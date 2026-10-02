@@ -77,6 +77,18 @@ chart:
   running: "running: {count} of {total} days"
   runningShort: running
 
+hover:
+  centre:
+    rolling:
+      mean: "{window}d average"
+      median: "{window}d median"
+    calendar:
+      mean: daily average
+      median: daily median
+  spread:
+    mean: "±1 sd: {sd}"
+    median: "P25–P75: {p25}–{p75}"
+
 calendar:
   unit:
     week: week

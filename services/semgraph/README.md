@@ -173,11 +173,24 @@ What the service does:
    short zigzag and the first axis value is bold. When the round start is zero anyway, it stays at zero.
 7. The footer: domain › dataset · owner; reliability · as-of date · definition; "How do I read this chart?".
    Missing context is printed as unknown: absence is never polished away.
-8. Hover, without script: every day has an invisible area with a native SVG `<title>` and a grey dotted guide line
-   (a guide, not data) that appears on hover. The label says what the day shows, e.g.
-   `23 sep (−7d) · 43,7 ± 12,2 · venster 17–23 sep`, or why it has no value:
-   `17 Sep (−13d) · no data: 15 Sep is missing · window 11–17 Sep`. This works when the SVG is opened directly or inlined in a page,
-   not inside `<img>`, Slack or e-mail; richer interaction belongs to the interactive page and the widget.
+8. Hover, without script (`src/core/render/hover.ts`, class `HoverLayer`): every slot has a column over the full
+   height, also a slot without data. On hover or focus it shows grey dotted guides (vertical through the slot,
+   horizontal from the y axis to the centre and both spread edges, the lower edge never below zero), a ring in the
+   focus colour around the point, and a box centred on the slot, above the spread or below it when there is no
+   room, always inside the plot:
+   `23 sep (−7d)` (bold), `gemiddelde 7d: 43,7`, `±1 sd: 12,2`, `venster 17–23 sep`; for a slot without data
+   `17 sep (−13d)`, `geen data: 15 sep ontbreekt`.
+   - Positions come from Vega's own scales (`view.scale('x')`, `view.scale('y')` after `toSVG`); a test checks
+     that every ring lies on Vega's point within 0.01 px.
+   - CSS `:hover` and `:focus`, every column with `tabindex="0"`: a tap on mobile shows it, a tap elsewhere hides
+     it, and the keyboard works the same way. `aria-label` holds the lines.
+   - The detail is hidden with the attribute `visibility="hidden"` and made visible by CSS, so a renderer without
+     CSS (such as a future PNG export) shows nothing instead of everything.
+   - No ids (several charts can share one page), every class starts with `semgraph-hover` (CSS in an inline SVG
+     applies to the whole page), and `pointer-events="none"` on guides and box, so the next column takes over.
+   - It works when the SVG is opened directly or inlined, not inside `<img>`, Slack or e-mail. On the interactive
+     page this will be Vega-Lite's own way (a tooltip encoding and a pointerover param with a rule); this CSS layer
+     is then the static fallback.
 9. Many values: while each slot has room for its bar plus some air (8 pixels for a mean, 13 for a median's wide
    bar), each slot is a dot with its bar. Beyond that the dots would overlap, so the mean becomes a line and the spread a band around it, in the same
    colours (the learning material: spread "as a band around a line or as a line around a point"). Lines and bands
@@ -191,7 +204,7 @@ What the service does:
 The charts are classes, so nothing is written twice:
 
 ```text
-TimeAxisChart (src/charts/time-axis-chart.ts)    contract, reference day, strict slots, rules, value axis
+TimeAxisChart (src/charts/time-axis-chart.ts)    contract, reference day, strict slots, rules, value axis, hover lines
 ├── MovingWindowChart                             slots per day over a rolling window, relative axis
 │   ├── MovingWindowAverage   ── uses Average
 │   └── MovingWindowMedian    ── uses Median
@@ -217,7 +230,7 @@ src/charts/                            the chart classes, statistics, calendar p
 locales/en.yml, nl-BE.yml              every text; other locales fall back to English
 tokens/ptditt-grafiektaal-tokens.json  style values; PROVISIONAL until the export from Figma is agreed
 src/core/pipeline.ts                   schema -> input checks -> compute -> rules -> draw -> template
-src/core/render/                       Vega-Lite to SVG (headless, no external loading) and the template
+src/core/render/                       Vega-Lite to SVG (headless, no external loading), HoverLayer, the template
 src/core/conformance.ts                the conformance checks, run by the tests and at start-up
 src/app.ts, src/routes/                the REST layer (Fastify); an MCP layer will call the same pipeline
 ```
@@ -247,7 +260,7 @@ the pages Anatomy and Line charts, and with the team:
 4. Conformance check 3 sharpened to "disjoint".
 5. The form of reading cue, footer and version label ("chart language v0"), still open in Figma.
 6. All token values except focus, text, text/muted, surface and badge, which come from Figma.
-7. The switch from dots to a line with a band, and the dotted hover guide.
+7. The switch from dots to a line with a band, and the look of the hover (guides, ring, box).
 8. The two new attributes `periodType` and `centralTendency`, and their values for the semgraphs of the analysis
    (`any` where they do not matter); see `test/fixtures/analysis-attributes.yml`.
 9. Calendar periods are strict too: a week, month, quarter or year with a missing day has no point. A running

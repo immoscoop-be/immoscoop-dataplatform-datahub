@@ -10,10 +10,18 @@ const refuse = () => Promise.reject(new Error('semgraph: Vega may not load exter
 /** All data is inline; Vega may not read files or fetch URLs. */
 const LOCKED_LOADER = { load: refuse, sanitize: refuse, http: refuse, file: refuse };
 
+/** Vega's own position scales, from data values to pixels inside the plot area. */
+export interface PlotScales {
+  x(value: number): number;
+  y(value: number): number;
+}
+
 export interface VegaOutput {
   svg: string;
   /** Warnings from Vega-Lite and Vega. Tests fail on any; in production they are logged. */
   warnings: string[];
+  /** The x and y scales of the drawn chart, so overlays sit exactly where Vega drew. */
+  scales: PlotScales;
 }
 
 /** Draws a Vega-Lite spec headless and returns the SVG. Vega-Lite only draws what it gets. */
@@ -28,10 +36,25 @@ export async function renderVegaLite(spec: TopLevelSpec): Promise<VegaOutput> {
   });
   try {
     const svg = await view.toSVG();
-    return { svg, warnings };
+    return { svg, warnings, scales: { x: scaleOf(view, 'x', warnings), y: scaleOf(view, 'y', warnings) } };
   } finally {
     view.finalize();
   }
+}
+
+/** A scale as Vega used it. A missing scale is reported as a warning and yields NaN, which overlays skip. */
+function scaleOf(view: vega.View, name: string, warnings: string[]): (value: number) => number {
+  let scale: ((value: number) => number) | undefined;
+  try {
+    scale = view.scale(name) as (value: number) => number;
+  } catch {
+    scale = undefined;
+  }
+  if (typeof scale !== 'function') {
+    warnings.push(`warn: the drawn chart has no scale ${name}`);
+    return () => Number.NaN;
+  }
+  return scale;
 }
 
 function collectingLogger(sink: string[]) {

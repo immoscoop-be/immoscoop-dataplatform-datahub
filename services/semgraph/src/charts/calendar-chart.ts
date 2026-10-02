@@ -100,6 +100,10 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
     return t(`cue.calendar.${this.statistic.id}`, { unit: t(`calendar.unit.${unit}`) });
   }
 
+  protected centreLabel(_request: CalendarRequest, t: Translator): string {
+    return t(`hover.centre.calendar.${this.statistic.id}`);
+  }
+
   protected periodNoun({ unit }: CalendarRequest): IssueParam {
     return { t: `period.${unit}` };
   }

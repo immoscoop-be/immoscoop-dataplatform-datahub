@@ -3,6 +3,7 @@ import { createTranslator, resolveLocale, type Translator } from './i18n.ts';
 import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, type Outcome } from './issues.ts';
 import type { LoadedSemgraph, Registry } from './registry.ts';
 import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
+import { HoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
@@ -84,7 +85,12 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
     title: drawing.title,
     readingCue: drawing.readingCue,
     description: drawing.description,
-    plot: { svg: plot.svg, height: drawing.height, area: drawing.plotArea, hover: drawing.hover },
+    plot: {
+      svg: plot.svg,
+      height: drawing.height,
+      area: drawing.plotArea,
+      overlay: new HoverLayer(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+    },
     footer: footer(t, request.context ?? {}, drawing, loaded, deviations, registry.tokens.languageVersion),
     tokens: registry.tokens,
     data: {

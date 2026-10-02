@@ -1,4 +1,3 @@
-import type { HoverTarget } from '../semgraph.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
 
@@ -29,9 +28,10 @@ export interface TemplateInput {
   plot: {
     svg: string;
     height: number;
-    /** Where the plot area sits inside the plot SVG; hover targets are placed over it. */
-    area: { x: number; y: number; width: number; height: number };
-    hover: HoverTarget[];
+    /** Where the plot area sits inside the plot SVG; the overlay is placed over it. */
+    area: { x: number; y: number };
+    /** Markup in plot-area coordinates drawn on top of the chart, e.g. the hover layer. */
+    overlay: string;
   };
   footer: Footer;
   tokens: Tokens;
@@ -82,7 +82,9 @@ export function composeSvg(input: TemplateInput): string {
 
   y += 8;
   parts.push(input.plot.svg.replace(/^<svg /, `<svg x="0" y="${round(y)}" `));
-  parts.push(...hoverLayer(input, y));
+  if (input.plot.overlay) {
+    parts.push(`<g transform="translate(${round(input.plot.area.x)},${round(y + input.plot.area.y)})">`, input.plot.overlay, '</g>');
+  }
   y += input.plot.height + 10;
 
   parts.push(
@@ -108,39 +110,13 @@ export function composeSvg(input: TemplateInput): string {
     .map(([name, value]) => ` data-${name}="${escapeXml(value)}"`)
     .join('');
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img"${data}>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"${data}>`,
     `<title>${escapeXml(input.title)}</title>`,
     `<desc>${escapeXml(input.description)}</desc>`,
     `<rect width="${width}" height="${height}" fill="${color(tokens, 'surface')}"/>`,
     ...parts,
     '</svg>',
   ].join('\n');
-}
-
-/**
- * Hover without script: per day an invisible area with a native <title>, and a grey dotted guide line
- * (a guide, not data) that appears on hover. Works when the SVG is opened or inlined, not inside <img>.
- */
-function hoverLayer(input: TemplateInput, plotTop: number): string[] {
-  const { area, hover } = input.plot;
-  if (hover.length === 0) return [];
-  const guide = color(input.tokens, 'context');
-  const items = hover.map((target) => {
-    const center = round(target.x + target.width / 2);
-    return [
-      '<g>',
-      `<rect x="${round(target.x)}" y="0" width="${round(target.width)}" height="${area.height}" fill="transparent"/>`,
-      `<line x1="${center}" x2="${center}" y1="0" y2="${area.height}" stroke="${guide}" stroke-width="${input.tokens.stroke.guide}" stroke-dasharray="1 3" stroke-linecap="round"/>`,
-      `<title>${escapeXml(target.label)}</title>`,
-      '</g>',
-    ].join('');
-  });
-  return [
-    '<style>.semgraph-hover line{opacity:0;pointer-events:none}.semgraph-hover g:hover line{opacity:1}</style>',
-    `<g class="semgraph-hover" transform="translate(${round(area.x)},${round(plotTop + area.y)})">`,
-    ...items,
-    '</g>',
-  ];
 }
 
 interface TextStyle {

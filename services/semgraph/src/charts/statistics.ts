@@ -28,6 +28,9 @@ export abstract class Statistic {
   /** "43,7 ± 12,2" or "44,0, P25–P75 38,0–51,0", for hover labels and descriptions. */
   abstract formatStats(t: Translator, format: Intl.NumberFormat, summary: Summary): string;
 
+  /** The spread on its own line on hover: "±1 sd: 12,2" or "P25–P75: 38,0–51,0"; null without spread. */
+  abstract spreadLine(t: Translator, format: Intl.NumberFormat, summary: Summary): string | null;
+
   /** The spread as a detail next to the last value: "± 12,2" or "38,0–51,0". */
   abstract formatDetail(format: Intl.NumberFormat, summary: Summary): string;
 
@@ -63,6 +66,10 @@ export class Average extends Statistic {
     return t('chart.stats.mean', { value: format.format(centre), sd: format.format(spread.hi - centre) });
   }
 
+  spreadLine(t: Translator, format: Intl.NumberFormat, { centre, spread }: Summary): string | null {
+    return spread ? t('hover.spread.mean', { sd: format.format(spread.hi - centre) }) : null;
+  }
+
   formatDetail(format: Intl.NumberFormat, { centre, spread }: Summary): string {
     return spread ? `± ${format.format(spread.hi - centre)}` : '';
   }
@@ -92,6 +99,10 @@ export class Median extends Statistic {
       p25: format.format(spread.lo),
       p75: format.format(spread.hi),
     });
+  }
+
+  spreadLine(t: Translator, format: Intl.NumberFormat, { spread }: Summary): string | null {
+    return spread ? t('hover.spread.median', { p25: format.format(spread.lo), p75: format.format(spread.hi) }) : null;
   }
 
   formatDetail(format: Intl.NumberFormat, { spread }: Summary): string {

@@ -77,6 +77,18 @@ chart:
   running: "lopend: {count} van {total} dagen"
   runningShort: lopend
 
+hover:
+  centre:
+    rolling:
+      mean: "gemiddelde {window}d"
+      median: "mediaan {window}d"
+    calendar:
+      mean: gemiddelde per dag
+      median: mediaan per dag
+  spread:
+    mean: "±1 sd: {sd}"
+    median: "P25–P75: {p25}–{p75}"
+
 calendar:
   unit:
     week: week

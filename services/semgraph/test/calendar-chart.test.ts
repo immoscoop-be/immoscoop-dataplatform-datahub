@@ -80,7 +80,7 @@ describe('calendar periods chart', () => {
   it('draws the running period hollow and says so, on the label and on hover', async () => {
     const { svg } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
     assert.match(svg!, />± 2,1 · lopend</);
-    assert.match(svg!, /<title>week 40 \(28 sep–4 okt\) · 53,7 ± 2,1 · lopend: 3 van 7 dagen<\/title>/);
+    assert.match(svg!, /aria-label="week 40 \(28 sep–4 okt\), gemiddelde per dag: 53,7, ±1 sd: 2,1, lopend: 3 van 7 dagen"/);
     // One hollow dot: filled with the surface colour, outlined in the focus colour.
     assert.equal([...svg!.matchAll(/fill="#ffffff" stroke="#dd2c88"/g)].length, 1);
   });

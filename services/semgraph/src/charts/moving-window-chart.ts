@@ -65,6 +65,10 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return t(`cue.rolling.${this.statistic.id}`, { window });
   }
 
+  protected centreLabel({ window }: MovingWindowRequest, t: Translator): string {
+    return t(`hover.centre.rolling.${this.statistic.id}`, { window });
+  }
+
   protected periodNoun({ window }: MovingWindowRequest): IssueParam {
     return { t: 'period.window', params: { window } };
   }

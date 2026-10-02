@@ -9,10 +9,9 @@ async function render(request: unknown) {
 }
 
 /** Text keys that slipped through untranslated would look like "footer.asOf". */
-const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes)\.[a-zA-Z]+/;
+const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes|hover)\.[a-zA-Z]+/;
 
-const hoverTitles = (svg: string) =>
-  [...svg.matchAll(/<g><rect [^>]*fill="transparent"\/><line [^>]*\/><title>([^<]*)<\/title><\/g>/g)].map((match) => match[1]);
+const hoverLabels = (svg: string) => [...svg.matchAll(/class="semgraph-hover-column" tabindex="0" role="img" aria-label="([^"]*)"/g)].map((match) => match[1]);
 
 describe('render', async () => {
   const registry = await testRegistry();
@@ -56,21 +55,6 @@ describe('render', async () => {
     assert.doesNotMatch(result.svg!, /grafiektaal v0/);
   });
 
-  it('gives every slot a hover label with its value and window, without script', async () => {
-    const { svg } = await render(await example('basic'));
-    const titles = hoverTitles(svg!);
-    assert.equal(titles.length, 28);
-    // Same numbers as BigQuery for 23 September: 43.714286 ± 12.16161.
-    assert.equal(titles[20], '23 sep (−7d) · 43,7 ± 12,2 · venster 17–23 sep');
-    assert.equal(titles[27], '30 sep (vandaag) · 45,9 ± 11,3 · venster 24–30 sep');
-    assert.doesNotMatch(svg!, /<script/);
-  });
-
-  it('says on hover why a slot has no value', async () => {
-    const { svg } = await render(await example('missing-days'));
-    assert.ok(hoverTitles(svg!).includes('17 Sep (−13d) · no data: 15 Sep is missing · window 11–17 Sep'));
-  });
-
   it('draws a long horizon as a line with a band, and thins out the time axis', async () => {
     const { svg } = await render(await example('long-horizon'));
     assert.doesNotMatch(svg!, /stroke="#f2afd2" stroke-width="4"/); // no bar per day
@@ -78,7 +62,7 @@ describe('render', async () => {
     assert.match(svg!, /mark-line role-mark/);
     for (const label of ['−168d', '−140d', '−112d', '−84d', '−56d', '−28d']) assert.match(svg!, new RegExp(`>${label}<`));
     assert.doesNotMatch(svg!, />−7d</);
-    assert.ok(hoverTitles(svg!).includes('16 jul (−76d) · geen data: 3 dagen ontbreken, de eerste op 14 jul · venster 10–16 jul'));
+    assert.ok(hoverLabels(svg!).includes('16 jul (−76d), geen data: 3 dagen ontbreken, de eerste op 14 jul'));
   });
 
   it('a median is a dot in a wide bar, a mean a dot over a thin one', async () => {

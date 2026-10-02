@@ -2,10 +2,10 @@ import type { TopLevelSpec } from 'vega-lite';
 import { checkDailySeries, currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
+import type { HoverSpec } from '../core/render/hover.ts';
 import type {
   DrawContext,
   Drawing,
-  HoverTarget,
   RequestContext,
   SemgraphImplementation,
   SemgraphMetadata,
@@ -129,6 +129,8 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   protected abstract slotLabel(slot: Slot, context: LabelContext, request: Request): string;
   /** The reading cue of the family, e.g. "rolling 7d average". */
   protected abstract periodCue(request: Request, t: Translator): string;
+  /** What the centre is called on hover, e.g. "gemiddelde 7d" or "mediaan per dag". */
+  protected abstract centreLabel(request: Request, t: Translator): string;
   /** The period a count would have to be unique over, e.g. "a 7-day window" or "a month". */
   protected abstract periodNoun(request: Request): IssueParam;
   /** The refusal when not a single slot is complete. */
@@ -533,26 +535,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       ],
     } as TopLevelSpec;
 
-    // On hover, every slot says what it shows, or why it has no value.
-    const absent = new Set(computed.absentDays);
-    const byRel = new Map(points.map((point) => [point.rel, point]));
-    const hover: HoverTarget[] = slots.map((slot) => {
-      const context = { t, computed, isFirst: false };
-      const point = byRel.get(slot.rel);
-      let facts: string;
-      if (point) {
-        facts = this.statistic.formatStats(t, valueFormat, point);
-      } else {
-        const gaps = [];
-        for (let day = slot.first; day <= slot.last; day++) if (absent.has(day)) gaps.push(day);
-        const first = localizeDay(t, gaps[0] ?? slot.first, 'short');
-        facts = gaps.length === 1
-          ? t('chart.missing.one', { absent: first })
-          : t('chart.missing.many', { count: gaps.length, absent: first });
-      }
-      const label = [this.slotLabel(slot, context, request), facts, ...this.slotExtras(slot, context, request)].join(' · ');
-      return { x: (slot.rel + count - 1) * slotWidth, width: slotWidth, label };
-    });
+    const hover = this.hoverSpecs(request, computed, t, valueFormat);
 
     const title = request.title ?? request.metric;
     const cue = [this.periodCue(request, t), computed.withSpread ? t(`cue.spread.${this.statistic.id}`) : '']
@@ -575,6 +558,39 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       description,
       asOf: computed.reference,
     };
+  }
+
+  /**
+   * What each slot shows on hover, also a slot without data: its name (bold), the centre, the spread
+   * and the family's extras, e.g. "23 sep (−7d)", "gemiddelde 7d: 43,7", "±1 sd: 12,2", "venster 17–23 sep";
+   * or why it has no value, e.g. "geen data: 15 sep ontbreekt".
+   */
+  protected hoverSpecs(request: Request, computed: TimeAxisComputed, t: Translator, format: Intl.NumberFormat): HoverSpec[] {
+    const absent = new Set(computed.absentDays);
+    const byRel = new Map(computed.points.map((point) => [point.rel, point]));
+    return computed.slots.map((slot) => {
+      const context = { t, computed, isFirst: false };
+      const name = { text: this.slotLabel(slot, context, request), bold: true };
+      const point = byRel.get(slot.rel);
+      if (!point) {
+        const gaps = [];
+        for (let day = slot.first; day <= slot.last; day++) if (absent.has(day)) gaps.push(day);
+        const first = localizeDay(t, gaps[0] ?? slot.first, 'short');
+        const text = gaps.length === 1 ? t('chart.missing.one', { absent: first }) : t('chart.missing.many', { count: gaps.length, absent: first });
+        return { x: slot.rel, lines: [name, { text }] };
+      }
+      const spread = this.statistic.spreadLine(t, format, point);
+      return {
+        x: slot.rel,
+        point: { y: point.centre, lo: point.spread?.lo ?? null, hi: point.spread?.hi ?? null },
+        lines: [
+          name,
+          { text: `${this.centreLabel(request, t)}: ${format.format(point.centre)}` },
+          ...(spread ? [{ text: spread }] : []),
+          ...this.slotExtras(slot, context, request).map((text) => ({ text })),
+        ],
+      };
+    });
   }
 }
 
