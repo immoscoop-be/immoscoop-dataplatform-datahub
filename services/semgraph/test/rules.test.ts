@@ -32,12 +32,13 @@ describe('movingWindowAverage rules', () => {
   });
 
   it('refuses uniques over the window: they cannot be derived from daily values', async () => {
-    const result = await validate({ ...(await example('unique-without-aggregation')), uniqueAggregation: 'overWindow' });
-    assert.deepEqual(result.codes, ['uniquesOverWindowNotDerivable']);
+    const result = await validate({ ...(await example('unique-without-aggregation')), uniqueAggregation: 'overPeriod' });
+    assert.deepEqual(result.codes, ['uniquesOverPeriodNotDerivable']);
+    assert.match(result.report.issues[0]!.message, /een venster van 7 dagen/);
   });
 
   it('draws the average of daily uniques', async () => {
-    const result = await validate({ ...(await example('unique-without-aggregation')), uniqueAggregation: 'dailyAverage' });
+    const result = await validate({ ...(await example('unique-without-aggregation')), uniqueAggregation: 'daily' });
     assert.equal(result.outcome, 'ok');
   });
 
@@ -67,6 +68,24 @@ describe('movingWindowAverage rules', () => {
     assert.deepEqual(result.codes, ['meanWithoutSpread']);
   });
 
+  it('tolerates a median without spread, as a deviation of its own', async () => {
+    const result = await validate({ ...(await example('basic', 'movingWindowMedian')), spread: 'none' });
+    assert.equal(result.outcome, 'deviation');
+    assert.deepEqual(result.codes, ['medianWithoutSpread']);
+  });
+
+  it('a median only accepts its own spread, P25–P75 (iqr)', async () => {
+    const result = await validate({ ...(await example('basic', 'movingWindowMedian')), spread: 'stddev' });
+    assert.equal(result.outcome, 'invalid');
+    assert.match(result.report.issues[0]!.message, /iqr, none/);
+  });
+
+  it('refuses uniques over a calendar period, naming the period', async () => {
+    const result = await validate({ ...(await example('months', 'calendarAverage')), measureType: 'unique', uniqueAggregation: 'overPeriod' });
+    assert.deepEqual(result.codes, ['uniquesOverPeriodNotDerivable']);
+    assert.match(result.report.issues[0]!.message, /Unieken over een maand/);
+  });
+
   it('mentions the days after the last complete day that were left out', async () => {
     const result = await validate({ ...(await example('basic')), data: series('2026-10-01', Array(40).fill(3)) });
     assert.equal(result.outcome, 'ok');
@@ -74,7 +93,7 @@ describe('movingWindowAverage rules', () => {
   });
 
   it('ignores uniqueAggregation for additive measures, and says so', async () => {
-    const result = await validate({ ...(await example('basic')), uniqueAggregation: 'dailyAverage' });
+    const result = await validate({ ...(await example('basic')), uniqueAggregation: 'daily' });
     assert.deepEqual(result.codes, ['uniqueAggregationIgnored']);
   });
 });

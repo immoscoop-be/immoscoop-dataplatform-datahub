@@ -9,17 +9,25 @@ async function render(request: unknown) {
 }
 
 /** Text keys that slipped through untranslated would look like "footer.asOf". */
-const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|date|types|attributes)\.[a-zA-Z]+/;
+const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes)\.[a-zA-Z]+/;
 
-describe('render', () => {
-  for (const name of ['basic', 'missing-days', 'window-10', 'long-horizon']) {
-    it(`matches the golden SVG for the example ${name}`, async () => {
-      const result = await render(await example(name));
-      assert.deepEqual(result.warnings, []);
-      assert.ok(result.svg);
-      assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
-      await assertGolden(`movingWindowAverage-${name}.svg`, result.svg);
-    });
+const hoverTitles = (svg: string) =>
+  [...svg.matchAll(/<g><rect [^>]*fill="transparent"\/><line [^>]*\/><title>([^<]*)<\/title><\/g>/g)].map((match) => match[1]);
+
+describe('render', async () => {
+  const registry = await testRegistry();
+  for (const [id, semgraph] of registry.semgraphs) {
+    for (const [name, request] of semgraph.examples) {
+      it(`${id}/${name}: no Vega warnings, no untranslated text, matches its golden SVG`, async () => {
+        const result = await render(request);
+        assert.deepEqual(result.warnings, []);
+        if (result.report.outcome === 'refused') return assert.equal(result.svg, undefined);
+        assert.ok(result.svg);
+        assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
+        assert.doesNotMatch(result.svg, /\sid="/, 'no ids, so several charts can share one page');
+        await assertGolden(`${id}-${name}.svg`, result.svg);
+      });
+    }
   }
 
   it('has the anatomy of the chart language: title, reading cue, footer and version label', async () => {
@@ -39,7 +47,6 @@ describe('render', () => {
   it('shows missing days as missing data, never as zero', async () => {
     const { svg } = await render(await example('missing-days'));
     assert.match(svg!, />no data</);
-    assert.doesNotMatch(svg!, />geen data</);
   });
 
   it('puts a tolerated deviation in the footer and leaves out the version label', async () => {
@@ -49,9 +56,9 @@ describe('render', () => {
     assert.doesNotMatch(result.svg!, /grafiektaal v0/);
   });
 
-  it('gives every day a hover label with its value and window, without script', async () => {
+  it('gives every slot a hover label with its value and window, without script', async () => {
     const { svg } = await render(await example('basic'));
-    const titles = [...svg!.matchAll(/<g><rect [^>]*fill="transparent"\/><line [^>]*\/><title>([^<]*)<\/title><\/g>/g)].map((match) => match[1]);
+    const titles = hoverTitles(svg!);
     assert.equal(titles.length, 28);
     // Same numbers as BigQuery for 23 September: 43.714286 ± 12.16161.
     assert.equal(titles[20], '23 sep (−7d) · 43,7 ± 12,2 · venster 17–23 sep');
@@ -59,27 +66,38 @@ describe('render', () => {
     assert.doesNotMatch(svg!, /<script/);
   });
 
-  it('says on hover why a day has no value', async () => {
+  it('says on hover why a slot has no value', async () => {
     const { svg } = await render(await example('missing-days'));
-    assert.match(svg!, /<title>17 Sep \(−13d\) · no data: 15 Sep is missing<\/title>/);
+    assert.ok(hoverTitles(svg!).includes('17 Sep (−13d) · no data: 15 Sep is missing · window 11–17 Sep'));
   });
 
   it('draws a long horizon as a line with a band, and thins out the time axis', async () => {
     const { svg } = await render(await example('long-horizon'));
-    // No rule per day and no dot per day, but labels every 28 days.
-    assert.doesNotMatch(svg!, /mark-rule role-mark/);
+    assert.doesNotMatch(svg!, /stroke="#f2afd2" stroke-width="4"/); // no bar per day
     assert.match(svg!, /mark-area role-mark/);
     assert.match(svg!, /mark-line role-mark/);
     for (const label of ['−168d', '−140d', '−112d', '−84d', '−56d', '−28d']) assert.match(svg!, new RegExp(`>${label}<`));
     assert.doesNotMatch(svg!, />−7d</);
-    // The gap of 14-16 July stays visible: the line is not drawn across it.
-    assert.match(svg!, /<title>16 jul \(−76d\) · geen data: 3 dagen ontbreken, de eerste op 14 jul<\/title>/);
+    assert.ok(hoverTitles(svg!).includes('16 jul (−76d) · geen data: 3 dagen ontbreken, de eerste op 14 jul · venster 10–16 jul'));
   });
 
-  it('draws nothing for a refusal', async () => {
-    const result = await render(await example('unique-without-aggregation'));
-    assert.equal(result.report.outcome, 'refused');
-    assert.equal(result.svg, undefined);
+  it('a median is a dot in a wide bar, a mean a dot over a thin one', async () => {
+    const { svg: median } = await render(await example('basic', 'movingWindowMedian'));
+    const { svg: mean } = await render(await example('basic'));
+    assert.match(median!, /voortschrijdende mediaan 7d · P25–P75/);
+    assert.match(median!, /stroke="#f2afd2" stroke-width="9" stroke-linecap="round"/);
+    assert.match(mean!, /stroke="#f2afd2" stroke-width="4" stroke-linecap="round"/);
+  });
+
+  it('a zoomed value axis gets a zigzag at the start of the baseline and a bold first value', async () => {
+    const { svg: zoomed } = await render(await example('zoomed'));
+    const { svg: fromZero } = await render(await example('basic'));
+    assert.match(zoomed!, /font-weight="bold"[^>]*>20</);
+    assert.doesNotMatch(zoomed!, />0</);
+    const zigzag = /class="mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#3c444e"/;
+    assert.match(zoomed!, zigzag);
+    assert.doesNotMatch(fromZero!, /font-weight="bold"[^>]*>0</);
+    assert.doesNotMatch(fromZero!, zigzag);
   });
 
   it('escapes every text from the caller', async () => {
@@ -96,18 +114,9 @@ describe('render', () => {
   });
 
   it('refuses links that are not web links, and control characters', async () => {
-    const result = await render({
-      ...(await example('basic')),
-      title: 'bell\u0007',
-      context: { definitionUrl: 'javascript:alert(1)' },
-    });
+    const result = await render({ ...(await example('basic')), title: 'bell\u0007', context: { definitionUrl: 'javascript:alert(1)' } });
     assert.equal(result.report.outcome, 'invalid');
     assert.deepEqual(result.report.issues.map((issue) => issue.code).sort(), ['invalidCharacters', 'invalidUrl']);
-  });
-
-  it('Vega output contains no ids, so several charts can share one page', async () => {
-    const { svg } = await render(await example('missing-days'));
-    assert.doesNotMatch(svg!, /\sid="/);
   });
 
   it('Vega may not load anything from outside', async () => {

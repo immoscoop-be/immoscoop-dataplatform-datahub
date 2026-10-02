@@ -1,13 +1,9 @@
-import { checkDailySeries } from '../../src/core/days.ts';
-import type { SemgraphImplementation } from '../../src/core/semgraph.ts';
-import { draw } from './chart.ts';
-import { compute } from './compute.ts';
-import { rules } from './rules.ts';
-import type { MovingWindowAverageComputed, MovingWindowAverageRequest } from './types.ts';
+import { MovingWindowChart } from '../../src/charts/moving-window-chart.ts';
+import { Average } from '../../src/charts/statistics.ts';
 
-export const movingWindowAverage: SemgraphImplementation<MovingWindowAverageRequest, MovingWindowAverageComputed> = {
-  check: (request) => checkDailySeries(request.data),
-  compute,
-  rules,
-  draw,
-};
+/** A rolling average: per day, the mean of the window ending on it, with ±1 sd. */
+export class MovingWindowAverage extends MovingWindowChart {
+  constructor() {
+    super('movingWindowAverage', new Average());
+  }
+}

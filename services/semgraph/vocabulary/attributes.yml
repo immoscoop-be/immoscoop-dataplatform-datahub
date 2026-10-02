@@ -31,3 +31,13 @@
   values: [perPeriod, runningTotal]
   askWhen: { timeAxis: calendar }
   source: [user]
+# Added with the calendar and median semgraphs: without them those would not be distinguishable.
+- id: periodType
+  question: attributes.periodType.question
+  values: [rolling, calendar]
+  askWhen: { timeAxis: calendar }
+  source: [user]
+- id: centralTendency
+  question: attributes.centralTendency.question
+  values: [mean, median]
+  source: [user, domainHub]

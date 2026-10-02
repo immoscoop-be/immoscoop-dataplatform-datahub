@@ -10,8 +10,8 @@ export type IssueLevel = 'inputError' | 'refusal' | 'deviation' | 'info';
 
 export type Outcome = 'ok' | 'deviation' | 'refused' | 'invalid';
 
-/** A parameter is shown as is, or translated when given as `{ t: key }`. */
-export type IssueParam = string | number | { t: string };
+/** A parameter is shown as is, or translated when given as `{ t: key, params }`. */
+export type IssueParam = string | number | { t: string; params?: Record<string, string | number> };
 
 /** An issue as the rules produce it: a code with parameters, independent of the language. */
 export interface IssueSpec {
@@ -46,7 +46,7 @@ export function localizeParams(
 ): Record<string, string | number> {
   const result: Record<string, string | number> = {};
   for (const [name, value] of Object.entries(params ?? {})) {
-    result[name] = typeof value === 'object' ? t(value.t) : value;
+    result[name] = typeof value === 'object' ? t(value.t, value.params) : value;
   }
   return result;
 }

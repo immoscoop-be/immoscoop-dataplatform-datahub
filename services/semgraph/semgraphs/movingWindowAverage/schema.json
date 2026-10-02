@@ -2,12 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "semgraph:movingWindowAverage/request",
   "title": "movingWindowAverage request",
-  "description": "A rolling average with its spread, over a relative time axis that ends at the last complete day. The caller sends raw daily values; the service computes windows, spread, axis and labels.",
+  "description": "A rolling window of days, per day on a relative time axis that ends at the last complete day. The mean is a dot over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["semgraph", "metric", "measureType", "window", "horizon", "data"],
+  "required": [
+    "semgraph",
+    "metric",
+    "measureType",
+    "window",
+    "horizon",
+    "data"
+  ],
   "properties": {
-    "semgraph": { "const": "movingWindowAverage" },
+    "semgraph": {
+      "const": "movingWindowAverage"
+    },
     "metric": {
       "description": "Identifier of the metric, e.g. creditLeads. Used as title when no title is given.",
       "type": "string",
@@ -21,11 +30,18 @@
     },
     "measureType": {
       "description": "Kind of number. Required until Domain Hub or the dbt YAML supplies it.",
-      "enum": ["additive", "unique", "ratio"]
+      "enum": [
+        "additive",
+        "unique",
+        "ratio"
+      ]
     },
     "uniqueAggregation": {
-      "description": "Required for unique counts: dailyAverage is the average of the daily uniques; overWindow (unique over the whole window) cannot be derived from daily values.",
-      "enum": ["dailyAverage", "overWindow"]
+      "description": "Required for unique counts: daily shows the daily uniques; overPeriod (unique over the whole period) cannot be derived from daily values.",
+      "enum": [
+        "daily",
+        "overPeriod"
+      ]
     },
     "window": {
       "description": "Length of the rolling window in days. The chart language uses multiples of 7.",
@@ -34,19 +50,35 @@
       "maximum": 364
     },
     "horizon": {
-      "description": "Number of days shown on the relative axis, ending at the last complete day.",
+      "description": "Number of days on the relative axis, ending at the last complete day.",
       "type": "integer",
       "minimum": 2,
       "maximum": 728
     },
     "spread": {
-      "description": "Spread shown around the mean. stddev is ±1 sample standard deviation over the same window.",
-      "enum": ["stddev", "none"],
+      "description": "Spread around the mean: stddev (the chart language default) or none.",
+      "enum": [
+        "stddev",
+        "none"
+      ],
       "default": "stddev"
+    },
+    "valueAxis": {
+      "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",
+      "enum": [
+        "zero",
+        "zoom"
+      ],
+      "default": "zero"
     },
     "format": {
       "description": "Output format. Only svg is available in v0.",
-      "enum": ["svg", "png", "html", "widget"],
+      "enum": [
+        "svg",
+        "png",
+        "html",
+        "widget"
+      ],
       "default": "svg"
     },
     "locale": {
@@ -59,25 +91,57 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "domain": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "dataset": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "owner": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "reliability": { "type": "string", "minLength": 1, "maxLength": 80 },
-        "definitionUrl": { "type": "string", "minLength": 1, "maxLength": 500 }
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "dataset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "reliability": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "definitionUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
       }
     },
     "data": {
       "description": "Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.",
       "type": "array",
       "minItems": 1,
-      "maxItems": 1100,
+      "maxItems": 4000,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["day", "value"],
+        "required": [
+          "day",
+          "value"
+        ],
         "properties": {
-          "day": { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
-          "value": { "type": ["number", "null"], "minimum": 0 }
+          "day": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
         }
       }
     }

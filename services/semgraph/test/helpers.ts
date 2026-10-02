@@ -13,9 +13,16 @@ export function testRegistry(): Promise<Registry> {
   return registry;
 }
 
-export async function example(name: string): Promise<Record<string, unknown>> {
-  const loaded = (await testRegistry()).semgraphs.get('movingWindowAverage')!;
-  return structuredClone(loaded.examples.get(name)) as Record<string, unknown>;
+export async function example(name: string, semgraph = 'movingWindowAverage'): Promise<Record<string, unknown>> {
+  const loaded = (await testRegistry()).semgraphs.get(semgraph)!;
+  const request = loaded.examples.get(name);
+  if (request === undefined) throw new Error(`no example ${semgraph}/${name}`);
+  return structuredClone(request) as Record<string, unknown>;
+}
+
+/** A fixture from test/fixtures. */
+export async function fixture<T>(name: string): Promise<T> {
+  return JSON.parse(await readFile(path.join(REPO_ROOT, 'test', 'fixtures', name), 'utf8')) as T;
 }
 
 /** A complete daily series ending at `end`, with the given values. */

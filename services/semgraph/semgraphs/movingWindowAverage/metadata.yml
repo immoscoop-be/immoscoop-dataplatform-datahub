@@ -8,6 +8,8 @@ attributes:
   dataGrain: [aggregated]
   measureType: [additive, unique]
   accumulation: [perPeriod]
+  periodType: [rolling]
+  centralTendency: [mean]
 exampleQuestions:
   - semgraphs.movingWindowAverage.examples.1
   - semgraphs.movingWindowAverage.examples.2

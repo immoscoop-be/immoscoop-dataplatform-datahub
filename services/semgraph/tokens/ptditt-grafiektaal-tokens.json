@@ -31,6 +31,7 @@
     "axis": 1,
     "baseline": 1.5,
     "spread": 4,
+    "spreadWide": 9,
     "line": 1.5,
     "missing": 1,
     "guide": 1

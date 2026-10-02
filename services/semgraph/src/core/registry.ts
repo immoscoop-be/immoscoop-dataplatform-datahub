@@ -72,12 +72,22 @@ export async function loadRegistry(options: LoadOptions = {}): Promise<Registry>
     if (!existsSync(path.join(folder, 'metadata.yml'))) continue;
     const problems: string[] = [];
     const metadata = (await readYaml(path.join(folder, 'metadata.yml'))) as SemgraphMetadata;
-    const schema = JSON.parse(await readFile(path.join(folder, 'schema.json'), 'utf8')) as object;
+    const implementation = implementations[entry.id];
+    if (!implementation) problems.push('no code registered in semgraphs/index.ts');
+    // The contract comes from the classes; schema.json is its written form and must match it.
+    const schema = implementation?.schema();
     let validate: ValidateFunction | undefined;
-    try {
-      validate = ajv.compile(schema);
-    } catch (error) {
-      problems.push(`schema.json does not compile: ${(error as Error).message}`);
+    if (schema) {
+      try {
+        validate = ajv.compile(schema);
+      } catch (error) {
+        problems.push(`the schema does not compile: ${(error as Error).message}`);
+      }
+      const written = path.join(folder, 'schema.json');
+      if (!existsSync(written)) problems.push('schema.json is missing: run npm run schemas');
+      else if (JSON.stringify(JSON.parse(await readFile(written, 'utf8'))) !== JSON.stringify(schema)) {
+        problems.push('schema.json is out of date: run npm run schemas');
+      }
     }
     const examples = new Map<string, unknown>();
     const examplesFolder = path.join(folder, 'examples');
@@ -90,10 +100,8 @@ export async function loadRegistry(options: LoadOptions = {}): Promise<Registry>
         examples.set(name.slice(0, -'.json'.length), example);
       }
     }
-    const implementation = implementations[entry.id];
-    if (!implementation) problems.push('no code registered in semgraphs/index.ts');
     underCheck.push({ id: entry.id, metadata, loadProblems: problems });
-    if (validate && implementation) {
+    if (validate && implementation && schema) {
       semgraphs.set(entry.id, { id: entry.id, metadata, schema, validate, examples, implementation });
     }
   }

@@ -1,14 +1,18 @@
-# The first fill of all twelve semgraphs from the analysis "Grafiekserver" (table "Eerste invulling").
+# The first fill of all twelve semgraphs from the analysis "Grafiekserver" (table "Eerste invulling"),
+# plus the attributes periodType and centralTendency and the three semgraphs added with them.
 # A dash in that table means the attribute does not apply, so it is left out here.
-movingWindowAverage: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive, unique], accumulation: [perPeriod] }
-periodComparison: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [previousPeriod], dataGrain: [aggregated], measureType: any, accumulation: any }
-kpiTile: { timeAxis: [none], breakdown: [none], comparisonBasis: [previousPeriod, target], dataGrain: [aggregated], measureType: any }
-cumulative: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive], accumulation: [runningTotal] }
-kpiStatus: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [target], dataGrain: [aggregated], measureType: [additive], accumulation: [runningTotal] }
-categoryComparison: { timeAxis: [none], breakdown: [category], comparisonBasis: any, dataGrain: [aggregated], measureType: any, partToWhole: ["no"] }
-composition: { timeAxis: any, breakdown: [category], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive], partToWhole: ["yes"], accumulation: any }
-distribution: { timeAxis: [none], breakdown: [none], comparisonBasis: any, dataGrain: [individual], measureType: any }
-funnel: { timeAxis: [none], breakdown: [steps], comparisonBasis: [none], dataGrain: [aggregated], measureType: any }
-overlap: { timeAxis: [none], breakdown: [sets], comparisonBasis: [none], dataGrain: [individual], measureType: [unique] }
-survival: { timeAxis: [elapsed], breakdown: [none], comparisonBasis: any, dataGrain: [individual], measureType: any }
-regionalDistribution: { timeAxis: [none], breakdown: [region], comparisonBasis: [none], dataGrain: [aggregated], measureType: any }
+movingWindowAverage: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive, unique], accumulation: [perPeriod], periodType: [rolling], centralTendency: [mean] }
+periodComparison: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [previousPeriod], dataGrain: [aggregated], measureType: any, accumulation: any, periodType: any, centralTendency: any }
+kpiTile: { timeAxis: [none], breakdown: [none], comparisonBasis: [previousPeriod, target], dataGrain: [aggregated], measureType: any, centralTendency: any }
+cumulative: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive], accumulation: [runningTotal], periodType: any, centralTendency: any }
+kpiStatus: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [target], dataGrain: [aggregated], measureType: [additive], accumulation: [runningTotal], periodType: any, centralTendency: any }
+categoryComparison: { timeAxis: [none], breakdown: [category], comparisonBasis: any, dataGrain: [aggregated], measureType: any, partToWhole: ["no"], centralTendency: any }
+composition: { timeAxis: any, breakdown: [category], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive], partToWhole: ["yes"], accumulation: any, periodType: any, centralTendency: any }
+distribution: { timeAxis: [none], breakdown: [none], comparisonBasis: any, dataGrain: [individual], measureType: any, centralTendency: any }
+funnel: { timeAxis: [none], breakdown: [steps], comparisonBasis: [none], dataGrain: [aggregated], measureType: any, centralTendency: any }
+overlap: { timeAxis: [none], breakdown: [sets], comparisonBasis: [none], dataGrain: [individual], measureType: [unique], centralTendency: any }
+survival: { timeAxis: [elapsed], breakdown: [none], comparisonBasis: any, dataGrain: [individual], measureType: any, centralTendency: any }
+regionalDistribution: { timeAxis: [none], breakdown: [region], comparisonBasis: [none], dataGrain: [aggregated], measureType: any, centralTendency: any }
+movingWindowMedian: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive, unique], accumulation: [perPeriod], periodType: [rolling], centralTendency: [median] }
+calendarAverage: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive, unique], accumulation: [perPeriod], periodType: [calendar], centralTendency: [mean] }
+calendarMedian: { timeAxis: [calendar], breakdown: [none], comparisonBasis: [none], dataGrain: [aggregated], measureType: [additive, unique], accumulation: [perPeriod], periodType: [calendar], centralTendency: [median] }

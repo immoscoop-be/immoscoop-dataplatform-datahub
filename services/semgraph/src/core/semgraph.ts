@@ -70,6 +70,9 @@ export interface Drawing {
  * what `draw` gives it. Requests reach these functions only after they passed the JSON Schema.
  */
 export interface SemgraphImplementation<Request, Computed> {
+  readonly id: string;
+  /** The JSON Schema of the request: the contract, also written to semgraphs/<id>/schema.json. */
+  schema(): object;
   /** Input checks the schema cannot express, e.g. existing days and duplicates. */
   check(request: Request): IssueSpec[];
   compute(request: Request, context: { now: Date }): Computed;

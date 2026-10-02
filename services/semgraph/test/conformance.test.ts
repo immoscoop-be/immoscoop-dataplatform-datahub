@@ -43,14 +43,14 @@ describe('conformance', () => {
     assert.deepEqual(checkConformance(await input()), []);
   });
 
-  it('the first fill of all twelve semgraphs in the analysis passes checks 1 to 4', async () => {
+  it('the first fill of the analysis, with the new attributes and semgraphs, passes checks 1 to 4', async () => {
     const { vocabulary } = await testRegistry();
     const table = parse(await readFile(path.join(REPO_ROOT, 'test', 'fixtures', 'analysis-attributes.yml'), 'utf8')) as Record<
       string,
       Record<string, AttributeValues>
     >;
     const semgraphs = Object.entries(table).map(([id, attributes]) => metadata(id, attributes));
-    assert.equal(semgraphs.length, 12);
+    assert.equal(semgraphs.length, 15);
     assert.deepEqual(checkVocabulary(vocabulary), []);
     assert.deepEqual(semgraphs.flatMap((semgraph) => checkAttributes(vocabulary, semgraph)), []);
     assert.deepEqual(checkDistinguishable(semgraphs), []);
@@ -119,6 +119,14 @@ describe('conformance', () => {
       broken.folders = ['movingWindowAverage', 'sparkline'];
       assert.ok(checkConformance(broken).some((problem) => problem.includes('semgraphs/sparkline is not in')));
     });
+  });
+
+  it('schema.json of every semgraph is the contract its classes compose', async () => {
+    const { readFile } = await import('node:fs/promises');
+    for (const [id, semgraph] of (await testRegistry()).semgraphs) {
+      const written = JSON.parse(await readFile(path.join(REPO_ROOT, 'semgraphs', id, 'schema.json'), 'utf8'));
+      assert.deepEqual(written, semgraph.implementation.schema(), `${id}/schema.json is out of date: npm run schemas`);
+    }
   });
 
   it('nl-BE translates every English text', async () => {
