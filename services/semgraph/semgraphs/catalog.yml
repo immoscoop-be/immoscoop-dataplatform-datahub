@@ -1,0 +1,14 @@
+# Every semgraph from the catalogue in the analysis. Only "available" ones can be rendered;
+# "planned" ids may already be referenced, e.g. as the alternative in doNotUseWhen.
+- { id: movingWindowAverage, status: available }
+- { id: periodComparison, status: planned }
+- { id: kpiTile, status: planned }
+- { id: cumulative, status: planned }
+- { id: kpiStatus, status: planned }
+- { id: categoryComparison, status: planned }
+- { id: distribution, status: planned }
+- { id: composition, status: planned }
+- { id: funnel, status: planned }
+- { id: overlap, status: planned }
+- { id: survival, status: planned }
+- { id: regionalDistribution, status: planned }

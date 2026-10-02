@@ -1,0 +1,156 @@
+import assert from 'node:assert/strict';
+import { after, before, describe, it } from 'node:test';
+import type { FastifyInstance } from 'fastify';
+import { buildApp } from '../src/app.ts';
+import { example, NOW, testRegistry } from './helpers.ts';
+
+let app: FastifyInstance;
+
+before(async () => {
+  app = await buildApp({ registry: await testRegistry(), now: () => NOW, logger: false });
+});
+after(() => app.close());
+
+const post = (url: string, payload: unknown) => app.inject({ method: 'POST', url, payload: payload as object });
+
+describe('API', () => {
+  it('GET /healthz reports the versions', async () => {
+    const response = await app.inject('/healthz');
+    assert.equal(response.statusCode, 200);
+    assert.deepEqual(response.json(), {
+      status: 'ok',
+      version: '0.1.0',
+      languageVersion: 'v0',
+      tokensVersion: '0.0.0-provisional',
+    });
+  });
+
+  it('GET /semgraphs lists what is available and what is planned', async () => {
+    const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
+    assert.equal(body.semgraphs[0].id, 'movingWindowAverage');
+    assert.equal(body.semgraphs[0].title, 'Voortschrijdend gemiddelde');
+    assert.ok(body.planned.includes('periodComparison'));
+  });
+
+  it('GET /semgraphs/{id} returns metadata, schema and examples', async () => {
+    const body = (await app.inject('/semgraphs/movingWindowAverage')).json();
+    assert.equal(body.answers, 'How does this evolve, without the daily noise?');
+    assert.deepEqual(body.attributes.measureType, ['additive', 'unique']);
+    assert.equal(body.schema.properties.window.minimum, 2);
+    assert.ok(body.examples.some((entry: { name: string }) => entry.name === 'basic'));
+  });
+
+  it('GET /semgraphs/{id} for a planned semgraph says it is planned', async () => {
+    const response = await app.inject('/semgraphs/kpiTile');
+    assert.equal(response.statusCode, 404);
+    assert.equal(response.json().issues[0].code, 'plannedSemgraph');
+  });
+
+  it('POST /render returns an SVG with the version headers', async () => {
+    const response = await post('/render', await example('basic'));
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['content-type'], 'image/svg+xml; charset=utf-8');
+    assert.equal(response.headers['x-content-type-options'], 'nosniff');
+    assert.match(String(response.headers['content-security-policy']), /default-src 'none'/);
+    assert.equal(response.headers['semgraph-language-version'], 'v0');
+    assert.equal(response.headers['semgraph-tokens-version'], '0.0.0-provisional');
+    assert.equal(response.headers['semgraph-deviations'], undefined);
+    assert.match(response.body, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
+  });
+
+  it('POST /render names tolerated deviations in a header', async () => {
+    const response = await post('/render', await example('window-10'));
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['semgraph-deviations'], 'windowNotMultipleOf7');
+  });
+
+  it('POST /render refuses a misleading chart with 422 and an explanation', async () => {
+    const response = await post('/render', await example('unique-without-aggregation'));
+    assert.equal(response.statusCode, 422);
+    const body = response.json();
+    assert.equal(body.outcome, 'refused');
+    assert.equal(body.issues[0].code, 'uniqueAggregationRequired');
+    assert.equal(body.locale, 'nl-BE');
+  });
+
+  it('POST /render rejects an unknown field with 400, also inside data', async () => {
+    const request = await example('basic');
+    const response = await post('/render', { ...request, horizn: 28 });
+    assert.equal(response.statusCode, 400);
+    assert.equal(response.json().issues[0].code, 'unexpectedField');
+    assert.equal(response.json().issues[0].field, '/horizn');
+
+    const data = (request.data as object[]).map((point, index) => (index === 0 ? { ...point, email: 'x@y.be' } : point));
+    const pii = (await post('/render', { ...request, data })).json();
+    assert.equal(pii.issues[0].code, 'unexpectedDataField');
+    assert.match(pii.issues[0].alternative, /persoonsgegevens/);
+  });
+
+  it('POST /render requires measureType, in plain language', async () => {
+    const { measureType: _, ...request } = await example('basic');
+    const body = (await post('/render', { ...request, locale: 'en' })).json();
+    assert.equal(body.outcome, 'invalid');
+    assert.equal(body.issues[0].code, 'missingField');
+    assert.equal(body.issues[0].message, 'The field measureType is required.');
+  });
+
+  it('POST /render says when a semgraph or format is not available yet', async () => {
+    assert.equal((await post('/render', { semgraph: 'kpiTile' })).json().issues[0].code, 'plannedSemgraph');
+    assert.equal((await post('/render', { semgraph: 'pieChart' })).json().issues[0].code, 'unknownSemgraph');
+    const png = (await post('/render', { ...(await example('basic')), format: 'png' })).json();
+    assert.equal(png.issues[0].code, 'formatNotAvailable');
+  });
+
+  it('POST /render falls back to English for an unknown locale, and says so', async () => {
+    const response = await post('/validate', { ...(await example('basic')), locale: 'fr-BE' });
+    const body = response.json();
+    assert.equal(body.locale, 'en');
+    assert.equal(body.outcome, 'ok');
+    assert.equal(body.issues[0].code, 'localeFallback');
+  });
+
+  it('POST /validate always answers 200 with the outcome', async () => {
+    for (const [name, outcome] of [
+      ['basic', 'ok'],
+      ['window-10', 'deviation'],
+      ['unique-without-aggregation', 'refused'],
+    ] as const) {
+      const response = await post('/validate', await example(name));
+      assert.equal(response.statusCode, 200);
+      assert.equal(response.json().outcome, outcome);
+    }
+    const invalid = await post('/validate', { semgraph: 'movingWindowAverage' });
+    assert.equal(invalid.statusCode, 200);
+    assert.equal(invalid.json().outcome, 'invalid');
+  });
+
+  it('answers broken requests in the same issue format', async () => {
+    const json = await app.inject({ method: 'POST', url: '/render', payload: '{"semgraph":', headers: { 'content-type': 'application/json' } });
+    assert.equal(json.statusCode, 400);
+    assert.equal(json.json().issues[0].code, 'badRequest');
+
+    const text = await app.inject({ method: 'POST', url: '/render', payload: 'hello', headers: { 'content-type': 'text/plain' } });
+    assert.equal(text.statusCode, 415);
+    assert.equal(text.json().issues[0].code, 'unsupportedMediaType');
+
+    const large = await app.inject({
+      method: 'POST',
+      url: '/render',
+      payload: JSON.stringify({ semgraph: 'movingWindowAverage', padding: 'x'.repeat(1_100_000) }),
+      headers: { 'content-type': 'application/json' },
+    });
+    assert.equal(large.statusCode, 413);
+    assert.equal(large.json().issues[0].code, 'payloadTooLarge');
+
+    const missing = await app.inject('/nothing');
+    assert.equal(missing.statusCode, 404);
+    assert.equal(missing.json().issues[0].code, 'notFound');
+  });
+
+  it('GET /semgraphs/{id}/examples/{name} renders an example for the browser', async () => {
+    const response = await app.inject('/semgraphs/movingWindowAverage/examples/missing-days');
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['content-type'], 'image/svg+xml; charset=utf-8');
+    assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/../../package')).statusCode, 404);
+  });
+});
