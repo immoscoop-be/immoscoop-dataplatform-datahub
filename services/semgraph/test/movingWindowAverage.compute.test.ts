@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { formatDay } from '../src/core/days.ts';
-import { niceTicks, relativeTicks } from '../semgraphs/movingWindowAverage/chart.ts';
+import { formFor, niceTicks, relativeTicks } from '../semgraphs/movingWindowAverage/chart.ts';
 import { compute, sampleStandardDeviation } from '../semgraphs/movingWindowAverage/compute.ts';
 import type { MovingWindowAverageRequest } from '../semgraphs/movingWindowAverage/types.ts';
 import { NOW, series } from './helpers.ts';
@@ -92,6 +92,19 @@ describe('movingWindowAverage axes', () => {
 
   it('always shows at least two ticks', () => {
     assert.deepEqual(relativeTicks(7, 7), [-6, 0]);
+  });
+
+  it('thins out the time axis to at most eight labels, in multiples of the window', () => {
+    assert.deepEqual(relativeTicks(182, 7), [-168, -140, -112, -84, -56, -28, 0]);
+    assert.deepEqual(relativeTicks(364, 7), [-273, -182, -91, 0]);
+    assert.ok(relativeTicks(728, 7).length <= 8);
+  });
+
+  it('draws a dot per day while there is room, and a line with a band beyond that', () => {
+    assert.equal(formFor(28), 'dots');
+    assert.equal(formFor(56), 'dots');
+    assert.equal(formFor(91), 'line');
+    assert.equal(formFor(728), 'line');
   });
 
   it('chooses round value ticks from zero', () => {

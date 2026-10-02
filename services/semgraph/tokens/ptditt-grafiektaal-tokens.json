@@ -31,7 +31,9 @@
     "axis": 1,
     "baseline": 1.5,
     "spread": 4,
-    "missing": 1
+    "line": 1.5,
+    "missing": 1,
+    "guide": 1
   },
   "mark": {
     "meanSize": 36

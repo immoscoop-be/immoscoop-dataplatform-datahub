@@ -12,7 +12,7 @@ async function render(request: unknown) {
 const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|date|types|attributes)\.[a-zA-Z]+/;
 
 describe('render', () => {
-  for (const name of ['basic', 'missing-days', 'window-10']) {
+  for (const name of ['basic', 'missing-days', 'window-10', 'long-horizon']) {
     it(`matches the golden SVG for the example ${name}`, async () => {
       const result = await render(await example(name));
       assert.deepEqual(result.warnings, []);
@@ -47,6 +47,33 @@ describe('render', () => {
     assert.deepEqual(result.deviations, ['windowNotMultipleOf7']);
     assert.match(result.svg!, /Buiten de grafiektaal: het venster van 10 dagen is geen veelvoud van 7\./);
     assert.doesNotMatch(result.svg!, /grafiektaal v0/);
+  });
+
+  it('gives every day a hover label with its value and window, without script', async () => {
+    const { svg } = await render(await example('basic'));
+    const titles = [...svg!.matchAll(/<g><rect [^>]*fill="transparent"\/><line [^>]*\/><title>([^<]*)<\/title><\/g>/g)].map((match) => match[1]);
+    assert.equal(titles.length, 28);
+    // Same numbers as BigQuery for 23 September: 43.714286 ± 12.16161.
+    assert.equal(titles[20], '23 sep (−7d) · 43,7 ± 12,2 · venster 17–23 sep');
+    assert.equal(titles[27], '30 sep (vandaag) · 45,9 ± 11,3 · venster 24–30 sep');
+    assert.doesNotMatch(svg!, /<script/);
+  });
+
+  it('says on hover why a day has no value', async () => {
+    const { svg } = await render(await example('missing-days'));
+    assert.match(svg!, /<title>17 Sep \(−13d\) · no data: 15 Sep is missing<\/title>/);
+  });
+
+  it('draws a long horizon as a line with a band, and thins out the time axis', async () => {
+    const { svg } = await render(await example('long-horizon'));
+    // No rule per day and no dot per day, but labels every 28 days.
+    assert.doesNotMatch(svg!, /mark-rule role-mark/);
+    assert.match(svg!, /mark-area role-mark/);
+    assert.match(svg!, /mark-line role-mark/);
+    for (const label of ['−168d', '−140d', '−112d', '−84d', '−56d', '−28d']) assert.match(svg!, new RegExp(`>${label}<`));
+    assert.doesNotMatch(svg!, />−7d</);
+    // The gap of 14-16 July stays visible: the line is not drawn across it.
+    assert.match(svg!, /<title>16 jul \(−76d\) · geen data: 3 dagen ontbreken, de eerste op 14 jul<\/title>/);
   });
 
   it('draws nothing for a refusal', async () => {

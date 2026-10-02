@@ -46,6 +46,19 @@ export function localizeDay(t: Translator, day: number, style: 'short' | 'long')
   });
 }
 
+/** A range of days, e.g. "17–23 sep", or "28 aug–3 sep" across months. */
+export function localizeRange(t: Translator, from: number, to: number): string {
+  const [start, end] = [new Date(from * MS_PER_DAY), new Date(to * MS_PER_DAY)];
+  if (start.getUTCMonth() === end.getUTCMonth() && start.getUTCFullYear() === end.getUTCFullYear()) {
+    return t('date.rangeSameMonth', {
+      from: start.getUTCDate(),
+      to: end.getUTCDate(),
+      month: t(`date.month.${end.getUTCMonth() + 1}`),
+    });
+  }
+  return t('date.range', { from: localizeDay(t, from, 'short'), to: localizeDay(t, to, 'short') });
+}
+
 /** Input checks shared by every semgraph with daily values: existing days, one value per day. */
 export function checkDailySeries(data: readonly { day: string }[], pointer = '/data'): IssueSpec[] {
   const issues: IssueSpec[] = [];

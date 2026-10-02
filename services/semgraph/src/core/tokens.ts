@@ -7,7 +7,7 @@ export interface Tokens {
   color: Record<string, string>;
   font: { title: string; body: string };
   size: { title: number; readingCue: number; value: number; detail: number; axisLabel: number; footer: number };
-  stroke: { axis: number; baseline: number; spread: number; missing: number };
+  stroke: { axis: number; baseline: number; spread: number; line: number; missing: number; guide: number };
   mark: { meanSize: number };
 }
 

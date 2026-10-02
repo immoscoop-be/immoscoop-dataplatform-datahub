@@ -19,10 +19,11 @@ export function compute(request: MovingWindowAverageRequest, { now }: { now: Dat
   const ignoredAfterReference = [...values.keys()].filter((day) => day > reference).length;
 
   const rangeStart = reference - (horizon - 1) - (window - 1);
-  let valuesInRange = 0;
+  const absentDays: number[] = [];
   for (let day = rangeStart; day <= reference; day++) {
-    if (typeof values.get(day) === 'number') valuesInRange++;
+    if (typeof values.get(day) !== 'number') absentDays.push(day);
   }
+  const valuesInRange = horizon + window - 1 - absentDays.length;
 
   const points: WindowPoint[] = [];
   const missing: number[] = [];
@@ -48,6 +49,7 @@ export function compute(request: MovingWindowAverageRequest, { now }: { now: Dat
     valuesInRange,
     points,
     missing,
+    absentDays,
   };
 }
 

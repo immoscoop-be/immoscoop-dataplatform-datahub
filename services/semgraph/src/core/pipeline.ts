@@ -84,7 +84,7 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
     title: drawing.title,
     readingCue: drawing.readingCue,
     description: drawing.description,
-    plot: { svg: plot.svg, height: drawing.height },
+    plot: { svg: plot.svg, height: drawing.height, area: drawing.plotArea, hover: drawing.hover },
     footer: footer(t, request.context ?? {}, drawing, loaded, deviations, registry.tokens.languageVersion),
     tokens: registry.tokens,
     data: {

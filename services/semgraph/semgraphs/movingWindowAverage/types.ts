@@ -44,4 +44,6 @@ export interface MovingWindowAverageComputed {
   points: WindowPoint[];
   /** Relative days without a complete window: drawn as missing, never as zero. */
   missing: number[];
+  /** Days between rangeStart and the reference day without a value, in order. */
+  absentDays: number[];
 }

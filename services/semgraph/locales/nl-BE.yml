@@ -34,10 +34,17 @@ axis:
 
 chart:
   noData: geen data
+  hover:
+    point: "{day} · {value} ± {sd} · venster {range}"
+    pointNoSpread: "{day} · {value} · venster {range}"
+    missingOne: "{day} · geen data: {absent} ontbreekt"
+    missingMany: "{day} · geen data: {count} dagen ontbreken, de eerste op {absent}"
 
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  range: "{from}–{to}"
+  rangeSameMonth: "{from}–{to} {month}"
   month:
     "1": jan
     "2": feb

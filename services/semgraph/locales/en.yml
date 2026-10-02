@@ -34,10 +34,17 @@ axis:
 
 chart:
   noData: no data
+  hover:
+    point: "{day} · {value} ± {sd} · window {range}"
+    pointNoSpread: "{day} · {value} · window {range}"
+    missingOne: "{day} · no data: {absent} is missing"
+    missingMany: "{day} · no data: {count} days are missing, the first on {absent}"
 
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  range: "{from}–{to}"
+  rangeSameMonth: "{from}–{to} {month}"
   month:
     "1": Jan
     "2": Feb

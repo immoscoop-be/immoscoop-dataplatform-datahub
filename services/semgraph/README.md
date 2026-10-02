@@ -146,6 +146,16 @@ What the service does:
    a value axis from zero with a darker, thicker baseline.
 5. The footer: domain › dataset · owner; reliability · as-of date · definition; "How do I read this chart?".
    Missing context is printed as unknown: absence is never polished away.
+6. Hover, without script: every day has an invisible area with a native SVG `<title>` and a grey dotted guide line
+   (a guide, not data) that appears on hover. The label says what the day shows, e.g.
+   `23 sep (−7d) · 43,7 ± 12,2 · venster 17–23 sep`, or why it has no value:
+   `17 Sep (−13d) · no data: 15 Sep is missing`. This works when the SVG is opened directly or inlined in a page,
+   not inside `<img>`, Slack or e-mail; richer interaction belongs to the interactive page and the widget.
+7. Many values: while there are at least 8 pixels per day (a horizon up to 65 days), each day is a dot over a
+   bar. Beyond that the dots would overlap, so the mean becomes a line and the spread a band around it, in the same
+   colours (the learning material: spread "as a band around a line or as a line around a point"). Lines and bands
+   never bridge a gap, and a lone day between two gaps keeps its dot. The time axis keeps at most eight labels, in
+   multiples of the window (7, 14, 28, 91, … days). See `examples/long-horizon.json` (182 days).
 
 ## How it is built
 
@@ -185,6 +195,7 @@ the pages Anatomy and Line charts, and with the team:
 4. Conformance check 3 sharpened to "disjoint".
 5. The form of reading cue, footer and version label ("chart language v0"), still open in Figma.
 6. All token values except focus, text, text/muted, surface and badge, which come from Figma.
+7. The switch from dots to a line with a band at 8 pixels per day, and the dotted hover guide.
 
 ## Notes for consumers
 

@@ -1,3 +1,4 @@
+import type { HoverTarget } from '../semgraph.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
 
@@ -25,7 +26,13 @@ export interface TemplateInput {
   title: string;
   readingCue: string;
   description: string;
-  plot: { svg: string; height: number };
+  plot: {
+    svg: string;
+    height: number;
+    /** Where the plot area sits inside the plot SVG; hover targets are placed over it. */
+    area: { x: number; y: number; width: number; height: number };
+    hover: HoverTarget[];
+  };
   footer: Footer;
   tokens: Tokens;
   /** data-* attributes on the root element, e.g. the language and token versions. */
@@ -75,6 +82,7 @@ export function composeSvg(input: TemplateInput): string {
 
   y += 8;
   parts.push(input.plot.svg.replace(/^<svg /, `<svg x="0" y="${round(y)}" `));
+  parts.push(...hoverLayer(input, y));
   y += input.plot.height + 10;
 
   parts.push(
@@ -107,6 +115,32 @@ export function composeSvg(input: TemplateInput): string {
     ...parts,
     '</svg>',
   ].join('\n');
+}
+
+/**
+ * Hover without script: per day an invisible area with a native <title>, and a grey dotted guide line
+ * (a guide, not data) that appears on hover. Works when the SVG is opened or inlined, not inside <img>.
+ */
+function hoverLayer(input: TemplateInput, plotTop: number): string[] {
+  const { area, hover } = input.plot;
+  if (hover.length === 0) return [];
+  const guide = color(input.tokens, 'context');
+  const items = hover.map((target) => {
+    const center = round(target.x + target.width / 2);
+    return [
+      '<g>',
+      `<rect x="${round(target.x)}" y="0" width="${round(target.width)}" height="${area.height}" fill="transparent"/>`,
+      `<line x1="${center}" x2="${center}" y1="0" y2="${area.height}" stroke="${guide}" stroke-width="${input.tokens.stroke.guide}" stroke-dasharray="1 3" stroke-linecap="round"/>`,
+      `<title>${escapeXml(target.label)}</title>`,
+      '</g>',
+    ].join('');
+  });
+  return [
+    '<style>.semgraph-hover line{opacity:0;pointer-events:none}.semgraph-hover g:hover line{opacity:1}</style>',
+    `<g class="semgraph-hover" transform="translate(${round(area.x)},${round(plotTop + area.y)})">`,
+    ...items,
+    '</g>',
+  ];
 }
 
 interface TextStyle {
