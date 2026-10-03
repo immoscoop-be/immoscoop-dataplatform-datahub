@@ -27,6 +27,7 @@ Statussen:
 - **geïmplementeerd**: gebouwd en met tests.
 - **gedeeltelijk**: een deel is gebouwd; wat ontbreekt staat in het bestand.
 - **voorbereid**: de regel staat in de code, maar nog geen semgraph gebruikt ze.
+- **aanvaard, nog niet nodig**: beslist, maar er is nog geen code die het nodig heeft.
 - **open**: eerst scherp maken (zie de open punten hieronder).
 
 Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
@@ -34,7 +35,7 @@ Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
 
 | Nr | Requirement | Beslist | Status | Commits |
 | --- | --- | --- | --- | --- |
-| [REQ-000](REQ-000.md) | Basis: de regels in Figma vóór REQ-001 | 2026-10-02 | gedeeltelijk | [9a22b22](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/9a22b22), [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a), [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
+| [REQ-000](REQ-000.md) | Basis: de regels in Figma vóór REQ-001 | 2026-10-02 | gedeeltelijk | [9a22b22](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/9a22b22), [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a), [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3), [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
 | [REQ-001](REQ-001.md) | Een datumas is altijd een lijn, nooit staven | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-002](REQ-002.md) | Staven enkel voor categorieën, nooit op een datumas | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | REQ-003 | `periodComparison`: twee lijnen op één tijdas | 2026-10-02 | open | – |
@@ -51,64 +52,60 @@ Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
 | [REQ-014](REQ-014.md) | Klassen met overerving, geen codeduplicatie | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
 | [REQ-015](REQ-015.md) | De waardeas mag niet van nul beginnen, maar nooit stil | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
 | [REQ-016](REQ-016.md) | Hover in de statische SVG, zonder script | 2026-10-02 (opdracht) | geïmplementeerd | [ca4e93c](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/ca4e93c) |
+| [REQ-017](REQ-017.md) | Met een band staat de vorm enkel op het laatste punt | 2026-10-03 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
+| [REQ-018](REQ-018.md) | Een rollend venster toont blokken die elkaar niet overlappen; de tijdas zoals in Figma | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
+| [REQ-019](REQ-019.md) | Het laatste venster heet "nu" | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
+| [REQ-020](REQ-020.md) | Een venster van één dag: de dagwaarden | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
+| [REQ-021](REQ-021.md) | Zonder spreiding: toegestaan, met een rode melding | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
+| [REQ-022](REQ-022.md) | Waardelabels: off, last, lastAndPrevious of all | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
+| REQ-023 | `periodComparison`: de vergelijking is altijd met wat niet op het scherm past, de verleden periode | 2026-10-03 | open | – |
+| REQ-024 | `periodComparison`: beide lijnen tonen dezelfde waarde: de som, het gemiddelde of de mediaan | 2026-10-03 | open | – |
+| REQ-025 | Technische id's in de SVG zijn toegestaan (bv. een patroon voor arcering) | 2026-10-03 | aanvaard, nog niet nodig | – |
 
 REQ-010 tot REQ-016 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
 afspraak en noemen daarom nog geen nummer.
 
+REQ-017 tot REQ-025 zijn de antwoorden van 2026-10-03 op de open punten van 2026-10-02.
+
 ## Open punten, eerst te bespreken
 
-Deze punten zijn niet geïmplementeerd, omdat requirements elkaar tegenspreken of meer dan één uitvoering toelaten.
-Bij elk punt staat een voorstel.
+Deze punten zijn niet geïmplementeerd, omdat ze meer dan één uitvoering toelaten. Bij elk punt staat een voorstel.
 
-1. **Rollend venster: één punt per dag of één punt per venster?**
-   - In Figma (REQ-000, Time series) staat: "Every point is one block of time, not a moment" en "windows of 1, 7,
-     14 or 91 days, labelled in steps of the window and ending at "now"". De x-as heeft daar 7 periodes,
-     bijvoorbeeld −42d … now voor een venster van 7 dagen. Dat zijn dus vensters die elkaar niet overlappen.
-   - Het uitgewerkte voorbeeld in de analyse rekent één punt per dag, voor het venster dat op die dag eindigt
-     (horizon 28, venster 7: 28 punten). Zo is het nu gebouwd.
-   - De keuze verandert enkel `MovingWindowChart.slots()`.
-   - Voorstel: Figma volgen, want REQ-000 is de recentste bron. Eén punt per dag kan dan een expliciete variant
-     blijven, als de dagelijkse resolutie gewenst is.
-2. **Het label van het laatste punt op een rollende as.** Figma zegt "now". De analyse zegt "vandaag", of de datum
-   als de laatste volledige dag ouder is dan gisteren; zo is het gebouwd. Voorstel: "nu" als de laatste volledige
-   dag gisteren is, anders de datum.
-3. **Welke vensters?**
-   - Figma noemt vensters van 1, 7, 14 of 91 dagen, en tegelijk "altijd veelvouden van 7". Een venster van 1 is
-     geen veelvoud van 7.
-   - Het contract laat nu 2 tot 364 dagen toe. Wat geen veelvoud van 7 is, wordt getekend als getolereerde
-     afwijking.
-   - Voorstel: 1 toelaten als "dagwaarden" en elk veelvoud van 7 conform houden.
-4. **Een gemiddelde of mediaan zonder spreiding.**
-   - Figma (REQ-000) zegt: "A median or mean never appears without its spread."
-   - Volgens de analyse is `spread: none` een getolereerde afwijking: getekend, met een melding in de voetregel.
-     Zo is het gebouwd.
-   - Voorstel: Figma volgen en `spread: none` weigeren (422).
-5. **Waardelabels.**
-   - Figma (REQ-000) zegt: "Values: Off by default; Last for rolling; Last + previous for calendar (previous =
-     last final value, bold; current in grey); All only with one series and few points."
-   - Gebouwd: altijd de laatste waarde, vet, met de spreiding als detail.
-   - Voorstel: een contractveld `values` met `off`, `last`, `lastAndPrevious` of `all`. De standaard is `last` voor
-     een rollend venster en `lastAndPrevious` voor kalenderperiodes. "Off by default" lees ik als de standaard
-     van het Figma-component.
-6. **`periodComparison` (REQ-003, REQ-004, REQ-005).** De tekening is duidelijk, in Figma onder
-   [Period comparison](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6?node-id=184-423): twee lijnen, enkel
-   een achterstand gearceerd, enkel de focusreeks met een band. Het contract is nog niet scherp:
-   - **Vergelijken met wat?** REQ-003 zegt "een vorige periode". Figma toont "last year" (364 dagen terug, zodat
-     de weekdagen samenvallen). Voorstel: `compareWith: previousYear | previousPeriod`. Bij maanden en kwartalen
-     betekent vorig jaar dezelfde maand of hetzelfde kwartaal, niet 364 dagen terug.
-   - **Welke reeksen?** Figma toont drie varianten: een hoeveelheid (som per periode, vierkant, REQ-007), een
-     gemiddelde per dag (ruit met band) en een mediaan per dag (bol met band). Voorstel: drie semgraphs op de
-     bestaande klassen, of één semgraph met een veld voor de statistiek. Een som van unieke aantallen is nooit
-     toegelaten.
-   - **Arcering (REQ-004).** Een SVG-patroon heeft een `id` nodig, en dat botst met "geen id's" uit REQ-016
-     (meerdere grafieken op één pagina). Voorstel: de arceerlijnen zelf berekenen en tekenen, zonder patroon en
-     zonder id.
-   - **Labels aan het einde.** Figma toont de laatste waarde van de focusreeks ("427", "61 /day") en "last year" bij
-     de vergelijkingslijn. Voorstel: zo overnemen, met "vorig jaar" of "vorige maand" afhankelijk van
-     `compareWith`.
-7. **Nog te bouwen uit REQ-000, zonder discussie.** Een langere, donkerdere tick bij een jaarwissel, en het label
-   "lopend"/"current" onder het holle punt in plaats van naast de waarde. Zie [REQ-000](REQ-000.md).
+1. **`periodComparison`: wat is "de verleden periode"?** Beslist op 2026-10-03:
+   - De vergelijking is altijd met wat niet op het scherm past: de verleden periode, een jaar of een maand of wat
+     dan ook (REQ-023).
+   - Beide lijnen tonen dezelfde waarde: de som, het gemiddelde of de mediaan (REQ-024).
+   - Technische id's mogen (REQ-025).
+
+   Nog open is hoe ver de vergelijkingslijn teruggaat. Er zijn twee lezingen:
+   - **A, de periode net vóór het scherm, even lang als wat getoond wordt.**
+     - 12 weken (W27–W38) → de 12 weken ervoor (W15–W26), met het label "vorige 12 weken".
+     - Een jaar per maand → het jaar ervoor, met het label "vorig jaar".
+     - 7 vensters van 7 dagen → de 49 dagen ervoor.
+   - **B, een gekozen periode (vorig jaar, vorige maand) die minstens zo lang is als het scherm,** zodat ze er niet
+     op past. Zo staat het in het Figma-voorbeeld "Leads per week, this year vs last year": 12 weken tegenover
+     dezelfde weken vorig jaar (364 dagen terug).
+
+   Voorstel: A, omdat "altijd" en "wat niet op het scherm past" daar het best bij passen. Het Figma-voorbeeld
+   toont dan een heel jaar in plaats van 12 weken.
+
+   Verder stel ik voor:
+   - **Labels:** de laatste waarde van de focusreeks volgens `values` (REQ-022), en aan het einde van de grijze
+     lijn "vorig jaar" of "vorige 12 weken".
+   - **Som:** de som per periode is een hoeveelheid en wordt een vierkant (REQ-007). Een som van unieke aantallen
+     wordt geweigerd.
+2. **Rode melding ook voor de andere afwijkingen?**
+   - De rode melding geldt nu enkel voor een gemiddelde of mediaan zonder spreiding (REQ-021).
+   - Een venster dat geen 1 en geen veelvoud van 7 is, blijft een afwijking met enkel de melding in de voetregel.
+   - Voorstel: elke getolereerde afwijking krijgt een rode melding met haar eigen tekst, om dezelfde reden: slecht
+     gedrag ondersteunen maar ontmoedigen.
+3. **Dagwaarden (REQ-020): welke vorm, en vanaf hoeveel dagen?**
+   - **Vorm.** Een dagwaarde in `movingWindowAverage` is nu een ruit, in `movingWindowMedian` een bol. Een
+     dagwaarde van een telling is eigenlijk een hoeveelheid, en dus een vierkant (REQ-007). Voorstel: zo laten, en
+     het vierkant gebruiken zodra er een semgraph voor hoeveelheden is.
+   - **Minimum.** `minimumPoints` (28 waarden) blijft gelden, dus dagwaarden vragen minstens 28 dagen, terwijl de
+     Figma-as "Rolling 1d" er 7 toont. Voorstel: 28 houden.
 
 ## Sjabloon voor een requirement
 
