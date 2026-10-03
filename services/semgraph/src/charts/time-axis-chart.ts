@@ -614,7 +614,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         {
           // Missing data is an outlined area, never a zero and never interpolated.
           data: { name: 'missing' },
-          mark: { type: 'rect', fill: null, stroke: color(tokens, 'context'), strokeWidth: tokens.stroke.missing },
+          mark: { type: 'rect', fill: null, stroke: color(tokens, 'context/dark'), strokeWidth: tokens.stroke.missing },
           encoding: { x: { ...x, field: 'from' }, x2: { field: 'to' } },
         },
         {

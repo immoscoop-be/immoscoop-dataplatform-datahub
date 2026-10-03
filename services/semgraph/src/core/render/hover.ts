@@ -82,7 +82,7 @@ export class HoverLayer {
 
   /** Grey dotted guides: vertical through the column, horizontal from the y axis to the point and its spread. */
   protected guides(spec: HoverSpec, centre: number): string[] {
-    const stroke = `stroke="${color(this.tokens, 'context')}" stroke-width="${this.tokens.stroke.guide}" stroke-dasharray="1 3" stroke-linecap="round"`;
+    const stroke = `stroke="${color(this.tokens, 'context/dark')}" stroke-width="${this.tokens.stroke.guide}" stroke-dasharray="1 3" stroke-linecap="round"`;
     const lines = [`<line x1="${round(centre)}" x2="${round(centre)}" y1="0" y2="${this.area.height}" ${stroke}/>`];
     for (const value of this.levels(spec)) {
       const y = round(this.scales.y(value));

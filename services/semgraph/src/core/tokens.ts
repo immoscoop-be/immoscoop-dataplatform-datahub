@@ -5,8 +5,17 @@ export interface Tokens {
   version: string;
   languageVersion: string;
   color: Record<string, string>;
-  font: { title: string; body: string };
-  size: { title: number; readingCue: number; value: number; detail: number; axisLabel: number; footer: number };
+  font: { title: string; body: string; mono: string };
+  size: {
+    title: number;
+    readingCue: number;
+    value: number;
+    detail: number;
+    axisLabel: number;
+    footer: number;
+    panelTitle: number;
+    panelBody: number;
+  };
   stroke: { axis: number; baseline: number; spread: number; spreadWide: number; line: number; missing: number; guide: number };
   /** Width in pixels of a point, per shape (see src/charts/signatures.ts). */
   mark: { square: number; diamond: number; circle: number };
@@ -36,7 +45,7 @@ export function vegaLiteConfig(tokens: Tokens): Config {
       domainWidth: tokens.stroke.axis,
       tickColor: color(tokens, 'axis'),
       tickWidth: tokens.stroke.axis,
-      gridColor: color(tokens, 'grid'),
+      gridColor: color(tokens, 'context/light'),
       gridWidth: tokens.stroke.axis,
     },
     // The baseline, the floor of the value axis, is darker and thicker than the other axis lines.

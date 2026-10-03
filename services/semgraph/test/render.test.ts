@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { runPipeline } from '../src/core/pipeline.ts';
 import { renderVegaLite } from '../src/core/render/vega.ts';
+import { color } from '../src/core/tokens.ts';
 import { assertGolden, example, NOW, testRegistry } from './helpers.ts';
 
 async function render(request: unknown) {
@@ -39,7 +40,7 @@ describe('render', async () => {
     assert.match(svg!, /definitie onbekend/);
     assert.match(svg!, /<a href="https:\/\/immoscoop\.atlassian\.net\/wiki\/spaces\/DATA\/pages\/1354629146">/);
     assert.match(svg!, />grafiektaal v0</);
-    assert.match(svg!, /data-tokens-version="0\.0\.0-provisional"/);
+    assert.ok(svg!.includes(`data-tokens-version="${(await testRegistry()).tokens.version}"`));
     // The reference day is yesterday, so the last window reads "nu" (REQ-030).
     assert.match(svg!, />nu</);
   });
@@ -97,8 +98,9 @@ describe('render', async () => {
     const { svg: median } = await render(await example('basic', 'movingWindowMedian'));
     const { svg: mean } = await render(await example('basic'));
     assert.match(median!, /voortschrijdende mediaan 7d · P25–P75/);
-    assert.match(median!, /stroke="#f2afd2" stroke-width="9" stroke-linecap="round"/);
-    assert.match(mean!, /stroke="#f2afd2" stroke-width="4" stroke-linecap="round"/);
+    const light = color((await testRegistry()).tokens, 'focus/light');
+    assert.ok(median!.includes(`stroke="${light}" stroke-width="9" stroke-linecap="round"`));
+    assert.ok(mean!.includes(`stroke="${light}" stroke-width="4" stroke-linecap="round"`));
   });
 
   it('a zoomed value axis gets a zigzag at the start of the baseline and a bold first value', async () => {
@@ -106,7 +108,7 @@ describe('render', async () => {
     const { svg: fromZero } = await render(await example('basic'));
     assert.match(zoomed!, /font-weight="bold"[^>]*>20</);
     assert.doesNotMatch(zoomed!, />0</);
-    const zigzag = /class="mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#3c444e"/;
+    const zigzag = new RegExp(`class="mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="${color((await testRegistry()).tokens, 'baseline')}"`);
     assert.match(zoomed!, zigzag);
     assert.doesNotMatch(fromZero!, /font-weight="bold"[^>]*>0</);
     assert.doesNotMatch(fromZero!, zigzag);

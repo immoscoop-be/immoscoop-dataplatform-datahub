@@ -21,7 +21,7 @@ describe('API', () => {
       status: 'ok',
       version: '0.1.0',
       languageVersion: 'v0',
-      tokensVersion: '0.0.0-provisional',
+      tokensVersion: (await testRegistry()).tokens.version,
     });
   });
 
@@ -64,7 +64,7 @@ describe('API', () => {
     assert.equal(response.headers['x-content-type-options'], 'nosniff');
     assert.match(String(response.headers['content-security-policy']), /default-src 'none'/);
     assert.equal(response.headers['semgraph-language-version'], 'v0');
-    assert.equal(response.headers['semgraph-tokens-version'], '0.0.0-provisional');
+    assert.equal(response.headers['semgraph-tokens-version'], (await testRegistry()).tokens.version);
     assert.equal(response.headers['semgraph-deviations'], undefined);
     assert.match(response.body, /^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg"/);
   });

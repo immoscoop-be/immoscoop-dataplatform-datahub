@@ -82,7 +82,7 @@ export function composeSvg(input: TemplateInput): string {
         size: tokens.size.readingCue,
         weight: 700,
         italic: true,
-        fill: muted,
+        fill: color(tokens, 'reading-cue/text'),
       }),
     );
   }
@@ -94,8 +94,8 @@ export function composeSvg(input: TemplateInput): string {
     const size = tokens.size.readingCue;
     const lines = wrap(alert, size, inner - ALERT_INDENT - 2 * ALERT_PADDING, 4);
     const height = 2 * ALERT_PADDING + lines.length * size * LINE_HEIGHT - size * (LINE_HEIGHT - 1);
-    parts.push(`<rect x="${PADDING_X}" y="${round(y)}" width="${inner}" height="${round(height)}" rx="3" fill="${color(tokens, 'alert')}"/>`);
-    parts.push(alertIcon(y + ALERT_PADDING, size, color(tokens, 'alert')));
+    parts.push(`<rect x="${PADDING_X}" y="${round(y)}" width="${inner}" height="${round(height)}" rx="3" fill="${color(tokens, 'warning')}"/>`);
+    parts.push(alertIcon(y + ALERT_PADDING, size, color(tokens, 'warning')));
     let lineY = y + ALERT_PADDING;
     for (const line of lines) {
       lineY += size;
@@ -113,7 +113,7 @@ export function composeSvg(input: TemplateInput): string {
   y += input.plot.height + 10;
 
   parts.push(
-    `<line x1="${PADDING_X}" x2="${width - PADDING_X}" y1="${round(y)}" y2="${round(y)}" stroke="${color(tokens, 'grid')}" stroke-width="1"/>`,
+    `<line x1="${PADDING_X}" x2="${width - PADDING_X}" y1="${round(y)}" y2="${round(y)}" stroke="${color(tokens, 'context/light')}" stroke-width="1"/>`,
   );
   y += 6;
   const footerSize = tokens.size.footer;

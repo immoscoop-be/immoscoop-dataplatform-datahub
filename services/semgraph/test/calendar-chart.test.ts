@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import type { CalendarRequest } from '../src/charts/calendar-chart.ts';
 import { formatDay } from '../src/core/days.ts';
+import { color } from '../src/core/tokens.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
 import { CalendarAverage } from '../semgraphs/calendarAverage/index.ts';
 import { CalendarMedian } from '../semgraphs/calendarMedian/index.ts';
@@ -94,7 +95,9 @@ describe('calendar periods chart', () => {
     const { svg: weekly } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
     // The year on a second line, on the first label and at a year change (REQ-000).
     const twoLines = (label: string, year: string) => new RegExp(`<tspan>${label}</tspan><tspan x="0" dy="12">${year}</tspan>`);
-    const yearTicks = (svg: string) => [...svg.matchAll(/<line transform="translate\([-\d.]+,196\)" x2="0" y2="12" stroke="#3c444e"/g)].length;
+    const baseline = color((await testRegistry()).tokens, 'baseline');
+    const yearTicks = (svg: string) =>
+      [...svg.matchAll(new RegExp(`<line transform="translate\\([-\\d.]+,196\\)" x2="0" y2="12" stroke="${baseline}"`, 'g'))].length;
     assert.match(weekly!, twoLines('W29', '2026'));
     assert.match(weekly!, />W40</);
     assert.equal(yearTicks(weekly!), 0);

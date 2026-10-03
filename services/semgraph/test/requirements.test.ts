@@ -184,7 +184,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-032, REQ-038 and REQ-040: every tolerated deviation is a red block between the title and the chart', () => {
-    const alert = color(tokens, 'alert');
+    const alert = color(tokens, 'warning');
     for (const drawn of examples) {
       const deviates = drawn.deviations.length > 0;
       assert.equal(drawn.svg.includes(`fill="${alert}"`), deviates, drawn.name);

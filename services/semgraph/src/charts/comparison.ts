@@ -60,7 +60,7 @@ export function hatchPattern(id: string, tokens: Tokens): string {
   return [
     `<pattern id="${id}" width="${HATCH_SPACING}" height="${HATCH_SPACING}" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">`,
     `<rect width="${HATCH_SPACING}" height="${HATCH_SPACING}" fill="${color(tokens, 'surface')}"/>`,
-    `<line x1="0" y1="0" x2="0" y2="${HATCH_SPACING}" stroke="${color(tokens, 'hatch')}" stroke-width="1.5"/>`,
+    `<line x1="0" y1="0" x2="0" y2="${HATCH_SPACING}" stroke="${color(tokens, 'loss')}" stroke-width="1.5"/>`,
     '</pattern>',
   ].join('');
 }
