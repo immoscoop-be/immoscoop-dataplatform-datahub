@@ -1,4 +1,3 @@
-import type { IssueSpec } from './issues.ts';
 import type { Translator } from './i18n.ts';
 
 /**
@@ -61,21 +60,4 @@ export function localizeRange(t: Translator, from: number, to: number): string {
     });
   }
   return t('date.range', { from: localizeDay(t, from, 'short'), to: localizeDay(t, to, 'short') });
-}
-
-/** Input checks shared by every semgraph with daily values: existing days, one value per day. */
-export function checkDailySeries(data: readonly { day: string }[], pointer = '/data'): IssueSpec[] {
-  const issues: IssueSpec[] = [];
-  const seen = new Set<number>();
-  data.forEach(({ day }, index) => {
-    const parsed = parseDay(day);
-    if (parsed === undefined) {
-      issues.push({ level: 'inputError', code: 'invalidDate', field: `${pointer}/${index}/day`, params: { value: day } });
-    } else if (seen.has(parsed)) {
-      issues.push({ level: 'inputError', code: 'duplicateDay', field: `${pointer}/${index}/day`, params: { day } });
-    } else {
-      seen.add(parsed);
-    }
-  });
-  return issues;
 }

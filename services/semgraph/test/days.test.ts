@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { checkDailySeries, currentDay, formatDay, parseDay } from '../src/core/days.ts';
+import { currentDay, formatDay, parseDay } from '../src/core/days.ts';
 
 describe('days', () => {
   it('parses only existing calendar days', () => {
@@ -23,16 +23,5 @@ describe('days', () => {
     // The clocks change on 25 October 2026; consecutive days stay one apart.
     assert.equal(parseDay('2026-10-26')! - parseDay('2026-10-25')!, 1);
     assert.equal(parseDay('2026-10-25')! - parseDay('2026-10-24')!, 1);
-  });
-
-  it('reports invalid and duplicate days with their position', () => {
-    const issues = checkDailySeries([{ day: '2026-09-01' }, { day: '2026-02-30' }, { day: '2026-09-01' }]);
-    assert.deepEqual(
-      issues.map((issue) => [issue.code, issue.field]),
-      [
-        ['invalidDate', '/data/1/day'],
-        ['duplicateDay', '/data/2/day'],
-      ],
-    );
   });
 });

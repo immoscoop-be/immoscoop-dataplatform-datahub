@@ -3,12 +3,12 @@ import { runs } from './scales.ts';
 
 /**
  * The state of the data in a period, as a pattern behind its whole column (REQ-049): a checkerboard
- * for empty (REQ-051) and fine vertical lines for a period that is still running (REQ-052). The
- * pattern for few observations (REQ-053) waits for the question what n is.
+ * for empty (REQ-051), fine vertical lines for a period that is still running (REQ-052) and sparse
+ * dots for few observations (REQ-053).
  */
-export type DataState = 'empty' | 'running';
+export type DataState = 'empty' | 'running' | 'few';
 
-export const DATA_STATES: readonly DataState[] = ['empty', 'running'];
+export const DATA_STATES: readonly DataState[] = ['empty', 'running', 'few'];
 
 /** A stretch of neighbouring slots in the same state, from the left edge of the first to the right edge of the last. */
 export interface StateColumn {
@@ -26,7 +26,7 @@ export function stateColumns(states: ReadonlyMap<number, DataState>): StateColum
 
 /**
  * The tiles of Figma's Pattern masters, on the surface colour. They use the user space of the plot, so
- * they are anchored to its origin and not to the column (REQ-050): mosaic 8 px, lines 4 px.
+ * they are anchored to its origin and not to the column (REQ-050): mosaic 8 px, lines 4 px, dots 6 px.
  */
 export function statePattern(id: string, state: DataState, tokens: Tokens): string {
   const surface = color(tokens, 'surface');
@@ -40,6 +40,13 @@ export function statePattern(id: string, state: DataState, tokens: Tokens): stri
         '</pattern>',
       ].join('');
     }
+    case 'few':
+      return [
+        `<pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse">`,
+        `<rect width="6" height="6" fill="${surface}"/>`,
+        `<circle cx="3" cy="3" r="1.1" fill="${color(tokens, 'pattern/few')}"/>`,
+        '</pattern>',
+      ].join('');
     case 'running':
       return [
         `<pattern id="${id}" width="4" height="4" patternUnits="userSpaceOnUse">`,

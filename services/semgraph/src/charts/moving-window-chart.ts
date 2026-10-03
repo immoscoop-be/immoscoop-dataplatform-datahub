@@ -1,4 +1,4 @@
-import { localizeDay, localizeRange } from '../core/days.ts';
+import { localizeDay, localizeRange, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { ticksEvery } from './scales.ts';
@@ -11,14 +11,15 @@ export interface MovingWindowRequest extends TimeAxisRequest {
 
 /**
  * Rolling windows as blocks of time that do not overlap (REQ-029): every point is one window, on a
- * relative axis in steps of the window (−42d … nu). The last window ends on the last complete day,
- * so a window is always complete and never running. A window of one day shows the daily values
- * (REQ-031).
+ * relative axis in steps of the window (−42d … nu). A window is named after its last day (REQ-062)
+ * and is always complete, never running. A window of one day shows the daily values (REQ-031).
  */
 export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowRequest> {
   protected readonly periodDescription =
-    'Rolling windows of days as blocks that do not overlap, one point per window, on a relative time axis that ends at the last complete day.';
+    'Rolling windows of days as blocks that do not overlap, one row per window named after its last day, on a relative time axis.';
   protected readonly defaultValues: ValuesMode = 'last';
+  protected readonly blockField = 'end';
+  protected readonly mayRun = false;
 
   protected periodSchema() {
     return {
@@ -30,23 +31,41 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
           minimum: 1,
           maximum: 364,
         },
-        horizon: {
-          description: 'Number of windows (points) on the relative axis, the last one ending at the last complete day.',
-          type: 'integer',
-          minimum: 2,
-          maximum: 730,
-        },
       },
+      blockName: { description: 'The last day of the window. Windows follow each other without overlap: their ends lie a whole number of windows apart.', type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' },
     };
   }
 
-  /** Blocks that do not overlap: window `rel` ends `rel` windows before the last complete day. */
-  protected slots(reference: number, { window, horizon }: MovingWindowRequest): Slot[] {
-    return Array.from({ length: horizon }, (_, index) => {
-      const rel = index - (horizon - 1);
-      const last = reference + rel * window;
-      return { rel, first: last - window + 1, last, fullLast: last, running: false };
+  protected blockKey(name: string): number | undefined {
+    return parseDay(name);
+  }
+
+  protected slotKey(slot: Slot): number {
+    return slot.last;
+  }
+
+  protected invalidBlock(name: string, pointer: string): IssueSpec {
+    return { level: 'inputError', code: 'invalidDate', field: pointer, params: { value: name } };
+  }
+
+  /** Windows touch but never overlap (REQ-029): their ends lie a whole number of windows apart. */
+  protected override blockChecks(keys: { key: number; pointer: string; name: string }[], { window }: MovingWindowRequest): IssueSpec[] {
+    const first = Math.min(...keys.map(({ key }) => key));
+    const off = keys.find(({ key }) => (key - first) % window !== 0);
+    return off ? [{ level: 'inputError', code: 'windowsNotAligned', field: off.pointer, params: { block: off.name, window } }] : [];
+  }
+
+  /** Every window from the first end to the last, in steps of the window. */
+  protected slotsBetween(first: number, last: number, _asOf: number, { window }: MovingWindowRequest): Slot[] {
+    const count = (last - first) / window + 1;
+    return Array.from({ length: count }, (_, index) => {
+      const end = first + index * window;
+      return { rel: index - (count - 1), first: end - window + 1, last: end, fullLast: end, running: false };
     });
+  }
+
+  protected slotCount(first: number, last: number, { window }: MovingWindowRequest): number {
+    return Math.floor((last - first) / window) + 1;
   }
 
   protected tickStep({ window }: MovingWindowRequest, slots: number): number {
@@ -80,26 +99,26 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return window === 1 ? t('hover.centre.rolling.daily') : t(`hover.centre.rolling.${this.statistic.id}`, { window });
   }
 
-  protected periodNoun({ window }: MovingWindowRequest): IssueParam {
-    return window === 1 ? { t: 'period.day' } : { t: 'period.window', params: { window } };
+  protected blockSingular({ window }: MovingWindowRequest, t: Translator): string {
+    return window === 1 ? t('blocks.oneDay') : t('blocks.oneWindow', { window });
+  }
+
+  protected blockNoun({ window }: MovingWindowRequest): IssueParam {
+    return { t: window === 1 ? 'blocks.day' : 'blocks.window' };
   }
 
   /** The windows before the screen: as many days back as the screen shows (REQ-037). */
-  protected previousSpan(slots: Slot[], { window, horizon }: MovingWindowRequest): Slot[] {
-    const days = window * horizon;
+  protected previousSpan(slots: Slot[], { window }: MovingWindowRequest): Slot[] {
+    const days = window * slots.length;
     return slots.map((slot) => ({ ...slot, first: slot.first - days, last: slot.last - days, fullLast: slot.fullLast - days, running: false }));
   }
 
   /** "vorig jaar" for 364 days, "vorige 7 weken" for 49, "vorige 10 dagen" otherwise. */
-  protected comparisonLabel({ window, horizon }: MovingWindowRequest, t: Translator): string {
-    const days = window * horizon;
+  protected comparisonLabel({ window }: MovingWindowRequest, t: Translator, blocks: number): string {
+    const days = window * blocks;
     if (days % 364 === 0) return days === 364 ? t('comparison.year') : t('comparison.years', { n: days / 364 });
     if (days % 7 === 0) return t('comparison.weeks', { n: days / 7 });
     return t('comparison.days', { n: days });
-  }
-
-  protected noPointIssue({ window }: MovingWindowRequest): IssueSpec {
-    return { level: 'refusal', code: 'noCompleteWindow', field: '/data', params: { window } };
   }
 
   /**

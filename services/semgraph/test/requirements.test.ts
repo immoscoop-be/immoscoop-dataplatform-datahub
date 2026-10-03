@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { SHAPES } from '../src/charts/signatures.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
 import { createTranslator } from '../src/core/i18n.ts';
+import { iconShapes, readIcon } from '../src/core/icon.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
 import { color } from '../src/core/tokens.ts';
@@ -27,6 +28,8 @@ interface Drawn {
   request: Record<string, unknown>;
   computed: TimeAxisComputed;
   deviations: string[];
+  /** Red blocks for the reader that are no deviation, such as few observations (REQ-047). */
+  cautions: string[];
   drawing: Drawing;
   datasets: Record<string, Record<string, unknown>[]>;
   layers: Layer[];
@@ -52,6 +55,7 @@ async function drawnExamples(): Promise<Drawn[]> {
         request: request as Record<string, unknown>,
         computed: computed as TimeAxisComputed,
         deviations: result.deviations,
+        cautions: result.report.issues.filter((issue) => issue.level === 'caution').map((issue) => issue.code),
         drawing,
         datasets: spec.datasets,
         layers: flatten(spec.layer),
@@ -69,6 +73,8 @@ function flatten(layers: Layer[]): Layer[] {
 const markOf = (layer: Layer): Record<string, unknown> => (typeof layer.mark === 'object' ? layer.mark : { type: layer.mark });
 const markType = (layer: Layer) => markOf(layer).type;
 const pointLayer = (drawn: Drawn) => drawn.layers.find((layer) => layer.data?.name === 'points')!;
+/** The SVG without the hover details, which only show on hover or focus. */
+const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-detail".*?<\/g><\/g>/g, '');
 
 describe('requirements of the chart language', async () => {
   const examples = await drawnExamples();
@@ -131,17 +137,20 @@ describe('requirements of the chart language', async () => {
       const covered = (state: string) => new Set(columns.filter((column) => column.state === state).flatMap((column) => Array.from({ length: column.to - column.from }, (_, index) => column.from + 0.5 + index)));
       assert.deepEqual([...covered('empty')].sort(), [...empty].sort(), `${drawn.name}: empty`);
       assert.deepEqual([...covered('running')].sort(), [...running].filter((rel) => !empty.has(rel)).sort(), `${drawn.name}: running`);
+      assert.deepEqual([...covered('few')].sort(), [...drawn.computed.few].sort(), `${drawn.name}: few`);
       // Behind the data: the columns are drawn before the band, the line and the points.
       const order = drawn.layers.map((layer) => layer.data?.name);
       assert.ok(order.indexOf('columns') < order.indexOf('line'), drawn.name);
-      // REQ-051: no outline over the chart and no label in it.
-      assert.doesNotMatch(drawn.svg, />(no data|geen data)</, drawn.name);
+      // REQ-051: no outline over the chart and no label in it; only the hover names an empty period.
+      assert.doesNotMatch(withoutHover(drawn.svg), />(no data|geen data)</, drawn.name);
       // REQ-050: tiles anchored to the plot, the sizes of Figma: mosaic 8 px, lines 4 px.
       if (empty.size > 0) assert.match(drawn.svg, /<pattern id="semgraph-empty-[0-9a-f]{8}" width="8" height="8" patternUnits="userSpaceOnUse">/, drawn.name);
       if (covered('running').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-running-[0-9a-f]{8}" width="4" height="4" patternUnits="userSpaceOnUse">/, drawn.name);
+      if (covered('few').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse">/, drawn.name);
     }
     assert.ok(examples.some((drawn) => drawn.computed.missing.length > 0), 'an example with empty periods');
     assert.ok(examples.some((drawn) => drawn.computed.points.some((point) => point.running)), 'an example with a running period');
+    assert.ok(examples.some((drawn) => drawn.computed.few.length > 0), 'an example with few observations');
   });
 
   it('REQ-028: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
@@ -209,7 +218,8 @@ describe('requirements of the chart language', async () => {
   it('REQ-032, REQ-038 and REQ-040: every tolerated deviation is a red block between the title and the chart', () => {
     const alert = color(tokens, 'warning');
     for (const drawn of examples) {
-      const deviates = drawn.deviations.length > 0;
+      // Few observations is a red block too, but no deviation (REQ-047).
+      const deviates = drawn.deviations.length + drawn.cautions.length > 0;
       assert.equal(drawn.svg.includes(`fill="${alert}"`), deviates, drawn.name);
       if (deviates) {
         const alertAt = drawn.svg.indexOf(`fill="${alert}"`);
@@ -387,14 +397,14 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-035: both lines show the same value: the total, the mean or the median', () => {
-    const statistic = { sum: (v: number[]) => v.reduce((a, b) => a + b, 0), mean: (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length, median: (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)]! };
     for (const drawn of comparisons()) {
-      const data = new Map((drawn.request.data as { day: string; value: number }[]).map((row) => [Date.parse(`${row.day}T00:00:00Z`) / 86_400_000, row.value]));
-      for (const point of drawn.computed.comparison!.points) {
-        const values = Array.from({ length: point.last - point.first + 1 }, (_, index) => data.get(point.first + index)!);
-        const expected = statistic[drawn.statistic as 'sum' | 'mean' | 'median'](values);
-        if (drawn.statistic !== 'median' || values.length % 2 === 1) assert.ok(Math.abs(point.centre - expected) < 1e-9, `${drawn.name}: ${point.rel}`);
-      }
+      const statistic = drawn.request.statistic as 'sum' | 'mean' | 'median';
+      assert.equal(drawn.statistic, statistic, drawn.name);
+      // The value before the screen comes from the same block, in the field of the same statistic (REQ-058).
+      const rows = drawn.request.points as { previous?: Record<string, number | null> | null }[];
+      const byRel = new Map(drawn.computed.comparison!.points.map((point) => [point.rel, point.centre]));
+      const expected = rows.flatMap((row, index) => (typeof row.previous?.[statistic] === 'number' ? [row.previous[statistic]] : []));
+      assert.deepEqual([...byRel.values()], expected, drawn.name);
     }
   });
 
@@ -407,5 +417,125 @@ describe('requirements of the chart language', async () => {
       assert.equal(previous.at(-1)!.fullLast + 1, slots[0]!.first, `${drawn.name}: it ends where the screen begins`);
       previous.forEach((slot, index) => assert.equal(slot.rel, slots[index]!.rel));
     }
+  });
+
+  const ratios = () => examples.filter((drawn) => drawn.request.measureType === 'ratio' && drawn.statistic !== 'sum');
+  const blockRows = (drawn: Drawn) => drawn.request.points as Record<string, unknown>[];
+
+  it('REQ-058: the semgraph computes nothing over days: every point is a block as the warehouse delivered it', () => {
+    for (const drawn of examples) {
+      const rows = blockRows(drawn).filter((row) => typeof row[drawn.statistic] === 'number');
+      assert.deepEqual(drawn.computed.points.map((point) => point.centre), rows.map((row) => row[drawn.statistic]), drawn.name);
+      // The spread too: ±1 sd around the mean, or P25–P75 around the median; none for a single day (REQ-031).
+      drawn.computed.points.forEach((point, index) => {
+        const row = rows[index]!;
+        if (!point.spread) return;
+        if (drawn.statistic === 'mean') assert.deepEqual([point.spread.lo, point.spread.hi], [(row.mean as number) - (row.sd as number), (row.mean as number) + (row.sd as number)], drawn.name);
+        else assert.deepEqual([point.spread.lo, point.spread.hi], [row.p25, row.p75], drawn.name);
+      });
+    }
+  });
+
+  it('REQ-062: a rolling window is named after its last day, a calendar period by its ISO name', () => {
+    for (const drawn of examples) {
+      const field = typeof drawn.request.window === 'number' ? 'end' : 'period';
+      const pattern = field === 'end' ? /^\d{4}-\d{2}-\d{2}$/ : /^\d{4}(-W\d{2}|-\d{2}|-Q[1-4])?$/;
+      for (const row of blockRows(drawn)) assert.match(String(row[field]), pattern, drawn.name);
+    }
+  });
+
+  it('REQ-043 and REQ-062: every point of a mean or median of observations shows its n on hover; without n a red alert', () => {
+    for (const drawn of ratios()) {
+      const withN = drawn.computed.points.filter((point) => point.n !== undefined);
+      assert.equal(drawn.deviations.includes(`nMissing.${drawn.statistic}`), withN.length < drawn.computed.points.length, drawn.name);
+      for (const point of withN) {
+        const label = drawn.drawing.hover!.find((hover) => hover.x === point.rel)!.lines.map((line) => line.text).join(' ');
+        assert.match(label, new RegExp(`n = ${point.n} (waarnemingen|observations)`), drawn.name);
+      }
+    }
+    assert.ok(ratios().some((drawn) => drawn.deviations.some((code) => code.startsWith('nMissing.'))), 'an example without n');
+    // A total has no n: for a count the number is the n.
+    for (const drawn of examples.filter((candidate) => candidate.statistic === 'sum')) assert.ok(drawn.computed.points.every((point) => point.n === undefined), drawn.name);
+  });
+
+  it('REQ-044, REQ-054 and REQ-057: few observations below 30 (mean) or 10 (median), or below half the median n; never running; only for observations', () => {
+    for (const drawn of examples) {
+      if (!ratios().includes(drawn)) {
+        assert.deepEqual(drawn.computed.few, [], `${drawn.name}: n of days is no number of observations (REQ-057)`);
+        continue;
+      }
+      const ns = drawn.computed.points.flatMap((point) => (point.n === undefined ? [] : [point.n])).sort((a, b) => a - b);
+      const middle = ns.length % 2 ? ns[(ns.length - 1) / 2]! : (ns[ns.length / 2 - 1]! + ns[ns.length / 2]!) / 2;
+      const relative = ns.length >= 5 ? middle / 2 : 0;
+      const threshold = drawn.statistic === 'mean' ? 30 : 10;
+      const expected = drawn.computed.points.filter((point) => point.n !== undefined && !point.running && (point.n < threshold || point.n < relative)).map((point) => point.rel);
+      assert.deepEqual(drawn.computed.few, expected, drawn.name);
+    }
+    const few = examples.find((drawn) => drawn.name === 'calendarAverage/ratio-few-observations')!;
+    assert.deepEqual(few.computed.few, [-7, -6]);
+    // The running week has n 17, but running wins (REQ-054).
+    assert.ok(few.computed.points.at(-1)!.running && few.computed.points.at(-1)!.n! < 30);
+  });
+
+  it('REQ-046: the n of a point with few observations sits under the time axis, right below it; other points get nothing there', () => {
+    for (const drawn of examples) {
+      const labels = drawn.datasets.nLabels as { rel: number; text: string }[];
+      assert.deepEqual(labels.map((label) => label.rel), drawn.computed.few, drawn.name);
+      for (const label of labels) assert.equal(label.text, `n ${drawn.computed.points.find((point) => point.rel === label.rel)!.n}`, drawn.name);
+      if (labels.length > 0) {
+        const layer = drawn.layers.find((candidate) => candidate.data?.name === 'nLabels')!;
+        assert.ok((layer.encoding!.y as { value: number }).value > 200, `${drawn.name}: below the axis`);
+      }
+    }
+  });
+
+  it('REQ-047: few observations is a red block for the reader, but no deviation: the version label stays', () => {
+    for (const drawn of examples) {
+      assert.equal(drawn.cautions.some((code) => code.startsWith('fewObservations.')), drawn.computed.few.length > 0, drawn.name);
+      if (drawn.computed.few.length === 0) continue;
+      assert.ok(drawn.svg.includes(`fill="${color(tokens, 'warning')}"`), drawn.name);
+      assert.match(drawn.svg, /Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij \d+ van de \d+/, drawn.name);
+      if (drawn.deviations.length === 0) assert.match(drawn.svg, />grafiektaal v0</, drawn.name);
+    }
+  });
+
+  it('REQ-053: a period with few observations gets dots behind its column; its shape stays filled in the focus colour', () => {
+    const few = examples.find((drawn) => drawn.name === 'calendarAverage/ratio-few-observations')!;
+    const marked = (few.datasets.points as { rel: number }[]).map((point) => point.rel);
+    for (const rel of few.computed.few) assert.ok(marked.includes(rel), `point ${rel} keeps its shape`);
+    assert.equal(markOf(pointLayer(few)).fill, color(tokens, 'focus'));
+    assert.match(few.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#ffffff"\/><circle [^>]*r="1\.1" fill="#a9a79e"\/><\/pattern>/);
+  });
+
+  it('REQ-059: the text of a chart is dark grey, grey/700, not black', () => {
+    assert.equal(color(tokens, 'text'), '#3c444e');
+    for (const drawn of examples) assert.match(drawn.svg, new RegExp(`font-size="15" font-weight="600" fill="${color(tokens, 'text')}"`), drawn.name);
+  });
+
+  it('REQ-060: the icon of the semgraph left of the title, 44 px, muted grey, linked to the reading card; a warning below the header', async () => {
+    const registry = await testRegistry();
+    for (const drawn of examples) {
+      const { metadata } = registry.semgraphs.get(drawn.semgraph)!;
+      const icon = new RegExp(`<a href="${metadata.links.learning.replace(/[.?]/g, '\\$&')}" aria-label="[^"]+"><svg x="20" y="12" width="44" height="44" viewBox="0 0 44 44" fill="none" color="${color(tokens, 'text/muted')}">`);
+      assert.match(drawn.svg, icon, drawn.name);
+      assert.match(drawn.svg, /<text x="78" y="33" font-family="Poppins/, `${drawn.name}: the title right of the icon`);
+      const alert = new RegExp(`<rect x="20" y="([\\d.]+)" width="600" height="[\\d.]+" rx="3" fill="${color(tokens, 'warning')}"/>`).exec(drawn.svg);
+      if (alert) assert.ok(Number(alert[1]) >= 12 + 44, `${drawn.name}: the warning below the header block, over the full width`);
+    }
+  });
+
+  it('REQ-061: every icon is built from the fixed set, in one colour, and says what its semgraph shows', async () => {
+    for (const [id, semgraph] of (await testRegistry()).semgraphs) {
+      assert.deepEqual(readIcon(`<svg viewBox="0 0 44 44" fill="none">${semgraph.icon}</svg>`).problems, [], id);
+      const shapes = iconShapes(semgraph.icon);
+      // A diamond for a mean, a dot for a median, a square for an amount (REQ-006, REQ-007, REQ-008).
+      const statistic = (semgraph.implementation as unknown as { statistic?: { id: string } }).statistic?.id;
+      if (statistic === 'mean') assert.ok(shapes.diamonds > 0 && shapes.dots === 0, id);
+      if (statistic === 'median') assert.ok(shapes.dots > 0 && shapes.diamonds === 0, id);
+      // A baseline with ticks for calendar periods; a dotted line for an earlier period.
+      assert.equal(/<path d="M[\d.]+ [\d.]+V[\d.]+H[\d.]+V[\d.]+(M[\d.]+ [\d.]+V[\d.]+)+" stroke=/.test(semgraph.icon), id.startsWith('calendar'), id);
+      assert.equal(shapes.lineDots > 0, id === 'periodComparison', id);
+    }
+    assert.ok(iconShapes((await testRegistry()).semgraphs.get('periodComparison')!.icon).squares > 0);
   });
 });

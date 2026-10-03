@@ -1,32 +1,29 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { Average, Median, percentile, sampleStandardDeviation } from '../src/charts/statistics.ts';
-
-const close = (actual: number | undefined, expected: number) =>
-  assert.ok(actual !== undefined && Math.abs(actual - expected) < 1e-9, `${actual} is not ${expected}`);
+import { Average, Median, Sum } from '../src/charts/statistics.ts';
 
 describe('statistics', () => {
-  it('average: mean with ±1 sample standard deviation (n − 1, like STDDEV)', () => {
-    const { centre, spread } = new Average().summarize([8, 10, 12], true);
-    close(centre, 10);
-    close(spread?.lo, 8);
-    close(spread?.hi, 12);
-    close(sampleStandardDeviation([2, 4, 4, 4, 5, 5, 7, 9]), Math.sqrt(32 / 7));
+  it('average: reads the mean with ±1 sd and n from the block, as the warehouse computed them (REQ-058)', () => {
+    assert.deepEqual(new Average().read({ end: '2026-09-30', mean: 10, sd: 2, n: 41 }), { centre: 10, spread: { lo: 8, hi: 12 }, n: 41 });
+    assert.deepEqual(new Average().read({ end: '2026-09-30', mean: 10 }), { centre: 10, spread: null });
   });
 
-  it('median: P25, P50 and P75 with linear interpolation, like PERCENTILE_CONT', () => {
-    const { centre, spread } = new Median().summarize([50, 30, 30, 49, 56, 52, 49], true);
-    // Sorted: 30 30 49 49 50 52 56. P25 sits halfway between ranks 1 and 2, P75 between 4 and 5.
-    close(centre, 49);
-    close(spread?.lo, 39.5);
-    close(spread?.hi, 51);
-    close(percentile([1, 2, 3, 4], 0.25), 1.75);
+  it('median: reads P25, the median and P75', () => {
+    assert.deepEqual(new Median().read({ period: '2026-W40', median: 49, p25: 39.5, p75: 51 }), { centre: 49, spread: { lo: 39.5, hi: 51 } });
   });
 
-  it('leaves the spread out when asked, or when one value cannot have a spread', () => {
-    assert.equal(new Average().summarize([1, 2, 3], false).spread, null);
-    assert.equal(new Average().summarize([5], true).spread, null);
-    assert.equal(new Median().summarize([5], true).spread, null);
+  it('a block without a value, or with null, has no point: never zero', () => {
+    assert.equal(new Average().read({ end: '2026-09-30', mean: null }), null);
+    assert.equal(new Median().read({ end: '2026-09-30' }), null);
+    assert.equal(new Sum().read({ period: '2026-09', sum: null }), null);
+    assert.deepEqual(new Sum().read({ period: '2026-09', sum: 0 }), { centre: 0, spread: null });
+  });
+
+  it('a total has no spread and no n (REQ-043)', () => {
+    const sum = new Sum();
+    assert.equal(sum.hasSpread, false);
+    assert.equal(sum.fewBelow, null);
+    assert.deepEqual(Object.keys(sum.pointProperties()), ['sum']);
   });
 
   it('a mean has a thin bar, a median a wide one', () => {

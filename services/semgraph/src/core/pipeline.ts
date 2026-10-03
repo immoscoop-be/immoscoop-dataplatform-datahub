@@ -81,13 +81,18 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
   const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
   const plot = await renderVegaLite(drawing.vegaLite);
   const deviations = issues.filter((issue) => issue.level === 'deviation');
-  // Every tolerated deviation is allowed, but discouraged: a red alert between the title and the chart (REQ-038).
-  const alerts = deviations.map((issue) => t(`issues.${issue.code}.alert`, localizeParams(t, issue.params)));
+  // Every tolerated deviation is allowed, but discouraged: a red alert between the title and the chart
+  // (REQ-038). A caution gets the same alert, but keeps the version label (REQ-047).
+  const alerts = issues
+    .filter((issue) => issue.level === 'deviation' || issue.level === 'caution')
+    .map((issue) => t(`issues.${issue.code}.alert`, localizeParams(t, issue.params)));
   const compiled = compiledDay(request.meta, now);
   const svg = composeSvg({
     width: drawing.width,
     title: drawing.title,
     readingCue: drawing.readingCue,
+    // REQ-060: the icon links to the reading card, like the learn line in the footer.
+    icon: { markup: loaded.icon, href: loaded.metadata.links.learning, label: t('footer.readingCard', { name: t(loaded.metadata.readingCard) }) },
     alerts,
     defs: drawing.defs,
     description: drawing.description,

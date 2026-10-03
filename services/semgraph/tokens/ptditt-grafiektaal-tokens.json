@@ -1,6 +1,6 @@
 {
-  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file.",
-  "version": "0.1.0",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard).",
+  "version": "0.2.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
@@ -9,7 +9,7 @@
     "context": "#b5bcc4",
     "context/dark": "#6b7480",
     "context/light": "#e5e8eb",
-    "text": "#2d333a",
+    "text": "#3c444e",
     "text/muted": "#6b7480",
     "surface": "#ffffff",
     "axis": "#d1d6db",

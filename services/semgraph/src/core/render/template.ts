@@ -1,3 +1,4 @@
+import { ICON_SIZE } from '../icon.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
 import { LABEL_HEIGHT, MetaLayer, type MetaItem } from './meta.ts';
@@ -27,6 +28,8 @@ export interface TemplateInput {
   width: number;
   title: string;
   readingCue: string;
+  /** The icon of the semgraph left of the title, linked to the reading card (REQ-060). */
+  icon?: { markup: string; href: string; label: string };
   /** Red alerts between the title and the chart: allowed, but discouraged (REQ-032, REQ-038). */
   alerts?: string[];
   /** SVG definitions the chart refers to, such as a hatch pattern. */
@@ -50,6 +53,9 @@ export interface TemplateInput {
 
 const PADDING_X = 20;
 const PADDING_TOP = 18;
+/** REQ-060: the icon spans the title and the reading cue, with white around it, as in Figma. */
+const ICON_TOP = 12;
+const ICON_GAP = 14;
 const PADDING_BOTTOM = 16;
 const LINE_HEIGHT = 1.5;
 /** Room for the warning sign in front of an alert, and the padding inside its red block. */
@@ -69,19 +75,30 @@ export function composeSvg(input: TemplateInput): string {
   const parts: string[] = [];
   let y = PADDING_TOP;
 
-  for (const line of wrap(input.title, tokens.size.title, inner, 2)) {
+  // The header block: the icon of the semgraph, in the muted grey (REQ-060), then title and reading cue.
+  const headerX = input.icon ? PADDING_X + ICON_SIZE + ICON_GAP : PADDING_X;
+  const headerWidth = width - PADDING_X - headerX;
+  if (input.icon) {
+    parts.push(
+      `<a href="${escapeXml(input.icon.href)}" aria-label="${escapeXml(input.icon.label)}">` +
+        `<svg x="${PADDING_X}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" fill="none" color="${muted}">` +
+        `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg></a>`,
+    );
+  }
+  for (const line of wrap(input.title, tokens.size.title, headerWidth, 2)) {
     y += tokens.size.title;
     parts.push(
-      text(line, { y, family: tokens.font.title, size: tokens.size.title, weight: 600, fill: textColor }),
+      text(line, { y, x: headerX, family: tokens.font.title, size: tokens.size.title, weight: 600, fill: textColor }),
     );
     y += tokens.size.title * (LINE_HEIGHT - 1);
   }
   y += tokens.size.readingCue * 0.5;
-  for (const line of wrap(input.readingCue, tokens.size.readingCue, inner, 2)) {
+  for (const line of wrap(input.readingCue, tokens.size.readingCue, headerWidth, 2)) {
     y += tokens.size.readingCue;
     parts.push(
       text(line, {
         y,
+        x: headerX,
         family: tokens.font.body,
         size: tokens.size.readingCue,
         weight: 700,
@@ -90,6 +107,9 @@ export function composeSvg(input: TemplateInput): string {
       }),
     );
   }
+
+  // A warning lies under the header block, over the full width (REQ-060).
+  if (input.icon) y = Math.max(y, ICON_TOP + ICON_SIZE);
 
   // A red block with white text (REQ-040). The text speaks to the reader, as help to read the chart;
   // the discomfort of whoever delivers it stays implicit (REQ-041).

@@ -50,6 +50,7 @@ attributes:
     question: Wil je het gemiddelde of de mediaan?
 
 axis:
+  n: "n {n}"
   now: nu
   daysAgo: "−{n}d"
 
@@ -63,11 +64,15 @@ cue:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
     sum: som per {unit}
+    ratio:
+      mean: "gemiddelde per {unit}"
+      median: "mediaan per {unit}"
   comparison: tegenover {label}
   spread:
     mean: ±1 sd
     median: P25–P75
   unique: uniek · per dag geteld
+  uniqueOverPeriod: "uniek · per {block} geteld"
 
 desc:
   base: "{title}: {cue}, tot {date}."
@@ -79,14 +84,13 @@ chart:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
-  missing:
-    one: "geen data: {absent} ontbreekt"
-    many: "geen data: {count} dagen ontbreken, de eerste op {absent}"
   window: venster {range}
   running: "lopend: {count} van {total} dagen"
+  noData: geen data
   runningShort: lopend
 
 hover:
+  n: "n = {n} waarnemingen"
   centre:
     rolling:
       mean: "gemiddelde {window}d"
@@ -97,6 +101,9 @@ hover:
       mean: gemiddelde per dag
       median: mediaan per dag
       sum: som
+      ratio:
+        mean: gemiddelde
+        median: mediaan
   comparison: "vorige periode, {name}: {value}"
   comparisonMissing: "vorige periode, {name}: geen data"
   spread:
@@ -112,11 +119,6 @@ calendar:
   tick:
     week: W{week}
     quarter: K{quarter}
-  none:
-    week: geen enkele week
-    month: geen enkele maand
-    quarter: geen enkel kwartaal
-    year: geen enkel jaar
   hover:
     week: week {week} ({range})
     month: "{month} {year}"
@@ -130,13 +132,15 @@ comparison:
   quarters: vorige {n} kwartalen
   days: vorige {n} dagen
 
-period:
-  day: een dag
-  window: een venster van {window} dagen
-  week: een week
-  month: een maand
-  quarter: een kwartaal
-  year: een jaar
+blocks:
+  day: dagen
+  window: vensters
+  week: weken
+  month: maanden
+  quarter: kwartalen
+  year: jaren
+  oneDay: dag
+  oneWindow: "venster van {window} dagen"
 
 date:
   short: "{day} {month}"
@@ -201,7 +205,7 @@ issues:
     alternative: Stuur een JSON-object met Content-Type application/json.
   payloadTooLarge:
     message: De aanvraag is te groot.
-    alternative: Stuur hoogstens 4000 dagen; meer heeft een grafiek nooit nodig.
+    alternative: Stuur hoogstens 1000 blokken; meer heeft een grafiek nooit nodig.
   unsupportedMediaType:
     message: Enkel JSON-aanvragen worden aanvaard.
     alternative: Gebruik Content-Type application/json.
@@ -227,8 +231,8 @@ issues:
   unexpectedField:
     message: Het veld {field} hoort niet bij deze semgraph.
     alternative: Laat het weg, of controleer de schrijfwijze in GET /semgraphs/{semgraph}.
-  unexpectedDataField:
-    message: Een dag mag enkel day en value bevatten; {field} is niet toegelaten.
+  unexpectedBlockField:
+    message: Een blok bevat enkel zijn naam en de velden van zijn statistiek; {field} is niet toegelaten.
     alternative: Laat de andere kolommen weg. Stuur nooit persoonsgegevens naar de grafiekserver.
   invalidValue:
     message: "{field} moet een van deze waarden zijn: {allowed}."
@@ -251,9 +255,28 @@ issues:
   invalidDate:
     message: "{field}: {value} is geen bestaande dag."
     alternative: Schrijf dagen als JJJJ-MM-DD.
-  duplicateDay:
-    message: De dag {day} komt meer dan eens voor.
-    alternative: Stuur één waarde per dag.
+  invalidPeriod:
+    message: "{field}: {value} is geen geldige {unit}."
+    alternative: Schrijf 2026-W40 voor een week, 2026-09 voor een maand, 2026-Q3 voor een kwartaal en 2026 voor een jaar.
+  tooManyBlocks:
+    message: "Van het eerste tot het laatste blok zijn er {count} blokken; een grafiek toont er hoogstens {max}."
+    alternative: Stuur een kortere periode, of langere blokken.
+  duplicateBlock:
+    message: Het blok {block} komt meer dan eens voor.
+    alternative: Stuur één rij per blok.
+  windowsNotAligned:
+    message: "{field}: het venster dat eindigt op {block} sluit niet aan op de andere. De einddagen moeten een veelvoud van {window} dagen uit elkaar liggen."
+    alternative: Laat de vensters op elkaar volgen zonder overlap, elk van {window} dagen.
+  fieldNotForStatistic:
+    message: "{field} hoort niet bij de statistiek {statistic}."
+    alternative: "Een blok bevat enkel de velden van zijn statistiek: mean met sd en n, median met p25, p75 en n, of sum."
+  spreadIncomplete:
+    message: "{field} heeft geen spreiding, terwijl andere blokken er wel een hebben."
+    alternative: Geef de spreiding mee bij elk blok met een waarde, of bij geen enkel.
+  spreadPartial:
+    message: "{field} ontbreekt: P25 en P75 horen samen."
+  spreadOrder:
+    message: "{field}: P25, de mediaan en P75 moeten in die volgorde liggen."
   invalidUrl:
     message: "{field} moet een weblink zijn die begint met http:// of https://."
   invalidCharacters:
@@ -265,40 +288,62 @@ issues:
   measureTypeNotAllowed:
     message: "Deze grafiek is niet gemaakt voor een maat van het type {measureType}: de grafiektaal legt ze enkel vast voor {allowed}."
     alternative: Gebruik een maat van het type {allowed}, of vraag aan het datateam welke semgraph past.
+  ratioNotSummable:
+    message: "Een som van verhoudingen betekent niets: een gemiddeld bedrag per lead tel je niet op over een week."
+    alternative: Kies statistic mean of median.
   uniqueAggregationRequired:
-    message: "Bij unieke aantallen moet je kiezen: unieken per dag geteld, of unieken over de hele periode. Dat zijn twee verschillende metrics."
-    alternative: Voeg uniqueAggregation daily toe als de waarden dagelijkse unieken zijn. Unieken over de periode kunnen niet uit dagwaarden berekend worden.
-  uniquesOverPeriodNotDerivable:
-    message: "Unieken over {period} kunnen niet uit dagwaarden berekend worden: wie op meerdere dagen terugkomt, zou meerdere keren tellen."
-    alternative: Bereken ze aan de bron, als aparte metric, of kies uniqueAggregation daily.
+    message: "Bij unieke aantallen moet je zeggen hoe ze geteld zijn: per dag (daily) of over het hele blok (overPeriod). Dat zijn twee verschillende metrics."
+    alternative: Voeg uniqueAggregation daily of overPeriod toe.
+  dailyUniquesNotSummable:
+    message: Een som van dagelijkse unieken telt wie op meerdere dagen terugkomt meer dan eens.
+    alternative: Tel de unieken per blok in het datawarehouse en geef uniqueAggregation overPeriod, of kies statistic mean voor het gemiddelde per dag.
+  uniquesOverPeriodNotAveraged:
+    message: "Unieken over een heel blok zijn één aantal per blok: er is geen gemiddelde per dag en geen spreiding om te tonen."
+    alternative: Gebruik periodComparison met statistic sum voor de unieken per blok, of stuur de dagelijkse unieken met uniqueAggregation daily.
+  blockAfterReference:
+    message: "Het blok {block} loopt voorbij de laatste volledige dag ({day}), dus zijn waarde is nog niet definitief."
+    alternative: Stuur enkel blokken tot de laatste volledige dag (een kalenderperiode mag nog lopen), of geef asOf mee als de data verder loopt.
+  noData:
+    message: Geen enkel blok heeft een waarde, dus er is niets om te tonen. Een blok zonder data telt nooit als nul.
+    alternative: Stuur de waarden mee (0 waar er niets gebeurde).
   insufficientData:
-    message: "Er zijn {count} dagen met een waarde in de {days} dagen die deze grafiek gebruikt ({from} tot {to}). Een betrouwbaar voortschrijdend gemiddelde vraagt er minstens {minimumPoints}."
-    alternative: Stuur meer dagen, of kies een langere horizon.
-  noCompleteWindow:
-    message: Geen enkel venster van {window} dagen is volledig, dus er is geen gemiddelde om te tonen. Dagen zonder data tellen nooit als nul.
-    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde), of gebruik een korter venster.
-  noCompletePeriod:
-    message: Er is {none} volledig, dus er is niets om te tonen. Dagen zonder data tellen nooit als nul.
-    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde).
+    message: "De blokken met een waarde beslaan samen {count} dagen. Een betrouwbare grafiek vraagt er minstens {minimumPoints}."
+    alternative: Stuur meer blokken.
 
   windowOrUnit:
     message: Geef ofwel window (rollende vensters) ofwel unit (kalenderperiodes), niet allebei en niet geen van beide.
   noComparisonData:
-    message: "Er is niets om mee te vergelijken: in de periode vóór het scherm, van {from} tot {to}, is geen enkele periode volledig."
-    alternative: Stuur ook de dagen van die periode mee (0 waar er niets gebeurde).
+    message: "Er is niets om mee te vergelijken: geen enkel blok draagt de waarde van de periode vóór het scherm."
+    alternative: Geef bij elk blok in previous de waarde van het blok ervoor.
 
   windowNotMultipleOf7:
-    message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een melding in de voetregel.
+    message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een rode melding.
     alternative: Gebruik 7, 14, 28 of een ander veelvoud van 7.
     alert: "Lees deze grafiek met voorzichtigheid: een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. Een verschil tussen twee punten kan van de weekdagen komen."
   meanWithoutSpread:
-    message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
-    alternative: Gebruik spread stddev.
-    alert: "Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Twee periodes met hetzelfde gemiddelde kunnen heel verschillend zijn."
+    message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de waarden uit elkaar liggen. De grafiek wordt getekend, met een rode melding.
+    alternative: Geef sd mee bij elk blok.
+    alert: "Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de waarden uit elkaar liggen. Twee periodes met hetzelfde gemiddelde kunnen heel verschillend zijn."
   medianWithoutSpread:
-    message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
-    alternative: Gebruik spread iqr.
-    alert: "Lees deze grafiek met voorzichtigheid: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Twee periodes met dezelfde mediaan kunnen heel verschillend zijn."
+    message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de waarden uit elkaar liggen. De grafiek wordt getekend, met een rode melding.
+    alternative: Geef p25 en p75 mee bij elk blok.
+    alert: "Lees deze grafiek met voorzichtigheid: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de waarden uit elkaar liggen. Twee periodes met dezelfde mediaan kunnen heel verschillend zijn."
+  nMissing:
+    mean:
+      message: Niet elk blok van dit gemiddelde zegt hoeveel waarnemingen erachter zitten (n). De grafiek wordt getekend, met een rode melding.
+      alternative: Geef n mee bij elk blok.
+      alert: "Lees deze grafiek met voorzichtigheid: bij dit gemiddelde staat niet hoeveel waarnemingen erachter zitten, dus je ziet niet welke punten op weinig waarnemingen steunen."
+    median:
+      message: Niet elk blok van deze mediaan zegt hoeveel waarnemingen erachter zitten (n). De grafiek wordt getekend, met een rode melding.
+      alternative: Geef n mee bij elk blok.
+      alert: "Lees deze grafiek met voorzichtigheid: bij deze mediaan staat niet hoeveel waarnemingen erachter zitten, dus je ziet niet welke punten op weinig waarnemingen steunen."
+  fewObservations:
+    mean:
+      message: "{count} van de {total} {blocks} steunen op weinig waarnemingen. Ze krijgen stippels achter hun kolom en hun n onder de as."
+      alert: "Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij {count} van de {total} {blocks}, dus één uitschieter kan hun gemiddelde sterk verschuiven."
+    median:
+      message: "{count} van de {total} {blocks} steunen op weinig waarnemingen. Ze krijgen stippels achter hun kolom en hun n onder de as."
+      alert: "Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij {count} van de {total} {blocks}, dus hun mediaan is nog onzeker."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.
@@ -306,6 +351,4 @@ issues:
     message: uniqueAggregation geldt enkel voor unieke aantallen en werd genegeerd.
   valuesAllTooDense:
     message: "Er zijn te veel punten om elke waarde op de grafiek te schrijven; de standaard ({values}) wordt gebruikt."
-    alternative: Kies een kortere horizon, of een grotere periode.
-  daysAfterReferenceIgnored:
-    message: "{count} dag(en) na de laatste volledige dag ({day}) werden weggelaten: de lopende dag is nog niet voorbij."
+    alternative: Stuur minder blokken, of kies een grotere periode.

@@ -38,14 +38,15 @@ describe('API', () => {
   it('GET /semgraphs/{id} returns metadata, schema and examples', async () => {
     const body = (await app.inject('/semgraphs/movingWindowAverage')).json();
     assert.equal(body.answers, 'How does this evolve, without the daily noise?');
-    assert.deepEqual(body.attributes.measureType, ['additive', 'unique']);
+    assert.deepEqual(body.attributes.measureType, ['additive', 'unique', 'ratio']);
+    assert.deepEqual(body.schema.properties.points.items.required, ['end', 'mean']);
     assert.equal(body.schema.properties.window.minimum, 1);
     assert.deepEqual(body.schema.properties.values.enum, ['off', 'last', 'lastAndPrevious', 'all']);
     assert.equal(body.schema.properties.values.default, 'last');
     assert.deepEqual(body.schema.properties.valueAxis.enum, ['zero', 'zoom']);
     const calendar = (await app.inject('/semgraphs/calendarMedian')).json();
     assert.deepEqual(calendar.schema.properties.unit.enum, ['week', 'month', 'quarter', 'year']);
-    assert.deepEqual(calendar.schema.properties.spread.enum, ['iqr', 'none']);
+    assert.deepEqual(Object.keys(calendar.schema.properties.points.items.properties), ['period', 'median', 'p25', 'p75', 'n']);
     assert.equal(calendar.schema.properties.window, undefined);
     assert.equal(calendar.schema.properties.values.default, 'lastAndPrevious');
     assert.ok(body.examples.some((entry: { name: string }) => entry.name === 'basic'));
@@ -84,16 +85,17 @@ describe('API', () => {
     assert.equal(body.locale, 'nl-BE');
   });
 
-  it('POST /render rejects an unknown field with 400, also inside data', async () => {
+  it('POST /render rejects an unknown field with 400, also inside a block', async () => {
     const request = await example('basic');
     const response = await post('/render', { ...request, horizn: 28 });
     assert.equal(response.statusCode, 400);
     assert.equal(response.json().issues[0].code, 'unexpectedField');
     assert.equal(response.json().issues[0].field, '/horizn');
 
-    const data = (request.data as object[]).map((point, index) => (index === 0 ? { ...point, email: 'x@y.be' } : point));
-    const pii = (await post('/render', { ...request, data })).json();
-    assert.equal(pii.issues[0].code, 'unexpectedDataField');
+    const points = (request.points as object[]).map((point, index) => (index === 0 ? { ...point, email: 'x@y.be' } : point));
+    const pii = (await post('/render', { ...request, points })).json();
+    assert.equal(pii.issues[0].code, 'unexpectedBlockField');
+    assert.equal(pii.issues[0].field, '/points/0/email');
     assert.match(pii.issues[0].alternative, /persoonsgegevens/);
   });
 

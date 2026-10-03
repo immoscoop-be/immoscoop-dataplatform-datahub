@@ -1,7 +1,7 @@
 import { localizeRange } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
-import { CALENDAR_UNITS, isoWeek, parts, periodStart, shiftPeriod, type CalendarUnit } from './calendar.ts';
+import { CALENDAR_UNITS, isoWeek, parts, periodFromName, shiftPeriod, type CalendarUnit } from './calendar.ts';
 import { TimeAxisChart, type LabelContext, type Slot, type TimeAxisRequest } from './time-axis-chart.ts';
 import type { ValuesMode } from './value-labels.ts';
 
@@ -23,14 +23,16 @@ const TICK_MULTIPLES: Record<CalendarUnit, number[]> = {
 const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter: 30, year: 36 };
 
 /**
- * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, ending with the
- * period that contains the last complete day. When that period is not over yet, it is running: its
- * value covers the days so far and is drawn hollow, because it is not final (REQ-023).
+ * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, each named by its ISO
+ * name (REQ-062). A period that ends after the last complete day is running: its value covers the
+ * days so far and its column gets the running pattern, because it is not final (REQ-052).
  */
 export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   protected readonly periodDescription =
-    'Calendar periods (ISO weeks, months, quarters or years), ending with the period of the last complete day; a period that is still running is drawn hollow.';
+    'Calendar periods (ISO weeks, months, quarters or years), one row per period named by its ISO name; a period that is still running gets the running pattern.';
   protected readonly defaultValues: ValuesMode = 'lastAndPrevious';
+  protected readonly blockField = 'period';
+  protected readonly mayRun = true;
 
   protected periodSchema() {
     return {
@@ -40,24 +42,38 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
           description: 'The calendar period: week (ISO, Monday to Sunday), month, quarter or year.',
           enum: [...CALENDAR_UNITS],
         },
-        horizon: {
-          description: 'Number of periods shown, ending with the period of the last complete day.',
-          type: 'integer',
-          minimum: 2,
-          maximum: 120,
-        },
       },
+      blockName: { description: 'The ISO name of the period: 2026-W40 (week), 2026-09 (month), 2026-Q3 (quarter) or 2026 (year).', type: 'string', pattern: '^[0-9]{4}(-W[0-9]{2}|-[0-9]{2}|-Q[1-4])?$' },
     };
   }
 
-  protected slots(reference: number, { unit, horizon }: CalendarRequest): Slot[] {
-    const current = periodStart(reference, unit);
-    return Array.from({ length: horizon }, (_, index) => {
-      const rel = index - (horizon - 1);
-      const first = shiftPeriod(current, unit, rel);
-      const fullLast = shiftPeriod(first, unit, 1) - 1;
-      return { rel, first, last: Math.min(fullLast, reference), fullLast, running: fullLast > reference };
-    });
+  protected blockKey(name: string, { unit }: CalendarRequest): number | undefined {
+    return periodFromName(name, unit);
+  }
+
+  protected slotKey(slot: Slot): number {
+    return slot.first;
+  }
+
+  protected invalidBlock(name: string, pointer: string, { unit }: CalendarRequest): IssueSpec {
+    return { level: 'inputError', code: 'invalidPeriod', field: pointer, params: { value: name, unit: { t: `calendar.unit.${unit}` } } };
+  }
+
+  /** Every period from the first block to the last; the one that ends after the last complete day runs. */
+  protected slotsBetween(first: number, last: number, asOf: number, { unit }: CalendarRequest): Slot[] {
+    const slots: Omit<Slot, 'rel'>[] = [];
+    for (let start = first; start <= last; start = shiftPeriod(start, unit, 1)) {
+      const fullLast = shiftPeriod(start, unit, 1) - 1;
+      slots.push({ first: start, last: Math.min(fullLast, asOf), fullLast, running: fullLast > asOf });
+    }
+    return slots.map((slot, index) => ({ ...slot, rel: index - (slots.length - 1) }));
+  }
+
+  protected slotCount(first: number, last: number, { unit }: CalendarRequest): number {
+    if (unit === 'week') return (last - first) / 7 + 1;
+    const [from, to] = [parts(first), parts(last)];
+    const months = (to.year - from.year) * 12 + (to.month - from.month);
+    return { month: months, quarter: months / 3, year: to.year - from.year }[unit] + 1;
   }
 
   protected tickStep({ unit }: CalendarRequest, _slots: number, slotWidth: number): number {
@@ -114,26 +130,32 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
     }
   }
 
-  protected periodCue({ unit }: CalendarRequest, t: Translator): string {
-    return t(`cue.calendar.${this.statistic.id}`, { unit: t(`calendar.unit.${unit}`) });
+  /** "gemiddelde per dag, per week" for an average per day of a count; "gemiddelde per week" for a ratio. */
+  protected periodCue({ unit, measureType }: CalendarRequest, t: Translator): string {
+    const kind = measureType === 'ratio' ? `ratio.${this.statistic.id}` : this.statistic.id;
+    return t(`cue.calendar.${kind}`, { unit: t(`calendar.unit.${unit}`) });
   }
 
-  protected centreLabel(_request: CalendarRequest, t: Translator): string {
-    return t(`hover.centre.calendar.${this.statistic.id}`);
+  protected centreLabel({ measureType }: CalendarRequest, t: Translator): string {
+    return t(`hover.centre.calendar.${measureType === 'ratio' ? `ratio.${this.statistic.id}` : this.statistic.id}`);
   }
 
-  protected periodNoun({ unit }: CalendarRequest): IssueParam {
-    return { t: `period.${unit}` };
+  protected blockSingular({ unit }: CalendarRequest, t: Translator): string {
+    return t(`calendar.unit.${unit}`);
+  }
+
+  protected blockNoun({ unit }: CalendarRequest): IssueParam {
+    return { t: `blocks.${unit}` };
   }
 
   /**
    * The periods before the screen: as many periods back as the screen shows (REQ-037). A running
-   * period is compared with as many days of the earlier period, so a week that has run three days
-   * is compared with the first three days of its week.
+   * period is compared with as many days of the earlier period: the warehouse delivers that value,
+   * the name says which days it covers.
    */
-  protected previousSpan(slots: Slot[], { unit, horizon }: CalendarRequest): Slot[] {
+  protected previousSpan(slots: Slot[], { unit }: CalendarRequest): Slot[] {
     return slots.map((slot) => {
-      const first = shiftPeriod(slot.first, unit, -horizon);
+      const first = shiftPeriod(slot.first, unit, -slots.length);
       const fullLast = shiftPeriod(first, unit, 1) - 1;
       const last = slot.running ? Math.min(fullLast, first + (slot.last - slot.first)) : fullLast;
       return { rel: slot.rel, first, last, fullLast, running: false };
@@ -141,20 +163,11 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   }
 
   /** "vorig jaar" for 12 months, "vorige 12 weken", "vorige 6 maanden", ... */
-  protected comparisonLabel({ unit, horizon }: CalendarRequest, t: Translator): string {
-    if (horizon % PER_YEAR[unit] === 0) {
-      const years = horizon / PER_YEAR[unit];
+  protected comparisonLabel({ unit }: CalendarRequest, t: Translator, blocks: number): string {
+    if (blocks % PER_YEAR[unit] === 0) {
+      const years = blocks / PER_YEAR[unit];
       return years === 1 ? t('comparison.year') : t('comparison.years', { n: years });
     }
-    return t(`comparison.${unit}s`, { n: horizon });
-  }
-
-  protected noPointIssue({ unit }: CalendarRequest): IssueSpec {
-    return {
-      level: 'refusal',
-      code: 'noCompletePeriod',
-      field: '/data',
-      params: { unit: { t: `calendar.unit.${unit}` }, none: { t: `calendar.none.${unit}` } },
-    };
+    return t(`comparison.${unit}s`, { n: blocks });
   }
 }

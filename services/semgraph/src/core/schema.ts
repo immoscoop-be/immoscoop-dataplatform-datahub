@@ -10,7 +10,7 @@ export type { ValidateFunction };
 
 const MAX_SCHEMA_ISSUES = 20;
 
-const DATA_ITEM = /^\/data\/\d+$/;
+const BLOCK = /^\/points\/\d+$/;
 
 /** Turns Ajv errors into issues with plain-language codes; the messages come from the locale files. */
 export function schemaIssues(errors: readonly ErrorObject[] | null | undefined, semgraph: string): IssueSpec[] {
@@ -41,7 +41,7 @@ function toIssue(error: ErrorObject, semgraph: string): IssueSpec {
       return issue('missingField', `${field}/${String(params.missingProperty)}`);
     case 'additionalProperties': {
       const at = `${field}/${String(params.additionalProperty)}`;
-      return DATA_ITEM.test(field) ? issue('unexpectedDataField', at) : issue('unexpectedField', at, { semgraph });
+      return BLOCK.test(field) ? issue('unexpectedBlockField', at) : issue('unexpectedField', at, { semgraph });
     }
     case 'enum':
       return issue('invalidValue', field, { allowed: (params.allowedValues as unknown[]).join(', ') });

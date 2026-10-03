@@ -1,5 +1,5 @@
 import type { TopLevelSpec } from 'vega-lite';
-import { checkDailySeries, currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
+import { currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { META_SCHEMA, type ChartMeta } from '../core/meta.ts';
@@ -16,7 +16,7 @@ import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './co
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
-import type { Statistic, Summary } from './statistics.ts';
+import { STATISTIC_FIELDS, type BlockRow, type Statistic, type Summary } from './statistics.ts';
 import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
 import { headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
 
@@ -27,23 +27,24 @@ export interface TimeAxisRequest {
   title?: string;
   measureType: 'additive' | 'unique' | 'ratio';
   uniqueAggregation?: 'daily' | 'overPeriod';
-  horizon: number;
-  spread?: string;
+  /** The last complete day of the data; yesterday in Brussels when absent. */
+  asOf?: string;
   valueAxis?: ValueAxisMode;
   values?: ValuesMode;
   format?: string;
   locale?: string;
   context?: RequestContext;
   meta?: ChartMeta;
-  data: { day: string; value: number | null }[];
+  /** One row per block, computed in the warehouse (REQ-058). */
+  points: BlockRow[];
 }
 
-/** The days one position on the time axis summarizes. */
+/** The days one position on the time axis stands for. */
 export interface Slot {
   /** 0 is the last slot, the one with the reference day; -1 the one before, ... */
   rel: number;
   first: number;
-  /** Last day used; never after the reference day. */
+  /** Last day covered; never after the reference day. */
   last: number;
   /** Last day of the whole period; after `last` while the period is still running. */
   fullLast: number;
@@ -52,35 +53,34 @@ export interface Slot {
 }
 
 export interface SlotPoint extends Slot, Summary {
-  /** Number of days summarized. */
+  /** Number of days the block covers. */
   days: number;
 }
 
 export interface TimeAxisComputed {
-  /** The last complete day in the data ("today"), as a day number. */
+  /** The last complete day the chart shows ("today"), as a day number. */
   reference: number;
   /** True when the reference day is yesterday, so it may be called "today". */
   referenceIsYesterday: boolean;
-  /** Days in the data after the reference day (the running day, or later). */
-  ignoredAfterReference: number;
-  /** First and number of days the chart uses, up to the reference day. */
-  rangeStart: number;
-  rangeDays: number;
-  /** Days with a value in that range. */
-  valuesInRange: number;
+  /** Blocks that end after the last complete day: not final, so refused for a rolling window. */
+  blocksAfterReference: string[];
+  /** Days covered by the blocks with a value. */
+  daysWithData: number;
   withSpread: boolean;
   /** The caller left out a spread that belongs to the statistic: a tolerated deviation. */
   spreadOmitted: boolean;
+  /** A mean or median of observations without its n on every point (REQ-062). */
+  nMissing: boolean;
+  /** Points of the current period that rest on few observations (REQ-044), never a running one (REQ-054). */
+  few: number[];
   /** Which values are written on the chart, and whether "all" fell back because they do not fit. */
   values: ValuesMode;
   valuesFallback: boolean;
   slots: Slot[];
-  /** Slots whose days all have a value. */
+  /** Slots with a value. */
   points: SlotPoint[];
-  /** Slots with a missing day: drawn as missing, never as zero, never interpolated. */
+  /** Slots without a value: drawn as empty, never as zero, never interpolated. */
   missing: number[];
-  /** Days in the range without a value, in order. */
-  absentDays: number[];
   /**
    * The same value for the period just before the screen, one block per block on the screen, at the
    * same position (`periodComparison`, REQ-037); null for a chart without comparison.
@@ -102,8 +102,12 @@ export const PADDING = { left: 52, right: 28, top: 14, bottom: AXIS_HEIGHT };
 export const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
 /** A comparison writes the last value and the name of the comparison right of the lines (REQ-003). */
 const COMPARISON_PADDING = { ...PADDING, right: 84 };
+/** The n of a point with few observations sits under the time axis, on a line of its own (REQ-046). */
+const N_LINE = 14;
 /** At most this many labels on the time axis. */
 export const MAX_TICKS = 8;
+/** At most this many blocks from the first to the last, gaps included: a chart, not a data dump. */
+export const MAX_SLOTS = 1000;
 
 /**
  * How the spread is drawn under the line (REQ-001): a bar under every point, or a band along the
@@ -119,12 +123,19 @@ export function formFor(slots: number, barWidth: number, plotWidth = PLOT_WIDTH)
 /** Master-leerplan, level 1: unique counts (1.2.2), rolling periods (1.4.2), centre and spread (1.5.4). */
 export const LEARNING_PLAN_LEVEL_1 = 'https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146';
 
+/** The median of a list of numbers. */
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
+}
+
 /**
- * Base class of every chart with a time axis of daily data. It owns everything the families share:
- * the contract, the reference day, the strict handling of missing days, the chart-language rules,
- * the value axis (from zero or zoomed), the drawing and the hover labels. A family decides which
- * days each slot summarizes and how slots are labelled; the statistic decides centre and spread.
- * Nothing is written twice (REQ-025).
+ * Base class of every chart with a time axis. The warehouse delivers one row per block (REQ-058);
+ * this class owns everything the families share: the contract, turning blocks into slots, the
+ * chart-language rules, the value axis (from zero or zoomed), the drawing and the hover labels. A
+ * family decides how a block is named and how slots are labelled; the statistic decides which
+ * fields a block carries. Nothing is written twice (REQ-025).
  */
 export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   implements SemgraphImplementation<Request, TimeAxisComputed>
@@ -152,10 +163,26 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   protected abstract readonly periodDescription: string;
   /** Which values the family writes on the chart by default (REQ-033). */
   protected abstract readonly defaultValues: ValuesMode;
-  /** Contract properties of the family, such as window or unit, and its horizon. */
-  protected abstract periodSchema(): { properties: Record<string, object>; required: string[] };
-  /** The slots, oldest first, ending with the one that contains the reference day. */
-  protected abstract slots(reference: number, request: Request): Slot[];
+  /** The field that names a block: `end` for a rolling window, `period` for a calendar period (REQ-062). */
+  protected abstract readonly blockField: 'end' | 'period';
+  /** Whether the last block may still be running: a calendar period may, a rolling window never. */
+  protected abstract readonly mayRun: boolean;
+  /** Contract properties of the family, such as window or unit, and the schema of a block name. */
+  protected abstract periodSchema(): { properties: Record<string, object>; required: string[]; blockName: object };
+  /** The day that identifies a block (its end day, or the first day of its period); undefined when the name is not valid. */
+  protected abstract blockKey(name: string, request: Request): number | undefined;
+  /** The same day for a slot. */
+  protected abstract slotKey(slot: Slot): number;
+  /** The input error for a block name that is not valid. */
+  protected abstract invalidBlock(name: string, pointer: string, request: Request): IssueSpec;
+  /** Checks on the names of the blocks together, such as windows that do not line up. */
+  protected blockChecks(_keys: { key: number; pointer: string; name: string }[], _request: Request): IssueSpec[] {
+    return [];
+  }
+  /** All slots from the first block to the last, gaps included, oldest first. */
+  protected abstract slotsBetween(first: number, last: number, asOf: number, request: Request): Slot[];
+  /** How many slots that is, without making them: checked before anything is computed. */
+  protected abstract slotCount(first: number, last: number, request: Request): number;
   /** Number of slots between two labelled ticks. */
   protected abstract tickStep(request: Request, slots: number, slotWidth: number): number;
   /** The label of a block on the time axis; a second line names the year. */
@@ -166,18 +193,17 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   protected abstract periodCue(request: Request, t: Translator): string;
   /** What the centre is called on hover, e.g. "gemiddelde 7d" or "mediaan per dag". */
   protected abstract centreLabel(request: Request, t: Translator): string;
-  /** The period a count would have to be unique over, e.g. "a 7-day window" or "a month". */
-  protected abstract periodNoun(request: Request): IssueParam;
-  /** The refusal when not a single slot is complete. */
-  protected abstract noPointIssue(request: Request): IssueSpec;
+  /** What one block is called in the reading cue, e.g. "week" or "venster van 7 dagen". */
+  protected abstract blockSingular(request: Request, t: Translator): string;
+  /** What the blocks are called in a message, plural, e.g. "weken" or "vensters". */
+  protected abstract blockNoun(request: Request): IssueParam;
   /**
    * The blocks of the period just before the screen, as long as what the screen shows, each at the
-   * position of the block it is compared with (REQ-037). A running period is compared with the same
-   * number of days.
+   * position of the block it is compared with (REQ-037).
    */
   protected abstract previousSpan(slots: Slot[], request: Request): Slot[];
   /** The name of that period at the end of its line, e.g. "vorige 12 weken" or "vorig jaar". */
-  protected abstract comparisonLabel(request: Request, t: Translator): string;
+  protected abstract comparisonLabel(request: Request, t: Translator, blocks: number): string;
 
   /** Rules that only hold for the family, e.g. a window in multiples of 7. */
   protected periodRules(_request: Request): IssueSpec[] {
@@ -200,7 +226,42 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return [t('chart.running', { count: slot.last - slot.first + 1, total: slot.fullLast - slot.first + 1 })];
   }
 
+  /**
+   * Whether n means observations the warehouse counted (REQ-057): for a mean or median of a ratio,
+   * such as an amount per lead. An average per day of a count rests on the days of its block; the
+   * thresholds for few observations do not apply to days.
+   */
+  protected observationsApply(request: Request): boolean {
+    return request.measureType === 'ratio' && this.statistic.fewBelow !== null;
+  }
+
   // ----- The contract -----
+
+  /** The schema of one block: its name and the fields of the statistic, and the earlier block when comparing. */
+  protected pointSchema(): object {
+    const period = this.periodSchema();
+    const centre = this.statistic.id;
+    return {
+      type: 'object',
+      additionalProperties: false,
+      required: [this.blockField, centre],
+      properties: {
+        [this.blockField]: period.blockName,
+        ...this.statistic.pointProperties(),
+        ...(this.compares
+          ? {
+              previous: {
+                description: `The ${centre} of the block just before the screen at this position (REQ-037); null when it has no data.`,
+                type: ['object', 'null'],
+                additionalProperties: false,
+                required: [centre],
+                properties: { [centre]: { type: ['number', 'null'], minimum: 0 } },
+              },
+            }
+          : {}),
+      },
+    };
+  }
 
   schema(): object {
     const period = this.periodSchema();
@@ -208,10 +269,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       $id: `semgraph:${this.id}/request`,
       title: `${this.id} request`,
-      description: `${this.periodDescription} ${this.statistic.description} The caller sends raw daily values; the service computes periods, statistics, axes and labels.`,
+      description: `${this.periodDescription} ${this.statistic.description} The warehouse computes the blocks; the service checks them against the chart language and draws (REQ-058).`,
       type: 'object',
       additionalProperties: false,
-      required: ['semgraph', 'metric', 'measureType', ...period.required, 'horizon', 'data'],
+      required: ['semgraph', 'metric', 'measureType', ...period.required, 'points'],
       properties: {
         semgraph: { const: this.id },
         metric: {
@@ -226,15 +287,19 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           maxLength: 120,
         },
         measureType: {
-          description: 'Kind of number. Required until Domain Hub or the dbt YAML supplies it.',
+          description: 'Kind of number: additive or unique for an average per day of a count, ratio for a mean or median of observations such as an amount per lead. Required until Domain Hub or the dbt YAML supplies it.',
           enum: ['additive', 'unique', 'ratio'],
         },
         uniqueAggregation: {
-          description: 'Required for unique counts: daily shows the daily uniques; overPeriod (unique over the whole period) cannot be derived from daily values.',
+          description: 'Required for unique counts: daily (the uniques per day; never summed) or overPeriod (the uniques over the whole block, counted in the warehouse; only as a total).',
           enum: ['daily', 'overPeriod'],
         },
         ...period.properties,
-        spread: this.statistic.spreadSchema(),
+        asOf: {
+          description: 'The last complete day of the data. A calendar period that ends after it is still running. Yesterday in Brussels when absent.',
+          type: 'string',
+          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+        },
         values: {
           description: 'Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).',
           enum: [...VALUES_MODES],
@@ -268,54 +333,113 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           },
         },
         meta: META_SCHEMA,
-        data: {
-          description: 'Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.',
+        points: {
+          description: 'One row per block, computed in the warehouse (REQ-058). A block without data is null or left out; it is drawn as empty, never as zero.',
           type: 'array',
           minItems: 1,
-          maxItems: 4000,
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['day', 'value'],
-            properties: {
-              day: { type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' },
-              value: { type: ['number', 'null'], minimum: 0 },
-            },
-          },
+          maxItems: 1000,
+          items: this.pointSchema(),
         },
       },
     };
   }
 
+  /** Valid and unique block names, only the fields of the statistic, and a spread on every block or on none. */
   check(request: Request): IssueSpec[] {
-    return checkDailySeries(request.data);
+    const issues: IssueSpec[] = [];
+    if (request.asOf !== undefined && parseDay(request.asOf) === undefined) {
+      issues.push({ level: 'inputError', code: 'invalidDate', field: '/asOf', params: { value: request.asOf } });
+    }
+    const keys: { key: number; pointer: string; name: string }[] = [];
+    const seen = new Set<number>();
+    const own = new Set<string>(Object.keys(this.statistic.pointProperties()));
+    request.points.forEach((row, index) => {
+      const pointer = `/points/${index}`;
+      const name = row[this.blockField];
+      // periodComparison accepts the fields of every statistic in its schema; only the chosen one belongs.
+      for (const field of STATISTIC_FIELDS) {
+        if (row[field] !== undefined && !own.has(field)) {
+          issues.push({ level: 'inputError', code: 'fieldNotForStatistic', field: `${pointer}/${field}`, params: { statistic: this.statistic.id } });
+        }
+      }
+      const other = this.blockField === 'end' ? 'period' : 'end';
+      if (row[other] !== undefined) issues.push({ level: 'inputError', code: 'unexpectedField', field: `${pointer}/${other}` });
+      if (row.previous && Object.keys(row.previous).some((field) => field !== this.statistic.id)) {
+        issues.push({ level: 'inputError', code: 'fieldNotForStatistic', field: `${pointer}/previous`, params: { statistic: this.statistic.id } });
+      }
+      issues.push(...this.statistic.checkRow(row, pointer));
+      if (name === undefined) return;
+      const key = this.blockKey(name, request);
+      if (key === undefined) {
+        issues.push(this.invalidBlock(name, `${pointer}/${this.blockField}`, request));
+      } else if (seen.has(key)) {
+        issues.push({ level: 'inputError', code: 'duplicateBlock', field: `${pointer}/${this.blockField}`, params: { block: name } });
+      } else {
+        seen.add(key);
+        keys.push({ key, pointer: `${pointer}/${this.blockField}`, name });
+      }
+    });
+    issues.push(...this.blockChecks(keys, request));
+    if (keys.length > 0) {
+      const count = this.slotCount(Math.min(...keys.map(({ key }) => key)), Math.max(...keys.map(({ key }) => key)), request);
+      if (count > MAX_SLOTS) issues.push({ level: 'inputError', code: 'tooManyBlocks', field: '/points', params: { count, max: MAX_SLOTS } });
+    }
+    // A spread on every block with a value, or on none: half a band would say nothing.
+    if (this.statistic.hasSpread) {
+      const withValue = request.points.map((row, index) => ({ row, index })).filter(({ row }) => this.statistic.read(row) !== null);
+      const withSpread = withValue.filter(({ row }) => this.statistic.hasSpreadIn(row));
+      if (withSpread.length > 0 && withSpread.length < withValue.length) {
+        const first = withValue.find(({ row }) => !this.statistic.hasSpreadIn(row))!;
+        issues.push({ level: 'inputError', code: 'spreadIncomplete', field: `/points/${first.index}`, params: { statistic: this.statistic.id } });
+      }
+    }
+    return issues;
   }
 
-  // ----- Computation -----
+  // ----- From blocks to slots: no computing over days (REQ-058) -----
 
   compute(request: Request, { now }: { now: Date }): TimeAxisComputed {
-    const values = new Map<number, number | null>();
-    for (const { day, value } of request.data) values.set(parseDay(day)!, value);
-
-    // "Today" is the last day in the data, but never the running day in Brussels: it is not complete yet.
     const yesterday = currentDay(now) - 1;
-    const reference = Math.min(Math.max(...values.keys()), yesterday);
-    const ignoredAfterReference = [...values.keys()].filter((day) => day > reference).length;
-
-    const slots = this.slots(reference, request);
-    const rangeStart = slots[0]!.first;
-    const rangeDays = reference - rangeStart + 1;
-    const absentDays: number[] = [];
-    for (let day = rangeStart; day <= reference; day++) {
-      if (typeof values.get(day) !== 'number') absentDays.push(day);
-    }
+    const asOf = request.asOf === undefined ? yesterday : parseDay(request.asOf)!;
+    const rows = new Map<number, BlockRow>();
+    for (const row of request.points) rows.set(this.blockKey(row[this.blockField]!, request)!, row);
+    const keys = [...rows.keys()].sort((a, b) => a - b);
+    const slots = this.slotsBetween(keys[0]!, keys.at(-1)!, asOf, request);
+    const reference = Math.min(asOf, slots.at(-1)!.fullLast);
+    // A block that ends after the last complete day is not final; a calendar period may still run.
+    const after = (slot: Slot) => slot.first > asOf || (!this.mayRun && slot.fullLast > asOf);
+    const blocksAfterReference = slots.filter((slot) => after(slot) && rows.has(this.slotKey(slot))).map((slot) => rows.get(this.slotKey(slot))![this.blockField]!);
 
     const spreadApplies = this.statistic.hasSpread && this.spreadApplies(request);
-    const spreadAsked = (request.spread ?? this.statistic.spreadName) !== 'none';
-    const withSpread = spreadApplies && spreadAsked;
-    const { points, missing } = this.summarize(slots, values, withSpread);
-    // REQ-005: the comparison line never has a band, so its spread is not computed.
-    const comparison = this.compares ? this.summarize(this.previousSpan(slots, request), values, false) : null;
+    const points: SlotPoint[] = [];
+    const missing: number[] = [];
+    for (const slot of slots) {
+      const row = rows.get(this.slotKey(slot));
+      const summary = row && this.statistic.read(row);
+      if (!summary) missing.push(slot.rel);
+      else points.push({ ...slot, ...summary, spread: spreadApplies ? summary.spread : null, days: slot.last - slot.first + 1 });
+    }
+    const withSpread = points.some((point) => point.spread !== null);
+
+    // REQ-005: the comparison line never has a band, so it only carries the centre.
+    let comparison: TimeAxisComputed['comparison'] = null;
+    if (this.compares) {
+      const previousSlots = this.previousSpan(slots, request);
+      const previousPoints = slots.flatMap((slot, index) => {
+        const value = rows.get(this.slotKey(slot))?.previous?.[this.statistic.id];
+        const previous = previousSlots[index]!;
+        return typeof value === 'number' ? [{ ...previous, centre: value, spread: null, days: previous.last - previous.first + 1 }] : [];
+      });
+      comparison = { slots: previousSlots, points: previousPoints };
+    }
+
+    // Few observations (REQ-044), only where n counts observations (REQ-057). Running wins (REQ-054).
+    const observations = this.observationsApply(request);
+    const counted = points.filter((point) => point.n !== undefined).map((point) => point.n!);
+    const relative = counted.length >= 5 ? median(counted) / 2 : 0;
+    const few = observations
+      ? points.filter((point) => point.n !== undefined && !point.running && (point.n < this.statistic.fewBelow! || point.n < relative)).map((point) => point.rel)
+      : [];
 
     // "all" only while every value has room above its point; otherwise the family's default. A
     // comparison labels the ends of its lines instead (REQ-003).
@@ -325,36 +449,19 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return {
       reference,
       referenceIsYesterday: reference === yesterday,
-      ignoredAfterReference,
-      rangeStart,
-      rangeDays,
-      valuesInRange: rangeDays - absentDays.length,
+      blocksAfterReference,
+      daysWithData: points.reduce((sum, point) => sum + point.days, 0),
       withSpread,
-      spreadOmitted: spreadApplies && !spreadAsked,
+      spreadOmitted: spreadApplies && points.length > 0 && !withSpread,
+      nMissing: observations && points.some((point) => point.n === undefined),
+      few,
       values: valuesFallback ? this.defaultValues : asked,
       valuesFallback,
       slots,
       points,
       missing,
-      absentDays,
-      comparison: comparison && { slots: this.previousSpan(slots, request), points: comparison.points },
+      comparison,
     };
-  }
-
-  /** Strict: a slot with a missing day has no value; missing days are never zero or interpolated. */
-  private summarize(slots: Slot[], values: Map<number, number | null>, withSpread: boolean) {
-    const points: SlotPoint[] = [];
-    const missing: number[] = [];
-    for (const slot of slots) {
-      const slotValues: number[] = [];
-      for (let day = slot.first; day <= slot.last; day++) {
-        const value = values.get(day);
-        if (typeof value === 'number') slotValues.push(value);
-      }
-      if (slotValues.length < slot.last - slot.first + 1) missing.push(slot.rel);
-      else points.push({ ...slot, ...this.statistic.summarize(slotValues, withSpread), days: slotValues.length });
-    }
-    return { points, missing };
   }
 
   // ----- The chart-language rules -----
@@ -370,68 +477,70 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         field: '/measureType',
         params: { measureType: request.measureType, allowed: allowed.join(', ') },
       });
+    } else if (request.measureType === 'ratio' && this.statistic.kind === 'amount') {
+      // A total of ratios means nothing: an average price per lead does not add up over a week.
+      issues.push({ level: 'refusal', code: 'ratioNotSummable', field: '/measureType' });
     }
 
-    // Daily uniques and the uniques over a whole period are two different metrics.
+    // Daily uniques and the uniques over a whole block are two different metrics: the caller says which.
     if (request.measureType === 'unique') {
+      const total = this.statistic.kind === 'amount';
       if (request.uniqueAggregation === undefined) {
         issues.push({ level: 'refusal', code: 'uniqueAggregationRequired', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
-      } else if (request.uniqueAggregation === 'overPeriod' || this.statistic.kind === 'amount') {
-        // A total of daily uniques counts someone who comes back on several days several times.
-        issues.push({
-          level: 'refusal',
-          code: 'uniquesOverPeriodNotDerivable',
-          field: request.uniqueAggregation === 'overPeriod' ? '/uniqueAggregation' : '/statistic',
-          params: { period: this.periodNoun(request) },
-          learnMore: LEARNING_PLAN_LEVEL_1,
-        });
+      } else if (request.uniqueAggregation === 'daily' && total) {
+        // REQ-035: a total of daily uniques counts someone who comes back on several days several times.
+        issues.push({ level: 'refusal', code: 'dailyUniquesNotSummable', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
+      } else if (request.uniqueAggregation === 'overPeriod' && !total) {
+        // The uniques over a block are one count, counted in the warehouse (REQ-058): not an average per day.
+        issues.push({ level: 'refusal', code: 'uniquesOverPeriodNotAveraged', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
       }
     } else if (request.uniqueAggregation !== undefined) {
       issues.push({ level: 'info', code: 'uniqueAggregationIgnored', field: '/uniqueAggregation' });
     }
 
     const { minimumPoints } = metadata.data;
-    if (computed.valuesInRange < minimumPoints) {
+    if (computed.blocksAfterReference.length > 0) {
+      issues.push({
+        level: 'refusal',
+        code: 'blockAfterReference',
+        field: '/points',
+        params: { block: computed.blocksAfterReference[0]!, day: formatDay(computed.reference) },
+      });
+    } else if (computed.points.length === 0) {
+      issues.push({ level: 'refusal', code: 'noData', field: '/points' });
+    } else if (computed.daysWithData < minimumPoints) {
       issues.push({
         level: 'refusal',
         code: 'insufficientData',
-        field: '/data',
-        params: {
-          count: computed.valuesInRange,
-          days: computed.rangeDays,
-          from: formatDay(computed.rangeStart),
-          to: formatDay(computed.reference),
-          minimumPoints,
-        },
+        field: '/points',
+        params: { count: computed.daysWithData, minimumPoints },
         learnMore: metadata.links.learning,
       });
-    } else if (computed.points.length === 0) {
-      issues.push({ ...this.noPointIssue(request), learnMore: metadata.links.learning });
     } else if (computed.comparison && computed.comparison.points.length === 0) {
-      // Nothing to compare with: the data does not reach back to the period before the screen.
-      issues.push({
-        level: 'refusal',
-        code: 'noComparisonData',
-        field: '/data',
-        params: { from: formatDay(computed.comparison.slots[0]!.first), to: formatDay(computed.comparison.slots.at(-1)!.fullLast) },
-      });
+      // Nothing to compare with: no block carries the value of the period before the screen.
+      issues.push({ level: 'refusal', code: 'noComparisonData', field: '/points' });
     }
 
     issues.push(...this.periodRules(request));
     // REQ-032: allowed, but discouraged with a red alert between the title and the chart.
     if (computed.spreadOmitted) {
-      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/spread', learnMore: LEARNING_PLAN_LEVEL_1 });
+      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/points', learnMore: LEARNING_PLAN_LEVEL_1 });
+    }
+    // REQ-062: n is not required, but without it the reader cannot see which points rest on few observations.
+    if (computed.nMissing) {
+      issues.push({ level: 'deviation', code: `nMissing.${this.statistic.id}`, field: '/points' });
+    }
+    // REQ-047: a red block for the reader, but not a deviation: the version label stays.
+    if (computed.few.length > 0) {
+      issues.push({
+        level: 'caution',
+        code: `fewObservations.${this.statistic.id}`,
+        field: '/points',
+        params: { count: computed.few.length, total: computed.points.length, blocks: this.blockNoun(request) },
+      });
     }
     if (computed.valuesFallback) {
       issues.push({ level: 'info', code: 'valuesAllTooDense', field: '/values', params: { values: computed.values } });
-    }
-    if (computed.ignoredAfterReference > 0) {
-      issues.push({
-        level: 'info',
-        code: 'daysAfterReferenceIgnored',
-        field: '/data',
-        params: { count: computed.ignoredAfterReference, day: formatDay(computed.reference) },
-      });
     }
     return issues;
   }
@@ -443,7 +552,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const previous = computed.comparison?.points ?? [];
     const count = slots.length;
     const plotWidth = this.plotWidth;
-    const padding = this.padding;
+    // REQ-046: the n of a point with few observations, under the time axis, right below the point.
+    const fewSet = new Set(computed.few);
+    const nLabels = points.filter((point) => fewSet.has(point.rel)).map((point) => ({ rel: point.rel, text: t('axis.n', { n: point.n! }) }));
+    const padding = nLabels.length > 0 ? { ...this.padding, bottom: this.padding.bottom + N_LINE } : this.padding;
     const slotWidth = plotWidth / count;
     const barWidth = this.statistic.barWidth(tokens);
     // REQ-005: with a comparison, the spread of the focus series is always a light band.
@@ -534,13 +646,15 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const endValue = lastFocus ? [{ rel: lastFocus.rel, py: ends.focus, text: valueFormat.format(lastFocus.centre) }] : [];
     // With a comparison, "lopend" goes under the value at the end instead of under the point.
     const endRunning = lastFocus?.running ? [{ rel: lastFocus.rel, py: ends.focus! + SECOND_LINE, text: t('chart.runningShort') }] : [];
-    const endComparison = this.compares && lastPrevious ? [{ rel: lastPrevious.rel, py: ends.comparison, text: this.comparisonLabel(request, t) }] : [];
+    const endComparison = this.compares && lastPrevious ? [{ rel: lastPrevious.rel, py: ends.comparison, text: this.comparisonLabel(request, t, computed.slots.length) }] : [];
 
     // REQ-049: the state of the data in a period is a pattern behind its whole column. Empty is a
     // checkerboard (REQ-051), never an outline over the chart; a running period gets fine vertical lines
-    // and keeps its filled shape (REQ-052). Only the current period: the comparison line never.
+    // and keeps its filled shape (REQ-052); few observations sparse dots, the shape filled too (REQ-053).
+    // Only the current period: the comparison line never.
     const states = new Map<number, DataState>([
       ...points.filter((point) => point.running).map((point) => [point.rel, 'running'] as const),
+      ...computed.few.map((rel) => [rel, 'few'] as const),
       ...computed.missing.map((rel) => [rel, 'empty'] as const),
     ]);
     const columns = stateColumns(states);
@@ -599,6 +713,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         endValue,
         endRunning,
         endComparison,
+        nLabels,
         ...values.datasets,
       },
       layer: [
@@ -702,6 +817,12 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           encoding: { x, y: { field: 'py', type: 'quantitative', scale: null }, text: { field: 'text' } },
         },
         {
+          data: { name: 'nLabels' },
+          // As in Figma: the axis style in the muted grey, a little lighter than the labels above it.
+          mark: { type: 'text', align: 'center', baseline: 'top', fontSize: tokens.size.axisLabel, color: color(tokens, 'text/muted'), opacity: 0.7 },
+          encoding: { x, y: { value: PLOT_HEIGHT + AXIS_HEIGHT + 1 }, text: { field: 'text' } },
+        },
+        {
           data: { name: 'endComparison' },
           mark: { type: 'text', align: 'left', baseline: 'middle', dx: 8, fontSize: tokens.size.detail, color: color(tokens, 'text/muted') },
           encoding: { x, y: { field: 'py', type: 'quantitative', scale: null }, text: { field: 'text' } },
@@ -715,11 +836,13 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const cue = [
       this.periodCue(request, t),
       computed.withSpread ? t(`cue.spread.${this.statistic.id}`) : '',
-      this.compares ? t('cue.comparison', { label: this.comparisonLabel(request, t) }) : '',
+      this.compares ? t('cue.comparison', { label: this.comparisonLabel(request, t, computed.slots.length) }) : '',
     ]
       .filter(Boolean)
       .join(' · ');
-    const readingCue = request.measureType === 'unique' ? `${t('cue.unique')} · ${cue}` : cue;
+    // Unique counts say how they were counted: per day, or over each block (in the warehouse).
+    const unique = request.uniqueAggregation === 'overPeriod' ? t('cue.uniqueOverPeriod', { block: this.blockSingular(request, t) }) : t('cue.unique');
+    const readingCue = request.measureType === 'unique' ? `${unique} · ${cue}` : cue;
     const last = points.find((point) => point.rel === 0);
     const description = [
       t('desc.base', { title, cue: readingCue, date: localizeDay(t, computed.reference, 'long') }),
@@ -741,12 +864,11 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   }
 
   /**
-   * What each slot shows on hover, also a slot without data: its name (bold), the centre, the spread
-   * and the family's extras, e.g. "23 sep (−7d)", "gemiddelde 7d: 43,7", "±1 sd: 12,2", "venster 17–23 sep";
-   * or why it has no value, e.g. "geen data: 15 sep ontbreekt".
+   * What each slot shows on hover, also a slot without data: its name (bold), the centre, the spread,
+   * n (REQ-043) and the family's extras, e.g. "23 sep (−7d)", "gemiddelde 7d: 43,7", "±1 sd: 12,2",
+   * "venster 17–23 sep"; or "geen data".
    */
   protected hoverSpecs(request: Request, computed: TimeAxisComputed, t: Translator, format: Intl.NumberFormat): HoverSpec[] {
-    const absent = new Set(computed.absentDays);
     const byRel = new Map(computed.points.map((point) => [point.rel, point]));
     const previousSlots = new Map(computed.comparison?.slots.map((slot) => [slot.rel, slot]));
     const previousPoints = new Map(computed.comparison?.points.map((point) => [point.rel, point]));
@@ -764,13 +886,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
               : t('hover.comparisonMissing', { name: this.slotLabel(previousSlot, context, request) }),
           }]
         : [];
-      if (!point) {
-        const gaps = [];
-        for (let day = slot.first; day <= slot.last; day++) if (absent.has(day)) gaps.push(day);
-        const first = localizeDay(t, gaps[0] ?? slot.first, 'short');
-        const text = gaps.length === 1 ? t('chart.missing.one', { absent: first }) : t('chart.missing.many', { count: gaps.length, absent: first });
-        return { x: slot.rel, lines: [name, { text }, ...comparison] };
-      }
+      if (!point) return { x: slot.rel, lines: [name, { text: t('chart.noData') }, ...comparison] };
       const spread = this.statistic.spreadLine(t, format, point);
       return {
         x: slot.rel,
@@ -779,6 +895,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           name,
           { text: `${this.centreLabel(request, t)}: ${format.format(point.centre)}` },
           ...(spread ? [{ text: spread }] : []),
+          ...(point.n === undefined ? [] : [{ text: t('hover.n', { n: numberFormat(t.locale, 0).format(point.n) }) }]),
           ...this.slotExtras(slot, context, request).map((text) => ({ text })),
           ...comparison,
         ],

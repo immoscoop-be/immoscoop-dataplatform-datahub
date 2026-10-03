@@ -12,6 +12,9 @@ async function render(request: unknown) {
 /** Text keys that slipped through untranslated would look like "footer.asOf". */
 const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes|hover|meta|readingCards)\.[a-zA-Z]+/;
 
+/** The SVG without the hover details, which only show on hover or focus. */
+const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-detail".*?<\/g><\/g>/g, '');
+
 const hoverLabels = (svg: string) => [...svg.matchAll(/class="semgraph-hover-column" tabindex="0" role="img" aria-label="([^"]*)"/g)].map((match) => match[1]);
 
 describe('render', async () => {
@@ -25,7 +28,7 @@ describe('render', async () => {
         assert.ok(result.svg);
         assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
         // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036).
-        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|empty|running)-[0-9a-f]{8}$/);
+        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|empty|running|few)-[0-9a-f]{8}$/);
         await assertGolden(`${id}-${name}.svg`, result.svg);
       });
     }
@@ -37,8 +40,8 @@ describe('render', async () => {
     assert.match(svg!, /voortschrijdend gemiddelde 7d · ±1 sd/);
     assert.match(svg!, /Leads<\/tspan><tspan> › <\/tspan><tspan>creditLeads<\/tspan><tspan> · <\/tspan><tspan>owner onbekend/);
     // The footer as the building blocks Origin, Status and Learn link in Figma.
-    assert.match(svg!, /font-weight="600" fill="#2d333a" xml:space="preserve"><tspan>Leads<\/tspan>/);
-    assert.match(svg!, /<tspan>peildatum 30\/09<\/tspan><tspan> · <\/tspan><tspan font-weight="700" fill="#2d333a">samengesteld 01\/10<\/tspan>/);
+    assert.match(svg!, /font-weight="600" fill="#3c444e" xml:space="preserve"><tspan>Leads<\/tspan>/);
+    assert.match(svg!, /<tspan>peildatum 30\/09<\/tspan><tspan> · <\/tspan><tspan font-weight="700" fill="#3c444e">samengesteld 01\/10<\/tspan>/);
     assert.match(svg!, /definitie onbekend/);
     assert.match(
       svg!,
@@ -50,10 +53,11 @@ describe('render', async () => {
     assert.match(svg!, />nu</);
   });
 
-  it('shows missing days as missing data, never as zero: a checkerboard behind the column (REQ-051)', async () => {
+  it('shows a block without data as empty, never as zero: a checkerboard behind the column (REQ-051)', async () => {
     const { svg } = await render(await example('missing-days'));
     assert.match(svg!, /fill="url\(#semgraph-empty-[0-9a-f]{8}\)"/);
-    assert.doesNotMatch(svg!, />no data</);
+    assert.doesNotMatch(withoutHover(svg!), />no data</);
+    assert.ok(hoverLabels(svg!).includes('16 Sep (−14d), no data'));
   });
 
   it('leaves out the version label for a tolerated deviation, without a footer note (REQ-042)', async () => {
@@ -70,9 +74,9 @@ describe('render', async () => {
     assert.match(svg!, /mark-line role-mark/);
     for (const label of ['−455d', '−364d', '−273d', '−182d', '−91d']) assert.match(svg!, new RegExp(`>${label}<`));
     assert.doesNotMatch(svg!, />−7d</);
-    // Two windows miss data: one misses 14 and 15 July, the next one 16 July.
-    assert.ok(hoverLabels(svg!).includes('15 jul (−77d), geen data: 2 dagen ontbreken, de eerste op 14 jul'));
-    assert.ok(hoverLabels(svg!).includes('22 jul (−70d), geen data: 16 jul ontbreekt'));
+    // Two windows without data.
+    assert.ok(hoverLabels(svg!).includes('15 jul (−77d), geen data'));
+    assert.ok(hoverLabels(svg!).includes('22 jul (−70d), geen data'));
   });
 
   it('shows every tolerated deviation as a red block with a message to the reader (REQ-032, REQ-038, REQ-040, REQ-041)', async () => {

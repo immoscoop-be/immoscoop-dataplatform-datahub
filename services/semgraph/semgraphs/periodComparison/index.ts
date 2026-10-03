@@ -12,9 +12,6 @@ type StatisticId = (typeof STATISTICS)[number];
 /** Either rolling windows (`window`) or calendar periods (`unit`), with the statistic to compare. */
 export type PeriodComparisonRequest = (MovingWindowRequest | CalendarRequest) & { statistic: StatisticId; window?: number; unit?: string };
 
-/** The spreads each statistic allows: a total has none. */
-const SPREADS: Record<StatisticId, string[]> = { sum: ['none'], mean: ['stddev', 'none'], median: ['iqr', 'none'] };
-
 const statistic = (id: StatisticId): Statistic => ({ sum: new Sum(), mean: new Average(), median: new Median() })[id];
 
 class RollingComparison extends MovingWindowChart {
@@ -44,18 +41,19 @@ export class PeriodComparison implements SemgraphImplementation<PeriodComparison
   }
 
   schema(): object {
-    const rolling = this.rolling.mean.schema() as { properties: Record<string, object> };
-    const calendar = this.calendar.mean.schema() as { properties: Record<string, object> };
-    const { semgraph, metric, title, measureType, uniqueAggregation, valueAxis, format, locale, context, meta, data } = rolling.properties;
+    const rolling = this.rolling.mean.schema() as { properties: Record<string, any> };
+    const calendar = this.calendar.mean.schema() as { properties: Record<string, any> };
+    const { semgraph, metric, title, measureType, uniqueAggregation, asOf, valueAxis, format, locale, context, meta, points } = rolling.properties;
+    const fields = Object.assign({}, ...STATISTICS.map((id) => statistic(id).pointProperties()));
     return {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       $id: `semgraph:${ID}/request`,
       title: `${ID} request`,
       description:
-        'The current period against the period just before the screen, as long as what the screen shows, as two lines on one time axis: the current one in the focus colour, the earlier one grey, a shortfall hatched. Give either window (rolling windows) or unit (calendar periods). The caller sends raw daily values for both periods; the service computes the rest.',
+        'The current period against the period just before the screen, as long as what the screen shows, as two lines on one time axis: the current one in the focus colour, the earlier one grey, a shortfall hatched. Give either window (rolling windows) or unit (calendar periods). The warehouse computes each block and the value of the block before the screen at its position (REQ-058).',
       type: 'object',
       additionalProperties: false,
-      required: ['semgraph', 'metric', 'measureType', 'statistic', 'horizon', 'data'],
+      required: ['semgraph', 'metric', 'measureType', 'statistic', 'points'],
       properties: {
         semgraph,
         metric,
@@ -63,27 +61,35 @@ export class PeriodComparison implements SemgraphImplementation<PeriodComparison
         measureType,
         uniqueAggregation,
         statistic: {
-          description: 'The value both lines show: sum (the total per period, a square), mean (a diamond with ±1 sd) or median (a dot with P25–P75).',
+          description: 'The value both lines show: sum (the total per block, a square), mean (a diamond with ±1 sd) or median (a dot with P25–P75). A block carries only the fields of this statistic.',
           enum: [...STATISTICS],
         },
         window: { ...rolling.properties.window, description: 'Rolling windows of this many days: 1 or a multiple of 7. Give either window or unit.' },
         unit: { ...calendar.properties.unit, description: 'Calendar periods: week (ISO), month, quarter or year. Give either unit or window.' },
-        horizon: {
-          description: 'Number of windows or periods on the screen; the comparison covers as many just before them.',
-          type: 'integer',
-          minimum: 2,
-          maximum: 120,
-        },
-        spread: {
-          description: 'The light band of the current period (the comparison never has one): stddev or none for a mean, iqr or none for a median, none for a sum.',
-          enum: ['stddev', 'iqr', 'none'],
-        },
+        asOf,
         valueAxis,
         format,
         locale,
         context,
         meta,
-        data: { ...data, description: 'Daily values of the period on the screen and the period just before it. 0 is a measured zero; null or an absent day means no data.' },
+        points: {
+          ...points,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              end: { ...points.items.properties.end, description: 'With window: the last day of the window.' },
+              period: { ...(calendar.properties.points.items.properties.period as object), description: 'With unit: the ISO name of the period.' },
+              ...fields,
+              previous: {
+                description: 'The value of the block just before the screen at this position, in the field of the statistic (REQ-037); null when it has no data. For a running period: as many days of the earlier one.',
+                type: ['object', 'null'],
+                additionalProperties: false,
+                properties: Object.fromEntries(STATISTICS.map((id) => [id, { type: ['number', 'null'], minimum: 0 }])),
+              },
+            },
+          },
+        },
       },
     };
   }
@@ -93,10 +99,12 @@ export class PeriodComparison implements SemgraphImplementation<PeriodComparison
     if (hasWindow === (request.unit !== undefined)) {
       return [{ level: 'inputError', code: 'windowOrUnit', field: hasWindow ? '/unit' : '/window' }];
     }
-    if (request.spread !== undefined && !SPREADS[request.statistic].includes(request.spread)) {
-      return [{ level: 'inputError', code: 'invalidValue', field: '/spread', params: { allowed: SPREADS[request.statistic].join(', ') } }];
-    }
-    return this.chartFor(request).check(request as never);
+    // Every block needs its name and the value of the statistic; the schema cannot tie them to the request.
+    const name = hasWindow ? 'end' : 'period';
+    const missing = request.points.flatMap((row, index) =>
+      [name, request.statistic].filter((field) => !(field in row)).map((field) => ({ level: 'inputError' as const, code: 'missingField', field: `/points/${index}/${field}`, params: { name: field } })),
+    );
+    return missing.length > 0 ? missing : this.chartFor(request).check(request as never);
   }
 
   compute(request: PeriodComparisonRequest, context: { now: Date }): TimeAxisComputed {

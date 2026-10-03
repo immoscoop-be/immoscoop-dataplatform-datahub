@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { runPipeline } from '../src/core/pipeline.ts';
-import { example, NOW, series, testRegistry } from './helpers.ts';
+import { example, NOW, testRegistry } from './helpers.ts';
 
 const PLOT = { width: 560, height: 200 };
 
@@ -71,7 +71,7 @@ describe('hover', () => {
     assert.deepEqual(found[5]!.bold, ['23 sep (−7d)']);
     assert.equal(found[6]!.label, '30 sep (nu), gemiddelde 7d: 45,9, ±1 sd: 11,3, venster 24–30 sep');
     const missing = columns(await svgOf(await example('missing-days')));
-    assert.equal(missing[4]!.label, '16 Sep (−14d), no data: 15 Sep is missing');
+    assert.equal(missing[4]!.label, '16 Sep (−14d), no data');
     const median = columns(await svgOf(await example('quarters', 'calendarMedian')));
     assert.equal(median[0]!.label, 'K2 2025, mediaan per dag: 46,0, P25–P75: 32,0–50,0');
     const weeks = columns(await svgOf(await example('weeks', 'calendarAverage')));
@@ -106,20 +106,22 @@ describe('hover', () => {
 
   it('never draws the lower spread guide below zero', async () => {
     // Mostly zeros with a few spikes: mean − sd is below zero.
-    const values = Array.from({ length: 49 }, (_, index) => (index % 7 === 3 ? 12 : 0));
-    const found = columns(await svgOf({ ...(await example('basic')), data: series('2026-09-30', values) }));
+    const basic = await example('basic');
+    const points = (basic.points as { end: string }[]).map(({ end }) => ({ end, mean: 1.7143, sd: 4.5356 }));
+    const found = columns(await svgOf({ ...basic, points }));
     for (const column of found) for (const guide of column.guides) assert.ok(guide.y1 <= PLOT.height + 1e-9);
     assert.ok(found.some((column) => column.guides.some((guide) => guide.x1 === 0 && guide.y1 === PLOT.height)));
   });
 
   it('puts the box above the spread when there is room, below it otherwise, always inside the plot', async () => {
-    // Low values with one early spike: the last days have plenty of room above.
-    const values = Array.from({ length: 49 }, (_, index) => (index === 3 ? 100 : 40 + (index % 3)));
-    const found = columns(await svgOf({ ...(await example('basic')), data: series('2026-09-30', values) }));
+    // Low values with one early spike: the last windows have plenty of room above.
+    const basic = await example('basic');
+    const points = (basic.points as { end: string }[]).map(({ end }, index) => (index === 0 ? { end, mean: 49.4, sd: 22.4 } : { end, mean: 41, sd: 0.8 }));
+    const found = columns(await svgOf({ ...basic, points }));
     const low = found.at(-1)!;
     const lowTop = Math.min(...low.guides.slice(1).map((guide) => guide.y1));
     assert.ok(low.box.y + low.box.height <= lowTop, 'above the spread');
-    // The first block has a spike: its spread reaches almost to the top, so the box goes below.
+    // The first window has a spike: its spread reaches almost to the top, so the box goes below.
     const high = found[0]!;
     const highBottom = Math.max(...high.guides.slice(1).map((guide) => guide.y1));
     assert.ok(high.box.y >= highBottom, 'below the spread');

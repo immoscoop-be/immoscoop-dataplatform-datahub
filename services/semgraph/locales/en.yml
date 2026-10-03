@@ -50,6 +50,7 @@ attributes:
     question: Do you want the average or the median?
 
 axis:
+  n: "n {n}"
   now: now
   daysAgo: "−{n}d"
 
@@ -63,11 +64,15 @@ cue:
     mean: daily average per {unit}
     median: daily median per {unit}
     sum: total per {unit}
+    ratio:
+      mean: "mean per {unit}"
+      median: "median per {unit}"
   comparison: vs {label}
   spread:
     mean: ±1 sd
     median: P25–P75
   unique: unique · counted per day
+  uniqueOverPeriod: "unique · counted per {block}"
 
 desc:
   base: "{title}: {cue}, up to {date}."
@@ -79,14 +84,13 @@ chart:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
-  missing:
-    one: "no data: {absent} is missing"
-    many: "no data: {count} days are missing, the first on {absent}"
   window: window {range}
   running: "running: {count} of {total} days"
+  noData: no data
   runningShort: current
 
 hover:
+  n: "n = {n} observations"
   centre:
     rolling:
       mean: "{window}d average"
@@ -97,6 +101,9 @@ hover:
       mean: daily average
       median: daily median
       sum: total
+      ratio:
+        mean: mean
+        median: median
   comparison: "previous period, {name}: {value}"
   comparisonMissing: "previous period, {name}: no data"
   spread:
@@ -112,11 +119,6 @@ calendar:
   tick:
     week: W{week}
     quarter: Q{quarter}
-  none:
-    week: not a single week
-    month: not a single month
-    quarter: not a single quarter
-    year: not a single year
   hover:
     week: week {week} ({range})
     month: "{month} {year}"
@@ -130,13 +132,15 @@ comparison:
   quarters: previous {n} quarters
   days: previous {n} days
 
-period:
-  day: a day
-  window: a {window}-day window
-  week: a week
-  month: a month
-  quarter: a quarter
-  year: a year
+blocks:
+  day: days
+  window: windows
+  week: weeks
+  month: months
+  quarter: quarters
+  year: years
+  oneDay: day
+  oneWindow: "{window}-day window"
 
 date:
   short: "{day} {month}"
@@ -202,7 +206,7 @@ issues:
     alternative: Send a JSON object with Content-Type application/json.
   payloadTooLarge:
     message: The request is too large.
-    alternative: Send at most 4000 days; a chart never needs more.
+    alternative: Send at most 1000 blocks; a chart never needs more.
   unsupportedMediaType:
     message: Only JSON requests are accepted.
     alternative: Use Content-Type application/json.
@@ -228,8 +232,8 @@ issues:
   unexpectedField:
     message: The field {field} does not belong to this semgraph.
     alternative: Remove it, or check the spelling in GET /semgraphs/{semgraph}.
-  unexpectedDataField:
-    message: A day may only contain day and value; {field} is not allowed.
+  unexpectedBlockField:
+    message: A block carries only its name and the fields of its statistic; {field} is not allowed.
     alternative: Remove the other columns. Never send personal data to the chart service.
   invalidValue:
     message: "{field} must be one of: {allowed}."
@@ -252,9 +256,28 @@ issues:
   invalidDate:
     message: "{field}: {value} is not an existing day."
     alternative: Write days as YYYY-MM-DD.
-  duplicateDay:
-    message: The day {day} appears more than once.
-    alternative: Send one value per day.
+  invalidPeriod:
+    message: "{field}: {value} is not a valid {unit}."
+    alternative: Write 2026-W40 for a week, 2026-09 for a month, 2026-Q3 for a quarter and 2026 for a year.
+  tooManyBlocks:
+    message: "From the first block to the last there are {count} blocks; a chart shows at most {max}."
+    alternative: Send a shorter period, or longer blocks.
+  duplicateBlock:
+    message: The block {block} occurs more than once.
+    alternative: Send one row per block.
+  windowsNotAligned:
+    message: "{field}: the window ending on {block} does not line up with the others. The end days must lie a multiple of {window} days apart."
+    alternative: Let the windows follow each other without overlap, each of {window} days.
+  fieldNotForStatistic:
+    message: "{field} does not belong to the statistic {statistic}."
+    alternative: "A block carries only the fields of its statistic: mean with sd and n, median with p25, p75 and n, or sum."
+  spreadIncomplete:
+    message: "{field} has no spread, while other blocks have one."
+    alternative: Give the spread with every block that has a value, or with none.
+  spreadPartial:
+    message: "{field} is missing: P25 and P75 go together."
+  spreadOrder:
+    message: "{field}: P25, the median and P75 must lie in that order."
   invalidUrl:
     message: "{field} must be a web link that starts with http:// or https://."
   invalidCharacters:
@@ -263,53 +286,71 @@ issues:
     message: The format {format} is not available yet; this version only makes svg.
     alternative: Ask for format svg.
 
+  # Refusals (422): the chart would mislead, so it is not drawn.
+  measureTypeNotAllowed:
+    message: "This chart is not made for a measure of type {measureType}: the chart language defines it only for {allowed}."
+    alternative: Use a measure of type {allowed}, or ask the data team which semgraph fits.
+  ratioNotSummable:
+    message: "A total of ratios means nothing: an average amount per lead does not add up over a week."
+    alternative: Choose statistic mean or median.
+  uniqueAggregationRequired:
+    message: "For unique counts, say how they were counted: per day (daily) or over the whole block (overPeriod). Those are two different metrics."
+    alternative: Add uniqueAggregation daily or overPeriod.
+  dailyUniquesNotSummable:
+    message: A total of daily uniques counts someone who comes back on several days several times.
+    alternative: Count the uniques over each block in the warehouse and give uniqueAggregation overPeriod, or choose statistic mean for the average per day.
+  uniquesOverPeriodNotAveraged:
+    message: "Uniques over a whole block are one count per block: there is no average per day and no spread to show."
+    alternative: Use periodComparison with statistic sum for the uniques per block, or send the daily uniques with uniqueAggregation daily.
+  blockAfterReference:
+    message: "The block {block} runs past the last complete day ({day}), so its value is not final yet."
+    alternative: Send only blocks up to the last complete day (a calendar period may still be running), or give asOf when the data runs further.
+  noData:
+    message: No block has a value, so there is nothing to show. A block without data never counts as zero.
+    alternative: Send the values (0 where nothing happened).
+  insufficientData:
+    message: "The blocks with a value cover {count} days together. A reliable chart needs at least {minimumPoints}."
+    alternative: Send more blocks.
+
   windowOrUnit:
     message: Give either window (rolling windows) or unit (calendar periods), not both and not neither.
-
-  # Refusals (422): the chart would mislead, so it is not drawn.
   noComparisonData:
-    message: "There is nothing to compare with: in the period before the screen, from {from} to {to}, not a single period is complete."
-    alternative: Send the days of that period too (0 where nothing happened).
-  measureTypeNotAllowed:
-    message: "This chart is not made for a measure of type {measureType}: the chart language only defines it for {allowed}."
-    alternative: Use a measure of type {allowed}, or ask the data team which semgraph fits.
-  uniqueAggregationRequired:
-    message: "For unique counts you have to choose: uniques counted per day, or uniques over the whole period. Those are two different metrics."
-    alternative: Add uniqueAggregation daily when the values are daily uniques. Uniques over the period cannot be computed from daily values.
-  uniquesOverPeriodNotDerivable:
-    message: "Uniques over {period} cannot be computed from daily values: someone who comes back on several days would be counted several times."
-    alternative: Compute them at the source as a metric of its own, or choose uniqueAggregation daily.
-  insufficientData:
-    message: "There are {count} days with a value in the {days} days this chart uses ({from} to {to}). A reliable rolling average needs at least {minimumPoints}."
-    alternative: Send more days, or choose a longer horizon.
-  noCompleteWindow:
-    message: Not a single {window}-day window is complete, so there is no average to show. Days without data are never counted as zero.
-    alternative: Send the missing days (0 where nothing happened), or use a shorter window.
-  noCompletePeriod:
-    message: Not a single {unit} is complete, so there is nothing to show. Days without data are never counted as zero.
-    alternative: Send the missing days (0 where nothing happened).
+    message: "There is nothing to compare with: no block carries the value of the period before the screen."
+    alternative: Give in previous, for every block, the value of the block before it.
 
-  # Tolerated deviations (200): the chart is drawn, with a note in the footer and without version label.
   windowNotMultipleOf7:
-    message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a note in the footer.
+    message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a red alert.
     alternative: Use 7, 14, 28 or another multiple of 7.
-    alert: "Read this chart with care: a {window}-day window is not a multiple of 7, so not every weekday counts equally often. A difference between two points can come from the weekdays."
+    alert: "Read this chart with care: a window of {window} days is not a multiple of 7, so not every weekday counts equally often. A difference between two points can come from the weekdays."
   meanWithoutSpread:
-    message: The average is shown without its spread, so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
-    alternative: Use spread stddev.
-    alert: "Read this chart with care: this average is shown without its spread, so you cannot see how far the daily values lie apart. Two periods with the same average can be very different."
+    message: The mean is shown without its spread, so you cannot see how far the values lie apart. The chart is drawn, with a red alert.
+    alternative: Give sd with every block.
+    alert: "Read this chart with care: this mean is shown without its spread, so you cannot see how far the values lie apart. Two periods with the same mean can be very different."
   medianWithoutSpread:
-    message: The median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
-    alternative: Use spread iqr.
-    alert: "Read this chart with care: this median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. Two periods with the same median can be very different."
+    message: The median is shown without its spread (P25–P75), so you cannot see how far the values lie apart. The chart is drawn, with a red alert.
+    alternative: Give p25 and p75 with every block.
+    alert: "Read this chart with care: this median is shown without its spread (P25–P75), so you cannot see how far the values lie apart. Two periods with the same median can be very different."
+  nMissing:
+    mean:
+      message: Not every block of this mean says how many observations are behind it (n). The chart is drawn, with a red alert.
+      alternative: Give n with every block.
+      alert: "Read this chart with care: this mean does not say how many observations are behind it, so you cannot see which points rest on few observations."
+    median:
+      message: Not every block of this median says how many observations are behind it (n). The chart is drawn, with a red alert.
+      alternative: Give n with every block.
+      alert: "Read this chart with care: this median does not say how many observations are behind it, so you cannot see which points rest on few observations."
+  fewObservations:
+    mean:
+      message: "{count} of the {total} {blocks} rest on few observations. Their columns get sparse dots and their n stands under the axis."
+      alert: "Read this chart with care: few observations in {count} of the {total} {blocks}, so a single outlier can move their mean a lot."
+    median:
+      message: "{count} of the {total} {blocks} rest on few observations. Their columns get sparse dots and their n stands under the axis."
+      alert: "Read this chart with care: few observations in {count} of the {total} {blocks}, so their median is still uncertain."
 
-  # Information: nothing is wrong, but the service did something you should know about.
   localeFallback:
     message: There are no texts for {locale}, so English is used.
   uniqueAggregationIgnored:
     message: uniqueAggregation only applies to unique counts and was ignored.
   valuesAllTooDense:
     message: "There are too many points to write every value on the chart; the default ({values}) is used."
-    alternative: Choose a shorter horizon, or a longer period.
-  daysAfterReferenceIgnored:
-    message: "{count} day(s) after the last complete day ({day}) were left out: the current day is not over yet."
+    alternative: Send fewer blocks, or choose a longer period.
