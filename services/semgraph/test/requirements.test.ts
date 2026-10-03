@@ -195,6 +195,27 @@ describe('requirements of the chart language', async () => {
     }
   });
 
+  it('REQ-042: a tolerated deviation has no footer note; only a conforming chart carries the version label', () => {
+    for (const drawn of examples) {
+      assert.doesNotMatch(drawn.svg, /Buiten de grafiektaal|Outside the chart language/, drawn.name);
+      assert.equal(/>(grafiektaal|chart language) v0</.test(drawn.svg), drawn.deviations.length === 0, drawn.name);
+    }
+  });
+
+  it('REQ-015: a mouse click holds nothing open, a tap opens on a device without hover, Tab opens', () => {
+    for (const drawn of examples) {
+      const styles = [...drawn.svg.matchAll(/<style>(.*?)<\/style>/g)].map((match) => match[1]!);
+      assert.ok(styles.length > 0, drawn.name);
+      for (const style of styles) {
+        // Outside the rules for touch, only :hover and :focus-visible open something: a click sets neither.
+        const outsideTouch = style.replace(/@media \(hover:none\)\{(?:[^{}]*\{[^{}]*\})*\}/g, '');
+        assert.doesNotMatch(outsideTouch, /:focus(?!-visible)/, drawn.name);
+        assert.match(style, /:focus-visible/, drawn.name);
+        assert.match(style, /@media \(hover:none\)\{[^}]*:focus /, drawn.name);
+      }
+    }
+  });
+
   it('REQ-033: the values on the chart follow the mode, centred above their point', () => {
     for (const drawn of examples) {
       const strong = drawn.datasets.valuesStrong as { rel: number; y: number }[];

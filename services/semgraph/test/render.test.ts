@@ -50,11 +50,11 @@ describe('render', async () => {
     assert.match(svg!, />no data</);
   });
 
-  it('puts a tolerated deviation in the footer and leaves out the version label', async () => {
+  it('leaves out the version label for a tolerated deviation, without a footer note (REQ-042)', async () => {
     const result = await render(await example('window-10'));
     assert.deepEqual(result.deviations, ['windowNotMultipleOf7']);
-    assert.match(result.svg!, /Buiten de grafiektaal: het venster van 10 dagen is geen veelvoud van 7\./);
     assert.doesNotMatch(result.svg!, /grafiektaal v0/);
+    assert.doesNotMatch(result.svg!, /Buiten de grafiektaal/);
   });
 
   it('draws a long horizon as a line with a band, and thins out the time axis', async () => {
@@ -76,8 +76,8 @@ describe('render', async () => {
     // REQ-041: a message to the reader, without saying anything about whoever delivered the chart.
     assert.match(result.svg!, /fill="#ffffff">Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je/);
     assert.doesNotMatch(result.svg!, /oplever|verantwoord|legt uit waarom/);
-    // The footer still says that the chart is outside the chart language.
-    assert.match(result.svg!, /Buiten de grafiektaal: gemiddelde zonder spreiding\./);
+    // REQ-042: the red block says enough; there is no footer note.
+    assert.doesNotMatch(result.svg!, /Buiten de grafiektaal/);
     const window10 = (await render(await example('window-10'))).svg!;
     assert.match(window10, /fill="#c8102e"/);
     assert.match(window10, />Lees deze grafiek met voorzichtigheid: een venster van 10 dagen/);

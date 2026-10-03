@@ -167,7 +167,6 @@ footer:
   definition: definition
   definitionUnknown: definition unknown
   howToRead: How do I read this chart?
-  outsideLanguage: "Outside the chart language: {details}."
   languageVersion: chart language {version}
 
 types:
@@ -277,17 +276,14 @@ issues:
   windowNotMultipleOf7:
     message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a note in the footer.
     alternative: Use 7, 14, 28 or another multiple of 7.
-    footer: the {window}-day window is not a multiple of 7
     alert: "Read this chart with care: a {window}-day window is not a multiple of 7, so not every weekday counts equally often. A difference between two points can come from the weekdays."
   meanWithoutSpread:
     message: The average is shown without its spread, so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
     alternative: Use spread stddev.
-    footer: average without spread
     alert: "Read this chart with care: this average is shown without its spread, so you cannot see how far the daily values lie apart. Two periods with the same average can be very different."
   medianWithoutSpread:
     message: The median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
     alternative: Use spread iqr.
-    footer: median without spread
     alert: "Read this chart with care: this median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. Two periods with the same median can be very different."
 
   # Information: nothing is wrong, but the service did something you should know about.

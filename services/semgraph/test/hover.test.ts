@@ -131,11 +131,15 @@ describe('hover', () => {
     }
   });
 
-  it('is shown by CSS on :hover and :focus only, with prefixed classes, and hidden without CSS', async () => {
+  it('is shown by CSS following the device rules (REQ-015), with prefixed classes, and hidden without CSS', async () => {
     const svg = await svgOf(await example('basic'));
     const style = /<style>(.*?)<\/style>/.exec(svg)![1]!;
-    assert.match(style, /\.semgraph-hover-column:hover \.semgraph-hover-detail,\.semgraph-hover-column:focus \.semgraph-hover-detail\{visibility:visible\}/);
-    for (const selector of style.matchAll(/(^|[},])([^{},]+)\{/g)) assert.match(selector[2]!.trim(), /^\.semgraph-hover/);
+    // The mouse hovers, the keyboard focuses visibly; a click sets :focus but not :focus-visible, so it holds nothing open.
+    assert.match(style, /\.semgraph-hover-column:hover \.semgraph-hover-detail,\.semgraph-hover-column:focus-visible \.semgraph-hover-detail\{visibility:visible\}/);
+    assert.doesNotMatch(style.replace(/@media \(hover:none\)\{.*?\}\}/, ''), /:focus[^-]/);
+    // On a device without hover a tap focuses and opens; a tap elsewhere takes the focus away and closes.
+    assert.match(style, /@media \(hover:none\)\{\.semgraph-hover-column:focus \.semgraph-hover-detail\{visibility:visible\}\}/);
+    for (const selector of style.replace(/@media [^{]+\{/g, '').matchAll(/(^|[},])([^{},]+)\{/g)) assert.match(selector[2]!.trim(), /^\.semgraph-hover/);
     // Every detail starts hidden and lets the pointer through to the next column.
     assert.equal([...svg.matchAll(/class="semgraph-hover-detail" visibility="hidden" pointer-events="none"/g)].length, 7);
     assert.equal([...svg.matchAll(/class="semgraph-hover-column" tabindex="0"/g)].length, 7);

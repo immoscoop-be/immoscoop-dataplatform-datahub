@@ -157,9 +157,6 @@ function footer(
   const definition: Segment = context.definitionUrl
     ? { text: t('footer.definition'), href: context.definitionUrl }
     : { text: t('footer.definitionUnknown') };
-  const details = deviations
-    .map((issue) => t(`issues.${issue.code}.footer`, localizeParams(t, issue.params)))
-    .join('; ');
   return {
     // Absence is never polished away: missing context is printed as unknown.
     provenance: [
@@ -177,9 +174,8 @@ function footer(
       definition,
     ],
     learn: [{ text: t('footer.howToRead'), href: loaded.metadata.links.learning }],
-    ...(details
-      ? { note: t('footer.outsideLanguage', { details }) }
-      : { versionLabel: t('footer.languageVersion', { version: languageVersion }) }),
+    // REQ-042: no footer note for a deviation; the red block says enough. The version label stays away.
+    ...(deviations.length === 0 ? { versionLabel: t('footer.languageVersion', { version: languageVersion }) } : {}),
   };
 }
 

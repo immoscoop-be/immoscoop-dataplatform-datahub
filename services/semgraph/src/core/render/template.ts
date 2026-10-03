@@ -14,8 +14,6 @@ export interface Footer {
   status: Segment[];
   /** 3) "How do I read this chart?" */
   learn: Segment[];
-  /** "Outside the chart language: ..." when there are tolerated deviations. */
-  note?: string;
   /** The chart-language version label, only when the chart fully conforms. */
   versionLabel?: string;
 }
@@ -124,9 +122,6 @@ export function composeSvg(input: TemplateInput): string {
   footerLine(input.footer.provenance);
   footerLine(input.footer.status);
   footerLine(input.footer.learn);
-  if (input.footer.note) {
-    for (const line of wrap(input.footer.note, footerSize, inner, 4)) footerLine([{ text: line }]);
-  }
   if (input.footer.versionLabel) footerLine([{ text: input.footer.versionLabel }]);
   y += PADDING_BOTTOM;
 
