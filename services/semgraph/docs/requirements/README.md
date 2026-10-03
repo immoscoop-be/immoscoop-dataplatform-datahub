@@ -144,7 +144,8 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-Ook op Confluence onder "In discussie" (14 tot 21).
+Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 14 tot 20. Punt 21 daar is de kleur van de bollen
+(zie [REQ-068](REQ-068.md)).
 
 1. **De mini-trend van de KPI-tegel met de periode ervoor.** REQ-067 (2026-10-03): "Een vergelijking buiten een
    tijdas (vergelijkingsstaaf, KPI-tegel en haar mini-trend) mag met de periode net ervoor of met vorig jaar".
