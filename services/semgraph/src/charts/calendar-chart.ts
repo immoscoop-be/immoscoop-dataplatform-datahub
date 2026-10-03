@@ -83,51 +83,18 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   }
 
   /** "W40", "sep", "K3" or "2026"; the leftmost label and each new year name the year on a second line. */
-  protected tickLabel(slot: Slot, { t, isFirst }: LabelContext, request: CalendarRequest): string[] {
-    const { year, month, quarter } = parts(slot.first);
-    const withYear = (label: string, labelYear: number) => (isFirst || this.startsYear(slot, request) ? [label, String(labelYear)] : [label]);
-    switch (request.unit) {
-      case 'week': {
-        const week = isoWeek(slot.first);
-        return withYear(t('calendar.tick.week', { week: week.week }), week.year);
-      }
-      case 'month':
-        return withYear(t(`date.month.${month}`), year);
-      case 'quarter':
-        return withYear(t('calendar.tick.quarter', { quarter }), year);
-      case 'year':
-        return [String(year)];
-    }
+  protected tickLabel(slot: Slot, { t, isFirst }: LabelContext, { unit }: CalendarRequest): string[] {
+    return periodTick(t, unit, slot.first, isFirst);
   }
 
   /** The first ISO week, January or the first quarter; with whole years every block is a year. */
   protected override startsYear(slot: Slot, { unit }: CalendarRequest): boolean {
-    const { month, quarter } = parts(slot.first);
-    switch (unit) {
-      case 'week':
-        return isoWeek(slot.first).week === 1;
-      case 'month':
-        return month === 1;
-      case 'quarter':
-        return quarter === 1;
-      case 'year':
-        return false;
-    }
+    return startsYear(unit, slot.first);
   }
 
   /** "week 39 (21–27 sep)", "sep 2026", "K3 2026 (jul–sep)" or "2026". */
   protected slotLabel(slot: Slot, { t }: LabelContext, { unit }: CalendarRequest): string {
-    const { year, month, quarter } = parts(slot.first);
-    switch (unit) {
-      case 'week':
-        return t('calendar.hover.week', { week: isoWeek(slot.first).week, range: localizeRange(t, slot.first, slot.fullLast) });
-      case 'month':
-        return t('calendar.hover.month', { month: t(`date.month.${month}`), year });
-      case 'quarter':
-        return t('calendar.hover.quarter', { quarter, year });
-      case 'year':
-        return String(year);
-    }
+    return periodLabel(t, unit, slot.first, slot.fullLast);
   }
 
   /** "gemiddelde per dag, per week" for an average per day of a count; "gemiddelde per week" for a mean per unit. */
@@ -169,5 +136,53 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
       return years === 1 ? t('comparison.year') : t('comparison.years', { n: years });
     }
     return t(`comparison.${unit}s`, { n: blocks });
+  }
+}
+
+/** A calendar period in words: "week 39 (21–27 sep)", "sep 2026", "K3 2026", "2026". */
+export function periodLabel(t: Translator, unit: CalendarUnit, first: number, last: number): string {
+  const { year, month, quarter } = parts(first);
+  switch (unit) {
+    case 'week':
+      return t('calendar.hover.week', { week: isoWeek(first).week, range: localizeRange(t, first, last) });
+    case 'month':
+      return t('calendar.hover.month', { month: t(`date.month.${month}`), year });
+    case 'quarter':
+      return t('calendar.hover.quarter', { quarter, year });
+    case 'year':
+      return String(year);
+  }
+}
+
+/** The label of a period on a calendar axis: "W40", "sep", "K3" or "2026", with the year under the first label and at a new year. */
+export function periodTick(t: Translator, unit: CalendarUnit, first: number, isFirst: boolean): string[] {
+  const { year, month, quarter } = parts(first);
+  const withYear = (label: string, labelYear: number) => (isFirst || startsYear(unit, first) ? [label, String(labelYear)] : [label]);
+  switch (unit) {
+    case 'week': {
+      const week = isoWeek(first);
+      return withYear(t('calendar.tick.week', { week: week.week }), week.year);
+    }
+    case 'month':
+      return withYear(t(`date.month.${month}`), year);
+    case 'quarter':
+      return withYear(t('calendar.tick.quarter', { quarter }), year);
+    case 'year':
+      return [String(year)];
+  }
+}
+
+/** Whether a period starts a year: the first ISO week, January or the first quarter. */
+export function startsYear(unit: CalendarUnit, first: number): boolean {
+  const { month, quarter } = parts(first);
+  switch (unit) {
+    case 'week':
+      return isoWeek(first).week === 1;
+    case 'month':
+      return month === 1;
+    case 'quarter':
+      return quarter === 1;
+    case 'year':
+      return false;
   }
 }

@@ -1,5 +1,5 @@
 import type { TopLevelSpec } from 'vega-lite';
-import { currentDay, formatDay, localizeDay, localizeRange, parseDay } from '../core/days.ts';
+import { currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueSpec } from '../core/issues.ts';
 import { META_SCHEMA, type ChartMeta } from '../core/meta.ts';
@@ -7,7 +7,8 @@ import type { HoverSpec } from '../core/render/hover.ts';
 import { textWidth, wrap } from '../core/render/text.ts';
 import type { DrawContext, Drawing, RequestContext, SemgraphImplementation, SemgraphMetadata } from '../core/semgraph.ts';
 import { color, vegaLiteConfig, type Tokens } from '../core/tokens.ts';
-import { anyPeriodFromName, isoWeek, parts, type CalendarUnit } from './calendar.ts';
+import { anyPeriodFromName, type CalendarUnit } from './calendar.ts';
+import { periodLabel } from './calendar-chart.ts';
 import { COMPARISONS, comparisonLabel, defaultComparison, hatchPattern, patternId, type BlockLength, type ComparisonKind } from './comparison.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
@@ -817,19 +818,8 @@ function scopeCue(scope: Scope, t: Translator): string {
       return t('cue.scope.window', { window: scope.window });
     case 'day':
       return t('cue.scope.day', { date: localizeDay(t, scope.first, 'numeric') });
-    case 'period': {
-      const { year, month, quarter } = parts(scope.first);
-      switch (scope.unit) {
-        case 'week':
-          return t('calendar.hover.week', { week: isoWeek(scope.first).week, range: localizeRange(t, scope.first, scope.last) });
-        case 'month':
-          return t('calendar.hover.month', { month: t(`date.month.${month}`), year });
-        case 'quarter':
-          return t('calendar.hover.quarter', { quarter, year });
-        case 'year':
-          return String(year);
-      }
-    }
+    case 'period':
+      return periodLabel(t, scope.unit, scope.first, scope.last);
   }
 }
 

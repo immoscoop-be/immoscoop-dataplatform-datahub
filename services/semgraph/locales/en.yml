@@ -1,5 +1,11 @@
 # Base texts. Every key used by the service must exist here; other locales fall back to these.
 semgraphs:
+  kpiStatus:
+    title: KPI status
+    answers: Are we on track for the target, and what does it still take?
+    examples:
+      "1": Will we reach 130k leads by the end of the year, and how many do we need per month?
+      "2": How far ahead or behind the plan are the new listings this quarter?
   kpiTile:
     title: KPI tile
     answers: How much is it now, and is that more or less than before?
@@ -93,6 +99,7 @@ cue:
       mean: "mean per {unit}"
       median: "median per {unit}"
   comparison: vs {label}
+  kpiStatus: "cumulative · from {start} on {date} · target {target}"
   spread:
     mean: ±1 sd
     median: P25–P75
@@ -103,6 +110,7 @@ desc:
   distribution: "P25 {p25}, median {p50}, P75 {p75}."
   categories: "{count} categories."
   kpi: "Now {value}, {difference} vs {label}."
+  kpiStatus: "Now {current} of {target} by {date}; {needed} still needed."
   base: "{title}: {cue}, up to {date}."
   latest: "Last point: {stats}."
   latestMissing: No value for the last point.
@@ -123,6 +131,21 @@ chart:
   runningShort: current
   kpi:
     shadow: "grey = {label}"
+  kpiStatus:
+    target: "target {value} · {date}"
+    pathSet: "path set {date}"
+    catchUp: incl. catch-up
+    pace: "{value}/{unit}"
+    per:
+      week: wk
+      month: mo
+      quarter: qtr
+    plan: "{catchUp} in {period} · then {pace}"
+    planWeighted: "{catchUp} in {period} · then along the path"
+    lastStep: "{catchUp} in {period}"
+    reached: target reached
+    above: "{value} above the target"
+    missed: target not reached
   noComparison: no comparison
 
 hover:
@@ -148,6 +171,12 @@ hover:
   comparisonMissing: "previous period, {name}: no data"
   comparedWith: "{label}: {value}"
   comparedWithMissing: "{label}: no data"
+  kpiStatus:
+    level: "level: {value}"
+    added: "this period: {value}"
+    path: "path: {value}"
+    difference: "against the planned step: {value}"
+    planned: "still to add: {value}"
   difference: "difference: {value}"
   spread:
     mean: "±1 sd: {sd}"
@@ -189,6 +218,7 @@ blocks:
   month: months
   quarter: quarters
   year: years
+  sinceStart: start
   oneDay: day
   oneWindow: "{window}-day window"
 
@@ -226,6 +256,7 @@ footer:
   languageVersion: chart language {version}
 
 readingCards:
+  kpiStatus: KPI status
   kpiTile: KPI tile
   distribution: distribution
   categoryComparison: bar chart
@@ -283,6 +314,27 @@ issues:
   kpiComparisonMissing:
     message: "The last block has no value for {label}: a number without a comparison says nothing."
     alternative: Send previous for the last block, or choose the other comparison.
+  targetBeforeStart:
+    message: The target day lies before the start day.
+    alternative: Give a target day after the start day.
+  pathSetOutsideKpi:
+    message: The path was set outside the period of the KPI.
+    alternative: Give in pathSet a day between the start and the target.
+  periodOutsideKpi:
+    message: "Period {block} lies outside the KPI, from the start to the target."
+    alternative: Send only the periods from the start to the target.
+  cumulativeDecreases:
+    message: "The level goes down in {block}: a level since the start can only go up."
+    alternative: Send the cumulative level at the end of each period, not the amount per period.
+  pathBeforeSet:
+    message: "Period {block} has a planned level, but the path was only set on {date}."
+    alternative: Send the path from the period in which it was set; it never moves afterwards.
+  cumulativeGap:
+    message: A period without a level lies between the start and the last level, so every level after it is unknown.
+    alternative: Send the level of every period that is over.
+  pathIncomplete:
+    message: "Period {block} has no planned level: the path runs from the moment it was set ({date}) to the target."
+    alternative: Send the planned level of every period from the plan to the target.
   noPreviousValues:
     message: "No category has a value for {label}, so there is nothing to compare with."
     alternative: Send the previous values, or leave out comparison and previous.

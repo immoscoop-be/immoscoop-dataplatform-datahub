@@ -1,5 +1,11 @@
 # Vertaling naar het Nederlands (België). Ontbreekt een sleutel, dan valt de dienst terug op en.yml.
 semgraphs:
+  kpiStatus:
+    title: KPI-status
+    answers: Halen we het doel, en wat is er nog nodig?
+    examples:
+      "1": Halen we tegen het einde van het jaar 130k leads, en hoeveel per maand is daarvoor nodig?
+      "2": Hoeveel voor of achter op het plan liggen de nieuwe panden dit kwartaal?
   kpiTile:
     title: KPI-tegel
     answers: Hoeveel is het nu, en is dat meer of minder dan ervoor?
@@ -93,6 +99,7 @@ cue:
       mean: "gemiddelde per {unit}"
       median: "mediaan per {unit}"
   comparison: tegenover {label}
+  kpiStatus: "cumulatief · vanaf {start} op {date} · doel {target}"
   spread:
     mean: ±1 sd
     median: P25–P75
@@ -103,6 +110,7 @@ desc:
   distribution: "P25 {p25}, mediaan {p50}, P75 {p75}."
   categories: "{count} categorieën."
   kpi: "Nu {value}, {difference} tegenover {label}."
+  kpiStatus: "Nu {current} van {target} tegen {date}; nog {needed} nodig."
   base: "{title}: {cue}, tot {date}."
   latest: "Laatste punt: {stats}."
   latestMissing: Geen waarde voor het laatste punt.
@@ -123,6 +131,21 @@ chart:
   runningShort: lopend
   kpi:
     shadow: "grijs = {label}"
+  kpiStatus:
+    target: "doel {value} · {date}"
+    pathSet: "pad vastgelegd {date}"
+    catchUp: incl. inhaal
+    pace: "{value}/{unit}"
+    per:
+      week: wk
+      month: mnd
+      quarter: kw
+    plan: "{catchUp} in {period} · daarna {pace}"
+    planWeighted: "{catchUp} in {period} · daarna volgens het pad"
+    lastStep: "{catchUp} in {period}"
+    reached: doel bereikt
+    above: "{value} boven het doel"
+    missed: doel niet gehaald
   noComparison: geen vergelijking
 
 hover:
@@ -148,6 +171,12 @@ hover:
   comparisonMissing: "vorige periode, {name}: geen data"
   comparedWith: "{label}: {value}"
   comparedWithMissing: "{label}: geen data"
+  kpiStatus:
+    level: "stand: {value}"
+    added: "deze periode: {value}"
+    path: "pad: {value}"
+    difference: "tegenover de geplande stap: {value}"
+    planned: "nog erbij: {value}"
   difference: "verschil: {value}"
   spread:
     mean: "±1 sd: {sd}"
@@ -189,6 +218,7 @@ blocks:
   month: maanden
   quarter: kwartalen
   year: jaren
+  sinceStart: start
   oneDay: dag
   oneWindow: "venster van {window} dagen"
 
@@ -226,6 +256,7 @@ footer:
   languageVersion: grafiektaal {version}
 
 readingCards:
+  kpiStatus: KPI-status
   kpiTile: KPI-tegel
   distribution: verdeling
   categoryComparison: staafgrafiek
@@ -283,6 +314,27 @@ issues:
   kpiComparisonMissing:
     message: "Het laatste blok heeft geen waarde voor {label}: een getal zonder vergelijking zegt niets."
     alternative: Stuur previous mee voor het laatste blok, of kies de andere vergelijking.
+  targetBeforeStart:
+    message: De dag van het doel ligt voor de startdag.
+    alternative: Geef een dag voor het doel na de startdag.
+  pathSetOutsideKpi:
+    message: Het pad is vastgelegd buiten de periode van de KPI.
+    alternative: Geef in pathSet een dag tussen de start en het doel.
+  periodOutsideKpi:
+    message: "Periode {block} ligt buiten de KPI, van de start tot het doel."
+    alternative: Stuur enkel de periodes van de start tot het doel.
+  cumulativeDecreases:
+    message: "De stand daalt in {block}: een stand sinds de start kan alleen stijgen."
+    alternative: Stuur de cumulatieve stand op het einde van elke periode, niet het aantal per periode.
+  pathBeforeSet:
+    message: "Periode {block} heeft een geplande stand, maar het pad is pas vastgelegd op {date}."
+    alternative: Stuur het pad vanaf de periode waarin het vastgelegd is; het verschuift nooit meer.
+  cumulativeGap:
+    message: Tussen de start en de laatste stand ligt een periode zonder stand, dus elke stand erna is onbekend.
+    alternative: Stuur de stand van elke periode die voorbij is.
+  pathIncomplete:
+    message: "Periode {block} heeft geen geplande stand: het pad loopt van het moment dat het vastgelegd is ({date}) tot het doel."
+    alternative: Stuur de geplande stand van elke periode van de planning tot het doel.
   noPreviousValues:
     message: "Geen enkele categorie heeft een waarde voor {label}, dus er is niets om mee te vergelijken."
     alternative: Stuur de vorige waarden mee, of laat comparison en previous weg.

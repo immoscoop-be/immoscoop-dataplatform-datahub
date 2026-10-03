@@ -7,7 +7,7 @@
 - { id: periodComparison, status: available }
 - { id: kpiTile, status: available }
 - { id: cumulative, status: planned }
-- { id: kpiStatus, status: planned }
+- { id: kpiStatus, status: available }
 - { id: categoryComparison, status: available }
 - { id: distribution, status: available }
 - { id: composition, status: planned }

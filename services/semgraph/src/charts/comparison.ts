@@ -70,6 +70,23 @@ export function hatchPattern(id: string, tokens: Tokens): string {
   ].join('');
 }
 
+/** Dots of what is still to be won: this far apart, centre to centre, and half as large, so they just touch. */
+const TO_WIN_SPACING = 4;
+
+/**
+ * What is still to be won against a path (REQ-068): dots in the light target colour that just touch,
+ * on the surface colour. Not hatching: hatching only ever means a loss (REQ-004, REQ-055).
+ */
+export function toWinPattern(id: string, tokens: Tokens): string {
+  const radius = TO_WIN_SPACING / 2;
+  return [
+    `<pattern id="${id}" width="${TO_WIN_SPACING}" height="${TO_WIN_SPACING}" patternUnits="userSpaceOnUse">`,
+    `<rect width="${TO_WIN_SPACING}" height="${TO_WIN_SPACING}" fill="${color(tokens, 'surface')}"/>`,
+    `<circle cx="${radius}" cy="${radius}" r="${radius}" fill="${color(tokens, 'target/light')}"/>`,
+    '</pattern>',
+  ].join('');
+}
+
 /** Two labels at the right end, at least this many pixels apart; a second line under the value adds this much. */
 const LABEL_GAP = 12;
 export const SECOND_LINE = 10;

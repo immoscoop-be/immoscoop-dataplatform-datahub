@@ -28,12 +28,14 @@ export class CompactFormat {
   private readonly locale: string;
   private readonly unit: ValueUnit;
   private readonly reach: number;
+  private readonly fixed: number | undefined;
 
-  /** `reach` is the highest value on the axis. */
-  constructor(locale: string, reach: number, unit: ValueUnit = {}) {
+  /** `reach` is the highest value on the axis; `fixed` gives every value the same number of decimals. */
+  constructor(locale: string, reach: number, unit: ValueUnit = {}, fixed?: number) {
     this.locale = locale;
     this.unit = unit;
     this.reach = reach;
+    this.fixed = fixed;
     [this.divisor, this.letter] = reach >= 1e6 ? [1e6, 'M'] : reach >= 1e3 ? [1e3, 'k'] : [1, ''];
   }
 
@@ -68,15 +70,23 @@ export class CompactFormat {
    * "▼ 0,08k", "▲ 3k". No change is "= 0".
    */
   difference(value: number): string {
-    const suffix = `${this.letter}${this.unit.suffix ?? ''}`;
-    if (value === 0) return `= 0${this.unit.suffix ?? ''}`;
+    return value === 0 ? `= 0${this.unit.suffix ?? ''}` : `${value > 0 ? '▲' : '▼'} ${this.size(value)}`;
+  }
+
+  /** The same with a sign instead of an arrow, against a plan: "−0,5k", "+0,04k", "0". */
+  signed(value: number): string {
+    return value === 0 ? `0${this.unit.suffix ?? ''}` : `${value > 0 ? '+' : '−'}${this.size(value)}`;
+  }
+
+  private size(value: number): string {
     const scaled = Math.abs(value) / this.divisor;
     const axis = this.divisor > 1 && this.reach / this.divisor < 10 ? 1 : 0;
     const first = Math.max(0, -Math.floor(Math.log10(scaled)));
-    return `${value > 0 ? '▲' : '▼'} ${this.number(scaled, Math.max(axis, first))}${suffix}`;
+    return `${this.number(scaled, Math.max(this.fixed ?? axis, first))}${this.letter}${this.unit.suffix ?? ''}`;
   }
 
   private digits(value: number): number {
+    if (this.fixed !== undefined) return this.fixed;
     const scaled = value / this.divisor;
     return this.divisor > 1 ? (Math.abs(scaled) < 10 ? 1 : 0) : Number.isInteger(value) ? 0 : 1;
   }

@@ -1,0 +1,39 @@
+{
+  "semgraph": "kpiStatus",
+  "metric": "newListings",
+  "title": "New listings this quarter (sample data)",
+  "measureType": "additive",
+  "unit": "week",
+  "start": {
+    "day": "2026-07-01",
+    "value": 0
+  },
+  "target": {
+    "day": "2026-09-30",
+    "value": 5000
+  },
+  "pathSet": "2026-07-01",
+  "asOf": "2026-08-23",
+  "locale": "en",
+  "context": {
+    "domain": "Listings",
+    "dataset": "Listing",
+    "reliability": "sample data"
+  },
+  "points": [
+    { "period": "2026-W27", "actual": 340, "path": 300 },
+    { "period": "2026-W28", "actual": 720, "path": 650 },
+    { "period": "2026-W29", "actual": 1080, "path": 980 },
+    { "period": "2026-W30", "actual": 1390, "path": 1280 },
+    { "period": "2026-W31", "actual": 1690, "path": 1560 },
+    { "period": "2026-W32", "actual": 1980, "path": 1830 },
+    { "period": "2026-W33", "actual": 2280, "path": 2120 },
+    { "period": "2026-W34", "actual": 2620, "path": 2450 },
+    { "period": "2026-W35", "path": 2850 },
+    { "period": "2026-W36", "path": 3270 },
+    { "period": "2026-W37", "path": 3700 },
+    { "period": "2026-W38", "path": 4130 },
+    { "period": "2026-W39", "path": 4570 },
+    { "period": "2026-W40", "path": 5000 }
+  ]
+}

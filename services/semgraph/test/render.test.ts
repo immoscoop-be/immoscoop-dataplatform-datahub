@@ -28,7 +28,7 @@ describe('render', async () => {
         assert.ok(result.svg);
         assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
         // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036).
-        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|empty|running|few)-[0-9a-f]{8}$/);
+        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|towin|empty|running|few)-[0-9a-f]{8}$/);
         await assertGolden(`${id}-${name}.svg`, result.svg);
       });
     }

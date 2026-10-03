@@ -55,7 +55,7 @@ async function drawnExamples(): Promise<Drawn[]> {
         name: `${id}/${name}`,
         semgraph: id,
         // A KPI tile has the blocks of a time axis, but only its mini trend is drawn on one.
-        family: id === 'kpiTile' ? 'kpi' : 'slots' in computed ? 'timeAxis' : 'rows' in computed ? 'category' : 'distribution',
+        family: id === 'kpiTile' || id === 'kpiStatus' ? 'kpi' : 'slots' in computed ? 'timeAxis' : 'rows' in computed ? 'category' : 'distribution',
         statistic: (implementation as unknown as { statistic?: { id: string } }).statistic?.id ?? String((request as { statistic: string }).statistic),
         request: request as Record<string, unknown>,
         computed: computed as TimeAxisComputed,
@@ -89,6 +89,7 @@ describe('requirements of the chart language', async () => {
   const timeAxis = examples.filter((drawn) => drawn.family === 'timeAxis');
   const categories = examples.filter((drawn) => drawn.family === 'category');
   const kpis = examples.filter((drawn) => drawn.family === 'kpi');
+  const tiles = kpis.filter((drawn) => drawn.semgraph === 'kpiTile');
   const categoryOf = (drawn: Drawn) => drawn.computed as unknown as CategoryComputed;
   const tokens = (await testRegistry()).tokens;
 
@@ -98,7 +99,7 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-001: a time axis is always a line through every point, never bridging missing data', () => {
     // The mini trend of a KPI tile too.
-    for (const drawn of [...timeAxis, ...kpis]) {
+    for (const drawn of [...timeAxis, ...tiles]) {
       const line = drawn.layers.find((layer) => layer.data?.name === 'line');
       assert.equal(line && markType(line), 'line', `${drawn.name}: no line`);
       const rows = drawn.datasets.line as { rel: number; segment: number }[];
@@ -125,8 +126,9 @@ describe('requirements of the chart language', async () => {
           assert.deepEqual([layer.encoding!.y, layer.encoding!.y2], [{ value: 0 }, { value: 200 - tokens.stroke.baseline }], drawn.name);
         } else {
           // Bars for categories, bins on a value axis, and the patterns of the data states; never a date axis.
-          // A comparison stays inside one bar: what was gained and what was lost (REQ-066).
-          assert.ok(['columns', 'bars', 'gained', 'lost', 'bins', 'open'].includes(layer.data!.name), `${drawn.name}: ${layer.data?.name}`);
+          // A comparison stays inside one bar: what was gained and what was lost (REQ-066). Against a
+          // path, a loss is hatched and what is still to be won dotted (REQ-068); the box is a label.
+          assert.ok(['columns', 'bars', 'gained', 'lost', 'bins', 'open', 'toWin', 'box'].includes(layer.data!.name), `${drawn.name}: ${layer.data?.name}`);
         }
       }
       if (drawn.family === 'category') {
@@ -137,7 +139,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; always filled (REQ-052)', () => {
-    for (const drawn of [...timeAxis, ...kpis]) {
+    for (const drawn of [...timeAxis, ...tiles]) {
       const mark = markOf(pointLayer(drawn));
       assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
       assert.equal(mark.fill, color(tokens, 'focus'), drawn.name);
@@ -685,8 +687,8 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-065 and REQ-067: a KPI tile is one number with a mandatory comparison, and a mini trend with a baseline and its first and last period', async () => {
     const registry = await testRegistry();
-    assert.ok(kpis.length >= 3, 'the KPI tile of Figma, a mean, and a short window');
-    for (const drawn of kpis) {
+    assert.ok(tiles.length >= 3, 'the KPI tile of Figma, a mean, and a short window');
+    for (const drawn of tiles) {
       const computed = drawn.computed;
       const last = computed.points.find((point) => point.rel === 0)!;
       // The number is the last block; the difference has an arrow, the absolute size and its share.
@@ -705,10 +707,10 @@ describe('requirements of the chart language', async () => {
       // A mean or median shows its spread next to the number.
       assert.equal((drawn.datasets.spread as unknown[]).length > 0, last.spread !== null, drawn.name);
     }
-    const figma = kpis.find((drawn) => drawn.name === 'kpiTile/rolling-28d')!;
+    const figma = tiles.find((drawn) => drawn.name === 'kpiTile/rolling-28d')!;
     assert.deepEqual((figma.datasets.number as { text: string }[]).map((line) => line.text), ['2,4k']);
     assert.match((figma.datasets.comparison as { text: string }[]).map((line) => line.text).join(' '), /^▲ 180 \(\+8%\) tegenover vorig jaar$/);
-    const week = kpis.find((drawn) => drawn.name === 'kpiTile/rolling-7d')!;
+    const week = tiles.find((drawn) => drawn.name === 'kpiTile/rolling-7d')!;
     assert.match((week.datasets.comparison as { text: string }[]).map((line) => line.text).join(' '), /vs previous 7 days$/);
     // No number without its comparison, and no tile without its number.
     const points = figma.request.points as Record<string, unknown>[];
@@ -716,6 +718,48 @@ describe('requirements of the chart language', async () => {
       (await runPipeline(registry, { ...figma.request, points: rows }, { now: NOW, draw: false })).report.issues.filter((issue) => issue.level === 'refusal').map((issue) => issue.code);
     assert.deepEqual(await codes(points.map((row, index) => (index === points.length - 1 ? { ...row, previous: null } : row))), ['kpiComparisonMissing']);
     assert.deepEqual(await codes(points.map((row, index) => (index === points.length - 1 ? { ...row, sum: null } : row))), ['kpiValueMissing']);
+  });
+
+  it('REQ-065, REQ-068 and REQ-069: a KPI status puts the real staircase against the fixed path; a loss is hatched, what is still to be won dotted', () => {
+    const drawn = kpis.find((candidate) => candidate.name === 'kpiStatus/leads-since-launch')!;
+    const texts = (name: string) => (drawn.datasets[name] as { text: string }[]).map((label) => label.text);
+    // REQ-069: the warehouse delivers the levels; the chart only takes differences.
+    assert.deepEqual(texts('added'), ['2,4k', '2,5k', '2,7k', '1,1k', '2,2k', '1,8k', '1,5k', '1,4k'], 'what each period added');
+    assert.deepEqual(texts('deltas'), ['−0,5k', '−0,9k', '−1,2k', '−1,3k'], 'each step against the planned step');
+    assert.deepEqual((drawn.datasets.futureLabels as { text: string; note: string }[]).map((label) => [label.text, label.note]), [['6,4k', 'incl. inhaal']], 'the catch-up');
+    assert.deepEqual(texts('paceLabels'), ['2,7k/mnd'], 'one label for a linear path');
+    assert.deepEqual(texts('current'), ['115,6k']);
+    assert.match(drawn.svg, />Δ \+14,4k</);
+    assert.match(drawn.svg, />6,4k in sep · daarna 2,7k\/mnd</);
+    assert.match(drawn.svg, />doel 130k · 31\/12</);
+    // Colour roles: magenta is done, teal is to do.
+    const mark = (name: string) => markOf(drawn.layers.find((layer) => layer.data?.name === name)!);
+    assert.equal(mark('risers').color, color(tokens, 'focus'));
+    assert.equal(mark('done').color, color(tokens, 'focus/subtle'));
+    for (const name of ['pastPath', 'futurePath']) {
+      assert.equal(mark(name).color, color(tokens, 'target'), name);
+      assert.ok(Array.isArray(mark(name).strokeDash), `${name}: dotted`);
+    }
+    // The path was set at planning and starts there: it never moves.
+    const path = drawn.datasets.pastPath as { rel: number }[];
+    assert.equal(path[0]!.rel, 3 + 0.5 - 11, 'from the end of April, when it was set');
+    // REQ-004, REQ-055: only a shortfall is hatched, densely.
+    assert.match(String(mark('lost').fill), /^url\(#semgraph-hatch-/);
+    for (const band of drawn.datasets.lost as { value: number; value2: number }[]) assert.ok(band.value < band.value2);
+    // REQ-068: what is still to be won is a new pattern, dots that just touch; never hatching.
+    assert.match(String(mark('toWin').fill), /^url\(#semgraph-towin-/);
+    const pattern = /<pattern id="semgraph-towin-[^"]*" width="(\d+)"[^>]*>(.*?)<\/pattern>/.exec(drawn.svg)!;
+    assert.ok(pattern, 'the dots are defined');
+    assert.doesNotMatch(pattern[2]!, /<line/);
+    assert.equal(Number(/<circle [^>]*r="([\d.]+)"/.exec(pattern[2]!)![1]) * 2, Number(pattern[1]), 'the dots just touch');
+    // Axis from the KPI start, with a zigzag; the start value bold.
+    assert.match(drawn.svg, ZIGZAG);
+    assert.match(drawn.svg, /font-weight="bold"[^>]*>100k</);
+    // A team ahead of its path: no hatching, the deltas positive, and no catch-up.
+    const ahead = kpis.find((candidate) => candidate.name === 'kpiStatus/weeks-ahead')!;
+    assert.equal((ahead.datasets.lost as unknown[]).length, 0);
+    assert.ok((ahead.datasets.deltas as { text: string }[]).every((label) => label.text.startsWith('+')));
+    assert.equal((ahead.datasets.futureLabels as { note: string }[])[0]!.note, '');
   });
 
   it('REQ-043, REQ-046 and REQ-053 for categories: n on hover; few observations get dots behind their column and their n under it', () => {
