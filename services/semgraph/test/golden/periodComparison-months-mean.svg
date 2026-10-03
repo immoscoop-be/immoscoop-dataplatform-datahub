@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="640" height="440" viewBox="0 0 640 440" data-semgraph="periodComparison" data-language-version="v0" data-tokens-version="0.1.0">
 <title>Kredietleads per dag, per maand, tegenover het halfjaar ervoor (voorbeelddata)</title>
 <desc>Kredietleads per dag, per maand, tegenover het halfjaar ervoor (voorbeelddata): gemiddelde per dag, per maand · ±1 sd · tegenover vorige 6 maanden, tot 30 sep 2026. Laatste punt: 45,0 ± 12,0.</desc>
-<defs><pattern id="semgraph-hatch-a4114aa8" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#2d333a" stroke-width="1.5"/></pattern></defs>
+<defs><pattern id="semgraph-hatch-a4114aa8" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#2d333a" stroke-width="1.5"/></pattern></defs>
 <rect width="640" height="440" fill="#ffffff"/>
 <text x="20" y="33" font-family="Poppins, &apos;Helvetica Neue&apos;, Arial, sans-serif" font-size="15" font-weight="600" fill="#2d333a">Kredietleads per dag, per maand, tegenover het halfjaar ervoor</text>
 <text x="20" y="55.5" font-family="Poppins, &apos;Helvetica Neue&apos;, Arial, sans-serif" font-size="15" font-weight="600" fill="#2d333a">(voorbeelddata)</text>

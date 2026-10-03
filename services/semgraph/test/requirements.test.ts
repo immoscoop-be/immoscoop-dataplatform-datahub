@@ -345,6 +345,8 @@ describe('requirements of the chart language', async () => {
       }
     }
     assert.ok(comparisons().some((drawn) => drawn.datasets.hatch!.length > 0), 'an example shows a shortfall');
+    // The hatching falls from top left to bottom right, as in Figma: a vertical line turned a quarter back.
+    for (const drawn of comparisons()) assert.match(drawn.svg, /<pattern id="semgraph-hatch-[0-9a-f]{8}"[^>]*patternTransform="rotate\(-45\)"/, drawn.name);
   });
 
   it('REQ-005: with a mean or median only the focus series has a light band; the comparison never has one', () => {

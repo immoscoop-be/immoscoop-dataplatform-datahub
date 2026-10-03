@@ -81,7 +81,7 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-042](REQ-042.md) | Geen voetregel "Buiten de grafiektaal": het rode blok zegt genoeg | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
 | REQ-043 | Elk punt van een gemiddelde of mediaan kent zijn n; de n staat in het hoverkader | 2026-10-03 | open (zie open punt 1) | – |
 | REQ-044 | Weinig waarnemingen: n < 30 (gemiddelde), n < 10 (mediaan), of minder dan de helft van de mediaan van alle n's | 2026-10-03 | open (zie open punt 1) | – |
-| REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | open (zie open punten 1 en 2) | – |
+| REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | open (zie open punten 1 tot 3) | – |
 | REQ-046 | De n van zo'n punt staat klein onder de x-as | 2026-10-03 | open (zie open punt 1) | – |
 | REQ-047 | Weinig waarnemingen geeft een rode waarschuwing, maar is geen afwijking: het versielabel blijft | 2026-10-03 | open (zie open punt 1) | – |
 | [REQ-048](REQ-048.md) | De hover op de datapunten volgt het gedrag per toestel van REQ-015 | 2026-10-03 (antwoord) | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
@@ -133,10 +133,26 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
        kwadraten; voor een mediaan de waarden zelf). Dan rekent de server gemiddelde, spreiding, mediaan en n over
        de waarnemingen, en gelden REQ-044 tot REQ-047 volledig. Uit te werken bij de eerste metric die het nodig
        heeft.
-     - Een lopende periode met weinig waarnemingen houdt de rand van de holle vorm, met de bleke vulling erin.
-2. **De bleke vorm op een lichte spreiding (REQ-045).** Op Confluence in discussie: in Figma valt een bleke ruit weg
-   tegen de lichte balk of band. Daniel beslist over de tint.
-3. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
+     - Hoe een punt met weinig waarnemingen eruitziet, hangt af van punt 2.
+2. **Data states in Figma, nog niet op Confluence.** Figma kreeg op 2026-10-03, na REQ-047, de sectie *Data states*
+   en de bouwstenen *Patterns*: de toestand van de data in een periode is een patroon achter de hele kolom, een
+   dambord voor leeg, schaarse stippen voor weinig waarnemingen en fijne verticale lijnen voor lopend. "Running wins
+   over few observations." "Shapes always stay filled. There is no hollow shape for a running period and no pale
+   shape for few observations." De omlijning van ontbrekende data staat er als *retired*. Dat botst met:
+   - REQ-006, REQ-007 en REQ-008 (2026-10-02): "Een lopende periode is een holle ruit / een hol vierkant / een
+     holle bol."
+   - [REQ-023](REQ-023.md) (2026-10-02): "De laatste periode is hol zolang ze nog loopt."
+   - REQ-045 (2026-10-03): "Een punt met weinig waarnemingen behoudt zijn vorm, gevuld in de lichte focuskleur."
+   - De omlijning van ontbrekende data ([REQ-000](REQ-000.md)).
+
+   Volgens de werkwijze krijgt een nieuwe afspraak in Figma eerst een rij op Confluence. Voorstel: de regels van
+   *Data states* komen er als nieuwe rijen, met Figma als bron en een verwijzing naar wat ze vervangen. Daarna
+   bouwen: het patroon achter de kolom in plaats van de holle vorm en de omlijning. Vraag: zijn de regels in Figma
+   beslist, en mag ik ze zo registreren?
+3. **De bleke vorm op een lichte spreiding (REQ-045).** Op Confluence in discussie: in Figma valt een bleke ruit weg
+   tegen de lichte balk of band. Daniel beslist over de tint. Vervalt als *Data states* beslist is: dan is er geen
+   bleke vorm meer.
+4. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
 
