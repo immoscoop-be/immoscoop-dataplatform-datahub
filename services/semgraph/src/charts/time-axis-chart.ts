@@ -14,7 +14,7 @@ import type {
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
-import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
+import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
@@ -585,13 +585,13 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     // A zigzag at the start of the baseline: the value axis does not start at zero.
     const left = -(count - 1) - 0.5;
     const zigzag = scale.zoomed
-      ? [[0, 0], [2, 3], [5, -3], [8, 3], [10, 0]].map(([px, py], order) => ({
-          rel: left + px! * perPixel.x,
-          value: scale.min + py! * perPixel.y,
+      ? ZIGZAG.map(([along, across], order) => ({
+          rel: left + along * perPixel.x,
+          value: scale.min + across * perPixel.y,
           order,
         }))
       : [];
-    const mask = scale.zoomed ? [{ rel: left, rel2: left + 11 * perPixel.x, value: scale.min }] : [];
+    const mask = scale.zoomed ? [{ rel: left, rel2: left + ZIGZAG_MASK * perPixel.x, value: scale.min }] : [];
 
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
@@ -632,7 +632,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
                 values: scale.ticks,
                 labelExpr: lookup(yLabels),
                 title: null,
-                ...(scale.zoomed ? { labelFontWeight: { condition: { test: `datum.value === ${scale.min}`, value: 'bold' }, value: 'normal' } } : {}),
+                ...zoomedLabelWeight(scale),
               },
             },
           },

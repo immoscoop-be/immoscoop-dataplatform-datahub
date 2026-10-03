@@ -25,4 +25,13 @@ describe('compact numbers, as Figma writes them on bar charts', () => {
     assert.deepEqual(Object.values(new CompactFormat('nl-BE', 600000, { prefix: '€ ' }).ticks([0, 200000, 400000, 600000])), ['€ 0', '€ 200k', '€ 400k', '€ 600k']);
     assert.deepEqual(Object.values(new CompactFormat('nl-BE', 150, { suffix: ' d' }).ticks([0, 50, 100, 150])), ['0', '50 d', '100 d', '150 d']);
   });
+
+  it('writes a difference with an arrow, in the precision of the axis, with the decimals its first digit needs', () => {
+    const counts = new CompactFormat('nl-BE', 2000);
+    assert.deepEqual([200, 80, -80, 50, 0].map((value) => counts.difference(value)), ['▲ 0,2k', '▲ 0,08k', '▼ 0,08k', '▲ 0,05k', '= 0']);
+    const months = new CompactFormat('nl-BE', 60000);
+    assert.deepEqual([3000, -1000, -16000, 400].map((value) => months.difference(value)), ['▲ 3k', '▼ 1k', '▼ 16k', '▲ 0,4k']);
+    assert.equal(new CompactFormat('nl-BE', 600000, { prefix: '€ ' }).difference(-20000), '▼ 20k');
+    assert.equal(new CompactFormat('nl-BE', 150, { suffix: ' d' }).difference(3), '▲ 3 d');
+  });
 });

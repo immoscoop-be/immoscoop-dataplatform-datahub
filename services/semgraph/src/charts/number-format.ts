@@ -27,11 +27,13 @@ export class CompactFormat {
   private readonly letter: string;
   private readonly locale: string;
   private readonly unit: ValueUnit;
+  private readonly reach: number;
 
   /** `reach` is the highest value on the axis. */
   constructor(locale: string, reach: number, unit: ValueUnit = {}) {
     this.locale = locale;
     this.unit = unit;
+    this.reach = reach;
     [this.divisor, this.letter] = reach >= 1e6 ? [1e6, 'M'] : reach >= 1e3 ? [1e3, 'k'] : [1, ''];
   }
 
@@ -58,6 +60,20 @@ export class CompactFormat {
   /** "± 170k", "± 28 d". */
   plusMinus(value: number): string {
     return `± ${this.number(value / this.divisor, this.digits(value))}${this.letter}${this.unit.suffix ?? ''}`;
+  }
+
+  /**
+   * A difference under its value, as in Figma's comparison bar: an arrow, no currency in front, the
+   * precision of the axis, and more decimals only when the first digit needs them: "▲ 0,2k",
+   * "▼ 0,08k", "▲ 3k". No change is "= 0".
+   */
+  difference(value: number): string {
+    const suffix = `${this.letter}${this.unit.suffix ?? ''}`;
+    if (value === 0) return `= 0${this.unit.suffix ?? ''}`;
+    const scaled = Math.abs(value) / this.divisor;
+    const axis = this.divisor > 1 && this.reach / this.divisor < 10 ? 1 : 0;
+    const first = Math.max(0, -Math.floor(Math.log10(scaled)));
+    return `${value > 0 ? '▲' : '▼'} ${this.number(scaled, Math.max(axis, first))}${suffix}`;
   }
 
   private digits(value: number): number {

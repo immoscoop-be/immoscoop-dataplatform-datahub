@@ -78,6 +78,8 @@ const markOf = (layer: Layer): Record<string, unknown> => (typeof layer.mark ===
 const markType = (layer: Layer) => markOf(layer).type;
 const pointLayer = (drawn: Drawn) => drawn.layers.find((layer) => layer.data?.name === 'points')!;
 /** The SVG without the hover details, which only show on hover or focus. */
+/** The zigzag of a zoomed value axis (REQ-026, REQ-073): a line in the baseline colour with sharp corners. */
+const ZIGZAG = /mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#6b7480"[^>]*stroke-linejoin="miter"/;
 const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-detail".*?<\/g><\/g>/g, '');
 
 describe('requirements of the chart language', async () => {
@@ -120,7 +122,8 @@ describe('requirements of the chart language', async () => {
           assert.deepEqual([layer.encoding!.y, layer.encoding!.y2], [{ value: 0 }, { value: 200 - tokens.stroke.baseline }], drawn.name);
         } else {
           // Bars for categories, bins on a value axis, and the patterns of the data states; never a date axis.
-          assert.ok(['columns', 'bars', 'bins', 'open'].includes(layer.data!.name), `${drawn.name}: ${layer.data?.name}`);
+          // A comparison stays inside one bar: what was gained and what was lost (REQ-066).
+          assert.ok(['columns', 'bars', 'gained', 'lost', 'bins', 'open'].includes(layer.data!.name), `${drawn.name}: ${layer.data?.name}`);
         }
       }
       if (drawn.family === 'category') {
@@ -600,8 +603,8 @@ describe('requirements of the chart language', async () => {
         assert.equal(markOf(spread).color, light, drawn.name);
         assert.equal(markOf(spread).strokeWidth, drawn.statistic === 'mean' ? tokens.stroke.spread : tokens.stroke.spreadWide, drawn.name);
       }
-      // The value axis starts at zero, also for medians and means (Figma, Bar charts).
-      assert.doesNotMatch(drawn.svg, /mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#6b7480"[^>]*stroke-linejoin="miter"/, `${drawn.name}: no zigzag`);
+      // The value axis starts at zero, also for medians and means (Figma, Bar charts), unless a mean or median zooms (REQ-073).
+      if (drawn.request.valueAxis !== 'zoom') assert.doesNotMatch(drawn.svg, ZIGZAG, `${drawn.name}: no zigzag`);
     }
     // Upright amounts take the ordinal ramp from light to dark, along the order.
     const ramp = categories.find((drawn) => drawn.name === 'categoryComparison/price-ranges-sum')!;
@@ -619,6 +622,61 @@ describe('requirements of the chart language', async () => {
     for (const drawn of categories) {
       const labels = [...(drawn.datasets.valuesStrong ?? []), ...(drawn.datasets.valuesAbove ?? []), ...(drawn.datasets.valuesBeside ?? [])];
       assert.equal(labels.length, categoryOf(drawn).rows.length - categoryOf(drawn).missing.length, `${drawn.name}: every value written`);
+    }
+  });
+
+  it('REQ-066 and REQ-067: a sum compares inside one bar: light shared, focus gained, hatched lost, a dark cap for now', async () => {
+    const registry = await testRegistry();
+    const compared = categories.filter((drawn) => categoryOf(drawn).comparison);
+    assert.deepEqual(compared.map((drawn) => categoryOf(drawn).orientation).sort(), ['horizontal', 'vertical'], 'lying and upright, as in Figma');
+    for (const drawn of compared) {
+      const rows = categoryOf(drawn).rows.filter((row) => row.summary && typeof row.previous === 'number');
+      const layer = (name: string) => markOf(drawn.layers.find((candidate) => candidate.data?.name === name)!);
+      // The bar from zero to now is light, what both periods share; upright too, without the ordinal ramp.
+      for (const bar of drawn.datasets.bars as Record<string, number | string>[]) {
+        assert.equal(bar.x ?? bar.v, 0, `${drawn.name}: from zero`);
+        assert.equal(bar.fill ?? layer('bars').color, color(tokens, 'focus/light'), drawn.name);
+      }
+      assert.equal(layer('gained').color, color(tokens, 'focus'), drawn.name);
+      assert.match(String(layer('lost').fill), /^url\(#semgraph-hatch-/, `${drawn.name}: a loss is hatched (REQ-004, REQ-055)`);
+      assert.equal(layer('caps').color, color(tokens, 'text'), drawn.name);
+      const span = (row: Record<string, number>) => [row.x ?? row.v, row.x2 ?? row.v2];
+      const gained = (drawn.datasets.gained as Record<string, number>[]).map(span);
+      const lost = (drawn.datasets.lost as Record<string, number>[]).map(span);
+      assert.deepEqual(gained, rows.filter((row) => row.summary!.centre > row.previous!).map((row) => [row.previous, row.summary!.centre]), drawn.name);
+      assert.deepEqual(lost, rows.filter((row) => row.summary!.centre < row.previous!).map((row) => [row.summary!.centre, row.previous]), drawn.name);
+      assert.equal((drawn.datasets.caps as unknown[]).length, categoryOf(drawn).rows.length - categoryOf(drawn).missing.length, `${drawn.name}: a cap on every bar`);
+      // REQ-037, REQ-067: the label names what it is compared with; neither is on the screen.
+      assert.match(drawn.drawing.readingCue, /tegenover vorig jaar|vs last year/, drawn.name);
+      for (const hover of drawn.drawing.hover.filter((spec) => spec.point)) assert.ok(hover.lines.some((line) => /^(verschil|difference): [▲▼=]/.test(line.text)), drawn.name);
+    }
+    // The difference stands under the value, with an arrow, in the unit and precision of the axis (Figma).
+    const provinces = categories.find((drawn) => drawn.name === 'categoryComparison/provinces-sum-vs-last-year')!;
+    assert.deepEqual((provinces.datasets.valuesDetail as { text: string }[]).map((label) => label.text), ['▲ 0,2k', '▲ 0,08k', '▼ 0,08k', '▲ 0,05k', '▼ 0,08k']);
+    // Without a choice, the default follows Figma: last year for 28 days and longer, the period before for 7 and 14 days.
+    const kinds = async (patch: Record<string, unknown>) => {
+      const request = { ...provinces.request, ...patch };
+      const semgraph = registry.semgraphs.get('categoryComparison')!;
+      return (semgraph.implementation.compute(request, { now: NOW }) as CategoryComputed).comparison?.kind;
+    };
+    assert.equal(await kinds({}), 'lastYear');
+    assert.equal(await kinds({ window: 14 }), 'previousPeriod');
+    assert.equal(await kinds({ window: 7 }), 'previousPeriod');
+    assert.equal(await kinds({ window: 91 }), 'lastYear');
+    assert.equal(await kinds({ window: undefined, period: '2026-09' }), 'lastYear');
+    assert.equal(await kinds({ window: 7, comparison: 'lastYear' }), 'lastYear');
+  });
+
+  it('REQ-073: an amount is a bar from zero; a mean or median may zoom, with a zigzag and a bold first value', async () => {
+    const registry = await testRegistry();
+    const zoomed = categories.find((drawn) => drawn.name === 'categoryComparison/provinces-median-zoomed')!;
+    assert.match(zoomed.svg, ZIGZAG, 'a zigzag at the start of the baseline');
+    assert.match(zoomed.svg, /font-weight="bold"[^>]*>€ 200k</, 'the first value is bold');
+    assert.doesNotMatch(zoomed.svg, />€ 0</);
+    for (const drawn of categories.filter((candidate) => candidate.statistic === 'sum')) {
+      const result = await runPipeline(registry, { ...drawn.request, valueAxis: 'zoom' }, { now: NOW });
+      assert.doesNotMatch(result.svg!, ZIGZAG, `${drawn.name}: a bar starts at zero`);
+      assert.ok(result.report.issues.some((issue) => issue.level === 'info' && issue.code === 'valueAxisZoomIgnored'), drawn.name);
     }
   });
 

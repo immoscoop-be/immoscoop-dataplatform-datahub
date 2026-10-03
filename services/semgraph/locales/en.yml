@@ -114,6 +114,7 @@ chart:
   running: "running: {count} of {total} days"
   noData: no data
   runningShort: current
+  noComparison: no comparison
 
 hover:
   n: "n = {n} observations"
@@ -136,6 +137,9 @@ hover:
         median: median
   comparison: "previous period, {name}: {value}"
   comparisonMissing: "previous period, {name}: no data"
+  categoryComparison: "{label}: {value}"
+  categoryComparisonMissing: "{label}: no data"
+  difference: "difference: {value}"
   spread:
     mean: "±1 sd: {sd}"
     median: "P25–P75: {p25}–{p75}"
@@ -162,6 +166,11 @@ comparison:
   months: previous {n} months
   quarters: previous {n} quarters
   days: previous {n} days
+  previous:
+    day: the day before
+    week: previous week
+    month: previous month
+    quarter: previous quarter
 
 blocks:
   category: categories
@@ -255,6 +264,12 @@ issues:
   tooFewCategories:
     message: "Only {count} category has a value. Bars compare categories; that takes at least {minimumPoints}."
     alternative: Send more categories, or show the value alone in a KPI tile.
+  comparisonOnlyForSum:
+    message: "A comparison lives inside one bar, so only for a sum; this chart shows the {statistic}."
+    alternative: Leave out comparison and previous, or follow the mean or median over time in periodComparison.
+  noPreviousValues:
+    message: "No category has a value for {label}, so there is nothing to compare with."
+    alternative: Send the previous values, or leave out comparison and previous.
   # Input errors (400): the request itself is not valid.
   badRequest:
     message: "The request could not be read: {detail}"
@@ -412,3 +427,6 @@ issues:
   valuesAllTooDense:
     message: "There are too many points to write every value on the chart; the default ({values}) is used."
     alternative: Send fewer blocks, or choose a longer period.
+  valueAxisZoomIgnored:
+    message: "An amount is a bar, and a bar starts at zero: the value axis is not zoomed."
+    alternative: Leave out valueAxis; zoom is for a mean or median per category.

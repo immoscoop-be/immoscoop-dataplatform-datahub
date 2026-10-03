@@ -1,0 +1,24 @@
+{
+  "semgraph": "categoryComparison",
+  "metric": "listingsOnline",
+  "title": "Panden online per prijsklasse tegenover vorig jaar (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "sum",
+  "ordered": true,
+  "day": "2026-09-25",
+  "asOf": "2026-09-30",
+  "comparison": "lastYear",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Panden",
+    "dataset": "Listings",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "category": "< 200k", "sum": 1210, "previous": { "sum": 1480 } },
+    { "category": "200–300k", "sum": 2790, "previous": { "sum": 2650 } },
+    { "category": "300–400k", "sum": 3410, "previous": { "sum": 3120 } },
+    { "category": "400–500k", "sum": 2080, "previous": { "sum": 1890 } },
+    { "category": "> 500k", "sum": 1010, "previous": { "sum": 1060 } }
+  ]
+}

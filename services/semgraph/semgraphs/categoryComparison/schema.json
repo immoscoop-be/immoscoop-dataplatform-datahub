@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "semgraph:categoryComparison/request",
   "title": "categoryComparison request",
-  "description": "Categories as bars: without order they lie down, sorted by value; with an order they stand upright in that order. One row per category, computed in the warehouse (REQ-058): sum (a bar from zero), mean with sd (a diamond over a thin bar) or median with p25 and p75 (a dot in a wide bar). Give the time the values cover: window, period or day.",
+  "description": "Categories as bars: without order they lie down, sorted by value; with an order they stand upright in that order. One row per category, computed in the warehouse (REQ-058): sum (a bar from zero), mean with sd (a diamond over a thin bar) or median with p25 and p75 (a dot in a wide bar). Give the time the values cover: window, period or day. A sum can carry the previous value of every category: the comparison then lives inside one bar (REQ-066, REQ-067).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -76,6 +76,21 @@
       "description": "The last complete day of the data. Yesterday in Brussels when absent.",
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "valueAxis": {
+      "description": "zero: the value axis starts at zero. zoom: for a mean or median it may start at a round value just below the data, with a zigzag at the start of the baseline and a bold first value (REQ-073). An amount is a bar, so it always starts at zero.",
+      "enum": [
+        "zero",
+        "zoom"
+      ],
+      "default": "zero"
+    },
+    "comparison": {
+      "description": "What the previous value of every row is: previousPeriod (the period just before, as long) or lastYear (the same period a year earlier). Neither is on the screen (REQ-037, REQ-067). For a sum only, drawn inside one bar. Default: the period before for a window of up to 14 days, last year for longer windows, calendar periods and a day.",
+      "enum": [
+        "previousPeriod",
+        "lastYear"
+      ]
     },
     "unit": {
       "description": "The unit around every number of the metric, e.g. { \"prefix\": \"€ \" } or { \"suffix\": \" d\" }.",
@@ -263,6 +278,38 @@
             "description": "75th percentile.",
             "type": "number",
             "minimum": 0
+          },
+          "previous": {
+            "description": "The sum of this category in the period it is compared with (see comparison); null when it has no data. Every row carries it, or none.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "minProperties": 1,
+            "properties": {
+              "sum": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "mean": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "median": {
+                "type": [
+                  "number",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
           }
         }
       }

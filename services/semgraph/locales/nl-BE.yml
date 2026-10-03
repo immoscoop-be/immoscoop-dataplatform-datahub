@@ -114,6 +114,7 @@ chart:
   running: "lopend: {count} van {total} dagen"
   noData: geen data
   runningShort: lopend
+  noComparison: geen vergelijking
 
 hover:
   n: "n = {n} waarnemingen"
@@ -136,6 +137,9 @@ hover:
         median: mediaan
   comparison: "vorige periode, {name}: {value}"
   comparisonMissing: "vorige periode, {name}: geen data"
+  categoryComparison: "{label}: {value}"
+  categoryComparisonMissing: "{label}: geen data"
+  difference: "verschil: {value}"
   spread:
     mean: "±1 sd: {sd}"
     median: "P25–P75: {p25}–{p75}"
@@ -162,6 +166,11 @@ comparison:
   months: vorige {n} maanden
   quarters: vorige {n} kwartalen
   days: vorige {n} dagen
+  previous:
+    day: de dag ervoor
+    week: vorige week
+    month: vorige maand
+    quarter: vorig kwartaal
 
 blocks:
   category: categorieën
@@ -255,6 +264,12 @@ issues:
   tooFewCategories:
     message: "Maar {count} categorie heeft een waarde. Staven vergelijken categorieën; dat vraagt er minstens {minimumPoints}."
     alternative: Stuur meer categorieën, of toon de waarde alleen in een KPI-tegel.
+  comparisonOnlyForSum:
+    message: "Een vergelijking zit in één staaf, dus enkel bij een som; deze grafiek toont de {statistic}."
+    alternative: Laat comparison en previous weg, of volg het gemiddelde of de mediaan in de tijd met periodComparison.
+  noPreviousValues:
+    message: "Geen enkele categorie heeft een waarde voor {label}, dus er is niets om mee te vergelijken."
+    alternative: Stuur de vorige waarden mee, of laat comparison en previous weg.
   badRequest:
     message: "De aanvraag kon niet gelezen worden: {detail}"
     alternative: Stuur een JSON-object met Content-Type application/json.
@@ -410,3 +425,6 @@ issues:
   valuesAllTooDense:
     message: "Er zijn te veel punten om elke waarde op de grafiek te schrijven; de standaard ({values}) wordt gebruikt."
     alternative: Stuur minder blokken, of kies een grotere periode.
+  valueAxisZoomIgnored:
+    message: "Een hoeveelheid is een staaf, en een staaf begint bij nul: de waardeas zoomt niet in."
+    alternative: Laat valueAxis weg; inzoomen is voor een gemiddelde of mediaan per categorie.

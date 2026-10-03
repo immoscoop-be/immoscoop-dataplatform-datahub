@@ -20,6 +20,18 @@ export function valueScale(lowest: number, highest: number, mode: ValueAxisMode)
   return { ticks, min, max: ticks.at(-1)!, zoomed: min > 0 };
 }
 
+/**
+ * The zigzag at the start of the baseline of a zoomed axis, in pixels: along the baseline, and across
+ * it. Every chart that zooms draws the same one (REQ-026, REQ-073); MASK is the stretch of baseline it replaces.
+ */
+export const ZIGZAG: readonly (readonly [number, number])[] = [[0, 0], [2, 3], [5, -3], [8, 3], [10, 0]];
+export const ZIGZAG_MASK = 11;
+
+/** The first value of a zoomed axis is bold. */
+export function zoomedLabelWeight(scale: ValueScale): object {
+  return scale.zoomed ? { labelFontWeight: { condition: { test: `datum.value === ${scale.min}`, value: 'bold' }, value: 'normal' } } : {};
+}
+
 /** Round ticks from zero to at least `top`: steps of 1, 2, 2.5 or 5 times a power of ten. */
 export function niceTicks(top: number, count = 4): number[] {
   if (!(top > 0)) return [0, 1];
