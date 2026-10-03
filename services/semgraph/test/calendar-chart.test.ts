@@ -79,7 +79,7 @@ describe('calendar periods chart', () => {
 
   it('draws the running period hollow and says so, on the label and on hover', async () => {
     const { svg } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
-    // REQ-022: the last final week in bold with its spread, the running week next to it in grey;
+    // REQ-033: the last final week in bold with its spread, the running week next to it in grey;
     // "lopend" under the running point (REQ-000).
     assert.match(svg!, /font-weight="bold"[^>]*>44,0</);
     assert.match(svg!, />± 12,4</);

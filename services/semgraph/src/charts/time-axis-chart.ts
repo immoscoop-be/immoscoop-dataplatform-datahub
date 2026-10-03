@@ -11,6 +11,7 @@ import type {
   SemgraphMetadata,
 } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
+import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
 import { decimalsOf, lookup, numberFormat, runs, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
 import type { Statistic, Summary } from './statistics.ts';
@@ -77,6 +78,11 @@ export interface TimeAxisComputed {
   missing: number[];
   /** Days in the range without a value, in order. */
   absentDays: number[];
+  /**
+   * The same value for the period just before the screen, one block per block on the screen, at the
+   * same position (`periodComparison`, REQ-037); null for a chart without comparison.
+   */
+  comparison: { slots: Slot[]; points: SlotPoint[] } | null;
 }
 
 export interface LabelContext {
@@ -91,6 +97,8 @@ export const PLOT_HEIGHT = 200;
 /** Fixed geometry (autosize none): room for the y labels left, half a value label right, the time axis below. */
 export const PADDING = { left: 52, right: 28, top: 14, bottom: AXIS_HEIGHT };
 export const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
+/** A comparison writes the last value and the name of the comparison right of the lines (REQ-003). */
+const COMPARISON_PADDING = { ...PADDING, right: 84 };
 /** At most this many labels on the time axis. */
 export const MAX_TICKS = 8;
 /** A "no data" label is only written in a missing stretch at least this wide. */
@@ -102,9 +110,9 @@ const MIN_LABEL_WIDTH = 44;
  */
 export type Form = 'bars' | 'band';
 
-/** Bars while each slot has room for its bar plus some air, a band beyond that (REQ-011). */
-export function formFor(slots: number, barWidth: number): Form {
-  return PLOT_WIDTH / slots >= Math.max(8, barWidth + 4) ? 'bars' : 'band';
+/** Bars while each slot has room for its bar plus some air, a band beyond that (REQ-022). */
+export function formFor(slots: number, barWidth: number, plotWidth = PLOT_WIDTH): Form {
+  return plotWidth / slots >= Math.max(8, barWidth + 4) ? 'bars' : 'band';
 }
 
 /** Master-leerplan, level 1: unique counts (1.2.2), rolling periods (1.4.2), centre and spread (1.5.4). */
@@ -115,23 +123,33 @@ export const LEARNING_PLAN_LEVEL_1 = 'https://immoscoop.atlassian.net/wiki/space
  * the contract, the reference day, the strict handling of missing days, the chart-language rules,
  * the value axis (from zero or zoomed), the drawing and the hover labels. A family decides which
  * days each slot summarizes and how slots are labelled; the statistic decides centre and spread.
- * Nothing is written twice (REQ-014).
+ * Nothing is written twice (REQ-025).
  */
 export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   implements SemgraphImplementation<Request, TimeAxisComputed>
 {
   readonly id: string;
   readonly statistic: Statistic;
+  /** Whether the chart compares with the period just before the screen (`periodComparison`). */
+  protected readonly compares: boolean = false;
 
   constructor(id: string, statistic: Statistic) {
     this.id = id;
     this.statistic = statistic;
   }
 
+  protected get padding() {
+    return this.compares ? COMPARISON_PADDING : PADDING;
+  }
+
+  protected get plotWidth(): number {
+    return WIDTH - this.padding.left - this.padding.right;
+  }
+
   // ----- What a family adds -----
 
   protected abstract readonly periodDescription: string;
-  /** Which values the family writes on the chart by default (REQ-022). */
+  /** Which values the family writes on the chart by default (REQ-033). */
   protected abstract readonly defaultValues: ValuesMode;
   /** Contract properties of the family, such as window or unit, and its horizon. */
   protected abstract periodSchema(): { properties: Record<string, object>; required: string[] };
@@ -151,13 +169,21 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   protected abstract periodNoun(request: Request): IssueParam;
   /** The refusal when not a single slot is complete. */
   protected abstract noPointIssue(request: Request): IssueSpec;
+  /**
+   * The blocks of the period just before the screen, as long as what the screen shows, each at the
+   * position of the block it is compared with (REQ-037). A running period is compared with the same
+   * number of days.
+   */
+  protected abstract previousSpan(slots: Slot[], request: Request): Slot[];
+  /** The name of that period at the end of its line, e.g. "vorige 12 weken" or "vorig jaar". */
+  protected abstract comparisonLabel(request: Request, t: Translator): string;
 
   /** Rules that only hold for the family, e.g. a window in multiples of 7. */
   protected periodRules(_request: Request): IssueSpec[] {
     return [];
   }
 
-  /** Whether the statistic has a spread at all; a single day has none (REQ-020). */
+  /** Whether the statistic has a spread at all; a single day has none (REQ-031). */
   protected spreadApplies(_request: Request): boolean {
     return true;
   }
@@ -282,24 +308,17 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       if (typeof values.get(day) !== 'number') absentDays.push(day);
     }
 
+    const spreadApplies = this.statistic.hasSpread && this.spreadApplies(request);
     const spreadAsked = (request.spread ?? this.statistic.spreadName) !== 'none';
-    const withSpread = this.spreadApplies(request) && spreadAsked;
-    const points: SlotPoint[] = [];
-    const missing: number[] = [];
-    for (const slot of slots) {
-      const slotValues: number[] = [];
-      for (let day = slot.first; day <= slot.last; day++) {
-        const value = values.get(day);
-        if (typeof value === 'number') slotValues.push(value);
-      }
-      // Strict: a slot with a missing day has no value; missing days are never zero or interpolated.
-      if (slotValues.length < slot.last - slot.first + 1) missing.push(slot.rel);
-      else points.push({ ...slot, ...this.statistic.summarize(slotValues, withSpread), days: slotValues.length });
-    }
+    const withSpread = spreadApplies && spreadAsked;
+    const { points, missing } = this.summarize(slots, values, withSpread);
+    // REQ-005: the comparison line never has a band, so its spread is not computed.
+    const comparison = this.compares ? this.summarize(this.previousSpan(slots, request), values, false) : null;
 
-    // "all" only while every value has room above its point; otherwise the family's default.
-    const asked = request.values ?? this.defaultValues;
-    const valuesFallback = asked === 'all' && PLOT_WIDTH / slots.length < MIN_WIDTH_FOR_ALL;
+    // "all" only while every value has room above its point; otherwise the family's default. A
+    // comparison labels the ends of its lines instead (REQ-003).
+    const asked = this.compares ? 'off' : (request.values ?? this.defaultValues);
+    const valuesFallback = asked === 'all' && this.plotWidth / slots.length < MIN_WIDTH_FOR_ALL;
 
     return {
       reference,
@@ -309,14 +328,31 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       rangeDays,
       valuesInRange: rangeDays - absentDays.length,
       withSpread,
-      spreadOmitted: this.spreadApplies(request) && !spreadAsked,
+      spreadOmitted: spreadApplies && !spreadAsked,
       values: valuesFallback ? this.defaultValues : asked,
       valuesFallback,
       slots,
       points,
       missing,
       absentDays,
+      comparison: comparison && { slots: this.previousSpan(slots, request), points: comparison.points },
     };
+  }
+
+  /** Strict: a slot with a missing day has no value; missing days are never zero or interpolated. */
+  private summarize(slots: Slot[], values: Map<number, number | null>, withSpread: boolean) {
+    const points: SlotPoint[] = [];
+    const missing: number[] = [];
+    for (const slot of slots) {
+      const slotValues: number[] = [];
+      for (let day = slot.first; day <= slot.last; day++) {
+        const value = values.get(day);
+        if (typeof value === 'number') slotValues.push(value);
+      }
+      if (slotValues.length < slot.last - slot.first + 1) missing.push(slot.rel);
+      else points.push({ ...slot, ...this.statistic.summarize(slotValues, withSpread), days: slotValues.length });
+    }
+    return { points, missing };
   }
 
   // ----- The chart-language rules -----
@@ -338,11 +374,12 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     if (request.measureType === 'unique') {
       if (request.uniqueAggregation === undefined) {
         issues.push({ level: 'refusal', code: 'uniqueAggregationRequired', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
-      } else if (request.uniqueAggregation === 'overPeriod') {
+      } else if (request.uniqueAggregation === 'overPeriod' || this.statistic.kind === 'amount') {
+        // A total of daily uniques counts someone who comes back on several days several times.
         issues.push({
           level: 'refusal',
           code: 'uniquesOverPeriodNotDerivable',
-          field: '/uniqueAggregation',
+          field: request.uniqueAggregation === 'overPeriod' ? '/uniqueAggregation' : '/statistic',
           params: { period: this.periodNoun(request) },
           learnMore: LEARNING_PLAN_LEVEL_1,
         });
@@ -368,12 +405,20 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       });
     } else if (computed.points.length === 0) {
       issues.push({ ...this.noPointIssue(request), learnMore: metadata.links.learning });
+    } else if (computed.comparison && computed.comparison.points.length === 0) {
+      // Nothing to compare with: the data does not reach back to the period before the screen.
+      issues.push({
+        level: 'refusal',
+        code: 'noComparisonData',
+        field: '/data',
+        params: { from: formatDay(computed.comparison.slots[0]!.first), to: formatDay(computed.comparison.slots.at(-1)!.fullLast) },
+      });
     }
 
     issues.push(...this.periodRules(request));
-    // REQ-021: allowed, but discouraged with a red alert between the title and the chart.
+    // REQ-032: allowed, but discouraged with a red alert between the title and the chart.
     if (computed.spreadOmitted) {
-      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/spread', learnMore: LEARNING_PLAN_LEVEL_1, alert: true });
+      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/spread', learnMore: LEARNING_PLAN_LEVEL_1 });
     }
     if (computed.valuesFallback) {
       issues.push({ level: 'info', code: 'valuesAllTooDense', field: '/values', params: { values: computed.values } });
@@ -393,18 +438,22 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
   draw(request: Request, computed: TimeAxisComputed, { t, tokens }: DrawContext): Drawing {
     const { slots, points } = computed;
+    const previous = computed.comparison?.points ?? [];
     const count = slots.length;
-    const slotWidth = PLOT_WIDTH / count;
+    const plotWidth = this.plotWidth;
+    const padding = this.padding;
+    const slotWidth = plotWidth / count;
     const barWidth = this.statistic.barWidth(tokens);
-    const form = formFor(count, barWidth);
+    // REQ-005: with a comparison, the spread of the focus series is always a light band.
+    const form = this.compares ? 'band' : formFor(count, barWidth, plotWidth);
     const surface = color(tokens, 'surface');
     const focus = color(tokens, 'focus');
     const labels = labelsFor(points, computed.values);
 
     // Value axis: from zero, or zoomed with a zigzag and a bold first value; high enough that every
-    // value label fits above its point.
-    const highest = Math.max(...points.map((point) => point.spread?.hi ?? point.centre));
-    const lowest = Math.min(...points.map((point) => Math.max(0, point.spread?.lo ?? point.centre)));
+    // value label fits above its point, and the comparison line fits too.
+    const highest = Math.max(...points.map((point) => point.spread?.hi ?? point.centre), ...previous.map((point) => point.centre));
+    const lowest = Math.min(...points.map((point) => Math.max(0, point.spread?.lo ?? point.centre)), ...previous.map((point) => point.centre));
     const mode = request.valueAxis ?? 'zero';
     let scale = valueScale(lowest, highest, mode);
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -417,7 +466,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     // Whole numbers stay whole (daily counts); otherwise one decimal below 100.
     const whole = points.every((point) => [point.centre, point.spread?.lo ?? 0, point.spread?.hi ?? 0].every(Number.isInteger));
     const valueFormat = numberFormat(t.locale, highest >= 100 || whole ? 0 : 1);
-    const perPixel = { x: count / PLOT_WIDTH, y: (scale.max - scale.min) / PLOT_HEIGHT };
+    const perPixel = { x: count / plotWidth, y: (scale.max - scale.min) / PLOT_HEIGHT };
 
     const x = {
       field: 'rel',
@@ -468,8 +517,22 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           .flatMap((point) => (point.spread ? [{ rel: point.rel, segment: point.segment, lo: Math.max(0, point.spread.lo), hi: point.spread.hi }] : []))
       : [];
     // Markers: every point while there is room; on a dense line only the points with their own bar
-    // and the last one, so the signature (REQ-006, REQ-008) stays visible (REQ-017).
-    const marked = points.filter((point) => ownBar(point) || point.rel === 0);
+    // and the last one, so the signature (REQ-006, REQ-008) stays visible (REQ-028). A comparison
+    // marks every point of the focus series while they fit, as in Figma.
+    const marked = this.compares && slotWidth >= 8 ? points : points.filter((point) => ownBar(point) || point.rel === 0);
+
+    // The comparison (REQ-003, REQ-004): a grey line, the shortfall hatched, both ends labelled.
+    const comparisonLine = withSegments(previous).map(({ rel, centre, segment }) => ({ rel, centre, segment }));
+    const hatch = shortfall(points, previous);
+    const hatchId = hatch.length > 0 ? patternId(JSON.stringify([request.metric, hatch])) : undefined;
+    const pixelY = (value: number) => PLOT_HEIGHT * (1 - (value - scale.min) / (scale.max - scale.min));
+    const lastFocus = this.compares ? points.find((point) => point.rel === 0) : undefined;
+    const lastPrevious = previous.at(-1);
+    const ends = endLabels(lastFocus && pixelY(lastFocus.centre), lastPrevious && pixelY(lastPrevious.centre), lastFocus?.running);
+    const endValue = lastFocus ? [{ rel: lastFocus.rel, py: ends.focus, text: valueFormat.format(lastFocus.centre) }] : [];
+    // With a comparison, "lopend" goes under the value at the end instead of under the point.
+    const endRunning = lastFocus?.running ? [{ rel: lastFocus.rel, py: ends.focus! + SECOND_LINE, text: t('chart.runningShort') }] : [];
+    const endComparison = this.compares && lastPrevious ? [{ rel: lastPrevious.rel, py: ends.comparison, text: this.comparisonLabel(request, t) }] : [];
 
     const missing = runs(computed.missing).map(([from, to]) => ({ from: from - 0.5, to: to + 0.5, center: (from + to) / 2, slots: to - from + 1 }));
     const missingLabels = missing
@@ -478,7 +541,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
     const values = valueLabels({
       labels,
-      running: points.filter((point) => point.running),
+      running: this.compares ? [] : points.filter((point) => point.running),
       statistic: this.statistic,
       format: valueFormat,
       t,
@@ -505,10 +568,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
-      width: PLOT_WIDTH,
+      width: plotWidth,
       height: PLOT_HEIGHT,
       autosize: { type: 'none' },
-      padding: PADDING,
+      padding,
       background: 'transparent',
       config: vegaLiteConfig(tokens),
       datasets: {
@@ -522,6 +585,11 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         points: marked,
         mask,
         zigzag,
+        comparisonLine,
+        hatch,
+        endValue,
+        endRunning,
+        endComparison,
         ...values.datasets,
       },
       layer: [
@@ -560,9 +628,21 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           encoding: { x, y: y('lo'), y2: { field: 'hi' }, detail: { field: 'segment' } },
         },
         {
+          // REQ-004: only a shortfall against the comparison is hatched; a gain gets no fill.
+          data: { name: 'hatch' },
+          mark: { type: 'area', fill: hatchId ? `url(#${hatchId})` : surface, opacity: 1 },
+          encoding: { x, y: y('lo'), y2: { field: 'hi' }, detail: { field: 'piece' } },
+        },
+        {
           data: { name: 'bars' },
           mark: { type: 'rule', strokeWidth: barWidth, strokeCap: 'round', color: color(tokens, 'focus/light') },
           encoding: { x, y: y('lo'), y2: { field: 'hi' } },
+        },
+        {
+          // REQ-003: the period before the screen as a grey line, never with a band (REQ-005).
+          data: { name: 'comparisonLine' },
+          mark: { type: 'line', color: color(tokens, 'context'), strokeWidth: tokens.stroke.line },
+          encoding: { x, y: y('centre'), detail: { field: 'segment' } },
         },
         {
           data: { name: 'line' },
@@ -573,7 +653,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           // The centre has the shape of its statistic: filled when final, hollow while its period is
           // still running (REQ-006, REQ-008).
           data: { name: 'points' },
-          mark: { type: 'point', shape: this.statistic.shape, filled: true, size: markerSize(tokens, this.statistic.id), opacity: 1 },
+          mark: { type: 'point', shape: this.statistic.shape, filled: true, size: markerSize(tokens, this.statistic.kind), opacity: 1 },
           encoding: {
             x,
             y: y('centre'),
@@ -593,13 +673,32 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           encoding: { x, y: y('value'), order: { field: 'order' } },
         },
         ...values.layers,
+        {
+          data: { name: 'endValue' },
+          mark: { type: 'text', align: 'left', baseline: 'middle', dx: 8, fontSize: tokens.size.value, fontWeight: 'bold', color: color(tokens, 'text') },
+          encoding: { x, y: { field: 'py', type: 'quantitative', scale: null }, text: { field: 'text' } },
+        },
+        {
+          data: { name: 'endRunning' },
+          mark: { type: 'text', align: 'left', baseline: 'middle', dx: 8, fontSize: tokens.size.detail, color: color(tokens, 'text/muted') },
+          encoding: { x, y: { field: 'py', type: 'quantitative', scale: null }, text: { field: 'text' } },
+        },
+        {
+          data: { name: 'endComparison' },
+          mark: { type: 'text', align: 'left', baseline: 'middle', dx: 8, fontSize: tokens.size.detail, color: color(tokens, 'text/muted') },
+          encoding: { x, y: { field: 'py', type: 'quantitative', scale: null }, text: { field: 'text' } },
+        },
       ],
     } as TopLevelSpec;
 
     const hover = this.hoverSpecs(request, computed, t, valueFormat);
 
     const title = request.title ?? request.metric;
-    const cue = [this.periodCue(request, t), computed.withSpread ? t(`cue.spread.${this.statistic.id}`) : '']
+    const cue = [
+      this.periodCue(request, t),
+      computed.withSpread ? t(`cue.spread.${this.statistic.id}`) : '',
+      this.compares ? t('cue.comparison', { label: this.comparisonLabel(request, t) }) : '',
+    ]
       .filter(Boolean)
       .join(' · ');
     const readingCue = request.measureType === 'unique' ? `${t('cue.unique')} · ${cue}` : cue;
@@ -612,8 +711,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return {
       vegaLite: spec,
       width: WIDTH,
-      height: PADDING.top + PLOT_HEIGHT + PADDING.bottom,
-      plotArea: { x: PADDING.left, y: PADDING.top, width: PLOT_WIDTH, height: PLOT_HEIGHT },
+      height: padding.top + PLOT_HEIGHT + padding.bottom,
+      plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
+      ...(hatchId ? { defs: hatchPattern(hatchId, tokens) } : {}),
       hover,
       title,
       readingCue,
@@ -630,16 +730,28 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   protected hoverSpecs(request: Request, computed: TimeAxisComputed, t: Translator, format: Intl.NumberFormat): HoverSpec[] {
     const absent = new Set(computed.absentDays);
     const byRel = new Map(computed.points.map((point) => [point.rel, point]));
+    const previousSlots = new Map(computed.comparison?.slots.map((slot) => [slot.rel, slot]));
+    const previousPoints = new Map(computed.comparison?.points.map((point) => [point.rel, point]));
     return computed.slots.map((slot) => {
       const context = { t, computed, isFirst: false };
       const name = { text: this.slotLabel(slot, context, request), bold: true };
       const point = byRel.get(slot.rel);
+      // With a comparison: the value of the block it is compared with, e.g. "vorige periode, week 28 (6–12 jul): 41,0".
+      const previousSlot = previousSlots.get(slot.rel);
+      const previous = previousSlot ? previousPoints.get(slot.rel) : undefined;
+      const comparison = previousSlot
+        ? [{
+            text: previous
+              ? t('hover.comparison', { name: this.slotLabel(previousSlot, context, request), value: format.format(previous.centre) })
+              : t('hover.comparisonMissing', { name: this.slotLabel(previousSlot, context, request) }),
+          }]
+        : [];
       if (!point) {
         const gaps = [];
         for (let day = slot.first; day <= slot.last; day++) if (absent.has(day)) gaps.push(day);
         const first = localizeDay(t, gaps[0] ?? slot.first, 'short');
         const text = gaps.length === 1 ? t('chart.missing.one', { absent: first }) : t('chart.missing.many', { count: gaps.length, absent: first });
-        return { x: slot.rel, lines: [name, { text }] };
+        return { x: slot.rel, lines: [name, { text }, ...comparison] };
       }
       const spread = this.statistic.spreadLine(t, format, point);
       return {
@@ -650,6 +762,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           { text: `${this.centreLabel(request, t)}: ${format.format(point.centre)}` },
           ...(spread ? [{ text: spread }] : []),
           ...this.slotExtras(slot, context, request).map((text) => ({ text })),
+          ...comparison,
         ],
       };
     });

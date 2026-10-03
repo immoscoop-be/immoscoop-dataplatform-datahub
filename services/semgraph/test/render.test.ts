@@ -23,7 +23,8 @@ describe('render', async () => {
         if (result.report.outcome === 'refused') return assert.equal(result.svg, undefined);
         assert.ok(result.svg);
         assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
-        assert.doesNotMatch(result.svg, /\sid="/, 'no ids, so several charts can share one page');
+        // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036).
+        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-hatch-[0-9a-f]{8}$/);
         await assertGolden(`${id}-${name}.svg`, result.svg);
       });
     }
@@ -39,7 +40,7 @@ describe('render', async () => {
     assert.match(svg!, /<a href="https:\/\/immoscoop\.atlassian\.net\/wiki\/spaces\/DATA\/pages\/1354629146">/);
     assert.match(svg!, />grafiektaal v0</);
     assert.match(svg!, /data-tokens-version="0\.0\.0-provisional"/);
-    // The reference day is yesterday, so the last window reads "nu" (REQ-019).
+    // The reference day is yesterday, so the last window reads "nu" (REQ-030).
     assert.match(svg!, />nu</);
   });
 
@@ -67,16 +68,21 @@ describe('render', async () => {
     assert.ok(hoverLabels(svg!).includes('22 jul (−70d), geen data: 16 jul ontbreekt'));
   });
 
-  it('shows a red alert between the title and the chart when the spread is left out (REQ-021)', async () => {
+  it('shows every tolerated deviation as a red block with white text between the title and the chart (REQ-032, REQ-038, REQ-040)', async () => {
     const result = await render(await example('without-spread'));
     assert.deepEqual(result.deviations, ['meanWithoutSpread']);
-    assert.match(result.svg!, /fill="#c8102e">Een gemiddelde zonder spreiding kan misleiden: je ziet niet hoe ver de dagwaarden uit/);
+    assert.match(result.svg!, /<rect x="20" y="[\d.]+" width="600" height="[\d.]+" rx="3" fill="#c8102e"\/>/);
+    assert.match(result.svg!, /fill="#ffffff">Buiten de grafiektaal: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de/);
+    assert.match(result.svg!, /Wie deze grafiek oplevert, legt uit waarom\./);
     // The footer still says that the chart is outside the chart language.
     assert.match(result.svg!, /Buiten de grafiektaal: gemiddelde zonder spreiding\./);
-    assert.doesNotMatch((await render(await example('window-10'))).svg!, /#c8102e/);
+    const window10 = (await render(await example('window-10'))).svg!;
+    assert.match(window10, /fill="#c8102e"/);
+    assert.match(window10, />Buiten de grafiektaal: een venster van 10 dagen is geen veelvoud van 7, dus niet elke</);
+    assert.doesNotMatch((await render(await example('basic'))).svg!, /#c8102e/);
   });
 
-  it('writes no values with values off, and falls back when all values do not fit (REQ-022)', async () => {
+  it('writes no values with values off, and falls back when all values do not fit (REQ-033)', async () => {
     const off = await render({ ...(await example('basic')), values: 'off' });
     assert.doesNotMatch(off.svg!, />45,9</);
     const dense = await render({ ...(await example('long-horizon')), values: 'all' });

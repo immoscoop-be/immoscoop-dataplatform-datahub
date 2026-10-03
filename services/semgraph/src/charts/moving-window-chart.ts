@@ -10,10 +10,10 @@ export interface MovingWindowRequest extends TimeAxisRequest {
 }
 
 /**
- * Rolling windows as blocks of time that do not overlap (REQ-018): every point is one window, on a
+ * Rolling windows as blocks of time that do not overlap (REQ-029): every point is one window, on a
  * relative axis in steps of the window (−42d … nu). The last window ends on the last complete day,
  * so a window is always complete and never running. A window of one day shows the daily values
- * (REQ-020).
+ * (REQ-031).
  */
 export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowRequest> {
   protected readonly periodDescription =
@@ -67,7 +67,7 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return window === 1 ? [] : [t('chart.window', { range: localizeRange(t, slot.first, slot.last) })];
   }
 
-  /** One day has no spread: it is the value of that day (REQ-020). */
+  /** One day has no spread: it is the value of that day (REQ-031). */
   protected override spreadApplies({ window }: MovingWindowRequest): boolean {
     return window > 1;
   }
@@ -84,13 +84,27 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return window === 1 ? { t: 'period.day' } : { t: 'period.window', params: { window } };
   }
 
+  /** The windows before the screen: as many days back as the screen shows (REQ-037). */
+  protected previousSpan(slots: Slot[], { window, horizon }: MovingWindowRequest): Slot[] {
+    const days = window * horizon;
+    return slots.map((slot) => ({ ...slot, first: slot.first - days, last: slot.last - days, fullLast: slot.fullLast - days, running: false }));
+  }
+
+  /** "vorig jaar" for 364 days, "vorige 7 weken" for 49, "vorige 10 dagen" otherwise. */
+  protected comparisonLabel({ window, horizon }: MovingWindowRequest, t: Translator): string {
+    const days = window * horizon;
+    if (days % 364 === 0) return days === 364 ? t('comparison.year') : t('comparison.years', { n: days / 364 });
+    if (days % 7 === 0) return t('comparison.weeks', { n: days / 7 });
+    return t('comparison.days', { n: days });
+  }
+
   protected noPointIssue({ window }: MovingWindowRequest): IssueSpec {
     return { level: 'refusal', code: 'noCompleteWindow', field: '/data', params: { window } };
   }
 
   /**
    * A window in multiples of 7 counts every weekday equally often, and a window of one day is the
-   * daily value (REQ-020); anything else is a tolerated deviation.
+   * daily value (REQ-031); anything else is a tolerated deviation.
    */
   protected override periodRules({ window }: MovingWindowRequest): IssueSpec[] {
     if (window === 1 || window % 7 === 0) return [];
@@ -113,7 +127,7 @@ export function relativeTicks(windows: number, window: number): number[] {
   return ticksEvery(relativeTickStep(windows, window), windows);
 }
 
-/** "−7d"; for the last window "nu" when it ends yesterday (REQ-019), and its date otherwise. */
+/** "−7d"; for the last window "nu" when it ends yesterday (REQ-030), and its date otherwise. */
 function relativeLabel(days: number, t: Translator, computed: TimeAxisComputed): string {
   if (days !== 0) return t('axis.daysAgo', { n: -days });
   return computed.referenceIsYesterday ? t('axis.now') : localizeDay(t, computed.reference, 'short');

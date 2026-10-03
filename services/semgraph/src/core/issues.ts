@@ -3,7 +3,8 @@ import type { Translator } from './i18n.ts';
 /**
  * inputError: the request is not valid (400).
  * refusal: the chart would mislead, so it is not drawn (422).
- * deviation: tolerated deviation from the chart language; drawn with a note in the footer.
+ * deviation: tolerated deviation from the chart language; drawn with a red alert between the title
+ *   and the chart, text `issues.<code>.alert` (REQ-032, REQ-038, REQ-040), and a note in the footer.
  * info: nothing is wrong, but the caller should know what the service did.
  */
 export type IssueLevel = 'inputError' | 'refusal' | 'deviation' | 'info';
@@ -21,11 +22,6 @@ export interface IssueSpec {
   field?: string;
   params?: Record<string, IssueParam>;
   learnMore?: string;
-  /**
-   * A deviation that is shown as a red alert between the title and the chart, besides the note in
-   * the footer: allowed, but discouraged (REQ-021). Its text is `issues.<code>.alert`.
-   */
-  alert?: boolean;
 }
 
 /** An issue as the caller receives it: in plain language, in the requested locale. */

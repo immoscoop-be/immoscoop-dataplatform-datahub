@@ -3,7 +3,7 @@ import { color, type Tokens } from '../core/tokens.ts';
 import type { Statistic, Summary } from './statistics.ts';
 
 /**
- * Which values are written on the chart (REQ-022, after Figma): none, the last one, the last final
+ * Which values are written on the chart (REQ-033, after Figma): none, the last one, the last final
  * one plus the running one (in grey), or all of them, which only fits with few points.
  */
 export const VALUES_MODES = ['off', 'last', 'lastAndPrevious', 'all'] as const;

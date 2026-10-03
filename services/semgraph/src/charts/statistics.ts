@@ -1,6 +1,6 @@
 import type { Translator } from '../core/i18n.ts';
 import type { Tokens } from '../core/tokens.ts';
-import { SHAPES, type Shape } from './signatures.ts';
+import { SHAPES, type Kind, type Shape } from './signatures.ts';
 
 /** A centre with its spread; the spread is null when it is left out or cannot be computed. */
 export interface Summary {
@@ -11,10 +11,14 @@ export interface Summary {
 /**
  * The statistic a chart shows per period: a centre and the spread that belongs to it. The chart
  * language never shows one without the other: a mean goes with ±1 sd, a median with P25–P75.
- * Every time-axis chart uses one of these, so the calculation lives in one place (REQ-013, REQ-014).
+ * Every time-axis chart uses one of these, so the calculation lives in one place (REQ-024, REQ-025).
  */
 export abstract class Statistic {
-  abstract readonly id: 'mean' | 'median';
+  abstract readonly id: 'mean' | 'median' | 'sum';
+  /** What kind of number it gives, which decides the shape of its point. */
+  abstract readonly kind: Kind;
+  /** Whether it has a spread at all; a total has none. */
+  readonly hasSpread: boolean = true;
   /** The value of `spread` in the contract that asks for the spread, e.g. stddev or iqr. */
   abstract readonly spreadName: string;
   /** The tolerated deviation when the spread is left out. */
@@ -23,9 +27,9 @@ export abstract class Statistic {
 
   abstract summarize(values: readonly number[], withSpread: boolean): Summary;
 
-  /** The shape of the point: a diamond for a mean (REQ-006), a dot for a median (REQ-008). */
+  /** The shape of the point: a diamond for a mean (REQ-006), a dot for a median (REQ-008), a square for a total (REQ-007). */
   get shape(): Shape {
-    return SHAPES[this.id];
+    return SHAPES[this.kind];
   }
 
   /** Width of the spread bar in pixels: a thin bar for a mean, a wide rounded one for a median. */
@@ -52,6 +56,7 @@ export abstract class Statistic {
 
 export class Average extends Statistic {
   readonly id = 'mean';
+  readonly kind = 'mean';
   readonly spreadName = 'stddev';
   readonly withoutSpreadCode = 'meanWithoutSpread';
   readonly description = 'The mean is a diamond over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery).';
@@ -83,6 +88,7 @@ export class Average extends Statistic {
 
 export class Median extends Statistic {
   readonly id = 'median';
+  readonly kind = 'median';
   readonly spreadName = 'iqr';
   readonly withoutSpreadCode = 'medianWithoutSpread';
   readonly description = 'The median is a dot inside a wide rounded bar from P25 to P75 (linear interpolation, like PERCENTILE_CONT in BigQuery).';
@@ -113,6 +119,36 @@ export class Median extends Statistic {
 
   formatDetail(format: Intl.NumberFormat, { spread }: Summary): string {
     return spread ? `${format.format(spread.lo)}–${format.format(spread.hi)}` : '';
+  }
+}
+
+/** The total of the daily values per period: an amount (volume), drawn as a square, without spread. */
+export class Sum extends Statistic {
+  readonly id = 'sum';
+  readonly kind = 'amount';
+  override readonly hasSpread = false;
+  readonly spreadName = 'none';
+  readonly withoutSpreadCode = 'none';
+  readonly description = 'The total of the daily values per period is a square (an amount, without spread).';
+
+  summarize(values: readonly number[]): Summary {
+    return { centre: values.reduce((sum, value) => sum + value, 0), spread: null };
+  }
+
+  barWidth(): number {
+    return 0;
+  }
+
+  formatStats(t: Translator, format: Intl.NumberFormat, { centre }: Summary): string {
+    return t('chart.stats.noSpread', { value: format.format(centre) });
+  }
+
+  spreadLine(): string | null {
+    return null;
+  }
+
+  formatDetail(): string {
+    return '';
   }
 }
 

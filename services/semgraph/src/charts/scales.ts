@@ -12,7 +12,7 @@ export type ValueAxisMode = 'zero' | 'zoom';
 /**
  * From zero by default. "zoom" lets the axis start at a round value just below the data; that is
  * allowed for positions such as averages and medians, never for bars. When the round start is zero
- * anyway, the axis simply starts at zero (REQ-015).
+ * anyway, the axis simply starts at zero (REQ-026).
  */
 export function valueScale(lowest: number, highest: number, mode: ValueAxisMode): ValueScale {
   const ticks = mode === 'zoom' && lowest > 0 ? niceRange(lowest, highest) : niceTicks(highest);

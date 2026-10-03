@@ -18,7 +18,7 @@ const close = (actual: number | undefined, expected: number, what = '') =>
   assert.ok(actual !== undefined && Math.abs(actual - expected) < 1e-6, `${what} ${actual} is not ${expected}`);
 
 describe('moving window', () => {
-  it('summarizes blocks of `window` days that do not overlap, the last one ending on the last complete day (REQ-018)', () => {
+  it('summarizes blocks of `window` days that do not overlap, the last one ending on the last complete day (REQ-029)', () => {
     const result = average.compute(request({ window: 3, horizon: 3, data: series('2026-09-30', [1, 2, 3, 4, 5, 6, 8, 10, 12]) }), { now: NOW });
     assert.deepEqual(result.points.map((point) => point.rel), [-2, -1, 0]);
     close(result.points[0]!.centre, 2);
@@ -58,7 +58,7 @@ describe('moving window', () => {
     assert.equal(result.points.every((point) => !point.running), true);
   });
 
-  it('shows the daily values for a window of one day, without spread and without deviation (REQ-020)', () => {
+  it('shows the daily values for a window of one day, without spread and without deviation (REQ-031)', () => {
     const result = average.compute(request({ window: 1, horizon: 5, data: series('2026-09-30', [3, 4, 5, 6, 7]) }), { now: NOW });
     assert.deepEqual(result.points.map((point) => point.centre), [3, 4, 5, 6, 7]);
     assert.ok(result.points.every((point) => point.spread === null));
@@ -103,7 +103,7 @@ describe('moving window', () => {
     assert.deepEqual(relativeTicks(78, 7), [-65, -52, -39, -26, -13, 0]);
   });
 
-  it('draws a bar under every point while there is room for it, and a band along the line beyond that (REQ-011)', () => {
+  it('draws a bar under every point while there is room for it, and a band along the line beyond that (REQ-022)', () => {
     assert.equal(formFor(28, 4), 'bars');
     assert.equal(formFor(56, 4), 'bars');
     assert.equal(formFor(91, 4), 'band');

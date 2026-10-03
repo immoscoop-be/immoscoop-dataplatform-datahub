@@ -4,7 +4,7 @@
 - { id: movingWindowMedian, status: available }
 - { id: calendarAverage, status: available }
 - { id: calendarMedian, status: available }
-- { id: periodComparison, status: planned }
+- { id: periodComparison, status: available }
 - { id: kpiTile, status: planned }
 - { id: cumulative, status: planned }
 - { id: kpiStatus, status: planned }

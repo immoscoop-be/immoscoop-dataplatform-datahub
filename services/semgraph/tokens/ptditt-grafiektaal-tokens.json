@@ -14,7 +14,8 @@
     "grid": "#eef0f2",
     "badge/text": "#3c444e",
     "badge/surface": "#f3f5f6",
-    "alert": "#c8102e"
+    "alert": "#c8102e",
+    "hatch": "#2d333a"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",

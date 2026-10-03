@@ -18,6 +18,12 @@ semgraphs:
     examples:
       "1": Hoeveel kredietleads per dag kregen we gemiddeld, per maand dit jaar?
       "2": Was deze week drukker dan de weken ervoor?
+  periodComparison:
+    title: Vergelijking met de vorige periode
+    answers: Doen we het beter of slechter dan in de periode ervoor?
+    examples:
+      "1": Kregen we deze 12 weken meer of minder kredietleads dan de 12 weken ervoor?
+      "2": Ligt de typische dag van dit halfjaar hoger dan die van het halfjaar ervoor?
   calendarMedian:
     title: Mediaan per kalenderperiode
     answers: Hoeveel op een typische dag, in elke week, maand, kwartaal of jaar?
@@ -52,9 +58,12 @@ cue:
     mean: voortschrijdend gemiddelde {window}d
     median: voortschrijdende mediaan {window}d
     daily: dagwaarden
+    sum: som per {window} dagen
   calendar:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
+    sum: som per {unit}
+  comparison: tegenover {label}
   spread:
     mean: ±1 sd
     median: P25–P75
@@ -84,9 +93,13 @@ hover:
       mean: "gemiddelde {window}d"
       median: "mediaan {window}d"
       daily: waarde
+      sum: "som {window}d"
     calendar:
       mean: gemiddelde per dag
       median: mediaan per dag
+      sum: som
+  comparison: "vorige periode, {name}: {value}"
+  comparisonMissing: "vorige periode, {name}: geen data"
   spread:
     mean: "±1 sd: {sd}"
     median: "P25–P75: {p25}–{p75}"
@@ -109,6 +122,14 @@ calendar:
     week: week {week} ({range})
     month: "{month} {year}"
     quarter: K{quarter} {year}
+
+comparison:
+  year: vorig jaar
+  years: vorige {n} jaar
+  weeks: vorige {n} weken
+  months: vorige {n} maanden
+  quarters: vorige {n} kwartalen
+  days: vorige {n} dagen
 
 period:
   day: een dag
@@ -244,20 +265,27 @@ issues:
     message: Er is {none} volledig, dus er is niets om te tonen. Dagen zonder data tellen nooit als nul.
     alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde).
 
+  windowOrUnit:
+    message: Geef ofwel window (rollende vensters) ofwel unit (kalenderperiodes), niet allebei en niet geen van beide.
+  noComparisonData:
+    message: "Er is niets om mee te vergelijken: in de periode vóór het scherm, van {from} tot {to}, is geen enkele periode volledig."
+    alternative: Stuur ook de dagen van die periode mee (0 waar er niets gebeurde).
+
   windowNotMultipleOf7:
     message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik 7, 14, 28 of een ander veelvoud van 7.
     footer: het venster van {window} dagen is geen veelvoud van 7
+    alert: "Buiten de grafiektaal: een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. Wie deze grafiek oplevert, legt uit waarom."
   meanWithoutSpread:
     message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread stddev.
     footer: gemiddelde zonder spreiding
-    alert: "Een gemiddelde zonder spreiding kan misleiden: je ziet niet hoe ver de dagwaarden uit elkaar liggen."
+    alert: "Buiten de grafiektaal: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Wie deze grafiek oplevert, legt uit waarom."
   medianWithoutSpread:
     message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread iqr.
     footer: mediaan zonder spreiding
-    alert: "Een mediaan zonder spreiding (P25–P75) kan misleiden: je ziet niet hoe ver de dagwaarden uit elkaar liggen."
+    alert: "Buiten de grafiektaal: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Wie deze grafiek oplevert, legt uit waarom."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.

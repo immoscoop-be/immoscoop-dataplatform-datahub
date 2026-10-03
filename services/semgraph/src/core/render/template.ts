@@ -24,8 +24,10 @@ export interface TemplateInput {
   width: number;
   title: string;
   readingCue: string;
-  /** Red alerts between the title and the chart: allowed, but discouraged (REQ-021). */
+  /** Red alerts between the title and the chart: allowed, but discouraged (REQ-032, REQ-038). */
   alerts?: string[];
+  /** SVG definitions the chart refers to, such as a hatch pattern. */
+  defs?: string;
   description: string;
   plot: {
     svg: string;
@@ -47,8 +49,9 @@ const PADDING_BOTTOM = 16;
 const LINE_HEIGHT = 1.5;
 /** Average character width as a share of the font size; good enough to wrap footer notes. */
 const CHAR_WIDTH = 0.56;
-/** Room for the warning sign in front of an alert. */
+/** Room for the warning sign in front of an alert, and the padding inside its red block. */
 const ALERT_INDENT = 18;
+const ALERT_PADDING = 8;
 
 /**
  * The fixed anatomy around the chart, like the building blocks in Figma: title, reading cue,
@@ -84,16 +87,22 @@ export function composeSvg(input: TemplateInput): string {
     );
   }
 
+  // A red block with white text: whoever delivers a chart outside the chart language should feel they
+  // have to account for it (REQ-040).
   for (const alert of input.alerts ?? []) {
     y += 10;
     const size = tokens.size.readingCue;
-    const lines = wrap(alert, size, inner - ALERT_INDENT, 3);
-    parts.push(alertIcon(y, size, color(tokens, 'alert')));
+    const lines = wrap(alert, size, inner - ALERT_INDENT - 2 * ALERT_PADDING, 4);
+    const height = 2 * ALERT_PADDING + lines.length * size * LINE_HEIGHT - size * (LINE_HEIGHT - 1);
+    parts.push(`<rect x="${PADDING_X}" y="${round(y)}" width="${inner}" height="${round(height)}" rx="3" fill="${color(tokens, 'alert')}"/>`);
+    parts.push(alertIcon(y + ALERT_PADDING, size, color(tokens, 'alert')));
+    let lineY = y + ALERT_PADDING;
     for (const line of lines) {
-      y += size;
-      parts.push(text(line, { y, x: PADDING_X + ALERT_INDENT, family: tokens.font.body, size, weight: 700, fill: color(tokens, 'alert') }));
-      y += size * (LINE_HEIGHT - 1);
+      lineY += size;
+      parts.push(text(line, { y: lineY, x: PADDING_X + ALERT_PADDING + ALERT_INDENT, family: tokens.font.body, size, weight: 700, fill: '#ffffff' }));
+      lineY += size * (LINE_HEIGHT - 1);
     }
+    y += height;
   }
 
   y += 8;
@@ -129,6 +138,7 @@ export function composeSvg(input: TemplateInput): string {
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"${data}>`,
     `<title>${escapeXml(input.title)}</title>`,
     `<desc>${escapeXml(input.description)}</desc>`,
+    ...(input.defs ? [`<defs>${input.defs}</defs>`] : []),
     `<rect width="${width}" height="${height}" fill="${color(tokens, 'surface')}"/>`,
     ...parts,
     '</svg>',
@@ -160,19 +170,19 @@ function attributes(style: TextStyle): string {
 }
 
 /**
- * A warning sign in the alert colour: a solid triangle with a white exclamation mark. No light fill
- * and no outline, because those mean spread and missing data in the chart language.
+ * A warning sign on the red block: a white triangle with an exclamation mark in the alert colour.
+ * The block is a strong, solid colour: never the light tint that means spread (REQ-009).
  */
-function alertIcon(top: number, size: number, fill: string): string {
+function alertIcon(top: number, size: number, alertColor: string): string {
   const h = size + 2;
   const w = h * 1.15;
-  const x = PADDING_X;
-  const y = top + 1;
+  const x = PADDING_X + ALERT_PADDING;
+  const y = top + 0.5;
   const mid = x + w / 2;
   return [
-    `<path d="M${round(mid)},${round(y)}L${round(x + w)},${round(y + h)}L${round(x)},${round(y + h)}Z" fill="${fill}"/>`,
-    `<path d="M${round(mid)},${round(y + h * 0.35)}V${round(y + h * 0.68)}" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>`,
-    `<circle cx="${round(mid)}" cy="${round(y + h * 0.83)}" r="0.9" fill="#ffffff"/>`,
+    `<path d="M${round(mid)},${round(y)}L${round(x + w)},${round(y + h)}L${round(x)},${round(y + h)}Z" fill="#ffffff"/>`,
+    `<path d="M${round(mid)},${round(y + h * 0.35)}V${round(y + h * 0.68)}" stroke="${alertColor}" stroke-width="1.5" stroke-linecap="round"/>`,
+    `<circle cx="${round(mid)}" cy="${round(y + h * 0.83)}" r="0.9" fill="${alertColor}"/>`,
   ].join('');
 }
 

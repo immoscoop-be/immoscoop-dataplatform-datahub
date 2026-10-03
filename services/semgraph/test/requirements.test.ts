@@ -48,7 +48,7 @@ async function drawnExamples(): Promise<Drawn[]> {
       drawn.push({
         name: `${id}/${name}`,
         semgraph: id,
-        statistic: (implementation as unknown as { statistic: { id: string } }).statistic.id,
+        statistic: (implementation as unknown as { statistic?: { id: string } }).statistic?.id ?? String((request as { statistic: string }).statistic),
         request: request as Record<string, unknown>,
         computed: computed as TimeAxisComputed,
         deviations: result.deviations,
@@ -107,10 +107,10 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-006 and REQ-008: a mean is a diamond, a median a dot; hollow while the period is running', () => {
+  it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; hollow while running', () => {
     for (const drawn of examples) {
       const shape = markOf(pointLayer(drawn)).shape;
-      assert.equal(shape, drawn.statistic === 'mean' ? 'diamond' : 'circle', drawn.name);
+      assert.equal(shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
       const fill = pointLayer(drawn).encoding!.fill as { condition: { test: string; value: string }; value: string };
       assert.deepEqual(fill, { condition: { test: 'datum.running', value: color(tokens, 'surface') }, value: color(tokens, 'focus') });
     }
@@ -121,14 +121,15 @@ describe('requirements of the chart language', async () => {
     assert.match(quarters.svg, /d="M3\.5,0A3\.5,3\.5,0,1,1,-3\.5,0A3\.5,3\.5,0,1,1,3\.5,0" fill="#dd2c88"/);
   });
 
-  it('REQ-017: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
+  it('REQ-028: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
     const long = examples.find((drawn) => drawn.name === 'movingWindowAverage/long-horizon')!;
     assert.ok((long.datasets.points as { rel: number }[]).some((point) => point.rel === 0));
     assert.ok(long.datasets.points!.length < long.datasets.line!.length / 10, 'not a marker on every point of a dense line');
   });
 
-  it('REQ-007: an amount is a square, ready for the first semgraph that shows amounts as points', () => {
+  it('REQ-007: an amount is a square', () => {
     assert.equal(SHAPES.amount, 'square');
+    assert.ok(examples.some((drawn) => drawn.statistic === 'sum'), 'an example shows totals');
   });
 
   it('REQ-009: a light area only shows spread', () => {
@@ -152,7 +153,7 @@ describe('requirements of the chart language', async () => {
       }
     }
   });
-  it('REQ-018: every point is a block of time; blocks touch but never overlap, and a rolling block is one window', () => {
+  it('REQ-029: every point is a block of time; blocks touch but never overlap, and a rolling block is one window', () => {
     for (const drawn of examples) {
       const { slots } = drawn.computed;
       slots.forEach((slot, index) => {
@@ -167,7 +168,7 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-019: the last window of a rolling axis is "nu" when it ends yesterday', () => {
+  it('REQ-030: the last window of a rolling axis is "nu" when it ends yesterday', () => {
     for (const drawn of examples.filter((candidate) => candidate.semgraph.startsWith('movingWindow'))) {
       const last = (drawn.datasets.axisLabels as { rel: number; lines: string[] }[]).at(-1)!;
       assert.equal(last.rel, 0);
@@ -175,32 +176,34 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-020: a window of one day shows the daily values, conform, without spread', () => {
+  it('REQ-031: a window of one day shows the daily values, conform, without spread', () => {
     const daily = examples.find((drawn) => drawn.name === 'movingWindowAverage/daily')!;
     assert.deepEqual(daily.deviations, []);
     assert.equal(daily.drawing.readingCue, 'dagwaarden');
     assert.equal(daily.datasets.bars!.length + daily.datasets.band!.length, 0);
   });
 
-  it('REQ-021: a mean or median without its spread is drawn with a red alert between the title and the chart', () => {
+  it('REQ-032, REQ-038 and REQ-040: every tolerated deviation is a red block between the title and the chart', () => {
     const alert = color(tokens, 'alert');
     for (const drawn of examples) {
-      const withoutSpread = drawn.deviations.some((code) => code.endsWith('WithoutSpread'));
-      assert.equal(drawn.svg.includes(`fill="${alert}"`), withoutSpread, drawn.name);
-      if (withoutSpread) {
+      const deviates = drawn.deviations.length > 0;
+      assert.equal(drawn.svg.includes(`fill="${alert}"`), deviates, drawn.name);
+      if (deviates) {
         const alertAt = drawn.svg.indexOf(`fill="${alert}"`);
         assert.ok(alertAt > drawn.svg.indexOf(drawn.drawing.readingCue) && alertAt < drawn.svg.indexOf('class="marks"'), `${drawn.name}: between title and chart`);
       }
     }
   });
 
-  it('REQ-022: the values on the chart follow the mode, centred above their point', () => {
+  it('REQ-033: the values on the chart follow the mode, centred above their point', () => {
     for (const drawn of examples) {
       const strong = drawn.datasets.valuesStrong as { rel: number; y: number }[];
       const muted = drawn.datasets.valuesMuted as { rel: number; y: number }[];
       const points = drawn.computed.points;
       const mode = drawn.computed.values;
-      assert.equal(mode, drawn.request.values ?? (drawn.semgraph.startsWith('calendar') ? 'lastAndPrevious' : 'last'), drawn.name);
+      const familyDefault = drawn.semgraph.startsWith('calendar') ? 'lastAndPrevious' : 'last';
+      // A comparison labels the ends of its lines instead (REQ-003).
+      assert.equal(mode, drawn.semgraph === 'periodComparison' ? 'off' : (drawn.request.values ?? familyDefault), drawn.name);
       if (mode === 'all') assert.equal(strong.length + muted.length, points.length, drawn.name);
       else if (mode === 'off') assert.equal(strong.length + muted.length, 0, drawn.name);
       else {
@@ -215,5 +218,72 @@ describe('requirements of the chart language', async () => {
     const weeks = examples.find((drawn) => drawn.name === 'calendarAverage/weeks')!;
     assert.deepEqual((weeks.datasets.valuesStrong as { rel: number }[]).map((label) => label.rel), [-1]);
     assert.deepEqual((weeks.datasets.valuesMuted as { rel: number }[]).map((label) => label.rel), [0]);
+  });
+  const comparisons = () => examples.filter((drawn) => drawn.computed.comparison);
+
+  it('REQ-003: a comparison is two lines on one time axis, the earlier one grey and labelled at its end', () => {
+    assert.ok(comparisons().length >= 3);
+    for (const drawn of comparisons()) {
+      const line = drawn.layers.find((layer) => layer.data?.name === 'comparisonLine')!;
+      assert.equal(markOf(line).color, color(tokens, 'context'), drawn.name);
+      assert.equal(drawn.datasets.comparisonLine!.length, drawn.computed.comparison!.points.length);
+      const label = drawn.datasets.endComparison as { rel: number; text: string }[];
+      assert.equal(label.length, 1, drawn.name);
+      assert.equal(label[0]!.rel, drawn.computed.comparison!.points.at(-1)!.rel);
+      assert.match(label[0]!.text, /^(vorig|vorige|last|previous) /);
+    }
+    for (const drawn of examples.filter((candidate) => !candidate.computed.comparison)) {
+      assert.equal(drawn.datasets.comparisonLine!.length + drawn.datasets.hatch!.length, 0, drawn.name);
+    }
+  });
+
+  it('REQ-004: only a shortfall against the comparison is hatched; a gain gets no fill', () => {
+    for (const drawn of comparisons()) {
+      const focus = new Map(drawn.computed.points.map((point) => [point.rel, point.centre]));
+      const previous = new Map(drawn.computed.comparison!.points.map((point) => [point.rel, point.centre]));
+      const rows = drawn.datasets.hatch as { rel: number; lo: number; hi: number }[];
+      for (const row of rows) {
+        assert.ok(row.lo <= row.hi + 1e-9, `${drawn.name}: hatch at ${row.rel}`);
+        if (Number.isInteger(row.rel)) assert.deepEqual([row.lo, row.hi], [focus.get(row.rel), previous.get(row.rel)]);
+      }
+      for (const [rel, value] of focus) {
+        const before = previous.get(rel);
+        if (before !== undefined && value >= before) {
+          assert.ok(!rows.some((row) => row.rel === rel && row.hi > row.lo), `${drawn.name}: a gain at ${rel} is hatched`);
+        }
+      }
+    }
+    assert.ok(comparisons().some((drawn) => drawn.datasets.hatch!.length > 0), 'an example shows a shortfall');
+  });
+
+  it('REQ-005: with a mean or median only the focus series has a light band; the comparison never has one', () => {
+    for (const drawn of comparisons()) {
+      assert.ok(drawn.computed.comparison!.points.every((point) => point.spread === null), drawn.name);
+      if (drawn.statistic !== 'sum') assert.ok(drawn.datasets.band!.length > 0, `${drawn.name}: the focus series has a band`);
+      assert.equal(drawn.datasets.bars!.filter((bar) => !drawn.computed.points.find((point) => point.rel === bar.rel)?.running).length, 0, drawn.name);
+    }
+  });
+
+  it('REQ-035: both lines show the same value: the total, the mean or the median', () => {
+    const statistic = { sum: (v: number[]) => v.reduce((a, b) => a + b, 0), mean: (v: number[]) => v.reduce((a, b) => a + b, 0) / v.length, median: (v: number[]) => [...v].sort((a, b) => a - b)[Math.floor(v.length / 2)]! };
+    for (const drawn of comparisons()) {
+      const data = new Map((drawn.request.data as { day: string; value: number }[]).map((row) => [Date.parse(`${row.day}T00:00:00Z`) / 86_400_000, row.value]));
+      for (const point of drawn.computed.comparison!.points) {
+        const values = Array.from({ length: point.last - point.first + 1 }, (_, index) => data.get(point.first + index)!);
+        const expected = statistic[drawn.statistic as 'sum' | 'mean' | 'median'](values);
+        if (drawn.statistic !== 'median' || values.length % 2 === 1) assert.ok(Math.abs(point.centre - expected) < 1e-9, `${drawn.name}: ${point.rel}`);
+      }
+    }
+  });
+
+  it('REQ-037: the comparison is always the period just before the screen, as long as what the screen shows', () => {
+    for (const drawn of comparisons()) {
+      const { slots } = drawn.computed;
+      const previous = drawn.computed.comparison!.slots;
+      assert.equal(previous.length, slots.length, drawn.name);
+      assert.ok(previous.every((slot) => slot.fullLast < slots[0]!.first), `${drawn.name}: nothing of it is on the screen`);
+      assert.equal(previous.at(-1)!.fullLast + 1, slots[0]!.first, `${drawn.name}: it ends where the screen begins`);
+      previous.forEach((slot, index) => assert.equal(slot.rel, slots[index]!.rel));
+    }
   });
 });

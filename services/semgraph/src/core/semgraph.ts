@@ -57,6 +57,8 @@ export interface Drawing {
   description: string;
   /** The reference day ("today") for the footer, as a day number. */
   asOf: number;
+  /** SVG definitions the chart refers to, e.g. the hatch pattern; their ids are unique per chart (REQ-036). */
+  defs?: string;
 }
 
 /**

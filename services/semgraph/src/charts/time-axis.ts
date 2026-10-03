@@ -31,7 +31,7 @@ interface AxisInput {
 
 /**
  * The time axis as Figma draws it: every point is a block of time, not a moment, so the ticks mark
- * the boundaries between blocks and each label sits in the middle of its block (REQ-018). The year
+ * the boundaries between blocks and each label sits in the middle of its block (REQ-029). The year
  * is named on a second line, on the first label and at every year change, and a year change gets a
  * longer, darker tick (REQ-000). Vega-Lite draws the baseline; these layers draw the rest.
  */

@@ -9,6 +9,9 @@ export interface CalendarRequest extends TimeAxisRequest {
   unit: CalendarUnit;
 }
 
+/** Periods in a year, to call a comparison of whole years "vorig jaar". */
+const PER_YEAR: Record<CalendarUnit, number> = { week: 52, month: 12, quarter: 4, year: 1 };
+
 /** Ticks every k periods: the first k that leaves room for each label. */
 const TICK_MULTIPLES: Record<CalendarUnit, number[]> = {
   week: [1, 2, 4, 13, 26, 52],
@@ -22,7 +25,7 @@ const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter
 /**
  * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, ending with the
  * period that contains the last complete day. When that period is not over yet, it is running: its
- * value covers the days so far and is drawn hollow, because it is not final (REQ-012).
+ * value covers the days so far and is drawn hollow, because it is not final (REQ-023).
  */
 export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   protected readonly periodDescription =
@@ -121,6 +124,29 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
 
   protected periodNoun({ unit }: CalendarRequest): IssueParam {
     return { t: `period.${unit}` };
+  }
+
+  /**
+   * The periods before the screen: as many periods back as the screen shows (REQ-037). A running
+   * period is compared with as many days of the earlier period, so a week that has run three days
+   * is compared with the first three days of its week.
+   */
+  protected previousSpan(slots: Slot[], { unit, horizon }: CalendarRequest): Slot[] {
+    return slots.map((slot) => {
+      const first = shiftPeriod(slot.first, unit, -horizon);
+      const fullLast = shiftPeriod(first, unit, 1) - 1;
+      const last = slot.running ? Math.min(fullLast, first + (slot.last - slot.first)) : fullLast;
+      return { rel: slot.rel, first, last, fullLast, running: false };
+    });
+  }
+
+  /** "vorig jaar" for 12 months, "vorige 12 weken", "vorige 6 maanden", ... */
+  protected comparisonLabel({ unit, horizon }: CalendarRequest, t: Translator): string {
+    if (horizon % PER_YEAR[unit] === 0) {
+      const years = horizon / PER_YEAR[unit];
+      return years === 1 ? t('comparison.year') : t('comparison.years', { n: years });
+    }
+    return t(`comparison.${unit}s`, { n: horizon });
   }
 
   protected noPointIssue({ unit }: CalendarRequest): IssueSpec {
