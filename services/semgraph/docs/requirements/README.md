@@ -92,6 +92,8 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | REQ-053 | Weinig waarnemingen: de kolom krijgt stippels, de vorm blijft gevuld; vervangt REQ-045 | 2026-10-03 | open (zie open punt 1: wat is n) | – |
 | REQ-054 | Lopend wint van weinig waarnemingen | 2026-10-03 | open (zie open punt 1) | – |
 | [REQ-055](REQ-055.md) | De arcering voor verlies: dalend, dun, zacht, op de achtergrondkleur | 2026-10-03 | geïmplementeerd | [c013878](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/c013878), [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
+| REQ-056 | Een gemiddelde van gemiddelden mag niet | 2026-10-03 (opdracht) | open (zie open punt 1: de garantie) | – |
+| REQ-057 | Weinig waarnemingen enkel waar het veilig is, dus niet bij dagwaarden | 2026-10-03 (opdracht) | open; de huidige semgraphs tonen het niet | – |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -102,7 +104,8 @@ REQ-013 en REQ-019 zijn vervangen voor ze gebouwd werden, REQ-017 wacht op een P
 de antwoorden van 2026-10-03 op de open punten. REQ-042 tot REQ-047 kwamen op 2026-10-03 op Confluence: REQ-042 is
 gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken. REQ-048 is het antwoord van 2026-10-03 op de vraag over de
 hover op de datapunten. REQ-049 tot REQ-055 zijn de data states uit Figma: gebouwd, behalve REQ-053 en REQ-054, die
-op de vraag naar n wachten.
+op de vraag naar n wachten. REQ-056 en REQ-057 zijn de opdracht van 2026-10-03 over gemiddelden van gemiddelden
+en wanneer weinig waarnemingen veilig is.
 
 ### Hernummering
 
@@ -119,30 +122,24 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-1. **Weinig waarnemingen (REQ-043 tot REQ-047): wat is n?**
-   - REQ-043 (2026-10-03): "Elk punt van een gemiddelde of mediaan kent zijn n, het aantal waarnemingen erachter."
-   - REQ-044 (2026-10-03): "Een punt heeft weinig waarnemingen als n < 30 bij een gemiddelde of n < 10 bij een
-     mediaan, of als n minder is dan de helft van de mediaan van alle n's in de grafiek (enkel vanaf vijf punten)."
-   - Onze semgraphs krijgen dagwaarden ([REQ-021](REQ-021.md)). Een gemiddelde of mediaan gaat dus over dagen, en
-     de enige n die de server kent is het aantal dagen achter een punt: 7 voor een venster van 7 dagen, 28 tot 31
-     voor een maand, de dagen tot nu voor een lopende periode.
-   - Met n = dagen geven de vaste drempels elk punt met minder dan 30 dagen stippels en een rode waarschuwing: elk
-     venster van 7 of 14 dagen en elke week. Dat botst met [REQ-031](REQ-031.md) (2026-10-03): "Veelvouden van 7
-     zijn conform." De relatieve regel slaat bij een rollend venster nooit aan (n is altijd het venster), en bij
-     kalenderperiodes enkel bij een lopende periode, en daar wint lopend (REQ-054).
-   - Het voorbeeld in Figma ("Credit leads per day, weekly mean", n 8, n 12, n 96) telt iets anders dan dagen:
-     waarnemingen achter de waarde, zoals de leads achter een gemiddeld bedrag. Die geeft het contract vandaag niet
-     mee.
-   - Vraag: wat is een waarneming? Voorstel:
-     - Bij de huidige semgraphs is een waarneming een dag. De n staat in het hoverkader (REQ-043), maar de drempels
-       gelden niet voor dagen. Er komen dus geen stippels en geen waarschuwing.
-     - Weinig waarnemingen gaat pas spelen met een nieuw soort metric: een gemiddelde of mediaan over waarnemingen,
-       waarbij de aanroeper per dag meestuurt wat erachter zit (voor een gemiddelde `n`, de som en de som van de
-       kwadraten; voor een mediaan de waarden zelf). Dan rekent de server gemiddelde, spreiding, mediaan en n over
-       de waarnemingen, en gelden REQ-044 tot REQ-047 volledig. Uit te werken bij de eerste metric die het nodig
-       heeft.
-     - Hoe zo'n punt eruitziet, ligt vast: stippels achter de kolom, de vorm gevuld (REQ-053), en lopend wint
-       (REQ-054). Enkel n staat nog open.
+1. **Waar wordt er gerekend? (REQ-056, REQ-057)**
+   - De vraag wat n is bij weinig waarnemingen, is op 2026-10-03 beslist (REQ-057): enkel waar het veilig is. Uit
+     dagwaarden een gemiddelde over een week trekken is niet veilig, want niets garandeert dat de dagwaarden
+     absolute getallen zijn en niet al een gemiddelde. De huidige semgraphs tonen dus geen weinig waarnemingen.
+   - Een gemiddelde van gemiddelden mag niet (REQ-056). Vandaag is de enige garantie het veld `measureType`, dat de
+     aanroeper zelf invult: een daggemiddelde met `measureType: additive` gaat er onopgemerkt door.
+   - Opdracht van 2026-10-03: de data wordt aangeleverd volgens richtlijnen, het manipuleren van data hoort in het
+     datawarehouse, en de semgraph werkt enkel als hij de juiste data heeft. Dat botst met het principe in de
+     [README](../../README.md#philosophy) en de analyse: "The rules live in the service. The caller sends raw
+     values; the service computes, validates and draws."
+   - Mogelijke uitvoeringen:
+     - A. Dagwaarden blijven, maar het type van de metric komt uit dbt of Domain Hub, niet van de aanroeper.
+     - B. Het warehouse levert per venster of periode de waarde, de spreiding en n volgens een richtlijn (bv.
+       dbt-macro's); de semgraph controleert de vorm en de regels van de grafiektaal, en tekent.
+     - C. Per dag bouwstenen die je mag optellen (aantal, som, som van kwadraten): een gemiddelde van gemiddelden
+       kan dan niet, maar een mediaan evenmin.
+   - Voorstel: B. De regels van de grafiektaal blijven in de semgraph; de berekening verhuist naar het warehouse,
+     één keer per semgraph-familie.
 2. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
