@@ -30,8 +30,9 @@ Statussen:
 - **aanvaard, nog niet nodig**: beslist, maar er is nog geen code die het nodig heeft.
 - **open**: eerst scherp maken (zie de open punten hieronder).
 
-Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
-[PR #1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/pull/1).
+Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`.
+[PR #1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/pull/1), gemerged op 2026-10-03, bevat de commits
+tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen PR; elk bestand zegt welke.
 
 | Nr | Requirement | Beslist | Status | Commits |
 | --- | --- | --- | --- | --- |
@@ -45,17 +46,17 @@ Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
 | [REQ-007](REQ-007.md) | Een hoeveelheid is een vierkant; lopend is hol | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3), [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
 | [REQ-008](REQ-008.md) | Een mediaan is een bol; lopend is hol | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-009](REQ-009.md) | Een licht vlak betekent enkel spreiding | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
-| REQ-010 | Metadata in de aanroep: vraag, referenties, query, wie vroeg, wie werkte uit, datum van samenstelling | 2026-10-03 | open | – |
-| REQ-011 | De datum van samenstelling staat altijd vet in de statusregel | 2026-10-03 | open | – |
-| REQ-012 | De overige metadata achter vier iconen links onderaan | 2026-10-03 | open, gewijzigd door REQ-018 | – |
-| REQ-013 | Een icoon zonder inhoud blijft zichtbaar, gedimd en doorgestreept | 2026-10-03 | vervangen door REQ-020 | – |
-| REQ-014 | Bij hover groeit het label uit tot een paneel over de hele grafiek; sluiten na ongeveer 350 ms | 2026-10-03 | open | – |
-| REQ-015 | Gedrag per toestel: muis enkel hover, tik op touch, Tab op het toetsenbord | 2026-10-03 | open | – |
-| REQ-016 | Alles met CSS in de SVG, zonder JavaScript; als afbeelding blijven de panelen verborgen | 2026-10-03 | open | – |
-| REQ-017 | In een PNG gaat de metadata in de tekstvelden van het bestand | 2026-10-03 | open | – |
-| REQ-018 | Tekstlabels in plaats van iconen: Question, References, Query, Metadata | 2026-10-03 | open | – |
-| REQ-019 | Zonder query geen label Query | 2026-10-03 | vervangen door REQ-020 | – |
-| REQ-020 | Wat er niet is, wordt niet getoond: een label enkel als er inhoud achter zit | 2026-10-03 | open | – |
+| [REQ-010](REQ-010.md) | Metadata in de aanroep: vraag, referenties, query, wie vroeg, wie werkte uit, datum van samenstelling | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| [REQ-011](REQ-011.md) | De datum van samenstelling staat altijd vet in de statusregel | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| [REQ-012](REQ-012.md) | De overige metadata links onderaan, één onderwerp per label | 2026-10-03 | geïmplementeerd, zoals gewijzigd door REQ-018 en REQ-020 | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| REQ-013 | Een icoon zonder inhoud blijft zichtbaar, gedimd en doorgestreept | 2026-10-03 | vervangen door REQ-020, nooit gebouwd | – |
+| [REQ-014](REQ-014.md) | Bij hover groeit het label uit tot een paneel over de hele grafiek; sluiten na ongeveer 350 ms | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| [REQ-015](REQ-015.md) | Gedrag per toestel: muis enkel hover, tik op touch, Tab op het toetsenbord; ook voor de datapunten | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e), [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| [REQ-016](REQ-016.md) | Alles met CSS in de SVG, zonder JavaScript; als afbeelding blijven de panelen verborgen | 2026-10-03 | geïmplementeerd voor SVG | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| REQ-017 | In een PNG gaat de metadata in de tekstvelden van het bestand | 2026-10-03 | aanvaard, nog niet nodig: er is nog geen PNG-uitvoer | – |
+| [REQ-018](REQ-018.md) | Tekstlabels in plaats van iconen: Question, References, Query, Metadata | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| REQ-019 | Zonder query geen label Query | 2026-10-03 | vervangen door REQ-020 (de regel geldt nu voor alles) | – |
+| [REQ-020](REQ-020.md) | Wat er niet is, wordt niet getoond: een label enkel als er inhoud achter zit | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | [REQ-021](REQ-021.md) | Eerste versie: Docker-image, Node, één semgraph als SVG via REST | 2026-10-02 (opdracht) | geïmplementeerd | [9a22b22](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/9a22b22) |
 | [REQ-022](REQ-022.md) | Veel waarden: leesbaar blijven, met een label per waarde | 2026-10-02 (opdracht) | geïmplementeerd | [e89e5c9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/e89e5c9), [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-023](REQ-023.md) | Kalenderperiodes; een lopende periode is hol | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
@@ -77,13 +78,21 @@ Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
 | [REQ-039](REQ-039.md) | Dagwaarden houden de vorm van de semgraph en het minimum van 28 | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
 | [REQ-040](REQ-040.md) | Een waarschuwing is een rood blok met witte tekst | 2026-10-03 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
 | [REQ-041](REQ-041.md) | De waarschuwing is een boodschap aan de lezer; het ongemak voor wie oplevert blijft impliciet | 2026-10-03 | geïmplementeerd | [ab03d0b](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/ab03d0b) |
+| [REQ-042](REQ-042.md) | Geen voetregel "Buiten de grafiektaal": het rode blok zegt genoeg | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
+| REQ-043 | Elk punt van een gemiddelde of mediaan kent zijn n; de n staat in het hoverkader | 2026-10-03 | open (zie open punt 1) | – |
+| REQ-044 | Weinig waarnemingen: n < 30 (gemiddelde), n < 10 (mediaan), of minder dan de helft van de mediaan van alle n's | 2026-10-03 | open (zie open punt 1) | – |
+| REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | open (zie open punten 1 en 2) | – |
+| REQ-046 | De n van zo'n punt staat klein onder de x-as | 2026-10-03 | open (zie open punt 1) | – |
+| REQ-047 | Weinig waarnemingen geeft een rode waarschuwing, maar is geen afwijking: het versielabel blijft | 2026-10-03 | open (zie open punt 1) | – |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
 afspraak en noemen daarom nog geen nummer.
 
-REQ-010 tot REQ-020 (metadata van een grafiek) staan op Confluence en zijn nog niet geïmplementeerd: Confluence is
-hun bron. REQ-028 tot REQ-041 zijn de antwoorden van 2026-10-03 op de open punten.
+REQ-010 tot REQ-020 (metadata van een grafiek) zijn geïmplementeerd zoals REQ-018 en REQ-020 ze wijzigden;
+REQ-013 en REQ-019 zijn vervangen voor ze gebouwd werden, REQ-017 wacht op een PNG-uitvoer. REQ-028 tot REQ-041 zijn
+de antwoorden van 2026-10-03 op de open punten. REQ-042 tot REQ-047 kwamen op 2026-10-03 op Confluence: REQ-042 is
+gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken.
 
 ### Hernummering
 
@@ -100,12 +109,32 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-1. **Metadata van een grafiek (REQ-010 tot REQ-020): bouwen?** Ze spreken geen gebouwde requirement tegen;
-   REQ-020 heeft al voorrang op REQ-013, REQ-018 en REQ-019. Eén punt raakt de hover van de datapunten (REQ-027):
-   - REQ-015 zegt dat een muisklik niets openhoudt.
-   - Bij de hover van de datapunten blijft het kader nu open na een klik, omdat de klik de focus zet.
-   - Voorstel: dezelfde regels per toestel voor beide. Met de muis enkel hover, een tik op touch, Tab op het
-     toetsenbord.
+1. **Weinig waarnemingen (REQ-043 tot REQ-047): wat is n?**
+   - REQ-043 (2026-10-03): "Elk punt van een gemiddelde of mediaan kent zijn n, het aantal waarnemingen erachter."
+   - REQ-044 (2026-10-03): "Een punt heeft weinig waarnemingen als n < 30 bij een gemiddelde of n < 10 bij een
+     mediaan, of als n minder is dan de helft van de mediaan van alle n's in de grafiek (enkel vanaf vijf punten)."
+   - Onze semgraphs krijgen dagwaarden ([REQ-021](REQ-021.md)). Een gemiddelde of mediaan gaat dus over dagen, en
+     de enige n die de server kent is het aantal dagen achter een punt: 7 voor een venster van 7 dagen, 28 tot 31
+     voor een maand, de dagen tot nu voor een lopende periode.
+   - Met n = dagen maken de vaste drempels elk punt met minder dan 30 dagen bleek, met een rode waarschuwing: elk
+     venster van 7 of 14 dagen en elke week. Dat botst met [REQ-031](REQ-031.md) (2026-10-03): "Veelvouden van 7
+     zijn conform." De relatieve regel slaat bij een rollend venster nooit aan (n is altijd het venster), en bij
+     kalenderperiodes enkel bij een lopende periode, die al hol is ([REQ-023](REQ-023.md)).
+   - Het voorbeeld in Figma ("Credit leads per day, weekly mean", n 8, n 12, n 96) telt iets anders dan dagen:
+     waarnemingen achter de waarde, zoals de leads achter een gemiddeld bedrag. Die geeft het contract vandaag niet
+     mee.
+   - Vraag: wat is een waarneming? Voorstel:
+     - Bij de huidige semgraphs is een waarneming een dag. De n staat in het hoverkader (REQ-043), maar de drempels
+       gelden niet voor dagen. Er wordt dus niets bleek en er komt geen waarschuwing.
+     - Weinig waarnemingen gaat pas spelen met een nieuw soort metric: een gemiddelde of mediaan over waarnemingen,
+       waarbij de aanroeper per dag meestuurt wat erachter zit (voor een gemiddelde `n`, de som en de som van de
+       kwadraten; voor een mediaan de waarden zelf). Dan rekent de server gemiddelde, spreiding, mediaan en n over
+       de waarnemingen, en gelden REQ-044 tot REQ-047 volledig. Uit te werken bij de eerste metric die het nodig
+       heeft.
+     - Een lopende periode met weinig waarnemingen houdt de rand van de holle vorm, met de bleke vulling erin.
+2. **De bleke vorm op een lichte spreiding (REQ-045).** Op Confluence in discussie: in Figma valt een bleke ruit weg
+   tegen de lichte balk of band. Daniel beslist over de tint.
+3. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
 
