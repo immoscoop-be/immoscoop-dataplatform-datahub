@@ -10,9 +10,24 @@ and draws, with title, reading cue and footer.
   implemented, [docs/requirements](docs/requirements/README.md) in this repository is their source of truth. How we
   handle requirements, also conflicting ones, is in [CLAUDE.md](CLAUDE.md).
 
+## Philosophy
+
+- **Ask by meaning, not by form.** You ask for what you want to show (a moving window average), never for "a line
+  chart". The semgraph knows which calculation, axis, spread and rules belong to it.
+- **The rules live in the service.** The caller sends raw values; the service computes, validates and draws.
+  Everything smart happens in our code; Vega-Lite only draws what it gets.
+- **Absence is never polished away.** Missing data is drawn as missing, never as zero, and unknown context is
+  printed as unknown.
+- **Bad practice is supported, but never silently.** What would mislead is refused. What only informs the reader
+  less well is drawn, under a red block that whoever delivers the chart has to account for (REQ-032, REQ-038,
+  REQ-040).
+- **Compare with what is not on the screen.** What is on the screen, the reader compares by eye. A comparison
+  therefore always brings in the period just before the screen, as long as what the screen shows, and never a
+  period that is already visible (REQ-037).
+
 ## Status: v0
 
-Four semgraphs on a time axis of daily data, end to end as SVG over REST, in English and Dutch (nl-BE), packaged
+Five semgraphs on a time axis of daily data, end to end as SVG over REST, in English and Dutch (nl-BE), packaged
 as one Docker image:
 
 | Semgraph | Per slot | Drawn as |
@@ -21,12 +36,14 @@ as one Docker image:
 | `movingWindowMedian` | per window of days (blocks that do not overlap), the median of its days | line of dots in wide bars, P25–P75 |
 | `calendarAverage` | per ISO week, month, quarter or year, the mean of its days | line of diamonds over thin bars, ±1 sd |
 | `calendarMedian` | per ISO week, month, quarter or year, the median of its days | line of dots in wide bars, P25–P75 |
+| `periodComparison` | per window or calendar period: the total, mean or median, against the period just before the screen | a line in the focus colour against a grey line, a shortfall hatched |
 
 MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
 the same core.
 
 ![movingWindowAverage example](test/golden/movingWindowAverage-basic.svg)
 ![calendarAverage per week, with the running week hollow](test/golden/calendarAverage-weeks.svg)
+![periodComparison: 12 weeks against the 12 weeks before](test/golden/periodComparison-weeks-sum.svg)
 
 ## Run it
 
@@ -76,7 +93,7 @@ Every request ends in one of four outcomes:
 | Outcome | `/render` | Meaning |
 | --- | --- | --- |
 | `ok` | 200 SVG | The chart follows the chart language and carries the version label. |
-| `deviation` | 200 SVG | Tolerated deviation: drawn, with "Outside the chart language: …" in the footer and no version label. The codes are in the `Semgraph-Deviations` header. |
+| `deviation` | 200 SVG | Tolerated deviation: drawn under a red block between the title and the chart, with "Outside the chart language: …" in the footer and no version label. The codes are in the `Semgraph-Deviations` header. |
 | `refused` | 422 JSON | The chart would mislead, so it is not drawn. |
 | `invalid` | 400 JSON | The request itself is not valid. |
 
@@ -127,6 +144,11 @@ All four share one contract, composed by their classes and written to `semgraphs
 | `spread` | average: `stddev` or `none`; median: `iqr` or `none` | same |
 | `values` | `off`, `last` (default), `lastAndPrevious`, `all` | same, default `lastAndPrevious` |
 
+`periodComparison` takes `statistic` (`sum`, `mean` or `median`) and either `window` or `unit`, with a `horizon`
+of 2–120 windows or periods; `spread` is `stddev` or `none` for a mean, `iqr` or `none` for a median and `none`
+for a sum. The data covers the screen and the period just before it. It has no `values`: it labels the ends of
+its two lines.
+
 Shared and optional: `title`; `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts);
 `valueAxis` (`zero`, the default, or `zoom`); `context` for the footer (`domain`, `dataset`, `owner`,
 `reliability`, `definitionUrl`); `locale`; `format` (`svg`). `data` holds at most 4000 days. Unknown fields are
@@ -157,10 +179,10 @@ ORDER BY day
 What the service does:
 
 1. "Today" is the last day in the data, but never the running day in Brussels, which is not complete yet. The last
-   window of a moving window reads "now" ("nu") when it ends yesterday, and its date otherwise (REQ-019).
-2. Slots: every point is a block of time (REQ-018). A moving window has one block per window, blocks that do not
+   window of a moving window reads "now" ("nu") when it ends yesterday, and its date otherwise (REQ-030).
+2. Slots: every point is a block of time (REQ-029). A moving window has one block per window, blocks that do not
    overlap, the last one ending on the last complete day: 7 windows of 7 days run from −42d to "nu". A window of
-   one day shows the daily values, without spread (REQ-020). A calendar chart has one block per period, ending
+   one day shows the daily values, without spread (REQ-031). A calendar chart has one block per period, ending
    with the period of the last complete day. While that period is not over, it is **running**: its value covers
    the days so far, its point is hollow, and "current" ("lopend") stands under it (on hover: "running: 3 of 7
    days").
@@ -170,8 +192,10 @@ What the service does:
    window or its period, never more.
 4. Rules: refusal for a measure type the metadata does not allow, unique counts without `uniqueAggregation`,
    uniques over the period, fewer than `minimumPoints` values in the days the chart uses, or no complete slot at
-   all. Tolerated deviation for a window that is not 1 or a multiple of 7, or a mean or median without its
-   spread; the latter also gets a red alert between the title and the chart: allowed, but discouraged (REQ-021).
+   all; for a comparison also a total of unique counts, or no complete period before the screen. Tolerated
+   deviation for a window that is not 1 or a multiple of 7, or a mean or median without its spread. Every
+   tolerated deviation is drawn under a red block with white text between the title and the chart: whoever
+   delivers it should feel they have to account for it (REQ-032, REQ-038, REQ-040).
 5. Drawing: always a line through the points, broken where data is missing and never bridged (REQ-001); the
    centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), filled when final and hollow while
    running; a thin bar for ±1 sd or a wide rounded bar for P25–P75, in the light tint of the focus colour, which
@@ -179,7 +203,7 @@ What the service does:
    an outlined area labelled "no data"; both axes labelled; a darker, thicker baseline. The time axis as in
    Figma: ticks on the boundaries between blocks, labels in the middle of a block, the year on a second line on
    the first label and at a year change, which gets a longer, darker tick.
-   Values (REQ-022), centred above the point with the spread as a detail: `last` for a moving window, and
+   Values (REQ-033), centred above the point with the spread as a detail: `last` for a moving window, and
    `lastAndPrevious` for a calendar chart (the last final value in bold, a running one next to it in grey);
    `off`; or `all`, only while every point has 40 pixels, otherwise the default with a message. The value axis
    grows until every label fits.
@@ -206,7 +230,7 @@ What the service does:
    - It works when the SVG is opened directly or inlined, not inside `<img>`, Slack or e-mail. On the interactive
      page this will be Vega-Lite's own way (a tooltip encoding and a pointerover param with a rule); this CSS layer
      is then the static fallback.
-9. Many values (REQ-011): while each slot has room for its bar plus some air (8 pixels for a mean, 13 for a
+9. Many values (REQ-022): while each slot has room for its bar plus some air (8 pixels for a mean, 13 for a
    median's wide bar), every point is drawn with its bar. Beyond that the bars would overlap, so the spread
    becomes a band along the line, in the same colours (the learning material: spread "as a band around a line or
    as a line around a point"), and only the last point, a lone point between two gaps and a running period keep
@@ -214,6 +238,14 @@ What the service does:
    and a running period keep their own bar. A moving window keeps at most eight labels, every 1, 2, 4, 13, 26 or
    52 windows (daily values per week); a calendar chart labels every period that fits ("W40", "sep", "K3",
    "2026"). Narrow blocks get their ticks under the labels. See `examples/long-horizon.json` (78 weeks).
+10. Comparison (`periodComparison`): the current period in the focus colour against the period just before the
+    screen, as long as what the screen shows, as a grey line on the same axis (REQ-003, REQ-037). Both show the
+    same value: the total per period (a square, REQ-007), the mean or the median (REQ-035). Only the focus series
+    has a light band (REQ-005), every point of it has its marker while there is room, and only a shortfall
+    against the comparison is hatched, cut at the crossings; a gain gets no fill (REQ-004). The hatching is an
+    SVG pattern whose id is unique per chart (REQ-036). The last value and the name of the comparison ("vorige
+    12 weken", "vorig jaar") stand at the ends of the lines. A running period is compared with as many days of
+    the earlier period. On hover each block also shows the block it is compared with.
 
 ## How it is built
 
@@ -223,19 +255,26 @@ The charts are classes, so nothing is written twice:
 TimeAxisChart (src/charts/time-axis-chart.ts)    contract, reference day, strict slots, rules, value axis, hover lines
 ├── MovingWindowChart                             blocks of a rolling window that do not overlap, relative axis
 │   ├── MovingWindowAverage   ── uses Average
-│   └── MovingWindowMedian    ── uses Median
+│   ├── MovingWindowMedian    ── uses Median
+│   └── RollingComparison     ── with a comparison; uses Sum, Average or Median
 └── CalendarChart                                 slots per ISO week, month, quarter or year, running period
     ├── CalendarAverage       ── uses Average
-    └── CalendarMedian        ── uses Median
+    ├── CalendarMedian        ── uses Median
+    └── CalendarComparison    ── with a comparison; uses Sum, Average or Median
+
+PeriodComparison (semgraphs/periodComparison)     one semgraph: the request picks the family and the statistic
 
 Statistic (src/charts/statistics.ts)              centre, spread, bar width, shape, labels
 ├── Average                                       mean, ±1 sd (n − 1), thin bar, diamond (REQ-006)
-└── Median                                        median, P25–P75, wide bar, dot (REQ-008)
+├── Median                                        median, P25–P75, wide bar, dot (REQ-008)
+└── Sum                                           total per period, no spread, square (REQ-007)
 ```
 
 The shape of a point per kind of number (square for an amount, diamond for a mean, dot for a median) is defined
 once, in `src/charts/signatures.ts`. The time axis (`src/charts/time-axis.ts`) and the value labels
-(`src/charts/value-labels.ts`) are drawn by helpers that every family shares.
+(`src/charts/value-labels.ts`) are drawn by helpers that every family shares, and so is the comparison
+(`src/charts/comparison.ts`): any time-axis chart compares with the period before the screen once it sets
+`compares`.
 
 The statistic is its own hierarchy, used by both families: with single inheritance alone, the mean and median code
 would have to be written once per family. A family decides which days a slot summarizes and how slots are
@@ -287,6 +326,9 @@ the pages Anatomy and Line charts, and with the team:
 9. Calendar periods are strict too: a week, month, quarter or year with a missing day has no point. A running
    period is hollow and covers the days so far; ISO weeks run from Monday to Sunday.
 10. The zoomed axis (zigzag and bold first value), and `uniqueAggregation` values `daily` and `overPeriod`.
+11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; the hatch (dark diagonal
+    lines on white, after the Figma example); a running period compared with as many days of the earlier period;
+    the alert colour `#c8102e`.
 
 ## Notes for consumers
 

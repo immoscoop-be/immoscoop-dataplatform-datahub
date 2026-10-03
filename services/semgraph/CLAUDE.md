@@ -3,6 +3,13 @@
 semgraph is de grafiekserver van de grafiektaal: zie [README.md](README.md) voor de opbouw en
 [docs/requirements](docs/requirements/README.md) voor wat hij moet doen.
 
+## Filosofie
+
+De principes van de semgraph staan in de [README](README.md#philosophy). Leg elke requirement en elk ontwerp
+ernaast, en meld het als iets ertegenin gaat. Eén ervan is expliciet beslist (REQ-037): **vergelijk met wat niet op
+het scherm staat.** Wat op het scherm staat, vergelijkt de lezer zelf met het oog. Een vergelijking haalt dus altijd
+de periode net vóór het scherm erbij, even lang als wat getoond wordt, en nooit een periode die al zichtbaar is.
+
 ## Requirements
 
 Elke functionele requirement heeft een nummer `REQ-xxx`.
@@ -61,5 +68,5 @@ Spreekt ze iets tegen, of laat ze meer dan één redelijke uitvoering toe:
   - `npm run schemas` na een wijziging aan een contract;
   - `UPDATE_GOLDEN=1 npm test` na een bewuste wijziging aan de tekening. Bekijk eerst de SVG's (`npm run render:examples`).
 - Alles wat slim is gebeurt in onze code; Vega-Lite tekent enkel wat het krijgt.
-- Geen codeduplicatie: een nieuwe grafiek is een subklasse (REQ-014).
+- Geen codeduplicatie: een nieuwe grafiek is een subklasse (REQ-025).
 - Commit en push enkel naar de afgesproken branch.
