@@ -111,15 +111,15 @@ elk bestand zegt welke.
 | [REQ-071](REQ-071.md) | Ratio en Cohort in de catalogus | 2026-10-03 (antwoord) | geïmplementeerd: beide gepland | [0b2b232](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0b2b232) |
 | REQ-072 | De verdeling van twee waarden wordt een eigen semgraph, na een analyse | 2026-10-03 (antwoord) | open: eerst een analyse | – |
 | [REQ-073](REQ-073.md) | Een staaf begint bij nul; een gemiddelde of mediaan per categorie mag inzoomen | 2026-10-03 (antwoord) | geïmplementeerd | [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464) |
-| [REQ-074](REQ-074.md) | Een verhouding is een teller gedeeld door een noemer: aandeel en verhouding per eenheid | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen; een verhouding per eenheid is een open punt | COMMIT |
-| [REQ-075](REQ-075.md) | Een verhouding is een vierkant in een vierkant | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
-| [REQ-076](REQ-076.md) | Een verhouding over de tijd: de lijn, met haar noemer als grijze trap op een rechteras; `movingWindowRatio`, `calendarRatio` | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen | COMMIT |
-| [REQ-077](REQ-077.md) | Een gevulde traplijn op een datumas enkel voor de noemer | 2026-10-03 (Confluence) | geïmplementeerd; `kpiStatus` is een open punt | COMMIT |
-| [REQ-078](REQ-078.md) | Een licht vlak: focuskleur is spreiding, grijs is basis | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
-| [REQ-079](REQ-079.md) | De tweede as: beide vanaf nul, dezelfde rasterlijnen, de noemer onder de verhouding | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
-| [REQ-080](REQ-080.md) | Weinig waarnemingen bij een verhouding: statistisch dun of een afwijkende basis | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-074](REQ-074.md) | Een verhouding is een teller gedeeld door een noemer: aandeel en verhouding per eenheid | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen; een verhouding per eenheid is een open punt | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-075](REQ-075.md) | Een verhouding is een vierkant in een vierkant | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-076](REQ-076.md) | Een verhouding over de tijd: de lijn, met haar noemer als grijze trap op een rechteras; `movingWindowRatio`, `calendarRatio` | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-077](REQ-077.md) | Een gevulde traplijn op een datumas enkel voor de noemer | 2026-10-03 (Confluence) | geïmplementeerd; `kpiStatus` is een open punt | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-078](REQ-078.md) | Een licht vlak: focuskleur is spreiding, grijs is basis | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-079](REQ-079.md) | De tweede as: beide vanaf nul, dezelfde rasterlijnen, de noemer onder de verhouding | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
+| [REQ-080](REQ-080.md) | Weinig waarnemingen bij een verhouding: statistisch dun of een afwijkende basis | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
 | [REQ-081](REQ-081.md) | Weinig waarnemingen tegenover de periode ervoor en erna, in plaats van de mediaan | 2026-10-03 (Confluence) | geïmplementeerd op de tijdas; bij categorieën een open punt | [4cccd03](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/4cccd03) |
-| [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
