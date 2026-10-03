@@ -32,7 +32,8 @@ Statussen:
 
 Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`.
 [PR #1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/pull/1), gemerged op 2026-10-03, bevat de commits
-tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen PR; elk bestand zegt welke.
+tot en met 4d05f0a. De latere commits zitten in [PR #2](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/pull/2);
+elk bestand zegt welke.
 
 | Nr | Requirement | Beslist | Status | Commits |
 | --- | --- | --- | --- | --- |
@@ -99,8 +100,8 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-060](REQ-060.md) | Het icoon van de semgraph links van de titel, in muted-grijs, gelinkt aan de leeskaart | 2026-10-03 | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 | [REQ-061](REQ-061.md) | Iconen uit een kleine vaste set, een zin in de grafiektaal | 2026-10-03 | geïmplementeerd (de iconen uit Figma, gecontroleerd) | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 | [REQ-062](REQ-062.md) | Een blok heet `end` of `period`; n niet verplicht, maar zonder n een rode waarschuwing | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
-| [REQ-063](REQ-063.md) | n en weinig waarnemingen enkel bij een gemiddelde of mediaan van waarnemingen (`ratio`) | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
-| [REQ-064](REQ-064.md) | Unieken over een blok enkel als som; dagelijkse unieken nooit als som | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
+| [REQ-063](REQ-063.md) | n en weinig waarnemingen enkel bij een gemiddelde of mediaan van waarnemingen (`ratio`) | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101), [52aa602](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/52aa602) |
+| [REQ-064](REQ-064.md) | Unieken over een blok enkel als som; dagelijkse unieken nooit als som | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101), [52aa602](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/52aa602) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
