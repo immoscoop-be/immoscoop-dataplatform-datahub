@@ -68,17 +68,18 @@ describe('render', async () => {
     assert.ok(hoverLabels(svg!).includes('22 jul (−70d), geen data: 16 jul ontbreekt'));
   });
 
-  it('shows every tolerated deviation as a red block with white text between the title and the chart (REQ-032, REQ-038, REQ-040)', async () => {
+  it('shows every tolerated deviation as a red block with a message to the reader (REQ-032, REQ-038, REQ-040, REQ-041)', async () => {
     const result = await render(await example('without-spread'));
     assert.deepEqual(result.deviations, ['meanWithoutSpread']);
     assert.match(result.svg!, /<rect x="20" y="[\d.]+" width="600" height="[\d.]+" rx="3" fill="#c8102e"\/>/);
-    assert.match(result.svg!, /fill="#ffffff">Buiten de grafiektaal: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de/);
-    assert.match(result.svg!, /Wie deze grafiek oplevert, legt uit waarom\./);
+    // REQ-041: a message to the reader, without saying anything about whoever delivered the chart.
+    assert.match(result.svg!, /fill="#ffffff">Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je/);
+    assert.doesNotMatch(result.svg!, /oplever|verantwoord|legt uit waarom/);
     // The footer still says that the chart is outside the chart language.
     assert.match(result.svg!, /Buiten de grafiektaal: gemiddelde zonder spreiding\./);
     const window10 = (await render(await example('window-10'))).svg!;
     assert.match(window10, /fill="#c8102e"/);
-    assert.match(window10, />Buiten de grafiektaal: een venster van 10 dagen is geen veelvoud van 7, dus niet elke</);
+    assert.match(window10, />Lees deze grafiek met voorzichtigheid: een venster van 10 dagen/);
     assert.doesNotMatch((await render(await example('basic'))).svg!, /#c8102e/);
   });
 

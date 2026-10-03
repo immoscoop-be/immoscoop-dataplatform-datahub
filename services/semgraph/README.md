@@ -19,8 +19,9 @@ and draws, with title, reading cue and footer.
 - **Absence is never polished away.** Missing data is drawn as missing, never as zero, and unknown context is
   printed as unknown.
 - **Bad practice is supported, but never silently.** What would mislead is refused. What only informs the reader
-  less well is drawn, under a red block that whoever delivers the chart has to account for (REQ-032, REQ-038,
-  REQ-040).
+  less well is drawn, under a red block that tells the reader how to read it with care (REQ-032, REQ-038,
+  REQ-040). It speaks to the reader, never about whoever made the chart: reading your own chart stays
+  comfortable, delivering it does not (REQ-041).
 - **Compare with what is not on the screen.** What is on the screen, the reader compares by eye. A comparison
   therefore always brings in the period just before the screen, as long as what the screen shows, and never a
   period that is already visible (REQ-037).
@@ -194,8 +195,8 @@ What the service does:
    uniques over the period, fewer than `minimumPoints` values in the days the chart uses, or no complete slot at
    all; for a comparison also a total of unique counts, or no complete period before the screen. Tolerated
    deviation for a window that is not 1 or a multiple of 7, or a mean or median without its spread. Every
-   tolerated deviation is drawn under a red block with white text between the title and the chart: whoever
-   delivers it should feel they have to account for it (REQ-032, REQ-038, REQ-040).
+   tolerated deviation is drawn under a red block with white text between the title and the chart, with a
+   message to the reader: "Lees deze grafiek met voorzichtigheid: …" (REQ-032, REQ-038, REQ-040, REQ-041).
 5. Drawing: always a line through the points, broken where data is missing and never bridged (REQ-001); the
    centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), filled when final and hollow while
    running; a thin bar for ±1 sd or a wide rounded bar for P25–P75, in the light tint of the focus colour, which

@@ -75,14 +75,15 @@ Alles hieronder is gebouwd op branch `claude/friendly-clarke-m7ru1i`, in
 | [REQ-037](REQ-037.md) | Vergelijk altijd met de periode vóór het scherm, even lang als het scherm; deel van de filosofie | 2026-10-03 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
 | [REQ-038](REQ-038.md) | Elke getolereerde afwijking krijgt een rode melding | 2026-10-03 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
 | [REQ-039](REQ-039.md) | Dagwaarden houden de vorm van de semgraph en het minimum van 28 | 2026-10-03 | geïmplementeerd | [16792e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/16792e8) |
-| [REQ-040](REQ-040.md) | Een waarschuwing is een rood blok met witte tekst: wie oplevert, verantwoordt zich | 2026-10-03 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
+| [REQ-040](REQ-040.md) | Een waarschuwing is een rood blok met witte tekst | 2026-10-03 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
+| [REQ-041](REQ-041.md) | De waarschuwing is een boodschap aan de lezer; het ongemak voor wie oplevert blijft impliciet | 2026-10-03 | geïmplementeerd | HASH |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
 afspraak en noemen daarom nog geen nummer.
 
 REQ-010 tot REQ-020 (metadata van een grafiek) staan op Confluence en zijn nog niet geïmplementeerd: Confluence is
-hun bron. REQ-028 tot REQ-040 zijn de antwoorden van 2026-10-03 op de open punten.
+hun bron. REQ-028 tot REQ-041 zijn de antwoorden van 2026-10-03 op de open punten.
 
 ### Hernummering
 

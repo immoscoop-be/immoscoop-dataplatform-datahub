@@ -275,17 +275,17 @@ issues:
     message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik 7, 14, 28 of een ander veelvoud van 7.
     footer: het venster van {window} dagen is geen veelvoud van 7
-    alert: "Buiten de grafiektaal: een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. Wie deze grafiek oplevert, legt uit waarom."
+    alert: "Lees deze grafiek met voorzichtigheid: een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. Een verschil tussen twee punten kan van de weekdagen komen."
   meanWithoutSpread:
     message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread stddev.
     footer: gemiddelde zonder spreiding
-    alert: "Buiten de grafiektaal: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Wie deze grafiek oplevert, legt uit waarom."
+    alert: "Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Twee periodes met hetzelfde gemiddelde kunnen heel verschillend zijn."
   medianWithoutSpread:
     message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread iqr.
     footer: mediaan zonder spreiding
-    alert: "Buiten de grafiektaal: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Wie deze grafiek oplevert, legt uit waarom."
+    alert: "Lees deze grafiek met voorzichtigheid: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. Twee periodes met dezelfde mediaan kunnen heel verschillend zijn."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.

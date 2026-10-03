@@ -87,8 +87,8 @@ export function composeSvg(input: TemplateInput): string {
     );
   }
 
-  // A red block with white text: whoever delivers a chart outside the chart language should feel they
-  // have to account for it (REQ-040).
+  // A red block with white text (REQ-040). The text speaks to the reader, as help to read the chart;
+  // the discomfort of whoever delivers it stays implicit (REQ-041).
   for (const alert of input.alerts ?? []) {
     y += 10;
     const size = tokens.size.readingCue;
