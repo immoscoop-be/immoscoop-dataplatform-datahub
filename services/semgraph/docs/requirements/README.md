@@ -94,6 +94,7 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-055](REQ-055.md) | De arcering voor verlies: dalend, dun, zacht, op de achtergrondkleur | 2026-10-03 | geïmplementeerd | [c013878](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/c013878), [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
 | REQ-056 | Een gemiddelde van gemiddelden mag niet | 2026-10-03 (opdracht) | open (zie open punt 1: de garantie) | – |
 | REQ-057 | Weinig waarnemingen enkel waar het veilig is, dus niet bij dagwaarden | 2026-10-03 (opdracht) | open; de huidige semgraphs tonen het niet | – |
+| REQ-058 | De semgraph rekent geen data meer om: het warehouse levert per blok de waarde, de spreiding en n | 2026-10-03 (opdracht) | open (zie open punt 1: het contract) | – |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -105,7 +106,7 @@ de antwoorden van 2026-10-03 op de open punten. REQ-042 tot REQ-047 kwamen op 20
 gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken. REQ-048 is het antwoord van 2026-10-03 op de vraag over de
 hover op de datapunten. REQ-049 tot REQ-055 zijn de data states uit Figma: gebouwd, behalve REQ-053 en REQ-054, die
 op de vraag naar n wachten. REQ-056 en REQ-057 zijn de opdracht van 2026-10-03 over gemiddelden van gemiddelden
-en wanneer weinig waarnemingen veilig is.
+en wanneer weinig waarnemingen veilig is; REQ-058 is de keuze die daaruit volgt: het warehouse rekent.
 
 ### Hernummering
 
@@ -122,24 +123,25 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-1. **Waar wordt er gerekend? (REQ-056, REQ-057)**
-   - De vraag wat n is bij weinig waarnemingen, is op 2026-10-03 beslist (REQ-057): enkel waar het veilig is. Uit
-     dagwaarden een gemiddelde over een week trekken is niet veilig, want niets garandeert dat de dagwaarden
-     absolute getallen zijn en niet al een gemiddelde. De huidige semgraphs tonen dus geen weinig waarnemingen.
-   - Een gemiddelde van gemiddelden mag niet (REQ-056). Vandaag is de enige garantie het veld `measureType`, dat de
-     aanroeper zelf invult: een daggemiddelde met `measureType: additive` gaat er onopgemerkt door.
-   - Opdracht van 2026-10-03: de data wordt aangeleverd volgens richtlijnen, het manipuleren van data hoort in het
-     datawarehouse, en de semgraph werkt enkel als hij de juiste data heeft. Dat botst met het principe in de
-     [README](../../README.md#philosophy) en de analyse: "The rules live in the service. The caller sends raw
-     values; the service computes, validates and draws."
-   - Mogelijke uitvoeringen:
-     - A. Dagwaarden blijven, maar het type van de metric komt uit dbt of Domain Hub, niet van de aanroeper.
-     - B. Het warehouse levert per venster of periode de waarde, de spreiding en n volgens een richtlijn (bv.
-       dbt-macro's); de semgraph controleert de vorm en de regels van de grafiektaal, en tekent.
-     - C. Per dag bouwstenen die je mag optellen (aantal, som, som van kwadraten): een gemiddelde van gemiddelden
-       kan dan niet, maar een mediaan evenmin.
-   - Voorstel: B. De regels van de grafiektaal blijven in de semgraph; de berekening verhuist naar het warehouse,
-     één keer per semgraph-familie.
+1. **Het contract van REQ-058.** Op 2026-10-03 beslist: het warehouse rekent, de semgraph controleert en tekent.
+   DBT-macro's en standaardqueries komen, maar zijn geen voorwaarde: "de taal is gekend genoeg". Dat wijzigt het
+   principe in de [README](../../README.md#philosophy): "The caller sends raw values; the service computes".
+   Voorstel voor het contract:
+   - Per blok een rij in `points`. Een rollend venster heet naar zijn laatste dag (`end`), een kalenderperiode naar
+     haar ISO-naam (`period`: `2026-W40`, `2026-09`, `2026-Q3`, `2026`). De semgraph leidt daaruit de as af: "nu",
+     de jaren, en welke periode nog loopt.
+   - De velden heten naar de statistiek: `mean` met `sd` en `n`; `median` met `p25`, `p75` en `n`; `sum` zonder
+     spreiding en zonder n. Een daggemiddelde kan zo niet meer als som doorgaan (REQ-056).
+   - `n` is verplicht bij een gemiddelde en een mediaan. Het warehouse telt het waar het gemiddelde berekend wordt,
+     dus weinig waarnemingen wordt veilig (REQ-057), en REQ-043 tot REQ-047, REQ-053 en REQ-054 kunnen gebouwd
+     worden.
+   - Een blok zonder data ontbreekt of is `null`: het mozaïek (REQ-051). Een onvolledig venster stuurt het warehouse
+     niet mee.
+   - `periodComparison`: elke rij draagt ook de waarde van het blok ervoor (`previous`), met dezelfde statistiek.
+   - Het contract met dagwaarden verdwijnt; de semgraph rekent geen gemiddelde, spreiding of mediaan meer. De
+     BigQuery-controles worden voorbeeldqueries in de README.
+
+   Vragen: zijn `end` en `period` als naam van een blok goed? En is `n` verplicht bij een gemiddelde en een mediaan?
 2. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
