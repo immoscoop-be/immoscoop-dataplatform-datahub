@@ -1,5 +1,11 @@
 # Vertaling naar het Nederlands (België). Ontbreekt een sleutel, dan valt de dienst terug op en.yml.
 semgraphs:
+  kpiTile:
+    title: KPI-tegel
+    answers: Hoeveel is het nu, en is dat meer of minder dan ervoor?
+    examples:
+      "1": Hoeveel kredietleads kregen we de laatste 28 dagen, tegenover vorig jaar?
+      "2": Hoe lang wacht een lead deze maand op een eerste contact?
   distribution:
     title: Verdeling
     answers: Hoe liggen de waarden verspreid, waar ligt het midden en hoe lang is de staart?
@@ -96,6 +102,7 @@ cue:
 desc:
   distribution: "P25 {p25}, mediaan {p50}, P75 {p75}."
   categories: "{count} categorieën."
+  kpi: "Nu {value}, {difference} tegenover {label}."
   base: "{title}: {cue}, tot {date}."
   latest: "Laatste punt: {stats}."
   latestMissing: Geen waarde voor het laatste punt.
@@ -114,6 +121,8 @@ chart:
   running: "lopend: {count} van {total} dagen"
   noData: geen data
   runningShort: lopend
+  kpi:
+    shadow: "grijs = {label}"
   noComparison: geen vergelijking
 
 hover:
@@ -137,8 +146,8 @@ hover:
         median: mediaan
   comparison: "vorige periode, {name}: {value}"
   comparisonMissing: "vorige periode, {name}: geen data"
-  categoryComparison: "{label}: {value}"
-  categoryComparisonMissing: "{label}: geen data"
+  comparedWith: "{label}: {value}"
+  comparedWithMissing: "{label}: geen data"
   difference: "verschil: {value}"
   spread:
     mean: "±1 sd: {sd}"
@@ -217,6 +226,7 @@ footer:
   languageVersion: grafiektaal {version}
 
 readingCards:
+  kpiTile: KPI-tegel
   distribution: verdeling
   categoryComparison: staafgrafiek
   timeSeries: tijdreeks
@@ -267,6 +277,12 @@ issues:
   comparisonOnlyForSum:
     message: "Een vergelijking zit in één staaf, dus enkel bij een som; deze grafiek toont de {statistic}."
     alternative: Laat comparison en previous weg, of volg het gemiddelde of de mediaan in de tijd met periodComparison.
+  kpiValueMissing:
+    message: Het laatste blok heeft geen waarde, dus de tegel heeft geen getal om te tonen.
+    alternative: Stuur de waarde van het laatste blok mee, of toon het verloop met periodComparison.
+  kpiComparisonMissing:
+    message: "Het laatste blok heeft geen waarde voor {label}: een getal zonder vergelijking zegt niets."
+    alternative: Stuur previous mee voor het laatste blok, of kies de andere vergelijking.
   noPreviousValues:
     message: "Geen enkele categorie heeft een waarde voor {label}, dus er is niets om mee te vergelijken."
     alternative: Stuur de vorige waarden mee, of laat comparison en previous weg.

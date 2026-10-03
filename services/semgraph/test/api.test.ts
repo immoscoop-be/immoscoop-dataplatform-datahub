@@ -27,14 +27,15 @@ describe('API', () => {
 
   it('GET /semgraphs lists what is available and what is planned', async () => {
     const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
-    assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), ['movingWindowAverage', 'movingWindowMedian', 'calendarAverage', 'calendarMedian', 'periodComparison', 'categoryComparison', 'distribution']);
+    assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), ['movingWindowAverage', 'movingWindowMedian', 'calendarAverage', 'calendarMedian', 'periodComparison', 'kpiTile', 'categoryComparison', 'distribution']);
     assert.equal(body.semgraphs[0].title, 'Voortschrijdend gemiddelde');
     assert.equal(body.semgraphs[3].title, 'Mediaan per kalenderperiode');
     assert.equal(body.semgraphs[4].title, 'Vergelijking met de vorige periode');
-    assert.ok(body.planned.includes('kpiTile'));
+    assert.ok(body.planned.includes('funnel'));
     assert.ok(!body.planned.includes('periodComparison'));
-    assert.equal(body.semgraphs[5].title, 'Vergelijking tussen categorieën');
-    assert.equal(body.semgraphs[6].title, 'Verdeling');
+    assert.equal(body.semgraphs[5].title, 'KPI-tegel');
+    assert.equal(body.semgraphs[6].title, 'Vergelijking tussen categorieën');
+    assert.equal(body.semgraphs[7].title, 'Verdeling');
   });
 
   it('GET /semgraphs/{id} returns metadata, schema and examples', async () => {
@@ -55,7 +56,7 @@ describe('API', () => {
   });
 
   it('GET /semgraphs/{id} for a planned semgraph says it is planned', async () => {
-    const response = await app.inject('/semgraphs/kpiTile');
+    const response = await app.inject('/semgraphs/funnel');
     assert.equal(response.statusCode, 404);
     assert.equal(response.json().issues[0].code, 'plannedSemgraph');
   });
@@ -110,7 +111,7 @@ describe('API', () => {
   });
 
   it('POST /render says when a semgraph or format is not available yet', async () => {
-    assert.equal((await post('/render', { semgraph: 'kpiTile' })).json().issues[0].code, 'plannedSemgraph');
+    assert.equal((await post('/render', { semgraph: 'funnel' })).json().issues[0].code, 'plannedSemgraph');
     assert.equal((await post('/render', { semgraph: 'pieChart' })).json().issues[0].code, 'unknownSemgraph');
     const png = (await post('/render', { ...(await example('basic')), format: 'png' })).json();
     assert.equal(png.issues[0].code, 'formatNotAvailable');

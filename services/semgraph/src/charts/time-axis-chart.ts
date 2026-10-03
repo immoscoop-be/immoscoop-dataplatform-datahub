@@ -766,6 +766,18 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     };
   }
 
+  /** How the family names its blocks, for another drawing of the same blocks, such as the KPI tile (REQ-065). */
+  names(request: Request, computed: TimeAxisComputed, t: Translator) {
+    const context = { t, computed, isFirst: false };
+    return {
+      cue: this.periodCue(request, t),
+      centre: this.centreLabel(request, t),
+      block: this.blockSingular(request, t),
+      slot: (slot: Slot) => this.slotLabel(slot, context, request),
+      tick: (slot: Slot, isFirst: boolean) => this.tickLabel(slot, { ...context, isFirst }, request),
+    };
+  }
+
   /**
    * What each slot shows on hover, also a slot without data: its name (bold), the centre, the spread,
    * n (REQ-043) and the family's extras, e.g. "23 sep (−7d)", "gemiddelde 7d: 43,7", "±1 sd: 12,2",
@@ -808,7 +820,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 }
 
 /** Numbers each run of consecutive slots, so a line or band never bridges a gap. */
-function withSegments<Point extends { rel: number }>(points: readonly Point[]) {
+export function withSegments<Point extends { rel: number }>(points: readonly Point[]) {
   let segment = 0;
   const segmentOf = points.map((point, index) => {
     if (index > 0 && point.rel !== points[index - 1]!.rel + 1) segment++;

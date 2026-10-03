@@ -15,6 +15,10 @@ export interface Tokens {
     footer: number;
     panelTitle: number;
     panelBody: number;
+    /** The number of a KPI tile, its comparison, and what a KPI status still needs (REQ-065). */
+    kpi: number;
+    kpiDetail: number;
+    delta: number;
   };
   stroke: { axis: number; baseline: number; spread: number; spreadWide: number; line: number; guide: number };
   /** Width in pixels of a point, per shape (see src/charts/signatures.ts). */

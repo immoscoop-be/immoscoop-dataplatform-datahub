@@ -9,10 +9,11 @@ export const ICON_SIZE = 44;
 /**
  * REQ-061: icons are built from a small fixed set. One stroke weight; one dot (a median), plus the
  * small dots that make a dotted line (an earlier period). Diamonds and squares are paths. The icon of
- * `distribution` in Figma stacks dots of its own size, a histogram in dots: allowed as it is in Figma.
+ * `distribution` in Figma stacks dots of its own size, a histogram in dots; the KPI icons draw a ring
+ * around their number (`kpiTile`) and a target mark (`kpiStatus`): allowed as they are in Figma.
  */
 const STROKE_WIDTH = '0.75';
-const RADII = { dot: '1.87', lineDot: '0.66', stackDot: '1.43' } as const;
+const RADII = { dot: '1.87', lineDot: '0.66', stackDot: '1.43', tileRing: '11.725', targetRing: '4.025', targetDot: '1.1' } as const;
 const ELEMENTS = new Set(['svg', 'path', 'circle']);
 const COLOUR_ATTRIBUTES = ['fill', 'stroke', 'color', 'stop-color'];
 
@@ -40,7 +41,7 @@ export function readIcon(svg: string): Icon {
     }
     if (name === 'circle') {
       const radius = /\br="([^"]*)"/.exec(attributes)?.[1];
-      if (!Object.values(RADII).includes(radius as never)) problems.push(`icon.svg has dots of r ${RADII.dot} (and ${RADII.lineDot} in a dotted line, ${RADII.stackDot} in a histogram of dots); found r ${radius}`);
+      if (!Object.values(RADII).includes(radius as never)) problems.push(`icon.svg has dots of r ${RADII.dot} (and ${RADII.lineDot} in a dotted line, ${RADII.stackDot} in a histogram of dots, ${RADII.tileRing}, ${RADII.targetRing} and ${RADII.targetDot} in the KPI icons); found r ${radius}`);
     }
   }
   return { markup: markup.trim(), problems };

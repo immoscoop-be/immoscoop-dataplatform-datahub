@@ -2,7 +2,7 @@ import { ICON_SIZE } from '../icon.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
 import { LABEL_HEIGHT, MetaLayer, type MetaItem } from './meta.ts';
-import { round, wrap } from './text.ts';
+import { round, textWidth, wrap } from './text.ts';
 
 /** A piece of footer text: a link when href is set, bold in the text colour when strong, in the dark focus colour when accent. */
 export interface Segment {
@@ -142,8 +142,10 @@ export function composeSvg(input: TemplateInput): string {
   y += 6;
   const footerSize = tokens.size.footer;
   const footerLine = (segments: Segment[], style: Partial<TextStyle> = {}) => {
-    y += footerSize * LINE_HEIGHT;
-    parts.push(segmentsText(segments, { y, family: tokens.font.body, size: footerSize, fill: muted, ...style }, tokens));
+    for (const line of footerLines(segments, footerSize, inner)) {
+      y += footerSize * LINE_HEIGHT;
+      parts.push(segmentsText(line, { y, family: tokens.font.body, size: footerSize, fill: muted, ...style }, tokens));
+    }
   };
   footerLine(input.footer.origin, { weight: 600, fill: textColor });
   footerLine(input.footer.status);
@@ -220,6 +222,29 @@ function alertIcon(top: number, size: number, alertColor: string): string {
 
 function text(content: string, style: TextStyle): string {
   return `<text ${attributes(style)}>${escapeXml(content)}</text>`;
+}
+
+/**
+ * A footer line that is wider than the chart, such as on a narrow KPI tile, breaks at its separators
+ * (" · ", " › "); the separator at the break is left out.
+ */
+function footerLines(segments: Segment[], size: number, width: number): Segment[][] {
+  const separator = (segment: Segment) => !segment.href && /^ \S \s*$/.test(segment.text);
+  const widthOf = (line: Segment[]) => line.reduce((sum, segment) => sum + textWidth(segment.text, size) * (segment.strong ? 1.06 : 1), 0);
+  const lines: Segment[][] = [[]];
+  let pending: Segment | undefined;
+  for (const segment of segments) {
+    if (separator(segment)) {
+      pending = segment;
+      continue;
+    }
+    const line = lines.at(-1)!;
+    const candidate = [...line, ...(pending && line.length > 0 ? [pending] : []), segment];
+    if (line.length > 0 && widthOf(candidate) > width) lines.push([segment]);
+    else line.splice(0, line.length, ...candidate);
+    pending = undefined;
+  }
+  return lines;
 }
 
 /** Links carry an arrow instead of an underline, as in Figma. */

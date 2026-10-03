@@ -1,4 +1,5 @@
 import { color, type Tokens } from '../core/tokens.ts';
+import type { CalendarUnit } from './calendar.ts';
 
 /**
  * The comparison of `periodComparison`: the same value for the period just before the screen, as a
@@ -91,4 +92,27 @@ export function endLabels(
   if (gap >= needed) return { focus: focusY, comparison: comparisonY };
   const push = (needed - gap) / 2;
   return above ? { focus: focusY - push, comparison: comparisonY + push } : { focus: focusY + push, comparison: comparisonY - push };
+}
+
+/**
+ * A comparison outside a time axis (the comparison bar, the KPI tile and its mini trend): with the
+ * period just before, or with the same period a year earlier. Neither is on the screen (REQ-037, REQ-067).
+ */
+export type ComparisonKind = 'previousPeriod' | 'lastYear';
+export const COMPARISONS: readonly ComparisonKind[] = ['previousPeriod', 'lastYear'];
+
+/** What one block lasts: a rolling window of days, a calendar period, or a single day. */
+export type BlockLength = { window: number } | { unit: CalendarUnit } | { day: true };
+
+/** REQ-067, as in Figma: 7 and 14 days against the period before, 28 and 91 days and calendar periods against last year. */
+export function defaultComparison(length: BlockLength): ComparisonKind {
+  return 'window' in length && length.window <= 14 ? 'previousPeriod' : 'lastYear';
+}
+
+/** What it is compared with, as the label says it: "vorig jaar", "vorige 7 dagen", "vorige maand", "de dag ervoor". */
+export function comparisonLabel(kind: ComparisonKind, length: BlockLength): { t: string; params?: Record<string, number> } {
+  if (kind === 'lastYear') return { t: 'comparison.year' };
+  if ('window' in length) return length.window === 1 ? { t: 'comparison.previous.day' } : { t: 'comparison.days', params: { n: length.window } };
+  if ('unit' in length) return length.unit === 'year' ? { t: 'comparison.year' } : { t: `comparison.previous.${length.unit}` };
+  return { t: 'comparison.previous.day' };
 }

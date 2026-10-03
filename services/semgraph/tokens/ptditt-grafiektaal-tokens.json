@@ -1,6 +1,6 @@
 {
-  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard).",
-  "version": "0.2.0",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065).",
+  "version": "0.3.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
@@ -26,7 +26,11 @@
     "ordinal/2": "#ff6ca6",
     "ordinal/3": "#e34f9c",
     "ordinal/4": "#b81e6e",
-    "ordinal/5": "#630038"
+    "ordinal/5": "#630038",
+    "target": "#1f9a8f",
+    "target/dark": "#146b63",
+    "target/light": "#d6f0ed",
+    "focus/subtle": "#fdeff6"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",
@@ -41,7 +45,10 @@
     "axisLabel": 11,
     "footer": 10,
     "panelTitle": 14,
-    "panelBody": 12
+    "panelBody": 12,
+    "kpi": 40,
+    "kpiDetail": 12,
+    "delta": 16
   },
   "stroke": {
     "axis": 1,
@@ -75,7 +82,9 @@
     "figmaExamples": [
       "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
       "mark (Points and markers)",
-      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)"
+      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)",
+      "size.kpi and size.kpiDetail (Chart/KPI tile: the number and its comparison)",
+      "size.delta (Chart/KPI status: what is still needed)"
     ],
     "notInFigmaYet": [
       "stroke.spread and stroke.spreadWide"

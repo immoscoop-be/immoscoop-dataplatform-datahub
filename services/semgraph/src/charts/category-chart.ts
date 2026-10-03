@@ -8,12 +8,12 @@ import { textWidth, wrap } from '../core/render/text.ts';
 import type { DrawContext, Drawing, RequestContext, SemgraphImplementation, SemgraphMetadata } from '../core/semgraph.ts';
 import { color, vegaLiteConfig, type Tokens } from '../core/tokens.ts';
 import { anyPeriodFromName, isoWeek, parts, type CalendarUnit } from './calendar.ts';
-import { hatchPattern, patternId } from './comparison.ts';
+import { COMPARISONS, comparisonLabel, defaultComparison, hatchPattern, patternId, type BlockLength, type ComparisonKind } from './comparison.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
-import { lookup, numberFormat, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
+import { lookup, numberFormat, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
 import { Average, Median, Sum, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
 import { PLOT_HEIGHT, WIDTH } from './time-axis-chart.ts';
@@ -46,10 +46,6 @@ export interface CategoryRequest extends MeasureRequest {
   meta?: ChartMeta;
   points: CategoryRow[];
 }
-
-/** The period just before the scope, or the same scope a year earlier: neither is on the screen (REQ-037, REQ-067). */
-export type ComparisonKind = 'previousPeriod' | 'lastYear';
-const COMPARISONS: readonly ComparisonKind[] = ['previousPeriod', 'lastYear'];
 
 type Scope =
   | { kind: 'window'; window: number; first: number; last: number }
@@ -260,7 +256,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
       nMissing: observations && withValue.some((row) => row.summary!.n === undefined),
       few: observations ? statistic.fewObservations(withValue.map((row) => ({ key: row.key, ...(row.summary!.n === undefined ? {} : { n: row.summary!.n }) }))) : [],
       missing: rows.filter((row) => row.summary === null).map((row) => row.key),
-      comparison: comparing ? { kind: request.comparison ?? defaultComparison(scope), given: request.comparison !== undefined } : null,
+      comparison: comparing ? { kind: request.comparison ?? defaultComparison(lengthOf(scope)), given: request.comparison !== undefined } : null,
       zoomIgnored: statistic.kind === 'amount' && request.valueAxis === 'zoom',
     };
   }
@@ -280,7 +276,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
       // REQ-066, REQ-067: the comparison lives inside one bar, so only an amount has one.
       if (statistic.kind !== 'amount') issues.push({ level: 'refusal', code: 'comparisonOnlyForSum', field: computed.comparison.given ? '/comparison' : '/points', params: { statistic: { t: `hover.centre.category.${statistic.id}` } } });
       else if (!computed.rows.some((row) => typeof row.previous === 'number')) {
-        issues.push({ level: 'refusal', code: 'noPreviousValues', field: '/points', params: { label: comparisonLabel(computed.comparison.kind, computed.scope) } });
+        issues.push({ level: 'refusal', code: 'noPreviousValues', field: '/points', params: { label: comparisonLabel(computed.comparison.kind, lengthOf(computed.scope)) } });
       }
     }
     if (computed.zoomIgnored) issues.push({ level: 'info', code: 'valueAxisZoomIgnored', field: '/valueAxis' });
@@ -297,7 +293,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
     const { t, tokens } = context;
     const vertical = computed.orientation === 'vertical';
     // REQ-066, REQ-067: only an amount compares, inside its bar (a mean or median with one is refused).
-    const label = computed.comparison && statistic.kind === 'amount' ? translate(t, comparisonLabel(computed.comparison.kind, computed.scope)) : undefined;
+    const label = computed.comparison && statistic.kind === 'amount' ? translate(t, comparisonLabel(computed.comparison.kind, lengthOf(computed.scope))) : undefined;
     const drawn = vertical ? this.vertical(request, computed, statistic, t, tokens, label) : this.horizontal(request, computed, statistic, t, tokens, label);
 
     const title = request.title ?? request.metric;
@@ -322,9 +318,9 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
     const centreLabel = t(`hover.centre.category.${statistic.id}`);
     const comparisonLines = (row: CategoryPoint) => {
       if (label === undefined || row.previous === undefined) return [];
-      if (row.previous === null) return [{ text: t('hover.categoryComparisonMissing', { label }) }];
+      if (row.previous === null) return [{ text: t('hover.comparedWithMissing', { label }) }];
       return [
-        { text: t('hover.categoryComparison', { label, value: format.value(row.previous) }) },
+        { text: t('hover.comparedWith', { label, value: format.value(row.previous) }) },
         ...(row.summary ? [{ text: t('hover.difference', { value: format.difference(row.summary.centre - row.previous) }) }] : []),
       ];
     };
@@ -723,25 +719,6 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
   }
 }
 
-/**
- * REQ-073: a zoomed axis, as on the time axis (REQ-026): the baseline gives way to a zigzag at its start.
- * `along` encodes the stretch of baseline the mask covers.
- */
-function zoomLayers(tokens: Tokens, x: object, y: object, along: object) {
-  return [
-    {
-      data: { name: 'mask' },
-      mark: { type: 'rule', color: color(tokens, 'surface'), strokeWidth: tokens.stroke.baseline + 2 },
-      encoding: along,
-    },
-    {
-      data: { name: 'zigzag' },
-      mark: { type: 'line', color: color(tokens, 'baseline'), strokeWidth: tokens.stroke.baseline, strokeJoin: 'miter' },
-      encoding: { x, y, order: { field: 'order' } },
-    },
-  ];
-}
-
 /** REQ-073: an amount is a length, so its bar starts at zero; a mean or median is a position and may zoom. */
 function axisMode(request: CategoryRequest, statistic: Statistic): ValueAxisMode {
   return statistic.kind === 'amount' ? 'zero' : request.valueAxis ?? 'zero';
@@ -824,22 +801,9 @@ function compares(request: CategoryRequest): boolean {
   return request.comparison !== undefined || request.points.some((row) => 'previous' in row);
 }
 
-/** REQ-067, as in Figma: 7 and 14 days against the period before, 28 and 91 days and calendar periods against last year. */
-function defaultComparison(scope: Scope): ComparisonKind {
-  return scope.kind === 'window' && scope.window <= 14 ? 'previousPeriod' : 'lastYear';
-}
-
-/** What the bar is compared with, as the label says it: "vorig jaar", "vorige 7 dagen", "vorige maand", "de dag ervoor". */
-function comparisonLabel(kind: ComparisonKind, scope: Scope): { t: string; params?: Record<string, number> } {
-  if (kind === 'lastYear') return { t: 'comparison.year' };
-  switch (scope.kind) {
-    case 'window':
-      return scope.window === 1 ? { t: 'comparison.previous.day' } : { t: 'comparison.days', params: { n: scope.window } };
-    case 'day':
-      return { t: 'comparison.previous.day' };
-    case 'period':
-      return scope.unit === 'year' ? { t: 'comparison.year' } : { t: `comparison.previous.${scope.unit}` };
-  }
+/** What one category's value covers, to name its comparison. */
+function lengthOf(scope: Scope): BlockLength {
+  return scope.kind === 'window' ? { window: scope.window } : scope.kind === 'period' ? { unit: scope.unit } : { day: true };
 }
 
 function scopeName(request: CategoryRequest): string {

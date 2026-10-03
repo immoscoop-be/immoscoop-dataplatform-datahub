@@ -1,0 +1,22 @@
+{
+  "semgraph": "kpiTile",
+  "metric": "hoursToFirstContact",
+  "title": "Uren tot eerste contact per lead (voorbeelddata)",
+  "measureType": "perUnit",
+  "statistic": "mean",
+  "unit": "month",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "Credit",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "period": "2026-04", "mean": 4.6, "sd": 2.1, "n": 812, "previous": { "mean": 5.2 } },
+    { "period": "2026-05", "mean": 4.2, "sd": 1.9, "n": 790, "previous": { "mean": 5.0 } },
+    { "period": "2026-06", "mean": 4.4, "sd": 2.0, "n": 845, "previous": { "mean": 4.9 } },
+    { "period": "2026-07", "mean": 5.1, "sd": 2.4, "n": 702, "previous": { "mean": 5.6 } },
+    { "period": "2026-08", "mean": 4.8, "sd": 2.2, "n": 655, "previous": { "mean": 5.3 } },
+    { "period": "2026-09", "mean": 3.9, "sd": 1.7, "n": 880, "previous": { "mean": 4.7 } }
+  ]
+}

@@ -1,3 +1,5 @@
+import { color, type Tokens } from '../core/tokens.ts';
+
 /** A value axis as the chart draws it: its ticks, and whether it starts above zero. */
 export interface ValueScale {
   ticks: number[];
@@ -26,6 +28,25 @@ export function valueScale(lowest: number, highest: number, mode: ValueAxisMode)
  */
 export const ZIGZAG: readonly (readonly [number, number])[] = [[0, 0], [2, 3], [5, -3], [8, 3], [10, 0]];
 export const ZIGZAG_MASK = 11;
+
+/**
+ * The layers of a zoomed axis (REQ-026, REQ-073): the baseline gives way to a zigzag at its start. The
+ * data sets `mask` and `zigzag` hold their points; `along` encodes the stretch of baseline the mask covers.
+ */
+export function zoomLayers(tokens: Tokens, x: object, y: object, along: object) {
+  return [
+    {
+      data: { name: 'mask' },
+      mark: { type: 'rule', color: color(tokens, 'surface'), strokeWidth: tokens.stroke.baseline + 2 },
+      encoding: along,
+    },
+    {
+      data: { name: 'zigzag' },
+      mark: { type: 'line', color: color(tokens, 'baseline'), strokeWidth: tokens.stroke.baseline, strokeJoin: 'miter' },
+      encoding: { x, y, order: { field: 'order' } },
+    },
+  ];
+}
 
 /** The first value of a zoomed axis is bold. */
 export function zoomedLabelWeight(scale: ValueScale): object {

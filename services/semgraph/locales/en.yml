@@ -1,5 +1,11 @@
 # Base texts. Every key used by the service must exist here; other locales fall back to these.
 semgraphs:
+  kpiTile:
+    title: KPI tile
+    answers: How much is it now, and is that more or less than before?
+    examples:
+      "1": How many credit leads did we get in the last 28 days, compared with last year?
+      "2": How long does a lead wait for a first contact this month?
   distribution:
     title: Distribution
     answers: How are the values spread, where does the middle lie and how long is the tail?
@@ -96,6 +102,7 @@ cue:
 desc:
   distribution: "P25 {p25}, median {p50}, P75 {p75}."
   categories: "{count} categories."
+  kpi: "Now {value}, {difference} vs {label}."
   base: "{title}: {cue}, up to {date}."
   latest: "Last point: {stats}."
   latestMissing: No value for the last point.
@@ -114,6 +121,8 @@ chart:
   running: "running: {count} of {total} days"
   noData: no data
   runningShort: current
+  kpi:
+    shadow: "grey = {label}"
   noComparison: no comparison
 
 hover:
@@ -137,8 +146,8 @@ hover:
         median: median
   comparison: "previous period, {name}: {value}"
   comparisonMissing: "previous period, {name}: no data"
-  categoryComparison: "{label}: {value}"
-  categoryComparisonMissing: "{label}: no data"
+  comparedWith: "{label}: {value}"
+  comparedWithMissing: "{label}: no data"
   difference: "difference: {value}"
   spread:
     mean: "±1 sd: {sd}"
@@ -217,6 +226,7 @@ footer:
   languageVersion: chart language {version}
 
 readingCards:
+  kpiTile: KPI tile
   distribution: distribution
   categoryComparison: bar chart
   timeSeries: time series
@@ -267,6 +277,12 @@ issues:
   comparisonOnlyForSum:
     message: "A comparison lives inside one bar, so only for a sum; this chart shows the {statistic}."
     alternative: Leave out comparison and previous, or follow the mean or median over time in periodComparison.
+  kpiValueMissing:
+    message: The last block has no value, so the tile has no number to show.
+    alternative: Send the value of the last block, or show the evolution in periodComparison.
+  kpiComparisonMissing:
+    message: "The last block has no value for {label}: a number without a comparison says nothing."
+    alternative: Send previous for the last block, or choose the other comparison.
   noPreviousValues:
     message: "No category has a value for {label}, so there is nothing to compare with."
     alternative: Send the previous values, or leave out comparison and previous.

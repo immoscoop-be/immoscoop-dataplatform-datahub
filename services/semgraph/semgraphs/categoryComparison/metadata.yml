@@ -6,7 +6,8 @@ attributes:
   timeAxis: [none]
   breakdown: [category]
   # The comparison with last year inside one bar waits on the questions of REQ-065.
-  comparisonBasis: [none]
+  # A sum can compare inside its bar, with the period before or last year (REQ-066, REQ-067).
+  comparisonBasis: [none, previousPeriod]
   dataGrain: [aggregated]
   measureType: [additive, unique, perUnit]
   partToWhole: ["no"]
