@@ -1,0 +1,263 @@
+# Vertaling naar het Nederlands (België). Ontbreekt een sleutel, dan valt de dienst terug op en.yml.
+semgraphs:
+  movingWindowAverage:
+    title: Voortschrijdend gemiddelde
+    answers: Hoe evolueert dit, zonder dagelijkse ruis?
+    examples:
+      "1": Hoe evolueerden de kredietleads de voorbije vier weken?
+      "2": Stijgt of daalt het aantal nieuwe panden per dag?
+  movingWindowMedian:
+    title: Voortschrijdende mediaan
+    answers: Hoe evolueert de typische dag, zonder dat enkele uitschieters het beeld meetrekken?
+    examples:
+      "1": Hoe evolueerde het typische aantal kredietleads per dag de voorbije vier weken?
+      "2": Stijgt of daalt de typische vraagprijs van nieuwe panden per dag?
+  calendarAverage:
+    title: Gemiddelde per kalenderperiode
+    answers: Hoeveel per dag, gemiddeld, in elke week, maand, kwartaal of jaar?
+    examples:
+      "1": Hoeveel kredietleads per dag kregen we gemiddeld, per maand dit jaar?
+      "2": Was deze week drukker dan de weken ervoor?
+  calendarMedian:
+    title: Mediaan per kalenderperiode
+    answers: Hoeveel op een typische dag, in elke week, maand, kwartaal of jaar?
+    examples:
+      "1": Hoe zag een typische dag voor kredietleads eruit, per kwartaal?
+      "2": Hoe veranderde de typische tijd tot het eerste contact per dag, per maand?
+
+attributes:
+  timeAxis:
+    question: Wil je het verloop in de tijd zien?
+  breakdown:
+    question: Wil je het uitsplitsen, en waarnaar?
+  comparisonBasis:
+    question: Waarmee wil je vergelijken?
+  dataGrain:
+    question: Heb je totalen of losse gevallen?
+  partToWhole:
+    question: Vormen de delen samen het geheel?
+  accumulation:
+    question: Wil je het tempo per periode, of het totaal tot nu?
+  periodType:
+    question: Een rollende periode (de laatste 7 dagen), of kalenderperiodes (weken, maanden)?
+  centralTendency:
+    question: Wil je het gemiddelde of de mediaan?
+
+axis:
+  today: vandaag
+  daysAgo: "−{n}d"
+
+cue:
+  rolling:
+    mean: voortschrijdend gemiddelde {window}d
+    median: voortschrijdende mediaan {window}d
+  calendar:
+    mean: gemiddelde per dag, per {unit}
+    median: mediaan per dag, per {unit}
+  spread:
+    mean: ±1 sd
+    median: P25–P75
+  unique: uniek · per dag geteld
+
+desc:
+  base: "{title}: {cue}, tot {date}."
+  latest: "Laatste punt: {stats}."
+  latestMissing: Geen waarde voor het laatste punt.
+
+chart:
+  noData: geen data
+  stats:
+    mean: "{value} ± {sd}"
+    median: "{value}, P25–P75 {p25}–{p75}"
+    noSpread: "{value}"
+  missing:
+    one: "geen data: {absent} ontbreekt"
+    many: "geen data: {count} dagen ontbreken, de eerste op {absent}"
+  window: venster {range}
+  running: "lopend: {count} van {total} dagen"
+  runningShort: lopend
+
+hover:
+  centre:
+    rolling:
+      mean: "gemiddelde {window}d"
+      median: "mediaan {window}d"
+    calendar:
+      mean: gemiddelde per dag
+      median: mediaan per dag
+  spread:
+    mean: "±1 sd: {sd}"
+    median: "P25–P75: {p25}–{p75}"
+
+calendar:
+  unit:
+    week: week
+    month: maand
+    quarter: kwartaal
+    year: jaar
+  tick:
+    week: W{week}
+    quarter: K{quarter} {year}
+  withYear: "{label} {year}"
+  none:
+    week: geen enkele week
+    month: geen enkele maand
+    quarter: geen enkel kwartaal
+    year: geen enkel jaar
+  hover:
+    week: week {week} ({range})
+    month: "{month} {year}"
+    quarter: K{quarter} {year}
+
+period:
+  window: een venster van {window} dagen
+  week: een week
+  month: een maand
+  quarter: een kwartaal
+  year: een jaar
+
+date:
+  short: "{day} {month}"
+  long: "{day} {month} {year}"
+  range: "{from}–{to}"
+  rangeSameMonth: "{from}–{to} {month}"
+  month:
+    "1": jan
+    "2": feb
+    "3": mrt
+    "4": apr
+    "5": mei
+    "6": jun
+    "7": jul
+    "8": aug
+    "9": sep
+    "10": okt
+    "11": nov
+    "12": dec
+
+footer:
+  unknownDomain: domein onbekend
+  unknownDataset: dataset onbekend
+  unknownOwner: owner onbekend
+  unknownReliability: betrouwbaarheid onbekend
+  asOf: peildatum {date}
+  definition: definitie
+  definitionUnknown: definitie onbekend
+  howToRead: Hoe lees ik deze grafiek?
+  outsideLanguage: "Buiten de grafiektaal: {details}."
+  languageVersion: grafiektaal {version}
+
+types:
+  integer: een geheel getal
+  number: een getal
+  string: tekst
+  array: een lijst
+  object: een object
+  boolean: waar of onwaar
+  "null": leeg
+
+issues:
+  badRequest:
+    message: "De aanvraag kon niet gelezen worden: {detail}"
+    alternative: Stuur een JSON-object met Content-Type application/json.
+  payloadTooLarge:
+    message: De aanvraag is te groot.
+    alternative: Stuur hoogstens 4000 dagen; meer heeft een grafiek nooit nodig.
+  unsupportedMediaType:
+    message: Enkel JSON-aanvragen worden aanvaard.
+    alternative: Gebruik Content-Type application/json.
+  notFound:
+    message: Op {path} staat niets.
+    alternative: GET /semgraphs toont wat er beschikbaar is.
+  internalError:
+    message: Er liep iets mis bij het maken van de grafiek. Dat ligt niet aan je aanvraag.
+    alternative: Probeer opnieuw. Blijft het gebeuren, laat het dan weten aan het datateam.
+  notAnObject:
+    message: De aanvraag moet een JSON-object zijn.
+  missingSemgraph:
+    message: Zeg in het veld semgraph welke grafiek je wil.
+    alternative: "Beschikbaar: {available}."
+  unknownSemgraph:
+    message: Er bestaat geen semgraph met de naam {value}.
+    alternative: "Beschikbaar: {available}."
+  plannedSemgraph:
+    message: De semgraph {value} is gepland, maar nog niet beschikbaar.
+    alternative: "Nu beschikbaar: {available}."
+  missingField:
+    message: Het veld {field} is verplicht.
+  unexpectedField:
+    message: Het veld {field} hoort niet bij deze semgraph.
+    alternative: Laat het weg, of controleer de schrijfwijze in GET /semgraphs/{semgraph}.
+  unexpectedDataField:
+    message: Een dag mag enkel day en value bevatten; {field} is niet toegelaten.
+    alternative: Laat de andere kolommen weg. Stuur nooit persoonsgegevens naar de grafiekserver.
+  invalidValue:
+    message: "{field} moet een van deze waarden zijn: {allowed}."
+  invalidType:
+    message: "{field} moet {expected} zijn."
+  tooSmall:
+    message: "{field} moet minstens {limit} zijn."
+  tooLarge:
+    message: "{field} mag hoogstens {limit} zijn."
+  tooShort:
+    message: "{field} moet minstens {limit} tekens hebben."
+  tooLong:
+    message: "{field} mag hoogstens {limit} tekens hebben."
+  tooFew:
+    message: "{field} moet minstens {limit} elementen bevatten."
+  tooMany:
+    message: "{field} mag hoogstens {limit} elementen bevatten."
+  invalidFormat:
+    message: "{field} heeft niet de verwachte vorm."
+  invalidDate:
+    message: "{field}: {value} is geen bestaande dag."
+    alternative: Schrijf dagen als JJJJ-MM-DD.
+  duplicateDay:
+    message: De dag {day} komt meer dan eens voor.
+    alternative: Stuur één waarde per dag.
+  invalidUrl:
+    message: "{field} moet een weblink zijn die begint met http:// of https://."
+  invalidCharacters:
+    message: "{field} bevat stuurtekens die niet getoond kunnen worden."
+  formatNotAvailable:
+    message: Het formaat {format} is nog niet beschikbaar; deze versie maakt enkel svg.
+    alternative: Vraag het formaat svg.
+
+  measureTypeNotAllowed:
+    message: "Deze grafiek is niet gemaakt voor een maat van het type {measureType}: de grafiektaal legt ze enkel vast voor {allowed}."
+    alternative: Gebruik een maat van het type {allowed}, of vraag aan het datateam welke semgraph past.
+  uniqueAggregationRequired:
+    message: "Bij unieke aantallen moet je kiezen: unieken per dag geteld, of unieken over de hele periode. Dat zijn twee verschillende metrics."
+    alternative: Voeg uniqueAggregation daily toe als de waarden dagelijkse unieken zijn. Unieken over de periode kunnen niet uit dagwaarden berekend worden.
+  uniquesOverPeriodNotDerivable:
+    message: "Unieken over {period} kunnen niet uit dagwaarden berekend worden: wie op meerdere dagen terugkomt, zou meerdere keren tellen."
+    alternative: Bereken ze aan de bron, als aparte metric, of kies uniqueAggregation daily.
+  insufficientData:
+    message: "Er zijn {count} dagen met een waarde in de {days} dagen die deze grafiek gebruikt ({from} tot {to}). Een betrouwbaar voortschrijdend gemiddelde vraagt er minstens {minimumPoints}."
+    alternative: Stuur meer dagen, of kies een langere horizon.
+  noCompleteWindow:
+    message: Geen enkel venster van {window} dagen is volledig, dus er is geen gemiddelde om te tonen. Dagen zonder data tellen nooit als nul.
+    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde), of gebruik een korter venster.
+  noCompletePeriod:
+    message: Er is {none} volledig, dus er is niets om te tonen. Dagen zonder data tellen nooit als nul.
+    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde).
+
+  windowNotMultipleOf7:
+    message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een melding in de voetregel.
+    alternative: Gebruik 7, 14, 28 of een ander veelvoud van 7.
+    footer: het venster van {window} dagen is geen veelvoud van 7
+  meanWithoutSpread:
+    message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
+    alternative: Gebruik spread stddev.
+    footer: gemiddelde zonder spreiding
+  medianWithoutSpread:
+    message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
+    alternative: Gebruik spread iqr.
+    footer: mediaan zonder spreiding
+
+  localeFallback:
+    message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.
+  uniqueAggregationIgnored:
+    message: uniqueAggregation geldt enkel voor unieke aantallen en werd genegeerd.
+  daysAfterReferenceIgnored:
+    message: "{count} dag(en) na de laatste volledige dag ({day}) werden weggelaten: de lopende dag is nog niet voorbij."

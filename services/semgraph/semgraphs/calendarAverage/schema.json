@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "semgraph:calendarAverage/request",
+  "title": "calendarAverage request",
+  "description": "Calendar periods (ISO weeks, months, quarters or years), ending with the period of the last complete day; a period that is still running is drawn hollow. The mean is a diamond over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "semgraph",
+    "metric",
+    "measureType",
+    "unit",
+    "horizon",
+    "data"
+  ],
+  "properties": {
+    "semgraph": {
+      "const": "calendarAverage"
+    },
+    "metric": {
+      "description": "Identifier of the metric, e.g. creditLeads. Used as title when no title is given.",
+      "type": "string",
+      "pattern": "^[A-Za-z][A-Za-z0-9_]{0,63}$"
+    },
+    "title": {
+      "description": "Title above the chart. States what is shown, not a conclusion.",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "measureType": {
+      "description": "Kind of number. Required until Domain Hub or the dbt YAML supplies it.",
+      "enum": [
+        "additive",
+        "unique",
+        "ratio"
+      ]
+    },
+    "uniqueAggregation": {
+      "description": "Required for unique counts: daily shows the daily uniques; overPeriod (unique over the whole period) cannot be derived from daily values.",
+      "enum": [
+        "daily",
+        "overPeriod"
+      ]
+    },
+    "unit": {
+      "description": "The calendar period: week (ISO, Monday to Sunday), month, quarter or year.",
+      "enum": [
+        "week",
+        "month",
+        "quarter",
+        "year"
+      ]
+    },
+    "horizon": {
+      "description": "Number of periods shown, ending with the period of the last complete day.",
+      "type": "integer",
+      "minimum": 2,
+      "maximum": 120
+    },
+    "spread": {
+      "description": "Spread around the mean: stddev (the chart language default) or none.",
+      "enum": [
+        "stddev",
+        "none"
+      ],
+      "default": "stddev"
+    },
+    "valueAxis": {
+      "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",
+      "enum": [
+        "zero",
+        "zoom"
+      ],
+      "default": "zero"
+    },
+    "format": {
+      "description": "Output format. Only svg is available in v0.",
+      "enum": [
+        "svg",
+        "png",
+        "html",
+        "widget"
+      ],
+      "default": "svg"
+    },
+    "locale": {
+      "description": "Language of titles, labels and messages, e.g. en or nl-BE. Unknown locales fall back to English.",
+      "type": "string",
+      "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "context": {
+      "description": "Provenance and status for the footer. Missing values are shown as unknown.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domain": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "dataset": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "owner": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "reliability": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "definitionUrl": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+        }
+      }
+    },
+    "data": {
+      "description": "Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4000,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "day",
+          "value"
+        ],
+        "properties": {
+          "day": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "value": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

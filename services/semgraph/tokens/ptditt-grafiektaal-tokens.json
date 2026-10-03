@@ -1,0 +1,48 @@
+{
+  "$description": "PROVISIONAL chart-language tokens for semgraph v0. Figma (file grafiektaal) is the source of truth. Values marked as read from Figma come from the cover page; all others are placeholders until the token export from Figma is agreed with Daniel. The service reads its style only from this file.",
+  "version": "0.0.0-provisional",
+  "languageVersion": "v0",
+  "color": {
+    "focus": "#dd2c88",
+    "focus/light": "#f2afd2",
+    "context": "#9aa3ad",
+    "text": "#2d333a",
+    "text/muted": "#6b7480",
+    "surface": "#ffffff",
+    "axis": "#c5cbd2",
+    "baseline": "#3c444e",
+    "grid": "#eef0f2",
+    "badge/text": "#3c444e",
+    "badge/surface": "#f3f5f6"
+  },
+  "font": {
+    "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",
+    "body": "Nunito, 'Helvetica Neue', Arial, sans-serif"
+  },
+  "size": {
+    "title": 16,
+    "readingCue": 11,
+    "value": 10,
+    "detail": 8,
+    "axisLabel": 10,
+    "footer": 10
+  },
+  "stroke": {
+    "axis": 1,
+    "baseline": 1.5,
+    "spread": 4,
+    "spreadWide": 9,
+    "line": 1.5,
+    "missing": 1,
+    "guide": 1
+  },
+  "mark": {
+    "$description": "Width in pixels of a point, per shape: a square for an amount, a diamond for a mean, a circle for a median (REQ-006, REQ-007, REQ-008). In Figma 10, 10 and 9 px on a 540 px chart.",
+    "square": 7,
+    "diamond": 8,
+    "circle": 7
+  },
+  "$sources": {
+    "fromFigma": ["color.focus", "color.text", "color.text/muted", "color.surface", "color.badge/text", "color.badge/surface", "font (Poppins and Nunito, still an open decision)", "size.value and size.detail (10 and 8)"]
+  }
+}

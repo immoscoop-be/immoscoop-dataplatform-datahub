@@ -1,0 +1,43 @@
+# The closed vocabulary of semgraph attributes (analysis "Grafiekserver", section "Keuzehulp").
+# A semgraph may only use attributes and values from this list. An attribute with `askWhen` only
+# applies when the condition holds; it is then mandatory, otherwise it must be left out.
+# `source` says where the answer usually comes from: user, data or domainHub.
+- id: timeAxis
+  question: attributes.timeAxis.question
+  values: [calendar, elapsed, none]
+  source: [user, data]
+- id: breakdown
+  question: attributes.breakdown.question
+  values: [none, category, steps, sets, region]
+  source: [user]
+- id: comparisonBasis
+  question: attributes.comparisonBasis.question
+  values: [none, previousPeriod, target, otherGroup]
+  source: [user]
+- id: dataGrain
+  question: attributes.dataGrain.question
+  values: [aggregated, individual]
+  source: [data]
+- id: measureType
+  values: [additive, unique, ratio]
+  source: [domainHub]
+- id: partToWhole
+  question: attributes.partToWhole.question
+  values: ["yes", "no"]
+  askWhen: { breakdown: category }
+  source: [user]
+- id: accumulation
+  question: attributes.accumulation.question
+  values: [perPeriod, runningTotal]
+  askWhen: { timeAxis: calendar }
+  source: [user]
+# Added with the calendar and median semgraphs: without them those would not be distinguishable.
+- id: periodType
+  question: attributes.periodType.question
+  values: [rolling, calendar]
+  askWhen: { timeAxis: calendar }
+  source: [user]
+- id: centralTendency
+  question: attributes.centralTendency.question
+  values: [mean, median]
+  source: [user, domainHub]

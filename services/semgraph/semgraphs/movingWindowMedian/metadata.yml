@@ -1,0 +1,26 @@
+id: movingWindowMedian
+title: semgraphs.movingWindowMedian.title
+answers: semgraphs.movingWindowMedian.answers
+attributes:
+  timeAxis: [calendar]
+  breakdown: [none]
+  comparisonBasis: [none]
+  dataGrain: [aggregated]
+  measureType: [additive, unique]
+  accumulation: [perPeriod]
+  periodType: [rolling]
+  centralTendency: [median]
+exampleQuestions:
+  - semgraphs.movingWindowMedian.examples.1
+  - semgraphs.movingWindowMedian.examples.2
+doNotUseWhen:
+  - intent: compareWithLastYear
+    use: periodComparison
+  - intent: showOneCurrentValue
+    use: kpiTile
+data:
+  minimumPoints: 28
+links:
+  figma: https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6
+  # The reading cards do not exist yet; until then this points to topic 1.4.3 of the learning plan.
+  learning: https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146

@@ -1,0 +1,267 @@
+# Base texts. Every key used by the service must exist here; other locales fall back to these.
+semgraphs:
+  movingWindowAverage:
+    title: Moving window average
+    answers: How does this evolve, without the daily noise?
+    examples:
+      "1": How have credit leads evolved over the last four weeks?
+      "2": Is the number of new listings per day going up or down?
+  movingWindowMedian:
+    title: Moving window median
+    answers: How does the typical day evolve, without being pulled along by a few outliers?
+    examples:
+      "1": How has the typical number of credit leads per day evolved over the last four weeks?
+      "2": Is the typical asking price of new listings per day going up or down?
+  calendarAverage:
+    title: Average per calendar period
+    answers: How much per day, on average, in each week, month, quarter or year?
+    examples:
+      "1": How many credit leads per day did we get on average, per month this year?
+      "2": Was this week busier than the weeks before?
+  calendarMedian:
+    title: Median per calendar period
+    answers: How much on a typical day, in each week, month, quarter or year?
+    examples:
+      "1": What was a typical day for credit leads, per quarter?
+      "2": How did the typical time to first contact per day change per month?
+
+attributes:
+  timeAxis:
+    question: Do you want to see how it evolves over time?
+  breakdown:
+    question: Do you want to break it down, and by what?
+  comparisonBasis:
+    question: What do you want to compare it with?
+  dataGrain:
+    question: Do you have totals or individual cases?
+  partToWhole:
+    question: Do the parts together make up the whole?
+  accumulation:
+    question: Do you want the pace per period, or the total so far?
+  periodType:
+    question: A rolling period (the last 7 days), or calendar periods (weeks, months)?
+  centralTendency:
+    question: Do you want the average or the median?
+
+axis:
+  today: today
+  daysAgo: "−{n}d"
+
+cue:
+  rolling:
+    mean: rolling {window}d average
+    median: rolling {window}d median
+  calendar:
+    mean: daily average per {unit}
+    median: daily median per {unit}
+  spread:
+    mean: ±1 sd
+    median: P25–P75
+  unique: unique · counted per day
+
+desc:
+  base: "{title}: {cue}, up to {date}."
+  latest: "Last point: {stats}."
+  latestMissing: No value for the last point.
+
+chart:
+  noData: no data
+  stats:
+    mean: "{value} ± {sd}"
+    median: "{value}, P25–P75 {p25}–{p75}"
+    noSpread: "{value}"
+  missing:
+    one: "no data: {absent} is missing"
+    many: "no data: {count} days are missing, the first on {absent}"
+  window: window {range}
+  running: "running: {count} of {total} days"
+  runningShort: current
+
+hover:
+  centre:
+    rolling:
+      mean: "{window}d average"
+      median: "{window}d median"
+    calendar:
+      mean: daily average
+      median: daily median
+  spread:
+    mean: "±1 sd: {sd}"
+    median: "P25–P75: {p25}–{p75}"
+
+calendar:
+  unit:
+    week: week
+    month: month
+    quarter: quarter
+    year: year
+  tick:
+    week: W{week}
+    quarter: Q{quarter} {year}
+  withYear: "{label} {year}"
+  none:
+    week: not a single week
+    month: not a single month
+    quarter: not a single quarter
+    year: not a single year
+  hover:
+    week: week {week} ({range})
+    month: "{month} {year}"
+    quarter: Q{quarter} {year}
+
+period:
+  window: a {window}-day window
+  week: a week
+  month: a month
+  quarter: a quarter
+  year: a year
+
+date:
+  short: "{day} {month}"
+  long: "{day} {month} {year}"
+  range: "{from}–{to}"
+  rangeSameMonth: "{from}–{to} {month}"
+  month:
+    "1": Jan
+    "2": Feb
+    "3": Mar
+    "4": Apr
+    "5": May
+    "6": Jun
+    "7": Jul
+    "8": Aug
+    "9": Sep
+    "10": Oct
+    "11": Nov
+    "12": Dec
+
+footer:
+  unknownDomain: domain unknown
+  unknownDataset: dataset unknown
+  unknownOwner: owner unknown
+  unknownReliability: reliability unknown
+  asOf: as of {date}
+  definition: definition
+  definitionUnknown: definition unknown
+  howToRead: How do I read this chart?
+  outsideLanguage: "Outside the chart language: {details}."
+  languageVersion: chart language {version}
+
+types:
+  integer: a whole number
+  number: a number
+  string: text
+  array: a list
+  object: an object
+  boolean: true or false
+  "null": empty
+
+issues:
+  # Input errors (400): the request itself is not valid.
+  badRequest:
+    message: "The request could not be read: {detail}"
+    alternative: Send a JSON object with Content-Type application/json.
+  payloadTooLarge:
+    message: The request is too large.
+    alternative: Send at most 4000 days; a chart never needs more.
+  unsupportedMediaType:
+    message: Only JSON requests are accepted.
+    alternative: Use Content-Type application/json.
+  notFound:
+    message: There is nothing at {path}.
+    alternative: GET /semgraphs lists what is available.
+  internalError:
+    message: Something went wrong while making the chart. This is not caused by your request.
+    alternative: Try again. If it keeps happening, tell the data team.
+  notAnObject:
+    message: The request must be a JSON object.
+  missingSemgraph:
+    message: Say which chart you want in the field semgraph.
+    alternative: "Available: {available}."
+  unknownSemgraph:
+    message: There is no semgraph called {value}.
+    alternative: "Available: {available}."
+  plannedSemgraph:
+    message: The semgraph {value} is planned, but not available yet.
+    alternative: "Available now: {available}."
+  missingField:
+    message: The field {field} is required.
+  unexpectedField:
+    message: The field {field} does not belong to this semgraph.
+    alternative: Remove it, or check the spelling in GET /semgraphs/{semgraph}.
+  unexpectedDataField:
+    message: A day may only contain day and value; {field} is not allowed.
+    alternative: Remove the other columns. Never send personal data to the chart service.
+  invalidValue:
+    message: "{field} must be one of: {allowed}."
+  invalidType:
+    message: "{field} must be {expected}."
+  tooSmall:
+    message: "{field} must be at least {limit}."
+  tooLarge:
+    message: "{field} must be at most {limit}."
+  tooShort:
+    message: "{field} must have at least {limit} characters."
+  tooLong:
+    message: "{field} must have at most {limit} characters."
+  tooFew:
+    message: "{field} must contain at least {limit} items."
+  tooMany:
+    message: "{field} must contain at most {limit} items."
+  invalidFormat:
+    message: "{field} does not have the expected form."
+  invalidDate:
+    message: "{field}: {value} is not an existing day."
+    alternative: Write days as YYYY-MM-DD.
+  duplicateDay:
+    message: The day {day} appears more than once.
+    alternative: Send one value per day.
+  invalidUrl:
+    message: "{field} must be a web link that starts with http:// or https://."
+  invalidCharacters:
+    message: "{field} contains control characters that cannot be shown."
+  formatNotAvailable:
+    message: The format {format} is not available yet; this version only makes svg.
+    alternative: Ask for format svg.
+
+  # Refusals (422): the chart would mislead, so it is not drawn.
+  measureTypeNotAllowed:
+    message: "This chart is not made for a measure of type {measureType}: the chart language only defines it for {allowed}."
+    alternative: Use a measure of type {allowed}, or ask the data team which semgraph fits.
+  uniqueAggregationRequired:
+    message: "For unique counts you have to choose: uniques counted per day, or uniques over the whole period. Those are two different metrics."
+    alternative: Add uniqueAggregation daily when the values are daily uniques. Uniques over the period cannot be computed from daily values.
+  uniquesOverPeriodNotDerivable:
+    message: "Uniques over {period} cannot be computed from daily values: someone who comes back on several days would be counted several times."
+    alternative: Compute them at the source as a metric of its own, or choose uniqueAggregation daily.
+  insufficientData:
+    message: "There are {count} days with a value in the {days} days this chart uses ({from} to {to}). A reliable rolling average needs at least {minimumPoints}."
+    alternative: Send more days, or choose a longer horizon.
+  noCompleteWindow:
+    message: Not a single {window}-day window is complete, so there is no average to show. Days without data are never counted as zero.
+    alternative: Send the missing days (0 where nothing happened), or use a shorter window.
+  noCompletePeriod:
+    message: Not a single {unit} is complete, so there is nothing to show. Days without data are never counted as zero.
+    alternative: Send the missing days (0 where nothing happened).
+
+  # Tolerated deviations (200): the chart is drawn, with a note in the footer and without version label.
+  windowNotMultipleOf7:
+    message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a note in the footer.
+    alternative: Use 7, 14, 28 or another multiple of 7.
+    footer: the {window}-day window is not a multiple of 7
+  meanWithoutSpread:
+    message: The average is shown without its spread, so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
+    alternative: Use spread stddev.
+    footer: average without spread
+  medianWithoutSpread:
+    message: The median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
+    alternative: Use spread iqr.
+    footer: median without spread
+
+  # Information: nothing is wrong, but the service did something you should know about.
+  localeFallback:
+    message: There are no texts for {locale}, so English is used.
+  uniqueAggregationIgnored:
+    message: uniqueAggregation only applies to unique counts and was ignored.
+  daysAfterReferenceIgnored:
+    message: "{count} day(s) after the last complete day ({day}) were left out: the current day is not over yet."

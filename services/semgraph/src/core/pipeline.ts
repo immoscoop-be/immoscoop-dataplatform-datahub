@@ -1,0 +1,192 @@
+import { localizeDay } from './days.ts';
+import { createTranslator, resolveLocale, type Translator } from './i18n.ts';
+import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, type Outcome } from './issues.ts';
+import type { LoadedSemgraph, Registry } from './registry.ts';
+import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
+import { HoverLayer } from './render/hover.ts';
+import { composeSvg, type Footer, type Segment } from './render/template.ts';
+import { renderVegaLite } from './render/vega.ts';
+import { schemaIssues } from './schema.ts';
+import type { Drawing, RequestContext } from './semgraph.ts';
+
+export interface Report {
+  outcome: Outcome;
+  semgraph?: string;
+  locale: string;
+  issues: Issue[];
+}
+
+export interface PipelineResult {
+  report: Report;
+  /** Codes of the tolerated deviations, also sent in the Semgraph-Deviations header. */
+  deviations: string[];
+  /** Only for render, and only when the outcome is ok or deviation. */
+  svg?: string;
+  /** Warnings from Vega-Lite or Vega while drawing. */
+  warnings: string[];
+}
+
+export interface PipelineOptions {
+  now?: Date;
+  /** false for /validate: run every check and the computation, but draw nothing. */
+  draw?: boolean;
+}
+
+/** Only svg exists in v0; the other formats are part of the contract already. */
+const AVAILABLE_FORMATS = new Set(['svg']);
+
+/**
+ * The core, shared by every access layer: specification (JSON Schema) -> input checks ->
+ * computation -> chart-language rules -> drawing (Vega-Lite) -> template around the chart.
+ */
+export async function runPipeline(registry: Registry, body: unknown, options: PipelineOptions = {}): Promise<PipelineResult> {
+  const now = options.now ?? new Date();
+  const requestedLocale = isObject(body) && typeof body.locale === 'string' ? body.locale : undefined;
+  const { locale, matched } = resolveLocale(requestedLocale, registry.locales.keys());
+  const t = createTranslator(registry.locales, locale);
+  const issues: IssueSpec[] = [];
+  if (!matched) issues.push({ level: 'info', code: 'localeFallback', params: { locale: requestedLocale ?? '' } });
+
+  const finish = (semgraph?: string, extra: Partial<PipelineResult> = {}): PipelineResult => ({
+    report: {
+      outcome: outcomeOf(issues),
+      ...(semgraph === undefined ? {} : { semgraph }),
+      locale,
+      issues: issues.map((issue) => localizeIssue(t, issue)),
+    },
+    deviations: issues.filter((issue) => issue.level === 'deviation').map((issue) => issue.code),
+    warnings: [],
+    ...extra,
+  });
+
+  const loaded = findSemgraph(registry, body, issues);
+  if (!loaded) return finish();
+  const { id, implementation, metadata } = loaded;
+
+  if (!loaded.validate(body)) {
+    issues.push(...schemaIssues(loaded.validate.errors, id));
+    return finish(id);
+  }
+  const request = body as Record<string, unknown> & { format?: string; context?: RequestContext };
+  issues.push(...genericChecks(request));
+  issues.push(...implementation.check(request));
+  if (outcomeOf(issues) === 'invalid') return finish(id);
+
+  const computed = implementation.compute(request, { now });
+  issues.push(...implementation.rules(request, computed, { metadata }));
+  const outcome = outcomeOf(issues);
+  if (options.draw === false || (outcome !== 'ok' && outcome !== 'deviation')) return finish(id);
+
+  const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
+  const plot = await renderVegaLite(drawing.vegaLite);
+  const deviations = issues.filter((issue) => issue.level === 'deviation');
+  const svg = composeSvg({
+    width: drawing.width,
+    title: drawing.title,
+    readingCue: drawing.readingCue,
+    description: drawing.description,
+    plot: {
+      svg: plot.svg,
+      height: drawing.height,
+      area: drawing.plotArea,
+      overlay: new HoverLayer(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+    },
+    footer: footer(t, request.context ?? {}, drawing, loaded, deviations, registry.tokens.languageVersion),
+    tokens: registry.tokens,
+    data: {
+      semgraph: id,
+      'language-version': registry.tokens.languageVersion,
+      'tokens-version': registry.tokens.version,
+    },
+  });
+  return finish(id, { svg, warnings: plot.warnings });
+}
+
+function findSemgraph(registry: Registry, body: unknown, issues: IssueSpec[]): LoadedSemgraph | undefined {
+  const available = [...registry.semgraphs.keys()].join(', ');
+  if (!isObject(body)) {
+    issues.push({ level: 'inputError', code: 'notAnObject' });
+    return undefined;
+  }
+  if (typeof body.semgraph !== 'string') {
+    issues.push({ level: 'inputError', code: 'missingSemgraph', field: '/semgraph', params: { available } });
+    return undefined;
+  }
+  const loaded = registry.semgraphs.get(body.semgraph);
+  if (loaded) return loaded;
+  const planned = registry.catalog.some((entry) => entry.id === body.semgraph && entry.status === 'planned');
+  issues.push({
+    level: 'inputError',
+    code: planned ? 'plannedSemgraph' : 'unknownSemgraph',
+    field: '/semgraph',
+    params: { value: body.semgraph, available },
+  });
+  return undefined;
+}
+
+/** Checks that hold for every semgraph: showable text, web links only, an available format. */
+function genericChecks(request: Record<string, unknown> & { format?: string; context?: RequestContext }): IssueSpec[] {
+  const issues: IssueSpec[] = [];
+  walkStrings(request, '', (value, pointer) => {
+    if (hasIllegalXmlCharacters(value)) issues.push({ level: 'inputError', code: 'invalidCharacters', field: pointer });
+  });
+  const url = request.context?.definitionUrl;
+  if (url !== undefined && !isWebLink(url)) {
+    issues.push({ level: 'inputError', code: 'invalidUrl', field: '/context/definitionUrl' });
+  }
+  const format = request.format ?? 'svg';
+  if (!AVAILABLE_FORMATS.has(format)) {
+    issues.push({ level: 'inputError', code: 'formatNotAvailable', field: '/format', params: { format } });
+  }
+  return issues;
+}
+
+function footer(
+  t: Translator,
+  context: RequestContext,
+  drawing: Drawing,
+  loaded: LoadedSemgraph,
+  deviations: IssueSpec[],
+  languageVersion: string,
+): Footer {
+  const separator = (text: string): Segment => ({ text: ` ${text} ` });
+  const definition: Segment = context.definitionUrl
+    ? { text: t('footer.definition'), href: context.definitionUrl }
+    : { text: t('footer.definitionUnknown') };
+  const details = deviations
+    .map((issue) => t(`issues.${issue.code}.footer`, localizeParams(t, issue.params)))
+    .join('; ');
+  return {
+    // Absence is never polished away: missing context is printed as unknown.
+    provenance: [
+      { text: context.domain ?? t('footer.unknownDomain') },
+      separator('›'),
+      { text: context.dataset ?? t('footer.unknownDataset') },
+      separator('·'),
+      { text: context.owner ?? t('footer.unknownOwner') },
+    ],
+    status: [
+      { text: context.reliability ?? t('footer.unknownReliability') },
+      separator('·'),
+      { text: t('footer.asOf', { date: localizeDay(t, drawing.asOf, 'long') }) },
+      separator('·'),
+      definition,
+    ],
+    learn: [{ text: t('footer.howToRead'), href: loaded.metadata.links.learning }],
+    ...(details
+      ? { note: t('footer.outsideLanguage', { details }) }
+      : { versionLabel: t('footer.languageVersion', { version: languageVersion }) }),
+  };
+}
+
+function walkStrings(value: unknown, pointer: string, visit: (value: string, pointer: string) => void): void {
+  if (typeof value === 'string') visit(value, pointer);
+  else if (Array.isArray(value)) value.forEach((item, index) => walkStrings(item, `${pointer}/${index}`, visit));
+  else if (isObject(value)) {
+    for (const [key, item] of Object.entries(value)) walkStrings(item, `${pointer}/${key}`, visit);
+  }
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
