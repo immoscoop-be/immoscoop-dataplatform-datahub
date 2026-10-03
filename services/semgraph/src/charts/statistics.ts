@@ -1,5 +1,6 @@
 import type { Translator } from '../core/i18n.ts';
 import type { Tokens } from '../core/tokens.ts';
+import { SHAPES, type Shape } from './signatures.ts';
 
 /** A centre with its spread; the spread is null when it is left out or cannot be computed. */
 export interface Summary {
@@ -10,7 +11,7 @@ export interface Summary {
 /**
  * The statistic a chart shows per period: a centre and the spread that belongs to it. The chart
  * language never shows one without the other: a mean goes with ±1 sd, a median with P25–P75.
- * Every time-axis chart uses one of these, so the calculation lives in one place.
+ * Every time-axis chart uses one of these, so the calculation lives in one place (REQ-013, REQ-014).
  */
 export abstract class Statistic {
   abstract readonly id: 'mean' | 'median';
@@ -21,6 +22,11 @@ export abstract class Statistic {
   abstract readonly description: string;
 
   abstract summarize(values: readonly number[], withSpread: boolean): Summary;
+
+  /** The shape of the point: a diamond for a mean (REQ-006), a dot for a median (REQ-008). */
+  get shape(): Shape {
+    return SHAPES[this.id];
+  }
 
   /** Width of the spread bar in pixels: a thin bar for a mean, a wide rounded one for a median. */
   abstract barWidth(tokens: Tokens): number;
@@ -48,7 +54,7 @@ export class Average extends Statistic {
   readonly id = 'mean';
   readonly spreadName = 'stddev';
   readonly withoutSpreadCode = 'meanWithoutSpread';
-  readonly description = 'The mean is a dot over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery).';
+  readonly description = 'The mean is a diamond over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery).';
 
   summarize(values: readonly number[], withSpread: boolean): Summary {
     const centre = mean(values);

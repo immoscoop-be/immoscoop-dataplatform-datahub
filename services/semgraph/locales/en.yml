@@ -75,7 +75,7 @@ chart:
     many: "no data: {count} days are missing, the first on {absent}"
   window: window {range}
   running: "running: {count} of {total} days"
-  runningShort: running
+  runningShort: current
 
 hover:
   centre:

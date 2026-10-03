@@ -37,7 +37,10 @@
     "guide": 1
   },
   "mark": {
-    "meanSize": 36
+    "$description": "Width in pixels of a point, per shape: a square for an amount, a diamond for a mean, a circle for a median (REQ-006, REQ-007, REQ-008). In Figma 10, 10 and 9 px on a 540 px chart.",
+    "square": 7,
+    "diamond": 8,
+    "circle": 7
   },
   "$sources": {
     "fromFigma": ["color.focus", "color.text", "color.text/muted", "color.surface", "color.badge/text", "color.badge/surface", "font (Poppins and Nunito, still an open decision)", "size.value and size.detail (10 and 8)"]

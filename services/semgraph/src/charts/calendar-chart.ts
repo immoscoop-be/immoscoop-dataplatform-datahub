@@ -21,7 +21,7 @@ const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter
 /**
  * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, ending with the
  * period that contains the last complete day. When that period is not over yet, it is running: its
- * value covers the days so far and is drawn hollow, because it is not final.
+ * value covers the days so far and is drawn hollow, because it is not final (REQ-012).
  */
 export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   protected readonly periodDescription =

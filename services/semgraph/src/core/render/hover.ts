@@ -43,7 +43,7 @@ const RING_RADIUS = 6;
  * On :hover or :focus (each column has tabindex 0, so a tap on mobile and the keyboard work too) it
  * shows grey dotted guides, a ring around the point and a box with the lines. The detail is hidden
  * with the visibility attribute and made visible by CSS, so a renderer without CSS shows nothing.
- * Positions come from Vega's own scales. No ids, so several charts can share one page.
+ * Positions come from Vega's own scales. No ids, so several charts can share one page (REQ-016).
  */
 export class HoverLayer {
   protected readonly tokens: Tokens;

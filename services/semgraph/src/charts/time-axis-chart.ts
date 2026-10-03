@@ -12,6 +12,7 @@ import type {
 } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { decimalsOf, lookup, numberFormat, runs, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
+import { markerSize } from './signatures.ts';
 import type { Statistic, Summary } from './statistics.ts';
 
 /** What every time-axis request carries, whatever its periods or statistic. */
@@ -87,12 +88,15 @@ export const MAX_TICKS = 8;
 /** A "no data" label is only written in a missing stretch at least this wide. */
 const MIN_LABEL_WIDTH = 44;
 
-/** Whether each slot is drawn on its own (a dot with its bar), or the slots as a line with a band. */
-export type Form = 'dots' | 'line';
+/**
+ * How the spread is drawn under the line (REQ-001): a bar under every point, or a band along the
+ * line when the points are too close together for their bars.
+ */
+export type Form = 'bars' | 'band';
 
-/** Dots while each slot has room for its bar plus some air, a line with a band beyond that. */
+/** Bars while each slot has room for its bar plus some air, a band beyond that (REQ-011). */
 export function formFor(slots: number, barWidth: number): Form {
-  return PLOT_WIDTH / slots >= Math.max(8, barWidth + 4) ? 'dots' : 'line';
+  return PLOT_WIDTH / slots >= Math.max(8, barWidth + 4) ? 'bars' : 'band';
 }
 
 /** Master-leerplan, level 1: unique counts (1.2.2), rolling periods (1.4.2), centre and spread (1.5.4). */
@@ -103,6 +107,7 @@ export const LEARNING_PLAN_LEVEL_1 = 'https://immoscoop.atlassian.net/wiki/space
  * the contract, the reference day, the strict handling of missing days, the chart-language rules,
  * the value axis (from zero or zoomed), the drawing and the hover labels. A family decides which
  * days each slot summarizes and how slots are labelled; the statistic decides centre and spread.
+ * Nothing is written twice (REQ-014).
  */
 export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   implements SemgraphImplementation<Request, TimeAxisComputed>
@@ -383,8 +388,15 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       scale: { domain: [scale.min, scale.max], nice: false, zero: false },
     });
 
-    // Spread: a bar per slot (shortened by half its width, so the round caps end exactly at the
-    // spread), or a band under the line; a running period always keeps its own bar.
+    // REQ-001: a time axis is always a line through the points, in both forms, also up to a running
+    // period. Missing data breaks the line; it is never bridged.
+    const line = withSegments(points);
+    // The band covers the final points only (REQ-009: a light area is spread, nothing else).
+    const settled = withSegments(points.filter((point) => !point.running));
+    const alone = new Set(settled.filter((point) => point.segmentLength === 1).map((point) => point.rel));
+    const ownBar = (point: SlotPoint) => form === 'bars' || point.running || alone.has(point.rel);
+    // Spread: a bar per point (shortened by half its width, so the round caps end exactly at the
+    // spread), or a band under the line; a point that is not part of the band keeps its own bar.
     const capPad = (barWidth / 2) * ((scale.max - scale.min) / PLOT_HEIGHT);
     const bar = (point: SlotPoint) => {
       if (!point.spread) return [];
@@ -392,13 +404,15 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       const hi = point.spread.hi - capPad;
       return [{ rel: point.rel, lo: Math.min(lo, point.centre), hi: Math.max(hi, point.centre) }];
     };
-    const settled = withSegments(points.filter((point) => !point.running));
-    const running = points.filter((point) => point.running);
-    const dotted = form === 'dots' ? points : [...settled.filter((point) => point.segmentLength === 1), ...running];
-    const bars = (form === 'dots' ? points : running).flatMap(bar);
-    const band = form === 'line'
-      ? settled.flatMap((point) => (point.spread ? [{ rel: point.rel, segment: point.segment, lo: Math.max(0, point.spread.lo), hi: point.spread.hi }] : []))
+    const bars = points.filter(ownBar).flatMap(bar);
+    const band = form === 'band'
+      ? settled
+          .filter((point) => point.segmentLength > 1)
+          .flatMap((point) => (point.spread ? [{ rel: point.rel, segment: point.segment, lo: Math.max(0, point.spread.lo), hi: point.spread.hi }] : []))
       : [];
+    // Markers: every point while there is room; on a dense line only the points with their own bar
+    // and the last one, so the signature (REQ-006, REQ-008) stays visible.
+    const marked = points.filter((point) => ownBar(point) || point.rel === 0);
 
     const missing = runs(computed.missing).map(([from, to]) => ({ from: from - 0.5, to: to + 0.5, center: (from + to) / 2, slots: to - from + 1 }));
     const missingLabels = missing
@@ -447,8 +461,8 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         missingLabels,
         bars,
         band,
-        line: settled,
-        dots: dotted,
+        line,
+        points: marked,
         latest,
         mask,
         zigzag,
@@ -492,17 +506,16 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           mark: { type: 'rule', strokeWidth: barWidth, strokeCap: 'round', color: color(tokens, 'focus/light') },
           encoding: { x, y: y('lo'), y2: { field: 'hi' } },
         },
-        ...(form === 'line'
-          ? [{
-              data: { name: 'line' },
-              mark: { type: 'line', color: focus, strokeWidth: tokens.stroke.line },
-              encoding: { x, y: y('centre'), detail: { field: 'segment' } },
-            }]
-          : []),
         {
-          // The centre is a dot: filled when final, hollow while its period is still running.
-          data: { name: 'dots' },
-          mark: { type: 'point', filled: true, size: tokens.mark.meanSize, opacity: 1 },
+          data: { name: 'line' },
+          mark: { type: 'line', color: focus, strokeWidth: tokens.stroke.line },
+          encoding: { x, y: y('centre'), detail: { field: 'segment' } },
+        },
+        {
+          // The centre has the shape of its statistic: filled when final, hollow while its period is
+          // still running (REQ-006, REQ-008).
+          data: { name: 'points' },
+          mark: { type: 'point', shape: this.statistic.shape, filled: true, size: markerSize(tokens, this.statistic.id), opacity: 1 },
           encoding: {
             x,
             y: y('centre'),

@@ -5,7 +5,10 @@ chart language. The rules live in the service: the caller sends raw values, and 
 and draws, with title, reading cue and footer.
 
 - Analysis (functional and technical): [ptditt - Tooling - Grafiekserver](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106324)
-- Chart language, the source of truth for every visual rule: [Figma, file grafiektaal](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6)
+- Chart language, the source of the visual rules: [Figma, file grafiektaal](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6)
+- Requirements: collected on [Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1359872021); once
+  implemented, [docs/requirements](docs/requirements/README.md) in this repository is their source of truth. How we
+  handle requirements, also conflicting ones, is in [CLAUDE.md](CLAUDE.md).
 
 ## Status: v0
 
@@ -14,10 +17,10 @@ as one Docker image:
 
 | Semgraph | Per slot | Drawn as |
 | --- | --- | --- |
-| `movingWindowAverage` | per day, the mean of the window ending on it | dot over a thin bar, ±1 sd |
-| `movingWindowMedian` | per day, the median of the window ending on it | dot in a wide bar, P25–P75 |
-| `calendarAverage` | per ISO week, month, quarter or year, the mean of its days | dot over a thin bar, ±1 sd |
-| `calendarMedian` | per ISO week, month, quarter or year, the median of its days | dot in a wide bar, P25–P75 |
+| `movingWindowAverage` | per day, the mean of the window ending on it | line of diamonds over thin bars, ±1 sd |
+| `movingWindowMedian` | per day, the median of the window ending on it | line of dots in wide bars, P25–P75 |
+| `calendarAverage` | per ISO week, month, quarter or year, the mean of its days | line of diamonds over thin bars, ±1 sd |
+| `calendarMedian` | per ISO week, month, quarter or year, the median of its days | line of dots in wide bars, P25–P75 |
 
 MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
 the same core.
@@ -156,8 +159,8 @@ What the service does:
    tick of a moving window reads "today" when that is yesterday, and the date otherwise.
 2. Slots: a moving window has one slot per day, summarizing the `window` days that end on it. A calendar chart has
    one slot per period, ending with the period of the last complete day. While that period is not over, it is
-   **running**: its value covers the days so far, the dot is hollow, and the label says "running" (on hover:
-   "running: 3 of 7 days").
+   **running**: its value covers the days so far, its point is hollow, and the label says "current" ("lopend";
+   on hover: "running: 3 of 7 days").
 3. Statistics, the same for both families: the mean with the sample standard deviation (n − 1, as `STDDEV` in
    BigQuery), or the median with P25–P75 (linear interpolation, as `PERCENTILE_CONT`). Tests compare with
    BigQuery's output, also per ISO week. A slot with a missing day has no point: one missing day leaves a gap of
@@ -165,9 +168,12 @@ What the service does:
 4. Rules: refusal for a measure type the metadata does not allow, unique counts without `uniqueAggregation`,
    uniques over the period, fewer than `minimumPoints` values in the days the chart uses, or no complete slot at
    all. Tolerated deviation for a window that is not a multiple of 7, or a mean or median without its spread.
-5. Drawing: the centre as a dot, filled when final and hollow while running; a thin bar for ±1 sd or a wide
-   rounded bar for P25–P75, in the light tint of the focus colour; missing stretches as an outlined area labelled
-   "no data"; the last value (bold) with its spread (detail); both axes labelled; a darker, thicker baseline.
+5. Drawing: always a line through the points, broken where data is missing and never bridged (REQ-001); the
+   centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), filled when final and hollow while
+   running; a thin bar for ±1 sd or a wide rounded bar for P25–P75, in the light tint of the focus colour, which
+   is used for spread only (REQ-009); never a bar for a value on the time axis (REQ-002); missing stretches as
+   an outlined area labelled "no data"; the last value (bold) with its spread (detail); both axes labelled; a
+   darker, thicker baseline.
 6. Value axis: from zero by default. With `"valueAxis": "zoom"` it starts at a round value just below the data,
    which the chart language allows for positions such as averages and medians; the baseline then starts with a
    short zigzag and the first axis value is bold. When the round start is zero anyway, it stays at zero.
@@ -191,13 +197,14 @@ What the service does:
    - It works when the SVG is opened directly or inlined, not inside `<img>`, Slack or e-mail. On the interactive
      page this will be Vega-Lite's own way (a tooltip encoding and a pointerover param with a rule); this CSS layer
      is then the static fallback.
-9. Many values: while each slot has room for its bar plus some air (8 pixels for a mean, 13 for a median's wide
-   bar), each slot is a dot with its bar. Beyond that the dots would overlap, so the mean becomes a line and the spread a band around it, in the same
-   colours (the learning material: spread "as a band around a line or as a line around a point"). Lines and bands
-   never bridge a gap, a lone slot between two gaps keeps its dot, and a running period keeps its hollow dot and
-   bar. A moving window keeps at most eight labels, in multiples of the window (7, 14, 28, 91, … days); a calendar
-   chart labels every period that fits ("W40", "sep", "K3 2026", "2026"), naming the year at the start and where
-   it changes. See `examples/long-horizon.json` (182 days).
+9. Many values (REQ-011): while each slot has room for its bar plus some air (8 pixels for a mean, 13 for a
+   median's wide bar), every point is drawn with its bar. Beyond that the bars would overlap, so the spread
+   becomes a band along the line, in the same colours (the learning material: spread "as a band around a line or
+   as a line around a point"), and only the last point, a lone point between two gaps and a running period keep
+   their marker, so the shape of the statistic stays visible. Lines and bands never bridge a gap; a lone point
+   and a running period keep their own bar. A moving window keeps at most eight labels, in multiples of the
+   window (7, 14, 28, 91, … days); a calendar chart labels every period that fits ("W40", "sep", "K3 2026",
+   "2026"), naming the year at the start and where it changes. See `examples/long-horizon.json` (182 days).
 
 ## How it is built
 
@@ -212,10 +219,13 @@ TimeAxisChart (src/charts/time-axis-chart.ts)    contract, reference day, strict
     ├── CalendarAverage       ── uses Average
     └── CalendarMedian        ── uses Median
 
-Statistic (src/charts/statistics.ts)              centre, spread, bar width, labels
-├── Average                                       mean, ±1 sd (n − 1), thin bar
-└── Median                                        median, P25–P75, wide bar
+Statistic (src/charts/statistics.ts)              centre, spread, bar width, shape, labels
+├── Average                                       mean, ±1 sd (n − 1), thin bar, diamond (REQ-006)
+└── Median                                        median, P25–P75, wide bar, dot (REQ-008)
 ```
+
+The shape of a point per kind of number (square for an amount, diamond for a mean, dot for a median) is defined
+once, in `src/charts/signatures.ts`.
 
 The statistic is its own hierarchy, used by both families: with single inheritance alone, the mean and median code
 would have to be written once per family. A family decides which days a slot summarizes and how slots are
@@ -226,7 +236,9 @@ A new semgraph on a time axis is a class of a few lines, plus its `metadata.yml`
 vocabulary/attributes.yml              closed vocabulary of the 9 attributes
 semgraphs/catalog.yml                  all semgraphs of the catalogue: available or planned
 semgraphs/<id>/                        index.ts (the class), metadata.yml, schema.json (generated), examples
-src/charts/                            the chart classes, statistics, calendar periods and scales
+src/charts/                            the chart classes, statistics, signatures, calendar periods and scales
+docs/requirements/                     the implemented requirements (REQ-xxx), the source of truth once implemented
+test/requirements.test.ts              one test per requirement, run on every example of every semgraph
 locales/en.yml, nl-BE.yml              every text; other locales fall back to English
 tokens/ptditt-grafiektaal-tokens.json  style values; PROVISIONAL until the export from Figma is agreed
 src/core/pipeline.ts                   schema -> input checks -> compute -> rules -> draw -> template
@@ -252,15 +264,14 @@ semgraphs: fifteen in all.
 Only the cover page of the Figma file was readable when v0 was built. These choices still need checking against
 the pages Anatomy and Line charts, and with the team:
 
-1. Missing points as an outlined area labelled "no data" (the cover says "an outlined area is missing data"), and
-   no line between the dots.
+1. Missing points as an outlined area labelled "no data" (the cover says "an outlined area is missing data").
 2. A strict window (an incomplete window has no point), rather than a hollow dot for an incomplete window.
 3. `minimumPoints` counts the values in the horizon + window − 1 days the chart uses; n − 1; a value axis from
    zero; no rule of its own for the horizon.
 4. Conformance check 3 sharpened to "disjoint".
 5. The form of reading cue, footer and version label ("chart language v0"), still open in Figma.
 6. All token values except focus, text, text/muted, surface and badge, which come from Figma.
-7. The switch from dots to a line with a band, and the look of the hover (guides, ring, box).
+7. The switch from bars to a band, and the look of the hover (guides, ring, box).
 8. The two new attributes `periodType` and `centralTendency`, and their values for the semgraphs of the analysis
    (`any` where they do not matter); see `test/fixtures/analysis-attributes.yml`.
 9. Calendar periods are strict too: a week, month, quarter or year with a missing day has no point. A running

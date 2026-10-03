@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "semgraph:movingWindowAverage/request",
   "title": "movingWindowAverage request",
-  "description": "A rolling window of days, per day on a relative time axis that ends at the last complete day. The mean is a dot over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
+  "description": "A rolling window of days, per day on a relative time axis that ends at the last complete day. The mean is a diamond over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
   "type": "object",
   "additionalProperties": false,
   "required": [

@@ -8,7 +8,8 @@ export interface Tokens {
   font: { title: string; body: string };
   size: { title: number; readingCue: number; value: number; detail: number; axisLabel: number; footer: number };
   stroke: { axis: number; baseline: number; spread: number; spreadWide: number; line: number; missing: number; guide: number };
-  mark: { meanSize: number };
+  /** Width in pixels of a point, per shape (see src/charts/signatures.ts). */
+  mark: { square: number; diamond: number; circle: number };
 }
 
 export function color(tokens: Tokens, name: string): string {

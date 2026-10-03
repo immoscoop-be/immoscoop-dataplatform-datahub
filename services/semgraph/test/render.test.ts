@@ -65,7 +65,7 @@ describe('render', async () => {
     assert.ok(hoverLabels(svg!).includes('16 jul (−76d), geen data: 3 dagen ontbreken, de eerste op 14 jul'));
   });
 
-  it('a median is a dot in a wide bar, a mean a dot over a thin one', async () => {
+  it('a median is a dot in a wide bar, a mean a diamond over a thin one (REQ-006, REQ-008)', async () => {
     const { svg: median } = await render(await example('basic', 'movingWindowMedian'));
     const { svg: mean } = await render(await example('basic'));
     assert.match(median!, /voortschrijdende mediaan 7d · P25–P75/);

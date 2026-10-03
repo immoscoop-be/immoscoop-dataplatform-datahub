@@ -86,12 +86,12 @@ describe('moving window', () => {
     assert.deepEqual(relativeTicks(364, 7), [-273, -182, -91, 0]);
   });
 
-  it('draws dots while there is room for the bar, and a line with a band beyond that', () => {
-    assert.equal(formFor(28, 4), 'dots');
-    assert.equal(formFor(56, 4), 'dots');
-    assert.equal(formFor(91, 4), 'line');
+  it('draws a bar under every point while there is room for it, and a band along the line beyond that (REQ-011)', () => {
+    assert.equal(formFor(28, 4), 'bars');
+    assert.equal(formFor(56, 4), 'bars');
+    assert.equal(formFor(91, 4), 'band');
     // A median's wide bar needs more room per day.
-    assert.equal(formFor(56, 9), 'line');
-    assert.equal(formFor(28, 9), 'dots');
+    assert.equal(formFor(56, 9), 'band');
+    assert.equal(formFor(28, 9), 'bars');
   });
 });
