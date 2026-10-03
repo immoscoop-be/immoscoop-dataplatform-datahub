@@ -94,7 +94,7 @@ Every request ends in one of four outcomes:
 | Outcome | `/render` | Meaning |
 | --- | --- | --- |
 | `ok` | 200 SVG | The chart follows the chart language and carries the version label. |
-| `deviation` | 200 SVG | Tolerated deviation: drawn under a red block between the title and the chart, with "Outside the chart language: …" in the footer and no version label. The codes are in the `Semgraph-Deviations` header. |
+| `deviation` | 200 SVG | Tolerated deviation: drawn under a red block between the title and the chart, without the version label and without a footer note (REQ-042). The codes are in the `Semgraph-Deviations` header. |
 | `refused` | 422 JSON | The chart would mislead, so it is not drawn. |
 | `invalid` | 400 JSON | The request itself is not valid. |
 
@@ -152,7 +152,8 @@ its two lines.
 
 Shared and optional: `title`; `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts);
 `valueAxis` (`zero`, the default, or `zoom`); `context` for the footer (`domain`, `dataset`, `owner`,
-`reliability`, `definitionUrl`); `locale`; `format` (`svg`). `data` holds at most 4000 days. Unknown fields are
+`reliability`, `definitionUrl`); `meta`, the metadata of the chart (REQ-010: `question`, `askedBy`, `builtBy`,
+`references` as `{label, url}`, `query`, `compiledOn`); `locale`; `format` (`svg`). `data` holds at most 4000 days. Unknown fields are
 rejected, so a typo never silently becomes a default and no extra columns (such as personal data) get in. See for
 example [`semgraphs/calendarMedian/schema.json`](semgraphs/calendarMedian/schema.json).
 
@@ -211,8 +212,18 @@ What the service does:
 6. Value axis: from zero by default. With `"valueAxis": "zoom"` it starts at a round value just below the data,
    which the chart language allows for positions such as averages and medians; the baseline then starts with a
    short zigzag and the first axis value is bold. When the round start is zero anyway, it stays at zero.
-7. The footer: domain › dataset · owner; reliability · as-of date · definition; "How do I read this chart?".
-   Missing context is printed as unknown: absence is never polished away.
+7. The footer, as the building blocks Origin, Status and Learn link in Figma: domain › dataset · owner (semibold);
+   reliability · as of 30/09 · **compiled 01/10** · definition →; "How do I read this chart? Reading card: time
+   series →". Missing context is printed as unknown: absence is never polished away. The compiled day is always
+   there, bold (REQ-011): `meta.compiledOn`, or the day the chart is drawn, in Brussels.
+   Below it, at the bottom left, the metadata as short text labels, one topic each: Question (with who asked),
+   References, Query and Metadata (who built it, the compiled day, the semgraph and the version of the service)
+   (REQ-012, REQ-018). A label only appears when it has content, so Metadata is always there (REQ-020). On hover
+   the label grows into a panel over the whole chart; the panel is part of the label's element, so the pointer
+   never leaves it, and closing waits about 350 ms (REQ-014). The text is selectable, a long query is cut where
+   the panel ends, and there are no copy buttons. CSS only, no script (REQ-016, `src/core/render/meta.ts`, class
+   `MetaLayer`): shown as an image, the panels stay hidden and the date stays visible. The version label
+   ("grafiektaal v0") sits at the right of that row, only when the chart conforms.
 8. Hover, without script (`src/core/render/hover.ts`, class `HoverLayer`): every slot has a column over the full
    height, also a slot without data. On hover or focus it shows grey dotted guides (vertical through the slot,
    horizontal from the y axis to the centre and both spread edges, the lower edge never below zero), a ring in the
@@ -222,8 +233,10 @@ What the service does:
    `16 sep (−14d)`, `geen data: 15 sep ontbreekt`.
    - Positions come from Vega's own scales (`view.scale('x')`, `view.scale('y')` after `toSVG`); a test checks
      that every ring lies on Vega's point within 0.01 px.
-   - CSS `:hover` and `:focus`, every column with `tabindex="0"`: a tap on mobile shows it, a tap elsewhere hides
-     it, and the keyboard works the same way. `aria-label` holds the lines.
+   - The device rules of REQ-015, every column with `tabindex="0"`: the mouse only hovers and a click holds
+     nothing open (`:hover` and `:focus-visible`); on a device without hover a tap opens and a tap elsewhere
+     closes (`:focus` under `@media (hover:none)`); Tab opens, the next Tab closes. The metadata labels follow
+     the same rules. `aria-label` holds the lines.
    - The detail is hidden with the attribute `visibility="hidden"` and made visible by CSS, so a renderer without
      CSS (such as a future PNG export) shows nothing instead of everything.
    - No ids (several charts can share one page), every class starts with `semgraph-hover` (CSS in an inline SVG
@@ -290,7 +303,7 @@ src/charts/                            the chart classes, statistics, signatures
 docs/requirements/                     the implemented requirements (REQ-xxx), the source of truth once implemented
 test/requirements.test.ts              one test per requirement, run on every example of every semgraph
 locales/en.yml, nl-BE.yml              every text; other locales fall back to English
-tokens/ptditt-grafiektaal-tokens.json  style values; PROVISIONAL until the export from Figma is agreed
+tokens/ptditt-grafiektaal-tokens.json  style values, read from the Figma variables and text styles
 src/core/pipeline.ts                   schema -> input checks -> compute -> rules -> draw -> template
 src/core/render/                       Vega-Lite to SVG (headless, no external loading), HoverLayer, the template
 src/core/conformance.ts                the conformance checks, run by the tests and at start-up
@@ -319,8 +332,9 @@ the pages Anatomy and Line charts, and with the team:
 3. `minimumPoints` counts the values in the horizon × window days the chart uses (so daily values need a horizon
    of at least 28 days); n − 1; a value axis from zero; no rule of its own for the horizon.
 4. Conformance check 3 sharpened to "disjoint".
-5. The form of reading cue, footer and version label ("chart language v0"), still open in Figma.
-6. All token values except focus, text, text/muted, surface and badge, which come from Figma.
+5. The place of the version label ("chart language v0"): at the right of the row of metadata labels. Figma has
+   no building block for it yet.
+6. The token values Figma does not hold yet: the width of the spread bars and of the outline of missing data.
 7. The switch from bars to a band, and the look of the hover (guides, ring, box).
 8. The two new attributes `periodType` and `centralTendency`, and their values for the semgraphs of the analysis
    (`any` where they do not matter); see `test/fixtures/analysis-attributes.yml`.
@@ -328,8 +342,7 @@ the pages Anatomy and Line charts, and with the team:
    period is hollow and covers the days so far; ISO weeks run from Monday to Sunday.
 10. The zoomed axis (zigzag and bold first value), and `uniqueAggregation` values `daily` and `overPeriod`.
 11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; the hatch (dark diagonal
-    lines on white, after the Figma example); a running period compared with as many days of the earlier period;
-    the alert colour `#c8102e`.
+    lines on white, after the Figma example); a running period compared with as many days of the earlier period.
 
 ## Notes for consumers
 

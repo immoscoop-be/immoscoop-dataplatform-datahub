@@ -142,6 +142,7 @@ period:
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  numeric: "{day}/{month}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -164,10 +165,27 @@ footer:
   unknownOwner: owner unknown
   unknownReliability: reliability unknown
   asOf: as of {date}
-  definition: definition
+  compiled: compiled {date}
+  definition: definition →
   definitionUnknown: definition unknown
   howToRead: How do I read this chart?
+  readingCard: "Reading card: {name} →"
   languageVersion: chart language {version}
+
+readingCards:
+  timeSeries: time series
+  periodComparison: period comparison
+
+meta:
+  question: Question
+  references: References
+  query: Query
+  metadata: Metadata
+  askedBy: Asked by {name}
+  builtBy: Built by
+  compiledOn: Compiled on
+  semgraph: Semgraph
+  version: Version
 
 types:
   integer: a whole number

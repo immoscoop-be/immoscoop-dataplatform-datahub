@@ -1,6 +1,7 @@
 id: periodComparison
 title: semgraphs.periodComparison.title
 answers: semgraphs.periodComparison.answers
+readingCard: readingCards.periodComparison
 attributes:
   timeAxis: [calendar]
   breakdown: [none]

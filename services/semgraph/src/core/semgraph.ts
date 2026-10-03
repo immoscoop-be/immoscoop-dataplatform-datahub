@@ -20,6 +20,8 @@ export interface SemgraphMetadata {
   id: string;
   title: string;
   answers: string;
+  /** Text key of the name of the reading card for this kind of chart, for the learn link in the footer. */
+  readingCard: string;
   attributes: Record<string, AttributeValues>;
   exampleQuestions: string[];
   doNotUseWhen: { intent: string; use: string }[];

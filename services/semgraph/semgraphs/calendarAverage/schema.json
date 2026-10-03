@@ -131,6 +131,67 @@
         }
       }
     },
+    "meta": {
+      "description": "Metadata of the chart (REQ-010): the question that started it, references, the query, who asked and who built it, and the day it was compiled. Only what is given is shown (REQ-020).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "description": "The question that started the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "askedBy": {
+          "description": "Who asked the question.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "builtBy": {
+          "description": "Who built the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "references": {
+          "description": "Links to Jira, Slack or anything else.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "query": {
+          "description": "The query behind the data, shown as written.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "compiledOn": {
+          "description": "The day the chart was compiled. When absent, the day it is drawn, in Brussels.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      }
+    },
     "data": {
       "description": "Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.",
       "type": "array",

@@ -142,6 +142,7 @@ period:
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  numeric: "{day}/{month}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -164,10 +165,27 @@ footer:
   unknownOwner: owner onbekend
   unknownReliability: betrouwbaarheid onbekend
   asOf: peildatum {date}
-  definition: definitie
+  compiled: samengesteld {date}
+  definition: definitie →
   definitionUnknown: definitie onbekend
   howToRead: Hoe lees ik deze grafiek?
+  readingCard: "Leeskaart: {name} →"
   languageVersion: grafiektaal {version}
+
+readingCards:
+  timeSeries: tijdreeks
+  periodComparison: periodevergelijking
+
+meta:
+  question: Vraag
+  references: Referenties
+  query: Query
+  metadata: Metadata
+  askedBy: Gesteld door {name}
+  builtBy: Uitgewerkt door
+  compiledOn: Samengesteld op
+  semgraph: Semgraph
+  version: Versie
 
 types:
   integer: een geheel getal

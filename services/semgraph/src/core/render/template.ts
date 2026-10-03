@@ -1,18 +1,23 @@
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
+import { LABEL_HEIGHT, MetaLayer, type MetaItem } from './meta.ts';
+import { round, wrap } from './text.ts';
 
-/** A piece of footer text; a link when href is set. */
+/** A piece of footer text: a link when href is set, bold in the text colour when strong, in the dark focus colour when accent. */
 export interface Segment {
   text: string;
   href?: string;
+  strong?: boolean;
+  accent?: boolean;
 }
 
+/** The footer, as the building blocks Origin, Status and Learn link in Figma. */
 export interface Footer {
   /** 1) domain › dataset · owner */
-  provenance: Segment[];
-  /** 2) reliability · as-of date · definition */
+  origin: Segment[];
+  /** 2) reliability · as of · compiled · definition */
   status: Segment[];
-  /** 3) "How do I read this chart?" */
+  /** 3) "How do I read this chart?" and the reading card */
   learn: Segment[];
   /** The chart-language version label, only when the chart fully conforms. */
   versionLabel?: string;
@@ -36,6 +41,8 @@ export interface TemplateInput {
     overlay: string;
   };
   footer: Footer;
+  /** The metadata labels at the bottom left and their panels (REQ-012, REQ-014, REQ-018, REQ-020). */
+  meta: MetaItem[];
   tokens: Tokens;
   /** data-* attributes on the root element, e.g. the language and token versions. */
   data: Record<string, string>;
@@ -45,15 +52,14 @@ const PADDING_X = 20;
 const PADDING_TOP = 18;
 const PADDING_BOTTOM = 16;
 const LINE_HEIGHT = 1.5;
-/** Average character width as a share of the font size; good enough to wrap footer notes. */
-const CHAR_WIDTH = 0.56;
 /** Room for the warning sign in front of an alert, and the padding inside its red block. */
 const ALERT_INDENT = 18;
 const ALERT_PADDING = 8;
 
 /**
  * The fixed anatomy around the chart, like the building blocks in Figma: title, reading cue,
- * the chart itself, and the footer with provenance, status, a learning link and the version label.
+ * the chart itself, and the footer with origin, status, the learn link, the metadata labels and
+ * the version label.
  */
 export function composeSvg(input: TemplateInput): string {
   const { tokens, width } = input;
@@ -115,15 +121,24 @@ export function composeSvg(input: TemplateInput): string {
   );
   y += 6;
   const footerSize = tokens.size.footer;
-  const footerLine = (segments: Segment[]) => {
+  const footerLine = (segments: Segment[], style: Partial<TextStyle> = {}) => {
     y += footerSize * LINE_HEIGHT;
-    parts.push(segmentsText(segments, { y, family: tokens.font.body, size: footerSize, fill: muted }));
+    parts.push(segmentsText(segments, { y, family: tokens.font.body, size: footerSize, fill: muted, ...style }, tokens));
   };
-  footerLine(input.footer.provenance);
+  footerLine(input.footer.origin, { weight: 600, fill: textColor });
   footerLine(input.footer.status);
   footerLine(input.footer.learn);
-  if (input.footer.versionLabel) footerLine([{ text: input.footer.versionLabel }]);
-  y += PADDING_BOTTOM;
+
+  // The metadata labels at the bottom left (REQ-012, REQ-018), the version label at the right of the same row.
+  y += 10;
+  const row = y;
+  if (input.footer.versionLabel) {
+    parts.push(text(input.footer.versionLabel, { y: row + 12.5, x: width - PADDING_X, anchor: 'end', family: tokens.font.body, size: footerSize, fill: muted }));
+  }
+  y += LABEL_HEIGHT + PADDING_BOTTOM;
+  // Drawn last, so a panel lies over the whole chart (REQ-014).
+  const metaLayer = new MetaLayer(tokens, { width, left: PADDING_X, top: row }).render(input.meta);
+  if (metaLayer) parts.push(metaLayer);
 
   const height = Math.ceil(y);
   const data = Object.entries(input.data)
@@ -148,12 +163,14 @@ interface TextStyle {
   fill: string;
   weight?: number;
   italic?: boolean;
+  anchor?: 'end';
 }
 
 function attributes(style: TextStyle): string {
   return [
     `x="${style.x ?? PADDING_X}"`,
     `y="${round(style.y)}"`,
+    style.anchor ? `text-anchor="${style.anchor}"` : '',
     `font-family="${escapeXml(style.family)}"`,
     `font-size="${style.size}"`,
     style.weight ? `font-weight="${style.weight}"` : '',
@@ -185,38 +202,17 @@ function text(content: string, style: TextStyle): string {
   return `<text ${attributes(style)}>${escapeXml(content)}</text>`;
 }
 
-function segmentsText(segments: Segment[], style: TextStyle): string {
+/** Links carry an arrow instead of an underline, as in Figma. */
+function segmentsText(segments: Segment[], style: TextStyle, tokens: Tokens): string {
   const body = segments
-    .map((segment) =>
-      segment.href
-        ? `<a href="${escapeXml(segment.href)}"><tspan text-decoration="underline">${escapeXml(segment.text)}</tspan></a>`
-        : `<tspan>${escapeXml(segment.text)}</tspan>`,
-    )
+    .map((segment) => {
+      const attributes = [
+        segment.strong ? ` font-weight="700" fill="${color(tokens, 'text')}"` : '',
+        segment.accent ? ` fill="${color(tokens, 'focus/dark')}"` : '',
+      ].join('');
+      const span = `<tspan${attributes}>${escapeXml(segment.text)}</tspan>`;
+      return segment.href ? `<a href="${escapeXml(segment.href)}">${span}</a>` : span;
+    })
     .join('');
   return `<text ${attributes(style)} xml:space="preserve">${body}</text>`;
-}
-
-/** Greedy word wrap on estimated widths; the last allowed line ends in an ellipsis when cut. */
-export function wrap(content: string, size: number, width: number, maxLines: number): string[] {
-  const maxChars = Math.max(10, Math.floor(width / (size * CHAR_WIDTH)));
-  const lines: string[] = [];
-  let line = '';
-  for (const word of content.split(/\s+/).filter(Boolean)) {
-    const candidate = line ? `${line} ${word}` : word;
-    if (candidate.length <= maxChars || !line) {
-      line = candidate;
-    } else {
-      lines.push(line);
-      line = word;
-    }
-  }
-  if (line) lines.push(line);
-  if (lines.length <= maxLines) return lines;
-  const kept = lines.slice(0, maxLines);
-  kept[maxLines - 1] = `${kept[maxLines - 1]!.slice(0, maxChars - 1)}…`;
-  return kept;
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

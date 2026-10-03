@@ -1,6 +1,7 @@
 id: movingWindowAverage
 title: semgraphs.movingWindowAverage.title
 answers: semgraphs.movingWindowAverage.answers
+readingCard: readingCards.timeSeries
 attributes:
   timeAxis: [calendar]
   breakdown: [none]

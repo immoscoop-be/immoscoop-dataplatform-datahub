@@ -1,6 +1,7 @@
 id: calendarAverage
 title: semgraphs.calendarAverage.title
 answers: semgraphs.calendarAverage.answers
+readingCard: readingCards.timeSeries
 attributes:
   timeAxis: [calendar]
   breakdown: [none]

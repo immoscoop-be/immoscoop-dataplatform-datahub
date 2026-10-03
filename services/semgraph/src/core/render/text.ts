@@ -24,9 +24,20 @@ export function wrap(content: string, size: number, width: number, maxLines: num
   return kept;
 }
 
-/** Estimated width of a text in pixels. */
-export function textWidth(content: string, size: number, charWidth = CHAR_WIDTH): number {
-  return content.length * size * charWidth;
+/**
+ * Estimated width of a text in pixels, from the widths of a sans-serif such as Nunito or Arial per kind
+ * of character, so short labels can be sized without measuring them.
+ */
+export function textWidth(content: string, size: number): number {
+  let em = 0;
+  for (const character of content) {
+    if (/[ijl]/.test(character)) em += 0.24;
+    else if (/[tfrI\s.,:;'!|()-]/.test(character)) em += 0.3;
+    else if (/[mwMW]/.test(character)) em += 0.82;
+    else if (/[A-Z]/.test(character)) em += 0.68;
+    else em += 0.54;
+  }
+  return em * size;
 }
 
 export function round(value: number): number {

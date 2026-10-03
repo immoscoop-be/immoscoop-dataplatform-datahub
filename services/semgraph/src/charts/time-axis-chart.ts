@@ -2,6 +2,7 @@ import type { TopLevelSpec } from 'vega-lite';
 import { checkDailySeries, currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
+import { META_SCHEMA, type ChartMeta } from '../core/meta.ts';
 import type { HoverSpec } from '../core/render/hover.ts';
 import type {
   DrawContext,
@@ -32,6 +33,7 @@ export interface TimeAxisRequest {
   format?: string;
   locale?: string;
   context?: RequestContext;
+  meta?: ChartMeta;
   data: { day: string; value: number | null }[];
 }
 
@@ -266,6 +268,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
             definitionUrl: { type: 'string', minLength: 1, maxLength: 500 },
           },
         },
+        meta: META_SCHEMA,
         data: {
           description: 'Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.',
           type: 'array',

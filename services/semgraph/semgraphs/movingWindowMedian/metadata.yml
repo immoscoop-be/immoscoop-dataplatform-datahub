@@ -1,6 +1,7 @@
 id: movingWindowMedian
 title: semgraphs.movingWindowMedian.title
 answers: semgraphs.movingWindowMedian.answers
+readingCard: readingCards.timeSeries
 attributes:
   timeAxis: [calendar]
   breakdown: [none]

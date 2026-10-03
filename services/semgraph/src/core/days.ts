@@ -36,12 +36,16 @@ export function currentDay(now: Date, timeZone = TIME_ZONE): number {
   return parseDay(text)!;
 }
 
-/** A day in the words of the locale, e.g. "30 sep" or "30 sep 2026", without depending on ICU data. */
-export function localizeDay(t: Translator, day: number, style: 'short' | 'long'): string {
+/**
+ * A day in the words of the locale, e.g. "30 sep" or "30 sep 2026", or in figures as in the footer
+ * of Figma, "30/09", without depending on ICU data.
+ */
+export function localizeDay(t: Translator, day: number, style: 'short' | 'long' | 'numeric'): string {
   const date = new Date(day * MS_PER_DAY);
+  const twoDigits = (value: number) => String(value).padStart(2, '0');
   return t(`date.${style}`, {
-    day: date.getUTCDate(),
-    month: t(`date.month.${date.getUTCMonth() + 1}`),
+    day: style === 'numeric' ? twoDigits(date.getUTCDate()) : date.getUTCDate(),
+    month: style === 'numeric' ? twoDigits(date.getUTCMonth() + 1) : t(`date.month.${date.getUTCMonth() + 1}`),
     year: date.getUTCFullYear(),
   });
 }

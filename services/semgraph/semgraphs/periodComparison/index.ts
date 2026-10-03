@@ -46,7 +46,7 @@ export class PeriodComparison implements SemgraphImplementation<PeriodComparison
   schema(): object {
     const rolling = this.rolling.mean.schema() as { properties: Record<string, object> };
     const calendar = this.calendar.mean.schema() as { properties: Record<string, object> };
-    const { semgraph, metric, title, measureType, uniqueAggregation, valueAxis, format, locale, context, data } = rolling.properties;
+    const { semgraph, metric, title, measureType, uniqueAggregation, valueAxis, format, locale, context, meta, data } = rolling.properties;
     return {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
       $id: `semgraph:${ID}/request`,
@@ -82,6 +82,7 @@ export class PeriodComparison implements SemgraphImplementation<PeriodComparison
         format,
         locale,
         context,
+        meta,
         data: { ...data, description: 'Daily values of the period on the screen and the period just before it. 0 is a measured zero; null or an absent day means no data.' },
       },
     };

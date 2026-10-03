@@ -216,6 +216,76 @@ describe('requirements of the chart language', async () => {
     }
   });
 
+  it('REQ-010: every contract takes the metadata of a chart', async () => {
+    for (const [id, semgraph] of (await testRegistry()).semgraphs) {
+      const meta = (semgraph.schema as { properties: Record<string, { properties?: Record<string, unknown> }> }).properties.meta;
+      assert.deepEqual(Object.keys(meta?.properties ?? {}).sort(), ['askedBy', 'builtBy', 'compiledOn', 'query', 'question', 'references'], id);
+    }
+  });
+
+  it('REQ-011: the day the chart was compiled is always in the status line, bold, next to the as-of date', () => {
+    for (const drawn of examples) {
+      const compiled = (drawn.request.meta as { compiledOn?: string } | undefined)?.compiledOn ?? '2026-10-01';
+      const [, month, day] = compiled.split('-');
+      const word = drawn.request.locale === 'en' ? 'compiled' : 'samengesteld';
+      assert.ok(drawn.svg.includes(`<tspan> · </tspan><tspan font-weight="700" fill="${color(tokens, 'text')}">${word} ${day}/${month}</tspan>`), drawn.name);
+    }
+  });
+
+  it('REQ-012, REQ-018 and REQ-020: a text label at the bottom left for each topic with content, and nothing for the rest', () => {
+    for (const drawn of examples) {
+      const meta = (drawn.request.meta ?? {}) as Record<string, unknown>;
+      const english = drawn.request.locale === 'en';
+      const expected = [
+        ...(meta.question || meta.askedBy ? [english ? 'Question' : 'Vraag'] : []),
+        ...(meta.references ? [english ? 'References' : 'Referenties'] : []),
+        ...(meta.query ? ['Query'] : []),
+        'Metadata',
+      ];
+      const labels = [...drawn.svg.matchAll(/class="semgraph-meta-item" tabindex="0" role="group" aria-label="([^"]*)"/g)].map((match) => match[1]);
+      assert.deepEqual(labels, expected, drawn.name);
+      // REQ-020 replaces REQ-013 and REQ-019: no dimmed or struck-through labels; no icons (REQ-018).
+      assert.doesNotMatch(drawn.svg, /line-through/, drawn.name);
+      // The labels lie below the footer lines, their text aligned with the footer's left edge.
+      const firstLabel = /class="semgraph-meta-pill" x="([\d.]+)" y="([\d.]+)"/.exec(drawn.svg)!;
+      const learnLine = /<text x="20" y="([\d.]+)"[^>]*xml:space="preserve"><tspan>(Hoe lees|How do I read)/.exec(drawn.svg)!;
+      assert.equal(Number(firstLabel[1]) + 4, 20, drawn.name);
+      assert.ok(Number(firstLabel[2]) > Number(learnLine[1]), drawn.name);
+    }
+    assert.ok(examples.some((drawn) => drawn.request.meta), 'an example with metadata');
+  });
+
+  it('REQ-014: the label itself grows into a panel over the whole chart; closing waits about 350 ms', () => {
+    for (const drawn of examples) {
+      const width = Number(/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="(\d+)"/.exec(drawn.svg)![1]);
+      for (const markup of drawn.svg.split('<g class="semgraph-meta-item"').slice(1)) {
+        // The panel is part of the label's element, so the pointer never leaves it.
+        const panel = /<g class="semgraph-meta-panel" visibility="hidden" style="transform-origin:[\d.]+px [\d.]+px"><rect x="0\.5" y="0\.5" width="(\d+)" height="([\d.]+)"/.exec(markup);
+        assert.ok(panel, drawn.name);
+        assert.equal(Number(panel[1]), width - 1, drawn.name);
+        // The hit area of the label reaches up to the bottom of the panel: no gap.
+        const hit = /<rect x="[\d.]+" y="([\d.]+)" width="[\d.]+" height="[\d.]+" fill="transparent"\/><rect class="semgraph-meta-pill"/.exec(markup)!;
+        assert.equal(Number(hit[1]), Math.round((Number(panel[2]) + 0.5) * 100) / 100, drawn.name);
+      }
+      assert.match(drawn.svg, /\.semgraph-meta-panel\{opacity:0;transform:scale\(\.04\);transition:transform 0\.15s ease-in 0\.35s/, drawn.name);
+    }
+  });
+
+  it('REQ-016: CSS in the SVG, no script; as an image the panels stay hidden and the date stays visible', () => {
+    for (const drawn of examples) {
+      assert.doesNotMatch(drawn.svg, /<script|\son[a-z]+="/i, drawn.name);
+      // Hidden by attribute, so a renderer without CSS or interaction shows no panel.
+      assert.equal(
+        [...drawn.svg.matchAll(/class="semgraph-meta-panel" visibility="hidden"/g)].length,
+        [...drawn.svg.matchAll(/class="semgraph-meta-item"/g)].length,
+        drawn.name,
+      );
+      // The compiled date is in the footer, outside every panel.
+      const compiledAt = drawn.svg.search(/>(samengesteld|compiled) \d\d\/\d\d</);
+      assert.ok(compiledAt > 0 && compiledAt < drawn.svg.indexOf('class="semgraph-meta"'), drawn.name);
+    }
+  });
+
   it('REQ-033: the values on the chart follow the mode, centred above their point', () => {
     for (const drawn of examples) {
       const strong = drawn.datasets.valuesStrong as { rel: number; y: number }[];

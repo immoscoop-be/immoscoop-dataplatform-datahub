@@ -10,7 +10,7 @@ async function render(request: unknown) {
 }
 
 /** Text keys that slipped through untranslated would look like "footer.asOf". */
-const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes|hover)\.[a-zA-Z]+/;
+const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes|hover|meta|readingCards)\.[a-zA-Z]+/;
 
 const hoverLabels = (svg: string) => [...svg.matchAll(/class="semgraph-hover-column" tabindex="0" role="img" aria-label="([^"]*)"/g)].map((match) => match[1]);
 
@@ -36,9 +36,14 @@ describe('render', async () => {
     assert.match(svg!, /<title>Kredietleads per dag \(voorbeelddata\)<\/title>/);
     assert.match(svg!, /voortschrijdend gemiddelde 7d · ±1 sd/);
     assert.match(svg!, /Leads<\/tspan><tspan> › <\/tspan><tspan>creditLeads<\/tspan><tspan> · <\/tspan><tspan>owner onbekend/);
-    assert.match(svg!, /peildatum 30 sep 2026/);
+    // The footer as the building blocks Origin, Status and Learn link in Figma.
+    assert.match(svg!, /font-weight="600" fill="#2d333a" xml:space="preserve"><tspan>Leads<\/tspan>/);
+    assert.match(svg!, /<tspan>peildatum 30\/09<\/tspan><tspan> · <\/tspan><tspan font-weight="700" fill="#2d333a">samengesteld 01\/10<\/tspan>/);
     assert.match(svg!, /definitie onbekend/);
-    assert.match(svg!, /<a href="https:\/\/immoscoop\.atlassian\.net\/wiki\/spaces\/DATA\/pages\/1354629146">/);
+    assert.match(
+      svg!,
+      /<tspan>Hoe lees ik deze grafiek\?  <\/tspan><a href="https:\/\/immoscoop\.atlassian\.net\/wiki\/spaces\/DATA\/pages\/1354629146"><tspan fill="#630038">Leeskaart: tijdreeks →<\/tspan><\/a>/,
+    );
     assert.match(svg!, />grafiektaal v0</);
     assert.ok(svg!.includes(`data-tokens-version="${(await testRegistry()).tokens.version}"`));
     // The reference day is yesterday, so the last window reads "nu" (REQ-030).
