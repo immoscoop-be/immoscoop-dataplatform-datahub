@@ -46,24 +46,25 @@ export function shortfall(focus: readonly LinePoint[], comparison: readonly Line
  * A pattern id that is the same for the same chart and differs between charts, so several charts can
  * share a page. Technical ids like this one are allowed (REQ-036).
  */
-export function patternId(seed: string): string {
+export function patternId(seed: string, kind = 'hatch'): string {
   let hash = 0x811c9dc5;
   for (let index = 0; index < seed.length; index++) {
     hash ^= seed.charCodeAt(index);
     hash = Math.imul(hash, 0x01000193) >>> 0;
   }
-  return `semgraph-hatch-${hash.toString(16).padStart(8, '0')}`;
+  return `semgraph-${kind}-${hash.toString(16).padStart(8, '0')}`;
 }
 
 /**
- * Diagonal dark lines on the surface colour: the hatching that means a loss against a reference. They fall
- * from top left to bottom right, as in Figma: a falling hatch reads as a decline.
+ * Diagonal lines on the surface colour: the hatching that means a loss against a reference. As in Figma
+ * (REQ-055): falling from top left to bottom right, so it reads as a decline; thin and soft; and on the
+ * surface colour, so it covers any pattern of a data state below it.
  */
 export function hatchPattern(id: string, tokens: Tokens): string {
   return [
     `<pattern id="${id}" width="${HATCH_SPACING}" height="${HATCH_SPACING}" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">`,
     `<rect width="${HATCH_SPACING}" height="${HATCH_SPACING}" fill="${color(tokens, 'surface')}"/>`,
-    `<line x1="0" y1="0" x2="0" y2="${HATCH_SPACING}" stroke="${color(tokens, 'loss')}" stroke-width="1.5"/>`,
+    `<line x1="0" y1="0" x2="0" y2="${HATCH_SPACING}" stroke="${color(tokens, 'loss')}" stroke-width="1" stroke-opacity="0.75"/>`,
     '</pattern>',
   ].join('');
 }

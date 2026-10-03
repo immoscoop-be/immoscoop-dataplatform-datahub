@@ -16,7 +16,7 @@ export interface Tokens {
     panelTitle: number;
     panelBody: number;
   };
-  stroke: { axis: number; baseline: number; spread: number; spreadWide: number; line: number; missing: number; guide: number };
+  stroke: { axis: number; baseline: number; spread: number; spreadWide: number; line: number; guide: number };
   /** Width in pixels of a point, per shape (see src/charts/signatures.ts). */
   mark: { square: number; diamond: number; circle: number };
 }

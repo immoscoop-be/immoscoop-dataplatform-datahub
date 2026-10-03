@@ -95,30 +95,53 @@ describe('requirements of the chart language', async () => {
     assert.equal(new Set((missing.datasets.line as { segment: number }[]).map((row) => row.segment)).size, 2, 'missing data breaks the line in two');
   });
 
-  it('REQ-002: no bars on a time axis; a rectangle only outlines missing data', () => {
+  it('REQ-002: no bars on a time axis; a rectangle only carries the state of a period, never a value', () => {
     for (const drawn of examples) {
       for (const layer of drawn.layers) {
         assert.notEqual(markType(layer), 'bar', `${drawn.name}: a bar on a time axis`);
         if (markType(layer) === 'rect') {
-          assert.equal(layer.data?.name, 'missing', `${drawn.name}: a rectangle that is not missing data`);
-          assert.equal(markOf(layer).fill, null, `${drawn.name}: missing data is outlined, not filled`);
+          assert.equal(layer.data?.name, 'columns', `${drawn.name}: a rectangle that is not a data state`);
+          // Over the full height of the plot, whatever the values are (REQ-049).
+          assert.deepEqual([layer.encoding!.y, layer.encoding!.y2], [{ value: 0 }, { value: 200 - tokens.stroke.baseline }], drawn.name);
         }
       }
     }
   });
 
-  it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; hollow while running', () => {
+  it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; always filled (REQ-052)', () => {
     for (const drawn of examples) {
-      const shape = markOf(pointLayer(drawn)).shape;
-      assert.equal(shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
-      const fill = pointLayer(drawn).encoding!.fill as { condition: { test: string; value: string }; value: string };
-      assert.deepEqual(fill, { condition: { test: 'datum.running', value: color(tokens, 'surface') }, value: color(tokens, 'focus') });
+      const mark = markOf(pointLayer(drawn));
+      assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
+      assert.equal(mark.fill, color(tokens, 'focus'), drawn.name);
+      assert.equal(pointLayer(drawn).encoding!.fill, undefined, `${drawn.name}: the fill does not depend on the state`);
     }
-    // In the SVG: the running week of calendarAverage/weeks is a hollow diamond.
+    // In the SVG: the running week of calendarAverage/weeks is a filled diamond.
     const weeks = examples.find((drawn) => drawn.name === 'calendarAverage/weeks')!;
-    assert.match(weeks.svg, /d="M-4,0L0,-4L4,0L0,4Z" fill="#ffffff" stroke="#dd2c88"/);
+    assert.match(weeks.svg, /d="M-4,0L0,-4L4,0L0,4Z" fill="#dd2c88" stroke="#ffffff"/);
+    assert.doesNotMatch(weeks.svg, /d="M-4,0L0,-4L4,0L0,4Z" fill="#ffffff"/);
     const quarters = examples.find((drawn) => drawn.name === 'calendarMedian/quarters')!;
     assert.match(quarters.svg, /d="M3\.5,0A3\.5,3\.5,0,1,1,-3\.5,0A3\.5,3\.5,0,1,1,3\.5,0" fill="#dd2c88"/);
+  });
+
+  it('REQ-049 to REQ-052: the state of a period is a pattern behind its whole column; empty is a checkerboard, running fine lines', () => {
+    for (const drawn of examples) {
+      const columns = drawn.datasets.columns as { from: number; to: number; state: string }[];
+      const running = new Set(drawn.computed.points.filter((point) => point.running).map((point) => point.rel));
+      const empty = new Set(drawn.computed.missing);
+      const covered = (state: string) => new Set(columns.filter((column) => column.state === state).flatMap((column) => Array.from({ length: column.to - column.from }, (_, index) => column.from + 0.5 + index)));
+      assert.deepEqual([...covered('empty')].sort(), [...empty].sort(), `${drawn.name}: empty`);
+      assert.deepEqual([...covered('running')].sort(), [...running].filter((rel) => !empty.has(rel)).sort(), `${drawn.name}: running`);
+      // Behind the data: the columns are drawn before the band, the line and the points.
+      const order = drawn.layers.map((layer) => layer.data?.name);
+      assert.ok(order.indexOf('columns') < order.indexOf('line'), drawn.name);
+      // REQ-051: no outline over the chart and no label in it.
+      assert.doesNotMatch(drawn.svg, />(no data|geen data)</, drawn.name);
+      // REQ-050: tiles anchored to the plot, the sizes of Figma: mosaic 8 px, lines 4 px.
+      if (empty.size > 0) assert.match(drawn.svg, /<pattern id="semgraph-empty-[0-9a-f]{8}" width="8" height="8" patternUnits="userSpaceOnUse">/, drawn.name);
+      if (covered('running').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-running-[0-9a-f]{8}" width="4" height="4" patternUnits="userSpaceOnUse">/, drawn.name);
+    }
+    assert.ok(examples.some((drawn) => drawn.computed.missing.length > 0), 'an example with empty periods');
+    assert.ok(examples.some((drawn) => drawn.computed.points.some((point) => point.running)), 'an example with a running period');
   });
 
   it('REQ-028: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
@@ -345,8 +368,14 @@ describe('requirements of the chart language', async () => {
       }
     }
     assert.ok(comparisons().some((drawn) => drawn.datasets.hatch!.length > 0), 'an example shows a shortfall');
-    // The hatching falls from top left to bottom right, as in Figma: a vertical line turned a quarter back.
-    for (const drawn of comparisons()) assert.match(drawn.svg, /<pattern id="semgraph-hatch-[0-9a-f]{8}"[^>]*patternTransform="rotate\(-45\)"/, drawn.name);
+    // REQ-055: falling from top left to bottom right, thin and soft, on the surface colour so it covers a pattern below.
+    for (const drawn of comparisons().filter((comparison) => comparison.datasets.hatch!.length > 0)) {
+      assert.match(
+        drawn.svg,
+        new RegExp(`<pattern id="semgraph-hatch-[0-9a-f]{8}"[^>]*patternTransform="rotate\\(-45\\)"><rect [^>]*fill="${color(tokens, 'surface')}"/><line [^>]*stroke-width="1" stroke-opacity="0.75"/>`),
+        drawn.name,
+      );
+    }
   });
 
   it('REQ-005: with a mean or median only the focus series has a light band; the comparison never has one', () => {

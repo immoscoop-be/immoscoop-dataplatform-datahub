@@ -13,7 +13,8 @@ import type {
 } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
-import { decimalsOf, lookup, numberFormat, runs, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
+import { stateColumns, statePattern, type DataState } from './data-states.ts';
+import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
 import type { Statistic, Summary } from './statistics.ts';
 import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
@@ -46,7 +47,7 @@ export interface Slot {
   last: number;
   /** Last day of the whole period; after `last` while the period is still running. */
   fullLast: number;
-  /** A period that is not over yet: drawn hollow, because its value is not final. */
+  /** A period that is not over yet: its column gets the running pattern, because its value is not final (REQ-052). */
   running: boolean;
 }
 
@@ -103,8 +104,6 @@ export const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
 const COMPARISON_PADDING = { ...PADDING, right: 84 };
 /** At most this many labels on the time axis. */
 export const MAX_TICKS = 8;
-/** A "no data" label is only written in a missing stretch at least this wide. */
-const MIN_LABEL_WIDTH = 44;
 
 /**
  * How the spread is drawn under the line (REQ-001): a bar under every point, or a band along the
@@ -537,10 +536,21 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const endRunning = lastFocus?.running ? [{ rel: lastFocus.rel, py: ends.focus! + SECOND_LINE, text: t('chart.runningShort') }] : [];
     const endComparison = this.compares && lastPrevious ? [{ rel: lastPrevious.rel, py: ends.comparison, text: this.comparisonLabel(request, t) }] : [];
 
-    const missing = runs(computed.missing).map(([from, to]) => ({ from: from - 0.5, to: to + 0.5, center: (from + to) / 2, slots: to - from + 1 }));
-    const missingLabels = missing
-      .filter((stretch) => stretch.slots * slotWidth >= MIN_LABEL_WIDTH)
-      .map((stretch) => ({ rel: stretch.center, label: t('chart.noData') }));
+    // REQ-049: the state of the data in a period is a pattern behind its whole column. Empty is a
+    // checkerboard (REQ-051), never an outline over the chart; a running period gets fine vertical lines
+    // and keeps its filled shape (REQ-052). Only the current period: the comparison line never.
+    const states = new Map<number, DataState>([
+      ...points.filter((point) => point.running).map((point) => [point.rel, 'running'] as const),
+      ...computed.missing.map((rel) => [rel, 'empty'] as const),
+    ]);
+    const columns = stateColumns(states);
+    const patternIds = Object.fromEntries(
+      [...new Set(columns.map((column) => column.state))].map((state) => [state, patternId(JSON.stringify([request.metric, state, columns]), state)]),
+    ) as Partial<Record<DataState, string>>;
+    const defs = [
+      ...Object.entries(patternIds).map(([state, id]) => statePattern(id!, state as DataState, tokens)),
+      ...(hatchId ? [hatchPattern(hatchId, tokens)] : []),
+    ].join('');
 
     const values = valueLabels({
       labels,
@@ -566,9 +576,6 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       : [];
     const mask = scale.zoomed ? [{ rel: left, rel2: left + 11 * perPixel.x, value: scale.min }] : [];
 
-    const fillByState = { condition: { test: 'datum.running', value: surface }, value: focus };
-    const strokeByState = { condition: { test: 'datum.running', value: focus }, value: surface };
-
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
       width: plotWidth,
@@ -580,8 +587,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       datasets: {
         frame: [{ rel: left + 0.5, value: scale.min }],
         ...axis.datasets,
-        missing,
-        missingLabels,
+        columns,
         bars,
         band,
         line,
@@ -613,18 +619,24 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
             },
           },
         },
+        {
+          // REQ-049: behind everything that is data, over the full height of the plot, above the baseline.
+          data: { name: 'columns' },
+          mark: { type: 'rect', opacity: 1 },
+          encoding: {
+            x: { ...x, field: 'from' },
+            x2: { field: 'to' },
+            y: { value: 0 },
+            y2: { value: PLOT_HEIGHT - tokens.stroke.baseline },
+            fill: {
+              field: 'state',
+              type: 'nominal',
+              scale: { domain: Object.keys(patternIds), range: Object.values(patternIds).map((id) => `url(#${id})`) },
+              legend: null,
+            },
+          },
+        },
         ...axis.layers,
-        {
-          // Missing data is an outlined area, never a zero and never interpolated.
-          data: { name: 'missing' },
-          mark: { type: 'rect', fill: null, stroke: color(tokens, 'context/dark'), strokeWidth: tokens.stroke.missing },
-          encoding: { x: { ...x, field: 'from' }, x2: { field: 'to' } },
-        },
-        {
-          data: { name: 'missingLabels' },
-          mark: { type: 'text', align: 'center', baseline: 'top', fontSize: tokens.size.detail, color: color(tokens, 'text/muted') },
-          encoding: { x, y: { value: 6 }, text: { field: 'label' } },
-        },
         {
           data: { name: 'band' },
           mark: { type: 'area', color: color(tokens, 'focus/light'), opacity: 1 },
@@ -653,17 +665,20 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           encoding: { x, y: y('centre'), detail: { field: 'segment' } },
         },
         {
-          // The centre has the shape of its statistic: filled when final, hollow while its period is
-          // still running (REQ-006, REQ-008).
+          // The centre has the shape of its statistic (REQ-006, REQ-007, REQ-008), always filled: the
+          // pattern behind the column tells whether its period still runs (REQ-052).
           data: { name: 'points' },
-          mark: { type: 'point', shape: this.statistic.shape, filled: true, size: markerSize(tokens, this.statistic.kind), opacity: 1 },
-          encoding: {
-            x,
-            y: y('centre'),
-            fill: fillByState,
-            stroke: strokeByState,
-            strokeWidth: { condition: { test: 'datum.running', value: 1.5 }, value: 1 },
+          mark: {
+            type: 'point',
+            shape: this.statistic.shape,
+            filled: true,
+            size: markerSize(tokens, this.statistic.kind),
+            opacity: 1,
+            fill: focus,
+            stroke: surface,
+            strokeWidth: 1,
           },
+          encoding: { x, y: y('centre') },
         },
         {
           data: { name: 'mask' },
@@ -716,7 +731,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       width: WIDTH,
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
-      ...(hatchId ? { defs: hatchPattern(hatchId, tokens) } : {}),
+      ...(defs ? { defs } : {}),
       hover,
       title,
       readingCue,

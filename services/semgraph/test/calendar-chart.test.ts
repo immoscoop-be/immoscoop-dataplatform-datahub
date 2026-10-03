@@ -78,7 +78,7 @@ describe('calendar periods chart', () => {
     assert.match(result.report.issues[0]!.message, /Er is geen enkel jaar volledig/);
   });
 
-  it('draws the running period hollow and says so, on the label and on hover', async () => {
+  it('marks the running period with its pattern and says so, on the label and on hover', async () => {
     const { svg } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
     // REQ-033: the last final week in bold with its spread, the running week next to it in grey;
     // "lopend" under the running point (REQ-000).
@@ -87,8 +87,9 @@ describe('calendar periods chart', () => {
     assert.match(svg!, /fill="#6b7480"[^>]*>53,7</);
     assert.match(svg!, />lopend</);
     assert.match(svg!, /aria-label="week 40 \(28 sep–4 okt\), gemiddelde per dag: 53,7, ±1 sd: 2,1, lopend: 3 van 7 dagen"/);
-    // One hollow dot: filled with the surface colour, outlined in the focus colour.
-    assert.equal([...svg!.matchAll(/fill="#ffffff" stroke="#dd2c88"/g)].length, 1);
+    // REQ-052: the running week keeps a filled diamond; its column gets the running pattern.
+    assert.doesNotMatch(svg!, /fill="#ffffff" stroke="#dd2c88"/);
+    assert.equal([...svg!.matchAll(/fill="url\(#semgraph-running-[0-9a-f]{8}\)"/g)].length, 1);
   });
 
   it('labels weeks, months and quarters, with the year where it changes', async () => {

@@ -75,7 +75,6 @@ desc:
   latestMissing: Geen waarde voor het laatste punt.
 
 chart:
-  noData: geen data
   stats:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"

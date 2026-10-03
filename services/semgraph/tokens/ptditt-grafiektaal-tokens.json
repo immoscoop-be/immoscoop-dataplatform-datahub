@@ -18,7 +18,10 @@
     "badge/surface": "#f3f5f6",
     "reading-cue/text": "#630038",
     "warning": "#c8102e",
-    "loss": "#2d333a"
+    "loss": "#2d333a",
+    "pattern/empty": "#e3e2dc",
+    "pattern/few": "#a9a79e",
+    "pattern/running": "#cfcdc4"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",
@@ -41,7 +44,6 @@
     "spread": 4,
     "spreadWide": 9,
     "line": 2,
-    "missing": 1,
     "guide": 1
   },
   "mark": {
@@ -51,9 +53,27 @@
     "circle": 7
   },
   "$sources": {
-    "figmaVariables": ["color (all)", "stroke.axis (line/guide)", "stroke.baseline (line/baseline)", "stroke.line (line/series)"],
-    "figmaTextStyles": ["font.title and size.title (Chart/Title)", "size.readingCue (Chart/Reading cue)", "size.axisLabel (Chart/Axis)", "size.value (Chart/Value)", "size.detail (Chart/Detail)", "size.footer (Chart/Footer)"],
-    "figmaExamples": ["font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)", "mark (Points and markers)"],
-    "notInFigmaYet": ["stroke.spread, stroke.spreadWide and stroke.missing"]
+    "figmaVariables": [
+      "color (all)",
+      "stroke.axis (line/guide)",
+      "stroke.baseline (line/baseline)",
+      "stroke.line (line/series)"
+    ],
+    "figmaTextStyles": [
+      "font.title and size.title (Chart/Title)",
+      "size.readingCue (Chart/Reading cue)",
+      "size.axisLabel (Chart/Axis)",
+      "size.value (Chart/Value)",
+      "size.detail (Chart/Detail)",
+      "size.footer (Chart/Footer)"
+    ],
+    "figmaExamples": [
+      "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
+      "mark (Points and markers)",
+      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)"
+    ],
+    "notInFigmaYet": [
+      "stroke.spread and stroke.spreadWide"
+    ]
   }
 }

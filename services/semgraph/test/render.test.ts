@@ -25,7 +25,7 @@ describe('render', async () => {
         assert.ok(result.svg);
         assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
         // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036).
-        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-hatch-[0-9a-f]{8}$/);
+        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|empty|running)-[0-9a-f]{8}$/);
         await assertGolden(`${id}-${name}.svg`, result.svg);
       });
     }
@@ -50,9 +50,10 @@ describe('render', async () => {
     assert.match(svg!, />nu</);
   });
 
-  it('shows missing days as missing data, never as zero', async () => {
+  it('shows missing days as missing data, never as zero: a checkerboard behind the column (REQ-051)', async () => {
     const { svg } = await render(await example('missing-days'));
-    assert.match(svg!, />no data</);
+    assert.match(svg!, /fill="url\(#semgraph-empty-[0-9a-f]{8}\)"/);
+    assert.doesNotMatch(svg!, />no data</);
   });
 
   it('leaves out the version label for a tolerated deviation, without a footer note (REQ-042)', async () => {
