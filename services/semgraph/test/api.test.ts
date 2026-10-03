@@ -171,7 +171,7 @@ describe('API', () => {
     assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/../../package')).statusCode, 404);
   });
 
-  it('REQ-074: GET /semgraphs is the overview of every chart on offer, each with links to all of its examples', async () => {
+  it('REQ-083: GET /semgraphs is the overview of every chart on offer, each with links to all of its examples', async () => {
     const registry = await testRegistry();
     const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
     assert.equal(body.gallery, '/gallery');
@@ -189,7 +189,7 @@ describe('API', () => {
     }
   });
 
-  it('REQ-074: GET /gallery shows every chart and every example to people, under a strict CSP; / leads there', async () => {
+  it('REQ-083: GET /gallery shows every chart and every example to people, under a strict CSP; / leads there', async () => {
     const registry = await testRegistry();
     const root = await app.inject('/');
     assert.equal(root.statusCode, 302);

@@ -16,7 +16,7 @@ export function semgraphRoutes(app: FastifyInstance, { registry }: Dependencies)
     const t = translator(request.query.locale);
     return {
       locale: t.locale,
-      // REQ-074: the overview of every chart on offer, each with links to its examples.
+      // REQ-083: the overview of every chart on offer, each with links to its examples.
       semgraphs: [...registry.semgraphs.values()].map((loaded) => ({
         id: loaded.id,
         title: t(loaded.metadata.title),

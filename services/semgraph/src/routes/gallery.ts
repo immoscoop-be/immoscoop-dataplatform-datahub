@@ -12,7 +12,7 @@ const HTML_HEADERS = {
   'content-security-policy': "default-src 'none'; img-src 'self'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
 };
 
-/** REQ-074: every chart on offer with its examples, as a page to look at. The root leads there too. */
+/** REQ-083: every chart on offer with its examples, as a page to look at. The root leads there too. */
 export function galleryRoutes(app: FastifyInstance, { registry, now }: Dependencies): void {
   app.get('/', async (_request, reply) => reply.redirect('/gallery'));
 

@@ -32,7 +32,7 @@ export interface GalleryInput {
 }
 
 /**
- * REQ-074: one page with every chart the service offers and all of its examples. Each example is a
+ * REQ-083: one page with every chart the service offers and all of its examples. Each example is a
  * picture that links to the chart itself, where hover and links work (a picture in an img has neither).
  * A refused example shows why. No scripts and nothing from outside: the page lives under a strict CSP.
  */

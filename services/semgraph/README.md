@@ -184,9 +184,9 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Call | Does |
 | --- | --- |
 | `GET /healthz` | `{status, version, languageVersion, tokensVersion}` |
-| `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-074) |
+| `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-083) |
 | `GET /` | leads to `/gallery` |
-| `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-074) |
+| `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-083) |
 | `GET /semgraphs/{id}` | metadata, JSON Schema, links to Figma and learning material, examples |
 | `POST /validate` | checks a request without drawing; always 200 with `{outcome, issues}` |
 | `POST /render` | draws the chart: 200 SVG, 422 refusal, 400 invalid request |
