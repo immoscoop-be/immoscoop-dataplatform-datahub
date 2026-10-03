@@ -1,0 +1,25 @@
+{
+  "semgraph": "categoryComparison",
+  "metric": "daysOnline",
+  "title": "Dagen online per prijsklasse (voorbeelddata)",
+  "measureType": "ratio",
+  "statistic": "median",
+  "ordered": true,
+  "period": "2026-09",
+  "unit": {
+    "suffix": " d"
+  },
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Panden",
+    "dataset": "Listings",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "category": "< 200k", "median": 45, "p25": 30, "p75": 70, "n": 410 },
+    { "category": "200–300k", "median": 38, "p25": 25, "p75": 60, "n": 960 },
+    { "category": "300–400k", "median": 42, "p25": 28, "p75": 65, "n": 1120 },
+    { "category": "400–500k", "median": 55, "p25": 35, "p75": 90, "n": 640 },
+    { "category": "> 500k", "median": 75, "p25": 45, "p75": 130, "n": 8 }
+  ]
+}

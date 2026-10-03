@@ -86,3 +86,12 @@ export function periodFromName(name: string, unit: CalendarUnit): number | undef
   // A week 53 that does not exist would be week 1 of the next year: the name must round-trip.
   return periodName(first, unit) === name ? first : undefined;
 }
+
+/** The unit and the days of an ISO period name of any unit, e.g. 2026-09 is a month; undefined when it is none. */
+export function anyPeriodFromName(name: string): { unit: CalendarUnit; first: number; last: number } | undefined {
+  for (const unit of CALENDAR_UNITS) {
+    const first = periodFromName(name, unit);
+    if (first !== undefined) return { unit, first, last: shiftPeriod(first, unit, 1) - 1 };
+  }
+  return undefined;
+}

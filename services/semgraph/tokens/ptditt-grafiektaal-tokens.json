@@ -21,7 +21,12 @@
     "loss": "#2d333a",
     "pattern/empty": "#e3e2dc",
     "pattern/few": "#a9a79e",
-    "pattern/running": "#cfcdc4"
+    "pattern/running": "#cfcdc4",
+    "ordinal/1": "#ffcada",
+    "ordinal/2": "#ff6ca6",
+    "ordinal/3": "#e34f9c",
+    "ordinal/4": "#b81e6e",
+    "ordinal/5": "#630038"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",

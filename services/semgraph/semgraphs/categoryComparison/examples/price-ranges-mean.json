@@ -1,0 +1,25 @@
+{
+  "semgraph": "categoryComparison",
+  "metric": "daysOnline",
+  "title": "Days online per price range (example data)",
+  "measureType": "ratio",
+  "statistic": "mean",
+  "ordered": true,
+  "period": "2026-09",
+  "unit": {
+    "suffix": " d"
+  },
+  "locale": "en",
+  "context": {
+    "domain": "Properties",
+    "dataset": "Listings",
+    "reliability": "example data"
+  },
+  "points": [
+    { "category": "< 200k", "mean": 48, "sd": 28, "n": 410 },
+    { "category": "200–300k", "mean": 42, "sd": 18, "n": 960 },
+    { "category": "300–400k", "mean": 46, "sd": 20, "n": 1120 },
+    { "category": "400–500k", "mean": 60, "sd": 28, "n": 640 },
+    { "category": "> 500k", "mean": 82, "sd": 40, "n": 340 }
+  ]
+}

@@ -10,8 +10,11 @@ export interface HoverLine {
 
 /** What one column shows on hover, in data units: the chart decides, the layer only places and draws. */
 export interface HoverSpec {
-  /** Centre of the column on the x scale; the column runs from x − 0.5 to x + 0.5. */
+  /** Centre of the column on the band scale; the column runs from x − 0.5 to x + 0.5 unless from and to say otherwise. */
   x: number;
+  /** The edges of the column when it is not one unit wide, such as a bin of a distribution. */
+  from?: number;
+  to?: number;
   /** The point and its spread on the y scale; absent for a slot without data. */
   point?: { y: number; lo: number | null; hi: number | null };
   lines: HoverLine[];
@@ -68,8 +71,8 @@ export class HoverLayer {
   }
 
   protected column(spec: HoverSpec): string {
-    const left = this.scales.x(spec.x - 0.5);
-    const right = this.scales.x(spec.x + 0.5);
+    const left = this.scales.x(spec.from ?? spec.x - 0.5);
+    const right = this.scales.x(spec.to ?? spec.x + 0.5);
     const centre = this.scales.x(spec.x);
     if (![left, right, centre].every(Number.isFinite)) return '';
     const label = escapeXml(spec.lines.map((line) => line.text).join(', '));
@@ -131,6 +134,72 @@ export class HoverLayer {
     if (!spec.point) return [];
     const { y, lo, hi } = spec.point;
     return [y, ...(hi === null ? [] : [hi]), ...(lo === null ? [] : [Math.max(0, lo)])];
+  }
+}
+
+/**
+ * The same hover for horizontal bars: every category is a row over the full width. The guides run
+ * through the row up to the spread, and up from the axis to the point and both spread edges; the box
+ * sits next to the spread, right of it when there is room, and never leaves the plot.
+ */
+export class RowHoverLayer extends HoverLayer {
+  protected override column(spec: HoverSpec): string {
+    const top = this.scales.y(spec.x - 0.5);
+    const bottom = this.scales.y(spec.x + 0.5);
+    const centre = this.scales.y(spec.x);
+    if (![top, bottom, centre].every(Number.isFinite)) return '';
+    const label = escapeXml(spec.lines.map((line) => line.text).join(', '));
+    const detail = [...this.guides(spec, centre), ...this.ring(spec, centre), ...this.box(spec, centre)];
+    return [
+      `<g class="${PREFIX}-column" tabindex="0" role="img" aria-label="${label}">`,
+      `<rect x="0" y="${round(Math.min(top, bottom))}" width="${this.area.width}" height="${round(Math.abs(bottom - top))}" fill="transparent"/>`,
+      `<g class="${PREFIX}-detail" visibility="hidden" pointer-events="none">`,
+      ...detail,
+      '</g>',
+      '</g>',
+    ].join('');
+  }
+
+  protected override guides(spec: HoverSpec, centre: number): string[] {
+    const stroke = `stroke="${color(this.tokens, 'context/dark')}" stroke-width="${this.tokens.stroke.guide}" stroke-dasharray="1 3" stroke-linecap="round"`;
+    // Through the row up to the end of the spread, so it never crosses the value written after it.
+    const levels = this.levels(spec).map((value) => this.scales.x(value));
+    const end = levels.length ? Math.max(...levels) : this.area.width;
+    const lines = [`<line x1="0" x2="${round(end)}" y1="${round(centre)}" y2="${round(centre)}" ${stroke}/>`];
+    for (const value of this.levels(spec)) {
+      const x = round(this.scales.x(value));
+      lines.push(`<line x1="${x}" x2="${x}" y1="${this.area.height}" y2="${round(centre)}" ${stroke}/>`);
+    }
+    return lines;
+  }
+
+  protected override ring(spec: HoverSpec, centre: number): string[] {
+    if (!spec.point) return [];
+    const x = round(this.scales.x(spec.point.y));
+    return [`<circle cx="${x}" cy="${round(centre)}" r="${RING_RADIUS}" fill="none" stroke="${color(this.tokens, 'focus')}" stroke-width="1.5"/>`];
+  }
+
+  protected override box(spec: HoverSpec, centre: number): string[] {
+    const widest = Math.max(...spec.lines.map((line) => line.text.length * CHAR_WIDTH * FONT_SIZE * (line.bold ? 1.06 : 1)));
+    const width = Math.min(this.area.width, widest + 2 * BOX_PADDING.x);
+    const height = spec.lines.length * LINE_HEIGHT + 2 * BOX_PADDING.y;
+    const levels = this.levels(spec).map((value) => this.scales.x(value));
+    const right = levels.length ? Math.max(...levels) + RING_RADIUS : 0;
+    const left = levels.length ? Math.min(...levels) - RING_RADIUS : 0;
+    let x = right + BOX_GAP;
+    if (x + width > this.area.width) x = left - BOX_GAP - width;
+    x = clamp(x, 0, this.area.width - width);
+    const y = clamp(centre - height / 2, 0, this.area.height - height);
+    const middle = round(x + width / 2);
+    const text = spec.lines.map((line, index) => {
+      const baseline = round(y + BOX_PADDING.y + (index + 1) * LINE_HEIGHT - 3);
+      const weight = line.bold ? ' font-weight="bold"' : '';
+      return `<text x="${middle}" y="${baseline}" text-anchor="middle" font-family="${escapeXml(this.tokens.font.body)}" font-size="${FONT_SIZE}"${weight} fill="${color(this.tokens, 'text')}">${escapeXml(line.text)}</text>`;
+    });
+    return [
+      `<rect x="${round(x)}" y="${round(y)}" width="${round(width)}" height="${height}" rx="4" fill="${color(this.tokens, 'surface')}" stroke="${color(this.tokens, 'axis')}" stroke-width="1"/>`,
+      ...text,
+    ];
   }
 }
 

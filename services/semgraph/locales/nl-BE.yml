@@ -1,5 +1,17 @@
 # Vertaling naar het Nederlands (België). Ontbreekt een sleutel, dan valt de dienst terug op en.yml.
 semgraphs:
+  distribution:
+    title: Verdeling
+    answers: Hoe liggen de waarden verspreid, waar ligt het midden en hoe lang is de staart?
+    examples:
+      "1": Hoe liggen de vraagprijzen van de panden te koop verspreid?
+      "2": Hoeveel panden kosten meer dan € 500k?
+  categoryComparison:
+    title: Vergelijking tussen categorieën
+    answers: Welke categorie heeft het meest, of de hoogste typische waarde?
+    examples:
+      "1": Welke provincie bracht de voorbije 28 dagen de meeste leads?
+      "2": Hoe lang staan panden online, per prijsklasse?
   movingWindowAverage:
     title: Voortschrijdend gemiddelde
     answers: Hoe evolueert dit, zonder dagelijkse ruis?
@@ -55,6 +67,13 @@ axis:
   daysAgo: "−{n}d"
 
 cue:
+  distribution: "verdeling · per {width}"
+  category:
+    mean: gemiddelde
+    median: mediaan
+  scope:
+    window: "voortschrijdend {window}d"
+    day: "op {date}"
   rolling:
     mean: voortschrijdend gemiddelde {window}d
     median: voortschrijdende mediaan {window}d
@@ -75,11 +94,18 @@ cue:
   uniqueOverPeriod: "uniek · per {block} geteld"
 
 desc:
+  distribution: "P25 {p25}, mediaan {p50}, P75 {p75}."
+  categories: "{count} categorieën."
   base: "{title}: {cue}, tot {date}."
   latest: "Laatste punt: {stats}."
   latestMissing: Geen waarde voor het laatste punt.
 
 chart:
+  distribution:
+    open: ≥ P95
+    bin: "{from}–{to}"
+    openBin: "≥ P95: vanaf {from}"
+    count: "{count} ({share})"
   stats:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
@@ -92,6 +118,10 @@ chart:
 hover:
   n: "n = {n} waarnemingen"
   centre:
+    category:
+      sum: totaal
+      mean: gemiddelde
+      median: mediaan
     rolling:
       mean: "gemiddelde {window}d"
       median: "mediaan {window}d"
@@ -112,6 +142,7 @@ hover:
 
 calendar:
   unit:
+    period: periode
     week: week
     month: maand
     quarter: kwartaal
@@ -133,6 +164,7 @@ comparison:
   days: vorige {n} dagen
 
 blocks:
+  category: categorieën
   day: dagen
   window: vensters
   week: weken
@@ -176,6 +208,8 @@ footer:
   languageVersion: grafiektaal {version}
 
 readingCards:
+  distribution: verdeling
+  categoryComparison: staafgrafiek
   timeSeries: tijdreeks
   periodComparison: periodevergelijking
 
@@ -200,6 +234,27 @@ types:
   "null": leeg
 
 issues:
+  binsNotContiguous:
+    message: "{field}: de bins moeten even breed zijn en op elkaar aansluiten: elk begint {width} na de vorige."
+    alternative: Stuur elke bin vanaf de eerste, ook de lege (count 0).
+  openBinOverlaps:
+    message: De open bin begint voor de laatste bin eindigt.
+    alternative: Laat de open bin beginnen bij of na het einde van de laatste bin.
+  tooFewUnits:
+    message: "De verdeling telt {count} eenheden. Kwartielen van minder dan {minimumPoints} zeggen weinig."
+    alternative: Neem een langere periode of een ruimere groep.
+  scopeRequired:
+    message: "Zeg welke tijd de waarden dekken: window (een rollend venster van dagen), period (een ISO-kalenderperiode) of day (een momentopname), precies één."
+    alternative: Voeg window, period of day toe.
+  categoryIsDate:
+    message: "{field}: {value} is een datum of een periode. Staven zijn voor categorieën; een datumas is altijd een lijn."
+    alternative: Gebruik movingWindowAverage, calendarAverage of periodComparison voor het verloop in de tijd.
+  tooManyCategories:
+    message: "{count} geordende categorieën passen niet naast elkaar; hoogstens {max}."
+    alternative: Groepeer de categorieën in minder klassen, of laat de volgorde weg zodat de staven liggen.
+  tooFewCategories:
+    message: "Maar {count} categorie heeft een waarde. Staven vergelijken categorieën; dat vraagt er minstens {minimumPoints}."
+    alternative: Stuur meer categorieën, of toon de waarde alleen in een KPI-tegel.
   badRequest:
     message: "De aanvraag kon niet gelezen worden: {detail}"
     alternative: Stuur een JSON-object met Content-Type application/json.

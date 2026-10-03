@@ -1,0 +1,24 @@
+{
+  "semgraph": "categoryComparison",
+  "metric": "askingPrice",
+  "title": "Vraagprijs per provincie (voorbeelddata)",
+  "measureType": "ratio",
+  "statistic": "median",
+  "window": 28,
+  "unit": {
+    "prefix": "€ "
+  },
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Panden",
+    "dataset": "Listings",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "category": "Antwerpen", "median": 345000, "p25": 270000, "p75": 450000, "n": 2140 },
+    { "category": "Vlaams-Brabant", "median": 390000, "p25": 300000, "p75": 510000, "n": 1310 },
+    { "category": "Oost-Vlaanderen", "median": 320000, "p25": 255000, "p75": 420000, "n": 1870 },
+    { "category": "West-Vlaanderen", "median": 300000, "p25": 235000, "p75": 400000, "n": 1650 },
+    { "category": "Limburg", "median": 285000, "p25": 230000, "p75": 360000, "n": 940 }
+  ]
+}

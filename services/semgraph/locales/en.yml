@@ -1,5 +1,17 @@
 # Base texts. Every key used by the service must exist here; other locales fall back to these.
 semgraphs:
+  distribution:
+    title: Distribution
+    answers: How are the values spread, where does the middle lie and how long is the tail?
+    examples:
+      "1": How are the asking prices of the properties for sale spread?
+      "2": How many properties cost more than € 500k?
+  categoryComparison:
+    title: Comparison between categories
+    answers: Which category has the most, or the highest typical value?
+    examples:
+      "1": Which province brought the most leads in the last 28 days?
+      "2": How long do properties stay online, per price range?
   movingWindowAverage:
     title: Moving window average
     answers: How does this evolve, without the daily noise?
@@ -55,6 +67,13 @@ axis:
   daysAgo: "−{n}d"
 
 cue:
+  distribution: "distribution · per {width}"
+  category:
+    mean: mean
+    median: median
+  scope:
+    window: "rolling {window}d"
+    day: "on {date}"
   rolling:
     mean: rolling {window}d average
     median: rolling {window}d median
@@ -75,11 +94,18 @@ cue:
   uniqueOverPeriod: "unique · counted per {block}"
 
 desc:
+  distribution: "P25 {p25}, median {p50}, P75 {p75}."
+  categories: "{count} categories."
   base: "{title}: {cue}, up to {date}."
   latest: "Last point: {stats}."
   latestMissing: No value for the last point.
 
 chart:
+  distribution:
+    open: ≥ P95
+    bin: "{from}–{to}"
+    openBin: "≥ P95: from {from}"
+    count: "{count} ({share})"
   stats:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
@@ -92,6 +118,10 @@ chart:
 hover:
   n: "n = {n} observations"
   centre:
+    category:
+      sum: total
+      mean: mean
+      median: median
     rolling:
       mean: "{window}d average"
       median: "{window}d median"
@@ -112,6 +142,7 @@ hover:
 
 calendar:
   unit:
+    period: period
     week: week
     month: month
     quarter: quarter
@@ -133,6 +164,7 @@ comparison:
   days: previous {n} days
 
 blocks:
+  category: categories
   day: days
   window: windows
   week: weeks
@@ -176,6 +208,8 @@ footer:
   languageVersion: chart language {version}
 
 readingCards:
+  distribution: distribution
+  categoryComparison: bar chart
   timeSeries: time series
   periodComparison: period comparison
 
@@ -200,6 +234,27 @@ types:
   "null": empty
 
 issues:
+  binsNotContiguous:
+    message: "{field}: the bins must be equally wide and touch: each starts {width} after the previous."
+    alternative: Send every bin from the first one up, also the empty ones (count 0).
+  openBinOverlaps:
+    message: The open bin starts before the last bin ends.
+    alternative: Let the open bin start at or after the end of the last bin.
+  tooFewUnits:
+    message: "The distribution holds {count} units. Quartiles of fewer than {minimumPoints} say little."
+    alternative: Take a longer period or a wider group.
+  scopeRequired:
+    message: "Say which time the values cover: window (a rolling window of days), period (an ISO calendar period) or day (a snapshot), exactly one."
+    alternative: Add window, period or day.
+  categoryIsDate:
+    message: "{field}: {value} is a date or a period. Bars are for categories; a date axis is always a line."
+    alternative: Use movingWindowAverage, calendarAverage or periodComparison for the evolution in time.
+  tooManyCategories:
+    message: "{count} ordered categories do not fit next to each other; at most {max}."
+    alternative: Group the categories into fewer ranges, or leave out the order so the bars lie down.
+  tooFewCategories:
+    message: "Only {count} category has a value. Bars compare categories; that takes at least {minimumPoints}."
+    alternative: Send more categories, or show the value alone in a KPI tile.
   # Input errors (400): the request itself is not valid.
   badRequest:
     message: "The request could not be read: {detail}"

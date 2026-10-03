@@ -54,6 +54,8 @@ export interface Drawing {
   plotArea: { x: number; y: number; width: number; height: number };
   /** What each column shows on hover, in data units; placed with Vega's own scales. */
   hover: HoverSpec[];
+  /** Horizontal bars: every category is a row on the y scale instead of a column on the x scale. */
+  hoverRows?: boolean;
   title: string;
   readingCue: string;
   description: string;

@@ -8,8 +8,8 @@
 - { id: kpiTile, status: planned }
 - { id: cumulative, status: planned }
 - { id: kpiStatus, status: planned }
-- { id: categoryComparison, status: planned }
-- { id: distribution, status: planned }
+- { id: categoryComparison, status: available }
+- { id: distribution, status: available }
 - { id: composition, status: planned }
 - { id: funnel, status: planned }
 - { id: overlap, status: planned }

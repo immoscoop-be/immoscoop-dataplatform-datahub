@@ -27,12 +27,14 @@ describe('API', () => {
 
   it('GET /semgraphs lists what is available and what is planned', async () => {
     const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
-    assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), ['movingWindowAverage', 'movingWindowMedian', 'calendarAverage', 'calendarMedian', 'periodComparison']);
+    assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), ['movingWindowAverage', 'movingWindowMedian', 'calendarAverage', 'calendarMedian', 'periodComparison', 'categoryComparison', 'distribution']);
     assert.equal(body.semgraphs[0].title, 'Voortschrijdend gemiddelde');
     assert.equal(body.semgraphs[3].title, 'Mediaan per kalenderperiode');
     assert.equal(body.semgraphs[4].title, 'Vergelijking met de vorige periode');
     assert.ok(body.planned.includes('kpiTile'));
     assert.ok(!body.planned.includes('periodComparison'));
+    assert.equal(body.semgraphs[5].title, 'Vergelijking tussen categorieën');
+    assert.equal(body.semgraphs[6].title, 'Verdeling');
   });
 
   it('GET /semgraphs/{id} returns metadata, schema and examples', async () => {

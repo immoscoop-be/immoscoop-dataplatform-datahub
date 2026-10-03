@@ -30,6 +30,11 @@ export interface BlockRow {
   previous?: Partial<Record<'mean' | 'median' | 'sum', number | null>> | null;
 }
 
+/** Writes a number: an Intl.NumberFormat, or the compact format of the bar charts. */
+export interface NumberFormatter {
+  format(value: number): string;
+}
+
 /** Every field a statistic may carry in a block; the fields of the others do not belong in it. */
 export const STATISTIC_FIELDS = ['mean', 'sd', 'median', 'p25', 'p75', 'sum', 'n'] as const;
 
@@ -72,6 +77,55 @@ export abstract class Statistic {
     return [];
   }
 
+  /**
+   * The checks on the fields of every row, for every family: only the fields of this statistic (a
+   * contract may accept the fields of several), what the schema cannot check, and a spread on every
+   * row with a value or on none, because half a band would say nothing.
+   */
+  checkFields(rows: readonly BlockRow[], path = '/points'): IssueSpec[] {
+    const issues: IssueSpec[] = [];
+    const own = new Set<string>(Object.keys(this.pointProperties()));
+    rows.forEach((row, index) => {
+      const pointer = `${path}/${index}`;
+      for (const field of STATISTIC_FIELDS) {
+        if (row[field] !== undefined && !own.has(field)) {
+          issues.push({ level: 'inputError', code: 'fieldNotForStatistic', field: `${pointer}/${field}`, params: { statistic: this.id } });
+        }
+      }
+      issues.push(...this.checkRow(row, pointer));
+    });
+    if (this.hasSpread) {
+      const withValue = rows.map((row, index) => ({ row, index })).filter(({ row }) => this.read(row) !== null);
+      const withSpread = withValue.filter(({ row }) => this.hasSpreadIn(row));
+      if (withSpread.length > 0 && withSpread.length < withValue.length) {
+        const first = withValue.find(({ row }) => !this.hasSpreadIn(row))!;
+        issues.push({ level: 'inputError', code: 'spreadIncomplete', field: `${path}/${first.index}`, params: { statistic: this.id } });
+      }
+    }
+    return issues;
+  }
+
+  /**
+   * Whether n counts observations (REQ-057, REQ-063): for a mean or median of observations, such as
+   * an amount per lead. An average per day of a count rests on the days of its block.
+   */
+  countsObservations(measureType: string): boolean {
+    return measureType === 'ratio' && this.fewBelow !== null;
+  }
+
+  /**
+   * The points that rest on few observations (REQ-044): n below the threshold of the statistic, or
+   * below half the median n once there are five n's. Never a running period (REQ-054).
+   */
+  fewObservations<Point extends { key: number; n?: number; running?: boolean }>(points: readonly Point[]): number[] {
+    if (this.fewBelow === null) return [];
+    const counted = points.flatMap((point) => (point.n === undefined ? [] : [point.n]));
+    const relative = counted.length >= 5 ? median(counted) / 2 : 0;
+    return points
+      .filter((point) => point.n !== undefined && !point.running && (point.n < this.fewBelow! || point.n < relative))
+      .map((point) => point.key);
+  }
+
   /** The shape of the point: a diamond for a mean (REQ-006), a dot for a median (REQ-008), a square for a total (REQ-007). */
   get shape(): Shape {
     return SHAPES[this.kind];
@@ -81,13 +135,13 @@ export abstract class Statistic {
   abstract barWidth(tokens: Tokens): number;
 
   /** "43,7 ± 12,2" or "44,0, P25–P75 38,0–51,0", for hover labels and descriptions. */
-  abstract formatStats(t: Translator, format: Intl.NumberFormat, summary: Summary): string;
+  abstract formatStats(t: Translator, format: NumberFormatter, summary: Summary): string;
 
   /** The spread on its own line on hover: "±1 sd: 12,2" or "P25–P75: 38,0–51,0"; null without spread. */
-  abstract spreadLine(t: Translator, format: Intl.NumberFormat, summary: Summary): string | null;
+  abstract spreadLine(t: Translator, format: NumberFormatter, summary: Summary): string | null;
 
   /** The spread as a detail next to the last value: "± 12,2" or "38,0–51,0". */
-  abstract formatDetail(format: Intl.NumberFormat, summary: Summary): string;
+  abstract formatDetail(format: NumberFormatter, summary: Summary): string;
 }
 
 export class Average extends Statistic {
@@ -115,16 +169,16 @@ export class Average extends Statistic {
     return tokens.stroke.spread;
   }
 
-  formatStats(t: Translator, format: Intl.NumberFormat, { centre, spread }: Summary): string {
+  formatStats(t: Translator, format: NumberFormatter, { centre, spread }: Summary): string {
     if (!spread) return t('chart.stats.noSpread', { value: format.format(centre) });
     return t('chart.stats.mean', { value: format.format(centre), sd: format.format(spread.hi - centre) });
   }
 
-  spreadLine(t: Translator, format: Intl.NumberFormat, { centre, spread }: Summary): string | null {
+  spreadLine(t: Translator, format: NumberFormatter, { centre, spread }: Summary): string | null {
     return spread ? t('hover.spread.mean', { sd: format.format(spread.hi - centre) }) : null;
   }
 
-  formatDetail(format: Intl.NumberFormat, { centre, spread }: Summary): string {
+  formatDetail(format: NumberFormatter, { centre, spread }: Summary): string {
     return spread ? `± ${format.format(spread.hi - centre)}` : '';
   }
 }
@@ -167,7 +221,7 @@ export class Median extends Statistic {
     return tokens.stroke.spreadWide;
   }
 
-  formatStats(t: Translator, format: Intl.NumberFormat, { centre, spread }: Summary): string {
+  formatStats(t: Translator, format: NumberFormatter, { centre, spread }: Summary): string {
     if (!spread) return t('chart.stats.noSpread', { value: format.format(centre) });
     return t('chart.stats.median', {
       value: format.format(centre),
@@ -176,11 +230,11 @@ export class Median extends Statistic {
     });
   }
 
-  spreadLine(t: Translator, format: Intl.NumberFormat, { spread }: Summary): string | null {
+  spreadLine(t: Translator, format: NumberFormatter, { spread }: Summary): string | null {
     return spread ? t('hover.spread.median', { p25: format.format(spread.lo), p75: format.format(spread.hi) }) : null;
   }
 
-  formatDetail(format: Intl.NumberFormat, { spread }: Summary): string {
+  formatDetail(format: NumberFormatter, { spread }: Summary): string {
     return spread ? `${format.format(spread.lo)}–${format.format(spread.hi)}` : '';
   }
 }
@@ -207,7 +261,7 @@ export class Sum extends Statistic {
     return 0;
   }
 
-  formatStats(t: Translator, format: Intl.NumberFormat, { centre }: Summary): string {
+  formatStats(t: Translator, format: NumberFormatter, { centre }: Summary): string {
     return t('chart.stats.noSpread', { value: format.format(centre) });
   }
 
@@ -218,4 +272,11 @@ export class Sum extends Statistic {
   formatDetail(): string {
     return '';
   }
+}
+
+/** The median of a list of numbers. */
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
 }

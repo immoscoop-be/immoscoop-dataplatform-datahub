@@ -2,7 +2,8 @@ import { localizeDay, localizeRange, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { ticksEvery } from './scales.ts';
-import { LEARNING_PLAN_LEVEL_1, MAX_TICKS, TimeAxisChart, type LabelContext, type Slot, type TimeAxisComputed, type TimeAxisRequest } from './time-axis-chart.ts';
+import { LEARNING_PLAN_LEVEL_1 } from './measure.ts';
+import { MAX_TICKS, TimeAxisChart, type LabelContext, type Slot, type TimeAxisComputed, type TimeAxisRequest } from './time-axis-chart.ts';
 import type { ValuesMode } from './value-labels.ts';
 
 export interface MovingWindowRequest extends TimeAxisRequest {

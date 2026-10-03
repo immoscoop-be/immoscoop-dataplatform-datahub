@@ -15,8 +15,10 @@ import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
-import { STATISTIC_FIELDS, type BlockRow, type Statistic, type Summary } from './statistics.ts';
+import type { BlockRow, Statistic, Summary } from './statistics.ts';
 import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
 import { headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
 
@@ -120,15 +122,6 @@ export function formFor(slots: number, barWidth: number, plotWidth = PLOT_WIDTH)
   return plotWidth / slots >= Math.max(8, barWidth + 4) ? 'bars' : 'band';
 }
 
-/** Master-leerplan, level 1: unique counts (1.2.2), rolling periods (1.4.2), centre and spread (1.5.4). */
-export const LEARNING_PLAN_LEVEL_1 = 'https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146';
-
-/** The median of a list of numbers. */
-function median(values: readonly number[]): number {
-  const sorted = [...values].sort((a, b) => a - b);
-  const middle = Math.floor(sorted.length / 2);
-  return sorted.length % 2 ? sorted[middle]! : (sorted[middle - 1]! + sorted[middle]!) / 2;
-}
 
 /**
  * Base class of every chart with a time axis. The warehouse delivers one row per block (REQ-058);
@@ -226,15 +219,6 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return [t('chart.running', { count: slot.last - slot.first + 1, total: slot.fullLast - slot.first + 1 })];
   }
 
-  /**
-   * Whether n means observations the warehouse counted (REQ-057, REQ-063): for a mean or median of a
-   * ratio, such as an amount per lead. An average per day of a count rests on the days of its block;
-   * the thresholds for few observations and the alert for a missing n do not apply to days.
-   */
-  protected observationsApply(request: Request): boolean {
-    return request.measureType === 'ratio' && this.statistic.fewBelow !== null;
-  }
-
   // ----- The contract -----
 
   /** The schema of one block: its name and the fields of the statistic, and the earlier block when comparing. */
@@ -275,30 +259,14 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       required: ['semgraph', 'metric', 'measureType', ...period.required, 'points'],
       properties: {
         semgraph: { const: this.id },
-        metric: {
-          description: 'Identifier of the metric, e.g. creditLeads. Used as title when no title is given.',
-          type: 'string',
-          pattern: '^[A-Za-z][A-Za-z0-9_]{0,63}$',
-        },
-        title: {
-          description: 'Title above the chart. States what is shown, not a conclusion.',
-          type: 'string',
-          minLength: 1,
-          maxLength: 120,
-        },
-        measureType: {
-          description: 'Kind of number: additive or unique for an average per day of a count, ratio for a mean or median of observations such as an amount per lead. Required until Domain Hub or the dbt YAML supplies it.',
-          enum: ['additive', 'unique', 'ratio'],
-        },
-        uniqueAggregation: {
-          description: 'Required for unique counts: daily (the uniques per day; never summed) or overPeriod (the uniques over the whole block, counted in the warehouse; only as a total).',
-          enum: ['daily', 'overPeriod'],
-        },
+        metric: METRIC,
+        title: TITLE,
+        measureType: MEASURE_TYPE,
+        uniqueAggregation: UNIQUE_AGGREGATION,
         ...period.properties,
         asOf: {
           description: 'The last complete day of the data. A calendar period that ends after it is still running. Yesterday in Brussels when absent.',
-          type: 'string',
-          pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$',
+          ...DAY,
         },
         values: {
           description: 'Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).',
@@ -310,28 +278,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           enum: ['zero', 'zoom'],
           default: 'zero',
         },
-        format: {
-          description: 'Output format. Only svg is available in v0.',
-          enum: ['svg', 'png', 'html', 'widget'],
-          default: 'svg',
-        },
-        locale: {
-          description: 'Language of titles, labels and messages, e.g. en or nl-BE. Unknown locales fall back to English.',
-          type: 'string',
-          pattern: '^[A-Za-z]{2,3}(-[A-Za-z0-9]{2,8})*$',
-        },
-        context: {
-          description: 'Provenance and status for the footer. Missing values are shown as unknown.',
-          type: 'object',
-          additionalProperties: false,
-          properties: {
-            domain: { type: 'string', minLength: 1, maxLength: 80 },
-            dataset: { type: 'string', minLength: 1, maxLength: 80 },
-            owner: { type: 'string', minLength: 1, maxLength: 80 },
-            reliability: { type: 'string', minLength: 1, maxLength: 80 },
-            definitionUrl: { type: 'string', minLength: 1, maxLength: 500 },
-          },
-        },
+        format: FORMAT,
+        locale: LOCALE,
+        context: CONTEXT,
         meta: META_SCHEMA,
         points: {
           description: 'One row per block, computed in the warehouse (REQ-058). A block without data is null or left out; it is drawn as empty, never as zero.',
@@ -350,24 +299,18 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     if (request.asOf !== undefined && parseDay(request.asOf) === undefined) {
       issues.push({ level: 'inputError', code: 'invalidDate', field: '/asOf', params: { value: request.asOf } });
     }
+    // periodComparison accepts the fields of every statistic in its schema; only the chosen one belongs.
+    issues.push(...this.statistic.checkFields(request.points));
     const keys: { key: number; pointer: string; name: string }[] = [];
     const seen = new Set<number>();
-    const own = new Set<string>(Object.keys(this.statistic.pointProperties()));
     request.points.forEach((row, index) => {
       const pointer = `/points/${index}`;
       const name = row[this.blockField];
-      // periodComparison accepts the fields of every statistic in its schema; only the chosen one belongs.
-      for (const field of STATISTIC_FIELDS) {
-        if (row[field] !== undefined && !own.has(field)) {
-          issues.push({ level: 'inputError', code: 'fieldNotForStatistic', field: `${pointer}/${field}`, params: { statistic: this.statistic.id } });
-        }
-      }
       const other = this.blockField === 'end' ? 'period' : 'end';
       if (row[other] !== undefined) issues.push({ level: 'inputError', code: 'unexpectedField', field: `${pointer}/${other}` });
       if (row.previous && Object.keys(row.previous).some((field) => field !== this.statistic.id)) {
         issues.push({ level: 'inputError', code: 'fieldNotForStatistic', field: `${pointer}/previous`, params: { statistic: this.statistic.id } });
       }
-      issues.push(...this.statistic.checkRow(row, pointer));
       if (name === undefined) return;
       const key = this.blockKey(name, request);
       if (key === undefined) {
@@ -383,15 +326,6 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     if (keys.length > 0) {
       const count = this.slotCount(Math.min(...keys.map(({ key }) => key)), Math.max(...keys.map(({ key }) => key)), request);
       if (count > MAX_SLOTS) issues.push({ level: 'inputError', code: 'tooManyBlocks', field: '/points', params: { count, max: MAX_SLOTS } });
-    }
-    // A spread on every block with a value, or on none: half a band would say nothing.
-    if (this.statistic.hasSpread) {
-      const withValue = request.points.map((row, index) => ({ row, index })).filter(({ row }) => this.statistic.read(row) !== null);
-      const withSpread = withValue.filter(({ row }) => this.statistic.hasSpreadIn(row));
-      if (withSpread.length > 0 && withSpread.length < withValue.length) {
-        const first = withValue.find(({ row }) => !this.statistic.hasSpreadIn(row))!;
-        issues.push({ level: 'inputError', code: 'spreadIncomplete', field: `/points/${first.index}`, params: { statistic: this.statistic.id } });
-      }
     }
     return issues;
   }
@@ -433,13 +367,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       comparison = { slots: previousSlots, points: previousPoints };
     }
 
-    // Few observations (REQ-044), only where n counts observations (REQ-057). Running wins (REQ-054).
-    const observations = this.observationsApply(request);
-    const counted = points.filter((point) => point.n !== undefined).map((point) => point.n!);
-    const relative = counted.length >= 5 ? median(counted) / 2 : 0;
-    const few = observations
-      ? points.filter((point) => point.n !== undefined && !point.running && (point.n < this.statistic.fewBelow! || point.n < relative)).map((point) => point.rel)
-      : [];
+    // Few observations (REQ-044), only where n counts observations (REQ-057, REQ-063). Running wins (REQ-054).
+    const observations = this.statistic.countsObservations(request.measureType);
+    const few = observations ? this.statistic.fewObservations(points.map((point) => ({ ...point, key: point.rel }))) : [];
 
     // "all" only while every value has room above its point; otherwise the family's default. A
     // comparison labels the ends of its lines instead (REQ-003).
@@ -469,34 +399,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   rules(request: Request, computed: TimeAxisComputed, { metadata }: { metadata: SemgraphMetadata }): IssueSpec[] {
     const issues: IssueSpec[] = [];
 
-    const allowed = metadata.attributes.measureType ?? 'any';
-    if (allowed !== 'any' && !allowed.includes(request.measureType)) {
-      issues.push({
-        level: 'refusal',
-        code: 'measureTypeNotAllowed',
-        field: '/measureType',
-        params: { measureType: request.measureType, allowed: allowed.join(', ') },
-      });
-    } else if (request.measureType === 'ratio' && this.statistic.kind === 'amount') {
-      // A total of ratios means nothing: an average price per lead does not add up over a week.
-      issues.push({ level: 'refusal', code: 'ratioNotSummable', field: '/measureType' });
-    }
-
-    // Daily uniques and the uniques over a whole block are two different metrics: the caller says which.
-    if (request.measureType === 'unique') {
-      const total = this.statistic.kind === 'amount';
-      if (request.uniqueAggregation === undefined) {
-        issues.push({ level: 'refusal', code: 'uniqueAggregationRequired', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
-      } else if (request.uniqueAggregation === 'daily' && total) {
-        // REQ-035: a total of daily uniques counts someone who comes back on several days several times.
-        issues.push({ level: 'refusal', code: 'dailyUniquesNotSummable', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
-      } else if (request.uniqueAggregation === 'overPeriod' && !total) {
-        // REQ-064: the uniques over a block are one count, counted in the warehouse: only as a total.
-        issues.push({ level: 'refusal', code: 'uniquesOverPeriodNotAveraged', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
-      }
-    } else if (request.uniqueAggregation !== undefined) {
-      issues.push({ level: 'info', code: 'uniqueAggregationIgnored', field: '/uniqueAggregation' });
-    }
+    issues.push(...measureRules(request, this.statistic, metadata));
 
     const { minimumPoints } = metadata.data;
     if (computed.blocksAfterReference.length > 0) {

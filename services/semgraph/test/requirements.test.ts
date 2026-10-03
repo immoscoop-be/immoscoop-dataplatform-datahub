@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { SHAPES } from '../src/charts/signatures.ts';
+import type { CategoryComputed } from '../src/charts/category-chart.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
 import { createTranslator } from '../src/core/i18n.ts';
 import { iconShapes, readIcon } from '../src/core/icon.ts';
@@ -24,6 +25,8 @@ interface Layer {
 interface Drawn {
   name: string;
   semgraph: string;
+  /** Time axis (REQ-001), categories (REQ-002) or the distribution of one value. */
+  family: 'timeAxis' | 'category' | 'distribution';
   statistic: string;
   request: Record<string, unknown>;
   computed: TimeAxisComputed;
@@ -51,6 +54,7 @@ async function drawnExamples(): Promise<Drawn[]> {
       drawn.push({
         name: `${id}/${name}`,
         semgraph: id,
+        family: 'slots' in computed ? 'timeAxis' : 'rows' in computed ? 'category' : 'distribution',
         statistic: (implementation as unknown as { statistic?: { id: string } }).statistic?.id ?? String((request as { statistic: string }).statistic),
         request: request as Record<string, unknown>,
         computed: computed as TimeAxisComputed,
@@ -78,6 +82,10 @@ const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-deta
 
 describe('requirements of the chart language', async () => {
   const examples = await drawnExamples();
+  /** The examples with a time axis; the requirements of a time axis only hold for these. */
+  const timeAxis = examples.filter((drawn) => drawn.family === 'timeAxis');
+  const categories = examples.filter((drawn) => drawn.family === 'category');
+  const categoryOf = (drawn: Drawn) => drawn.computed as unknown as CategoryComputed;
   const tokens = (await testRegistry()).tokens;
 
   it('every example is checked', () => {
@@ -85,7 +93,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-001: a time axis is always a line through every point, never bridging missing data', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const line = drawn.layers.find((layer) => layer.data?.name === 'line');
       assert.equal(line && markType(line), 'line', `${drawn.name}: no line`);
       const rows = drawn.datasets.line as { rel: number; segment: number }[];
@@ -101,21 +109,29 @@ describe('requirements of the chart language', async () => {
     assert.equal(new Set((missing.datasets.line as { segment: number }[]).map((row) => row.segment)).size, 2, 'missing data breaks the line in two');
   });
 
-  it('REQ-002: no bars on a time axis; a rectangle only carries the state of a period, never a value', () => {
+  it('REQ-002: bars only for categories, never on a date axis; on a time axis a rectangle only carries the state of a period', () => {
     for (const drawn of examples) {
       for (const layer of drawn.layers) {
-        assert.notEqual(markType(layer), 'bar', `${drawn.name}: a bar on a time axis`);
-        if (markType(layer) === 'rect') {
+        assert.notEqual(markType(layer), 'bar', drawn.name);
+        if (markType(layer) !== 'rect') continue;
+        if (drawn.family === 'timeAxis') {
           assert.equal(layer.data?.name, 'columns', `${drawn.name}: a rectangle that is not a data state`);
           // Over the full height of the plot, whatever the values are (REQ-049).
           assert.deepEqual([layer.encoding!.y, layer.encoding!.y2], [{ value: 0 }, { value: 200 - tokens.stroke.baseline }], drawn.name);
+        } else {
+          // Bars for categories, bins on a value axis, and the patterns of the data states; never a date axis.
+          assert.ok(['columns', 'bars', 'bins', 'open'].includes(layer.data!.name), `${drawn.name}: ${layer.data?.name}`);
         }
       }
+      if (drawn.family === 'category') {
+        for (const row of categoryOf(drawn).rows) assert.doesNotMatch(row.category, /^\d{4}(-\d{2}(-\d{2})?|-W\d{2}|-Q[1-4])?$/, drawn.name);
+      }
     }
+    assert.ok(categories.length >= 6, 'the six bar charts of Figma');
   });
 
   it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; always filled (REQ-052)', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const mark = markOf(pointLayer(drawn));
       assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
       assert.equal(mark.fill, color(tokens, 'focus'), drawn.name);
@@ -130,7 +146,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-049 to REQ-052: the state of a period is a pattern behind its whole column; empty is a checkerboard, running fine lines', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const columns = drawn.datasets.columns as { from: number; to: number; state: string }[];
       const running = new Set(drawn.computed.points.filter((point) => point.running).map((point) => point.rel));
       const empty = new Set(drawn.computed.missing);
@@ -148,9 +164,9 @@ describe('requirements of the chart language', async () => {
       if (covered('running').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-running-[0-9a-f]{8}" width="4" height="4" patternUnits="userSpaceOnUse">/, drawn.name);
       if (covered('few').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse">/, drawn.name);
     }
-    assert.ok(examples.some((drawn) => drawn.computed.missing.length > 0), 'an example with empty periods');
-    assert.ok(examples.some((drawn) => drawn.computed.points.some((point) => point.running)), 'an example with a running period');
-    assert.ok(examples.some((drawn) => drawn.computed.few.length > 0), 'an example with few observations');
+    assert.ok(timeAxis.some((drawn) => drawn.computed.missing.length > 0), 'an example with empty periods');
+    assert.ok(timeAxis.some((drawn) => drawn.computed.points.some((point) => point.running)), 'an example with a running period');
+    assert.ok(timeAxis.some((drawn) => drawn.computed.few.length > 0), 'an example with few observations');
   });
 
   it('REQ-028: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
@@ -166,7 +182,7 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-009: a light area only shows spread', () => {
     const light = color(tokens, 'focus/light');
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       for (const layer of drawn.layers) {
         const mark = markOf(layer);
         if (mark.color !== light && mark.fill !== light) continue;
@@ -186,7 +202,7 @@ describe('requirements of the chart language', async () => {
     }
   });
   it('REQ-029: every point is a block of time; blocks touch but never overlap, and a rolling block is one window', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const { slots } = drawn.computed;
       slots.forEach((slot, index) => {
         if (index > 0) assert.equal(slot.first, slots[index - 1]!.fullLast + 1, `${drawn.name}: block ${slot.rel}`);
@@ -320,7 +336,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-033: the values on the chart follow the mode, centred above their point', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const strong = drawn.datasets.valuesStrong as { rel: number; y: number }[];
       const muted = drawn.datasets.valuesMuted as { rel: number; y: number }[];
       const points = drawn.computed.points;
@@ -343,7 +359,7 @@ describe('requirements of the chart language', async () => {
     assert.deepEqual((weeks.datasets.valuesStrong as { rel: number }[]).map((label) => label.rel), [-1]);
     assert.deepEqual((weeks.datasets.valuesMuted as { rel: number }[]).map((label) => label.rel), [0]);
   });
-  const comparisons = () => examples.filter((drawn) => drawn.computed.comparison);
+  const comparisons = () => timeAxis.filter((drawn) => drawn.computed.comparison);
 
   it('REQ-003: a comparison is two lines on one time axis, the earlier one grey and labelled at its end', () => {
     assert.ok(comparisons().length >= 3);
@@ -356,7 +372,7 @@ describe('requirements of the chart language', async () => {
       assert.equal(label[0]!.rel, drawn.computed.comparison!.points.at(-1)!.rel);
       assert.match(label[0]!.text, /^(vorig|vorige|last|previous) /);
     }
-    for (const drawn of examples.filter((candidate) => !candidate.computed.comparison)) {
+    for (const drawn of timeAxis.filter((candidate) => !candidate.computed.comparison)) {
       assert.equal(drawn.datasets.comparisonLine!.length + drawn.datasets.hatch!.length, 0, drawn.name);
     }
   });
@@ -419,11 +435,11 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  const ratios = () => examples.filter((drawn) => drawn.request.measureType === 'ratio' && drawn.statistic !== 'sum');
+  const ratios = () => timeAxis.filter((drawn) => drawn.request.measureType === 'ratio' && drawn.statistic !== 'sum');
   const blockRows = (drawn: Drawn) => drawn.request.points as Record<string, unknown>[];
 
   it('REQ-058: the semgraph computes nothing over days: every point is a block as the warehouse delivered it', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const rows = blockRows(drawn).filter((row) => typeof row[drawn.statistic] === 'number');
       assert.deepEqual(drawn.computed.points.map((point) => point.centre), rows.map((row) => row[drawn.statistic]), drawn.name);
       // The spread too: ±1 sd around the mean, or P25–P75 around the median; none for a single day (REQ-031).
@@ -437,7 +453,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-062: a rolling window is named after its last day, a calendar period by its ISO name', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const field = typeof drawn.request.window === 'number' ? 'end' : 'period';
       const pattern = field === 'end' ? /^\d{4}-\d{2}-\d{2}$/ : /^\d{4}(-W\d{2}|-\d{2}|-Q[1-4])?$/;
       for (const row of blockRows(drawn)) assert.match(String(row[field]), pattern, drawn.name);
@@ -455,11 +471,11 @@ describe('requirements of the chart language', async () => {
     }
     assert.ok(ratios().some((drawn) => drawn.deviations.some((code) => code.startsWith('nMissing.'))), 'an example without n');
     // A total has no n: for a count the number is the n.
-    for (const drawn of examples.filter((candidate) => candidate.statistic === 'sum')) assert.ok(drawn.computed.points.every((point) => point.n === undefined), drawn.name);
+    for (const drawn of timeAxis.filter((candidate) => candidate.statistic === 'sum')) assert.ok(drawn.computed.points.every((point) => point.n === undefined), drawn.name);
   });
 
   it('REQ-044, REQ-054, REQ-057 and REQ-063: few observations below 30 (mean) or 10 (median), or below half the median n; never running; only for observations', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       if (!ratios().includes(drawn)) {
         assert.deepEqual(drawn.computed.few, [], `${drawn.name}: n of days is no number of observations (REQ-057)`);
         continue;
@@ -478,7 +494,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-046: the n of a point with few observations sits under the time axis, right below it; other points get nothing there', () => {
-    for (const drawn of examples) {
+    for (const drawn of timeAxis) {
       const labels = drawn.datasets.nLabels as { rel: number; text: string }[];
       assert.deepEqual(labels.map((label) => label.rel), drawn.computed.few, drawn.name);
       for (const label of labels) assert.equal(label.text, `n ${drawn.computed.points.find((point) => point.rel === label.rel)!.n}`, drawn.name);
@@ -491,8 +507,8 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-047: few observations is a red block for the reader, but no deviation: the version label stays', () => {
     for (const drawn of examples) {
-      assert.equal(drawn.cautions.some((code) => code.startsWith('fewObservations.')), drawn.computed.few.length > 0, drawn.name);
-      if (drawn.computed.few.length === 0) continue;
+      assert.equal(drawn.cautions.some((code) => code.startsWith('fewObservations.')), (drawn.computed.few ?? []).length > 0, drawn.name);
+      if ((drawn.computed.few ?? []).length === 0) continue;
       assert.ok(drawn.svg.includes(`fill="${color(tokens, 'warning')}"`), drawn.name);
       assert.match(drawn.svg, /Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij \d+ van de \d+/, drawn.name);
       if (drawn.deviations.length === 0) assert.match(drawn.svg, />grafiektaal v0</, drawn.name);
@@ -541,7 +557,7 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-064: daily uniques are never summed; the uniques over a block, counted in the warehouse, only as a total', async () => {
     const registry = await testRegistry();
-    for (const drawn of examples) {
+    for (const drawn of examples.filter((candidate) => candidate.family !== 'distribution')) {
       const codes = async (uniqueAggregation: string) =>
         (await runPipeline(registry, { ...drawn.request, measureType: 'unique', uniqueAggregation }, { now: NOW, draw: false })).report.issues
           .filter((issue) => issue.level === 'refusal')
@@ -550,5 +566,89 @@ describe('requirements of the chart language', async () => {
       assert.deepEqual(await codes('daily'), total ? ['dailyUniquesNotSummable'] : [], drawn.name);
       assert.deepEqual(await codes('overPeriod'), total ? [] : ['uniquesOverPeriodNotAveraged'], drawn.name);
     }
+  });
+
+  it('REQ-000 and REQ-065: bars lie down for categories without order, sorted by value, and stand up in their order', () => {
+    for (const drawn of categories) {
+      const computed = categoryOf(drawn);
+      const ordered = drawn.request.ordered === true;
+      assert.equal(computed.orientation, ordered ? 'vertical' : 'horizontal', drawn.name);
+      assert.equal(drawn.drawing.hoverRows, !ordered, drawn.name);
+      const order = computed.rows.map((row) => row.category);
+      const given = (drawn.request.points as { category: string }[]).map((row) => row.category);
+      if (ordered) assert.deepEqual(order, given, drawn.name);
+      else {
+        const centres = computed.rows.map((row) => row.summary?.centre ?? -Infinity);
+        assert.deepEqual(centres, [...centres].sort((a, b) => b - a), `${drawn.name}: sorted by value, the largest on top`);
+      }
+    }
+  });
+
+  it('REQ-000 and REQ-065: an amount is a bar from zero, a median a dot in a wide bar, a mean a diamond over a thin bar; the axis from zero', () => {
+    const light = color(tokens, 'focus/light');
+    for (const drawn of categories) {
+      const bars = drawn.datasets.bars as Record<string, number>[];
+      const points = drawn.datasets.points as unknown[];
+      const spread = drawn.layers.find((layer) => layer.data?.name === 'spread')!;
+      if (drawn.statistic === 'sum') {
+        assert.ok(bars.length > 0 && points.length === 0, drawn.name);
+        // From zero: x (lying) or v (upright) starts at 0.
+        for (const bar of bars) assert.equal(bar.x ?? bar.v, 0, drawn.name);
+      } else {
+        assert.equal(bars.length, 0, drawn.name);
+        assert.equal(markOf(pointLayer(drawn)).shape, drawn.statistic === 'mean' ? 'diamond' : 'circle', drawn.name);
+        assert.equal(markOf(spread).color, light, drawn.name);
+        assert.equal(markOf(spread).strokeWidth, drawn.statistic === 'mean' ? tokens.stroke.spread : tokens.stroke.spreadWide, drawn.name);
+      }
+      // The value axis starts at zero, also for medians and means (Figma, Bar charts).
+      assert.doesNotMatch(drawn.svg, /mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#6b7480"[^>]*stroke-linejoin="miter"/, `${drawn.name}: no zigzag`);
+    }
+    // Upright amounts take the ordinal ramp from light to dark, along the order.
+    const ramp = categories.find((drawn) => drawn.name === 'categoryComparison/price-ranges-sum')!;
+    assert.deepEqual((ramp.datasets.bars as { fill: string }[]).map((bar) => bar.fill), [1, 2, 3, 4, 5].map((step) => color(tokens, `ordinal/${step}`)));
+  });
+
+  it('REQ-000 and REQ-065: the value stands next to its shape, in the unit and precision of the axis', () => {
+    const provinces = categories.find((drawn) => drawn.name === 'categoryComparison/provinces-sum')!;
+    assert.deepEqual((provinces.datasets.valuesStrong as { text: string }[]).map((label) => label.text), ['1,8k', '1,5k', '1,1k', '0,9k', '0,6k']);
+    const median = categories.find((drawn) => drawn.name === 'categoryComparison/provinces-median')!;
+    assert.equal((median.datasets.valuesStrong as { text: string }[])[0]!.text, '€ 390k');
+    assert.equal((median.datasets.valuesDetail as { text: string }[])[0]!.text, '300–510k');
+    const mean = categories.find((drawn) => drawn.name === 'categoryComparison/price-ranges-mean')!;
+    assert.deepEqual((mean.datasets.detailAbove as { text: string }[]).map((label) => label.text), ['± 28 d', '± 18 d', '± 20 d', '± 28 d', '± 40 d']);
+    for (const drawn of categories) {
+      const labels = [...(drawn.datasets.valuesStrong ?? []), ...(drawn.datasets.valuesAbove ?? []), ...(drawn.datasets.valuesBeside ?? [])];
+      assert.equal(labels.length, categoryOf(drawn).rows.length - categoryOf(drawn).missing.length, `${drawn.name}: every value written`);
+    }
+  });
+
+  it('REQ-043, REQ-046 and REQ-053 for categories: n on hover; few observations get dots behind their column and their n under it', () => {
+    const few = categories.find((drawn) => drawn.name === 'categoryComparison/price-ranges-median')!;
+    assert.deepEqual(categoryOf(few).few, [4]);
+    assert.deepEqual(few.cautions, ['fewObservations.median']);
+    assert.deepEqual((few.datasets.columns as { state: string }[]).map((column) => column.state), ['few']);
+    assert.deepEqual((few.datasets.nLabels as { text: string }[]).map((label) => label.text), ['n 8']);
+    for (const drawn of categories.filter((candidate) => candidate.request.measureType === 'ratio')) {
+      for (const hover of drawn.drawing.hover) assert.ok(hover.lines.some((line) => /^n = /.test(line.text)), drawn.name);
+    }
+  });
+
+  it('REQ-000 and REQ-065: a distribution has equal bins that touch, P25, P50 and P75 as guides, and the tail in one grey open bin', () => {
+    const drawn = examples.find((candidate) => candidate.name === 'distribution/asking-price')!;
+    const bins = drawn.datasets.bins as { x: number; x2: number }[];
+    bins.forEach((bin, index) => {
+      if (index > 0) assert.equal(bin.x, bins[index - 1]!.x2, 'touching');
+      assert.equal(bin.x2 - bin.x, drawn.request.binWidth);
+    });
+    const guides = drawn.datasets.guides as { x: number; median: boolean }[];
+    assert.deepEqual(guides.map((guide) => guide.x), [261000, 312000, 408000]);
+    assert.deepEqual(guides.map((guide) => guide.median), [false, true, false]);
+    assert.deepEqual((drawn.datasets.guideMedian_center as { text: string }[]).map((label) => label.text), ['€ 312k']);
+    const open = drawn.layers.find((layer) => layer.data?.name === 'open')!;
+    assert.equal(markOf(open).color, color(tokens, 'context'));
+    assert.deepEqual((drawn.datasets.openAxis as { lines: string[] }[])[0]!.lines, ['≥ P95', '€ 900k']);
+    assert.equal(drawn.drawing.readingCue, 'verdeling · per € 50k');
+    // Set apart: a gap between the last bin and the open one.
+    assert.ok((drawn.datasets.open as { x: number }[])[0]!.x > bins.at(-1)!.x2);
   });
 });

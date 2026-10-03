@@ -4,7 +4,7 @@ import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, t
 import { checkMeta, compiledDay, metaItems, type ChartMeta } from './meta.ts';
 import type { LoadedSemgraph, Registry } from './registry.ts';
 import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
-import { HoverLayer } from './render/hover.ts';
+import { HoverLayer, RowHoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
@@ -100,7 +100,7 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       svg: plot.svg,
       height: drawing.height,
       area: drawing.plotArea,
-      overlay: new HoverLayer(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
     },
     footer: footer(t, request.context ?? {}, { asOf: drawing.asOf, compiled }, loaded, deviations, registry.tokens.languageVersion),
     meta: metaItems(t, request.meta, {
