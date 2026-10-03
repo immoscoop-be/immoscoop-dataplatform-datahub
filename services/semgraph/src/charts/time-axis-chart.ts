@@ -14,6 +14,8 @@ import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { decimalsOf, lookup, numberFormat, runs, ticksEvery, valueScale, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
 import type { Statistic, Summary } from './statistics.ts';
+import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
+import { headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
 
 /** What every time-axis request carries, whatever its periods or statistic. */
 export interface TimeAxisRequest {
@@ -25,6 +27,7 @@ export interface TimeAxisRequest {
   horizon: number;
   spread?: string;
   valueAxis?: ValueAxisMode;
+  values?: ValuesMode;
   format?: string;
   locale?: string;
   context?: RequestContext;
@@ -62,6 +65,11 @@ export interface TimeAxisComputed {
   /** Days with a value in that range. */
   valuesInRange: number;
   withSpread: boolean;
+  /** The caller left out a spread that belongs to the statistic: a tolerated deviation. */
+  spreadOmitted: boolean;
+  /** Which values are written on the chart, and whether "all" fell back because they do not fit. */
+  values: ValuesMode;
+  valuesFallback: boolean;
   slots: Slot[];
   /** Slots whose days all have a value. */
   points: SlotPoint[];
@@ -80,8 +88,8 @@ export interface LabelContext {
 
 export const WIDTH = 640;
 export const PLOT_HEIGHT = 200;
-/** Fixed geometry (autosize none): room for the y labels left and the last value's label right. */
-export const PADDING = { left: 52, right: 64, top: 14, bottom: 30 };
+/** Fixed geometry (autosize none): room for the y labels left, half a value label right, the time axis below. */
+export const PADDING = { left: 52, right: 28, top: 14, bottom: AXIS_HEIGHT };
 export const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
 /** At most this many labels on the time axis. */
 export const MAX_TICKS = 8;
@@ -123,13 +131,16 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   // ----- What a family adds -----
 
   protected abstract readonly periodDescription: string;
+  /** Which values the family writes on the chart by default (REQ-022). */
+  protected abstract readonly defaultValues: ValuesMode;
   /** Contract properties of the family, such as window or unit, and its horizon. */
   protected abstract periodSchema(): { properties: Record<string, object>; required: string[] };
   /** The slots, oldest first, ending with the one that contains the reference day. */
   protected abstract slots(reference: number, request: Request): Slot[];
   /** Number of slots between two labelled ticks. */
   protected abstract tickStep(request: Request, slots: number, slotWidth: number): number;
-  protected abstract tickLabel(slot: Slot, context: LabelContext, request: Request): string;
+  /** The label of a block on the time axis; a second line names the year. */
+  protected abstract tickLabel(slot: Slot, context: LabelContext, request: Request): string[];
   /** What a slot is on hover, e.g. "23 sep (−7d)" or "week 39 (21–27 sep)". */
   protected abstract slotLabel(slot: Slot, context: LabelContext, request: Request): string;
   /** The reading cue of the family, e.g. "rolling 7d average". */
@@ -144,6 +155,16 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   /** Rules that only hold for the family, e.g. a window in multiples of 7. */
   protected periodRules(_request: Request): IssueSpec[] {
     return [];
+  }
+
+  /** Whether the statistic has a spread at all; a single day has none (REQ-020). */
+  protected spreadApplies(_request: Request): boolean {
+    return true;
+  }
+
+  /** Whether a block starts a new year: a calendar axis marks that with a longer, darker tick. */
+  protected startsYear(_slot: Slot, _request: Request): boolean {
+    return false;
   }
 
   /** Extra facts on hover; by default how far a running period is. */
@@ -187,6 +208,11 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         },
         ...period.properties,
         spread: this.statistic.spreadSchema(),
+        values: {
+          description: 'Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).',
+          enum: [...VALUES_MODES],
+          default: this.defaultValues,
+        },
         valueAxis: {
           description: 'zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.',
           enum: ['zero', 'zoom'],
@@ -256,7 +282,8 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       if (typeof values.get(day) !== 'number') absentDays.push(day);
     }
 
-    const withSpread = (request.spread ?? this.statistic.spreadName) !== 'none';
+    const spreadAsked = (request.spread ?? this.statistic.spreadName) !== 'none';
+    const withSpread = this.spreadApplies(request) && spreadAsked;
     const points: SlotPoint[] = [];
     const missing: number[] = [];
     for (const slot of slots) {
@@ -270,6 +297,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       else points.push({ ...slot, ...this.statistic.summarize(slotValues, withSpread), days: slotValues.length });
     }
 
+    // "all" only while every value has room above its point; otherwise the family's default.
+    const asked = request.values ?? this.defaultValues;
+    const valuesFallback = asked === 'all' && PLOT_WIDTH / slots.length < MIN_WIDTH_FOR_ALL;
+
     return {
       reference,
       referenceIsYesterday: reference === yesterday,
@@ -278,6 +309,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       rangeDays,
       valuesInRange: rangeDays - absentDays.length,
       withSpread,
+      spreadOmitted: this.spreadApplies(request) && !spreadAsked,
+      values: valuesFallback ? this.defaultValues : asked,
+      valuesFallback,
       slots,
       points,
       missing,
@@ -337,8 +371,12 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     }
 
     issues.push(...this.periodRules(request));
-    if (!computed.withSpread) {
-      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/spread', learnMore: LEARNING_PLAN_LEVEL_1 });
+    // REQ-021: allowed, but discouraged with a red alert between the title and the chart.
+    if (computed.spreadOmitted) {
+      issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/spread', learnMore: LEARNING_PLAN_LEVEL_1, alert: true });
+    }
+    if (computed.valuesFallback) {
+      issues.push({ level: 'info', code: 'valuesAllTooDense', field: '/values', params: { values: computed.values } });
     }
     if (computed.ignoredAfterReference > 0) {
       issues.push({
@@ -361,21 +399,25 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const form = formFor(count, barWidth);
     const surface = color(tokens, 'surface');
     const focus = color(tokens, 'focus');
+    const labels = labelsFor(points, computed.values);
 
-    // Value axis: from zero, or zoomed with a zigzag and a bold first value.
+    // Value axis: from zero, or zoomed with a zigzag and a bold first value; high enough that every
+    // value label fits above its point.
     const highest = Math.max(...points.map((point) => point.spread?.hi ?? point.centre));
     const lowest = Math.min(...points.map((point) => Math.max(0, point.spread?.lo ?? point.centre)));
-    const scale = valueScale(lowest, highest, request.valueAxis ?? 'zero');
+    const mode = request.valueAxis ?? 'zero';
+    let scale = valueScale(lowest, highest, mode);
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const needed = headroom(labels, highest, (scale.max - scale.min) / PLOT_HEIGHT);
+      if (needed <= scale.max) break;
+      scale = valueScale(lowest, needed, mode);
+    }
     const tickFormat = numberFormat(t.locale, decimalsOf(scale.ticks[1]! - scale.ticks[0]!));
     const yLabels = Object.fromEntries(scale.ticks.map((tick) => [String(tick), tickFormat.format(tick)]));
-    const valueFormat = numberFormat(t.locale, highest >= 100 ? 0 : 1);
-
-    // Time axis: the family chooses the step and the labels.
-    const bySlot = new Map(slots.map((slot) => [slot.rel, slot]));
-    const xTicks = ticksEvery(this.tickStep(request, count, slotWidth), count);
-    const xLabels = Object.fromEntries(
-      xTicks.map((rel, index) => [String(rel), this.tickLabel(bySlot.get(rel)!, { t, computed, isFirst: index === 0 }, request)]),
-    );
+    // Whole numbers stay whole (daily counts); otherwise one decimal below 100.
+    const whole = points.every((point) => [point.centre, point.spread?.lo ?? 0, point.spread?.hi ?? 0].every(Number.isInteger));
+    const valueFormat = numberFormat(t.locale, highest >= 100 || whole ? 0 : 1);
+    const perPixel = { x: count / PLOT_WIDTH, y: (scale.max - scale.min) / PLOT_HEIGHT };
 
     const x = {
       field: 'rel',
@@ -388,6 +430,21 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       scale: { domain: [scale.min, scale.max], nice: false, zero: false },
     });
 
+    // Time axis: the family chooses the step, the labels and where a year starts.
+    const bySlot = new Map(slots.map((slot) => [slot.rel, slot]));
+    const axis = timeAxis({
+      count,
+      slotWidth,
+      labels: ticksEvery(this.tickStep(request, count, slotWidth), count).map((rel, index) => ({
+        rel,
+        lines: this.tickLabel(bySlot.get(rel)!, { t, computed, isFirst: index === 0 }, request),
+      })),
+      yearStarts: slots.filter((slot) => this.startsYear(slot, request)).map((slot) => slot.rel),
+      x,
+      plotHeight: PLOT_HEIGHT,
+      tokens,
+    });
+
     // REQ-001: a time axis is always a line through the points, in both forms, also up to a running
     // period. Missing data breaks the line; it is never bridged.
     const line = withSegments(points);
@@ -397,7 +454,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const ownBar = (point: SlotPoint) => form === 'bars' || point.running || alone.has(point.rel);
     // Spread: a bar per point (shortened by half its width, so the round caps end exactly at the
     // spread), or a band under the line; a point that is not part of the band keeps its own bar.
-    const capPad = (barWidth / 2) * ((scale.max - scale.min) / PLOT_HEIGHT);
+    const capPad = (barWidth / 2) * perPixel.y;
     const bar = (point: SlotPoint) => {
       if (!point.spread) return [];
       const lo = Math.max(0, point.spread.lo) + capPad;
@@ -411,7 +468,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           .flatMap((point) => (point.spread ? [{ rel: point.rel, segment: point.segment, lo: Math.max(0, point.spread.lo), hi: point.spread.hi }] : []))
       : [];
     // Markers: every point while there is room; on a dense line only the points with their own bar
-    // and the last one, so the signature (REQ-006, REQ-008) stays visible.
+    // and the last one, so the signature (REQ-006, REQ-008) stays visible (REQ-017).
     const marked = points.filter((point) => ownBar(point) || point.rel === 0);
 
     const missing = runs(computed.missing).map(([from, to]) => ({ from: from - 0.5, to: to + 0.5, center: (from + to) / 2, slots: to - from + 1 }));
@@ -419,20 +476,20 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       .filter((stretch) => stretch.slots * slotWidth >= MIN_LABEL_WIDTH)
       .map((stretch) => ({ rel: stretch.center, label: t('chart.noData') }));
 
-    const last = points.find((point) => point.rel === 0);
-    const latest = last
-      ? [{
-          rel: 0,
-          centre: last.centre,
-          value: valueFormat.format(last.centre),
-          detail: [this.statistic.formatDetail(valueFormat, last), last.running ? t('chart.runningShort') : '']
-            .filter(Boolean)
-            .join(' · '),
-        }]
-      : [];
+    const values = valueLabels({
+      labels,
+      running: points.filter((point) => point.running),
+      statistic: this.statistic,
+      format: valueFormat,
+      t,
+      tokens,
+      x,
+      y,
+      perPixel: perPixel.y,
+      min: scale.min,
+    });
 
     // A zigzag at the start of the baseline: the value axis does not start at zero.
-    const perPixel = { x: count / PLOT_WIDTH, y: (scale.max - scale.min) / PLOT_HEIGHT };
     const left = -(count - 1) - 0.5;
     const zigzag = scale.zoomed
       ? [[0, 0], [2, 3], [5, -3], [8, 3], [10, 0]].map(([px, py], order) => ({
@@ -445,7 +502,6 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
     const fillByState = { condition: { test: 'datum.running', value: surface }, value: focus };
     const strokeByState = { condition: { test: 'datum.running', value: focus }, value: surface };
-    const textMark = { type: 'text', align: 'left', baseline: 'middle', dx: 10 } as const;
 
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
@@ -457,23 +513,24 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       config: vegaLiteConfig(tokens),
       datasets: {
         frame: [{ rel: left + 0.5, value: scale.min }],
+        ...axis.datasets,
         missing,
         missingLabels,
         bars,
         band,
         line,
         points: marked,
-        latest,
         mask,
         zigzag,
+        ...values.datasets,
       },
       layer: [
         {
-          // Both axes, with the ticks and labels computed above, on a layer that always exists.
+          // The baseline and the value axis, on a layer that always exists; the time axis has its own layers.
           data: { name: 'frame' },
           mark: { type: 'point', opacity: 0 },
           encoding: {
-            x: { ...x, axis: { values: xTicks, labelExpr: lookup(xLabels), title: null } },
+            x: { ...x, axis: { values: [], ticks: false, labels: false, title: null } },
             y: {
               ...y('value'),
               axis: {
@@ -485,6 +542,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
             },
           },
         },
+        ...axis.layers,
         {
           // Missing data is an outlined area, never a zero and never interpolated.
           data: { name: 'missing' },
@@ -534,17 +592,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           mark: { type: 'line', color: color(tokens, 'baseline'), strokeWidth: tokens.stroke.baseline, strokeJoin: 'miter' },
           encoding: { x, y: y('value'), order: { field: 'order' } },
         },
-        {
-          // The last value (10, bold) and its spread as a detail (8, muted).
-          data: { name: 'latest' },
-          mark: { ...textMark, dy: -6, fontSize: tokens.size.value, fontWeight: 'bold', color: color(tokens, 'text') },
-          encoding: { x, y: y('centre'), text: { field: 'value' } },
-        },
-        {
-          data: { name: 'latest' },
-          mark: { ...textMark, dy: 6, fontSize: tokens.size.detail, color: color(tokens, 'text/muted') },
-          encoding: { x, y: y('centre'), text: { field: 'detail' } },
-        },
+        ...values.layers,
       ],
     } as TopLevelSpec;
 
@@ -555,6 +603,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       .filter(Boolean)
       .join(' · ');
     const readingCue = request.measureType === 'unique' ? `${t('cue.unique')} · ${cue}` : cue;
+    const last = points.find((point) => point.rel === 0);
     const description = [
       t('desc.base', { title, cue: readingCue, date: localizeDay(t, computed.reference, 'long') }),
       last ? t('desc.latest', { stats: this.statistic.formatStats(t, valueFormat, last) }) : t('desc.latestMissing'),

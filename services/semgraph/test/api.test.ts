@@ -37,12 +37,15 @@ describe('API', () => {
     const body = (await app.inject('/semgraphs/movingWindowAverage')).json();
     assert.equal(body.answers, 'How does this evolve, without the daily noise?');
     assert.deepEqual(body.attributes.measureType, ['additive', 'unique']);
-    assert.equal(body.schema.properties.window.minimum, 2);
+    assert.equal(body.schema.properties.window.minimum, 1);
+    assert.deepEqual(body.schema.properties.values.enum, ['off', 'last', 'lastAndPrevious', 'all']);
+    assert.equal(body.schema.properties.values.default, 'last');
     assert.deepEqual(body.schema.properties.valueAxis.enum, ['zero', 'zoom']);
     const calendar = (await app.inject('/semgraphs/calendarMedian')).json();
     assert.deepEqual(calendar.schema.properties.unit.enum, ['week', 'month', 'quarter', 'year']);
     assert.deepEqual(calendar.schema.properties.spread.enum, ['iqr', 'none']);
     assert.equal(calendar.schema.properties.window, undefined);
+    assert.equal(calendar.schema.properties.values.default, 'lastAndPrevious');
     assert.ok(body.examples.some((entry: { name: string }) => entry.name === 'basic'));
   });
 

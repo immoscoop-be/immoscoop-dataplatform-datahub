@@ -44,13 +44,14 @@ attributes:
     question: Do you want the average or the median?
 
 axis:
-  today: today
+  now: now
   daysAgo: "−{n}d"
 
 cue:
   rolling:
     mean: rolling {window}d average
     median: rolling {window}d median
+    daily: daily values
   calendar:
     mean: daily average per {unit}
     median: daily median per {unit}
@@ -82,6 +83,7 @@ hover:
     rolling:
       mean: "{window}d average"
       median: "{window}d median"
+      daily: value
     calendar:
       mean: daily average
       median: daily median
@@ -97,8 +99,7 @@ calendar:
     year: year
   tick:
     week: W{week}
-    quarter: Q{quarter} {year}
-  withYear: "{label} {year}"
+    quarter: Q{quarter}
   none:
     week: not a single week
     month: not a single month
@@ -110,6 +111,7 @@ calendar:
     quarter: Q{quarter} {year}
 
 period:
+  day: a day
   window: a {window}-day window
   week: a week
   month: a month
@@ -253,15 +255,20 @@ issues:
     message: The average is shown without its spread, so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
     alternative: Use spread stddev.
     footer: average without spread
+    alert: "An average without its spread can mislead: you cannot see how far the daily values lie apart."
   medianWithoutSpread:
     message: The median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
     alternative: Use spread iqr.
     footer: median without spread
+    alert: "A median without its spread (P25–P75) can mislead: you cannot see how far the daily values lie apart."
 
   # Information: nothing is wrong, but the service did something you should know about.
   localeFallback:
     message: There are no texts for {locale}, so English is used.
   uniqueAggregationIgnored:
     message: uniqueAggregation only applies to unique counts and was ignored.
+  valuesAllTooDense:
+    message: "There are too many points to write every value on the chart; the default ({values}) is used."
+    alternative: Choose a shorter horizon, or a longer period.
   daysAfterReferenceIgnored:
     message: "{count} day(s) after the last complete day ({day}) were left out: the current day is not over yet."

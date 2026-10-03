@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "semgraph:movingWindowMedian/request",
   "title": "movingWindowMedian request",
-  "description": "A rolling window of days, per day on a relative time axis that ends at the last complete day. The median is a dot inside a wide rounded bar from P25 to P75 (linear interpolation, like PERCENTILE_CONT in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
+  "description": "Rolling windows of days as blocks that do not overlap, one point per window, on a relative time axis that ends at the last complete day. The median is a dot inside a wide rounded bar from P25 to P75 (linear interpolation, like PERCENTILE_CONT in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -44,16 +44,16 @@
       ]
     },
     "window": {
-      "description": "Length of the rolling window in days. The chart language uses multiples of 7.",
+      "description": "Length of the rolling window in days: 1 for the daily values, or a multiple of 7 (another length is a tolerated deviation).",
       "type": "integer",
-      "minimum": 2,
+      "minimum": 1,
       "maximum": 364
     },
     "horizon": {
-      "description": "Number of days on the relative axis, ending at the last complete day.",
+      "description": "Number of windows (points) on the relative axis, the last one ending at the last complete day.",
       "type": "integer",
       "minimum": 2,
-      "maximum": 728
+      "maximum": 730
     },
     "spread": {
       "description": "Spread around the median: iqr (the chart language default) or none.",
@@ -62,6 +62,16 @@
         "none"
       ],
       "default": "iqr"
+    },
+    "values": {
+      "description": "Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).",
+      "enum": [
+        "off",
+        "last",
+        "lastAndPrevious",
+        "all"
+      ],
+      "default": "last"
     },
     "valueAxis": {
       "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",

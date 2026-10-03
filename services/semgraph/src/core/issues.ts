@@ -21,6 +21,11 @@ export interface IssueSpec {
   field?: string;
   params?: Record<string, IssueParam>;
   learnMore?: string;
+  /**
+   * A deviation that is shown as a red alert between the title and the chart, besides the note in
+   * the footer: allowed, but discouraged (REQ-021). Its text is `issues.<code>.alert`.
+   */
+  alert?: boolean;
 }
 
 /** An issue as the caller receives it: in plain language, in the requested locale. */

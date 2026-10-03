@@ -4,7 +4,7 @@
   "title": "Unieke bezoekers per dag (voorbeelddata)",
   "measureType": "unique",
   "window": 7,
-  "horizon": 28,
+  "horizon": 7,
   "locale": "nl-BE",
   "context": {
     "domain": "Web",
@@ -12,6 +12,15 @@
     "reliability": "voorbeelddata"
   },
   "data": [
+    { "day": "2026-08-13", "value": 1813 },
+    { "day": "2026-08-14", "value": 1776 },
+    { "day": "2026-08-15", "value": 666 },
+    { "day": "2026-08-16", "value": 1036 },
+    { "day": "2026-08-17", "value": 1591 },
+    { "day": "2026-08-18", "value": 1776 },
+    { "day": "2026-08-19", "value": 1961 },
+    { "day": "2026-08-20", "value": 1739 },
+    { "day": "2026-08-21", "value": 1554 },
     { "day": "2026-08-22", "value": 1510 },
     { "day": "2026-08-23", "value": 1362 },
     { "day": "2026-08-24", "value": 2213 },

@@ -79,7 +79,12 @@ describe('calendar periods chart', () => {
 
   it('draws the running period hollow and says so, on the label and on hover', async () => {
     const { svg } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
-    assert.match(svg!, />± 2,1 · lopend</);
+    // REQ-022: the last final week in bold with its spread, the running week next to it in grey;
+    // "lopend" under the running point (REQ-000).
+    assert.match(svg!, /font-weight="bold"[^>]*>44,0</);
+    assert.match(svg!, />± 12,4</);
+    assert.match(svg!, /fill="#6b7480"[^>]*>53,7</);
+    assert.match(svg!, />lopend</);
     assert.match(svg!, /aria-label="week 40 \(28 sep–4 okt\), gemiddelde per dag: 53,7, ±1 sd: 2,1, lopend: 3 van 7 dagen"/);
     // One hollow dot: filled with the surface colour, outlined in the focus colour.
     assert.equal([...svg!.matchAll(/fill="#ffffff" stroke="#dd2c88"/g)].length, 1);
@@ -87,14 +92,22 @@ describe('calendar periods chart', () => {
 
   it('labels weeks, months and quarters, with the year where it changes', async () => {
     const { svg: weekly } = await runPipeline(await testRegistry(), await weeks(), { now: NOW });
-    assert.match(weekly!, />W29 2026</);
+    // The year on a second line, on the first label and at a year change (REQ-000).
+    const twoLines = (label: string, year: string) => new RegExp(`<tspan>${label}</tspan><tspan x="0" dy="12">${year}</tspan>`);
+    const yearTicks = (svg: string) => [...svg.matchAll(/<line transform="translate\([-\d.]+,196\)" x2="0" y2="12" stroke="#3c444e"/g)].length;
+    assert.match(weekly!, twoLines('W29', '2026'));
     assert.match(weekly!, />W40</);
+    assert.equal(yearTicks(weekly!), 0);
     const { svg: monthly } = await runPipeline(await testRegistry(), await example('months', 'calendarAverage'), { now: NOW });
-    assert.match(monthly!, />okt 2025</);
-    assert.match(monthly!, />jan 2026</);
+    assert.match(monthly!, twoLines('okt', '2025'));
+    assert.match(monthly!, twoLines('jan', '2026'));
     assert.match(monthly!, />sep</);
+    // A longer, darker tick at the year change, between December and January.
+    assert.equal(yearTicks(monthly!), 1);
     const { svg: quarterly } = await runPipeline(await testRegistry(), await example('quarters', 'calendarMedian'), { now: NOW });
-    assert.match(quarterly!, />K3 2026</);
+    assert.match(quarterly!, twoLines('K1', '2026'));
+    assert.match(quarterly!, />K3</);
+    assert.equal(yearTicks(quarterly!), 1);
     assert.match(quarterly!, /mediaan per dag, per kwartaal · P25–P75/);
   });
 });

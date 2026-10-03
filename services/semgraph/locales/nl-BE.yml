@@ -44,13 +44,14 @@ attributes:
     question: Wil je het gemiddelde of de mediaan?
 
 axis:
-  today: vandaag
+  now: nu
   daysAgo: "−{n}d"
 
 cue:
   rolling:
     mean: voortschrijdend gemiddelde {window}d
     median: voortschrijdende mediaan {window}d
+    daily: dagwaarden
   calendar:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
@@ -82,6 +83,7 @@ hover:
     rolling:
       mean: "gemiddelde {window}d"
       median: "mediaan {window}d"
+      daily: waarde
     calendar:
       mean: gemiddelde per dag
       median: mediaan per dag
@@ -97,8 +99,7 @@ calendar:
     year: jaar
   tick:
     week: W{week}
-    quarter: K{quarter} {year}
-  withYear: "{label} {year}"
+    quarter: K{quarter}
   none:
     week: geen enkele week
     month: geen enkele maand
@@ -110,6 +111,7 @@ calendar:
     quarter: K{quarter} {year}
 
 period:
+  day: een dag
   window: een venster van {window} dagen
   week: een week
   month: een maand
@@ -250,14 +252,19 @@ issues:
     message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread stddev.
     footer: gemiddelde zonder spreiding
+    alert: "Een gemiddelde zonder spreiding kan misleiden: je ziet niet hoe ver de dagwaarden uit elkaar liggen."
   medianWithoutSpread:
     message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
     alternative: Gebruik spread iqr.
     footer: mediaan zonder spreiding
+    alert: "Een mediaan zonder spreiding (P25–P75) kan misleiden: je ziet niet hoe ver de dagwaarden uit elkaar liggen."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.
   uniqueAggregationIgnored:
     message: uniqueAggregation geldt enkel voor unieke aantallen en werd genegeerd.
+  valuesAllTooDense:
+    message: "Er zijn te veel punten om elke waarde op de grafiek te schrijven; de standaard ({values}) wordt gebruikt."
+    alternative: Kies een kortere horizon, of een grotere periode.
   daysAfterReferenceIgnored:
     message: "{count} dag(en) na de laatste volledige dag ({day}) werden weggelaten: de lopende dag is nog niet voorbij."

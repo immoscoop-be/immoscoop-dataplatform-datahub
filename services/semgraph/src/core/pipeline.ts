@@ -80,10 +80,14 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
   const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
   const plot = await renderVegaLite(drawing.vegaLite);
   const deviations = issues.filter((issue) => issue.level === 'deviation');
+  const alerts = deviations
+    .filter((issue) => issue.alert)
+    .map((issue) => t(`issues.${issue.code}.alert`, localizeParams(t, issue.params)));
   const svg = composeSvg({
     width: drawing.width,
     title: drawing.title,
     readingCue: drawing.readingCue,
+    alerts,
     description: drawing.description,
     plot: {
       svg: plot.svg,

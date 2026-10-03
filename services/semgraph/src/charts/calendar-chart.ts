@@ -3,6 +3,7 @@ import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { CALENDAR_UNITS, isoWeek, parts, periodStart, shiftPeriod, type CalendarUnit } from './calendar.ts';
 import { TimeAxisChart, type LabelContext, type Slot, type TimeAxisRequest } from './time-axis-chart.ts';
+import type { ValuesMode } from './value-labels.ts';
 
 export interface CalendarRequest extends TimeAxisRequest {
   unit: CalendarUnit;
@@ -15,8 +16,8 @@ const TICK_MULTIPLES: Record<CalendarUnit, number[]> = {
   quarter: [1, 2, 4],
   year: [1, 2, 5, 10],
 };
-/** Estimated width of a tick label in pixels plus some air, e.g. "W40", "sep", "K3 2026", "2026". */
-const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter: 52, year: 36 };
+/** Estimated width of a tick label in pixels plus some air, e.g. "W40", "sep", "K3", "2026". */
+const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter: 30, year: 36 };
 
 /**
  * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, ending with the
@@ -26,6 +27,7 @@ const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter
 export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   protected readonly periodDescription =
     'Calendar periods (ISO weeks, months, quarters or years), ending with the period of the last complete day; a period that is still running is drawn hollow.';
+  protected readonly defaultValues: ValuesMode = 'lastAndPrevious';
 
   protected periodSchema() {
     return {
@@ -61,23 +63,36 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
     return multiples.find(fits) ?? multiples.at(-1)!;
   }
 
-  /** "W40", "sep", "K3 2026" or "2026"; the leftmost label and each new year name the year. */
-  protected tickLabel(slot: Slot, { t, isFirst }: LabelContext, { unit }: CalendarRequest): string {
+  /** "W40", "sep", "K3" or "2026"; the leftmost label and each new year name the year on a second line. */
+  protected tickLabel(slot: Slot, { t, isFirst }: LabelContext, request: CalendarRequest): string[] {
     const { year, month, quarter } = parts(slot.first);
-    switch (unit) {
+    const withYear = (label: string, labelYear: number) => (isFirst || this.startsYear(slot, request) ? [label, String(labelYear)] : [label]);
+    switch (request.unit) {
       case 'week': {
         const week = isoWeek(slot.first);
-        const label = t('calendar.tick.week', { week: week.week });
-        return isFirst || week.week === 1 ? t('calendar.withYear', { label, year: week.year }) : label;
+        return withYear(t('calendar.tick.week', { week: week.week }), week.year);
       }
-      case 'month': {
-        const label = t(`date.month.${month}`);
-        return isFirst || month === 1 ? t('calendar.withYear', { label, year }) : label;
-      }
+      case 'month':
+        return withYear(t(`date.month.${month}`), year);
       case 'quarter':
-        return t('calendar.tick.quarter', { quarter, year });
+        return withYear(t('calendar.tick.quarter', { quarter }), year);
       case 'year':
-        return String(year);
+        return [String(year)];
+    }
+  }
+
+  /** The first ISO week, January or the first quarter; with whole years every block is a year. */
+  protected override startsYear(slot: Slot, { unit }: CalendarRequest): boolean {
+    const { month, quarter } = parts(slot.first);
+    switch (unit) {
+      case 'week':
+        return isoWeek(slot.first).week === 1;
+      case 'month':
+        return month === 1;
+      case 'quarter':
+        return quarter === 1;
+      case 'year':
+        return false;
     }
   }
 

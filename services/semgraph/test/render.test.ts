@@ -39,8 +39,8 @@ describe('render', async () => {
     assert.match(svg!, /<a href="https:\/\/immoscoop\.atlassian\.net\/wiki\/spaces\/DATA\/pages\/1354629146">/);
     assert.match(svg!, />grafiektaal v0</);
     assert.match(svg!, /data-tokens-version="0\.0\.0-provisional"/);
-    // The reference day is yesterday, so the 0 tick reads "vandaag".
-    assert.match(svg!, />vandaag</);
+    // The reference day is yesterday, so the last window reads "nu" (REQ-019).
+    assert.match(svg!, />nu</);
   });
 
   it('shows missing days as missing data, never as zero', async () => {
@@ -57,12 +57,33 @@ describe('render', async () => {
 
   it('draws a long horizon as a line with a band, and thins out the time axis', async () => {
     const { svg } = await render(await example('long-horizon'));
-    assert.doesNotMatch(svg!, /stroke="#f2afd2" stroke-width="4"/); // no bar per day
+    assert.doesNotMatch(svg!, /stroke="#f2afd2" stroke-width="4"/); // no bar per window
     assert.match(svg!, /mark-area role-mark/);
     assert.match(svg!, /mark-line role-mark/);
-    for (const label of ['−168d', '−140d', '−112d', '−84d', '−56d', '−28d']) assert.match(svg!, new RegExp(`>${label}<`));
+    for (const label of ['−455d', '−364d', '−273d', '−182d', '−91d']) assert.match(svg!, new RegExp(`>${label}<`));
     assert.doesNotMatch(svg!, />−7d</);
-    assert.ok(hoverLabels(svg!).includes('16 jul (−76d), geen data: 3 dagen ontbreken, de eerste op 14 jul'));
+    // Two windows miss data: one misses 14 and 15 July, the next one 16 July.
+    assert.ok(hoverLabels(svg!).includes('15 jul (−77d), geen data: 2 dagen ontbreken, de eerste op 14 jul'));
+    assert.ok(hoverLabels(svg!).includes('22 jul (−70d), geen data: 16 jul ontbreekt'));
+  });
+
+  it('shows a red alert between the title and the chart when the spread is left out (REQ-021)', async () => {
+    const result = await render(await example('without-spread'));
+    assert.deepEqual(result.deviations, ['meanWithoutSpread']);
+    assert.match(result.svg!, /fill="#c8102e">Een gemiddelde zonder spreiding kan misleiden: je ziet niet hoe ver de dagwaarden uit/);
+    // The footer still says that the chart is outside the chart language.
+    assert.match(result.svg!, /Buiten de grafiektaal: gemiddelde zonder spreiding\./);
+    assert.doesNotMatch((await render(await example('window-10'))).svg!, /#c8102e/);
+  });
+
+  it('writes no values with values off, and falls back when all values do not fit (REQ-022)', async () => {
+    const off = await render({ ...(await example('basic')), values: 'off' });
+    assert.doesNotMatch(off.svg!, />45,9</);
+    const dense = await render({ ...(await example('long-horizon')), values: 'all' });
+    assert.deepEqual(dense.report.issues.map((issue) => issue.code), ['valuesAllTooDense']);
+    assert.match(dense.report.issues[0]!.message, /de standaard \(last\) wordt gebruikt/);
+    const all = await render(await example('months-values-all', 'calendarAverage'));
+    assert.equal([...all.svg!.matchAll(/font-weight="bold"[^>]*>\d+,\d</g)].length, 12);
   });
 
   it('a median is a dot in a wide bar, a mean a diamond over a thin one (REQ-006, REQ-008)', async () => {

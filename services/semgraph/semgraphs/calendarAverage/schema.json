@@ -66,6 +66,16 @@
       ],
       "default": "stddev"
     },
+    "values": {
+      "description": "Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).",
+      "enum": [
+        "off",
+        "last",
+        "lastAndPrevious",
+        "all"
+      ],
+      "default": "lastAndPrevious"
+    },
     "valueAxis": {
       "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",
       "enum": [

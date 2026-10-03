@@ -13,7 +13,8 @@
     "baseline": "#3c444e",
     "grid": "#eef0f2",
     "badge/text": "#3c444e",
-    "badge/surface": "#f3f5f6"
+    "badge/surface": "#f3f5f6",
+    "alert": "#c8102e"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",

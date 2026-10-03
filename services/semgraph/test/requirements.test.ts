@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { SHAPES } from '../src/charts/signatures.ts';
+import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
 import { createTranslator } from '../src/core/i18n.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
@@ -23,6 +24,9 @@ interface Drawn {
   name: string;
   semgraph: string;
   statistic: string;
+  request: Record<string, unknown>;
+  computed: TimeAxisComputed;
+  deviations: string[];
   drawing: Drawing;
   datasets: Record<string, Record<string, unknown>[]>;
   layers: Layer[];
@@ -45,6 +49,9 @@ async function drawnExamples(): Promise<Drawn[]> {
         name: `${id}/${name}`,
         semgraph: id,
         statistic: (implementation as unknown as { statistic: { id: string } }).statistic.id,
+        request: request as Record<string, unknown>,
+        computed: computed as TimeAxisComputed,
+        deviations: result.deviations,
         drawing,
         datasets: spec.datasets,
         layers: flatten(spec.layer),
@@ -114,7 +121,7 @@ describe('requirements of the chart language', async () => {
     assert.match(quarters.svg, /d="M3\.5,0A3\.5,3\.5,0,1,1,-3\.5,0A3\.5,3\.5,0,1,1,3\.5,0" fill="#dd2c88"/);
   });
 
-  it('REQ-006 and REQ-008: on a dense line the last point still shows its shape', () => {
+  it('REQ-017: on a dense line the last point still shows its shape (REQ-006, REQ-008)', () => {
     const long = examples.find((drawn) => drawn.name === 'movingWindowAverage/long-horizon')!;
     assert.ok((long.datasets.points as { rel: number }[]).some((point) => point.rel === 0));
     assert.ok(long.datasets.points!.length < long.datasets.line!.length / 10, 'not a marker on every point of a dense line');
@@ -144,5 +151,69 @@ describe('requirements of the chart language', async () => {
         assert.equal(container, 'area', `${drawn.name}: a ${container} filled with the light colour`);
       }
     }
+  });
+  it('REQ-018: every point is a block of time; blocks touch but never overlap, and a rolling block is one window', () => {
+    for (const drawn of examples) {
+      const { slots } = drawn.computed;
+      slots.forEach((slot, index) => {
+        if (index > 0) assert.equal(slot.first, slots[index - 1]!.fullLast + 1, `${drawn.name}: block ${slot.rel}`);
+        if (typeof drawn.request.window === 'number') assert.equal(slot.last - slot.first + 1, drawn.request.window);
+      });
+      // Ticks mark the boundaries between blocks, labels sit in the middle of a block.
+      const labels = drawn.datasets.axisLabels as { rel: number }[];
+      assert.ok(labels.every((label) => Number.isInteger(label.rel)), drawn.name);
+      const ticks = drawn.datasets.axisTicks as { rel: number }[];
+      if (drawn.computed.slots.length <= 46) assert.ok(ticks.every((tick) => !Number.isInteger(tick.rel)), `${drawn.name}: ticks between blocks`);
+    }
+  });
+
+  it('REQ-019: the last window of a rolling axis is "nu" when it ends yesterday', () => {
+    for (const drawn of examples.filter((candidate) => candidate.semgraph.startsWith('movingWindow'))) {
+      const last = (drawn.datasets.axisLabels as { rel: number; lines: string[] }[]).at(-1)!;
+      assert.equal(last.rel, 0);
+      assert.deepEqual(last.lines, [drawn.request.locale === 'en' ? 'now' : 'nu'], drawn.name);
+    }
+  });
+
+  it('REQ-020: a window of one day shows the daily values, conform, without spread', () => {
+    const daily = examples.find((drawn) => drawn.name === 'movingWindowAverage/daily')!;
+    assert.deepEqual(daily.deviations, []);
+    assert.equal(daily.drawing.readingCue, 'dagwaarden');
+    assert.equal(daily.datasets.bars!.length + daily.datasets.band!.length, 0);
+  });
+
+  it('REQ-021: a mean or median without its spread is drawn with a red alert between the title and the chart', () => {
+    const alert = color(tokens, 'alert');
+    for (const drawn of examples) {
+      const withoutSpread = drawn.deviations.some((code) => code.endsWith('WithoutSpread'));
+      assert.equal(drawn.svg.includes(`fill="${alert}"`), withoutSpread, drawn.name);
+      if (withoutSpread) {
+        const alertAt = drawn.svg.indexOf(`fill="${alert}"`);
+        assert.ok(alertAt > drawn.svg.indexOf(drawn.drawing.readingCue) && alertAt < drawn.svg.indexOf('class="marks"'), `${drawn.name}: between title and chart`);
+      }
+    }
+  });
+
+  it('REQ-022: the values on the chart follow the mode, centred above their point', () => {
+    for (const drawn of examples) {
+      const strong = drawn.datasets.valuesStrong as { rel: number; y: number }[];
+      const muted = drawn.datasets.valuesMuted as { rel: number; y: number }[];
+      const points = drawn.computed.points;
+      const mode = drawn.computed.values;
+      assert.equal(mode, drawn.request.values ?? (drawn.semgraph.startsWith('calendar') ? 'lastAndPrevious' : 'last'), drawn.name);
+      if (mode === 'all') assert.equal(strong.length + muted.length, points.length, drawn.name);
+      else if (mode === 'off') assert.equal(strong.length + muted.length, 0, drawn.name);
+      else {
+        assert.ok(strong.length <= 1 && muted.length <= (mode === 'lastAndPrevious' ? 1 : 0), drawn.name);
+        if (points.some((point) => point.rel === 0)) assert.equal(strong.length + muted.length >= 1, true, drawn.name);
+      }
+      for (const label of [...strong, ...muted]) {
+        const point = points.find((candidate) => candidate.rel === label.rel)!;
+        assert.ok(label.y > (point.spread?.hi ?? point.centre), `${drawn.name}: label above point ${label.rel}`);
+      }
+    }
+    const weeks = examples.find((drawn) => drawn.name === 'calendarAverage/weeks')!;
+    assert.deepEqual((weeks.datasets.valuesStrong as { rel: number }[]).map((label) => label.rel), [-1]);
+    assert.deepEqual((weeks.datasets.valuesMuted as { rel: number }[]).map((label) => label.rel), [0]);
   });
 });

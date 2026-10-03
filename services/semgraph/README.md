@@ -17,8 +17,8 @@ as one Docker image:
 
 | Semgraph | Per slot | Drawn as |
 | --- | --- | --- |
-| `movingWindowAverage` | per day, the mean of the window ending on it | line of diamonds over thin bars, ±1 sd |
-| `movingWindowMedian` | per day, the median of the window ending on it | line of dots in wide bars, P25–P75 |
+| `movingWindowAverage` | per window of days (blocks that do not overlap), the mean of its days | line of diamonds over thin bars, ±1 sd |
+| `movingWindowMedian` | per window of days (blocks that do not overlap), the median of its days | line of dots in wide bars, P25–P75 |
 | `calendarAverage` | per ISO week, month, quarter or year, the mean of its days | line of diamonds over thin bars, ±1 sd |
 | `calendarMedian` | per ISO week, month, quarter or year, the median of its days | line of dots in wide bars, P25–P75 |
 
@@ -109,7 +109,7 @@ All four share one contract, composed by their classes and written to `semgraphs
   "measureType": "additive",
   "window": 7,
   "spread": "stddev",
-  "horizon": 28,
+  "horizon": 7,
   "format": "svg",
   "locale": "nl-BE",
   "data": [
@@ -121,10 +121,11 @@ All four share one contract, composed by their classes and written to `semgraphs
 
 | Field | Moving window | Calendar |
 | --- | --- | --- |
-| `window` | days per window, 2–364 (multiples of 7) | – |
+| `window` | days per window: 1 (the daily values) or a multiple of 7; 2–364 otherwise a tolerated deviation | – |
 | `unit` | – | `week` (ISO, Monday–Sunday), `month`, `quarter`, `year` |
-| `horizon` | days on the axis, 2–728 | periods on the axis, 2–120 |
+| `horizon` | windows on the axis, 2–730 | periods on the axis, 2–120 |
 | `spread` | average: `stddev` or `none`; median: `iqr` or `none` | same |
+| `values` | `off`, `last` (default), `lastAndPrevious`, `all` | same, default `lastAndPrevious` |
 
 Shared and optional: `title`; `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts);
 `valueAxis` (`zero`, the default, or `zoom`); `context` for the footer (`domain`, `dataset`, `owner`,
@@ -155,25 +156,33 @@ ORDER BY day
 
 What the service does:
 
-1. "Today" is the last day in the data, but never the running day in Brussels, which is not complete yet. The 0
-   tick of a moving window reads "today" when that is yesterday, and the date otherwise.
-2. Slots: a moving window has one slot per day, summarizing the `window` days that end on it. A calendar chart has
-   one slot per period, ending with the period of the last complete day. While that period is not over, it is
-   **running**: its value covers the days so far, its point is hollow, and the label says "current" ("lopend";
-   on hover: "running: 3 of 7 days").
+1. "Today" is the last day in the data, but never the running day in Brussels, which is not complete yet. The last
+   window of a moving window reads "now" ("nu") when it ends yesterday, and its date otherwise (REQ-019).
+2. Slots: every point is a block of time (REQ-018). A moving window has one block per window, blocks that do not
+   overlap, the last one ending on the last complete day: 7 windows of 7 days run from −42d to "nu". A window of
+   one day shows the daily values, without spread (REQ-020). A calendar chart has one block per period, ending
+   with the period of the last complete day. While that period is not over, it is **running**: its value covers
+   the days so far, its point is hollow, and "current" ("lopend") stands under it (on hover: "running: 3 of 7
+   days").
 3. Statistics, the same for both families: the mean with the sample standard deviation (n − 1, as `STDDEV` in
    BigQuery), or the median with P25–P75 (linear interpolation, as `PERCENTILE_CONT`). Tests compare with
-   BigQuery's output, also per ISO week. A slot with a missing day has no point: one missing day leaves a gap of
-   `window` points in a moving window, and removes its whole period in a calendar chart.
+   BigQuery's output, also per ISO week. A block with a missing day has no point: one missing day removes its
+   window or its period, never more.
 4. Rules: refusal for a measure type the metadata does not allow, unique counts without `uniqueAggregation`,
    uniques over the period, fewer than `minimumPoints` values in the days the chart uses, or no complete slot at
-   all. Tolerated deviation for a window that is not a multiple of 7, or a mean or median without its spread.
+   all. Tolerated deviation for a window that is not 1 or a multiple of 7, or a mean or median without its
+   spread; the latter also gets a red alert between the title and the chart: allowed, but discouraged (REQ-021).
 5. Drawing: always a line through the points, broken where data is missing and never bridged (REQ-001); the
    centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), filled when final and hollow while
    running; a thin bar for ±1 sd or a wide rounded bar for P25–P75, in the light tint of the focus colour, which
    is used for spread only (REQ-009); never a bar for a value on the time axis (REQ-002); missing stretches as
-   an outlined area labelled "no data"; the last value (bold) with its spread (detail); both axes labelled; a
-   darker, thicker baseline.
+   an outlined area labelled "no data"; both axes labelled; a darker, thicker baseline. The time axis as in
+   Figma: ticks on the boundaries between blocks, labels in the middle of a block, the year on a second line on
+   the first label and at a year change, which gets a longer, darker tick.
+   Values (REQ-022), centred above the point with the spread as a detail: `last` for a moving window, and
+   `lastAndPrevious` for a calendar chart (the last final value in bold, a running one next to it in grey);
+   `off`; or `all`, only while every point has 40 pixels, otherwise the default with a message. The value axis
+   grows until every label fits.
 6. Value axis: from zero by default. With `"valueAxis": "zoom"` it starts at a round value just below the data,
    which the chart language allows for positions such as averages and medians; the baseline then starts with a
    short zigzag and the first axis value is bold. When the round start is zero anyway, it stays at zero.
@@ -185,7 +194,7 @@ What the service does:
    focus colour around the point, and a box centred on the slot, above the spread or below it when there is no
    room, always inside the plot:
    `23 sep (−7d)` (bold), `gemiddelde 7d: 43,7`, `±1 sd: 12,2`, `venster 17–23 sep`; for a slot without data
-   `17 sep (−13d)`, `geen data: 15 sep ontbreekt`.
+   `16 sep (−14d)`, `geen data: 15 sep ontbreekt`.
    - Positions come from Vega's own scales (`view.scale('x')`, `view.scale('y')` after `toSVG`); a test checks
      that every ring lies on Vega's point within 0.01 px.
    - CSS `:hover` and `:focus`, every column with `tabindex="0"`: a tap on mobile shows it, a tap elsewhere hides
@@ -202,9 +211,9 @@ What the service does:
    becomes a band along the line, in the same colours (the learning material: spread "as a band around a line or
    as a line around a point"), and only the last point, a lone point between two gaps and a running period keep
    their marker, so the shape of the statistic stays visible. Lines and bands never bridge a gap; a lone point
-   and a running period keep their own bar. A moving window keeps at most eight labels, in multiples of the
-   window (7, 14, 28, 91, … days); a calendar chart labels every period that fits ("W40", "sep", "K3 2026",
-   "2026"), naming the year at the start and where it changes. See `examples/long-horizon.json` (182 days).
+   and a running period keep their own bar. A moving window keeps at most eight labels, every 1, 2, 4, 13, 26 or
+   52 windows (daily values per week); a calendar chart labels every period that fits ("W40", "sep", "K3",
+   "2026"). Narrow blocks get their ticks under the labels. See `examples/long-horizon.json` (78 weeks).
 
 ## How it is built
 
@@ -212,7 +221,7 @@ The charts are classes, so nothing is written twice:
 
 ```text
 TimeAxisChart (src/charts/time-axis-chart.ts)    contract, reference day, strict slots, rules, value axis, hover lines
-├── MovingWindowChart                             slots per day over a rolling window, relative axis
+├── MovingWindowChart                             blocks of a rolling window that do not overlap, relative axis
 │   ├── MovingWindowAverage   ── uses Average
 │   └── MovingWindowMedian    ── uses Median
 └── CalendarChart                                 slots per ISO week, month, quarter or year, running period
@@ -225,7 +234,8 @@ Statistic (src/charts/statistics.ts)              centre, spread, bar width, sha
 ```
 
 The shape of a point per kind of number (square for an amount, diamond for a mean, dot for a median) is defined
-once, in `src/charts/signatures.ts`.
+once, in `src/charts/signatures.ts`. The time axis (`src/charts/time-axis.ts`) and the value labels
+(`src/charts/value-labels.ts`) are drawn by helpers that every family shares.
 
 The statistic is its own hierarchy, used by both families: with single inheritance alone, the mean and median code
 would have to be written once per family. A family decides which days a slot summarizes and how slots are
@@ -266,8 +276,8 @@ the pages Anatomy and Line charts, and with the team:
 
 1. Missing points as an outlined area labelled "no data" (the cover says "an outlined area is missing data").
 2. A strict window (an incomplete window has no point), rather than a hollow dot for an incomplete window.
-3. `minimumPoints` counts the values in the horizon + window − 1 days the chart uses; n − 1; a value axis from
-   zero; no rule of its own for the horizon.
+3. `minimumPoints` counts the values in the horizon × window days the chart uses (so daily values need a horizon
+   of at least 28 days); n − 1; a value axis from zero; no rule of its own for the horizon.
 4. Conformance check 3 sharpened to "disjoint".
 5. The form of reading cue, footer and version label ("chart language v0"), still open in Figma.
 6. All token values except focus, text, text/muted, surface and badge, which come from Figma.

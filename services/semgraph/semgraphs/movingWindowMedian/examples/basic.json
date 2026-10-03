@@ -5,7 +5,7 @@
   "measureType": "additive",
   "window": 7,
   "spread": "iqr",
-  "horizon": 28,
+  "horizon": 7,
   "format": "svg",
   "locale": "nl-BE",
   "context": {
@@ -14,6 +14,15 @@
     "reliability": "voorbeelddata"
   },
   "data": [
+    { "day": "2026-08-13", "value": 40 },
+    { "day": "2026-08-14", "value": 49 },
+    { "day": "2026-08-15", "value": 18 },
+    { "day": "2026-08-16", "value": 23 },
+    { "day": "2026-08-17", "value": 54 },
+    { "day": "2026-08-18", "value": 42 },
+    { "day": "2026-08-19", "value": 53 },
+    { "day": "2026-08-20", "value": 47 },
+    { "day": "2026-08-21", "value": 44 },
     { "day": "2026-08-22", "value": 30 },
     { "day": "2026-08-23", "value": 26 },
     { "day": "2026-08-24", "value": 49 },
