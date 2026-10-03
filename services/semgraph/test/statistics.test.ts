@@ -30,4 +30,23 @@ describe('statistics', () => {
     const tokens = { stroke: { spread: 4, spreadWide: 9 } } as never;
     assert.ok(new Average().barWidth(tokens) < new Median().barWidth(tokens));
   });
+
+  it('REQ-081: on a time axis, few observations against the period before and after, so a trend does not trigger it', () => {
+    const median = new Median();
+    const points = (ns: number[]) => ns.map((n, key) => ({ key, n }));
+    // A steady rise: every point is more than half of its neighbours, also the first ones.
+    assert.deepEqual(median.fewObservations(points([20, 30, 45, 70, 110, 170, 260])), []);
+    // REQ-044 compared with the median of all n's (70) and flagged the start of the trend.
+    assert.deepEqual(median.fewObservations(points([20, 30, 45, 70, 110, 170, 260]), 'median'), [0, 1]);
+    // A dip against both neighbours; at the edges only the neighbour there is.
+    assert.deepEqual(median.fewObservations(points([200, 210, 90, 205, 200])), [2]);
+    assert.deepEqual(median.fewObservations(points([60, 200, 210, 205, 70])), [0, 4]);
+    // A gap leaves only one neighbour; a running period is no neighbour and is never flagged itself.
+    assert.deepEqual(median.fewObservations([{ key: 0, n: 200 }, { key: 2, n: 80 }, { key: 3, n: 200 }]), [2]);
+    assert.deepEqual(median.fewObservations([{ key: 0, n: 200 }, { key: 1, n: 90 }, { key: 2, n: 15, running: true }]), [1]);
+    assert.deepEqual(median.fewObservations([{ key: 0, n: 30 }, { key: 1, n: 200 }, { key: 2, n: 15, running: true }]), [0]);
+    // The fixed thresholds stay: n < 10 for a median, n < 30 for a mean.
+    assert.deepEqual(median.fewObservations(points([9, 9, 9])), [0, 1, 2]);
+    assert.deepEqual(new Average().fewObservations(points([29, 31, 31])), [0]);
+  });
 });

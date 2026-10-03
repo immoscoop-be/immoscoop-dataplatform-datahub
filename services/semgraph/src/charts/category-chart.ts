@@ -255,7 +255,8 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
       withSpread,
       spreadOmitted: statistic.hasSpread && withValue.length > 0 && !withSpread,
       nMissing: observations && withValue.some((row) => row.summary!.n === undefined),
-      few: observations ? statistic.fewObservations(withValue.map((row) => ({ key: row.key, ...(row.summary!.n === undefined ? {} : { n: row.summary!.n }) }))) : [],
+      // Categories have no neighbours: the relative rule of REQ-044 stays (REQ-081 is for a time axis).
+      few: observations ? statistic.fewObservations(withValue.map((row) => ({ key: row.key, ...(row.summary!.n === undefined ? {} : { n: row.summary!.n }) })), 'median') : [],
       missing: rows.filter((row) => row.summary === null).map((row) => row.key),
       comparison: comparing ? { kind: request.comparison ?? defaultComparison(lengthOf(scope)), given: request.comparison !== undefined } : null,
       zoomIgnored: statistic.kind === 'amount' && request.valueAxis === 'zoom',

@@ -115,14 +115,22 @@ export abstract class Statistic {
 
   /**
    * The points that rest on few observations (REQ-044): n below the threshold of the statistic, or
-   * below half the median n once there are five n's. Never a running period (REQ-054).
+   * below half the usual n. On a time axis the usual n is the mean of the period before and after
+   * (REQ-081), so a trend does not trigger it; between categories, which have no neighbours, it is the
+   * median of all n's, once there are five. Never a running period (REQ-054).
    */
-  fewObservations<Point extends { key: number; n?: number; running?: boolean }>(points: readonly Point[]): number[] {
+  fewObservations<Point extends { key: number; n?: number; running?: boolean }>(points: readonly Point[], relative: 'neighbours' | 'median' = 'neighbours'): number[] {
     if (this.fewBelow === null) return [];
     const counted = points.flatMap((point) => (point.n === undefined ? [] : [point.n]));
-    const relative = counted.length >= 5 ? median(counted) / 2 : 0;
+    const byKey = new Map(points.map((point) => [point.key, point]));
+    const usual = (point: Point) =>
+      relative === 'neighbours' ? neighbourMean(byKey, point.key, (other) => other.n) : counted.length >= 5 ? median(counted) : undefined;
     return points
-      .filter((point) => point.n !== undefined && !point.running && (point.n < this.fewBelow! || point.n < relative))
+      .filter((point) => {
+        if (point.n === undefined || point.running) return false;
+        const around = usual(point);
+        return point.n < this.fewBelow! || (around !== undefined && point.n < around / 2);
+      })
       .map((point) => point.key);
   }
 
@@ -272,6 +280,23 @@ export class Sum extends Statistic {
   formatDetail(): string {
     return '';
   }
+}
+
+/**
+ * REQ-080, REQ-081: the mean of a value over the period just before and just after, as far as they
+ * exist; at the edges only the neighbour there is. A running period is no neighbour: its value is not
+ * complete yet.
+ */
+export function neighbourMean<Point extends { key: number; running?: boolean }>(
+  byKey: ReadonlyMap<number, Point>,
+  key: number,
+  value: (point: Point) => number | undefined,
+): number | undefined {
+  const values = [byKey.get(key - 1), byKey.get(key + 1)].flatMap((point) => {
+    const found = point && !point.running ? value(point) : undefined;
+    return found === undefined ? [] : [found];
+  });
+  return values.length > 0 ? values.reduce((sum, item) => sum + item, 0) / values.length : undefined;
 }
 
 /** The median of a list of numbers. */
