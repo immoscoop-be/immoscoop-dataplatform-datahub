@@ -1,6 +1,6 @@
 import type { Translator } from '../core/i18n.ts';
 import { color, type Tokens } from '../core/tokens.ts';
-import type { Statistic, Summary } from './statistics.ts';
+import type { NumberFormatter, Statistic, Summary } from './statistics.ts';
 
 /**
  * Which values are written on the chart (REQ-033, after Figma): none, the last one, the last final
@@ -30,7 +30,7 @@ interface LabelRow {
   text: string;
 }
 
-interface Label {
+export interface Label {
   point: LabelledPoint;
   /** strong: bold, in the text colour; muted: the running value next to the last final one. */
   style: 'strong' | 'muted';
@@ -61,6 +61,12 @@ export function labelsFor(points: readonly LabelledPoint[], mode: ValuesMode): L
   }
 }
 
+/** Labels for some more points, such as those with few observations of a ratio (REQ-080), unless they have one. */
+export function alsoLabelled(labels: readonly Label[], points: readonly LabelledPoint[]): Label[] {
+  const labelled = new Set(labels.map((label) => label.point.rel));
+  return [...labels, ...points.filter((point) => !labelled.has(point.rel)).map((point) => ({ point, style: 'strong' as const, detail: true }))];
+}
+
 /** The highest value the value axis must reach so that every label fits above its point. */
 export function headroom(labels: readonly Label[], highest: number, perPixel: number): number {
   return Math.max(highest, ...labels.map(({ point, detail }) => top(point) + (GAP + VALUE_LINE + (detail ? DETAIL_LINE : 0)) * perPixel));
@@ -71,7 +77,7 @@ interface DrawInput {
   /** Running points, which get "lopend" ("current") under them. */
   running: readonly LabelledPoint[];
   statistic: Statistic;
-  format: Intl.NumberFormat;
+  format: NumberFormatter;
   t: Translator;
   tokens: Tokens;
   x: object;
@@ -93,7 +99,7 @@ export function valueLabels({ labels, running, statistic, format, t, tokens, x, 
   const details: LabelRow[] = [];
   const stackTop = new Map<number, number>();
   for (const { point, style, detail } of labels) {
-    const detailText = detail ? statistic.formatDetail(format, point) : '';
+    const detailText = detail ? statistic.formatDetail(format, point, t.locale) : '';
     let at = top(point) + GAP * perPixel;
     if (detailText) {
       details.push(row(point.rel, at, detailText));

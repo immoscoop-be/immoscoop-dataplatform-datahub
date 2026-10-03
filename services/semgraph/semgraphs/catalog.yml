@@ -4,6 +4,9 @@
 - { id: movingWindowMedian, status: available }
 - { id: calendarAverage, status: available }
 - { id: calendarMedian, status: available }
+# REQ-076: a share over time, with its denominator as the base behind it.
+- { id: movingWindowRatio, status: available }
+- { id: calendarRatio, status: available }
 - { id: periodComparison, status: available }
 - { id: kpiTile, status: available }
 - { id: cumulative, status: planned }
@@ -13,8 +16,8 @@
 - { id: composition, status: planned }
 - { id: funnel, status: planned }
 - { id: overlap, status: planned }
-# REQ-071: survival is the Cohort of Figma (Chart/Cohort). Like ratio, it shows a share and waits on the
-# requirement about numerator and denominator (REQ-070).
+# REQ-071: survival is the Cohort of Figma (Chart/Cohort); ratio is the Ratio per category. Both show a
+# share; whether they follow now that REQ-076 settles numerator and denominator is an open point.
 - { id: survival, status: planned }
 - { id: ratio, status: planned }
 - { id: regionalDistribution, status: planned }

@@ -141,8 +141,9 @@ describe('requirements of the chart language', async () => {
   it('REQ-006, REQ-007 and REQ-008: a mean is a diamond, a total a square, a median a dot; always filled (REQ-052)', () => {
     for (const drawn of [...timeAxis, ...tiles]) {
       const mark = markOf(pointLayer(drawn));
-      assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle' }[drawn.statistic], drawn.name);
-      assert.equal(mark.fill, color(tokens, 'focus'), drawn.name);
+      assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle', ratio: 'square' }[drawn.statistic], drawn.name);
+      // A ratio is a square in a square (REQ-075): its outer square is white inside, outlined in the focus colour.
+      assert.equal(drawn.statistic === 'ratio' ? mark.stroke : mark.fill, color(tokens, 'focus'), drawn.name);
       assert.equal(pointLayer(drawn).encoding!.fill, undefined, `${drawn.name}: the fill does not depend on the state`);
     }
     // In the SVG: the running week of calendarAverage/weeks is a filled diamond.
@@ -350,12 +351,14 @@ describe('requirements of the chart language', async () => {
       const points = drawn.computed.points;
       const mode = drawn.computed.values;
       const familyDefault = drawn.semgraph.startsWith('calendar') ? 'lastAndPrevious' : 'last';
+      // A ratio also labels its points with few observations (REQ-080).
+      const extra = drawn.statistic === 'ratio' ? drawn.computed.few.filter((rel) => rel !== 0).length : 0;
       // A comparison labels the ends of its lines instead (REQ-003).
       assert.equal(mode, drawn.semgraph === 'periodComparison' ? 'off' : (drawn.request.values ?? familyDefault), drawn.name);
       if (mode === 'all') assert.equal(strong.length + muted.length, points.length, drawn.name);
-      else if (mode === 'off') assert.equal(strong.length + muted.length, 0, drawn.name);
+      else if (mode === 'off') assert.equal(strong.length + muted.length, extra, drawn.name);
       else {
-        assert.ok(strong.length <= 1 && muted.length <= (mode === 'lastAndPrevious' ? 1 : 0), drawn.name);
+        assert.ok(strong.length <= 1 + extra && muted.length <= (mode === 'lastAndPrevious' ? 1 : 0), drawn.name);
         if (points.some((point) => point.rel === 0)) assert.equal(strong.length + muted.length >= 1, true, drawn.name);
       }
       for (const label of [...strong, ...muted]) {
@@ -443,13 +446,16 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  const ratios = () => timeAxis.filter((drawn) => drawn.request.measureType === 'perUnit' && drawn.statistic !== 'sum');
+  /** Means and medians of observations, whose n counts observations (REQ-063, REQ-070). */
+  const perUnit = () => timeAxis.filter((drawn) => drawn.request.measureType === 'perUnit' && drawn.statistic !== 'sum');
   const blockRows = (drawn: Drawn) => drawn.request.points as Record<string, unknown>[];
 
   it('REQ-058: the semgraph computes nothing over days: every point is a block as the warehouse delivered it', () => {
     for (const drawn of timeAxis) {
-      const rows = blockRows(drawn).filter((row) => typeof row[drawn.statistic] === 'number');
-      assert.deepEqual(drawn.computed.points.map((point) => point.centre), rows.map((row) => row[drawn.statistic]), drawn.name);
+      // A ratio only divides the numerator by the denominator (REQ-076).
+      const value = (row: Record<string, unknown>) => (drawn.statistic === 'ratio' ? (row.numerator as number) / (row.denominator as number) : row[drawn.statistic]);
+      const rows = blockRows(drawn).filter((row) => typeof value(row) === 'number');
+      assert.deepEqual(drawn.computed.points.map((point) => point.centre), rows.map(value), drawn.name);
       // The spread too: ±1 sd around the mean, or P25–P75 around the median; none for a single day (REQ-031).
       drawn.computed.points.forEach((point, index) => {
         const row = rows[index]!;
@@ -469,7 +475,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-043, REQ-062 and REQ-063: every point of a mean or median of observations shows its n on hover; without n a red alert', () => {
-    for (const drawn of ratios()) {
+    for (const drawn of perUnit()) {
       const withN = drawn.computed.points.filter((point) => point.n !== undefined);
       assert.equal(drawn.deviations.includes(`nMissing.${drawn.statistic}`), withN.length < drawn.computed.points.length, drawn.name);
       for (const point of withN) {
@@ -477,14 +483,16 @@ describe('requirements of the chart language', async () => {
         assert.match(label, new RegExp(`n = ${point.n} (waarnemingen|observations)`), drawn.name);
       }
     }
-    assert.ok(ratios().some((drawn) => drawn.deviations.some((code) => code.startsWith('nMissing.'))), 'an example without n');
+    assert.ok(perUnit().some((drawn) => drawn.deviations.some((code) => code.startsWith('nMissing.'))), 'an example without n');
     // A total has no n: for a count the number is the n.
     for (const drawn of timeAxis.filter((candidate) => candidate.statistic === 'sum')) assert.ok(drawn.computed.points.every((point) => point.n === undefined), drawn.name);
   });
 
   it('REQ-044, REQ-054, REQ-057 and REQ-063: few observations below 30 (mean) or 10 (median), or below half the median n; never running; only for observations', () => {
     for (const drawn of timeAxis) {
-      if (!ratios().includes(drawn)) {
+      // A ratio has rules of its own (REQ-080).
+      if (drawn.statistic === 'ratio') continue;
+      if (!perUnit().includes(drawn)) {
         assert.deepEqual(drawn.computed.few, [], `${drawn.name}: n of days is no number of observations (REQ-057)`);
         continue;
       }
@@ -504,7 +512,8 @@ describe('requirements of the chart language', async () => {
   it('REQ-046: the n of a point with few observations sits under the time axis, right below it; other points get nothing there', () => {
     for (const drawn of timeAxis) {
       const labels = drawn.datasets.nLabels as { rel: number; text: string }[];
-      assert.deepEqual(labels.map((label) => label.rel), drawn.computed.few, drawn.name);
+      // A ratio has no n: its counts stand at the point (REQ-080).
+      assert.deepEqual(labels.map((label) => label.rel), drawn.statistic === 'ratio' ? [] : drawn.computed.few, drawn.name);
       for (const label of labels) assert.equal(label.text, `n ${drawn.computed.points.find((point) => point.rel === label.rel)!.n}`, drawn.name);
       if (labels.length > 0) {
         const layer = drawn.layers.find((candidate) => candidate.data?.name === 'nLabels')!;
@@ -518,8 +527,8 @@ describe('requirements of the chart language', async () => {
       assert.equal(drawn.cautions.some((code) => code.startsWith('fewObservations.')), (drawn.computed.few ?? []).length > 0, drawn.name);
       if ((drawn.computed.few ?? []).length === 0) continue;
       assert.ok(drawn.svg.includes(`fill="${color(tokens, 'warning')}"`), drawn.name);
-      assert.match(drawn.svg, /Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij \d+ van de \d+/, drawn.name);
-      if (drawn.deviations.length === 0) assert.match(drawn.svg, />grafiektaal v0</, drawn.name);
+      assert.match(drawn.svg, /(Lees deze grafiek met voorzichtigheid: (weinig waarnemingen bij )?\d+ van de \d+|Read this chart with care: (few observations in )?\d+ of the \d+)/, drawn.name);
+      if (drawn.deviations.length === 0) assert.match(drawn.svg, />(grafiektaal|chart language) v0</, drawn.name);
     }
   });
 
@@ -565,7 +574,8 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-064: daily uniques are never summed; the uniques over a block, counted in the warehouse, only as a total', async () => {
     const registry = await testRegistry();
-    for (const drawn of examples.filter((candidate) => candidate.family !== 'distribution')) {
+    // A ratio is always measureType ratio (REQ-074).
+    for (const drawn of examples.filter((candidate) => candidate.family !== 'distribution' && candidate.statistic !== 'ratio')) {
       const codes = async (uniqueAggregation: string) =>
         (await runPipeline(registry, { ...drawn.request, measureType: 'unique', uniqueAggregation }, { now: NOW, draw: false })).report.issues
           .filter((issue) => issue.level === 'refusal')
@@ -790,5 +800,133 @@ describe('requirements of the chart language', async () => {
     assert.equal(drawn.drawing.readingCue, 'verdeling · per € 50k');
     // Set apart: a gap between the last bin and the open one.
     assert.ok((drawn.datasets.open as { x: number }[])[0]!.x > bins.at(-1)!.x2);
+  });
+
+  const ratioCharts = timeAxis.filter((drawn) => drawn.statistic === 'ratio');
+  type RatioPoint = { rel: number; centre: number; parts: { numerator: number; denominator: number } };
+  const ratioPoints = (drawn: Drawn) => drawn.computed.points as unknown as RatioPoint[];
+  /** The height of each block of the denominator, in the units of the ratio axis, by position. */
+  const baseOf = (drawn: Drawn) => new Map((drawn.datasets.base as { rel: number; value: number }[]).map((row) => [row.rel, row.value]));
+
+  it('REQ-074: a ratio is a numerator divided by a denominator, drawn only by a ratio chart; every other chart refuses it', async () => {
+    const registry = await testRegistry();
+    assert.deepEqual(ratioCharts.map((drawn) => drawn.semgraph).sort(), ['calendarRatio', 'movingWindowRatio']);
+    for (const drawn of timeAxis) {
+      const refusals = async (measureType: string) =>
+        (await runPipeline(registry, { ...drawn.request, measureType }, { now: NOW, draw: false })).report.issues.filter((issue) => issue.level === 'refusal').map((issue) => issue.code);
+      if (drawn.statistic === 'ratio') {
+        assert.equal(drawn.request.measureType, 'ratio', drawn.name);
+        assert.deepEqual(await refusals('perUnit'), ['measureTypeNotAllowed'], drawn.name);
+      } else assert.ok((await refusals('ratio')).includes('ratioNeedsNumerator'), drawn.name);
+    }
+  });
+
+  it('REQ-075: a ratio is a square in a square: an open square in the focus colour around a small filled one', () => {
+    for (const drawn of timeAxis) {
+      const marks = drawn.layers.filter((layer) => layer.data?.name === 'points').map(markOf);
+      if (drawn.statistic !== 'ratio') {
+        assert.equal(marks.length, 1, drawn.name);
+        continue;
+      }
+      const [outer, inner] = marks as [Record<string, unknown>, Record<string, unknown>];
+      assert.deepEqual([outer.shape, outer.fill, outer.stroke], ['square', color(tokens, 'surface'), color(tokens, 'focus')], drawn.name);
+      assert.deepEqual([inner.shape, inner.fill], ['square', color(tokens, 'focus')], drawn.name);
+      assert.ok((inner.size as number) < (outer.size as number) / 4, `${drawn.name}: the numerator is small inside the denominator`);
+    }
+  });
+
+  it('REQ-076: a ratio over time is one chart: the ratio as a line, the denominator as a grey step area behind it, on a right axis; the numerator only in words', () => {
+    assert.ok(ratioCharts.length > 0);
+    for (const drawn of ratioCharts) {
+      const order = drawn.layers.map((layer) => layer.data?.name);
+      assert.ok(order.indexOf('base') > order.indexOf('columns') && order.indexOf('base') < order.indexOf('line'), `${drawn.name}: the denominator behind the data`);
+      const area = drawn.layers.find((layer) => layer.data?.name === 'base' && markType(layer) === 'area')!;
+      assert.deepEqual([markOf(area).interpolate, markOf(area).color], ['step', color(tokens, 'axis')], drawn.name);
+      // One flat block per period, as high as its denominator on the right axis: one scale for every block.
+      const base = baseOf(drawn);
+      const perUnit = ratioPoints(drawn).map((point) => base.get(point.rel)! / point.parts.denominator);
+      for (const value of perUnit) assert.ok(Math.abs(value - perUnit[0]!) < 1e-12, drawn.name);
+      for (const point of ratioPoints(drawn)) assert.equal(base.get(point.rel - 0.5) ?? base.get(point.rel), base.get(point.rel), `${drawn.name}: flat over ${point.rel}`);
+      // The numerator is not drawn: it stands with the labelled values and on hover, "27 / 640".
+      const details = (drawn.datasets.valuesDetail as { rel: number; text: string }[]).map((label) => label.text);
+      assert.ok(details.length > 0 && details.every((text) => /^[\d., ]+ \/ [\d., ]+$/.test(text)), drawn.name);
+      const names = `${drawn.request.numeratorName} / ${drawn.request.denominatorName}`;
+      assert.ok(drawn.drawing.readingCue.includes(names), drawn.name);
+      for (const point of ratioPoints(drawn)) {
+        const hover = drawn.drawing.hover!.find((spec) => spec.x === point.rel)!;
+        assert.ok(hover.lines.some((line) => line.text.startsWith(`${names}: `)), `${drawn.name}: the counts on hover at ${point.rel}`);
+      }
+    }
+  });
+
+  it('REQ-077: a filled step on a date axis only for the denominator of a ratio, in neutral grey, never for the metric itself', () => {
+    for (const drawn of [...timeAxis, ...tiles]) {
+      for (const layer of drawn.layers) {
+        const mark = markOf(layer);
+        if (!String(mark.interpolate ?? '').startsWith('step')) continue;
+        assert.equal(layer.data?.name, 'base', `${drawn.name}: a step on ${layer.data?.name}`);
+        if (markType(layer) === 'area') assert.equal(mark.color, color(tokens, 'axis'), drawn.name);
+      }
+    }
+    // kpiStatus draws its cumulative level as a staircase (REQ-065, REQ-068): an open point against REQ-077.
+  });
+
+  it('REQ-078: a light area in the focus colour is spread, in neutral grey it is the base of a ratio; never the other way round', () => {
+    const light = color(tokens, 'focus/light');
+    const grey = color(tokens, 'axis');
+    for (const drawn of timeAxis) {
+      for (const layer of drawn.layers.filter((candidate) => markType(candidate) === 'area')) {
+        const fill = markOf(layer).color ?? markOf(layer).fill;
+        if (fill === light) assert.equal(layer.data?.name, 'band', drawn.name);
+        if (fill === grey) assert.equal(layer.data?.name, 'base', drawn.name);
+        if (layer.data?.name === 'base') assert.equal(fill, grey, drawn.name);
+      }
+      if (drawn.statistic === 'ratio') assert.equal(drawn.computed.withSpread, false, `${drawn.name}: a ratio has no spread`);
+    }
+  });
+
+  it('REQ-079: both axes start at zero and share their gridlines; the denominator stays below the ratio; the right axis is quieter', () => {
+    for (const drawn of ratioCharts) {
+      const left = drawn.layers.find((layer) => layer.data?.name === 'frame')!;
+      const ticks = (left.encoding!.y as { axis: { values: number[] } }).axis.values;
+      assert.equal(ticks[0], 0, `${drawn.name}: the ratio axis from zero`);
+      const right = drawn.datasets.rightAxis as { value: number; text: string }[];
+      assert.deepEqual(right.map((tick) => tick.value), ticks, `${drawn.name}: one set of gridlines`);
+      assert.equal(right[0]!.text, '0', `${drawn.name}: the denominator axis from zero`);
+      const base = baseOf(drawn);
+      for (const point of ratioPoints(drawn).filter((candidate) => candidate.centre > 0)) {
+        assert.ok(base.get(point.rel)! < point.centre, `${drawn.name}: the denominator under the ratio at ${point.rel}`);
+      }
+      // On hover the denominator is read on the right axis: its guide runs to the right.
+      for (const point of ratioPoints(drawn)) assert.equal(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.point!.right, base.get(point.rel), drawn.name);
+      assert.match(drawn.svg, /<line x1="[\d.]+" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#[0-9a-f]{6}" stroke-width="[\d.]+" stroke-dasharray="1 3"/, drawn.name);
+      const rightLayer = drawn.layers.find((layer) => layer.data?.name === 'rightAxis')!;
+      assert.equal(markOf(rightLayer).color, color(tokens, 'context'), `${drawn.name}: lighter labels`);
+      assert.equal(drawn.layers.filter((layer) => markType(layer) === 'point' && layer.data?.name !== 'points' && layer.data?.name !== 'frame').length, 0, `${drawn.name}: no shapes on the right axis`);
+    }
+  });
+
+  it('REQ-080: few observations of a ratio: statistically thin or an unusual base; dots behind the column, the counts at the point', () => {
+    const thin = ratioCharts.find((drawn) => drawn.name === 'movingWindowRatio/few-qualified')!;
+    assert.deepEqual([thin.computed.few, thin.cautions], [[-4], ['fewObservations.ratio.thin']]);
+    const base = ratioCharts.find((drawn) => drawn.name === 'calendarRatio/weeks')!;
+    assert.deepEqual([base.computed.few, base.cautions], [[-5], ['fewObservations.ratio.base']]);
+    for (const drawn of ratioCharts) {
+      assert.deepEqual((drawn.datasets.columns as { state: string }[]).filter((column) => column.state === 'few').length, drawn.computed.few.length, drawn.name);
+      const labelled = new Set((drawn.datasets.valuesDetail as { rel: number }[]).map((label) => label.rel));
+      const baseLabels = new Set((drawn.datasets.baseLabels as { rel: number }[]).map((label) => label.rel));
+      for (const rel of drawn.computed.few) assert.ok(labelled.has(rel) && baseLabels.has(rel), `${drawn.name}: the counts of ${rel} at the point`);
+    }
+    assert.match(base.svg, /Read this chart with care: 1 of the 10 weeks rest on far fewer visitors than the weeks around them\./);
+  });
+
+  it('REQ-082: the icon of a ratio over time: a line of squares in a square over a step line; with calendar periods the baseline with ticks', async () => {
+    for (const [id, semgraph] of (await testRegistry()).semgraphs) {
+      const ratio = (semgraph.implementation as unknown as { statistic?: { id: string } }).statistic?.id === 'ratio';
+      const outlined = [...semgraph.icon.matchAll(/<path d="M[\d.]+ [\d.]+H[\d.]+V[\d.]+H[\d.]+V[\d.]+Z" stroke="currentColor"/g)].length;
+      const steps = /<path d="M[\d.]+ [\d.]+V[\d.]+(H[\d.]+V[\d.]+){3,}" stroke=/.test(semgraph.icon);
+      assert.equal(outlined > 0 && iconShapes(semgraph.icon).squares === outlined, ratio, `${id}: squares in a square`);
+      assert.equal(steps, ratio, `${id}: the denominator as a step line`);
+    }
   });
 });

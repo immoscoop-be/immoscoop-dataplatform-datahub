@@ -14,13 +14,14 @@ import type {
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
-import { decimalsOf, lookup, numberFormat, ticksEvery, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
+import { lookup, numberFormat, ticksEvery, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
-import type { BlockRow, Statistic, Summary } from './statistics.ts';
+import { baseLayers, denominatorAxis, RIGHT_AXIS } from './ratio.ts';
+import { Ratio, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
 import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
-import { headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
+import { alsoLabelled, headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
 
 /** What every time-axis request carries, whatever its periods or statistic. */
 export interface TimeAxisRequest {
@@ -37,6 +38,9 @@ export interface TimeAxisRequest {
   locale?: string;
   context?: RequestContext;
   meta?: ChartMeta;
+  /** A ratio: what the numerator and the denominator count, as the reading cue names them (REQ-076). */
+  numeratorName?: string;
+  denominatorName?: string;
   /** One row per block, computed in the warehouse (REQ-058). */
   points: BlockRow[];
 }
@@ -75,6 +79,8 @@ export interface TimeAxisComputed {
   nMissing: boolean;
   /** Points of the current period that rest on few observations (REQ-044), never a running one (REQ-054). */
   few: number[];
+  /** A ratio: why its points rest on few observations, statistically thin or an unusual base (REQ-080). */
+  fewKinds?: ('thin' | 'base')[];
   /** Which values are written on the chart, and whether "all" fell back because they do not fit. */
   values: ValuesMode;
   valuesFallback: boolean;
@@ -102,8 +108,13 @@ export const PLOT_HEIGHT = 200;
 /** Fixed geometry (autosize none): room for the y labels left, half a value label right, the time axis below. */
 export const PADDING = { left: 52, right: 28, top: 14, bottom: AXIS_HEIGHT };
 export const PLOT_WIDTH = WIDTH - PADDING.left - PADDING.right;
+/** The square in a square of a ratio (REQ-075), as in Figma: 10 px around 3.5 px on a 620 px chart. */
+const RATIO_MARK = 8;
+const RATIO_INNER = 0.4;
 /** A comparison writes the last value and the name of the comparison right of the lines (REQ-003). */
 const COMPARISON_PADDING = { ...PADDING, right: 84 };
+/** A ratio has the axis of its denominator on the right (REQ-076, REQ-079). */
+const RATIO_PADDING = { ...PADDING, right: RIGHT_AXIS };
 /** The n of a point with few observations sits under the time axis, on a line of its own (REQ-046). */
 const N_LINE = 14;
 /** At most this many labels on the time axis. */
@@ -144,7 +155,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   }
 
   protected get padding() {
-    return this.compares ? COMPARISON_PADDING : PADDING;
+    return this.compares ? COMPARISON_PADDING : this.statistic.kind === 'ratio' ? RATIO_PADDING : PADDING;
   }
 
   protected get plotWidth(): number {
@@ -228,7 +239,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return {
       type: 'object',
       additionalProperties: false,
-      required: [this.blockField, centre],
+      required: [this.blockField, ...this.statistic.required],
       properties: {
         [this.blockField]: period.blockName,
         ...this.statistic.pointProperties(),
@@ -256,7 +267,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       description: `${this.periodDescription} ${this.statistic.description} The warehouse computes the blocks; the service checks them against the chart language and draws (REQ-058).`,
       type: 'object',
       additionalProperties: false,
-      required: ['semgraph', 'metric', 'measureType', ...period.required, 'points'],
+      required: ['semgraph', 'metric', 'measureType', ...period.required, ...(this.statistic.kind === 'ratio' ? ['numeratorName', 'denominatorName'] : []), 'points'],
       properties: {
         semgraph: { const: this.id },
         metric: METRIC,
@@ -273,11 +284,19 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           enum: [...VALUES_MODES],
           default: this.defaultValues,
         },
-        valueAxis: {
-          description: 'zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.',
-          enum: ['zero', 'zoom'],
-          default: 'zero',
-        },
+        // REQ-079: the axes of a ratio start at zero, so it has no valueAxis; it names what it counts.
+        ...(this.statistic.kind === 'ratio'
+          ? {
+              numeratorName: { description: 'What the numerator counts, as the reading cue names it: "leads".', type: 'string', minLength: 1, maxLength: 40 },
+              denominatorName: { description: 'What the denominator counts: "bezoekers".', type: 'string', minLength: 1, maxLength: 40 },
+            }
+          : {
+              valueAxis: {
+                description: 'zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.',
+                enum: ['zero', 'zoom'],
+                default: 'zero',
+              },
+            }),
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,
@@ -369,7 +388,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
     // Few observations (REQ-044), only where n counts observations (REQ-057, REQ-063). Running wins (REQ-054).
     const observations = this.statistic.countsObservations(request.measureType);
-    const few = observations ? this.statistic.fewObservations(points.map((point) => ({ ...point, key: point.rel }))) : [];
+    const keyed = points.map((point) => ({ ...point, key: point.rel }));
+    const few = observations ? this.statistic.fewObservations(keyed) : [];
+    const fewKinds = this.statistic instanceof Ratio && observations ? [...new Set(this.statistic.fewReasons(keyed).values())].sort() : undefined;
 
     // "all" only while every value has room above its point; otherwise the family's default. A
     // comparison labels the ends of its lines instead (REQ-003).
@@ -383,8 +404,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       daysWithData: points.reduce((sum, point) => sum + point.days, 0),
       withSpread,
       spreadOmitted: spreadApplies && points.length > 0 && !withSpread,
-      nMissing: observations && points.some((point) => point.n === undefined),
+      nMissing: this.statistic.wantsN(request.measureType) && points.some((point) => point.n === undefined),
       few,
+      ...(fewKinds ? { fewKinds } : {}),
       values: valuesFallback ? this.defaultValues : asked,
       valuesFallback,
       slots,
@@ -425,6 +447,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     }
 
     issues.push(...this.periodRules(request));
+    // REQ-074: a ratio per unit, whose numerator can exceed its denominator, waits on how it is shown (open point).
+    if (this.statistic.kind === 'ratio' && computed.points.some((point) => point.parts && point.parts.numerator > point.parts.denominator)) {
+      issues.push({ level: 'refusal', code: 'ratioPerUnitOpen', field: '/points' });
+    }
     // REQ-032: allowed, but discouraged with a red alert between the title and the chart.
     if (computed.spreadOmitted) {
       issues.push({ level: 'deviation', code: this.statistic.withoutSpreadCode, field: '/points', learnMore: LEARNING_PLAN_LEVEL_1 });
@@ -435,11 +461,18 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     }
     // REQ-047: a red block for the reader, but not a deviation: the version label stays.
     if (computed.few.length > 0) {
+      // REQ-080: for a ratio the caution says which it is: statistically thin, an unusual base, or both.
+      const kinds = computed.fewKinds ?? [];
       issues.push({
         level: 'caution',
-        code: `fewObservations.${this.statistic.id}`,
+        code: this.statistic.kind === 'ratio' ? `fewObservations.ratio.${kinds.length === 1 ? kinds[0] : 'both'}` : `fewObservations.${this.statistic.id}`,
         field: '/points',
-        params: { count: computed.few.length, total: computed.points.length, blocks: this.blockNoun(request) },
+        params: {
+          count: computed.few.length,
+          total: computed.points.length,
+          blocks: this.blockNoun(request),
+          ...(this.statistic.kind === 'ratio' ? { numerator: request.numeratorName ?? '', denominator: request.denominatorName ?? '' } : {}),
+        },
       });
     }
     if (computed.valuesFallback) {
@@ -455,9 +488,11 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const previous = computed.comparison?.points ?? [];
     const count = slots.length;
     const plotWidth = this.plotWidth;
-    // REQ-046: the n of a point with few observations, under the time axis, right below the point.
+    const ratio = this.statistic.kind === 'ratio';
+    // REQ-046: the n of a point with few observations, under the time axis, right below the point. A
+    // ratio writes its counts at the point instead, as in Figma (REQ-080).
     const fewSet = new Set(computed.few);
-    const nLabels = points.filter((point) => fewSet.has(point.rel)).map((point) => ({ rel: point.rel, text: t('axis.n', { n: point.n! }) }));
+    const nLabels = ratio ? [] : points.filter((point) => fewSet.has(point.rel)).map((point) => ({ rel: point.rel, text: t('axis.n', { n: point.n! }) }));
     const padding = nLabels.length > 0 ? { ...this.padding, bottom: this.padding.bottom + N_LINE } : this.padding;
     const slotWidth = plotWidth / count;
     const barWidth = this.statistic.barWidth(tokens);
@@ -465,24 +500,25 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const form = this.compares ? 'band' : formFor(count, barWidth, plotWidth);
     const surface = color(tokens, 'surface');
     const focus = color(tokens, 'focus');
-    const labels = labelsFor(points, computed.values);
+    const labels = ratio ? alsoLabelled(labelsFor(points, computed.values), points.filter((point) => fewSet.has(point.rel))) : labelsFor(points, computed.values);
 
     // Value axis: from zero, or zoomed with a zigzag and a bold first value; high enough that every
     // value label fits above its point, and the comparison line fits too.
     const highest = Math.max(...points.map((point) => point.spread?.hi ?? point.centre), ...previous.map((point) => point.centre));
     const lowest = Math.min(...points.map((point) => Math.max(0, point.spread?.lo ?? point.centre)), ...previous.map((point) => point.centre));
-    const mode = request.valueAxis ?? 'zero';
+    // REQ-079: the axes of a ratio start at zero.
+    const mode = ratio ? 'zero' : (request.valueAxis ?? 'zero');
     let scale = valueScale(lowest, highest, mode);
     for (let attempt = 0; attempt < 4; attempt++) {
       const needed = headroom(labels, highest, (scale.max - scale.min) / PLOT_HEIGHT);
       if (needed <= scale.max) break;
       scale = valueScale(lowest, needed, mode);
     }
-    const tickFormat = numberFormat(t.locale, decimalsOf(scale.ticks[1]! - scale.ticks[0]!));
-    const yLabels = Object.fromEntries(scale.ticks.map((tick) => [String(tick), tickFormat.format(tick)]));
-    // Whole numbers stay whole (daily counts); otherwise one decimal below 100.
+    const yLabels = this.statistic.tickLabels(t.locale, scale.ticks);
+    // Whole numbers stay whole (daily counts); otherwise one decimal below 100; a share in percent.
     const whole = points.every((point) => [point.centre, point.spread?.lo ?? 0, point.spread?.hi ?? 0].every(Number.isInteger));
-    const valueFormat = numberFormat(t.locale, highest >= 100 || whole ? 0 : 1);
+    const valueFormat = this.statistic.valueFormat(t.locale, highest, whole);
+    const denominator = ratio ? denominatorAxis(points, scale, PLOT_HEIGHT) : undefined;
     const perPixel = { x: count / plotWidth, y: (scale.max - scale.min) / PLOT_HEIGHT };
 
     const x = {
@@ -592,6 +628,10 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         }))
       : [];
     const mask = scale.zoomed ? [{ rel: left, rel2: left + ZIGZAG_MASK * perPixel.x, value: scale.min }] : [];
+    // REQ-076: the denominator of a ratio behind the data, with its own axis on the right.
+    const base = denominator
+      ? baseLayers({ points, axis: denominator, labelled: new Set(labels.map((label) => label.point.rel)), scale, x, y, plotWidth, locale: t.locale, tokens })
+      : undefined;
 
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
@@ -618,6 +658,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         endComparison,
         nLabels,
         ...values.datasets,
+        ...(base?.datasets ?? {}),
       },
       layer: [
         {
@@ -655,6 +696,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           },
         },
         ...axis.layers,
+        ...(base?.layers ?? []),
         {
           data: { name: 'band' },
           mark: { type: 'area', color: color(tokens, 'focus/light'), opacity: 1 },
@@ -684,20 +726,32 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         },
         {
           // The centre has the shape of its statistic (REQ-006, REQ-007, REQ-008), always filled: the
-          // pattern behind the column tells whether its period still runs (REQ-052).
+          // pattern behind the column tells whether its period still runs (REQ-052). A ratio is a square
+          // in a square: the open square of the denominator, white inside, around the numerator (REQ-075).
           data: { name: 'points' },
-          mark: {
-            type: 'point',
-            shape: this.statistic.shape,
-            filled: true,
-            size: markerSize(tokens, this.statistic.kind),
-            opacity: 1,
-            fill: focus,
-            stroke: surface,
-            strokeWidth: 1,
-          },
+          mark: ratio
+            ? { type: 'point', shape: 'square', filled: true, size: RATIO_MARK ** 2, opacity: 1, fill: surface, stroke: focus, strokeWidth: 1.3 }
+            : {
+                type: 'point',
+                shape: this.statistic.shape,
+                filled: true,
+                size: markerSize(tokens, this.statistic.kind),
+                opacity: 1,
+                fill: focus,
+                stroke: surface,
+                strokeWidth: 1,
+              },
           encoding: { x, y: y('centre') },
         },
+        ...(ratio
+          ? [
+              {
+                data: { name: 'points' },
+                mark: { type: 'point', shape: 'square', filled: true, size: (RATIO_MARK * RATIO_INNER) ** 2, opacity: 1, fill: focus, strokeWidth: 0 },
+                encoding: { x, y: y('centre') },
+              },
+            ]
+          : []),
         {
           data: { name: 'mask' },
           mark: { type: 'rule', color: surface, strokeWidth: tokens.stroke.baseline + 2 },
@@ -733,11 +787,18 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       ],
     } as TopLevelSpec;
 
-    const hover = this.hoverSpecs(request, computed, t, valueFormat);
+    // A ratio: a guide from its denominator to the right axis, where the denominator is read (REQ-079).
+    const parts = new Map(points.map((point) => [point.rel, point.parts]));
+    const hover = this.hoverSpecs(request, computed, t, valueFormat).map((spec) => {
+      const counts = parts.get(spec.x);
+      return denominator && spec.point && counts ? { ...spec, point: { ...spec.point, right: denominator.toRatio(counts.denominator) } } : spec;
+    });
 
     const title = request.title ?? request.metric;
     const cue = [
       this.periodCue(request, t),
+      // REQ-076: a ratio names what it divides, as in Figma: "leads / bezoekers".
+      ratio ? this.ratioOf(request, t) : '',
       computed.withSpread ? t(`cue.spread.${this.statistic.id}`) : '',
       this.compares ? t('cue.comparison', { label: this.comparisonLabel(request, t, computed.slots.length) }) : '',
     ]
@@ -766,6 +827,11 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     };
   }
 
+  /** What a ratio divides, as in Figma: "leads / bezoekers" (REQ-076). */
+  private ratioOf(request: Request, t: Translator): string {
+    return t('cue.ratioOf', { numerator: request.numeratorName ?? '', denominator: request.denominatorName ?? '' });
+  }
+
   /** How the family names its blocks, for another drawing of the same blocks, such as the KPI tile (REQ-065). */
   names(request: Request, computed: TimeAxisComputed, t: Translator) {
     const context = { t, computed, isFirst: false };
@@ -783,7 +849,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
    * n (REQ-043) and the family's extras, e.g. "23 sep (−7d)", "gemiddelde 7d: 43,7", "±1 sd: 12,2",
    * "venster 17–23 sep"; or "geen data".
    */
-  protected hoverSpecs(request: Request, computed: TimeAxisComputed, t: Translator, format: Intl.NumberFormat): HoverSpec[] {
+  protected hoverSpecs(request: Request, computed: TimeAxisComputed, t: Translator, format: NumberFormatter): HoverSpec[] {
     const byRel = new Map(computed.points.map((point) => [point.rel, point]));
     const previousSlots = new Map(computed.comparison?.slots.map((slot) => [slot.rel, slot]));
     const previousPoints = new Map(computed.comparison?.points.map((point) => [point.rel, point]));
@@ -802,7 +868,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           }]
         : [];
       if (!point) return { x: slot.rel, lines: [name, { text: t('chart.noData') }, ...comparison] };
-      const spread = this.statistic.spreadLine(t, format, point);
+      // A ratio names its counts: "leads / bezoekers: 27 / 640" (REQ-076).
+      const spreadLine = this.statistic.spreadLine(t, format, point);
+      const spread = spreadLine && this.statistic.kind === 'ratio' ? `${this.ratioOf(request, t)}: ${spreadLine}` : spreadLine;
       return {
         x: slot.rel,
         point: { y: point.centre, lo: point.spread?.lo ?? null, hi: point.spread?.hi ?? null },

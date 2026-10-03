@@ -54,6 +54,18 @@ semgraphs:
     examples:
       "1": Hoe zag een typische dag voor kredietleads eruit, per kwartaal?
       "2": Hoe veranderde de typische tijd tot het eerste contact per dag, per maand?
+  movingWindowRatio:
+    title: Voortschrijdende verhouding
+    answers: Hoe evolueert een aandeel, en hoe groot is de basis waarop het steunt?
+    examples:
+      "1": Welk aandeel van de bezoekers werd de voorbije weken een lead, over telkens 7 dagen?
+      "2": Stijgt of daalt het aandeel gekwalificeerde leads?
+  calendarRatio:
+    title: Verhouding per kalenderperiode
+    answers: Welk aandeel in elke week, maand, kwartaal of jaar, en op hoe grote een basis?
+    examples:
+      "1": Hoe evolueerde de conversie van bezoek naar lead per week?
+      "2": Welk aandeel van de panden werd binnen 90 dagen verkocht, per maand?
 
 attributes:
   timeAxis:
@@ -91,14 +103,17 @@ cue:
     median: voortschrijdende mediaan {window}d
     daily: dagwaarden
     sum: som per {window} dagen
+    ratio: voortschrijdende verhouding {window}d
   calendar:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
     sum: som per {unit}
+    ratio: verhouding per {unit}
     perUnit:
       mean: "gemiddelde per {unit}"
       median: "mediaan per {unit}"
   comparison: tegenover {label}
+  ratioOf: "{numerator} / {denominator}"
   kpiStatus: "cumulatief · vanaf {start} op {date} · doel {target}"
   spread:
     mean: ±1 sd
@@ -125,6 +140,7 @@ chart:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
+    ratio: "{value} ({parts})"
   window: venster {range}
   running: "lopend: {count} van {total} dagen"
   noData: geen data
@@ -160,10 +176,12 @@ hover:
       median: "mediaan {window}d"
       daily: waarde
       sum: "som {window}d"
+      ratio: "verhouding {window}d"
     calendar:
       mean: gemiddelde per dag
       median: mediaan per dag
       sum: som
+      ratio: verhouding
       perUnit:
         mean: gemiddelde
         median: mediaan
@@ -447,9 +465,12 @@ issues:
   perUnitNotSummable:
     message: "Een som van gemiddelden per eenheid betekent niets: een gemiddeld bedrag per lead tel je niet op over een week."
     alternative: Kies statistic mean of median.
+  ratioPerUnitOpen:
+    message: "In minstens één blok is de teller groter dan de noemer: een verhouding per eenheid, zoals panden per makelaar. Hoe zo'n verhouding getoond wordt, ligt nog open; voorlopig wordt enkel een aandeel getekend, waarvan de teller deel is van de noemer."
+    alternative: "Kijk de teller en de noemer na. Is het een gemiddelde per eenheid waarbij de spreiding tussen de eenheden de vraag is? Gebruik dan measureType perUnit met calendarAverage of calendarMedian."
   ratioNeedsNumerator:
-    message: "Een verhouding, zoals gekwalificeerde leads op alle leads, heeft een teller en een noemer nodig. Dat contract komt er nog."
-    alternative: Is het een gemiddelde per eenheid, zoals een bedrag per lead? Gebruik dan measureType perUnit.
+    message: "Een verhouding, zoals leads van bezoekers, is een teller gedeeld door een noemer. Deze grafiek kan ze niet allebei tonen."
+    alternative: "Stuur per blok de teller en de noemer naar movingWindowRatio of calendarRatio. Is het een gemiddelde of mediaan per eenheid waarbij de spreiding tussen de eenheden de vraag is, zoals het bedrag per lead? Gebruik dan measureType perUnit."
   uniqueAggregationRequired:
     message: "Bij unieke aantallen moet je zeggen hoe ze geteld zijn: per dag (daily) of over het hele blok (overPeriod). Dat zijn twee verschillende metrics."
     alternative: Voeg uniqueAggregation daily of overPeriod toe.
@@ -503,6 +524,16 @@ issues:
     median:
       message: "{count} van de {total} {blocks} steunen op weinig waarnemingen. Ze krijgen stippels achter hun kolom en hun n onder de as."
       alert: "Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij {count} van de {total} {blocks}, dus hun mediaan is nog onzeker."
+    ratio:
+      thin:
+        message: "{count} van de {total} {blocks} steunen op weinig waarnemingen: minder dan 10 {numerator}, of minder dan 10 {denominator} zonder hen. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op heel weinig {numerator} of {denominator}, dus enkele meer of minder kunnen het aandeel sterk verschuiven."
+      base:
+        message: "{count} van de {total} {blocks} steunen op veel minder {denominator} dan de {blocks} errond. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op veel minder {denominator} dan de {blocks} errond."
+      both:
+        message: "{count} van de {total} {blocks} steunen op weinig waarnemingen: heel weinig {numerator} of {denominator}, of veel minder {denominator} dan de {blocks} errond. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op heel weinig {numerator} of {denominator}, of op veel minder {denominator} dan de {blocks} errond."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.

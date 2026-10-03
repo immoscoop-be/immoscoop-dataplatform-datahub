@@ -68,7 +68,8 @@ export function niceRange(lowest: number, highest: number, count = 4): number[] 
   return Array.from({ length: last - first + 1 }, (_, index) => Number(((first + index) * step).toPrecision(12)));
 }
 
-function niceStep(raw: number): number {
+/** The smallest round step of at least `raw`: 1, 2, 2.5 or 5 times a power of ten. */
+export function niceStep(raw: number): number {
   const magnitude = 10 ** Math.floor(Math.log10(raw));
   return [1, 2, 2.5, 5, 10].map((multiple) => multiple * magnitude).find((candidate) => candidate >= raw)!;
 }

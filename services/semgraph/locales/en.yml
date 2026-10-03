@@ -54,6 +54,18 @@ semgraphs:
     examples:
       "1": What was a typical day for credit leads, per quarter?
       "2": How did the typical time to first contact per day change per month?
+  movingWindowRatio:
+    title: Moving window ratio
+    answers: How does a share evolve, and how large is the base it rests on?
+    examples:
+      "1": Which share of the visitors became a lead, over the last 7 days, these past weeks?
+      "2": Is the share of qualified leads going up or down?
+  calendarRatio:
+    title: Ratio per calendar period
+    answers: Which share in each week, month, quarter or year, and on how large a base?
+    examples:
+      "1": How did the conversion from visit to lead evolve per week?
+      "2": Which share of the listings sold within 90 days, per month?
 
 attributes:
   timeAxis:
@@ -91,14 +103,17 @@ cue:
     median: rolling {window}d median
     daily: daily values
     sum: total per {window} days
+    ratio: rolling {window}d ratio
   calendar:
     mean: daily average per {unit}
     median: daily median per {unit}
     sum: total per {unit}
+    ratio: ratio per {unit}
     perUnit:
       mean: "mean per {unit}"
       median: "median per {unit}"
   comparison: vs {label}
+  ratioOf: "{numerator} / {denominator}"
   kpiStatus: "cumulative · from {start} on {date} · target {target}"
   spread:
     mean: ±1 sd
@@ -125,6 +140,7 @@ chart:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
+    ratio: "{value} ({parts})"
   window: window {range}
   running: "running: {count} of {total} days"
   noData: no data
@@ -160,10 +176,12 @@ hover:
       median: "{window}d median"
       daily: value
       sum: "{window}d total"
+      ratio: "{window}d ratio"
     calendar:
       mean: daily average
       median: daily median
       sum: total
+      ratio: ratio
       perUnit:
         mean: mean
         median: median
@@ -449,9 +467,12 @@ issues:
   perUnitNotSummable:
     message: "A total of means per unit means nothing: an average amount per lead does not add up over a week."
     alternative: Choose statistic mean or median.
+  ratioPerUnitOpen:
+    message: "In at least one block the numerator is larger than the denominator: a ratio per unit, such as listings per agent. How such a ratio is shown is still open; only a share, whose numerator is part of its denominator, is drawn for now."
+    alternative: "Check the numerator and the denominator. Is it a mean per unit where the spread between the units is the question? Then use measureType perUnit with calendarAverage or calendarMedian."
   ratioNeedsNumerator:
-    message: "A ratio, such as qualified leads out of all leads, needs a numerator and a denominator. That contract is still to come."
-    alternative: Is it a mean per unit, such as an amount per lead? Then use measureType perUnit.
+    message: "A ratio, such as leads out of visitors, is a numerator divided by a denominator. This chart cannot show both."
+    alternative: "Send the numerator and the denominator per block to movingWindowRatio or calendarRatio. Is it a mean or median per unit where the spread between the units is the question, such as the amount per lead? Then use measureType perUnit."
   uniqueAggregationRequired:
     message: "For unique counts, say how they were counted: per day (daily) or over the whole block (overPeriod). Those are two different metrics."
     alternative: Add uniqueAggregation daily or overPeriod.
@@ -505,6 +526,16 @@ issues:
     median:
       message: "{count} of the {total} {blocks} rest on few observations. Their columns get sparse dots and their n stands under the axis."
       alert: "Read this chart with care: few observations in {count} of the {total} {blocks}, so their median is still uncertain."
+    ratio:
+      thin:
+        message: "{count} of the {total} {blocks} rest on few observations: fewer than 10 {numerator}, or fewer than 10 {denominator} without them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on very few {numerator} or {denominator}, so a few more or fewer can move the share a lot."
+      base:
+        message: "{count} of the {total} {blocks} rest on far fewer {denominator} than the {blocks} around them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on far fewer {denominator} than the {blocks} around them."
+      both:
+        message: "{count} of the {total} {blocks} rest on few observations: very few {numerator} or {denominator}, or far fewer {denominator} than the {blocks} around them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on very few {numerator} or {denominator}, or on far fewer {denominator} than the {blocks} around them."
 
   localeFallback:
     message: There are no texts for {locale}, so English is used.

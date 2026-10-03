@@ -9,6 +9,8 @@ export interface Summary {
   spread: { lo: number; hi: number } | null;
   /** The number of observations behind the value (REQ-043), as the warehouse counted it. */
   n?: number;
+  /** A ratio: its numerator and denominator, as the warehouse delivered them (REQ-076). */
+  parts?: { numerator: number; denominator: number };
 }
 
 /**
@@ -26,8 +28,11 @@ export interface BlockRow {
   p75?: number;
   sum?: number | null;
   n?: number;
+  /** A ratio: the numerator and the denominator of the block (REQ-076). */
+  numerator?: number | null;
+  denominator?: number | null;
   /** periodComparison: the value of the block just before the screen at this position. */
-  previous?: Partial<Record<'mean' | 'median' | 'sum', number | null>> | null;
+  previous?: Partial<Record<'mean' | 'median' | 'sum' | 'ratio', number | null>> | null;
 }
 
 /** Writes a number: an Intl.NumberFormat, or the compact format of the bar charts. */
@@ -36,7 +41,7 @@ export interface NumberFormatter {
 }
 
 /** Every field a statistic may carry in a block; the fields of the others do not belong in it. */
-export const STATISTIC_FIELDS = ['mean', 'sd', 'median', 'p25', 'p75', 'sum', 'n'] as const;
+export const STATISTIC_FIELDS = ['mean', 'sd', 'median', 'p25', 'p75', 'sum', 'n', 'numerator', 'denominator'] as const;
 
 const VALUE = { type: ['number', 'null'], minimum: 0 };
 const N = { description: 'Number of observations behind the value, as counted where the value is computed (REQ-043).', type: 'integer', minimum: 1 };
@@ -48,7 +53,7 @@ const N = { description: 'Number of observations behind the value, as counted wh
  * Every time-axis chart uses one of these, so this lives in one place (REQ-024, REQ-025).
  */
 export abstract class Statistic {
-  abstract readonly id: 'mean' | 'median' | 'sum';
+  abstract readonly id: 'mean' | 'median' | 'sum' | 'ratio';
   /** What kind of number it gives, which decides the shape of its point. */
   abstract readonly kind: Kind;
   /** Whether it has a spread at all; a total has none. */
@@ -63,6 +68,11 @@ export abstract class Statistic {
 
   /** The fields of a block for this statistic, in the contract. */
   abstract pointProperties(): Record<string, object>;
+
+  /** The fields every block carries (null for a block without data). */
+  get required(): string[] {
+    return [this.id];
+  }
 
   /** Centre, spread and n of a block, or null when the block has no value. */
   abstract read(row: BlockRow): Summary | null;
@@ -113,6 +123,22 @@ export abstract class Statistic {
     return measureType === 'perUnit' && this.fewBelow !== null;
   }
 
+  /** Whether every block should carry n (REQ-062): where n counts observations. */
+  wantsN(measureType: string): boolean {
+    return this.countsObservations(measureType);
+  }
+
+  /** How a value is written next to its point and on hover: whole numbers stay whole, otherwise one decimal below 100. */
+  valueFormat(locale: string, highest: number, whole: boolean): NumberFormatter {
+    return numberFormatter(locale, highest >= 100 || whole ? 0 : 1);
+  }
+
+  /** The labels of the value axis, with the decimals of the step between the ticks. */
+  tickLabels(locale: string, ticks: readonly number[]): Record<string, string> {
+    const format = numberFormatter(locale, decimals(ticks[1]! - ticks[0]!));
+    return Object.fromEntries(ticks.map((tick) => [String(tick), format.format(tick)]));
+  }
+
   /**
    * The points that rest on few observations (REQ-044): n below the threshold of the statistic, or
    * below half the usual n. On a time axis the usual n is the mean of the period before and after
@@ -149,7 +175,7 @@ export abstract class Statistic {
   abstract spreadLine(t: Translator, format: NumberFormatter, summary: Summary): string | null;
 
   /** The spread as a detail next to the last value: "± 12,2" or "38,0–51,0". */
-  abstract formatDetail(format: NumberFormatter, summary: Summary): string;
+  abstract formatDetail(format: NumberFormatter, summary: Summary, locale: string): string;
 }
 
 export class Average extends Statistic {
@@ -283,6 +309,100 @@ export class Sum extends Statistic {
 }
 
 /**
+ * A ratio per block (REQ-074, REQ-076): the numerator divided by the denominator, both delivered by the
+ * warehouse; the semgraph only divides. Its point is a square in a square, the numerator inside the
+ * denominator (REQ-075). It has no spread: the denominator stands behind it as the base (REQ-076, REQ-077).
+ * For now only a share, whose numerator is part of its denominator, shown as a percentage.
+ */
+export class Ratio extends Statistic {
+  readonly id = 'ratio';
+  readonly kind = 'ratio';
+  override readonly hasSpread = false;
+  readonly spreadFields = [] as const;
+  readonly withoutSpreadCode = 'none';
+  readonly description = 'Per block the numerator and the denominator of a share (a square in a square), as the warehouse counted them; the chart only divides.';
+  readonly fewBelow = null;
+
+  pointProperties(): Record<string, object> {
+    return {
+      numerator: { ...VALUE, description: 'The numerator of the block, such as the leads; null when the block has no data.' },
+      denominator: { ...VALUE, description: 'The denominator of the block, such as the visitors; null when the block has no data. The numerator of a share is part of it.' },
+    };
+  }
+
+  override get required(): string[] {
+    return ['numerator', 'denominator'];
+  }
+
+  read({ numerator, denominator }: BlockRow): Summary | null {
+    if (typeof numerator !== 'number' || typeof denominator !== 'number' || denominator <= 0) return null;
+    return { centre: numerator / denominator, spread: null, parts: { numerator, denominator } };
+  }
+
+  /** A ratio rests on its own counts (REQ-080), not on an n. */
+  override countsObservations(measureType: string): boolean {
+    return measureType === 'ratio';
+  }
+
+  override wantsN(): boolean {
+    return false;
+  }
+
+  /**
+   * REQ-080: few observations for a ratio. Statistically thin: fewer than 10 in the numerator, or fewer
+   * than 10 in the denominator without the numerator. An unusual base: a denominator below half the
+   * mean of the period before and after. One is enough; a running period never (REQ-054).
+   */
+  override fewObservations<Point extends { key: number; running?: boolean }>(points: readonly Point[]): number[] {
+    return [...this.fewReasons(points as never).keys()];
+  }
+
+  fewReasons<Point extends { key: number; running?: boolean; parts?: { numerator: number; denominator: number } }>(points: readonly Point[]): Map<number, 'thin' | 'base'> {
+    const byKey = new Map(points.map((point) => [point.key, point]));
+    const reasons = new Map<number, 'thin' | 'base'>();
+    for (const point of points) {
+      if (!point.parts || point.running) continue;
+      const { numerator, denominator } = point.parts;
+      const around = neighbourMean(byKey, point.key, (other) => other.parts?.denominator);
+      if (numerator < 10 || denominator - numerator < 10) reasons.set(point.key, 'thin');
+      else if (around !== undefined && denominator < around / 2) reasons.set(point.key, 'base');
+    }
+    return reasons;
+  }
+
+  /** A share as a percentage, with one decimal: "4,2%". */
+  override valueFormat(locale: string): NumberFormatter {
+    return new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+
+  override tickLabels(locale: string, ticks: readonly number[]): Record<string, string> {
+    const digits = decimals((ticks[1]! - ticks[0]!) * 100);
+    const format = new Intl.NumberFormat(locale, { style: 'percent', minimumFractionDigits: digits, maximumFractionDigits: digits });
+    return Object.fromEntries(ticks.map((tick) => [String(tick), format.format(tick)]));
+  }
+
+  barWidth(): number {
+    return 0;
+  }
+
+  formatStats(t: Translator, format: NumberFormatter, summary: Summary): string {
+    return t('chart.stats.ratio', { value: format.format(summary.centre), parts: this.formatDetail(format, summary, t.locale) });
+  }
+
+  /** The numerator and the denominator on hover: "27 / 640". */
+  spreadLine(t: Translator, format: NumberFormatter, summary: Summary): string | null {
+    return this.formatDetail(format, summary, t.locale) || null;
+  }
+
+  /** The numerator is not drawn: it stands under the value, "27 / 640" (REQ-076). */
+  formatDetail(_format: NumberFormatter, { parts }: Summary, locale: string): string {
+    if (!parts) return '';
+    const count = numberFormatter(locale, 0);
+    return `${count.format(parts.numerator)} / ${count.format(parts.denominator)}`;
+  }
+}
+
+/**
  * REQ-080, REQ-081: the mean of a value over the period just before and just after, as far as they
  * exist; at the edges only the neighbour there is. A running period is no neighbour: its value is not
  * complete yet.
@@ -297,6 +417,19 @@ export function neighbourMean<Point extends { key: number; running?: boolean }>(
     return found === undefined ? [] : [found];
   });
   return values.length > 0 ? values.reduce((sum, item) => sum + item, 0) / values.length : undefined;
+}
+
+function numberFormatter(locale: string, digits: number): Intl.NumberFormat {
+  return new Intl.NumberFormat(locale, { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+/** The number of decimals a step needs: 2.5 needs one, 20 none. */
+function decimals(value: number): number {
+  for (let digits = 0; digits < 6; digits++) {
+    const scaled = value * 10 ** digits;
+    if (Math.abs(Math.round(scaled) - scaled) < 1e-6) return digits;
+  }
+  return 6;
 }
 
 /** The median of a list of numbers. */

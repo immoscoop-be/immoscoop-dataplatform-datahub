@@ -18,8 +18,9 @@ export interface MeasureRequest {
 export function measureRules(request: MeasureRequest, statistic: Statistic, metadata: SemgraphMetadata): IssueSpec[] {
   const issues: IssueSpec[] = [];
   const allowed = metadata.attributes.measureType ?? 'any';
-  if (request.measureType === 'ratio') {
-    // REQ-070: a share needs its numerator and denominator; that contract follows in its own requirement.
+  if (request.measureType === 'ratio' && statistic.kind !== 'ratio') {
+    // REQ-074, REQ-076: a ratio is a numerator divided by a denominator, and only a ratio chart takes
+    // both; as a mean or a total of ratios it would mislead.
     issues.push({ level: 'refusal', code: 'ratioNeedsNumerator', field: '/measureType' });
   } else if (allowed !== 'any' && !allowed.includes(request.measureType)) {
     issues.push({

@@ -39,7 +39,7 @@ describe('movingWindowAverage rules', () => {
     assert.deepEqual(result.codes, ['perUnitNotSummable']);
   });
 
-  it('refuses a ratio until its numerator and denominator have a contract (REQ-070)', async () => {
+  it('refuses a ratio outside a ratio chart: a mean of ratios would mislead (REQ-070, REQ-074, REQ-076)', async () => {
     const result = await validate({ ...(await example('basic')), measureType: 'ratio' });
     assert.deepEqual(result.codes, ['ratioNeedsNumerator']);
     assert.match(result.report.issues[0]!.alternative!, /measureType perUnit/);
@@ -121,5 +121,37 @@ describe('movingWindowAverage rules', () => {
   it('ignores uniqueAggregation for additive measures, and says so', async () => {
     const result = await validate({ ...(await example('basic')), uniqueAggregation: 'daily' });
     assert.deepEqual(result.codes, ['uniqueAggregationIgnored']);
+  });
+});
+
+describe('ratio rules (REQ-074 to REQ-080)', () => {
+  it('a ratio chart takes measureType ratio, and names what it counts', async () => {
+    const request = await example('weeks', 'calendarRatio');
+    assert.deepEqual((await validate(request)).codes, ['fewObservations.ratio.base']);
+    assert.deepEqual((await validate({ ...request, measureType: 'additive' })).codes.filter((code) => code !== 'fewObservations.ratio.base'), ['measureTypeNotAllowed']);
+    const { numeratorName: _, ...unnamed } = request;
+    assert.equal((await validate(unnamed)).outcome, 'invalid');
+    // A ratio chart has no valueAxis: both axes start at zero (REQ-079).
+    assert.equal((await validate({ ...request, valueAxis: 'zoom' })).outcome, 'invalid');
+  });
+
+  it('every block carries its numerator and denominator, and nothing of another statistic', async () => {
+    assert.equal((await validate(await withPoints(without('denominator'), 'weeks', 'calendarRatio'))).outcome, 'invalid');
+    const result = await validate(await withPoints((rows) => rows.map((row) => ({ ...row, mean: 0.04 })), 'weeks', 'calendarRatio'));
+    assert.equal(result.outcome, 'invalid');
+  });
+
+  it('refuses a numerator larger than its denominator: how a ratio per unit is shown is still open (REQ-074)', async () => {
+    const result = await validate(await withPoints((rows) => rows.map((row, index) => (index === 2 ? { ...row, numerator: 900, denominator: 300 } : row)), 'weeks', 'calendarRatio'));
+    assert.equal(result.outcome, 'refused');
+    assert.ok(result.codes.includes('ratioPerUnitOpen'));
+  });
+
+  it('says whether few observations are statistically thin, an unusual base, or both (REQ-080)', async () => {
+    assert.deepEqual((await validate(await example('few-qualified', 'movingWindowRatio'))).codes, ['fewObservations.ratio.thin']);
+    const both = await withPoints((rows) => rows.map((row, index) => (index === 1 ? { ...row, numerator: 5, denominator: 300 } : row)), 'weeks', 'calendarRatio');
+    const result = await validate(both);
+    assert.deepEqual(result.codes, ['fewObservations.ratio.both']);
+    assert.match(result.report.issues[0]!.message, /^2 of the 10 weeks rest on few observations: very few leads or visitors, or far fewer visitors than the weeks around them\./);
   });
 });

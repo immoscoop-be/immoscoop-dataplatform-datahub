@@ -15,8 +15,11 @@ export interface HoverSpec {
   /** The edges of the column when it is not one unit wide, such as a bin of a distribution. */
   from?: number;
   to?: number;
-  /** The point and its spread on the y scale; absent for a slot without data. */
-  point?: { y: number; lo: number | null; hi: number | null };
+  /**
+   * The point and its spread on the y scale; absent for a slot without data. `right` is a level read on
+   * the right axis, such as the denominator of a ratio (REQ-079): its guide runs to the right.
+   */
+  point?: { y: number; lo: number | null; hi: number | null; right?: number };
   lines: HoverLine[];
 }
 
@@ -94,6 +97,10 @@ export class HoverLayer {
     for (const value of this.levels(spec)) {
       const y = round(this.scales.y(value));
       lines.push(`<line x1="0" x2="${round(centre)}" y1="${y}" y2="${y}" ${stroke}/>`);
+    }
+    if (spec.point?.right !== undefined) {
+      const y = round(this.scales.y(spec.point.right));
+      lines.push(`<line x1="${round(centre)}" x2="${this.area.width}" y1="${y}" y2="${y}" ${stroke}/>`);
     }
     return lines;
   }

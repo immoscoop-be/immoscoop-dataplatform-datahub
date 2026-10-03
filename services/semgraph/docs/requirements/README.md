@@ -111,7 +111,15 @@ elk bestand zegt welke.
 | [REQ-071](REQ-071.md) | Ratio en Cohort in de catalogus | 2026-10-03 (antwoord) | geïmplementeerd: beide gepland | [0b2b232](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0b2b232) |
 | REQ-072 | De verdeling van twee waarden wordt een eigen semgraph, na een analyse | 2026-10-03 (antwoord) | open: eerst een analyse | – |
 | [REQ-073](REQ-073.md) | Een staaf begint bij nul; een gemiddelde of mediaan per categorie mag inzoomen | 2026-10-03 (antwoord) | geïmplementeerd | [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464) |
-| REQ-074 tot REQ-082 | Teller en noemer, de verhouding over de tijd, de tweede as, de buurregel bij weinig waarnemingen | 2026-10-03 (Confluence) | open: eerst naast de bestaande requirements leggen | – |
+| [REQ-074](REQ-074.md) | Een verhouding is een teller gedeeld door een noemer: aandeel en verhouding per eenheid | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen; een verhouding per eenheid is een open punt | COMMIT |
+| [REQ-075](REQ-075.md) | Een verhouding is een vierkant in een vierkant | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-076](REQ-076.md) | Een verhouding over de tijd: de lijn, met haar noemer als grijze trap op een rechteras; `movingWindowRatio`, `calendarRatio` | 2026-10-03 (Confluence) | geïmplementeerd voor aandelen | COMMIT |
+| [REQ-077](REQ-077.md) | Een gevulde traplijn op een datumas enkel voor de noemer | 2026-10-03 (Confluence) | geïmplementeerd; `kpiStatus` is een open punt | COMMIT |
+| [REQ-078](REQ-078.md) | Een licht vlak: focuskleur is spreiding, grijs is basis | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-079](REQ-079.md) | De tweede as: beide vanaf nul, dezelfde rasterlijnen, de noemer onder de verhouding | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-080](REQ-080.md) | Weinig waarnemingen bij een verhouding: statistisch dun of een afwijkende basis | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
+| [REQ-081](REQ-081.md) | Weinig waarnemingen tegenover de periode ervoor en erna, in plaats van de mediaan | 2026-10-03 (Confluence) | geïmplementeerd op de tijdas; bij categorieën een open punt | [4cccd03](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/4cccd03) |
+| [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | COMMIT |
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
@@ -129,7 +137,9 @@ REQ-043 tot REQ-047, REQ-053 en REQ-054 (weinig waarnemingen) gebouwd. REQ-059 t
 kwamen op 2026-10-03 uit Figma. REQ-063 en REQ-064 zijn de antwoorden van 2026-10-03 op de open punten over n en over
 unieken over een blok; ze bevestigen hoe het al gebouwd was. REQ-065 is de opdracht om te bouwen wat in Figma uitgewerkt is;
 REQ-066 tot REQ-073 zijn de antwoorden van 2026-10-03 op de acht vragen daarover. Alles is gebouwd, op de verdeling van
-twee waarden na (REQ-072, eerst een analyse). REQ-074 tot REQ-082 kwamen op 2026-10-03 op Confluence (teller en noemer en wat erbij hoort) en zijn nog te bekijken.
+twee waarden na (REQ-072, eerst een analyse). REQ-074 tot REQ-082 kwamen op 2026-10-03 op Confluence: teller en
+noemer, de verhouding over de tijd en haar tweede as, en de buurregel bij weinig waarnemingen. Ze zijn gebouwd voor
+aandelen (`movingWindowRatio`, `calendarRatio`); de vragen die overblijven staan bij de open punten 9 tot 15.
 REQ-083 is de opdracht voor een overzicht van de grafieken met hun voorbeelden; eerst genoteerd als REQ-074.
 
 ### Hernummering
@@ -147,8 +157,8 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 14 tot 20. Punt 21 daar is de kleur van de bollen
-(zie [REQ-068](REQ-068.md)).
+Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 19 tot 25, de punten 9 tot 15 zijn daar 27 tot 33.
+Punt 26 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)).
 
 1. **De mini-trend van de KPI-tegel met de periode ervoor.** REQ-067 (2026-10-03): "Een vergelijking buiten een
    tijdas (vergelijkingsstaaf, KPI-tegel en haar mini-trend) mag met de periode net ervoor of met vorig jaar".
@@ -161,7 +171,8 @@ Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 14 tot 20. P
 3. **Cohort wacht ook op teller en noemer.** REQ-071 (2026-10-03): "Ratio wacht op de requirement over teller en
    noemer." Een cel van de Cohort is een aandeel (nog actief van de nieuwe in die maand), dus ook een ratio over de
    tijd. Voorstel: het warehouse levert per cel beide aantallen (nieuw en nog actief), de semgraph rekent enkel het
-   aandeel, net zoals REQ-069 verschillen toelaat. Te beslissen samen met de requirement over teller en noemer.
+   aandeel, net zoals REQ-069 verschillen toelaat. De requirement over teller en noemer is er nu: REQ-076 doet het
+   zo voor de verhouding over de tijd. Of de Cohort nu gebouwd wordt: punt 13.
 4. **REQ-072: de analyse van de verdeling van twee waarden.** Welke eigenschap onderscheidt ze van `distribution`
    (de keuzehulp moet bij precies één semgraph uitkomen)? Voorstel: een nieuwe eigenschap in de woordenlijst, het
    aantal waarden (één of twee). En het contract: een raster van cellen met per cel het aantal, plus beide medianen,
@@ -176,6 +187,29 @@ Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 14 tot 20. P
    vet". Figma (KPI status, Distribution of two values): "its first value is bold on a light background". Voorstel:
    ook de lichte achtergrond, op elke ingezoomde as.
 8. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
+9. **De buurregel bij categorieën (REQ-081).** REQ-081 (2026-10-03): "n kleiner dan de helft van het gemiddelde n
+   van de periode ervoor en erna", voor "alle semgraphs met een gemiddelde of mediaan". Categorieën hebben geen
+   periodes. Voorstel, zo gebouwd: de buurregel op de tijdas; bij categorieën blijft de regel van REQ-044.
+10. **REQ-081 en "enkel vanaf vijf punten".** REQ-044 (2026-10-03): "(enkel vanaf vijf punten)". REQ-081 zegt er
+    niets over. Voorstel, zo gebouwd: de voorwaarde verdwijnt mee; een lopende periode is geen buur.
+11. **Een verhouding per eenheid tonen (REQ-074).** REQ-074 (2026-10-03): ratio omvat een aandeel en een verhouding
+    per eenheid, "op dezelfde manier getoond". "3,4 panden per makelaar" staat niet in procent. Voorstel: `share:
+    true` (procent, de teller is deel van de noemer) of `false` (een getal). Gebouwd: enkel aandelen; een teller
+    groter dan de noemer wordt voorlopig geweigerd (`ratioPerUnitOpen`).
+12. **Een verhouding van nul en "de twee kruisen nooit" (REQ-079).** Bij een verhouding van 0 ligt de lijn op de
+    basislijn en kan de noemer er niet onder. Voorstel, zo gebouwd: zulke periodes tellen niet mee voor de schaal.
+13. **`measureType: ratio` bij de andere semgraphs.** Gebouwd: `movingWindowRatio` en `calendarRatio`; een andere
+    semgraph weigert `ratio` met die twee als alternatief. Bouw ik nu ook Ratio per categorie (Figma Chart/Ratio,
+    met de lichte noemerstaaf) en de Cohort (`survival`, met per cel nieuw en nog actief), en mag een KPI-tegel een
+    verhouding tonen?
+14. **Het open vierkant (REQ-075) en "altijd gevuld" (REQ-052).** REQ-052 (2026-10-03): "The shape on a point stays
+    filled in every state; there is no hollow or pale shape." REQ-075 (2026-10-03): "een open vierkant (de noemer)
+    met een klein gevuld vierkant erin". Lezing, zo gebouwd: een eigen vorm, binnenin wit, geen toestand.
+15. **De trap van `kpiStatus` en REQ-077.** REQ-077 (2026-10-03, de recentste): "een gevulde traplijn op een datumas
+    is toegelaten, enkel voor de noemer van een verhouding … Nooit voor de metriek zelf." `kpiStatus`
+    ([REQ-065](REQ-065.md), [REQ-068](REQ-068.md), 2026-10-03, naar Figma KPI status) tekent de cumulatieve stand als
+    gevulde trap, een trede per periode. Voorstel: REQ-077 aanscherpen met een uitzondering voor een cumulatieve
+    stand tegenover een pad. Niet gewijzigd tot het antwoord.
 
 ## Sjabloon voor een requirement
 

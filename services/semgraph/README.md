@@ -34,8 +34,8 @@ language and draws, with title, reading cue and footer (REQ-058).
 
 ## Status: v0
 
-Nine semgraphs, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker image: five on a
-time axis, one for categories, one for the distribution of a value, and two for a KPI.
+Eleven semgraphs, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker image: seven on a
+time axis (two of them for a ratio), one for categories, one for the distribution of a value, and two for a KPI.
 
 | Semgraph | One block | Drawn as |
 | --- | --- | --- |
@@ -43,6 +43,8 @@ time axis, one for categories, one for the distribution of a value, and two for 
 | `movingWindowMedian` | a window of days, named after its last day: median, P25, P75, n | line of dots in wide bars, P25–P75 |
 | `calendarAverage` | an ISO week, month, quarter or year, named by its ISO name: mean, sd, n | line of diamonds over thin bars, ±1 sd |
 | `calendarMedian` | an ISO week, month, quarter or year: median, P25, P75, n | line of dots in wide bars, P25–P75 |
+| `movingWindowRatio` | a window of days, named after its last day: numerator and denominator | a line of squares in a square, over the denominator as a grey step area on a right axis |
+| `calendarRatio` | an ISO week, month, quarter or year: numerator and denominator | the same, per calendar period |
 | `periodComparison` | a window or a calendar period: the total, mean or median, and the same value of the block before the screen | a line in the focus colour against a grey line, a shortfall hatched |
 | `categoryComparison` | a category: the total, mean or median; a total may carry its previous value | bars: lying and sorted by value without order, upright in their order; a dot or diamond with its spread for a median or mean; a comparison inside one bar |
 | `kpiTile` | a window or a calendar period, as in `periodComparison`, with the value it is compared with | the number of the last block with its difference, and a mini trend |
@@ -60,6 +62,7 @@ the same core.
 ![categoryComparison: leads per province against last year](test/golden/categoryComparison-provinces-sum-vs-last-year.svg)
 ![kpiTile: credit leads over 28 days against last year](test/golden/kpiTile-rolling-28d.svg)
 ![kpiStatus: leads since the launch against the path to the target](test/golden/kpiStatus-leads-since-launch.svg)
+![calendarRatio: the conversion from visit to lead per week, over the visitors](test/golden/calendarRatio-weeks.svg)
 
 ## Run it
 
@@ -135,6 +138,18 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `quarters` | 6 quarters, median with P25–P75 | ok | [local](http://localhost:8080/semgraphs/calendarMedian/examples/quarters) · [golden](test/golden/calendarMedian-quarters.svg) |
+
+### movingWindowRatio
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `few-qualified` | the share of qualified leads per window of 7 days; one window rests on fewer than 10 qualified leads | ok, with a red caution `fewObservations.ratio.thin` | [local](http://localhost:8080/semgraphs/movingWindowRatio/examples/few-qualified) · [golden](test/golden/movingWindowRatio-few-qualified.svg) |
+
+### calendarRatio
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `weeks` | the conversion from visit to lead per week, as in Figma; week 31 rests on far fewer visitors; en | ok, with a red caution `fewObservations.ratio.base` | [local](http://localhost:8080/semgraphs/calendarRatio/examples/weeks) · [golden](test/golden/calendarRatio-weeks.svg) |
 
 ### periodComparison
 
@@ -275,10 +290,27 @@ per unit (`measureType: perUnit`, such as an amount per lead) a missing `n` give
 reader cannot see which points rest on few observations (REQ-062). For an average per day of a count (`additive`
 or `unique`) the observations are the days of the block, so there is no n to give.
 
-`measureType` says what kind of number it is (REQ-070): `additive` or `unique` for a count, `perUnit` for a mean or
-median per unit, such as an amount per lead or the days a property stays online. `ratio` is a share whose numerator
-is part of its denominator, such as qualified leads out of all leads; it needs a numerator and a denominator, and
-that contract is still to come, so it is refused for now.
+`measureType` says what kind of number it is (REQ-070, REQ-074): `additive` or `unique` for a count, `perUnit` for a
+mean or median per unit where the spread between the units is the question, such as an amount per lead or the days a
+property stays online. `ratio` is a numerator divided by a denominator, such as leads out of visitors: only
+`movingWindowRatio` and `calendarRatio` take it, every other chart refuses it.
+
+### Ratios over time (REQ-074 to REQ-080)
+
+`movingWindowRatio` and `calendarRatio` take per block the `numerator` and the `denominator`, as the warehouse counted
+them, and name what they count (`numeratorName`, `denominatorName`): the chart only divides (REQ-076). The ratio is the
+line; the denominator stands behind it as a grey step area on a right axis, both axes from zero with shared gridlines,
+the denominator always below the ratio (REQ-079). A block with fewer than 10 in the numerator, or fewer than 10 in the
+denominator without the numerator, or a denominator below half that of the periods around it, gets the dots of few
+observations (REQ-080). For now a ratio is a share, shown in percent; a numerator larger than its denominator (a ratio
+per unit, such as listings per agent) is refused until it is decided how that is shown.
+
+```json
+{ "semgraph": "calendarRatio", "metric": "visitToLead", "measureType": "ratio", "unit": "week",
+  "numeratorName": "leads", "denominatorName": "visitors",
+  "points": [ { "period": "2026-W30", "numerator": 88, "denominator": 2100 },
+              { "period": "2026-W31", "numerator": 27, "denominator": 640 } ] }
+```
 
 `periodComparison` takes `statistic` (`sum`, `mean` or `median`) and either `window` or `unit`. Each block also
 carries `previous`: the same value for the block just before the screen at its position, e.g.
@@ -606,6 +638,10 @@ the pages Anatomy and Line charts, and with the team:
 13. For `kpiTile`: with the period before, the mini trend has no shadow line (that period is on the trend itself);
     a footer line too wide for the narrow tile breaks at its separators.
 14. For `kpiStatus`: the touching dots in `target/light`; the per-step and catch-up labels placed as in Figma.
+15. For the ratios: the square in a square 8 px around 40 %; the denominator at least 24 px below its ratio (at
+    least halfway for a very low ratio); a ratio of zero does not count for the scale; the counts of a block with few
+    observations at its point, the denominator above its block; on hover a guide from the denominator to the right
+    axis.
     The open questions are in [docs/requirements](docs/requirements/README.md#open-punten-eerst-te-bespreken).
 
 ## Notes for consumers
