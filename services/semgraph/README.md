@@ -78,6 +78,54 @@ The container is stateless, needs no secrets and listens on `PORT` (default 8080
 that comes from the platform it is deployed on (still to be agreed), so do not expose it publicly.
 `LOG_LEVEL` sets the log level (default `info`).
 
+## Examples
+
+Every example request, with a link to render it on a local server (`npm start`) and to its golden SVG. The requests
+are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
+
+### movingWindowAverage
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `basic` | 7 windows of 7 days, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/basic) · [golden](test/golden/movingWindowAverage-basic.svg) |
+| `daily` | window of 1 day, 28 days: the daily values themselves | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/daily) · [golden](test/golden/movingWindowAverage-daily.svg) |
+| `long-horizon` | 78 windows of 7 days (a year and a half), with a thinned time axis | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/long-horizon) · [golden](test/golden/movingWindowAverage-long-horizon.svg) |
+| `missing-days` | days without a value, drawn as missing; en | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/missing-days) · [golden](test/golden/movingWindowAverage-missing-days.svg) |
+| `with-metadata` | the metadata block (`meta`): question, asked and built by, references, query | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/with-metadata) · [golden](test/golden/movingWindowAverage-with-metadata.svg) |
+| `zoomed` | `valueAxis: zoom`: the value axis starts just below the data, with a zigzag | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/zoomed) · [golden](test/golden/movingWindowAverage-zoomed.svg) |
+| `window-10` | a window of 10 days, not a multiple of 7 | deviation `windowNotMultipleOf7` | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/window-10) · [golden](test/golden/movingWindowAverage-window-10.svg) |
+| `without-spread` | `spread: none`: the mean without its spread | deviation `meanWithoutSpread` | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/without-spread) · [golden](test/golden/movingWindowAverage-without-spread.svg) |
+| `unique-without-aggregation` | unique visitors without `uniqueAggregation` | refused `uniqueAggregationRequired`: 422 JSON, no chart | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/unique-without-aggregation) |
+
+### movingWindowMedian
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `basic` | 7 windows of 7 days, median with P25–P75 | ok | [local](http://localhost:8080/semgraphs/movingWindowMedian/examples/basic) · [golden](test/golden/movingWindowMedian-basic.svg) |
+
+### calendarAverage
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `weeks` | 12 ISO weeks, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks) · [golden](test/golden/calendarAverage-weeks.svg) |
+| `months` | 12 months | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months) · [golden](test/golden/calendarAverage-months.svg) |
+| `months-values-all` | 12 months, with every value written on the chart (`values: all`) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months-values-all) · [golden](test/golden/calendarAverage-months-values-all.svg) |
+| `years` | 3 years, with a zoomed value axis | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/years) · [golden](test/golden/calendarAverage-years.svg) |
+
+### calendarMedian
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `quarters` | 6 quarters, median with P25–P75 | ok | [local](http://localhost:8080/semgraphs/calendarMedian/examples/quarters) · [golden](test/golden/calendarMedian-quarters.svg) |
+
+### periodComparison
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `weeks-sum` | the total per week, 12 weeks against the 12 weeks before | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/weeks-sum) · [golden](test/golden/periodComparison-weeks-sum.svg) |
+| `months-mean` | the mean per month, 6 months against the half year before | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/months-mean) · [golden](test/golden/periodComparison-months-mean.svg) |
+| `rolling-median` | the median per window of 7 days, 8 windows against the 8 before; en | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/rolling-median) · [golden](test/golden/periodComparison-rolling-median.svg) |
+
 ## API
 
 | Call | Does |
