@@ -43,7 +43,7 @@ MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and 
 the same core.
 
 ![movingWindowAverage example](test/golden/movingWindowAverage-basic.svg)
-![calendarAverage per week, with the running week hollow](test/golden/calendarAverage-weeks.svg)
+![calendarAverage per week, with the running week on its pattern](test/golden/calendarAverage-weeks.svg)
 ![periodComparison: 12 weeks against the 12 weeks before](test/golden/periodComparison-weeks-sum.svg)
 
 ## Run it
@@ -186,8 +186,8 @@ What the service does:
    overlap, the last one ending on the last complete day: 7 windows of 7 days run from −42d to "nu". A window of
    one day shows the daily values, without spread (REQ-031). A calendar chart has one block per period, ending
    with the period of the last complete day. While that period is not over, it is **running**: its value covers
-   the days so far, its point is hollow, and "current" ("lopend") stands under it (on hover: "running: 3 of 7
-   days").
+   the days so far, its column gets the running pattern while its shape stays filled (REQ-052), and "current"
+   ("lopend") stands under it (on hover: "running: 3 of 7 days").
 3. Statistics, the same for both families: the mean with the sample standard deviation (n − 1, as `STDDEV` in
    BigQuery), or the median with P25–P75 (linear interpolation, as `PERCENTILE_CONT`). Tests compare with
    BigQuery's output, also per ISO week. A block with a missing day has no point: one missing day removes its
@@ -199,10 +199,12 @@ What the service does:
    tolerated deviation is drawn under a red block with white text between the title and the chart, with a
    message to the reader: "Lees deze grafiek met voorzichtigheid: …" (REQ-032, REQ-038, REQ-040, REQ-041).
 5. Drawing: always a line through the points, broken where data is missing and never bridged (REQ-001); the
-   centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), filled when final and hollow while
-   running; a thin bar for ±1 sd or a wide rounded bar for P25–P75, in the light tint of the focus colour, which
-   is used for spread only (REQ-009); never a bar for a value on the time axis (REQ-002); missing stretches as
-   an outlined area labelled "no data"; both axes labelled; a darker, thicker baseline. The time axis as in
+   centre as a diamond for a mean (REQ-006) and a dot for a median (REQ-008), always filled; a thin bar for ±1 sd
+   or a wide rounded bar for P25–P75, in the light tint of the focus colour, which is used for spread only
+   (REQ-009); never a bar for a value on the time axis (REQ-002). The state of a period is a pattern behind its
+   whole column, over the full height of the plot (REQ-049, REQ-050, `src/charts/data-states.ts`): a
+   checkerboard for an empty period (REQ-051), fine vertical lines for a running one (REQ-052), as tiles
+   anchored to the plot so neighbouring columns form one area. Both axes labelled; a darker, thicker baseline. The time axis as in
    Figma: ticks on the boundaries between blocks, labels in the middle of a block, the year on a second line on
    the first label and at a year change, which gets a longer, darker tick.
    Values (REQ-033), centred above the point with the spread as a detail: `last` for a moving window, and
@@ -327,7 +329,7 @@ semgraphs: fifteen in all.
 Only the cover page of the Figma file was readable when v0 was built. These choices still need checking against
 the pages Anatomy and Line charts, and with the team:
 
-1. Missing points as an outlined area labelled "no data" (the cover says "an outlined area is missing data").
+1. Missing points: first an outlined area labelled "no data"; since REQ-051 the checkerboard behind the column.
 2. A strict window (an incomplete window has no point), rather than a hollow dot for an incomplete window.
 3. `minimumPoints` counts the values in the horizon × window days the chart uses (so daily values need a horizon
    of at least 28 days); n − 1; a value axis from zero; no rule of its own for the horizon.
@@ -339,7 +341,7 @@ the pages Anatomy and Line charts, and with the team:
 8. The two new attributes `periodType` and `centralTendency`, and their values for the semgraphs of the analysis
    (`any` where they do not matter); see `test/fixtures/analysis-attributes.yml`.
 9. Calendar periods are strict too: a week, month, quarter or year with a missing day has no point. A running
-   period is hollow and covers the days so far; ISO weeks run from Monday to Sunday.
+   period covers the days so far and gets the running pattern; ISO weeks run from Monday to Sunday.
 10. The zoomed axis (zigzag and bold first value), and `uniqueAggregation` values `daily` and `overPeriod`.
 11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; the hatch (dark diagonal
     lines on white, after the Figma example); a running period compared with as many days of the earlier period.

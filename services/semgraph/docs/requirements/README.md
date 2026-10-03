@@ -40,11 +40,11 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-001](REQ-001.md) | Een datumas is altijd een lijn, nooit staven | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-002](REQ-002.md) | Staven enkel voor categorieën, nooit op een datumas | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-003](REQ-003.md) | `periodComparison`: twee lijnen op één tijdas | 2026-10-02 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
-| [REQ-004](REQ-004.md) | `periodComparison`: enkel een achterstand wordt gearceerd | 2026-10-02 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
+| [REQ-004](REQ-004.md) | `periodComparison`: enkel een achterstand wordt gearceerd | 2026-10-02 | geïmplementeerd, vorm gewijzigd door REQ-055 | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85), [c013878](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/c013878) |
 | [REQ-005](REQ-005.md) | `periodComparison`: enkel de focusreeks krijgt een band | 2026-10-02 | geïmplementeerd | [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
-| [REQ-006](REQ-006.md) | Een gemiddelde is een ruit; lopend is hol | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
-| [REQ-007](REQ-007.md) | Een hoeveelheid is een vierkant; lopend is hol | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3), [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
-| [REQ-008](REQ-008.md) | Een mediaan is een bol; lopend is hol | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
+| [REQ-006](REQ-006.md) | Een gemiddelde is een ruit; lopend is hol | 2026-10-02 | geïmplementeerd, gewijzigd door REQ-052 | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
+| [REQ-007](REQ-007.md) | Een hoeveelheid is een vierkant; lopend is hol | 2026-10-02 | geïmplementeerd, gewijzigd door REQ-052 | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3), [1667f85](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1667f85) |
+| [REQ-008](REQ-008.md) | Een mediaan is een bol; lopend is hol | 2026-10-02 | geïmplementeerd, gewijzigd door REQ-052 | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-009](REQ-009.md) | Een licht vlak betekent enkel spreiding | 2026-10-02 | geïmplementeerd | [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
 | [REQ-010](REQ-010.md) | Metadata in de aanroep: vraag, referenties, query, wie vroeg, wie werkte uit, datum van samenstelling | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | [REQ-011](REQ-011.md) | De datum van samenstelling staat altijd vet in de statusregel | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
@@ -59,7 +59,7 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-020](REQ-020.md) | Wat er niet is, wordt niet getoond: een label enkel als er inhoud achter zit | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | [REQ-021](REQ-021.md) | Eerste versie: Docker-image, Node, één semgraph als SVG via REST | 2026-10-02 (opdracht) | geïmplementeerd | [9a22b22](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/9a22b22) |
 | [REQ-022](REQ-022.md) | Veel waarden: leesbaar blijven, met een label per waarde | 2026-10-02 (opdracht) | geïmplementeerd | [e89e5c9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/e89e5c9), [a238eb3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a238eb3) |
-| [REQ-023](REQ-023.md) | Kalenderperiodes; een lopende periode is hol | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
+| [REQ-023](REQ-023.md) | Kalenderperiodes; een lopende periode is hol | 2026-10-02 (opdracht) | geïmplementeerd, gewijzigd door REQ-052 | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
 | [REQ-024](REQ-024.md) | De mediaan naast het gemiddelde | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
 | [REQ-025](REQ-025.md) | Klassen met overerving, geen codeduplicatie | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
 | [REQ-026](REQ-026.md) | De waardeas mag niet van nul beginnen, maar nooit stil | 2026-10-02 (opdracht) | geïmplementeerd | [77b414a](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/77b414a) |
@@ -81,10 +81,17 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-042](REQ-042.md) | Geen voetregel "Buiten de grafiektaal": het rode blok zegt genoeg | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
 | REQ-043 | Elk punt van een gemiddelde of mediaan kent zijn n; de n staat in het hoverkader | 2026-10-03 | open (zie open punt 1) | – |
 | REQ-044 | Weinig waarnemingen: n < 30 (gemiddelde), n < 10 (mediaan), of minder dan de helft van de mediaan van alle n's | 2026-10-03 | open (zie open punt 1) | – |
-| REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | open (zie open punten 1 tot 3) | – |
+| REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | vervangen door REQ-053, nooit gebouwd | – |
 | REQ-046 | De n van zo'n punt staat klein onder de x-as | 2026-10-03 | open (zie open punt 1) | – |
 | REQ-047 | Weinig waarnemingen geeft een rode waarschuwing, maar is geen afwijking: het versielabel blijft | 2026-10-03 | open (zie open punt 1) | – |
 | [REQ-048](REQ-048.md) | De hover op de datapunten volgt het gedrag per toestel van REQ-015 | 2026-10-03 (antwoord) | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
+| [REQ-049](REQ-049.md) | De toestand van een periode is een patroon achter haar hele kolom | 2026-10-03 | geïmplementeerd voor leeg en lopend | [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
+| [REQ-050](REQ-050.md) | Patronen zijn naadloze tegels, verankerd aan de plot: mozaïek 8 px, stippels 6 px, lijntjes 4 px | 2026-10-03 | geïmplementeerd (stippels met REQ-053) | [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
+| [REQ-051](REQ-051.md) | Leeg: de kolom krijgt het mozaïek; geen omlijning meer | 2026-10-03 | geïmplementeerd | [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
+| [REQ-052](REQ-052.md) | Lopend: fijne verticale lijntjes, de vorm blijft gevuld; de holle vorm vervalt | 2026-10-03 | geïmplementeerd | [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
+| REQ-053 | Weinig waarnemingen: de kolom krijgt stippels, de vorm blijft gevuld; vervangt REQ-045 | 2026-10-03 | open (zie open punt 1: wat is n) | – |
+| REQ-054 | Lopend wint van weinig waarnemingen | 2026-10-03 | open (zie open punt 1) | – |
+| [REQ-055](REQ-055.md) | De arcering voor verlies: dalend, dun, zacht, op de achtergrondkleur | 2026-10-03 | geïmplementeerd | [c013878](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/c013878), [72f61e8](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/72f61e8) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -94,7 +101,8 @@ REQ-010 tot REQ-020 (metadata van een grafiek) zijn geïmplementeerd zoals REQ-0
 REQ-013 en REQ-019 zijn vervangen voor ze gebouwd werden, REQ-017 wacht op een PNG-uitvoer. REQ-028 tot REQ-041 zijn
 de antwoorden van 2026-10-03 op de open punten. REQ-042 tot REQ-047 kwamen op 2026-10-03 op Confluence: REQ-042 is
 gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken. REQ-048 is het antwoord van 2026-10-03 op de vraag over de
-hover op de datapunten.
+hover op de datapunten. REQ-049 tot REQ-055 zijn de data states uit Figma: gebouwd, behalve REQ-053 en REQ-054, die
+op de vraag naar n wachten.
 
 ### Hernummering
 
@@ -118,41 +126,24 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
    - Onze semgraphs krijgen dagwaarden ([REQ-021](REQ-021.md)). Een gemiddelde of mediaan gaat dus over dagen, en
      de enige n die de server kent is het aantal dagen achter een punt: 7 voor een venster van 7 dagen, 28 tot 31
      voor een maand, de dagen tot nu voor een lopende periode.
-   - Met n = dagen maken de vaste drempels elk punt met minder dan 30 dagen bleek, met een rode waarschuwing: elk
+   - Met n = dagen geven de vaste drempels elk punt met minder dan 30 dagen stippels en een rode waarschuwing: elk
      venster van 7 of 14 dagen en elke week. Dat botst met [REQ-031](REQ-031.md) (2026-10-03): "Veelvouden van 7
      zijn conform." De relatieve regel slaat bij een rollend venster nooit aan (n is altijd het venster), en bij
-     kalenderperiodes enkel bij een lopende periode, die al hol is ([REQ-023](REQ-023.md)).
+     kalenderperiodes enkel bij een lopende periode, en daar wint lopend (REQ-054).
    - Het voorbeeld in Figma ("Credit leads per day, weekly mean", n 8, n 12, n 96) telt iets anders dan dagen:
      waarnemingen achter de waarde, zoals de leads achter een gemiddeld bedrag. Die geeft het contract vandaag niet
      mee.
    - Vraag: wat is een waarneming? Voorstel:
      - Bij de huidige semgraphs is een waarneming een dag. De n staat in het hoverkader (REQ-043), maar de drempels
-       gelden niet voor dagen. Er wordt dus niets bleek en er komt geen waarschuwing.
+       gelden niet voor dagen. Er komen dus geen stippels en geen waarschuwing.
      - Weinig waarnemingen gaat pas spelen met een nieuw soort metric: een gemiddelde of mediaan over waarnemingen,
        waarbij de aanroeper per dag meestuurt wat erachter zit (voor een gemiddelde `n`, de som en de som van de
        kwadraten; voor een mediaan de waarden zelf). Dan rekent de server gemiddelde, spreiding, mediaan en n over
        de waarnemingen, en gelden REQ-044 tot REQ-047 volledig. Uit te werken bij de eerste metric die het nodig
        heeft.
-     - Hoe een punt met weinig waarnemingen eruitziet, hangt af van punt 2.
-2. **Data states in Figma, nog niet op Confluence.** Figma kreeg op 2026-10-03, na REQ-047, de sectie *Data states*
-   en de bouwstenen *Patterns*: de toestand van de data in een periode is een patroon achter de hele kolom, een
-   dambord voor leeg, schaarse stippen voor weinig waarnemingen en fijne verticale lijnen voor lopend. "Running wins
-   over few observations." "Shapes always stay filled. There is no hollow shape for a running period and no pale
-   shape for few observations." De omlijning van ontbrekende data staat er als *retired*. Dat botst met:
-   - REQ-006, REQ-007 en REQ-008 (2026-10-02): "Een lopende periode is een holle ruit / een hol vierkant / een
-     holle bol."
-   - [REQ-023](REQ-023.md) (2026-10-02): "De laatste periode is hol zolang ze nog loopt."
-   - REQ-045 (2026-10-03): "Een punt met weinig waarnemingen behoudt zijn vorm, gevuld in de lichte focuskleur."
-   - De omlijning van ontbrekende data ([REQ-000](REQ-000.md)).
-
-   Volgens de werkwijze krijgt een nieuwe afspraak in Figma eerst een rij op Confluence. Voorstel: de regels van
-   *Data states* komen er als nieuwe rijen, met Figma als bron en een verwijzing naar wat ze vervangen. Daarna
-   bouwen: het patroon achter de kolom in plaats van de holle vorm en de omlijning. Vraag: zijn de regels in Figma
-   beslist, en mag ik ze zo registreren?
-3. **De bleke vorm op een lichte spreiding (REQ-045).** Op Confluence in discussie: in Figma valt een bleke ruit weg
-   tegen de lichte balk of band. Daniel beslist over de tint. Vervalt als *Data states* beslist is: dan is er geen
-   bleke vorm meer.
-4. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
+     - Hoe zo'n punt eruitziet, ligt vast: stippels achter de kolom, de vorm gevuld (REQ-053), en lopend wint
+       (REQ-054). Enkel n staat nog open.
+2. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
 
