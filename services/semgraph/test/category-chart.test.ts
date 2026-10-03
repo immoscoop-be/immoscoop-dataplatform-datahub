@@ -68,7 +68,7 @@ describe('categoryComparison', () => {
 
   it('follows the rules about the kind of number: no total of ratios, unique counts that say how they were counted (REQ-064)', async () => {
     const request = await example('provinces-sum', 'categoryComparison');
-    assert.deepEqual(codes(await run({ ...request, measureType: 'ratio' }, false)), ['ratioNotSummable']);
+    assert.deepEqual(codes(await run({ ...request, measureType: 'perUnit' }, false)), ['perUnitNotSummable']);
     assert.deepEqual(codes(await run({ ...request, measureType: 'unique', uniqueAggregation: 'daily' }, false)), ['dailyUniquesNotSummable']);
     const uniques = await run({ ...request, measureType: 'unique', uniqueAggregation: 'overPeriod' });
     assert.equal(uniques.report.outcome, 'ok');

@@ -83,7 +83,7 @@ cue:
     mean: daily average per {unit}
     median: daily median per {unit}
     sum: total per {unit}
-    ratio:
+    perUnit:
       mean: "mean per {unit}"
       median: "median per {unit}"
   comparison: vs {label}
@@ -131,7 +131,7 @@ hover:
       mean: daily average
       median: daily median
       sum: total
-      ratio:
+      perUnit:
         mean: mean
         median: median
   comparison: "previous period, {name}: {value}"
@@ -345,9 +345,12 @@ issues:
   measureTypeNotAllowed:
     message: "This chart is not made for a measure of type {measureType}: the chart language defines it only for {allowed}."
     alternative: Use a measure of type {allowed}, or ask the data team which semgraph fits.
-  ratioNotSummable:
-    message: "A total of ratios means nothing: an average amount per lead does not add up over a week."
+  perUnitNotSummable:
+    message: "A total of means per unit means nothing: an average amount per lead does not add up over a week."
     alternative: Choose statistic mean or median.
+  ratioNeedsNumerator:
+    message: "A ratio, such as qualified leads out of all leads, needs a numerator and a denominator. That contract is still to come."
+    alternative: Is it a mean per unit, such as an amount per lead? Then use measureType perUnit.
   uniqueAggregationRequired:
     message: "For unique counts, say how they were counted: per day (daily) or over the whole block (overPeriod). Those are two different metrics."
     alternative: Add uniqueAggregation daily or overPeriod.

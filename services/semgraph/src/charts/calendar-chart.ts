@@ -130,14 +130,14 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
     }
   }
 
-  /** "gemiddelde per dag, per week" for an average per day of a count; "gemiddelde per week" for a ratio. */
+  /** "gemiddelde per dag, per week" for an average per day of a count; "gemiddelde per week" for a mean per unit. */
   protected periodCue({ unit, measureType }: CalendarRequest, t: Translator): string {
-    const kind = measureType === 'ratio' ? `ratio.${this.statistic.id}` : this.statistic.id;
+    const kind = measureType === 'perUnit' ? `perUnit.${this.statistic.id}` : this.statistic.id;
     return t(`cue.calendar.${kind}`, { unit: t(`calendar.unit.${unit}`) });
   }
 
   protected centreLabel({ measureType }: CalendarRequest, t: Translator): string {
-    return t(`hover.centre.calendar.${measureType === 'ratio' ? `ratio.${this.statistic.id}` : this.statistic.id}`);
+    return t(`hover.centre.calendar.${measureType === 'perUnit' ? `perUnit.${this.statistic.id}` : this.statistic.id}`);
   }
 
   protected blockSingular({ unit }: CalendarRequest, t: Translator): string {

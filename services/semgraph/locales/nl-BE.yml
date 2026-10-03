@@ -83,7 +83,7 @@ cue:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
     sum: som per {unit}
-    ratio:
+    perUnit:
       mean: "gemiddelde per {unit}"
       median: "mediaan per {unit}"
   comparison: tegenover {label}
@@ -131,7 +131,7 @@ hover:
       mean: gemiddelde per dag
       median: mediaan per dag
       sum: som
-      ratio:
+      perUnit:
         mean: gemiddelde
         median: mediaan
   comparison: "vorige periode, {name}: {value}"
@@ -343,9 +343,12 @@ issues:
   measureTypeNotAllowed:
     message: "Deze grafiek is niet gemaakt voor een maat van het type {measureType}: de grafiektaal legt ze enkel vast voor {allowed}."
     alternative: Gebruik een maat van het type {allowed}, of vraag aan het datateam welke semgraph past.
-  ratioNotSummable:
-    message: "Een som van verhoudingen betekent niets: een gemiddeld bedrag per lead tel je niet op over een week."
+  perUnitNotSummable:
+    message: "Een som van gemiddelden per eenheid betekent niets: een gemiddeld bedrag per lead tel je niet op over een week."
     alternative: Kies statistic mean of median.
+  ratioNeedsNumerator:
+    message: "Een verhouding, zoals gekwalificeerde leads op alle leads, heeft een teller en een noemer nodig. Dat contract komt er nog."
+    alternative: Is het een gemiddelde per eenheid, zoals een bedrag per lead? Gebruik dan measureType perUnit.
   uniqueAggregationRequired:
     message: "Bij unieke aantallen moet je zeggen hoe ze geteld zijn: per dag (daily) of over het hele blok (overPeriod). Dat zijn twee verschillende metrics."
     alternative: Voeg uniqueAggregation daily of overPeriod toe.

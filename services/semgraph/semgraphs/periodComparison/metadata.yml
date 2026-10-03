@@ -7,7 +7,7 @@ attributes:
   breakdown: [none]
   comparisonBasis: [previousPeriod]
   dataGrain: [aggregated]
-  measureType: [additive, unique, ratio]
+  measureType: [additive, unique, perUnit]
   accumulation: [perPeriod]
   periodType: any
   centralTendency: any

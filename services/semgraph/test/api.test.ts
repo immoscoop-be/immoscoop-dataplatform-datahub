@@ -40,7 +40,7 @@ describe('API', () => {
   it('GET /semgraphs/{id} returns metadata, schema and examples', async () => {
     const body = (await app.inject('/semgraphs/movingWindowAverage')).json();
     assert.equal(body.answers, 'How does this evolve, without the daily noise?');
-    assert.deepEqual(body.attributes.measureType, ['additive', 'unique', 'ratio']);
+    assert.deepEqual(body.attributes.measureType, ['additive', 'unique', 'perUnit']);
     assert.deepEqual(body.schema.properties.points.items.required, ['end', 'mean']);
     assert.equal(body.schema.properties.window.minimum, 1);
     assert.deepEqual(body.schema.properties.values.enum, ['off', 'last', 'lastAndPrevious', 'all']);

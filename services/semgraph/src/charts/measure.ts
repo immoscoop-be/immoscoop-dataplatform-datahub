@@ -7,7 +7,7 @@ export const LEARNING_PLAN_LEVEL_1 = 'https://immoscoop.atlassian.net/wiki/space
 
 /** What every request says about its numbers. */
 export interface MeasureRequest {
-  measureType: 'additive' | 'unique' | 'ratio';
+  measureType: 'additive' | 'unique' | 'perUnit' | 'ratio';
   uniqueAggregation?: 'daily' | 'overPeriod';
 }
 
@@ -18,16 +18,19 @@ export interface MeasureRequest {
 export function measureRules(request: MeasureRequest, statistic: Statistic, metadata: SemgraphMetadata): IssueSpec[] {
   const issues: IssueSpec[] = [];
   const allowed = metadata.attributes.measureType ?? 'any';
-  if (allowed !== 'any' && !allowed.includes(request.measureType)) {
+  if (request.measureType === 'ratio') {
+    // REQ-070: a share needs its numerator and denominator; that contract follows in its own requirement.
+    issues.push({ level: 'refusal', code: 'ratioNeedsNumerator', field: '/measureType' });
+  } else if (allowed !== 'any' && !allowed.includes(request.measureType)) {
     issues.push({
       level: 'refusal',
       code: 'measureTypeNotAllowed',
       field: '/measureType',
       params: { measureType: request.measureType, allowed: allowed.join(', ') },
     });
-  } else if (request.measureType === 'ratio' && statistic.kind === 'amount') {
-    // A total of ratios means nothing: an average price per lead does not add up over a week.
-    issues.push({ level: 'refusal', code: 'ratioNotSummable', field: '/measureType' });
+  } else if (request.measureType === 'perUnit' && statistic.kind === 'amount') {
+    // A total of means per unit means nothing: an average price per lead does not add up over a week.
+    issues.push({ level: 'refusal', code: 'perUnitNotSummable', field: '/measureType' });
   }
 
   // Daily uniques and the uniques over a whole block are two different metrics: the caller says which.

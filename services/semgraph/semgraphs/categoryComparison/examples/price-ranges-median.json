@@ -2,7 +2,7 @@
   "semgraph": "categoryComparison",
   "metric": "daysOnline",
   "title": "Dagen online per prijsklasse (voorbeelddata)",
-  "measureType": "ratio",
+  "measureType": "perUnit",
   "statistic": "median",
   "ordered": true,
   "period": "2026-09",

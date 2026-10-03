@@ -435,7 +435,7 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  const ratios = () => timeAxis.filter((drawn) => drawn.request.measureType === 'ratio' && drawn.statistic !== 'sum');
+  const ratios = () => timeAxis.filter((drawn) => drawn.request.measureType === 'perUnit' && drawn.statistic !== 'sum');
   const blockRows = (drawn: Drawn) => drawn.request.points as Record<string, unknown>[];
 
   it('REQ-058: the semgraph computes nothing over days: every point is a block as the warehouse delivered it', () => {
@@ -487,7 +487,7 @@ describe('requirements of the chart language', async () => {
       const expected = drawn.computed.points.filter((point) => point.n !== undefined && !point.running && (point.n < threshold || point.n < relative)).map((point) => point.rel);
       assert.deepEqual(drawn.computed.few, expected, drawn.name);
     }
-    const few = examples.find((drawn) => drawn.name === 'calendarAverage/ratio-few-observations')!;
+    const few = examples.find((drawn) => drawn.name === 'calendarAverage/per-unit-few-observations')!;
     assert.deepEqual(few.computed.few, [-7, -6]);
     // The running week has n 17, but running wins (REQ-054).
     assert.ok(few.computed.points.at(-1)!.running && few.computed.points.at(-1)!.n! < 30);
@@ -516,7 +516,7 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-053: a period with few observations gets dots behind its column; its shape stays filled in the focus colour', () => {
-    const few = examples.find((drawn) => drawn.name === 'calendarAverage/ratio-few-observations')!;
+    const few = examples.find((drawn) => drawn.name === 'calendarAverage/per-unit-few-observations')!;
     const marked = (few.datasets.points as { rel: number }[]).map((point) => point.rel);
     for (const rel of few.computed.few) assert.ok(marked.includes(rel), `point ${rel} keeps its shape`);
     assert.equal(markOf(pointLayer(few)).fill, color(tokens, 'focus'));
@@ -628,7 +628,7 @@ describe('requirements of the chart language', async () => {
     assert.deepEqual(few.cautions, ['fewObservations.median']);
     assert.deepEqual((few.datasets.columns as { state: string }[]).map((column) => column.state), ['few']);
     assert.deepEqual((few.datasets.nLabels as { text: string }[]).map((label) => label.text), ['n 8']);
-    for (const drawn of categories.filter((candidate) => candidate.request.measureType === 'ratio')) {
+    for (const drawn of categories.filter((candidate) => candidate.request.measureType === 'perUnit')) {
       for (const hover of drawn.drawing.hover) assert.ok(hover.lines.some((line) => /^n = /.test(line.text)), drawn.name);
     }
   });

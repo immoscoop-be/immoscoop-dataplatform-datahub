@@ -1,7 +1,7 @@
 {
   "semgraph": "calendarAverage",
   "metric": "creditAmountPerLead",
-  "measureType": "ratio",
+  "measureType": "perUnit",
   "locale": "nl-BE",
   "context": {
     "domain": "Leads",

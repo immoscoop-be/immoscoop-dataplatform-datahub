@@ -2,7 +2,7 @@
   "semgraph": "categoryComparison",
   "metric": "askingPrice",
   "title": "Vraagprijs per provincie (voorbeelddata)",
-  "measureType": "ratio",
+  "measureType": "perUnit",
   "statistic": "mean",
   "window": 28,
   "unit": {

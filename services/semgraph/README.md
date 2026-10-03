@@ -112,7 +112,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `basic` | 7 windows of 7 days, median with P25–P75 | ok | [local](http://localhost:8080/semgraphs/movingWindowMedian/examples/basic) · [golden](test/golden/movingWindowMedian-basic.svg) |
-| `ratio-without-n` | hours to the first contact, a median of observations (`measureType: ratio`) without `n` | deviation `nMissing.median` | [local](http://localhost:8080/semgraphs/movingWindowMedian/examples/ratio-without-n) · [golden](test/golden/movingWindowMedian-ratio-without-n.svg) |
+| `per-unit-without-n` | hours to the first contact, a median per unit (`measureType: perUnit`) without `n` | deviation `nMissing.median` | [local](http://localhost:8080/semgraphs/movingWindowMedian/examples/per-unit-without-n) · [golden](test/golden/movingWindowMedian-per-unit-without-n.svg) |
 
 ### calendarAverage
 
@@ -122,7 +122,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `months` | 12 months | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months) · [golden](test/golden/calendarAverage-months.svg) |
 | `months-values-all` | 12 months, with every value written on the chart (`values: all`) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months-values-all) · [golden](test/golden/calendarAverage-months-values-all.svg) |
 | `years` | 3 years, with a zoomed value axis | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/years) · [golden](test/golden/calendarAverage-years.svg) |
-| `ratio-few-observations` | the amount per lead per week (`measureType: ratio`) with `n`: two weeks rest on few observations, the running week has a low n | ok, with a red caution `fewObservations.mean` | [local](http://localhost:8080/semgraphs/calendarAverage/examples/ratio-few-observations) · [golden](test/golden/calendarAverage-ratio-few-observations.svg) |
+| `per-unit-few-observations` | the amount per lead per week (`measureType: perUnit`) with `n`: two weeks rest on few observations, the running week has a low n | ok, with a red caution `fewObservations.mean` | [local](http://localhost:8080/semgraphs/calendarAverage/examples/per-unit-few-observations) · [golden](test/golden/calendarAverage-per-unit-few-observations.svg) |
 
 ### calendarMedian
 
@@ -219,7 +219,7 @@ calendar period (REQ-062):
 {
   "semgraph": "calendarAverage",
   "metric": "creditAmountPerLead",
-  "measureType": "ratio",
+  "measureType": "perUnit",
   "unit": "week",
   "points": [
     { "period": "2026-W39", "mean": 188.2, "sd": 59.9, "n": 58 },
@@ -245,9 +245,14 @@ A block carries its name and the fields of its statistic, nothing else:
 
 The spread is on every block with a value, or on none. A window of one day has no spread. `n` is the number of
 observations behind the value, as the warehouse counted it (REQ-043). It is not required, but for a mean or median
-of observations (`measureType: ratio`, such as an amount per lead) a missing `n` gives a red alert, because the
+per unit (`measureType: perUnit`, such as an amount per lead) a missing `n` gives a red alert, because the
 reader cannot see which points rest on few observations (REQ-062). For an average per day of a count (`additive`
 or `unique`) the observations are the days of the block, so there is no n to give.
+
+`measureType` says what kind of number it is (REQ-070): `additive` or `unique` for a count, `perUnit` for a mean or
+median per unit, such as an amount per lead or the days a property stays online. `ratio` is a share whose numerator
+is part of its denominator, such as qualified leads out of all leads; it needs a numerator and a denominator, and
+that contract is still to come, so it is refused for now.
 
 `periodComparison` takes `statistic` (`sum`, `mean` or `median`) and either `window` or `unit`. Each block also
 carries `previous`: the same value for the block just before the screen at its position, e.g.
@@ -274,7 +279,7 @@ complete day), `period` (an ISO period that is over) or `day` (a snapshot). Date
 is a line (REQ-001, REQ-002). `unit` puts a unit around the numbers (`{ "prefix": "€ " }`, `{ "suffix": " d" }`).
 
 ```json
-{ "semgraph": "categoryComparison", "metric": "askingPrice", "measureType": "ratio", "statistic": "median",
+{ "semgraph": "categoryComparison", "metric": "askingPrice", "measureType": "perUnit", "statistic": "median",
   "window": 28, "unit": { "prefix": "€ " },
   "points": [ { "category": "Antwerpen", "median": 345000, "p25": 270000, "p75": 450000, "n": 2140 } ] }
 ```
@@ -327,7 +332,7 @@ GROUP BY `end`
 ORDER BY `end`
 ```
 
-ISO weeks of a ratio, with n: the mean amount per lead over the leads of each week (12 weeks, the last one may
+ISO weeks of a mean per unit, with n: the mean amount per lead over the leads of each week (12 weeks, the last one may
 run). `%G-W%V` is the ISO year and week, so the block name is `2026-W40`:
 
 ```sql
@@ -365,7 +370,8 @@ What the service does:
    complete day, or a window that ends after it, is refused: its value is not final.
 3. Checks on the blocks (input errors): valid and unique names, windows that line up, only the fields of the
    statistic, the spread on every block or on none, P25 ≤ median ≤ P75 (`src/charts/statistics.ts`).
-4. Rules: refusal for a measure type the metadata does not allow, a total of ratios, unique counts without
+4. Rules: refusal for a measure type the metadata does not allow, a ratio (its numerator and denominator have no
+   contract yet, REQ-070), a total of means per unit, unique counts without
    `uniqueAggregation`, a total of daily uniques (REQ-035), the uniques over a block as an average (REQ-064), no block with a
    value, blocks with a value that together cover fewer days than `minimumPoints`, or, for a comparison, no value
    before the screen. Tolerated deviation for a window that is not 1 or a multiple of 7, a mean or median without
@@ -373,7 +379,7 @@ What the service does:
    red block with white text between the title and the chart, with a message to the reader: "Lees deze grafiek
    met voorzichtigheid: …" (REQ-032, REQ-038, REQ-040, REQ-041).
    Few observations (REQ-044): a block with n below 30 (mean) or 10 (median), or below half the median n of the
-   chart (from five n's on). Only where n counts observations (`measureType: ratio`), never for days (REQ-057,
+   chart (from five n's on). Only where n counts observations (`measureType: perUnit`), never for days (REQ-057,
    REQ-063),
    and never for a running period (REQ-054). Its column gets sparse dots, its shape stays filled (REQ-053), its n
    stands under the time axis ("n 22", REQ-046), and a red block warns the reader while the version label stays

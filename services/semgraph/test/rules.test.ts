@@ -33,10 +33,16 @@ describe('movingWindowAverage rules', () => {
     assert.deepEqual(issues.map((issue) => issue.code), ['measureTypeNotAllowed']);
   });
 
-  it('refuses a total of ratios: an amount per lead does not add up', async () => {
-    const result = await validate({ ...(await example('weeks-sum', 'periodComparison')), measureType: 'ratio' });
+  it('refuses a total of means per unit: an amount per lead does not add up', async () => {
+    const result = await validate({ ...(await example('weeks-sum', 'periodComparison')), measureType: 'perUnit' });
     assert.equal(result.outcome, 'refused');
-    assert.deepEqual(result.codes, ['ratioNotSummable']);
+    assert.deepEqual(result.codes, ['perUnitNotSummable']);
+  });
+
+  it('refuses a ratio until its numerator and denominator have a contract (REQ-070)', async () => {
+    const result = await validate({ ...(await example('basic')), measureType: 'ratio' });
+    assert.deepEqual(result.codes, ['ratioNeedsNumerator']);
+    assert.match(result.report.issues[0]!.alternative!, /measureType perUnit/);
   });
 
   it('asks which unique metric is meant, instead of guessing', async () => {

@@ -106,11 +106,11 @@ export abstract class Statistic {
   }
 
   /**
-   * Whether n counts observations (REQ-057, REQ-063): for a mean or median of observations, such as
+   * Whether n counts observations (REQ-057, REQ-063, REQ-070): for a mean or median per unit, such as
    * an amount per lead. An average per day of a count rests on the days of its block.
    */
   countsObservations(measureType: string): boolean {
-    return measureType === 'ratio' && this.fewBelow !== null;
+    return measureType === 'perUnit' && this.fewBelow !== null;
   }
 
   /**

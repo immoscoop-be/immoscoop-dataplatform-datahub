@@ -16,8 +16,8 @@ export const TITLE = {
 };
 
 export const MEASURE_TYPE = {
-  description: 'Kind of number: additive or unique for an average per day of a count, ratio for a mean or median of observations such as an amount per lead. Required until Domain Hub or the dbt YAML supplies it.',
-  enum: ['additive', 'unique', 'ratio'],
+  description: 'Kind of number: additive or unique for a count, perUnit for a mean or median per unit such as an amount per lead (REQ-070). ratio, a share with a numerator and a denominator, is not available yet. Required until Domain Hub or the dbt YAML supplies it.',
+  enum: ['additive', 'unique', 'perUnit', 'ratio'],
 };
 
 export const UNIQUE_AGGREGATION = {

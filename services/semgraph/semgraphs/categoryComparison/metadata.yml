@@ -8,7 +8,7 @@ attributes:
   # The comparison with last year inside one bar waits on the questions of REQ-065.
   comparisonBasis: [none]
   dataGrain: [aggregated]
-  measureType: [additive, unique, ratio]
+  measureType: [additive, unique, perUnit]
   partToWhole: ["no"]
   centralTendency: any
 exampleQuestions:

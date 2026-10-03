@@ -27,7 +27,7 @@ export interface TimeAxisRequest {
   semgraph: string;
   metric: string;
   title?: string;
-  measureType: 'additive' | 'unique' | 'ratio';
+  measureType: 'additive' | 'unique' | 'perUnit' | 'ratio';
   uniqueAggregation?: 'daily' | 'overPeriod';
   /** The last complete day of the data; yesterday in Brussels when absent. */
   asOf?: string;
