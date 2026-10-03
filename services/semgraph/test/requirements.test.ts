@@ -202,7 +202,7 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-015: a mouse click holds nothing open, a tap opens on a device without hover, Tab opens', () => {
+  it('REQ-015 and REQ-048: a mouse click holds nothing open, a tap opens on a device without hover, Tab opens', () => {
     for (const drawn of examples) {
       const styles = [...drawn.svg.matchAll(/<style>(.*?)<\/style>/g)].map((match) => match[1]!);
       assert.ok(styles.length > 0, drawn.name);

@@ -51,7 +51,7 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-012](REQ-012.md) | De overige metadata links onderaan, één onderwerp per label | 2026-10-03 | geïmplementeerd, zoals gewijzigd door REQ-018 en REQ-020 | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | REQ-013 | Een icoon zonder inhoud blijft zichtbaar, gedimd en doorgestreept | 2026-10-03 | vervangen door REQ-020, nooit gebouwd | – |
 | [REQ-014](REQ-014.md) | Bij hover groeit het label uit tot een paneel over de hele grafiek; sluiten na ongeveer 350 ms | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
-| [REQ-015](REQ-015.md) | Gedrag per toestel: muis enkel hover, tik op touch, Tab op het toetsenbord; ook voor de datapunten | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e), [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
+| [REQ-015](REQ-015.md) | Gedrag per toestel: muis enkel hover, tik op touch, Tab op het toetsenbord | 2026-10-03 | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e), [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | [REQ-016](REQ-016.md) | Alles met CSS in de SVG, zonder JavaScript; als afbeelding blijven de panelen verborgen | 2026-10-03 | geïmplementeerd voor SVG | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
 | REQ-017 | In een PNG gaat de metadata in de tekstvelden van het bestand | 2026-10-03 | aanvaard, nog niet nodig: er is nog geen PNG-uitvoer | – |
 | [REQ-018](REQ-018.md) | Tekstlabels in plaats van iconen: Question, References, Query, Metadata | 2026-10-03 | geïmplementeerd | [10547b7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/10547b7) |
@@ -84,6 +84,7 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | REQ-045 | Een punt met weinig waarnemingen behoudt zijn vorm, bleek, ook in een band | 2026-10-03 | open (zie open punten 1 en 2) | – |
 | REQ-046 | De n van zo'n punt staat klein onder de x-as | 2026-10-03 | open (zie open punt 1) | – |
 | REQ-047 | Weinig waarnemingen geeft een rode waarschuwing, maar is geen afwijking: het versielabel blijft | 2026-10-03 | open (zie open punt 1) | – |
+| [REQ-048](REQ-048.md) | De hover op de datapunten volgt het gedrag per toestel van REQ-015 | 2026-10-03 (antwoord) | geïmplementeerd | [780050e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/780050e) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -92,7 +93,8 @@ afspraak en noemen daarom nog geen nummer.
 REQ-010 tot REQ-020 (metadata van een grafiek) zijn geïmplementeerd zoals REQ-018 en REQ-020 ze wijzigden;
 REQ-013 en REQ-019 zijn vervangen voor ze gebouwd werden, REQ-017 wacht op een PNG-uitvoer. REQ-028 tot REQ-041 zijn
 de antwoorden van 2026-10-03 op de open punten. REQ-042 tot REQ-047 kwamen op 2026-10-03 op Confluence: REQ-042 is
-gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken.
+gebouwd, REQ-043 tot REQ-047 zijn eerst te bespreken. REQ-048 is het antwoord van 2026-10-03 op de vraag over de
+hover op de datapunten.
 
 ### Hernummering
 

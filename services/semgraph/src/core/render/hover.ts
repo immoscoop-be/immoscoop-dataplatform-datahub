@@ -25,7 +25,8 @@ export interface PlotArea {
 /** Every class has this prefix: CSS in an inline SVG applies to the whole page. */
 const PREFIX = 'semgraph-hover';
 
-// REQ-015: the mouse only hovers, a click holds nothing open (:focus-visible is not set by a click);
+// REQ-048: the device rules of REQ-015 hold here too. The mouse only hovers, a click holds nothing open
+// (:focus-visible is not set by a click);
 // a tap opens and a tap elsewhere closes (focus on a device without hover); Tab opens, the next Tab closes.
 const STYLE = [
   `.${PREFIX}-column{outline:none}`,
@@ -43,7 +44,7 @@ const RING_RADIUS = 6;
 
 /**
  * Hover for a static SVG, without script. Every column covers the full height, also without data.
- * On hover, a tap or Tab (each column has tabindex 0), following the device rules of REQ-015, it
+ * On hover, a tap or Tab (each column has tabindex 0), following the device rules of REQ-015 (REQ-048), it
  * shows grey dotted guides, a ring around the point and a box with the lines. The detail is hidden
  * with the visibility attribute and made visible by CSS, so a renderer without CSS shows nothing.
  * Positions come from Vega's own scales. No ids, so several charts can share one page (REQ-027).

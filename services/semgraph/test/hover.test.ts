@@ -131,7 +131,7 @@ describe('hover', () => {
     }
   });
 
-  it('is shown by CSS following the device rules (REQ-015), with prefixed classes, and hidden without CSS', async () => {
+  it('is shown by CSS following the device rules (REQ-015, REQ-048), with prefixed classes, and hidden without CSS', async () => {
     const svg = await svgOf(await example('basic'));
     const style = /<style>(.*?)<\/style>/.exec(svg)![1]!;
     // The mouse hovers, the keyboard focuses visibly; a click sets :focus but not :focus-visible, so it holds nothing open.
