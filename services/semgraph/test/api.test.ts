@@ -170,4 +170,48 @@ describe('API', () => {
     assert.equal(response.headers['content-type'], 'image/svg+xml; charset=utf-8');
     assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/../../package')).statusCode, 404);
   });
+
+  it('REQ-074: GET /semgraphs is the overview of every chart on offer, each with links to all of its examples', async () => {
+    const registry = await testRegistry();
+    const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
+    assert.equal(body.gallery, '/gallery');
+    assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), [...registry.semgraphs.keys()]);
+    for (const semgraph of body.semgraphs as { id: string; links: { figma: string }; examples: { name: string; title: string; href: string }[] }[]) {
+      const loaded = registry.semgraphs.get(semgraph.id)!;
+      assert.deepEqual(semgraph.examples.map((example) => example.name), [...loaded.examples.keys()], semgraph.id);
+      assert.match(semgraph.links.figma, /^https:\/\/www\.figma\.com\//, semgraph.id);
+      for (const example of semgraph.examples) {
+        assert.ok(example.title.length > 0, example.href);
+        // Every link leads to the drawn example, or to the reason it is refused.
+        const response = await app.inject(example.href);
+        assert.ok([200, 422].includes(response.statusCode), `${example.href}: ${response.statusCode}`);
+      }
+    }
+  });
+
+  it('REQ-074: GET /gallery shows every chart and every example to people, under a strict CSP; / leads there', async () => {
+    const registry = await testRegistry();
+    const root = await app.inject('/');
+    assert.equal(root.statusCode, 302);
+    assert.equal(root.headers.location, '/gallery');
+    const response = await app.inject('/gallery?locale=nl-BE');
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['content-type'], 'text/html; charset=utf-8');
+    assert.equal(response.headers['x-content-type-options'], 'nosniff');
+    assert.match(String(response.headers['content-security-policy']), /default-src 'none'; img-src 'self'/);
+    const html = response.body;
+    assert.match(html, /<html lang="nl-BE">/);
+    assert.match(html, /<h1>Semgraph: de grafieken<\/h1>/);
+    assert.doesNotMatch(html, /<script/);
+    for (const [id, loaded] of registry.semgraphs) {
+      assert.match(html, new RegExp(`<section id="${id}">`), id);
+      for (const name of loaded.examples.keys()) assert.ok(html.includes(`href="/semgraphs/${id}/examples/${name}"`), `${id}/${name}`);
+    }
+    // A drawn example is a picture; a refused one says why, in the language of the page.
+    assert.ok(html.includes('<img src="/semgraphs/kpiStatus/examples/leads-since-launch"'));
+    assert.doesNotMatch(html, /<img src="\/semgraphs\/movingWindowAverage\/examples\/unique-without-aggregation"/);
+    assert.match(html, /<a class="refused" href="\/semgraphs\/movingWindowAverage\/examples\/unique-without-aggregation">Bij unieke aantallen/);
+    assert.match(html, /<section id="planned">.*<code>funnel<\/code>/s);
+    assert.match((await app.inject('/gallery?locale=en')).body, /<a class="refused"[^>]*>For unique counts/);
+  });
 });

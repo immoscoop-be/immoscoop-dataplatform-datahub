@@ -111,6 +111,7 @@ elk bestand zegt welke.
 | [REQ-071](REQ-071.md) | Ratio en Cohort in de catalogus | 2026-10-03 (antwoord) | geïmplementeerd: beide gepland | [0b2b232](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0b2b232) |
 | REQ-072 | De verdeling van twee waarden wordt een eigen semgraph, na een analyse | 2026-10-03 (antwoord) | open: eerst een analyse | – |
 | [REQ-073](REQ-073.md) | Een staaf begint bij nul; een gemiddelde of mediaan per categorie mag inzoomen | 2026-10-03 (antwoord) | geïmplementeerd | [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464) |
+| [REQ-074](REQ-074.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | – |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -127,7 +128,8 @@ REQ-043 tot REQ-047, REQ-053 en REQ-054 (weinig waarnemingen) gebouwd. REQ-059 t
 kwamen op 2026-10-03 uit Figma. REQ-063 en REQ-064 zijn de antwoorden van 2026-10-03 op de open punten over n en over
 unieken over een blok; ze bevestigen hoe het al gebouwd was. REQ-065 is de opdracht om te bouwen wat in Figma uitgewerkt is;
 REQ-066 tot REQ-073 zijn de antwoorden van 2026-10-03 op de acht vragen daarover. Alles is gebouwd, op de verdeling van
-twee waarden na (REQ-072, eerst een analyse).
+twee waarden na (REQ-072, eerst een analyse). REQ-074 is de opdracht voor een overzicht van de grafieken met hun
+voorbeelden.
 
 ### Hernummering
 

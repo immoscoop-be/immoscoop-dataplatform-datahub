@@ -81,7 +81,8 @@ docker build -t semgraph .
 docker run --rm -p 8080:8080 semgraph
 ```
 
-Then open <http://localhost:8080/semgraphs/movingWindowAverage/examples/basic> in a browser, or:
+Then open <http://localhost:8080/gallery> in a browser for every semgraph and its examples, or one example such as
+<http://localhost:8080/semgraphs/movingWindowAverage/examples/basic>, or:
 
 ```sh
 curl -X POST http://localhost:8080/render \
@@ -183,7 +184,9 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Call | Does |
 | --- | --- |
 | `GET /healthz` | `{status, version, languageVersion, tokensVersion}` |
-| `GET /semgraphs` | available semgraphs (title, the question they answer) and the planned ones; `?locale=` |
+| `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-074) |
+| `GET /` | leads to `/gallery` |
+| `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-074) |
 | `GET /semgraphs/{id}` | metadata, JSON Schema, links to Figma and learning material, examples |
 | `POST /validate` | checks a request without drawing; always 200 with `{outcome, issues}` |
 | `POST /render` | draws the chart: 200 SVG, 422 refusal, 400 invalid request |
@@ -195,11 +198,11 @@ Every request ends in one of four outcomes:
 | --- | --- | --- |
 | `ok` | 200 SVG | The chart follows the chart language and carries the version label. |
 | `deviation` | 200 SVG | Tolerated deviation: drawn under a red block between the title and the chart, without the version label and without a footer note (REQ-042). The codes are in the `Semgraph-Deviations` header. |
+| `refused` | 422 JSON | The chart would mislead, so it is not drawn. |
+| `invalid` | 400 JSON | The request itself is not valid. |
 
 Few observations (REQ-047) is not a deviation: the chart is `ok`, keeps its version label and still gets the red
 block, as an issue of level `caution`.
-| `refused` | 422 JSON | The chart would mislead, so it is not drawn. |
-| `invalid` | 400 JSON | The request itself is not valid. |
 
 Issues always have the same shape, in the language of `locale`:
 
@@ -215,7 +218,7 @@ Issues always have the same shape, in the language of `locale`:
 ```
 
 SVG responses also carry `Semgraph-Language-Version` and `Semgraph-Tokens-Version`, `nosniff` and a strict
-Content-Security-Policy.
+Content-Security-Policy. The gallery is a page without scripts that only loads its own example pictures.
 
 ## The contract
 

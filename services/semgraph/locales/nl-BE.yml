@@ -255,6 +255,24 @@ footer:
   readingCard: "Leeskaart: {name} →"
   languageVersion: grafiektaal {version}
 
+gallery:
+  title: "Semgraph: de grafieken"
+  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links."
+  examples: "{count} voorbeelden"
+  contract: contract (JSON)
+  readingCard: leeskaart
+  json: dit overzicht in JSON
+  planned: Gepland
+  plannedNote: In de catalogus, nog niet beschikbaar.
+  outcome:
+    ok: ok
+    deviation: buiten de grafiektaal
+    refused: geweigerd
+    invalid: ongeldig
+  language:
+    en: English
+    nl-BE: Nederlands
+
 readingCards:
   kpiStatus: KPI-status
   kpiTile: KPI-tegel

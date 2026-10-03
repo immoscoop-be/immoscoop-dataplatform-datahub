@@ -255,6 +255,24 @@ footer:
   readingCard: "Reading card: {name} →"
   languageVersion: chart language {version}
 
+gallery:
+  title: "Semgraph: the charts"
+  intro: "Every chart the service offers, {semgraphs} in all, with its {examples} examples. Click an example to open the chart itself, with hover and working links."
+  examples: "{count} examples"
+  contract: contract (JSON)
+  readingCard: reading card
+  json: this overview as JSON
+  planned: Planned
+  plannedNote: In the catalogue, not available yet.
+  outcome:
+    ok: ok
+    deviation: outside the chart language
+    refused: refused
+    invalid: invalid
+  language:
+    en: English
+    nl-BE: Nederlands
+
 readingCards:
   kpiStatus: KPI status
   kpiTile: KPI tile
