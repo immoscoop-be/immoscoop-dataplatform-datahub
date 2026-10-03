@@ -34,8 +34,8 @@ language and draws, with title, reading cue and footer (REQ-058).
 
 ## Status: v0
 
-Seven semgraphs, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker image: five on a
-time axis, one for categories and one for the distribution of a value.
+Nine semgraphs, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker image: five on a
+time axis, one for categories, one for the distribution of a value, and two for a KPI.
 
 | Semgraph | One block | Drawn as |
 | --- | --- | --- |
@@ -44,7 +44,9 @@ time axis, one for categories and one for the distribution of a value.
 | `calendarAverage` | an ISO week, month, quarter or year, named by its ISO name: mean, sd, n | line of diamonds over thin bars, ±1 sd |
 | `calendarMedian` | an ISO week, month, quarter or year: median, P25, P75, n | line of dots in wide bars, P25–P75 |
 | `periodComparison` | a window or a calendar period: the total, mean or median, and the same value of the block before the screen | a line in the focus colour against a grey line, a shortfall hatched |
-| `categoryComparison` | a category: the total, mean or median | bars: lying and sorted by value without order, upright in their order; a dot or diamond with its spread for a median or mean |
+| `categoryComparison` | a category: the total, mean or median; a total may carry its previous value | bars: lying and sorted by value without order, upright in their order; a dot or diamond with its spread for a median or mean; a comparison inside one bar |
+| `kpiTile` | a window or a calendar period, as in `periodComparison`, with the value it is compared with | the number of the last block with its difference, and a mini trend |
+| `kpiStatus` | a period: the real and the planned cumulative level at its end | the real staircase against the fixed path to the target, a loss hatched, what is still to be won dotted |
 | `distribution` | a bin of a continuous value: its count; plus P25, P50, P75 and the open bin above the threshold | touching bins, quartile guides, the tail in one grey bin |
 
 MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
@@ -55,6 +57,9 @@ the same core.
 ![periodComparison: 12 weeks against the 12 weeks before](test/golden/periodComparison-weeks-sum.svg)
 ![categoryComparison: the median asking price per province](test/golden/categoryComparison-provinces-median.svg)
 ![distribution: the asking prices](test/golden/distribution-asking-price.svg)
+![categoryComparison: leads per province against last year](test/golden/categoryComparison-provinces-sum-vs-last-year.svg)
+![kpiTile: credit leads over 28 days against last year](test/golden/kpiTile-rolling-28d.svg)
+![kpiStatus: leads since the launch against the path to the target](test/golden/kpiStatus-leads-since-launch.svg)
 
 ## Run it
 
@@ -148,6 +153,24 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `price-ranges-sum` | listings online on one day per price range: upright bars in the ordinal ramp | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum) · [golden](test/golden/categoryComparison-price-ranges-sum.svg) |
 | `price-ranges-median` | days online per price range, one range with few observations | ok, with a red caution `fewObservations.median` | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-median) · [golden](test/golden/categoryComparison-price-ranges-median.svg) |
 | `price-ranges-mean` | days online per price range, ±1 sd; en | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-mean) · [golden](test/golden/categoryComparison-price-ranges-mean.svg) |
+| `provinces-median-zoomed` | the median asking price per province, `valueAxis: zoom`: the axis starts at € 200k, with a zigzag (REQ-073) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-median-zoomed) · [golden](test/golden/categoryComparison-provinces-median-zoomed.svg) |
+| `provinces-sum-vs-last-year` | leads per province against last year, inside one bar: shared, gained, lost, now (REQ-066, REQ-067) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year.svg) |
+| `price-ranges-sum-vs-last-year` | listings online per price range against last year, upright | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum-vs-last-year) · [golden](test/golden/categoryComparison-price-ranges-sum-vs-last-year.svg) |
+
+### kpiTile
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `rolling-28d` | credit leads over 28 days against last year, with the mini trend and its grey shadow line (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-28d) · [golden](test/golden/kpiTile-rolling-28d.svg) |
+| `months-mean` | the hours to a first contact per lead this month, ±1 sd next to the number, against last year | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/months-mean) · [golden](test/golden/kpiTile-months-mean.svg) |
+| `rolling-7d` | credit leads over 7 days against the 7 days before: no shadow line; en | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-7d) · [golden](test/golden/kpiTile-rolling-7d.svg) |
+
+### kpiStatus
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `leads-since-launch` | leads since the launch against the path set on 30/04 to 130k: behind, with the catch-up (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch) · [golden](test/golden/kpiStatus-leads-since-launch.svg) |
+| `weeks-ahead` | new listings this quarter, per week, ahead of the path; en | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/weeks-ahead) · [golden](test/golden/kpiStatus-weeks-ahead.svg) |
 
 ### distribution
 
@@ -277,6 +300,10 @@ with `sd`, `median` with `p25` and `p75`, and `n`), `ordered` (false: lying bars
 bars in the order given, at most 16), and the time the values cover: exactly one of `window` (days up to the last
 complete day), `period` (an ISO period that is over) or `day` (a snapshot). Dates are no categories: a date axis
 is a line (REQ-001, REQ-002). `unit` puts a unit around the numbers (`{ "prefix": "€ " }`, `{ "suffix": " d" }`).
+A mean or median may zoom (`valueAxis: zoom`); an amount is a bar and starts at zero (REQ-073).
+
+A total compares inside its bar when every row carries `previous` (REQ-066, REQ-067): `comparison` says what it is,
+`previousPeriod` or `lastYear`; by default the period before for a window of up to 14 days, last year otherwise.
 
 ```json
 { "semgraph": "categoryComparison", "metric": "askingPrice", "measureType": "perUnit", "statistic": "median",
@@ -293,6 +320,31 @@ dbt YAML, so months stay comparable (Figma).
   "bins": [ { "from": 100000, "count": 180 }, { "from": 150000, "count": 590 } ],
   "openBin": { "from": 900000, "count": 480 },
   "percentiles": { "p25": 261000, "p50": 312000, "p75": 408000 } }
+```
+
+### KPIs (REQ-065, REQ-067, REQ-069)
+
+`kpiTile` takes the blocks of `periodComparison` (`window` or `unit`, one row per block with the fields of its
+`statistic`), where `previous` is the value the block is compared with, and `comparison` (`previousPeriod` or
+`lastYear`, the default as above). The last block is the number; it is never shown without its comparison.
+
+```json
+{ "semgraph": "kpiTile", "metric": "creditLeads", "measureType": "additive", "statistic": "sum", "window": 28,
+  "points": [ { "end": "2026-09-02", "sum": 2340, "previous": { "sum": 2150 } },
+              { "end": "2026-09-30", "sum": 2400, "previous": { "sum": 2220 } } ] }
+```
+
+`kpiStatus` takes the cumulative levels at the end of each period, real (`actual`, for periods that are over) and
+planned (`path`, from the period in which the path was set to the target), with the `start`, the `target` and the
+day the path was set (`pathSet`). The warehouse delivers the levels; the chart only takes differences (REQ-069).
+
+```json
+{ "semgraph": "kpiStatus", "metric": "leads", "measureType": "additive", "unit": "month",
+  "start": { "day": "2026-01-01", "value": 100000 }, "target": { "day": "2026-12-31", "value": 130000 },
+  "pathSet": "2026-04-30",
+  "points": [ { "period": "2026-04", "actual": 108700, "path": 108700 },
+              { "period": "2026-05", "actual": 110900, "path": 111363 },
+              { "period": "2026-09", "path": 122013 } ] }
 ```
 
 ### Guidelines for the query
@@ -547,8 +599,11 @@ the pages Anatomy and Line charts, and with the team:
 11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; a running period
     compared with as many days of the earlier period.
 12. For `categoryComparison`: the ordinal ramp spread over its five steps for any number of categories; the n of a
-    lying bar with few observations under its label. The open questions of REQ-065 are in
-    [docs/requirements](docs/requirements/README.md#open-punten-eerst-te-bespreken).
+    lying bar with few observations under its label.
+13. For `kpiTile`: with the period before, the mini trend has no shadow line (that period is on the trend itself);
+    a footer line too wide for the narrow tile breaks at its separators.
+14. For `kpiStatus`: the touching dots in `target/light`; the per-step and catch-up labels placed as in Figma.
+    The open questions are in [docs/requirements](docs/requirements/README.md#open-punten-eerst-te-bespreken).
 
 ## Notes for consumers
 

@@ -102,7 +102,15 @@ elk bestand zegt welke.
 | [REQ-062](REQ-062.md) | Een blok heet `end` of `period`; n niet verplicht, maar zonder n een rode waarschuwing | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 | [REQ-063](REQ-063.md) | n en weinig waarnemingen enkel bij een gemiddelde of mediaan van waarnemingen (`ratio`) | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101), [52aa602](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/52aa602) |
 | [REQ-064](REQ-064.md) | Unieken over een blok enkel als som; dagelijkse unieken nooit als som | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101), [52aa602](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/52aa602) |
-| [REQ-065](REQ-065.md) | Bouw de semgraphs die in Figma uitgewerkt zijn | 2026-10-03 (opdracht) | gedeeltelijk: `categoryComparison` zonder vergelijking en `distribution` van één waarde | [7ef1593](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/7ef1593) |
+| [REQ-065](REQ-065.md) | Bouw de semgraphs die in Figma uitgewerkt zijn | 2026-10-03 (opdracht) | gedeeltelijk: de verdeling van twee waarden wacht op REQ-072 | [7ef1593](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/7ef1593), [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464), [ba3fadd](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/ba3fadd), [2c38f25](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/2c38f25) |
+| [REQ-066](REQ-066.md) | Maanden zijn nooit staven | 2026-10-03 (antwoord) | geïmplementeerd | [7ef1593](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/7ef1593), [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464) |
+| [REQ-067](REQ-067.md) | Vergelijken buiten een tijdas: de periode ervoor of vorig jaar, de aanvraag kiest | 2026-10-03 (antwoord) | gedeeltelijk: twee keuzes bij de open punten | [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464), [ba3fadd](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/ba3fadd) |
+| [REQ-068](REQ-068.md) | Wat nog te winnen is: bollen die elkaar net raken | 2026-10-03 (antwoord) | geïmplementeerd | [2c38f25](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/2c38f25) |
+| [REQ-069](REQ-069.md) | `kpiStatus`: het warehouse levert het pad, de semgraph rekent verschillen | 2026-10-03 (antwoord) | geïmplementeerd | [2c38f25](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/2c38f25) |
+| [REQ-070](REQ-070.md) | `measureType` `perUnit`; `ratio` vraagt een teller en een noemer | 2026-10-03 (antwoord) | geïmplementeerd | [e6501f7](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/e6501f7) |
+| [REQ-071](REQ-071.md) | Ratio en Cohort in de catalogus | 2026-10-03 (antwoord) | geïmplementeerd: beide gepland | [0b2b232](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0b2b232) |
+| REQ-072 | De verdeling van twee waarden wordt een eigen semgraph, na een analyse | 2026-10-03 (antwoord) | open: eerst een analyse | – |
+| [REQ-073](REQ-073.md) | Een staaf begint bij nul; een gemiddelde of mediaan per categorie mag inzoomen | 2026-10-03 (antwoord) | geïmplementeerd | [0e06464](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0e06464) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -118,7 +126,8 @@ daaruit volgt (het warehouse rekent) en REQ-062 het antwoord op de vragen over h
 REQ-043 tot REQ-047, REQ-053 en REQ-054 (weinig waarnemingen) gebouwd. REQ-059 tot REQ-061 (tekstkleur en iconen)
 kwamen op 2026-10-03 uit Figma. REQ-063 en REQ-064 zijn de antwoorden van 2026-10-03 op de open punten over n en over
 unieken over een blok; ze bevestigen hoe het al gebouwd was. REQ-065 is de opdracht om te bouwen wat in Figma uitgewerkt is;
-het scherpe deel is gebouwd, de rest wacht op de open punten 1 tot 8.
+REQ-066 tot REQ-073 zijn de antwoorden van 2026-10-03 op de acht vragen daarover. Alles is gebouwd, op de verdeling van
+twee waarden na (REQ-072, eerst een analyse).
 
 ### Hernummering
 
@@ -135,36 +144,34 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-De vragen bij REQ-065, ook op Confluence onder "In discussie" (6 tot 13):
+Ook op Confluence onder "In discussie" (14 tot 21).
 
-1. **Maanden als staven.** De verticale vergelijkingsstaaf ("Leads per month, 2026") en Ratio ("Qualified leads per
-   month") zetten maanden op een staafgrafiek. REQ-001 (2026-10-02): "Een as met datums is altijd een lijn, nooit
-   staven." REQ-002 (2026-10-02): "een staaf staat nooit op een datumas." Figma zelf (Bar charts): "Bars never sit
-   on a date axis." Voorstel: staven enkel voor categorieën die geen datums zijn; maanden over de tijd blijven een
-   lijn (`periodComparison`). Zo gebouwd: datums als categorie worden geweigerd.
-2. **Vorig jaar of de periode net ervoor.** REQ-034 (2026-10-03): "de verleden periode (jaar of maand of wat dan
-   ook)". REQ-037 (2026-10-03): "Altijd vóór het scherm." Figma: de vergelijkingsstaaf vergelijkt met vorig jaar; de
-   KPI-tegel met "the period before (7 and 14 days) or last year (28 and 91 days)", met vorig jaar als grijze
-   schaduwlijn in de mini-trend. Voorstel: beide mogen, want geen van beide staat op het scherm; het warehouse
-   levert `previous` en de aanvraag zegt welke (`previousPeriod` of `lastYear`). Vraag erbij: volgt de mini-trend
-   REQ-037 (het stuk net ervoor) of Figma (vorig jaar)?
-3. **Een tweede arcering bij `kpiStatus`.** REQ-049: "elk patroon heeft één betekenis"; REQ-055: de arcering is
-   verlies. Figma: "Light hatching = what is still to be won". Voorstel: nog te winnen als licht teal vlak
-   (`target/light`), zonder arcering.
-4. **Het pad naar het doel bij `kpiStatus`.** REQ-058: "De semgraph rekent geen data meer om." Voorstel: het
-   warehouse levert het geplande pad (vast) en de werkelijke waarden per periode; de semgraph rekent enkel
-   verschillen (achterstand, inhaalbeweging, tempo).
-5. **Ratio betekent twee dingen.** REQ-063: "measureType: ratio, bv. een bedrag per lead". Figma Ratio: "A ratio is
-   only a ratio when the numerator is part of the denominator … Leads per property: no, that is a mean per unit".
-   Voorstel: een nieuwe waarde `perUnit` voor een gemiddelde per eenheid; `ratio` blijft voor een aandeel.
-6. **Ratio en Cohort in de catalogus?** Beide zijn uitgewerkt in Figma maar staan niet in de catalogus. Cohort als
-   de `survival` uit de analyse?
-7. **Verdeling van twee waarden:** een eigen semgraph of een variant van `distribution`? Voorstel: een eigen
-   semgraph.
-8. **Inzoomen bij staafgrafieken.** REQ-026: "voor alle assen … het niet van 0 beginnen". Figma: "The value axis
-   starts at zero, also for medians and means." Voorstel: een staaf voor een hoeveelheid altijd vanaf nul; een
-   gemiddelde of mediaan per categorie mag inzoomen. Voorlopig gebouwd met de as vanaf nul.
-9. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
+1. **De mini-trend van de KPI-tegel met de periode ervoor.** REQ-067 (2026-10-03): "Een vergelijking buiten een
+   tijdas (vergelijkingsstaaf, KPI-tegel en haar mini-trend) mag met de periode net ervoor of met vorig jaar".
+   REQ-037 (2026-10-03): "Vergelijk met wat niet op het scherm staat." Met de periode ervoor is die periode het
+   vorige punt van de mini-trend zelf. Voorstel, zo gebouwd: dan geen schaduwlijn; enkel het getal vergelijkt. Een
+   schaduwlijn met de periode vóór het scherm (zoals `periodComparison`) zou een andere waarde tonen dan het getal.
+2. **Een momentopname en vorig jaar.** REQ-067 noemt vensters (7 en 14 dagen tegenover 28 en 91) en
+   kalenderperiodes, geen dag. Voorstel, zo gebouwd: een momentopname (`day`) vergelijkt standaard met vorig jaar,
+   want de dag ervoor verschilt bij een voorraad zoals panden online haast niet.
+3. **Cohort wacht ook op teller en noemer.** REQ-071 (2026-10-03): "Ratio wacht op de requirement over teller en
+   noemer." Een cel van de Cohort is een aandeel (nog actief van de nieuwe in die maand), dus ook een ratio over de
+   tijd. Voorstel: het warehouse levert per cel beide aantallen (nieuw en nog actief), de semgraph rekent enkel het
+   aandeel, net zoals REQ-069 verschillen toelaat. Te beslissen samen met de requirement over teller en noemer.
+4. **REQ-072: de analyse van de verdeling van twee waarden.** Welke eigenschap onderscheidt ze van `distribution`
+   (de keuzehulp moet bij precies één semgraph uitkomen)? Voorstel: een nieuwe eigenschap in de woordenlijst, het
+   aantal waarden (één of twee). En het contract: een raster van cellen met per cel het aantal, plus beide medianen,
+   geteld in het warehouse.
+5. **Een gemiddelde of mediaan vergelijken in een staafgrafiek.** Figma ontwerpt de vergelijking in één staaf enkel
+   voor een hoeveelheid. Zo gebouwd: geweigerd (`comparisonOnlyForSum`), met `periodComparison` als alternatief.
+   Is een vergelijking van een gemiddelde per categorie nodig?
+6. **Een eenheid bij de tijdas en de KPI-tegel.** `categoryComparison` noemt de eenheid van de waarden `unit`
+   ("€ "), maar op de tijdas is `unit` de kalendereenheid. Voorstel: `valueUnit` op de tijdas, de KPI-tegel en de
+   KPI-status, en `unit` in `categoryComparison` laten zoals het is.
+7. **De eerste waarde van een ingezoomde as op een lichte achtergrond.** REQ-026 (2026-10-03): "de eerste waarde
+   vet". Figma (KPI status, Distribution of two values): "its first value is bold on a light background". Voorstel:
+   ook de lichte achtergrond, op elke ingezoomde as.
+8. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
 
