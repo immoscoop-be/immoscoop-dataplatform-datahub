@@ -99,6 +99,8 @@ tot en met 4d05f0a. De latere commits staan op de branch en zitten nog in geen P
 | [REQ-060](REQ-060.md) | Het icoon van de semgraph links van de titel, in muted-grijs, gelinkt aan de leeskaart | 2026-10-03 | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 | [REQ-061](REQ-061.md) | Iconen uit een kleine vaste set, een zin in de grafiektaal | 2026-10-03 | geïmplementeerd (de iconen uit Figma, gecontroleerd) | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 | [REQ-062](REQ-062.md) | Een blok heet `end` of `period`; n niet verplicht, maar zonder n een rode waarschuwing | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
+| [REQ-063](REQ-063.md) | n en weinig waarnemingen enkel bij een gemiddelde of mediaan van waarnemingen (`ratio`) | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
+| [REQ-064](REQ-064.md) | Unieken over een blok enkel als som; dagelijkse unieken nooit als som | 2026-10-03 (antwoord) | geïmplementeerd | [59f0101](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/59f0101) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -112,7 +114,8 @@ hover op de datapunten. REQ-049 tot REQ-055 zijn de data states uit Figma. REQ-0
 2026-10-03 over gemiddelden van gemiddelden en wanneer weinig waarnemingen veilig is; REQ-058 is de keuze die
 daaruit volgt (het warehouse rekent) en REQ-062 het antwoord op de vragen over het contract. Daarmee zijn ook
 REQ-043 tot REQ-047, REQ-053 en REQ-054 (weinig waarnemingen) gebouwd. REQ-059 tot REQ-061 (tekstkleur en iconen)
-kwamen op 2026-10-03 uit Figma.
+kwamen op 2026-10-03 uit Figma. REQ-063 en REQ-064 zijn de antwoorden van 2026-10-03 op de open punten over n en over
+unieken over een blok; ze bevestigen hoe het al gebouwd was.
 
 ### Hernummering
 
@@ -129,15 +132,7 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-1. **n en weinig waarnemingen enkel bij `measureType: ratio`?** Gebouwd zoals REQ-057 het zegt: n telt
-   waarnemingen bij een gemiddelde of mediaan van waarnemingen (een bedrag per lead). Bij een gemiddelde per dag
-   van een telling (`additive`, `unique`) zijn de waarnemingen de dagen van het blok; daar gelden de drempels van
-   REQ-044 niet en is er geen waarschuwing bij een ontbrekende n (REQ-062). Vraag: klopt die lezing?
-2. **Unieken over een blok enkel als som.** Een som van dagelijkse unieken blijft geweigerd (REQ-035). De unieken
-   over een heel blok, geteld in het warehouse (`overPeriod`), zijn één aantal per blok: gebouwd als toegelaten bij
-   `periodComparison` met `statistic: sum`, en geweigerd bij een gemiddelde of mediaan (er is geen gemiddelde per
-   dag en geen spreiding). Vraag: akkoord?
-3. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
+1. **REQ-017 (PNG).** Wacht op een PNG-uitvoer; v0 levert enkel SVG.
 
 ## Sjabloon voor een requirement
 

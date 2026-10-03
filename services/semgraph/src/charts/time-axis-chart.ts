@@ -227,9 +227,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   }
 
   /**
-   * Whether n means observations the warehouse counted (REQ-057): for a mean or median of a ratio,
-   * such as an amount per lead. An average per day of a count rests on the days of its block; the
-   * thresholds for few observations do not apply to days.
+   * Whether n means observations the warehouse counted (REQ-057, REQ-063): for a mean or median of a
+   * ratio, such as an amount per lead. An average per day of a count rests on the days of its block;
+   * the thresholds for few observations and the alert for a missing n do not apply to days.
    */
   protected observationsApply(request: Request): boolean {
     return request.measureType === 'ratio' && this.statistic.fewBelow !== null;
@@ -491,7 +491,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
         // REQ-035: a total of daily uniques counts someone who comes back on several days several times.
         issues.push({ level: 'refusal', code: 'dailyUniquesNotSummable', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
       } else if (request.uniqueAggregation === 'overPeriod' && !total) {
-        // The uniques over a block are one count, counted in the warehouse (REQ-058): not an average per day.
+        // REQ-064: the uniques over a block are one count, counted in the warehouse: only as a total.
         issues.push({ level: 'refusal', code: 'uniquesOverPeriodNotAveraged', field: '/uniqueAggregation', learnMore: LEARNING_PLAN_LEVEL_1 });
       }
     } else if (request.uniqueAggregation !== undefined) {

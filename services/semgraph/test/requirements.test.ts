@@ -444,7 +444,7 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-043 and REQ-062: every point of a mean or median of observations shows its n on hover; without n a red alert', () => {
+  it('REQ-043, REQ-062 and REQ-063: every point of a mean or median of observations shows its n on hover; without n a red alert', () => {
     for (const drawn of ratios()) {
       const withN = drawn.computed.points.filter((point) => point.n !== undefined);
       assert.equal(drawn.deviations.includes(`nMissing.${drawn.statistic}`), withN.length < drawn.computed.points.length, drawn.name);
@@ -458,7 +458,7 @@ describe('requirements of the chart language', async () => {
     for (const drawn of examples.filter((candidate) => candidate.statistic === 'sum')) assert.ok(drawn.computed.points.every((point) => point.n === undefined), drawn.name);
   });
 
-  it('REQ-044, REQ-054 and REQ-057: few observations below 30 (mean) or 10 (median), or below half the median n; never running; only for observations', () => {
+  it('REQ-044, REQ-054, REQ-057 and REQ-063: few observations below 30 (mean) or 10 (median), or below half the median n; never running; only for observations', () => {
     for (const drawn of examples) {
       if (!ratios().includes(drawn)) {
         assert.deepEqual(drawn.computed.few, [], `${drawn.name}: n of days is no number of observations (REQ-057)`);
@@ -537,5 +537,18 @@ describe('requirements of the chart language', async () => {
       assert.equal(shapes.lineDots > 0, id === 'periodComparison', id);
     }
     assert.ok(iconShapes((await testRegistry()).semgraphs.get('periodComparison')!.icon).squares > 0);
+  });
+
+  it('REQ-064: daily uniques are never summed; the uniques over a block, counted in the warehouse, only as a total', async () => {
+    const registry = await testRegistry();
+    for (const drawn of examples) {
+      const codes = async (uniqueAggregation: string) =>
+        (await runPipeline(registry, { ...drawn.request, measureType: 'unique', uniqueAggregation }, { now: NOW, draw: false })).report.issues
+          .filter((issue) => issue.level === 'refusal')
+          .map((issue) => issue.code);
+      const total = drawn.statistic === 'sum';
+      assert.deepEqual(await codes('daily'), total ? ['dailyUniquesNotSummable'] : [], drawn.name);
+      assert.deepEqual(await codes('overPeriod'), total ? [] : ['uniquesOverPeriodNotAveraged'], drawn.name);
+    }
   });
 });

@@ -320,14 +320,15 @@ What the service does:
 3. Checks on the blocks (input errors): valid and unique names, windows that line up, only the fields of the
    statistic, the spread on every block or on none, P25 ≤ median ≤ P75 (`src/charts/statistics.ts`).
 4. Rules: refusal for a measure type the metadata does not allow, a total of ratios, unique counts without
-   `uniqueAggregation`, a total of daily uniques (REQ-035), the uniques over a block as an average, no block with a
+   `uniqueAggregation`, a total of daily uniques (REQ-035), the uniques over a block as an average (REQ-064), no block with a
    value, blocks with a value that together cover fewer days than `minimumPoints`, or, for a comparison, no value
    before the screen. Tolerated deviation for a window that is not 1 or a multiple of 7, a mean or median without
    its spread, or a mean or median of observations without n (REQ-062). Every tolerated deviation is drawn under a
    red block with white text between the title and the chart, with a message to the reader: "Lees deze grafiek
    met voorzichtigheid: …" (REQ-032, REQ-038, REQ-040, REQ-041).
    Few observations (REQ-044): a block with n below 30 (mean) or 10 (median), or below half the median n of the
-   chart (from five n's on). Only where n counts observations (`measureType: ratio`), never for days (REQ-057),
+   chart (from five n's on). Only where n counts observations (`measureType: ratio`), never for days (REQ-057,
+   REQ-063),
    and never for a running period (REQ-054). Its column gets sparse dots, its shape stays filled (REQ-053), its n
    stands under the time axis ("n 22", REQ-046), and a red block warns the reader while the version label stays
    (REQ-047).
@@ -482,12 +483,9 @@ the pages Anatomy and Line charts, and with the team:
 8. The two new attributes `periodType` and `centralTendency`, and their values for the semgraphs of the analysis
    (`any` where they do not matter); see `test/fixtures/analysis-attributes.yml`.
 9. A running period covers the days so far and gets the running pattern; ISO weeks run from Monday to Sunday.
-10. The zoomed axis (zigzag and bold first value), and `uniqueAggregation` values `daily` and `overPeriod`:
-    daily uniques are never summed, the uniques over a block (counted in the warehouse) only appear as a total.
+10. The zoomed axis (zigzag and bold first value).
 11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; a running period
     compared with as many days of the earlier period.
-12. n, few observations and the alert for a missing n only for `measureType: ratio`: for an average per day of a
-    count, the observations are the days of the block (REQ-057).
 
 ## Notes for consumers
 

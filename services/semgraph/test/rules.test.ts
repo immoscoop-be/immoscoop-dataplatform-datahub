@@ -54,12 +54,12 @@ describe('movingWindowAverage rules', () => {
     assert.match(daily.svg!, /uniek · per dag geteld · voortschrijdend gemiddelde 7d/);
   });
 
-  it('refuses the uniques over a window as an average: they are one count per window', async () => {
+  it('refuses the uniques over a window as an average: they are one count per window (REQ-064)', async () => {
     const result = await validate({ ...(await example('unique-without-aggregation')), uniqueAggregation: 'overPeriod' });
     assert.deepEqual(result.codes, ['uniquesOverPeriodNotAveraged']);
   });
 
-  it('a total of unique counts only as the uniques over each block, counted in the warehouse (REQ-035)', async () => {
+  it('a total of unique counts only as the uniques over each block, counted in the warehouse (REQ-035, REQ-064)', async () => {
     const weeks = await example('weeks-sum', 'periodComparison');
     const daily = await validate({ ...weeks, measureType: 'unique', uniqueAggregation: 'daily' });
     assert.deepEqual(daily.codes, ['dailyUniquesNotSummable']);
