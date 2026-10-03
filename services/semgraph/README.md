@@ -34,8 +34,8 @@ language and draws, with title, reading cue and footer (REQ-058).
 
 ## Status: v0
 
-Five semgraphs on a time axis, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker
-image:
+Seven semgraphs, end to end as SVG over REST, in English and Dutch (nl-BE), packaged as one Docker image: five on a
+time axis, one for categories and one for the distribution of a value.
 
 | Semgraph | One block | Drawn as |
 | --- | --- | --- |
@@ -44,6 +44,8 @@ image:
 | `calendarAverage` | an ISO week, month, quarter or year, named by its ISO name: mean, sd, n | line of diamonds over thin bars, ±1 sd |
 | `calendarMedian` | an ISO week, month, quarter or year: median, P25, P75, n | line of dots in wide bars, P25–P75 |
 | `periodComparison` | a window or a calendar period: the total, mean or median, and the same value of the block before the screen | a line in the focus colour against a grey line, a shortfall hatched |
+| `categoryComparison` | a category: the total, mean or median | bars: lying and sorted by value without order, upright in their order; a dot or diamond with its spread for a median or mean |
+| `distribution` | a bin of a continuous value: its count; plus P25, P50, P75 and the open bin above the threshold | touching bins, quartile guides, the tail in one grey bin |
 
 MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
 the same core.
@@ -51,6 +53,8 @@ the same core.
 ![movingWindowAverage example](test/golden/movingWindowAverage-basic.svg)
 ![calendarAverage per week, with the running week on its pattern](test/golden/calendarAverage-weeks.svg)
 ![periodComparison: 12 weeks against the 12 weeks before](test/golden/periodComparison-weeks-sum.svg)
+![categoryComparison: the median asking price per province](test/golden/categoryComparison-provinces-median.svg)
+![distribution: the asking prices](test/golden/distribution-asking-price.svg)
 
 ## Run it
 
@@ -133,6 +137,23 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `weeks-sum` | the total per week, 12 weeks against the 12 weeks before | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/weeks-sum) · [golden](test/golden/periodComparison-weeks-sum.svg) |
 | `months-mean` | the mean per month, 6 months against the half year before | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/months-mean) · [golden](test/golden/periodComparison-months-mean.svg) |
 | `rolling-median` | the median per window of 7 days, 8 windows against the 8 before; en | ok | [local](http://localhost:8080/semgraphs/periodComparison/examples/rolling-median) · [golden](test/golden/periodComparison-rolling-median.svg) |
+
+### categoryComparison
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `provinces-sum` | leads per province over 28 days: lying bars, sorted by value | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum) · [golden](test/golden/categoryComparison-provinces-sum.svg) |
+| `provinces-median` | the median asking price per province, P25–P75, with n | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-median) · [golden](test/golden/categoryComparison-provinces-median.svg) |
+| `provinces-mean` | the mean asking price per province, ±1 sd | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-mean) · [golden](test/golden/categoryComparison-provinces-mean.svg) |
+| `price-ranges-sum` | listings online on one day per price range: upright bars in the ordinal ramp | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum) · [golden](test/golden/categoryComparison-price-ranges-sum.svg) |
+| `price-ranges-median` | days online per price range, one range with few observations | ok, with a red caution `fewObservations.median` | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-median) · [golden](test/golden/categoryComparison-price-ranges-median.svg) |
+| `price-ranges-mean` | days online per price range, ±1 sd; en | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-mean) · [golden](test/golden/categoryComparison-price-ranges-mean.svg) |
+
+### distribution
+
+| Example | Shows | Outcome | Open |
+| --- | --- | --- | --- |
+| `asking-price` | asking prices in bins of € 50k, quartiles, the tail above € 900k | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price) · [golden](test/golden/distribution-asking-price.svg) |
 
 ## API
 
@@ -243,6 +264,31 @@ data) get in. See for example [`semgraphs/calendarMedian/schema.json`](semgraphs
 
 **Empty is not zero.** A block with `null` (or left out) has no data: it is drawn as empty, never as zero. `0` is
 a measured zero.
+
+### Categories and distributions (REQ-065)
+
+`categoryComparison` takes one row per category in `points`, with the fields of its `statistic` (`sum`, `mean`
+with `sd`, `median` with `p25` and `p75`, and `n`), `ordered` (false: lying bars, sorted by value; true: upright
+bars in the order given, at most 16), and the time the values cover: exactly one of `window` (days up to the last
+complete day), `period` (an ISO period that is over) or `day` (a snapshot). Dates are no categories: a date axis
+is a line (REQ-001, REQ-002). `unit` puts a unit around the numbers (`{ "prefix": "€ " }`, `{ "suffix": " d" }`).
+
+```json
+{ "semgraph": "categoryComparison", "metric": "askingPrice", "measureType": "ratio", "statistic": "median",
+  "window": 28, "unit": { "prefix": "€ " },
+  "points": [ { "category": "Antwerpen", "median": 345000, "p25": 270000, "p75": 450000, "n": 2140 } ] }
+```
+
+`distribution` takes the bins as the warehouse counted them, each `binWidth` after the previous, the percentiles,
+and optionally the open bin above the threshold (about P95). Bin width and threshold are fixed per metric in the
+dbt YAML, so months stay comparable (Figma).
+
+```json
+{ "semgraph": "distribution", "metric": "askingPrice", "binWidth": 50000, "unit": { "prefix": "€ " },
+  "bins": [ { "from": 100000, "count": 180 }, { "from": 150000, "count": 590 } ],
+  "openBin": { "from": 900000, "count": 480 },
+  "percentiles": { "p25": 261000, "p50": 312000, "p75": 408000 } }
+```
 
 ### Guidelines for the query
 
@@ -421,6 +467,11 @@ TimeAxisChart (src/charts/time-axis-chart.ts)    contract, checks, blocks to slo
 
 PeriodComparison (semgraphs/periodComparison)     one semgraph: the request picks the family and the statistic
 
+CategoryChart (src/charts/category-chart.ts)      categories as bars, lying or upright; the request picks the statistic
+└── CategoryComparison
+DistributionChart (src/charts/distribution-chart.ts)  bins, quartile guides and the open bin
+└── Distribution
+
 Statistic (src/charts/statistics.ts)              the fields of a block, how to read them, bar width, shape, labels
 ├── Average                                       mean, ±1 sd, n; thin bar, diamond (REQ-006); few below n 30
 ├── Median                                        median, P25–P75, n; wide bar, dot (REQ-008); few below n 10
@@ -428,7 +479,10 @@ Statistic (src/charts/statistics.ts)              the fields of a block, how to 
 ```
 
 The shape of a point per kind of number (square for an amount, diamond for a mean, dot for a median) is defined
-once, in `src/charts/signatures.ts`. The time axis (`src/charts/time-axis.ts`) and the value labels
+once, in `src/charts/signatures.ts`. Every family shares the rules about the kind of number
+(`src/charts/measure.ts`), the field checks and the few-observations logic of the statistic, the contract fields
+(`src/charts/contract.ts`) and the compact numbers of the bar charts (`src/charts/number-format.ts`: "1,8k",
+"€ 390k", "45 d"). The time axis (`src/charts/time-axis.ts`) and the value labels
 (`src/charts/value-labels.ts`) are drawn by helpers that every family shares, and so is the comparison
 (`src/charts/comparison.ts`): any time-axis chart compares with the period before the screen once it sets
 `compares`.
@@ -486,6 +540,9 @@ the pages Anatomy and Line charts, and with the team:
 10. The zoomed axis (zigzag and bold first value).
 11. For `periodComparison`: one semgraph with `statistic` and either `window` or `unit`; a running period
     compared with as many days of the earlier period.
+12. For `categoryComparison`: the ordinal ramp spread over its five steps for any number of categories; the n of a
+    lying bar with few observations under its label. The open questions of REQ-065 are in
+    [docs/requirements](docs/requirements/README.md#open-punten-eerst-te-bespreken).
 
 ## Notes for consumers
 
