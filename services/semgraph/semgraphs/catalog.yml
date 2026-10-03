@@ -13,5 +13,8 @@
 - { id: composition, status: planned }
 - { id: funnel, status: planned }
 - { id: overlap, status: planned }
+# REQ-071: survival is the Cohort of Figma (Chart/Cohort). Like ratio, it shows a share and waits on the
+# requirement about numerator and denominator (REQ-070).
 - { id: survival, status: planned }
+- { id: ratio, status: planned }
 - { id: regionalDistribution, status: planned }
