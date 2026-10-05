@@ -25,11 +25,13 @@ export function renderRoutes(app: FastifyInstance, { registry, now }: Dependenci
     return send(reply, result);
   });
 
-  // A demo in the browser: renders one of the example requests next to the semgraph.
-  app.get<{ Params: { id: string; name: string } }>('/semgraphs/:id/examples/:name', async (request, reply) => {
+  // A demo in the browser: renders one of the example requests next to the semgraph; ?theme=dark in the
+  // colours of the mode Dark (REQ-094).
+  app.get<{ Params: { id: string; name: string }; Querystring: { theme?: string } }>('/semgraphs/:id/examples/:name', async (request, reply) => {
     const example = registry.semgraphs.get(request.params.id)?.examples.get(request.params.name);
     if (example === undefined) return reply.callNotFound();
-    const result = await runPipeline(registry, example, { now: now() });
+    const theme = request.query.theme === undefined ? {} : { theme: request.query.theme };
+    const result = await runPipeline(registry, { ...(example as object), ...theme }, { now: now() });
     logOutcome(request.log, 'example', result);
     return send(reply, result);
   });

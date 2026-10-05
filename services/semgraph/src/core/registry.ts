@@ -8,7 +8,7 @@ import { readIcon } from './icon.ts';
 import type { Catalog } from './i18n.ts';
 import { createAjv, type ValidateFunction } from './schema.ts';
 import type { AnySemgraphImplementation, Attribute, SemgraphMetadata } from './semgraph.ts';
-import type { Tokens } from './tokens.ts';
+import { checkThemes, type Tokens } from './tokens.ts';
 
 export const REPO_ROOT = path.resolve(import.meta.dirname, '../..');
 
@@ -60,6 +60,8 @@ export async function loadRegistry(options: LoadOptions = {}): Promise<Registry>
     locales.set(name.slice(0, -'.yml'.length), (await readYaml(file('locales', name))) as Catalog);
   }
   const tokens = JSON.parse(await readFile(file('tokens', 'ptditt-grafiektaal-tokens.json'), 'utf8')) as Tokens;
+  const themeErrors = checkThemes(tokens);
+  if (themeErrors.length > 0) throw new Error(`tokens/ptditt-grafiektaal-tokens.json:\n${themeErrors.join('\n')}`);
   const { version } = JSON.parse(await readFile(file('package.json'), 'utf8')) as { version: string };
 
   const ajv = createAjv();

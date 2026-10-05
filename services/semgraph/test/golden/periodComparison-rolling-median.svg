@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="periodComparison" data-language-version="v0" data-tokens-version="0.3.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="periodComparison" data-language-version="v0" data-tokens-version="0.4.0">
 <title>Credit leads per day, against the 8 weeks before (example data)</title>
 <desc>Credit leads per day, against the 8 weeks before (example data): rolling 7d median · P25–P75 · vs previous 8 weeks, up to 30 Sep 2026. Last point: 49.0, P25–P75 41.0–50.0.</desc>
 <defs><pattern id="semgraph-hatch-505dfd0f" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#2d333a" stroke-width="1" stroke-opacity="0.75"/></pattern></defs>

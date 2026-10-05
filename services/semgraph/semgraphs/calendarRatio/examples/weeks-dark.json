@@ -1,0 +1,29 @@
+{
+  "semgraph": "calendarRatio",
+  "theme": "dark",
+  "metric": "visitToLead",
+  "title": "Conversion visit → lead, per week (example data)",
+  "measureType": "ratio",
+  "numeratorName": "leads",
+  "denominatorName": "visitors",
+  "unit": "week",
+  "locale": "en",
+  "context": {
+    "domain": "Leads",
+    "dataset": "reactivation",
+    "owner": "DigiKom",
+    "reliability": "example data"
+  },
+  "points": [
+    { "period": "2026-W27", "numerator": 80, "denominator": 1900 },
+    { "period": "2026-W28", "numerator": 86, "denominator": 2050 },
+    { "period": "2026-W29", "numerator": 84, "denominator": 2000 },
+    { "period": "2026-W30", "numerator": 88, "denominator": 2100 },
+    { "period": "2026-W31", "numerator": 27, "denominator": 640 },
+    { "period": "2026-W32", "numerator": 82, "denominator": 1950 },
+    { "period": "2026-W33", "numerator": 85, "denominator": 2000 },
+    { "period": "2026-W34", "numerator": 86, "denominator": 2050 },
+    { "period": "2026-W35", "numerator": 90, "denominator": 2150 },
+    { "period": "2026-W36", "numerator": 109, "denominator": 2600 }
+  ]
+}

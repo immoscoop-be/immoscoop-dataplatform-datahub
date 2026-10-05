@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="calendarAverage" data-language-version="v0" data-tokens-version="0.3.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="calendarAverage" data-language-version="v0" data-tokens-version="0.4.0">
 <title>Kredietleads per dag, per jaar (voorbeelddata)</title>
 <desc>Kredietleads per dag, per jaar (voorbeelddata): gemiddelde per dag, per jaar · ±1 sd, tot 30 sep 2026. Laatste punt: 41,9 ± 11,2.</desc>
 <defs><pattern id="semgraph-running-c8771f22" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#ffffff"/><line x1="0.5" y1="0" x2="0.5" y2="4" stroke="#cfcdc4" stroke-width="1"/></pattern></defs>

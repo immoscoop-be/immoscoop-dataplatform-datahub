@@ -12,7 +12,7 @@ import { createAjv } from '../src/core/schema.ts';
 import { SIZE_NAMES, SIZES } from '../src/core/size.ts';
 import { textWidth } from '../src/core/render/text.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
-import { color } from '../src/core/tokens.ts';
+import { checkThemes, color, themeOf, tokensFor, type Tokens } from '../src/core/tokens.ts';
 import { mcpCall, NOW, svgOfResult, testRegistry } from './helpers.ts';
 
 /**
@@ -42,6 +42,8 @@ interface Drawn {
   datasets: Record<string, Record<string, unknown>[]>;
   layers: Layer[];
   svg: string;
+  /** The tokens of the theme of the example: light, or dark (REQ-094). */
+  tokens: Tokens;
 }
 
 async function drawnExamples(): Promise<Drawn[]> {
@@ -54,7 +56,8 @@ async function drawnExamples(): Promise<Drawn[]> {
       const { implementation, metadata } = semgraph;
       const computed = implementation.compute(request, { now: NOW });
       const t = createTranslator(registry.locales, result.report.locale);
-      const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
+      const tokens = tokensFor(registry.tokens, themeOf(request as object));
+      const drawing = implementation.draw(request, computed, { t, tokens, metadata });
       const spec = drawing.vegaLite as unknown as { datasets: Drawn['datasets']; layer: Layer[] };
       drawn.push({
         name: `${id}/${name}`,
@@ -70,6 +73,7 @@ async function drawnExamples(): Promise<Drawn[]> {
         datasets: spec.datasets,
         layers: flatten(spec.layer),
         svg: result.svg,
+        tokens,
       });
     }
   }
@@ -148,7 +152,7 @@ describe('requirements of the chart language', async () => {
       const mark = markOf(pointLayer(drawn));
       assert.equal(mark.shape, { mean: 'diamond', sum: 'square', median: 'circle', ratio: 'square' }[drawn.statistic], drawn.name);
       // A ratio is a square in a square (REQ-075): its outer square is white inside, outlined in the focus colour.
-      assert.equal(drawn.statistic === 'ratio' ? mark.stroke : mark.fill, color(tokens, 'focus'), drawn.name);
+      assert.equal(drawn.statistic === 'ratio' ? mark.stroke : mark.fill, color(drawn.tokens, 'focus'), drawn.name);
       assert.equal(pointLayer(drawn).encoding!.fill, undefined, `${drawn.name}: the fill does not depend on the state`);
     }
     // In the SVG: the running week of calendarAverage/weeks is a filled diamond.
@@ -174,9 +178,9 @@ describe('requirements of the chart language', async () => {
       // REQ-051: no outline over the chart and no label in it; only the hover names an empty period.
       assert.doesNotMatch(withoutHover(drawn.svg), />(no data|geen data)</, drawn.name);
       // REQ-050: tiles anchored to the plot, the sizes of Figma: mosaic 8 px, lines 4 px.
-      if (empty.size > 0) assert.match(drawn.svg, /<pattern id="semgraph-empty-[0-9a-f]{8}" width="8" height="8" patternUnits="userSpaceOnUse">/, drawn.name);
-      if (covered('running').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-running-[0-9a-f]{8}" width="4" height="4" patternUnits="userSpaceOnUse">/, drawn.name);
-      if (covered('few').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse">/, drawn.name);
+      if (empty.size > 0) assert.match(drawn.svg, /<pattern id="semgraph-empty-[0-9a-f]{8}(-dark)?" width="8" height="8" patternUnits="userSpaceOnUse">/, drawn.name);
+      if (covered('running').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-running-[0-9a-f]{8}(-dark)?" width="4" height="4" patternUnits="userSpaceOnUse">/, drawn.name);
+      if (covered('few').size > 0) assert.match(drawn.svg, /<pattern id="semgraph-few-[0-9a-f]{8}(-dark)?" width="6" height="6" patternUnits="userSpaceOnUse">/, drawn.name);
     }
     assert.ok(timeAxis.some((drawn) => drawn.computed.missing.length > 0), 'an example with empty periods');
     assert.ok(timeAxis.some((drawn) => drawn.computed.points.some((point) => point.running)), 'an example with a running period');
@@ -195,8 +199,8 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-009: a light area only shows spread', () => {
-    const light = color(tokens, 'focus/light');
     for (const drawn of timeAxis) {
+      const light = color(drawn.tokens, 'focus/light');
       for (const layer of drawn.layers) {
         const mark = markOf(layer);
         if (mark.color !== light && mark.fill !== light) continue;
@@ -291,7 +295,7 @@ describe('requirements of the chart language', async () => {
       const compiled = (drawn.request.meta as { compiledOn?: string } | undefined)?.compiledOn ?? '2026-10-01';
       const [, month, day] = compiled.split('-');
       const word = drawn.request.locale === 'en' ? 'compiled' : 'samengesteld';
-      assert.ok(drawn.svg.includes(`<tspan> · </tspan><tspan font-weight="700" fill="${color(tokens, 'text')}">${word} ${day}/${month}</tspan>`), drawn.name);
+      assert.ok(drawn.svg.includes(`<tspan> · </tspan><tspan font-weight="700" fill="${color(drawn.tokens, 'text')}">${word} ${day}/${month}</tspan>`), drawn.name);
     }
   });
 
@@ -382,7 +386,7 @@ describe('requirements of the chart language', async () => {
     assert.ok(comparisons().length >= 3);
     for (const drawn of comparisons()) {
       const line = drawn.layers.find((layer) => layer.data?.name === 'comparisonLine')!;
-      assert.equal(markOf(line).color, color(tokens, 'context'), drawn.name);
+      assert.equal(markOf(line).color, color(drawn.tokens, 'context'), drawn.name);
       assert.equal(drawn.datasets.comparisonLine!.length, drawn.computed.comparison!.points.length);
       const label = drawn.datasets.endComparison as { rel: number; text: string }[];
       assert.equal(label.length, 1, drawn.name);
@@ -415,7 +419,7 @@ describe('requirements of the chart language', async () => {
     for (const drawn of comparisons().filter((comparison) => comparison.datasets.hatch!.length > 0)) {
       assert.match(
         drawn.svg,
-        new RegExp(`<pattern id="semgraph-hatch-[0-9a-f]{8}"[^>]*patternTransform="rotate\\(-45\\)"><rect [^>]*fill="${color(tokens, 'surface')}"/><line [^>]*stroke-width="1" stroke-opacity="0.75"/>`),
+        new RegExp(`<pattern id="semgraph-hatch-[0-9a-f]{8}(-dark)?"[^>]*patternTransform="rotate\\(-45\\)"><rect [^>]*fill="${color(drawn.tokens, 'surface')}"/><line [^>]*stroke-width="1" stroke-opacity="0.75"/>`),
         drawn.name,
       );
     }
@@ -532,7 +536,7 @@ describe('requirements of the chart language', async () => {
     for (const drawn of examples) {
       assert.equal(drawn.cautions.some((code) => code.startsWith('fewObservations.')), (drawn.computed.few ?? []).length > 0, drawn.name);
       if ((drawn.computed.few ?? []).length === 0) continue;
-      assert.ok(drawn.svg.includes(`fill="${color(tokens, 'warning')}"`), drawn.name);
+      assert.ok(drawn.svg.includes(`fill="${color(drawn.tokens, 'warning')}"`), drawn.name);
       assert.match(drawn.svg, /(Lees deze grafiek met voorzichtigheid: (weinig waarnemingen bij )?\d+ van de \d+|Read this chart with care: (few observations in )?\d+ of the \d+)/, drawn.name);
       if (drawn.deviations.length === 0) assert.match(drawn.svg, />(grafiektaal|chart language) v0</, drawn.name);
     }
@@ -548,17 +552,17 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-059: the text of a chart is dark grey, grey/700, not black', () => {
     assert.equal(color(tokens, 'text'), '#3c444e');
-    for (const drawn of examples) assert.match(drawn.svg, new RegExp(`font-size="15" font-weight="600" fill="${color(tokens, 'text')}"`), drawn.name);
+    for (const drawn of examples) assert.match(drawn.svg, new RegExp(`font-size="15" font-weight="600" fill="${color(drawn.tokens, 'text')}"`), drawn.name);
   });
 
   it('REQ-060: the icon of the semgraph left of the title, 44 px, muted grey, linked to the reading card; a warning below the header', async () => {
     const registry = await testRegistry();
     for (const drawn of examples) {
       const { metadata } = registry.semgraphs.get(drawn.semgraph)!;
-      const icon = new RegExp(`<a href="${metadata.links.learning.replace(/[.?]/g, '\\$&')}" aria-label="[^"]+"><svg x="20" y="12" width="44" height="44" viewBox="0 0 44 44" fill="none" color="${color(tokens, 'text/muted')}">`);
+      const icon = new RegExp(`<a href="${metadata.links.learning.replace(/[.?]/g, '\\$&')}" aria-label="[^"]+"><svg x="20" y="12" width="44" height="44" viewBox="0 0 44 44" fill="none" color="${color(drawn.tokens, 'text/muted')}">`);
       assert.match(drawn.svg, icon, drawn.name);
       assert.match(drawn.svg, /<text x="78" y="33" font-family="Poppins/, `${drawn.name}: the title right of the icon`);
-      const alert = new RegExp(`<rect x="20" y="([\\d.]+)" width="600" height="[\\d.]+" rx="3" fill="${color(tokens, 'warning')}"/>`).exec(drawn.svg);
+      const alert = new RegExp(`<rect x="20" y="([\\d.]+)" width="600" height="[\\d.]+" rx="3" fill="${color(drawn.tokens, 'warning')}"/>`).exec(drawn.svg);
       if (alert) assert.ok(Number(alert[1]) >= 12 + 44, `${drawn.name}: the warning below the header block, over the full width`);
     }
   });
@@ -609,8 +613,8 @@ describe('requirements of the chart language', async () => {
   });
 
   it('REQ-000 and REQ-065: an amount is a bar from zero, a median a dot in a wide bar, a mean a diamond over a thin bar; the axis from zero', () => {
-    const light = color(tokens, 'focus/light');
     for (const drawn of categories) {
+      const light = color(drawn.tokens, 'focus/light');
       const bars = drawn.datasets.bars as Record<string, number>[];
       const points = drawn.datasets.points as unknown[];
       const spread = drawn.layers.find((layer) => layer.data?.name === 'spread')!;
@@ -656,11 +660,11 @@ describe('requirements of the chart language', async () => {
       // The bar from zero to now is light, what both periods share; upright too, without the ordinal ramp.
       for (const bar of drawn.datasets.bars as Record<string, number | string>[]) {
         assert.equal(bar.x ?? bar.v, 0, `${drawn.name}: from zero`);
-        assert.equal(bar.fill ?? layer('bars').color, color(tokens, 'focus/light'), drawn.name);
+        assert.equal(bar.fill ?? layer('bars').color, color(drawn.tokens, 'focus/light'), drawn.name);
       }
-      assert.equal(layer('gained').color, color(tokens, 'focus'), drawn.name);
+      assert.equal(layer('gained').color, color(drawn.tokens, 'focus'), drawn.name);
       assert.match(String(layer('lost').fill), /^url\(#semgraph-hatch-/, `${drawn.name}: a loss is hatched (REQ-004, REQ-055)`);
-      assert.equal(layer('caps').color, color(tokens, 'text'), drawn.name);
+      assert.equal(layer('caps').color, color(drawn.tokens, 'text'), drawn.name);
       const span = (row: Record<string, number>) => [row.x ?? row.v, row.x2 ?? row.v2];
       const gained = (drawn.datasets.gained as Record<string, number>[]).map(span);
       const lost = (drawn.datasets.lost as Record<string, number>[]).map(span);
@@ -719,7 +723,7 @@ describe('requirements of the chart language', async () => {
       const lastYear = (drawn.request.comparison ?? (drawn.request.window !== undefined && Number(drawn.request.window) <= 14 ? 'previousPeriod' : 'lastYear')) === 'lastYear';
       assert.equal(shadow.length > 0, lastYear, drawn.name);
       assert.equal((drawn.datasets.legend as unknown[]).length > 0, lastYear, drawn.name);
-      assert.equal(markOf(drawn.layers.find((layer) => layer.data?.name === 'shadow')!).color, color(tokens, 'context'), drawn.name);
+      assert.equal(markOf(drawn.layers.find((layer) => layer.data?.name === 'shadow')!).color, color(drawn.tokens, 'context'), drawn.name);
       // A mean or median shows its spread next to the number.
       assert.equal((drawn.datasets.spread as unknown[]).length > 0, last.spread !== null, drawn.name);
     }
@@ -816,7 +820,7 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-074: a ratio is a numerator divided by a denominator, drawn only by a ratio chart; every other chart refuses it', async () => {
     const registry = await testRegistry();
-    assert.deepEqual(ratioCharts.map((drawn) => drawn.semgraph).sort(), ['calendarRatio', 'movingWindowRatio']);
+    assert.deepEqual([...new Set(ratioCharts.map((drawn) => drawn.semgraph))].sort(), ['calendarRatio', 'movingWindowRatio']);
     for (const drawn of timeAxis) {
       const refusals = async (measureType: string) =>
         (await runPipeline(registry, { ...drawn.request, measureType }, { now: NOW, draw: false })).report.issues.filter((issue) => issue.level === 'refusal').map((issue) => issue.code);
@@ -835,8 +839,8 @@ describe('requirements of the chart language', async () => {
         continue;
       }
       const [outer, inner] = marks as [Record<string, unknown>, Record<string, unknown>];
-      assert.deepEqual([outer.shape, outer.fill, outer.stroke], ['square', color(tokens, 'surface'), color(tokens, 'focus')], drawn.name);
-      assert.deepEqual([inner.shape, inner.fill], ['square', color(tokens, 'focus')], drawn.name);
+      assert.deepEqual([outer.shape, outer.fill, outer.stroke], ['square', color(drawn.tokens, 'surface'), color(drawn.tokens, 'focus')], drawn.name);
+      assert.deepEqual([inner.shape, inner.fill], ['square', color(drawn.tokens, 'focus')], drawn.name);
       assert.ok((inner.size as number) < (outer.size as number) / 4, `${drawn.name}: the numerator is small inside the denominator`);
     }
   });
@@ -847,7 +851,7 @@ describe('requirements of the chart language', async () => {
       const order = drawn.layers.map((layer) => layer.data?.name);
       assert.ok(order.indexOf('base') > order.indexOf('columns') && order.indexOf('base') < order.indexOf('line'), `${drawn.name}: the denominator behind the data`);
       const area = drawn.layers.find((layer) => layer.data?.name === 'base' && markType(layer) === 'area')!;
-      assert.deepEqual([markOf(area).interpolate, markOf(area).color], ['step', color(tokens, 'axis')], drawn.name);
+      assert.deepEqual([markOf(area).interpolate, markOf(area).color], ['step', color(drawn.tokens, 'axis')], drawn.name);
       // One flat block per period, as high as its denominator on the right axis: one scale for every block.
       const base = baseOf(drawn);
       const perUnit = ratioPoints(drawn).map((point) => base.get(point.rel)! / point.parts.denominator);
@@ -871,16 +875,16 @@ describe('requirements of the chart language', async () => {
         const mark = markOf(layer);
         if (!String(mark.interpolate ?? '').startsWith('step')) continue;
         assert.equal(layer.data?.name, 'base', `${drawn.name}: a step on ${layer.data?.name}`);
-        if (markType(layer) === 'area') assert.equal(mark.color, color(tokens, 'axis'), drawn.name);
+        if (markType(layer) === 'area') assert.equal(mark.color, color(drawn.tokens, 'axis'), drawn.name);
       }
     }
     // kpiStatus draws its cumulative level as a staircase (REQ-065, REQ-068): an open point against REQ-077.
   });
 
   it('REQ-078: a light area in the focus colour is spread, in neutral grey it is the base of a ratio; never the other way round', () => {
-    const light = color(tokens, 'focus/light');
-    const grey = color(tokens, 'axis');
     for (const drawn of timeAxis) {
+      const light = color(drawn.tokens, 'focus/light');
+      const grey = color(drawn.tokens, 'axis');
       for (const layer of drawn.layers.filter((candidate) => markType(candidate) === 'area')) {
         const fill = markOf(layer).color ?? markOf(layer).fill;
         if (fill === light) assert.equal(layer.data?.name, 'band', drawn.name);
@@ -907,7 +911,7 @@ describe('requirements of the chart language', async () => {
       for (const point of ratioPoints(drawn)) assert.equal(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.point!.right, base.get(point.rel), drawn.name);
       assert.match(drawn.svg, /<line x1="[\d.]+" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#[0-9a-f]{6}" stroke-width="[\d.]+" stroke-dasharray="1 3"/, drawn.name);
       const rightLayer = drawn.layers.find((layer) => layer.data?.name === 'rightAxis')!;
-      assert.equal(markOf(rightLayer).color, color(tokens, 'context'), `${drawn.name}: lighter labels`);
+      assert.equal(markOf(rightLayer).color, color(drawn.tokens, 'context'), `${drawn.name}: lighter labels`);
       assert.equal(drawn.layers.filter((layer) => markType(layer) === 'point' && layer.data?.name !== 'points' && layer.data?.name !== 'frame').length, 0, `${drawn.name}: no shapes on the right axis`);
     }
   });
@@ -1021,9 +1025,9 @@ describe('requirements of the chart language', async () => {
       // Claude passes on a tool result of about 150,000 characters; the gzipped chart stays well under it.
       assert.ok(JSON.stringify(result).length < 100_000, `${drawn.name}: ${JSON.stringify(result).length} characters`);
       for (const content of result.content) assert.doesNotMatch(content.text, /<svg/, drawn.name);
-      // The chart keeps its own light background, also in a dark conversation (REQ-094 is open).
+      // The chart paints its own background, in the colours of its theme (REQ-094).
       const [, width, height] = /^<svg [^>]*viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(drawn.svg)!;
-      assert.ok(drawn.svg.includes(`<rect width="${width}" height="${height}" fill="#ffffff"/>`), drawn.name);
+      assert.ok(drawn.svg.includes(`<rect width="${width}" height="${height}" fill="${color(drawn.tokens, 'surface')}"/>`), drawn.name);
     }
     await app.close();
   });
@@ -1039,4 +1043,63 @@ describe('requirements of the chart language', async () => {
       assert.ok(result.svg!.includes('Hannelore'), drawn.name);
     }
   });
+
+  it('REQ-094: every chart also dark: the same chart in the colours of the mode Dark, and nothing of the mode Light', async () => {
+    const registry = await testRegistry();
+    const light = registry.tokens;
+    const dark = tokensFor(light, 'dark');
+    assert.deepEqual(checkThemes(light), []);
+    // Only what the mode Light has and the mode Dark not; white stays for the text on the red alert (REQ-040).
+    const lightOnly = new Set(Object.values(light.color).filter((value) => !Object.values(dark.color).includes(value) && value !== '#ffffff'));
+    for (const [id, semgraph] of registry.semgraphs) {
+      for (const [name, request] of semgraph.examples) {
+        if ((request as { theme?: string }).theme !== undefined) continue;
+        const label = `${id}/${name}`;
+        const [day, night] = await Promise.all([runPipeline(registry, request, { now: NOW }), runPipeline(registry, { ...(request as object), theme: 'dark' }, { now: NOW })]);
+        assert.equal(night.report.outcome, day.report.outcome, label);
+        assert.deepEqual(night.report.issues, day.report.issues, label);
+        if (!day.svg) continue;
+        const root = (svg: string) => /^<svg [^>]*width="([\d.]+)" height="([\d.]+)"/.exec(svg)!.slice(1);
+        assert.deepEqual(root(night.svg!), root(day.svg), `${label}: the same size`);
+        assert.match(night.svg!, /^<svg [^>]* data-theme="dark">/, label);
+        const [, width, height] = /^<svg [^>]*viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(night.svg!)!;
+        assert.ok(night.svg!.includes(`<rect width="${width}" height="${height}" fill="${color(dark, 'surface')}"/>`), `${label}: the dark surface`);
+        for (const value of lightOnly) assert.ok(!night.svg!.toLowerCase().includes(value.toLowerCase()), `${label}: ${value} of the mode Light`);
+        // Light and dark of one chart can share a page: their patterns have ids of their own (REQ-036).
+        for (const [, patternId] of night.svg!.matchAll(/<pattern id="([^"]+)"/g)) assert.match(patternId!, /-dark$/, label);
+      }
+    }
+  });
+
+  it('REQ-096: the patterns in the dark take greys of the base palette, in the order of the light ones', async () => {
+    const registry = await testRegistry();
+    const { color: day, colorDark: night } = registry.tokens;
+    assert.deepEqual(
+      [night['pattern/empty'], night['pattern/running'], night['pattern/few']],
+      ['#2d333a', '#3c444e', '#6b7480'],
+      'grey/800, grey/700 and grey/500',
+    );
+    // As in the light: empty stands out least from the surface, few most.
+    const contrast = (a: string, b: string) => Math.abs(luminance(a) - luminance(b));
+    for (const theme of [day, night]) {
+      const [empty, running, few] = ['pattern/empty', 'pattern/running', 'pattern/few'].map((name) => contrast(theme[name]!, theme.surface!));
+      assert.ok(empty! < running! && running! < few!, 'empty < running < few');
+    }
+    for (const drawn of examples.filter((candidate) => candidate.request.theme === 'dark')) {
+      for (const [state, name] of [['empty', 'pattern/empty'], ['running', 'pattern/running'], ['few', 'pattern/few']] as const) {
+        const pattern = new RegExp(`<pattern id="semgraph-${state}-[0-9a-f]{8}-dark"[^>]*>(.*?)</pattern>`).exec(drawn.svg);
+        if (pattern) assert.ok(pattern[1]!.includes(night[name]!), `${drawn.name}: ${state}`);
+      }
+    }
+    assert.ok(examples.some((drawn) => drawn.request.theme === 'dark' && /semgraph-empty-[0-9a-f]{8}-dark/.test(drawn.svg)), 'a dark example with an empty period');
+  });
 });
+
+/** Relative luminance of a colour, for the order of the patterns. */
+function luminance(hex: string): number {
+  const [r, g, b] = [1, 3, 5].map((index) => {
+    const channel = parseInt(hex.slice(index, index + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r! + 0.7152 * g! + 0.0722 * b!;
+}

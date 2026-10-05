@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync, sign, type KeyObject } from 'node:crypto';
+import { gunzipSync } from 'node:zlib';
 import { after, before, describe, it } from 'node:test';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.ts';
+import { runPipeline } from '../src/core/pipeline.ts';
 import { mcpAuthFromEnv, type McpAuth, type OAuthConfig } from '../src/mcp/auth.ts';
 import { example, mcpCall, NOW, svgOfResult, testRegistry } from './helpers.ts';
 
@@ -73,6 +75,21 @@ describe('MCP server (REQ-090)', () => {
     const invalid = (await mcpCall(app, 'tools/call', { name: 'render_semgraph', arguments: { request: { semgraph: 'movingWindowAverage' } } })).result;
     assert.equal(invalid.isError, true);
     assert.equal(reportOf(invalid).outcome, 'invalid');
+  });
+
+  it('REQ-094 and REQ-096: the app gets the chart dark too, for a dark conversation; the download stays light', async () => {
+    const request = await example('basic');
+    const { result } = await mcpCall(app, 'tools/call', { name: 'render_semgraph', arguments: { request } });
+    const packed = (key: string) => (typeof result._meta[key] === 'string' ? gunzipSync(Buffer.from(result._meta[key], 'base64')).toString('utf8') : undefined);
+    const registry = await testRegistry();
+    assert.equal(packed('semgraph/svg'), (await runPipeline(registry, request, { now: NOW })).svg, 'the chart as asked: light');
+    assert.equal(packed('semgraph/svgDark'), (await runPipeline(registry, { ...request, theme: 'dark' }, { now: NOW })).svg, 'and dark');
+    // A request that chooses its theme gets that one only, for the conversation and the download alike.
+    const chosen = (await mcpCall(app, 'tools/call', { name: 'render_semgraph', arguments: { request: { ...request, theme: 'dark' } } })).result;
+    assert.equal(chosen._meta['semgraph/svgDark'], undefined);
+    assert.match(svgOfResult(chosen)!, /data-theme="dark"/);
+    const { result: init } = await mcpCall(app, 'initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+    assert.match(init.instructions, /Leave `theme` out/);
   });
 
   it('serves the app as one self-contained page, with its labels in every locale (REQ-092)', async () => {

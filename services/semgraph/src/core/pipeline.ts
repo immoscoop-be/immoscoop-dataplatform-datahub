@@ -9,6 +9,7 @@ import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
 import { sizeOf } from './size.ts';
+import { themeOf, tokensFor } from './tokens.ts';
 import type { RequestContext } from './semgraph.ts';
 
 export interface Report {
@@ -79,7 +80,10 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
   const outcome = outcomeOf(issues);
   if (options.draw === false || (outcome !== 'ok' && outcome !== 'deviation')) return finish(id);
 
-  const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
+  // REQ-094: a dark chart is the same chart with the colours of the mode Dark.
+  const theme = themeOf(request);
+  const tokens = tokensFor(registry.tokens, theme);
+  const drawing = implementation.draw(request, computed, { t, tokens, metadata });
   const plot = await renderVegaLite(drawing.vegaLite);
   const deviations = issues.filter((issue) => issue.level === 'deviation');
   // Every tolerated deviation is allowed, but discouraged: a red alert between the title and the chart
@@ -103,7 +107,7 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       svg: plot.svg,
       height: drawing.height,
       area: drawing.plotArea,
-      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(tokens, drawing.plotArea, plot.scales).render(drawing.hover),
     },
     footer: footer(t, request.context ?? {}, { asOf: drawing.asOf, compiled }, loaded, deviations, registry.tokens.languageVersion),
     meta: metaItems(t, request.meta, {
@@ -111,14 +115,24 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       compiled,
       serviceVersion: registry.version,
     }),
-    tokens: registry.tokens,
+    tokens,
     data: {
       semgraph: id,
       'language-version': registry.tokens.languageVersion,
       'tokens-version': registry.tokens.version,
+      ...(theme === 'dark' ? { theme } : {}),
     },
   });
-  return finish(id, { svg, warnings: plot.warnings });
+  return finish(id, { svg: theme === 'dark' ? darkIds(svg) : svg, warnings: plot.warnings });
+}
+
+/**
+ * The ids of the patterns are the same for the same chart, so several charts can share a page (REQ-036). The
+ * light and the dark version of one chart are two charts there: on one page, the dark one would otherwise fill
+ * with the patterns of the light one (REQ-094).
+ */
+function darkIds(svg: string): string {
+  return svg.replace(/\bsemgraph-([a-z]+)-([0-9a-f]{8})\b/g, 'semgraph-$1-$2-dark');
 }
 
 function findSemgraph(registry: Registry, body: unknown, issues: IssueSpec[]): LoadedSemgraph | undefined {

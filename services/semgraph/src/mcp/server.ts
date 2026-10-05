@@ -10,6 +10,8 @@ import { CHART_APP_URI, claudeUiDomain } from './chart-app.ts';
 
 /** Keys in the _meta of a render result: for the app only, not for the model (REQ-092). */
 export const SVG_META = 'semgraph/svg';
+/** REQ-094: the same chart in the colours of the mode Dark, for a dark conversation. */
+export const SVG_DARK_META = 'semgraph/svgDark';
 export const REPORT_META = 'semgraph/report';
 
 export interface McpServerOptions {
@@ -122,10 +124,17 @@ export function createMcpServer(options: McpServerOptions): McpServer {
       const where = options.saveSvg
         ? `The chart is saved as ${await options.saveSvg(args.request, result.svg)}.`
         : 'The chart is shown to the user in the conversation; you do not see it. Do not draw it again.';
+      // REQ-094: the app shows the chart in the theme of the conversation, so without a theme of its own the
+      // request is drawn dark too. REQ-096: the download stays the chart as asked, light by default.
+      const dark = options.saveSvg || args.request.theme !== undefined ? undefined : await runPipeline(registry, { ...args.request, theme: 'dark' }, { now: now() });
       return {
         content: [text(`${where}\n${JSON.stringify(report)}`)],
         // REQ-092: the SVG reaches the app, not the model; gzipped, since the largest charts are 150 KB.
-        _meta: { [SVG_META]: gzipSync(result.svg).toString('base64'), [REPORT_META]: report },
+        _meta: {
+          [SVG_META]: pack(result.svg),
+          ...(dark?.svg ? { [SVG_DARK_META]: pack(dark.svg) } : {}),
+          [REPORT_META]: report,
+        },
       };
     },
   );
@@ -160,7 +169,7 @@ function instructions(registry: Registry): string {
     `2. ${WAREHOUSE_STEP}`,
     '3. render_semgraph draws the chart and shows it to the user in the conversation. You receive the report, not the picture: do not draw the chart again, and do not describe what you cannot see. When the chart is refused or invalid, the report says what is wrong and what to do instead; follow it. validate_semgraph checks a request without drawing.',
     '4. Fill `meta` (REQ-093), so the chart carries its context when it is shared: `question` with the question of the user, `query` with the query that fetched the data, as it ran, `askedBy` with the name of the user when you know it, and `compiledOn` with the day of today (YYYY-MM-DD). Leave out what you do not know.',
-    '5. Leave `size` out, unless the chart is meant for a slide (`large`) or a small card (`card`).',
+    '5. Leave `size` out, unless the chart is meant for a slide (`large`) or a small card (`card`). Leave `theme` out too: the conversation shows the chart light or dark, as the user sees Claude, and the download is light. Only give `theme: dark` when the user asks for a dark chart, e.g. for a dark slide.',
     '',
     EMPTY_IS_NOT_ZERO,
     '',
@@ -168,5 +177,6 @@ function instructions(registry: Registry): string {
   ].join('\n');
 }
 
+const pack = (svg: string) => gzipSync(svg).toString('base64');
 const text = (value: string) => ({ type: 'text' as const, text: value });
 const json = (value: unknown): CallToolResult => ({ content: [text(JSON.stringify(value))] });

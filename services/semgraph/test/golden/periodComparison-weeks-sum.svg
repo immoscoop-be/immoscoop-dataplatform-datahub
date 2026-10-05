@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440" viewBox="0 0 640 440" data-semgraph="periodComparison" data-language-version="v0" data-tokens-version="0.3.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="440" viewBox="0 0 640 440" data-semgraph="periodComparison" data-language-version="v0" data-tokens-version="0.4.0">
 <title>Kredietleads per week, tegenover de 12 weken ervoor (voorbeelddata)</title>
 <desc>Kredietleads per week, tegenover de 12 weken ervoor (voorbeelddata): som per week · tegenover vorige 12 weken, tot 30 sep 2026. Laatste punt: 161.</desc>
 <defs><pattern id="semgraph-running-c8771f22" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#ffffff"/><line x1="0.5" y1="0" x2="0.5" y2="4" stroke="#cfcdc4" stroke-width="1"/></pattern><pattern id="semgraph-hatch-02bc6596" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4" height="4" fill="#ffffff"/><line x1="0" y1="0" x2="0" y2="4" stroke="#2d333a" stroke-width="1" stroke-opacity="0.75"/></pattern></defs>
