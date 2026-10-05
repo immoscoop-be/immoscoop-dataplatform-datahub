@@ -15,7 +15,8 @@ import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './comparison.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { lookup, numberFormat, ticksEvery, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { sizeOf } from '../core/size.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
 import { baseLayers, denominatorAxis, RIGHT_AXIS } from './ratio.ts';
@@ -34,6 +35,8 @@ export interface TimeAxisRequest {
   asOf?: string;
   valueAxis?: ValueAxisMode;
   values?: ValuesMode;
+  /** card, default, large or xl (REQ-085). */
+  size?: string;
   format?: string;
   locale?: string;
   context?: RequestContext;
@@ -103,6 +106,7 @@ export interface LabelContext {
   isFirst: boolean;
 }
 
+/** The width of a chart in the default size; another size builds it at another width (REQ-085). */
 export const WIDTH = 640;
 export const PLOT_HEIGHT = 200;
 /** Fixed geometry (autosize none): room for the y labels left, half a value label right, the time axis below. */
@@ -117,8 +121,13 @@ const COMPARISON_PADDING = { ...PADDING, right: 84 };
 const RATIO_PADDING = { ...PADDING, right: RIGHT_AXIS };
 /** The n of a point with few observations sits under the time axis, on a line of its own (REQ-046). */
 const N_LINE = 14;
-/** At most this many labels on the time axis. */
+/** At most this many labels on the time axis in the default size. */
 export const MAX_TICKS = 8;
+
+/** REQ-085: the labels of the time axis follow the width of the chart: 8 by default, 5 on a card, 12 and 16 on a slide and a big screen. */
+export function maxTicks(layout: number): number {
+  return Math.max(3, Math.round((layout / WIDTH) * MAX_TICKS));
+}
 /** At most this many blocks from the first to the last, gaps included: a chart, not a data dump. */
 export const MAX_SLOTS = 1000;
 
@@ -158,8 +167,9 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     return this.compares ? COMPARISON_PADDING : this.statistic.kind === 'ratio' ? RATIO_PADDING : PADDING;
   }
 
-  protected get plotWidth(): number {
-    return WIDTH - this.padding.left - this.padding.right;
+  /** The width of the plot in the size the request asks for (REQ-085). */
+  protected plotWidth(request: Request): number {
+    return sizeOf(request).layout - this.padding.left - this.padding.right;
   }
 
   // ----- What a family adds -----
@@ -297,6 +307,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
                 default: 'zero',
               },
             }),
+        size: SIZE,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,
@@ -395,7 +406,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     // "all" only while every value has room above its point; otherwise the family's default. A
     // comparison labels the ends of its lines instead (REQ-003).
     const asked = this.compares ? 'off' : (request.values ?? this.defaultValues);
-    const valuesFallback = asked === 'all' && this.plotWidth / slots.length < MIN_WIDTH_FOR_ALL;
+    const valuesFallback = asked === 'all' && this.plotWidth(request) / slots.length < MIN_WIDTH_FOR_ALL;
 
     return {
       reference,
@@ -487,7 +498,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const { slots, points } = computed;
     const previous = computed.comparison?.points ?? [];
     const count = slots.length;
-    const plotWidth = this.plotWidth;
+    const plotWidth = this.plotWidth(request);
     const ratio = this.statistic.kind === 'ratio';
     // REQ-046: the n of a point with few observations, under the time axis, right below the point. A
     // ratio writes its counts at the point instead, as in Figma (REQ-080).
@@ -500,7 +511,8 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
     const form = this.compares ? 'band' : formFor(count, barWidth, plotWidth);
     const surface = color(tokens, 'surface');
     const focus = color(tokens, 'focus');
-    const labels = ratio ? alsoLabelled(labelsFor(points, computed.values), points.filter((point) => fewSet.has(point.rel))) : labelsFor(points, computed.values);
+    const shown = labelsFor(points, computed.values, slotWidth);
+    const labels = ratio ? alsoLabelled(shown, points.filter((point) => fewSet.has(point.rel))) : shown;
 
     // Value axis: from zero, or zoomed with a zigzag and a bold first value; high enough that every
     // value label fits above its point, and the comparison line fits too.
@@ -815,7 +827,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
 
     return {
       vegaLite: spec,
-      width: WIDTH,
+      width: sizeOf(request).layout,
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(defs ? { defs } : {}),

@@ -122,6 +122,7 @@ elk bestand zegt welke.
 | [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
 | [REQ-084](REQ-084.md) | De API als OpenAPI-document (`GET /openapi.json`), met Swagger UI op `/docs` | 2026-10-05 (opdracht) | geïmplementeerd | [a3db5c3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a3db5c3) |
+| [REQ-085](REQ-085.md) | Vaste maten voor een grafiek: `card`, `default`, `large` (een slide), `xl` (een groot scherm); enkel de breedte | 2026-10-05 (opdracht) | geïmplementeerd; de breedtes zijn een open punt | COMMIT |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -143,6 +144,7 @@ noemer, de verhouding over de tijd en haar tweede as, en de buurregel bij weinig
 aandelen (`movingWindowRatio`, `calendarRatio`); de vragen die overblijven staan bij de open punten 9 tot 15.
 REQ-083 is de opdracht voor een overzicht van de grafieken met hun voorbeelden; eerst genoteerd als REQ-074.
 REQ-084 is de opdracht van 2026-10-05 om de API als Swagger-documentatie aan te bieden.
+REQ-085 is de opdracht van 2026-10-05 om een grafiek in een vaste maat te laten tekenen.
 
 ### Hernummering
 
@@ -159,7 +161,7 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 19 tot 25, de punten 9 tot 15 zijn daar 27 tot 33.
+Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 19 tot 25, de punten 9 tot 16 zijn daar 27 tot 34.
 Punt 26 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)).
 
 1. **De mini-trend van de KPI-tegel met de periode ervoor.** REQ-067 (2026-10-03): "Een vergelijking buiten een
@@ -212,6 +214,10 @@ Punt 26 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)).
     ([REQ-065](REQ-065.md), [REQ-068](REQ-068.md), 2026-10-03, naar Figma KPI status) tekent de cumulatieve stand als
     gevulde trap, een trede per periode. Voorstel: REQ-077 aanscherpen met een uitzondering voor een cumulatieve
     stand tegenover een pad. Niet gewijzigd tot het antwoord.
+16. **De vaste maten van REQ-085.** Voorstel, zo gebouwd: `card` 360 px (zo breed als de KPI-tegel), `default` 640 px,
+    `large` 1280 px (een slide van 16:9) en `xl` 1920 px (full HD of print). `large` en `xl` worden opgebouwd op 960
+    en 1280 px en dan vergroot (×4/3 en ×1,5), zodat de tekst meegroeit; `card` en `default` houden de lettergroottes
+    van de grafiektaal. Akkoord met die breedtes, en met de vergroting?
 
 ## Sjabloon voor een requirement
 

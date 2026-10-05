@@ -129,6 +129,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `weeks` | 12 ISO weeks, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks) · [golden](test/golden/calendarAverage-weeks.svg) |
+| `weeks-card` | the same weeks on a card (`size: card`, REQ-085): fewer labels, only the last final value | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks-card) · [golden](test/golden/calendarAverage-weeks-card.svg) |
 | `months` | 12 months | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months) · [golden](test/golden/calendarAverage-months.svg) |
 | `months-values-all` | 12 months, with every value written on the chart (`values: all`) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months-values-all) · [golden](test/golden/calendarAverage-months-values-all.svg) |
 | `years` | 3 years, with a zoomed value axis | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/years) · [golden](test/golden/calendarAverage-years.svg) |
@@ -172,6 +173,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `price-ranges-mean` | days online per price range, ±1 sd; en | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-mean) · [golden](test/golden/categoryComparison-price-ranges-mean.svg) |
 | `provinces-median-zoomed` | the median asking price per province, `valueAxis: zoom`: the axis starts at € 200k, with a zigzag (REQ-073) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-median-zoomed) · [golden](test/golden/categoryComparison-provinces-median-zoomed.svg) |
 | `provinces-sum-vs-last-year` | leads per province against last year, inside one bar: shared, gained, lost, now (REQ-066, REQ-067) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year.svg) |
+| `provinces-sum-vs-last-year-large` | the same on a slide (`size: large`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year-large) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year-large.svg) |
 | `price-ranges-sum-vs-last-year` | listings online per price range against last year, upright | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum-vs-last-year) · [golden](test/golden/categoryComparison-price-ranges-sum-vs-last-year.svg) |
 
 ### kpiTile
@@ -187,6 +189,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `leads-since-launch` | leads since the launch against the path set on 30/04 to 130k: behind, with the catch-up (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch) · [golden](test/golden/kpiStatus-leads-since-launch.svg) |
+| `leads-since-launch-card` | the same on a card (`size: card`, REQ-085): the step labels are on hover | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch-card) · [golden](test/golden/kpiStatus-leads-since-launch-card.svg) |
 | `weeks-ahead` | new listings this quarter, per week, ahead of the path; en | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/weeks-ahead) · [golden](test/golden/kpiStatus-weeks-ahead.svg) |
 
 ### distribution
@@ -194,6 +197,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `asking-price` | asking prices in bins of € 50k, quartiles, the tail above € 900k | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price) · [golden](test/golden/distribution-asking-price.svg) |
+| `asking-price-xl` | the same on a big screen (`size: xl`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price-xl) · [golden](test/golden/distribution-asking-price-xl.svg) |
 
 ## API
 
@@ -328,6 +332,12 @@ per unit, such as listings per agent) is refused until it is decided how that is
 carries `previous`: the same value for the block just before the screen at its position, e.g.
 `{ "period": "2026-W40", "sum": 161, "previous": { "sum": 135 } }`. For a running period, `previous` covers as
 many days of the earlier period. It has no `values`: it labels the ends of its two lines.
+
+**Sizes (REQ-085).** Every semgraph except `kpiTile` takes `size`: `card` (360 px wide, as wide as a KPI tile),
+`default` (640 px), `large` (1280 px, a 16:9 slide) or `xl` (1920 px, a big screen or print). Only the width is
+chosen; the height follows from the content. The chart is built anew at its width, so its labels fit: a card gets
+fewer labels on its axis, a slide more. `large` and `xl` are built at 960 and 1280 px and enlarged, so the text
+grows with them.
 
 Shared and optional: `title`; `asOf`, the last complete day of the data (yesterday in Brussels when absent);
 `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts); `valueAxis` (`zero`, the default, or

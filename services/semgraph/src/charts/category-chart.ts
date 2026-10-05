@@ -10,14 +10,15 @@ import { color, vegaLiteConfig, type Tokens } from '../core/tokens.ts';
 import { anyPeriodFromName, type CalendarUnit } from './calendar.ts';
 import { periodLabel } from './calendar-chart.ts';
 import { COMPARISONS, comparisonLabel, defaultComparison, hatchPattern, patternId, type BlockLength, type ComparisonKind } from './comparison.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { sizeOf } from '../core/size.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
 import { lookup, numberFormat, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
 import { Average, Median, Sum, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
-import { PLOT_HEIGHT, WIDTH } from './time-axis-chart.ts';
+import { PLOT_HEIGHT } from './time-axis-chart.ts';
 
 /** One category as the warehouse delivers it, with the fields of its statistic (REQ-058). */
 export interface CategoryRow extends BlockRow {
@@ -41,6 +42,8 @@ export interface CategoryRequest extends MeasureRequest {
   /** REQ-066, REQ-067: what each row's previous value is; the default follows Figma. */
   comparison?: ComparisonKind;
   unit?: ValueUnit;
+  /** card, default, large or xl (REQ-085). */
+  size?: string;
   format?: string;
   locale?: string;
   context?: RequestContext;
@@ -159,6 +162,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
           enum: [...COMPARISONS],
         },
         unit: UNIT_SCHEMA,
+        size: SIZE,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,
@@ -389,8 +393,11 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
     const scale = valueScale(lowest, highest, axisMode(request, statistic));
     const format = new CompactFormat(t.locale, scale.max, request.unit);
     const labelSize = tokens.size.axisLabel;
-    const labels = rows.map((row) => ({ rel: row.key, label: fit(row.category, labelSize, 190) }));
-    const left = Math.min(200, Math.max(60, Math.max(...labels.map((label) => textWidth(label.label, labelSize))) + 16));
+    // REQ-085: the column of the category names takes at most 30% of a narrow chart, 190 px otherwise.
+    const width = sizeOf(request).layout;
+    const labelRoom = Math.min(190, Math.round(width * 0.3));
+    const labels = rows.map((row) => ({ rel: row.key, label: fit(row.category, labelSize, labelRoom) }));
+    const left = Math.min(labelRoom + 10, Math.max(60, Math.max(...labels.map((label) => textWidth(label.label, labelSize))) + 16));
     const texts = rows.map((row) => valueTexts(row, statistic, format, comparing ? t('chart.noComparison') : undefined));
     // The value stands after the shape, after the hatching of a loss, and clear of the cap.
     const end = (row: CategoryPoint) => Math.max(row.summary!.spread?.hi ?? row.summary!.centre, comparing ? row.previous ?? 0 : 0);
@@ -404,10 +411,10 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
         : boldWidth(strong, tokens.size.value) + 4 + textWidth(detail, tokens.size.detail);
     };
     const textRight = (row: CategoryPoint, index: number, perPixel: number) => (row.summary ? (end(row) - scale.min) / perPixel + gap + textsWidth(index) : 0);
-    const firstWidth = WIDTH - left - 28;
+    const firstWidth = width - left - 28;
     const overflow = Math.max(0, ...rows.map((row, index) => textRight(row, index, (scale.max - scale.min) / firstWidth) - firstWidth));
     const padding = { left, right: 28 + Math.ceil(overflow), top: 8, bottom: 24 };
-    const plotWidth = WIDTH - padding.left - padding.right;
+    const plotWidth = width - padding.left - padding.right;
     const perPixel = (scale.max - scale.min) / plotWidth;
     const common = this.common(request, computed, statistic, t, tokens, format, label);
     const fewSet = common.fewSet;
@@ -535,7 +542,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
 
     return {
       vegaLite: spec,
-      width: WIDTH,
+      width,
       height: padding.top + plotHeight + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: plotHeight },
       ...(common.defs ? { defs: common.defs } : {}),
@@ -549,7 +556,8 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
     const count = rows.length;
     const comparing = label !== undefined;
     const padding0 = { left: 52, right: 28, top: 14 };
-    const plotWidth = WIDTH - padding0.left - padding0.right;
+    const width = sizeOf(request).layout;
+    const plotWidth = width - padding0.left - padding0.right;
     const slot = plotWidth / count;
     const labelLines = rows.map((row) => wrap(row.category, tokens.size.axisLabel, slot - 6, 2));
     const lines = Math.max(...labelLines.map((label) => label.length));
@@ -712,7 +720,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
 
     return {
       vegaLite: spec,
-      width: WIDTH,
+      width,
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(common.defs ? { defs: common.defs } : {}),

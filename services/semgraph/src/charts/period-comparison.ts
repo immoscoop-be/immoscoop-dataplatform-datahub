@@ -50,7 +50,7 @@ export class PeriodComparisonChart<Request extends PeriodComparisonRequest = Per
   schema(): object {
     const rolling = this.rolling.mean.schema() as { properties: Record<string, any> };
     const calendar = this.calendar.mean.schema() as { properties: Record<string, any> };
-    const { semgraph, metric, title, measureType, uniqueAggregation, asOf, valueAxis, format, locale, context, meta, points } = rolling.properties;
+    const { semgraph, metric, title, measureType, uniqueAggregation, asOf, valueAxis, size, format, locale, context, meta, points } = rolling.properties;
     const fields = Object.assign({}, ...STATISTICS.map((id) => statistic(id).pointProperties()));
     return {
       $schema: 'https://json-schema.org/draft/2020-12/schema',
@@ -75,6 +75,7 @@ export class PeriodComparisonChart<Request extends PeriodComparisonRequest = Per
         unit: { ...calendar.properties.unit, description: 'Calendar periods: week (ISO), month, quarter or year. Give either unit or window.' },
         asOf,
         valueAxis,
+        size,
         format,
         locale,
         context,

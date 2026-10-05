@@ -5,10 +5,11 @@ import { META_SCHEMA, type ChartMeta } from '../core/meta.ts';
 import type { HoverSpec } from '../core/render/hover.ts';
 import type { DrawContext, Drawing, RequestContext, SemgraphImplementation, SemgraphMetadata } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, METRIC, TITLE } from './contract.ts';
+import { sizeOf } from '../core/size.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, METRIC, SIZE, TITLE } from './contract.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
 import { lookup, niceRange, valueScale } from './scales.ts';
-import { PLOT_HEIGHT, WIDTH } from './time-axis-chart.ts';
+import { PLOT_HEIGHT } from './time-axis-chart.ts';
 
 export interface Bin {
   from: number;
@@ -27,6 +28,8 @@ export interface DistributionRequest {
   percentiles: { p25: number; p50: number; p75: number };
   asOf?: string;
   unit?: ValueUnit;
+  /** card, default, large or xl (REQ-085). */
+  size?: string;
   format?: string;
   locale?: string;
   context?: RequestContext;
@@ -93,6 +96,7 @@ export class DistributionChart implements SemgraphImplementation<DistributionReq
         },
         asOf: { description: 'The day of the data, for the footer. Yesterday in Brussels when absent.', ...DAY },
         unit: UNIT_SCHEMA,
+        size: SIZE,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,
@@ -138,7 +142,8 @@ export class DistributionChart implements SemgraphImplementation<DistributionReq
     const first = bins[0]!.from;
     const openFrom = computed.end + GAP * binWidth;
     const right = openBin ? openFrom + binWidth : computed.end;
-    const plotWidth = WIDTH - PADDING.left - PADDING.right;
+    const width = sizeOf(request).layout;
+    const plotWidth = width - PADDING.left - PADDING.right;
     const counts = [...bins.map((bin) => bin.count), openBin?.count ?? 0];
     // Room above the open bin for its count and share.
     const highest = Math.max(...counts);
@@ -284,7 +289,7 @@ export class DistributionChart implements SemgraphImplementation<DistributionReq
     ].join(' ');
     return {
       vegaLite: spec,
-      width: WIDTH,
+      width,
       height: PADDING.top + PLOT_HEIGHT + PADDING.bottom,
       plotArea: { x: PADDING.left, y: PADDING.top, width: plotWidth, height: PLOT_HEIGHT },
       hover,

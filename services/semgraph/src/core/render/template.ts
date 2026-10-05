@@ -26,6 +26,8 @@ export interface Footer {
 
 export interface TemplateInput {
   width: number;
+  /** REQ-085: how much the finished chart is enlarged (large and xl); the drawing keeps its own units. */
+  scale?: number;
   title: string;
   readingCue: string;
   /** The icon of the semgraph left of the title, linked to the reading card (REQ-060). */
@@ -61,6 +63,8 @@ const LINE_HEIGHT = 1.5;
 /** Room for the warning sign in front of an alert, and the padding inside its red block. */
 const ALERT_INDENT = 18;
 const ALERT_PADDING = 8;
+/** REQ-085: a title may take three lines on a narrow chart, such as a card, so it is never cut. */
+const NARROW = 500;
 
 /**
  * The fixed anatomy around the chart, like the building blocks in Figma: title, reading cue,
@@ -69,6 +73,7 @@ const ALERT_PADDING = 8;
  */
 export function composeSvg(input: TemplateInput): string {
   const { tokens, width } = input;
+  const scale = input.scale ?? 1;
   const textColor = color(tokens, 'text');
   const muted = color(tokens, 'text/muted');
   const inner = width - 2 * PADDING_X;
@@ -85,7 +90,7 @@ export function composeSvg(input: TemplateInput): string {
         `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg></a>`,
     );
   }
-  for (const line of wrap(input.title, tokens.size.title, headerWidth, 2)) {
+  for (const line of wrap(input.title, tokens.size.title, headerWidth, width < NARROW ? 3 : 2)) {
     y += tokens.size.title;
     parts.push(
       text(line, { y, x: headerX, family: tokens.font.title, size: tokens.size.title, weight: 600, fill: textColor }),
@@ -93,8 +98,9 @@ export function composeSvg(input: TemplateInput): string {
     y += tokens.size.title * (LINE_HEIGHT - 1);
   }
   y += tokens.size.readingCue * 0.5;
-  for (const line of wrap(input.readingCue, tokens.size.readingCue, headerWidth, 2)) {
-    y += tokens.size.readingCue;
+  wrap(input.readingCue, tokens.size.readingCue, headerWidth, 2).forEach((line, index) => {
+    // A second line keeps the line spacing of the first.
+    y += tokens.size.readingCue * (index === 0 ? 1 : LINE_HEIGHT);
     parts.push(
       text(line, {
         y,
@@ -106,7 +112,7 @@ export function composeSvg(input: TemplateInput): string {
         fill: color(tokens, 'reading-cue/text'),
       }),
     );
-  }
+  });
 
   // A warning lies under the header block, over the full width (REQ-060).
   if (input.icon) y = Math.max(y, ICON_TOP + ICON_SIZE);
@@ -116,7 +122,8 @@ export function composeSvg(input: TemplateInput): string {
   for (const alert of input.alerts ?? []) {
     y += 10;
     const size = tokens.size.readingCue;
-    const lines = wrap(alert, size, inner - ALERT_INDENT - 2 * ALERT_PADDING, 4);
+    // Never cut: on a card an alert simply takes more lines.
+    const lines = wrap(alert, size, inner - ALERT_INDENT - 2 * ALERT_PADDING, 12);
     const height = 2 * ALERT_PADDING + lines.length * size * LINE_HEIGHT - size * (LINE_HEIGHT - 1);
     parts.push(`<rect x="${PADDING_X}" y="${round(y)}" width="${inner}" height="${round(height)}" rx="3" fill="${color(tokens, 'warning')}"/>`);
     parts.push(alertIcon(y + ALERT_PADDING, size, color(tokens, 'warning')));
@@ -167,7 +174,7 @@ export function composeSvg(input: TemplateInput): string {
     .map(([name, value]) => ` data-${name}="${escapeXml(value)}"`)
     .join('');
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"${data}>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${Math.round(width * scale)}" height="${Math.ceil(height * scale)}" viewBox="0 0 ${width} ${height}"${data}>`,
     `<title>${escapeXml(input.title)}</title>`,
     `<desc>${escapeXml(input.description)}</desc>`,
     ...(input.defs ? [`<defs>${input.defs}</defs>`] : []),

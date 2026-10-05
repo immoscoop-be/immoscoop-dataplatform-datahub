@@ -106,6 +106,16 @@
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
     },
+    "size": {
+      "description": "The size of the chart (REQ-085): card (360 px wide, next to a KPI tile), default (640 px), large (1280 px, a 16:9 slide) or xl (1920 px, a big screen or print). Only the width is chosen; the height follows from the content. The chart is built anew in every size, so everything written on it fits.",
+      "enum": [
+        "card",
+        "default",
+        "large",
+        "xl"
+      ],
+      "default": "default"
+    },
     "format": {
       "description": "Output format. Only svg is available in v0.",
       "enum": [

@@ -1,3 +1,5 @@
+import { SIZE_NAMES } from '../core/size.ts';
+
 /**
  * The fields every contract shares, written once (REQ-025). Each family adds its own: the periods of
  * a time axis, the categories of a bar chart, the bins of a distribution.
@@ -26,6 +28,12 @@ export const UNIQUE_AGGREGATION = {
 };
 
 export const DAY = { type: 'string', pattern: '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' };
+
+export const SIZE = {
+  description: 'The size of the chart (REQ-085): card (360 px wide, next to a KPI tile), default (640 px), large (1280 px, a 16:9 slide) or xl (1920 px, a big screen or print). Only the width is chosen; the height follows from the content. The chart is built anew in every size, so everything written on it fits.',
+  enum: [...SIZE_NAMES],
+  default: 'default',
+};
 
 export const FORMAT = {
   description: 'Output format. Only svg is available in v0.',
