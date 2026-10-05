@@ -210,6 +210,10 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
 | `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
 
+The internal-tools platform runs the image ([deploy workflow](.github/workflows/deploy-internal-tools.yml)): `main` on
+<https://semgraph.internal-immoscoop.be>, every other branch on <https://semgraph.dev.internal-immoscoop.be>, each
+with `/docs`.
+
 **For a program or an agent** that should make charts with this service: start from `/openapi.json`. Its
 description says how to use the service, `POST /render` takes the request of any semgraph (chosen by `semgraph`),
 and every example is in it.

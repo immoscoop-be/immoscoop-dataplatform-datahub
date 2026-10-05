@@ -121,7 +121,7 @@ elk bestand zegt welke.
 | [REQ-081](REQ-081.md) | Weinig waarnemingen tegenover de periode ervoor en erna, in plaats van de mediaan | 2026-10-03 (Confluence) | geïmplementeerd op de tijdas; bij categorieën een open punt | [4cccd03](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/4cccd03) |
 | [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
-| [REQ-084](REQ-084.md) | De API als OpenAPI-document (`GET /openapi.json`), met Swagger UI op `/docs` | 2026-10-05 (opdracht) | geïmplementeerd | COMMIT |
+| [REQ-084](REQ-084.md) | De API als OpenAPI-document (`GET /openapi.json`), met Swagger UI op `/docs` | 2026-10-05 (opdracht) | geïmplementeerd | [a3db5c3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a3db5c3) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
