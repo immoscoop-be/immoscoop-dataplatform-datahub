@@ -112,6 +112,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `basic` | 7 windows of 7 days, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/basic) · [golden](test/golden/movingWindowAverage-basic.svg) |
 | `daily` | window of 1 day, 28 days: the daily values themselves | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/daily) · [golden](test/golden/movingWindowAverage-daily.svg) |
 | `long-horizon` | 78 windows of 7 days (a year and a half), with a thinned time axis | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/long-horizon) · [golden](test/golden/movingWindowAverage-long-horizon.svg) |
+| `long-horizon-dark` | the same, dark (`theme: dark`, REQ-094): the empty window on the dark checkerboard (REQ-096) | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/long-horizon-dark) · [golden](test/golden/movingWindowAverage-long-horizon-dark.svg) |
 | `missing-days` | a window without data (`mean: null`), drawn as empty; en | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/missing-days) · [golden](test/golden/movingWindowAverage-missing-days.svg) |
 | `with-metadata` | the metadata block (`meta`): question, asked and built by, references, query | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/with-metadata) · [golden](test/golden/movingWindowAverage-with-metadata.svg) |
 | `zoomed` | `valueAxis: zoom`: the value axis starts just below the data, with a zigzag | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/zoomed) · [golden](test/golden/movingWindowAverage-zoomed.svg) |
@@ -131,6 +132,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `weeks` | 12 ISO weeks, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks) · [golden](test/golden/calendarAverage-weeks.svg) |
+| `weeks-dark` | the same weeks, dark (`theme: dark`, REQ-094): the running week on its dark pattern (REQ-096) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks-dark) · [golden](test/golden/calendarAverage-weeks-dark.svg) |
 | `weeks-card` | the same weeks on a card (`size: card`, REQ-085): fewer labels, only the last final value | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks-card) · [golden](test/golden/calendarAverage-weeks-card.svg) |
 | `months` | 12 months | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months) · [golden](test/golden/calendarAverage-months.svg) |
 | `months-values-all` | 12 months, with every value written on the chart (`values: all`) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months-values-all) · [golden](test/golden/calendarAverage-months-values-all.svg) |
@@ -154,6 +156,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `weeks` | the conversion from visit to lead per week, as in Figma; week 31 rests on far fewer visitors; en | ok, with a red caution `fewObservations.ratio.base` | [local](http://localhost:8080/semgraphs/calendarRatio/examples/weeks) · [golden](test/golden/calendarRatio-weeks.svg) |
+| `weeks-dark` | the same, dark (`theme: dark`, REQ-094); en | ok, with a red caution `fewObservations.ratio.base` | [local](http://localhost:8080/semgraphs/calendarRatio/examples/weeks-dark) · [golden](test/golden/calendarRatio-weeks-dark.svg) |
 
 ### periodComparison
 
@@ -175,6 +178,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `price-ranges-mean` | days online per price range, ±1 sd; en | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-mean) · [golden](test/golden/categoryComparison-price-ranges-mean.svg) |
 | `provinces-median-zoomed` | the median asking price per province, `valueAxis: zoom`: the axis starts at € 200k, with a zigzag (REQ-073) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-median-zoomed) · [golden](test/golden/categoryComparison-provinces-median-zoomed.svg) |
 | `provinces-sum-vs-last-year` | leads per province against last year, inside one bar: shared, gained, lost, now (REQ-066, REQ-067) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year.svg) |
+| `provinces-sum-vs-last-year-dark` | the same, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year-dark) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year-dark.svg) |
 | `provinces-sum-vs-last-year-large` | the same on a slide (`size: large`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year-large) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year-large.svg) |
 | `price-ranges-sum-vs-last-year` | listings online per price range against last year, upright | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum-vs-last-year) · [golden](test/golden/categoryComparison-price-ranges-sum-vs-last-year.svg) |
 
@@ -183,6 +187,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `rolling-28d` | credit leads over 28 days against last year, with the mini trend and its grey shadow line (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-28d) · [golden](test/golden/kpiTile-rolling-28d.svg) |
+| `rolling-28d-dark` | the same tile, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-28d-dark) · [golden](test/golden/kpiTile-rolling-28d-dark.svg) |
 | `months-mean` | the hours to a first contact per lead this month, ±1 sd next to the number, against last year | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/months-mean) · [golden](test/golden/kpiTile-months-mean.svg) |
 | `rolling-7d` | credit leads over 7 days against the 7 days before: no shadow line; en | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-7d) · [golden](test/golden/kpiTile-rolling-7d.svg) |
 
@@ -191,6 +196,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `leads-since-launch` | leads since the launch against the path set on 30/04 to 130k: behind, with the catch-up (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch) · [golden](test/golden/kpiStatus-leads-since-launch.svg) |
+| `leads-since-launch-dark` | the same, dark (`theme: dark`, REQ-094): the hatching on the dark surface (REQ-055) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch-dark) · [golden](test/golden/kpiStatus-leads-since-launch-dark.svg) |
 | `leads-since-launch-card` | the same on a card (`size: card`, REQ-085): the step labels are on hover | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch-card) · [golden](test/golden/kpiStatus-leads-since-launch-card.svg) |
 | `weeks-ahead` | new listings this quarter, per week, ahead of the path; en | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/weeks-ahead) · [golden](test/golden/kpiStatus-weeks-ahead.svg) |
 
@@ -199,6 +205,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `asking-price` | asking prices in bins of € 50k, quartiles, the tail above € 900k | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price) · [golden](test/golden/distribution-asking-price.svg) |
+| `asking-price-dark` | the same, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price-dark) · [golden](test/golden/distribution-asking-price-dark.svg) |
 | `asking-price-xl` | the same on a big screen (`size: xl`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price-xl) · [golden](test/golden/distribution-asking-price-xl.svg) |
 
 ## API
@@ -270,9 +277,10 @@ core as the REST API (REQ-090). The tools are read-only:
 **The chart in the conversation (REQ-092).** Claude shows only PNG, JPEG, GIF or WebP as an image, so
 `render_semgraph` comes with an MCP App: a small page in the conversation that shows exactly the SVG the service
 drew, with its hover and metadata panels. Inline at size `default`, scaled to the width of the conversation; in full
-screen at size `large`; with a button to download the SVG. The chart stays a light card in a dark conversation
-(night mode is REQ-094, open). Claude itself gets the report (outcome, issues, alternative), not the SVG, and is asked
-to fill `meta`: the question, the query, who asked and the day (REQ-093).
+screen at size `large`; with a button to download the SVG. In a dark conversation the app shows the chart dark
+(REQ-094); the download stays light, since it goes to a page, a slide or a mail (REQ-096). Claude itself gets the
+report (outcome, issues, alternative), not the SVG, and is asked to fill `meta`: the question, the query, who asked
+and the day (REQ-093).
 
 **Login (REQ-091).** Claude calls `/mcp` from Anthropic's cloud, without the gate's cookie, so `/mcp` checks an OAuth
 access token itself, issued to a gate account (Cognito Pool 1). The configuration comes from the environment:
@@ -396,6 +404,14 @@ many days of the earlier period. It has no `values`: it labels the ends of its t
 chosen; the height follows from the content. The chart is built anew at its width, so its labels fit: a card gets
 fewer labels on its axis, a slide more. `large` and `xl` are built at 960 and 1280 px and enlarged, so the text
 grows with them.
+
+**Light and dark (REQ-094).** Every semgraph takes `theme`: `light` (the default) or `dark`, for a dark page, slide or
+conversation. Both are the Figma variables of the collection Chart, modes Light and Dark (`color` and `colorDark` in
+the tokens): only the colours change, never the chart. The patterns are no Figma variables yet; in the dark they take
+greys of the base palette, in the order of the light ones: empty grey/800, running grey/700, few grey/500 (REQ-096).
+A dark SVG carries `data-theme="dark"`, and its pattern ids end in `-dark`, so a light and a dark chart can share a
+page. `GET /semgraphs/{id}/examples/{name}?theme=dark` draws an example dark, and `npm run render:examples` writes
+every chart dark too.
 
 Shared and optional: `title`; `asOf`, the last complete day of the data (yesterday in Brussels when absent);
 `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts); `valueAxis` (`zero`, the default, or
