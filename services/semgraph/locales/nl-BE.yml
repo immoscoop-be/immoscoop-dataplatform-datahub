@@ -280,6 +280,7 @@ gallery:
   contract: contract (JSON)
   readingCard: leeskaart
   json: dit overzicht in JSON
+  api: de API (Swagger)
   planned: Gepland
   plannedNote: In de catalogus, nog niet beschikbaar.
   outcome:

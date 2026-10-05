@@ -121,6 +121,7 @@ elk bestand zegt welke.
 | [REQ-081](REQ-081.md) | Weinig waarnemingen tegenover de periode ervoor en erna, in plaats van de mediaan | 2026-10-03 (Confluence) | geïmplementeerd op de tijdas; bij categorieën een open punt | [4cccd03](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/4cccd03) |
 | [REQ-082](REQ-082.md) | Iconen voor de verhouding over de tijd | 2026-10-03 (Confluence) | geïmplementeerd | [d661e80](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/d661e80) |
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
+| [REQ-084](REQ-084.md) | De API als OpenAPI-document (`GET /openapi.json`), met Swagger UI op `/docs` | 2026-10-05 (opdracht) | geïmplementeerd | COMMIT |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -141,6 +142,7 @@ twee waarden na (REQ-072, eerst een analyse). REQ-074 tot REQ-082 kwamen op 2026
 noemer, de verhouding over de tijd en haar tweede as, en de buurregel bij weinig waarnemingen. Ze zijn gebouwd voor
 aandelen (`movingWindowRatio`, `calendarRatio`); de vragen die overblijven staan bij de open punten 9 tot 15.
 REQ-083 is de opdracht voor een overzicht van de grafieken met hun voorbeelden; eerst genoteerd als REQ-074.
+REQ-084 is de opdracht van 2026-10-05 om de API als Swagger-documentatie aan te bieden.
 
 ### Hernummering
 

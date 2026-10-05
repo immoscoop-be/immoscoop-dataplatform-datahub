@@ -84,7 +84,8 @@ docker build -t semgraph .
 docker run --rm -p 8080:8080 semgraph
 ```
 
-Then open <http://localhost:8080/gallery> in a browser for every semgraph and its examples, or one example such as
+Then open <http://localhost:8080/gallery> in a browser for every semgraph and its examples,
+<http://localhost:8080/docs> for the API in Swagger UI (where "Try it out" draws any example), one example such as
 <http://localhost:8080/semgraphs/movingWindowAverage/examples/basic>, or:
 
 ```sh
@@ -206,6 +207,12 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `POST /validate` | checks a request without drawing; always 200 with `{outcome, issues}` |
 | `POST /render` | draws the chart: 200 SVG, 422 refusal, 400 invalid request |
 | `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser |
+| `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
+| `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
+
+**For a program or an agent** that should make charts with this service: start from `/openapi.json`. Its
+description says how to use the service, `POST /render` takes the request of any semgraph (chosen by `semgraph`),
+and every example is in it.
 
 Every request ends in one of four outcomes:
 
@@ -233,7 +240,8 @@ Issues always have the same shape, in the language of `locale`:
 ```
 
 SVG responses also carry `Semgraph-Language-Version` and `Semgraph-Tokens-Version`, `nosniff` and a strict
-Content-Security-Policy. The gallery is a page without scripts that only loads its own example pictures.
+Content-Security-Policy. The gallery is a page without scripts that only loads its own example pictures. Swagger UI
+comes with the package and loads nothing from outside either.
 
 ## The contract
 

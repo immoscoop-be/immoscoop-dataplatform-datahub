@@ -5,7 +5,9 @@ import type { CategoryComputed } from '../src/charts/category-chart.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
 import { createTranslator } from '../src/core/i18n.ts';
 import { iconShapes, readIcon } from '../src/core/icon.ts';
+import { openApiDocument } from '../src/core/openapi.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
+import { createAjv } from '../src/core/schema.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
 import { color } from '../src/core/tokens.ts';
 import { NOW, testRegistry } from './helpers.ts';
@@ -927,6 +929,21 @@ describe('requirements of the chart language', async () => {
       const steps = /<path d="M[\d.]+ [\d.]+V[\d.]+(H[\d.]+V[\d.]+){3,}" stroke=/.test(semgraph.icon);
       assert.equal(outlined > 0 && iconShapes(semgraph.icon).squares === outlined, ratio, `${id}: squares in a square`);
       assert.equal(steps, ratio, `${id}: the denominator as a step line`);
+    }
+  });
+
+  it('REQ-084: every example is in the OpenAPI document as a request of its semgraph, and valid against the contract there', async () => {
+    const registry = await testRegistry();
+    const document = openApiDocument(registry) as { components: { schemas: Record<string, object>; examples: Record<string, { value: unknown }> } };
+    const ajv = createAjv();
+    // Every example, also the ones that show a refusal: they are drawn on /gallery, not here.
+    for (const [id, semgraph] of registry.semgraphs) {
+      const validate = ajv.compile(document.components.schemas[`${id}Request`]!);
+      for (const [name, request] of semgraph.examples) {
+        const example = document.components.examples[`${id}.${name}`];
+        assert.deepEqual(example?.value, request, `${id}/${name}`);
+        assert.ok(validate(example!.value), `${id}/${name}: ${ajv.errorsText(validate.errors)}`);
+      }
     }
   });
 });

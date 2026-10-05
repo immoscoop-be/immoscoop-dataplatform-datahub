@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Dependencies } from '../app.ts';
 import { createTranslator, resolveLocale } from '../core/i18n.ts';
 import { localizeIssue } from '../core/issues.ts';
+import { DOCS_PATH, OPENAPI_PATH } from '../core/openapi.ts';
 import type { LoadedSemgraph } from '../core/registry.ts';
 
 interface LocaleQuery {
@@ -27,6 +28,9 @@ export function semgraphRoutes(app: FastifyInstance, { registry }: Dependencies)
       })),
       planned: registry.catalog.filter((entry) => entry.status === 'planned').map((entry) => entry.id),
       gallery: '/gallery',
+      // REQ-084: the API itself, for a program or an agent, and to read it in Swagger UI.
+      openapi: OPENAPI_PATH,
+      docs: DOCS_PATH,
     };
   });
 
