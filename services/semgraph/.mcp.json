@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "semgraph": {
+      "command": "node",
+      "args": ["src/mcp/stdio.ts"]
+    }
+  }
+}

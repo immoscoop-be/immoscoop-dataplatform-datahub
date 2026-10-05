@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import { SHAPES } from '../src/charts/signatures.ts';
 import type { CategoryComputed } from '../src/charts/category-chart.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
+import { buildApp } from '../src/app.ts';
 import { createTranslator } from '../src/core/i18n.ts';
 import { iconShapes, readIcon } from '../src/core/icon.ts';
 import { openApiDocument } from '../src/core/openapi.ts';
@@ -12,7 +13,7 @@ import { SIZE_NAMES, SIZES } from '../src/core/size.ts';
 import { textWidth } from '../src/core/render/text.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
 import { color } from '../src/core/tokens.ts';
-import { NOW, testRegistry } from './helpers.ts';
+import { mcpCall, NOW, svgOfResult, testRegistry } from './helpers.ts';
 
 /**
  * One test per requirement of the chart language (docs/requirements). They run on every example of
@@ -989,6 +990,53 @@ describe('requirements of the chart language', async () => {
           }
         }
       }
+    }
+  });
+
+  it('REQ-090: through MCP every example gets the outcome and the chart of the core, as through REST', async () => {
+    const registry = await testRegistry();
+    const app = await buildApp({ registry, now: () => NOW, logger: false, mcp: { mode: 'open' } });
+    for (const [id, semgraph] of registry.semgraphs) {
+      for (const [name, request] of semgraph.examples) {
+        const label = `${id}/${name}`;
+        const core = await runPipeline(registry, request, { now: NOW });
+        const { result } = await mcpCall(app, 'tools/call', { name: 'render_semgraph', arguments: { request } });
+        assert.equal(result._meta['semgraph/report'].outcome, core.report.outcome, label);
+        assert.deepEqual(result._meta['semgraph/report'].issues, core.report.issues, label);
+        assert.equal(svgOfResult(result), core.svg, label);
+      }
+    }
+    await app.close();
+  });
+
+  it('REQ-092: every chart reaches the app as drawn, within what Claude passes on, and Claude gets the report, not the SVG', async () => {
+    const registry = await testRegistry();
+    const app = await buildApp({ registry, now: () => NOW, logger: false, mcp: { mode: 'open' } });
+    const { result: list } = await mcpCall(app, 'tools/list');
+    const render = list.tools.find((tool: { name: string }) => tool.name === 'render_semgraph');
+    assert.equal(render._meta.ui.resourceUri, 'ui://semgraph/chart.html');
+    for (const drawn of await drawnExamples()) {
+      const { result } = await mcpCall(app, 'tools/call', { name: 'render_semgraph', arguments: { request: drawn.request } });
+      assert.equal(svgOfResult(result), drawn.svg, drawn.name);
+      // Claude passes on a tool result of about 150,000 characters; the gzipped chart stays well under it.
+      assert.ok(JSON.stringify(result).length < 100_000, `${drawn.name}: ${JSON.stringify(result).length} characters`);
+      for (const content of result.content) assert.doesNotMatch(content.text, /<svg/, drawn.name);
+      // The chart keeps its own light background, also in a dark conversation (REQ-094 is open).
+      const [, width, height] = /^<svg [^>]*viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(drawn.svg)!;
+      assert.ok(drawn.svg.includes(`<rect width="${width}" height="${height}" fill="#ffffff"/>`), drawn.name);
+    }
+    await app.close();
+  });
+
+  it('REQ-093: every contract takes the meta that Claude fills in, and the chart shows it', async () => {
+    const registry = await testRegistry();
+    const meta = { question: 'How many credit leads per day?', query: 'SELECT day, COUNT(*) FROM leads GROUP BY day', askedBy: 'Hannelore', compiledOn: '2026-10-01' };
+    for (const drawn of await drawnExamples()) {
+      const result = await runPipeline(registry, { ...drawn.request, meta }, { now: NOW });
+      assert.equal(result.report.outcome, (await runPipeline(registry, drawn.request, { now: NOW })).report.outcome, drawn.name);
+      const t = createTranslator(registry.locales, result.report.locale);
+      for (const key of ['meta.question', 'meta.query']) assert.ok(result.svg!.includes(`>${t(key)}<`), `${drawn.name}: ${t(key)}`);
+      assert.ok(result.svg!.includes('Hannelore'), drawn.name);
     }
   });
 });

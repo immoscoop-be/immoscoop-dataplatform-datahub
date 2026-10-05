@@ -7,7 +7,7 @@ import { example, NOW, testRegistry } from './helpers.ts';
 let app: FastifyInstance;
 
 before(async () => {
-  app = await buildApp({ registry: await testRegistry(), now: () => NOW, logger: false });
+  app = await buildApp({ registry: await testRegistry(), now: () => NOW, logger: false, mcp: { mode: 'off' } });
 });
 after(() => app.close());
 
@@ -22,6 +22,7 @@ describe('API', () => {
       version: '0.1.0',
       languageVersion: 'v0',
       tokensVersion: (await testRegistry()).tokens.version,
+      mcp: 'off',
     });
   });
 
