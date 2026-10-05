@@ -46,7 +46,8 @@ export function mcpAuthFromEnv(env: NodeJS.ProcessEnv = process.env): McpAuth {
   const resource = env.MCP_RESOURCE_URL?.trim();
   const missing = [clientIds.length === 0 && 'MCP_AUTH_CLIENT_IDS', !resource && 'MCP_RESOURCE_URL'].filter(Boolean);
   if (missing.length > 0) throw new Error(`MCP_AUTH_ISSUER is set, so ${missing.join(' and ')} must be set too`);
-  for (const [name, url] of [['MCP_AUTH_ISSUER', issuer], ['MCP_RESOURCE_URL', resource!], ['MCP_AUTHORIZATION_SERVER', env.MCP_AUTHORIZATION_SERVER]] as const) {
+  const authorizationServer = env.MCP_AUTHORIZATION_SERVER?.trim() || undefined;
+  for (const [name, url] of [['MCP_AUTH_ISSUER', issuer], ['MCP_RESOURCE_URL', resource!], ['MCP_AUTHORIZATION_SERVER', authorizationServer]] as const) {
     if (url !== undefined && !/^https:\/\/[^\s/]+/.test(url) && !/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//.test(url)) {
       throw new Error(`${name} must be an https URL, not "${url}"`);
     }
@@ -54,7 +55,7 @@ export function mcpAuthFromEnv(env: NodeJS.ProcessEnv = process.env): McpAuth {
   return {
     mode: 'oauth',
     issuer: issuer.replace(/\/$/, ''),
-    authorizationServer: env.MCP_AUTHORIZATION_SERVER?.trim() || issuer.replace(/\/$/, ''),
+    authorizationServer: authorizationServer ?? issuer.replace(/\/$/, ''),
     clientIds,
     resource: resource!,
     ...(env.MCP_AUTH_SCOPE?.trim() ? { scope: env.MCP_AUTH_SCOPE.trim() } : {}),
