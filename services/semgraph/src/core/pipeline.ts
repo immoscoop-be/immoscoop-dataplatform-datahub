@@ -8,6 +8,7 @@ import { HoverLayer, RowHoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
+import { sizeOf } from './size.ts';
 import type { RequestContext } from './semgraph.ts';
 
 export interface Report {
@@ -89,6 +90,8 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
   const compiled = compiledDay(request.meta, now);
   const svg = composeSvg({
     width: drawing.width,
+    // REQ-085: a slide and a big screen get the chart enlarged; the tile has no size and stays as it is.
+    scale: sizeOf(request).scale,
     title: drawing.title,
     readingCue: drawing.readingCue,
     // REQ-060: the icon links to the reading card, like the learn line in the footer.

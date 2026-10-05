@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 import { createTranslator, BASE_LOCALE } from './core/i18n.ts';
 import { localizeIssue, type IssueSpec } from './core/issues.ts';
 import { loadRegistry, type Registry } from './core/registry.ts';
+import { docsRoutes } from './routes/docs.ts';
 import { galleryRoutes } from './routes/gallery.ts';
 import { healthRoutes } from './routes/health.ts';
 import { renderRoutes } from './routes/render.ts';
@@ -65,5 +66,6 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   semgraphRoutes(app, dependencies);
   renderRoutes(app, dependencies);
   galleryRoutes(app, dependencies);
+  await docsRoutes(app, dependencies);
   return app;
 }

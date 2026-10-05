@@ -22,6 +22,12 @@ const TICK_MULTIPLES: Record<CalendarUnit, number[]> = {
 /** Estimated width of a tick label in pixels plus some air, e.g. "W40", "sep", "K3", "2026". */
 const LABEL_WIDTH: Record<CalendarUnit, number> = { week: 34, month: 34, quarter: 30, year: 36 };
 
+/** A label every so many periods: the first step that leaves room for each label, also on a card (REQ-085). */
+export function calendarTickStep(unit: CalendarUnit, slotWidth: number): number {
+  const multiples = TICK_MULTIPLES[unit];
+  return multiples.find((step) => step * slotWidth >= LABEL_WIDTH[unit]) ?? multiples.at(-1)!;
+}
+
 /**
  * Calendar periods: ISO weeks (Monday to Sunday), months, quarters or years, each named by its ISO
  * name (REQ-062). A period that ends after the last complete day is running: its value covers the
@@ -77,9 +83,7 @@ export abstract class CalendarChart extends TimeAxisChart<CalendarRequest> {
   }
 
   protected tickStep({ unit }: CalendarRequest, _slots: number, slotWidth: number): number {
-    const fits = (step: number) => step * slotWidth >= LABEL_WIDTH[unit];
-    const multiples = TICK_MULTIPLES[unit];
-    return multiples.find(fits) ?? multiples.at(-1)!;
+    return calendarTickStep(unit, slotWidth);
   }
 
   /** "W40", "sep", "K3" or "2026"; the leftmost label and each new year name the year on a second line. */

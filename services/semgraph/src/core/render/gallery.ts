@@ -1,4 +1,5 @@
 import type { Translator } from '../i18n.ts';
+import { DOCS_PATH } from '../openapi.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
 
@@ -109,6 +110,7 @@ export function galleryPage({ t, tokens, locales, semgraphs, planned }: GalleryI
     '</nav>',
     '<nav class="meta">',
     `<a href="/semgraphs?locale=${escapeXml(t.locale)}">${escapeXml(t('gallery.json'))}</a>`,
+    `<a href="${DOCS_PATH}">${escapeXml(t('gallery.api'))}</a>`,
     ...locales.map((locale) => `<a href="/gallery?locale=${escapeXml(locale)}" hreflang="${escapeXml(locale)}">${escapeXml(t(`gallery.language.${locale}`))}</a>`),
     '</nav>',
     '</header>',

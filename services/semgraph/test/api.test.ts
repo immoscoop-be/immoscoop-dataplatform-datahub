@@ -216,4 +216,51 @@ describe('API', () => {
     assert.match(html, /<section id="planned">.*<code>funnel<\/code>/s);
     assert.match((await app.inject('/gallery?locale=en')).body, /<a class="refused"[^>]*>For unique counts/);
   });
+
+  it('REQ-084: GET /openapi.json describes the API in OpenAPI 3.1, with the contract and the examples of every semgraph', async () => {
+    const registry = await testRegistry();
+    const response = await app.inject('/openapi.json');
+    assert.equal(response.statusCode, 200);
+    const document = response.json();
+    assert.equal(document.openapi, '3.1.0');
+    assert.equal(document.info.version, registry.version);
+    assert.deepEqual(Object.keys(document.paths).sort(), ['/gallery', '/healthz', '/openapi.json', '/render', '/semgraphs', '/semgraphs/{id}', '/semgraphs/{id}/examples/{name}', '/validate']);
+    // One source: the request of a semgraph is its own contract, its examples are its own files.
+    const { schemas, examples } = document.components;
+    for (const [id, loaded] of registry.semgraphs) {
+      const { $schema: _schema, $id: _id, ...contract } = loaded.schema as Record<string, unknown>;
+      assert.deepEqual(schemas[`${id}Request`], contract, id);
+      assert.equal(schemas.RenderRequest.discriminator.mapping[id], `#/components/schemas/${id}Request`, id);
+      for (const [name, request] of loaded.examples) assert.deepEqual(examples[`${id}.${name}`].value, request, `${id}/${name}`);
+    }
+    assert.equal(schemas.RenderRequest.oneOf.length, registry.semgraphs.size);
+    assert.deepEqual(Object.keys(document.paths['/render'].post.requestBody.content['application/json'].examples), Object.keys(examples));
+    // Every path in the document exists: no route is described that the service does not have.
+    for (const path of Object.keys(document.paths)) {
+      const url = path.replace('{id}', 'calendarRatio').replace('{name}', 'weeks');
+      const method = document.paths[path].post ? 'POST' : 'GET';
+      const reply = await app.inject({ method, url, ...(method === 'POST' ? { payload: examples['calendarRatio.weeks'].value } : {}) });
+      assert.ok(reply.statusCode < 400, `${method} ${url}: ${reply.statusCode}`);
+    }
+    // Every $ref points at something in the document.
+    for (const [, ref] of JSON.stringify(document).matchAll(/"\$ref":"#\/([^"]+)"/g)) {
+      const target = ref!.split('/').reduce((node: Record<string, unknown> | undefined, key) => node?.[key] as Record<string, unknown> | undefined, document);
+      assert.ok(target, ref);
+    }
+  });
+
+  it('REQ-084: Swagger UI on /docs shows the same document, loads nothing from outside and links back from the overview', async () => {
+    const page = await app.inject('/docs/');
+    assert.equal(page.statusCode, 200);
+    assert.match(String(page.headers['content-type']), /^text\/html/);
+    const csp = String(page.headers['content-security-policy']);
+    assert.match(csp, /default-src 'self'/);
+    assert.match(csp, /script-src 'self';/);
+    assert.doesNotMatch(csp, /https:|upgrade-insecure-requests|validator\.swagger\.io/);
+    assert.doesNotMatch(page.body, /(src|href)="https?:/);
+    assert.deepEqual((await app.inject('/docs/json')).json(), (await app.inject('/openapi.json')).json());
+    const overview = (await app.inject('/semgraphs')).json();
+    assert.deepEqual([overview.openapi, overview.docs], ['/openapi.json', '/docs']);
+    assert.match((await app.inject('/gallery?locale=nl-BE')).body, /<a href="\/docs">de API \(Swagger\)<\/a>/);
+  });
 });

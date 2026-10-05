@@ -40,8 +40,11 @@ export interface Label {
 const top = (point: Summary) => point.spread?.hi ?? point.centre;
 const bottom = (point: Summary) => Math.max(0, point.spread?.lo ?? point.centre);
 
-/** The points that get a label, and how. */
-export function labelsFor(points: readonly LabelledPoint[], mode: ValuesMode): Label[] {
+/**
+ * The points that get a label, and how. `slotWidth` is the room per point: the running value only goes
+ * next to the last final one when both fit side by side (REQ-085: on a card they may not).
+ */
+export function labelsFor(points: readonly LabelledPoint[], mode: ValuesMode, slotWidth = Infinity): Label[] {
   const last = points.find((point) => point.rel === 0);
   const lastFinal = [...points].reverse().find((point) => !point.running);
   switch (mode) {
@@ -54,7 +57,7 @@ export function labelsFor(points: readonly LabelledPoint[], mode: ValuesMode): L
       if (last && !last.running) return [{ point: last, style: 'strong', detail: true }];
       return [
         ...(lastFinal ? [{ point: lastFinal, style: 'strong' as const, detail: true }] : []),
-        ...(last ? [{ point: last, style: 'muted' as const, detail: false }] : []),
+        ...(last && (!lastFinal || (last.rel - lastFinal.rel) * slotWidth >= MIN_WIDTH_FOR_ALL) ? [{ point: last, style: 'muted' as const, detail: false }] : []),
       ];
     case 'all':
       return points.map((point) => (point.running ? { point, style: 'muted', detail: false } : { point, style: 'strong', detail: true }));

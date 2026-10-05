@@ -7,14 +7,15 @@ import { textWidth } from '../core/render/text.ts';
 import type { DrawContext, Drawing, RequestContext, SemgraphImplementation, SemgraphMetadata } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { periodFromName, periodName, shiftPeriod, type CalendarUnit } from './calendar.ts';
-import { periodLabel, periodTick, startsYear } from './calendar-chart.ts';
+import { calendarTickStep, periodLabel, periodTick, startsYear } from './calendar-chart.ts';
 import { hatchPattern, patternId, toWinPattern } from './comparison.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { sizeOf } from '../core/size.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat } from './number-format.ts';
 import { lookup, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers } from './scales.ts';
 import { Sum } from './statistics.ts';
-import { PADDING, PLOT_HEIGHT, WIDTH } from './time-axis-chart.ts';
+import { PADDING, PLOT_HEIGHT } from './time-axis-chart.ts';
 import { timeAxis } from './time-axis.ts';
 
 /** One period as the warehouse delivers it: the cumulative levels at its end (REQ-069). */
@@ -38,6 +39,8 @@ export interface KpiStatusRequest extends MeasureRequest {
   /** The day the path was set; it never moves after that. */
   pathSet: string;
   asOf?: string;
+  /** card, default, large or xl (REQ-085). */
+  size?: string;
   format?: string;
   locale?: string;
   context?: RequestContext;
@@ -129,6 +132,7 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
         target: { description: 'The level to reach, and the last day to reach it.', ...moment('target') },
         pathSet: { description: 'The day the path was set. It never moves afterwards: a path that is redrawn every month can never be missed.', ...DAY },
         asOf: { description: 'The last complete day of the data. Yesterday in Brussels when absent.', ...DAY },
+        size: SIZE,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,
@@ -257,7 +261,8 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
     const path = (index: number) => periods[index]!.path!;
     const now = actual(last);
     const padding = KPI_PADDING;
-    const plotWidth = WIDTH - padding.left - padding.right;
+    const width = sizeOf(request).layout;
+    const plotWidth = width - padding.left - padding.right;
     const slotWidth = plotWidth / count;
 
     // The axis starts at the KPI start, with a zigzag when that is not zero (Figma, KPI status; REQ-026).
@@ -349,7 +354,10 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
     const axis = timeAxis({
       count,
       slotWidth,
-      labels: periods.map((period) => ({ rel: rel(period.index), lines: periodTick(t, unit, period.first, period.index === 0) })),
+      // A label for every period while they fit, otherwise every so many, as on a calendar axis (REQ-085).
+      labels: periods
+        .filter((period) => period.index % calendarTickStep(unit, slotWidth) === 0)
+        .map((period) => ({ rel: rel(period.index), lines: periodTick(t, unit, period.first, period.index === 0) })),
       yearStarts: periods.filter((period) => startsYear(unit, period.first)).map((period) => rel(period.index)),
       x,
       plotHeight: PLOT_HEIGHT,
@@ -366,6 +374,7 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
     const dotted = { type: 'line', color: target, strokeWidth: 1.5, strokeDash: [2, 2], strokeCap: 'butt' };
     const band = (fill: string) => ({ type: 'rect', fill, opacity: 1 });
     const text = (style: Record<string, unknown>) => ({ type: 'text', fontSize: SMALL, color: color(tokens, 'text'), ...style });
+    const fits = (labels: readonly { text: string }[]) => labels.every((label) => textWidth(label.text, SMALL) * BOLD + 6 <= slotWidth);
 
     const spec = {
       $schema: 'https://vega.github.io/schema/vega-lite/v6.json',
@@ -387,8 +396,10 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
         futurePath,
         treads,
         risers,
-        added,
-        deltas,
+        // What each period added and its step against the plan stand next to the steps while they fit;
+        // on a narrow chart they are only on hover (REQ-085).
+        added: fits(added) ? added : [],
+        deltas: fits(deltas) ? deltas : [],
         futureLabels,
         paceLabels,
         current: [{ rel: rel(today), value: now, text: precise.value(now) }],
@@ -555,7 +566,7 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
 
     return {
       vegaLite: spec,
-      width: WIDTH,
+      width,
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(defs ? { defs } : {}),

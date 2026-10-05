@@ -17,6 +17,8 @@
     "schemas": "node scripts/write-schemas.ts"
   },
   "dependencies": {
+    "@fastify/swagger": "9.9.1",
+    "@fastify/swagger-ui": "6.1.1",
     "ajv": "8.20.0",
     "fastify": "5.12.5",
     "vega": "6.4.0",

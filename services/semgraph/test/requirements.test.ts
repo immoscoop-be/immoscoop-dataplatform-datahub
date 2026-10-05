@@ -5,7 +5,11 @@ import type { CategoryComputed } from '../src/charts/category-chart.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';
 import { createTranslator } from '../src/core/i18n.ts';
 import { iconShapes, readIcon } from '../src/core/icon.ts';
+import { openApiDocument } from '../src/core/openapi.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
+import { createAjv } from '../src/core/schema.ts';
+import { SIZE_NAMES, SIZES } from '../src/core/size.ts';
+import { textWidth } from '../src/core/render/text.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
 import { color } from '../src/core/tokens.ts';
 import { NOW, testRegistry } from './helpers.ts';
@@ -315,7 +319,8 @@ describe('requirements of the chart language', async () => {
 
   it('REQ-014: the label itself grows into a panel over the whole chart; closing waits about 350 ms', () => {
     for (const drawn of examples) {
-      const width = Number(/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" width="(\d+)"/.exec(drawn.svg)![1]);
+      // In the units of the drawing: a slide or a big screen enlarges the whole (REQ-085).
+      const width = Number(/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" [^>]*viewBox="0 0 (\d+)/.exec(drawn.svg)![1]);
       for (const markup of drawn.svg.split('<g class="semgraph-meta-item"').slice(1)) {
         // The panel is part of the label's element, so the pointer never leaves it.
         const panel = /<g class="semgraph-meta-panel" visibility="hidden" style="transform-origin:[\d.]+px [\d.]+px"><rect x="0\.5" y="0\.5" width="(\d+)" height="([\d.]+)"/.exec(markup);
@@ -643,7 +648,7 @@ describe('requirements of the chart language', async () => {
   it('REQ-066 and REQ-067: a sum compares inside one bar: light shared, focus gained, hatched lost, a dark cap for now', async () => {
     const registry = await testRegistry();
     const compared = categories.filter((drawn) => categoryOf(drawn).comparison);
-    assert.deepEqual(compared.map((drawn) => categoryOf(drawn).orientation).sort(), ['horizontal', 'vertical'], 'lying and upright, as in Figma');
+    assert.deepEqual([...new Set(compared.map((drawn) => categoryOf(drawn).orientation))].sort(), ['horizontal', 'vertical'], 'lying and upright, as in Figma');
     for (const drawn of compared) {
       const rows = categoryOf(drawn).rows.filter((row) => row.summary && typeof row.previous === 'number');
       const layer = (name: string) => markOf(drawn.layers.find((candidate) => candidate.data?.name === name)!);
@@ -927,6 +932,63 @@ describe('requirements of the chart language', async () => {
       const steps = /<path d="M[\d.]+ [\d.]+V[\d.]+(H[\d.]+V[\d.]+){3,}" stroke=/.test(semgraph.icon);
       assert.equal(outlined > 0 && iconShapes(semgraph.icon).squares === outlined, ratio, `${id}: squares in a square`);
       assert.equal(steps, ratio, `${id}: the denominator as a step line`);
+    }
+  });
+
+  it('REQ-084: every example is in the OpenAPI document as a request of its semgraph, and valid against the contract there', async () => {
+    const registry = await testRegistry();
+    const document = openApiDocument(registry) as { components: { schemas: Record<string, object>; examples: Record<string, { value: unknown }> } };
+    const ajv = createAjv();
+    // Every example, also the ones that show a refusal: they are drawn on /gallery, not here.
+    for (const [id, semgraph] of registry.semgraphs) {
+      const validate = ajv.compile(document.components.schemas[`${id}Request`]!);
+      for (const [name, request] of semgraph.examples) {
+        const example = document.components.examples[`${id}.${name}`];
+        assert.deepEqual(example?.value, request, `${id}/${name}`);
+        assert.ok(validate(example!.value), `${id}/${name}: ${ajv.errorsText(validate.errors)}`);
+      }
+    }
+  });
+
+  it('REQ-085: every chart in every size: built at its width, enlarged for a slide or a big screen, its axis labels apart; the KPI tile has one size', async () => {
+    const registry = await testRegistry();
+    for (const [id, semgraph] of registry.semgraphs) {
+      for (const [name, example] of semgraph.examples) {
+        const { size: _size, ...request } = example as Record<string, unknown>;
+        const plain = await runPipeline(registry, request, { now: NOW });
+        if (id === 'kpiTile') {
+          // A tile keeps its size wherever it stands.
+          assert.equal((await runPipeline(registry, { ...request, size: 'card' }, { now: NOW, draw: false })).report.outcome, 'invalid', `${id}/${name}`);
+          continue;
+        }
+        for (const size of SIZE_NAMES) {
+          const label = `${id}/${name} ${size}`;
+          const sized = { ...request, size };
+          const result = await runPipeline(registry, sized, { now: NOW });
+          assert.equal(result.report.outcome, plain.report.outcome, label);
+          assert.deepEqual(result.warnings, [], label);
+          if (size === 'default') assert.equal(result.svg, plain.svg, `${label}: the default is the chart without a size`);
+          if (!result.svg) continue;
+          const { layout, scale } = SIZES[size];
+          const [, width, height, viewWidth, viewHeight] = /^<svg [^>]*width="([\d.]+)" height="([\d.]+)" viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(result.svg)!.map(Number);
+          assert.deepEqual([width, viewWidth, height], [Math.round(layout * scale), layout, Math.ceil(viewHeight! * scale)], label);
+          // The labels of a time axis never touch: on a card there are fewer of them.
+          const { implementation } = semgraph;
+          const t = createTranslator(registry.locales, result.report.locale);
+          const drawing = implementation.draw(sized as never, implementation.compute(sized as never, { now: NOW }), { t, tokens: registry.tokens, metadata: semgraph.metadata });
+          const spec = drawing.vegaLite as unknown as { datasets: Record<string, { rel: number; lines: string[] }[]>; layer: Layer[] };
+          const labels = spec.datasets.axisLabels;
+          if (!labels || !drawing.plotArea) continue;
+          const domain = (flatten(spec.layer).find((layer) => (layer.encoding?.x as { scale?: { domain?: number[] } } | undefined)?.scale?.domain)!.encoding!.x as { scale: { domain: [number, number] } }).scale.domain;
+          const perSlot = drawing.plotArea.width / (domain[1] - domain[0]);
+          const widthOf = (item: { lines: string[] }) => Math.max(...item.lines.map((line) => textWidth(line, registry.tokens.size.axisLabel)));
+          const sorted = [...labels].sort((a, b) => a.rel - b.rel);
+          for (let index = 1; index < sorted.length; index++) {
+            const [a, b] = [sorted[index - 1]!, sorted[index]!];
+            assert.ok((b.rel - a.rel) * perSlot >= (widthOf(a) + widthOf(b)) / 2 + 2, `${label}: ${a.lines[0]} and ${b.lines[0]} touch`);
+          }
+        }
+      }
     }
   });
 });

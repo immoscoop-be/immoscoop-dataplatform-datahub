@@ -40,7 +40,8 @@ const TITLE_FACE = 1.1;
 export class KpiTileChart extends PeriodComparisonChart<KpiTileRequest> {
   override schema(): object {
     const base = super.schema() as { description: string; properties: Record<string, any> };
-    const { valueAxis: _, ...properties } = base.properties;
+    // A tile has no value axis, and keeps its size wherever it stands (REQ-085).
+    const { valueAxis: _, size: _size, ...properties } = base.properties;
     const points = properties.points;
     return {
       ...base,

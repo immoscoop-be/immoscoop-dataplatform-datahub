@@ -3,7 +3,8 @@ import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { ticksEvery } from './scales.ts';
 import { LEARNING_PLAN_LEVEL_1 } from './measure.ts';
-import { MAX_TICKS, TimeAxisChart, type LabelContext, type Slot, type TimeAxisComputed, type TimeAxisRequest } from './time-axis-chart.ts';
+import { sizeOf } from '../core/size.ts';
+import { MAX_TICKS, maxTicks, TimeAxisChart, type LabelContext, type Slot, type TimeAxisComputed, type TimeAxisRequest } from './time-axis-chart.ts';
 import type { ValuesMode } from './value-labels.ts';
 
 export interface MovingWindowRequest extends TimeAxisRequest {
@@ -69,8 +70,8 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return Math.floor((last - first) / window) + 1;
   }
 
-  protected tickStep({ window }: MovingWindowRequest, slots: number): number {
-    return relativeTickStep(slots, window);
+  protected tickStep(request: MovingWindowRequest, slots: number): number {
+    return relativeTickStep(slots, request.window, maxTicks(sizeOf(request).layout));
   }
 
   protected tickLabel(slot: Slot, { t, computed }: LabelContext): string[] {
@@ -136,15 +137,15 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
  * A label for every window, or for every 2, 4, 13, 26 or 52 windows when that would give more than
  * eight labels. Daily values are labelled per week once they do not all fit.
  */
-function relativeTickStep(windows: number, window: number): number {
-  const base = window === 1 && windows > MAX_TICKS ? 7 : 1;
+function relativeTickStep(windows: number, window: number, most = MAX_TICKS): number {
+  const base = window === 1 && windows > most ? 7 : 1;
   const count = (step: number) => Math.floor((windows - 1) / step) + 1;
-  return [1, 2, 4, 13, 26, 52].map((multiple) => multiple * base).find((step) => count(step) <= MAX_TICKS) ?? 52 * base;
+  return [1, 2, 4, 13, 26, 52].map((multiple) => multiple * base).find((step) => count(step) <= most) ?? 52 * base;
 }
 
 /** The labelled windows, as positions on the axis (0 is the last window). */
-export function relativeTicks(windows: number, window: number): number[] {
-  return ticksEvery(relativeTickStep(windows, window), windows);
+export function relativeTicks(windows: number, window: number, most = MAX_TICKS): number[] {
+  return ticksEvery(relativeTickStep(windows, window, most), windows);
 }
 
 /** "−7d"; for the last window "nu" when it ends yesterday (REQ-030), and its date otherwise. */
