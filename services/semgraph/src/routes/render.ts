@@ -1,5 +1,6 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { Dependencies } from '../app.ts';
+import { logOutcome } from '../core/log.ts';
 import { runPipeline, type PipelineResult } from '../core/pipeline.ts';
 
 const STATUS = { ok: 200, deviation: 200, refused: 422, invalid: 400 } as const;
@@ -14,13 +15,13 @@ const SVG_HEADERS = {
 export function renderRoutes(app: FastifyInstance, { registry, now }: Dependencies): void {
   app.post('/validate', async (request) => {
     const result = await runPipeline(registry, request.body, { now: now(), draw: false });
-    logOutcome(request, 'validate', result);
+    logOutcome(request.log, 'validate', result);
     return result.report;
   });
 
   app.post('/render', async (request, reply) => {
     const result = await runPipeline(registry, request.body, { now: now() });
-    logOutcome(request, 'render', result);
+    logOutcome(request.log, 'render', result);
     return send(reply, result);
   });
 
@@ -29,7 +30,7 @@ export function renderRoutes(app: FastifyInstance, { registry, now }: Dependenci
     const example = registry.semgraphs.get(request.params.id)?.examples.get(request.params.name);
     if (example === undefined) return reply.callNotFound();
     const result = await runPipeline(registry, example, { now: now() });
-    logOutcome(request, 'example', result);
+    logOutcome(request.log, 'example', result);
     return send(reply, result);
   });
 
@@ -44,22 +45,4 @@ export function renderRoutes(app: FastifyInstance, { registry, now }: Dependenci
     });
     return reply.code(status).send(result.svg);
   }
-}
-
-/**
- * One structured line per request: which semgraph, which outcome, which issue codes. This is the
- * start of the learning loop from the analysis, without storage. Data values are never logged.
- */
-function logOutcome(request: FastifyRequest, action: string, result: PipelineResult): void {
-  request.log.info(
-    {
-      event: `semgraph.${action}`,
-      semgraph: result.report.semgraph,
-      outcome: result.report.outcome,
-      codes: result.report.issues.map((issue) => issue.code),
-      locale: result.report.locale,
-    },
-    `${action} ${result.report.semgraph ?? '-'}: ${result.report.outcome}`,
-  );
-  if (result.warnings.length > 0) request.log.warn({ warnings: result.warnings }, 'Vega reported warnings');
 }
