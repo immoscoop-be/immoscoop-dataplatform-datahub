@@ -123,6 +123,9 @@ elk bestand zegt welke.
 | [REQ-083](REQ-083.md) | Een overzicht van de grafieken met links naar hun voorbeelden: `GET /semgraphs` en `GET /gallery` | 2026-10-03 (opdracht) | geïmplementeerd | [eba8d30](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/eba8d30) |
 | [REQ-084](REQ-084.md) | De API als OpenAPI-document (`GET /openapi.json`), met Swagger UI op `/docs` | 2026-10-05 (opdracht) | geïmplementeerd | [a3db5c3](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/a3db5c3) |
 | [REQ-085](REQ-085.md) | Vaste maten voor een grafiek: `card`, `default`, `large` (een slide), `xl` (een groot scherm); enkel de breedte | 2026-10-05 (opdracht) | geïmplementeerd; de breedtes zijn een open punt | [f8c1ef9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/f8c1ef9) |
+| REQ-086 | Kaarten van Vlaanderen: heat map, punten, vlakken per postcode, per provincie en per eigen vaste regio | 2026-10-05 (opdracht) | open: eerst de analyse | – |
+| REQ-087 | Op een kaart ter referentie de belangrijkste steden, de grote verkeersassen en de waterlopen | 2026-10-05 (opdracht) | open: eerst de analyse | – |
+| REQ-088 | De geografische basisbestanden eenmalig opbouwen; bij nieuwe of gewijzigde regio's eerst opnieuw bouwen | 2026-10-05 (opdracht) | open: eerst de analyse | – |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -145,6 +148,9 @@ aandelen (`movingWindowRatio`, `calendarRatio`); de vragen die overblijven staan
 REQ-083 is de opdracht voor een overzicht van de grafieken met hun voorbeelden; eerst genoteerd als REQ-074.
 REQ-084 is de opdracht van 2026-10-05 om de API als Swagger-documentatie aan te bieden.
 REQ-085 is de opdracht van 2026-10-05 om een grafiek in een vaste maat te laten tekenen.
+REQ-086 tot REQ-088 zijn de opdracht van 2026-10-05 voor kaarten. Eerst de analyse:
+[Kaarten (analyse)](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361674253) op Confluence, met de vragen bij
+open punt 17.
 
 ### Hernummering
 
@@ -161,8 +167,9 @@ REQ-021 tot REQ-036. De commits 4d05f0a, 16792e8 en 9ac7a56 noemen nog de oude n
 
 ## Open punten, eerst te bespreken
 
-Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 19 tot 25, de punten 9 tot 16 zijn daar 27 tot 34.
-Punt 26 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)).
+Ook op Confluence onder "In discussie": de punten 1 tot 7 zijn daar 14 tot 20, de punten 9 tot 16 zijn daar 22 tot 29.
+Punt 21 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)). Punt 17 hieronder (kaarten) zijn daar de punten
+30 tot 42. Tel op Confluence enkel de genummerde punten: de zes opsommingstekens onder punt 2 tellen niet mee.
 
 1. **De mini-trend van de KPI-tegel met de periode ervoor.** REQ-067 (2026-10-03): "Een vergelijking buiten een
    tijdas (vergelijkingsstaaf, KPI-tegel en haar mini-trend) mag met de periode net ervoor of met vorig jaar".
@@ -218,6 +225,22 @@ Punt 26 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)).
     `large` 1280 px (een slide van 16:9) en `xl` 1920 px (full HD of print). `large` en `xl` worden opgebouwd op 960
     en 1280 px en dan vergroot (×4/3 en ×1,5), zodat de tekst meegroeit; `card` en `default` houden de lettergroottes
     van de grafiektaal. Akkoord met die breedtes, en met de vergroting?
+17. **Kaarten (REQ-086 tot REQ-088).** De analyse staat op
+    [Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361674253). De vragen staan daar onder "In
+    discussie", punten 30 tot 42, met de letterlijke tekst van de requirements en een voorstel. In het kort:
+    - de lichtste klasse van de kleurschaal is de lichte focustint, die volgens REQ-078 spreiding betekent;
+    - een heat map in cellen van het zeshoekraster, niet uitgesmeerd (REQ-058);
+    - geen som op vlakken van ongelijke grootte;
+    - geen data en weinig waarnemingen op een vlak;
+    - een punt op een kaart is een plaats (REQ-008), en nooit van een persoon;
+    - de Kust-regio afknippen op het land;
+    - herkomst en licentie van de postcodegrenzen (OPDA);
+    - de 13 postcodes in twee regio's;
+    - een `regionId` voor de regio's;
+    - een eigenschap `geoUnit` voor de keuzehulp;
+    - de referentielagen;
+    - de klassen en de legende;
+    - de postcodes van heel Vlaanderen op een card.
 
 ## Sjabloon voor een requirement
 
