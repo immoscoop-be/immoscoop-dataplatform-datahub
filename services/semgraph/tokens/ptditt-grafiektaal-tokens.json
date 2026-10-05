@@ -1,39 +1,61 @@
 {
-  "$description": "PROVISIONAL chart-language tokens for semgraph v0. Figma (file grafiektaal) is the source of truth. Values marked as read from Figma come from the cover page; all others are placeholders until the token export from Figma is agreed with Daniel. The service reads its style only from this file.",
-  "version": "0.0.0-provisional",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065).",
+  "version": "0.3.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
-    "focus/light": "#f2afd2",
-    "context": "#9aa3ad",
-    "text": "#2d333a",
+    "focus/light": "#ffcada",
+    "focus/dark": "#630038",
+    "context": "#b5bcc4",
+    "context/dark": "#6b7480",
+    "context/light": "#e5e8eb",
+    "text": "#3c444e",
     "text/muted": "#6b7480",
     "surface": "#ffffff",
-    "axis": "#c5cbd2",
-    "baseline": "#3c444e",
-    "grid": "#eef0f2",
+    "axis": "#d1d6db",
+    "baseline": "#6b7480",
     "badge/text": "#3c444e",
-    "badge/surface": "#f3f5f6"
+    "badge/surface": "#f3f5f6",
+    "reading-cue/text": "#630038",
+    "warning": "#c8102e",
+    "loss": "#2d333a",
+    "pattern/empty": "#e3e2dc",
+    "pattern/few": "#a9a79e",
+    "pattern/running": "#cfcdc4",
+    "ordinal/1": "#ffcada",
+    "ordinal/2": "#ff6ca6",
+    "ordinal/3": "#e34f9c",
+    "ordinal/4": "#b81e6e",
+    "ordinal/5": "#630038",
+    "target": "#1f9a8f",
+    "target/dark": "#146b63",
+    "target/light": "#d6f0ed",
+    "focus/subtle": "#fdeff6"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",
-    "body": "Nunito, 'Helvetica Neue', Arial, sans-serif"
+    "body": "Nunito, 'Helvetica Neue', Arial, sans-serif",
+    "mono": "'Roboto Mono', ui-monospace, Menlo, Consolas, monospace"
   },
   "size": {
-    "title": 16,
-    "readingCue": 11,
+    "title": 15,
+    "readingCue": 10,
     "value": 10,
     "detail": 8,
-    "axisLabel": 10,
-    "footer": 10
+    "axisLabel": 11,
+    "footer": 10,
+    "panelTitle": 14,
+    "panelBody": 12,
+    "kpi": 40,
+    "kpiDetail": 12,
+    "delta": 16
   },
   "stroke": {
     "axis": 1,
     "baseline": 1.5,
     "spread": 4,
     "spreadWide": 9,
-    "line": 1.5,
-    "missing": 1,
+    "line": 2,
     "guide": 1
   },
   "mark": {
@@ -43,6 +65,29 @@
     "circle": 7
   },
   "$sources": {
-    "fromFigma": ["color.focus", "color.text", "color.text/muted", "color.surface", "color.badge/text", "color.badge/surface", "font (Poppins and Nunito, still an open decision)", "size.value and size.detail (10 and 8)"]
+    "figmaVariables": [
+      "color (all)",
+      "stroke.axis (line/guide)",
+      "stroke.baseline (line/baseline)",
+      "stroke.line (line/series)"
+    ],
+    "figmaTextStyles": [
+      "font.title and size.title (Chart/Title)",
+      "size.readingCue (Chart/Reading cue)",
+      "size.axisLabel (Chart/Axis)",
+      "size.value (Chart/Value)",
+      "size.detail (Chart/Detail)",
+      "size.footer (Chart/Footer)"
+    ],
+    "figmaExamples": [
+      "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
+      "mark (Points and markers)",
+      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)",
+      "size.kpi and size.kpiDetail (Chart/KPI tile: the number and its comparison)",
+      "size.delta (Chart/KPI status: what is still needed)"
+    ],
+    "notInFigmaYet": [
+      "stroke.spread and stroke.spreadWide"
+    ]
   }
 }

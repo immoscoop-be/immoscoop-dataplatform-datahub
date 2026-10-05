@@ -1,12 +1,13 @@
 id: calendarAverage
 title: semgraphs.calendarAverage.title
 answers: semgraphs.calendarAverage.answers
+readingCard: readingCards.timeSeries
 attributes:
   timeAxis: [calendar]
   breakdown: [none]
   comparisonBasis: [none]
   dataGrain: [aggregated]
-  measureType: [additive, unique]
+  measureType: [additive, unique, perUnit]
   accumulation: [perPeriod]
   periodType: [calendar]
   centralTendency: [mean]

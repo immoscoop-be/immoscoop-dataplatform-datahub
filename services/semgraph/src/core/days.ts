@@ -1,4 +1,3 @@
-import type { IssueSpec } from './issues.ts';
 import type { Translator } from './i18n.ts';
 
 /**
@@ -36,12 +35,16 @@ export function currentDay(now: Date, timeZone = TIME_ZONE): number {
   return parseDay(text)!;
 }
 
-/** A day in the words of the locale, e.g. "30 sep" or "30 sep 2026", without depending on ICU data. */
-export function localizeDay(t: Translator, day: number, style: 'short' | 'long'): string {
+/**
+ * A day in the words of the locale, e.g. "30 sep" or "30 sep 2026", or in figures as in the footer
+ * of Figma, "30/09", without depending on ICU data.
+ */
+export function localizeDay(t: Translator, day: number, style: 'short' | 'long' | 'numeric'): string {
   const date = new Date(day * MS_PER_DAY);
+  const twoDigits = (value: number) => String(value).padStart(2, '0');
   return t(`date.${style}`, {
-    day: date.getUTCDate(),
-    month: t(`date.month.${date.getUTCMonth() + 1}`),
+    day: style === 'numeric' ? twoDigits(date.getUTCDate()) : date.getUTCDate(),
+    month: style === 'numeric' ? twoDigits(date.getUTCMonth() + 1) : t(`date.month.${date.getUTCMonth() + 1}`),
     year: date.getUTCFullYear(),
   });
 }
@@ -57,21 +60,4 @@ export function localizeRange(t: Translator, from: number, to: number): string {
     });
   }
   return t('date.range', { from: localizeDay(t, from, 'short'), to: localizeDay(t, to, 'short') });
-}
-
-/** Input checks shared by every semgraph with daily values: existing days, one value per day. */
-export function checkDailySeries(data: readonly { day: string }[], pointer = '/data'): IssueSpec[] {
-  const issues: IssueSpec[] = [];
-  const seen = new Set<number>();
-  data.forEach(({ day }, index) => {
-    const parsed = parseDay(day);
-    if (parsed === undefined) {
-      issues.push({ level: 'inputError', code: 'invalidDate', field: `${pointer}/${index}/day`, params: { value: day } });
-    } else if (seen.has(parsed)) {
-      issues.push({ level: 'inputError', code: 'duplicateDay', field: `${pointer}/${index}/day`, params: { day } });
-    } else {
-      seen.add(parsed);
-    }
-  });
-  return issues;
 }

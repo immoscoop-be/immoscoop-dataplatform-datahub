@@ -13,22 +13,6 @@ export function weekday(day: number): number {
   return (toDate(day).getUTCDay() + 6) % 7;
 }
 
-/** The first day of the period that contains `day`. */
-export function periodStart(day: number, unit: CalendarUnit): number {
-  const date = toDate(day);
-  const [year, month] = [date.getUTCFullYear(), date.getUTCMonth()];
-  switch (unit) {
-    case 'week':
-      return day - weekday(day);
-    case 'month':
-      return fromParts(year, month);
-    case 'quarter':
-      return fromParts(year, month - (month % 3));
-    case 'year':
-      return fromParts(year, 0);
-  }
-}
-
 /** The first day of the period `count` periods after (or before, when negative) the one starting at `start`. */
 export function shiftPeriod(start: number, unit: CalendarUnit, count: number): number {
   if (unit === 'week') return start + 7 * count;
@@ -48,4 +32,66 @@ export function parts(day: number): { year: number; month: number; quarter: numb
   const date = toDate(day);
   const month = date.getUTCMonth() + 1;
   return { year: date.getUTCFullYear(), month, quarter: Math.ceil(month / 3) };
+}
+
+/** The ISO name of a period, the name of a block in the contract (REQ-062): 2026-W40, 2026-09, 2026-Q3, 2026. */
+export function periodName(first: number, unit: CalendarUnit): string {
+  const { year, month, quarter } = parts(first);
+  switch (unit) {
+    case 'week': {
+      const week = isoWeek(first);
+      return `${week.year}-W${String(week.week).padStart(2, '0')}`;
+    }
+    case 'month':
+      return `${year}-${String(month).padStart(2, '0')}`;
+    case 'quarter':
+      return `${year}-Q${quarter}`;
+    case 'year':
+      return String(year);
+  }
+}
+
+const PERIOD_PATTERNS: Record<CalendarUnit, RegExp> = {
+  week: /^(\d{4})-W(\d{2})$/,
+  month: /^(\d{4})-(\d{2})$/,
+  quarter: /^(\d{4})-Q([1-4])$/,
+  year: /^(\d{4})$/,
+};
+
+/** The first day of the period with this ISO name, or undefined when it is not one of `unit`. */
+export function periodFromName(name: string, unit: CalendarUnit): number | undefined {
+  const match = PERIOD_PATTERNS[unit].exec(name);
+  if (!match) return undefined;
+  const year = Number(match[1]);
+  const index = Number(match[2] ?? 1);
+  let first: number;
+  switch (unit) {
+    case 'week': {
+      // Week 1 is the week with the year's first Thursday, so it contains 4 January.
+      const january4 = fromParts(year, 0) + 3;
+      first = january4 - weekday(january4) + 7 * (index - 1);
+      break;
+    }
+    case 'month':
+      if (index < 1 || index > 12) return undefined;
+      first = fromParts(year, index - 1);
+      break;
+    case 'quarter':
+      first = fromParts(year, 3 * (index - 1));
+      break;
+    case 'year':
+      first = fromParts(year, 0);
+      break;
+  }
+  // A week 53 that does not exist would be week 1 of the next year: the name must round-trip.
+  return periodName(first, unit) === name ? first : undefined;
+}
+
+/** The unit and the days of an ISO period name of any unit, e.g. 2026-09 is a month; undefined when it is none. */
+export function anyPeriodFromName(name: string): { unit: CalendarUnit; first: number; last: number } | undefined {
+  for (const unit of CALENDAR_UNITS) {
+    const first = periodFromName(name, unit);
+    if (first !== undefined) return { unit, first, last: shiftPeriod(first, unit, 1) - 1 };
+  }
+  return undefined;
 }

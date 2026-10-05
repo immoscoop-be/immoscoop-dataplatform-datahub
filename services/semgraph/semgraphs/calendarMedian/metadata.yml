@@ -1,12 +1,13 @@
 id: calendarMedian
 title: semgraphs.calendarMedian.title
 answers: semgraphs.calendarMedian.answers
+readingCard: readingCards.timeSeries
 attributes:
   timeAxis: [calendar]
   breakdown: [none]
   comparisonBasis: [none]
   dataGrain: [aggregated]
-  measureType: [additive, unique]
+  measureType: [additive, unique, perUnit]
   accumulation: [perPeriod]
   periodType: [calendar]
   centralTendency: [median]

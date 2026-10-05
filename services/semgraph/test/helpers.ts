@@ -25,15 +25,6 @@ export async function fixture<T>(name: string): Promise<T> {
   return JSON.parse(await readFile(path.join(REPO_ROOT, 'test', 'fixtures', name), 'utf8')) as T;
 }
 
-/** A complete daily series ending at `end`, with the given values. */
-export function series(end: string, values: (number | null)[]): { day: string; value: number | null }[] {
-  const last = Date.parse(`${end}T00:00:00Z`);
-  return values.map((value, index) => ({
-    day: new Date(last - (values.length - 1 - index) * 86_400_000).toISOString().slice(0, 10),
-    value,
-  }));
-}
-
 /** Compares with test/golden/<name>; UPDATE_GOLDEN=1 rewrites the file instead. */
 export async function assertGolden(name: string, actual: string): Promise<void> {
   const file = path.join(REPO_ROOT, 'test', 'golden', name);

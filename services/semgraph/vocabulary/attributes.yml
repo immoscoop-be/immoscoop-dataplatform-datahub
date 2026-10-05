@@ -19,7 +19,9 @@
   values: [aggregated, individual]
   source: [data]
 - id: measureType
-  values: [additive, unique, ratio]
+  # perUnit: a mean or median per unit where the spread between the units is the question, such as an amount
+  # per lead; ratio: a numerator divided by a denominator, a share or a ratio per unit (REQ-070, REQ-074).
+  values: [additive, unique, perUnit, ratio]
   source: [domainHub]
 - id: partToWhole
   question: attributes.partToWhole.question

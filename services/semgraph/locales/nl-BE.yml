@@ -1,5 +1,29 @@
 # Vertaling naar het Nederlands (België). Ontbreekt een sleutel, dan valt de dienst terug op en.yml.
 semgraphs:
+  kpiStatus:
+    title: KPI-status
+    answers: Halen we het doel, en wat is er nog nodig?
+    examples:
+      "1": Halen we tegen het einde van het jaar 130k leads, en hoeveel per maand is daarvoor nodig?
+      "2": Hoeveel voor of achter op het plan liggen de nieuwe panden dit kwartaal?
+  kpiTile:
+    title: KPI-tegel
+    answers: Hoeveel is het nu, en is dat meer of minder dan ervoor?
+    examples:
+      "1": Hoeveel kredietleads kregen we de laatste 28 dagen, tegenover vorig jaar?
+      "2": Hoe lang wacht een lead deze maand op een eerste contact?
+  distribution:
+    title: Verdeling
+    answers: Hoe liggen de waarden verspreid, waar ligt het midden en hoe lang is de staart?
+    examples:
+      "1": Hoe liggen de vraagprijzen van de panden te koop verspreid?
+      "2": Hoeveel panden kosten meer dan € 500k?
+  categoryComparison:
+    title: Vergelijking tussen categorieën
+    answers: Welke categorie heeft het meest, of de hoogste typische waarde?
+    examples:
+      "1": Welke provincie bracht de voorbije 28 dagen de meeste leads?
+      "2": Hoe lang staan panden online, per prijsklasse?
   movingWindowAverage:
     title: Voortschrijdend gemiddelde
     answers: Hoe evolueert dit, zonder dagelijkse ruis?
@@ -18,12 +42,30 @@ semgraphs:
     examples:
       "1": Hoeveel kredietleads per dag kregen we gemiddeld, per maand dit jaar?
       "2": Was deze week drukker dan de weken ervoor?
+  periodComparison:
+    title: Vergelijking met de vorige periode
+    answers: Doen we het beter of slechter dan in de periode ervoor?
+    examples:
+      "1": Kregen we deze 12 weken meer of minder kredietleads dan de 12 weken ervoor?
+      "2": Ligt de typische dag van dit halfjaar hoger dan die van het halfjaar ervoor?
   calendarMedian:
     title: Mediaan per kalenderperiode
     answers: Hoeveel op een typische dag, in elke week, maand, kwartaal of jaar?
     examples:
       "1": Hoe zag een typische dag voor kredietleads eruit, per kwartaal?
       "2": Hoe veranderde de typische tijd tot het eerste contact per dag, per maand?
+  movingWindowRatio:
+    title: Voortschrijdende verhouding
+    answers: Hoe evolueert een aandeel, en hoe groot is de basis waarop het steunt?
+    examples:
+      "1": Welk aandeel van de bezoekers werd de voorbije weken een lead, over telkens 7 dagen?
+      "2": Stijgt of daalt het aandeel gekwalificeerde leads?
+  calendarRatio:
+    title: Verhouding per kalenderperiode
+    answers: Welk aandeel in elke week, maand, kwartaal of jaar, en op hoe grote een basis?
+    examples:
+      "1": Hoe evolueerde de conversie van bezoek naar lead per week?
+      "2": Welk aandeel van de panden werd binnen 90 dagen verkocht, per maand?
 
 attributes:
   timeAxis:
@@ -44,81 +86,164 @@ attributes:
     question: Wil je het gemiddelde of de mediaan?
 
 axis:
-  today: vandaag
+  n: "n {n}"
+  now: nu
   daysAgo: "−{n}d"
 
 cue:
+  distribution: "verdeling · per {width}"
+  category:
+    mean: gemiddelde
+    median: mediaan
+  scope:
+    window: "voortschrijdend {window}d"
+    day: "op {date}"
   rolling:
     mean: voortschrijdend gemiddelde {window}d
     median: voortschrijdende mediaan {window}d
+    daily: dagwaarden
+    sum: som per {window} dagen
+    ratio: voortschrijdende verhouding {window}d
   calendar:
     mean: gemiddelde per dag, per {unit}
     median: mediaan per dag, per {unit}
+    sum: som per {unit}
+    ratio: verhouding per {unit}
+    perUnit:
+      mean: "gemiddelde per {unit}"
+      median: "mediaan per {unit}"
+  comparison: tegenover {label}
+  ratioOf: "{numerator} / {denominator}"
+  kpiStatus: "cumulatief · vanaf {start} op {date} · doel {target}"
   spread:
     mean: ±1 sd
     median: P25–P75
   unique: uniek · per dag geteld
+  uniqueOverPeriod: "uniek · per {block} geteld"
 
 desc:
+  distribution: "P25 {p25}, mediaan {p50}, P75 {p75}."
+  categories: "{count} categorieën."
+  kpi: "Nu {value}, {difference} tegenover {label}."
+  kpiStatus: "Nu {current} van {target} tegen {date}; nog {needed} nodig."
   base: "{title}: {cue}, tot {date}."
   latest: "Laatste punt: {stats}."
   latestMissing: Geen waarde voor het laatste punt.
 
 chart:
-  noData: geen data
+  distribution:
+    open: ≥ P95
+    bin: "{from}–{to}"
+    openBin: "≥ P95: vanaf {from}"
+    count: "{count} ({share})"
   stats:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
-  missing:
-    one: "geen data: {absent} ontbreekt"
-    many: "geen data: {count} dagen ontbreken, de eerste op {absent}"
+    ratio: "{value} ({parts})"
   window: venster {range}
   running: "lopend: {count} van {total} dagen"
+  noData: geen data
   runningShort: lopend
+  kpi:
+    shadow: "grijs = {label}"
+  kpiStatus:
+    target: "doel {value} · {date}"
+    pathSet: "pad vastgelegd {date}"
+    catchUp: incl. inhaal
+    pace: "{value}/{unit}"
+    per:
+      week: wk
+      month: mnd
+      quarter: kw
+    plan: "{catchUp} in {period} · daarna {pace}"
+    planWeighted: "{catchUp} in {period} · daarna volgens het pad"
+    lastStep: "{catchUp} in {period}"
+    reached: doel bereikt
+    above: "{value} boven het doel"
+    missed: doel niet gehaald
+  noComparison: geen vergelijking
 
 hover:
+  n: "n = {n} waarnemingen"
   centre:
+    category:
+      sum: totaal
+      mean: gemiddelde
+      median: mediaan
     rolling:
       mean: "gemiddelde {window}d"
       median: "mediaan {window}d"
+      daily: waarde
+      sum: "som {window}d"
+      ratio: "verhouding {window}d"
     calendar:
       mean: gemiddelde per dag
       median: mediaan per dag
+      sum: som
+      ratio: verhouding
+      perUnit:
+        mean: gemiddelde
+        median: mediaan
+  comparison: "vorige periode, {name}: {value}"
+  comparisonMissing: "vorige periode, {name}: geen data"
+  comparedWith: "{label}: {value}"
+  comparedWithMissing: "{label}: geen data"
+  kpiStatus:
+    level: "stand: {value}"
+    added: "deze periode: {value}"
+    path: "pad: {value}"
+    difference: "tegenover de geplande stap: {value}"
+    planned: "nog erbij: {value}"
+  difference: "verschil: {value}"
   spread:
     mean: "±1 sd: {sd}"
     median: "P25–P75: {p25}–{p75}"
 
 calendar:
   unit:
+    period: periode
     week: week
     month: maand
     quarter: kwartaal
     year: jaar
   tick:
     week: W{week}
-    quarter: K{quarter} {year}
-  withYear: "{label} {year}"
-  none:
-    week: geen enkele week
-    month: geen enkele maand
-    quarter: geen enkel kwartaal
-    year: geen enkel jaar
+    quarter: K{quarter}
   hover:
     week: week {week} ({range})
     month: "{month} {year}"
     quarter: K{quarter} {year}
 
-period:
-  window: een venster van {window} dagen
-  week: een week
-  month: een maand
-  quarter: een kwartaal
-  year: een jaar
+comparison:
+  year: vorig jaar
+  years: vorige {n} jaar
+  weeks: vorige {n} weken
+  months: vorige {n} maanden
+  quarters: vorige {n} kwartalen
+  days: vorige {n} dagen
+  previous:
+    day: de dag ervoor
+    week: vorige week
+    month: vorige maand
+    quarter: vorig kwartaal
+
+blocks:
+  category: categorieën
+  day: dagen
+  window: vensters
+  week: weken
+  month: maanden
+  quarter: kwartalen
+  year: jaren
+  sinceStart: start
+  oneDay: dag
+  oneWindow: "venster van {window} dagen"
 
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  numeric: "{day}/{month}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -141,11 +266,49 @@ footer:
   unknownOwner: owner onbekend
   unknownReliability: betrouwbaarheid onbekend
   asOf: peildatum {date}
-  definition: definitie
+  compiled: samengesteld {date}
+  definition: definitie →
   definitionUnknown: definitie onbekend
   howToRead: Hoe lees ik deze grafiek?
-  outsideLanguage: "Buiten de grafiektaal: {details}."
+  readingCard: "Leeskaart: {name} →"
   languageVersion: grafiektaal {version}
+
+gallery:
+  title: "Semgraph: de grafieken"
+  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links."
+  examples: "{count} voorbeelden"
+  contract: contract (JSON)
+  readingCard: leeskaart
+  json: dit overzicht in JSON
+  planned: Gepland
+  plannedNote: In de catalogus, nog niet beschikbaar.
+  outcome:
+    ok: ok
+    deviation: buiten de grafiektaal
+    refused: geweigerd
+    invalid: ongeldig
+  language:
+    en: English
+    nl-BE: Nederlands
+
+readingCards:
+  kpiStatus: KPI-status
+  kpiTile: KPI-tegel
+  distribution: verdeling
+  categoryComparison: staafgrafiek
+  timeSeries: tijdreeks
+  periodComparison: periodevergelijking
+
+meta:
+  question: Vraag
+  references: Referenties
+  query: Query
+  metadata: Metadata
+  askedBy: Gesteld door {name}
+  builtBy: Uitgewerkt door
+  compiledOn: Samengesteld op
+  semgraph: Semgraph
+  version: Versie
 
 types:
   integer: een geheel getal
@@ -157,12 +320,66 @@ types:
   "null": leeg
 
 issues:
+  binsNotContiguous:
+    message: "{field}: de bins moeten even breed zijn en op elkaar aansluiten: elk begint {width} na de vorige."
+    alternative: Stuur elke bin vanaf de eerste, ook de lege (count 0).
+  openBinOverlaps:
+    message: De open bin begint voor de laatste bin eindigt.
+    alternative: Laat de open bin beginnen bij of na het einde van de laatste bin.
+  tooFewUnits:
+    message: "De verdeling telt {count} eenheden. Kwartielen van minder dan {minimumPoints} zeggen weinig."
+    alternative: Neem een langere periode of een ruimere groep.
+  scopeRequired:
+    message: "Zeg welke tijd de waarden dekken: window (een rollend venster van dagen), period (een ISO-kalenderperiode) of day (een momentopname), precies één."
+    alternative: Voeg window, period of day toe.
+  categoryIsDate:
+    message: "{field}: {value} is een datum of een periode. Staven zijn voor categorieën; een datumas is altijd een lijn."
+    alternative: Gebruik movingWindowAverage, calendarAverage of periodComparison voor het verloop in de tijd.
+  tooManyCategories:
+    message: "{count} geordende categorieën passen niet naast elkaar; hoogstens {max}."
+    alternative: Groepeer de categorieën in minder klassen, of laat de volgorde weg zodat de staven liggen.
+  tooFewCategories:
+    message: "Maar {count} categorie heeft een waarde. Staven vergelijken categorieën; dat vraagt er minstens {minimumPoints}."
+    alternative: Stuur meer categorieën, of toon de waarde alleen in een KPI-tegel.
+  comparisonOnlyForSum:
+    message: "Een vergelijking zit in één staaf, dus enkel bij een som; deze grafiek toont de {statistic}."
+    alternative: Laat comparison en previous weg, of volg het gemiddelde of de mediaan in de tijd met periodComparison.
+  kpiValueMissing:
+    message: Het laatste blok heeft geen waarde, dus de tegel heeft geen getal om te tonen.
+    alternative: Stuur de waarde van het laatste blok mee, of toon het verloop met periodComparison.
+  kpiComparisonMissing:
+    message: "Het laatste blok heeft geen waarde voor {label}: een getal zonder vergelijking zegt niets."
+    alternative: Stuur previous mee voor het laatste blok, of kies de andere vergelijking.
+  targetBeforeStart:
+    message: De dag van het doel ligt voor de startdag.
+    alternative: Geef een dag voor het doel na de startdag.
+  pathSetOutsideKpi:
+    message: Het pad is vastgelegd buiten de periode van de KPI.
+    alternative: Geef in pathSet een dag tussen de start en het doel.
+  periodOutsideKpi:
+    message: "Periode {block} ligt buiten de KPI, van de start tot het doel."
+    alternative: Stuur enkel de periodes van de start tot het doel.
+  cumulativeDecreases:
+    message: "De stand daalt in {block}: een stand sinds de start kan alleen stijgen."
+    alternative: Stuur de cumulatieve stand op het einde van elke periode, niet het aantal per periode.
+  pathBeforeSet:
+    message: "Periode {block} heeft een geplande stand, maar het pad is pas vastgelegd op {date}."
+    alternative: Stuur het pad vanaf de periode waarin het vastgelegd is; het verschuift nooit meer.
+  cumulativeGap:
+    message: Tussen de start en de laatste stand ligt een periode zonder stand, dus elke stand erna is onbekend.
+    alternative: Stuur de stand van elke periode die voorbij is.
+  pathIncomplete:
+    message: "Periode {block} heeft geen geplande stand: het pad loopt van het moment dat het vastgelegd is ({date}) tot het doel."
+    alternative: Stuur de geplande stand van elke periode van de planning tot het doel.
+  noPreviousValues:
+    message: "Geen enkele categorie heeft een waarde voor {label}, dus er is niets om mee te vergelijken."
+    alternative: Stuur de vorige waarden mee, of laat comparison en previous weg.
   badRequest:
     message: "De aanvraag kon niet gelezen worden: {detail}"
     alternative: Stuur een JSON-object met Content-Type application/json.
   payloadTooLarge:
     message: De aanvraag is te groot.
-    alternative: Stuur hoogstens 4000 dagen; meer heeft een grafiek nooit nodig.
+    alternative: Stuur hoogstens 1000 blokken; meer heeft een grafiek nooit nodig.
   unsupportedMediaType:
     message: Enkel JSON-aanvragen worden aanvaard.
     alternative: Gebruik Content-Type application/json.
@@ -188,8 +405,8 @@ issues:
   unexpectedField:
     message: Het veld {field} hoort niet bij deze semgraph.
     alternative: Laat het weg, of controleer de schrijfwijze in GET /semgraphs/{semgraph}.
-  unexpectedDataField:
-    message: Een dag mag enkel day en value bevatten; {field} is niet toegelaten.
+  unexpectedBlockField:
+    message: Een blok bevat enkel zijn naam en de velden van zijn statistiek; {field} is niet toegelaten.
     alternative: Laat de andere kolommen weg. Stuur nooit persoonsgegevens naar de grafiekserver.
   invalidValue:
     message: "{field} moet een van deze waarden zijn: {allowed}."
@@ -212,9 +429,28 @@ issues:
   invalidDate:
     message: "{field}: {value} is geen bestaande dag."
     alternative: Schrijf dagen als JJJJ-MM-DD.
-  duplicateDay:
-    message: De dag {day} komt meer dan eens voor.
-    alternative: Stuur één waarde per dag.
+  invalidPeriod:
+    message: "{field}: {value} is geen geldige {unit}."
+    alternative: Schrijf 2026-W40 voor een week, 2026-09 voor een maand, 2026-Q3 voor een kwartaal en 2026 voor een jaar.
+  tooManyBlocks:
+    message: "Van het eerste tot het laatste blok zijn er {count} blokken; een grafiek toont er hoogstens {max}."
+    alternative: Stuur een kortere periode, of langere blokken.
+  duplicateBlock:
+    message: Het blok {block} komt meer dan eens voor.
+    alternative: Stuur één rij per blok.
+  windowsNotAligned:
+    message: "{field}: het venster dat eindigt op {block} sluit niet aan op de andere. De einddagen moeten een veelvoud van {window} dagen uit elkaar liggen."
+    alternative: Laat de vensters op elkaar volgen zonder overlap, elk van {window} dagen.
+  fieldNotForStatistic:
+    message: "{field} hoort niet bij de statistiek {statistic}."
+    alternative: "Een blok bevat enkel de velden van zijn statistiek: mean met sd en n, median met p25, p75 en n, of sum."
+  spreadIncomplete:
+    message: "{field} heeft geen spreiding, terwijl andere blokken er wel een hebben."
+    alternative: Geef de spreiding mee bij elk blok met een waarde, of bij geen enkel.
+  spreadPartial:
+    message: "{field} ontbreekt: P25 en P75 horen samen."
+  spreadOrder:
+    message: "{field}: P25, de mediaan en P75 moeten in die volgorde liggen."
   invalidUrl:
     message: "{field} moet een weblink zijn die begint met http:// of https://."
   invalidCharacters:
@@ -226,38 +462,86 @@ issues:
   measureTypeNotAllowed:
     message: "Deze grafiek is niet gemaakt voor een maat van het type {measureType}: de grafiektaal legt ze enkel vast voor {allowed}."
     alternative: Gebruik een maat van het type {allowed}, of vraag aan het datateam welke semgraph past.
+  perUnitNotSummable:
+    message: "Een som van gemiddelden per eenheid betekent niets: een gemiddeld bedrag per lead tel je niet op over een week."
+    alternative: Kies statistic mean of median.
+  ratioPerUnitOpen:
+    message: "In minstens één blok is de teller groter dan de noemer: een verhouding per eenheid, zoals panden per makelaar. Hoe zo'n verhouding getoond wordt, ligt nog open; voorlopig wordt enkel een aandeel getekend, waarvan de teller deel is van de noemer."
+    alternative: "Kijk de teller en de noemer na. Is het een gemiddelde per eenheid waarbij de spreiding tussen de eenheden de vraag is? Gebruik dan measureType perUnit met calendarAverage of calendarMedian."
+  ratioNeedsNumerator:
+    message: "Een verhouding, zoals leads van bezoekers, is een teller gedeeld door een noemer. Deze grafiek kan ze niet allebei tonen."
+    alternative: "Stuur per blok de teller en de noemer naar movingWindowRatio of calendarRatio. Is het een gemiddelde of mediaan per eenheid waarbij de spreiding tussen de eenheden de vraag is, zoals het bedrag per lead? Gebruik dan measureType perUnit."
   uniqueAggregationRequired:
-    message: "Bij unieke aantallen moet je kiezen: unieken per dag geteld, of unieken over de hele periode. Dat zijn twee verschillende metrics."
-    alternative: Voeg uniqueAggregation daily toe als de waarden dagelijkse unieken zijn. Unieken over de periode kunnen niet uit dagwaarden berekend worden.
-  uniquesOverPeriodNotDerivable:
-    message: "Unieken over {period} kunnen niet uit dagwaarden berekend worden: wie op meerdere dagen terugkomt, zou meerdere keren tellen."
-    alternative: Bereken ze aan de bron, als aparte metric, of kies uniqueAggregation daily.
+    message: "Bij unieke aantallen moet je zeggen hoe ze geteld zijn: per dag (daily) of over het hele blok (overPeriod). Dat zijn twee verschillende metrics."
+    alternative: Voeg uniqueAggregation daily of overPeriod toe.
+  dailyUniquesNotSummable:
+    message: Een som van dagelijkse unieken telt wie op meerdere dagen terugkomt meer dan eens.
+    alternative: Tel de unieken per blok in het datawarehouse en geef uniqueAggregation overPeriod, of kies statistic mean voor het gemiddelde per dag.
+  uniquesOverPeriodNotAveraged:
+    message: "Unieken over een heel blok zijn één aantal per blok: er is geen gemiddelde per dag en geen spreiding om te tonen."
+    alternative: Gebruik periodComparison met statistic sum voor de unieken per blok, of stuur de dagelijkse unieken met uniqueAggregation daily.
+  blockAfterReference:
+    message: "Het blok {block} loopt voorbij de laatste volledige dag ({day}), dus zijn waarde is nog niet definitief."
+    alternative: Stuur enkel blokken tot de laatste volledige dag (een kalenderperiode mag nog lopen), of geef asOf mee als de data verder loopt.
+  noData:
+    message: Geen enkel blok heeft een waarde, dus er is niets om te tonen. Een blok zonder data telt nooit als nul.
+    alternative: Stuur de waarden mee (0 waar er niets gebeurde).
   insufficientData:
-    message: "Er zijn {count} dagen met een waarde in de {days} dagen die deze grafiek gebruikt ({from} tot {to}). Een betrouwbaar voortschrijdend gemiddelde vraagt er minstens {minimumPoints}."
-    alternative: Stuur meer dagen, of kies een langere horizon.
-  noCompleteWindow:
-    message: Geen enkel venster van {window} dagen is volledig, dus er is geen gemiddelde om te tonen. Dagen zonder data tellen nooit als nul.
-    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde), of gebruik een korter venster.
-  noCompletePeriod:
-    message: Er is {none} volledig, dus er is niets om te tonen. Dagen zonder data tellen nooit als nul.
-    alternative: Stuur de ontbrekende dagen mee (0 waar er niets gebeurde).
+    message: "De blokken met een waarde beslaan samen {count} dagen. Een betrouwbare grafiek vraagt er minstens {minimumPoints}."
+    alternative: Stuur meer blokken.
+
+  windowOrUnit:
+    message: Geef ofwel window (rollende vensters) ofwel unit (kalenderperiodes), niet allebei en niet geen van beide.
+  noComparisonData:
+    message: "Er is niets om mee te vergelijken: geen enkel blok draagt de waarde van de periode vóór het scherm."
+    alternative: Geef bij elk blok in previous de waarde van het blok ervoor.
 
   windowNotMultipleOf7:
-    message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een melding in de voetregel.
+    message: Een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. De grafiek wordt getekend, met een rode melding.
     alternative: Gebruik 7, 14, 28 of een ander veelvoud van 7.
-    footer: het venster van {window} dagen is geen veelvoud van 7
+    alert: "Lees deze grafiek met voorzichtigheid: een venster van {window} dagen is geen veelvoud van 7, dus niet elke weekdag telt even vaak mee. Een verschil tussen twee punten kan van de weekdagen komen."
   meanWithoutSpread:
-    message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
-    alternative: Gebruik spread stddev.
-    footer: gemiddelde zonder spreiding
+    message: Het gemiddelde wordt getoond zonder spreiding, dus je ziet niet hoe ver de waarden uit elkaar liggen. De grafiek wordt getekend, met een rode melding.
+    alternative: Geef sd mee bij elk blok.
+    alert: "Lees deze grafiek met voorzichtigheid: dit gemiddelde staat zonder spreiding, dus je ziet niet hoe ver de waarden uit elkaar liggen. Twee periodes met hetzelfde gemiddelde kunnen heel verschillend zijn."
   medianWithoutSpread:
-    message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de dagwaarden uit elkaar liggen. De grafiek wordt getekend, met een melding in de voetregel.
-    alternative: Gebruik spread iqr.
-    footer: mediaan zonder spreiding
+    message: De mediaan wordt getoond zonder spreiding (P25–P75), dus je ziet niet hoe ver de waarden uit elkaar liggen. De grafiek wordt getekend, met een rode melding.
+    alternative: Geef p25 en p75 mee bij elk blok.
+    alert: "Lees deze grafiek met voorzichtigheid: deze mediaan staat zonder spreiding (P25–P75), dus je ziet niet hoe ver de waarden uit elkaar liggen. Twee periodes met dezelfde mediaan kunnen heel verschillend zijn."
+  nMissing:
+    mean:
+      message: Niet elk blok van dit gemiddelde zegt hoeveel waarnemingen erachter zitten (n). De grafiek wordt getekend, met een rode melding.
+      alternative: Geef n mee bij elk blok.
+      alert: "Lees deze grafiek met voorzichtigheid: bij dit gemiddelde staat niet hoeveel waarnemingen erachter zitten, dus je ziet niet welke punten op weinig waarnemingen steunen."
+    median:
+      message: Niet elk blok van deze mediaan zegt hoeveel waarnemingen erachter zitten (n). De grafiek wordt getekend, met een rode melding.
+      alternative: Geef n mee bij elk blok.
+      alert: "Lees deze grafiek met voorzichtigheid: bij deze mediaan staat niet hoeveel waarnemingen erachter zitten, dus je ziet niet welke punten op weinig waarnemingen steunen."
+  fewObservations:
+    mean:
+      message: "{count} van de {total} {blocks} steunen op weinig waarnemingen. Ze krijgen stippels achter hun kolom en hun n onder de as."
+      alert: "Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij {count} van de {total} {blocks}, dus één uitschieter kan hun gemiddelde sterk verschuiven."
+    median:
+      message: "{count} van de {total} {blocks} steunen op weinig waarnemingen. Ze krijgen stippels achter hun kolom en hun n onder de as."
+      alert: "Lees deze grafiek met voorzichtigheid: weinig waarnemingen bij {count} van de {total} {blocks}, dus hun mediaan is nog onzeker."
+    ratio:
+      thin:
+        message: "{count} van de {total} {blocks} steunen op weinig waarnemingen: minder dan 10 {numerator}, of minder dan 10 {denominator} zonder hen. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op heel weinig {numerator} of {denominator}, dus enkele meer of minder kunnen het aandeel sterk verschuiven."
+      base:
+        message: "{count} van de {total} {blocks} steunen op veel minder {denominator} dan de {blocks} errond. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op veel minder {denominator} dan de {blocks} errond."
+      both:
+        message: "{count} van de {total} {blocks} steunen op weinig waarnemingen: heel weinig {numerator} of {denominator}, of veel minder {denominator} dan de {blocks} errond. Ze krijgen stippels achter hun kolom en hun aantallen bij het punt."
+        alert: "Lees deze grafiek met voorzichtigheid: {count} van de {total} {blocks} steunen op heel weinig {numerator} of {denominator}, of op veel minder {denominator} dan de {blocks} errond."
 
   localeFallback:
     message: Er zijn geen teksten voor {locale}, dus het Engels wordt gebruikt.
   uniqueAggregationIgnored:
     message: uniqueAggregation geldt enkel voor unieke aantallen en werd genegeerd.
-  daysAfterReferenceIgnored:
-    message: "{count} dag(en) na de laatste volledige dag ({day}) werden weggelaten: de lopende dag is nog niet voorbij."
+  valuesAllTooDense:
+    message: "Er zijn te veel punten om elke waarde op de grafiek te schrijven; de standaard ({values}) wordt gebruikt."
+    alternative: Stuur minder blokken, of kies een grotere periode.
+  valueAxisZoomIgnored:
+    message: "Een hoeveelheid is een staaf, en een staaf begint bij nul: de waardeas zoomt niet in."
+    alternative: Laat valueAxis weg; inzoomen is voor een gemiddelde of mediaan per categorie.

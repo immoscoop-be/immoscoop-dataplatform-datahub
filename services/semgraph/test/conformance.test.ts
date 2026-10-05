@@ -30,6 +30,7 @@ function metadata(id: string, attributes: Record<string, AttributeValues>): Semg
     id,
     title: 'semgraphs.movingWindowAverage.title',
     answers: 'semgraphs.movingWindowAverage.answers',
+    readingCard: 'readingCards.timeSeries',
     attributes,
     exampleQuestions: [],
     doNotUseWhen: [],

@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import type { Dependencies } from '../app.ts';
 import { createTranslator, resolveLocale } from '../core/i18n.ts';
 import { localizeIssue } from '../core/issues.ts';
+import type { LoadedSemgraph } from '../core/registry.ts';
 
 interface LocaleQuery {
   Querystring: { locale?: string };
@@ -15,13 +16,17 @@ export function semgraphRoutes(app: FastifyInstance, { registry }: Dependencies)
     const t = translator(request.query.locale);
     return {
       locale: t.locale,
-      semgraphs: [...registry.semgraphs.values()].map(({ id, metadata }) => ({
-        id,
-        title: t(metadata.title),
-        answers: t(metadata.answers),
-        href: `/semgraphs/${id}`,
+      // REQ-083: the overview of every chart on offer, each with links to its examples.
+      semgraphs: [...registry.semgraphs.values()].map((loaded) => ({
+        id: loaded.id,
+        title: t(loaded.metadata.title),
+        answers: t(loaded.metadata.answers),
+        href: `/semgraphs/${loaded.id}`,
+        links: loaded.metadata.links,
+        examples: exampleLinks(loaded),
       })),
       planned: registry.catalog.filter((entry) => entry.status === 'planned').map((entry) => entry.id),
+      gallery: '/gallery',
     };
   });
 
@@ -37,7 +42,7 @@ export function semgraphRoutes(app: FastifyInstance, { registry }: Dependencies)
       });
       return reply.code(404).send({ outcome: 'invalid', locale: t.locale, issues: [issue] });
     }
-    const { id, metadata, schema, examples } = loaded;
+    const { id, metadata, schema } = loaded;
     return {
       id,
       locale: t.locale,
@@ -48,8 +53,16 @@ export function semgraphRoutes(app: FastifyInstance, { registry }: Dependencies)
       doNotUseWhen: metadata.doNotUseWhen,
       data: metadata.data,
       links: metadata.links,
-      examples: [...examples.keys()].map((name) => ({ name, href: `/semgraphs/${id}/examples/${name}` })),
+      examples: exampleLinks(loaded),
       schema,
     };
+  });
+}
+
+/** The examples of a semgraph: their name, their title as the chart shows it, and where to see them drawn. */
+export function exampleLinks({ id, examples }: LoadedSemgraph): { name: string; title: string; href: string }[] {
+  return [...examples].map(([name, request]) => {
+    const title = (request as { title?: unknown }).title;
+    return { name, title: typeof title === 'string' ? title : name, href: `/semgraphs/${id}/examples/${name}` };
   });
 }

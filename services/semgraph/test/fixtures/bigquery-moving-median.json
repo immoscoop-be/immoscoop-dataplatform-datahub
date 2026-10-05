@@ -1,5 +1,5 @@
 {
-  "$description": "PERCENTILE_CONT 0.25/0.5/0.75 in BigQuery over the 7 days ending on each day, on the data of semgraphs/movingWindowMedian/examples/basic.json (self-join, ARRAY_AGG, PERCENTILE_CONT OVER (PARTITION BY day)).",
+  "$description": "PERCENTILE_CONT 0.25/0.5/0.75 in BigQuery over the 7 days ending on each day, on the daily example data behind semgraphs/movingWindowMedian/examples/basic.json, the warehouse query that gives its blocks (REQ-058; self-join, ARRAY_AGG, PERCENTILE_CONT OVER (PARTITION BY day)).",
   "rows": [
     ["2026-09-30", 39.0, 49.0, 54.0], ["2026-09-29", 39.0, 49.0, 55.0], ["2026-09-28", 39.0, 49.0, 51.5],
     ["2026-09-27", 39.0, 49.0, 52.0], ["2026-09-26", 39.0, 49.0, 52.0], ["2026-09-25", 39.5, 49.0, 52.0],

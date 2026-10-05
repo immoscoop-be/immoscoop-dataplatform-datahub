@@ -1,3 +1,5 @@
+import { color, type Tokens } from '../core/tokens.ts';
+
 /** A value axis as the chart draws it: its ticks, and whether it starts above zero. */
 export interface ValueScale {
   ticks: number[];
@@ -12,12 +14,43 @@ export type ValueAxisMode = 'zero' | 'zoom';
 /**
  * From zero by default. "zoom" lets the axis start at a round value just below the data; that is
  * allowed for positions such as averages and medians, never for bars. When the round start is zero
- * anyway, the axis simply starts at zero (REQ-015).
+ * anyway, the axis simply starts at zero (REQ-026).
  */
 export function valueScale(lowest: number, highest: number, mode: ValueAxisMode): ValueScale {
   const ticks = mode === 'zoom' && lowest > 0 ? niceRange(lowest, highest) : niceTicks(highest);
   const min = ticks[0]!;
   return { ticks, min, max: ticks.at(-1)!, zoomed: min > 0 };
+}
+
+/**
+ * The zigzag at the start of the baseline of a zoomed axis, in pixels: along the baseline, and across
+ * it. Every chart that zooms draws the same one (REQ-026, REQ-073); MASK is the stretch of baseline it replaces.
+ */
+export const ZIGZAG: readonly (readonly [number, number])[] = [[0, 0], [2, 3], [5, -3], [8, 3], [10, 0]];
+export const ZIGZAG_MASK = 11;
+
+/**
+ * The layers of a zoomed axis (REQ-026, REQ-073): the baseline gives way to a zigzag at its start. The
+ * data sets `mask` and `zigzag` hold their points; `along` encodes the stretch of baseline the mask covers.
+ */
+export function zoomLayers(tokens: Tokens, x: object, y: object, along: object) {
+  return [
+    {
+      data: { name: 'mask' },
+      mark: { type: 'rule', color: color(tokens, 'surface'), strokeWidth: tokens.stroke.baseline + 2 },
+      encoding: along,
+    },
+    {
+      data: { name: 'zigzag' },
+      mark: { type: 'line', color: color(tokens, 'baseline'), strokeWidth: tokens.stroke.baseline, strokeJoin: 'miter' },
+      encoding: { x, y, order: { field: 'order' } },
+    },
+  ];
+}
+
+/** The first value of a zoomed axis is bold. */
+export function zoomedLabelWeight(scale: ValueScale): object {
+  return scale.zoomed ? { labelFontWeight: { condition: { test: `datum.value === ${scale.min}`, value: 'bold' }, value: 'normal' } } : {};
 }
 
 /** Round ticks from zero to at least `top`: steps of 1, 2, 2.5 or 5 times a power of ten. */
@@ -35,7 +68,8 @@ export function niceRange(lowest: number, highest: number, count = 4): number[] 
   return Array.from({ length: last - first + 1 }, (_, index) => Number(((first + index) * step).toPrecision(12)));
 }
 
-function niceStep(raw: number): number {
+/** The smallest round step of at least `raw`: 1, 2, 2.5 or 5 times a power of ten. */
+export function niceStep(raw: number): number {
   const magnitude = 10 ** Math.floor(Math.log10(raw));
   return [1, 2, 2.5, 5, 10].map((multiple) => multiple * magnitude).find((candidate) => candidate >= raw)!;
 }

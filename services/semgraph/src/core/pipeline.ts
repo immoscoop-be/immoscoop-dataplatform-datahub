@@ -1,13 +1,14 @@
 import { localizeDay } from './days.ts';
 import { createTranslator, resolveLocale, type Translator } from './i18n.ts';
 import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, type Outcome } from './issues.ts';
+import { checkMeta, compiledDay, metaItems, type ChartMeta } from './meta.ts';
 import type { LoadedSemgraph, Registry } from './registry.ts';
 import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
-import { HoverLayer } from './render/hover.ts';
+import { HoverLayer, RowHoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
-import type { Drawing, RequestContext } from './semgraph.ts';
+import type { RequestContext } from './semgraph.ts';
 
 export interface Report {
   outcome: Outcome;
@@ -67,7 +68,7 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
     issues.push(...schemaIssues(loaded.validate.errors, id));
     return finish(id);
   }
-  const request = body as Record<string, unknown> & { format?: string; context?: RequestContext };
+  const request = body as Record<string, unknown> & { format?: string; context?: RequestContext; meta?: ChartMeta };
   issues.push(...genericChecks(request));
   issues.push(...implementation.check(request));
   if (outcomeOf(issues) === 'invalid') return finish(id);
@@ -80,18 +81,33 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
   const drawing = implementation.draw(request, computed, { t, tokens: registry.tokens, metadata });
   const plot = await renderVegaLite(drawing.vegaLite);
   const deviations = issues.filter((issue) => issue.level === 'deviation');
+  // Every tolerated deviation is allowed, but discouraged: a red alert between the title and the chart
+  // (REQ-038). A caution gets the same alert, but keeps the version label (REQ-047).
+  const alerts = issues
+    .filter((issue) => issue.level === 'deviation' || issue.level === 'caution')
+    .map((issue) => t(`issues.${issue.code}.alert`, localizeParams(t, issue.params)));
+  const compiled = compiledDay(request.meta, now);
   const svg = composeSvg({
     width: drawing.width,
     title: drawing.title,
     readingCue: drawing.readingCue,
+    // REQ-060: the icon links to the reading card, like the learn line in the footer.
+    icon: { markup: loaded.icon, href: loaded.metadata.links.learning, label: t('footer.readingCard', { name: t(loaded.metadata.readingCard) }) },
+    alerts,
+    defs: drawing.defs,
     description: drawing.description,
     plot: {
       svg: plot.svg,
       height: drawing.height,
       area: drawing.plotArea,
-      overlay: new HoverLayer(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(registry.tokens, drawing.plotArea, plot.scales).render(drawing.hover),
     },
-    footer: footer(t, request.context ?? {}, drawing, loaded, deviations, registry.tokens.languageVersion),
+    footer: footer(t, request.context ?? {}, { asOf: drawing.asOf, compiled }, loaded, deviations, registry.tokens.languageVersion),
+    meta: metaItems(t, request.meta, {
+      semgraph: id,
+      compiled,
+      serviceVersion: registry.version,
+    }),
     tokens: registry.tokens,
     data: {
       semgraph: id,
@@ -125,7 +141,7 @@ function findSemgraph(registry: Registry, body: unknown, issues: IssueSpec[]): L
 }
 
 /** Checks that hold for every semgraph: showable text, web links only, an available format. */
-function genericChecks(request: Record<string, unknown> & { format?: string; context?: RequestContext }): IssueSpec[] {
+function genericChecks(request: Record<string, unknown> & { format?: string; context?: RequestContext; meta?: ChartMeta }): IssueSpec[] {
   const issues: IssueSpec[] = [];
   walkStrings(request, '', (value, pointer) => {
     if (hasIllegalXmlCharacters(value)) issues.push({ level: 'inputError', code: 'invalidCharacters', field: pointer });
@@ -134,6 +150,7 @@ function genericChecks(request: Record<string, unknown> & { format?: string; con
   if (url !== undefined && !isWebLink(url)) {
     issues.push({ level: 'inputError', code: 'invalidUrl', field: '/context/definitionUrl' });
   }
+  issues.push(...checkMeta(request.meta));
   const format = request.format ?? 'svg';
   if (!AVAILABLE_FORMATS.has(format)) {
     issues.push({ level: 'inputError', code: 'formatNotAvailable', field: '/format', params: { format } });
@@ -144,7 +161,7 @@ function genericChecks(request: Record<string, unknown> & { format?: string; con
 function footer(
   t: Translator,
   context: RequestContext,
-  drawing: Drawing,
+  days: { asOf: number; compiled: number },
   loaded: LoadedSemgraph,
   deviations: IssueSpec[],
   languageVersion: string,
@@ -153,12 +170,9 @@ function footer(
   const definition: Segment = context.definitionUrl
     ? { text: t('footer.definition'), href: context.definitionUrl }
     : { text: t('footer.definitionUnknown') };
-  const details = deviations
-    .map((issue) => t(`issues.${issue.code}.footer`, localizeParams(t, issue.params)))
-    .join('; ');
   return {
     // Absence is never polished away: missing context is printed as unknown.
-    provenance: [
+    origin: [
       { text: context.domain ?? t('footer.unknownDomain') },
       separator('›'),
       { text: context.dataset ?? t('footer.unknownDataset') },
@@ -168,14 +182,19 @@ function footer(
     status: [
       { text: context.reliability ?? t('footer.unknownReliability') },
       separator('·'),
-      { text: t('footer.asOf', { date: localizeDay(t, drawing.asOf, 'long') }) },
+      { text: t('footer.asOf', { date: localizeDay(t, days.asOf, 'numeric') }) },
+      separator('·'),
+      // REQ-011: the day the chart was compiled is always there, bold, next to the as-of date of the data.
+      { text: t('footer.compiled', { date: localizeDay(t, days.compiled, 'numeric') }), strong: true },
       separator('·'),
       definition,
     ],
-    learn: [{ text: t('footer.howToRead'), href: loaded.metadata.links.learning }],
-    ...(details
-      ? { note: t('footer.outsideLanguage', { details }) }
-      : { versionLabel: t('footer.languageVersion', { version: languageVersion }) }),
+    learn: [
+      { text: `${t('footer.howToRead')}  ` },
+      { text: t('footer.readingCard', { name: t(loaded.metadata.readingCard) }), href: loaded.metadata.links.learning, accent: true },
+    ],
+    // REQ-042: no footer note for a deviation; the red block says enough. The version label stays away.
+    ...(deviations.length === 0 ? { versionLabel: t('footer.languageVersion', { version: languageVersion }) } : {}),
   };
 }
 

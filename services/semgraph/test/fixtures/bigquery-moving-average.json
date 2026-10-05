@@ -1,5 +1,5 @@
 {
-  "$description": "AVG and STDDEV over a 7-day RANGE window in BigQuery, on the data of semgraphs/movingWindowAverage/examples/basic.json (movingWindowAverage), rounded to 6 decimals. Query: SELECT day, AVG(value) OVER w, STDDEV(value) OVER w, COUNT(value) OVER w FROM UNNEST([...]) WINDOW w AS (ORDER BY UNIX_DATE(day) RANGE BETWEEN 6 PRECEDING AND CURRENT ROW).",
+  "$description": "AVG and STDDEV over a 7-day RANGE window in BigQuery, on the daily example data behind semgraphs/movingWindowAverage/examples/basic.json: the warehouse query that gives its blocks (REQ-058), rounded to 6 decimals. Query: SELECT day, AVG(value) OVER w, STDDEV(value) OVER w, COUNT(value) OVER w FROM UNNEST([...]) WINDOW w AS (ORDER BY UNIX_DATE(day) RANGE BETWEEN 6 PRECEDING AND CURRENT ROW).",
   "rows": [
     ["2026-09-30", 45.857143, 11.260973], ["2026-09-29", 46.142857, 11.466307], ["2026-09-28", 45.142857, 10.745985],
     ["2026-09-27", 45.285714, 10.812251], ["2026-09-26", 44.142857, 12.915476], ["2026-09-25", 44.285714, 12.737272],

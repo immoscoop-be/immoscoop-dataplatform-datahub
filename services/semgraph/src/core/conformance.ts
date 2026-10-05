@@ -142,7 +142,7 @@ function checkMetadataShape(metadata: SemgraphMetadata, folder: string): string[
   const problems: string[] = [];
   const at = `${folder}/metadata.yml`;
   if (metadata.id !== folder) problems.push(`${at}: id ${metadata.id} does not match the folder ${folder}`);
-  for (const key of ['title', 'answers'] as const) {
+  for (const key of ['title', 'answers', 'readingCard'] as const) {
     if (typeof metadata[key] !== 'string') problems.push(`${at}: ${key} must be a text key`);
   }
   if (!Array.isArray(metadata.exampleQuestions)) problems.push(`${at}: exampleQuestions must be a list`);
@@ -197,6 +197,7 @@ function checkTexts(input: ConformanceInput): string[] {
     ...input.semgraphs.flatMap(({ metadata }) => [
       metadata.title,
       metadata.answers,
+      metadata.readingCard,
       ...(metadata.exampleQuestions ?? []),
     ]),
   ];

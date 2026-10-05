@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "semgraph:calendarAverage/request",
   "title": "calendarAverage request",
-  "description": "Calendar periods (ISO weeks, months, quarters or years), ending with the period of the last complete day; a period that is still running is drawn hollow. The mean is a diamond over a thin bar of ±1 sample standard deviation (n − 1, like STDDEV in BigQuery). The caller sends raw daily values; the service computes periods, statistics, axes and labels.",
+  "description": "Calendar periods (ISO weeks, months, quarters or years), one row per period named by its ISO name; a period that is still running gets the running pattern. Per block mean (a diamond) with sd, the sample standard deviation (a thin bar of ±1 sd), and n. The warehouse computes the blocks; the service checks them against the chart language and draws (REQ-058).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,8 +10,7 @@
     "metric",
     "measureType",
     "unit",
-    "horizon",
-    "data"
+    "points"
   ],
   "properties": {
     "semgraph": {
@@ -29,15 +28,16 @@
       "maxLength": 120
     },
     "measureType": {
-      "description": "Kind of number. Required until Domain Hub or the dbt YAML supplies it.",
+      "description": "Kind of number: additive or unique for a count; perUnit for a mean or median per unit where the spread between the units is the question, such as an amount per lead (REQ-070, REQ-074); ratio for a numerator divided by a denominator, only in movingWindowRatio and calendarRatio (REQ-074, REQ-076). Required until Domain Hub or the dbt YAML supplies it.",
       "enum": [
         "additive",
         "unique",
+        "perUnit",
         "ratio"
       ]
     },
     "uniqueAggregation": {
-      "description": "Required for unique counts: daily shows the daily uniques; overPeriod (unique over the whole period) cannot be derived from daily values.",
+      "description": "Required for unique counts: daily (the uniques per day; never summed) or overPeriod (the uniques over the whole block, counted in the warehouse; only as a total).",
       "enum": [
         "daily",
         "overPeriod"
@@ -52,19 +52,20 @@
         "year"
       ]
     },
-    "horizon": {
-      "description": "Number of periods shown, ending with the period of the last complete day.",
-      "type": "integer",
-      "minimum": 2,
-      "maximum": 120
+    "asOf": {
+      "description": "The last complete day of the data. A calendar period that ends after it is still running. Yesterday in Brussels when absent.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
     },
-    "spread": {
-      "description": "Spread around the mean: stddev (the chart language default) or none.",
+    "values": {
+      "description": "Which values are written on the chart: off, last (the last value), lastAndPrevious (the last final value in bold, a running one next to it in grey) or all (only with few points; otherwise the default is used).",
       "enum": [
-        "stddev",
-        "none"
+        "off",
+        "last",
+        "lastAndPrevious",
+        "all"
       ],
-      "default": "stddev"
+      "default": "lastAndPrevious"
     },
     "valueAxis": {
       "description": "zero: the value axis starts at zero. zoom: it may start at a round value just below the data, marked with a zigzag at the start of the baseline and a bold first value; allowed for positions such as averages and medians.",
@@ -121,29 +122,102 @@
         }
       }
     },
-    "data": {
-      "description": "Daily values. 0 is a measured zero; null or an absent day means no data. Send zeros explicitly.",
+    "meta": {
+      "description": "Metadata of the chart (REQ-010): the question that started it, references, the query, who asked and who built it, and the day it was compiled. Only what is given is shown (REQ-020).",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "question": {
+          "description": "The question that started the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "askedBy": {
+          "description": "Who asked the question.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "builtBy": {
+          "description": "Who built the chart.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "references": {
+          "description": "Links to Jira, Slack or anything else.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "label": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "url": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            }
+          }
+        },
+        "query": {
+          "description": "The query behind the data, shown as written.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 10000
+        },
+        "compiledOn": {
+          "description": "The day the chart was compiled. When absent, the day it is drawn, in Brussels.",
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        }
+      }
+    },
+    "points": {
+      "description": "One row per block, computed in the warehouse (REQ-058). A block without data is null or left out; it is drawn as empty, never as zero.",
       "type": "array",
       "minItems": 1,
-      "maxItems": 4000,
+      "maxItems": 1000,
       "items": {
         "type": "object",
         "additionalProperties": false,
         "required": [
-          "day",
-          "value"
+          "period",
+          "mean"
         ],
         "properties": {
-          "day": {
+          "period": {
+            "description": "The ISO name of the period: 2026-W40 (week), 2026-09 (month), 2026-Q3 (quarter) or 2026 (year).",
             "type": "string",
-            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            "pattern": "^[0-9]{4}(-W[0-9]{2}|-[0-9]{2}|-Q[1-4])?$"
           },
-          "value": {
+          "mean": {
             "type": [
               "number",
               "null"
             ],
+            "minimum": 0,
+            "description": "The mean of the block; null when the block has no data."
+          },
+          "sd": {
+            "description": "Sample standard deviation (n − 1, like STDDEV in BigQuery).",
+            "type": "number",
             "minimum": 0
+          },
+          "n": {
+            "description": "Number of observations behind the value, as counted where the value is computed (REQ-043).",
+            "type": "integer",
+            "minimum": 1
           }
         }
       }

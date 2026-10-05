@@ -20,6 +20,8 @@ export interface SemgraphMetadata {
   id: string;
   title: string;
   answers: string;
+  /** Text key of the name of the reading card for this kind of chart, for the learn link in the footer. */
+  readingCard: string;
   attributes: Record<string, AttributeValues>;
   exampleQuestions: string[];
   doNotUseWhen: { intent: string; use: string }[];
@@ -52,11 +54,15 @@ export interface Drawing {
   plotArea: { x: number; y: number; width: number; height: number };
   /** What each column shows on hover, in data units; placed with Vega's own scales. */
   hover: HoverSpec[];
+  /** Horizontal bars: every category is a row on the y scale instead of a column on the x scale. */
+  hoverRows?: boolean;
   title: string;
   readingCue: string;
   description: string;
   /** The reference day ("today") for the footer, as a day number. */
   asOf: number;
+  /** SVG definitions the chart refers to, e.g. the hatch pattern; their ids are unique per chart (REQ-036). */
+  defs?: string;
 }
 
 /**

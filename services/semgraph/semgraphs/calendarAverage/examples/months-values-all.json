@@ -1,0 +1,28 @@
+{
+  "semgraph": "calendarAverage",
+  "metric": "creditLeads",
+  "measureType": "additive",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "title": "Kredietleads per dag, per maand (voorbeelddata)",
+  "unit": "month",
+  "values": "all",
+  "points": [
+    { "period": "2025-10", "mean": 42.4839, "sd": 10.1419 },
+    { "period": "2025-11", "mean": 39.9667, "sd": 11.0749 },
+    { "period": "2025-12", "mean": 34.8065, "sd": 9.4213 },
+    { "period": "2026-01", "mean": 42.1613, "sd": 11.1118 },
+    { "period": "2026-02", "mean": 42.25, "sd": 11.9958 },
+    { "period": "2026-03", "mean": 42.9355, "sd": 11.5439 },
+    { "period": "2026-04", "mean": 43.7, "sd": 10.0898 },
+    { "period": "2026-05", "mean": 42.6129, "sd": 12.3253 },
+    { "period": "2026-06", "mean": 45.5, "sd": 11.178 },
+    { "period": "2026-07", "mean": 38.4839, "sd": 10.2563 },
+    { "period": "2026-08", "mean": 31.0968, "sd": 8.8557 },
+    { "period": "2026-09", "mean": 45.0333, "sd": 11.9841 }
+  ]
+}

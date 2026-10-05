@@ -1,5 +1,5 @@
 {
-  "$description": "Per ISO week (DATE_TRUNC(day, ISOWEEK)) in BigQuery, on the data of semgraphs/calendarAverage/examples/weeks.json: week start, ISO week, days, AVG, STDDEV (6 decimals), PERCENTILE_CONT 0.25/0.5/0.75. Week 27 starts before the data (5 days), week 40 is running (3 days).",
+  "$description": "Per ISO week (DATE_TRUNC(day, ISOWEEK)) in BigQuery, on the daily example data behind semgraphs/calendarAverage/examples/weeks.json: the warehouse query that gives its blocks (REQ-058): week start, ISO week, days, AVG, STDDEV (6 decimals), PERCENTILE_CONT 0.25/0.5/0.75. Week 27 starts before the data (5 days), week 40 is running (3 days).",
   "rows": [
     ["2026-06-29", 27, 5, 36.4, 12.012493, 30.0, 39.0, 46.0],
     ["2026-07-06", 28, 7, 38.0, 12.096832, 31.0, 41.0, 47.0],

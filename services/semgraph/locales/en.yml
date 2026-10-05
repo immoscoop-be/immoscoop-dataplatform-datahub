@@ -1,5 +1,29 @@
 # Base texts. Every key used by the service must exist here; other locales fall back to these.
 semgraphs:
+  kpiStatus:
+    title: KPI status
+    answers: Are we on track for the target, and what does it still take?
+    examples:
+      "1": Will we reach 130k leads by the end of the year, and how many do we need per month?
+      "2": How far ahead or behind the plan are the new listings this quarter?
+  kpiTile:
+    title: KPI tile
+    answers: How much is it now, and is that more or less than before?
+    examples:
+      "1": How many credit leads did we get in the last 28 days, compared with last year?
+      "2": How long does a lead wait for a first contact this month?
+  distribution:
+    title: Distribution
+    answers: How are the values spread, where does the middle lie and how long is the tail?
+    examples:
+      "1": How are the asking prices of the properties for sale spread?
+      "2": How many properties cost more than € 500k?
+  categoryComparison:
+    title: Comparison between categories
+    answers: Which category has the most, or the highest typical value?
+    examples:
+      "1": Which province brought the most leads in the last 28 days?
+      "2": How long do properties stay online, per price range?
   movingWindowAverage:
     title: Moving window average
     answers: How does this evolve, without the daily noise?
@@ -18,12 +42,30 @@ semgraphs:
     examples:
       "1": How many credit leads per day did we get on average, per month this year?
       "2": Was this week busier than the weeks before?
+  periodComparison:
+    title: Comparison with the previous period
+    answers: Are we doing better or worse than in the period before?
+    examples:
+      "1": Did we get more or fewer credit leads in these 12 weeks than in the 12 weeks before?
+      "2": Is the typical day of this half year higher than that of the half year before?
   calendarMedian:
     title: Median per calendar period
     answers: How much on a typical day, in each week, month, quarter or year?
     examples:
       "1": What was a typical day for credit leads, per quarter?
       "2": How did the typical time to first contact per day change per month?
+  movingWindowRatio:
+    title: Moving window ratio
+    answers: How does a share evolve, and how large is the base it rests on?
+    examples:
+      "1": Which share of the visitors became a lead, over the last 7 days, these past weeks?
+      "2": Is the share of qualified leads going up or down?
+  calendarRatio:
+    title: Ratio per calendar period
+    answers: Which share in each week, month, quarter or year, and on how large a base?
+    examples:
+      "1": How did the conversion from visit to lead evolve per week?
+      "2": Which share of the listings sold within 90 days, per month?
 
 attributes:
   timeAxis:
@@ -44,81 +86,164 @@ attributes:
     question: Do you want the average or the median?
 
 axis:
-  today: today
+  n: "n {n}"
+  now: now
   daysAgo: "−{n}d"
 
 cue:
+  distribution: "distribution · per {width}"
+  category:
+    mean: mean
+    median: median
+  scope:
+    window: "rolling {window}d"
+    day: "on {date}"
   rolling:
     mean: rolling {window}d average
     median: rolling {window}d median
+    daily: daily values
+    sum: total per {window} days
+    ratio: rolling {window}d ratio
   calendar:
     mean: daily average per {unit}
     median: daily median per {unit}
+    sum: total per {unit}
+    ratio: ratio per {unit}
+    perUnit:
+      mean: "mean per {unit}"
+      median: "median per {unit}"
+  comparison: vs {label}
+  ratioOf: "{numerator} / {denominator}"
+  kpiStatus: "cumulative · from {start} on {date} · target {target}"
   spread:
     mean: ±1 sd
     median: P25–P75
   unique: unique · counted per day
+  uniqueOverPeriod: "unique · counted per {block}"
 
 desc:
+  distribution: "P25 {p25}, median {p50}, P75 {p75}."
+  categories: "{count} categories."
+  kpi: "Now {value}, {difference} vs {label}."
+  kpiStatus: "Now {current} of {target} by {date}; {needed} still needed."
   base: "{title}: {cue}, up to {date}."
   latest: "Last point: {stats}."
   latestMissing: No value for the last point.
 
 chart:
-  noData: no data
+  distribution:
+    open: ≥ P95
+    bin: "{from}–{to}"
+    openBin: "≥ P95: from {from}"
+    count: "{count} ({share})"
   stats:
     mean: "{value} ± {sd}"
     median: "{value}, P25–P75 {p25}–{p75}"
     noSpread: "{value}"
-  missing:
-    one: "no data: {absent} is missing"
-    many: "no data: {count} days are missing, the first on {absent}"
+    ratio: "{value} ({parts})"
   window: window {range}
   running: "running: {count} of {total} days"
+  noData: no data
   runningShort: current
+  kpi:
+    shadow: "grey = {label}"
+  kpiStatus:
+    target: "target {value} · {date}"
+    pathSet: "path set {date}"
+    catchUp: incl. catch-up
+    pace: "{value}/{unit}"
+    per:
+      week: wk
+      month: mo
+      quarter: qtr
+    plan: "{catchUp} in {period} · then {pace}"
+    planWeighted: "{catchUp} in {period} · then along the path"
+    lastStep: "{catchUp} in {period}"
+    reached: target reached
+    above: "{value} above the target"
+    missed: target not reached
+  noComparison: no comparison
 
 hover:
+  n: "n = {n} observations"
   centre:
+    category:
+      sum: total
+      mean: mean
+      median: median
     rolling:
       mean: "{window}d average"
       median: "{window}d median"
+      daily: value
+      sum: "{window}d total"
+      ratio: "{window}d ratio"
     calendar:
       mean: daily average
       median: daily median
+      sum: total
+      ratio: ratio
+      perUnit:
+        mean: mean
+        median: median
+  comparison: "previous period, {name}: {value}"
+  comparisonMissing: "previous period, {name}: no data"
+  comparedWith: "{label}: {value}"
+  comparedWithMissing: "{label}: no data"
+  kpiStatus:
+    level: "level: {value}"
+    added: "this period: {value}"
+    path: "path: {value}"
+    difference: "against the planned step: {value}"
+    planned: "still to add: {value}"
+  difference: "difference: {value}"
   spread:
     mean: "±1 sd: {sd}"
     median: "P25–P75: {p25}–{p75}"
 
 calendar:
   unit:
+    period: period
     week: week
     month: month
     quarter: quarter
     year: year
   tick:
     week: W{week}
-    quarter: Q{quarter} {year}
-  withYear: "{label} {year}"
-  none:
-    week: not a single week
-    month: not a single month
-    quarter: not a single quarter
-    year: not a single year
+    quarter: Q{quarter}
   hover:
     week: week {week} ({range})
     month: "{month} {year}"
     quarter: Q{quarter} {year}
 
-period:
-  window: a {window}-day window
-  week: a week
-  month: a month
-  quarter: a quarter
-  year: a year
+comparison:
+  year: last year
+  years: previous {n} years
+  weeks: previous {n} weeks
+  months: previous {n} months
+  quarters: previous {n} quarters
+  days: previous {n} days
+  previous:
+    day: the day before
+    week: previous week
+    month: previous month
+    quarter: previous quarter
+
+blocks:
+  category: categories
+  day: days
+  window: windows
+  week: weeks
+  month: months
+  quarter: quarters
+  year: years
+  sinceStart: start
+  oneDay: day
+  oneWindow: "{window}-day window"
 
 date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
+  numeric: "{day}/{month}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -141,11 +266,49 @@ footer:
   unknownOwner: owner unknown
   unknownReliability: reliability unknown
   asOf: as of {date}
-  definition: definition
+  compiled: compiled {date}
+  definition: definition →
   definitionUnknown: definition unknown
   howToRead: How do I read this chart?
-  outsideLanguage: "Outside the chart language: {details}."
+  readingCard: "Reading card: {name} →"
   languageVersion: chart language {version}
+
+gallery:
+  title: "Semgraph: the charts"
+  intro: "Every chart the service offers, {semgraphs} in all, with its {examples} examples. Click an example to open the chart itself, with hover and working links."
+  examples: "{count} examples"
+  contract: contract (JSON)
+  readingCard: reading card
+  json: this overview as JSON
+  planned: Planned
+  plannedNote: In the catalogue, not available yet.
+  outcome:
+    ok: ok
+    deviation: outside the chart language
+    refused: refused
+    invalid: invalid
+  language:
+    en: English
+    nl-BE: Nederlands
+
+readingCards:
+  kpiStatus: KPI status
+  kpiTile: KPI tile
+  distribution: distribution
+  categoryComparison: bar chart
+  timeSeries: time series
+  periodComparison: period comparison
+
+meta:
+  question: Question
+  references: References
+  query: Query
+  metadata: Metadata
+  askedBy: Asked by {name}
+  builtBy: Built by
+  compiledOn: Compiled on
+  semgraph: Semgraph
+  version: Version
 
 types:
   integer: a whole number
@@ -157,13 +320,67 @@ types:
   "null": empty
 
 issues:
+  binsNotContiguous:
+    message: "{field}: the bins must be equally wide and touch: each starts {width} after the previous."
+    alternative: Send every bin from the first one up, also the empty ones (count 0).
+  openBinOverlaps:
+    message: The open bin starts before the last bin ends.
+    alternative: Let the open bin start at or after the end of the last bin.
+  tooFewUnits:
+    message: "The distribution holds {count} units. Quartiles of fewer than {minimumPoints} say little."
+    alternative: Take a longer period or a wider group.
+  scopeRequired:
+    message: "Say which time the values cover: window (a rolling window of days), period (an ISO calendar period) or day (a snapshot), exactly one."
+    alternative: Add window, period or day.
+  categoryIsDate:
+    message: "{field}: {value} is a date or a period. Bars are for categories; a date axis is always a line."
+    alternative: Use movingWindowAverage, calendarAverage or periodComparison for the evolution in time.
+  tooManyCategories:
+    message: "{count} ordered categories do not fit next to each other; at most {max}."
+    alternative: Group the categories into fewer ranges, or leave out the order so the bars lie down.
+  tooFewCategories:
+    message: "Only {count} category has a value. Bars compare categories; that takes at least {minimumPoints}."
+    alternative: Send more categories, or show the value alone in a KPI tile.
+  comparisonOnlyForSum:
+    message: "A comparison lives inside one bar, so only for a sum; this chart shows the {statistic}."
+    alternative: Leave out comparison and previous, or follow the mean or median over time in periodComparison.
+  kpiValueMissing:
+    message: The last block has no value, so the tile has no number to show.
+    alternative: Send the value of the last block, or show the evolution in periodComparison.
+  kpiComparisonMissing:
+    message: "The last block has no value for {label}: a number without a comparison says nothing."
+    alternative: Send previous for the last block, or choose the other comparison.
+  targetBeforeStart:
+    message: The target day lies before the start day.
+    alternative: Give a target day after the start day.
+  pathSetOutsideKpi:
+    message: The path was set outside the period of the KPI.
+    alternative: Give in pathSet a day between the start and the target.
+  periodOutsideKpi:
+    message: "Period {block} lies outside the KPI, from the start to the target."
+    alternative: Send only the periods from the start to the target.
+  cumulativeDecreases:
+    message: "The level goes down in {block}: a level since the start can only go up."
+    alternative: Send the cumulative level at the end of each period, not the amount per period.
+  pathBeforeSet:
+    message: "Period {block} has a planned level, but the path was only set on {date}."
+    alternative: Send the path from the period in which it was set; it never moves afterwards.
+  cumulativeGap:
+    message: A period without a level lies between the start and the last level, so every level after it is unknown.
+    alternative: Send the level of every period that is over.
+  pathIncomplete:
+    message: "Period {block} has no planned level: the path runs from the moment it was set ({date}) to the target."
+    alternative: Send the planned level of every period from the plan to the target.
+  noPreviousValues:
+    message: "No category has a value for {label}, so there is nothing to compare with."
+    alternative: Send the previous values, or leave out comparison and previous.
   # Input errors (400): the request itself is not valid.
   badRequest:
     message: "The request could not be read: {detail}"
     alternative: Send a JSON object with Content-Type application/json.
   payloadTooLarge:
     message: The request is too large.
-    alternative: Send at most 4000 days; a chart never needs more.
+    alternative: Send at most 1000 blocks; a chart never needs more.
   unsupportedMediaType:
     message: Only JSON requests are accepted.
     alternative: Use Content-Type application/json.
@@ -189,8 +406,8 @@ issues:
   unexpectedField:
     message: The field {field} does not belong to this semgraph.
     alternative: Remove it, or check the spelling in GET /semgraphs/{semgraph}.
-  unexpectedDataField:
-    message: A day may only contain day and value; {field} is not allowed.
+  unexpectedBlockField:
+    message: A block carries only its name and the fields of its statistic; {field} is not allowed.
     alternative: Remove the other columns. Never send personal data to the chart service.
   invalidValue:
     message: "{field} must be one of: {allowed}."
@@ -213,9 +430,28 @@ issues:
   invalidDate:
     message: "{field}: {value} is not an existing day."
     alternative: Write days as YYYY-MM-DD.
-  duplicateDay:
-    message: The day {day} appears more than once.
-    alternative: Send one value per day.
+  invalidPeriod:
+    message: "{field}: {value} is not a valid {unit}."
+    alternative: Write 2026-W40 for a week, 2026-09 for a month, 2026-Q3 for a quarter and 2026 for a year.
+  tooManyBlocks:
+    message: "From the first block to the last there are {count} blocks; a chart shows at most {max}."
+    alternative: Send a shorter period, or longer blocks.
+  duplicateBlock:
+    message: The block {block} occurs more than once.
+    alternative: Send one row per block.
+  windowsNotAligned:
+    message: "{field}: the window ending on {block} does not line up with the others. The end days must lie a multiple of {window} days apart."
+    alternative: Let the windows follow each other without overlap, each of {window} days.
+  fieldNotForStatistic:
+    message: "{field} does not belong to the statistic {statistic}."
+    alternative: "A block carries only the fields of its statistic: mean with sd and n, median with p25, p75 and n, or sum."
+  spreadIncomplete:
+    message: "{field} has no spread, while other blocks have one."
+    alternative: Give the spread with every block that has a value, or with none.
+  spreadPartial:
+    message: "{field} is missing: P25 and P75 go together."
+  spreadOrder:
+    message: "{field}: P25, the median and P75 must lie in that order."
   invalidUrl:
     message: "{field} must be a web link that starts with http:// or https://."
   invalidCharacters:
@@ -226,42 +462,88 @@ issues:
 
   # Refusals (422): the chart would mislead, so it is not drawn.
   measureTypeNotAllowed:
-    message: "This chart is not made for a measure of type {measureType}: the chart language only defines it for {allowed}."
+    message: "This chart is not made for a measure of type {measureType}: the chart language defines it only for {allowed}."
     alternative: Use a measure of type {allowed}, or ask the data team which semgraph fits.
+  perUnitNotSummable:
+    message: "A total of means per unit means nothing: an average amount per lead does not add up over a week."
+    alternative: Choose statistic mean or median.
+  ratioPerUnitOpen:
+    message: "In at least one block the numerator is larger than the denominator: a ratio per unit, such as listings per agent. How such a ratio is shown is still open; only a share, whose numerator is part of its denominator, is drawn for now."
+    alternative: "Check the numerator and the denominator. Is it a mean per unit where the spread between the units is the question? Then use measureType perUnit with calendarAverage or calendarMedian."
+  ratioNeedsNumerator:
+    message: "A ratio, such as leads out of visitors, is a numerator divided by a denominator. This chart cannot show both."
+    alternative: "Send the numerator and the denominator per block to movingWindowRatio or calendarRatio. Is it a mean or median per unit where the spread between the units is the question, such as the amount per lead? Then use measureType perUnit."
   uniqueAggregationRequired:
-    message: "For unique counts you have to choose: uniques counted per day, or uniques over the whole period. Those are two different metrics."
-    alternative: Add uniqueAggregation daily when the values are daily uniques. Uniques over the period cannot be computed from daily values.
-  uniquesOverPeriodNotDerivable:
-    message: "Uniques over {period} cannot be computed from daily values: someone who comes back on several days would be counted several times."
-    alternative: Compute them at the source as a metric of its own, or choose uniqueAggregation daily.
+    message: "For unique counts, say how they were counted: per day (daily) or over the whole block (overPeriod). Those are two different metrics."
+    alternative: Add uniqueAggregation daily or overPeriod.
+  dailyUniquesNotSummable:
+    message: A total of daily uniques counts someone who comes back on several days several times.
+    alternative: Count the uniques over each block in the warehouse and give uniqueAggregation overPeriod, or choose statistic mean for the average per day.
+  uniquesOverPeriodNotAveraged:
+    message: "Uniques over a whole block are one count per block: there is no average per day and no spread to show."
+    alternative: Use periodComparison with statistic sum for the uniques per block, or send the daily uniques with uniqueAggregation daily.
+  blockAfterReference:
+    message: "The block {block} runs past the last complete day ({day}), so its value is not final yet."
+    alternative: Send only blocks up to the last complete day (a calendar period may still be running), or give asOf when the data runs further.
+  noData:
+    message: No block has a value, so there is nothing to show. A block without data never counts as zero.
+    alternative: Send the values (0 where nothing happened).
   insufficientData:
-    message: "There are {count} days with a value in the {days} days this chart uses ({from} to {to}). A reliable rolling average needs at least {minimumPoints}."
-    alternative: Send more days, or choose a longer horizon.
-  noCompleteWindow:
-    message: Not a single {window}-day window is complete, so there is no average to show. Days without data are never counted as zero.
-    alternative: Send the missing days (0 where nothing happened), or use a shorter window.
-  noCompletePeriod:
-    message: Not a single {unit} is complete, so there is nothing to show. Days without data are never counted as zero.
-    alternative: Send the missing days (0 where nothing happened).
+    message: "The blocks with a value cover {count} days together. A reliable chart needs at least {minimumPoints}."
+    alternative: Send more blocks.
 
-  # Tolerated deviations (200): the chart is drawn, with a note in the footer and without version label.
+  windowOrUnit:
+    message: Give either window (rolling windows) or unit (calendar periods), not both and not neither.
+  noComparisonData:
+    message: "There is nothing to compare with: no block carries the value of the period before the screen."
+    alternative: Give in previous, for every block, the value of the block before it.
+
   windowNotMultipleOf7:
-    message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a note in the footer.
+    message: A window of {window} days is not a multiple of 7, so not every weekday counts equally often. The chart is drawn, with a red alert.
     alternative: Use 7, 14, 28 or another multiple of 7.
-    footer: the {window}-day window is not a multiple of 7
+    alert: "Read this chart with care: a window of {window} days is not a multiple of 7, so not every weekday counts equally often. A difference between two points can come from the weekdays."
   meanWithoutSpread:
-    message: The average is shown without its spread, so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
-    alternative: Use spread stddev.
-    footer: average without spread
+    message: The mean is shown without its spread, so you cannot see how far the values lie apart. The chart is drawn, with a red alert.
+    alternative: Give sd with every block.
+    alert: "Read this chart with care: this mean is shown without its spread, so you cannot see how far the values lie apart. Two periods with the same mean can be very different."
   medianWithoutSpread:
-    message: The median is shown without its spread (P25–P75), so you cannot see how far the daily values lie apart. The chart is drawn, with a note in the footer.
-    alternative: Use spread iqr.
-    footer: median without spread
+    message: The median is shown without its spread (P25–P75), so you cannot see how far the values lie apart. The chart is drawn, with a red alert.
+    alternative: Give p25 and p75 with every block.
+    alert: "Read this chart with care: this median is shown without its spread (P25–P75), so you cannot see how far the values lie apart. Two periods with the same median can be very different."
+  nMissing:
+    mean:
+      message: Not every block of this mean says how many observations are behind it (n). The chart is drawn, with a red alert.
+      alternative: Give n with every block.
+      alert: "Read this chart with care: this mean does not say how many observations are behind it, so you cannot see which points rest on few observations."
+    median:
+      message: Not every block of this median says how many observations are behind it (n). The chart is drawn, with a red alert.
+      alternative: Give n with every block.
+      alert: "Read this chart with care: this median does not say how many observations are behind it, so you cannot see which points rest on few observations."
+  fewObservations:
+    mean:
+      message: "{count} of the {total} {blocks} rest on few observations. Their columns get sparse dots and their n stands under the axis."
+      alert: "Read this chart with care: few observations in {count} of the {total} {blocks}, so a single outlier can move their mean a lot."
+    median:
+      message: "{count} of the {total} {blocks} rest on few observations. Their columns get sparse dots and their n stands under the axis."
+      alert: "Read this chart with care: few observations in {count} of the {total} {blocks}, so their median is still uncertain."
+    ratio:
+      thin:
+        message: "{count} of the {total} {blocks} rest on few observations: fewer than 10 {numerator}, or fewer than 10 {denominator} without them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on very few {numerator} or {denominator}, so a few more or fewer can move the share a lot."
+      base:
+        message: "{count} of the {total} {blocks} rest on far fewer {denominator} than the {blocks} around them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on far fewer {denominator} than the {blocks} around them."
+      both:
+        message: "{count} of the {total} {blocks} rest on few observations: very few {numerator} or {denominator}, or far fewer {denominator} than the {blocks} around them. Their columns get sparse dots and their counts stand at the point."
+        alert: "Read this chart with care: {count} of the {total} {blocks} rest on very few {numerator} or {denominator}, or on far fewer {denominator} than the {blocks} around them."
 
-  # Information: nothing is wrong, but the service did something you should know about.
   localeFallback:
     message: There are no texts for {locale}, so English is used.
   uniqueAggregationIgnored:
     message: uniqueAggregation only applies to unique counts and was ignored.
-  daysAfterReferenceIgnored:
-    message: "{count} day(s) after the last complete day ({day}) were left out: the current day is not over yet."
+  valuesAllTooDense:
+    message: "There are too many points to write every value on the chart; the default ({values}) is used."
+    alternative: Send fewer blocks, or choose a longer period.
+  valueAxisZoomIgnored:
+    message: "An amount is a bar, and a bar starts at zero: the value axis is not zoomed."
+    alternative: Leave out valueAxis; zoom is for a mean or median per category.

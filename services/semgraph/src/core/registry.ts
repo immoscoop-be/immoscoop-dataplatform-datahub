@@ -4,6 +4,7 @@ import path from 'node:path';
 import { parse as parseYaml } from 'yaml';
 import { implementations as defaultImplementations } from '../../semgraphs/index.ts';
 import { checkConformance, type CatalogEntry } from './conformance.ts';
+import { readIcon } from './icon.ts';
 import type { Catalog } from './i18n.ts';
 import { createAjv, type ValidateFunction } from './schema.ts';
 import type { AnySemgraphImplementation, Attribute, SemgraphMetadata } from './semgraph.ts';
@@ -18,6 +19,8 @@ export interface LoadedSemgraph {
   validate: ValidateFunction;
   /** Example requests from semgraphs/<id>/examples, by file name without .json. */
   examples: ReadonlyMap<string, unknown>;
+  /** The inside of semgraphs/<id>/icon.svg, shown left of the title (REQ-060, REQ-061). */
+  icon: string;
   implementation: AnySemgraphImplementation;
 }
 
@@ -100,9 +103,13 @@ export async function loadRegistry(options: LoadOptions = {}): Promise<Registry>
         examples.set(name.slice(0, -'.json'.length), example);
       }
     }
+    // REQ-060 and REQ-061: every semgraph has its icon from Figma, built from the fixed set.
+    const iconFile = path.join(folder, 'icon.svg');
+    const icon = existsSync(iconFile) ? readIcon(await readFile(iconFile, 'utf8')) : { markup: '', problems: ['icon.svg is missing: export it from the Semgraph icons in Figma'] };
+    problems.push(...icon.problems);
     underCheck.push({ id: entry.id, metadata, loadProblems: problems });
     if (validate && implementation && schema) {
-      semgraphs.set(entry.id, { id: entry.id, metadata, schema, validate, examples, implementation });
+      semgraphs.set(entry.id, { id: entry.id, metadata, schema, validate, examples, icon: icon.markup, implementation });
     }
   }
 
