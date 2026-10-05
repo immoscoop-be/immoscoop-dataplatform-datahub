@@ -51,8 +51,9 @@ time axis (two of them for a ratio), one for categories, one for the distributio
 | `kpiStatus` | a period: the real and the planned cumulative level at its end | the real staircase against the fixed path to the target, a loss hatched, what is still to be won dotted |
 | `distribution` | a bin of a continuous value: its count; plus P25, P50, P75 and the open bin above the threshold | touching bins, quartile guides, the tail in one grey bin |
 
-MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
-the same core.
+Claude can use the service through an MCP server on `/mcp`, which shows the chart in the conversation (REQ-090 to
+REQ-093, see [MCP: charts in Claude](#mcp-charts-in-claude)). PNG, the interactive HTML page, the widget, the choice
+aid (`/choose`, REQ-095) and the other semgraphs come later, on the same core.
 
 ![movingWindowAverage example](test/golden/movingWindowAverage-basic.svg)
 ![calendarAverage per week, with the running week on its pattern](test/golden/calendarAverage-weeks.svg)
@@ -95,8 +96,9 @@ curl -X POST http://localhost:8080/render \
 ```
 
 The container is stateless, needs no secrets and listens on `PORT` (default 8080). It has no login of its own:
-that comes from the platform it is deployed on (still to be agreed), so do not expose it publicly.
-`LOG_LEVEL` sets the log level (default `info`).
+that comes from the platform it is deployed on, so do not expose it publicly. The one exception is `/mcp`, which
+checks OAuth tokens itself (REQ-091) and refuses everything until it is configured; see
+[MCP: charts in Claude](#mcp-charts-in-claude). `LOG_LEVEL` sets the log level (default `info`).
 
 ## Examples
 
@@ -203,7 +205,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 
 | Call | Does |
 | --- | --- |
-| `GET /healthz` | `{status, version, languageVersion, tokensVersion}` |
+| `GET /healthz` | `{status, version, languageVersion, tokensVersion, mcp}`; `mcp` is `off`, `open` or `oauth` (REQ-091) |
 | `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-083) |
 | `GET /` | leads to `/gallery` |
 | `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-083) |
@@ -213,6 +215,8 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser |
 | `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
 | `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
+| `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |
+| `GET /.well-known/oauth-protected-resource/mcp` | where Claude signs in for `/mcp`, only when OAuth is configured (REQ-091) |
 
 The internal-tools platform runs the image ([deploy workflow](.github/workflows/deploy-internal-tools.yml)): `main` on
 <https://semgraph.internal-immoscoop.be>, every other branch on <https://semgraph.dev.internal-immoscoop.be>, each
@@ -250,6 +254,60 @@ Issues always have the same shape, in the language of `locale`:
 SVG responses also carry `Semgraph-Language-Version` and `Semgraph-Tokens-Version`, `nosniff` and a strict
 Content-Security-Policy. The gallery is a page without scripts that only loads its own example pictures. Swagger UI
 comes with the package and loads nothing from outside either.
+
+## MCP: charts in Claude
+
+Claude (claude.ai, Desktop, mobile and Claude Code) uses the service through an MCP server on `POST /mcp`, on the same
+core as the REST API (REQ-090). The tools are read-only:
+
+| Tool | Does |
+| --- | --- |
+| `list_semgraphs` | every semgraph with the question it answers, as `GET /semgraphs` |
+| `describe_semgraph` | one semgraph: when not to use it, its contract and a full example request, as `GET /semgraphs/{id}` |
+| `validate_semgraph` | the report of `POST /validate` |
+| `render_semgraph` | draws the chart and shows it to the user in the conversation |
+
+**The chart in the conversation (REQ-092).** Claude shows only PNG, JPEG, GIF or WebP as an image, so
+`render_semgraph` comes with an MCP App: a small page in the conversation that shows exactly the SVG the service
+drew, with its hover and metadata panels. Inline at size `default`, scaled to the width of the conversation; in full
+screen at size `large`; with a button to download the SVG. The chart stays a light card in a dark conversation
+(night mode is REQ-094, open). Claude itself gets the report (outcome, issues, alternative), not the SVG, and is asked
+to fill `meta`: the question, the query, who asked and the day (REQ-093).
+
+**Login (REQ-091).** Claude calls `/mcp` from Anthropic's cloud, without the gate's cookie, so `/mcp` checks an OAuth
+access token itself, issued to a gate account (Cognito Pool 1). The configuration comes from the environment:
+
+| Variable | |
+| --- | --- |
+| `MCP_AUTH_ISSUER` | the issuer of the tokens, e.g. `https://cognito-idp.eu-central-1.amazonaws.com/<pool id>` |
+| `MCP_AUTH_CLIENT_IDS` | the OAuth clients whose tokens are accepted, comma separated |
+| `MCP_RESOURCE_URL` | the URL of `/mcp` as users enter it in Claude, e.g. `https://semgraph.internal-immoscoop.be/mcp` |
+| `MCP_AUTH_SCOPE` | optional: a scope every token must carry, e.g. `semgraph/mcp` |
+| `MCP_AUTHORIZATION_SERVER` | optional: where Claude signs in, when that is not the issuer |
+| `MCP_AUTH=none` | no login, for a local server; excludes the variables above |
+
+Without any of these, `/mcp` answers 503: it fails closed. An incomplete configuration stops the service from
+starting. What the platform has to do (an OAuth client in Cognito, a gate exception for `/mcp` on the semgraph host,
+the WAF) is proposed in [docs/platform/mcp-access.md](docs/platform/mcp-access.md).
+
+**Connect** once the platform is ready:
+
+- *claude.ai, for the whole organization:* an Owner adds it under Organization settings → Connectors → Add → Custom →
+  Web, with the URL of `/mcp` and "Use your own OAuth client" (the client id from the platform, no secret). Every
+  colleague then connects under Customize → Connectors and signs in with their gate account.
+- *Claude Code:*
+  `claude mcp add --transport http --client-id <client id> --callback-port 33418 semgraph https://semgraph.internal-immoscoop.be/mcp`.
+
+**Locally**, without a platform:
+
+```sh
+MCP_AUTH=none npm start                     # MCP on http://localhost:8080/mcp
+npx @modelcontextprotocol/inspector         # to try the tools
+npm run mcp                                 # the same server on stdio
+```
+
+`.mcp.json` gives Claude Code in a clone of this repository the stdio server, without login. Claude Code shows no
+app, so there every chart is also written to `out/mcp/`, and Claude gets the path.
 
 ## The contract
 
@@ -619,7 +677,8 @@ tokens/ptditt-grafiektaal-tokens.json  style values, read from the Figma variabl
 src/core/pipeline.ts                   schema -> input checks -> blocks to slots -> rules -> draw -> template
 src/core/render/                       Vega-Lite to SVG (headless, no external loading), HoverLayer, the template
 src/core/conformance.ts                the conformance checks, run by the tests and at start-up
-src/app.ts, src/routes/                the REST layer (Fastify); an MCP layer will call the same pipeline
+src/app.ts, src/routes/                the REST layer (Fastify), and POST /mcp
+src/mcp/                               the MCP server on the same core, its login and the app that shows a chart
 ```
 
 Everything smart happens in our code; Vega-Lite only draws what it gets. The axis ticks and labels, which value is
