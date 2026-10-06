@@ -135,6 +135,13 @@ elk bestand zegt welke.
 | REQ-095 | De keuzehulp als MCP-tool `choose_semgraph` en als `POST /choose` | 2026-10-05 (opdracht) | open: punt 19 | – |
 | [REQ-096](REQ-096.md) | Night mode: de patronen in het donker uit het basispalet; de download blijft licht | 2026-10-05 (opdracht) | geïmplementeerd; de patronen vervangen door REQ-097 | [0579dc9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0579dc9) |
 | [REQ-097](REQ-097.md) | De patronen volgen hun variabelen in Figma, in Light en Dark: leeg en lopend `context/light`, weinig `context` | 2026-10-06 (opdracht) | geïmplementeerd | [3580e5e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/3580e5e) |
+| [REQ-098](REQ-098.md) | Een label opent een kaart op een sluier over de hele grafiek, in `surface` (0,82), ook in het donker | 2026-10-06 (opdracht) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-099](REQ-099.md) | Elke kaart dezelfde opbouw: bovenregel, titel, secties tussen dunne lijnen, de labelrij met het actieve label onderstreept | 2026-10-06 (opdracht) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-100](REQ-100.md) | De Query-kaart: enkel de titel en de SQL | 2026-10-06 (opdracht) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-101](REQ-101.md) | Metadata: Parameters, Data, Gemaakt en Dienst | 2026-10-06 (opdracht) | geïmplementeerd, zoals aangescherpt door REQ-104 | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-102](REQ-102.md) | Een vijfde label, Learn: een les per grafiektype, met enkel de tekens die de grafiek tekende | 2026-10-06 (opdracht) | geïmplementeerd als mechanisme; nog geen lessen (open punt 21) | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-103](REQ-103.md) | Learn enkel met een les; dan opent ook het icoon de Learn-kaart | 2026-10-06 (antwoord) | geïmplementeerd als mechanisme | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-104](REQ-104.md) | Metadata: de parameters zoals gevraagd, zonder filter of periode; "door wie" is `builtBy` | 2026-10-06 (antwoord) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -166,6 +173,9 @@ de grafiek als MCP App (REQ-092) en de metadata die Claude invult (REQ-093). De 
 later. Night mode (REQ-094) is gebouwd zodra de modus Dark in Figma stond; REQ-096 zijn de antwoorden op de vragen
 daarover (de patronen en de download). REQ-097 is de opdracht van 2026-10-06 om de patronen over te nemen zodra
 hun masters in Figma aan variabelen gebonden waren. Wat het platform moet doen, staat in [docs/platform/mcp-access.md](../platform/mcp-access.md).
+REQ-098 tot REQ-102 zijn de beslissingen van 2026-10-06 over de kaarten achter de labels (Query, Metadata, Learn);
+REQ-103 en REQ-104 zijn de antwoorden op de vragen die ze in het gesprek opriepen. De opdracht noemde de hover op een
+vaste plek REQ-103; die kreeg het eerstvolgende vrije nummer, REQ-105.
 
 ### Hernummering
 
@@ -269,6 +279,20 @@ Punt 21 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)). Punt 17 hier
     Pool 1, een uitzondering in de gate voor `/mcp` op de semgraph-host, de WAF en drie omgevingsvariabelen. Het
     voorstel staat in [docs/platform/mcp-access.md](../platform/mcp-access.md). Tot dan werkt de MCP-server enkel
     lokaal (stdio, of `MCP_AUTH=none`), en antwoordt `/mcp` op het platform 503.
+21. **De kaarten (REQ-098 tot REQ-104).** Gebouwd; wat overblijft:
+    - **De lessen.** Er is nog geen les en geen leeskaart: elke rij in het master-leerplan staat op "Nog te maken".
+      Learn verschijnt pas als iemand per grafiektype een les schrijft, in `metadata.yml` en de locales
+      ([REQ-103](REQ-103.md)). Vraag: wie schrijft ze, en vanuit welke leeskaart?
+    - **Tekens buiten de lijst van REQ-102.** Signs in this chart kent enkel de vorm van de reeks, de drie patronen,
+      de arcering en de zigzag. Vraag: horen de staaf, de grijze vergelijkingslijn, het pad en het doel van een
+      KPI-status, de stippen van wat nog te winnen is en de hulplijnen P25–P75 van een verdeling er ook bij?
+    - **Kaarten die niet passen.** Een kaart die hoger is dan haar grafiek, sluit eerst de tussenruimtes en wordt
+      dan afgebroken met "…". Op de KPI-tegel en op een korte staafgrafiek verliest Metadata zo Data en Gemaakt, en
+      verliest Learn zijn Let op. In Figma is het voorbeeld met een open kaart hoger dan de grafiek (540 tegenover
+      444). Vraag: mag de SVG een vaste hoogte voor de kaarten krijgen, of is afbreken goed?
+    - **Figma.** Het voorbeeld "Example/closed" heeft geen label Learn, terwijl de regelkaart zegt dat het er altijd
+      is. Het voorbeeld van de kaart klopt niet met zichzelf: de titel zegt per maand, de SQL groepeert per week en
+      het venster is 7 dagen.
 
 ## Sjabloon voor een requirement
 

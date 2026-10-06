@@ -595,13 +595,22 @@ What the service does:
    series →". Missing context is printed as unknown: absence is never polished away. The compiled day is always
    there, bold (REQ-011): `meta.compiledOn`, or the day the chart is drawn, in Brussels.
    Below it, at the bottom left, the metadata as short text labels, one topic each: Question (with who asked),
-   References, Query and Metadata (who built it, the compiled day, the semgraph and the version of the service)
-   (REQ-012, REQ-018). A label only appears when it has content, so Metadata is always there (REQ-020). On hover
-   the label grows into a panel over the whole chart; the panel is part of the label's element, so the pointer
-   never leaves it, and closing waits about 350 ms (REQ-014). The text is selectable, a long query is cut where
-   the panel ends, and there are no copy buttons. CSS only, no script (REQ-016, `src/core/render/meta.ts`, class
-   `MetaLayer`): shown as an image, the panels stay hidden and the date stays visible. The version label
-   ("grafiektaal v0") sits at the right of that row, only when the chart conforms.
+   References, Query, Metadata and Learn (REQ-012, REQ-018, REQ-102). A label only appears when it has content, so
+   Metadata is always there and Learn only when a lesson is written for the kind of chart; none is yet (REQ-020,
+   REQ-103). A label opens a card on a veil in the surface colour (0.82) over the whole chart (REQ-098), so the card
+   stays while the pointer is over the chart and closes about 350 ms after it left (REQ-014). Every card has the same
+   anatomy (REQ-099): an eyebrow (QUERY, METADATA, HOW DO I READ THIS?), a title, sections between thin lines, and
+   the row of labels with the active one underlined; a label in the card switches to its card with `:has()`.
+   - Query: the title and the SQL, in Roboto Mono on its own surface (REQ-100).
+   - Metadata: the parameters straight from the request, the data (dataset, as-of date, reliability label), and who
+     built it and when next to the version of the service (REQ-101, REQ-104).
+   - Learn: what you see, only the signs this chart really drew (every chart reports them in `Drawing.signs`), what
+     to watch out for, and the reading card (REQ-102); with a lesson the icon opens it too (REQ-103).
+
+   A card that does not fit its chart closes up, then is cut with "…". The text is selectable and there are no copy
+   buttons. CSS only, no script (REQ-016, `src/core/render/meta.ts`, class `MetaLayer`): shown as an image, the cards
+   stay hidden and the date stays visible. The version label ("grafiektaal v0") sits at the right of that row, only
+   when the chart conforms.
 9. Hover, without script (`src/core/render/hover.ts`, class `HoverLayer`): every slot has a column over the full
    height, also a slot without data. On hover or focus it shows grey dotted guides (vertical through the slot,
    horizontal from the y axis to the centre and both spread edges, the lower edge never below zero), a ring in the
