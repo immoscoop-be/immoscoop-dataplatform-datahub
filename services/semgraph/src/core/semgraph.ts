@@ -1,7 +1,7 @@
 import type { TopLevelSpec } from 'vega-lite';
 import type { Translator } from './i18n.ts';
 import type { IssueSpec } from './issues.ts';
-import type { HoverSpec } from './render/hover.ts';
+import type { HoverSpec, Readout } from './render/hover.ts';
 import type { Tokens } from './tokens.ts';
 
 /** One attribute of the closed vocabulary (vocabulary/attributes.yml). */
@@ -82,6 +82,11 @@ export interface Drawing {
   defs?: string;
   /** REQ-102: the signs this chart really drew, in the order of the lesson. */
   signs?: SignSample[];
+  /**
+   * REQ-105: a time axis reads its values in one fixed spot: the readout at rest (the latest value), and where the
+   * labels of the time axis start, in plot-area coordinates, for the date under the point.
+   */
+  readout?: { rest: Readout; dateTop: number };
 }
 
 /**

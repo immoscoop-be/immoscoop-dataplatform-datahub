@@ -4,7 +4,7 @@ import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, t
 import { checkMeta, compiledDay, metaCards, type ChartMeta } from './meta.ts';
 import type { LoadedSemgraph, Registry } from './registry.ts';
 import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
-import { HoverLayer, RowHoverLayer } from './render/hover.ts';
+import { HoverLayer, ReadoutHoverLayer, RowHoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
@@ -124,8 +124,15 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       svg: plot.svg,
       height: drawing.height,
       area: drawing.plotArea,
-      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+      overlay: ({ origin, readout }) =>
+        // REQ-105: a time axis reads its values in one fixed spot; other charts keep the box.
+        drawing.readout && readout
+          ? new ReadoutHoverLayer(tokens, drawing.plotArea, plot.scales, { anchor: readout, origin, ...drawing.readout }).render(drawing.hover)
+          : new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(tokens, drawing.plotArea, plot.scales).render(drawing.hover),
     },
+    ...(drawing.readout
+      ? { readout: ReadoutHoverLayer.size(tokens, [drawing.readout.rest, ...drawing.hover.flatMap((spec) => (spec.readout ? [spec.readout] : []))]) }
+      : {}),
     footer: footer(t, request.context ?? {}, { asOf: drawing.asOf, compiled }, loaded, deviations, registry.tokens.languageVersion),
     meta,
     tokens,

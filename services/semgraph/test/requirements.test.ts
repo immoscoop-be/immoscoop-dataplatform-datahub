@@ -904,9 +904,8 @@ describe('requirements of the chart language', async () => {
       for (const point of ratioPoints(drawn).filter((candidate) => candidate.centre > 0)) {
         assert.ok(base.get(point.rel)! < point.centre, `${drawn.name}: the denominator under the ratio at ${point.rel}`);
       }
-      // On hover the denominator is read on the right axis: its guide runs to the right.
-      for (const point of ratioPoints(drawn)) assert.equal(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.point!.right, base.get(point.rel), drawn.name);
-      assert.match(drawn.svg, /<line x1="[\d.]+" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#[0-9a-f]{6}" stroke-width="[\d.]+" stroke-dasharray="1 3"/, drawn.name);
+      // REQ-105, REQ-106: on hover nothing is drawn over the data; the counts are read in the readout.
+      for (const point of ratioPoints(drawn)) assert.match(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.readout!.extra ?? '', /: [\d.,]+ \/ [\d.,]+/, drawn.name);
       const rightLayer = drawn.layers.find((layer) => layer.data?.name === 'rightAxis')!;
       assert.equal(markOf(rightLayer).color, color(drawn.tokens, 'context'), `${drawn.name}: lighter labels`);
       assert.equal(drawn.layers.filter((layer) => markType(layer) === 'point' && layer.data?.name !== 'points' && layer.data?.name !== 'frame').length, 0, `${drawn.name}: no shapes on the right axis`);
@@ -1229,6 +1228,48 @@ describe('requirements of the chart language', async () => {
       assert.deepEqual(sections.slice(1), [upper('whatYouSee'), ...(signs.length > 0 ? [upper('signs')] : []), upper('watchOut')].slice(0, sections.length - 1), drawn.name);
       // Unless the card was cut to fit its chart (REQ-014), it ends with the full reading card.
       if (!texts.includes('…')) assert.ok(card.includes(`<a href="${learning}">`), drawn.name);
+    }
+  });
+
+  it('REQ-105: a time axis reads its values in one fixed spot; on the data only a guide and a ring, the date on the axis', () => {
+    for (const drawn of timeAxis) {
+      const [, width] = /^<svg [^>]*viewBox="0 0 ([\d.]+)/.exec(drawn.svg)!;
+      const layer = /<g class="semgraph-hover">\n<g class="semgraph-hover-rest" pointer-events="none">(.*?)<\/g>/.exec(drawn.svg);
+      assert.ok(layer, `${drawn.name}: the readout at rest`);
+      // At rest the latest value.
+      const latest = drawn.computed.points.at(-1)!;
+      assert.equal(textsOf(layer[1]!)[0], drawn.drawing.hover.find((spec) => spec.x === latest.rel)!.readout!.value, drawn.name);
+      // Right aligned at the right edge of a wide chart; on a narrow one left aligned, at 13.
+      if (Number(width) >= 500) assert.match(layer[1]!, /text-anchor="end"[^>]*font-size="16" font-weight="bold"/, drawn.name);
+      else assert.match(layer[1]!, /^<text x="[-\d.]+" y="[-\d.]+" font-family="[^"]+" font-size="13" font-weight="bold"/, drawn.name);
+      for (const spec of drawn.drawing.hover) {
+        assert.ok(spec.readout?.date, `${drawn.name}: a date for ${spec.x}`);
+        assert.equal(spec.readout!.value, spec.point ? spec.lines[1]!.text.split(': ').at(-1) : '–', drawn.name);
+      }
+      // No box over the data: only the dotted guide, the ring and the date label in a column.
+      const details = [...drawn.svg.matchAll(/<g class="semgraph-hover-detail" visibility="hidden" pointer-events="none">(.*?)<\/g><\/g>/g)].map((match) => match[1]!);
+      assert.equal(details.length, drawn.drawing.hover.length, drawn.name);
+      for (const detail of details) {
+        assert.equal([...detail.matchAll(/<line /g)].length, 1, drawn.name);
+        assert.doesNotMatch(detail, /<rect [^>]*stroke=/, `${drawn.name}: no box`);
+        assert.match(detail, new RegExp(`rx="3" fill="${color(drawn.tokens, 'text')}"/><text [^>]*font-weight="bold" fill="${color(drawn.tokens, 'surface')}">`), `${drawn.name}: the date`);
+      }
+    }
+  });
+
+  it('REQ-106: the labels at the points stay; whatever else the box said stands on a second line, and every line in the aria-label', () => {
+    for (const drawn of timeAxis) {
+      // REQ-033 and REQ-003 as they were: the value labels are still drawn.
+      if (drawn.request.values !== 'off') assert.ok((drawn.datasets.valuesStrong ?? []).length + (drawn.datasets.valuesMuted ?? []).length + (drawn.datasets.endValue ?? []).length > 0, drawn.name);
+      for (const spec of drawn.drawing.hover) {
+        const label = drawn.svg.includes(`aria-label="${spec.lines.map((line) => line.text).join(', ').replaceAll('&', '&amp;').replaceAll('"', '&quot;')}"`);
+        assert.ok(label, `${drawn.name}: every line in the aria-label of ${spec.x}`);
+        // Every line beyond the name, the value, the spread and the window or period is on the second line.
+        const extra = spec.readout!.extra ?? '';
+        for (const line of spec.lines.slice(1)) {
+          if (/^(n = |lopend|running|vorige periode|previous period|geen data|no data)/.test(line.text)) assert.ok(extra.includes(line.text), `${drawn.name}: ${line.text}`);
+        }
+      }
     }
   });
 

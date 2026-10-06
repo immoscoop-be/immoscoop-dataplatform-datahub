@@ -165,6 +165,8 @@ chart:
   noComparison: no comparison
 
 hover:
+  # REQ-105: the readout at rest.
+  latest: "latest · {date}"
   n: "n = {n} observations"
   centre:
     category:

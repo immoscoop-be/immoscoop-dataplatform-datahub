@@ -9,7 +9,8 @@ export interface AxisLabel {
 const TICK_LENGTH = 6;
 /** A year change pokes a little into the plot and reaches further down. */
 const YEAR_TICK = { above: 4, below: 8 };
-const LABEL_TOP = 10;
+/** The top of the labels under the axis; REQ-105 lays the date of a hovered block over them. */
+export const LABEL_TOP = 10;
 const LABEL_LINE = 12;
 /** Room the time axis needs under the plot: ticks and two lines of labels. */
 export const AXIS_HEIGHT = LABEL_TOP + 2 * LABEL_LINE + 2;

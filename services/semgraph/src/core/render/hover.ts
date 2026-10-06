@@ -1,5 +1,6 @@
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
+import { textWidth } from './text.ts';
 import type { PlotScales } from './vega.ts';
 
 /** One line of a hover box; the first line is usually bold. */
@@ -15,12 +16,42 @@ export interface HoverSpec {
   /** The edges of the column when it is not one unit wide, such as a bin of a distribution. */
   from?: number;
   to?: number;
-  /**
-   * The point and its spread on the y scale; absent for a slot without data. `right` is a level read on
-   * the right axis, such as the denominator of a ratio (REQ-079): its guide runs to the right.
-   */
-  point?: { y: number; lo: number | null; hi: number | null; right?: number };
+  /** The point and its spread on the y scale; absent for a slot without data. */
+  point?: { y: number; lo: number | null; hi: number | null };
+  /** Every line, also for the aria-label of the column (REQ-027, REQ-106). */
   lines: HoverLine[];
+  /** REQ-105: what the fixed readout says for this column, and the date on the time axis under the point. */
+  readout?: Readout & { date: string };
+}
+
+/**
+ * REQ-105, REQ-106: the value you are looking at, in one fixed spot: the value, the spread and the window or
+ * period under it, and on a second line whatever else there is to know (n, the comparison, running, no data, the
+ * counts of a ratio).
+ */
+export interface Readout {
+  value: string;
+  detail?: string;
+  extra?: string;
+}
+
+/** Where the readout stands, in the coordinates of the whole chart (REQ-105). */
+export interface ReadoutAnchor {
+  /** The right edge (end) or the left edge (start) of the readout, and the baseline of the value. */
+  x: number;
+  y: number;
+  /** At the right of the header, right aligned; or on a line of its own under the reading cue (the size card). */
+  align: 'end' | 'start';
+}
+
+export interface ReadoutPlace {
+  anchor: ReadoutAnchor;
+  /** The origin of the plot area in the coordinates of the whole chart. */
+  origin: { x: number; y: number };
+  /** The top of the labels of the time axis, in plot-area coordinates: the date goes over them. */
+  dateTop: number;
+  /** The readout at rest: the latest value. */
+  rest: Readout;
 }
 
 export interface PlotArea {
@@ -39,6 +70,13 @@ const STYLE = [
   `.${PREFIX}-column:hover .${PREFIX}-detail,.${PREFIX}-column:focus-visible .${PREFIX}-detail{visibility:visible}`,
   `@media (hover:none){.${PREFIX}-column:focus .${PREFIX}-detail{visibility:visible}}`,
 ].join('');
+
+/** REQ-105: the value, its detail lines, and the date over the time axis. */
+const READOUT = { value: 16, valueNarrow: 13, detail: 11, detailLine: 15, extraLine: 14, gap: 8 };
+const DATE = { size: 11, padding: { x: 6, y: 2 }, radius: 3, overhang: 20 };
+const RING = { radius: 7, stroke: 1.6 };
+/** A bold text is a bit wider than the estimate. */
+const BOLD = 1.06;
 
 const FONT_SIZE = 10;
 const LINE_HEIGHT = 13;
@@ -97,10 +135,6 @@ export class HoverLayer {
     for (const value of this.levels(spec)) {
       const y = round(this.scales.y(value));
       lines.push(`<line x1="0" x2="${round(centre)}" y1="${y}" y2="${y}" ${stroke}/>`);
-    }
-    if (spec.point?.right !== undefined) {
-      const y = round(this.scales.y(spec.point.right));
-      lines.push(`<line x1="${round(centre)}" x2="${this.area.width}" y1="${y}" y2="${y}" ${stroke}/>`);
     }
     return lines;
   }
@@ -209,6 +243,130 @@ export class RowHoverLayer extends HoverLayer {
     ];
   }
 }
+
+/**
+ * REQ-105, REQ-106: the hover of a time axis. Nothing is drawn over the data: on the point only a dotted guide
+ * over the height of the plot and a ring; the date as a small label on the time axis, over the label of its
+ * period; and the value in one fixed spot. Every column carries its own readout at the same coordinates, so
+ * nothing jumps; the readout at rest (the latest value) hides while a column is shown. Only CSS, with the device
+ * rules of REQ-015 (REQ-048).
+ */
+export class ReadoutHoverLayer extends HoverLayer {
+  protected readonly place: ReadoutPlace;
+
+  constructor(tokens: Tokens, area: PlotArea, scales: PlotScales, place: ReadoutPlace) {
+    super(tokens, area, scales);
+    this.place = place;
+  }
+
+  /** How much room the readouts need at the right of the header, and whether any has a second detail line. */
+  static size(tokens: Tokens, readouts: readonly Readout[]): { width: number; extra: boolean } {
+    const width = Math.max(
+      0,
+      // The extra line too: it stands under the detail, next to the reading cue, and never runs under it.
+      ...readouts.map((readout) =>
+        Math.max(textWidth(readout.value, READOUT.value) * BOLD, textWidth(readout.detail ?? '', READOUT.detail), textWidth(readout.extra ?? '', READOUT.detail)),
+      ),
+    );
+    return { width: Math.ceil(width), extra: readouts.some((readout) => Boolean(readout.extra)) };
+  }
+
+  override render(specs: readonly HoverSpec[]): string {
+    const columns = specs.map((spec) => this.column(spec)).filter(Boolean);
+    if (columns.length === 0) return '';
+    const group = `.${PREFIX}`;
+    const rest = `.${PREFIX}-rest`;
+    const column = `.${PREFIX}-column`;
+    const detail = `.${PREFIX}-detail`;
+    // As STYLE, and there are never two values at once: the readout at rest hides while a column shows its own.
+    const style = [
+      `${column}{outline:none}`,
+      `${column}:hover ${detail},${column}:focus-visible ${detail}{visibility:visible}`,
+      `${group}:hover ${rest},${group}:has(${column}:focus-visible) ${rest}{visibility:hidden}`,
+      `@media (hover:none){${column}:focus ${detail}{visibility:visible}${group}:has(${column}:focus) ${rest}{visibility:hidden}}`,
+    ].join('');
+    return [
+      `<style>${style}</style>`,
+      `<g class="${PREFIX}">`,
+      `<g class="${PREFIX}-rest" pointer-events="none">${this.readout(this.place.rest)}</g>`,
+      ...columns,
+      '</g>',
+    ].join('\n');
+  }
+
+  protected override column(spec: HoverSpec): string {
+    const left = this.scales.x(spec.from ?? spec.x - 0.5);
+    const right = this.scales.x(spec.to ?? spec.x + 0.5);
+    const centre = this.scales.x(spec.x);
+    if (![left, right, centre].every(Number.isFinite)) return '';
+    const label = escapeXml(spec.lines.map((line) => line.text).join(', '));
+    const detail = [
+      ...this.guides(spec, centre),
+      ...this.ring(spec, centre),
+      ...(spec.readout ? [this.date(spec.readout.date, centre), this.readout(spec.readout)] : this.box(spec, centre)),
+    ];
+    return [
+      `<g class="${PREFIX}-column" tabindex="0" role="img" aria-label="${label}">`,
+      `<rect x="${round(left)}" y="0" width="${round(right - left)}" height="${this.area.height}" fill="transparent"/>`,
+      `<g class="${PREFIX}-detail" visibility="hidden" pointer-events="none">`,
+      ...detail,
+      '</g>',
+      '</g>',
+    ].join('');
+  }
+
+  /** Only the dotted guide through the column, over the height of the plot. */
+  protected override guides(_spec: HoverSpec, centre: number): string[] {
+    const stroke = `stroke="${color(this.tokens, 'context/dark')}" stroke-width="${this.tokens.stroke.guide}" stroke-dasharray="2 3"`;
+    return [`<line x1="${round(centre)}" x2="${round(centre)}" y1="0" y2="${this.area.height}" ${stroke}/>`];
+  }
+
+  protected override ring(spec: HoverSpec, centre: number): string[] {
+    if (!spec.point) return [];
+    const y = round(this.scales.y(spec.point.y));
+    return [`<circle cx="${round(centre)}" cy="${y}" r="${RING.radius}" fill="none" stroke="${color(this.tokens, 'focus')}" stroke-width="${RING.stroke}"/>`];
+  }
+
+  /** The date on the time axis, right under the point, over the label of its period. */
+  protected date(text: string, centre: number): string {
+    const width = textWidth(text, DATE.size) * BOLD + 2 * DATE.padding.x;
+    const height = DATE.size + 2 * DATE.padding.y + 1;
+    // Under the point, but never further out than the axis labels themselves.
+    const x = clamp(centre - width / 2, -DATE.overhang, this.area.width + DATE.overhang - width);
+    const top = this.place.dateTop - DATE.padding.y - 1;
+    return [
+      `<rect x="${round(x)}" y="${round(top)}" width="${round(width)}" height="${height}" rx="${DATE.radius}" fill="${color(this.tokens, 'text')}"/>`,
+      `<text x="${round(x + width / 2)}" y="${round(top + DATE.padding.y + DATE.size - 1.5)}" text-anchor="middle" font-family="${escapeXml(this.tokens.font.body)}" font-size="${DATE.size}" font-weight="bold" fill="${color(this.tokens, 'surface')}">${escapeXml(text)}</text>`,
+    ].join('');
+  }
+
+  /** The readout in its fixed spot: the value, the detail beside or under it, and the extra line under that. */
+  protected readout(readout: Readout): string {
+    const { anchor, origin } = this.place;
+    const x = anchor.x - origin.x;
+    const y = anchor.y - origin.y;
+    const font = escapeXml(this.tokens.font.body);
+    const text = (content: string, at: { x: number; y: number }, style: string) =>
+      `<text x="${round(at.x)}" y="${round(at.y)}"${anchor.align === 'end' ? ' text-anchor="end"' : ''} font-family="${font}" ${style}>${escapeXml(content)}</text>`;
+    const muted = `font-size="${READOUT.detail}" fill="${color(this.tokens, 'text/muted')}"`;
+    const parts: string[] = [];
+    if (anchor.align === 'end') {
+      parts.push(text(readout.value, { x, y }, `font-size="${READOUT.value}" font-weight="bold" fill="${color(this.tokens, 'focus/dark')}"`));
+      if (readout.detail) parts.push(text(readout.detail, { x, y: y + READOUT.detailLine }, muted));
+      if (readout.extra) parts.push(text(readout.extra, { x, y: y + READOUT.detailLine + READOUT.extraLine }, muted));
+    } else {
+      // On a narrow chart: the value and its detail on one line under the reading cue, the extra line under it.
+      parts.push(text(readout.value, { x, y }, `font-size="${READOUT.valueNarrow}" font-weight="bold" fill="${color(this.tokens, 'focus/dark')}"`));
+      const after = x + textWidth(readout.value, READOUT.valueNarrow) * BOLD + READOUT.gap;
+      if (readout.detail) parts.push(text(readout.detail, { x: after, y }, muted));
+      if (readout.extra) parts.push(text(readout.extra, { x, y: y + READOUT.extraLine }, muted));
+    }
+    return parts.join('');
+  }
+}
+
+/** How far under the value of a readout its lines reach, for the room the header keeps (REQ-105). */
+export const READOUT_LINES = { detail: READOUT.detailLine, extra: READOUT.extraLine, narrowValue: READOUT.valueNarrow };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), Math.max(min, max));

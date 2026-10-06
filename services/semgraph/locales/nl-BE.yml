@@ -165,6 +165,8 @@ chart:
   noComparison: geen vergelijking
 
 hover:
+  # REQ-105: the readout at rest.
+  latest: "laatste · {date}"
   n: "n = {n} waarnemingen"
   centre:
     category:
