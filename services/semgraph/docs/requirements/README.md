@@ -133,7 +133,8 @@ elk bestand zegt welke.
 | [REQ-093](REQ-093.md) | Claude vult de metadata in: de vraag, de query, wie vroeg en de datum | 2026-10-05 (opdracht) | geïmplementeerd | [2d7a8c4](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/2d7a8c4) |
 | [REQ-094](REQ-094.md) | Night mode: elke grafiek ook donker (`theme: dark`), in de modus Dark van Figma; in een donker gesprek toont de app ze donker | 2026-10-05 (opdracht) | geïmplementeerd | [0579dc9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0579dc9) |
 | REQ-095 | De keuzehulp als MCP-tool `choose_semgraph` en als `POST /choose` | 2026-10-05 (opdracht) | open: punt 19 | – |
-| [REQ-096](REQ-096.md) | Night mode: de patronen in het donker uit het basispalet; de download blijft licht | 2026-10-05 (opdracht) | geïmplementeerd | [0579dc9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0579dc9) |
+| [REQ-096](REQ-096.md) | Night mode: de patronen in het donker uit het basispalet; de download blijft licht | 2026-10-05 (opdracht) | geïmplementeerd; de patronen vervangen door REQ-097 | [0579dc9](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/0579dc9) |
+| [REQ-097](REQ-097.md) | De patronen volgen hun variabelen in Figma, in Light en Dark: leeg en lopend `context/light`, weinig `context` | 2026-10-06 (opdracht) | geïmplementeerd | [3580e5e](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/3580e5e) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -163,7 +164,8 @@ REQ-090 tot REQ-095 zijn de opdracht van 2026-10-05 om Claude de semgraph te lat
 collega's, met de antwoorden in hetzelfde gesprek: een MCP-server (REQ-090), login met de gate-accounts (REQ-091),
 de grafiek als MCP App (REQ-092) en de metadata die Claude invult (REQ-093). De keuzehulp als tool (REQ-095) komt
 later. Night mode (REQ-094) is gebouwd zodra de modus Dark in Figma stond; REQ-096 zijn de antwoorden op de vragen
-daarover (de patronen en de download). Wat het platform moet doen, staat in [docs/platform/mcp-access.md](../platform/mcp-access.md).
+daarover (de patronen en de download). REQ-097 is de opdracht van 2026-10-06 om de patronen over te nemen zodra
+hun masters in Figma aan variabelen gebonden waren. Wat het platform moet doen, staat in [docs/platform/mcp-access.md](../platform/mcp-access.md).
 
 ### Hernummering
 
@@ -256,9 +258,8 @@ Punt 21 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)). Punt 17 hier
     - de postcodes van heel Vlaanderen op een card;
     - hoe grof een regio getekend wordt (REQ-089): voorstel 500 m voor regio's en provincies, 150 m voor postcodes.
 18. **Night mode (REQ-094).** *Opgelost op 2026-10-05:* de modus Dark staat in Figma en is gebouwd
-    ([REQ-094](REQ-094.md)); de patronen nemen in het donker grijzen uit het basispalet en de download blijft licht
-    ([REQ-096](REQ-096.md)). Nog na te kijken met Daniel: de patronen als variabelen in Figma, met hun waarde in de
-    modus Dark.
+    ([REQ-094](REQ-094.md)); de download blijft licht ([REQ-096](REQ-096.md)). *Opgelost op 2026-10-06:* de patronen
+    volgen de variabelen waaraan hun masters in Figma gebonden zijn ([REQ-097](REQ-097.md)).
 19. **De keuzehulp als tool (REQ-095).** De analyse noemt `choose_semgraph` naast de andere tools; het kiesalgoritme
     (de vraag die de grootste overblijvende groep zo klein mogelijk maakt) is nog niet gebouwd, de woordenlijst en de
     conformiteitscontroles wel. Tot dan kiest Claude met de voorbeeldvragen en de regels "niet gebruiken als" uit

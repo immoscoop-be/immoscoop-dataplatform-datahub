@@ -407,8 +407,9 @@ grows with them.
 
 **Light and dark (REQ-094).** Every semgraph takes `theme`: `light` (the default) or `dark`, for a dark page, slide or
 conversation. Both are the Figma variables of the collection Chart, modes Light and Dark (`color` and `colorDark` in
-the tokens): only the colours change, never the chart. The patterns are no Figma variables yet; in the dark they take
-greys of the base palette, in the order of the light ones: empty grey/800, running grey/700, few grey/500 (REQ-096).
+the tokens): only the colours change, never the chart. The patterns take the variables their masters are bound to in
+Figma, in both modes: the mosaic (empty) and the fine lines (running) `context/light`, the dots (few observations)
+`context`, on `surface` (REQ-097).
 A dark SVG carries `data-theme="dark"`, and its pattern ids end in `-dark`, so a light and a dark chart can share a
 page. `GET /semgraphs/{id}/examples/{name}?theme=dark` draws an example dark, and `npm run render:examples` writes
 every chart dark too.
