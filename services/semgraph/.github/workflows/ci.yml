@@ -33,7 +33,8 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: docker build -t semgraph:ci .
-      - run: docker run -d --name semgraph -p 8080:8080 semgraph:ci
+      # MCP without a login (REQ-090); the platform sets OAuth instead (REQ-091).
+      - run: docker run -d --name semgraph -p 8080:8080 -e MCP_AUTH=none semgraph:ci
       - name: Wait until the service is healthy
         run: |
           for i in $(seq 1 30); do
@@ -56,5 +57,19 @@ jobs:
             --data @semgraphs/movingWindowAverage/examples/unique-without-aggregation.json \
             http://127.0.0.1:8080/render)
           test "$status" = 422
+      - name: MCP lists its tools
+        run: |
+          curl -fsS -X POST http://127.0.0.1:8080/mcp \
+            -H 'content-type: application/json' -H 'accept: application/json, text/event-stream' \
+            -H 'mcp-protocol-version: 2025-06-18' \
+            --data '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' > tools.json
+          grep -q '"render_semgraph"' tools.json
+      - name: MCP fails closed without configuration
+        run: |
+          docker run -d --name semgraph-closed -p 8081:8080 semgraph:ci
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8081/healthz && break; sleep 1; done
+          status=$(curl -sS -o /dev/null -w '%{http_code}' -X POST http://127.0.0.1:8081/mcp \
+            -H 'content-type: application/json' --data '{"jsonrpc":"2.0","id":1,"method":"tools/list"}')
+          test "$status" = 503
       - if: failure()
         run: docker logs semgraph

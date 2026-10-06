@@ -1,4 +1,4 @@
-# semgraph: one stateless container, internal only, behind the platform's login.
+# semgraph: one stateless container behind the platform's login; only /mcp checks its own OAuth tokens (REQ-091).
 # Node runs the TypeScript sources directly (type stripping), so there is no build step.
 FROM node:24.21.0-slim@sha256:0e0ff40c39bc087845bfb27465a0df4ea419520094bc35842ff83dd8cbe6f9b6
 

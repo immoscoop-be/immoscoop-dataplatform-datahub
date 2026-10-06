@@ -51,8 +51,9 @@ time axis (two of them for a ratio), one for categories, one for the distributio
 | `kpiStatus` | a period: the real and the planned cumulative level at its end | the real staircase against the fixed path to the target, a loss hatched, what is still to be won dotted |
 | `distribution` | a bin of a continuous value: its count; plus P25, P50, P75 and the open bin above the threshold | touching bins, quartile guides, the tail in one grey bin |
 
-MCP, PNG, the interactive HTML page, the widget, the choice aid (`/choose`) and the other semgraphs come later, on
-the same core.
+Claude can use the service through an MCP server on `/mcp`, which shows the chart in the conversation (REQ-090 to
+REQ-093, see [MCP: charts in Claude](#mcp-charts-in-claude)). PNG, the interactive HTML page, the widget, the choice
+aid (`/choose`, REQ-095) and the other semgraphs come later, on the same core.
 
 ![movingWindowAverage example](test/golden/movingWindowAverage-basic.svg)
 ![calendarAverage per week, with the running week on its pattern](test/golden/calendarAverage-weeks.svg)
@@ -95,8 +96,9 @@ curl -X POST http://localhost:8080/render \
 ```
 
 The container is stateless, needs no secrets and listens on `PORT` (default 8080). It has no login of its own:
-that comes from the platform it is deployed on (still to be agreed), so do not expose it publicly.
-`LOG_LEVEL` sets the log level (default `info`).
+that comes from the platform it is deployed on, so do not expose it publicly. The one exception is `/mcp`, which
+checks OAuth tokens itself (REQ-091) and refuses everything until it is configured; see
+[MCP: charts in Claude](#mcp-charts-in-claude). `LOG_LEVEL` sets the log level (default `info`).
 
 ## Examples
 
@@ -110,6 +112,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `basic` | 7 windows of 7 days, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/basic) · [golden](test/golden/movingWindowAverage-basic.svg) |
 | `daily` | window of 1 day, 28 days: the daily values themselves | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/daily) · [golden](test/golden/movingWindowAverage-daily.svg) |
 | `long-horizon` | 78 windows of 7 days (a year and a half), with a thinned time axis | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/long-horizon) · [golden](test/golden/movingWindowAverage-long-horizon.svg) |
+| `long-horizon-dark` | the same, dark (`theme: dark`, REQ-094): the empty window on the dark checkerboard (REQ-096) | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/long-horizon-dark) · [golden](test/golden/movingWindowAverage-long-horizon-dark.svg) |
 | `missing-days` | a window without data (`mean: null`), drawn as empty; en | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/missing-days) · [golden](test/golden/movingWindowAverage-missing-days.svg) |
 | `with-metadata` | the metadata block (`meta`): question, asked and built by, references, query | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/with-metadata) · [golden](test/golden/movingWindowAverage-with-metadata.svg) |
 | `zoomed` | `valueAxis: zoom`: the value axis starts just below the data, with a zigzag | ok | [local](http://localhost:8080/semgraphs/movingWindowAverage/examples/zoomed) · [golden](test/golden/movingWindowAverage-zoomed.svg) |
@@ -129,6 +132,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `weeks` | 12 ISO weeks, mean ±1 sd | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks) · [golden](test/golden/calendarAverage-weeks.svg) |
+| `weeks-dark` | the same weeks, dark (`theme: dark`, REQ-094): the running week on its dark pattern (REQ-096) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks-dark) · [golden](test/golden/calendarAverage-weeks-dark.svg) |
 | `weeks-card` | the same weeks on a card (`size: card`, REQ-085): fewer labels, only the last final value | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/weeks-card) · [golden](test/golden/calendarAverage-weeks-card.svg) |
 | `months` | 12 months | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months) · [golden](test/golden/calendarAverage-months.svg) |
 | `months-values-all` | 12 months, with every value written on the chart (`values: all`) | ok | [local](http://localhost:8080/semgraphs/calendarAverage/examples/months-values-all) · [golden](test/golden/calendarAverage-months-values-all.svg) |
@@ -152,6 +156,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `weeks` | the conversion from visit to lead per week, as in Figma; week 31 rests on far fewer visitors; en | ok, with a red caution `fewObservations.ratio.base` | [local](http://localhost:8080/semgraphs/calendarRatio/examples/weeks) · [golden](test/golden/calendarRatio-weeks.svg) |
+| `weeks-dark` | the same, dark (`theme: dark`, REQ-094); en | ok, with a red caution `fewObservations.ratio.base` | [local](http://localhost:8080/semgraphs/calendarRatio/examples/weeks-dark) · [golden](test/golden/calendarRatio-weeks-dark.svg) |
 
 ### periodComparison
 
@@ -173,6 +178,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `price-ranges-mean` | days online per price range, ±1 sd; en | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-mean) · [golden](test/golden/categoryComparison-price-ranges-mean.svg) |
 | `provinces-median-zoomed` | the median asking price per province, `valueAxis: zoom`: the axis starts at € 200k, with a zigzag (REQ-073) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-median-zoomed) · [golden](test/golden/categoryComparison-provinces-median-zoomed.svg) |
 | `provinces-sum-vs-last-year` | leads per province against last year, inside one bar: shared, gained, lost, now (REQ-066, REQ-067) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year.svg) |
+| `provinces-sum-vs-last-year-dark` | the same, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year-dark) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year-dark.svg) |
 | `provinces-sum-vs-last-year-large` | the same on a slide (`size: large`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/provinces-sum-vs-last-year-large) · [golden](test/golden/categoryComparison-provinces-sum-vs-last-year-large.svg) |
 | `price-ranges-sum-vs-last-year` | listings online per price range against last year, upright | ok | [local](http://localhost:8080/semgraphs/categoryComparison/examples/price-ranges-sum-vs-last-year) · [golden](test/golden/categoryComparison-price-ranges-sum-vs-last-year.svg) |
 
@@ -181,6 +187,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `rolling-28d` | credit leads over 28 days against last year, with the mini trend and its grey shadow line (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-28d) · [golden](test/golden/kpiTile-rolling-28d.svg) |
+| `rolling-28d-dark` | the same tile, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-28d-dark) · [golden](test/golden/kpiTile-rolling-28d-dark.svg) |
 | `months-mean` | the hours to a first contact per lead this month, ±1 sd next to the number, against last year | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/months-mean) · [golden](test/golden/kpiTile-months-mean.svg) |
 | `rolling-7d` | credit leads over 7 days against the 7 days before: no shadow line; en | ok | [local](http://localhost:8080/semgraphs/kpiTile/examples/rolling-7d) · [golden](test/golden/kpiTile-rolling-7d.svg) |
 
@@ -189,6 +196,7 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `leads-since-launch` | leads since the launch against the path set on 30/04 to 130k: behind, with the catch-up (Figma) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch) · [golden](test/golden/kpiStatus-leads-since-launch.svg) |
+| `leads-since-launch-dark` | the same, dark (`theme: dark`, REQ-094): the hatching on the dark surface (REQ-055) | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch-dark) · [golden](test/golden/kpiStatus-leads-since-launch-dark.svg) |
 | `leads-since-launch-card` | the same on a card (`size: card`, REQ-085): the step labels are on hover | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/leads-since-launch-card) · [golden](test/golden/kpiStatus-leads-since-launch-card.svg) |
 | `weeks-ahead` | new listings this quarter, per week, ahead of the path; en | ok | [local](http://localhost:8080/semgraphs/kpiStatus/examples/weeks-ahead) · [golden](test/golden/kpiStatus-weeks-ahead.svg) |
 
@@ -197,13 +205,14 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Example | Shows | Outcome | Open |
 | --- | --- | --- | --- |
 | `asking-price` | asking prices in bins of € 50k, quartiles, the tail above € 900k | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price) · [golden](test/golden/distribution-asking-price.svg) |
+| `asking-price-dark` | the same, dark (`theme: dark`, REQ-094) | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price-dark) · [golden](test/golden/distribution-asking-price-dark.svg) |
 | `asking-price-xl` | the same on a big screen (`size: xl`, REQ-085) | ok | [local](http://localhost:8080/semgraphs/distribution/examples/asking-price-xl) · [golden](test/golden/distribution-asking-price-xl.svg) |
 
 ## API
 
 | Call | Does |
 | --- | --- |
-| `GET /healthz` | `{status, version, languageVersion, tokensVersion}` |
+| `GET /healthz` | `{status, version, languageVersion, tokensVersion, mcp}`; `mcp` is `off`, `open` or `oauth` (REQ-091) |
 | `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-083) |
 | `GET /` | leads to `/gallery` |
 | `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-083) |
@@ -213,6 +222,8 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser |
 | `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
 | `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
+| `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |
+| `GET /.well-known/oauth-protected-resource/mcp` | where Claude signs in for `/mcp`, only when OAuth is configured (REQ-091) |
 
 The internal-tools platform runs the image ([deploy workflow](.github/workflows/deploy-internal-tools.yml)): `main` on
 <https://semgraph.internal-immoscoop.be>, every other branch on <https://semgraph.dev.internal-immoscoop.be>, each
@@ -250,6 +261,61 @@ Issues always have the same shape, in the language of `locale`:
 SVG responses also carry `Semgraph-Language-Version` and `Semgraph-Tokens-Version`, `nosniff` and a strict
 Content-Security-Policy. The gallery is a page without scripts that only loads its own example pictures. Swagger UI
 comes with the package and loads nothing from outside either.
+
+## MCP: charts in Claude
+
+Claude (claude.ai, Desktop, mobile and Claude Code) uses the service through an MCP server on `POST /mcp`, on the same
+core as the REST API (REQ-090). The tools are read-only:
+
+| Tool | Does |
+| --- | --- |
+| `list_semgraphs` | every semgraph with the question it answers, as `GET /semgraphs` |
+| `describe_semgraph` | one semgraph: when not to use it, its contract and a full example request, as `GET /semgraphs/{id}` |
+| `validate_semgraph` | the report of `POST /validate` |
+| `render_semgraph` | draws the chart and shows it to the user in the conversation |
+
+**The chart in the conversation (REQ-092).** Claude shows only PNG, JPEG, GIF or WebP as an image, so
+`render_semgraph` comes with an MCP App: a small page in the conversation that shows exactly the SVG the service
+drew, with its hover and metadata panels. Inline at size `default`, scaled to the width of the conversation; in full
+screen at size `large`; with a button to download the SVG. In a dark conversation the app shows the chart dark
+(REQ-094); the download stays light, since it goes to a page, a slide or a mail (REQ-096). Claude itself gets the
+report (outcome, issues, alternative), not the SVG, and is asked to fill `meta`: the question, the query, who asked
+and the day (REQ-093).
+
+**Login (REQ-091).** Claude calls `/mcp` from Anthropic's cloud, without the gate's cookie, so `/mcp` checks an OAuth
+access token itself, issued to a gate account (Cognito Pool 1). The configuration comes from the environment:
+
+| Variable | |
+| --- | --- |
+| `MCP_AUTH_ISSUER` | the issuer of the tokens, e.g. `https://cognito-idp.eu-central-1.amazonaws.com/<pool id>` |
+| `MCP_AUTH_CLIENT_IDS` | the OAuth clients whose tokens are accepted, comma separated |
+| `MCP_RESOURCE_URL` | the URL of `/mcp` as users enter it in Claude, e.g. `https://semgraph.internal-immoscoop.be/mcp` |
+| `MCP_AUTH_SCOPE` | optional: a scope every token must carry, e.g. `semgraph/mcp` |
+| `MCP_AUTHORIZATION_SERVER` | optional: where Claude signs in, when that is not the issuer |
+| `MCP_AUTH=none` | no login, for a local server; excludes the variables above |
+
+Without any of these, `/mcp` answers 503: it fails closed. An incomplete configuration stops the service from
+starting. What the platform has to do (an OAuth client in Cognito, a gate exception for `/mcp` on the semgraph host,
+the WAF) is proposed in [docs/platform/mcp-access.md](docs/platform/mcp-access.md).
+
+**Connect** once the platform is ready:
+
+- *claude.ai, for the whole organization:* an Owner adds it under Organization settings → Connectors → Add → Custom →
+  Web, with the URL of `/mcp` and "Use your own OAuth client" (the client id from the platform, no secret). Every
+  colleague then connects under Customize → Connectors and signs in with their gate account.
+- *Claude Code:*
+  `claude mcp add --transport http --client-id <client id> --callback-port 33418 semgraph https://semgraph.internal-immoscoop.be/mcp`.
+
+**Locally**, without a platform:
+
+```sh
+MCP_AUTH=none npm start                     # MCP on http://localhost:8080/mcp
+npx @modelcontextprotocol/inspector         # to try the tools
+npm run mcp                                 # the same server on stdio
+```
+
+`.mcp.json` gives Claude Code in a clone of this repository the stdio server, without login. Claude Code shows no
+app, so there every chart is also written to `out/mcp/`, and Claude gets the path.
 
 ## The contract
 
@@ -338,6 +404,15 @@ many days of the earlier period. It has no `values`: it labels the ends of its t
 chosen; the height follows from the content. The chart is built anew at its width, so its labels fit: a card gets
 fewer labels on its axis, a slide more. `large` and `xl` are built at 960 and 1280 px and enlarged, so the text
 grows with them.
+
+**Light and dark (REQ-094).** Every semgraph takes `theme`: `light` (the default) or `dark`, for a dark page, slide or
+conversation. Both are the Figma variables of the collection Chart, modes Light and Dark (`color` and `colorDark` in
+the tokens): only the colours change, never the chart. The patterns take the variables their masters are bound to in
+Figma, in both modes: the mosaic (empty) and the fine lines (running) `context/light`, the dots (few observations)
+`context`, on `surface` (REQ-097).
+A dark SVG carries `data-theme="dark"`, and its pattern ids end in `-dark`, so a light and a dark chart can share a
+page. `GET /semgraphs/{id}/examples/{name}?theme=dark` draws an example dark, and `npm run render:examples` writes
+every chart dark too.
 
 Shared and optional: `title`; `asOf`, the last complete day of the data (yesterday in Brussels when absent);
 `uniqueAggregation` (`daily` or `overPeriod`, required for unique counts); `valueAxis` (`zero`, the default, or
@@ -619,7 +694,8 @@ tokens/ptditt-grafiektaal-tokens.json  style values, read from the Figma variabl
 src/core/pipeline.ts                   schema -> input checks -> blocks to slots -> rules -> draw -> template
 src/core/render/                       Vega-Lite to SVG (headless, no external loading), HoverLayer, the template
 src/core/conformance.ts                the conformance checks, run by the tests and at start-up
-src/app.ts, src/routes/                the REST layer (Fastify); an MCP layer will call the same pipeline
+src/app.ts, src/routes/                the REST layer (Fastify), and POST /mcp
+src/mcp/                               the MCP server on the same core, its login and the app that shows a chart
 ```
 
 Everything smart happens in our code; Vega-Lite only draws what it gets. The axis ticks and labels, which value is

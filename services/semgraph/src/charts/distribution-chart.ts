@@ -6,7 +6,7 @@ import type { HoverSpec } from '../core/render/hover.ts';
 import type { DrawContext, Drawing, RequestContext, SemgraphImplementation, SemgraphMetadata } from '../core/semgraph.ts';
 import { color, vegaLiteConfig } from '../core/tokens.ts';
 import { sizeOf } from '../core/size.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, METRIC, SIZE, TITLE } from './contract.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, METRIC, SIZE, THEME, TITLE } from './contract.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
 import { lookup, niceRange, valueScale } from './scales.ts';
 import { PLOT_HEIGHT } from './time-axis-chart.ts';
@@ -97,6 +97,7 @@ export class DistributionChart implements SemgraphImplementation<DistributionReq
         asOf: { description: 'The day of the data, for the footer. Yesterday in Brussels when absent.', ...DAY },
         unit: UNIT_SCHEMA,
         size: SIZE,
+        theme: THEME,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,

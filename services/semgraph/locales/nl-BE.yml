@@ -292,6 +292,12 @@ gallery:
     en: English
     nl-BE: Nederlands
 
+app:
+  # De MCP App die een grafiek toont in een gesprek met Claude (REQ-092).
+  download: SVG downloaden
+  fullscreen: Volledig scherm
+  notDrawn: "Niet getekend: {message}"
+
 readingCards:
   kpiStatus: KPI-status
   kpiTile: KPI-tegel

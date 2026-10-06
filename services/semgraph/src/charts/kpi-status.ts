@@ -10,7 +10,7 @@ import { periodFromName, periodName, shiftPeriod, type CalendarUnit } from './ca
 import { calendarTickStep, periodLabel, periodTick, startsYear } from './calendar-chart.ts';
 import { hatchPattern, patternId, toWinPattern } from './comparison.ts';
 import { sizeOf } from '../core/size.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat } from './number-format.ts';
 import { lookup, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers } from './scales.ts';
@@ -133,6 +133,7 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
         pathSet: { description: 'The day the path was set. It never moves afterwards: a path that is redrawn every month can never be missed.', ...DAY },
         asOf: { description: 'The last complete day of the data. Yesterday in Brussels when absent.', ...DAY },
         size: SIZE,
+        theme: THEME,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,

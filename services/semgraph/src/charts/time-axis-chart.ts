@@ -16,7 +16,7 @@ import { endLabels, hatchPattern, patternId, SECOND_LINE, shortfall } from './co
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { lookup, numberFormat, ticksEvery, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, type ValueAxisMode } from './scales.ts';
 import { sizeOf } from '../core/size.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
 import { baseLayers, denominatorAxis, RIGHT_AXIS } from './ratio.ts';
@@ -308,6 +308,7 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
               },
             }),
         size: SIZE,
+        theme: THEME,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,

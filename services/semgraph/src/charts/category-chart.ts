@@ -11,7 +11,7 @@ import { anyPeriodFromName, type CalendarUnit } from './calendar.ts';
 import { periodLabel } from './calendar-chart.ts';
 import { COMPARISONS, comparisonLabel, defaultComparison, hatchPattern, patternId, type BlockLength, type ComparisonKind } from './comparison.ts';
 import { sizeOf } from '../core/size.ts';
-import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
+import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { stateColumns, statePattern, type DataState } from './data-states.ts';
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
@@ -163,6 +163,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
         },
         unit: UNIT_SCHEMA,
         size: SIZE,
+        theme: THEME,
         format: FORMAT,
         locale: LOCALE,
         context: CONTEXT,

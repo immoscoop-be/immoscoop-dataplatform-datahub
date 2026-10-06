@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="434" viewBox="0 0 640 434" data-semgraph="kpiStatus" data-language-version="v0" data-tokens-version="0.3.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="434" viewBox="0 0 640 434" data-semgraph="kpiStatus" data-language-version="v0" data-tokens-version="0.5.0">
 <title>New listings this quarter (sample data)</title>
 <desc>New listings this quarter (sample data): cumulative · from 0 on 1 Jul · target 5.0k, up to 23 Aug 2026. Now 2.6k of 5.0k by 30 Sep 2026; 2.4k still needed.</desc>
 <defs><pattern id="semgraph-towin-d4cfd4d0" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#ffffff"/><circle cx="2" cy="2" r="2" fill="#d6f0ed"/></pattern></defs>

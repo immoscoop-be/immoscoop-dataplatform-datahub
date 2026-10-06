@@ -11,6 +11,7 @@
   "scripts": {
     "start": "node src/server.ts",
     "dev": "node --watch src/server.ts",
+    "mcp": "node src/mcp/stdio.ts",
     "test": "node --test \"test/**/*.test.ts\"",
     "typecheck": "tsc --noEmit",
     "render:examples": "node scripts/render-examples.ts",
@@ -19,6 +20,8 @@
   "dependencies": {
     "@fastify/swagger": "9.9.1",
     "@fastify/swagger-ui": "6.1.1",
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/server": "2.3.1",
     "ajv": "8.20.0",
     "fastify": "5.12.5",
     "vega": "6.4.0",

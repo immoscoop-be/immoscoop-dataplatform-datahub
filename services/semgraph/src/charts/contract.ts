@@ -1,4 +1,5 @@
 import { SIZE_NAMES } from '../core/size.ts';
+import { THEMES } from '../core/tokens.ts';
 
 /**
  * The fields every contract shares, written once (REQ-025). Each family adds its own: the periods of
@@ -33,6 +34,12 @@ export const SIZE = {
   description: 'The size of the chart (REQ-085): card (360 px wide, next to a KPI tile), default (640 px), large (1280 px, a 16:9 slide) or xl (1920 px, a big screen or print). Only the width is chosen; the height follows from the content. The chart is built anew in every size, so everything written on it fits.',
   enum: [...SIZE_NAMES],
   default: 'default',
+};
+
+export const THEME = {
+  description: 'The colours of the chart (REQ-094): light, or dark for a dark page, slide or conversation. Both are the Figma variables of the chart language (collection Chart, modes Light and Dark); only the colours change.',
+  enum: [...THEMES],
+  default: 'light',
 };
 
 export const FORMAT = {

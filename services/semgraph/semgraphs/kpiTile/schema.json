@@ -71,6 +71,14 @@
       "type": "string",
       "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
     },
+    "theme": {
+      "description": "The colours of the chart (REQ-094): light, or dark for a dark page, slide or conversation. Both are the Figma variables of the chart language (collection Chart, modes Light and Dark); only the colours change.",
+      "enum": [
+        "light",
+        "dark"
+      ],
+      "default": "light"
+    },
     "format": {
       "description": "Output format. Only svg is available in v0.",
       "enum": [

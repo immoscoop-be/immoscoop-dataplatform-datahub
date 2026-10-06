@@ -1,9 +1,9 @@
 import type { FastifyInstance } from 'fastify';
 import type { Dependencies } from '../app.ts';
+import { exampleLinks } from '../core/catalog.ts';
 import { createTranslator, resolveLocale } from '../core/i18n.ts';
 import { runPipeline } from '../core/pipeline.ts';
 import { galleryPage, type GalleryExample } from '../core/render/gallery.ts';
-import { exampleLinks } from './semgraphs.ts';
 
 /** The page only shows our own example pictures; no scripts, nothing from outside. */
 const HTML_HEADERS = {

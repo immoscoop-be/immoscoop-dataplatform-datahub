@@ -1,6 +1,6 @@
 {
-  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart (mode Current) and its text styles, read on 2026-10-03. Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065).",
-  "version": "0.3.0",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart and its text styles, read on 2026-10-06. color is the mode Light, the default; colorDark the mode Dark (REQ-094). Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065). Since 0.4.0 the mode Dark (REQ-094, REQ-096). Since 0.5.0 the patterns take the variables their masters are bound to in Figma (REQ-097), so they have no tokens of their own.",
+  "version": "0.5.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
@@ -19,9 +19,6 @@
     "reading-cue/text": "#630038",
     "warning": "#c8102e",
     "loss": "#2d333a",
-    "pattern/empty": "#e3e2dc",
-    "pattern/few": "#a9a79e",
-    "pattern/running": "#cfcdc4",
     "ordinal/1": "#ffcada",
     "ordinal/2": "#ff6ca6",
     "ordinal/3": "#e34f9c",
@@ -31,6 +28,33 @@
     "target/dark": "#146b63",
     "target/light": "#d6f0ed",
     "focus/subtle": "#fdeff6"
+  },
+  "colorDark": {
+    "focus": "#ff6ca6",
+    "focus/light": "#8a1450",
+    "focus/dark": "#ffcada",
+    "context": "#6b7480",
+    "context/dark": "#b5bcc4",
+    "context/light": "#3c444e",
+    "text": "#e5e8eb",
+    "text/muted": "#b5bcc4",
+    "surface": "#181c20",
+    "axis": "#3c444e",
+    "baseline": "#b5bcc4",
+    "badge/text": "#e5e8eb",
+    "badge/surface": "#2d333a",
+    "reading-cue/text": "#ffcada",
+    "warning": "#c8102e",
+    "loss": "#f3f5f6",
+    "ordinal/1": "#8a1450",
+    "ordinal/2": "#dd2c88",
+    "ordinal/3": "#e34f9c",
+    "ordinal/4": "#ff6ca6",
+    "ordinal/5": "#ffcada",
+    "target": "#3fbfb2",
+    "target/dark": "#6fd3c8",
+    "target/light": "#146b63",
+    "focus/subtle": "#3d0122"
   },
   "font": {
     "title": "Poppins, 'Helvetica Neue', Arial, sans-serif",
@@ -66,7 +90,7 @@
   },
   "$sources": {
     "figmaVariables": [
-      "color (all)",
+      "color and colorDark (all, modes Light and Dark); the patterns use context/light and context, as their masters in Figma (REQ-097)",
       "stroke.axis (line/guide)",
       "stroke.baseline (line/baseline)",
       "stroke.line (line/series)"
@@ -82,7 +106,6 @@
     "figmaExamples": [
       "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
       "mark (Points and markers)",
-      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)",
       "size.kpi and size.kpiDetail (Chart/KPI tile: the number and its comparison)",
       "size.delta (Chart/KPI status: what is still needed)"
     ],

@@ -1,4 +1,5 @@
 import { LOCALE } from '../charts/contract.ts';
+import { EMPTY_IS_NOT_ZERO, SERVICE_SUMMARY, WAREHOUSE_STEP } from './guide.ts';
 import type { Registry } from './registry.ts';
 
 /** Where the document and its viewer live (REQ-084). */
@@ -60,15 +61,15 @@ export function openApiDocument(registry: Registry): Record<string, unknown> {
       version: registry.version,
       summary: 'Charts by meaning, following the Immoscoop chart language.',
       description: [
-        'semgraph draws a chart by what it means (a rolling average, a comparison between categories, a KPI against its target), not by its form. Each chart is a *semgraph* with its own contract; the service checks a request against the chart language and draws it as SVG, or refuses it when the chart would mislead.',
+        SERVICE_SUMMARY,
         '',
         '**How to use it**',
         '',
         '1. Choose a semgraph: `GET /semgraphs` lists every semgraph with the question it answers; `GET /semgraphs/{id}` adds when not to use it, its attributes, its contract and its examples.',
-        '2. Compute the blocks in the warehouse: one row per window, calendar period, category or bin, with the fields of its statistic (`mean` with `sd` and `n`; `median` with `p25`, `p75` and `n`; `sum`; `numerator` and `denominator` for a ratio). The service never computes over days; it only checks and draws (REQ-058).',
+        `2. ${WAREHOUSE_STEP}`,
         '3. `POST /validate` checks a request and answers with a report, always with status 200. `POST /render` answers with the SVG (200), or with the report: 422 when the chart is refused, 400 when the request is not valid. Every issue says what is wrong and what to do instead.',
         '',
-        '**Empty is not zero.** A block with `null`, or left out, has no data and is drawn as empty; `0` is a measured zero.',
+        EMPTY_IS_NOT_ZERO,
         '',
         `Chart language ${registry.tokens.languageVersion}, tokens ${registry.tokens.version}. Every example can be seen drawn on \`/gallery\`.`,
       ].join('\n'),

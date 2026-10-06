@@ -2,9 +2,11 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 import { createTranslator, BASE_LOCALE } from './core/i18n.ts';
 import { localizeIssue, type IssueSpec } from './core/issues.ts';
 import { loadRegistry, type Registry } from './core/registry.ts';
+import { mcpAuthFromEnv, type FetchJson, type McpAuth } from './mcp/auth.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { galleryRoutes } from './routes/gallery.ts';
 import { healthRoutes } from './routes/health.ts';
+import { mcpRoutes } from './routes/mcp.ts';
 import { renderRoutes } from './routes/render.ts';
 import { semgraphRoutes } from './routes/semgraphs.ts';
 
@@ -13,11 +15,16 @@ export interface AppOptions {
   /** The clock; tests pin it so "today" is fixed. */
   now?: () => Date;
   logger?: FastifyServerOptions['logger'];
+  /** Who may use /mcp (REQ-091); read from the environment when absent. */
+  mcp?: McpAuth;
+  /** How the keys of the token issuer are fetched; tests serve their own. */
+  fetchJson?: FetchJson;
 }
 
 export interface Dependencies {
   registry: Registry;
   now: () => Date;
+  mcp: McpAuth;
 }
 
 /** 1 MB: 1100 days of data fit many times over. */
@@ -25,7 +32,7 @@ const BODY_LIMIT = 1024 * 1024;
 
 export async function buildApp(options: AppOptions = {}): Promise<FastifyInstance> {
   const registry = options.registry ?? (await loadRegistry());
-  const dependencies: Dependencies = { registry, now: options.now ?? (() => new Date()) };
+  const dependencies: Dependencies = { registry, now: options.now ?? (() => new Date()), mcp: options.mcp ?? mcpAuthFromEnv() };
   const app = Fastify({
     logger: options.logger ?? { level: process.env.LOG_LEVEL ?? 'info' },
     bodyLimit: BODY_LIMIT,
@@ -67,5 +74,6 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   renderRoutes(app, dependencies);
   galleryRoutes(app, dependencies);
   await docsRoutes(app, dependencies);
+  await mcpRoutes(app, dependencies, options.fetchJson ? { fetchJson: options.fetchJson } : {});
   return app;
 }

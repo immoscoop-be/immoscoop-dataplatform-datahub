@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="473" viewBox="0 0 640 473" data-semgraph="categoryComparison" data-language-version="v0" data-tokens-version="0.3.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="473" viewBox="0 0 640 473" data-semgraph="categoryComparison" data-language-version="v0" data-tokens-version="0.5.0">
 <title>Dagen online per prijsklasse (voorbeelddata)</title>
 <desc>Dagen online per prijsklasse (voorbeelddata): mediaan · P25–P75 · sep 2026, tot 30 sep 2026. 5 categorieën.</desc>
-<defs><pattern id="semgraph-few-fb78e55c" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#ffffff"/><circle cx="3" cy="3" r="1.1" fill="#a9a79e"/></pattern></defs>
+<defs><pattern id="semgraph-few-fb78e55c" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#ffffff"/><circle cx="3" cy="3" r="1.1" fill="#b5bcc4"/></pattern></defs>
 <rect width="640" height="473" fill="#ffffff"/>
 <a href="https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146" aria-label="Leeskaart: staafgrafiek →"><svg x="20" y="12" width="44" height="44" viewBox="0 0 44 44" fill="none" color="#6b7480"><rect width="44" height="44" fill="transparent"/><path d="M8.8 13.2H35.2M8.8 22H26.4M8.8 30.8H19.8M8.8 8.80005V35.2" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
 <text x="78" y="33" font-family="Poppins, &apos;Helvetica Neue&apos;, Arial, sans-serif" font-size="15" font-weight="600" fill="#3c444e">Dagen online per prijsklasse (voorbeelddata)</text>

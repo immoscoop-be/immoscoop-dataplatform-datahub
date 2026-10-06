@@ -27,8 +27,9 @@ describe('render', async () => {
         if (result.report.outcome === 'refused') return assert.equal(result.svg, undefined);
         assert.ok(result.svg);
         assert.doesNotMatch(result.svg, UNRESOLVED_KEY);
-        // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036).
-        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|towin|empty|running|few)-[0-9a-f]{8}$/);
+        // No ids, so several charts can share one page; only technical ids that are unique per chart (REQ-036),
+        // also between the light and the dark version of one chart (REQ-094).
+        for (const [, id] of result.svg.matchAll(/\sid="([^"]*)"/g)) assert.match(id!, /^semgraph-(hatch|towin|empty|running|few)-[0-9a-f]{8}(-dark)?$/);
         await assertGolden(`${id}-${name}.svg`, result.svg);
       });
     }
