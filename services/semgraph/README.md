@@ -611,13 +611,20 @@ What the service does:
    buttons. CSS only, no script (REQ-016, `src/core/render/meta.ts`, class `MetaLayer`): shown as an image, the cards
    stay hidden and the date stays visible. The version label ("grafiektaal v0") sits at the right of that row, only
    when the chart conforms.
-9. Hover, without script (`src/core/render/hover.ts`, class `HoverLayer`): every slot has a column over the full
-   height, also a slot without data. On hover or focus it shows grey dotted guides (vertical through the slot,
-   horizontal from the y axis to the centre and both spread edges, the lower edge never below zero), a ring in the
-   focus colour around the point, and a box centred on the slot, above the spread or below it when there is no
-   room, always inside the plot:
-   `23 sep (−7d)` (bold), `gemiddelde 7d: 43,7`, `±1 sd: 12,2`, `n = 41 waarnemingen` when the block has n,
-   `venster 17–23 sep`; for a slot without data `16 sep (−14d)`, `geen data`.
+9. Hover, without script (`src/core/render/hover.ts`): every slot has a column over the full height, also a slot
+   without data.
+   - On a time series (REQ-105, REQ-106, class `ReadoutHoverLayer`) nothing is drawn over the data: on the point a
+     dotted guide over the plot and a ring; the date as a dark label on the time axis, over the label of its period;
+     and the value in one fixed spot at the right of the header, with the spread and the window or period under it
+     (`43,7`, `± 12,2 · venster 17–23 sep`), and on a second line n, running, no data, the counts of a ratio or the
+     comparison. At rest that spot reads the latest value (`45,9`, `laatste · 30 sep`); it hides while a column is
+     shown. On a narrow chart the readout has a line of its own under the reading cue. The value labels at the
+     points stay (REQ-033).
+   - Other charts (class `HoverLayer`) show grey dotted guides (vertical through the slot, horizontal from the axis
+     to the centre and both spread edges, the lower edge never below zero), a ring around the point, and a box
+     next to the spread, always inside the plot.
+   - The `aria-label` of a column holds every line: `23 sep (−7d), gemiddelde 7d: 43,7, ±1 sd: 12,2, venster
+     17–23 sep`; for a slot without data `16 sep (−14d), geen data`.
    - Positions come from Vega's own scales (`view.scale('x')`, `view.scale('y')` after `toSVG`); a test checks
      that every ring lies on Vega's point within 0.01 px.
    - The device rules of REQ-015, every column with `tabindex="0"`: the mouse only hovers and a click holds
@@ -627,7 +634,8 @@ What the service does:
    - The detail is hidden with the attribute `visibility="hidden"` and made visible by CSS, so a renderer without
      CSS (such as a future PNG export) shows nothing instead of everything.
    - No ids (several charts can share one page), every class starts with `semgraph-hover` (CSS in an inline SVG
-     applies to the whole page), and `pointer-events="none"` on guides and box, so the next column takes over.
+     applies to the whole page), and `pointer-events="none"` on guides, box and readout, so the next column takes
+     over.
    - It works when the SVG is opened directly or inlined, not inside `<img>`, Slack or e-mail. On the interactive
      page this will be Vega-Lite's own way (a tooltip encoding and a pointerover param with a rule); this CSS layer
      is then the static fallback.

@@ -142,6 +142,8 @@ elk bestand zegt welke.
 | [REQ-102](REQ-102.md) | Een vijfde label, Learn: een les per grafiektype, met enkel de tekens die de grafiek tekende | 2026-10-06 (opdracht) | geïmplementeerd als mechanisme; nog geen lessen (open punt 21) | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
 | [REQ-103](REQ-103.md) | Learn enkel met een les; dan opent ook het icoon de Learn-kaart | 2026-10-06 (antwoord) | geïmplementeerd als mechanisme | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
 | [REQ-104](REQ-104.md) | Metadata: de parameters zoals gevraagd, zonder filter of periode; "door wie" is `builtBy` | 2026-10-06 (antwoord) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
+| [REQ-105](REQ-105.md) | De hover van een tijdas leest de waarde op één vaste plek: geen kader, de datum op de as, de waarde rechtsboven | 2026-10-06 (opdracht) | geïmplementeerd voor de tijdreeksen; KPI-grafieken open punt 22 | [908d2c1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/908d2c1) |
+| [REQ-106](REQ-106.md) | De waardelabels blijven; wat het kader meer zei, staat op een tweede regel van de uitlezing | 2026-10-06 (antwoord) | geïmplementeerd | [908d2c1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/908d2c1) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -175,7 +177,8 @@ daarover (de patronen en de download). REQ-097 is de opdracht van 2026-10-06 om 
 hun masters in Figma aan variabelen gebonden waren. Wat het platform moet doen, staat in [docs/platform/mcp-access.md](../platform/mcp-access.md).
 REQ-098 tot REQ-102 zijn de beslissingen van 2026-10-06 over de kaarten achter de labels (Query, Metadata, Learn);
 REQ-103 en REQ-104 zijn de antwoorden op de vragen die ze in het gesprek opriepen. De opdracht noemde de hover op een
-vaste plek REQ-103; die kreeg het eerstvolgende vrije nummer, REQ-105.
+vaste plek REQ-103; die kreeg het eerstvolgende vrije nummer, REQ-105. REQ-106 is het antwoord op de twee vragen die
+REQ-105 opriep.
 
 ### Hernummering
 
@@ -293,6 +296,13 @@ Punt 21 daar is de kleur van de bollen (zie [REQ-068](REQ-068.md)). Punt 17 hier
     - **Figma.** Het voorbeeld "Example/closed" heeft geen label Learn, terwijl de regelkaart zegt dat het er altijd
       is. Het voorbeeld van de kaart klopt niet met zichzelf: de titel zegt per maand, de SQL groepeert per week en
       het venster is 7 dagen.
+22. **De hover op een vaste plek (REQ-105) buiten de tijdreeksen.** Gebouwd voor de tijdreeksen. Wat overblijft:
+    - **De KPI-status** heeft ook een tijdas, maar haar kader zegt vijf dingen: de stand, wat erbij kwam, het pad, het
+      verschil met de geplande stap en wat nog moet. Vraag: wat is daar "de waarde waar je naar kijkt", en wat staat
+      eronder? Voorstel: de stand, met het pad en het verschil eronder. Tot dan houdt ze het kader.
+    - **De KPI-tegel** heeft geen tijdas maar een mini-trend onder een groot getal. Voorstel: ze houdt het kader.
+    - **Smalle grafieken.** Op de maat `card` bedekt het datumlabel soms ook een stukje van het aslabel ernaast.
+    - **De hulplijn** loopt over het waardelabel van een punt, als dat erboven staat (REQ-106 houdt de labels).
 
 ## Sjabloon voor een requirement
 
