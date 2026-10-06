@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="movingWindowAverage" data-language-version="v0" data-tokens-version="0.4.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="movingWindowAverage" data-language-version="v0" data-tokens-version="0.5.0">
 <title>Credit leads per day (example data)</title>
 <desc>Credit leads per day (example data): rolling 7d average · ±1 sd, up to 30 Sep 2026. Last point: 45.9 ± 11.3.</desc>
-<defs><pattern id="semgraph-empty-8529c14e" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ffffff"/><rect width="4" height="4" fill="#e3e2dc"/><rect x="4" y="4" width="4" height="4" fill="#e3e2dc"/></pattern></defs>
+<defs><pattern id="semgraph-empty-8529c14e" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#ffffff"/><rect width="4" height="4" fill="#e5e8eb"/><rect x="4" y="4" width="4" height="4" fill="#e5e8eb"/></pattern></defs>
 <rect width="640" height="418" fill="#ffffff"/>
 <a href="https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146" aria-label="Reading card: time series →"><svg x="20" y="12" width="44" height="44" viewBox="0 0 44 44" fill="none" color="#6b7480"><rect width="44" height="44" fill="transparent"/><path d="M6.6 26.4L37.4 17.6" stroke="currentColor" stroke-width="0.75" stroke-linecap="round" stroke-linejoin="round"/><path d="M8.8 23.35L11.22 25.77L8.8 28.19L6.38 25.77L8.8 23.35Z" fill="currentColor"/><path d="M22 19.58L24.42 22L22 24.42L19.58 22L22 19.58Z" fill="currentColor"/><path d="M35.2 15.8101L37.62 18.2301L35.2 20.6501L32.78 18.2301L35.2 15.8101Z" fill="currentColor"/></svg></a>
 <text x="78" y="33" font-family="Poppins, &apos;Helvetica Neue&apos;, Arial, sans-serif" font-size="15" font-weight="600" fill="#3c444e">Credit leads per day (example data)</text>

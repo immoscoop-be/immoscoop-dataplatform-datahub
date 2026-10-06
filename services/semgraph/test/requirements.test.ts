@@ -547,7 +547,9 @@ describe('requirements of the chart language', async () => {
     const marked = (few.datasets.points as { rel: number }[]).map((point) => point.rel);
     for (const rel of few.computed.few) assert.ok(marked.includes(rel), `point ${rel} keeps its shape`);
     assert.equal(markOf(pointLayer(few)).fill, color(tokens, 'focus'));
-    assert.match(few.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#ffffff"\/><circle [^>]*r="1\.1" fill="#a9a79e"\/><\/pattern>/);
+    // REQ-097: the dots take the variable their master is bound to in Figma, context.
+    assert.ok(few.svg.includes(`<rect width="6" height="6" fill="${color(tokens, 'surface')}"/><circle cx="3" cy="3" r="1.1" fill="${color(tokens, 'context')}"/></pattern>`));
+    assert.match(few.svg, /<pattern id="semgraph-few-[0-9a-f]{8}" width="6" height="6" patternUnits="userSpaceOnUse">/);
   });
 
   it('REQ-059: the text of a chart is dark grey, grey/700, not black', () => {
@@ -1071,27 +1073,35 @@ describe('requirements of the chart language', async () => {
     }
   });
 
-  it('REQ-096: the patterns in the dark take greys of the base palette, in the order of the light ones', async () => {
+  it('REQ-097: the patterns take the Figma variables of their masters, in Light and Dark; few observations stands out most', async () => {
     const registry = await testRegistry();
-    const { color: day, colorDark: night } = registry.tokens;
-    assert.deepEqual(
-      [night['pattern/empty'], night['pattern/running'], night['pattern/few']],
-      ['#2d333a', '#3c444e', '#6b7480'],
-      'grey/800, grey/700 and grey/500',
-    );
-    // As in the light: empty stands out least from the surface, few most.
+    // As the masters in Figma: the mosaic and the fine lines in context/light, the dots in context, on surface.
+    const expected = (theme: Tokens) => ({
+      empty: [color(theme, 'surface'), color(theme, 'context/light')],
+      running: [color(theme, 'surface'), color(theme, 'context/light')],
+      few: [color(theme, 'surface'), color(theme, 'context')],
+    });
     const contrast = (a: string, b: string) => Math.abs(luminance(a) - luminance(b));
-    for (const theme of [day, night]) {
-      const [empty, running, few] = ['pattern/empty', 'pattern/running', 'pattern/few'].map((name) => contrast(theme[name]!, theme.surface!));
-      assert.ok(empty! < running! && running! < few!, 'empty < running < few');
+    for (const theme of [registry.tokens, tokensFor(registry.tokens, 'dark')]) {
+      const { empty, running, few } = expected(theme);
+      // Empty and running share their colour and differ in shape; few stands out most, as in REQ-096.
+      assert.ok(contrast(empty[1]!, empty[0]!) === contrast(running[1]!, running[0]!) && contrast(running[1]!, running[0]!) < contrast(few[1]!, few[0]!));
     }
-    for (const drawn of examples.filter((candidate) => candidate.request.theme === 'dark')) {
-      for (const [state, name] of [['empty', 'pattern/empty'], ['running', 'pattern/running'], ['few', 'pattern/few']] as const) {
-        const pattern = new RegExp(`<pattern id="semgraph-${state}-[0-9a-f]{8}-dark"[^>]*>(.*?)</pattern>`).exec(drawn.svg);
-        if (pattern) assert.ok(pattern[1]!.includes(night[name]!), `${drawn.name}: ${state}`);
+    let seen = 0;
+    for (const drawn of examples) {
+      const colours = expected(drawn.tokens);
+      for (const state of ['empty', 'running', 'few'] as const) {
+        for (const [, body] of drawn.svg.matchAll(new RegExp(`<pattern id="semgraph-${state}-[0-9a-f]{8}(?:-dark)?"[^>]*>(.*?)</pattern>`, 'g'))) {
+          const used = [...body!.matchAll(/(?:fill|stroke)="(#[0-9a-f]{6})"/g)].map((match) => match[1]);
+          assert.deepEqual([...new Set(used)], colours[state], `${drawn.name}: ${state}`);
+          seen++;
+        }
       }
     }
-    assert.ok(examples.some((drawn) => drawn.request.theme === 'dark' && /semgraph-empty-[0-9a-f]{8}-dark/.test(drawn.svg)), 'a dark example with an empty period');
+    assert.ok(seen > 0);
+    for (const state of ['empty', 'running', 'few']) {
+      assert.ok(examples.some((drawn) => drawn.request.theme === 'dark' && new RegExp(`semgraph-${state}-[0-9a-f]{8}-dark`).test(drawn.svg)), `a dark example with ${state}`);
+    }
   });
 });
 

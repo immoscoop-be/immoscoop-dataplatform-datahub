@@ -1,6 +1,6 @@
 {
-  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart and its text styles, read on 2026-10-05. color is the mode Light, the default; colorDark the mode Dark (REQ-094). Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065). Since 0.4.0 the mode Dark (REQ-094, REQ-096).",
-  "version": "0.4.0",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart and its text styles, read on 2026-10-06. color is the mode Light, the default; colorDark the mode Dark (REQ-094). Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065). Since 0.4.0 the mode Dark (REQ-094, REQ-096). Since 0.5.0 the patterns take the variables their masters are bound to in Figma (REQ-097), so they have no tokens of their own.",
+  "version": "0.5.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
@@ -19,9 +19,6 @@
     "reading-cue/text": "#630038",
     "warning": "#c8102e",
     "loss": "#2d333a",
-    "pattern/empty": "#e3e2dc",
-    "pattern/few": "#a9a79e",
-    "pattern/running": "#cfcdc4",
     "ordinal/1": "#ffcada",
     "ordinal/2": "#ff6ca6",
     "ordinal/3": "#e34f9c",
@@ -49,9 +46,6 @@
     "reading-cue/text": "#ffcada",
     "warning": "#c8102e",
     "loss": "#f3f5f6",
-    "pattern/empty": "#2d333a",
-    "pattern/few": "#6b7480",
-    "pattern/running": "#3c444e",
     "ordinal/1": "#8a1450",
     "ordinal/2": "#dd2c88",
     "ordinal/3": "#e34f9c",
@@ -96,7 +90,7 @@
   },
   "$sources": {
     "figmaVariables": [
-      "color and colorDark (all, modes Light and Dark), except color.pattern/*",
+      "color and colorDark (all, modes Light and Dark); the patterns use context/light and context, as their masters in Figma (REQ-097)",
       "stroke.axis (line/guide)",
       "stroke.baseline (line/baseline)",
       "stroke.line (line/series)"
@@ -112,13 +106,11 @@
     "figmaExamples": [
       "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
       "mark (Points and markers)",
-      "color.pattern/* (the Pattern tile masters; not variables in Figma yet)",
       "size.kpi and size.kpiDetail (Chart/KPI tile: the number and its comparison)",
       "size.delta (Chart/KPI status: what is still needed)"
     ],
     "notInFigmaYet": [
-      "stroke.spread and stroke.spreadWide",
-      "colorDark.pattern/*: greys of the base palette, decided on 2026-10-05 (REQ-096): empty grey/800, running grey/700, few grey/500"
+      "stroke.spread and stroke.spreadWide"
     ]
   }
 }

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="movingWindowAverage" data-language-version="v0" data-tokens-version="0.4.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="418" viewBox="0 0 640 418" data-semgraph="movingWindowAverage" data-language-version="v0" data-tokens-version="0.5.0">
 <title>Kredietleads per dag (voorbeelddata)</title>
 <desc>Kredietleads per dag (voorbeelddata): voortschrijdend gemiddelde 7d · ±1 sd, tot 30 sep 2026. Laatste punt: 45,9 ± 11,3.</desc>
 <rect width="640" height="418" fill="#ffffff"/>

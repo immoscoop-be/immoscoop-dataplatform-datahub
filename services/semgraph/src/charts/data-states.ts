@@ -27,12 +27,13 @@ export function stateColumns(states: ReadonlyMap<number, DataState>): StateColum
 /**
  * The tiles of Figma's Pattern masters, on the surface colour. They use the user space of the plot, so
  * they are anchored to its origin and not to the column (REQ-050): mosaic 8 px, lines 4 px, dots 6 px.
+ * REQ-097: their colours are the variables the masters are bound to in Figma, in Light and Dark.
  */
 export function statePattern(id: string, state: DataState, tokens: Tokens): string {
   const surface = color(tokens, 'surface');
   switch (state) {
     case 'empty': {
-      const tile = color(tokens, 'pattern/empty');
+      const tile = color(tokens, 'context/light');
       return [
         `<pattern id="${id}" width="8" height="8" patternUnits="userSpaceOnUse">`,
         `<rect width="8" height="8" fill="${surface}"/>`,
@@ -44,14 +45,14 @@ export function statePattern(id: string, state: DataState, tokens: Tokens): stri
       return [
         `<pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse">`,
         `<rect width="6" height="6" fill="${surface}"/>`,
-        `<circle cx="3" cy="3" r="1.1" fill="${color(tokens, 'pattern/few')}"/>`,
+        `<circle cx="3" cy="3" r="1.1" fill="${color(tokens, 'context')}"/>`,
         '</pattern>',
       ].join('');
     case 'running':
       return [
         `<pattern id="${id}" width="4" height="4" patternUnits="userSpaceOnUse">`,
         `<rect width="4" height="4" fill="${surface}"/>`,
-        `<line x1="0.5" y1="0" x2="0.5" y2="4" stroke="${color(tokens, 'pattern/running')}" stroke-width="1"/>`,
+        `<line x1="0.5" y1="0" x2="0.5" y2="4" stroke="${color(tokens, 'context/light')}" stroke-width="1"/>`,
         '</pattern>',
       ].join('');
   }
