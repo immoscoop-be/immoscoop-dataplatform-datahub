@@ -1273,6 +1273,33 @@ describe('requirements of the chart language', async () => {
     }
   });
 
+  it('REQ-107: the gallery links every drawn example in every size, light and dark; the KPI tile only light and dark', async () => {
+    const registry = await testRegistry();
+    const app = await buildApp({ registry, now: () => NOW, logger: false, mcp: { mode: 'off' } });
+    const html = (await app.inject('/gallery?locale=nl-BE')).body;
+    for (const drawn of examples) {
+      const href = `/semgraphs/${drawn.semgraph}/examples/${drawn.name.split('/')[1]}`;
+      const sized = 'size' in ((registry.semgraphs.get(drawn.semgraph)!.schema as { properties: object }).properties);
+      for (const theme of ['light', 'dark']) {
+        const links = sized ? SIZE_NAMES.map((size) => `${href}?theme=${theme}&amp;size=${size}`) : [`${href}?theme=${theme}`];
+        for (const link of links) assert.ok(html.includes(`<a href="${link}">`), `${drawn.name}: ${link}`);
+      }
+      if (!sized) assert.ok(!html.includes(`${href}?theme=light&amp;size=`), drawn.name);
+    }
+    // A refused example has no other sizes or modes.
+    assert.ok(!html.includes('/semgraphs/movingWindowAverage/examples/unique-without-aggregation?theme='));
+    // The links draw what they say: the size of REQ-085 and the mode of REQ-094, also against what the example asks.
+    const svgOf = async (url: string) => (await app.inject(url)).body;
+    const card = await svgOf('/semgraphs/calendarAverage/examples/weeks-dark?theme=light&size=card');
+    assert.match(card, /^<svg [^>]*width="360"/);
+    assert.doesNotMatch(card, /data-theme="dark"/);
+    assert.match(await svgOf('/semgraphs/movingWindowAverage/examples/basic?theme=dark&size=xl'), /^<svg [^>]*width="1920"[^>]*data-theme="dark"/);
+    assert.match(await svgOf('/semgraphs/kpiTile/examples/rolling-28d?theme=dark'), /data-theme="dark"/);
+    assert.equal((await app.inject('/semgraphs/kpiTile/examples/rolling-28d?size=large')).statusCode, 400);
+    assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/basic?size=huge')).statusCode, 400);
+    await app.close();
+  });
+
   it('REQ-102: Signs in this chart lists only the signs the chart really drew', () => {
     const shapes: Record<string, string> = { mean: 'diamond', median: 'circle', sum: 'square', ratio: 'squareInSquare' };
     const seen = new Set<string>();

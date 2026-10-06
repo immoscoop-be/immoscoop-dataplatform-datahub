@@ -278,7 +278,7 @@ footer:
 
 gallery:
   title: "Semgraph: de grafieken"
-  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links."
+  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links. Eronder de grafiek in elke maat, licht en donker."
   examples: "{count} voorbeelden"
   contract: contract (JSON)
   readingCard: leeskaart
@@ -294,6 +294,11 @@ gallery:
   language:
     en: English
     nl-BE: Nederlands
+  # REQ-107: the chart in another mode and size.
+  theme:
+    light: licht
+    dark: donker
+  mode: modus
 
 app:
   # De MCP App die een grafiek toont in een gesprek met Claude (REQ-092).

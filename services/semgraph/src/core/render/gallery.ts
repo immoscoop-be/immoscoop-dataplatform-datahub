@@ -11,6 +11,8 @@ export interface GalleryExample {
   outcome: 'ok' | 'deviation' | 'refused' | 'invalid';
   /** The first refusal or input error, in the words of the locale. */
   message?: string;
+  /** REQ-107: the same chart in another size or mode: a row per mode, a link per size. */
+  variants?: { label: string; links: { label: string; href: string }[] }[];
 }
 
 export interface GallerySemgraph {
@@ -59,6 +61,7 @@ export function galleryPage({ t, tokens, locales, semgraphs, planned }: GalleryI
     `figure{margin:0;border:1px solid ${line};border-radius:6px;padding:10px;background:${color(tokens, 'surface')}}`,
     'figure img{display:block;width:100%;height:auto}',
     'figcaption{margin-top:8px;font-size:13px}',
+    '.variants{margin:6px 0 0;font-size:12px}.variants div{display:flex;flex-wrap:wrap;gap:0 10px}.variants span{min-width:52px}',
     `.refused{display:flex;align-items:center;min-height:120px;padding:12px;border-radius:4px;background:${color(tokens, 'badge/surface')};color:${text};font-size:13px}`,
     `.badge{display:inline-block;margin-left:6px;padding:0 6px;border-radius:3px;background:${color(tokens, 'badge/surface')};color:${color(tokens, 'badge/text')};font-size:12px}`,
   ].join('');
@@ -70,7 +73,13 @@ export function galleryPage({ t, tokens, locales, semgraphs, planned }: GalleryI
       const picture = example.outcome === 'ok' || example.outcome === 'deviation'
         ? `<a href="${escapeXml(example.href)}"><img src="${escapeXml(example.href)}" alt="${escapeXml(example.title)}" loading="lazy"></a>`
         : `<a class="refused" href="${escapeXml(example.href)}">${escapeXml(example.message ?? t(`gallery.outcome.${example.outcome}`))}</a>`;
-      return `<figure>${picture}<figcaption>${caption}</figcaption></figure>`;
+      // REQ-107: under the picture, the chart in every size, light and dark.
+      const variants = example.variants?.length
+        ? `<div class="variants">${example.variants
+            .map((row) => `<div><span>${escapeXml(row.label)}</span>${row.links.map((link) => `<a href="${escapeXml(link.href)}">${escapeXml(link.label)}</a>`).join('')}</div>`)
+            .join('')}</div>`
+        : '';
+      return `<figure>${picture}<figcaption>${caption}${variants}</figcaption></figure>`;
     });
     return [
       `<section id="${escapeXml(semgraph.id)}">`,

@@ -1,6 +1,8 @@
 import { LOCALE } from '../charts/contract.ts';
 import { EMPTY_IS_NOT_ZERO, SERVICE_SUMMARY, WAREHOUSE_STEP } from './guide.ts';
 import type { Registry } from './registry.ts';
+import { SIZE_NAMES } from './size.ts';
+import { THEMES } from './tokens.ts';
 
 /** Where the document and its viewer live (REQ-084). */
 export const OPENAPI_PATH = '/openapi.json';
@@ -143,9 +145,12 @@ export function openApiDocument(registry: Registry): Record<string, unknown> {
           parameters: [
             { name: 'id', in: 'path', required: true, schema: { enum: ids } },
             { name: 'name', in: 'path', required: true, description: 'The name of the example, as `GET /semgraphs/{id}` lists it.', schema: { type: 'string' } },
+            { name: 'theme', in: 'query', description: 'Draw the example light or dark instead (REQ-094).', schema: { enum: [...THEMES] } },
+            { name: 'size', in: 'query', description: 'Draw the example in this size instead (REQ-085); the KPI tile has one size.', schema: { enum: [...SIZE_NAMES] } },
           ],
           responses: {
             200: svg,
+            400: report('An unknown theme or size, or a size for the KPI tile.'),
             404: report('No such semgraph or example.'),
             422: report('The example shows a refusal.'),
           },
