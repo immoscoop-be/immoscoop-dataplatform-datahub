@@ -213,13 +213,13 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | Call | Does |
 | --- | --- |
 | `GET /healthz` | `{status, version, languageVersion, tokensVersion, mcp}`; `mcp` is `off`, `open` or `oauth` (REQ-091) |
-| `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself; `?locale=` (REQ-083) |
+| `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself, and under it in every size, light and dark (REQ-107); `?locale=` (REQ-083) |
 | `GET /` | leads to `/gallery` |
 | `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-083) |
 | `GET /semgraphs/{id}` | metadata, JSON Schema, links to Figma and learning material, examples |
 | `POST /validate` | checks a request without drawing; always 200 with `{outcome, issues}` |
 | `POST /render` | draws the chart: 200 SVG, 422 refusal, 400 invalid request |
-| `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser |
+| `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser; `?theme=light\|dark` and `?size=card\|default\|large\|xl` (REQ-107) |
 | `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
 | `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
 | `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |

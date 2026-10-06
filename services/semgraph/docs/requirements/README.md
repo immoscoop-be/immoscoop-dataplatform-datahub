@@ -144,6 +144,7 @@ elk bestand zegt welke.
 | [REQ-104](REQ-104.md) | Metadata: de parameters zoals gevraagd, zonder filter of periode; "door wie" is `builtBy` | 2026-10-06 (antwoord) | geïmplementeerd | [1afcd6d](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/1afcd6d) |
 | [REQ-105](REQ-105.md) | De hover van een tijdas leest de waarde op één vaste plek: geen kader, de datum op de as, de waarde rechtsboven | 2026-10-06 (opdracht) | geïmplementeerd voor de tijdreeksen; KPI-grafieken open punt 22 | [908d2c1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/908d2c1) |
 | [REQ-106](REQ-106.md) | De waardelabels blijven; wat het kader meer zei, staat op een tweede regel van de uitlezing | 2026-10-06 (antwoord) | geïmplementeerd | [908d2c1](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/908d2c1) |
+| [REQ-107](REQ-107.md) | De galerij linkt elk voorbeeld in elke maat, licht en donker; de KPI-tegel enkel licht en donker | 2026-10-06 (opdracht) | geïmplementeerd | [9e9e0d2](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/commit/9e9e0d2) |
 
 REQ-021 tot REQ-027 waren opdrachten in het gesprek met Claude, gegeven vóór de rijen REQ-001 tot REQ-009 op
 Confluence stonden. Bij tegenspraak gaan REQ-001 tot REQ-009 dus voor. Hun commits dateren van vóór deze
@@ -178,7 +179,8 @@ hun masters in Figma aan variabelen gebonden waren. Wat het platform moet doen, 
 REQ-098 tot REQ-102 zijn de beslissingen van 2026-10-06 over de kaarten achter de labels (Query, Metadata, Learn);
 REQ-103 en REQ-104 zijn de antwoorden op de vragen die ze in het gesprek opriepen. De opdracht noemde de hover op een
 vaste plek REQ-103; die kreeg het eerstvolgende vrije nummer, REQ-105. REQ-106 is het antwoord op de twee vragen die
-REQ-105 opriep.
+REQ-105 opriep. REQ-107 is de opdracht om in de galerij elke maat en
+beide modi te linken.
 
 ### Hernummering
 
