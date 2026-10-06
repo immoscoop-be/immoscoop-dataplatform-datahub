@@ -19,6 +19,7 @@ import { sizeOf } from '../core/size.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
+import { signSamples } from './signs.ts';
 import { baseLayers, denominatorAxis, RIGHT_AXIS } from './ratio.ts';
 import { Ratio, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
 import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
@@ -832,6 +833,16 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(defs ? { defs } : {}),
+      // REQ-102: the signs this chart drew, for its lesson.
+      signs: signSamples(
+        {
+          ...(points.length > 0 ? { shape: ratio ? 'squareInSquare' : this.statistic.shape } : {}),
+          patterns: patternIds,
+          ...(hatchId ? { hatch: hatchId } : {}),
+          zigzag: scale.zoomed,
+        },
+        tokens,
+      ),
       hover,
       title,
       readingCue,

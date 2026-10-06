@@ -17,6 +17,7 @@ import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat, UNIT_SCHEMA, type ValueUnit } from './number-format.ts';
 import { lookup, numberFormat, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers, type ValueAxisMode } from './scales.ts';
 import { markerSize } from './signatures.ts';
+import { signSamples } from './signs.ts';
 import { Average, Median, Sum, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
 import { PLOT_HEIGHT } from './time-axis-chart.ts';
 
@@ -379,7 +380,23 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
     const lostFill = hatchId ? `url(#${hatchId})` : color(tokens, 'surface');
     // The cap marks now on every bar of a comparison, also where the earlier value is missing.
     const now = label === undefined ? [] : computed.rows.flatMap((row) => (row.summary ? [{ key: row.key, now: row.summary.centre }] : []));
-    return { hover, columns, defs, fill, nLabels, fewSet, gained, lost, lostFill, now };
+    return { hover, columns, defs, fill, nLabels, fewSet, gained, lost, lostFill, now, patternIds, hatchId };
+  }
+
+  /**
+   * REQ-102: the signs this chart drew, for its lesson. An amount is a bar, not a point: only a mean or a
+   * median has the shape of its statistic.
+   */
+  private signs(common: { patternIds: Partial<Record<DataState, string>>; hatchId: string | undefined }, statistic: Statistic, points: number, zoomed: boolean, tokens: Tokens) {
+    return signSamples(
+      {
+        ...(statistic.kind !== 'amount' && points > 0 ? { shape: statistic.shape } : {}),
+        patterns: common.patternIds,
+        ...(common.hatchId ? { hatch: common.hatchId } : {}),
+        zigzag: zoomed,
+      },
+      tokens,
+    );
   }
 
   /** Lying bars: categories without order, sorted by value, the label left of the baseline and the value after the shape. */
@@ -547,6 +564,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
       height: padding.top + plotHeight + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: plotHeight },
       ...(common.defs ? { defs: common.defs } : {}),
+      signs: this.signs(common, statistic, withValue.length, scale.zoomed, tokens),
       hover: common.hover,
     };
   }
@@ -725,6 +743,7 @@ export class CategoryChart implements SemgraphImplementation<CategoryRequest, Ca
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(common.defs ? { defs: common.defs } : {}),
+      signs: this.signs(common, statistic, withValue.length, scale.zoomed, tokens),
       hover: common.hover,
     };
   }

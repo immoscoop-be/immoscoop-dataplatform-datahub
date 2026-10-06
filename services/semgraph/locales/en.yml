@@ -244,6 +244,7 @@ date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
   numeric: "{day}/{month}"
+  full: "{day}/{month}/{year}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -311,11 +312,59 @@ meta:
   references: References
   query: Query
   metadata: Metadata
+  learn: Learn
   askedBy: Asked by {name}
-  builtBy: Built by
-  compiledOn: Compiled on
-  semgraph: Semgraph
-  version: Version
+  # REQ-099: the eyebrow of every card, in capitals.
+  eyebrow:
+    question: Question
+    references: References
+    query: Query
+    metadata: Metadata
+    learn: How do I read this?
+  close:
+    mouse: Move away to close
+    touch: Tap outside to close
+  section:
+    question: Question
+    links: Links
+    sql: SQL
+    parameters: Parameters
+    data: Data
+    made: Made
+    service: Service
+    whatYouSee: What you see
+    signs: Signs in this chart
+    watchOut: Watch out
+  field:
+    type: Type
+    metric: Metric
+    window: Window
+    unit: Unit
+    statistic: Statistic
+    comparison: Comparison
+    period: Period
+    day: Day
+    dataset: Dataset
+    asOf: As of
+    reliability: Label
+    builtBy: By
+    compiled: Compiled
+    semgraph: semgraph
+  days: "{n} days"
+  oneDay: 1 day
+  version: v{version}
+  readingCard: Full reading card in the course
+  # REQ-102: what every sign means, next to its sample.
+  signs:
+    square: a measured amount
+    circle: a median
+    diamond: a mean
+    squareInSquare: a ratio; the open square is the denominator
+    running: a period still running; it can still change
+    few: few observations; read with care
+    empty: no data in this period
+    loss: what was lost against the comparison
+    zigzag: the value axis does not start at zero
 
 types:
   integer: a whole number

@@ -10,6 +10,7 @@ import { COMPARISONS, comparisonLabel, defaultComparison, type BlockLength, type
 import { CompactFormat } from './number-format.ts';
 import { PeriodComparisonChart, type PeriodComparisonRequest } from './period-comparison.ts';
 import { numberFormat, valueScale, ZIGZAG, ZIGZAG_MASK, zoomLayers } from './scales.ts';
+import { signSamples } from './signs.ts';
 import { withSegments, type TimeAxisComputed } from './time-axis-chart.ts';
 
 /** The blocks of periodComparison, and what they are compared with (REQ-067); the default follows Figma. */
@@ -237,6 +238,8 @@ export class KpiTileChart extends PeriodComparisonChart<KpiTileRequest> {
       width: TILE_WIDTH,
       height: TREND.top + TREND.height + TREND.bottom,
       plotArea: { x: TREND.left, y: TREND.top, width: TREND.width, height: TREND.height },
+      // REQ-102: the signs this tile drew, for its lesson: the shape of its statistic, small, and the zigzag.
+      signs: signSamples({ ...(computed.points.length > 0 ? { shape: statistic.shape } : {}), zigzag: scale.zoomed }, tokens),
       hover,
       title,
       readingCue,

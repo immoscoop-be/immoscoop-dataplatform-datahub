@@ -15,6 +15,42 @@ export function testRegistry(): Promise<Registry> {
   return registry;
 }
 
+/** The markup of the card of one topic (REQ-099), up to the next card or the end of the chart. */
+export function cardOf(svg: string, kind: string): string | undefined {
+  const start = svg.indexOf(`<g class="semgraph-meta-card semgraph-meta-card-${kind}"`);
+  if (start < 0) return undefined;
+  const next = svg.indexOf('<g class="semgraph-meta-card ', start + 1);
+  return svg.slice(start, next < 0 ? svg.lastIndexOf('</svg>') : next);
+}
+/** The texts of a card, in order. */
+export const textsOf = (markup: string) =>
+  [...markup.matchAll(/<text [^>]*>([^<]*)<\/text>/g)].map((match) =>
+    match[1]!.replaceAll('&quot;', '"').replaceAll('&apos;', "'").replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;', '&'),
+  );
+
+/** The texts of the lesson that only exists in the tests: no kind of chart has one yet (REQ-103). */
+export const TEST_LESSON = {
+  title: 'A time series with rolling windows',
+  whatYouSee: 'Each point is one complete window of 7 days. The windows follow each other and end at "now".',
+  watchOut: 'Compare a window with the window before it, not with a calendar month: a month is not equally long.',
+};
+
+let lessonRegistry: Promise<Registry> | undefined;
+/** The test registry, but every semgraph has a lesson, so its Learn card can be tested (REQ-102, REQ-103). */
+export function testRegistryWithLessons(): Promise<Registry> {
+  lessonRegistry ??= testRegistry().then((base) => ({
+    ...base,
+    semgraphs: new Map(
+      [...base.semgraphs].map(([id, loaded]) => [
+        id,
+        { ...loaded, metadata: { ...loaded.metadata, lesson: { title: 'testLesson.title', whatYouSee: 'testLesson.whatYouSee', watchOut: 'testLesson.watchOut' } } },
+      ]),
+    ),
+    locales: new Map([...base.locales].map(([name, catalog]) => [name, { ...catalog, testLesson: TEST_LESSON }])),
+  }));
+  return lessonRegistry;
+}
+
 export async function example(name: string, semgraph = 'movingWindowAverage'): Promise<Record<string, unknown>> {
   const loaded = (await testRegistry()).semgraphs.get(semgraph)!;
   const request = loaded.examples.get(name);

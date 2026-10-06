@@ -1,7 +1,7 @@
 import { ICON_SIZE } from '../icon.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
-import { LABEL_HEIGHT, MetaLayer, type MetaItem } from './meta.ts';
+import { LABEL_HEIGHT, MetaLayer, type MetaCards } from './meta.ts';
 import { round, textWidth, wrap } from './text.ts';
 
 /** A piece of footer text: a link when href is set, bold in the text colour when strong, in the dark focus colour when accent. */
@@ -30,8 +30,11 @@ export interface TemplateInput {
   scale?: number;
   title: string;
   readingCue: string;
-  /** The icon of the semgraph left of the title, linked to the reading card (REQ-060). */
-  icon?: { markup: string; href: string; label: string };
+  /**
+   * The icon of the semgraph left of the title, linked to the reading card (REQ-060). With a lesson it opens
+   * the Learn card instead, which links to the reading card (REQ-103).
+   */
+  icon?: { markup: string; href: string; label: string; opensLearn?: boolean };
   /** Red alerts between the title and the chart: allowed, but discouraged (REQ-032, REQ-038). */
   alerts?: string[];
   /** SVG definitions the chart refers to, such as a hatch pattern. */
@@ -46,8 +49,8 @@ export interface TemplateInput {
     overlay: string;
   };
   footer: Footer;
-  /** The metadata labels at the bottom left and their panels (REQ-012, REQ-014, REQ-018, REQ-020). */
-  meta: MetaItem[];
+  /** The metadata labels at the bottom left and their cards (REQ-012, REQ-018, REQ-020, REQ-098, REQ-099). */
+  meta: MetaCards;
   tokens: Tokens;
   /** data-* attributes on the root element, e.g. the language and token versions. */
   data: Record<string, string>;
@@ -84,10 +87,14 @@ export function composeSvg(input: TemplateInput): string {
   const headerX = input.icon ? PADDING_X + ICON_SIZE + ICON_GAP : PADDING_X;
   const headerWidth = width - PADDING_X - headerX;
   if (input.icon) {
+    const icon =
+      `<svg x="${PADDING_X}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" fill="none" color="${muted}">` +
+      `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg>`;
+    // REQ-103: with a lesson the icon is one more label of Learn; the Learn card links to the reading card.
     parts.push(
-      `<a href="${escapeXml(input.icon.href)}" aria-label="${escapeXml(input.icon.label)}">` +
-        `<svg x="${PADDING_X}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" fill="none" color="${muted}">` +
-        `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg></a>`,
+      input.icon.opensLearn
+        ? `<g class="semgraph-meta-label semgraph-meta-for-learn" tabindex="0" role="button" aria-label="${escapeXml(input.icon.label)}">${icon}</g>`
+        : `<a href="${escapeXml(input.icon.href)}" aria-label="${escapeXml(input.icon.label)}">${icon}</a>`,
     );
   }
   for (const line of wrap(input.title, tokens.size.title, headerWidth, width < NARROW ? 3 : 2)) {
@@ -165,11 +172,11 @@ export function composeSvg(input: TemplateInput): string {
     parts.push(text(input.footer.versionLabel, { y: row + 12.5, x: width - PADDING_X, anchor: 'end', family: tokens.font.body, size: footerSize, fill: muted }));
   }
   y += LABEL_HEIGHT + PADDING_BOTTOM;
-  // Drawn last, so a panel lies over the whole chart (REQ-014).
-  const metaLayer = new MetaLayer(tokens, { width, left: PADDING_X, top: row }).render(input.meta);
+  const height = Math.ceil(y);
+  // Drawn last, so a card and its veil lie over the whole chart (REQ-098).
+  const metaLayer = new MetaLayer(tokens, { width, height, left: PADDING_X, top: row }).render(input.meta);
   if (metaLayer) parts.push(metaLayer);
 
-  const height = Math.ceil(y);
   const data = Object.entries(input.data)
     .map(([name, value]) => ` data-${name}="${escapeXml(value)}"`)
     .join('');

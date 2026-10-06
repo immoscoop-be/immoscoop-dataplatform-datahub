@@ -244,6 +244,7 @@ date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
   numeric: "{day}/{month}"
+  full: "{day}/{month}/{year}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -311,11 +312,59 @@ meta:
   references: Referenties
   query: Query
   metadata: Metadata
+  learn: Uitleg
   askedBy: Gesteld door {name}
-  builtBy: Uitgewerkt door
-  compiledOn: Samengesteld op
-  semgraph: Semgraph
-  version: Versie
+  # REQ-099: de bovenregel van elke kaart, in hoofdletters.
+  eyebrow:
+    question: Vraag
+    references: Referenties
+    query: Query
+    metadata: Metadata
+    learn: Hoe lees ik dit?
+  close:
+    mouse: Beweeg weg om te sluiten
+    touch: Tik ernaast om te sluiten
+  section:
+    question: Vraag
+    links: Links
+    sql: SQL
+    parameters: Parameters
+    data: Data
+    made: Gemaakt
+    service: Dienst
+    whatYouSee: Wat je ziet
+    signs: Tekens in deze grafiek
+    watchOut: Let op
+  field:
+    type: Type
+    metric: Metriek
+    window: Venster
+    unit: Eenheid
+    statistic: Statistiek
+    comparison: Vergelijking
+    period: Periode
+    day: Dag
+    dataset: Dataset
+    asOf: Peildatum
+    reliability: Label
+    builtBy: Door
+    compiled: Samengesteld
+    semgraph: semgraph
+  days: "{n} dagen"
+  oneDay: 1 dag
+  version: v{version}
+  readingCard: Volledige leeskaart in de cursus
+  # REQ-102: wat elk teken betekent, naast zijn staaltje.
+  signs:
+    square: een gemeten hoeveelheid
+    circle: een mediaan
+    diamond: een gemiddelde
+    squareInSquare: een verhouding; het open vierkant is de noemer
+    running: een periode die nog loopt; ze kan nog veranderen
+    few: weinig waarnemingen; lees met zorg
+    empty: geen data in deze periode
+    loss: wat verloren ging tegenover de vergelijking
+    zigzag: de waardeas begint niet bij nul
 
 types:
   integer: een geheel getal
