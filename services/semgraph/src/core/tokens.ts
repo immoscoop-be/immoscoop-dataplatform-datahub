@@ -16,8 +16,11 @@ export interface Tokens {
     detail: number;
     axisLabel: number;
     footer: number;
+    /** REQ-099: the eyebrow of a card (QUERY, METADATA), its title and its text; REQ-100: its SQL. */
+    panelKind: number;
     panelTitle: number;
     panelBody: number;
+    panelCode: number;
     /** The number of a KPI tile, its comparison, and what a KPI status still needs (REQ-065). */
     kpi: number;
     kpiDetail: number;

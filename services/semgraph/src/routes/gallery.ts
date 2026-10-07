@@ -4,6 +4,8 @@ import { exampleLinks } from '../core/catalog.ts';
 import { createTranslator, resolveLocale } from '../core/i18n.ts';
 import { runPipeline } from '../core/pipeline.ts';
 import { galleryPage, type GalleryExample } from '../core/render/gallery.ts';
+import { SIZE_NAMES } from '../core/size.ts';
+import { THEMES } from '../core/tokens.ts';
 
 /** The page only shows our own example pictures; no scripts, nothing from outside. */
 const HTML_HEADERS = {
@@ -18,24 +20,37 @@ export function galleryRoutes(app: FastifyInstance, { registry, now }: Dependenc
 
   app.get<{ Querystring: { locale?: string } }>('/gallery', async (request, reply) => {
     const t = createTranslator(registry.locales, resolveLocale(request.query.locale, registry.locales.keys()).locale);
+    // REQ-107: every drawn example also in every size, light and dark. The KPI tile has one size (REQ-085).
+    const variants = (href: string, sized: boolean) =>
+      sized
+        ? THEMES.map((theme) => ({
+            label: t(`gallery.theme.${theme}`),
+            links: SIZE_NAMES.map((size) => ({ label: size, href: `${href}?theme=${theme}&size=${size}` })),
+          }))
+        : [{ label: t('gallery.mode'), links: THEMES.map((theme) => ({ label: t(`gallery.theme.${theme}`), href: `${href}?theme=${theme}` })) }];
     const semgraphs = await Promise.all(
-      [...registry.semgraphs.values()].map(async (loaded) => ({
-        id: loaded.id,
-        title: t(loaded.metadata.title),
-        answers: t(loaded.metadata.answers),
-        icon: loaded.icon,
-        links: loaded.metadata.links,
-        // Whether an example is drawn or refused today, without drawing it: the page links to the picture.
-        examples: await Promise.all(
-          exampleLinks(loaded).map(async (link): Promise<GalleryExample> => {
-            // In the language of the page, so the reason for a refusal reads in it too.
-            const example = { ...(loaded.examples.get(link.name) as object), locale: t.locale };
-            const { report } = await runPipeline(registry, example, { now: now(), draw: false });
-            const reason = report.issues.find((issue) => issue.level === 'refusal' || issue.level === 'inputError');
-            return { ...link, outcome: report.outcome, ...(reason ? { message: reason.message } : {}) };
-          }),
-        ),
-      })),
+      [...registry.semgraphs.values()].map(async (loaded) => {
+        // A semgraph takes a size when its contract has one; the KPI tile does not.
+        const sized = 'size' in ((loaded.schema as { properties?: object }).properties ?? {});
+        return {
+          id: loaded.id,
+          title: t(loaded.metadata.title),
+          answers: t(loaded.metadata.answers),
+          icon: loaded.icon,
+          links: loaded.metadata.links,
+          // Whether an example is drawn or refused today, without drawing it: the page links to the picture.
+          examples: await Promise.all(
+            exampleLinks(loaded).map(async (link): Promise<GalleryExample> => {
+              // In the language of the page, so the reason for a refusal reads in it too.
+              const example = { ...(loaded.examples.get(link.name) as object), locale: t.locale };
+              const { report } = await runPipeline(registry, example, { now: now(), draw: false });
+              const reason = report.issues.find((issue) => issue.level === 'refusal' || issue.level === 'inputError');
+              const drawn = report.outcome === 'ok' || report.outcome === 'deviation';
+              return { ...link, outcome: report.outcome, ...(reason ? { message: reason.message } : {}), ...(drawn ? { variants: variants(link.href, sized) } : {}) };
+            }),
+          ),
+        };
+      }),
     );
     const html = galleryPage({
       t,

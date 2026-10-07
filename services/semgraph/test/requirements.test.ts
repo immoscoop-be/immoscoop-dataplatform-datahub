@@ -13,7 +13,7 @@ import { SIZE_NAMES, SIZES } from '../src/core/size.ts';
 import { textWidth } from '../src/core/render/text.ts';
 import type { Drawing } from '../src/core/semgraph.ts';
 import { checkThemes, color, themeOf, tokensFor, type Tokens } from '../src/core/tokens.ts';
-import { mcpCall, NOW, svgOfResult, testRegistry } from './helpers.ts';
+import { cardOf, mcpCall, NOW, svgOfResult, TEST_LESSON, testRegistry, testRegistryWithLessons, textsOf } from './helpers.ts';
 
 /**
  * One test per requirement of the chart language (docs/requirements). They run on every example of
@@ -91,6 +91,10 @@ const pointLayer = (drawn: Drawn) => drawn.layers.find((layer) => layer.data?.na
 /** The zigzag of a zoomed value axis (REQ-026, REQ-073): a line in the baseline colour with sharp corners. */
 const ZIGZAG = /mark-line role-mark[^"]*"[^>]*><path [^>]*stroke="#6b7480"[^>]*stroke-linejoin="miter"/;
 const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-detail".*?<\/g><\/g>/g, '');
+/** The labels in the footer (REQ-012, REQ-018), by text and by topic. */
+const footerLabels = (svg: string) => [...svg.matchAll(/class="semgraph-meta-label semgraph-meta-for-\w+" tabindex="0" role="button" aria-label="([^"]*)"/g)].map((match) => match[1]);
+const footerKinds = (svg: string) => [...svg.matchAll(/class="semgraph-meta-label semgraph-meta-for-(\w+)" tabindex="0" role="button" aria-label="[^"]*"><rect/g)].map((match) => match[1]!);
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 describe('requirements of the chart language', async () => {
   const examples = await drawnExamples();
@@ -278,7 +282,7 @@ describe('requirements of the chart language', async () => {
         const outsideTouch = style.replace(/@media \(hover:none\)\{(?:[^{}]*\{[^{}]*\})*\}/g, '');
         assert.doesNotMatch(outsideTouch, /:focus(?!-visible)/, drawn.name);
         assert.match(style, /:focus-visible/, drawn.name);
-        assert.match(style, /@media \(hover:none\)\{[^}]*:focus /, drawn.name);
+        assert.match(style, /@media \(hover:none\)\{[^}]*:focus[ )]/, drawn.name);
       }
     }
   });
@@ -309,12 +313,11 @@ describe('requirements of the chart language', async () => {
         ...(meta.query ? ['Query'] : []),
         'Metadata',
       ];
-      const labels = [...drawn.svg.matchAll(/class="semgraph-meta-item" tabindex="0" role="group" aria-label="([^"]*)"/g)].map((match) => match[1]);
-      assert.deepEqual(labels, expected, drawn.name);
+      assert.deepEqual(footerLabels(drawn.svg), expected, drawn.name);
       // REQ-020 replaces REQ-013 and REQ-019: no dimmed or struck-through labels; no icons (REQ-018).
       assert.doesNotMatch(drawn.svg, /line-through/, drawn.name);
       // The labels lie below the footer lines, their text aligned with the footer's left edge.
-      const firstLabel = /class="semgraph-meta-pill" x="([\d.]+)" y="([\d.]+)"/.exec(drawn.svg)!;
+      const firstLabel = /class="semgraph-meta-label semgraph-meta-for-\w+" tabindex="0" role="button" aria-label="[^"]*"><rect x="([\d.]+)" y="([\d.]+)"/.exec(drawn.svg)!;
       const learnLine = /<text x="20" y="([\d.]+)"[^>]*xml:space="preserve"><tspan>(Hoe lees|How do I read)/.exec(drawn.svg)!;
       assert.equal(Number(firstLabel[1]) + 4, 20, drawn.name);
       assert.ok(Number(firstLabel[2]) > Number(learnLine[1]), drawn.name);
@@ -322,32 +325,24 @@ describe('requirements of the chart language', async () => {
     assert.ok(examples.some((drawn) => drawn.request.meta), 'an example with metadata');
   });
 
-  it('REQ-014: the label itself grows into a panel over the whole chart; closing waits about 350 ms', () => {
+  it('REQ-014 as changed by REQ-098: a label opens a card; it stays while the pointer is over the chart and closes about 350 ms after it left', () => {
     for (const drawn of examples) {
-      // In the units of the drawing: a slide or a big screen enlarges the whole (REQ-085).
-      const width = Number(/<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" [^>]*viewBox="0 0 (\d+)/.exec(drawn.svg)![1]);
-      for (const markup of drawn.svg.split('<g class="semgraph-meta-item"').slice(1)) {
-        // The panel is part of the label's element, so the pointer never leaves it.
-        const panel = /<g class="semgraph-meta-panel" visibility="hidden" style="transform-origin:[\d.]+px [\d.]+px"><rect x="0\.5" y="0\.5" width="(\d+)" height="([\d.]+)"/.exec(markup);
-        assert.ok(panel, drawn.name);
-        assert.equal(Number(panel[1]), width - 1, drawn.name);
-        // The hit area of the label reaches up to the bottom of the panel: no gap.
-        const hit = /<rect x="[\d.]+" y="([\d.]+)" width="[\d.]+" height="[\d.]+" fill="transparent"\/><rect class="semgraph-meta-pill"/.exec(markup)!;
-        assert.equal(Number(hit[1]), Math.round((Number(panel[2]) + 0.5) * 100) / 100, drawn.name);
+      // Closed, a card waits 350 ms before it fades; over the card or its veil, which covers the whole chart, it stays.
+      assert.ok(drawn.svg.includes('.semgraph-meta-card{opacity:0;transition:opacity 0.15s ease-in 0.35s,visibility 0s linear 0.5s}'), drawn.name);
+      assert.match(drawn.svg, /@media \(hover:hover\)\{[^@]*\.semgraph-meta-card:hover\{visibility:visible;opacity:1/, drawn.name);
+      // Every label in the footer opens the card of its topic.
+      for (const kind of footerKinds(drawn.svg)) {
+        assert.ok(drawn.svg.includes(`svg[data-semgraph]:has(.semgraph-meta-for-${kind}:hover) .semgraph-meta-card-${kind}`), `${drawn.name}: ${kind}`);
       }
-      assert.match(drawn.svg, /\.semgraph-meta-panel\{opacity:0;transform:scale\(\.04\);transition:transform 0\.15s ease-in 0\.35s/, drawn.name);
     }
   });
 
   it('REQ-016: CSS in the SVG, no script; as an image the panels stay hidden and the date stays visible', () => {
     for (const drawn of examples) {
       assert.doesNotMatch(drawn.svg, /<script|\son[a-z]+="/i, drawn.name);
-      // Hidden by attribute, so a renderer without CSS or interaction shows no panel.
-      assert.equal(
-        [...drawn.svg.matchAll(/class="semgraph-meta-panel" visibility="hidden"/g)].length,
-        [...drawn.svg.matchAll(/class="semgraph-meta-item"/g)].length,
-        drawn.name,
-      );
+      // Hidden by attribute, so a renderer without CSS or interaction shows no card and no veil (REQ-098).
+      assert.equal([...drawn.svg.matchAll(/<g class="semgraph-meta-card semgraph-meta-card-\w+" visibility="hidden"/g)].length, footerKinds(drawn.svg).length, drawn.name);
+      assert.equal([...drawn.svg.matchAll(/class="semgraph-meta-veil"/g)].length, footerKinds(drawn.svg).length, drawn.name);
       // The compiled date is in the footer, outside every panel.
       const compiledAt = drawn.svg.search(/>(samengesteld|compiled) \d\d\/\d\d</);
       assert.ok(compiledAt > 0 && compiledAt < drawn.svg.indexOf('class="semgraph-meta"'), drawn.name);
@@ -909,9 +904,8 @@ describe('requirements of the chart language', async () => {
       for (const point of ratioPoints(drawn).filter((candidate) => candidate.centre > 0)) {
         assert.ok(base.get(point.rel)! < point.centre, `${drawn.name}: the denominator under the ratio at ${point.rel}`);
       }
-      // On hover the denominator is read on the right axis: its guide runs to the right.
-      for (const point of ratioPoints(drawn)) assert.equal(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.point!.right, base.get(point.rel), drawn.name);
-      assert.match(drawn.svg, /<line x1="[\d.]+" x2="[\d.]+" y1="[\d.]+" y2="[\d.]+" stroke="#[0-9a-f]{6}" stroke-width="[\d.]+" stroke-dasharray="1 3"/, drawn.name);
+      // REQ-105, REQ-106: on hover nothing is drawn over the data; the counts are read in the readout.
+      for (const point of ratioPoints(drawn)) assert.match(drawn.drawing.hover!.find((spec) => spec.x === point.rel)!.readout!.extra ?? '', /: [\d.,]+ \/ [\d.,]+/, drawn.name);
       const rightLayer = drawn.layers.find((layer) => layer.data?.name === 'rightAxis')!;
       assert.equal(markOf(rightLayer).color, color(drawn.tokens, 'context'), `${drawn.name}: lighter labels`);
       assert.equal(drawn.layers.filter((layer) => markType(layer) === 'point' && layer.data?.name !== 'points' && layer.data?.name !== 'frame').length, 0, `${drawn.name}: no shapes on the right axis`);
@@ -1102,6 +1096,230 @@ describe('requirements of the chart language', async () => {
     for (const state of ['empty', 'running', 'few']) {
       assert.ok(examples.some((drawn) => drawn.request.theme === 'dark' && new RegExp(`semgraph-${state}-[0-9a-f]{8}-dark`).test(drawn.svg)), `a dark example with ${state}`);
     }
+  });
+
+  it('REQ-098: a card lies on a veil over the whole chart, in the surface colour of its theme, about 80% opaque', () => {
+    for (const drawn of examples) {
+      const [, width, height] = /^<svg [^>]*viewBox="0 0 ([\d.]+) ([\d.]+)"/.exec(drawn.svg)!;
+      const veils = [...drawn.svg.matchAll(/<rect class="semgraph-meta-veil" width="([\d.]+)" height="([\d.]+)" fill="(#[0-9a-f]{6})" fill-opacity="0\.82"\/>/g)];
+      assert.equal(veils.length, footerKinds(drawn.svg).length, drawn.name);
+      for (const [, w, h, fill] of veils) assert.deepEqual([w, h, fill], [width, height, color(drawn.tokens, 'surface')], drawn.name);
+      // The cards come after everything else, so a card and its veil lie on top, the footer included.
+      const lastFooterLabel = Math.max(...[...drawn.svg.matchAll(/class="semgraph-meta-label semgraph-meta-for-\w+" tabindex="0"/g)].map((match) => match.index));
+      assert.ok(drawn.svg.indexOf('semgraph-meta-veil') > lastFooterLabel, drawn.name);
+    }
+  });
+
+  it('REQ-099: every card has the same anatomy: eyebrow, title, sections between thin lines, and the row of labels with the active one underlined', () => {
+    for (const drawn of examples) {
+      const [, width] = /^<svg [^>]*viewBox="0 0 ([\d.]+)/.exec(drawn.svg)!;
+      const labels = footerLabels(drawn.svg);
+      for (const kind of footerKinds(drawn.svg)) {
+        const card = cardOf(drawn.svg, kind)!;
+        const label = `${drawn.name}: ${kind}`;
+        // 540 wide and centred, at least 20 from the edge; on a narrow chart (a card or the tile) all but 16 (REQ-085).
+        const box = /<g class="semgraph-meta-box" tabindex="-1" transform="translate\(([\d.]+),([\d.]+)\)"><rect x="0\.5" y="0\.5" width="([\d.]+)" height="[\d.]+" rx="10" fill="([^"]+)" stroke="([^"]+)" stroke-width="1"\/>/.exec(card);
+        assert.ok(box, label);
+        const cardWidth = Number(box[3]) + 1;
+        assert.equal(cardWidth, Number(width) < 500 ? Number(width) - 32 : Math.min(540, Number(width) - 40), label);
+        assert.equal(Number(box[1]), (Number(width) - cardWidth) / 2, label);
+        assert.deepEqual([box[4], box[5]], [color(drawn.tokens, 'surface'), color(drawn.tokens, 'context/light')], label);
+        // The eyebrow in capitals, bold and spaced in the dark focus colour; the title of the chart in Poppins.
+        const texts = textsOf(card);
+        assert.match(card, new RegExp(`font-size="10" font-weight="700" letter-spacing="0.8" fill="${color(drawn.tokens, 'focus/dark')}">[^<a-z]+</text>`), label);
+        if (kind !== 'learn') assert.ok(drawn.drawing.title.startsWith(texts.find((text, index) => index > 2 && text.length > 0)!.replace(/…$/, '')), label);
+        // Thin lines in context/light, section labels in capitals.
+        assert.match(card, new RegExp(`<line x1="24" x2="[\\d.]+" y1="[\\d.]+" y2="[\\d.]+" stroke="${color(drawn.tokens, 'context/light')}" stroke-width="1"/>`), label);
+        // The row: every label, the active one underlined in the focus colour, the others switch to their card.
+        const row = texts.slice(-labels.length - 1).filter((text) => labels.includes(text));
+        assert.deepEqual(row, labels, label);
+        assert.match(card, new RegExp(`height="1.5" fill="${color(drawn.tokens, 'focus')}"/>`), label);
+        assert.equal([...card.matchAll(/class="semgraph-meta-label semgraph-meta-for-\w+ semgraph-meta-switch" tabindex="-1"/g)].length, labels.length - 1, label);
+      }
+      // A label in a card opens its card without closing first: the card it was in steps aside.
+      assert.ok(drawn.svg.includes('.semgraph-meta-card:has(.semgraph-meta-switch:hover){visibility:hidden!important'), drawn.name);
+      // How to close, for the mouse and for touch.
+      assert.match(drawn.svg, /@media \(hover:none\)\{[^@]*\.semgraph-meta-mouse\{display:none\}\.semgraph-meta-touch\{display:inline\}\}/, drawn.name);
+    }
+  });
+
+  it('REQ-100: the Query card shows only the title of the chart and the SQL, in Roboto Mono on its own surface', async () => {
+    const registry = await testRegistry();
+    let seen = 0;
+    for (const drawn of examples) {
+      const query = (drawn.request.meta as { query?: string } | undefined)?.query;
+      const card = cardOf(drawn.svg, 'query');
+      assert.equal(card !== undefined, Boolean(query), drawn.name);
+      if (!card) continue;
+      const t = createTranslator(registry.locales, (drawn.request.locale as string | undefined) ?? 'nl-BE');
+      // One section, SQL; no parameters.
+      const sections = [...card.matchAll(/letter-spacing="0.8" fill="[^"]+">([^<]+)<\/text>/g)].map((match) => match[1]);
+      assert.deepEqual(sections, ['QUERY', t('meta.section.sql').toLocaleUpperCase()], drawn.name);
+      assert.match(card, new RegExp(`<rect x="24" y="[\\d.]+" width="[\\d.]+" height="[\\d.]+" rx="6" fill="${color(drawn.tokens, 'badge/surface')}"/>`), drawn.name);
+      // The first line of the query, as written, in the monospaced font at 11.
+      const first = query!.split(/\r?\n/)[0]!.trimEnd();
+      assert.match(card, new RegExp(`font-family="&apos;Roboto Mono&apos;[^"]*" font-size="11" fill="[^"]+" xml:space="preserve">${escapeRegExp(first.slice(0, 20).replaceAll("'", '&apos;'))}`), drawn.name);
+      seen++;
+    }
+    assert.ok(seen > 0);
+  });
+
+  it('REQ-101 and REQ-104: Metadata: the parameters straight from the request, the data, and who made it next to the service', async () => {
+    const registry = await testRegistry();
+    for (const drawn of examples) {
+      const t = createTranslator(registry.locales, (drawn.request.locale as string | undefined) ?? 'nl-BE');
+      const card = cardOf(drawn.svg, 'metadata')!;
+      assert.ok(card, drawn.name);
+      const texts = textsOf(card);
+      const sections = [...card.matchAll(/letter-spacing="0.8" fill="[^"]+">([^<]+)<\/text>/g)].map((match) => match[1]);
+      const upper = (key: string) => t(`meta.section.${key}`).toLocaleUpperCase();
+      assert.deepEqual(sections.slice(1), [upper('parameters'), upper('data'), upper('made'), upper('service')].slice(0, sections.length - 1), drawn.name);
+      const value = (key: string) => {
+        const index = texts.indexOf(t(`meta.field.${key}`));
+        return index < 0 ? undefined : texts[index + 1];
+      };
+      // A card that does not fit its chart, such as on the size card, is cut (REQ-014): what is shown is right.
+      const cut = texts.includes('…');
+      const equal = (actual: string | undefined, expected: string | undefined, label: string) => {
+        if (!cut || actual !== undefined) assert.equal(actual, expected, label);
+      };
+      // The type is the semgraph; every other parameter only when the request gives it, as given.
+      assert.equal(value('type'), drawn.semgraph, drawn.name);
+      for (const key of ['metric', 'unit', 'statistic', 'comparison', 'period', 'day']) {
+        const given = drawn.request[key];
+        equal(value(key), typeof given === 'string' ? given : undefined, `${drawn.name}: ${key}`);
+      }
+      const window = drawn.request.window as number | undefined;
+      equal(value('window'), window === undefined ? undefined : window === 1 ? t('meta.oneDay') : t('meta.days', { n: window }), drawn.name);
+      // No filter and no period of a time series: no contract has them (REQ-104).
+      assert.ok(!texts.includes('Filter'), drawn.name);
+      // Made: by whom only with builtBy, and the compiled day; the owner stays in the footer.
+      const meta = (drawn.request.meta ?? {}) as { builtBy?: string };
+      equal(value('builtBy'), meta.builtBy, drawn.name);
+      if (!cut || value('compiled')) assert.match(value('compiled') ?? '', /^\d\d\/\d\d\/\d{4}$/, drawn.name);
+      equal(value('semgraph'), `v${registry.version}`, drawn.name);
+    }
+  });
+
+  it('REQ-102 and REQ-103: without a lesson no Learn label and the icon links to the reading card; with one, Learn opens from the label and the icon', async () => {
+    const plain = await testRegistry();
+    for (const drawn of examples) {
+      assert.ok(!drawn.svg.includes('semgraph-meta-for-learn'), drawn.name);
+      assert.match(drawn.svg, new RegExp(`<a href="${plain.semgraphs.get(drawn.semgraph)!.metadata.links.learning.replace(/[.?]/g, '\\$&')}" aria-label="[^"]+"><svg x="20" y="12"`), drawn.name);
+    }
+    const registry = await testRegistryWithLessons();
+    for (const drawn of examples) {
+      const result = await runPipeline(registry, drawn.request, { now: NOW });
+      const svg = result.svg!;
+      const t = createTranslator(registry.locales, result.report.locale);
+      const learning = registry.semgraphs.get(drawn.semgraph)!.metadata.links.learning;
+      // Learn is the last label; the icon is one more label of Learn instead of a link.
+      assert.equal(footerLabels(svg).at(-1), t('meta.learn'), drawn.name);
+      assert.match(svg, /<g class="semgraph-meta-label semgraph-meta-for-learn" tabindex="0" role="button" aria-label="[^"]+"><svg x="20" y="12" width="44"/, drawn.name);
+      assert.ok(!svg.includes(`<a href="${learning}" aria-label`), drawn.name);
+      // The card: the kind of chart as its title, what you see, the signs, watch out, and the full reading card.
+      const card = cardOf(svg, 'learn')!;
+      const texts = textsOf(card);
+      // On a narrow chart the title takes two lines.
+      assert.ok(texts.join(' ').includes(TEST_LESSON.title), drawn.name);
+      const sections = [...card.matchAll(/letter-spacing="0.8" fill="[^"]+">([^<]+)<\/text>/g)].map((match) => match[1]);
+      const upper = (key: string) => t(`meta.section.${key}`).toLocaleUpperCase();
+      const signs = drawn.drawing.signs ?? [];
+      assert.deepEqual(sections.slice(1), [upper('whatYouSee'), ...(signs.length > 0 ? [upper('signs')] : []), upper('watchOut')].slice(0, sections.length - 1), drawn.name);
+      // Unless the card was cut to fit its chart (REQ-014), it ends with the full reading card.
+      if (!texts.includes('…')) assert.ok(card.includes(`<a href="${learning}">`), drawn.name);
+    }
+  });
+
+  it('REQ-105: a time axis reads its values in one fixed spot; on the data only a guide and a ring, the date on the axis', () => {
+    for (const drawn of timeAxis) {
+      const [, width] = /^<svg [^>]*viewBox="0 0 ([\d.]+)/.exec(drawn.svg)!;
+      const layer = /<g class="semgraph-hover">\n<g class="semgraph-hover-rest" pointer-events="none">(.*?)<\/g>/.exec(drawn.svg);
+      assert.ok(layer, `${drawn.name}: the readout at rest`);
+      // At rest the latest value.
+      const latest = drawn.computed.points.at(-1)!;
+      assert.equal(textsOf(layer[1]!)[0], drawn.drawing.hover.find((spec) => spec.x === latest.rel)!.readout!.value, drawn.name);
+      // Right aligned at the right edge of a wide chart; on a narrow one left aligned, at 13.
+      if (Number(width) >= 500) assert.match(layer[1]!, /text-anchor="end"[^>]*font-size="16" font-weight="bold"/, drawn.name);
+      else assert.match(layer[1]!, /^<text x="[-\d.]+" y="[-\d.]+" font-family="[^"]+" font-size="13" font-weight="bold"/, drawn.name);
+      for (const spec of drawn.drawing.hover) {
+        assert.ok(spec.readout?.date, `${drawn.name}: a date for ${spec.x}`);
+        assert.equal(spec.readout!.value, spec.point ? spec.lines[1]!.text.split(': ').at(-1) : '–', drawn.name);
+      }
+      // No box over the data: only the dotted guide, the ring and the date label in a column.
+      const details = [...drawn.svg.matchAll(/<g class="semgraph-hover-detail" visibility="hidden" pointer-events="none">(.*?)<\/g><\/g>/g)].map((match) => match[1]!);
+      assert.equal(details.length, drawn.drawing.hover.length, drawn.name);
+      for (const detail of details) {
+        assert.equal([...detail.matchAll(/<line /g)].length, 1, drawn.name);
+        assert.doesNotMatch(detail, /<rect [^>]*stroke=/, `${drawn.name}: no box`);
+        assert.match(detail, new RegExp(`rx="3" fill="${color(drawn.tokens, 'text')}"/><text [^>]*font-weight="bold" fill="${color(drawn.tokens, 'surface')}">`), `${drawn.name}: the date`);
+      }
+    }
+  });
+
+  it('REQ-106: the labels at the points stay; whatever else the box said stands on a second line, and every line in the aria-label', () => {
+    for (const drawn of timeAxis) {
+      // REQ-033 and REQ-003 as they were: the value labels are still drawn.
+      if (drawn.request.values !== 'off') assert.ok((drawn.datasets.valuesStrong ?? []).length + (drawn.datasets.valuesMuted ?? []).length + (drawn.datasets.endValue ?? []).length > 0, drawn.name);
+      for (const spec of drawn.drawing.hover) {
+        const label = drawn.svg.includes(`aria-label="${spec.lines.map((line) => line.text).join(', ').replaceAll('&', '&amp;').replaceAll('"', '&quot;')}"`);
+        assert.ok(label, `${drawn.name}: every line in the aria-label of ${spec.x}`);
+        // Every line beyond the name, the value, the spread and the window or period is on the second line.
+        const extra = spec.readout!.extra ?? '';
+        for (const line of spec.lines.slice(1)) {
+          if (/^(n = |lopend|running|vorige periode|previous period|geen data|no data)/.test(line.text)) assert.ok(extra.includes(line.text), `${drawn.name}: ${line.text}`);
+        }
+      }
+    }
+  });
+
+  it('REQ-107: the gallery links every drawn example in every size, light and dark; the KPI tile only light and dark', async () => {
+    const registry = await testRegistry();
+    const app = await buildApp({ registry, now: () => NOW, logger: false, mcp: { mode: 'off' } });
+    const html = (await app.inject('/gallery?locale=nl-BE')).body;
+    for (const drawn of examples) {
+      const href = `/semgraphs/${drawn.semgraph}/examples/${drawn.name.split('/')[1]}`;
+      const sized = 'size' in ((registry.semgraphs.get(drawn.semgraph)!.schema as { properties: object }).properties);
+      for (const theme of ['light', 'dark']) {
+        const links = sized ? SIZE_NAMES.map((size) => `${href}?theme=${theme}&amp;size=${size}`) : [`${href}?theme=${theme}`];
+        for (const link of links) assert.ok(html.includes(`<a href="${link}">`), `${drawn.name}: ${link}`);
+      }
+      if (!sized) assert.ok(!html.includes(`${href}?theme=light&amp;size=`), drawn.name);
+    }
+    // A refused example has no other sizes or modes.
+    assert.ok(!html.includes('/semgraphs/movingWindowAverage/examples/unique-without-aggregation?theme='));
+    // The links draw what they say: the size of REQ-085 and the mode of REQ-094, also against what the example asks.
+    const svgOf = async (url: string) => (await app.inject(url)).body;
+    const card = await svgOf('/semgraphs/calendarAverage/examples/weeks-dark?theme=light&size=card');
+    assert.match(card, /^<svg [^>]*width="360"/);
+    assert.doesNotMatch(card, /data-theme="dark"/);
+    assert.match(await svgOf('/semgraphs/movingWindowAverage/examples/basic?theme=dark&size=xl'), /^<svg [^>]*width="1920"[^>]*data-theme="dark"/);
+    assert.match(await svgOf('/semgraphs/kpiTile/examples/rolling-28d?theme=dark'), /data-theme="dark"/);
+    assert.equal((await app.inject('/semgraphs/kpiTile/examples/rolling-28d?size=large')).statusCode, 400);
+    assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/basic?size=huge')).statusCode, 400);
+    await app.close();
+  });
+
+  it('REQ-102: Signs in this chart lists only the signs the chart really drew', () => {
+    const shapes: Record<string, string> = { mean: 'diamond', median: 'circle', sum: 'square', ratio: 'squareInSquare' };
+    const seen = new Set<string>();
+    for (const drawn of examples) {
+      const signs = (drawn.drawing.signs ?? []).map((sample) => sample.sign);
+      signs.forEach((sign) => seen.add(sign));
+      const has = (pattern: string) => new RegExp(`<pattern id="semgraph-${pattern}-[0-9a-f]{8}`).test(drawn.svg);
+      const points = (drawn.datasets.points ?? []).length > 0;
+      // The shape of the series, unless it is a bar (an amount per category) or there is no series of points.
+      const shape = drawn.semgraph === 'kpiStatus' || drawn.family === 'distribution' || (drawn.family === 'category' && drawn.statistic === 'sum') || !points ? undefined : shapes[drawn.statistic];
+      const expected = [
+        ...(shape ? [shape] : []),
+        ...(['running', 'few', 'empty'] as const).filter((state) => has(state)),
+        ...(has('hatch') ? ['loss'] : []),
+        ...((drawn.datasets.zigzag ?? []).length > 0 ? ['zigzag'] : []),
+      ];
+      assert.deepEqual([...signs].sort(), expected.sort(), drawn.name);
+    }
+    // The examples show every sign at least once.
+    for (const sign of ['square', 'circle', 'diamond', 'squareInSquare', 'running', 'few', 'empty', 'loss', 'zigzag']) assert.ok(seen.has(sign), sign);
   });
 });
 

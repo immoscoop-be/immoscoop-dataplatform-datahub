@@ -3,7 +3,7 @@ import { currentDay, formatDay, localizeDay, parseDay } from '../core/days.ts';
 import type { Translator } from '../core/i18n.ts';
 import type { IssueParam, IssueSpec } from '../core/issues.ts';
 import { META_SCHEMA, type ChartMeta } from '../core/meta.ts';
-import type { HoverSpec } from '../core/render/hover.ts';
+import type { HoverSpec, Readout } from '../core/render/hover.ts';
 import type {
   DrawContext,
   Drawing,
@@ -19,9 +19,10 @@ import { sizeOf } from '../core/size.ts';
 import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE, UNIQUE_AGGREGATION } from './contract.ts';
 import { LEARNING_PLAN_LEVEL_1, measureRules } from './measure.ts';
 import { markerSize } from './signatures.ts';
+import { signSamples } from './signs.ts';
 import { baseLayers, denominatorAxis, RIGHT_AXIS } from './ratio.ts';
 import { Ratio, type BlockRow, type NumberFormatter, type Statistic, type Summary } from './statistics.ts';
-import { AXIS_HEIGHT, timeAxis } from './time-axis.ts';
+import { AXIS_HEIGHT, LABEL_TOP, timeAxis } from './time-axis.ts';
 import { alsoLabelled, headroom, labelsFor, MIN_WIDTH_FOR_ALL, VALUES_MODES, valueLabels, type ValuesMode } from './value-labels.ts';
 
 /** What every time-axis request carries, whatever its periods or statistic. */
@@ -235,9 +236,23 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
   }
 
   /** Extra facts on hover; by default how far a running period is. */
-  protected slotExtras(slot: Slot, { t }: LabelContext, _request: Request): string[] {
-    if (!slot.running) return [];
-    return [t('chart.running', { count: slot.last - slot.first + 1, total: slot.fullLast - slot.first + 1 })];
+  protected slotExtras(slot: Slot, context: LabelContext, _request: Request): string[] {
+    return slot.running ? [this.runningText(slot, context)] : [];
+  }
+
+  /** "lopend: 3 van 7 dagen". */
+  protected runningText(slot: Slot, { t }: LabelContext): string {
+    return t('chart.running', { count: slot.last - slot.first + 1, total: slot.fullLast - slot.first + 1 });
+  }
+
+  /** REQ-105: the date of a block on the time axis, under its point; by default its label on the axis. */
+  protected slotDate(slot: Slot, context: LabelContext, request: Request): string {
+    return this.tickLabel(slot, { ...context, isFirst: false }, request).join(' ');
+  }
+
+  /** REQ-105: the window or period of a block in the readout; by default its name, e.g. "week 39 (21–27 sep)". */
+  protected slotPeriod(slot: Slot, context: LabelContext, request: Request): string {
+    return this.slotLabel(slot, context, request);
   }
 
   // ----- The contract -----
@@ -800,12 +815,8 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       ],
     } as TopLevelSpec;
 
-    // A ratio: a guide from its denominator to the right axis, where the denominator is read (REQ-079).
-    const parts = new Map(points.map((point) => [point.rel, point.parts]));
-    const hover = this.hoverSpecs(request, computed, t, valueFormat).map((spec) => {
-      const counts = parts.get(spec.x);
-      return denominator && spec.point && counts ? { ...spec, point: { ...spec.point, right: denominator.toRatio(counts.denominator) } } : spec;
-    });
+    // REQ-105: nothing on the data but the guide and the ring; a ratio reads its counts in the readout.
+    const hover = this.hoverSpecs(request, computed, t, valueFormat);
 
     const title = request.title ?? request.metric;
     const cue = [
@@ -832,6 +843,18 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(defs ? { defs } : {}),
+      // REQ-105: the values are read in one fixed spot; the date goes over the labels of the time axis.
+      readout: { rest: this.restReadout(request, computed, t, valueFormat), dateTop: PLOT_HEIGHT + LABEL_TOP },
+      // REQ-102: the signs this chart drew, for its lesson.
+      signs: signSamples(
+        {
+          ...(points.length > 0 ? { shape: ratio ? 'squareInSquare' : this.statistic.shape } : {}),
+          patterns: patternIds,
+          ...(hatchId ? { hatch: hatchId } : {}),
+          zigzag: scale.zoomed,
+        },
+        tokens,
+      ),
       hover,
       title,
       readingCue,
@@ -880,10 +903,23 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
               : t('hover.comparisonMissing', { name: this.slotLabel(previousSlot, context, request) }),
           }]
         : [];
-      if (!point) return { x: slot.rel, lines: [name, { text: t('chart.noData') }, ...comparison] };
+      // REQ-105, REQ-106: the readout: the value; the spread and the window or period; and whatever else the
+      // lines say, on a second line. The date goes on the time axis.
+      const date = this.slotDate(slot, context, request);
+      const period = this.slotPeriod(slot, context, request);
+      const running = slot.running ? this.runningText(slot, context) : '';
+      if (!point) {
+        return {
+          x: slot.rel,
+          lines: [name, { text: t('chart.noData') }, ...comparison],
+          readout: { value: '–', ...readoutLines(period, [t('chart.noData'), comparison[0]?.text]), date },
+        };
+      }
       // A ratio names its counts: "leads / bezoekers: 27 / 640" (REQ-076).
+      const ratio = this.statistic.kind === 'ratio';
       const spreadLine = this.statistic.spreadLine(t, format, point);
-      const spread = spreadLine && this.statistic.kind === 'ratio' ? `${this.ratioOf(request, t)}: ${spreadLine}` : spreadLine;
+      const spread = spreadLine && ratio ? `${this.ratioOf(request, t)}: ${spreadLine}` : spreadLine;
+      const n = point.n === undefined ? undefined : t('hover.n', { n: numberFormat(t.locale, 0).format(point.n) });
       return {
         x: slot.rel,
         point: { y: point.centre, lo: point.spread?.lo ?? null, hi: point.spread?.hi ?? null },
@@ -891,12 +927,25 @@ export abstract class TimeAxisChart<Request extends TimeAxisRequest>
           name,
           { text: `${this.centreLabel(request, t)}: ${format.format(point.centre)}` },
           ...(spread ? [{ text: spread }] : []),
-          ...(point.n === undefined ? [] : [{ text: t('hover.n', { n: numberFormat(t.locale, 0).format(point.n) }) }]),
+          ...(n ? [{ text: n }] : []),
           ...this.slotExtras(slot, context, request).map((text) => ({ text })),
           ...comparison,
         ],
+        readout: {
+          value: format.format(point.centre),
+          ...readoutLines([ratio ? '' : this.statistic.formatDetail(format, point, t.locale), period].filter(Boolean).join(' · '), [ratio ? spread : undefined, n, running, comparison[0]?.text]),
+          date,
+        },
       };
     });
+  }
+
+  /** REQ-105: the readout at rest: the latest value and the block it belongs to. */
+  protected restReadout(request: Request, computed: TimeAxisComputed, t: Translator, format: NumberFormatter): Readout {
+    const latest = computed.points.reduce<SlotPoint | undefined>((last, point) => (!last || point.rel > last.rel ? point : last), undefined);
+    const slot = latest && computed.slots.find((candidate) => candidate.rel === latest.rel);
+    if (!latest || !slot) return { value: '–' };
+    return { value: format.format(latest.centre), detail: t('hover.latest', { date: this.slotDate(slot, { t, computed, isFirst: false }, request) }) };
   }
 }
 
@@ -910,4 +959,10 @@ export function withSegments<Point extends { rel: number }>(points: readonly Poi
   const lengths = new Map<number, number>();
   for (const id of segmentOf) lengths.set(id, (lengths.get(id) ?? 0) + 1);
   return points.map((point, index) => ({ ...point, segment: segmentOf[index]!, segmentLength: lengths.get(segmentOf[index]!)! }));
+}
+
+/** REQ-105, REQ-106: the detail line of a readout, and the second line with the rest, without empty parts. */
+function readoutLines(detail: string, extras: (string | null | undefined)[]): { detail?: string; extra?: string } {
+  const extra = extras.filter(Boolean).join(' · ');
+  return { ...(detail ? { detail } : {}), ...(extra ? { extra } : {}) };
 }

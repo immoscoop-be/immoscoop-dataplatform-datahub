@@ -54,7 +54,9 @@ describe('periodComparison', () => {
     const result = await run(await example('weeks-sum', 'periodComparison'));
     // Week 40 has run three days (28–30 September); it is compared with the first three days of week 28.
     assert.match(result.svg!, /week 40 \(28 sep–4 okt\), som: 161, lopend: 3 van 7 dagen, vorige periode, week 28 \(6–12 jul\): 135/);
-    assert.match(result.svg!, />som per week · tegenover vorige 12 weken</);
+    // The reading cue, on one line or two next to the readout of REQ-105.
+    const cue = [...result.svg!.matchAll(/font-style="italic"[^>]*>([^<]*)</g)].map((match) => match[1]).join(' ');
+    assert.equal(cue, 'som per week · tegenover vorige 12 weken');
     assert.match(result.svg!, />vorige 12 weken</);
   });
 

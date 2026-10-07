@@ -1,6 +1,6 @@
 {
-  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart and its text styles, read on 2026-10-06. color is the mode Light, the default; colorDark the mode Dark (REQ-094). Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065). Since 0.4.0 the mode Dark (REQ-094, REQ-096). Since 0.5.0 the patterns take the variables their masters are bound to in Figma (REQ-097), so they have no tokens of their own.",
-  "version": "0.5.0",
+  "$description": "Chart-language tokens for semgraph. Figma (file grafiektaal) is the source of truth: the colours, line weights and type sizes below are the Figma variables of the collection Chart and its text styles, read on 2026-10-06. color is the mode Light, the default; colorDark the mode Dark (REQ-094). Names follow the Figma variables. The few values Figma does not hold yet are marked in $sources. The service reads its style only from this file. Since 0.2.0 text is grey/700 instead of grey/800 (REQ-059: black is too hard). Since 0.3.0 the target colours and the type sizes of the KPI charts (REQ-065). Since 0.4.0 the mode Dark (REQ-094, REQ-096). Since 0.5.0 the patterns take the variables their masters are bound to in Figma (REQ-097), so they have no tokens of their own. Since 0.6.0 the type sizes of the chart cards (REQ-099, REQ-100).",
+  "version": "0.6.0",
   "languageVersion": "v0",
   "color": {
     "focus": "#dd2c88",
@@ -68,8 +68,10 @@
     "detail": 8,
     "axisLabel": 11,
     "footer": 10,
-    "panelTitle": 14,
+    "panelKind": 10,
+    "panelTitle": 16,
     "panelBody": 12,
+    "panelCode": 11,
     "kpi": 40,
     "kpiDetail": 12,
     "delta": 16
@@ -104,7 +106,7 @@
       "size.footer (Chart/Footer)"
     ],
     "figmaExamples": [
-      "font.mono, size.panelTitle and size.panelBody (Chart metadata, open panel)",
+      "font.mono, size.panelKind, size.panelTitle, size.panelBody and size.panelCode (Chart card 307:328: the eyebrow, the title, the text and the SQL; REQ-099, REQ-100)",
       "mark (Points and markers)",
       "size.kpi and size.kpiDetail (Chart/KPI tile: the number and its comparison)",
       "size.delta (Chart/KPI status: what is still needed)"

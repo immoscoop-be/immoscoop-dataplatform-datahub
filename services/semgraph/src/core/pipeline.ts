@@ -1,10 +1,10 @@
 import { localizeDay } from './days.ts';
 import { createTranslator, resolveLocale, type Translator } from './i18n.ts';
 import { localizeIssue, localizeParams, outcomeOf, type Issue, type IssueSpec, type Outcome } from './issues.ts';
-import { checkMeta, compiledDay, metaItems, type ChartMeta } from './meta.ts';
+import { checkMeta, compiledDay, metaCards, type ChartMeta } from './meta.ts';
 import type { LoadedSemgraph, Registry } from './registry.ts';
 import { hasIllegalXmlCharacters, isWebLink } from './render/escape.ts';
-import { HoverLayer, RowHoverLayer } from './render/hover.ts';
+import { HoverLayer, ReadoutHoverLayer, RowHoverLayer } from './render/hover.ts';
 import { composeSvg, type Footer, type Segment } from './render/template.ts';
 import { renderVegaLite } from './render/vega.ts';
 import { schemaIssues } from './schema.ts';
@@ -92,14 +92,31 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
     .filter((issue) => issue.level === 'deviation' || issue.level === 'caution')
     .map((issue) => t(`issues.${issue.code}.alert`, localizeParams(t, issue.params)));
   const compiled = compiledDay(request.meta, now);
+  const meta = metaCards(t, {
+    request,
+    semgraph: id,
+    title: drawing.title,
+    compiled,
+    asOf: drawing.asOf,
+    serviceVersion: registry.version,
+    ...(metadata.lesson ? { lesson: metadata.lesson } : {}),
+    learning: metadata.links.learning,
+    signs: drawing.signs ?? [],
+  });
   const svg = composeSvg({
     width: drawing.width,
     // REQ-085: a slide and a big screen get the chart enlarged; the tile has no size and stays as it is.
     scale: sizeOf(request).scale,
     title: drawing.title,
     readingCue: drawing.readingCue,
-    // REQ-060: the icon links to the reading card, like the learn line in the footer.
-    icon: { markup: loaded.icon, href: loaded.metadata.links.learning, label: t('footer.readingCard', { name: t(loaded.metadata.readingCard) }) },
+    // REQ-060: the icon links to the reading card, like the learn line in the footer; with a lesson it opens
+    // the Learn card, which links to the reading card (REQ-103).
+    icon: {
+      markup: loaded.icon,
+      href: metadata.links.learning,
+      label: t('footer.readingCard', { name: t(metadata.readingCard) }),
+      opensLearn: meta.items.some((item) => item.kind === 'learn'),
+    },
     alerts,
     defs: drawing.defs,
     description: drawing.description,
@@ -107,14 +124,17 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       svg: plot.svg,
       height: drawing.height,
       area: drawing.plotArea,
-      overlay: new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(tokens, drawing.plotArea, plot.scales).render(drawing.hover),
+      overlay: ({ origin, readout }) =>
+        // REQ-105: a time axis reads its values in one fixed spot; other charts keep the box.
+        drawing.readout && readout
+          ? new ReadoutHoverLayer(tokens, drawing.plotArea, plot.scales, { anchor: readout, origin, ...drawing.readout }).render(drawing.hover)
+          : new (drawing.hoverRows ? RowHoverLayer : HoverLayer)(tokens, drawing.plotArea, plot.scales).render(drawing.hover),
     },
+    ...(drawing.readout
+      ? { readout: ReadoutHoverLayer.size(tokens, [drawing.readout.rest, ...drawing.hover.flatMap((spec) => (spec.readout ? [spec.readout] : []))]) }
+      : {}),
     footer: footer(t, request.context ?? {}, { asOf: drawing.asOf, compiled }, loaded, deviations, registry.tokens.languageVersion),
-    meta: metaItems(t, request.meta, {
-      semgraph: id,
-      compiled,
-      serviceVersion: registry.version,
-    }),
+    meta,
     tokens,
     data: {
       semgraph: id,

@@ -14,6 +14,7 @@ import { CONTEXT, DAY, FORMAT, LOCALE, MEASURE_TYPE, METRIC, SIZE, THEME, TITLE,
 import { measureRules, type MeasureRequest } from './measure.ts';
 import { CompactFormat } from './number-format.ts';
 import { lookup, valueScale, ZIGZAG, ZIGZAG_MASK, zoomedLabelWeight, zoomLayers } from './scales.ts';
+import { signSamples } from './signs.ts';
 import { Sum } from './statistics.ts';
 import { PADDING, PLOT_HEIGHT } from './time-axis-chart.ts';
 import { timeAxis } from './time-axis.ts';
@@ -571,6 +572,8 @@ export class KpiStatusChart implements SemgraphImplementation<KpiStatusRequest, 
       height: padding.top + PLOT_HEIGHT + padding.bottom,
       plotArea: { x: padding.left, y: padding.top, width: plotWidth, height: PLOT_HEIGHT },
       ...(defs ? { defs } : {}),
+      // REQ-102: the signs this chart drew, for its lesson: the hatching of what was lost, and the zigzag.
+      signs: signSamples({ ...(hatchId ? { hatch: hatchId } : {}), zigzag: scale.zoomed }, tokens),
       hover,
       title,
       readingCue,

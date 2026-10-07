@@ -12,11 +12,12 @@ async function render(request: unknown) {
 /** Text keys that slipped through untranslated would look like "footer.asOf". */
 const UNRESOLVED_KEY = /\b(semgraphs|footer|issues|axis|chart|cue|desc|calendar|period|date|types|attributes|hover|meta|readingCards)\.[a-zA-Z]+/;
 
-/** The SVG without the hover details, which only show on hover or focus. */
-const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover-detail".*?<\/g><\/g>/g, '');
 
 const hoverLabels = (svg: string) => [...svg.matchAll(/class="semgraph-hover-column" tabindex="0" role="img" aria-label="([^"]*)"/g)].map((match) => match[1]);
 
+
+/** The SVG without the hover layer, whose readouts repeat the values (REQ-105). */
+const withoutHover = (svg: string) => svg.replace(/<g class="semgraph-hover">[\s\S]*?\n<\/g>\n<\/g>/, '');
 describe('render', async () => {
   const registry = await testRegistry();
   for (const [id, semgraph] of registry.semgraphs) {
@@ -96,13 +97,15 @@ describe('render', async () => {
   });
 
   it('writes no values with values off, and falls back when all values do not fit (REQ-033)', async () => {
+    // No label at the points; the readout of REQ-105 still reads the latest value at rest (REQ-106).
     const off = await render({ ...(await example('basic')), values: 'off' });
-    assert.doesNotMatch(off.svg!, />45,9</);
+    assert.doesNotMatch(withoutHover(off.svg!), />45,9</);
+    assert.match(off.svg!, /<g class="semgraph-hover-rest" pointer-events="none"><text [^>]*>45,9</);
     const dense = await render({ ...(await example('long-horizon')), values: 'all' });
     assert.deepEqual(dense.report.issues.map((issue) => issue.code), ['valuesAllTooDense']);
     assert.match(dense.report.issues[0]!.message, /de standaard \(last\) wordt gebruikt/);
     const all = await render(await example('months-values-all', 'calendarAverage'));
-    assert.equal([...all.svg!.matchAll(/font-weight="bold"[^>]*>\d+,\d</g)].length, 12);
+    assert.equal([...withoutHover(all.svg!).matchAll(/font-weight="bold"[^>]*>\d+,\d</g)].length, 12);
   });
 
   it('a median is a dot in a wide bar, a mean a diamond over a thin one (REQ-006, REQ-008)', async () => {

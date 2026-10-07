@@ -1,7 +1,7 @@
 import type { TopLevelSpec } from 'vega-lite';
 import type { Translator } from './i18n.ts';
 import type { IssueSpec } from './issues.ts';
-import type { HoverSpec } from './render/hover.ts';
+import type { HoverSpec, Readout } from './render/hover.ts';
 import type { Tokens } from './tokens.ts';
 
 /** One attribute of the closed vocabulary (vocabulary/attributes.yml). */
@@ -27,6 +27,23 @@ export interface SemgraphMetadata {
   doNotUseWhen: { intent: string; use: string }[];
   data: { minimumPoints: number };
   links: { figma: string; learning: string };
+  /**
+   * REQ-102, REQ-103: the lesson of this kind of chart, written once, as text keys. Without a lesson there is
+   * no Learn label, and the icon links to the reading card.
+   */
+  lesson?: { title: string; whatYouSee: string; watchOut: string };
+}
+
+/**
+ * REQ-102: a sign of the chart language that a chart can draw, for "Signs in this chart" in its lesson: the
+ * shape of the series, the patterns of the data states, the hatching of a loss and the zigzag of a zoomed axis.
+ */
+export type Sign = 'square' | 'circle' | 'diamond' | 'squareInSquare' | 'running' | 'few' | 'empty' | 'loss' | 'zigzag';
+
+/** A sign the chart really drew, with its sample: markup for a 16 × 16 box. */
+export interface SignSample {
+  sign: Sign;
+  markup: string;
 }
 
 /** Footer context that every semgraph request may carry. */
@@ -63,6 +80,13 @@ export interface Drawing {
   asOf: number;
   /** SVG definitions the chart refers to, e.g. the hatch pattern; their ids are unique per chart (REQ-036). */
   defs?: string;
+  /** REQ-102: the signs this chart really drew, in the order of the lesson. */
+  signs?: SignSample[];
+  /**
+   * REQ-105: a time axis reads its values in one fixed spot: the readout at rest (the latest value), and where the
+   * labels of the time axis start, in plot-area coordinates, for the date under the point.
+   */
+  readout?: { rest: Readout; dateTop: number };
 }
 
 /**

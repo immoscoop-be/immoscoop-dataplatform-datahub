@@ -1,7 +1,8 @@
 import { ICON_SIZE } from '../icon.ts';
 import { color, type Tokens } from '../tokens.ts';
 import { escapeXml } from './escape.ts';
-import { LABEL_HEIGHT, MetaLayer, type MetaItem } from './meta.ts';
+import { READOUT_LINES, type ReadoutAnchor } from './hover.ts';
+import { LABEL_HEIGHT, MetaLayer, type MetaCards } from './meta.ts';
 import { round, textWidth, wrap } from './text.ts';
 
 /** A piece of footer text: a link when href is set, bold in the text colour when strong, in the dark focus colour when accent. */
@@ -30,8 +31,11 @@ export interface TemplateInput {
   scale?: number;
   title: string;
   readingCue: string;
-  /** The icon of the semgraph left of the title, linked to the reading card (REQ-060). */
-  icon?: { markup: string; href: string; label: string };
+  /**
+   * The icon of the semgraph left of the title, linked to the reading card (REQ-060). With a lesson it opens
+   * the Learn card instead, which links to the reading card (REQ-103).
+   */
+  icon?: { markup: string; href: string; label: string; opensLearn?: boolean };
   /** Red alerts between the title and the chart: allowed, but discouraged (REQ-032, REQ-038). */
   alerts?: string[];
   /** SVG definitions the chart refers to, such as a hatch pattern. */
@@ -42,18 +46,31 @@ export interface TemplateInput {
     height: number;
     /** Where the plot area sits inside the plot SVG; the overlay is placed over it. */
     area: { x: number; y: number };
-    /** Markup in plot-area coordinates drawn on top of the chart, e.g. the hover layer. */
-    overlay: string;
+    /**
+     * Markup in plot-area coordinates drawn on top of the chart, e.g. the hover layer. It learns where the plot
+     * area and the readout of REQ-105 ended up.
+     */
+    overlay: (place: OverlayPlace) => string;
   };
+  /** REQ-105: the room the fixed readout needs in the header, and whether it has a second detail line. */
+  readout?: { width: number; extra: boolean };
   footer: Footer;
-  /** The metadata labels at the bottom left and their panels (REQ-012, REQ-014, REQ-018, REQ-020). */
-  meta: MetaItem[];
+  /** The metadata labels at the bottom left and their cards (REQ-012, REQ-018, REQ-020, REQ-098, REQ-099). */
+  meta: MetaCards;
   tokens: Tokens;
   /** data-* attributes on the root element, e.g. the language and token versions. */
   data: Record<string, string>;
 }
 
+/** Where the overlay is drawn: the origin of the plot area, and the readout in the header (REQ-105). */
+export interface OverlayPlace {
+  origin: { x: number; y: number };
+  readout?: ReadoutAnchor;
+}
+
 const PADDING_X = 20;
+/** REQ-105: room between the title and the readout at its right. */
+const READOUT_GAP = 16;
 const PADDING_TOP = 18;
 /** REQ-060: the icon spans the title and the reading cue, with white around it, as in Figma. */
 const ICON_TOP = 12;
@@ -80,17 +97,24 @@ export function composeSvg(input: TemplateInput): string {
   const parts: string[] = [];
   let y = PADDING_TOP;
 
-  // The header block: the icon of the semgraph, in the muted grey (REQ-060), then title and reading cue.
+  // The header block: the icon of the semgraph, in the muted grey (REQ-060), then title and reading cue. REQ-105:
+  // the fixed readout stands at the right of title and cue; on a narrow chart on a line of its own under the cue.
+  const narrow = width < NARROW;
   const headerX = input.icon ? PADDING_X + ICON_SIZE + ICON_GAP : PADDING_X;
-  const headerWidth = width - PADDING_X - headerX;
+  const reserve = input.readout && !narrow ? input.readout.width + READOUT_GAP : 0;
+  const headerWidth = width - PADDING_X - headerX - reserve;
   if (input.icon) {
+    const icon =
+      `<svg x="${PADDING_X}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" fill="none" color="${muted}">` +
+      `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg>`;
+    // REQ-103: with a lesson the icon is one more label of Learn; the Learn card links to the reading card.
     parts.push(
-      `<a href="${escapeXml(input.icon.href)}" aria-label="${escapeXml(input.icon.label)}">` +
-        `<svg x="${PADDING_X}" y="${ICON_TOP}" width="${ICON_SIZE}" height="${ICON_SIZE}" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}" fill="none" color="${muted}">` +
-        `<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="transparent"/>${input.icon.markup.replace(/\n/g, '')}</svg></a>`,
+      input.icon.opensLearn
+        ? `<g class="semgraph-meta-label semgraph-meta-for-learn" tabindex="0" role="button" aria-label="${escapeXml(input.icon.label)}">${icon}</g>`
+        : `<a href="${escapeXml(input.icon.href)}" aria-label="${escapeXml(input.icon.label)}">${icon}</a>`,
     );
   }
-  for (const line of wrap(input.title, tokens.size.title, headerWidth, width < NARROW ? 3 : 2)) {
+  for (const line of wrap(input.title, tokens.size.title, headerWidth, narrow || reserve > 0 ? 3 : 2)) {
     y += tokens.size.title;
     parts.push(
       text(line, { y, x: headerX, family: tokens.font.title, size: tokens.size.title, weight: 600, fill: textColor }),
@@ -113,6 +137,16 @@ export function composeSvg(input: TemplateInput): string {
       }),
     );
   });
+
+  let readout: ReadoutAnchor | undefined;
+  if (input.readout && narrow) {
+    y += 6 + READOUT_LINES.narrowValue;
+    readout = { x: headerX, y, align: 'start' };
+    y += (input.readout.extra ? READOUT_LINES.extra : 0) + 3;
+  } else if (input.readout) {
+    readout = { x: width - PADDING_X, y: PADDING_TOP + tokens.size.title, align: 'end' };
+    y = Math.max(y, readout.y + READOUT_LINES.detail + (input.readout.extra ? READOUT_LINES.extra : 0) + 4);
+  }
 
   // A warning lies under the header block, over the full width (REQ-060).
   if (input.icon) y = Math.max(y, ICON_TOP + ICON_SIZE);
@@ -138,9 +172,9 @@ export function composeSvg(input: TemplateInput): string {
 
   y += 8;
   parts.push(input.plot.svg.replace(/^<svg /, `<svg x="0" y="${round(y)}" `));
-  if (input.plot.overlay) {
-    parts.push(`<g transform="translate(${round(input.plot.area.x)},${round(y + input.plot.area.y)})">`, input.plot.overlay, '</g>');
-  }
+  const origin = { x: input.plot.area.x, y: y + input.plot.area.y };
+  const overlay = input.plot.overlay({ origin, ...(readout ? { readout } : {}) });
+  if (overlay) parts.push(`<g transform="translate(${round(origin.x)},${round(origin.y)})">`, overlay, '</g>');
   y += input.plot.height + 10;
 
   parts.push(
@@ -165,11 +199,11 @@ export function composeSvg(input: TemplateInput): string {
     parts.push(text(input.footer.versionLabel, { y: row + 12.5, x: width - PADDING_X, anchor: 'end', family: tokens.font.body, size: footerSize, fill: muted }));
   }
   y += LABEL_HEIGHT + PADDING_BOTTOM;
-  // Drawn last, so a panel lies over the whole chart (REQ-014).
-  const metaLayer = new MetaLayer(tokens, { width, left: PADDING_X, top: row }).render(input.meta);
+  const height = Math.ceil(y);
+  // Drawn last, so a card and its veil lie over the whole chart (REQ-098).
+  const metaLayer = new MetaLayer(tokens, { width, height, left: PADDING_X, top: row }).render(input.meta);
   if (metaLayer) parts.push(metaLayer);
 
-  const height = Math.ceil(y);
   const data = Object.entries(input.data)
     .map(([name, value]) => ` data-${name}="${escapeXml(value)}"`)
     .join('');

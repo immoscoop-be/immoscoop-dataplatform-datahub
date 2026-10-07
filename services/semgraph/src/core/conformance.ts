@@ -154,6 +154,12 @@ function checkMetadataShape(metadata: SemgraphMetadata, folder: string): string[
   for (const link of ['figma', 'learning'] as const) {
     if (!/^https:\/\//.test(metadata.links?.[link] ?? '')) problems.push(`${at}: links.${link} must be an https link`);
   }
+  // REQ-102, REQ-103: a lesson is optional; when there is one, all of it.
+  if (metadata.lesson !== undefined) {
+    for (const key of ['title', 'whatYouSee', 'watchOut'] as const) {
+      if (typeof metadata.lesson?.[key] !== 'string') problems.push(`${at}: lesson.${key} must be a text key`);
+    }
+  }
   return problems;
 }
 
@@ -199,6 +205,7 @@ function checkTexts(input: ConformanceInput): string[] {
       metadata.answers,
       metadata.readingCard,
       ...(metadata.exampleQuestions ?? []),
+      ...(metadata.lesson ? [metadata.lesson.title, metadata.lesson.whatYouSee, metadata.lesson.watchOut] : []),
     ]),
   ];
   return keys

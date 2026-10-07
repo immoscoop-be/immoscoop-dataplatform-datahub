@@ -88,6 +88,16 @@ export abstract class MovingWindowChart extends TimeAxisChart<MovingWindowReques
     return window === 1 ? [] : [t('chart.window', { range: localizeRange(t, slot.first, slot.last) })];
   }
 
+  /** REQ-105: the date under the point is the last day of its window, "12 sep". */
+  protected override slotDate(slot: Slot, { t }: LabelContext): string {
+    return localizeDay(t, slot.last, 'short');
+  }
+
+  /** REQ-105: in the readout, the window, "venster 6–12 sep"; a single day has none. */
+  protected override slotPeriod(slot: Slot, context: LabelContext, request: MovingWindowRequest): string {
+    return this.slotExtras(slot, context, request).join(' · ');
+  }
+
   /** One day has no spread: it is the value of that day (REQ-031). */
   protected override spreadApplies({ window }: MovingWindowRequest): boolean {
     return window > 1;

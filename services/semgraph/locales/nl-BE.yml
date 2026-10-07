@@ -165,6 +165,8 @@ chart:
   noComparison: geen vergelijking
 
 hover:
+  # REQ-105: the readout at rest.
+  latest: "laatste · {date}"
   n: "n = {n} waarnemingen"
   centre:
     category:
@@ -244,6 +246,7 @@ date:
   short: "{day} {month}"
   long: "{day} {month} {year}"
   numeric: "{day}/{month}"
+  full: "{day}/{month}/{year}"
   range: "{from}–{to}"
   rangeSameMonth: "{from}–{to} {month}"
   month:
@@ -275,7 +278,7 @@ footer:
 
 gallery:
   title: "Semgraph: de grafieken"
-  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links."
+  intro: "Elke grafiek die de dienst aanbiedt, {semgraphs} in totaal, met haar {examples} voorbeelden. Klik op een voorbeeld om de grafiek zelf te openen, met hover en werkende links. Eronder de grafiek in elke maat, licht en donker."
   examples: "{count} voorbeelden"
   contract: contract (JSON)
   readingCard: leeskaart
@@ -291,6 +294,11 @@ gallery:
   language:
     en: English
     nl-BE: Nederlands
+  # REQ-107: the chart in another mode and size.
+  theme:
+    light: licht
+    dark: donker
+  mode: modus
 
 app:
   # De MCP App die een grafiek toont in een gesprek met Claude (REQ-092).
@@ -311,11 +319,59 @@ meta:
   references: Referenties
   query: Query
   metadata: Metadata
+  learn: Uitleg
   askedBy: Gesteld door {name}
-  builtBy: Uitgewerkt door
-  compiledOn: Samengesteld op
-  semgraph: Semgraph
-  version: Versie
+  # REQ-099: de bovenregel van elke kaart, in hoofdletters.
+  eyebrow:
+    question: Vraag
+    references: Referenties
+    query: Query
+    metadata: Metadata
+    learn: Hoe lees ik dit?
+  close:
+    mouse: Beweeg weg om te sluiten
+    touch: Tik ernaast om te sluiten
+  section:
+    question: Vraag
+    links: Links
+    sql: SQL
+    parameters: Parameters
+    data: Data
+    made: Gemaakt
+    service: Dienst
+    whatYouSee: Wat je ziet
+    signs: Tekens in deze grafiek
+    watchOut: Let op
+  field:
+    type: Type
+    metric: Metriek
+    window: Venster
+    unit: Eenheid
+    statistic: Statistiek
+    comparison: Vergelijking
+    period: Periode
+    day: Dag
+    dataset: Dataset
+    asOf: Peildatum
+    reliability: Label
+    builtBy: Door
+    compiled: Samengesteld
+    semgraph: semgraph
+  days: "{n} dagen"
+  oneDay: 1 dag
+  version: v{version}
+  readingCard: Volledige leeskaart in de cursus
+  # REQ-102: wat elk teken betekent, naast zijn staaltje.
+  signs:
+    square: een gemeten hoeveelheid
+    circle: een mediaan
+    diamond: een gemiddelde
+    squareInSquare: een verhouding; het open vierkant is de noemer
+    running: een periode die nog loopt; ze kan nog veranderen
+    few: weinig waarnemingen; lees met zorg
+    empty: geen data in deze periode
+    loss: wat verloren ging tegenover de vergelijking
+    zigzag: de waardeas begint niet bij nul
 
 types:
   integer: een geheel getal
