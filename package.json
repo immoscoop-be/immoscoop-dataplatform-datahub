@@ -1,0 +1,23 @@
+{
+  "name": "datahub",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json && tsc -p scripts/tsconfig.json",
+    "test": "vitest run",
+    "check": "pnpm typecheck && pnpm test && pnpm docs:check",
+    "docs:check": "node scripts/requirements.ts check",
+    "docs:build": "node scripts/requirements.ts build",
+    "clean": "tsc -b --clean"
+  },
+  "devDependencies": {
+    "@types/node": "^24.19.2",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}

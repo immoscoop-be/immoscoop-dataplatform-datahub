@@ -1,0 +1,17 @@
+{
+  "name": "@datahub/query",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Running queries on the stacks: previews, free SQL for Claude, feeds for Excel. See docs/architecture/services/query.md.",
+  "type": "module",
+  "main": "./dist/main.js",
+  "files": ["dist"],
+  "scripts": {
+    "start": "node dist/main.js"
+  },
+  "dependencies": {
+    "@datahub/auth": "workspace:*",
+    "@datahub/server": "workspace:*",
+    "fastify": "^5.12.7"
+  }
+}

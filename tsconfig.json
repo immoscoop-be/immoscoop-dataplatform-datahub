@@ -1,0 +1,26 @@
+{
+  "files": [],
+  "references": [
+    {
+      "path": "packages/contracts"
+    },
+    {
+      "path": "packages/auth"
+    },
+    {
+      "path": "packages/server"
+    },
+    {
+      "path": "services/identity"
+    },
+    {
+      "path": "services/catalogue"
+    },
+    {
+      "path": "services/registry"
+    },
+    {
+      "path": "services/query"
+    }
+  ]
+}

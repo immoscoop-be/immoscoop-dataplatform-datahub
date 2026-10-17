@@ -1,0 +1,169 @@
+name: ci
+
+# One workflow, one gate. The branch rules in GitHub require only the check "ci" (TR-PF-20):
+# it passes when every job below has passed, so adding a service or a job never changes the
+# GitHub settings. See docs/architecture/build-and-deploy.md.
+
+on:
+  pull_request:
+  push:
+    branches: [uat, main]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Type-check, test and check the docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Type-check code, tests and scripts
+        run: pnpm typecheck
+      - name: Run tests
+        run: pnpm test
+      - name: Check requirement IDs, statuses and links
+        run: pnpm docs:check
+
+  # main (prod) only receives merges from uat (DEC-PF-14, TR-PF-19).
+  source-branch:
+    name: Verify source branch is uat
+    if: github.event_name == 'pull_request' && github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if the pull request does not come from uat
+        if: github.head_ref != 'uat'
+        env:
+          SOURCE: ${{ github.head_ref }}
+        run: |
+          echo "Only the uat branch can be merged into main. This pull request comes from: $SOURCE"
+          exit 1
+
+  # Every folder under services/ is a service with its own image; nothing to list by hand.
+  services:
+    name: Find the services
+    runs-on: ubuntu-latest
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@v7
+      - id: list
+        run: |
+          list=$(find services -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -R -s -c 'split("\n") | map(select(length > 0))')
+          echo "Services: $list"
+          echo "list=$list" >> "$GITHUB_OUTPUT"
+
+  # One image per service (TR-PF-15).
+  # - Pull requests: build every image, to prove it builds; nothing is pushed.
+  # - Push to uat or main: push to Artifact Registry, once the GCP connection is configured as
+  #   repository variables (docs/architecture/gcp-setup.md).
+  # Images are tagged with the git tree hash of the code ("tree-<hash>") and with the commit SHA.
+  # main only receives merges from uat, so its code has the same tree hash as what ran on uat:
+  # the existing image gets the extra commit tag and is never rebuilt (TR-PF-17).
+  image:
+    name: image (${{ matrix.service }})
+    needs: services
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # Workload Identity Federation: GitHub proves its identity to GCP, no stored keys
+    strategy:
+      fail-fast: false
+      matrix:
+        service: ${{ fromJSON(needs.services.outputs.list) }}
+    env:
+      PUSH: ${{ github.event_name == 'push' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+      REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
+      REPOSITORY: ${{ vars.GCP_IMAGES_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      SERVICE: ${{ matrix.service }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Name the image
+        id: image
+        run: |
+          tree=$(git rev-parse 'HEAD^{tree}')
+          if [ "$PUSH" = "true" ]; then
+            name="$REGISTRY/$REPOSITORY/$SERVICE"
+          else
+            name="datahub/$SERVICE"
+          fi
+          echo "tree_tag=$name:tree-$tree" >> "$GITHUB_OUTPUT"
+          echo "commit_tag=$name:$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Authenticate to Google Cloud
+        if: env.PUSH == 'true'
+        id: gcp
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_CI_SERVICE_ACCOUNT }}
+          token_format: access_token
+
+      - name: Log in to Artifact Registry
+        if: env.PUSH == 'true'
+        uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: oauth2accesstoken
+          password: ${{ steps.gcp.outputs.access_token }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Look for an image of this exact code
+        if: env.PUSH == 'true'
+        id: existing
+        env:
+          TREE_TAG: ${{ steps.image.outputs.tree_tag }}
+        run: |
+          if docker buildx imagetools inspect "$TREE_TAG" > /dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Reuse the existing image
+        if: steps.existing.outputs.found == 'true'
+        env:
+          TREE_TAG: ${{ steps.image.outputs.tree_tag }}
+          COMMIT_TAG: ${{ steps.image.outputs.commit_tag }}
+        run: docker buildx imagetools create --tag "$COMMIT_TAG" "$TREE_TAG"
+
+      - name: Build the image
+        if: steps.existing.outputs.found != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          build-args: SERVICE=${{ matrix.service }}
+          tags: |
+            ${{ steps.image.outputs.tree_tag }}
+            ${{ steps.image.outputs.commit_tag }}
+          push: ${{ env.PUSH == 'true' }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  # The one check the branch rules require. Green only when every job above passed;
+  # the source-branch job may be skipped, because it only runs on pull requests into main.
+  ci:
+    name: ci
+    if: always()
+    needs: [check, source-branch, services, image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every job to have passed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          echo "$NEEDS" | jq -e '
+            .check.result == "success" and
+            .services.result == "success" and
+            .image.result == "success" and
+            (.["source-branch"].result == "success" or .["source-branch"].result == "skipped")
+          ' > /dev/null
