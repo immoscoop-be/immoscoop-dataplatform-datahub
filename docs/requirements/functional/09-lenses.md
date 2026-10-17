@@ -7,7 +7,7 @@
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Lenzen) |
 
-**Scope:** lens types, parameters and their level.
+**Scope:** Lens types, Parameters and their Level.
 
 *Functional domain 9 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 

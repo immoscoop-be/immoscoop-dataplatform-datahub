@@ -7,7 +7,7 @@
 | Source of truth | This file |
 | Origin | Proposed as a new domain in [OP-MR-01](06-maturity-and-release.md#op-mr-01); not yet in the domain overview on Confluence |
 
-**Scope:** how an exploration (exploratory data analysis) runs and is linked to a resource.
+**Scope:** how an exploration (exploratory data analysis) runs and is linked to a Resource.
 
 *Functional domain 15 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 

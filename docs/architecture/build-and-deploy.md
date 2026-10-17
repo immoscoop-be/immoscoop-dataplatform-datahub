@@ -9,7 +9,7 @@
 
 ## Working locally
 
-You need Node 24 (see `.node-version`) and pnpm, which Corepack provides: `corepack enable`.
+You need Node.js 24 (see `.node-version`) and pnpm, which Corepack provides: `corepack enable`.
 
 | Command | What it does |
 | --- | --- |

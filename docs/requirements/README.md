@@ -53,7 +53,7 @@ Non-functional categories are listed in [`non-functional/README.md`](non-functio
 
 - An ID is never reused or renumbered. A requirement that is no longer wanted gets status `Withdrawn` and stays in place.
 - A new requirement takes the next free number in its type and code.
-- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [log catalogue](functional/log-catalogue.md).
+- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [Log catalogue](functional/log-catalogue.md).
 
 ### Confluence IDs
 
@@ -111,7 +111,7 @@ Always link an ID when you mention it outside its own definition: `[FR-AR-05](fu
 | Verified | Built and tested. |
 | Withdrawn | No longer wanted. Kept for history, never deleted. |
 
-"Specified" is deliberately not called "Described": Described is a maturity level of a resource (see the [glossary](../glossary.md#maturity-levels)), and the two must not be confused.
+"Specified" is deliberately not called "Described": Described is a maturity level of a Resource (see the [definitions](../definitions.md#maturity-levels)), and the two must not be confused.
 
 ## Commits
 
@@ -132,7 +132,7 @@ The matrix picks the trailers up from `git log`, including from squash merges.
 
 ## Tooling
 
-[`scripts/requirements.ts`](../../scripts/requirements.ts) uses only Node built-ins, and Node 24 runs it directly: no build step and no dependencies.
+[`scripts/requirements.ts`](../../scripts/requirements.ts) uses only Node.js built-ins, and Node.js 24 runs it directly: no build step and no dependencies.
 
 ```sh
 pnpm docs:check   # validate IDs, statuses and links (node scripts/requirements.ts check)

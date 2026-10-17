@@ -2,14 +2,14 @@
 
 | | |
 | --- | --- |
-| Status | First draft; to be completed with the log IDs of the other domains ([OP-SR-02](04-stacks-and-resources.md#op-sr-02)) |
+| Status | First draft; to be completed with the Log IDs of the other domains ([OP-SR-02](04-stacks-and-resources.md#op-sr-02)) |
 | Owned by | [Log and notifications](07-log-and-notifications.md), once that domain is described |
 | Source of truth | This file |
 | Migrated from | The section "Logcatalogus (eerste aanzet)" of [ptditt - Tooling - Data Hub - Stacks en resources](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371078741) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17 |
 
-Every log entry in Data Hub refers to a fixed log ID from this catalogue, with its parameters as JSON. The text is only built at display time from the template and the parameters ([DEC-SR-09](04-stacks-and-resources.md#dec-sr-09), [FR-SR-11](04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](04-stacks-and-resources.md#fr-sr-12)).
+Every Log Entry in Data Hub refers to a fixed Log ID from this catalogue, with its parameters as JSON. The text is only built at display time from the template and the parameters ([DEC-SR-09](04-stacks-and-resources.md#dec-sr-09), [FR-SR-11](04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](04-stacks-and-resources.md#fr-sr-12)).
 
-The prefix of a log ID says which domain the entry comes from. The templates are in English, like everything in the app.
+The prefix of a Log ID says which domain the entry comes from. The templates are in English, like everything in the app.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
 

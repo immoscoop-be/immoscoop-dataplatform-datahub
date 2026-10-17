@@ -2,11 +2,12 @@
 
 ## Language
 
-Everything in this repository is in English: code, comments, documentation and commit messages. The app itself is English-only too (FR-SR-15). The Confluence pages the documentation came from are in Dutch; when translating from them, use the vocabulary in the translation reference of `docs/glossary.md`, and add new term pairs there.
+Everything in this repository is in English: code, comments, documentation and commit messages. The app itself is English-only too (FR-SR-15). The Confluence pages the documentation came from are in Dutch; when translating from them, use the vocabulary in the translation reference of `docs/definitions.md`, and add new term pairs there.
 
 ## Documentation
 
 - `docs/` is the source of truth for what Data Hub is and must do. Start from `docs/README.md`.
+- Defined Terms are written with capitals, as in a contract, wherever they are used in their defined meaning: a Data Admin registers a Resource in a Collection. `docs/definitions.md` lists every Defined Term and the rules (ordinary meanings stay lowercase, verbs are not capitalised, service names stay lowercase, the runtime is written Node.js). A new term is added to `docs/definitions.md` first.
 - `docs/architecture/` describes how Data Hub is built: one page per service. It is descriptive; the binding decisions and technical requirements it follows are in `docs/requirements/technical/00-platform.md`. Keep the two in step when a service changes.
 - Requirements live under `docs/requirements/`: functional (`FR`), edge cases (`EC`), technical (`TR`) and non-functional (`NFR`), plus decisions (`DEC`) and open points (`OP`). The ID scheme, the block format and the status values are in `docs/requirements/README.md`; follow them exactly.
 - Never renumber or reuse an ID. A requirement that is no longer wanted gets status `Withdrawn`.

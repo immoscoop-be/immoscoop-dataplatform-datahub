@@ -7,7 +7,7 @@
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet |
 
-**Scope:** bundling lenses around a question, with text and shared parameters.
+**Scope:** bundling Lenses around a question, with text and shared Parameters.
 
 *Functional domain 10 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 

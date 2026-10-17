@@ -17,34 +17,34 @@
 
 | # | Domain | Code | What it is about | Status |
 | --- | --- | --- | --- | --- |
-| 1 | [Artifact registry](01-artifact-registry.md) | `AR` | Fetching the dbt artifacts, storing them, processing them into searchable tables, and detecting and propagating changes | Specified |
-| 2 | [User management](02-user-management.md) | `UM` | Who uses Data Hub: logging in with Google, groups and owner units from Google Workspace, and how people join and leave | Specified |
-| 3 | [Collections](03-collections.md) | `CO` | The functional domains of Immoscoop in which resources sit together, each with one owner unit, managed by the data team | Specified |
-| 4 | [Stacks and resources](04-stacks-and-resources.md) | `SR` | Registering a resource in Data Hub: key, display name, collection, initial level, fingerprint, and a log with fixed log IDs | Specified |
-| 5 | [Resource card](05-resource-card.md) | `RC` | What Data Hub derives about a resource and keeps itself, with known behaviour and anomalies | To be specified |
-| 6 | [Maturity and release](06-maturity-and-release.md) | `MR` | Deriving levels, confirming by publishing, visibility in two steps | Specified ¹ |
-| 7 | [Log and notifications](07-log-and-notifications.md) | `LN` | The log catalogue across all domains, the message centre, who gets which notification when, and through which channel | To be specified |
-| 8 | [Checks and monitoring](08-checks-and-monitoring.md) | `CM` | Automatic checks after a change, derived from the EDA, and the monitors of an owner | To be specified |
-| 9 | [Lenses](09-lenses.md) | `LE` | Lens types, parameters and their level | To be specified |
-| 10 | [Reports](10-reports.md) | `RP` | Bundling lenses around a question, with text and shared parameters | To be specified |
-| 11 | [Beta and promotion](11-beta-and-promotion.md) | `BP` | Concepts that business defines itself, and how they are hardened into a resource | To be specified |
+| 1 | [Artifact registry](01-artifact-registry.md) | `AR` | Fetching the dbt Artifacts, storing them, processing them into searchable tables, and detecting and propagating Changes | Specified |
+| 2 | [User management](02-user-management.md) | `UM` | Who uses Data Hub: logging in with Google, Groups and Owner Units from Google Workspace, and how people join and leave | Specified |
+| 3 | [Collections](03-collections.md) | `CO` | The functional domains of Immoscoop in which Resources sit together, each with one Owner Unit, managed by the Data Team | Specified |
+| 4 | [Stacks and resources](04-stacks-and-resources.md) | `SR` | Registering a Resource in Data Hub: Key, Display Name, Collection, initial Level, Fingerprint, and a Log with fixed Log IDs | Specified |
+| 5 | [Resource card](05-resource-card.md) | `RC` | What Data Hub derives about a Resource and keeps itself, with Known Behaviour and Anomalies | To be specified |
+| 6 | [Maturity and release](06-maturity-and-release.md) | `MR` | Deriving Levels, confirming by publishing, visibility in two steps | Specified ¹ |
+| 7 | [Log and notifications](07-log-and-notifications.md) | `LN` | The Log Catalogue across all domains, the Message Centre, who gets which notification when, and through which channel | To be specified |
+| 8 | [Checks and monitoring](08-checks-and-monitoring.md) | `CM` | Automatic checks after a Change, derived from the EDA, and the monitors of an Owner | To be specified |
+| 9 | [Lenses](09-lenses.md) | `LE` | Lens types, Parameters and their Level | To be specified |
+| 10 | [Reports](10-reports.md) | `RP` | Bundling Lenses around a question, with text and shared Parameters | To be specified |
+| 11 | [Beta and promotion](11-beta-and-promotion.md) | `BP` | Concepts that business defines itself, and how they are hardened into a Resource | To be specified |
 | 12 | [Permissions and library cards](12-permissions-and-library-cards.md) | `PL` | Roles, access and personal keys | To be specified |
 | 13 | [Channels](13-channels.md) | `CH` | Data Hub itself, Claude as an MCP App, Excel and HTML reports | To be specified |
-| 14 | [Conversations](14-conversations.md) | `CV` | Questions, remarks and margin notes on an object | To be specified |
-| 15 | [EDA](15-eda.md) | `ED` | How an exploration runs and is linked to a resource | To be specified ² |
+| 14 | [Conversations](14-conversations.md) | `CV` | Questions, Remarks and margin notes on an object | To be specified |
+| 15 | [EDA](15-eda.md) | `ED` | How an exploration runs and is linked to a Resource | To be specified ² |
 
 ¹ The Confluence overview still listed this domain as "to be described", but its page already holds six decisions and ten rules.
 ² Not in the Confluence overview; proposed in [OP-MR-01](06-maturity-and-release.md#op-mr-01).
 
 The number of requirements per domain and status is in the [traceability matrix](../traceability.md).
 
-Shared across domains: the [log catalogue](log-catalogue.md).
+Shared across domains: the [Log catalogue](log-catalogue.md).
 
 ## Every domain file follows the same structure
 
 Goal, terms, flow, functional requirements with their own numbering per domain (such as `FR-AR-01` for the Artifact registry, `FR-UM-01` for User management, `FR-CO-01` for Collections and `FR-SR-01` for Stacks and resources), edge cases, what falls outside the domain, open points as tasks, and "Builds on". Decisions that touch only the domain are at the top (on Confluence, as a decision macro).
 
-Domain status is either Specified (Confluence: "Beschreven") or To be specified (Confluence: "Nog te beschrijven"). The word Described is avoided here because it is a maturity level of a resource. The ID scheme and the format are in the [requirements conventions](../README.md); a new domain starts from the [functional domain template](../_templates/functional-domain.md).
+Domain status is either Specified (Confluence: "Beschreven") or To be specified (Confluence: "Nog te beschrijven"). The word Described is avoided here because it is a maturity level of a Resource. The ID scheme and the format are in the [requirements conventions](../README.md); a new domain starts from the [functional domain template](../_templates/functional-domain.md).
 
 ## Builds on
 

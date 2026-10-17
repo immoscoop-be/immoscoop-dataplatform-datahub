@@ -1,6 +1,6 @@
 # Data Hub documentation
 
-Data Hub is the library of our data: the one entry point for business colleagues and their Claude, next to and together with the chart server. This folder holds everything that describes it: why it exists, what it must do, and how it is built.
+Data Hub is the library of our data: the one entry point for business colleagues and their Claude, next to and together with the Chart Server. This folder holds everything that describes it: why it exists, what it must do, and how it is built.
 
 This repository is the source of truth. The documentation started on Confluence, in Dutch, under [ptditt - Tooling - Data Hub](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1362428000), and was migrated here, in English, on 2026-10-17. Every migrated file links its Confluence page.
 
@@ -9,7 +9,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | If you want to know | Read |
 | --- | --- |
 | What Data Hub is, and the decisions that shape it | [Data Hub overview](overview/data-hub.md) |
-| What a term means, or how a Confluence term is translated | [Glossary](glossary.md) |
+| What a term means, or how a Confluence term is translated | [Definitions](definitions.md) |
 | What Data Hub must do, domain by domain | [Functional domains](requirements/functional/README.md) |
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
@@ -21,7 +21,7 @@ This repository is the source of truth. The documentation started on Confluence,
 ```text
 docs/
 ├── README.md                  this file
-├── glossary.md                terms, maturity levels, Dutch-to-English translation reference
+├── definitions.md             Defined Terms, Levels, Dutch-to-English translation reference
 ├── architecture/
 │   ├── README.md              services, how users are validated, interfaces, data, repository layout
 │   └── services/              one page per service and application

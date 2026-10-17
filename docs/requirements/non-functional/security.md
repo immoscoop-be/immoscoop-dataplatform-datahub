@@ -20,11 +20,11 @@ No request is trusted because of where it comes from: not the network, not a gat
 
 **Status:** Specified · **Applies to:** [DEC-PF-08](../technical/00-platform.md#dec-pf-08), [DEC-DH-08](../../overview/data-hub.md#dec-dh-08)
 
-Every service runs under its own identity, with only the permissions its responsibility needs. Only query can read the stacks, only registry can reach dbt Cloud and the artifact bucket, and only identity can read the groups in Workspace.
+Every service runs under its own identity, with only the permissions its responsibility needs. Only query can read the Stacks, only registry can reach dbt Cloud and the artifact bucket, and only identity can read the Groups in Workspace.
 
 <a id="nfr-sec-03"></a>
 ### NFR-SEC-03 · Lost access takes effect quickly
 
 **Status:** Proposed · **Applies to:** [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10)
 
-A change in Workspace, such as a removed group membership or a suspended account, takes effect in Data Hub within the lifetime of one access token (15 minutes), plus the time groups are cached at identity ([OP-PF-02](../technical/00-platform.md#op-pf-02)).
+A change in Workspace, such as a removed Group membership or a suspended account, takes effect in Data Hub within the lifetime of one Access Token (15 minutes), plus the time Groups are cached at identity ([OP-PF-02](../technical/00-platform.md#op-pf-02)).

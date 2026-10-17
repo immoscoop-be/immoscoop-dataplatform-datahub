@@ -24,10 +24,10 @@ Many technical decisions were already taken on Confluence. They are in the [Data
 
 | Topic | Decisions |
 | --- | --- |
-| Fetching and processing the dbt artifacts | [DEC-DH-19](../../overview/data-hub.md#dec-dh-19) to [DEC-DH-25](../../overview/data-hub.md#dec-dh-25) |
-| How the level is determined | [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) |
-| Infrastructure: GCP, Cloud Run, Node with TypeScript | [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) to [DEC-DH-54](../../overview/data-hub.md#dec-dh-54) |
+| Fetching and processing the dbt Artifacts | [DEC-DH-19](../../overview/data-hub.md#dec-dh-19) to [DEC-DH-25](../../overview/data-hub.md#dec-dh-25) |
+| How the Level is determined | [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) |
+| Infrastructure: GCP, Cloud Run, Node.js with TypeScript | [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) to [DEC-DH-54](../../overview/data-hub.md#dec-dh-54) |
 | Storage: Postgres on Cloud SQL, migrations | [DEC-DH-55](../../overview/data-hub.md#dec-dh-55) to [DEC-DH-59](../../overview/data-hub.md#dec-dh-59) |
-| Authentication and groups | [DEC-UM-01](../functional/02-user-management.md#dec-um-01) to [DEC-UM-05](../functional/02-user-management.md#dec-um-05) |
+| Authentication and Groups | [DEC-UM-01](../functional/02-user-management.md#dec-um-01) to [DEC-UM-05](../functional/02-user-management.md#dec-um-05) |
 | Search in Postgres | [DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10) and the [search table](../functional/04-stacks-and-resources.md#search) |
-| Log with fixed log IDs | [DEC-SR-09](../functional/04-stacks-and-resources.md#dec-sr-09) and the [log catalogue](../functional/log-catalogue.md) |
+| Log with fixed Log IDs | [DEC-SR-09](../functional/04-stacks-and-resources.md#dec-sr-09) and the [Log catalogue](../functional/log-catalogue.md) |
