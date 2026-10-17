@@ -21,6 +21,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-07"></a>**DEC-PF-07** · Services expose REST APIs with JSON, described in OpenAPI that is generated from zod schemas. Not tRPC: Excel and MCP clients need plain HTTP.
 - <a id="dec-pf-08"></a>**DEC-PF-08** · Every service runs under its own GCP service account, with only the permissions its responsibility needs.
 - <a id="dec-pf-09"></a>**DEC-PF-09** · Tooling: Node 24 LTS and TypeScript in strict mode; Fastify for HTTP; Kysely for Postgres; zod for schemas; jose for tokens; the official MCP TypeScript SDK; Vitest for tests; Terraform for infrastructure. Node moves to the next LTS release once it is available. These build on [DEC-DH-53](../../overview/data-hub.md#dec-dh-53) to [DEC-DH-55](../../overview/data-hub.md#dec-dh-55).
+- <a id="dec-pf-10"></a>**DEC-PF-10** · All services and applications of Data Hub are publicly reachable. The protection comes from the login and the token check in every service, not from the network, so that the browser, Excel and Claude can reach Data Hub from anywhere. Claude in particular calls MCP servers from Anthropic's servers on the internet, so an internal-only mcp would be unreachable for it. This answers [OP-PF-04](#op-pf-04).
 
 ## Requirements
 
@@ -121,15 +122,23 @@ The React components that render lenses and reports live in `packages/ui`, and a
 
 All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucket, Secret Manager, service accounts and their roles, Cloud Scheduler) are defined in Terraform in `infra/`, per environment: uat and prod.
 
+<a id="tr-pf-14"></a>
+### TR-PF-14 · Public ingress, protected by the token checks
+
+**Status:** Specified · **Realises:** [DEC-PF-10](#dec-pf-10), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
+
+Every service and application runs on Cloud Run with public ingress. Every endpoint requires a valid access token ([TR-PF-03](#tr-pf-03)), except the endpoints that start a login. Endpoints for work that no user started accept only the service accounts of Data Hub ([TR-PF-05](#tr-pf-05)).
+
 ## Open points
 
 - [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an artifact set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
 - [ ] <a id="op-pf-02"></a>**OP-PF-02** · Decide how the web app renews its access token (a refresh token in an http-only cookie, or a new login through Google), and how often identity reads the groups again on renewal ([FR-UM-06](../functional/02-user-management.md#fr-um-06)).
 - [ ] <a id="op-pf-03"></a>**OP-PF-03** · Decide where the signing key of identity lives (Cloud KMS or Secret Manager) and how it is rotated.
-- [ ] <a id="op-pf-04"></a>**OP-PF-04** · Decide the ingress of the services: public endpoints protected by their own token checks, or internal ingress under internal-immoscoop.be ([OP-DH-35](../../overview/open-themes.md#op-dh-35)), and in that case how Claude reaches mcp.
+- [x] <a id="op-pf-04"></a>**OP-PF-04** · Decide the ingress of the services: public endpoints protected by their own token checks, or internal ingress under internal-immoscoop.be ([OP-DH-35](../../overview/open-themes.md#op-dh-35)), and in that case how Claude reaches mcp. *Decided on 2026-10-17: public ([DEC-PF-10](#dec-pf-10)).*
 - [ ] <a id="op-pf-05"></a>**OP-PF-05** · Decide how registry hands its changes to catalogue ([FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12)): a direct call per artifact set, or a Pub/Sub topic.
 - [ ] <a id="op-pf-06"></a>**OP-PF-06** · Decide where the message centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../functional/07-log-and-notifications.md) is specified.
 - [ ] <a id="op-pf-07"></a>**OP-PF-07** · Decide how the web app is served: static files from a small Cloud Run service, or from Cloud Storage behind a load balancer.
+- [ ] <a id="op-pf-08"></a>**OP-PF-08** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
 
 ## Builds on
 

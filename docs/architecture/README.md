@@ -12,6 +12,7 @@
 | Principle | Decision |
 | --- | --- |
 | One responsibility per service, deployed separately | [DEC-PF-01](../requirements/technical/00-platform.md#dec-pf-01) |
+| Publicly reachable; the token checks protect, not the network | [DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10) |
 | Every service validates the user itself, on every request | [DEC-PF-02](../requirements/technical/00-platform.md#dec-pf-02), [NFR-SEC-01](../requirements/non-functional/security.md#nfr-sec-01) |
 | Every interface is a client of the same APIs, without business logic | [DEC-PF-03](../requirements/technical/00-platform.md#dec-pf-03) |
 | One schema per service; other data only through APIs | [DEC-PF-05](../requirements/technical/00-platform.md#dec-pf-05) |
@@ -156,10 +157,20 @@ scripts/
 
 Each service keeps its migrations in `services/<name>/migrations` ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09)).
 
+## Reachability
+
+All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10), [TR-PF-14](../requirements/technical/00-platform.md#tr-pf-14)). Nothing is protected by being hidden on an internal network; every request has to pass the login and the token check of the service it reaches.
+
+| Interface | Calls from | Why public is needed |
+| --- | --- | --- |
+| Browser | The laptop of the user, anywhere | Colleagues can work without VPN |
+| Excel | The laptop of the user, anywhere | Same as the browser |
+| Claude | Anthropic's servers, on the internet | Claude cannot reach an internal-only MCP server |
+
 ## Environments
 
 Two environments, uat and prod, each with its own GCP resources, service accounts and Postgres instance, defined in Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)).
 
 ## Open points
 
-The open points of the platform are in [Platform](../requirements/technical/00-platform.md#open-points): processing of artifact sets ([OP-PF-01](../requirements/technical/00-platform.md#op-pf-01)), token renewal ([OP-PF-02](../requirements/technical/00-platform.md#op-pf-02)), signing keys ([OP-PF-03](../requirements/technical/00-platform.md#op-pf-03)), ingress ([OP-PF-04](../requirements/technical/00-platform.md#op-pf-04)), the hand-over of changes ([OP-PF-05](../requirements/technical/00-platform.md#op-pf-05)), the message centre ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) and hosting of the web app ([OP-PF-07](../requirements/technical/00-platform.md#op-pf-07)).
+The open points of the platform are in [Platform](../requirements/technical/00-platform.md#open-points): processing of artifact sets ([OP-PF-01](../requirements/technical/00-platform.md#op-pf-01)), token renewal ([OP-PF-02](../requirements/technical/00-platform.md#op-pf-02)), signing keys ([OP-PF-03](../requirements/technical/00-platform.md#op-pf-03)), the hand-over of changes ([OP-PF-05](../requirements/technical/00-platform.md#op-pf-05)), the message centre ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)), hosting of the web app ([OP-PF-07](../requirements/technical/00-platform.md#op-pf-07)) and the public domain names ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)).

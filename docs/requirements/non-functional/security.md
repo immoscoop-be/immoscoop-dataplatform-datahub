@@ -11,7 +11,7 @@
 <a id="nfr-sec-01"></a>
 ### NFR-SEC-01 · Every service authenticates and authorises every request
 
-**Status:** Specified · **Applies to:** [DEC-PF-02](../technical/00-platform.md#dec-pf-02)
+**Status:** Specified · **Applies to:** [DEC-PF-02](../technical/00-platform.md#dec-pf-02), [DEC-PF-10](../technical/00-platform.md#dec-pf-10)
 
 No request is trusted because of where it comes from: not the network, not a gateway, and not another service. Every service checks who is asking and what they may do, on every request.
 

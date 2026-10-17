@@ -17,4 +17,4 @@
 
 ## Talks to
 
-catalogue, registry and query, passing on the access token of the user. Whether Claude can reach mcp when the services are internal is open ([OP-PF-04](../../requirements/technical/00-platform.md#op-pf-04)).
+catalogue, registry and query, passing on the access token of the user. mcp is publicly reachable, because Claude calls it from Anthropic's servers on the internet ([DEC-PF-10](../../requirements/technical/00-platform.md#dec-pf-10)).

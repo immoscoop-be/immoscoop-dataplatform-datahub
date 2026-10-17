@@ -27,7 +27,7 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 3 (1 proposed, 2 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 13 (4 proposed, 9 specified) | – | 9 | 7 (7 open) |
+| [Platform: technical requirements](technical/00-platform.md) | 14 (4 proposed, 10 specified) | – | 10 | 8 (7 open, 1 done) |
 
 ## Functional requirements
 
@@ -185,6 +185,7 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [TR-PF-11](technical/00-platform.md#tr-pf-11) | Own service account per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08), [DEC-DH-49](../overview/data-hub.md#dec-dh-49), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | – |
 | [TR-PF-12](technical/00-platform.md#tr-pf-12) | Shared components for lenses and reports | Specified | [DEC-DH-15](../overview/data-hub.md#dec-dh-15), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | – |
 | [TR-PF-13](technical/00-platform.md#tr-pf-13) | Infrastructure as code | Proposed | [DEC-PF-09](technical/00-platform.md#dec-pf-09), [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | – |
+| [TR-PF-14](technical/00-platform.md#tr-pf-14) | Public ingress, protected by the token checks | Specified | [DEC-PF-10](technical/00-platform.md#dec-pf-10), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | – |
 
 ## Non-functional requirements
 
@@ -192,6 +193,6 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 
 | ID | Title | Status | Applies to | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05) | – |
+| [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [DEC-PF-10](technical/00-platform.md#dec-pf-10) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-PF-14](technical/00-platform.md#tr-pf-14) | – |
 | [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | Least privilege per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08) | [TR-PF-11](technical/00-platform.md#tr-pf-11) | – |
 | [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | Lost access takes effect quickly | Proposed | [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10) | – | – |
