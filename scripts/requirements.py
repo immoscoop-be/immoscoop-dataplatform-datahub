@@ -336,8 +336,8 @@ def build(docs: dict[Path, Doc], items: dict[str, Item], warnings: list[str]) ->
          lambda i: [cell_ids(realised_by.get(i.id, []))]),
         ("Technical requirements", "TR", ["ID", "Title", "Status", "Realises", "Commits"],
          lambda i: [cell_ids(i.realises)]),
-        ("Non-functional requirements", "NFR", ["ID", "Title", "Status", "Applies to", "Commits"],
-         lambda i: [cell_ids(i.applies_to)]),
+        ("Non-functional requirements", "NFR", ["ID", "Title", "Status", "Applies to", "Realised by", "Commits"],
+         lambda i: [cell_ids(i.applies_to), cell_ids(realised_by.get(i.id, []))]),
     ]
     for heading, kind, columns, extra in sections:
         out += ["", f"## {heading}", ""]

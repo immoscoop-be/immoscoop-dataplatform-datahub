@@ -7,6 +7,7 @@ Everything in this repository is in English: code, comments, documentation and c
 ## Documentation
 
 - `docs/` is the source of truth for what Data Hub is and must do. Start from `docs/README.md`.
+- `docs/architecture/` describes how Data Hub is built: one page per service. It is descriptive; the binding decisions and technical requirements it follows are in `docs/requirements/technical/00-platform.md`. Keep the two in step when a service changes.
 - Requirements live under `docs/requirements/`: functional (`FR`), edge cases (`EC`), technical (`TR`) and non-functional (`NFR`), plus decisions (`DEC`) and open points (`OP`). The ID scheme, the block format and the status values are in `docs/requirements/README.md`; follow them exactly.
 - Never renumber or reuse an ID. A requirement that is no longer wanted gets status `Withdrawn`.
 - Link every ID you mention to its anchor, for example `[FR-AR-05](functional/01-artifact-registry.md#fr-ar-05)`.

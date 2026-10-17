@@ -14,6 +14,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
+| How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
 
 ## Structure
 
@@ -21,6 +22,9 @@ This repository is the source of truth. The documentation started on Confluence,
 docs/
 ├── README.md                  this file
 ├── glossary.md                terms, maturity levels, Dutch-to-English translation reference
+├── architecture/
+│   ├── README.md              services, how users are validated, interfaces, data, repository layout
+│   └── services/              one page per service and application
 ├── overview/
 │   ├── data-hub.md            vision, the library metaphor, overarching decisions (DEC-DH)
 │   └── open-themes.md         themes still to be worked out (OP-DH)
@@ -29,7 +33,7 @@ docs/
     ├── traceability.md        generated: requirement → status → realised by → commits
     ├── _templates/            starting points for new files
     ├── functional/            one file per functional domain (FR, EC, DEC, OP)
-    ├── technical/             technical requirements (TR), one file per domain
+    ├── technical/             technical requirements (TR): the platform, then one file per domain
     └── non-functional/        non-functional requirements (NFR), one file per category
 ```
 

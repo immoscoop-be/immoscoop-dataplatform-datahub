@@ -4,7 +4,7 @@ How Data Hub is built. Every technical requirement realises one or more [functio
 
 | | |
 | --- | --- |
-| Status | Skeleton: no technical requirements yet |
+| Status | [Platform](00-platform.md) specified; the domains follow |
 | Source of truth | This folder |
 
 ## Structure
@@ -18,7 +18,9 @@ Start a new file from the [technical requirements template](../_templates/techni
 
 ## Starting points
 
-Many technical decisions were already taken on Confluence. They are in the [Data Hub overview](../../overview/data-hub.md) and are the natural starting point for the first technical requirements:
+The architecture that follows from the [platform decisions](00-platform.md) is described in [`docs/architecture/`](../../architecture/README.md), with one page per service.
+
+Many technical decisions were already taken on Confluence. They are in the [Data Hub overview](../../overview/data-hub.md) and are the natural starting point for the technical requirements of each domain:
 
 | Topic | Decisions |
 | --- | --- |

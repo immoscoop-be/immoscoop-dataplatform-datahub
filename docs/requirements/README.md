@@ -5,8 +5,8 @@ This folder holds every requirement for Data Hub: what it must do (functional), 
 | Folder | What it holds | State |
 | --- | --- | --- |
 | [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, ten still to be specified |
-| [`technical/`](technical/README.md) | How each functional requirement is realised | Skeleton |
-| [`non-functional/`](non-functional/README.md) | Security, performance, cost, localisation and other qualities | Skeleton |
+| [`technical/`](technical/README.md) | How each functional requirement is realised | Platform specified; domains to follow |
+| [`non-functional/`](non-functional/README.md) | Security, performance, cost, localisation and other qualities | Security started; other categories to follow |
 | [`traceability.md`](traceability.md) | Generated matrix: requirement → status → realised by → commits | Generated, never edit by hand |
 | [`_templates/`](_templates/) | Starting points for a new domain or requirement file | — |
 
@@ -45,7 +45,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `CH` | Channels | [13-channels.md](functional/13-channels.md) |
 | `CV` | Conversations | [14-conversations.md](functional/14-conversations.md) |
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
-| `PF` | Platform: technical choices not tied to one domain (technical requirements only) | `technical/00-platform.md`, not created yet |
+| `PF` | Platform: technical choices not tied to one domain (technical requirements only) | [00-platform.md](technical/00-platform.md) |
 
 Non-functional categories are listed in [`non-functional/README.md`](non-functional/README.md).
 
@@ -86,7 +86,7 @@ A run is ingested at most once. A duplicate signal for the same run creates no d
 
 - The anchor is the ID in lower case. Links point to the anchor, never to the heading text, so a title can change without breaking links.
 - The title after `·` is short and descriptive. The Confluence rules had no titles; the titles of migrated rules were derived from their text.
-- A technical requirement extends its status line with `· **Realises:**` and links to the functional requirements (or edge cases) it realises. A non-functional requirement adds `· **Applies to:**` when it is about specific requirements. See the [templates](_templates/).
+- A technical requirement extends its status line with `· **Realises:**` and links to what it realises: functional requirements, edge cases, decisions or non-functional requirements. A non-functional requirement adds `· **Applies to:**` when it is about specific requirements. See the [templates](_templates/).
 
 ### Decisions and open points
 

@@ -4,7 +4,7 @@ The qualities Data Hub must have, across domains: how secure, how fast, how chea
 
 | | |
 | --- | --- |
-| Status | Skeleton: no non-functional requirements yet |
+| Status | [Security](security.md) started; the other categories follow |
 | Source of truth | This folder |
 
 ## Categories
@@ -13,7 +13,7 @@ Each category gets its own file and code. The categories below are a proposal; a
 
 | Code | Category | File |
 | --- | --- | --- |
-| `SEC` | Security: authentication, authorisation, secrets | `security.md` |
+| `SEC` | Security: authentication, authorisation, secrets | [security.md](security.md) |
 | `PRV` | Privacy and data protection: personal data, access classification | `privacy.md` |
 | `PRF` | Performance and scalability | `performance.md` |
 | `AVL` | Availability and resilience | `availability.md` |
@@ -34,7 +34,7 @@ Some rules and decisions migrated from Confluence are, by nature, non-functional
 | All texts in the app are in English: [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02) | `LOC` |
 | A limit on scanned bytes for every query: [FR-SR-27](../functional/04-stacks-and-resources.md#fr-sr-27), [DEC-SR-17](../functional/04-stacks-and-resources.md#dec-sr-17) | `CST` |
 | Costs tracked via the own service account: [DEC-DH-49](../../overview/data-hub.md#dec-dh-49) | `CST` |
-| The service account reaches only the stacks: [DEC-DH-08](../../overview/data-hub.md#dec-dh-08) | `SEC` |
+| The service account reaches only the stacks: [DEC-DH-08](../../overview/data-hub.md#dec-dh-08); now covered by [NFR-SEC-02](security.md#nfr-sec-02) | `SEC` |
 | No passwords stored, Google identity only: [FR-UM-01](../functional/02-user-management.md#fr-um-01), [FR-UM-03](../functional/02-user-management.md#fr-um-03) | `SEC` |
 | Access classification for personal data: [The resource card](../../overview/data-hub.md#the-resource-card) | `PRV` |
 | Horizontal scalability is not a requirement: [DEC-DH-59](../../overview/data-hub.md#dec-dh-59) | `PRF` |

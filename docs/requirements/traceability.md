@@ -26,6 +26,8 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [Channels](functional/13-channels.md) | – | – | – | – |
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
+| [Security](non-functional/security.md) | 3 (1 proposed, 2 specified) | – | – | – |
+| [Platform: technical requirements](technical/00-platform.md) | 13 (4 proposed, 9 specified) | – | 9 | 7 (7 open) |
 
 ## Functional requirements
 
@@ -54,12 +56,12 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | --- | --- | --- | --- | --- | --- |
 | [FR-UM-01](functional/02-user-management.md#fr-um-01) | Sign in with Google only | Specified | GB-01 | – | – |
 | [FR-UM-02](functional/02-user-management.md#fr-um-02) | Accounts of the own Workspace domain only | Specified | GB-02 | – | – |
-| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the user at first login, never store a password | Specified | GB-03 | – | – |
+| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the user at first login, never store a password | Specified | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
 | [FR-UM-04](functional/02-user-management.md#fr-um-04) | Groups from the Cloud Identity Groups API, nested groups included | Specified | GB-04 | – | – |
 | [FR-UM-05](functional/02-user-management.md#fr-um-05) | Only convention groups are pulled in | Specified | GB-05 | – | – |
-| [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the groups at login | Specified | GB-06 | – | – |
+| [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the groups at login | Specified | GB-06 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
 | [FR-UM-07](functional/02-user-management.md#fr-um-07) | Synchronise the members of convention groups periodically | Specified | GB-07 | – | – |
-| [FR-UM-08](functional/02-user-management.md#fr-um-08) | Recognise a group by its fixed Google ID | Specified | GB-08 | – | – |
+| [FR-UM-08](functional/02-user-management.md#fr-um-08) | Recognise a group by its fixed Google ID | Specified | GB-08 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
 | [FR-UM-09](functional/02-user-management.md#fr-um-09) | Owner units are managed in Workspace | Specified | GB-09 | – | – |
 | [FR-UM-10](functional/02-user-management.md#fr-um-10) | Removed or suspended accounts | Specified | GB-10 | – | – |
 
@@ -93,14 +95,14 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [FR-SR-08](functional/04-stacks-and-resources.md#fr-sr-08) | Store a fingerprint at registration | Specified | SR-08 | – | – |
 | [FR-SR-09](functional/04-stacks-and-resources.md#fr-sr-09) | Open the log at registration | Specified | SR-09 | – | – |
 | [FR-SR-10](functional/04-stacks-and-resources.md#fr-sr-10) | Notify the data admins of every registration | Specified | SR-10 | – | – |
-| [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | Structure of a log entry | Specified | SR-11 | – | – |
+| [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | Structure of a log entry | Specified | SR-11 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | – |
 | [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12) | Log IDs come from a fixed catalogue | Specified | SR-12 | – | – |
 | [FR-SR-13](functional/04-stacks-and-resources.md#fr-sr-13) | Names, descriptions and log texts are searchable | Specified | SR-13 | – | – |
 | [FR-SR-14](functional/04-stacks-and-resources.md#fr-sr-14) | Deregistration keeps the log and history | Specified | SR-14 | – | – |
 | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | All texts in the app are in English | Specified | SR-15 | – | – |
-| [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16) | Only the owner publishes | Specified | SR-16 | – | – |
+| [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16) | Only the owner publishes | Specified | SR-16 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
 | [FR-SR-17](functional/04-stacks-and-resources.md#fr-sr-17) | The first publication, from Described, is the first confirmation | Specified | SR-17 | – | – |
-| [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on publication | Specified | SR-18 | – | – |
+| [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on publication | Specified | SR-18 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
 | [FR-SR-19](functional/04-stacks-and-resources.md#fr-sr-19) | A published resource stays published when its level drops | Specified | SR-19 | – | – |
 | [FR-SR-20](functional/04-stacks-and-resources.md#fr-sr-20) | Reconfirm after a drop | Specified | SR-20 | – | – |
 | [FR-SR-21](functional/04-stacks-and-resources.md#fr-sr-21) | Search on title, description, collection and owner | Specified | SR-21 | – | – |
@@ -162,12 +164,34 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [EC-SR-01](functional/04-stacks-and-resources.md#ec-sr-01) | The view is not (yet) in the artifacts | Proposed | – | – |
 | [EC-SR-02](functional/04-stacks-and-resources.md#ec-sr-02) | A registered view disappears from the artifacts | Proposed | – | – |
 | [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Proposed | – | – |
-| [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second stack is added | Proposed | – | – |
+| [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second stack is added | Proposed | [TR-PF-13](technical/00-platform.md#tr-pf-13) | – |
 
 ## Technical requirements
 
-None yet.
+### [Platform: technical requirements](technical/00-platform.md)
+
+| ID | Title | Status | Realises | Commits |
+| --- | --- | --- | --- | --- |
+| [TR-PF-01](technical/00-platform.md#tr-pf-01) | Services and runtime | Specified | [DEC-PF-01](technical/00-platform.md#dec-pf-01), [DEC-DH-53](../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../overview/data-hub.md#dec-dh-54) | – |
+| [TR-PF-02](technical/00-platform.md#tr-pf-02) | identity issues short-lived access tokens | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [FR-UM-03](functional/02-user-management.md#fr-um-03), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-08](functional/02-user-management.md#fr-um-08) | – |
+| [TR-PF-03](technical/00-platform.md#tr-pf-03) | Every service validates the token itself | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | – |
+| [TR-PF-04](technical/00-platform.md#tr-pf-04) | Every service authorises itself | Specified | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | – |
+| [TR-PF-05](technical/00-platform.md#tr-pf-05) | Calls between services | Proposed | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | – |
+| [TR-PF-06](technical/00-platform.md#tr-pf-06) | Claude signs in through identity | Proposed | [DEC-UM-02](functional/02-user-management.md#dec-um-02), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | – |
+| [TR-PF-07](technical/00-platform.md#tr-pf-07) | Excel uses the library card | Proposed | [DEC-DH-47](../overview/data-hub.md#dec-dh-47), [DEC-PF-02](technical/00-platform.md#dec-pf-02) | – |
+| [TR-PF-08](technical/00-platform.md#tr-pf-08) | One schema per service | Specified | [DEC-PF-05](technical/00-platform.md#dec-pf-05), [DEC-DH-55](../overview/data-hub.md#dec-dh-55) | – |
+| [TR-PF-09](technical/00-platform.md#tr-pf-09) | Migrations per service | Specified | [DEC-DH-59](../overview/data-hub.md#dec-dh-59) | – |
+| [TR-PF-10](technical/00-platform.md#tr-pf-10) | API contracts from zod schemas | Specified | [DEC-PF-07](technical/00-platform.md#dec-pf-07), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | – |
+| [TR-PF-11](technical/00-platform.md#tr-pf-11) | Own service account per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08), [DEC-DH-49](../overview/data-hub.md#dec-dh-49), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | – |
+| [TR-PF-12](technical/00-platform.md#tr-pf-12) | Shared components for lenses and reports | Specified | [DEC-DH-15](../overview/data-hub.md#dec-dh-15), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | – |
+| [TR-PF-13](technical/00-platform.md#tr-pf-13) | Infrastructure as code | Proposed | [DEC-PF-09](technical/00-platform.md#dec-pf-09), [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | – |
 
 ## Non-functional requirements
 
-None yet.
+### [Security](non-functional/security.md)
+
+| ID | Title | Status | Applies to | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05) | – |
+| [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | Least privilege per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08) | [TR-PF-11](technical/00-platform.md#tr-pf-11) | – |
+| [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | Lost access takes effect quickly | Proposed | [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10) | – | – |
