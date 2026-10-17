@@ -161,7 +161,7 @@ An image is built once, when a change lands on `uat`, and is tagged with the git
 
 **Status:** Proposed · **Realises:** [TR-PF-17](#tr-pf-17), [DEC-PF-13](#dec-pf-13)
 
-The Artifact Registry repository `datahub`, the CI service account and Workload Identity Federation live in the prod project, `immoscoop-dataplatform-398214`, in `europe-west1`. Cloud Run in the uat project may read images from that repository, so that uat and prod run the very same image.
+The Artifact Registry repository `datahub`, the CI service account and Workload Identity Federation live in the prod project, `immoscoop-dataplatform-398214`, in `europe-west1`. Cloud Run in the uat project may read images from that repository, so that uat and prod run the very same image. The Terraform service account of each environment may read them too, because Cloud Run only deploys an image that the deploying identity may read.
 
 <a id="tr-pf-19"></a>
 ### TR-PF-19 · Only uat merges into main
