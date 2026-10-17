@@ -87,6 +87,8 @@ The check `ci` blocks a pull request with failing tests, a broken image, or, int
 - **Merge, not squash, into `main`.** A squash would give `main` commits that `uat` does not have, and the next pull request from `uat` would show old changes again. Into `uat`, squash or merge are both fine.
 - **Required approvals** are your choice; once there is more than one person working on Data Hub, one approval on each ruleset is a sensible start.
 - **Default branch.** Set `uat` as the default branch (**Settings → General → Default branch**), so that new pull requests target `uat` by default.
+- **Up to date before merging: on for `uat`, off for `main`.** On `uat`, a pull request must first take in what was merged before it, so that `ci` runs on the combination. On `main` it must stay off: every merge from `uat` leaves a merge commit on `main` that `uat` does not have, so `uat` always looks behind, and updating it would mean pushing to `uat` without a pull request, which its ruleset forbids.
+- **Do not require status checks on creation: off for both.** It only matters when the branch is created; `main` and `uat` exist and may not be deleted.
 - **One required check.** Both rulesets require only `ci`. A new service or a new job in the pipeline never changes the settings in GitHub.
 - **Bypass.** Leave the bypass list empty, so that the rules also hold for admins.
 
