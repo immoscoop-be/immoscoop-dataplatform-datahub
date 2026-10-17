@@ -148,12 +148,71 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.service }}
           cache-to: type=gha,mode=max,scope=${{ matrix.service }}
 
+  # Format, validate and test the Terraform on every run; needs no GCP access (TR-PF-13).
+  terraform-check:
+    name: Terraform format, validate and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+          terraform_wrapper: false
+      - name: Check the formatting
+        run: terraform -chdir=infra fmt -check -recursive
+      - name: Initialise, without state
+        run: terraform -chdir=infra init -backend=false -input=false
+      - name: Validate
+        run: terraform -chdir=infra validate
+      - name: Test against a mocked provider
+        run: terraform -chdir=infra test
+
+  # Applies the infrastructure: a push to uat applies uat, a push to main applies prod
+  # (DEC-PF-16, TR-PF-21). The GitHub environment only allows its own branch, and Workload
+  # Identity Federation only lets that branch act as the Terraform identity of its project
+  # (NFR-SEC-04). It runs after the images, and deploys the images of exactly this code.
+  terraform:
+    name: Terraform apply (${{ github.ref_name == 'main' && 'prod' || 'uat' }})
+    if: github.event_name == 'push' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != ''
+    needs: [check, image, terraform-check]
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'uat' }}
+    concurrency:
+      group: terraform-${{ github.ref_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENVIRONMENT: ${{ github.ref_name == 'main' && 'prod' || 'uat' }}
+      TF_STATE_BUCKET: ${{ vars.TF_STATE_BUCKET }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.16.6
+          terraform_wrapper: false
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_TERRAFORM_SERVICE_ACCOUNT }}
+      - name: Initialise, with the state of this environment
+        run: terraform -chdir=infra init -input=false -backend-config="bucket=$TF_STATE_BUCKET"
+      - name: Plan
+        run: |
+          tag="tree-$(git rev-parse 'HEAD^{tree}')"
+          terraform -chdir=infra plan -input=false -var-file="environments/$ENVIRONMENT.tfvars" -var="image_tag=$tag" -out=infra.tfplan
+      - name: Apply
+        run: terraform -chdir=infra apply -input=false infra.tfplan
+
   # The one check the branch rules require. Green only when every job above passed;
-  # the source-branch job may be skipped, because it only runs on pull requests into main.
+  # the source-branch job only runs on pull requests into main, and the Terraform apply only
+  # on pushes, so those two may be skipped.
   ci:
     name: ci
     if: always()
-    needs: [check, source-branch, services, image]
+    needs: [check, source-branch, services, image, terraform-check, terraform]
     runs-on: ubuntu-latest
     steps:
       - name: Require every job to have passed
@@ -165,5 +224,7 @@ jobs:
             .check.result == "success" and
             .services.result == "success" and
             .image.result == "success" and
-            (.["source-branch"].result == "success" or .["source-branch"].result == "skipped")
+            .["terraform-check"].result == "success" and
+            (.["source-branch"].result == "success" or .["source-branch"].result == "skipped") and
+            (.terraform.result == "success" or .terraform.result == "skipped")
           ' > /dev/null

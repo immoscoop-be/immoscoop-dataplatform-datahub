@@ -132,34 +132,34 @@ function markdownFiles(dir: string): string[] {
   return files.sort();
 }
 
-function loadDocs(): Map<string, Doc> {
-  const docs = new Map<string, Doc>();
-  for (const file of markdownFiles(DOCS)) {
-    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
-    if (lines.at(-1) === '') {
-      lines.pop();
-    }
-    const doc: Doc = { path: file, lines, title: '', anchors: new Set() };
-    const seen = new Map<string, number>();
-    for (const line of stripCode(lines)) {
-      const heading = HEADING.exec(line);
-      if (heading) {
-        const [, hashes = '', text = ''] = heading;
-        if (!doc.title && hashes.length === 1) {
-          doc.title = text;
-        }
-        const slug = githubSlug(text);
-        const count = seen.get(slug) ?? 0;
-        doc.anchors.add(count === 0 ? slug : `${slug}-${count}`);
-        seen.set(slug, count + 1);
-      }
-      for (const match of line.matchAll(ANCHOR)) {
-        doc.anchors.add(match[1] as string);
-      }
-    }
-    docs.set(file, doc);
+function parseDoc(file: string): Doc {
+  const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+  if (lines.at(-1) === '') {
+    lines.pop();
   }
-  return docs;
+  const doc: Doc = { path: file, lines, title: '', anchors: new Set() };
+  const seen = new Map<string, number>();
+  for (const line of stripCode(lines)) {
+    const heading = HEADING.exec(line);
+    if (heading) {
+      const [, hashes = '', text = ''] = heading;
+      if (!doc.title && hashes.length === 1) {
+        doc.title = text;
+      }
+      const slug = githubSlug(text);
+      const count = seen.get(slug) ?? 0;
+      doc.anchors.add(count === 0 ? slug : `${slug}-${count}`);
+      seen.set(slug, count + 1);
+    }
+    for (const match of line.matchAll(ANCHOR)) {
+      doc.anchors.add(match[1] as string);
+    }
+  }
+  return doc;
+}
+
+function loadDocs(): Map<string, Doc> {
+  return new Map(markdownFiles(DOCS).map((file) => [file, parseDoc(file)]));
 }
 
 function parseItems(docs: Map<string, Doc>, errors: string[]): Map<string, Item> {
@@ -272,12 +272,14 @@ function checkLinks(docs: Map<string, Doc>, items: Map<string, Item>, errors: st
           continue;
         }
         if (fragment && dest.endsWith('.md')) {
-          if (!docs.get(dest)?.anchors.has(fragment)) {
+          // Markdown outside docs/ (such as infra/README.md) is read when a link points into it.
+          const target = docs.get(dest) ?? parseDoc(dest);
+          if (!target.anchors.has(fragment)) {
             errors.push(`${where}: link to missing anchor '#${fragment}' in ${rel(dest)}`);
           }
-          const target = items.get(fragment.toUpperCase());
-          if (target && target.file !== dest) {
-            errors.push(`${where}: ${target.id} is defined in ${rel(target.file)}, not in ${rel(dest)}`);
+          const item = items.get(fragment.toUpperCase());
+          if (item && item.file !== dest) {
+            errors.push(`${where}: ${item.id} is defined in ${rel(item.file)}, not in ${rel(dest)}`);
           }
         }
       }

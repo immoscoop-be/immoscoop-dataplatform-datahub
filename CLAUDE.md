@@ -29,6 +29,7 @@ Everything in this repository is in English: code, comments, documentation and c
 
 - All GCP resources of Data Hub are Terraform in `infra/`, applied by GitHub Actions: `uat` applies to the uat project, `main` to the prod project. Never apply Terraform or change resources by hand.
 - The only manual steps are the one-time bootstrap in `docs/architecture/gcp-setup.md`; keep that file in step when the bootstrap changes.
+- Before committing Terraform: `terraform -chdir=infra fmt -recursive`, `validate` and `test` (CI runs them too). The tests in `infra/tests/` use a mocked provider; add a test for every new rule the infrastructure must keep.
 
 ## Branches
 
