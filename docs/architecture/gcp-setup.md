@@ -128,9 +128,18 @@ gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROD" -
 gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROD" --location="$REGION" \
   --member="serviceAccount:service-$UAT_NUMBER@serverless-robot-prod.iam.gserviceaccount.com" \
   --role=roles/artifactregistry.reader
+
+# Terraform of both environments may read the images it deploys
+for PROJECT in "$PROD" "$UAT"; do
+  gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROD" --location="$REGION" \
+    --member="serviceAccount:datahub-terraform@$PROJECT.iam.gserviceaccount.com" \
+    --role=roles/artifactregistry.reader
+done
 ```
 
-The last command needs the Cloud Run service agent of uat to exist. Enabling the Cloud Run API in step 2 creates it; if the command still reports that the account does not exist, wait a minute and run it again.
+Two identities read the images. The Cloud Run service agent pulls an image whenever a service starts; in the prod project it already may, in uat it needs the first binding. And Cloud Run refuses to create or change a service unless the identity that deploys it may read its image, so both Terraform service accounts need the last binding; without it, the apply fails with "Permission 'artifactregistry.repositories.downloadArtifacts' denied".
+
+The binding for the uat service agent needs the Cloud Run service agent of uat to exist. Enabling the Cloud Run API in step 2 creates it; if the command still reports that the account does not exist, wait a minute and run it again.
 
 ## 6. Trust between GitHub and GCP, with branch-bound access
 
@@ -210,6 +219,7 @@ After the first Terraform run has created the service account of identity in eac
 ## Check that it worked
 
 - `gcloud iam service-accounts list --project="$PROD"` and `--project="$UAT"` show `datahub-terraform` (and `datahub-ci` in prod).
+- `gcloud artifacts repositories get-iam-policy datahub --project="$PROD" --location="$REGION"` shows `datahub-ci` as writer, and as readers the Cloud Run service agent of uat and `datahub-terraform` of both projects.
 - `gcloud iam workload-identity-pools providers describe github --project="$PROD" --location=global --workload-identity-pool=datahub-github` shows the condition on the repository.
 - After the next merge into `uat`, the job "image (catalogue)" in GitHub Actions logs in to Google Cloud and pushes; the image appears in Artifact Registry.
 
