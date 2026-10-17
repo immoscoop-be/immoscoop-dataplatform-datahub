@@ -31,6 +31,7 @@ Everything in this repository is in English: code, comments, documentation and c
 - `main` only receives pull requests from `uat`; CI fails any other pull request into `main`.
 - Never push or merge directly onto `uat` or `main`; everything goes through a pull request.
 - Merge `uat` into `main` with a merge commit, never a squash.
+- CI is one workflow, `.github/workflows/ci.yml`, ending in the gate job `ci`: the only check the branch rules require. Add new jobs to that workflow and to the `needs` of `ci`, never as a separate required check.
 
 ## Commits
 

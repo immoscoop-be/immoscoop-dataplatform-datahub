@@ -39,11 +39,17 @@ DATAHUB_TOKEN_ISSUER=… DATAHUB_TOKEN_AUDIENCE=datahub DATAHUB_JWKS_URL=… POR
 
 | Workflow | When | What |
 | --- | --- | --- |
-| [`ci.yml`](../../.github/workflows/ci.yml) | Every pull request, and every push to `uat` or `main` | Install, type-check, test, and check the documentation |
-| [`images.yml`](../../.github/workflows/images.yml) | Every pull request | Builds the image of every service, to prove it builds |
-| [`images.yml`](../../.github/workflows/images.yml) | Every push to `uat` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
-| [`images.yml`](../../.github/workflows/images.yml) | Every push to `main` | Finds the images of the same code from uat and tags them with the new commit; builds only if they are missing ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)) |
-| [`enforce-source-branch.yml`](../../.github/workflows/enforce-source-branch.yml) | Every pull request into `main` | Fails unless the pull request comes from `uat` ([TR-PF-19](../requirements/technical/00-platform.md#tr-pf-19)) |
+All of it is one workflow, [`ci.yml`](../../.github/workflows/ci.yml), with one gate at the end ([TR-PF-20](../requirements/technical/00-platform.md#tr-pf-20)).
+
+| Job | When | What |
+| --- | --- | --- |
+| Type-check, test and check the docs | Every pull request, and every push to `uat` or `main` | Install, type-check, test, and check the documentation |
+| Find the services | Every run | Lists the folders under `services/`; every folder is a service with its own image |
+| image (*service*) | Every pull request | Builds the image of every service, to prove it builds |
+| image (*service*) | Every push to `uat` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
+| image (*service*) | Every push to `main` | Finds the images of the same code from uat and tags them with the new commit; builds only if they are missing ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)) |
+| Verify source branch is uat | Every pull request into `main` | Fails unless the pull request comes from `uat` ([TR-PF-19](../requirements/technical/00-platform.md#tr-pf-19)) |
+| **ci** | Always, last | Passes only when every job above passed; the source-branch job may be skipped, because it only runs on pull requests into `main`. **This is the only check the branch rules require.** |
 
 GitHub authenticates to GCP with **Workload Identity Federation**: GitHub proves to Google which repository a run comes from, and Google hands out a short-lived token. No service account key is stored anywhere.
 
@@ -71,16 +77,17 @@ flowchart LR
 
 ### Rules in GitHub
 
-The check "Verify source branch is uat" blocks a wrong pull request, but only GitHub's branch rules make it impossible to go around it. An admin of the repository sets them up once ([OP-PF-12](../requirements/technical/00-platform.md#op-pf-12)), under **Settings → Rules → Rulesets → New branch ruleset**:
+The check `ci` blocks a pull request with failing tests, a broken image, or, into `main`, the wrong source branch. Only GitHub's branch rules make it impossible to go around it. An admin of the repository sets them up once ([OP-PF-12](../requirements/technical/00-platform.md#op-pf-12)), under **Settings → Rules → Rulesets → New branch ruleset**:
 
 | Ruleset | Target branch | Rules |
 | --- | --- | --- |
-| `main` | `main` | Restrict deletions; block force pushes; require a pull request before merging, with allowed merge method **Merge** only; require status checks to pass: `Verify source branch is uat`, `check`, `image (identity)`, `image (catalogue)`, `image (registry)`, `image (query)` |
-| `uat` | `uat` | Restrict deletions; block force pushes; require a pull request before merging; require status checks to pass: `check`, `image (identity)`, `image (catalogue)`, `image (registry)`, `image (query)` |
+| `main` | `main` | Restrict deletions; block force pushes; require a pull request before merging, with allowed merge method **Merge** only; require status check `ci` to pass |
+| `uat` | `uat` | Restrict deletions; block force pushes; require a pull request before merging; require status check `ci` to pass |
 
 - **Merge, not squash, into `main`.** A squash would give `main` commits that `uat` does not have, and the next pull request from `uat` would show old changes again. Into `uat`, squash or merge are both fine.
 - **Required approvals** are your choice; once there is more than one person working on Data Hub, one approval on each ruleset is a sensible start.
 - **Default branch.** Set `uat` as the default branch (**Settings → General → Default branch**), so that new pull requests target `uat` by default.
+- **One required check.** Both rulesets require only `ci`. A new service or a new job in the pipeline never changes the settings in GitHub.
 - **Bypass.** Leave the bypass list empty, so that the rules also hold for admins.
 
 ## One-time setup in GCP
@@ -136,5 +143,5 @@ From the next push to `main` onwards, the images land in Artifact Registry as `e
 ## Adding a service
 
 1. Copy one of the folders under `services/`, and change the name in `package.json`, `src/app.ts` and the test.
-2. Add it to the `references` in the root `tsconfig.json` and to the `matrix.service` list in `images.yml`.
+2. Add it to the `references` in the root `tsconfig.json`. The pipeline finds the new folder by itself and builds its image; the rules in GitHub stay as they are.
 3. Describe it in [`services/`](services/) and in the [service map](README.md#services).

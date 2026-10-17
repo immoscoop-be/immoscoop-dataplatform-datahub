@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 3 (1 proposed, 2 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 19 (6 proposed, 9 specified, 4 implemented) | – | 14 | 12 (9 open, 3 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 20 (6 proposed, 9 specified, 5 implemented) | – | 14 | 12 (9 open, 3 done) |
 
 ## Functional requirements
 
@@ -191,6 +191,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-17](technical/00-platform.md#tr-pf-17) | Build once, deploy many | Proposed | [DEC-PF-11](technical/00-platform.md#dec-pf-11) | [9b18182](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9b1818291f1ed9ae74933792f50d99e07bc1ad99) refs, 2026-10-17<br>[dc853c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dc853c027e1e090855c8d49d4ec15ef58dcbc1c3) refs, 2026-10-17 |
 | [TR-PF-18](technical/00-platform.md#tr-pf-18) | One image repository, shared by both environments | Proposed | [TR-PF-17](technical/00-platform.md#tr-pf-17), [DEC-PF-13](technical/00-platform.md#dec-pf-13) | – |
 | [TR-PF-19](technical/00-platform.md#tr-pf-19) | Only uat merges into main | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14) | [9b18182](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9b1818291f1ed9ae74933792f50d99e07bc1ad99) implements, 2026-10-17 |
+| [TR-PF-20](technical/00-platform.md#tr-pf-20) | One required check, whatever the pipeline contains | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14), [TR-PF-19](technical/00-platform.md#tr-pf-19) | – |
 
 ## Non-functional requirements
 

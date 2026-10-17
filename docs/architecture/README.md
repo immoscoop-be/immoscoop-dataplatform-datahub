@@ -155,7 +155,7 @@ infra/            Terraform, per environment (uat, prod); not created yet
 docs/
 scripts/          requirements.ts: checks the docs and builds the traceability matrix
 Dockerfile        one image per service (build argument SERVICE)
-.github/workflows ci.yml (checks) and images.yml (images per service)
+.github/workflows ci.yml: tests, docs, an image per service, and the one gate check ci
 ```
 
 `packages/db` and `packages/ui` are created when the first service needs them. How the images are built and where they go is in [Build and deploy](build-and-deploy.md).

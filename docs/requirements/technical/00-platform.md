@@ -166,7 +166,14 @@ The Artifact Registry repository `datahub`, the CI service account and Workload 
 
 **Status:** Implemented · **Realises:** [DEC-PF-14](#dec-pf-14)
 
-A pull request into `main` fails the check "Verify source branch is uat" unless it comes from `uat`. Together with the rules on the branches in GitHub ([OP-PF-12](#op-pf-12)), nothing reaches `main` except through a reviewed merge from `uat`, and nothing reaches `uat` except through a pull request.
+A pull request into `main` fails the job "Verify source branch is uat", and therefore the check `ci` ([TR-PF-20](#tr-pf-20)), unless it comes from `uat`. Together with the rules on the branches in GitHub ([OP-PF-12](#op-pf-12)), nothing reaches `main` except through a reviewed merge from `uat`, and nothing reaches `uat` except through a pull request.
+
+<a id="tr-pf-20"></a>
+### TR-PF-20 · One required check, whatever the pipeline contains
+
+**Status:** Implemented · **Realises:** [DEC-PF-14](#dec-pf-14), [TR-PF-19](#tr-pf-19)
+
+CI is one workflow that ends in one gate job, `ci`, which passes only when every other job passed. The branch rules in GitHub require only `ci`. The services to build are found from the folders under `services/`, so adding a service or a job changes neither the workflow's list nor the settings in GitHub.
 
 ## Open points
 
