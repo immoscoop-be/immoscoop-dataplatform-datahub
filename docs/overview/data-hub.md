@@ -6,7 +6,7 @@
 | Tags | strategy, context, decision |
 | Area | Tooling, Technical |
 | Status | Idea |
-| Repository | [immoscoop-dataplatform-datahub](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub) |
+| Repository | [immoscoop-dataplatform-datahub](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub) |
 | Source of truth | This file. On Confluence the source of truth was "this page, until there is a functional and technical analysis"; that analysis is now built up under [requirements](../requirements/README.md). |
 | Migrated from | [ptditt - Tooling - Data Hub](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1362428000) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17 |
 

@@ -51,12 +51,12 @@ Once the Cloud Run services exist, deploying follows the principle "build once, 
 
 ## One-time setup in GCP
 
-Someone with admin rights on the GCP project does this once, until the infrastructure moves to Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)). The project and region are still to be chosen ([OP-PF-09](../requirements/technical/00-platform.md#op-pf-09)); the repository name in the trust condition depends on where the repository lives ([OP-PF-11](../requirements/technical/00-platform.md#op-pf-11)).
+Someone with admin rights on the GCP project does this once, until the infrastructure moves to Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)). The project and region are still to be chosen ([OP-PF-09](../requirements/technical/00-platform.md#op-pf-09)). The trust condition names the repository, `immoscoop-be/immoscoop-dataplatform-datahub` ([DEC-PF-12](../requirements/technical/00-platform.md#dec-pf-12)); if it ever moves, the condition moves with it.
 
 ```sh
 PROJECT_ID=<project>                 # OP-PF-09
 REGION=<region>                      # OP-PF-09, for example europe-west1
-REPO=maximethenextimmoscoopbe/immoscoop-dataplatform-datahub   # OP-PF-11
+REPO=immoscoop-be/immoscoop-dataplatform-datahub
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 
 # 1. The Docker repository for the images

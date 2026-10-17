@@ -23,6 +23,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-09"></a>**DEC-PF-09** · Tooling: Node.js 24 LTS and TypeScript in strict mode; Fastify for HTTP; Kysely for Postgres; zod for schemas; jose for tokens; the official MCP TypeScript SDK; Vitest for tests; Terraform for infrastructure. Node.js moves to the next LTS release once it is available. These build on [DEC-DH-53](../../overview/data-hub.md#dec-dh-53) to [DEC-DH-55](../../overview/data-hub.md#dec-dh-55).
 - <a id="dec-pf-10"></a>**DEC-PF-10** · All services and applications of Data Hub are publicly reachable. The protection comes from the login and the token check in every service, not from the network, so that the browser, Excel and Claude can reach Data Hub from anywhere. Claude in particular calls MCP servers from Anthropic's servers on the internet, so an internal-only mcp would be unreachable for it. This answers [OP-PF-04](#op-pf-04).
 - <a id="dec-pf-11"></a>**DEC-PF-11** · The container images of the services are stored in Artifact Registry in GCP, not on Docker Hub: Cloud Run pulls from it with its own identity, without extra credentials, the images stay private, and they live in the same region as the services. The note in the [Artifact registry](../functional/01-artifact-registry.md) domain already assumed this.
+- <a id="dec-pf-12"></a>**DEC-PF-12** · The repository lives in the organisation `immoscoop-be`, next to the data repository, as `immoscoop-be/immoscoop-dataplatform-datahub`. It was transferred there from a personal account on 2026-10-17, with its full history; the old address redirects. This answers [OP-PF-11](#op-pf-11).
 
 ## Requirements
 
@@ -163,7 +164,7 @@ An image is built once, on `main`. uat runs that image by its commit tag, and pr
 - [ ] <a id="op-pf-08"></a>**OP-PF-08** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
 - [ ] <a id="op-pf-09"></a>**OP-PF-09** · Choose the GCP project or projects and the region of Data Hub, per environment, including where the Artifact Registry repository lives. [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) rules out a separate project for Data Hub; the Stacks are in `immoscoop-dataplatform-398214`.
 - [ ] <a id="op-pf-10"></a>**OP-PF-10** · Do the one-time GCP setup for the image pipeline: the Artifact Registry repository, the CI service account and Workload Identity Federation, and the GitHub repository variables ([Build and deploy](../../architecture/build-and-deploy.md#one-time-setup-in-gcp)).
-- [ ] <a id="op-pf-11"></a>**OP-PF-11** · Decide where this repository lives for good: under the personal account `maximethenextimmoscoopbe`, or in the organisation `immoscoop-be` next to the data repository. The trust condition of Workload Identity Federation names the repository, so this is best settled before [OP-PF-10](#op-pf-10).
+- [x] <a id="op-pf-11"></a>**OP-PF-11** · Decide where this repository lives for good: under the personal account `maximethenextimmoscoopbe`, or in the organisation `immoscoop-be` next to the data repository. The trust condition of Workload Identity Federation names the repository, so this is best settled before [OP-PF-10](#op-pf-10). *Decided on 2026-10-17: `immoscoop-be` ([DEC-PF-12](#dec-pf-12)).*
 
 ## Builds on
 

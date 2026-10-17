@@ -18,7 +18,7 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const DOCS = path.join(ROOT, 'docs');
 const REQUIREMENTS = path.join(DOCS, 'requirements');
 const MATRIX = path.join(REQUIREMENTS, 'traceability.md');
-const REPO_URL = 'https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub';
+const REPO_URL = 'https://github.com/immoscoop-be/immoscoop-dataplatform-datahub';
 
 const ID = String.raw`(?:FR|TR|NFR|DEC|EC|OP)-[A-Z]{2,3}-\d{2,3}`;
 const HEADING_KINDS = new Set(['FR', 'EC', 'TR', 'NFR']);
