@@ -51,11 +51,12 @@ Once the Cloud Run services exist, deploying follows the principle "build once, 
 
 ## One-time setup in GCP
 
-Someone with admin rights on the GCP project does this once, until the infrastructure moves to Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)). The project and region are still to be chosen ([OP-PF-09](../requirements/technical/00-platform.md#op-pf-09)). The trust condition names the repository, `immoscoop-be/immoscoop-dataplatform-datahub` ([DEC-PF-12](../requirements/technical/00-platform.md#dec-pf-12)); if it ever moves, the condition moves with it.
+Someone with admin rights on both GCP projects does this once, until the infrastructure moves to Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)). The image repository, the CI service account and Workload Identity Federation live in the prod project ([TR-PF-18](../requirements/technical/00-platform.md#tr-pf-18)); the uat project only gets permission to read the images. The trust condition names the repository, `immoscoop-be/immoscoop-dataplatform-datahub` ([DEC-PF-12](../requirements/technical/00-platform.md#dec-pf-12)); if it ever moves, the condition moves with it.
 
 ```sh
-PROJECT_ID=<project>                 # OP-PF-09
-REGION=<region>                      # OP-PF-09, for example europe-west1
+PROJECT_ID=immoscoop-dataplatform-398214   # prod: holds the image repository (DEC-PF-13, TR-PF-18)
+UAT_PROJECT_ID=immoscoop-dataplatform
+REGION=europe-west1
 REPO=immoscoop-be/immoscoop-dataplatform-datahub
 PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
 
@@ -78,19 +79,25 @@ gcloud iam workload-identity-pools providers create-oidc datahub --project="$PRO
 gcloud iam service-accounts add-iam-policy-binding "datahub-ci@$PROJECT_ID.iam.gserviceaccount.com" \
   --project="$PROJECT_ID" --role=roles/iam.workloadIdentityUser \
   --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/$REPO"
+
+# 4. Let Cloud Run in uat pull the same images (its service agent reads the repository)
+UAT_PROJECT_NUMBER=$(gcloud projects describe "$UAT_PROJECT_ID" --format='value(projectNumber)')
+gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROJECT_ID" --location="$REGION" \
+  --member="serviceAccount:service-$UAT_PROJECT_NUMBER@serverless-robot-prod.iam.gserviceaccount.com" \
+  --role=roles/artifactregistry.reader
 ```
 
 Then set these **repository variables** in GitHub (Settings → Secrets and variables → Actions → Variables). They are not secrets: none of them grants access on its own.
 
 | Variable | Value |
 | --- | --- |
-| `GCP_PROJECT_ID` | The project ID |
-| `GCP_REGION` | The region, for example `europe-west1` |
+| `GCP_PROJECT_ID` | `immoscoop-dataplatform-398214` |
+| `GCP_REGION` | `europe-west1` |
 | `GCP_ARTIFACT_REPOSITORY` | `datahub` |
 | `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/<project number>/locations/global/workloadIdentityPools/github/providers/datahub` |
-| `GCP_CI_SERVICE_ACCOUNT` | `datahub-ci@<project>.iam.gserviceaccount.com` |
+| `GCP_CI_SERVICE_ACCOUNT` | `datahub-ci@immoscoop-dataplatform-398214.iam.gserviceaccount.com` |
 
-From the next push to `main` onwards, the images land in Artifact Registry as `<region>-docker.pkg.dev/<project>/datahub/<service>:<commit SHA>`.
+From the next push to `main` onwards, the images land in Artifact Registry as `europe-west1-docker.pkg.dev/immoscoop-dataplatform-398214/datahub/<service>:<commit SHA>`.
 
 ## Adding a service
 

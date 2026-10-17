@@ -174,7 +174,14 @@ All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](.
 
 ## Environments
 
-Two environments, uat and prod, each with its own GCP resources, service accounts and Postgres instance, defined in Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)).
+Two environments, each in the existing GCP project of the data platform for that environment ([DEC-PF-13](../requirements/technical/00-platform.md#dec-pf-13)), with its own Cloud SQL instance, service accounts, bucket and Cloud Run services, defined in Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)):
+
+| Environment | GCP project | Region | Reads the Stacks of |
+| --- | --- | --- | --- |
+| prod | `immoscoop-dataplatform-398214` | `europe-west1` | the prod dbt job, in the same project |
+| uat | `immoscoop-dataplatform` | `europe-west1` | the uat dbt job, in the same project |
+
+The images are built once and live in one repository in the prod project, which uat may read too ([TR-PF-18](../requirements/technical/00-platform.md#tr-pf-18)).
 
 ## Open points
 
