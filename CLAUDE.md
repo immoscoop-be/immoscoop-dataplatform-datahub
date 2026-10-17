@@ -25,6 +25,13 @@ Everything in this repository is in English: code, comments, documentation and c
 - A new service starts as a copy of an existing one; follow `docs/architecture/build-and-deploy.md#adding-a-service`.
 - Scripts in `scripts/` are TypeScript that Node runs directly: Node built-ins only, and only type syntax that can be stripped (no enums, no namespaces).
 
+## Branches
+
+- Every change goes first to `uat`, then from `uat` to `main` (prod). Work happens on a feature branch, with a pull request into `uat`.
+- `main` only receives pull requests from `uat`; CI fails any other pull request into `main`.
+- Never push or merge directly onto `uat` or `main`; everything goes through a pull request.
+- Merge `uat` into `main` with a merge commit, never a squash.
+
 ## Commits
 
 When a commit implements or relates to a requirement, end its message with git trailers:

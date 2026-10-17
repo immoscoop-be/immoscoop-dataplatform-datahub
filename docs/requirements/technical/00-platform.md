@@ -25,6 +25,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-11"></a>**DEC-PF-11** · The container images of the services are stored in Artifact Registry in GCP, not on Docker Hub: Cloud Run pulls from it with its own identity, without extra credentials, the images stay private, and they live in the same region as the services. The note in the [Artifact registry](../functional/01-artifact-registry.md) domain already assumed this.
 - <a id="dec-pf-12"></a>**DEC-PF-12** · The repository lives in the organisation `immoscoop-be`, next to the data repository, as `immoscoop-be/immoscoop-dataplatform-datahub`. It was transferred there from a personal account on 2026-10-17, with its full history; the old address redirects. This answers [OP-PF-11](#op-pf-11).
 - <a id="dec-pf-13"></a>**DEC-PF-13** · Each environment runs in the existing GCP project of the data platform for that environment: prod in `immoscoop-dataplatform-398214`, uat in `immoscoop-dataplatform`, both in the region `europe-west1`, where all their BigQuery data lives. Each environment has its own Cloud SQL instance, service accounts, bucket and Cloud Run services, and reads the Stacks of its own project. This answers [OP-PF-09](#op-pf-09) for the projects and the region.
+- <a id="dec-pf-14"></a>**DEC-PF-14** · Every change goes first to uat, then from uat to prod. Work lands in the branch `uat` through a pull request; the branch `main`, which is prod, only receives merges from `uat`. The same strategy as the data repository.
 
 ## Requirements
 
@@ -137,7 +138,7 @@ Every service and application runs on Cloud Run with public ingress. Every endpo
 
 **Status:** Implemented · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-PF-11](#dec-pf-11)
 
-One Dockerfile builds the image of every service, chosen with the build argument `SERVICE`. It builds the workspace, then copies only that service and its production dependencies onto `node:24-slim`, and runs as a non-root user. Every image is tagged with the full git commit SHA. See [Build and deploy](../../architecture/build-and-deploy.md).
+One Dockerfile builds the image of every service, chosen with the build argument `SERVICE`. It builds the workspace, then copies only that service and its production dependencies onto `node:24-slim`, and runs as a non-root user. Every image is tagged with the git tree hash of its code (`tree-<hash>`) and with the commit SHA. See [Build and deploy](../../architecture/build-and-deploy.md).
 
 <a id="tr-pf-16"></a>
 ### TR-PF-16 · Images are built by GitHub Actions, without stored keys
@@ -151,7 +152,7 @@ GitHub Actions builds the image of every service on every pull request, and push
 
 **Status:** Proposed · **Realises:** [DEC-PF-11](#dec-pf-11)
 
-An image is built once, on `main`. uat runs that image by its commit tag, and prod runs the very same image after approval. An image is never rebuilt for another environment.
+An image is built once, when a change lands on `uat`, and is tagged with the git tree hash of its code. uat runs it. When `uat` is merged into `main`, the code on `main` has the same tree hash, because `main` only receives merges from `uat` ([DEC-PF-14](#dec-pf-14)); prod therefore runs the very same image, found by that tag. An image is never rebuilt for another environment.
 
 <a id="tr-pf-18"></a>
 ### TR-PF-18 · One image repository, shared by both environments
@@ -159,6 +160,13 @@ An image is built once, on `main`. uat runs that image by its commit tag, and pr
 **Status:** Proposed · **Realises:** [TR-PF-17](#tr-pf-17), [DEC-PF-13](#dec-pf-13)
 
 The Artifact Registry repository `datahub`, the CI service account and Workload Identity Federation live in the prod project, `immoscoop-dataplatform-398214`, in `europe-west1`. Cloud Run in the uat project may read images from that repository, so that uat and prod run the very same image.
+
+<a id="tr-pf-19"></a>
+### TR-PF-19 · Only uat merges into main
+
+**Status:** Implemented · **Realises:** [DEC-PF-14](#dec-pf-14)
+
+A pull request into `main` fails the check "Verify source branch is uat" unless it comes from `uat`. Together with the rules on the branches in GitHub ([OP-PF-12](#op-pf-12)), nothing reaches `main` except through a reviewed merge from `uat`, and nothing reaches `uat` except through a pull request.
 
 ## Open points
 
@@ -173,6 +181,7 @@ The Artifact Registry repository `datahub`, the CI service account and Workload 
 - [x] <a id="op-pf-09"></a>**OP-PF-09** · Choose the GCP project or projects and the region of Data Hub, per environment, including where the Artifact Registry repository lives. [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) rules out a separate project for Data Hub; the Stacks are in `immoscoop-dataplatform-398214`. *Decided on 2026-10-17: prod in `immoscoop-dataplatform-398214`, uat in `immoscoop-dataplatform`, both in `europe-west1` ([DEC-PF-13](#dec-pf-13)); where the image repository lives is proposed in [TR-PF-18](#tr-pf-18).*
 - [ ] <a id="op-pf-10"></a>**OP-PF-10** · Do the one-time GCP setup for the image pipeline: the Artifact Registry repository, the CI service account and Workload Identity Federation, and the GitHub repository variables ([Build and deploy](../../architecture/build-and-deploy.md#one-time-setup-in-gcp)).
 - [x] <a id="op-pf-11"></a>**OP-PF-11** · Decide where this repository lives for good: under the personal account `maximethenextimmoscoopbe`, or in the organisation `immoscoop-be` next to the data repository. The trust condition of Workload Identity Federation names the repository, so this is best settled before [OP-PF-10](#op-pf-10). *Decided on 2026-10-17: `immoscoop-be` ([DEC-PF-12](#dec-pf-12)).*
+- [ ] <a id="op-pf-12"></a>**OP-PF-12** · Set up the branch rules in GitHub: rulesets for `main` and `uat`, the required checks, and `uat` as the default branch ([Build and deploy](../../architecture/build-and-deploy.md#rules-in-github)).
 
 ## Builds on
 

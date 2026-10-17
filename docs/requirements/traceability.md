@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 3 (1 proposed, 2 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 18 (6 proposed, 9 specified, 3 implemented) | – | 13 | 11 (8 open, 3 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 19 (6 proposed, 9 specified, 4 implemented) | – | 14 | 12 (9 open, 3 done) |
 
 ## Functional requirements
 
@@ -188,8 +188,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-14](technical/00-platform.md#tr-pf-14) | Public ingress, protected by the token checks | Specified | [DEC-PF-10](technical/00-platform.md#dec-pf-10), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
 | [TR-PF-15](technical/00-platform.md#tr-pf-15) | One image per service, from one Dockerfile | Implemented | [DEC-PF-01](technical/00-platform.md#dec-pf-01), [DEC-PF-11](technical/00-platform.md#dec-pf-11) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) implements, 2026-10-17 |
 | [TR-PF-16](technical/00-platform.md#tr-pf-16) | Images are built by GitHub Actions, without stored keys | Implemented | [DEC-PF-11](technical/00-platform.md#dec-pf-11), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) implements, 2026-10-17 |
-| [TR-PF-17](technical/00-platform.md#tr-pf-17) | Build once, deploy many | Proposed | [DEC-PF-11](technical/00-platform.md#dec-pf-11) | – |
+| [TR-PF-17](technical/00-platform.md#tr-pf-17) | Build once, deploy many | Proposed | [DEC-PF-11](technical/00-platform.md#dec-pf-11) | [dc853c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dc853c027e1e090855c8d49d4ec15ef58dcbc1c3) refs, 2026-10-17 |
 | [TR-PF-18](technical/00-platform.md#tr-pf-18) | One image repository, shared by both environments | Proposed | [TR-PF-17](technical/00-platform.md#tr-pf-17), [DEC-PF-13](technical/00-platform.md#dec-pf-13) | – |
+| [TR-PF-19](technical/00-platform.md#tr-pf-19) | Only uat merges into main | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14) | – |
 
 ## Non-functional requirements
 

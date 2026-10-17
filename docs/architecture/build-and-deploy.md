@@ -32,22 +32,56 @@ DATAHUB_TOKEN_ISSUER=… DATAHUB_TOKEN_AUDIENCE=datahub DATAHUB_JWKS_URL=… POR
 
 - **One Dockerfile for all services.** The service is chosen with a build argument: `docker build --build-arg SERVICE=catalogue -t catalogue .` ([TR-PF-15](../requirements/technical/00-platform.md#tr-pf-15)).
 - **Two stages.** The first stage builds the whole workspace. The second copies only the chosen service and its production dependencies (`pnpm deploy`) onto `node:24-slim`, and runs as the non-root user `node`.
-- **Tagged with the commit.** Every image is tagged with the full git commit SHA, so an image always says exactly which code it contains.
+- **Tagged with its code.** Every image is tagged with the git tree hash of its code (`tree-<hash>`) and with the commit SHA. The tree hash is a fingerprint of the code itself: two commits with the same code have the same tree hash, which is what lets prod reuse the image of uat.
 - **Stored in Artifact Registry in GCP**, not on Docker Hub ([DEC-PF-11](../requirements/technical/00-platform.md#dec-pf-11)). Cloud Run pulls from it with its own identity, without extra credentials, the images stay private, and they live in the same region as the services.
 
 ## Pipeline
 
 | Workflow | When | What |
 | --- | --- | --- |
-| [`ci.yml`](../../.github/workflows/ci.yml) | Every pull request and every push to `main` | Install, type-check, test, and check the documentation |
+| [`ci.yml`](../../.github/workflows/ci.yml) | Every pull request, and every push to `uat` or `main` | Install, type-check, test, and check the documentation |
 | [`images.yml`](../../.github/workflows/images.yml) | Every pull request | Builds the image of every service, to prove it builds |
-| [`images.yml`](../../.github/workflows/images.yml) | Every push to `main` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
+| [`images.yml`](../../.github/workflows/images.yml) | Every push to `uat` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
+| [`images.yml`](../../.github/workflows/images.yml) | Every push to `main` | Finds the images of the same code from uat and tags them with the new commit; builds only if they are missing ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)) |
+| [`enforce-source-branch.yml`](../../.github/workflows/enforce-source-branch.yml) | Every pull request into `main` | Fails unless the pull request comes from `uat` ([TR-PF-19](../requirements/technical/00-platform.md#tr-pf-19)) |
 
 GitHub authenticates to GCP with **Workload Identity Federation**: GitHub proves to Google which repository a run comes from, and Google hands out a short-lived token. No service account key is stored anywhere.
 
 ### Deploying (to follow)
 
-Once the Cloud Run services exist, deploying follows the principle "build once, deploy many" ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)): the image built on `main` goes to uat, and the very same image, by the same tag, goes to prod after approval. An image is never rebuilt for prod.
+Once the Cloud Run services exist, a push to `uat` deploys to the uat project, and a push to `main` deploys to the prod project. Deploying follows the principle "build once, deploy many" ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)): prod runs the very same images that ran on uat. An image is never rebuilt for prod.
+
+## Branches and environments
+
+Every change goes first to uat, then from uat to prod ([DEC-PF-14](../requirements/technical/00-platform.md#dec-pf-14)), as in the data repository.
+
+```mermaid
+flowchart LR
+  feature["feature branch"] -- "pull request" --> uat["uat"]
+  uat -- "pull request, only from uat" --> main["main"]
+  uat -. deploys .-> uatenv["uat: immoscoop-dataplatform"]
+  main -. deploys .-> prodenv["prod: immoscoop-dataplatform-398214"]
+```
+
+| Branch | Receives | Deploys to |
+| --- | --- | --- |
+| a feature branch | your commits | nothing; its pull request is checked and its images are built |
+| `uat` | pull requests from feature branches | the uat project |
+| `main` | pull requests from `uat` only | the prod project |
+
+### Rules in GitHub
+
+The check "Verify source branch is uat" blocks a wrong pull request, but only GitHub's branch rules make it impossible to go around it. An admin of the repository sets them up once ([OP-PF-12](../requirements/technical/00-platform.md#op-pf-12)), under **Settings → Rules → Rulesets → New branch ruleset**:
+
+| Ruleset | Target branch | Rules |
+| --- | --- | --- |
+| `main` | `main` | Restrict deletions; block force pushes; require a pull request before merging, with allowed merge method **Merge** only; require status checks to pass: `Verify source branch is uat`, `check`, `image (identity)`, `image (catalogue)`, `image (registry)`, `image (query)` |
+| `uat` | `uat` | Restrict deletions; block force pushes; require a pull request before merging; require status checks to pass: `check`, `image (identity)`, `image (catalogue)`, `image (registry)`, `image (query)` |
+
+- **Merge, not squash, into `main`.** A squash would give `main` commits that `uat` does not have, and the next pull request from `uat` would show old changes again. Into `uat`, squash or merge are both fine.
+- **Required approvals** are your choice; once there is more than one person working on Data Hub, one approval on each ruleset is a sensible start.
+- **Default branch.** Set `uat` as the default branch (**Settings → General → Default branch**), so that new pull requests target `uat` by default.
+- **Bypass.** Leave the bypass list empty, so that the rules also hold for admins.
 
 ## One-time setup in GCP
 
