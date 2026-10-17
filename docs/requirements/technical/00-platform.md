@@ -124,7 +124,7 @@ The React components that render Lenses and Reports live in `packages/ui`, and a
 <a id="tr-pf-13"></a>
 ### TR-PF-13 · Infrastructure as code
 
-**Status:** Specified · **Realises:** [DEC-PF-09](#dec-pf-09), [DEC-PF-15](#dec-pf-15), [EC-SR-04](../functional/04-stacks-and-resources.md#ec-sr-04)
+**Status:** Implemented · **Realises:** [DEC-PF-09](#dec-pf-09), [DEC-PF-15](#dec-pf-15), [EC-SR-04](../functional/04-stacks-and-resources.md#ec-sr-04)
 
 All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucket, Secret Manager, service accounts and their roles, Cloud Scheduler) are defined in Terraform in `infra/`, per environment: uat and prod. Only what Terraform needs in order to run is created by hand, once ([GCP setup](../../architecture/gcp-setup.md)).
 
@@ -180,9 +180,23 @@ CI is one workflow that ends in one gate job, `ci`, which passes only when every
 <a id="tr-pf-21"></a>
 ### TR-PF-21 · Terraform runs in GitHub Actions, per environment
 
-**Status:** Proposed · **Realises:** [DEC-PF-16](#dec-pf-16), [NFR-SEC-04](../non-functional/security.md#nfr-sec-04)
+**Status:** Implemented · **Realises:** [DEC-PF-16](#dec-pf-16), [NFR-SEC-04](../non-functional/security.md#nfr-sec-04)
 
 A push to `uat` plans and applies the Terraform in `infra/` to the uat project; a push to `main` does the same for the prod project. The job runs in the GitHub environment of that project, authenticates with Workload Identity Federation as the `datahub-terraform` service account of that project, and keeps its state in that project's state bucket. Workload Identity Federation only lets a run on `uat` act as the uat identity and a run on `main` act as the prod identity.
+
+<a id="tr-pf-22"></a>
+### TR-PF-22 · Services log in to Postgres with their Google identity
+
+**Status:** Specified · **Realises:** [TR-PF-08](#tr-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+
+Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The schema of each service and its grants are created by that service's migrations ([TR-PF-09](#tr-pf-09)).
+
+<a id="tr-pf-23"></a>
+### TR-PF-23 · Secrets are created by Terraform and filled by a person
+
+**Status:** Specified · **Realises:** [DEC-PF-08](#dec-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+
+Terraform creates every secret in Secret Manager and gives exactly one service read access to it; the value is added by a person ([GCP setup](../../architecture/gcp-setup.md), step 8) and never passes through GitHub or the repository. A service reads a secret through the API when it needs it, so a secret without a value does not block a deployment.
 
 ## Open points
 

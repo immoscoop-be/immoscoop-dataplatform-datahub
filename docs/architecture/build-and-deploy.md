@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Build in place; pushing waits for the one-time [GCP setup](gcp-setup.md); deploying follows once the Terraform in `infra/` exists |
+| Status | Build, push and deploy in place, after the one-time [GCP setup](gcp-setup.md) |
 | Source of truth | The requirements in [Platform](../requirements/technical/00-platform.md); this page describes how to work with them |
 
 **In one sentence:** every service becomes its own Docker image, built by GitHub Actions from one shared Dockerfile, stored in Artifact Registry in GCP, and deployed to Cloud Run.
@@ -49,13 +49,15 @@ All of it is one workflow, [`ci.yml`](../../.github/workflows/ci.yml), with one 
 | image (*service*) | Every push to `uat` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
 | image (*service*) | Every push to `main` | Finds the images of the same code from uat and tags them with the new commit; builds only if they are missing ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)) |
 | Verify source branch is uat | Every pull request into `main` | Fails unless the pull request comes from `uat` ([TR-PF-19](../requirements/technical/00-platform.md#tr-pf-19)) |
-| **ci** | Always, last | Passes only when every job above passed; the source-branch job may be skipped, because it only runs on pull requests into `main`. **This is the only check the branch rules require.** |
+| Terraform format, validate and test | Every run | Checks the Terraform in [`infra/`](../../infra/README.md), and tests its logic against a mocked provider ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)) |
+| Terraform apply (uat or prod) | Every push to `uat` or `main`, after the images | Applies the Terraform to the project of that branch, with the images of exactly this code ([TR-PF-21](../requirements/technical/00-platform.md#tr-pf-21)) |
+| **ci** | Always, last | Passes only when every job above passed; the source-branch job and the Terraform apply may be skipped, because they only run on pull requests into `main` and on pushes. **This is the only check the branch rules require.** |
 
 GitHub authenticates to GCP with **Workload Identity Federation**: GitHub proves to Google which repository a run comes from, and Google hands out a short-lived token. No service account key is stored anywhere.
 
-### Deploying (to follow)
+### Deploying
 
-Once the Cloud Run services exist, a push to `uat` deploys to the uat project, and a push to `main` deploys to the prod project. Deploying follows the principle "build once, deploy many" ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)): prod runs the very same images that ran on uat. An image is never rebuilt for prod.
+Deploying is applying the Terraform: a push to `uat` deploys to the uat project, and a push to `main` deploys to the prod project. The Terraform sets every service to the image tagged with the tree hash of the code being applied. Deploying follows the principle "build once, deploy many" ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)): prod runs the very same images that ran on uat. An image is never rebuilt for prod.
 
 ## Branches and environments
 
@@ -100,4 +102,5 @@ Before GitHub can push images or apply Terraform, the projects need a one-time b
 
 1. Copy one of the folders under `services/`, and change the name in `package.json`, `src/app.ts` and the test.
 2. Add it to the `references` in the root `tsconfig.json`. The pipeline finds the new folder by itself and builds its image; the rules in GitHub stay as they are.
-3. Describe it in [`services/`](services/) and in the [service map](README.md#services).
+3. Add it to the Terraform: `local.services` in `infra/main.tf`, plus its roles ([infra/README.md](../../infra/README.md#adding-a-service)).
+4. Describe it in [`services/`](services/) and in the [service map](README.md#services).

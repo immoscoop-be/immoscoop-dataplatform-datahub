@@ -151,7 +151,7 @@ packages/
   server/         the common shape of every service: logs for Cloud Logging, health check, token check
   db/             Kysely setup and the migration runner
   ui/             React components shared by web and the MCP App
-infra/            Terraform, per environment (uat, prod), applied by GitHub Actions; not created yet
+infra/            Terraform, per environment (uat, prod), applied by GitHub Actions
 docs/
 scripts/          requirements.ts: checks the docs and builds the traceability matrix
 Dockerfile        one image per service (build argument SERVICE)

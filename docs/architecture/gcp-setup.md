@@ -196,8 +196,9 @@ Terraform creates the secrets in Secret Manager, but some values only a person c
 
 | Secret | Value | Where it comes from |
 | --- | --- | --- |
-| `dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts | dbt Cloud → Account settings → Service tokens. The Source Jobs are probably `324502` (prod) and `324451` (uat), to be confirmed ([OP-AR-01](../requirements/functional/01-artifact-registry.md#op-ar-01)) |
-| `google-oauth-client` | The client ID and secret of an OAuth client of type "Web application", for Sign in with Google | GCP console → Google Auth Platform, per project: branding with audience **Internal**, then a client. Its redirect URI is the login callback of identity, known once the domain names are chosen ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)) |
+| `datahub-dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts; one per environment | dbt Cloud → Account settings → Service tokens. The Source Jobs are probably `324502` (prod) and `324451` (uat), to be confirmed ([OP-AR-01](../requirements/functional/01-artifact-registry.md#op-ar-01)) |
+| `datahub-google-oauth-client` | The client ID and secret of an OAuth client of type "Web application", for Sign in with Google | GCP console → Google Auth Platform, per project: branding with audience **Internal**, then a client. Its redirect URI is the login callback of identity: `https://datahub-identity-<project number>.europe-west1.run.app/callback` (the Terraform output `identity_url`), until the domain names are chosen ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)) |
+| `datahub-token-signing-key` | The private key identity signs Access Tokens with | Not yet: once identity issues tokens, and the choice between Secret Manager and Cloud KMS is made ([OP-PF-03](../requirements/technical/00-platform.md#op-pf-03)) |
 
 ## 9. Google Workspace, by a Workspace admin
 
