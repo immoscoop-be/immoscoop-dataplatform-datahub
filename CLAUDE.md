@@ -12,9 +12,17 @@ Everything in this repository is in English: code, comments, documentation and c
 - Never renumber or reuse an ID. A requirement that is no longer wanted gets status `Withdrawn`.
 - Link every ID you mention to its anchor, for example `[FR-AR-05](functional/01-artifact-registry.md#fr-ar-05)`.
 - New files start from `docs/requirements/_templates/`.
-- `docs/requirements/traceability.md` is generated. Never edit it by hand: run `python3 scripts/requirements.py build`.
-- Run `python3 scripts/requirements.py check` before every commit that touches `docs/`; CI runs it on every pull request.
+- `docs/requirements/traceability.md` is generated. Never edit it by hand: run `pnpm docs:build`.
+- Run `pnpm docs:check` before every commit that touches `docs/`; CI runs it on every pull request.
 - Content migrated from Confluence is translated faithfully. Inconsistencies are not silently fixed: record them as an open point, marked as raised during the migration or later review.
+
+## Code
+
+- All code is TypeScript on Node 24, in one pnpm workspace: `packages/*` (shared), `services/*` (backend services), `apps/*` (web, mcp). ESM only.
+- Before every commit that touches code: `pnpm typecheck` and `pnpm test`. `pnpm check` runs those plus the documentation check, as CI does.
+- Every route is protected by the access token by default (`@datahub/auth`). Only mark a route public (`config: { public: true }`) when it must be reachable without login, such as a health check or the start of a login.
+- A new service starts as a copy of an existing one; follow `docs/architecture/build-and-deploy.md#adding-a-service`.
+- Scripts in `scripts/` are TypeScript that Node runs directly: Node built-ins only, and only type syntax that can be stripped (no enums, no namespaces).
 
 ## Commits
 

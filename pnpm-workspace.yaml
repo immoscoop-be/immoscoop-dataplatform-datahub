@@ -1,0 +1,10 @@
+packages:
+  - packages/*
+  - services/*
+  - apps/*
+
+# `pnpm deploy` copies workspace packages into a self-contained folder per service (see Dockerfile).
+injectWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - esbuild

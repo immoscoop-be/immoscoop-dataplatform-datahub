@@ -132,11 +132,11 @@ The matrix picks the trailers up from `git log`, including from squash merges.
 
 ## Tooling
 
-[`scripts/requirements.py`](../../scripts/requirements.py) uses only the Python standard library.
+[`scripts/requirements.ts`](../../scripts/requirements.ts) uses only Node built-ins, and Node 24 runs it directly: no build step and no dependencies.
 
 ```sh
-python3 scripts/requirements.py check   # validate IDs, statuses and links
-python3 scripts/requirements.py build   # regenerate docs/requirements/traceability.md
+pnpm docs:check   # validate IDs, statuses and links (node scripts/requirements.ts check)
+pnpm docs:build   # regenerate docs/requirements/traceability.md (node scripts/requirements.ts build)
 ```
 
 `check` fails on a duplicate ID, an anchor that does not match its ID, an unknown status, a broken link or anchor, and a mention of an ID that does not exist. It runs in CI on every pull request. Run `build` after changing requirements or after commits with trailers. Never edit `traceability.md` by hand.

@@ -22,6 +22,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-08"></a>**DEC-PF-08** · Every service runs under its own GCP service account, with only the permissions its responsibility needs.
 - <a id="dec-pf-09"></a>**DEC-PF-09** · Tooling: Node 24 LTS and TypeScript in strict mode; Fastify for HTTP; Kysely for Postgres; zod for schemas; jose for tokens; the official MCP TypeScript SDK; Vitest for tests; Terraform for infrastructure. Node moves to the next LTS release once it is available. These build on [DEC-DH-53](../../overview/data-hub.md#dec-dh-53) to [DEC-DH-55](../../overview/data-hub.md#dec-dh-55).
 - <a id="dec-pf-10"></a>**DEC-PF-10** · All services and applications of Data Hub are publicly reachable. The protection comes from the login and the token check in every service, not from the network, so that the browser, Excel and Claude can reach Data Hub from anywhere. Claude in particular calls MCP servers from Anthropic's servers on the internet, so an internal-only mcp would be unreachable for it. This answers [OP-PF-04](#op-pf-04).
+- <a id="dec-pf-11"></a>**DEC-PF-11** · The container images of the services are stored in Artifact Registry in GCP, not on Docker Hub: Cloud Run pulls from it with its own identity, without extra credentials, the images stay private, and they live in the same region as the services. The note in the [Artifact registry](../functional/01-artifact-registry.md) domain already assumed this.
 
 ## Requirements
 
@@ -42,7 +43,7 @@ After a successful login, identity issues an access token: a JWT signed with an 
 <a id="tr-pf-03"></a>
 ### TR-PF-03 · Every service validates the token itself
 
-**Status:** Specified · **Realises:** [DEC-PF-02](#dec-pf-02), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
+**Status:** Implemented · **Realises:** [DEC-PF-02](#dec-pf-02), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
 
 Every request to every service is checked by the shared package `@datahub/auth`: the signature against the public keys of identity (cached), the issuer, the audience and the expiry. A request without a valid token gets `401`. No service implements its own check.
 
@@ -129,6 +130,27 @@ All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucke
 
 Every service and application runs on Cloud Run with public ingress. Every endpoint requires a valid access token ([TR-PF-03](#tr-pf-03)), except the endpoints that start a login. Endpoints for work that no user started accept only the service accounts of Data Hub ([TR-PF-05](#tr-pf-05)).
 
+<a id="tr-pf-15"></a>
+### TR-PF-15 · One image per service, from one Dockerfile
+
+**Status:** Implemented · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-PF-11](#dec-pf-11)
+
+One Dockerfile builds the image of every service, chosen with the build argument `SERVICE`. It builds the workspace, then copies only that service and its production dependencies onto `node:24-slim`, and runs as a non-root user. Every image is tagged with the full git commit SHA. See [Build and deploy](../../architecture/build-and-deploy.md).
+
+<a id="tr-pf-16"></a>
+### TR-PF-16 · Images are built by GitHub Actions, without stored keys
+
+**Status:** Implemented · **Realises:** [DEC-PF-11](#dec-pf-11), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+
+GitHub Actions builds the image of every service on every pull request, and pushes them to Artifact Registry on every push to `main`. It authenticates to GCP with Workload Identity Federation, as a service account that can only push images; no service account key is stored.
+
+<a id="tr-pf-17"></a>
+### TR-PF-17 · Build once, deploy many
+
+**Status:** Proposed · **Realises:** [DEC-PF-11](#dec-pf-11)
+
+An image is built once, on `main`. uat runs that image by its commit tag, and prod runs the very same image after approval. An image is never rebuilt for another environment.
+
 ## Open points
 
 - [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an artifact set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
@@ -139,6 +161,9 @@ Every service and application runs on Cloud Run with public ingress. Every endpo
 - [ ] <a id="op-pf-06"></a>**OP-PF-06** · Decide where the message centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../functional/07-log-and-notifications.md) is specified.
 - [ ] <a id="op-pf-07"></a>**OP-PF-07** · Decide how the web app is served: static files from a small Cloud Run service, or from Cloud Storage behind a load balancer.
 - [ ] <a id="op-pf-08"></a>**OP-PF-08** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
+- [ ] <a id="op-pf-09"></a>**OP-PF-09** · Choose the GCP project or projects and the region of Data Hub, per environment, including where the Artifact Registry repository lives. [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) rules out a separate project for Data Hub; the stacks are in `immoscoop-dataplatform-398214`.
+- [ ] <a id="op-pf-10"></a>**OP-PF-10** · Do the one-time GCP setup for the image pipeline: the Artifact Registry repository, the CI service account and Workload Identity Federation, and the GitHub repository variables ([Build and deploy](../../architecture/build-and-deploy.md#one-time-setup-in-gcp)).
+- [ ] <a id="op-pf-11"></a>**OP-PF-11** · Decide where this repository lives for good: under the personal account `maximethenextimmoscoopbe`, or in the organisation `immoscoop-be` next to the data repository. The trust condition of Workload Identity Federation names the repository, so this is best settled before [OP-PF-10](#op-pf-10).
 
 ## Builds on
 

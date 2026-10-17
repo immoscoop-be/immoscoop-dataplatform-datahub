@@ -42,6 +42,6 @@ docs/
 - Everything is in English, as is the app itself.
 - Every requirement, edge case, decision and open point has a stable ID, such as `FR-AR-05`, and an anchor to link to.
 - Commits name what they implement with `Implements:` and `Refs:` trailers.
-- `python3 scripts/requirements.py check` validates IDs and links; `build` regenerates the traceability matrix.
+- `pnpm docs:check` validates IDs and links; `pnpm docs:build` regenerates the traceability matrix.
 
 The details are in the [requirements conventions](requirements/README.md).

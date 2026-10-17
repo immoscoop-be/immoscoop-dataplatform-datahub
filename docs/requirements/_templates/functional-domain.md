@@ -2,7 +2,7 @@
 Template for a functional domain file in docs/requirements/functional/.
 Copy it to NN-<domain-name>.md, replace every <placeholder>, and remove the sections that stay empty.
 IDs: FR-XX-NN for requirements, EC-XX-NN for edge cases, DEC-XX-NN for decisions, OP-XX-NN for open points,
-where XX is the domain code from docs/requirements/README.md. Run `python3 scripts/requirements.py check` afterwards.
+where XX is the domain code from docs/requirements/README.md. Run `pnpm docs:check` afterwards.
 This folder is skipped by the checker.
 -->
 

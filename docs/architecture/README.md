@@ -148,12 +148,17 @@ services/
 packages/
   auth/           token validation shared by every service and app
   contracts/      zod schemas and the generated OpenAPI per service
+  server/         the common shape of every service: logs for Cloud Logging, health check, token check
   db/             Kysely setup and the migration runner
   ui/             React components shared by web and the MCP App
-infra/            Terraform, per environment (uat, prod)
+infra/            Terraform, per environment (uat, prod); not created yet
 docs/
-scripts/
+scripts/          requirements.ts: checks the docs and builds the traceability matrix
+Dockerfile        one image per service (build argument SERVICE)
+.github/workflows ci.yml (checks) and images.yml (images per service)
 ```
+
+`packages/db` and `packages/ui` are created when the first service needs them. How the images are built and where they go is in [Build and deploy](build-and-deploy.md).
 
 Each service keeps its migrations in `services/<name>/migrations` ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09)).
 
