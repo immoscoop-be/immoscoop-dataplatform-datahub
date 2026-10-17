@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 23 (5 proposed, 11 specified, 7 implemented) | – | 16 | 14 (11 open, 3 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 24 (5 proposed, 12 specified, 7 implemented) | – | 17 | 14 (10 open, 4 done) |
 
 ## Functional requirements
 
@@ -173,7 +173,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Realises | Commits |
 | --- | --- | --- | --- | --- |
 | [TR-PF-01](technical/00-platform.md#tr-pf-01) | Services and runtime | Specified | [DEC-PF-01](technical/00-platform.md#dec-pf-01), [DEC-DH-53](../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../overview/data-hub.md#dec-dh-54) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17<br>[195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
-| [TR-PF-02](technical/00-platform.md#tr-pf-02) | identity issues short-lived Access Tokens | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [FR-UM-03](functional/02-user-management.md#fr-um-03), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-08](functional/02-user-management.md#fr-um-08) | – |
+| [TR-PF-02](technical/00-platform.md#tr-pf-02) | identity issues short-lived Access Tokens | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [FR-UM-03](functional/02-user-management.md#fr-um-03), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-08](functional/02-user-management.md#fr-um-08) | [73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
 | [TR-PF-03](technical/00-platform.md#tr-pf-03) | Every service validates the token itself | Implemented | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) implements, 2026-10-17 |
 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | Every service authorises itself | Specified | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | – |
 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | Calls between services | Proposed | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | – |
@@ -195,6 +195,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-21](technical/00-platform.md#tr-pf-21) | Terraform runs in GitHub Actions, per environment | Implemented | [DEC-PF-16](technical/00-platform.md#dec-pf-16), [NFR-SEC-04](non-functional/security.md#nfr-sec-04) | [08243a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/08243a27d27e1cfffecc8d8b80f4f59cfc8243a9) refs, 2026-10-17<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) implements, 2026-10-17 |
 | [TR-PF-22](technical/00-platform.md#tr-pf-22) | Services log in to Postgres with their Google identity | Specified | [TR-PF-08](technical/00-platform.md#tr-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-23](technical/00-platform.md#tr-pf-23) | Secrets are created by Terraform and filled by a person | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
+| [TR-PF-24](technical/00-platform.md#tr-pf-24) | The signing key of identity | Specified | [DEC-PF-17](technical/00-platform.md#dec-pf-17), [TR-PF-02](technical/00-platform.md#tr-pf-02), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
 
 ## Non-functional requirements
 
@@ -203,6 +204,6 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Applies to | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
 | [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [DEC-PF-10](technical/00-platform.md#dec-pf-10) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-PF-14](technical/00-platform.md#tr-pf-14) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
-| [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | Least privilege per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08) | [TR-PF-11](technical/00-platform.md#tr-pf-11), [TR-PF-16](technical/00-platform.md#tr-pf-16), [TR-PF-22](technical/00-platform.md#tr-pf-22), [TR-PF-23](technical/00-platform.md#tr-pf-23) | – |
+| [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | Least privilege per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08) | [TR-PF-11](technical/00-platform.md#tr-pf-11), [TR-PF-16](technical/00-platform.md#tr-pf-16), [TR-PF-22](technical/00-platform.md#tr-pf-22), [TR-PF-23](technical/00-platform.md#tr-pf-23), [TR-PF-24](technical/00-platform.md#tr-pf-24) | – |
 | [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | Lost access takes effect quickly | Proposed | [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10) | – | – |
 | [NFR-SEC-04](non-functional/security.md#nfr-sec-04) | Only main can change prod | Specified | [DEC-PF-14](technical/00-platform.md#dec-pf-14), [DEC-PF-16](technical/00-platform.md#dec-pf-16) | [TR-PF-21](technical/00-platform.md#tr-pf-21) | – |
