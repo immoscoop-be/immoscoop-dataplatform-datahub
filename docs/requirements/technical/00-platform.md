@@ -28,6 +28,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-14"></a>**DEC-PF-14** · Every change goes first to uat, then from uat to prod. Work lands in the branch `uat` through a pull request; the branch `main`, which is prod, only receives merges from `uat`. The same strategy as the data repository.
 - <a id="dec-pf-15"></a>**DEC-PF-15** · The infrastructure of Data Hub is defined in Terraform in this repository, in `infra/`. There is no other Terraform for these projects, and Data Hub keeps its own.
 - <a id="dec-pf-16"></a>**DEC-PF-16** · GitHub Actions applies the Terraform: a push to `uat` applies it to uat, a merge into `main` applies it to prod. Nobody applies it from their own machine. Only the one-time bootstrap that makes this possible is run by hand ([GCP setup](../../architecture/gcp-setup.md)).
+- <a id="dec-pf-17"></a>**DEC-PF-17** · The private key that signs Access Tokens lives in Cloud KMS: it is created there, never leaves it, and nobody can read it, not even a project Owner. Only identity may sign with it. It is rotated once a year, and immediately on any suspicion of misuse.
 
 ## Requirements
 
@@ -43,7 +44,7 @@ Every backend service and client application is a TypeScript Node.js application
 
 **Status:** Specified · **Realises:** [DEC-PF-02](#dec-pf-02), [FR-UM-03](../functional/02-user-management.md#fr-um-03), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-08](../functional/02-user-management.md#fr-um-08)
 
-After a successful login, identity issues an Access Token: a JWT signed with an asymmetric key, valid for 15 minutes. It carries the fixed Google ID of the User, email, name, the Groups of the User (by their fixed Google ID) and the User's roles. identity publishes its public keys at a JWKS endpoint.
+After a successful login, identity issues an Access Token: a JWT signed with an asymmetric key in Cloud KMS ([TR-PF-24](#tr-pf-24)), valid for 15 minutes. It carries the fixed Google ID of the User, email, name, the Groups of the User (by their fixed Google ID) and the User's roles. identity publishes its public keys at a JWKS endpoint.
 
 <a id="tr-pf-03"></a>
 ### TR-PF-03 · Every service validates the token itself
@@ -198,11 +199,20 @@ Every service that keeps data logs in to Cloud SQL as its own service account, t
 
 Terraform creates every secret in Secret Manager and gives exactly one service read access to it; the value is added by a person ([GCP setup](../../architecture/gcp-setup.md), step 8) and never passes through GitHub or the repository. A service reads a secret through the API when it needs it, so a secret without a value does not block a deployment.
 
+<a id="tr-pf-24"></a>
+### TR-PF-24 · The signing key of identity
+
+**Status:** Specified · **Realises:** [DEC-PF-17](#dec-pf-17), [TR-PF-02](#tr-pf-02), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+
+Terraform creates the key in each environment: key ring `datahub`, key `access-token`, algorithm ES256 (EC P-256 with SHA-256), the only algorithm `@datahub/auth` accepts. Only the service account of identity may sign with it; the Terraform identity manages the key but cannot sign. In prod, Terraform refuses to destroy the key.
+
+identity signs with the newest enabled version of the key, and publishes the public key of every enabled version at its JWKS endpoint. A rotation adds a version; the previous one is disabled a day later, when every token it signed has long expired. Disabling a version at once, on suspicion, makes every token it signed invalid: Users sign in again. The steps are in [Rotating the signing key](../../../infra/README.md#rotating-the-signing-key).
+
 ## Open points
 
 - [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
 - [ ] <a id="op-pf-02"></a>**OP-PF-02** · Decide how the web app renews its Access Token (a refresh token in an http-only cookie, or a new login through Google), and how often identity reads the Groups again on renewal ([FR-UM-06](../functional/02-user-management.md#fr-um-06)).
-- [ ] <a id="op-pf-03"></a>**OP-PF-03** · Decide where the signing key of identity lives (Cloud KMS or Secret Manager) and how it is rotated.
+- [x] <a id="op-pf-03"></a>**OP-PF-03** · Decide where the signing key of identity lives (Cloud KMS or Secret Manager) and how it is rotated. *Decided on 2026-10-17: Cloud KMS, rotated once a year and immediately on any suspicion ([DEC-PF-17](#dec-pf-17), [TR-PF-24](#tr-pf-24)).*
 - [x] <a id="op-pf-04"></a>**OP-PF-04** · Decide the ingress of the services: public endpoints protected by their own token checks, or internal ingress under internal-immoscoop.be ([OP-DH-35](../../overview/open-themes.md#op-dh-35)), and in that case how Claude reaches mcp. *Decided on 2026-10-17: public ([DEC-PF-10](#dec-pf-10)).*
 - [ ] <a id="op-pf-05"></a>**OP-PF-05** · Decide how registry hands its Changes to catalogue ([FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12)): a direct call per Artifact Set, or a Pub/Sub topic.
 - [ ] <a id="op-pf-06"></a>**OP-PF-06** · Decide where the Message Centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../functional/07-log-and-notifications.md) is specified.

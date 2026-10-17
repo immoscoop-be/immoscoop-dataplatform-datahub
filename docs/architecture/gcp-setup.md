@@ -59,7 +59,7 @@ for PROJECT in "$PROD" "$UAT"; do
     cloudscheduler.googleapis.com storage.googleapis.com bigquery.googleapis.com \
     iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
     cloudresourcemanager.googleapis.com serviceusage.googleapis.com \
-    artifactregistry.googleapis.com cloudidentity.googleapis.com
+    artifactregistry.googleapis.com cloudidentity.googleapis.com cloudkms.googleapis.com
 done
 ```
 
@@ -94,6 +94,7 @@ for PROJECT in "$PROD" "$UAT"; do
     roles/cloudsql.admin \
     roles/storage.admin \
     roles/secretmanager.admin \
+    roles/cloudkms.admin \
     roles/cloudscheduler.admin; do
     gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" \
       --role="$ROLE" --condition=None --quiet > /dev/null
@@ -110,7 +111,8 @@ done
 | Project IAM Admin | Giving those service accounts their narrow roles, such as Cloud SQL Client |
 | Cloud SQL Admin | The Postgres instance, its databases and users |
 | Storage Admin | The bucket for the Artifacts |
-| Secret Manager Admin | The secrets: dbt Cloud token, signing key, OAuth client |
+| Secret Manager Admin | The secrets: dbt Cloud token, OAuth client |
+| Cloud KMS Admin | The key that signs Access Tokens ([TR-PF-24](../requirements/technical/00-platform.md#tr-pf-24)); managing the key does not allow signing with it |
 | Cloud Scheduler Admin | The scheduled jobs, such as the Synchronisation of Groups |
 
 ## 5. Image repository and CI service account, in the prod project
@@ -201,13 +203,12 @@ From the next push to `uat`, the images land in `europe-west1-docker.pkg.dev/imm
 
 **This step comes after the first Terraform run**, because Terraform creates the secrets these values go into. Until then, you can prepare them: create the dbt Cloud token and keep it somewhere safe (never in GitHub), check that both Source Jobs generate the docs ("Generate docs on run"), and set up the branding of Sign in with Google with audience **Internal** in both projects.
 
-Terraform creates the secrets in Secret Manager, but some values only a person can provide. Add them per environment once Terraform has created the secret, with `printf '%s' '<value>' | gcloud secrets versions add <secret> --project=<project> --data-file=-`.
+Terraform creates the secrets in Secret Manager, but some values only a person can provide. Add them per environment once Terraform has created the secret, with `printf '%s' '<value>' | gcloud secrets versions add <secret> --project=<project> --data-file=-`. The key that signs Access Tokens is not among them: Terraform creates it in Cloud KMS, and nobody ever sees it ([TR-PF-24](../requirements/technical/00-platform.md#tr-pf-24)).
 
 | Secret | Value | Where it comes from |
 | --- | --- | --- |
 | `datahub-dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts; one per environment | dbt Cloud → Account settings → Service tokens. The Source Jobs are probably `324502` (prod) and `324451` (uat), to be confirmed ([OP-AR-01](../requirements/functional/01-artifact-registry.md#op-ar-01)) |
 | `datahub-google-oauth-client` | The client ID and secret of an OAuth client of type "Web application", for Sign in with Google | GCP console → Google Auth Platform, per project: branding with audience **Internal**, then a client. Its redirect URI is the login callback of identity: `https://datahub-identity-<project number>.europe-west1.run.app/callback` (the Terraform output `identity_url`), until the domain names are chosen ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)) |
-| `datahub-token-signing-key` | The private key identity signs Access Tokens with | Not yet: once identity issues tokens, and the choice between Secret Manager and Cloud KMS is made ([OP-PF-03](../requirements/technical/00-platform.md#op-pf-03)) |
 
 ## 9. Google Workspace, by a Workspace admin
 

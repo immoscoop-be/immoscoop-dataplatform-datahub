@@ -14,7 +14,7 @@
 - Sign in with Google through OpenID Connect, only for the own Workspace domain: [FR-UM-01](../../requirements/functional/02-user-management.md#fr-um-01), [FR-UM-02](../../requirements/functional/02-user-management.md#fr-um-02), [FR-UM-03](../../requirements/functional/02-user-management.md#fr-um-03)
 - Groups from the Cloud Identity Groups API, nested groups included, and no other Google groups: [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04) to [FR-UM-06](../../requirements/functional/02-user-management.md#fr-um-06), [FR-UM-08](../../requirements/functional/02-user-management.md#fr-um-08)
 - Periodic Synchronisation of the members of all Groups: [FR-UM-07](../../requirements/functional/02-user-management.md#fr-um-07), [FR-UM-10](../../requirements/functional/02-user-management.md#fr-um-10)
-- Issuing Access Tokens and publishing the public keys: [TR-PF-02](../../requirements/technical/00-platform.md#tr-pf-02)
+- Issuing Access Tokens, signed with its key in Cloud KMS, and publishing the public keys: [TR-PF-02](../../requirements/technical/00-platform.md#tr-pf-02), [TR-PF-24](../../requirements/technical/00-platform.md#tr-pf-24)
 - OAuth authorisation server for Claude: [TR-PF-06](../../requirements/technical/00-platform.md#tr-pf-06)
 - Library Cards for Excel: issuing, revoking, renewing and exchanging them for Access Tokens: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)
 
@@ -39,8 +39,8 @@ Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Library
 
 ## Talks to
 
-Google Sign-In (OpenID Connect) and the Cloud Identity Groups API.
+Google Sign-In (OpenID Connect), the Cloud Identity Groups API, and Cloud KMS to sign Access Tokens.
 
 ## Permissions
 
-See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): the Groups Reader admin role in Workspace, and Cloud SQL client.
+See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): the Groups Reader admin role in Workspace, Cloud SQL client, and Cloud KMS Signer/Verifier on the signing key alone.

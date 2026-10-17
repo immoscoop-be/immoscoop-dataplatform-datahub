@@ -52,6 +52,7 @@ resource "google_cloud_run_v2_service" "service" {
   depends_on = [
     google_project_iam_member.database_client,
     google_project_iam_member.database_login,
+    google_kms_crypto_key_iam_member.identity_signs,
     google_secret_manager_secret_iam_member.reader,
     google_storage_bucket_iam_member.registry_artifacts,
   ]

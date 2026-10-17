@@ -35,7 +35,7 @@ locals {
   }
 
   service_env = {
-    identity  = local.database_env
+    identity  = merge(local.database_env, local.token_signing_env)
     catalogue = local.database_env
     registry  = merge(local.database_env, { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
     query     = {}
