@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 8 of Data Hub · code `CM` |
-| Status | To be described |
+| Status | To be specified |
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Checks en monitoring) |
 

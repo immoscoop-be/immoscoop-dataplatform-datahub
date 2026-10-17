@@ -16,7 +16,7 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [Collections](functional/03-collections.md) | 11 (11 specified) | 2 (2 proposed) | 7 | 5 (5 open) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 30 (30 specified) | 4 (4 proposed) | 21 | 9 (8 open, 1 done) |
 | [Resource card](functional/05-resource-card.md) | – | – | – | – |
-| [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 4 (4 open) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | – | – | – | – |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | – | – | – | – |
@@ -110,7 +110,7 @@ Regenerate it with `python3 scripts/requirements.py build`; the conventions are 
 | [FR-SR-25](functional/04-stacks-and-resources.md#fr-sr-25) | The preview shows a limited number of rows | Specified | SR-25 | – | – |
 | [FR-SR-26](functional/04-stacks-and-resources.md#fr-sr-26) | Free SQL via Claude, over visible resources only | Specified | SR-26 | – | – |
 | [FR-SR-27](functional/04-stacks-and-resources.md#fr-sr-27) | A byte limit and a user label on every query | Specified | SR-27 | – | – |
-| [FR-SR-28](functional/04-stacks-and-resources.md#fr-sr-28) | The owner and the data team supplement known behaviour | Specified | SR-28 | – | – |
+| [FR-SR-28](functional/04-stacks-and-resources.md#fr-sr-28) | The owner and the data team supplement the description | Specified | SR-28 | – | – |
 | [FR-SR-29](functional/04-stacks-and-resources.md#fr-sr-29) | React with a question, a remark or a signal | Specified | SR-29 | – | – |
 | [FR-SR-30](functional/04-stacks-and-resources.md#fr-sr-30) | A signal can become an anomaly | Specified | SR-30 | – | – |
 

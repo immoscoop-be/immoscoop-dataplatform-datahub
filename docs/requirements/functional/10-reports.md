@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 10 of Data Hub · code `RP` |
-| Status | To be described |
+| Status | To be specified |
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet |
 

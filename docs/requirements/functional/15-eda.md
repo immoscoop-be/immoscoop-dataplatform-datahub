@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 15 of Data Hub · code `ED` |
-| Status | To be described |
+| Status | To be specified |
 | Source of truth | This file |
 | Origin | Proposed as a new domain in [OP-MR-01](06-maturity-and-release.md#op-mr-01); not yet in the domain overview on Confluence |
 

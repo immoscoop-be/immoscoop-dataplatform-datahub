@@ -4,7 +4,7 @@ This folder holds every requirement for Data Hub: what it must do (functional), 
 
 | Folder | What it holds | State |
 | --- | --- | --- |
-| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, ten to be described |
+| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, ten still to be specified |
 | [`technical/`](technical/README.md) | How each functional requirement is realised | Skeleton |
 | [`non-functional/`](non-functional/README.md) | Security, performance, cost, localisation and other qualities | Skeleton |
 | [`traceability.md`](traceability.md) | Generated matrix: requirement → status → realised by → commits | Generated, never edit by hand |

@@ -23,7 +23,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-03"></a>**DEC-SR-03** · Only a data admin registers resources: a member of the role group of the data team from [User management](02-user-management.md). At registration, the data admin chooses the collection straight away.
 - <a id="dec-sr-04"></a>**DEC-SR-04** · A resource has two identities: a key, the full name `project.dataset.table`, and a display name, readable and unique, that the data admin chooses.
 - <a id="dec-sr-05"></a>**DEC-SR-05** · At registration, the level is derived, and it is at most 2. A new resource is not yet published, and therefore only visible to data and to the owner of its collection.
-- <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on publication, not on the level. Publishing is a deliberate switch that the owner turns on. That way, a resource does not disappear for those who use it every time the level briefly drops.
+- <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on publication, not on the level. Publishing is a deliberate switch that the owner flips. That way, a resource does not disappear for those who use it every time the level briefly drops.
 - <a id="dec-sr-07"></a>**DEC-SR-07** · The first publication is only possible from Described, and is at once the first confirmation: with it, the resource rises to Confirmed.
 - <a id="dec-sr-08"></a>**DEC-SR-08** · A published resource stays published, even if its level drops afterwards. The owner then gets an alert, the lower level is visible on the resource card and on every lens and report built on it, and the owner confirms again without touching the publication.
 - <a id="dec-sr-09"></a>**DEC-SR-09** · The log works with fixed log IDs from a catalogue. Every log entry refers to a log ID, with the extra parameters in a JSON field. The text is only built at display time from the template and the parameters, so that the log stays compact and filterable.
@@ -292,7 +292,7 @@ Via Claude, a user can have free SQL executed over the resources they may see. A
 Every query gets a limit on scanned bytes and a label with the user. Executed queries are not stored in Data Hub in v1.
 
 <a id="fr-sr-28"></a>
-### FR-SR-28 · The owner and the data team supplement known behaviour
+### FR-SR-28 · The owner and the data team supplement the description
 
 **Status:** Specified · **Confluence:** SR-28
 

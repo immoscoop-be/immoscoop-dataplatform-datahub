@@ -12,7 +12,7 @@
 
 **In one sentence:** Data Hub is the library of our data: the one entry point for business colleagues and their Claude, next to and together with the chart server. All data in the company runs through Data Hub.
 
-*Built up from conversations with Max on 2026-10-07, and later on documentation in ptditt. This is a direction, not a design. Earlier we spoke of "the data server", "the data tool" and "Data-Desk"; since 2026-10-12 it has been called Data Hub, next to Domain Hub. Whether Data Hub stays a separate application or merges with Domain Hub is still open. The functional elaboration per domain is in [Functional domains](../requirements/functional/README.md).*
+*Built up from conversations with Max, on 2026-10-07 and later, about documentation in ptditt. This is a direction, not a design. Earlier we spoke of "the data server", "the data tool" and "Data-Desk"; since 2026-10-12 it has been called Data Hub, next to Domain Hub. Whether Data Hub stays a separate application or merges with Domain Hub is still open. The functional elaboration per domain is in [Functional domains](../requirements/functional/README.md).*
 
 - <a id="dec-dh-01"></a>**DEC-DH-01** · The name is Data Hub, next to Domain Hub: Domain Hub for the meaning, Data Hub for the data. The image behind it is a library, with the data team as librarian and the stacks as shelves.
 - <a id="dec-dh-02"></a>**DEC-DH-02** · The app is entirely in English: the interface, the names and the texts of the log. The documentation on Confluence stays in Dutch.
@@ -83,7 +83,7 @@ Data Hub offers three kinds of assets, which build on each other: the resource f
 
 ### The stacks
 
-- <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` comes a dataset with the working name `dbt_prod_stacks`: the stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one stack; because resources are registered with their full name, more can be added later.
+- <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one stack; because resources are registered with their full name, more can be added later.
 - <a id="dec-dh-07"></a>**DEC-DH-07** · The registration in Data Hub is the index. Putting a view in the stacks is necessary, but not sufficient: only when a data admin registers it, with a display name and a collection, is it a resource. This replaces the earlier decision "the stacks are the index". Worked out in [Stacks and resources](../requirements/functional/04-stacks-and-resources.md).
 - <a id="dec-dh-08"></a>**DEC-DH-08** · The service account of Data Hub only has access to the stacks. The views in the stacks are authorized views onto the other datasets, so that the account cannot reach anything else.
 
