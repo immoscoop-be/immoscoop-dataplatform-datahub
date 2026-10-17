@@ -190,6 +190,8 @@ From the next push to `uat`, the images land in `europe-west1-docker.pkg.dev/imm
 
 ## 8. Values Terraform cannot know
 
+**This step comes after the first Terraform run**, because Terraform creates the secrets these values go into. Until then, you can prepare them: create the dbt Cloud token and keep it somewhere safe (never in GitHub), check that both Source Jobs generate the docs ("Generate docs on run"), and set up the branding of Sign in with Google with audience **Internal** in both projects.
+
 Terraform creates the secrets in Secret Manager, but some values only a person can provide. Add them per environment once Terraform has created the secret, with `printf '%s' '<value>' | gcloud secrets versions add <secret> --project=<project> --data-file=-`.
 
 | Secret | Value | Where it comes from |
