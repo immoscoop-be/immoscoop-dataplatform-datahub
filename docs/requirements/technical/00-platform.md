@@ -26,6 +26,8 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-12"></a>**DEC-PF-12** · The repository lives in the organisation `immoscoop-be`, next to the data repository, as `immoscoop-be/immoscoop-dataplatform-datahub`. It was transferred there from a personal account on 2026-10-17, with its full history; the old address redirects. This answers [OP-PF-11](#op-pf-11).
 - <a id="dec-pf-13"></a>**DEC-PF-13** · Each environment runs in the existing GCP project of the data platform for that environment: prod in `immoscoop-dataplatform-398214`, uat in `immoscoop-dataplatform`, both in the region `europe-west1`, where all their BigQuery data lives. Each environment has its own Cloud SQL instance, service accounts, bucket and Cloud Run services, and reads the Stacks of its own project. This answers [OP-PF-09](#op-pf-09) for the projects and the region.
 - <a id="dec-pf-14"></a>**DEC-PF-14** · Every change goes first to uat, then from uat to prod. Work lands in the branch `uat` through a pull request; the branch `main`, which is prod, only receives merges from `uat`. The same strategy as the data repository.
+- <a id="dec-pf-15"></a>**DEC-PF-15** · The infrastructure of Data Hub is defined in Terraform in this repository, in `infra/`. There is no other Terraform for these projects, and Data Hub keeps its own.
+- <a id="dec-pf-16"></a>**DEC-PF-16** · GitHub Actions applies the Terraform: a push to `uat` applies it to uat, a merge into `main` applies it to prod. Nobody applies it from their own machine. Only the one-time bootstrap that makes this possible is run by hand ([GCP setup](../../architecture/gcp-setup.md)).
 
 ## Requirements
 
@@ -122,9 +124,9 @@ The React components that render Lenses and Reports live in `packages/ui`, and a
 <a id="tr-pf-13"></a>
 ### TR-PF-13 · Infrastructure as code
 
-**Status:** Proposed · **Realises:** [DEC-PF-09](#dec-pf-09), [EC-SR-04](../functional/04-stacks-and-resources.md#ec-sr-04)
+**Status:** Specified · **Realises:** [DEC-PF-09](#dec-pf-09), [DEC-PF-15](#dec-pf-15), [EC-SR-04](../functional/04-stacks-and-resources.md#ec-sr-04)
 
-All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucket, Secret Manager, service accounts and their roles, Cloud Scheduler) are defined in Terraform in `infra/`, per environment: uat and prod.
+All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucket, Secret Manager, service accounts and their roles, Cloud Scheduler) are defined in Terraform in `infra/`, per environment: uat and prod. Only what Terraform needs in order to run is created by hand, once ([GCP setup](../../architecture/gcp-setup.md)).
 
 <a id="tr-pf-14"></a>
 ### TR-PF-14 · Public ingress, protected by the token checks
@@ -175,6 +177,13 @@ A pull request into `main` fails the job "Verify source branch is uat", and ther
 
 CI is one workflow that ends in one gate job, `ci`, which passes only when every other job passed. The branch rules in GitHub require only `ci`. The services to build are found from the folders under `services/`, so adding a service or a job changes neither the workflow's list nor the settings in GitHub.
 
+<a id="tr-pf-21"></a>
+### TR-PF-21 · Terraform runs in GitHub Actions, per environment
+
+**Status:** Proposed · **Realises:** [DEC-PF-16](#dec-pf-16), [NFR-SEC-04](../non-functional/security.md#nfr-sec-04)
+
+A push to `uat` plans and applies the Terraform in `infra/` to the uat project; a push to `main` does the same for the prod project. The job runs in the GitHub environment of that project, authenticates with Workload Identity Federation as the `datahub-terraform` service account of that project, and keeps its state in that project's state bucket. Workload Identity Federation only lets a run on `uat` act as the uat identity and a run on `main` act as the prod identity.
+
 ## Open points
 
 - [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
@@ -186,9 +195,11 @@ CI is one workflow that ends in one gate job, `ci`, which passes only when every
 - [ ] <a id="op-pf-07"></a>**OP-PF-07** · Decide how the web app is served: static files from a small Cloud Run service, or from Cloud Storage behind a load balancer.
 - [ ] <a id="op-pf-08"></a>**OP-PF-08** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
 - [x] <a id="op-pf-09"></a>**OP-PF-09** · Choose the GCP project or projects and the region of Data Hub, per environment, including where the Artifact Registry repository lives. [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) rules out a separate project for Data Hub; the Stacks are in `immoscoop-dataplatform-398214`. *Decided on 2026-10-17: prod in `immoscoop-dataplatform-398214`, uat in `immoscoop-dataplatform`, both in `europe-west1` ([DEC-PF-13](#dec-pf-13)); where the image repository lives is proposed in [TR-PF-18](#tr-pf-18).*
-- [ ] <a id="op-pf-10"></a>**OP-PF-10** · Do the one-time GCP setup for the image pipeline: the Artifact Registry repository, the CI service account and Workload Identity Federation, and the GitHub repository variables ([Build and deploy](../../architecture/build-and-deploy.md#one-time-setup-in-gcp)).
+- [ ] <a id="op-pf-10"></a>**OP-PF-10** · Run the one-time bootstrap in both projects and set up the GitHub environments and variables, as described in [GCP setup](../../architecture/gcp-setup.md).
 - [x] <a id="op-pf-11"></a>**OP-PF-11** · Decide where this repository lives for good: under the personal account `maximethenextimmoscoopbe`, or in the organisation `immoscoop-be` next to the data repository. The trust condition of Workload Identity Federation names the repository, so this is best settled before [OP-PF-10](#op-pf-10). *Decided on 2026-10-17: `immoscoop-be` ([DEC-PF-12](#dec-pf-12)).*
 - [ ] <a id="op-pf-12"></a>**OP-PF-12** · Set up the branch rules in GitHub: rulesets for `main` and `uat`, the required checks, and `uat` as the default branch ([Build and deploy](../../architecture/build-and-deploy.md#rules-in-github)).
+- [ ] <a id="op-pf-13"></a>**OP-PF-13** · Decide whether pull requests show a Terraform plan before merging. That needs a separate, read-only identity that pull requests may use, because the Terraform identities only trust `uat` and `main`.
+- [ ] <a id="op-pf-14"></a>**OP-PF-14** · Decide who gives query its read access on the Stacks: Terraform, which then needs rights on the Stacks dataset, or dbt, which creates that dataset.
 
 ## Builds on
 

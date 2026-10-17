@@ -151,7 +151,7 @@ packages/
   server/         the common shape of every service: logs for Cloud Logging, health check, token check
   db/             Kysely setup and the migration runner
   ui/             React components shared by web and the MCP App
-infra/            Terraform, per environment (uat, prod); not created yet
+infra/            Terraform, per environment (uat, prod), applied by GitHub Actions; not created yet
 docs/
 scripts/          requirements.ts: checks the docs and builds the traceability matrix
 Dockerfile        one image per service (build argument SERVICE)
@@ -183,7 +183,7 @@ Two environments, each in the existing GCP project of the data platform for that
 
 Every change goes to uat first; `main` only receives merges from `uat` ([DEC-PF-14](../requirements/technical/00-platform.md#dec-pf-14), [Branches and environments](build-and-deploy.md#branches-and-environments)).
 
-The images are built once and live in one repository in the prod project, which uat may read too ([TR-PF-18](../requirements/technical/00-platform.md#tr-pf-18)).
+The images are built once and live in one repository in the prod project, which uat may read too ([TR-PF-18](../requirements/technical/00-platform.md#tr-pf-18)). The infrastructure is Terraform, applied by GitHub Actions from the branch of each environment ([DEC-PF-16](../requirements/technical/00-platform.md#dec-pf-16)); the one-time bootstrap is in [GCP setup](gcp-setup.md).
 
 ## Open points
 

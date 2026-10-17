@@ -25,6 +25,11 @@ Everything in this repository is in English: code, comments, documentation and c
 - A new service starts as a copy of an existing one; follow `docs/architecture/build-and-deploy.md#adding-a-service`.
 - Scripts in `scripts/` are TypeScript that Node runs directly: Node built-ins only, and only type syntax that can be stripped (no enums, no namespaces).
 
+## Infrastructure
+
+- All GCP resources of Data Hub are Terraform in `infra/`, applied by GitHub Actions: `uat` applies to the uat project, `main` to the prod project. Never apply Terraform or change resources by hand.
+- The only manual steps are the one-time bootstrap in `docs/architecture/gcp-setup.md`; keep that file in step when the bootstrap changes.
+
 ## Branches
 
 - Every change goes first to `uat`, then from `uat` to `main` (prod). Work happens on a feature branch, with a pull request into `uat`.

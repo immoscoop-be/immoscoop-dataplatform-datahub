@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Status | Build in place; pushing waits for the one-time GCP setup below; deploying follows once the Cloud Run services exist |
+| Status | Build in place; pushing waits for the one-time [GCP setup](gcp-setup.md); deploying follows once the Terraform in `infra/` exists |
 | Source of truth | The requirements in [Platform](../requirements/technical/00-platform.md); this page describes how to work with them |
 
 **In one sentence:** every service becomes its own Docker image, built by GitHub Actions from one shared Dockerfile, stored in Artifact Registry in GCP, and deployed to Cloud Run.
@@ -94,53 +94,7 @@ The check `ci` blocks a pull request with failing tests, a broken image, or, int
 
 ## One-time setup in GCP
 
-Someone with admin rights on both GCP projects does this once, until the infrastructure moves to Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)). The image repository, the CI service account and Workload Identity Federation live in the prod project ([TR-PF-18](../requirements/technical/00-platform.md#tr-pf-18)); the uat project only gets permission to read the images. The trust condition names the repository, `immoscoop-be/immoscoop-dataplatform-datahub` ([DEC-PF-12](../requirements/technical/00-platform.md#dec-pf-12)); if it ever moves, the condition moves with it.
-
-```sh
-PROJECT_ID=immoscoop-dataplatform-398214   # prod: holds the image repository (DEC-PF-13, TR-PF-18)
-UAT_PROJECT_ID=immoscoop-dataplatform
-REGION=europe-west1
-REPO=immoscoop-be/immoscoop-dataplatform-datahub
-PROJECT_NUMBER=$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')
-
-# 1. The Docker repository for the images
-gcloud artifacts repositories create datahub --project="$PROJECT_ID" --location="$REGION" \
-  --repository-format=docker --description="Data Hub service images"
-
-# 2. The service account GitHub Actions acts as, allowed to push images and nothing else
-gcloud iam service-accounts create datahub-ci --project="$PROJECT_ID" --display-name="Data Hub CI"
-gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROJECT_ID" --location="$REGION" \
-  --member="serviceAccount:datahub-ci@$PROJECT_ID.iam.gserviceaccount.com" --role=roles/artifactregistry.writer
-
-# 3. Trust GitHub Actions runs of this repository, and only this repository
-gcloud iam workload-identity-pools create github --project="$PROJECT_ID" --location=global \
-  --display-name="GitHub Actions"
-gcloud iam workload-identity-pools providers create-oidc datahub --project="$PROJECT_ID" --location=global \
-  --workload-identity-pool=github --issuer-uri=https://token.actions.githubusercontent.com \
-  --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository" \
-  --attribute-condition="assertion.repository == '$REPO'"
-gcloud iam service-accounts add-iam-policy-binding "datahub-ci@$PROJECT_ID.iam.gserviceaccount.com" \
-  --project="$PROJECT_ID" --role=roles/iam.workloadIdentityUser \
-  --member="principalSet://iam.googleapis.com/projects/$PROJECT_NUMBER/locations/global/workloadIdentityPools/github/attribute.repository/$REPO"
-
-# 4. Let Cloud Run in uat pull the same images (its service agent reads the repository)
-UAT_PROJECT_NUMBER=$(gcloud projects describe "$UAT_PROJECT_ID" --format='value(projectNumber)')
-gcloud artifacts repositories add-iam-policy-binding datahub --project="$PROJECT_ID" --location="$REGION" \
-  --member="serviceAccount:service-$UAT_PROJECT_NUMBER@serverless-robot-prod.iam.gserviceaccount.com" \
-  --role=roles/artifactregistry.reader
-```
-
-Then set these **repository variables** in GitHub (Settings → Secrets and variables → Actions → Variables). They are not secrets: none of them grants access on its own.
-
-| Variable | Value |
-| --- | --- |
-| `GCP_PROJECT_ID` | `immoscoop-dataplatform-398214` |
-| `GCP_REGION` | `europe-west1` |
-| `GCP_ARTIFACT_REPOSITORY` | `datahub` |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `projects/<project number>/locations/global/workloadIdentityPools/github/providers/datahub` |
-| `GCP_CI_SERVICE_ACCOUNT` | `datahub-ci@immoscoop-dataplatform-398214.iam.gserviceaccount.com` |
-
-From the next push to `main` onwards, the images land in Artifact Registry as `europe-west1-docker.pkg.dev/immoscoop-dataplatform-398214/datahub/<service>:<commit SHA>`.
+Before GitHub can push images or apply Terraform, the projects need a one-time bootstrap from someone's own machine: the Terraform identities and state buckets, the image repository, and the branch-bound trust between GitHub and GCP. It is described step by step in [GCP setup](gcp-setup.md) ([OP-PF-10](../requirements/technical/00-platform.md#op-pf-10)). Everything after that is Terraform in `infra/`, applied by GitHub Actions ([DEC-PF-16](../requirements/technical/00-platform.md#dec-pf-16)).
 
 ## Adding a service
 

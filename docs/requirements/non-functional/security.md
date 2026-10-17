@@ -28,3 +28,10 @@ Every service runs under its own identity, with only the permissions its respons
 **Status:** Proposed · **Applies to:** [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10)
 
 A change in Workspace, such as a removed Group membership or a suspended account, takes effect in Data Hub within the lifetime of one Access Token (15 minutes), plus the time Groups are cached at identity ([OP-PF-02](../technical/00-platform.md#op-pf-02)).
+
+<a id="nfr-sec-04"></a>
+### NFR-SEC-04 · Only main can change prod
+
+**Status:** Specified · **Applies to:** [DEC-PF-14](../technical/00-platform.md#dec-pf-14), [DEC-PF-16](../technical/00-platform.md#dec-pf-16)
+
+Nothing outside the branch `main` can change the prod project: GitHub Actions may only act as the prod Terraform identity on `main`, and as the uat Terraform identity only on `uat`. A pull request or a feature branch cannot act as either, even with a changed workflow. No service account key exists that could bypass this.

@@ -15,6 +15,8 @@ This repository is the source of truth. The documentation started on Confluence,
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
 | How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
+| How code becomes running services, and the branches | [Build and deploy](architecture/build-and-deploy.md) |
+| How to set up the GCP projects, once | [GCP setup](architecture/gcp-setup.md) |
 
 ## Structure
 
@@ -24,6 +26,8 @@ docs/
 ├── definitions.md             Defined Terms, Levels, Dutch-to-English translation reference
 ├── architecture/
 │   ├── README.md              services, how users are validated, interfaces, data, repository layout
+│   ├── build-and-deploy.md    pipeline, images, branches and their rules
+│   ├── gcp-setup.md           the one-time bootstrap of the GCP projects
 │   └── services/              one page per service and application
 ├── overview/
 │   ├── data-hub.md            vision, the library metaphor, overarching decisions (DEC-DH)

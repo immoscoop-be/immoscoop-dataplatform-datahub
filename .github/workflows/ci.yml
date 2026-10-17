@@ -62,7 +62,7 @@ jobs:
   # One image per service (TR-PF-15).
   # - Pull requests: build every image, to prove it builds; nothing is pushed.
   # - Push to uat or main: push to Artifact Registry, once the GCP connection is configured as
-  #   repository variables (docs/architecture/build-and-deploy.md).
+  #   repository variables (docs/architecture/gcp-setup.md).
   # Images are tagged with the git tree hash of the code ("tree-<hash>") and with the commit SHA.
   # main only receives merges from uat, so its code has the same tree hash as what ran on uat:
   # the existing image gets the extra commit tag and is never rebuilt (TR-PF-17).
@@ -80,7 +80,7 @@ jobs:
     env:
       PUSH: ${{ github.event_name == 'push' && vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
       REGISTRY: ${{ vars.GCP_REGION }}-docker.pkg.dev
-      REPOSITORY: ${{ vars.GCP_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}
+      REPOSITORY: ${{ vars.GCP_IMAGES_PROJECT_ID }}/${{ vars.GCP_ARTIFACT_REPOSITORY }}
       SERVICE: ${{ matrix.service }}
     steps:
       - uses: actions/checkout@v7
