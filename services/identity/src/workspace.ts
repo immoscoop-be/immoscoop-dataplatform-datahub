@@ -1,5 +1,5 @@
 const DIRECTORY_USERS = 'https://admin.googleapis.com/admin/directory/v1/users/';
-const TRANSITIVE_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchTransitiveGroups';
+const DIRECT_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups';
 const METADATA_TOKEN = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 
 /** A Group of a User, as Workspace knows it. */
@@ -29,6 +29,34 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
     return request(url, { headers: { authorization: `Bearer ${await token([scope])}` } });
   }
 
+  /** The groups a User or group is a direct member of, over every page. */
+  async function directGroups(member: string): Promise<WorkspaceGroup[]> {
+    const groups: WorkspaceGroup[] = [];
+    let pageToken: string | undefined;
+    do {
+      const url = new URL(DIRECT_GROUPS);
+      url.searchParams.set('query', `member_key_id == '${member.replaceAll("'", '')}' && 'cloud_identity_googlegroup' in labels`);
+      if (pageToken) {
+        url.searchParams.set('pageToken', pageToken);
+      }
+      const response = await get(url, 'https://www.googleapis.com/auth/cloud-identity.groups.readonly');
+      if (!response.ok) {
+        throw await failure('Workspace did not return the groups', response);
+      }
+      const page = (await response.json()) as {
+        memberships?: { group?: string; groupKey?: { id?: string } }[];
+        nextPageToken?: string;
+      };
+      for (const membership of page.memberships ?? []) {
+        if (membership.group && membership.groupKey?.id) {
+          groups.push({ id: membership.group.replace(/^groups\//, ''), email: membership.groupKey.id });
+        }
+      }
+      pageToken = page.nextPageToken;
+    } while (pageToken);
+    return groups;
+  }
+
   return {
     async isActive(googleId) {
       const url = new URL(encodeURIComponent(googleId), DIRECTORY_USERS);
@@ -44,31 +72,25 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
       return !user.suspended && !user.archived;
     },
 
+    /**
+     * Walks up from the User, one level of nesting at a time: the direct groups of the User, then
+     * the groups those groups are in, and so on. Google's search for all groups at once
+     * (searchTransitiveGroups) only works on Workspace Enterprise and Cloud Identity Premium.
+     */
     async groups(email) {
-      const groups: WorkspaceGroup[] = [];
-      let pageToken: string | undefined;
-      do {
-        const url = new URL(TRANSITIVE_GROUPS);
-        url.searchParams.set('query', `member_key_id == '${email.replaceAll("'", '')}' && 'cloud_identity_googlegroup' in labels`);
-        if (pageToken) {
-          url.searchParams.set('pageToken', pageToken);
-        }
-        const response = await get(url, 'https://www.googleapis.com/auth/cloud-identity.groups.readonly');
-        if (!response.ok) {
-          throw await failure('Workspace did not return the groups', response);
-        }
-        const page = (await response.json()) as {
-          memberships?: { group?: string; groupKey?: { id?: string } }[];
-          nextPageToken?: string;
-        };
-        for (const membership of page.memberships ?? []) {
-          if (membership.group && membership.groupKey?.id) {
-            groups.push({ id: membership.group.replace(/^groups\//, ''), email: membership.groupKey.id });
+      const found = new Map<string, WorkspaceGroup>();
+      let members = [email];
+      while (members.length > 0) {
+        const level = (await Promise.all(members.map(directGroups))).flat();
+        members = [];
+        for (const group of level) {
+          if (!found.has(group.id)) {
+            found.set(group.id, group);
+            members.push(group.email);
           }
         }
-        pageToken = page.nextPageToken;
-      } while (pageToken);
-      return groups;
+      }
+      return [...found.values()];
     },
   };
 }

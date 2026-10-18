@@ -42,6 +42,8 @@ Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Library
 
 Google Sign-In (OpenID Connect), the Cloud Identity Groups API, the Admin SDK Directory API to check accounts, and Cloud KMS to sign Access Tokens.
 
+For the nested groups of [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04), identity asks the Cloud Identity Groups API for the direct groups of the User, then for the direct groups of each of those groups, one level at a time, until no new group turns up. Google's search for every nested group in one call (`searchTransitiveGroups`) only works on Workspace Enterprise and Cloud Identity Premium, and answers 403 on other editions.
+
 ## Permissions
 
 See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): the Groups Reader and Data Hub user reader admin roles in Workspace, Cloud SQL client, and Cloud KMS Signer/Verifier on the signing key alone.
