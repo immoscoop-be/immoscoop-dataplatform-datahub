@@ -46,8 +46,15 @@ locals {
     name => merge(local.database, { DATAHUB_DB_USER = google_sql_user.service[name].name })
   }
 
+  # Signing in through Google, for the web app and MCP clients (TR-PF-06, TR-PF-25).
+  sign_in_env = {
+    DATAHUB_WORKSPACE_DOMAIN    = var.workspace_domain
+    DATAHUB_GOOGLE_OAUTH_CLIENT = "${google_secret_manager_secret.secret["datahub-google-oauth-client"].id}/versions/latest"
+    DATAHUB_MCP_REDIRECT_URIS   = join(",", var.mcp_redirect_uris)
+  }
+
   service_env = {
-    identity  = merge(local.database_env["identity"], local.token_signing_env)
+    identity  = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
     catalogue = local.database_env["catalogue"]
     registry  = merge(local.database_env["registry"], { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
     query     = {}

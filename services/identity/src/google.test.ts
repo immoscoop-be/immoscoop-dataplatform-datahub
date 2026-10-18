@@ -1,0 +1,171 @@
+import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTPayload } from 'jose';
+import { describe, expect, it } from 'vitest';
+import { parseGoogleClient, readGoogleClient } from './google-client.js';
+import { createGoogleSignIn, SignInError } from './google-sign-in.js';
+import { applyNamingConvention } from './naming-convention.js';
+import { createWorkspace, metadataAccessToken } from './workspace.js';
+
+const DOMAIN = 'thenextimmoscoop.be';
+const CLIENT_ID = 'client.apps.googleusercontent.com';
+
+/** Google as the token endpoint: it returns an ID token signed with a key the test controls. */
+async function googleWith(claims: JWTPayload) {
+  const { privateKey, publicKey } = await generateKeyPair('RS256');
+  const jwk = { ...(await exportJWK(publicKey)), kid: 'google', alg: 'RS256' };
+  const idToken = await new SignJWT({
+    iss: 'https://accounts.google.com',
+    aud: CLIENT_ID,
+    sub: '108234567890',
+    email: `jan@${DOMAIN}`,
+    email_verified: true,
+    name: 'Jan Peeters',
+    hd: DOMAIN,
+    nonce: 'nonce-1',
+    ...claims,
+  })
+    .setProtectedHeader({ alg: 'RS256', kid: 'google' })
+    .setIssuedAt()
+    .setExpirationTime('5m')
+    .sign(privateKey);
+  const requests: URLSearchParams[] = [];
+  const signIn = createGoogleSignIn({
+    clientId: CLIENT_ID,
+    clientSecret: 'secret',
+    redirectUri: 'https://identity.test/callback',
+    domain: DOMAIN,
+    keys: createLocalJWKSet({ keys: [jwk] }),
+    fetch: async (_url, init) => {
+      requests.push(init?.body as URLSearchParams);
+      return Response.json({ id_token: idToken });
+    },
+  });
+  return { signIn, requests };
+}
+
+describe('createGoogleSignIn', () => {
+  it('sends the User to Google with PKCE, a nonce and the own domain', async () => {
+    const { signIn } = await googleWith({});
+    const url = new URL(signIn.authorizationUrl({ state: 's', nonce: 'n', codeChallenge: 'c' }));
+    expect(url.origin).toBe('https://accounts.google.com');
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      client_id: CLIENT_ID,
+      redirect_uri: 'https://identity.test/callback',
+      scope: 'openid email profile',
+      state: 's',
+      nonce: 'n',
+      code_challenge: 'c',
+      code_challenge_method: 'S256',
+      hd: DOMAIN,
+    });
+  });
+
+  it('returns who signed in, after exchanging the code with the verifier', async () => {
+    const { signIn, requests } = await googleWith({});
+    await expect(signIn.identity({ code: 'code', codeVerifier: 'verifier', nonce: 'nonce-1' })).resolves.toEqual({
+      sub: '108234567890',
+      email: `jan@${DOMAIN}`,
+      name: 'Jan Peeters',
+    });
+    expect(requests[0]?.get('code_verifier')).toBe('verifier');
+  });
+
+  it.each([
+    ['another Workspace domain', { hd: 'other.be' }],
+    ['a personal Gmail account', { hd: undefined, email: 'jan@gmail.com' }],
+    ['an unverified email', { email_verified: false }],
+    ['another sign-in', { nonce: 'nonce-2' }],
+    ['another OAuth client', { aud: 'someone-else' }],
+    ['another issuer', { iss: 'https://evil.test' }],
+  ])('refuses %s', async (_case, claims) => {
+    const { signIn } = await googleWith(claims);
+    await expect(signIn.identity({ code: 'code', codeVerifier: 'v', nonce: 'nonce-1' })).rejects.toThrow(SignInError);
+  });
+});
+
+describe('createWorkspace', () => {
+  const token = async () => 'token';
+
+  it('tells active, suspended and removed accounts apart', async () => {
+    const answers: Record<string, Response> = {
+      active: Response.json({ suspended: false }),
+      suspended: Response.json({ suspended: true }),
+      removed: new Response(null, { status: 404 }),
+    };
+    const workspace = createWorkspace(token, async (url) => {
+      const id = new URL(url as string).pathname.split('/').pop() ?? '';
+      return answers[id] ?? new Response(null, { status: 500 });
+    });
+    await expect(workspace.isActive('active')).resolves.toBe(true);
+    await expect(workspace.isActive('suspended')).resolves.toBe(false);
+    await expect(workspace.isActive('removed')).resolves.toBe(false);
+    await expect(workspace.isActive('broken')).rejects.toThrow();
+  });
+
+  it('collects the groups of a User over every page', async () => {
+    const queries: string[] = [];
+    const workspace = createWorkspace(token, async (url) => {
+      const search = new URL(url as string).searchParams;
+      queries.push(search.get('query') ?? '');
+      return search.get('pageToken')
+        ? Response.json({ memberships: [{ group: 'groups/b', groupKey: { id: `datahub-owner-x@${DOMAIN}` } }] })
+        : Response.json({ memberships: [{ group: 'groups/a', groupKey: { id: `datahub-datateam@${DOMAIN}` } }], nextPageToken: 'next' });
+    });
+    await expect(workspace.groups(`jan@${DOMAIN}`)).resolves.toEqual([
+      { id: 'a', email: `datahub-datateam@${DOMAIN}` },
+      { id: 'b', email: `datahub-owner-x@${DOMAIN}` },
+    ]);
+    expect(queries[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloud_identity_googlegroup' in labels`);
+  });
+});
+
+describe('metadataAccessToken', () => {
+  it('asks the metadata server once per set of scopes until the token nearly expires', async () => {
+    let calls = 0;
+    let time = 0;
+    const token = metadataAccessToken(async () => {
+      calls++;
+      return Response.json({ access_token: `t${calls}`, expires_in: 3600 });
+    }, () => time);
+    expect(await token(['a'])).toBe('t1');
+    expect(await token(['a'])).toBe('t1');
+    time += 3550 * 1000;
+    expect(await token(['a'])).toBe('t2');
+    expect(await token(['b'])).toBe('t3');
+  });
+});
+
+describe('applyNamingConvention', () => {
+  it('keeps only datahub- groups of the own domain, and turns Role Groups into roles', () => {
+    const result = applyNamingConvention(
+      [
+        { id: '1', email: `datahub-datateam@${DOMAIN}` },
+        { id: '2', email: `datahub-owner-digikom@${DOMAIN}` },
+        { id: '3', email: `sales@${DOMAIN}` },
+        { id: '4', email: 'datahub-datateam@other.be' },
+        { id: '5', email: `DataHub-Admins@${DOMAIN.toUpperCase()}` },
+      ],
+      DOMAIN,
+    );
+    expect(result).toEqual({ groups: ['1', '2', '5'], roles: ['admins', 'datateam'] });
+  });
+});
+
+describe('the OAuth client secret', () => {
+  it('reads the file the Google console downloads, or its fields at the top', () => {
+    expect(parseGoogleClient(JSON.stringify({ web: { client_id: 'id', client_secret: 'secret' } }))).toEqual({ clientId: 'id', clientSecret: 'secret' });
+    expect(parseGoogleClient(JSON.stringify({ client_id: 'id', client_secret: 'secret' }))).toEqual({ clientId: 'id', clientSecret: 'secret' });
+    expect(() => parseGoogleClient('{}')).toThrow(/client_id/);
+    expect(() => parseGoogleClient('not json')).toThrow(/JSON/);
+  });
+
+  it('comes from Secret Manager', async () => {
+    const data = Buffer.from(JSON.stringify({ web: { client_id: 'id', client_secret: 'secret' } })).toString('base64');
+    let asked = '';
+    const client = await readGoogleClient('projects/p/secrets/s/versions/latest', async () => 'token', async (url) => {
+      asked = url as string;
+      return Response.json({ payload: { data } });
+    });
+    expect(asked).toBe('https://secretmanager.googleapis.com/v1/projects/p/secrets/s/versions/latest:access');
+    expect(client.clientId).toBe('id');
+  });
+});

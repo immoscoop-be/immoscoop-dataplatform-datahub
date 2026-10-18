@@ -27,7 +27,8 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | --- | --- |
 | `GET /callback` | Where Google sends the User back after signing in: the redirect URI of identity's OAuth client at Google |
 | `GET /.well-known/jwks.json` | Public keys to validate Access Tokens |
-| OAuth 2.1 metadata, `/authorize`, `/token`, `/revoke`, client registration | Signing in, renewing with a Refresh Token, and logging out, for the server of the web app and for MCP clients such as Claude |
+| `/.well-known/oauth-authorization-server`, `/authorize`, `/token`, `/revoke`, `/register` | Signing in, renewing with a Refresh Token, and logging out, for the server of the web app and for MCP clients such as Claude; only Claude's callbacks may register |
+| `DELETE /users/{googleId}/sessions` | The Data Team ends every session of a User at once ([TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25)) |
 | `GET /me` | The current User, Groups and roles |
 | `POST /library-cards`, `DELETE /library-cards/{id}` | Issue and revoke a Library Card |
 | `POST /exchange` | Exchange a Library Card for an Access Token; used by `@datahub/auth` |
