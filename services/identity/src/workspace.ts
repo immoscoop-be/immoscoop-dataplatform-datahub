@@ -1,5 +1,7 @@
 const DIRECTORY_USERS = 'https://admin.googleapis.com/admin/directory/v1/users/';
 const DIRECT_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups';
+/** The label every Google Group carries, security groups included; the search must name a label. */
+const GOOGLE_GROUP_LABEL = 'cloudidentity.googleapis.com/groups.discussion_forum';
 const METADATA_TOKEN = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 
 /** A Group of a User, as Workspace knows it. */
@@ -35,7 +37,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
     let pageToken: string | undefined;
     do {
       const url = new URL(DIRECT_GROUPS);
-      url.searchParams.set('query', `member_key_id == '${member.replaceAll("'", '')}' && 'cloud_identity_googlegroup' in labels`);
+      url.searchParams.set('query', `member_key_id == '${member.replaceAll("'", '')}' && '${GOOGLE_GROUP_LABEL}' in labels`);
       if (pageToken) {
         url.searchParams.set('pageToken', pageToken);
       }
