@@ -54,35 +54,35 @@ In library terms: the library keeps no member register of its own. It uses the r
 <a id="fr-um-01"></a>
 ### FR-UM-01 · Sign in with Google only
 
-**Status:** Specified · **Confluence:** GB-01
+**Status:** Implemented · **Confluence:** GB-01
 
 Logging in is only possible with Google, via OpenID Connect. Data Hub verifies the signature of the ID token, the audience and the Workspace domain.
 
 <a id="fr-um-02"></a>
 ### FR-UM-02 · Accounts of the own Workspace domain only
 
-**Status:** Specified · **Confluence:** GB-02
+**Status:** Implemented · **Confluence:** GB-02
 
 Only accounts of the company's own Workspace domain get in. Personal Gmail accounts and accounts of other domains are refused.
 
 <a id="fr-um-03"></a>
 ### FR-UM-03 · Create the User at first login, never store a password
 
-**Status:** Specified · **Confluence:** GB-03
+**Status:** Implemented · **Confluence:** GB-03
 
 At the first login, Data Hub creates the User, with the fixed Google ID as key, and email and name as data. A password is never stored.
 
 <a id="fr-um-04"></a>
 ### FR-UM-04 · Groups from the Cloud Identity Groups API, nested groups included
 
-**Status:** Specified · **Confluence:** GB-04
+**Status:** Implemented · **Confluence:** GB-04
 
 Groups are requested via the Cloud Identity Groups API, not taken from the token. Nested groups count: whoever is in a group that is a member of a Group is also in that Group.
 
 <a id="fr-um-05"></a>
 ### FR-UM-05 · Only Groups are pulled in
 
-**Status:** Specified · **Confluence:** GB-05
+**Status:** Implemented · **Confluence:** GB-05
 
 Only Groups that follow the [Naming Convention](#naming-convention) are pulled in.
 
@@ -103,7 +103,7 @@ Periodically, the members of all Groups are synchronised to Data Hub, so that ow
 <a id="fr-um-08"></a>
 ### FR-UM-08 · Recognise a Group by its fixed Google ID
 
-**Status:** Specified · **Confluence:** GB-08
+**Status:** Implemented · **Confluence:** GB-08
 
 A Group is recognised by its fixed Google ID, not by its email address, so that a renamed Group keeps its history.
 

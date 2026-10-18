@@ -244,6 +244,34 @@ run "every_new_image_runs_the_migrations_once" {
   }
 }
 
+run "identity_signs_in_only_the_own_domain_and_known_mcp_clients" {
+  command = plan
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_WORKSPACE_DOMAIN"],
+      "thenextimmoscoop.be"
+    )
+    error_message = "Only accounts of thenextimmoscoop.be may sign in (DEC-UM-06)."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_MCP_REDIRECT_URIS"],
+      "https://claude.ai/api/mcp/auth_callback,https://claude.com/api/mcp/auth_callback"
+    )
+    error_message = "MCP clients may only register Claude's callbacks."
+  }
+
+  assert {
+    condition = alltrue([
+      for name in ["catalogue", "registry", "query"] :
+      !contains([for env in google_cloud_run_v2_service.service[name].template[0].containers[0].env : env.name], "DATAHUB_GOOGLE_OAUTH_CLIENT")
+    ])
+    error_message = "Only identity knows where the OAuth client is."
+  }
+}
+
 run "uat_can_be_torn_down" {
   command = plan
 

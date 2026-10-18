@@ -61,6 +61,18 @@ variable "token_signing_key_versions" {
   }
 }
 
+variable "workspace_domain" {
+  description = "The only Google Workspace domain whose accounts may sign in (DEC-UM-06)."
+  type        = string
+  default     = "thenextimmoscoop.be"
+}
+
+variable "mcp_redirect_uris" {
+  description = "The only callbacks an MCP client may register at identity: Claude's (TR-PF-06)."
+  type        = list(string)
+  default     = ["https://claude.ai/api/mcp/auth_callback", "https://claude.com/api/mcp/auth_callback"]
+}
+
 variable "token_audience" {
   description = "The audience of the Access Tokens that identity issues and every service checks."
   type        = string

@@ -44,7 +44,7 @@ Every backend service and client application is a TypeScript Node.js application
 <a id="tr-pf-02"></a>
 ### TR-PF-02 · identity issues short-lived Access Tokens
 
-**Status:** Specified · **Realises:** [DEC-PF-02](#dec-pf-02), [FR-UM-03](../functional/02-user-management.md#fr-um-03), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-08](../functional/02-user-management.md#fr-um-08)
+**Status:** Implemented · **Realises:** [DEC-PF-02](#dec-pf-02), [FR-UM-03](../functional/02-user-management.md#fr-um-03), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-08](../functional/02-user-management.md#fr-um-08)
 
 After a successful login, identity issues an Access Token: a JWT signed with an asymmetric key in Cloud KMS ([TR-PF-24](#tr-pf-24)), valid for 15 minutes. It carries the fixed Google ID of the User, email, name, the Groups of the User (by their fixed Google ID) and the User's roles. identity publishes its public keys at a JWKS endpoint.
 
@@ -72,9 +72,9 @@ A service that calls another service on behalf of a User forwards the Access Tok
 <a id="tr-pf-06"></a>
 ### TR-PF-06 · Claude signs in through identity
 
-**Status:** Proposed · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
+**Status:** Specified · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
 
-identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). mcp validates the resulting Access Tokens like every other service.
+identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). MCP clients register themselves (RFC 7591), but only with a callback on a fixed list, Claude's, so no other site can have a User's sign-in sent to it. mcp validates the resulting Access Tokens like every other service.
 
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Library Card
@@ -214,7 +214,7 @@ identity signs with the newest enabled version of the key, and publishes the pub
 <a id="tr-pf-25"></a>
 ### TR-PF-25 · Refresh Tokens
 
-**Status:** Specified · **Realises:** [DEC-PF-18](#dec-pf-18), [TR-PF-06](#tr-pf-06), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
+**Status:** Implemented · **Realises:** [DEC-PF-18](#dec-pf-18), [TR-PF-06](#tr-pf-06), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
 
 identity issues a Refresh Token with every Access Token to the server of the web app and to MCP clients, through its OAuth 2.1 token endpoint. Each Refresh Token works once: a renewal returns a new Access Token and a new Refresh Token. A Refresh Token that is used a second time has been copied, so identity then ends the whole session it belongs to. identity keeps only a hash of each Refresh Token.
 
@@ -228,7 +228,7 @@ Logging out ends the session at once. The Data Team can end all sessions of a Us
 <a id="tr-pf-26"></a>
 ### TR-PF-26 · Every renewal checks the User again
 
-**Status:** Specified · **Realises:** [DEC-PF-18](#dec-pf-18), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10), [NFR-SEC-03](../non-functional/security.md#nfr-sec-03)
+**Status:** Implemented · **Realises:** [DEC-PF-18](#dec-pf-18), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10), [NFR-SEC-03](../non-functional/security.md#nfr-sec-03)
 
 At every renewal, identity reads the Groups of the User again, as at login, and checks the account through the Admin SDK Directory API. For that, its service account has the custom Workspace admin role "Data Hub user reader", which may only read users. A suspended or removed account, or one outside `thenextimmoscoop.be` ([DEC-UM-06](../functional/02-user-management.md#dec-um-06)), gets no new Access Token, and all its sessions end. A change in Workspace thus reaches Data Hub within the lifetime of one Access Token.
 

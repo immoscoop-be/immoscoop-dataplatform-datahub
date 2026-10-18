@@ -16,6 +16,30 @@ export function tokenIssuerFromEnv(keys: KeyService, env: NodeJS.ProcessEnv = pr
   });
 }
 
+/** The settings of signing in, from the environment Terraform gives identity. */
+export interface SignInSettings {
+  /** identity's own address, the issuer of the Access Tokens (DATAHUB_TOKEN_ISSUER). */
+  issuer: string;
+  /** The only Workspace domain that gets in (DATAHUB_WORKSPACE_DOMAIN, DEC-UM-06). */
+  domain: string;
+  /** The secret version that holds identity's OAuth client at Google (DATAHUB_GOOGLE_OAUTH_CLIENT). */
+  googleClientSecret: string;
+  /** The callbacks MCP clients may register (DATAHUB_MCP_REDIRECT_URIS, comma-separated). */
+  mcpRedirectUris: string[];
+  /** The callback of the web app's server (DATAHUB_WEB_REDIRECT_URI), once it exists. */
+  webClient?: { clientId: string; redirectUri: string };
+}
+
+export function signInSettingsFromEnv(env: NodeJS.ProcessEnv = process.env): SignInSettings {
+  return {
+    issuer: required(env, 'DATAHUB_TOKEN_ISSUER'),
+    domain: required(env, 'DATAHUB_WORKSPACE_DOMAIN'),
+    googleClientSecret: required(env, 'DATAHUB_GOOGLE_OAUTH_CLIENT'),
+    mcpRedirectUris: (env.DATAHUB_MCP_REDIRECT_URIS ?? '').split(',').filter((uri) => uri.length > 0),
+    webClient: env.DATAHUB_WEB_REDIRECT_URI ? { clientId: 'datahub-web', redirectUri: env.DATAHUB_WEB_REDIRECT_URI } : undefined,
+  };
+}
+
 function required(env: NodeJS.ProcessEnv, name: string): string {
   const value = env[name];
   if (!value) {
