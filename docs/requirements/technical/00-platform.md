@@ -235,7 +235,7 @@ At every renewal, identity reads the Groups of the User again, as at login, and 
 <a id="tr-pf-27"></a>
 ### TR-PF-27 · The server of the web app
 
-**Status:** Specified · **Realises:** [DEC-PF-19](#dec-pf-19), [DEC-PF-03](#dec-pf-03)
+**Status:** Implemented · **Realises:** [DEC-PF-19](#dec-pf-19), [DEC-PF-03](#dec-pf-03)
 
 The Cloud Run service `datahub-web` serves the web app and signs in through identity as an OAuth client, like an MCP client does. It keeps the Refresh Token in a cookie of its own address that JavaScript cannot read, is only sent over HTTPS, and is never sent along from another site (`HttpOnly`, `Secure`, `SameSite=Strict`). It gives the browser only the Access Token, with which the app calls the services itself. It holds no business logic and no data.
 

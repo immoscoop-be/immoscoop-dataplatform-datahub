@@ -4,8 +4,8 @@ import { buildApp } from './app.js';
 import { createLocalKeyService } from './testing.js';
 import { createTokenIssuer } from './tokens.js';
 
-async function app() {
-  const { verifier } = await createTestIssuer();
+async function app(issuer?: Awaited<ReturnType<typeof createTestIssuer>>) {
+  const { verifier } = issuer ?? (await createTestIssuer());
   const tokens = createTokenIssuer({
     keys: createLocalKeyService(['v1']),
     signingKey: 'v1',
@@ -36,6 +36,16 @@ describe('identity', () => {
   it('refuses everything else without a valid token', async () => {
     const identity = await app();
     expect((await identity.inject({ url: '/' })).statusCode).toBe(401);
+    await identity.close();
+  });
+
+  it('tells the signed-in User who they are', async () => {
+    const issuer = await createTestIssuer();
+    const identity = await app(issuer);
+    const token = await issuer.sign({ sub: 'g-1', name: 'Jan Peeters', email: 'jan@thenextimmoscoop.be', groups: ['g'], roles: ['datateam'] });
+    const response = await identity.inject({ url: '/me', headers: { authorization: `Bearer ${token}` } });
+    expect(response.json()).toEqual({ sub: 'g-1', email: 'jan@thenextimmoscoop.be', name: 'Jan Peeters', groups: ['g'], roles: ['datateam'] });
+    expect((await identity.inject({ url: '/me' })).statusCode).toBe(401);
     await identity.close();
   });
 });

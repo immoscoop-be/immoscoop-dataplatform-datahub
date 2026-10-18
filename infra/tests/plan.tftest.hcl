@@ -25,8 +25,8 @@ run "every_service_runs_the_shared_image_of_this_code" {
   command = plan
 
   assert {
-    condition     = length(google_cloud_run_v2_service.service) == 5
-    error_message = "Expected identity, catalogue, registry, query and mcp."
+    condition     = length(google_cloud_run_v2_service.service) == 6
+    error_message = "Expected identity, catalogue, registry, query, mcp and web."
   }
 
   assert {
@@ -291,6 +291,31 @@ run "claude_finds_mcp_and_signs_in_at_identity" {
   assert {
     condition     = !contains(keys(google_cloud_run_v2_job.migrate), "mcp") && !contains(keys(google_sql_user.service), "mcp")
     error_message = "mcp keeps no data: no database login, no migrations."
+  }
+}
+
+run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
+  command = plan
+
+  assert {
+    condition     = output.web_url == "https://datahub-web-123456789.europe-west1.run.app"
+    error_message = "The web app's address must follow Cloud Run's fixed address format."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_WEB_REDIRECT_URI"],
+      "https://datahub-web-123456789.europe-west1.run.app/auth/callback"
+    )
+    error_message = "identity knows the web app as a client, with its callback on the web app's own address."
+  }
+
+  assert {
+    condition = alltrue([
+      for service in google_cloud_run_v2_service.service :
+      contains([for env in service.template[0].containers[0].env : env.value if env.name == "DATAHUB_ALLOWED_ORIGINS"], "https://datahub-web-123456789.europe-west1.run.app")
+    ])
+    error_message = "Every service accepts calls from the pages of the web app, and only from there."
   }
 }
 
