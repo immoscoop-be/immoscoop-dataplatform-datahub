@@ -22,6 +22,12 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return options.tokens.jwks();
   });
 
+  // The current User, as the Access Token says; the web app shows it.
+  app.get('/me', async (request) => {
+    const { sub, email, name, groups, roles } = request.user ?? {};
+    return { sub, email, name, groups, roles };
+  });
+
   if (options.signIn) {
     await app.register(signInRoutes, options.signIn);
   }

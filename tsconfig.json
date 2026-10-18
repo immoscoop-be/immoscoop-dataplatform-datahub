@@ -27,6 +27,9 @@
     },
     {
       "path": "apps/mcp"
+    },
+    {
+      "path": "apps/web"
     }
   ]
 }

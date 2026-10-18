@@ -40,6 +40,18 @@ importers:
         specifier: ^4.6.7
         version: 4.6.7
 
+  apps/web:
+    dependencies:
+      '@datahub/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@datahub/server':
+        specifier: workspace:*
+        version: link:../../packages/server
+      fastify:
+        specifier: ^5.12.7
+        version: 5.12.7
+
   packages/auth:
     dependencies:
       '@datahub/contracts':

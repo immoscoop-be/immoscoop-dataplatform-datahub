@@ -8,6 +8,11 @@ output "identity_url" {
   value       = local.identity_url
 }
 
+output "web_url" {
+  description = "The web app: open it in a browser to sign in."
+  value       = local.urls["web"]
+}
+
 output "mcp_url" {
   description = "The address to add as a connector in Claude."
   value       = "${local.urls["mcp"]}/mcp"

@@ -19,4 +19,16 @@
 
 ## Talks to
 
-identity, catalogue, registry and query, with the Access Token of the User. Its server only talks to identity, to sign in and renew.
+identity, catalogue, registry and query, with the Access Token of the User; the services accept calls from the web app's address only (CORS). Its server only talks to identity, to sign in and renew.
+
+## What exists today
+
+A first page that signs you in and shows who identity says you are (`GET /me`): name, email, roles and Groups. Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your `thenextimmoscoop.be` account.
+
+| Route of the server | Purpose |
+| --- | --- |
+| `GET /`, `/app.js`, `/app.css` | The page; it may only talk to its own server and identity |
+| `GET /auth/login` | Sends the User to identity, with PKCE, as the client `datahub-web` |
+| `GET /auth/callback` | Back from identity: exchanges the code and keeps the Refresh Token in the cookie |
+| `POST /auth/token` | Gives the page an Access Token for the Refresh Token in the cookie; only from the web app's own pages |
+| `POST /auth/logout` | Ends the session at identity and forgets the cookie |

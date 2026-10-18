@@ -13,7 +13,7 @@ data "google_project" "this" {}
 locals {
   # Every service and application of Data Hub that runs on Cloud Run, with an image of its own
   # (docs/architecture/README.md#services).
-  services = toset(["identity", "catalogue", "registry", "query", "mcp"])
+  services = toset(["identity", "catalogue", "registry", "query", "mcp", "web"])
 
   # The services that keep data in Postgres, each in its own schema (TR-PF-08).
   # query stores nothing in v1 (DEC-SR-18).
@@ -29,6 +29,8 @@ locals {
     DATAHUB_TOKEN_ISSUER   = local.identity_url
     DATAHUB_TOKEN_AUDIENCE = var.token_audience
     DATAHUB_JWKS_URL       = "${local.identity_url}/.well-known/jwks.json"
+    # The pages of the web app call the services from the browser (CORS).
+    DATAHUB_ALLOWED_ORIGINS = local.urls["web"]
   }
 
   # The image of every service: exactly the code being applied (TR-PF-17).
@@ -53,6 +55,8 @@ locals {
     DATAHUB_WORKSPACE_DOMAIN    = var.workspace_domain
     DATAHUB_GOOGLE_OAUTH_CLIENT = "${google_secret_manager_secret.secret["datahub-google-oauth-client"].id}/versions/latest"
     DATAHUB_MCP_REDIRECT_URIS   = join(",", var.mcp_redirect_uris)
+    # The server of the web app, a client of identity known in advance (TR-PF-27).
+    DATAHUB_WEB_REDIRECT_URI = "${local.urls["web"]}/auth/callback"
   }
 
   service_env = {
@@ -62,5 +66,7 @@ locals {
     query     = {}
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
+    # The web app signs Users in at its own address (DEC-PF-19).
+    web = { DATAHUB_WEB_URL = local.urls["web"] }
   }
 }
