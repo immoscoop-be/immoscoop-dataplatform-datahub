@@ -1,7 +1,10 @@
 import { createHash } from 'node:crypto';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createTestIssuer } from '@datahub/auth/testing';
 import type { FastifyInstance } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp, CLIENT_ID } from './app.js';
 
 const WEB = 'https://web.test';
@@ -51,13 +54,33 @@ function cookies(headers: Record<string, unknown>): Record<string, string> {
   return Object.fromEntries(list.map((cookie: string) => [cookie.split('=')[0], cookie]));
 }
 
+/** A page as Vite builds it from client/index.html, with one script and one icon. */
+async function builtClient(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'datahub-web-'));
+  await mkdir(join(dir, 'assets'));
+  await writeFile(
+    join(dir, 'index.html'),
+    '<!doctype html>\n<html lang="en">\n  <head>\n    <script type="module" crossorigin src="/assets/index-a1b2.js"></script>\n  </head>\n  <body><div id="root"></div></body>\n</html>\n',
+  );
+  await writeFile(join(dir, 'assets', 'index-a1b2.js'), 'console.log("Data Hub");');
+  await writeFile(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  return dir;
+}
+
 describe('the server of the web app', () => {
   let app: FastifyInstance;
   let identity: ReturnType<typeof fakeIdentity>;
+  let clientDir: string;
+
+  beforeAll(async () => {
+    clientDir = await builtClient();
+  });
+
+  afterAll(() => rm(clientDir, { recursive: true, force: true }));
 
   beforeEach(async () => {
     identity = fakeIdentity();
-    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, fetch: identity.fetch, logger: false });
+    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, clientDir, fetch: identity.fetch, logger: false });
   });
 
   afterEach(() => app.close());
@@ -81,10 +104,47 @@ describe('the server of the web app', () => {
   it('serves the page, which may only talk to itself, identity and registry', async () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
-    expect(page.body).toContain(`data-identity="${IDENTITY}"`);
-    expect(page.body).toContain(`data-registry="${REGISTRY}"`);
-    expect(page.headers['content-security-policy']).toContain(`connect-src 'self' ${IDENTITY} ${REGISTRY};`);
-    expect((await app.inject({ url: '/app.js' })).headers['content-type']).toContain('javascript');
+    expect(page.headers['cache-control']).toBe('no-store');
+    expect(page.body).toContain(`<html lang="en" data-identity="${IDENTITY}" data-registry="${REGISTRY}">`);
+    const policy = page.headers['content-security-policy'] as string;
+    expect(policy).toContain("default-src 'self';");
+    expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${REGISTRY};`);
+    expect(policy).not.toContain('unsafe');
+  });
+
+  it('gives every page its own nonce, which only lets styles in', async () => {
+    const nonces = await Promise.all(
+      [1, 2].map(async () => {
+        const page = await app.inject({ url: '/' });
+        const nonce = /<meta property="csp-nonce" nonce="([^"]+)" \/>/.exec(page.body)?.[1];
+        expect(page.headers['content-security-policy']).toContain(`style-src 'self' 'nonce-${nonce}';`);
+        expect(page.headers['content-security-policy']).not.toContain('script-src');
+        return nonce;
+      }),
+    );
+    expect(nonces[0]).toMatch(/^[A-Za-z0-9+/]{22}==$/);
+    expect(nonces[0]).not.toBe(nonces[1]);
+  });
+
+  it('serves the built files, the ones named after their content for good', async () => {
+    const script = await app.inject({ url: '/assets/index-a1b2.js' });
+    expect(script.headers['content-type']).toContain('text/javascript');
+    expect(script.headers['cache-control']).toContain('immutable');
+    expect(script.headers['x-content-type-options']).toBe('nosniff');
+    expect(script.body).toBe('console.log("Data Hub");');
+    const icon = await app.inject({ url: '/favicon.svg' });
+    expect(icon.headers['content-type']).toBe('image/svg+xml');
+    expect(icon.headers['cache-control']).not.toContain('immutable');
+    // Only the built files are routes; anything else meets the token check of every service.
+    for (const url of ['/index.html', '/assets/../index.html', '/assets/missing.js']) {
+      expect((await app.inject({ url })).statusCode).toBe(401);
+    }
+  });
+
+  it('refuses to start without the built page', async () => {
+    await expect(
+      buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, clientDir: join(clientDir, 'missing'), logger: false }),
+    ).rejects.toThrow(/index\.html/);
   });
 
   it('sends the User to identity with PKCE, as the client datahub-web', async () => {

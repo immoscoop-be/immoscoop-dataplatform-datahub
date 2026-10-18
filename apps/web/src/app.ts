@@ -3,7 +3,7 @@ import type { TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { readCookie, serializeCookie } from './cookies.js';
-import { pageHtml, pageScript, pageStyle } from './page.js';
+import { loadClient } from './page.js';
 
 /** The web app is an OAuth client of identity, known there by this ID (TR-PF-27). */
 export const CLIENT_ID = 'datahub-web';
@@ -22,6 +22,8 @@ export interface AppOptions {
   identityUrl: string;
   /** registry's address (DATAHUB_REGISTRY_URL), which the page calls to search the dbt projects. */
   registryUrl: string;
+  /** The page as Vite built it: `dist/client` next to the server. */
+  clientDir: string;
   /** Calls to identity; tests pass a stand-in. */
   fetch?: typeof fetch;
   logger?: ServerOptions['logger'];
@@ -33,6 +35,7 @@ export interface AppOptions {
  * the Access Token, with which the app calls the services itself. No business logic, no data.
  */
 export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
+  const client = await loadClient(options.clientDir, options);
   const app = await createServer({ name: 'web', verifier: options.verifier, logger: options.logger });
   const request = options.fetch ?? fetch;
   const redirectUri = `${options.webUrl}/auth/callback`;
@@ -57,18 +60,28 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return origin === undefined || origin === new URL(options.webUrl).origin;
   }
 
-  app.get('/', open, async (_incoming, reply) =>
-    reply
+  // The page loads scripts, styles and fonts only from its own address, and talks only to its own
+  // server, identity and registry. Mantine adds <style> elements, which need this request's nonce.
+  app.get('/', open, async (_incoming, reply) => {
+    const nonce = randomBytes(16).toString('base64');
+    return reply
       .type('text/html; charset=utf-8')
       .header(
         'content-security-policy',
-        `default-src 'self'; connect-src 'self' ${options.identityUrl} ${options.registryUrl}; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
+        `default-src 'self'; style-src 'self' 'nonce-${nonce}'; connect-src 'self' ${options.identityUrl} ${options.registryUrl}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
       )
       .header('cache-control', 'no-store')
-      .send(pageHtml(options.identityUrl, options.registryUrl)),
-  );
-  app.get('/app.js', open, async (_incoming, reply) => reply.type('text/javascript; charset=utf-8').send(pageScript));
-  app.get('/app.css', open, async (_incoming, reply) => reply.type('text/css; charset=utf-8').send(pageStyle));
+      .send(client.page(nonce));
+  });
+  for (const [path, file] of client.files) {
+    app.get(path, open, async (_incoming, reply) =>
+      reply
+        .type(file.type)
+        .header('x-content-type-options', 'nosniff')
+        .header('cache-control', file.immutable ? 'public, max-age=31536000, immutable' : 'public, max-age=3600')
+        .send(file.body),
+    );
+  }
 
   // The start of signing in: off to identity, with PKCE, remembering what to check on return.
   app.get('/auth/login', open, async (_incoming, reply) => {
