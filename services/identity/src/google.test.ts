@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { parseGoogleClient, readGoogleClient } from './google-client.js';
 import { createGoogleSignIn, SignInError } from './google-sign-in.js';
 import { applyNamingConvention } from './naming-convention.js';
-import { createWorkspace, metadataAccessToken } from './workspace.js';
+import { createWorkspace } from './workspace.js';
 
 const DOMAIN = 'thenextimmoscoop.be';
 const CLIENT_ID = 'client.apps.googleusercontent.com';
@@ -152,22 +152,6 @@ describe('createWorkspace', () => {
       ),
     );
     await expect(refused.groups(`jan@${DOMAIN}`)).rejects.toThrow('400 Request contains an invalid argument. · query: Unsupported filter');
-  });
-});
-
-describe('metadataAccessToken', () => {
-  it('asks the metadata server once per set of scopes until the token nearly expires', async () => {
-    let calls = 0;
-    let time = 0;
-    const token = metadataAccessToken(async () => {
-      calls++;
-      return Response.json({ access_token: `t${calls}`, expires_in: 3600 });
-    }, () => time);
-    expect(await token(['a'])).toBe('t1');
-    expect(await token(['a'])).toBe('t1');
-    time += 3550 * 1000;
-    expect(await token(['a'])).toBe('t2');
-    expect(await token(['b'])).toBe('t3');
   });
 });
 

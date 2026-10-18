@@ -89,6 +89,8 @@ importers:
         specifier: ^8.23.1
         version: 8.23.1
 
+  packages/google: {}
+
   packages/server:
     dependencies:
       '@datahub/auth':
@@ -127,6 +129,9 @@ importers:
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@datahub/google':
+        specifier: workspace:*
+        version: link:../../packages/google
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server
@@ -163,6 +168,9 @@ importers:
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@datahub/google':
+        specifier: workspace:*
+        version: link:../../packages/google
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server

@@ -27,3 +27,8 @@ output "artifact_bucket" {
   description = "Where registry keeps the Artifacts."
   value       = google_storage_bucket.artifacts.name
 }
+
+output "registry_webhook_url" {
+  description = "The endpoint of the webhook in dbt Cloud (docs/architecture/gcp-setup.md, step 10)."
+  value       = "${local.urls["registry"]}/webhooks/dbt-cloud"
+}

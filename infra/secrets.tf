@@ -5,6 +5,7 @@
 locals {
   secrets = {
     "datahub-dbt-cloud-token"     = "registry" # fetching the Artifacts from dbt Cloud
+    "datahub-dbt-webhook-secret"  = "registry" # checking that a webhook comes from dbt Cloud
     "datahub-google-oauth-client" = "identity" # Sign in with Google
   }
 }

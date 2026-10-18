@@ -1,4 +1,4 @@
-import type { AccessTokenSource } from './workspace.js';
+import { type AccessTokenSource, readSecret } from '@datahub/google';
 
 /** identity's OAuth client at Google, as stored in the secret datahub-google-oauth-client (step 8 of the GCP setup). */
 export interface GoogleClient {
@@ -15,14 +15,7 @@ export async function readGoogleClient(
   token: AccessTokenSource,
   request: typeof fetch = fetch,
 ): Promise<GoogleClient> {
-  const response = await request(`https://secretmanager.googleapis.com/v1/${secretVersion}:access`, {
-    headers: { authorization: `Bearer ${await token(['https://www.googleapis.com/auth/cloud-platform'])}` },
-  });
-  if (!response.ok) {
-    throw new Error(`The OAuth client could not be read from ${secretVersion}: ${response.status}`);
-  }
-  const { payload } = (await response.json()) as { payload?: { data?: string } };
-  return parseGoogleClient(Buffer.from(payload?.data ?? '', 'base64').toString('utf8'));
+  return parseGoogleClient(await readSecret(secretVersion, token, request));
 }
 
 export function parseGoogleClient(json: string): GoogleClient {

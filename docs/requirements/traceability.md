@@ -11,7 +11,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [Data Hub](../overview/data-hub.md) | – | – | 59 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 37 (34 open, 3 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 14 (14 specified) | 4 (4 proposed) | – | 4 (4 open) |
+| [Artifact registry](functional/01-artifact-registry.md) | 14 (6 specified, 8 implemented) | 4 (4 proposed) | 3 | 4 (1 open, 3 done) |
 | [User management](functional/02-user-management.md) | 10 (4 specified, 6 implemented) | 3 (3 proposed) | 6 | 6 (4 open, 2 done) |
 | [Collections](functional/03-collections.md) | 11 (11 specified) | 2 (2 proposed) | 7 | 5 (5 open) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 30 (30 specified) | 4 (4 proposed) | 21 | 9 (8 open, 1 done) |
@@ -27,7 +27,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 27 (4 proposed, 9 specified, 14 implemented) | – | 19 | 14 (8 open, 6 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 27 (4 proposed, 9 specified, 14 implemented) | – | 20 | 14 (7 open, 7 done) |
+| [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 4 (1 specified, 3 implemented) | – | – | – |
 
 ## Functional requirements
 
@@ -35,15 +36,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-AR-01](functional/01-artifact-registry.md#fr-ar-01) | Fetch the Artifacts from dbt Cloud | Specified | AR-01 | – | – |
-| [FR-AR-02](functional/01-artifact-registry.md#fr-ar-02) | Two dbt projects, one Source Job each | Specified | AR-02 | – | – |
-| [FR-AR-03](functional/01-artifact-registry.md#fr-ar-03) | Only successful runs of a Source Job | Specified | AR-03 | – | – |
-| [FR-AR-04](functional/01-artifact-registry.md#fr-ar-04) | Manifest and catalog only | Specified | AR-04 | – | – |
-| [FR-AR-05](functional/01-artifact-registry.md#fr-ar-05) | Ingest a run at most once | Specified | AR-05 | – | – |
-| [FR-AR-06](functional/01-artifact-registry.md#fr-ar-06) | Store the files unchanged and keep old versions | Specified | AR-06 | – | – |
-| [FR-AR-07](functional/01-artifact-registry.md#fr-ar-07) | Normalise a set into Nodes, columns, Edges and tests | Specified | AR-07 | – | – |
-| [FR-AR-08](functional/01-artifact-registry.md#fr-ar-08) | Lineage across the dbt projects | Specified | AR-08 | – | – |
-| [FR-AR-09](functional/01-artifact-registry.md#fr-ar-09) | Switch to a set only after complete processing | Specified | AR-09 | – | – |
+| [FR-AR-01](functional/01-artifact-registry.md#fr-ar-01) | Fetch the Artifacts from dbt Cloud | Implemented | AR-01 | [TR-AR-01](technical/01-artifact-registry.md#tr-ar-01), [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-02](functional/01-artifact-registry.md#fr-ar-02) | Two dbt projects, one Source Job each | Implemented | AR-02 | – | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-03](functional/01-artifact-registry.md#fr-ar-03) | Only successful runs of a Source Job | Implemented | AR-03 | [TR-AR-01](technical/01-artifact-registry.md#tr-ar-01) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-04](functional/01-artifact-registry.md#fr-ar-04) | Manifest and catalog only | Implemented | AR-04 | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-05](functional/01-artifact-registry.md#fr-ar-05) | Ingest a run at most once | Implemented | AR-05 | [TR-AR-01](technical/01-artifact-registry.md#tr-ar-01) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-06](functional/01-artifact-registry.md#fr-ar-06) | Store the files unchanged and keep old versions | Implemented | AR-06 | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02), [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-07](functional/01-artifact-registry.md#fr-ar-07) | Normalise a set into Nodes, columns, Edges and tests | Implemented | AR-07 | [TR-AR-03](technical/01-artifact-registry.md#tr-ar-03) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [FR-AR-08](functional/01-artifact-registry.md#fr-ar-08) | Lineage across the dbt projects | Specified | AR-08 | [TR-AR-03](technical/01-artifact-registry.md#tr-ar-03) | – |
+| [FR-AR-09](functional/01-artifact-registry.md#fr-ar-09) | Switch to a set only after complete processing | Implemented | AR-09 | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
 | [FR-AR-10](functional/01-artifact-registry.md#fr-ar-10) | Search by name, free text and lineage | Specified | AR-10 | – | – |
 | [FR-AR-11](functional/01-artifact-registry.md#fr-ar-11) | Compare every new version Node by Node | Specified | AR-11 | – | – |
 | [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12) | Propagate every Change downstream | Specified | AR-12 | – | – |
@@ -137,8 +138,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01) | An older run arrives after a newer one | Proposed | – | – |
-| [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Proposed | – | – |
+| [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01) | An older run arrives after a newer one | Proposed | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | – |
+| [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Proposed | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | – |
 | [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | A view in the Stacks is renamed | Proposed | – | – |
 | [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Proposed | – | – |
 
@@ -194,11 +195,20 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-20](technical/00-platform.md#tr-pf-20) | One required check, whatever the pipeline contains | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14), [TR-PF-19](technical/00-platform.md#tr-pf-19) | [e54284b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e54284b340eaa9772fdd0fdcf3d40f648b193627) implements, 2026-10-17 |
 | [TR-PF-21](technical/00-platform.md#tr-pf-21) | Terraform runs in GitHub Actions, per environment | Implemented | [DEC-PF-16](technical/00-platform.md#dec-pf-16), [NFR-SEC-04](non-functional/security.md#nfr-sec-04) | [08243a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/08243a27d27e1cfffecc8d8b80f4f59cfc8243a9) refs, 2026-10-17<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) implements, 2026-10-17 |
 | [TR-PF-22](technical/00-platform.md#tr-pf-22) | Services log in to Postgres with their Google identity | Specified | [TR-PF-08](technical/00-platform.md#tr-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
-| [TR-PF-23](technical/00-platform.md#tr-pf-23) | Secrets are created by Terraform and filled by a person | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
+| [TR-PF-23](technical/00-platform.md#tr-pf-23) | Secrets are created by Terraform and filled by a person | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [983eee6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/983eee6a31eaddf4d4a67b3c53f0c3edcb01c263) refs, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-24](technical/00-platform.md#tr-pf-24) | The signing key of identity | Implemented | [DEC-PF-17](technical/00-platform.md#dec-pf-17), [TR-PF-02](technical/00-platform.md#tr-pf-02), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [3a09298](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3a09298ea190b88c18c7036f4a451660c336352f) implements, 2026-10-18<br>[73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
 | [TR-PF-25](technical/00-platform.md#tr-pf-25) | Refresh Tokens | Implemented | [DEC-PF-18](technical/00-platform.md#dec-pf-18), [TR-PF-06](technical/00-platform.md#tr-pf-06), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | [02b9680](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02b9680fa32044267f2798725615e739b8337e65) refs, 2026-10-18<br>[ad876f8](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad876f834990eef5dd9e86a44531b2e16581b319) refs, 2026-10-18<br>[99749ad](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/99749adf66519d375050d879c313644fea3fdf98) refs, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
 | [TR-PF-26](technical/00-platform.md#tr-pf-26) | Every renewal checks the User again | Implemented | [DEC-PF-18](technical/00-platform.md#dec-pf-18), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10), [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | [02b9680](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02b9680fa32044267f2798725615e739b8337e65) refs, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
 | [TR-PF-27](technical/00-platform.md#tr-pf-27) | The server of the web app | Implemented | [DEC-PF-19](technical/00-platform.md#dec-pf-19), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [02b9680](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02b9680fa32044267f2798725615e739b8337e65) refs, 2026-10-18<br>[ad876f8](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad876f834990eef5dd9e86a44531b2e16581b319) implements, 2026-10-18<br>[b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
+
+### [Artifact registry: technical requirements](technical/01-artifact-registry.md)
+
+| ID | Title | Status | Realises | Commits |
+| --- | --- | --- | --- | --- |
+| [TR-AR-01](technical/01-artifact-registry.md#tr-ar-01) | dbt Cloud announces a run with a signed webhook | Implemented | [FR-AR-01](functional/01-artifact-registry.md#fr-ar-01), [FR-AR-03](functional/01-artifact-registry.md#fr-ar-03), [FR-AR-05](functional/01-artifact-registry.md#fr-ar-05), [DEC-AR-02](functional/01-artifact-registry.md#dec-ar-02) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | The ingest job fetches and stores the Artifacts | Implemented | [FR-AR-01](functional/01-artifact-registry.md#fr-ar-01), [FR-AR-04](functional/01-artifact-registry.md#fr-ar-04), [FR-AR-06](functional/01-artifact-registry.md#fr-ar-06), [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02), [DEC-DH-22](../overview/data-hub.md#dec-dh-22), [DEC-PF-20](technical/00-platform.md#dec-pf-20) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
+| [TR-AR-03](technical/01-artifact-registry.md#tr-ar-03) | The normalised tables | Specified | [FR-AR-07](functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](functional/01-artifact-registry.md#fr-ar-08), [DEC-AR-03](functional/01-artifact-registry.md#dec-ar-03), [DEC-DH-23](../overview/data-hub.md#dec-dh-23) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) refs, 2026-10-18 |
+| [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | A set becomes current only when all of it is in | Implemented | [FR-AR-09](functional/01-artifact-registry.md#fr-ar-09), [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01), [FR-AR-06](functional/01-artifact-registry.md#fr-ar-06), [DEC-DH-24](../overview/data-hub.md#dec-dh-24) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
 
 ## Non-functional requirements
 

@@ -31,6 +31,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-17"></a>**DEC-PF-17** · The private key that signs Access Tokens lives in Cloud KMS: it is created there, never leaves it, and nobody can read it, not even a project Owner. Only identity may sign with it. It is rotated once a year, and immediately on any suspicion of misuse.
 - <a id="dec-pf-18"></a>**DEC-PF-18** · A client that signs in on behalf of a User keeps that User signed in with a Refresh Token from identity: the server of the web app, and MCP clients such as Claude. One mechanism for every client. The Refresh Token of the web app lasts 12 hours, once a working day through Google; that of an MCP client 30 days, renewed as it is used. At every renewal identity reads the Groups again and checks the account in Workspace.
 - <a id="dec-pf-19"></a>**DEC-PF-19** · The web app is served by a small Cloud Run service of its own. That service also keeps the Refresh Token of the User, in a cookie of its own address, so that no browser treats it as a third-party cookie and Data Hub works on any address. It holds no business logic.
+- <a id="dec-pf-20"></a>**DEC-PF-20** · Heavy work that a request starts runs as a Cloud Run job, built from the same image as its service and running under the same service account. The first is the processing of an Artifact Set ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)): the service only records what has to be done and starts the job, which works through it without the time limit of a request.
 
 ## Requirements
 
@@ -113,7 +114,7 @@ The request and response schemas of every service are defined with zod in `packa
 | --- | --- |
 | identity | Groups Reader and Data Hub user reader admin roles in Workspace ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
 | catalogue | Cloud SQL client |
-| registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token from Secret Manager |
+| registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account |
 | query | Read access to the Stacks and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
 | `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
@@ -241,7 +242,7 @@ The Cloud Run service `datahub-web` serves the web app and signs in through iden
 
 ## Open points
 
-- [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
+- [x] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)). *Decided on 2026-10-18: a Cloud Run job ([DEC-PF-20](#dec-pf-20)).*
 - [x] <a id="op-pf-02"></a>**OP-PF-02** · Decide how the web app renews its Access Token (a refresh token in an http-only cookie, or a new login through Google), and how often identity reads the Groups again on renewal ([FR-UM-06](../functional/02-user-management.md#fr-um-06)). *Decided on 2026-10-18: a Refresh Token, for the web app through its own server and for MCP clients alike; Groups and account are checked at every renewal ([DEC-PF-18](#dec-pf-18), [TR-PF-25](#tr-pf-25), [TR-PF-26](#tr-pf-26)).*
 - [x] <a id="op-pf-03"></a>**OP-PF-03** · Decide where the signing key of identity lives (Cloud KMS or Secret Manager) and how it is rotated. *Decided on 2026-10-17: Cloud KMS, rotated once a year and immediately on any suspicion ([DEC-PF-17](#dec-pf-17), [TR-PF-24](#tr-pf-24)).*
 - [x] <a id="op-pf-04"></a>**OP-PF-04** · Decide the ingress of the services: public endpoints protected by their own token checks, or internal ingress under internal-immoscoop.be ([OP-DH-35](../../overview/open-themes.md#op-dh-35)), and in that case how Claude reaches mcp. *Decided on 2026-10-17: public ([DEC-PF-10](#dec-pf-10)).*

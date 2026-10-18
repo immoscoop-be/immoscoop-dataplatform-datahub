@@ -1,6 +1,7 @@
+import { type AccessTokenSource, googleApiError, metadataAccessToken } from '@datahub/google';
+
 const DIRECTORY_USERS = 'https://admin.googleapis.com/admin/directory/v1/users/';
 const DIRECT_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups';
-const METADATA_TOKEN = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 
 /** A Group of a User, as Workspace knows it. */
 export interface WorkspaceGroup {
@@ -16,9 +17,6 @@ export interface Workspace {
   /** Every group the User is in, nested groups included (FR-UM-04). */
   groups(email: string): Promise<WorkspaceGroup[]>;
 }
-
-/** An access token for Google's APIs, as the service account of identity. */
-export type AccessTokenSource = (scopes: string[]) => Promise<string>;
 
 /**
  * Asks Workspace as the service account of identity, which has the Groups Reader and Data Hub
@@ -45,7 +43,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
       }
       const response = await get(url, 'https://www.googleapis.com/auth/cloud-identity.groups.readonly');
       if (!response.ok) {
-        throw await failure('Workspace did not return the groups', response);
+        throw await googleApiError('Workspace did not return the groups', response);
       }
       const page = (await response.json()) as {
         memberships?: { group?: string; groupKey?: { id?: string } }[];
@@ -70,7 +68,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
         return false;
       }
       if (!response.ok) {
-        throw await failure('Workspace did not say whether the account is active', response);
+        throw await googleApiError('Workspace did not say whether the account is active', response);
       }
       const user = (await response.json()) as { suspended?: boolean; archived?: boolean };
       return !user.suspended && !user.archived;
@@ -96,52 +94,5 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
       }
       return [...found.values()];
     },
-  };
-}
-
-/**
- * An error with Google's own reason in it, such as an API that is not enabled, and for a bad request
- * which argument it refused; for the log.
- */
-async function failure(what: string, response: Response): Promise<Error> {
-  let reason = '';
-  try {
-    const body = (await response.json()) as {
-      error?: { message?: string; details?: { fieldViolations?: { field?: string; description?: string }[] }[] };
-    };
-    const violations = (body.error?.details ?? [])
-      .flatMap((detail) => detail.fieldViolations ?? [])
-      .map((violation) => `${violation.field ?? '?'}: ${violation.description ?? ''}`);
-    reason = [body.error?.message ?? '', ...violations].filter(Boolean).join(' · ');
-  } catch {
-    // No JSON: the status says enough.
-  }
-  return new Error(`${what}: ${response.status}${reason ? ` ${reason}` : ''}`);
-}
-
-/**
- * Access tokens from the metadata server of Cloud Run, for the service account the service runs
- * as, kept until shortly before they expire.
- */
-export function metadataAccessToken(request: typeof fetch = fetch, now: () => number = Date.now): AccessTokenSource {
-  const cache = new Map<string, { token: string; expiresAt: number }>();
-  return async (scopes) => {
-    const key = scopes.join(',');
-    const cached = cache.get(key);
-    if (cached && cached.expiresAt > now()) {
-      return cached.token;
-    }
-    const response = await request(`${METADATA_TOKEN}?scopes=${encodeURIComponent(key)}`, {
-      headers: { 'metadata-flavor': 'Google' },
-    });
-    if (!response.ok) {
-      throw new Error(`The metadata server gave no access token: ${response.status}`);
-    }
-    const { access_token: token, expires_in: expiresIn } = (await response.json()) as {
-      access_token: string;
-      expires_in: number;
-    };
-    cache.set(key, { token, expiresAt: now() + (expiresIn - 60) * 1000 });
-    return token;
   };
 }
