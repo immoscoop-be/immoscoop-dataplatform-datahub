@@ -202,7 +202,7 @@ Terraform creates every secret in Secret Manager and gives exactly one service r
 <a id="tr-pf-24"></a>
 ### TR-PF-24 · The signing key of identity
 
-**Status:** Specified · **Realises:** [DEC-PF-17](#dec-pf-17), [TR-PF-02](#tr-pf-02), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+**Status:** Implemented · **Realises:** [DEC-PF-17](#dec-pf-17), [TR-PF-02](#tr-pf-02), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
 Terraform creates the key in each environment: key ring `datahub`, key `access-token`, algorithm ES256 (EC P-256 with SHA-256), the only algorithm `@datahub/auth` accepts. Only the service account of identity may sign with it; the Terraform identity manages the key but cannot sign. In prod, Terraform refuses to destroy the key.
 
