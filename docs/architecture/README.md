@@ -69,7 +69,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
 | [query](services/query.md) | Running queries on the Stacks: preview, free SQL for Claude, feeds for Excel | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
-| [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moves in from its own repository ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
+| [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
 
 | Application | For | Uses |
 | --- | --- | --- |
@@ -148,7 +148,7 @@ services/
   catalogue/
   registry/
   query/
-  semgraph/       the Chart Server, once it has moved in
+  semgraph/       the Chart Server; Node runs its TypeScript directly (DEC-PF-25)
 packages/
   auth/           token validation shared by every service and app
   contracts/      zod schemas and the generated OpenAPI per service
