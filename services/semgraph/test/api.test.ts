@@ -27,6 +27,23 @@ describe('API', () => {
     assert.deepEqual((await app.inject('/health')).json(), response.json());
   });
 
+  it('answers pages of every site, without credentials, as it is open to everyone', async () => {
+    const response = await app.inject({ url: '/semgraphs', headers: { origin: 'https://datahub-web.example' } });
+    assert.equal(response.headers['access-control-allow-origin'], '*');
+    assert.match(String(response.headers['access-control-expose-headers']), /Semgraph-Deviations/);
+    assert.equal(response.headers['access-control-allow-credentials'], undefined);
+
+    const preflight = await app.inject({
+      method: 'OPTIONS',
+      url: '/render',
+      headers: { origin: 'https://elsewhere.example', 'access-control-request-method': 'POST', 'access-control-request-headers': 'content-type' },
+    });
+    assert.equal(preflight.statusCode, 204);
+    assert.equal(preflight.headers['access-control-allow-origin'], '*');
+    assert.equal(preflight.headers['access-control-allow-methods'], 'GET, POST');
+    assert.equal(preflight.headers['access-control-allow-headers'], 'content-type');
+  });
+
   it('GET /semgraphs lists what is available and what is planned', async () => {
     const body = (await app.inject('/semgraphs?locale=nl-BE')).json();
     assert.deepEqual(body.semgraphs.map((semgraph: { id: string }) => semgraph.id), ['movingWindowAverage', 'movingWindowMedian', 'calendarAverage', 'calendarMedian', 'movingWindowRatio', 'calendarRatio', 'periodComparison', 'kpiTile', 'kpiStatus', 'categoryComparison', 'distribution']);

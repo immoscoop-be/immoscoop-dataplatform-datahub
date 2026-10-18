@@ -354,6 +354,14 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
 
   assert {
     condition = contains(
+      [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_SEMGRAPH_URL"],
+      "https://datahub-semgraph-123456789.europe-west1.run.app"
+    )
+    error_message = "The page of the web app shows the charts of semgraph, so it needs its address."
+  }
+
+  assert {
+    condition = contains(
       [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_URL"],
       "https://datahub-registry-123456789.europe-west1.run.app"
     )

@@ -46,7 +46,7 @@ createRoot(root).render(
   <StrictMode>
     <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} forceColorScheme="light" getStyleNonce={() => config.styleNonce}>
       <QueryClientProvider client={queryClient}>
-        <App api={api} session={session} />
+        <App api={api} session={session} semgraphUrl={config.semgraphUrl} />
       </QueryClientProvider>
     </MantineProvider>
   </StrictMode>,

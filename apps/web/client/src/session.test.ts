@@ -63,7 +63,7 @@ describe('the session of the page', () => {
 });
 
 describe('the calls to the services', () => {
-  const config = { identityUrl: 'https://identity.test', registryUrl: 'https://registry.test' };
+  const config = { identityUrl: 'https://identity.test', registryUrl: 'https://registry.test', semgraphUrl: 'https://semgraph.test' };
 
   it('calls identity and registry with the Access Token, with IDs and texts escaped', async () => {
     const asked: { url: string; authorization: string | null }[] = [];
@@ -91,5 +91,31 @@ describe('the calls to the services', () => {
       new ServiceError(403, 'Only the Data Team may read the registry for now.'),
     );
     await expect(answering(new Response('Bad gateway', { status: 502 })).node('x')).rejects.toThrow('registry answered 502.');
+  });
+
+  it('calls semgraph without Access Token, as it is open to everyone, and tells why it refuses', async () => {
+    const asked: { url: string; authorization: string | null }[] = [];
+    const tokens: string[] = [];
+    const api = createApi(config, { accessToken: async () => (tokens.push('asked'), 'a-1') }, (async (input: string | URL | Request, init?: RequestInit) => {
+      const url = String(input);
+      asked.push({ url, authorization: new Headers(init?.headers).get('authorization') });
+      if (url.includes('/examples/')) {
+        return Response.json({ outcome: 'refused', issues: [{ level: 'caution', message: 'Few observations.' }, { level: 'refusal', message: 'Say how unique counts were counted.' }] }, { status: 422 });
+      }
+      if (url.endsWith('/semgraphs/nothing')) {
+        return Response.json({ outcome: 'invalid', issues: [{ level: 'inputError', message: 'There is no semgraph nothing.' }] }, { status: 404 });
+      }
+      return Response.json({ semgraphs: [], planned: [] });
+    }) as typeof fetch);
+    expect(await api.charts()).toEqual({ semgraphs: [], planned: [] });
+    expect(await api.refusal('/semgraphs/kpiTile/examples/unique?theme=dark')).toBe('Say how unique counts were counted.');
+    await expect(api.chart('nothing')).rejects.toEqual(new ServiceError(404, 'There is no semgraph nothing.'));
+    expect(asked.map((call) => call.url)).toEqual([
+      'https://semgraph.test/semgraphs',
+      'https://semgraph.test/semgraphs/kpiTile/examples/unique?theme=dark',
+      'https://semgraph.test/semgraphs/nothing',
+    ]);
+    expect(asked.every((call) => call.authorization === null)).toBe(true);
+    expect(tokens).toEqual([]);
   });
 });

@@ -2,18 +2,20 @@ import { Center, Loader, Stack, Text, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { SignedOut, type Api } from './api.js';
+import { ChartPage, ChartsPage } from './Charts.js';
 import { NodePage } from './Node.js';
-import { useRoute } from './route.js';
+import { hrefFor, useRoute, type Route } from './route.js';
 import { SearchPage } from './Search.js';
 import { explain, SignInProblem, type Session } from './session.js';
-import { Shell } from './Shell.js';
+import { Shell, type NavItem } from './Shell.js';
 import { SignIn } from './SignIn.js';
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
 const DATA_TEAM = 'datateam';
 
-export function App({ api, session }: { api: Api; session: Pick<Session, 'signOut'> }) {
+export function App({ api, session, semgraphUrl }: { api: Api; session: Pick<Session, 'signOut'>; semgraphUrl: string }) {
   const me = useQuery({ queryKey: ['me'], queryFn: api.me });
+  const route = useRoute();
 
   if (me.isPending) {
     return (
@@ -36,16 +38,22 @@ export function App({ api, session }: { api: Api; session: Pick<Session, 'signOu
     window.location.replace('/');
   }
 
+  const dataTeam = me.data.roles.includes(DATA_TEAM);
+  const charts = route.page === 'charts' || route.page === 'chart' || !dataTeam;
+  const nav: NavItem[] = [
+    ...(dataTeam ? [{ label: 'dbt projects', href: hrefFor({ page: 'search', query: '' }), active: !charts }] : []),
+    { label: 'Charts', href: hrefFor({ page: 'charts' }), active: charts },
+  ];
+
   return (
-    <Shell me={me.data} onSignOut={signOut}>
-      {me.data.roles.includes(DATA_TEAM) ? <Registry api={api} /> : <Welcome name={me.data.name} />}
+    <Shell me={me.data} nav={nav} onSignOut={signOut}>
+      <Page api={api} route={route} dataTeam={dataTeam} semgraphUrl={semgraphUrl} />
     </Shell>
   );
 }
 
-/** What the Data Team can do today: search the dbt projects and read a Node. */
-function Registry({ api }: { api: Api }) {
-  const route = useRoute();
+/** The page for the address: the charts for everyone; searching the dbt projects for the Data Team. */
+function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; dataTeam: boolean; semgraphUrl: string }) {
   // A Node leads back to the results it was found in.
   const [lastQuery, setLastQuery] = useState('');
   const query = route.page === 'search' ? route.query : undefined;
@@ -54,14 +62,24 @@ function Registry({ api }: { api: Api }) {
       setLastQuery(query);
     }
   }, [query]);
-  return route.page === 'node' ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastQuery} /> : <SearchPage api={api} query={route.query} />;
+
+  switch (route.page) {
+    case 'chart':
+      return <ChartPage api={api} semgraphUrl={semgraphUrl} id={route.id} />;
+    case 'charts':
+      return <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
+    case 'node':
+      return dataTeam ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastQuery} /> : <DataTeamOnly />;
+    case 'search':
+      return dataTeam ? <SearchPage api={api} query={route.query} /> : <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
+  }
 }
 
-function Welcome({ name }: { name: string }) {
+function DataTeamOnly() {
   return (
     <Stack gap="xs" maw={640}>
-      <Title order={1}>Welcome, {name.split(' ')[0]}</Title>
-      <Text c="dimmed">Searching the dbt projects is for the Data Team for now. The rest of Data Hub comes here as it is built.</Text>
+      <Title order={1}>For the Data Team, for now</Title>
+      <Text c="dimmed">Reading the dbt projects is for the Data Team for now. The charts are open to everyone.</Text>
     </Stack>
   );
 }

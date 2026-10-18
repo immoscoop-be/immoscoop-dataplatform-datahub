@@ -231,6 +231,10 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |
 | `GET /.well-known/oauth-protected-resource/mcp` | where Claude signs in for `/mcp`, only when OAuth is configured (REQ-091) |
 
+Every answer allows pages of every site (CORS: `Access-Control-Allow-Origin: *`, without credentials), as semgraph is open
+to everyone ([TR-PF-31](../../docs/requirements/technical/00-platform.md#tr-pf-31)); the web app of Data Hub shows its
+charts that way.
+
 Data Hub runs it on Cloud Run as `datahub-semgraph`, in uat and prod; the Terraform output `semgraph_url` is its
 address, with `/docs`. Until its current users have moved over
 ([OP-PF-18](../../docs/requirements/technical/00-platform.md#op-pf-18)), the former repository still deploys it on the
