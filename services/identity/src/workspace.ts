@@ -1,7 +1,5 @@
 const DIRECTORY_USERS = 'https://admin.googleapis.com/admin/directory/v1/users/';
 const DIRECT_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups';
-/** The label every Google Group carries, security groups included; the search must name a label. */
-const GOOGLE_GROUP_LABEL = 'cloudidentity.googleapis.com/groups.discussion_forum';
 const METADATA_TOKEN = 'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token';
 
 /** A Group of a User, as Workspace knows it. */
@@ -31,13 +29,17 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
     return request(url, { headers: { authorization: `Bearer ${await token([scope])}` } });
   }
 
-  /** The groups a User or group is a direct member of, over every page. */
+  /**
+   * The groups a User or group is a direct member of, over every page. The query names the member
+   * only, as in Google's own sample: this method refuses the label filter its reference asks for
+   * (400), unlike searchTransitiveGroups.
+   */
   async function directGroups(member: string): Promise<WorkspaceGroup[]> {
     const groups: WorkspaceGroup[] = [];
     let pageToken: string | undefined;
     do {
       const url = new URL(DIRECT_GROUPS);
-      url.searchParams.set('query', `member_key_id == '${member.replaceAll("'", '')}' && '${GOOGLE_GROUP_LABEL}' in labels`);
+      url.searchParams.set('query', `member_key_id == '${member.replaceAll("'", '')}'`);
       if (pageToken) {
         url.searchParams.set('pageToken', pageToken);
       }
@@ -97,12 +99,20 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
   };
 }
 
-/** An error with Google's own reason in it, such as an API that is not enabled; for the log. */
+/**
+ * An error with Google's own reason in it, such as an API that is not enabled, and for a bad request
+ * which argument it refused; for the log.
+ */
 async function failure(what: string, response: Response): Promise<Error> {
   let reason = '';
   try {
-    const body = (await response.json()) as { error?: { message?: string } };
-    reason = body.error?.message ?? '';
+    const body = (await response.json()) as {
+      error?: { message?: string; details?: { fieldViolations?: { field?: string; description?: string }[] }[] };
+    };
+    const violations = (body.error?.details ?? [])
+      .flatMap((detail) => detail.fieldViolations ?? [])
+      .map((violation) => `${violation.field ?? '?'}: ${violation.description ?? ''}`);
+    reason = [body.error?.message ?? '', ...violations].filter(Boolean).join(' · ');
   } catch {
     // No JSON: the status says enough.
   }
