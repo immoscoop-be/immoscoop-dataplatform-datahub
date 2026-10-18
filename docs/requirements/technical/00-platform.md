@@ -72,9 +72,9 @@ A service that calls another service on behalf of a User forwards the Access Tok
 <a id="tr-pf-06"></a>
 ### TR-PF-06 · Claude signs in through identity
 
-**Status:** Specified · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
+**Status:** Implemented · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
 
-identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). MCP clients register themselves (RFC 7591), but only with a callback on a fixed list, Claude's, so no other site can have a User's sign-in sent to it. mcp validates the resulting Access Tokens like every other service.
+identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). MCP clients register themselves (RFC 7591), but only with a callback on a fixed list, Claude's, so no other site can have a User's sign-in sent to it. mcp tells clients where to sign in through its protected resource metadata (RFC 9728), and validates the resulting Access Tokens like every other service.
 
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Library Card

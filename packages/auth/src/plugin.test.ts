@@ -52,4 +52,19 @@ describe('authPlugin', () => {
     const response = await app.inject({ url: '/does-not-exist', headers: { authorization: `Bearer ${token}` } });
     expect(response.statusCode).toBe(404);
   });
+
+  it('tells the client where to sign in, on a 401 only, when asked to', async () => {
+    const withChallenge = Fastify();
+    await withChallenge.register(authPlugin, { verifier: issuer.verifier, challenge: 'Bearer resource_metadata="https://mcp.test/meta"' });
+    withChallenge.get('/whoami', async (request) => ({ sub: request.user?.sub }));
+
+    const denied = await withChallenge.inject({ url: '/whoami' });
+    expect(denied.statusCode).toBe(401);
+    expect(denied.headers['www-authenticate']).toBe('Bearer resource_metadata="https://mcp.test/meta"');
+    const allowed = await withChallenge.inject({ url: '/whoami', headers: { authorization: `Bearer ${await issuer.sign()}` } });
+    expect(allowed.statusCode).toBe(200);
+    expect(allowed.headers['www-authenticate']).toBeUndefined();
+    expect((await app.inject({ url: '/whoami' })).headers['www-authenticate']).toBeUndefined();
+    await withChallenge.close();
+  });
 });

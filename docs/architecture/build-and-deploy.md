@@ -44,7 +44,7 @@ All of it is one workflow, [`ci.yml`](../../.github/workflows/ci.yml), with one 
 | Job | When | What |
 | --- | --- | --- |
 | Type-check, test and check the docs | Every pull request, and every push to `uat` or `main` | Install, type-check, test, and check the documentation |
-| Find the services | Every run | Lists the folders under `services/`; every folder is a service with its own image |
+| Find the services | Every run | Lists the folders under `services/` and `apps/`; every folder gets its own image |
 | image (*service*) | Every pull request | Builds the image of every service, to prove it builds |
 | image (*service*) | Every push to `uat` | Builds the images and pushes them to Artifact Registry, once the variables below are set ([TR-PF-16](../requirements/technical/00-platform.md#tr-pf-16)) |
 | image (*service*) | Every push to `main` | Finds the images of the same code from uat and tags them with the new commit; builds only if they are missing ([TR-PF-17](../requirements/technical/00-platform.md#tr-pf-17)) |
@@ -100,7 +100,7 @@ Before GitHub can push images or apply Terraform, the projects need a one-time b
 
 ## Adding a service
 
-1. Copy one of the folders under `services/`, and change the name in `package.json`, `src/app.ts` and the test.
+1. Copy one of the folders under `services/` (or `apps/` for an interface, such as mcp), and change the name in `package.json`, `src/app.ts` and the test.
 2. Add it to the `references` in the root `tsconfig.json`. The pipeline finds the new folder by itself and builds its image; the rules in GitHub stay as they are.
 3. Add it to the Terraform: `local.services` in `infra/main.tf`, plus its roles ([infra/README.md](../../infra/README.md#adding-a-service)).
 4. Describe it in [`services/`](services/) and in the [service map](README.md#services).

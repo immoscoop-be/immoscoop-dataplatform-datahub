@@ -6,6 +6,8 @@ export interface ServerOptions {
   name: string;
   /** Validates the access token on every request that is not public. */
   verifier: TokenVerifier;
+  /** The WWW-Authenticate header of every 401 (see AuthPluginOptions). */
+  challenge?: string;
   /** Overrides the logger; tests pass `false`. */
   logger?: FastifyServerOptions['logger'];
 }
@@ -34,7 +36,7 @@ export async function createServer(options: ServerOptions): Promise<FastifyInsta
     },
   });
 
-  await app.register(authPlugin, { verifier: options.verifier });
+  await app.register(authPlugin, { verifier: options.verifier, challenge: options.challenge });
 
   app.get('/health', { config: { public: true } }, async () => ({ status: 'ok', service: options.name }));
 

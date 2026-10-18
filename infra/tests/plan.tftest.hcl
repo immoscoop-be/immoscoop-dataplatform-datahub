@@ -25,8 +25,8 @@ run "every_service_runs_the_shared_image_of_this_code" {
   command = plan
 
   assert {
-    condition     = length(google_cloud_run_v2_service.service) == 4
-    error_message = "Expected the four services identity, catalogue, registry and query."
+    condition     = length(google_cloud_run_v2_service.service) == 5
+    error_message = "Expected identity, catalogue, registry, query and mcp."
   }
 
   assert {
@@ -269,6 +269,28 @@ run "identity_signs_in_only_the_own_domain_and_known_mcp_clients" {
       !contains([for env in google_cloud_run_v2_service.service[name].template[0].containers[0].env : env.name], "DATAHUB_GOOGLE_OAUTH_CLIENT")
     ])
     error_message = "Only identity knows where the OAuth client is."
+  }
+}
+
+run "claude_finds_mcp_and_signs_in_at_identity" {
+  command = plan
+
+  assert {
+    condition     = output.mcp_url == "https://datahub-mcp-123456789.europe-west1.run.app/mcp"
+    error_message = "mcp's address must follow Cloud Run's fixed address format, with the endpoint /mcp."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["mcp"].template[0].containers[0].env : env.value if env.name == "DATAHUB_MCP_RESOURCE"],
+      "https://datahub-mcp-123456789.europe-west1.run.app/mcp"
+    )
+    error_message = "mcp must know its own address, which it gives to MCP clients as the protected resource."
+  }
+
+  assert {
+    condition     = !contains(keys(google_cloud_run_v2_job.migrate), "mcp") && !contains(keys(google_sql_user.service), "mcp")
+    error_message = "mcp keeps no data: no database login, no migrations."
   }
 }
 
