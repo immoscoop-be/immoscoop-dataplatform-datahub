@@ -1,9 +1,11 @@
 import { cssVariablesResolver, theme } from '@datahub/ui';
 import { MantineProvider } from '@mantine/core';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { Lineage, NodeDetail, SearchHit } from './api.js';
+import type { ChartDetail, Lineage, NodeDetail, SearchHit } from './api.js';
+import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
 import { SignIn } from './SignIn.js';
@@ -11,9 +13,11 @@ import { SignIn } from './SignIn.js';
 /** The HTML React renders, in the theme of the app, and the text a reader sees in it. */
 function render(element: ReactNode) {
   const html = renderToString(
-    <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} forceColorScheme="light">
-      {element}
-    </MantineProvider>,
+    <QueryClientProvider client={new QueryClient()}>
+      <MantineProvider theme={theme} cssVariablesResolver={cssVariablesResolver} forceColorScheme="light">
+        {element}
+      </MantineProvider>
+    </QueryClientProvider>,
   );
   return { html, text: html.replace(/<style[^>]*>.*?<\/style>/gs, '').replace(/<!--.*?-->/g, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ') };
 }
@@ -94,5 +98,48 @@ describe('the views of the registry', () => {
     expect(html).toContain('href="/auth/login"');
     expect(text).toContain('Only active accounts of the company can sign in.');
     expect(render(<SignIn />).text).not.toContain('You are not signed in');
+  });
+});
+
+describe('the charts of semgraph', () => {
+  const SEMGRAPH = 'https://semgraph.test';
+  const example = (name: string, id = 'movingWindowAverage') => ({ name, title: `Credit leads (${name})`, href: `/semgraphs/${id}/examples/${name}` });
+  const chart: ChartDetail = {
+    id: 'movingWindowAverage',
+    title: 'Moving window average',
+    answers: 'How does this evolve, without the daily noise?',
+    links: { learning: 'https://confluence.test/reading-card', figma: 'https://figma.test/file' },
+    examples: [example('basic'), example('daily')],
+    exampleQuestions: ['How have credit leads evolved over the last four weeks?'],
+    doNotUseWhen: [{ intent: 'compareWithLastYear', use: 'periodComparison' }],
+    schema: { properties: { size: {} } },
+  };
+
+  it('draws an example as asked, or in the theme and size chosen', () => {
+    expect(exampleImage(SEMGRAPH, example('basic'))).toBe('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic');
+    expect(exampleImage(SEMGRAPH, example('basic'), { theme: 'dark', size: 'xl' })).toBe('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=dark&size=xl');
+    expect(intentInWords('compareWithLastYear')).toBe('Compare with last year');
+  });
+
+  it('shows every chart with the question it answers, and its first example', () => {
+    const { html, text } = render(<ChartList catalog={{ semgraphs: [chart, { ...chart, id: 'kpiTile', title: 'KPI tile', examples: [] }], planned: ['funnel', 'survival'] }} semgraphUrl={SEMGRAPH} />);
+    expect(html).toContain('href="#/charts/movingWindowAverage"');
+    expect(html).toContain('src="https://semgraph.test/semgraphs/movingWindowAverage/examples/basic"');
+    expect(text).toContain('Moving window average How does this evolve, without the daily noise? 2 examples');
+    expect(text).toContain('KPI tile');
+    expect(text).toContain('Still to come: funnel, survival.');
+  });
+
+  it('shows a chart with its questions, the chart to use instead, and all its examples', () => {
+    const { html, text } = render(<ChartView chart={chart} titles={new Map([['periodComparison', 'Comparison with the previous period']])} semgraphUrl={SEMGRAPH} refusal={async () => undefined} />);
+    expect(text).toContain('How have credit leads evolved over the last four weeks?');
+    expect(text).toContain('Compare with last year: Comparison with the previous period');
+    expect(html).toContain('href="#/charts/periodComparison"');
+    expect(html).toContain('href="https://semgraph.test/semgraphs/movingWindowAverage"');
+    expect(html).toContain('src="https://semgraph.test/semgraphs/movingWindowAverage/examples/daily"');
+    expect(text).toContain('Credit leads (daily)');
+    expect(html).toContain('aria-label="Size"');
+    // The KPI tile has one size: no choice of size.
+    expect(render(<ChartView chart={{ ...chart, schema: {} }} titles={new Map()} semgraphUrl={SEMGRAPH} refusal={async () => undefined} />).html).not.toContain('aria-label="Size"');
   });
 });

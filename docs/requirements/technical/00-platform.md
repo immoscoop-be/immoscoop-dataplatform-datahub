@@ -274,6 +274,13 @@ A global external Application Load Balancer stands in front of the Cloud Run ser
 
 The Cloud Run service accepts traffic only through the load balancer, so its own `run.app` address cannot be used to get around the limit, and a maximum number of instances caps the cost. The load balancer needs a domain name with a Google-managed certificate ([OP-PF-08](#op-pf-08)). The service account of semgraph gets no permission on any data and no secret ([DEC-PF-24](#dec-pf-24)). All of it is Terraform in `infra/`, like the rest ([TR-PF-13](#tr-pf-13)).
 
+<a id="tr-pf-31"></a>
+### TR-PF-31 · Pages of every site may call semgraph
+
+**Status:** Implemented · **Realises:** [DEC-PF-24](#dec-pf-24), [DEC-PF-23](#dec-pf-23)
+
+semgraph answers every request with `Access-Control-Allow-Origin: *`, and the preflight of the browser for a `POST` with JSON, so a page on any site can call it from the browser: the web app of Data Hub, and a dashboard or document elsewhere. It allows no credentials, as there are none. The page of the web app may load pictures and call only semgraph besides its own server, identity and registry ([TR-PF-29](#tr-pf-29)).
+
 ## Open points
 
 - [x] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)). *Decided on 2026-10-18: a Cloud Run job ([DEC-PF-20](#dec-pf-20)).*

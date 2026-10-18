@@ -9,6 +9,12 @@ describe('the address of a page', () => {
     expect(parseHash('#/')).toEqual({ page: 'search', query: '' });
   });
 
+  it('reads the charts and one chart', () => {
+    expect(parseHash('#/charts')).toEqual({ page: 'charts' });
+    expect(parseHash('#/charts/')).toEqual({ page: 'charts' });
+    expect(parseHash('#/charts/movingWindowAverage')).toEqual({ page: 'chart', id: 'movingWindowAverage' });
+  });
+
   it('still opens the links of the first page, which held only the unique ID', () => {
     expect(parseHash('#source.compilacion.raw%20leads')).toEqual({ page: 'node', uniqueId: 'source.compilacion.raw leads' });
   });
@@ -22,6 +28,8 @@ describe('the address of a page', () => {
       { page: 'search', query: '' },
       { page: 'search', query: 'leads & visits' },
       { page: 'node', uniqueId: 'model.p.a/b#c' },
+      { page: 'charts' },
+      { page: 'chart', id: 'kpiTile' },
     ];
     for (const route of routes) {
       expect(parseHash(hrefFor(route))).toEqual(route);

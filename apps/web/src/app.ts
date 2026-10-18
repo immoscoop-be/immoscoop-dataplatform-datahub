@@ -22,6 +22,8 @@ export interface AppOptions {
   identityUrl: string;
   /** registry's address (DATAHUB_REGISTRY_URL), which the page calls to search the dbt projects. */
   registryUrl: string;
+  /** semgraph's address (DATAHUB_SEMGRAPH_URL): the page shows its charts. */
+  semgraphUrl: string;
   /** The page as Vite built it: `dist/client` next to the server. */
   clientDir: string;
   /** Calls to identity; tests pass a stand-in. */
@@ -60,15 +62,16 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return origin === undefined || origin === new URL(options.webUrl).origin;
   }
 
-  // The page loads scripts, styles and fonts only from its own address, and talks only to its own
-  // server, identity and registry. Mantine adds <style> elements, which need this request's nonce.
+  // The page loads scripts, styles and fonts only from its own address, and charts from semgraph; it
+  // talks only to its own server, identity, registry and semgraph. Mantine adds <style> elements,
+  // which need this request's nonce.
   app.get('/', open, async (_incoming, reply) => {
     const nonce = randomBytes(16).toString('base64');
     return reply
       .type('text/html; charset=utf-8')
       .header(
         'content-security-policy',
-        `default-src 'self'; style-src 'self' 'nonce-${nonce}'; connect-src 'self' ${options.identityUrl} ${options.registryUrl}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
+        `default-src 'self'; style-src 'self' 'nonce-${nonce}'; img-src 'self' ${options.semgraphUrl}; connect-src 'self' ${options.identityUrl} ${options.registryUrl} ${options.semgraphUrl}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
       )
       .header('cache-control', 'no-store')
       .send(client.page(nonce));
