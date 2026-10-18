@@ -12,3 +12,10 @@ onlyBuiltDependencies:
 # protobufjs (through @google-cloud/kms) only prints a version warning on install; not needed.
 ignoredBuiltDependencies:
   - protobufjs
+
+# The versions semgraph ran with before it moved here; newer patches are less than two weeks old.
+# Remove these once its dependencies are next updated.
+overrides:
+  '@fastify/static': 10.1.5
+  '@fastify/send': 4.1.1
+  '@fastify/accept-negotiator': 2.1.0

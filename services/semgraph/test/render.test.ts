@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { runPipeline } from '../src/core/pipeline.ts';
 import { renderVegaLite } from '../src/core/render/vega.ts';
 import { color } from '../src/core/tokens.ts';

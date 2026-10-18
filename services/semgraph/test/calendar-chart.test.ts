@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import type { CalendarRequest } from '../src/charts/calendar-chart.ts';
 import { formatDay } from '../src/core/days.ts';
 import { color } from '../src/core/tokens.ts';

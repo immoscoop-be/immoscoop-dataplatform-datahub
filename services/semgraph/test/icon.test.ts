@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { readIcon } from '../src/core/icon.ts';
 
 const svg = (inside: string, viewBox = '0 0 44 44') => `<svg width="44" height="44" viewBox="${viewBox}" fill="none" xmlns="http://www.w3.org/2000/svg">\n${inside}\n</svg>\n`;

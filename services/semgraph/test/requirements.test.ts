@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { SHAPES } from '../src/charts/signatures.ts';
 import type { CategoryComputed } from '../src/charts/category-chart.ts';
 import type { TimeAxisComputed } from '../src/charts/time-axis-chart.ts';

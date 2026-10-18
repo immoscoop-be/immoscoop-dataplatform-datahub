@@ -1,72 +1,79 @@
-# Werken in deze repository
+# Working on semgraph
 
-semgraph is de grafiekserver van de grafiektaal: zie [README.md](README.md) voor de opbouw en
-[docs/requirements](docs/requirements/README.md) voor wat hij moet doen.
+semgraph is the chart server of the chart language, the Chart Server of Data Hub: see [README.md](README.md) for how
+it is built, and [its architecture page](../../docs/architecture/services/semgraph.md) for its place in Data Hub. The
+rules of the repository root ([CLAUDE.md](../../CLAUDE.md)) apply here too; this file adds what is particular to the
+chart language.
 
-## Filosofie
+## Philosophy
 
-De principes van de semgraph staan in de [README](README.md#philosophy). Leg elke requirement en elk ontwerp
-ernaast, en meld het als iets ertegenin gaat. Eén ervan is expliciet beslist (REQ-037): **vergelijk met wat niet op
-het scherm staat.** Wat op het scherm staat, vergelijkt de lezer zelf met het oog. Een vergelijking haalt dus altijd
-de periode net vóór het scherm erbij, even lang als wat getoond wordt, en nooit een periode die al zichtbaar is.
+The principles of semgraph are in the [README](README.md#philosophy). Hold every requirement and every design against
+them, and say so when something goes against one. One of them was decided explicitly (REQ-037): **compare with what is
+not on the screen.** What is on the screen, the reader compares by eye. A comparison therefore always brings in the
+period just before the screen, as long as what is shown, and never a period that is already visible.
 
 ## Requirements
 
-Elke functionele requirement heeft een nummer `REQ-xxx`.
+Every functional requirement has a number `REQ-xxx`.
 
-- **Waar ze binnenkomen.** Nieuwe requirements staan op Confluence:
-  [Requirements grafiektaal](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1359872021). Ook een opdracht
-  in een gesprek of issue die daar nog niet staat, is een requirement. Geef ze het volgende vrije nummer en zet ze
-  op Confluence, met de datum van de opdracht en de opdracht als bron.
-- **Bron van waarheid.** Zolang een requirement niet geïmplementeerd is, is Confluence de bron. Eens ze
-  geïmplementeerd is, is dat deze repository: `docs/requirements/REQ-xxx.md`. Een latere wijziging begint dus hier,
-  als een nieuwe requirement die naar de oude verwijst, en niet op Confluence.
-- **Volgorde.** Spreken requirements elkaar tegen, dan geldt de recentste beslissing. Dat is de datum (en het
-  tijdstip) van beslissing, niet het nummer.
+- **Where they come in.** New requirements are on Confluence:
+  [Requirements grafiektaal](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1359872021). An assignment in a
+  conversation or an issue that is not there yet is a requirement too. Give it the next free number and put it on
+  Confluence, with the date of the assignment and the assignment as its source.
+- **Source of truth.** As long as a requirement is not implemented, Confluence is the source. Once it is implemented,
+  the register of implemented requirements is. A later change therefore starts there, as a new requirement that refers
+  to the old one, and not on Confluence.
+- **Where the register is.** Until the requirements move into `docs/requirements` of Data Hub, translated into English
+  ([OP-PF-16](../../docs/requirements/technical/00-platform.md#op-pf-16)), the register REQ-000 to REQ-107 is in Dutch
+  in the [former repository](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/tree/main/docs/requirements).
+  Do not bring untranslated files into this repository: a requirement implemented in the meantime is described in its
+  pull request, and gets its file when the register moves.
+- **Order.** When requirements contradict each other, the most recent decision applies. That is the date (and the
+  time) of the decision, not the number.
 
-## Een nieuwe requirement: eerst scherp, dan bouwen
+## A new requirement: sharp first, then build
 
-Leg elke nieuwe requirement naast drie bronnen voor je iets implementeert:
+Hold every new requirement against three sources before you implement anything:
 
-1. de geïmplementeerde requirements in `docs/requirements/`;
-2. de open requirements op Confluence;
-3. de regels in Figma ([bestand grafiektaal](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6)) en de
-   [analyse](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106324).
+1. the implemented requirements in the register;
+2. the open requirements on Confluence;
+3. the rules in Figma ([file grafiektaal](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6)) and the
+   [analysis](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106324).
 
-Spreekt ze iets tegen, of laat ze meer dan één redelijke uitvoering toe:
+If it contradicts something, or allows more than one reasonable implementation:
 
-- **Meld het voor je code schrijft.** Citeer de botsende requirements letterlijk, met nummer en datum, en zeg wat
-  elke keuze in de code verandert.
-- **Trek het in discussie.** Stel een concrete vraag met een voorstel, en wacht op het antwoord. "De recentste
-  wint" bepaalt je voorstel, maar vervangt de discussie niet: een nieuwere requirement kan het oudere geval over
-  het hoofd gezien hebben.
-- **Implementeer pas als de requirement scherp is.** De uitkomst van de discussie wordt een nieuwe of aangescherpte
-  requirement: een nieuwe rij op Confluence die naar de oude verwijst.
-- **Is maar een deel scherp?** Implementeer dat deel. Zet de rest bij de open punten in
-  `docs/requirements/README.md`, met de vraag erbij.
+- **Say so before you write code.** Quote the conflicting requirements literally, with number and date, and say what
+  each choice changes in the code.
+- **Put it up for discussion.** Ask a concrete question with a proposal, and wait for the answer. "The most recent
+  wins" decides your proposal, but does not replace the discussion: a newer requirement may have overlooked the older
+  case.
+- **Implement only once the requirement is sharp.** The outcome of the discussion becomes a new or sharpened
+  requirement: a new row on Confluence that refers to the old one.
+- **Only part of it sharp?** Implement that part. Put the rest with the open points of the register, with the question.
 
-## Verwijzen naar requirements
+## Referring to requirements
 
-- **Commitboodschappen** noemen de nummers, bv. `REQ-006: mean as diamond`.
-- **In de code** staat het nummer waar een regel uit een requirement komt en iemand zou vragen "waarom zo?", bv.
-  `// REQ-001: ...`. Niet op elke regel.
-- **Tests.** `test/requirements.test.ts` heeft per requirement een test, die over elk voorbeeld van elke semgraph
-  loopt. Andere tests mogen het nummer in hun naam dragen.
+- **Commit messages** name the numbers, for example `REQ-006: mean as diamond`.
+- **In the code** the number stands where a rule comes from a requirement and someone would ask "why like this?", for
+  example `// REQ-001: ...`. Not on every line.
+- **Tests.** `test/requirements.test.ts` has a test per requirement, which runs over every example of every semgraph.
+  Other tests may carry the number in their name.
 
-## Eens geïmplementeerd
+## Once implemented
 
-1. Maak `docs/requirements/REQ-xxx.md` aan of werk het bij volgens het sjabloon in
-   [docs/requirements/README.md](docs/requirements/README.md). Daarin staan de tekst zoals beslist, hoe ze
-   geïmplementeerd is, code, tests, branch, commits en PR.
-2. Werk het register in `docs/requirements/README.md` bij.
-3. Vul op Confluence de rij aan met branch, commit en PR (links naar GitHub) en de link naar het bestand in de repo.
+1. Describe the requirement as decided, how it is implemented, the code, tests, branch, commits and pull request:
+   for now in the pull request (see "Where the register is" above).
+2. Fill in the row on Confluence with branch, commit and pull request (links to GitHub).
 
-## Ontwikkelen
+## Developing
 
-- Node 24 (`.nvmrc`) voert de TypeScript rechtstreeks uit. De commando's:
-  - `npm test` en `npm run typecheck`;
-  - `npm run schemas` na een wijziging aan een contract;
-  - `UPDATE_GOLDEN=1 npm test` na een bewuste wijziging aan de tekening. Bekijk eerst de SVG's (`npm run render:examples`).
-- Alles wat slim is gebeurt in onze code; Vega-Lite tekent enkel wat het krijgt.
-- Geen codeduplicatie: een nieuwe grafiek is een subklasse (REQ-025).
-- Commit en push enkel naar de afgesproken branch.
+- Node 24 runs the TypeScript directly, without a build; semgraph reads its definitions next to its code. From the
+  root of Data Hub:
+  - `pnpm vitest run --project semgraph` and `pnpm typecheck`;
+  - `pnpm --filter @datahub/semgraph schemas` after a change to a contract;
+  - `UPDATE_GOLDEN=1 pnpm vitest run --project semgraph` after a deliberate change to the drawing. Look at the SVGs
+    first (`pnpm --filter @datahub/semgraph render:examples`).
+- Everything smart happens in our code; Vega-Lite only draws what it gets.
+- No code duplication: a new chart is a subclass (REQ-025).
+- semgraph holds no data and gets access to none: it is open to everyone
+  ([DEC-PF-24](../../docs/requirements/technical/00-platform.md#dec-pf-24)).

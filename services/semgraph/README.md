@@ -1,4 +1,7 @@
-# immoscoop-ptditt-semgraph
+# semgraph
+
+The Chart Server of Data Hub ([architecture](../../docs/architecture/services/semgraph.md)). It moved here from
+[immoscoop-ptditt-semgraph](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph), with its history.
 
 Semantic chart service: renders charts by meaning (e.g. `movingWindowAverage`), not form, following the Immoscoop
 chart language. The data warehouse computes the values per block; the service checks them against the chart
@@ -7,8 +10,10 @@ language and draws, with title, reading cue and footer (REQ-058).
 - Analysis (functional and technical): [ptditt - Tooling - Grafiekserver](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106324)
 - Chart language, the source of the visual rules: [Figma, file grafiektaal](https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6)
 - Requirements: collected on [Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1359872021); once
-  implemented, [docs/requirements](docs/requirements/README.md) in this repository is their source of truth. How we
-  handle requirements, also conflicting ones, is in [CLAUDE.md](CLAUDE.md).
+  implemented, the register is their source of truth. Until they move into the requirements of Data Hub, translated
+  ([OP-PF-16](../../docs/requirements/technical/00-platform.md#op-pf-16)), that register is still in Dutch in the
+  [former repository](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/tree/main/docs/requirements). How we handle requirements, also conflicting
+  ones, is in [CLAUDE.md](CLAUDE.md).
 
 ## Philosophy
 
@@ -67,22 +72,22 @@ aid (`/choose`, REQ-095) and the other semgraphs come later, on the same core.
 
 ## Run it
 
-Requires Node 24 (`.nvmrc`; Node ≥ 22.18 also works). Node runs the TypeScript sources directly, so there is no
-build step.
+Requires Node 24 (`.node-version` of Data Hub). Node runs the TypeScript sources directly, so semgraph has no build
+step, unlike the other services. From the root of Data Hub:
 
 ```sh
-npm ci
-npm start                 # http://localhost:8080
-npm test                  # unit, API, conformance and golden SVG tests
-npm run typecheck
-npm run render:examples   # every example to out/*.svg, to compare with Figma
+pnpm install
+pnpm --filter @datahub/semgraph start             # http://localhost:8080
+pnpm vitest run --project semgraph                # unit, API, conformance and golden SVG tests
+pnpm typecheck                                    # all of Data Hub, semgraph included
+pnpm --filter @datahub/semgraph render:examples   # every example to out/*.svg, to compare with Figma
 ```
 
-With Docker:
+With Docker, from the root of Data Hub, with the one Dockerfile of all services:
 
 ```sh
-docker build -t semgraph .
-docker run --rm -p 8080:8080 semgraph
+docker build --build-arg SERVICE=semgraph -t semgraph .
+docker run --rm -p 8080:8080 -e MCP_AUTH=none semgraph
 ```
 
 Then open <http://localhost:8080/gallery> in a browser for every semgraph and its examples,
@@ -95,14 +100,15 @@ curl -X POST http://localhost:8080/render \
   --data @semgraphs/movingWindowAverage/examples/basic.json > basic.svg
 ```
 
-The container is stateless, needs no secrets and listens on `PORT` (default 8080). It has no login of its own:
-that comes from the platform it is deployed on, so do not expose it publicly. The one exception is `/mcp`, which
-checks OAuth tokens itself (REQ-091) and refuses everything until it is configured; see
+The container is stateless, needs no secrets and listens on `PORT` (default 8080). It has no login: in Data Hub it is
+open to everyone, its MCP server too ([DEC-PF-24](../../docs/requirements/technical/00-platform.md#dec-pf-24)),
+behind a rate limit ([TR-PF-30](../../docs/requirements/technical/00-platform.md#tr-pf-30)). `/mcp` can still check
+OAuth tokens itself (REQ-091), and refuses everything until it is configured; see
 [MCP: charts in Claude](#mcp-charts-in-claude). `LOG_LEVEL` sets the log level (default `info`).
 
 ## Examples
 
-Every example request, with a link to render it on a local server (`npm start`) and to its golden SVG. The requests
+Every example request, with a link to render it on a local server (`pnpm --filter @datahub/semgraph start`) and to its golden SVG. The requests
 are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 
 ### movingWindowAverage
@@ -225,9 +231,10 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |
 | `GET /.well-known/oauth-protected-resource/mcp` | where Claude signs in for `/mcp`, only when OAuth is configured (REQ-091) |
 
-The internal-tools platform runs the image ([deploy workflow](.github/workflows/deploy-internal-tools.yml)): `main` on
-<https://semgraph.internal-immoscoop.be>, every other branch on <https://semgraph.dev.internal-immoscoop.be>, each
-with `/docs`.
+Data Hub runs it on Cloud Run as `datahub-semgraph`, in uat and prod; the Terraform output `semgraph_url` is its
+address, with `/docs`. Until its current users have moved over
+([OP-PF-18](../../docs/requirements/technical/00-platform.md#op-pf-18)), the former repository still deploys it on the
+internal-tools platform: see [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109).
 
 **For a program or an agent** that should make charts with this service: start from `/openapi.json`. Its
 description says how to use the service, `POST /render` takes the request of any semgraph (chosen by `semgraph`),
@@ -282,8 +289,10 @@ screen at size `large`; with a button to download the SVG. In a dark conversatio
 report (outcome, issues, alternative), not the SVG, and is asked to fill `meta`: the question, the query, who asked
 and the day (REQ-093).
 
-**Login (REQ-091).** Claude calls `/mcp` from Anthropic's cloud, without the gate's cookie, so `/mcp` checks an OAuth
-access token itself, issued to a gate account (Cognito Pool 1). The configuration comes from the environment:
+**Login (REQ-091).** In Data Hub the MCP server is open, like the API: Data Hub sets `MCP_AUTH=none`
+([DEC-PF-24](../../docs/requirements/technical/00-platform.md#dec-pf-24)). `/mcp` can still check an OAuth access token
+itself, as it did on the internal-tools platform with a gate account (Cognito Pool 1). The configuration comes from the
+environment:
 
 | Variable | |
 | --- | --- |
@@ -295,32 +304,29 @@ access token itself, issued to a gate account (Cognito Pool 1). The configuratio
 | `MCP_AUTH=none` | no login, for a local server; excludes the variables above |
 
 Without any of these, `/mcp` answers 503: it fails closed. An incomplete configuration stops the service from
-starting. What the platform has to do (an OAuth client in Cognito, a gate exception for `/mcp` on the semgraph host,
-the WAF) is proposed in [docs/platform/mcp-access.md](docs/platform/mcp-access.md).
+starting.
 
-**Connect** once the platform is ready:
+**Connect**, with the address of `/mcp` (the Terraform output `semgraph_url`, followed by `/mcp`):
 
 - *claude.ai, for the whole organization:* an Owner adds it under Organization settings → Connectors → Add → Custom →
-  Web, with the URL of `/mcp` and "Use your own OAuth client" (the client id from the platform, no secret). Every
-  colleague then connects under Customize → Connectors and signs in with their gate account.
-- *Claude Code:*
-  `claude mcp add --transport http --client-id <client id> --callback-port 33418 semgraph https://semgraph.internal-immoscoop.be/mcp`.
+  Web, with the URL of `/mcp`. It needs no sign-in.
+- *Claude Code:* `claude mcp add --transport http semgraph <semgraph_url>/mcp`.
 
 **Locally**, without a platform:
 
 ```sh
-MCP_AUTH=none npm start                     # MCP on http://localhost:8080/mcp
-npx @modelcontextprotocol/inspector         # to try the tools
-npm run mcp                                 # the same server on stdio
+MCP_AUTH=none pnpm --filter @datahub/semgraph start   # MCP on http://localhost:8080/mcp
+npx @modelcontextprotocol/inspector                   # to try the tools
+pnpm --filter @datahub/semgraph mcp                   # the same server on stdio
 ```
 
-`.mcp.json` gives Claude Code in a clone of this repository the stdio server, without login. Claude Code shows no
-app, so there every chart is also written to `out/mcp/`, and Claude gets the path.
+On stdio, as Claude Code runs it, there is no app, so every chart is also written to `out/mcp/`, and Claude gets the
+path.
 
 ## The contract
 
 Every semgraph has its contract, composed by its classes and written to `semgraphs/<id>/schema.json`
-(`npm run schemas`; a test fails when a file is out of date). The warehouse delivers **one row per block** in
+(`pnpm --filter @datahub/semgraph schemas`; a test fails when a file is out of date). The warehouse delivers **one row per block** in
 `points` (REQ-058), named after its last day (`end`) for a rolling window and by its ISO name (`period`) for a
 calendar period (REQ-062):
 
@@ -411,7 +417,7 @@ the tokens): only the colours change, never the chart. The patterns take the var
 Figma, in both modes: the mosaic (empty) and the fine lines (running) `context/light`, the dots (few observations)
 `context`, on `surface` (REQ-097).
 A dark SVG carries `data-theme="dark"`, and its pattern ids end in `-dark`, so a light and a dark chart can share a
-page. `GET /semgraphs/{id}/examples/{name}?theme=dark` draws an example dark, and `npm run render:examples` writes
+page. `GET /semgraphs/{id}/examples/{name}?theme=dark` draws an example dark, and `pnpm --filter @datahub/semgraph render:examples` writes
 every chart dark too.
 
 Shared and optional: `title`; `asOf`, the last complete day of the data (yesterday in Brussels when absent);
@@ -704,7 +710,7 @@ vocabulary/attributes.yml              closed vocabulary of the 9 attributes
 semgraphs/catalog.yml                  all semgraphs of the catalogue: available or planned
 semgraphs/<id>/                        index.ts (the class), metadata.yml, schema.json (generated), icon.svg, examples
 src/charts/                            the chart classes, statistics, signatures, calendar periods and scales
-docs/requirements/                     the implemented requirements (REQ-xxx), the source of truth once implemented
+the requirements (REQ-xxx)                 for now in the former repository, until they move into docs/requirements (OP-PF-16)
 test/requirements.test.ts              one test per requirement, run on every example of every semgraph
 locales/en.yml, nl-BE.yml              every text; other locales fall back to English
 tokens/ptditt-grafiektaal-tokens.json  style values, read from the Figma variables and text styles
@@ -757,7 +763,7 @@ the pages Anatomy and Line charts, and with the team:
     least halfway for a very low ratio); a ratio of zero does not count for the scale; the counts of a block with few
     observations at its point, the denominator above its block; on hover a guide from the denominator to the right
     axis.
-    The open questions are in [docs/requirements](docs/requirements/README.md#open-punten-eerst-te-bespreken).
+    The open questions are in the register of the [former repository](https://github.com/immoscoop-be/immoscoop-ptditt-semgraph/blob/main/docs/requirements/README.md#open-punten-eerst-te-bespreken).
 
 ## Notes for consumers
 

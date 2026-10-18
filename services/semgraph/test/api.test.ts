@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { after, before, describe, it } from 'node:test';
+import { afterAll as after, beforeAll as before, describe, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../src/app.ts';
 import { example, NOW, testRegistry } from './helpers.ts';
@@ -24,6 +24,7 @@ describe('API', () => {
       tokensVersion: (await testRegistry()).tokens.version,
       mcp: 'off',
     });
+    assert.deepEqual((await app.inject('/health')).json(), response.json());
   });
 
   it('GET /semgraphs lists what is available and what is planned', async () => {

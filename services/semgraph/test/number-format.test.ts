@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { CompactFormat } from '../src/charts/number-format.ts';
 
 describe('compact numbers, as Figma writes them on bar charts', () => {

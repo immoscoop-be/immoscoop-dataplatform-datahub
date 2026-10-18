@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import { relativeTicks, type MovingWindowRequest } from '../src/charts/moving-window-chart.ts';
 import type { BlockRow } from '../src/charts/statistics.ts';
 import { formFor } from '../src/charts/time-axis-chart.ts';

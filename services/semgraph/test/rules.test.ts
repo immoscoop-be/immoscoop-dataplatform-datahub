@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it } from 'vitest';
 import type { MovingWindowRequest } from '../src/charts/moving-window-chart.ts';
 import { runPipeline } from '../src/core/pipeline.ts';
 import { example, NOW, testRegistry } from './helpers.ts';
