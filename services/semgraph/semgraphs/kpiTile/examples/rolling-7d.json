@@ -1,0 +1,24 @@
+{
+  "semgraph": "kpiTile",
+  "metric": "creditLeads",
+  "title": "Kredietleads (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "sum",
+  "window": 7,
+  "locale": "en",
+  "context": {
+    "domain": "Leads",
+    "dataset": "Credit",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "end": "2026-08-12", "sum": 512, "previous": { "sum": 505 } },
+    { "end": "2026-08-19", "sum": 498, "previous": { "sum": 512 } },
+    { "end": "2026-08-26", "sum": 530, "previous": { "sum": 498 } },
+    { "end": "2026-09-02", "sum": 561, "previous": { "sum": 530 } },
+    { "end": "2026-09-09", "sum": 547, "previous": { "sum": 561 } },
+    { "end": "2026-09-16", "sum": 589, "previous": { "sum": 547 } },
+    { "end": "2026-09-23", "sum": 572, "previous": { "sum": 589 } },
+    { "end": "2026-09-30", "sum": 604, "previous": { "sum": 572 } }
+  ]
+}
