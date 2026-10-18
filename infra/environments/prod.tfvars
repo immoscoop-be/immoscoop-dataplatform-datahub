@@ -7,3 +7,9 @@ deletion_protection = true
 token_signing_key_versions = {
   "2026" = "ENABLED"
 }
+
+# The Source Jobs this environment reads: dbt-prod and Colleciónes (DEC-AR-01)
+dbt_source_jobs = {
+  "9367"  = "322950"
+  "17121" = "739004"
+}

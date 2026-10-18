@@ -57,5 +57,6 @@ resource "google_cloud_run_v2_service" "service" {
     google_kms_crypto_key_iam_member.identity_signs,
     google_secret_manager_secret_iam_member.reader,
     google_storage_bucket_iam_member.registry_artifacts,
+    google_cloud_run_v2_job_iam_member.registry_starts_ingest,
   ]
 }

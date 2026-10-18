@@ -202,13 +202,14 @@ From the next push to `uat`, the images land in `europe-west1-docker.pkg.dev/imm
 
 ## 8. Values Terraform cannot know
 
-**This step comes after the first Terraform run**, because Terraform creates the secrets these values go into. Until then, you can prepare them: create the dbt Cloud token and keep it somewhere safe (never in GitHub), check that both Source Jobs generate the docs ("Generate docs on run"), and set up the branding of Sign in with Google with audience **Internal** in both projects.
+**This step comes after the first Terraform run**, because Terraform creates the secrets these values go into. Until then, you can prepare them: create the dbt Cloud token and keep it somewhere safe (never in GitHub), check that every Source Job generates the docs ("Generate docs on run"), and set up the branding of Sign in with Google with audience **Internal** in both projects.
 
 Terraform creates the secrets in Secret Manager, but some values only a person can provide. Add them per environment once Terraform has created the secret, with `printf '%s' '<value>' | gcloud secrets versions add <secret> --project=<project> --data-file=-`. The key that signs Access Tokens is not among them: Terraform creates it in Cloud KMS, and nobody ever sees it ([TR-PF-24](../requirements/technical/00-platform.md#tr-pf-24)).
 
 | Secret | Value | Where it comes from |
 | --- | --- | --- |
-| `datahub-dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts; one per environment | dbt Cloud → Account settings → Service tokens. The Source Jobs are probably `324502` (prod) and `324451` (uat), to be confirmed ([OP-AR-01](../requirements/functional/01-artifact-registry.md#op-ar-01)) |
+| `datahub-dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts; one per environment | dbt Cloud → Account settings → Service tokens, with the permission **Job Viewer** on both dbt projects (9367 and 17121). The Source Jobs it reads are in [DEC-AR-01](../requirements/functional/01-artifact-registry.md#dec-ar-01) |
+| `datahub-dbt-webhook-secret` | The secret with which dbt Cloud signs its webhook to this environment | Step 10, once the webhook exists in dbt Cloud |
 | `datahub-google-oauth-client` | The JSON file the Google console downloads for an OAuth client of type "Web application", for Sign in with Google; add it with `gcloud secrets versions add datahub-google-oauth-client --project=<project> --data-file=<file>.json` and delete the file | GCP console → Google Auth Platform, per project: branding with audience **Internal**, then a client. Its redirect URI is the login callback of identity: `https://datahub-identity-<project number>.europe-west1.run.app/callback` (the Terraform output `identity_url`), until the domain names are chosen ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)) |
 
 ## 9. Google Workspace, by a Workspace admin
@@ -218,6 +219,16 @@ After the first Terraform run has created the service account of identity in eac
 1. **Groups Reader for identity.** Admin console → Account → Admin roles → **Groups Reader** → Assign service accounts → add `datahub-identity@immoscoop-dataplatform-398214.iam.gserviceaccount.com` and `datahub-identity@immoscoop-dataplatform.iam.gserviceaccount.com` ([DEC-UM-03](../requirements/functional/02-user-management.md#dec-um-03), [OP-UM-03](../requirements/functional/02-user-management.md#op-um-03)).
 2. **Data Hub user reader for identity.** Admin console → Account → Admin roles → **Create new role** `Data Hub user reader`, with only **Admin API privileges → Users → Read** → Assign service accounts → the same two addresses. identity checks with it at every renewal whether an account is still active ([TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)); it cannot change anything.
 3. **The first Groups**, following the Naming Convention: the Role Group of the Data Team, `datahub-datateam@`, and the first Owner Units ([OP-UM-04](../requirements/functional/02-user-management.md#op-um-04), [OP-CO-03](../requirements/functional/03-collections.md#op-co-03)).
+
+## 10. The webhook in dbt Cloud
+
+After the first deploy of registry, dbt Cloud must tell it about every finished run of a Source Job ([DEC-AR-02](../requirements/functional/01-artifact-registry.md#dec-ar-02)). One webhook per environment:
+
+1. dbt Cloud → Account settings → **Webhooks** → **Create webhook**.
+2. Name `Data Hub uat` (or `Data Hub prod`), event **Run completed**, and the Source Jobs of that environment from [DEC-AR-01](../requirements/functional/01-artifact-registry.md#dec-ar-01): `322951` and `739003` for uat, `322950` and `739004` for prod.
+3. Endpoint: the Terraform output `registry_webhook_url`, `https://datahub-registry-<project number>.europe-west1.run.app/webhooks/dbt-cloud`.
+4. Save, copy the secret token dbt Cloud shows, and add it to `datahub-dbt-webhook-secret` as in step 8. dbt Cloud shows it only once; if it is lost, create the webhook again.
+5. **Test** in dbt Cloud sends a test event; registry answers it with `204` and ignores it, which shows the signature is right. A wrong secret gives `401`.
 
 ## Check that it worked
 

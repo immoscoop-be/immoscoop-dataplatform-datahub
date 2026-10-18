@@ -19,6 +19,11 @@ variables {
   token_signing_key_versions = {
     "2026" = "ENABLED"
   }
+
+  dbt_source_jobs = {
+    "9367"  = "322951"
+    "17121" = "739003"
+  }
 }
 
 run "every_service_runs_the_shared_image_of_this_code" {
@@ -89,7 +94,12 @@ run "only_the_right_service_reads_each_secret" {
   }
 
   assert {
-    condition     = length(google_secret_manager_secret_iam_member.reader) == 2
+    condition     = google_secret_manager_secret_iam_member.reader["datahub-dbt-webhook-secret"].role == "roles/secretmanager.secretAccessor"
+    error_message = "registry must be able to read the secret dbt Cloud signs its webhook with."
+  }
+
+  assert {
+    condition     = length(google_secret_manager_secret_iam_member.reader) == 3
     error_message = "Each secret has exactly one reader."
   }
 }
@@ -317,6 +327,84 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
     ])
     error_message = "Every service accepts calls from the pages of the web app, and only from there."
   }
+}
+
+run "registry_starts_its_ingest_job_which_runs_its_image_as_registry" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["registry"]
+    override_during = plan
+    values = {
+      email  = "datahub-registry@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].image == google_cloud_run_v2_service.service["registry"].template[0].containers[0].image
+    error_message = "The ingest job runs the same image as registry (DEC-PF-20)."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].command == tolist(["node", "dist/ingest.js"])
+    error_message = "The ingest job runs dist/ingest.js."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job.registry_ingest.template[0].template[0].service_account == "datahub-registry@test-project.iam.gserviceaccount.com"
+    error_message = "The ingest job runs as registry, which may read the dbt Cloud token and write to the bucket."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_job_iam_member.registry_starts_ingest.role == "roles/run.invoker" && google_cloud_run_v2_job_iam_member.registry_starts_ingest.member == "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    error_message = "registry may start the ingest job, and only start it."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["registry"].template[0].containers[0].env : env.value if env.name == "DATAHUB_INGEST_JOB"],
+      "projects/test-project/locations/europe-west1/jobs/datahub-registry-ingest"
+    )
+    error_message = "registry must know the full name of the job it starts."
+  }
+
+  assert {
+    condition = (
+      [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_DB_USER"]
+      == [for env in google_cloud_run_v2_service.service["registry"].template[0].containers[0].env : env.value if env.name == "DATAHUB_DB_USER"]
+    )
+    error_message = "The ingest job logs in to Postgres as registry."
+  }
+}
+
+run "registry_reads_the_source_jobs_of_its_own_environment" {
+  command = plan
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_DBT_SOURCE_JOBS"],
+      "17121:739003,9367:322951"
+    )
+    error_message = "The Source Jobs reach registry and its job as <project>:<job> (DEC-AR-01)."
+  }
+
+  assert {
+    condition     = output.registry_webhook_url == "https://datahub-registry-123456789.europe-west1.run.app/webhooks/dbt-cloud"
+    error_message = "The webhook endpoint to give dbt Cloud is registry's /webhooks/dbt-cloud."
+  }
+}
+
+run "source_jobs_are_named_by_their_ids" {
+  command = plan
+
+  variables {
+    dbt_source_jobs = {
+      "dbt-prod" = "daily build"
+    }
+  }
+
+  expect_failures = [var.dbt_source_jobs]
 }
 
 run "uat_can_be_torn_down" {

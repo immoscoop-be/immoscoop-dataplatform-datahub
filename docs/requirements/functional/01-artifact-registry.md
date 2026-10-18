@@ -26,11 +26,23 @@ The decisions for this domain are in the [Data Hub overview](../../overview/data
 - Processing: [DEC-DH-23](../../overview/data-hub.md#dec-dh-23) to [DEC-DH-25](../../overview/data-hub.md#dec-dh-25)
 - Changes: [DEC-DH-26](../../overview/data-hub.md#dec-dh-26) to [DEC-DH-30](../../overview/data-hub.md#dec-dh-30)
 
+Decisions taken while building this domain:
+
+- <a id="dec-ar-01"></a>**DEC-AR-01** · The two dbt projects are `immoscoop_dataplatform_sql` (dbt-prod, project 9367) and `compilacion-colleciones-dbt` (Colleciónes, project 17121), in dbt Cloud account 576. Their Source Jobs are the daily full builds. Each environment of Data Hub reads the Source Jobs of the same environment of the data platform, so that uat of Data Hub is tested against uat of the data:
+
+  | dbt project | Source Job for prod | Source Job for uat |
+  | --- | --- | --- |
+  | dbt-prod (9367) | 322950 · daily production build (prod) | 322951 · daily UAT build (uat) |
+  | Colleciónes (17121) | 739004 · PROD - Scheduled - Daily build | 739003 · UAT - Scheduled - Daily build |
+
+- <a id="dec-ar-02"></a>**DEC-AR-02** · dbt Cloud announces a finished run with a webhook (`job.run.completed`), signed with a secret that only dbt Cloud and Data Hub know. Data Hub does not poll. A delivery that is lost even after dbt Cloud's retries is recovered by fetching the run again by hand ([FR-AR-14](#fr-ar-14)).
+- <a id="dec-ar-03"></a>**DEC-AR-03** · A source in one dbt project is linked to the Node in the other project that builds the same table: the same database, schema and table name. The link is made when the lineage is read, between the Current Versions of both projects, so it always follows both.
+
 ## Terms
 
 | Term | Meaning |
 | --- | --- |
-| Source Job | The one prod job in dbt Cloud, per dbt project, whose Artifacts Data Hub uses: a full build that also runs `dbt docs generate` |
+| Source Job | The one prod job in dbt Cloud, per dbt project, whose Artifacts Data Hub uses: a full build that also runs `dbt docs generate`. uat of Data Hub reads the UAT counterpart ([DEC-AR-01](#dec-ar-01)) |
 | Artifact Set | The Artifacts of one successful run of a Source Job: `manifest.json` and `catalog.json`, with run ID, git SHA and timestamp |
 | Current Version | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it |
 | Node | A model, seed, snapshot, source or exposure from the manifest, with its columns |
@@ -53,49 +65,49 @@ The decisions for this domain are in the [Data Hub overview](../../overview/data
 <a id="fr-ar-01"></a>
 ### FR-AR-01 · Fetch the Artifacts from dbt Cloud
 
-**Status:** Specified · **Confluence:** AR-01
+**Status:** Implemented · **Confluence:** AR-01
 
 Data Hub fetches the Artifacts from dbt Cloud itself. The repositories deliver nothing.
 
 <a id="fr-ar-02"></a>
 ### FR-AR-02 · Two dbt projects, one Source Job each
 
-**Status:** Specified · **Confluence:** AR-02
+**Status:** Implemented · **Confluence:** AR-02
 
 There are two dbt projects: dbt-prod and Colleciónes. Per project, exactly one prod job is the Source Job.
 
 <a id="fr-ar-03"></a>
 ### FR-AR-03 · Only successful runs of a Source Job
 
-**Status:** Specified · **Confluence:** AR-03
+**Status:** Implemented · **Confluence:** AR-03
 
 Only successful runs of a Source Job are fetched. Runs of other jobs are ignored.
 
 <a id="fr-ar-04"></a>
 ### FR-AR-04 · Manifest and catalog only
 
-**Status:** Specified · **Confluence:** AR-04
+**Status:** Implemented · **Confluence:** AR-04
 
 Per run, `manifest.json` and `catalog.json` are fetched. Other artifacts are outside the first version.
 
 <a id="fr-ar-05"></a>
 ### FR-AR-05 · Ingest a run at most once
 
-**Status:** Specified · **Confluence:** AR-05
+**Status:** Implemented · **Confluence:** AR-05
 
 A run is ingested at most once. A duplicate signal for the same run creates no duplicates.
 
 <a id="fr-ar-06"></a>
 ### FR-AR-06 · Store the files unchanged and keep old versions
 
-**Status:** Specified · **Confluence:** AR-06
+**Status:** Implemented · **Confluence:** AR-06
 
 The fetched files are stored unchanged, per project and per run. Old versions are kept.
 
 <a id="fr-ar-07"></a>
 ### FR-AR-07 · Normalise a set into Nodes, columns, Edges and tests
 
-**Status:** Specified · **Confluence:** AR-07
+**Status:** Implemented · **Confluence:** AR-07
 
 Processing normalises a set into Nodes, columns, Edges and tests. Columns combine the description from the manifest with the actual name and type from the catalog. Relationships tests are split out into column, target table and target column.
 
@@ -109,7 +121,7 @@ Lineage crosses the boundary between the dbt projects: Nodes from dbt-prod and C
 <a id="fr-ar-09"></a>
 ### FR-AR-09 · Switch to a set only after complete processing
 
-**Status:** Specified · **Confluence:** AR-09
+**Status:** Implemented · **Confluence:** AR-09
 
 A set only becomes the Current Version of its project once it is fully processed. If processing fails, the previous version stays current, and the error is stored with the set.
 
@@ -198,10 +210,10 @@ Which views are Resources and how their ID stays stable ([Stacks and resources](
 
 ## Open points
 
-- [ ] <a id="op-ar-01"></a>**OP-AR-01** · At build time, record which dbt Cloud projects dbt-prod and Colleciónes are, and which job is the Source Job of each project.
-- [ ] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time.
+- [x] <a id="op-ar-01"></a>**OP-AR-01** · At build time, record which dbt Cloud projects dbt-prod and Colleciónes are, and which job is the Source Job of each project. *Recorded on 2026-10-18 in [DEC-AR-01](#dec-ar-01). The prod Source Job of Colleciónes does not generate the docs yet; until "Generate docs on run" is on, its sets fail without a catalog ([EC-AR-02](#ec-ar-02)).*
+- [x] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Decided on 2026-10-18: a webhook ([DEC-AR-02](#dec-ar-02)).*
 - [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
-- [ ] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other.
+- [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
 
 ## Builds on
 

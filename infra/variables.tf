@@ -78,3 +78,25 @@ variable "token_audience" {
   type        = string
   default     = "datahub"
 }
+
+variable "dbt_cloud_url" {
+  description = "The access URL of the dbt Cloud account that holds the Source Jobs."
+  type        = string
+  default     = "https://emea.dbt.com"
+}
+
+variable "dbt_account_id" {
+  description = "The dbt Cloud account of the Source Jobs (DEC-AR-01)."
+  type        = string
+  default     = "576"
+}
+
+variable "dbt_source_jobs" {
+  description = "The Source Job of each dbt project for this environment, dbt project ID => job ID (DEC-AR-01)."
+  type        = map(string)
+
+  validation {
+    condition     = alltrue([for project, job in var.dbt_source_jobs : can(regex("^[0-9]+$", project)) && can(regex("^[0-9]+$", job))])
+    error_message = "dbt projects and jobs are named by their numeric IDs."
+  }
+}

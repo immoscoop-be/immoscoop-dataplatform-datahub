@@ -59,10 +59,22 @@ locals {
     DATAHUB_WEB_REDIRECT_URI = "${local.urls["web"]}/auth/callback"
   }
 
+  # registry and its ingest job: where the Artifacts come from and where they go (TR-AR-01, TR-AR-02).
+  ingest_job = "datahub-registry-ingest"
+  registry_env = merge(local.database_env["registry"], {
+    DATAHUB_ARTIFACT_BUCKET    = google_storage_bucket.artifacts.name
+    DATAHUB_DBT_CLOUD_URL      = var.dbt_cloud_url
+    DATAHUB_DBT_ACCOUNT_ID     = var.dbt_account_id
+    DATAHUB_DBT_SOURCE_JOBS    = join(",", [for project, job in var.dbt_source_jobs : "${project}:${job}"])
+    DATAHUB_DBT_CLOUD_TOKEN    = "${google_secret_manager_secret.secret["datahub-dbt-cloud-token"].id}/versions/latest"
+    DATAHUB_DBT_WEBHOOK_SECRET = "${google_secret_manager_secret.secret["datahub-dbt-webhook-secret"].id}/versions/latest"
+    DATAHUB_INGEST_JOB         = "projects/${var.project_id}/locations/${var.region}/jobs/${local.ingest_job}"
+  })
+
   service_env = {
     identity  = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
     catalogue = local.database_env["catalogue"]
-    registry  = merge(local.database_env["registry"], { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
+    registry  = local.registry_env
     query     = {}
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
