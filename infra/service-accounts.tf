@@ -25,6 +25,22 @@ resource "google_project_iam_member" "database_login" {
   member  = google_service_account.service[each.key].member
 }
 
+# The identity of the migration jobs (TR-PF-09): it owns the schemas and their tables; the
+# services can only read and write rows (TR-PF-22). No service runs as it.
+resource "google_service_account" "migrator" {
+  account_id   = "datahub-migrator"
+  display_name = "Data Hub migrator"
+  description  = "Runs the database migrations of Data Hub (${var.environment}); used by the migration jobs only."
+}
+
+resource "google_project_iam_member" "migrator" {
+  for_each = toset(["roles/cloudsql.client", "roles/cloudsql.instanceUser"])
+
+  project = var.project_id
+  role    = each.key
+  member  = google_service_account.migrator.member
+}
+
 # query runs the queries on the Stacks (TR-PF-11). Read access to the Stacks themselves
 # is still open (OP-PF-14).
 resource "google_project_iam_member" "query_jobs" {

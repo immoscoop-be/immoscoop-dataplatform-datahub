@@ -182,6 +182,68 @@ run "a_signing_key_without_an_enabled_version_is_refused" {
   expect_failures = [var.token_signing_key_versions]
 }
 
+run "migrations_run_as_their_own_identity_with_the_image_of_the_service" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.migrator
+    override_during = plan
+    values = {
+      email  = "datahub-migrator@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-migrator@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = toset(keys(google_cloud_run_v2_job.migrate)) == toset(["identity", "catalogue", "registry"])
+    error_message = "Every service that keeps data, and only those, has a migration job."
+  }
+
+  assert {
+    condition = alltrue([
+      for name, job in google_cloud_run_v2_job.migrate :
+      job.template[0].template[0].containers[0].image == google_cloud_run_v2_service.service[name].template[0].containers[0].image
+    ])
+    error_message = "A migration job runs the same image as the service it migrates."
+  }
+
+  assert {
+    condition = alltrue([
+      for job in google_cloud_run_v2_job.migrate :
+      job.template[0].template[0].service_account == "datahub-migrator@test-project.iam.gserviceaccount.com" && job.template[0].template[0].containers[0].command == tolist(["node", "dist/migrate.js"])
+    ])
+    error_message = "Migrations run dist/migrate.js as datahub-migrator, never as the service itself."
+  }
+
+  assert {
+    condition     = google_sql_user.migrator.database_roles == tolist(["cloudsqlsuperuser"]) && alltrue([for user in google_sql_user.service : user.database_roles == null])
+    error_message = "Only the migrator may create schemas; the services get no database roles."
+  }
+
+  assert {
+    condition     = length(google_cloud_run_v2_service.service["query"].template[0].containers[0].env) == length(local.common_env)
+    error_message = "query keeps no data, so it gets no database settings."
+  }
+}
+
+run "every_new_image_runs_the_migrations_once" {
+  command = plan
+
+  variables {
+    image_tag = "tree-0123456789abcdef0123456789abcdef01234567"
+  }
+
+  assert {
+    condition     = alltrue([for job in google_cloud_run_v2_job.migrate : job.run_execution_token == "tree-0123456789ab"])
+    error_message = "The migrations run again for every new image of the code."
+  }
+
+  assert {
+    condition     = alltrue([for job in google_cloud_run_v2_job.migrate : length(job.name) + length(job.run_execution_token) < 63])
+    error_message = "Cloud Run refuses a job name and execution token of 63 characters or more together."
+  }
+}
+
 run "uat_can_be_torn_down" {
   command = plan
 

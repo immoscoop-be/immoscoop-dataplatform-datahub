@@ -12,7 +12,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub](../overview/data-hub.md) | – | – | 59 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 37 (34 open, 3 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (14 specified) | 4 (4 proposed) | – | 4 (4 open) |
-| [User management](functional/02-user-management.md) | 10 (10 specified) | 3 (3 proposed) | 5 | 6 (5 open, 1 done) |
+| [User management](functional/02-user-management.md) | 10 (10 specified) | 3 (3 proposed) | 6 | 6 (4 open, 2 done) |
 | [Collections](functional/03-collections.md) | 11 (11 specified) | 2 (2 proposed) | 7 | 5 (5 open) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 30 (30 specified) | 4 (4 proposed) | 21 | 9 (8 open, 1 done) |
 | [Resource card](functional/05-resource-card.md) | – | – | – | – |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 24 (5 proposed, 11 specified, 8 implemented) | – | 17 | 14 (10 open, 4 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 27 (5 proposed, 13 specified, 9 implemented) | – | 19 | 14 (8 open, 6 done) |
 
 ## Functional requirements
 
@@ -56,14 +56,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [FR-UM-01](functional/02-user-management.md#fr-um-01) | Sign in with Google only | Specified | GB-01 | – | – |
 | [FR-UM-02](functional/02-user-management.md#fr-um-02) | Accounts of the own Workspace domain only | Specified | GB-02 | – | – |
-| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the User at first login, never store a password | Specified | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
+| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the User at first login, never store a password | Specified | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18 |
 | [FR-UM-04](functional/02-user-management.md#fr-um-04) | Groups from the Cloud Identity Groups API, nested groups included | Specified | GB-04 | – | – |
 | [FR-UM-05](functional/02-user-management.md#fr-um-05) | Only Groups are pulled in | Specified | GB-05 | – | – |
-| [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the Groups at login | Specified | GB-06 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
+| [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the Groups at login | Specified | GB-06 | [TR-PF-02](technical/00-platform.md#tr-pf-02), [TR-PF-26](technical/00-platform.md#tr-pf-26) | – |
 | [FR-UM-07](functional/02-user-management.md#fr-um-07) | Synchronise the members of Groups periodically | Specified | GB-07 | – | – |
 | [FR-UM-08](functional/02-user-management.md#fr-um-08) | Recognise a Group by its fixed Google ID | Specified | GB-08 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | – |
 | [FR-UM-09](functional/02-user-management.md#fr-um-09) | Owner Units are managed in Workspace | Specified | GB-09 | – | – |
-| [FR-UM-10](functional/02-user-management.md#fr-um-10) | Removed or suspended accounts | Specified | GB-10 | – | – |
+| [FR-UM-10](functional/02-user-management.md#fr-um-10) | Removed or suspended accounts | Specified | GB-10 | [TR-PF-26](technical/00-platform.md#tr-pf-26) | – |
 
 ### [Collections](functional/03-collections.md)
 
@@ -179,8 +179,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | Calls between services | Proposed | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | – |
 | [TR-PF-06](technical/00-platform.md#tr-pf-06) | Claude signs in through identity | Proposed | [DEC-UM-02](functional/02-user-management.md#dec-um-02), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | – |
 | [TR-PF-07](technical/00-platform.md#tr-pf-07) | Excel uses the Library Card | Proposed | [DEC-DH-47](../overview/data-hub.md#dec-dh-47), [DEC-PF-02](technical/00-platform.md#dec-pf-02) | – |
-| [TR-PF-08](technical/00-platform.md#tr-pf-08) | One schema per service | Specified | [DEC-PF-05](technical/00-platform.md#dec-pf-05), [DEC-DH-55](../overview/data-hub.md#dec-dh-55) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
-| [TR-PF-09](technical/00-platform.md#tr-pf-09) | Migrations per service | Specified | [DEC-DH-59](../overview/data-hub.md#dec-dh-59) | – |
+| [TR-PF-08](technical/00-platform.md#tr-pf-08) | One schema per service | Specified | [DEC-PF-05](technical/00-platform.md#dec-pf-05), [DEC-DH-55](../overview/data-hub.md#dec-dh-55) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
+| [TR-PF-09](technical/00-platform.md#tr-pf-09) | Migrations per service | Implemented | [DEC-DH-59](../overview/data-hub.md#dec-dh-59) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) implements, 2026-10-18 |
 | [TR-PF-10](technical/00-platform.md#tr-pf-10) | API contracts from zod schemas | Specified | [DEC-PF-07](technical/00-platform.md#dec-pf-07), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
 | [TR-PF-11](technical/00-platform.md#tr-pf-11) | Own service account per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08), [DEC-DH-49](../overview/data-hub.md#dec-dh-49), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-12](technical/00-platform.md#tr-pf-12) | Shared components for Lenses and Reports | Specified | [DEC-DH-15](../overview/data-hub.md#dec-dh-15), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | – |
@@ -193,9 +193,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-19](technical/00-platform.md#tr-pf-19) | Only uat merges into main | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14) | [e54284b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e54284b340eaa9772fdd0fdcf3d40f648b193627) refs, 2026-10-17<br>[9b18182](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9b1818291f1ed9ae74933792f50d99e07bc1ad99) implements, 2026-10-17 |
 | [TR-PF-20](technical/00-platform.md#tr-pf-20) | One required check, whatever the pipeline contains | Implemented | [DEC-PF-14](technical/00-platform.md#dec-pf-14), [TR-PF-19](technical/00-platform.md#tr-pf-19) | [e54284b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e54284b340eaa9772fdd0fdcf3d40f648b193627) implements, 2026-10-17 |
 | [TR-PF-21](technical/00-platform.md#tr-pf-21) | Terraform runs in GitHub Actions, per environment | Implemented | [DEC-PF-16](technical/00-platform.md#dec-pf-16), [NFR-SEC-04](non-functional/security.md#nfr-sec-04) | [08243a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/08243a27d27e1cfffecc8d8b80f4f59cfc8243a9) refs, 2026-10-17<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) implements, 2026-10-17 |
-| [TR-PF-22](technical/00-platform.md#tr-pf-22) | Services log in to Postgres with their Google identity | Specified | [TR-PF-08](technical/00-platform.md#tr-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
+| [TR-PF-22](technical/00-platform.md#tr-pf-22) | Services log in to Postgres with their Google identity | Specified | [TR-PF-08](technical/00-platform.md#tr-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-23](technical/00-platform.md#tr-pf-23) | Secrets are created by Terraform and filled by a person | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-24](technical/00-platform.md#tr-pf-24) | The signing key of identity | Implemented | [DEC-PF-17](technical/00-platform.md#dec-pf-17), [TR-PF-02](technical/00-platform.md#tr-pf-02), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [3a09298](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3a09298ea190b88c18c7036f4a451660c336352f) implements, 2026-10-18<br>[73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
+| [TR-PF-25](technical/00-platform.md#tr-pf-25) | Refresh Tokens | Specified | [DEC-PF-18](technical/00-platform.md#dec-pf-18), [TR-PF-06](technical/00-platform.md#tr-pf-06), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | [b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
+| [TR-PF-26](technical/00-platform.md#tr-pf-26) | Every renewal checks the User again | Specified | [DEC-PF-18](technical/00-platform.md#dec-pf-18), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10), [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | [b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
+| [TR-PF-27](technical/00-platform.md#tr-pf-27) | The server of the web app | Specified | [DEC-PF-19](technical/00-platform.md#dec-pf-19), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
 
 ## Non-functional requirements
 
@@ -203,7 +206,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Applies to | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [DEC-PF-10](technical/00-platform.md#dec-pf-10) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-PF-14](technical/00-platform.md#tr-pf-14) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
+| [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | Every service authenticates and authorises every request | Specified | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [DEC-PF-10](technical/00-platform.md#dec-pf-10) | [TR-PF-03](technical/00-platform.md#tr-pf-03), [TR-PF-04](technical/00-platform.md#tr-pf-04), [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-PF-14](technical/00-platform.md#tr-pf-14), [TR-PF-25](technical/00-platform.md#tr-pf-25) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
 | [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | Least privilege per service | Specified | [DEC-PF-08](technical/00-platform.md#dec-pf-08), [DEC-DH-08](../overview/data-hub.md#dec-dh-08) | [TR-PF-11](technical/00-platform.md#tr-pf-11), [TR-PF-16](technical/00-platform.md#tr-pf-16), [TR-PF-22](technical/00-platform.md#tr-pf-22), [TR-PF-23](technical/00-platform.md#tr-pf-23), [TR-PF-24](technical/00-platform.md#tr-pf-24) | – |
-| [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | Lost access takes effect quickly | Proposed | [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10) | – | – |
+| [NFR-SEC-03](non-functional/security.md#nfr-sec-03) | Lost access takes effect quickly | Proposed | [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-10](functional/02-user-management.md#fr-um-10) | [TR-PF-26](technical/00-platform.md#tr-pf-26) | [b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
 | [NFR-SEC-04](non-functional/security.md#nfr-sec-04) | Only main can change prod | Specified | [DEC-PF-14](technical/00-platform.md#dec-pf-14), [DEC-PF-16](technical/00-platform.md#dec-pf-16) | [TR-PF-21](technical/00-platform.md#tr-pf-21) | – |

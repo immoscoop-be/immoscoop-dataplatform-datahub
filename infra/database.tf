@@ -1,6 +1,7 @@
 # One Postgres instance per environment, one schema per service (DEC-PF-05, TR-PF-08).
-# The services log in with IAM database authentication; the schemas and their grants are
-# created by the migrations of each service (TR-PF-09).
+# Everyone logs in with IAM database authentication: no passwords (TR-PF-22). The migration
+# jobs log in as datahub-migrator, which creates the schemas and tables and gives each service
+# access to the rows of its own schema only (TR-PF-09, migrations.tf).
 
 resource "google_sql_database_instance" "main" {
   name                = "datahub-${var.environment}"
@@ -37,6 +38,14 @@ resource "google_sql_database_instance" "main" {
 resource "google_sql_database" "datahub" {
   name     = "datahub"
   instance = google_sql_database_instance.main.name
+}
+
+# A member of cloudsqlsuperuser, the most Cloud SQL allows: it creates the schemas.
+resource "google_sql_user" "migrator" {
+  instance       = google_sql_database_instance.main.name
+  name           = trimsuffix(google_service_account.migrator.email, ".gserviceaccount.com")
+  type           = "CLOUD_IAM_SERVICE_ACCOUNT"
+  database_roles = ["cloudsqlsuperuser"]
 }
 
 resource "google_sql_user" "service" {

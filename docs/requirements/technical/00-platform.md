@@ -29,6 +29,8 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-15"></a>**DEC-PF-15** · The infrastructure of Data Hub is defined in Terraform in this repository, in `infra/`. There is no other Terraform for these projects, and Data Hub keeps its own.
 - <a id="dec-pf-16"></a>**DEC-PF-16** · GitHub Actions applies the Terraform: a push to `uat` applies it to uat, a merge into `main` applies it to prod. Nobody applies it from their own machine. Only the one-time bootstrap that makes this possible is run by hand ([GCP setup](../../architecture/gcp-setup.md)).
 - <a id="dec-pf-17"></a>**DEC-PF-17** · The private key that signs Access Tokens lives in Cloud KMS: it is created there, never leaves it, and nobody can read it, not even a project Owner. Only identity may sign with it. It is rotated once a year, and immediately on any suspicion of misuse.
+- <a id="dec-pf-18"></a>**DEC-PF-18** · A client that signs in on behalf of a User keeps that User signed in with a Refresh Token from identity: the server of the web app, and MCP clients such as Claude. One mechanism for every client. The Refresh Token of the web app lasts 12 hours, once a working day through Google; that of an MCP client 30 days, renewed as it is used. At every renewal identity reads the Groups again and checks the account in Workspace.
+- <a id="dec-pf-19"></a>**DEC-PF-19** · The web app is served by a small Cloud Run service of its own. That service also keeps the Refresh Token of the User, in a cookie of its own address, so that no browser treats it as a third-party cookie and Data Hub works on any address. It holds no business logic.
 
 ## Requirements
 
@@ -72,7 +74,7 @@ A service that calls another service on behalf of a User forwards the Access Tok
 
 **Status:** Proposed · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
 
-identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. mcp validates the resulting Access Tokens like every other service.
+identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). mcp validates the resulting Access Tokens like every other service.
 
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Library Card
@@ -91,9 +93,9 @@ Each service that stores data owns exactly one schema in the shared Cloud SQL Po
 <a id="tr-pf-09"></a>
 ### TR-PF-09 · Migrations per service
 
-**Status:** Specified · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
+**Status:** Implemented · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
 
-Each service keeps its database migrations in its own folder. They run as a separate step at deploy, before the new revision of the service gets traffic.
+Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
 
 <a id="tr-pf-10"></a>
 ### TR-PF-10 · API contracts from zod schemas
@@ -109,11 +111,12 @@ The request and response schemas of every service are defined with zod in `packa
 
 | Service | Permissions |
 | --- | --- |
-| identity | Groups Reader admin role in Workspace ([OP-UM-03](../functional/02-user-management.md#op-um-03)); Cloud SQL client |
+| identity | Groups Reader and Data Hub user reader admin roles in Workspace ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
 | catalogue | Cloud SQL client |
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token from Secret Manager |
 | query | Read access to the Stacks and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
-| web, mcp | None beyond calling the services |
+| web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
+| `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
 
 <a id="tr-pf-12"></a>
 ### TR-PF-12 · Shared components for Lenses and Reports
@@ -190,7 +193,7 @@ A push to `uat` plans and applies the Terraform in `infra/` to the uat project; 
 
 **Status:** Specified · **Realises:** [TR-PF-08](#tr-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
-Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The schema of each service and its grants are created by that service's migrations ([TR-PF-09](#tr-pf-09)).
+Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The migrations run as a separate identity, `datahub-migrator`, a member of `cloudsqlsuperuser`: it creates the schema of each service and its tables, and gives the service's own login read and write access to the rows of that schema, nothing more ([TR-PF-09](#tr-pf-09)). A service cannot change its tables, and cannot see the schema of another service ([TR-PF-08](#tr-pf-08)).
 
 <a id="tr-pf-23"></a>
 ### TR-PF-23 · Secrets are created by Terraform and filled by a person
@@ -208,15 +211,43 @@ Terraform creates the key in each environment: key ring `datahub`, key `access-t
 
 identity signs with the newest enabled version of the key, and publishes the public key of every enabled version at its JWKS endpoint. A rotation adds a version; the previous one is disabled a day later, when every token it signed has long expired. Disabling a version at once, on suspicion, makes every token it signed invalid: Users sign in again. The steps are in [Rotating the signing key](../../../infra/README.md#rotating-the-signing-key).
 
+<a id="tr-pf-25"></a>
+### TR-PF-25 · Refresh Tokens
+
+**Status:** Specified · **Realises:** [DEC-PF-18](#dec-pf-18), [TR-PF-06](#tr-pf-06), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
+
+identity issues a Refresh Token with every Access Token to the server of the web app and to MCP clients, through its OAuth 2.1 token endpoint. Each Refresh Token works once: a renewal returns a new Access Token and a new Refresh Token. A Refresh Token that is used a second time has been copied, so identity then ends the whole session it belongs to. identity keeps only a hash of each Refresh Token.
+
+| Client | Lifetime of the session |
+| --- | --- |
+| Server of the web app | 12 hours from the login, not extended by renewals |
+| MCP client, such as Claude | 30 days, counted again from every renewal |
+
+Logging out ends the session at once. The Data Team can end all sessions of a User at once.
+
+<a id="tr-pf-26"></a>
+### TR-PF-26 · Every renewal checks the User again
+
+**Status:** Specified · **Realises:** [DEC-PF-18](#dec-pf-18), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10), [NFR-SEC-03](../non-functional/security.md#nfr-sec-03)
+
+At every renewal, identity reads the Groups of the User again, as at login, and checks the account through the Admin SDK Directory API. For that, its service account has the custom Workspace admin role "Data Hub user reader", which may only read users. A suspended or removed account, or one outside `thenextimmoscoop.be` ([DEC-UM-06](../functional/02-user-management.md#dec-um-06)), gets no new Access Token, and all its sessions end. A change in Workspace thus reaches Data Hub within the lifetime of one Access Token.
+
+<a id="tr-pf-27"></a>
+### TR-PF-27 · The server of the web app
+
+**Status:** Specified · **Realises:** [DEC-PF-19](#dec-pf-19), [DEC-PF-03](#dec-pf-03)
+
+The Cloud Run service `datahub-web` serves the web app and signs in through identity as an OAuth client, like an MCP client does. It keeps the Refresh Token in a cookie of its own address that JavaScript cannot read, is only sent over HTTPS, and is never sent along from another site (`HttpOnly`, `Secure`, `SameSite=Strict`). It gives the browser only the Access Token, with which the app calls the services itself. It holds no business logic and no data.
+
 ## Open points
 
 - [ ] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)).
-- [ ] <a id="op-pf-02"></a>**OP-PF-02** · Decide how the web app renews its Access Token (a refresh token in an http-only cookie, or a new login through Google), and how often identity reads the Groups again on renewal ([FR-UM-06](../functional/02-user-management.md#fr-um-06)).
+- [x] <a id="op-pf-02"></a>**OP-PF-02** · Decide how the web app renews its Access Token (a refresh token in an http-only cookie, or a new login through Google), and how often identity reads the Groups again on renewal ([FR-UM-06](../functional/02-user-management.md#fr-um-06)). *Decided on 2026-10-18: a Refresh Token, for the web app through its own server and for MCP clients alike; Groups and account are checked at every renewal ([DEC-PF-18](#dec-pf-18), [TR-PF-25](#tr-pf-25), [TR-PF-26](#tr-pf-26)).*
 - [x] <a id="op-pf-03"></a>**OP-PF-03** · Decide where the signing key of identity lives (Cloud KMS or Secret Manager) and how it is rotated. *Decided on 2026-10-17: Cloud KMS, rotated once a year and immediately on any suspicion ([DEC-PF-17](#dec-pf-17), [TR-PF-24](#tr-pf-24)).*
 - [x] <a id="op-pf-04"></a>**OP-PF-04** · Decide the ingress of the services: public endpoints protected by their own token checks, or internal ingress under internal-immoscoop.be ([OP-DH-35](../../overview/open-themes.md#op-dh-35)), and in that case how Claude reaches mcp. *Decided on 2026-10-17: public ([DEC-PF-10](#dec-pf-10)).*
 - [ ] <a id="op-pf-05"></a>**OP-PF-05** · Decide how registry hands its Changes to catalogue ([FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12)): a direct call per Artifact Set, or a Pub/Sub topic.
 - [ ] <a id="op-pf-06"></a>**OP-PF-06** · Decide where the Message Centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../functional/07-log-and-notifications.md) is specified.
-- [ ] <a id="op-pf-07"></a>**OP-PF-07** · Decide how the web app is served: static files from a small Cloud Run service, or from Cloud Storage behind a load balancer.
+- [x] <a id="op-pf-07"></a>**OP-PF-07** · Decide how the web app is served: static files from a small Cloud Run service, or from Cloud Storage behind a load balancer. *Decided on 2026-10-18: a small Cloud Run service, which also keeps the Refresh Token ([DEC-PF-19](#dec-pf-19), [TR-PF-27](#tr-pf-27)).*
 - [ ] <a id="op-pf-08"></a>**OP-PF-08** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
 - [x] <a id="op-pf-09"></a>**OP-PF-09** · Choose the GCP project or projects and the region of Data Hub, per environment, including where the Artifact Registry repository lives. [DEC-DH-48](../../overview/data-hub.md#dec-dh-48) rules out a separate project for Data Hub; the Stacks are in `immoscoop-dataplatform-398214`. *Decided on 2026-10-17: prod in `immoscoop-dataplatform-398214`, uat in `immoscoop-dataplatform`, both in `europe-west1` ([DEC-PF-13](#dec-pf-13)); where the image repository lives is proposed in [TR-PF-18](#tr-pf-18).*
 - [ ] <a id="op-pf-10"></a>**OP-PF-10** · Run the one-time bootstrap in both projects and set up the GitHub environments and variables, as described in [GCP setup](../../architecture/gcp-setup.md).
