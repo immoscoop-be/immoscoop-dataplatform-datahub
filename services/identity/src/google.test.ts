@@ -131,15 +131,27 @@ describe('createWorkspace', () => {
       { id: 'b', email: `b@${DOMAIN}` },
       { id: 'c', email: `c@${DOMAIN}` },
     ]);
-    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloudidentity.googleapis.com/groups.discussion_forum' in labels`);
+    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}'`);
     expect(asked).toHaveLength(5);
   });
 
-  it('fails with the reason Google gives when the groups cannot be read', async () => {
+  it('fails with the reason Google gives when the groups cannot be read, and the argument it refused', async () => {
     const workspace = createWorkspace(token, async () =>
       Response.json({ error: { message: 'The caller does not have permission' } }, { status: 403 }),
     );
     await expect(workspace.groups(`jan@${DOMAIN}`)).rejects.toThrow(/403 The caller does not have permission/);
+    const refused = createWorkspace(token, async () =>
+      Response.json(
+        {
+          error: {
+            message: 'Request contains an invalid argument.',
+            details: [{ '@type': 'type.googleapis.com/google.rpc.BadRequest', fieldViolations: [{ field: 'query', description: 'Unsupported filter' }] }],
+          },
+        },
+        { status: 400 },
+      ),
+    );
+    await expect(refused.groups(`jan@${DOMAIN}`)).rejects.toThrow('400 Request contains an invalid argument. · query: Unsupported filter');
   });
 });
 
