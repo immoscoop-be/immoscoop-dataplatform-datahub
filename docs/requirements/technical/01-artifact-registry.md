@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Artifact registry](../functional/01-artifact-registry.md) |
-| Status | Fetching, storing and processing implemented; reading the lineage and Changes follow |
+| Status | Fetching, storing, processing and reading implemented; Changes follow |
 | Source of truth | This file |
 
 How a run of a Source Job becomes the Current Version of its dbt project, in the service [registry](../../architecture/services/registry.md).
@@ -36,7 +36,7 @@ A set without a catalog, or with a file that cannot be read, gets the status `fa
 <a id="tr-ar-03"></a>
 ### TR-AR-03 · The normalised tables
 
-**Status:** Specified · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23)
+**Status:** Implemented · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23)
 
 Processing turns a set into rows in the schema `registry`, all keyed by the set:
 
@@ -57,6 +57,34 @@ Links between the two projects ([DEC-AR-03](../functional/01-artifact-registry.m
 The rows of a set are written in one transaction, which also makes the set the Current Version of its dbt project, unless the project already has a Current Version from a later run: the Current Version never goes back in time ([EC-AR-01](../functional/01-artifact-registry.md#ec-ar-01)), and such a set is kept as processed but not current. If anything fails, nothing of the set stays behind: it gets the status `failed` with the error, and the Current Version stays as it was.
 
 The rows are kept for the Current Version and the one before it, which the comparison of [FR-AR-11](../functional/01-artifact-registry.md#fr-ar-11) needs. Older sets keep their status, and their files stay in the bucket, so any of them can be processed again ([FR-AR-14](../functional/01-artifact-registry.md#fr-ar-14)).
+
+<a id="tr-ar-05"></a>
+### TR-AR-05 · Searching the Nodes
+
+**Status:** Implemented · **Realises:** [FR-AR-10](../functional/01-artifact-registry.md#fr-ar-10), [DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10)
+
+`GET /nodes?q=<text>&type=<kind>` searches the Nodes of the Current Versions, in Postgres itself ([DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10)):
+
+- **by name**, also with a typo or half a name, through trigrams (`pg_trgm`, in the schema `public`, which every schema can use);
+- **by free text** in the descriptions of Nodes and columns, and in column names, through full-text search with the `simple` configuration, which neither stems nor drops words, since the descriptions mix English and Dutch.
+
+An exact name comes first, then names that start with the text, then the closest names and the best text matches. Each hit names up to five matching columns. `type` limits the search to models, seeds, snapshots, sources or exposures.
+
+Every route of registry that reads, and processing a run again, needs the role of the Data Team for now (`datateam`, from its Role Group). Who else may read the registry is open ([OP-AR-05](../functional/01-artifact-registry.md#op-ar-05)). `GET /projects` gives each dbt project with its Current Version; `GET /runs` gives the latest runs dbt Cloud reported, with their status and error.
+
+<a id="tr-ar-06"></a>
+### TR-AR-06 · One Node and its lineage, across both projects
+
+**Status:** Implemented · **Realises:** [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-10](../functional/01-artifact-registry.md#fr-ar-10), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03)
+
+`GET /nodes/{unique ID}` gives a Node of a Current Version with its columns, in the order of the table, and its tests. `GET /nodes/{unique ID}/lineage?direction=upstream|downstream&depth=<n>` follows the Edges of the Current Versions, plus the links between the projects ([TR-AR-03](#tr-ar-03)), up to `depth` steps (10 by default, at most 50). It gives every Node reached with its shortest distance, the links between them, and whether more Nodes lie beyond the first 500.
+
+<a id="tr-ar-07"></a>
+### TR-AR-07 · Processing a run again by hand
+
+**Status:** Implemented · **Realises:** [FR-AR-14](../functional/01-artifact-registry.md#fr-ar-14), [DEC-AR-02](../functional/01-artifact-registry.md#dec-ar-02)
+
+`POST /runs/{run ID}/reprocess` puts a processed or failed Artifact Set back in the queue and starts the ingest job, which reads the files from the bucket and only goes to dbt Cloud for a file that is not there. A set in progress is left alone (`409`). A run registry never heard of, because its webhook was lost, is first looked up in dbt Cloud: only a successful run of a Source Job of this environment is recorded and processed.
 
 ## Open points
 

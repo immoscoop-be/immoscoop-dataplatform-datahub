@@ -6,6 +6,7 @@ import { buildApp, CLIENT_ID } from './app.js';
 
 const WEB = 'https://web.test';
 const IDENTITY = 'https://identity.test';
+const REGISTRY = 'https://registry.test';
 
 /** identity as far as the web app's server sees it: its token and revocation endpoints. */
 function fakeIdentity() {
@@ -56,7 +57,7 @@ describe('the server of the web app', () => {
 
   beforeEach(async () => {
     identity = fakeIdentity();
-    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, fetch: identity.fetch, logger: false });
+    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, fetch: identity.fetch, logger: false });
   });
 
   afterEach(() => app.close());
@@ -77,11 +78,12 @@ describe('the server of the web app', () => {
     return cookies(callback.headers)['datahub_session'] ?? '';
   }
 
-  it('serves the page, which may only talk to itself and identity', async () => {
+  it('serves the page, which may only talk to itself, identity and registry', async () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
     expect(page.body).toContain(`data-identity="${IDENTITY}"`);
-    expect(page.headers['content-security-policy']).toContain(`connect-src 'self' ${IDENTITY}`);
+    expect(page.body).toContain(`data-registry="${REGISTRY}"`);
+    expect(page.headers['content-security-policy']).toContain(`connect-src 'self' ${IDENTITY} ${REGISTRY};`);
     expect((await app.inject({ url: '/app.js' })).headers['content-type']).toContain('javascript');
   });
 

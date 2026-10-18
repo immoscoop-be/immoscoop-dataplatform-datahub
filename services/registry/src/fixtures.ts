@@ -145,3 +145,57 @@ export function sampleCatalog() {
     },
   };
 }
+
+/**
+ * A second project in the shape of Colleciónes: a source that reads the table the `orders` model of
+ * the first project builds, and a model on that source. The two are linked by that table (DEC-AR-03).
+ */
+export function collecionesManifest() {
+  const P = 'compilacion_colleciones_dbt';
+  return {
+    metadata: { dbt_version: '2.0.0-fusion', project_name: P, generated_at: '2026-10-18T06:09:00Z' },
+    nodes: {
+      [`model.${P}.agency_orders`]: {
+        resource_type: 'model',
+        name: 'agency_orders',
+        alias: 'agency_orders',
+        package_name: P,
+        database: 'immoscoop-dataplatform',
+        schema: 'dbt_colleciones',
+        original_file_path: 'models/agency_orders.sql',
+        checksum: { name: 'sha256', checksum: 'sum-agency-orders' },
+        config: { materialized: 'table' },
+        tags: [],
+        description: 'Orders per agency, for the agencies case.',
+        columns: { agency_id: { name: 'agency_id', description: 'The agency.' } },
+        depends_on: { nodes: [`source.${P}.dbt_prod.orders`] },
+      },
+    },
+    sources: {
+      [`source.${P}.dbt_prod.orders`]: {
+        resource_type: 'source',
+        name: 'orders',
+        source_name: 'dbt_prod',
+        identifier: 'orders',
+        package_name: P,
+        database: 'immoscoop-dataplatform',
+        schema: 'dbt_marts',
+        description: 'The orders that dbt-prod builds.',
+        columns: {},
+      },
+    },
+    exposures: {},
+  };
+}
+
+export function collecionesCatalog() {
+  const P = 'compilacion_colleciones_dbt';
+  return {
+    nodes: {
+      [`model.${P}.agency_orders`]: { columns: { agency_id: { name: 'agency_id', type: 'STRING', index: 1 } } },
+    },
+    sources: {
+      [`source.${P}.dbt_prod.orders`]: { columns: { ORDER_ID: { name: 'ORDER_ID', type: 'INT64', index: 1 } } },
+    },
+  };
+}

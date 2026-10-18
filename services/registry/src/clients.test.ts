@@ -136,3 +136,23 @@ describe('the settings', () => {
     expect(reads).toBe(2);
   });
 });
+
+describe('dbt Cloud runs', () => {
+  it('tells which job and project a run belongs to, and whether it succeeded', async () => {
+    let asked = '';
+    const dbt = createDbtCloud({
+      url: 'https://emea.dbt.com',
+      accountId: '576',
+      token: async () => 'service-token',
+      request: async (url) => {
+        asked = String(url);
+        return String(url).includes('/runs/1/')
+          ? Response.json({ data: { id: 1, job_definition_id: 322951, project_id: 9367, status: 10 } })
+          : new Response('{}', { status: 404 });
+      },
+    });
+    expect(await dbt.run('1')).toEqual({ jobId: '322951', projectId: '9367', success: true });
+    expect(asked).toBe('https://emea.dbt.com/api/v2/accounts/576/runs/1/');
+    expect(await dbt.run('2')).toBeUndefined();
+  });
+});

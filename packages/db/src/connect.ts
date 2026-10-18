@@ -47,11 +47,12 @@ export async function connectCloudSql<T>(options: CloudSqlOptions): Promise<Data
 
 /**
  * Opens a connection pool in which every query runs in `schema`, with snake_case columns in
- * Postgres and camelCase in TypeScript; keys inside JSON columns stay as stored. Tests pass the
- * address of a local Postgres.
+ * Postgres and camelCase in TypeScript; keys inside JSON columns stay as stored. `public` comes
+ * after the schema, for the extensions every schema shares, such as pg_trgm; it holds no tables.
+ * Tests pass the address of a local Postgres.
  */
 export function createDatabase<T>(config: pg.PoolConfig, schema: string): Database<T> {
-  const pool = new pg.Pool({ ...config, options: `-c search_path=${schemaName(schema)}` });
+  const pool = new pg.Pool({ ...config, options: `-c search_path=${schemaName(schema)},public` });
   const db = new Kysely<T>({
     dialect: new PostgresDialect({ pool }),
     plugins: [new CamelCasePlugin({ maintainNestedObjectKeys: true })],

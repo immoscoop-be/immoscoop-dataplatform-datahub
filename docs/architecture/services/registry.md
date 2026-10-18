@@ -27,15 +27,17 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 
 ## API
 
-First sketch; the exact contracts follow in the technical requirements of the domain.
-
 | Endpoint | Purpose |
 | --- | --- |
 | `POST /webhooks/dbt-cloud` | A finished run, from dbt Cloud; public, protected by its signature ([TR-AR-01](../../requirements/technical/01-artifact-registry.md#tr-ar-01)) |
-| `POST /runs/{id}/reprocess` | Fetch and process a run again (Data Team) |
-| `GET /projects/{project}/current` | The Current Version of a dbt project |
-| `GET /nodes`, `GET /nodes/{id}` | Search Nodes, read one Node with its columns |
-| `GET /nodes/{id}/lineage` | Lineage upstream or downstream, across both projects |
+| `GET /projects` | Each dbt project with its Current Version ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05)) |
+| `GET /runs` | The latest runs, with their status and error |
+| `GET /nodes?q=&type=` | Search Nodes by name, also with a typo, and by free text in descriptions and columns ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05)) |
+| `GET /nodes/{id}` | One Node with its columns and tests ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
+| `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
+| `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
+
+Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)).
 
 ## Data
 

@@ -26,7 +26,7 @@ function harness(options: { dbtFiles?: Record<string, Uint8Array>; stored?: Reco
       objects.set(path, data);
     },
   };
-  const dbtCloud: DbtCloud = {
+  const dbtCloud: Pick<DbtCloud, 'artifact'> = {
     artifact: async (runId, file, { wait = false } = {}) => {
       asked.push({ runId, file, wait });
       return options.dbtFiles?.[`${runId}/${file}`];
