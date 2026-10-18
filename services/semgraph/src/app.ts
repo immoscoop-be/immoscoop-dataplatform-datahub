@@ -3,6 +3,7 @@ import { createTranslator, BASE_LOCALE } from './core/i18n.ts';
 import { localizeIssue, type IssueSpec } from './core/issues.ts';
 import { loadRegistry, type Registry } from './core/registry.ts';
 import { mcpAuthFromEnv, type FetchJson, type McpAuth } from './mcp/auth.ts';
+import { corsRoutes } from './routes/cors.ts';
 import { docsRoutes } from './routes/docs.ts';
 import { galleryRoutes } from './routes/gallery.ts';
 import { healthRoutes } from './routes/health.ts';
@@ -69,6 +70,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     reply.code(404).send(problem({ level: 'inputError', code: 'notFound', params: { path: request.url.split('?')[0]! } })),
   );
 
+  corsRoutes(app);
   healthRoutes(app, dependencies);
   semgraphRoutes(app, dependencies);
   renderRoutes(app, dependencies);
