@@ -1,5 +1,7 @@
-# The four services on Cloud Run (TR-PF-01), all publicly reachable: every request is checked
-# by the service itself (DEC-PF-10, TR-PF-14), so Cloud Run does not check callers.
+# The services and applications on Cloud Run (TR-PF-01), all publicly reachable: every request is
+# checked by the service itself (DEC-PF-10, TR-PF-14), so Cloud Run does not check callers.
+# semgraph checks nobody: it is open to everyone and holds no data (DEC-PF-24). Until its rate limit
+# stands in front of it (TR-PF-30), the maximum number of instances caps what that can cost.
 
 resource "google_cloud_run_v2_service" "service" {
   for_each = local.services

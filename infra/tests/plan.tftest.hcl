@@ -30,8 +30,8 @@ run "every_service_runs_the_shared_image_of_this_code" {
   command = plan
 
   assert {
-    condition     = length(google_cloud_run_v2_service.service) == 6
-    error_message = "Expected identity, catalogue, registry, query, mcp and web."
+    condition     = length(google_cloud_run_v2_service.service) == 7
+    error_message = "Expected identity, catalogue, registry, query, semgraph, mcp and web."
   }
 
   assert {
@@ -68,6 +68,30 @@ run "services_are_public_and_check_tokens_themselves" {
   assert {
     condition     = alltrue([for service in google_cloud_run_v2_service.service : service.invoker_iam_disabled && service.ingress == "INGRESS_TRAFFIC_ALL"])
     error_message = "Services are publicly reachable; the token check in each service protects them (DEC-PF-10)."
+  }
+}
+
+run "semgraph_is_open_to_everyone_and_reaches_no_data" {
+  command = plan
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["semgraph"].template[0].containers[0].env : "${env.name}=${env.value}"], "MCP_AUTH=none")
+    error_message = "The MCP server of semgraph is open to everyone, like its API (DEC-PF-24)."
+  }
+
+  assert {
+    condition     = !contains(keys(google_project_iam_member.database_client), "semgraph") && !contains(keys(google_project_iam_member.database_login), "semgraph")
+    error_message = "semgraph is open without login, so it may never reach data (DEC-PF-24)."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_service.service["semgraph"].template[0].scaling[0].max_instance_count <= 2
+    error_message = "Until its rate limit is in place, the number of instances caps what an open semgraph can cost (TR-PF-30)."
+  }
+
+  assert {
+    condition     = output.semgraph_url == "https://datahub-semgraph-123456789.europe-west1.run.app"
+    error_message = "semgraph's address must follow Cloud Run's fixed address format."
   }
 }
 

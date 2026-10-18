@@ -13,7 +13,7 @@ data "google_project" "this" {}
 locals {
   # Every service and application of Data Hub that runs on Cloud Run, with an image of its own
   # (docs/architecture/README.md#services).
-  services = toset(["identity", "catalogue", "registry", "query", "mcp", "web"])
+  services = toset(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"])
 
   # The services that keep data in Postgres, each in its own schema (TR-PF-08).
   # query stores nothing in v1 (DEC-SR-18).
@@ -81,6 +81,8 @@ locals {
     catalogue = local.database_env["catalogue"]
     registry  = local.registry_env
     query     = {}
+    # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
+    semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
     # The web app signs Users in at its own address (DEC-PF-19); its page searches registry.

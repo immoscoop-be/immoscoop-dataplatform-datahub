@@ -14,7 +14,7 @@ GitHub Actions applies it, never a person ([DEC-PF-16](../docs/requirements/tech
 | `storage.tf` | The bucket for the Artifacts, which only registry may write |
 | `secrets.tf` | The secrets, each readable by one service; a person adds the values ([TR-PF-23](../docs/requirements/technical/00-platform.md#tr-pf-23)) |
 | `kms.tf` | The key in Cloud KMS that signs Access Tokens, which only identity may use ([TR-PF-24](../docs/requirements/technical/00-platform.md#tr-pf-24)) |
-| `services.tf` | The four services, mcp and web on Cloud Run, `datahub-<name>`, publicly reachable, running the images of exactly this code; the outputs `web_url` and `mcp_url` are where people and Claude come in |
+| `services.tf` | The services, mcp and web on Cloud Run, `datahub-<name>`, publicly reachable, running the images of exactly this code; the outputs `web_url` and `mcp_url` are where people and Claude come in, and `semgraph_url` is the Chart Server, open to everyone |
 | `environments/*.tfvars` | What differs between uat and prod |
 
 | | uat | prod |
