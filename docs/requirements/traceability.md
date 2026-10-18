@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 29 (4 proposed, 9 specified, 16 implemented) | – | 23 | 18 (11 open, 7 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 30 (4 proposed, 10 specified, 16 implemented) | – | 24 | 18 (11 open, 7 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 7 (7 implemented) | – | – | – |
 
 ## Functional requirements
@@ -202,6 +202,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-27](technical/00-platform.md#tr-pf-27) | The server of the web app | Implemented | [DEC-PF-19](technical/00-platform.md#dec-pf-19), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [02b9680](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02b9680fa32044267f2798725615e739b8337e65) refs, 2026-10-18<br>[ad876f8](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ad876f834990eef5dd9e86a44531b2e16581b319) implements, 2026-10-18<br>[b9c6501](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b9c650141084e0b7097b5123419358707d5be5cc) refs, 2026-10-18 |
 | [TR-PF-28](technical/00-platform.md#tr-pf-28) | The Data Team reads the tables in Cloud SQL Studio | Implemented | [DEC-PF-21](technical/00-platform.md#dec-pf-21), [TR-PF-22](technical/00-platform.md#tr-pf-22), [NFR-SEC-02](non-functional/security.md#nfr-sec-02) | [dccb3fa](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dccb3fac3a47253e29a51739635058eba93a8d7f) implements, 2026-10-18 |
 | [TR-PF-29](technical/00-platform.md#tr-pf-29) | The look and the page of the web app | Implemented | [DEC-PF-22](technical/00-platform.md#dec-pf-22), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | [fda53b2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fda53b234dedc5c42ef5ff86a680b4c96caaaf6c) implements, 2026-10-18 |
+| [TR-PF-30](technical/00-platform.md#tr-pf-30) | semgraph is open, behind a rate limit | Specified | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | – |
 
 ### [Artifact registry: technical requirements](technical/01-artifact-registry.md)
 

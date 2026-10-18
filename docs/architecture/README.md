@@ -170,7 +170,7 @@ The Data Team can look into the tables of registry and catalogue, read-only, in 
 
 ## Reachability
 
-All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10), [TR-PF-14](../requirements/technical/00-platform.md#tr-pf-14)). Nothing is protected by being hidden on an internal network; every request has to pass the login and the token check of the service it reaches.
+All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10), [TR-PF-14](../requirements/technical/00-platform.md#tr-pf-14)). Nothing is protected by being hidden on an internal network; every request has to pass the login and the token check of the service it reaches. The one exception is semgraph, the Chart Server: it holds no data, so it is open to everyone without login, behind a rate limit per address ([DEC-PF-24](../requirements/technical/00-platform.md#dec-pf-24), [TR-PF-30](../requirements/technical/00-platform.md#tr-pf-30)).
 
 | Interface | Calls from | Why public is needed |
 | --- | --- | --- |

@@ -15,6 +15,8 @@
 
 No request is trusted because of where it comes from: not the network, not a gateway, and not another service. Every service checks who is asking and what they may do, on every request.
 
+The one exception is semgraph, the Chart Server: it holds no data and has access to none, so it is open without login, behind a rate limit ([DEC-PF-24](../technical/00-platform.md#dec-pf-24)).
+
 <a id="nfr-sec-02"></a>
 ### NFR-SEC-02 · Least privilege per service
 

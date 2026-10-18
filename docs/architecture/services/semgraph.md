@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Kind | Backend service on Cloud Run, once it has moved in ([DEC-PF-23](../../requirements/technical/00-platform.md#dec-pf-23)) |
+| Kind | Backend service on Cloud Run, once it has moved in ([DEC-PF-23](../../requirements/technical/00-platform.md#dec-pf-23)); open to everyone without login, behind a rate limit ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)) |
 | Code | `services/semgraph`; until the move, the repository `immoscoop-be/immoscoop-ptditt-semgraph` |
 | Schema | None: semgraph keeps no data |
 | Domains | The chart language, used by [Lenses](../../requirements/functional/09-lenses.md) and [Reports](../../requirements/functional/10-reports.md); its requirements are still in its own repository ([OP-PF-16](../../requirements/technical/00-platform.md#op-pf-16)) |
@@ -35,11 +35,16 @@ As semgraph has it today; it may change with the move.
 
 Nothing: the data comes in the request.
 
+## Who may call it
+
+Everyone, worldwide, without login: the web app, Claude, dashboards and documents ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)). That is safe because semgraph holds no data and has access to none. A load balancer with Cloud Armor in front of it limits the requests per address, and Cloud Run only accepts traffic through that load balancer ([TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)).
+
 ## Before the move
 
 Where semgraph runs now is on [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch): on AWS, through the internal-tools platform, reachable only internally. What the move has to settle:
 
 - How the code comes in, and how its build and tests join the workspace: [OP-PF-15](../../requirements/technical/00-platform.md#op-pf-15)
 - Its requirements in `docs/requirements`: [OP-PF-16](../../requirements/technical/00-platform.md#op-pf-16)
-- Who may call it, and where its MCP tools live: [OP-PF-17](../../requirements/technical/00-platform.md#op-pf-17)
+- Where its MCP tools live, now that everyone may call it: [OP-PF-17](../../requirements/technical/00-platform.md#op-pf-17)
+- A domain name for its load balancer: [OP-PF-08](../../requirements/technical/00-platform.md#op-pf-08)
 - The switch from AWS for its current users: [OP-PF-18](../../requirements/technical/00-platform.md#op-pf-18)
