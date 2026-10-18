@@ -46,6 +46,21 @@ variable "deletion_protection" {
   type        = bool
 }
 
+variable "token_signing_key_versions" {
+  description = "The versions of the key that signs Access Tokens, labelled by the year they were made, each ENABLED or DISABLED. The newest enabled version signs (infra/README.md#rotating-the-signing-key)."
+  type        = map(string)
+
+  validation {
+    condition     = alltrue([for state in values(var.token_signing_key_versions) : contains(["ENABLED", "DISABLED"], state)])
+    error_message = "Each version of the signing key is ENABLED or DISABLED."
+  }
+
+  validation {
+    condition     = contains(values(var.token_signing_key_versions), "ENABLED")
+    error_message = "At least one version of the signing key must be enabled, or nobody can sign in."
+  }
+}
+
 variable "token_audience" {
   description = "The audience of the Access Tokens that identity issues and every service checks."
   type        = string

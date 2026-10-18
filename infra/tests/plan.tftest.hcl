@@ -15,6 +15,10 @@ variables {
   database_tier       = "db-f1-micro"
   deletion_protection = false
   image_tag           = "tree-abc123"
+
+  token_signing_key_versions = {
+    "2026" = "ENABLED"
+  }
 }
 
 run "every_service_runs_the_shared_image_of_this_code" {
@@ -85,9 +89,97 @@ run "only_the_right_service_reads_each_secret" {
   }
 
   assert {
-    condition     = length(google_secret_manager_secret_iam_member.reader) == 3
+    condition     = length(google_secret_manager_secret_iam_member.reader) == 2
     error_message = "Each secret has exactly one reader."
   }
+}
+
+run "only_identity_signs_access_tokens_with_an_es256_key_in_kms" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["identity"]
+    override_during = plan
+    values = {
+      member = "serviceAccount:datahub-identity@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_kms_crypto_key.access_token.purpose == "ASYMMETRIC_SIGN" && google_kms_crypto_key.access_token.version_template[0].algorithm == "EC_SIGN_P256_SHA256"
+    error_message = "Access Tokens are signed with an ES256 key in Cloud KMS, the only algorithm @datahub/auth accepts (TR-PF-24)."
+  }
+
+  assert {
+    condition     = google_kms_crypto_key_iam_member.identity_signs.member == "serviceAccount:datahub-identity@test-project.iam.gserviceaccount.com" && google_kms_crypto_key_iam_member.identity_signs.role == "roles/cloudkms.signerVerifier"
+    error_message = "identity must be able to sign with the key."
+  }
+
+  assert {
+    condition = alltrue([
+      for name in ["catalogue", "registry", "query"] :
+      !contains([for env in google_cloud_run_v2_service.service[name].template[0].containers[0].env : env.name], "DATAHUB_TOKEN_SIGNING_KEY")
+    ])
+    error_message = "Only identity is told which key signs Access Tokens."
+  }
+}
+
+run "the_newest_enabled_key_version_signs_and_all_enabled_versions_are_published" {
+  command = plan
+
+  variables {
+    token_signing_key_versions = {
+      "2025" = "DISABLED"
+      "2026" = "ENABLED"
+      "2027" = "ENABLED"
+    }
+  }
+
+  override_resource {
+    target          = google_kms_crypto_key_version.access_token["2025"]
+    override_during = plan
+    values          = { name = "key/cryptoKeyVersions/1" }
+  }
+
+  override_resource {
+    target          = google_kms_crypto_key_version.access_token["2026"]
+    override_during = plan
+    values          = { name = "key/cryptoKeyVersions/2" }
+  }
+
+  override_resource {
+    target          = google_kms_crypto_key_version.access_token["2027"]
+    override_during = plan
+    values          = { name = "key/cryptoKeyVersions/3" }
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_TOKEN_SIGNING_KEY"],
+      "key/cryptoKeyVersions/3"
+    )
+    error_message = "identity must sign with the newest enabled version of the key."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_TOKEN_PUBLIC_KEYS"],
+      "key/cryptoKeyVersions/2,key/cryptoKeyVersions/3"
+    )
+    error_message = "identity must publish every enabled version, and no disabled one, so tokens from before a rotation stay valid."
+  }
+}
+
+run "a_signing_key_without_an_enabled_version_is_refused" {
+  command = plan
+
+  variables {
+    token_signing_key_versions = {
+      "2026" = "DISABLED"
+    }
+  }
+
+  expect_failures = [var.token_signing_key_versions]
 }
 
 run "uat_can_be_torn_down" {
@@ -122,6 +214,11 @@ run "prod_is_protected_and_recoverable" {
   assert {
     condition     = alltrue([for service in google_cloud_run_v2_service.service : service.deletion_protection])
     error_message = "prod services must be protected against deletion."
+  }
+
+  assert {
+    condition     = google_kms_crypto_key.access_token.deletion_policy == "PREVENT"
+    error_message = "Terraform must never destroy the prod signing key: that would log everyone out."
   }
 }
 
