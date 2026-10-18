@@ -102,6 +102,7 @@ sequenceDiagram
 2. **The Access Token** is short-lived and carries the Groups ([TR-PF-02](../requirements/technical/00-platform.md#tr-pf-02)).
 3. **Every service validates** the token itself with the shared package `@datahub/auth` ([TR-PF-03](../requirements/technical/00-platform.md#tr-pf-03)), and **authorises** with its own data ([TR-PF-04](../requirements/technical/00-platform.md#tr-pf-04)).
 4. **Between services**, the token of the User is passed on and validated again; background work uses the identity of the service ([TR-PF-05](../requirements/technical/00-platform.md#tr-pf-05)).
+5. **Staying signed in**: the server of the web app and Claude get a Refresh Token with the Access Token. Every 15 minutes they exchange it at identity for a new pair, and identity checks the Groups and the account again ([TR-PF-25](../requirements/technical/00-platform.md#tr-pf-25), [TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)).
 
 ### Access Token
 
@@ -187,4 +188,4 @@ The images are built once and live in one repository in the prod project, which 
 
 ## Open points
 
-The open points of the platform are in [Platform](../requirements/technical/00-platform.md#open-points): processing of Artifact Sets ([OP-PF-01](../requirements/technical/00-platform.md#op-pf-01)), token renewal ([OP-PF-02](../requirements/technical/00-platform.md#op-pf-02)), the hand-over of Changes ([OP-PF-05](../requirements/technical/00-platform.md#op-pf-05)), the Message Centre ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)), hosting of the web app ([OP-PF-07](../requirements/technical/00-platform.md#op-pf-07)) and the public domain names ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)).
+The open points of the platform are in [Platform](../requirements/technical/00-platform.md#open-points): processing of Artifact Sets ([OP-PF-01](../requirements/technical/00-platform.md#op-pf-01)), the hand-over of Changes ([OP-PF-05](../requirements/technical/00-platform.md#op-pf-05)), the Message Centre ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) and the public domain names ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)).

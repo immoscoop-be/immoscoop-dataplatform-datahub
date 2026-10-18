@@ -27,7 +27,7 @@ Every service runs under its own identity, with only the permissions its respons
 
 **Status:** Proposed · **Applies to:** [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-10](../functional/02-user-management.md#fr-um-10)
 
-A change in Workspace, such as a removed Group membership or a suspended account, takes effect in Data Hub within the lifetime of one Access Token (15 minutes), plus the time Groups are cached at identity ([OP-PF-02](../technical/00-platform.md#op-pf-02)).
+A change in Workspace, such as a removed Group membership or a suspended account, takes effect in Data Hub within the lifetime of one Access Token (15 minutes): at every renewal identity reads the Groups again and checks the account ([TR-PF-26](../technical/00-platform.md#tr-pf-26)).
 
 <a id="nfr-sec-04"></a>
 ### NFR-SEC-04 · Only main can change prod

@@ -23,6 +23,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 - <a id="dec-um-03"></a>**DEC-UM-03** · Groups come from Google Workspace. Data Hub requests them via the Cloud Identity Groups API, with a service account that is given the Groups Reader admin role in Workspace.
 - <a id="dec-um-04"></a>**DEC-UM-04** · Owner Units are Google groups that follow a Naming Convention. They are created and managed in Workspace, not in Data Hub. This answers the open question "Workspace groups or our own lists": Workspace groups.
 - <a id="dec-um-05"></a>**DEC-UM-05** · Data Hub only pulls in the Groups that follow the convention, not all groups of the company.
+- <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`.
 
 ## Terms
 
@@ -152,8 +153,8 @@ What someone may see and do, and issuing Library Cards ([Permissions and library
 ## Open points
 
 - [x] <a id="op-um-01"></a>**OP-UM-01** · Finalise the Naming Convention for Groups.
-- [ ] <a id="op-um-02"></a>**OP-UM-02** · Confirm which Workspace domain (or which domains) is allowed.
-- [ ] <a id="op-um-03"></a>**OP-UM-03** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod).
+- [x] <a id="op-um-02"></a>**OP-UM-02** · Confirm which Workspace domain (or which domains) is allowed. *Decided on 2026-10-18: `thenextimmoscoop.be` only ([DEC-UM-06](#dec-um-06)).*
+- [ ] <a id="op-um-03"></a>**OP-UM-03** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
 - [ ] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner.
 - [ ] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation.
 - [ ] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above.

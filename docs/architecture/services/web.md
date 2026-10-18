@@ -2,7 +2,7 @@
 
 | | |
 | --- | --- |
-| Kind | Client application: React, in the browser |
+| Kind | Client application: React, in the browser, served by its own small Cloud Run service ([DEC-PF-19](../../requirements/technical/00-platform.md#dec-pf-19)) |
 | Code | `apps/web` |
 | Schema | None |
 
@@ -10,7 +10,7 @@
 
 ## Responsibilities
 
-- Signing in through identity
+- Signing in through identity, and staying signed in: its server keeps the Refresh Token of the User in a cookie and gives the browser only the Access Token ([TR-PF-27](../../requirements/technical/00-platform.md#tr-pf-27))
 - Finding, reading and discussing Resources: the tabs of a Resource ([FR-SR-24](../../requirements/functional/04-stacks-and-resources.md#fr-sr-24)), search and browsing per Collection ([FR-SR-21](../../requirements/functional/04-stacks-and-resources.md#fr-sr-21), [FR-SR-22](../../requirements/functional/04-stacks-and-resources.md#fr-sr-22))
 - The admin for Data Admins and the Data Team: registering Resources and managing Collections
 - Showing the Level everywhere ([FR-MR-10](../../requirements/functional/06-maturity-and-release.md#fr-mr-10))
@@ -19,4 +19,4 @@
 
 ## Talks to
 
-identity, catalogue, registry and query, with the Access Token of the User. How the app is served is open ([OP-PF-07](../../requirements/technical/00-platform.md#op-pf-07)).
+identity, catalogue, registry and query, with the Access Token of the User. Its server only talks to identity, to sign in and renew.
