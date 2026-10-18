@@ -29,15 +29,27 @@ locals {
     DATAHUB_JWKS_URL       = "${local.identity_url}/.well-known/jwks.json"
   }
 
-  database_env = {
+  # The image of every service: exactly the code being applied (TR-PF-17).
+  images = {
+    for name in local.services :
+    name => "${var.region}-docker.pkg.dev/${var.images_project_id}/${var.artifact_repository}/${name}:${var.image_tag}"
+  }
+
+  database = {
     DATAHUB_DB_INSTANCE = google_sql_database_instance.main.connection_name
     DATAHUB_DB_NAME     = google_sql_database.datahub.name
   }
 
+  # Each service logs in to Postgres as itself (TR-PF-22).
+  database_env = {
+    for name in local.database_services :
+    name => merge(local.database, { DATAHUB_DB_USER = google_sql_user.service[name].name })
+  }
+
   service_env = {
-    identity  = merge(local.database_env, local.token_signing_env)
-    catalogue = local.database_env
-    registry  = merge(local.database_env, { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
+    identity  = merge(local.database_env["identity"], local.token_signing_env)
+    catalogue = local.database_env["catalogue"]
+    registry  = merge(local.database_env["registry"], { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
     query     = {}
   }
 }

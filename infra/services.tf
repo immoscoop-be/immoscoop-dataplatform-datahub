@@ -19,7 +19,7 @@ resource "google_cloud_run_v2_service" "service" {
     }
 
     containers {
-      image = "${var.region}-docker.pkg.dev/${var.images_project_id}/${var.artifact_repository}/${each.key}:${var.image_tag}"
+      image = local.images[each.key]
 
       ports {
         container_port = 8080
@@ -49,7 +49,9 @@ resource "google_cloud_run_v2_service" "service" {
     }
   }
 
+  # A service gets its new revision only once the migrations of this code have run (TR-PF-09).
   depends_on = [
+    google_cloud_run_v2_job.migrate,
     google_project_iam_member.database_client,
     google_project_iam_member.database_login,
     google_kms_crypto_key_iam_member.identity_signs,

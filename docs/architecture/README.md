@@ -150,7 +150,7 @@ packages/
   auth/           token validation shared by every service and app
   contracts/      zod schemas and the generated OpenAPI per service
   server/         the common shape of every service: logs for Cloud Logging, health check, token check
-  db/             Kysely setup and the migration runner
+  db/             the connection to Cloud SQL and the migration runner (Kysely)
   ui/             React components shared by web and the MCP App
 infra/            Terraform, per environment (uat, prod), applied by GitHub Actions
 docs/
@@ -159,9 +159,9 @@ Dockerfile        one image per service (build argument SERVICE)
 .github/workflows ci.yml: tests, docs, an image per service, and the one gate check ci
 ```
 
-`packages/db` and `packages/ui` are created when the first service needs them. How the images are built and where they go is in [Build and deploy](build-and-deploy.md).
+`packages/ui` is created when the first app needs it. How the images are built and where they go is in [Build and deploy](build-and-deploy.md).
 
-Each service keeps its migrations in `services/<name>/migrations` ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09)).
+Each service keeps its migrations in `services/<name>/src/migrations`. They run as a separate job, as `datahub-migrator`, before the service gets its new revision ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09), [TR-PF-22](../requirements/technical/00-platform.md#tr-pf-22)).
 
 ## Reachability
 

@@ -21,6 +21,7 @@ Everything in this repository is in English: code, comments, documentation and c
 
 - All code is TypeScript on Node 24, in one pnpm workspace: `packages/*` (shared), `services/*` (backend services), `apps/*` (web, mcp). ESM only.
 - Before every commit that touches code: `pnpm typecheck` and `pnpm test`. `pnpm check` runs those plus the documentation check, as CI does.
+- Tests that need Postgres run when `DATAHUB_TEST_DATABASE_URL` points at a throwaway Postgres (CI starts one); without it they are skipped locally and fail in CI. Database changes are migrations in `services/<name>/src/migrations`, never changes by hand.
 - Every route is protected by the access token by default (`@datahub/auth`). Only mark a route public (`config: { public: true }`) when it must be reachable without login, such as a health check or the start of a login.
 - A new service starts as a copy of an existing one; follow `docs/architecture/build-and-deploy.md#adding-a-service`.
 - Scripts in `scripts/` are TypeScript that Node runs directly: Node built-ins only, and only type syntax that can be stripped (no enums, no namespaces).

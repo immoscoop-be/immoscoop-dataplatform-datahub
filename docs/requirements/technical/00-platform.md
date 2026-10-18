@@ -93,9 +93,9 @@ Each service that stores data owns exactly one schema in the shared Cloud SQL Po
 <a id="tr-pf-09"></a>
 ### TR-PF-09 · Migrations per service
 
-**Status:** Specified · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
+**Status:** Implemented · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
 
-Each service keeps its database migrations in its own folder. They run as a separate step at deploy, before the new revision of the service gets traffic.
+Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
 
 <a id="tr-pf-10"></a>
 ### TR-PF-10 · API contracts from zod schemas
@@ -116,6 +116,7 @@ The request and response schemas of every service are defined with zod in `packa
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token from Secret Manager |
 | query | Read access to the Stacks and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
+| `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
 
 <a id="tr-pf-12"></a>
 ### TR-PF-12 · Shared components for Lenses and Reports
@@ -192,7 +193,7 @@ A push to `uat` plans and applies the Terraform in `infra/` to the uat project; 
 
 **Status:** Specified · **Realises:** [TR-PF-08](#tr-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
-Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The schema of each service and its grants are created by that service's migrations ([TR-PF-09](#tr-pf-09)).
+Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The migrations run as a separate identity, `datahub-migrator`, a member of `cloudsqlsuperuser`: it creates the schema of each service and its tables, and gives the service's own login read and write access to the rows of that schema, nothing more ([TR-PF-09](#tr-pf-09)). A service cannot change its tables, and cannot see the schema of another service ([TR-PF-08](#tr-pf-08)).
 
 <a id="tr-pf-23"></a>
 ### TR-PF-23 · Secrets are created by Terraform and filled by a person
