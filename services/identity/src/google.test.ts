@@ -105,20 +105,41 @@ describe('createWorkspace', () => {
     await expect(disabled.isActive('someone')).rejects.toThrow(/403 Admin SDK API has not been used/);
   });
 
-  it('collects the groups of a User over every page', async () => {
-    const queries: string[] = [];
+  it('collects the groups of a User over every page, and the groups those groups are in', async () => {
+    // The direct groups of each member, one list per page: Jan is in a and, on the second page, in
+    // b; a is a member of c, and c of a again, which must not loop.
+    const parents: Record<string, string[][]> = {
+      [`jan@${DOMAIN}`]: [['a'], ['b']],
+      [`a@${DOMAIN}`]: [['c']],
+      [`c@${DOMAIN}`]: [['a']],
+    };
+    const asked: string[] = [];
     const workspace = createWorkspace(token, async (url) => {
-      const search = new URL(url as string).searchParams;
-      queries.push(search.get('query') ?? '');
-      return search.get('pageToken')
-        ? Response.json({ memberships: [{ group: 'groups/b', groupKey: { id: `datahub-owner-x@${DOMAIN}` } }] })
-        : Response.json({ memberships: [{ group: 'groups/a', groupKey: { id: `datahub-datateam@${DOMAIN}` } }], nextPageToken: 'next' });
+      const { pathname, searchParams } = new URL(url as string);
+      expect(pathname).toBe('/v1/groups/-/memberships:searchDirectGroups');
+      const query = searchParams.get('query') ?? '';
+      asked.push(query);
+      const pages = parents[/member_key_id == '([^']+)'/.exec(query)?.[1] ?? ''] ?? [[]];
+      const page = Number(searchParams.get('pageToken') ?? 0);
+      return Response.json({
+        memberships: (pages[page] ?? []).map((id) => ({ group: `groups/${id}`, groupKey: { id: `${id}@${DOMAIN}` } })),
+        nextPageToken: page + 1 < pages.length ? String(page + 1) : undefined,
+      });
     });
     await expect(workspace.groups(`jan@${DOMAIN}`)).resolves.toEqual([
-      { id: 'a', email: `datahub-datateam@${DOMAIN}` },
-      { id: 'b', email: `datahub-owner-x@${DOMAIN}` },
+      { id: 'a', email: `a@${DOMAIN}` },
+      { id: 'b', email: `b@${DOMAIN}` },
+      { id: 'c', email: `c@${DOMAIN}` },
     ]);
-    expect(queries[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloud_identity_googlegroup' in labels`);
+    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloud_identity_googlegroup' in labels`);
+    expect(asked).toHaveLength(5);
+  });
+
+  it('fails with the reason Google gives when the groups cannot be read', async () => {
+    const workspace = createWorkspace(token, async () =>
+      Response.json({ error: { message: 'The caller does not have permission' } }, { status: 403 }),
+    );
+    await expect(workspace.groups(`jan@${DOMAIN}`)).rejects.toThrow(/403 The caller does not have permission/);
   });
 });
 
