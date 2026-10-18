@@ -6,6 +6,8 @@ export interface DbtCloud {
    * it reports the run.
    */
   artifact(runId: string, file: string, options?: { wait?: boolean }): Promise<Uint8Array | undefined>;
+  /** Which job and project a run belongs to and whether it succeeded, or undefined for an unknown run. */
+  run(runId: string): Promise<{ jobId: string; projectId: string; success: boolean } | undefined>;
 }
 
 export interface DbtCloudOptions {
@@ -25,9 +27,11 @@ export function createDbtCloud(options: DbtCloudOptions): DbtCloud {
   const request = options.request ?? fetch;
   const sleep = options.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
 
+  const runs = `${options.url.replace(/\/$/, '')}/api/v2/accounts/${options.accountId}/runs`;
+
   return {
     async artifact(runId, file, { wait = false } = {}) {
-      const url = `${options.url.replace(/\/$/, '')}/api/v2/accounts/${options.accountId}/runs/${runId}/artifacts/${file}`;
+      const url = `${runs}/${runId}/artifacts/${file}`;
       const pauses = wait ? [...PAUSES_MS] : [];
       for (;;) {
         const response = await request(url, { headers: { authorization: `Token ${await options.token()}` } });
@@ -43,6 +47,19 @@ export function createDbtCloud(options: DbtCloudOptions): DbtCloud {
         }
         await sleep(pause);
       }
+    },
+
+    async run(runId) {
+      const response = await request(`${runs}/${runId}/`, { headers: { authorization: `Token ${await options.token()}` } });
+      if (response.status === 404) {
+        return undefined;
+      }
+      if (!response.ok) {
+        throw new Error(`dbt Cloud did not describe run ${runId}: ${response.status} ${(await response.text()).slice(0, 200)}`);
+      }
+      const { data } = (await response.json()) as { data?: { job_definition_id?: number; project_id?: number; status?: number } };
+      // Status 10 is a successful run in the dbt Cloud API.
+      return data ? { jobId: String(data.job_definition_id), projectId: String(data.project_id), success: data.status === 10 } : undefined;
     },
   };
 }

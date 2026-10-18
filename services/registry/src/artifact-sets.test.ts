@@ -136,6 +136,23 @@ describe.skipIf(!url)('the Artifact Sets', () => {
     expect(orders.description).toBe('Changed.');
   });
 
+  it('puts a processed or failed set back in the queue, but not one in progress (FR-AR-14)', async () => {
+    const done = await claimed('100');
+    await sets.save(done, sample);
+    const broken = await claimed('200');
+    await sets.fail(broken.id, 'no catalog');
+    await sets.record({ projectId: DBT_PROD, jobId: '322950', runId: '300' });
+    await sets.claimNext();
+
+    expect(await sets.reprocess('100')).toBe('pending');
+    expect(await sets.reprocess('200')).toBe('pending');
+    expect(await sets.reprocess('300')).toBe('processing');
+    expect(await sets.reprocess('400')).toBeUndefined();
+    const again = await sets.claimNext();
+    expect(again?.runId).toBe('100');
+    expect(await db.selectFrom('artifactSets').select('error').where('runId', '=', '200').executeTakeFirstOrThrow()).toEqual({ error: null });
+  });
+
   it('leaves nothing behind when writing a set fails, and keeps the Current Version (FR-AR-09)', async () => {
     const first = await claimed('100');
     await sets.save(first, sample);

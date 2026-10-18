@@ -6,6 +6,7 @@ const app = await buildApp({
   verifier: verifierFromEnv(),
   webUrl: required('DATAHUB_WEB_URL'),
   identityUrl: required('DATAHUB_TOKEN_ISSUER'),
+  registryUrl: required('DATAHUB_REGISTRY_URL'),
 });
 await start(app);
 

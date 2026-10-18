@@ -20,6 +20,8 @@ export interface AppOptions {
   webUrl: string;
   /** identity's address (DATAHUB_TOKEN_ISSUER). */
   identityUrl: string;
+  /** registry's address (DATAHUB_REGISTRY_URL), which the page calls to search the dbt projects. */
+  registryUrl: string;
   /** Calls to identity; tests pass a stand-in. */
   fetch?: typeof fetch;
   logger?: ServerOptions['logger'];
@@ -60,10 +62,10 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       .type('text/html; charset=utf-8')
       .header(
         'content-security-policy',
-        `default-src 'self'; connect-src 'self' ${options.identityUrl}; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
+        `default-src 'self'; connect-src 'self' ${options.identityUrl} ${options.registryUrl}; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
       )
       .header('cache-control', 'no-store')
-      .send(pageHtml(options.identityUrl)),
+      .send(pageHtml(options.identityUrl, options.registryUrl)),
   );
   app.get('/app.js', open, async (_incoming, reply) => reply.type('text/javascript; charset=utf-8').send(pageScript));
   app.get('/app.css', open, async (_incoming, reply) => reply.type('text/css; charset=utf-8').send(pageStyle));

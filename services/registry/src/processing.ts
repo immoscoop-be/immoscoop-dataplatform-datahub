@@ -12,7 +12,7 @@ export interface Log {
 export interface ProcessingOptions {
   sets: Pick<ArtifactSets, 'claimNext' | 'save' | 'fail'>;
   bucket: Bucket;
-  dbtCloud: DbtCloud;
+  dbtCloud: Pick<DbtCloud, 'artifact'>;
   log: Log;
 }
 

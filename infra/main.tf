@@ -83,7 +83,7 @@ locals {
     query     = {}
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
-    # The web app signs Users in at its own address (DEC-PF-19).
-    web = { DATAHUB_WEB_URL = local.urls["web"] }
+    # The web app signs Users in at its own address (DEC-PF-19); its page searches registry.
+    web = { DATAHUB_WEB_URL = local.urls["web"], DATAHUB_REGISTRY_URL = local.urls["registry"] }
   }
 }

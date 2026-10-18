@@ -114,7 +114,7 @@ Processing normalises a set into Nodes, columns, Edges and tests. Columns combin
 <a id="fr-ar-08"></a>
 ### FR-AR-08 · Lineage across the dbt projects
 
-**Status:** Specified · **Confluence:** AR-08
+**Status:** Implemented · **Confluence:** AR-08
 
 Lineage crosses the boundary between the dbt projects: Nodes from dbt-prod and Colleciónes are linked to each other.
 
@@ -128,7 +128,7 @@ A set only becomes the Current Version of its project once it is fully processed
 <a id="fr-ar-10"></a>
 ### FR-AR-10 · Search by name, free text and lineage
 
-**Status:** Specified · **Confluence:** AR-10
+**Status:** Implemented · **Confluence:** AR-10
 
 Search works by name (also with a typo or a half-remembered name), by free text in descriptions and columns, and along the lineage in both directions.
 
@@ -156,7 +156,7 @@ Anyone with access to a Resource can read its Log.
 <a id="fr-ar-14"></a>
 ### FR-AR-14 · Fetch and process a run again manually
 
-**Status:** Specified · **Confluence:** AR-14
+**Status:** Implemented · **Confluence:** AR-14
 
 A run can be fetched and processed again manually, for recovery and tests.
 
@@ -214,6 +214,7 @@ Which views are Resources and how their ID stays stable ([Stacks and resources](
 - [x] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Decided on 2026-10-18: a webhook ([DEC-AR-02](#dec-ar-02)).*
 - [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
+- [ ] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and library cards](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)).
 
 ## Builds on
 

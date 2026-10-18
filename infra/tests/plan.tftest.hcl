@@ -327,6 +327,14 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
     ])
     error_message = "Every service accepts calls from the pages of the web app, and only from there."
   }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_URL"],
+      "https://datahub-registry-123456789.europe-west1.run.app"
+    )
+    error_message = "The page of the web app searches registry, at its fixed address."
+  }
 }
 
 run "registry_starts_its_ingest_job_which_runs_its_image_as_registry" {

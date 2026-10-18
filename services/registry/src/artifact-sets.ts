@@ -62,6 +62,24 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
         .executeTakeFirst();
     },
 
+    /**
+     * Puts a processed or failed set back in the queue, to be fetched and processed again (FR-AR-14).
+     * Tells where the set stands afterwards, or undefined when the run was never recorded.
+     */
+    async reprocess(runId: string): Promise<SetStatus | undefined> {
+      const queued = await db
+        .updateTable('artifactSets')
+        .set({ status: 'pending', error: null, claimedAt: null })
+        .where('runId', '=', runId)
+        .where('status', 'in', ['processed', 'failed'])
+        .returning('status')
+        .executeTakeFirst();
+      if (queued) {
+        return queued.status;
+      }
+      return (await db.selectFrom('artifactSets').select('status').where('runId', '=', runId).executeTakeFirst())?.status;
+    },
+
     /** The set could not be processed: the reason stays with it, the Current Version stays as it was. */
     async fail(id: number, error: string): Promise<void> {
       await db.updateTable('artifactSets').set({ status: 'failed', error, processedAt: now() }).where('id', '=', id).execute();

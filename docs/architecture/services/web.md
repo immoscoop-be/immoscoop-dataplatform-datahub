@@ -23,11 +23,11 @@ identity, catalogue, registry and query, with the Access Token of the User; the 
 
 ## What exists today
 
-A first page that signs you in and shows who identity says you are (`GET /me`): name, email, roles and Groups. Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your `thenextimmoscoop.be` account.
+A first page that signs you in and shows who identity says you are (`GET /me`): name, email, roles and Groups. For the Data Team it also searches the dbt projects in registry, and shows a Node with its columns, tests and lineage up- and downstream, across both projects ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05), [TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)). Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your `thenextimmoscoop.be` account.
 
 | Route of the server | Purpose |
 | --- | --- |
-| `GET /`, `/app.js`, `/app.css` | The page; it may only talk to its own server and identity |
+| `GET /`, `/app.js`, `/app.css` | The page; it may only talk to its own server, identity and registry |
 | `GET /auth/login` | Sends the User to identity, with PKCE, as the client `datahub-web` |
 | `GET /auth/callback` | Back from identity: exchanges the code and keeps the Refresh Token in the cookie |
 | `POST /auth/token` | Gives the page an Access Token for the Refresh Token in the cookie; only from the web app's own pages |
