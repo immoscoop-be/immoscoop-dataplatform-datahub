@@ -38,7 +38,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
         return false;
       }
       if (!response.ok) {
-        throw new Error(`Workspace did not answer for user ${googleId}: ${response.status}`);
+        throw await failure('Workspace did not say whether the account is active', response);
       }
       const user = (await response.json()) as { suspended?: boolean; archived?: boolean };
       return !user.suspended && !user.archived;
@@ -55,7 +55,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
         }
         const response = await get(url, 'https://www.googleapis.com/auth/cloud-identity.groups.readonly');
         if (!response.ok) {
-          throw new Error(`Workspace did not return the groups of ${email}: ${response.status}`);
+          throw await failure('Workspace did not return the groups', response);
         }
         const page = (await response.json()) as {
           memberships?: { group?: string; groupKey?: { id?: string } }[];
@@ -71,6 +71,18 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
       return groups;
     },
   };
+}
+
+/** An error with Google's own reason in it, such as an API that is not enabled; for the log. */
+async function failure(what: string, response: Response): Promise<Error> {
+  let reason = '';
+  try {
+    const body = (await response.json()) as { error?: { message?: string } };
+    reason = body.error?.message ?? '';
+  } catch {
+    // No JSON: the status says enough.
+  }
+  return new Error(`${what}: ${response.status}${reason ? ` ${reason}` : ''}`);
 }
 
 /**

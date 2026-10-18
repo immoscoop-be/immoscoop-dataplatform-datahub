@@ -37,6 +37,14 @@ export function pageHtml(identityUrl: string): string {
 
 export const pageScript = `const identity = document.documentElement.dataset.identity;
 const $ = (id) => document.getElementById(id);
+const problems = {
+  access_denied: 'Only active accounts of the company can sign in.',
+  server_error: 'Data Hub could not check your account with Google. Please try again in a minute.',
+  temporarily_unavailable: 'Data Hub could not check your account with Google. Please try again in a minute.',
+  expired: 'This sign-in took too long or was started in another window. Please try again.',
+  refused: 'identity did not accept this sign-in. Please try again.',
+};
+const problem = (code) => problems[code] ?? 'Signing in did not work (' + code + ').';
 
 // The server of the web app exchanges the Refresh Token in its cookie for an Access Token. If the
 // renewal was refused, another tab may have renewed at the same moment and changed the cookie:
@@ -47,7 +55,11 @@ async function accessToken() {
     if (response.ok) {
       return (await response.json()).access_token;
     }
-    if ((await response.json()).error !== 'renewal_refused') {
+    const { error } = await response.json();
+    if (error === 'temporarily_unavailable') {
+      throw new Error(error);
+    }
+    if (error !== 'renewal_refused') {
       return null;
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -56,12 +68,18 @@ async function accessToken() {
 }
 
 async function show() {
-  const token = await accessToken();
+  let token;
+  try {
+    token = await accessToken();
+  } catch (failure) {
+    $('status').textContent = problem(failure.message);
+    return;
+  }
   if (!token) {
     $('status').textContent = 'You are not signed in.';
     const error = new URLSearchParams(location.search).get('error');
     if (error) {
-      $('error').textContent = 'Signing in did not work (' + error + '). Only accounts of the company can sign in.';
+      $('error').textContent = problem(error);
       $('error').hidden = false;
     }
     $('signed-out').hidden = false;

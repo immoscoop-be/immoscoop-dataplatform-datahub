@@ -125,6 +125,10 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       return reply.code(401).send({ error: 'signed_out' });
     }
     const response = await identity('/token', { grant_type: 'refresh_token', refresh_token: refreshToken });
+    if (response.status === 503) {
+      // Google did not answer identity; the session is still good.
+      return reply.code(503).send({ error: 'temporarily_unavailable' });
+    }
     if (!response.ok) {
       // The cookie is left alone: another tab may just have replaced it with a newer one.
       return reply.code(401).send({ error: 'renewal_refused' });

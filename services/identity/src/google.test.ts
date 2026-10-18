@@ -99,6 +99,10 @@ describe('createWorkspace', () => {
     await expect(workspace.isActive('suspended')).resolves.toBe(false);
     await expect(workspace.isActive('removed')).resolves.toBe(false);
     await expect(workspace.isActive('broken')).rejects.toThrow();
+    const disabled = createWorkspace(token, async () =>
+      Response.json({ error: { message: 'Admin SDK API has not been used in project 1 before or it is disabled.' } }, { status: 403 }),
+    );
+    await expect(disabled.isActive('someone')).rejects.toThrow(/403 Admin SDK API has not been used/);
   });
 
   it('collects the groups of a User over every page', async () => {

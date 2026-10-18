@@ -15,6 +15,7 @@ function fakeIdentity() {
   const identity = {
     calls,
     refuse: false,
+    unavailable: false,
     rememberChallenge(value: string) {
       challenge = value;
     },
@@ -27,6 +28,9 @@ function fakeIdentity() {
       }
       if (identity.refuse) {
         return Response.json({ error: 'invalid_grant' }, { status: 400 });
+      }
+      if (identity.unavailable) {
+        return Response.json({ error: 'temporarily_unavailable' }, { status: 503 });
       }
       if (fields.grant_type === 'authorization_code') {
         const proven = createHash('sha256').update(fields.code_verifier ?? '').digest('base64url') === challenge;
@@ -135,6 +139,11 @@ describe('the server of the web app', () => {
     const refused = await app.inject({ method: 'POST', url: '/auth/token', headers: { cookie: session } });
     expect(refused.statusCode).toBe(401);
     expect(refused.json().error).toBe('renewal_refused');
+    identity.refuse = false;
+    identity.unavailable = true;
+    const unavailable = await app.inject({ method: 'POST', url: '/auth/token', headers: { cookie: session } });
+    expect(unavailable.statusCode).toBe(503);
+    expect(cookies(unavailable.headers)['datahub_session']).toBeUndefined();
   });
 
   it('signs out at identity too, and forgets the session', async () => {
