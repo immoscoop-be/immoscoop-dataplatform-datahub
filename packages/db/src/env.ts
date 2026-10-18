@@ -17,7 +17,8 @@ export function cloudSqlOptionsFromEnv(schema: string, env: NodeJS.ProcessEnv = 
 
 /**
  * What the migration job of a service runs (TR-PF-09): it logs in as `datahub-migrator`
- * (DATAHUB_DB_USER) and gives the service's login (DATAHUB_DB_SERVICE_USER) its access.
+ * (DATAHUB_DB_USER) and gives the service's login (DATAHUB_DB_SERVICE_USER) its access, and the
+ * readers (DATAHUB_DB_READERS, comma-separated, if any) read access (TR-PF-28).
  */
 export async function migrateFromEnv(
   schema: string,
@@ -27,7 +28,8 @@ export async function migrateFromEnv(
   const serviceUser = required(env, 'DATAHUB_DB_SERVICE_USER');
   const database = await connectCloudSql<unknown>(cloudSqlOptionsFromEnv(schema, env));
   try {
-    const results = await migrate({ db: database.db, schema, migrations, serviceUser });
+    const readers = (env.DATAHUB_DB_READERS ?? '').split(',').filter((reader) => reader.length > 0);
+    const results = await migrate({ db: database.db, schema, migrations, serviceUser, readers });
     const ran = results.map((result) => result.migrationName);
     log('INFO', ran.length ? `Ran ${ran.join(', ')} on ${schema}` : `${schema} is up to date`);
   } catch (error) {

@@ -32,6 +32,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-18"></a>**DEC-PF-18** · A client that signs in on behalf of a User keeps that User signed in with a Refresh Token from identity: the server of the web app, and MCP clients such as Claude. One mechanism for every client. The Refresh Token of the web app lasts 12 hours, once a working day through Google; that of an MCP client 30 days, renewed as it is used. At every renewal identity reads the Groups again and checks the account in Workspace.
 - <a id="dec-pf-19"></a>**DEC-PF-19** · The web app is served by a small Cloud Run service of its own. That service also keeps the Refresh Token of the User, in a cookie of its own address, so that no browser treats it as a third-party cookie and Data Hub works on any address. It holds no business logic.
 - <a id="dec-pf-20"></a>**DEC-PF-20** · Heavy work that a request starts runs as a Cloud Run job, built from the same image as its service and running under the same service account. The first is the processing of an Artifact Set ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)): the service only records what has to be done and starts the job, which works through it without the time limit of a request.
+- <a id="dec-pf-21"></a>**DEC-PF-21** · People look into the database only as members of the Role Group of the Data Team, read-only, through Cloud SQL Studio, and never with a password. They see the schemas of registry and catalogue; the schema of identity, with sessions and personal data, stays closed to people.
 
 ## Requirements
 
@@ -118,6 +119,7 @@ The request and response schemas of every service are defined with zod in `packa
 | query | Read access to the Stacks and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
 | `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
+| The Data Team, not a service | Cloud SQL Studio User, as its Role Group `datahub-datateam@`; read-only on the tables of registry and catalogue ([TR-PF-28](#tr-pf-28)) |
 
 <a id="tr-pf-12"></a>
 ### TR-PF-12 · Shared components for Lenses and Reports
@@ -239,6 +241,15 @@ At every renewal, identity reads the Groups of the User again, as at login, and 
 **Status:** Implemented · **Realises:** [DEC-PF-19](#dec-pf-19), [DEC-PF-03](#dec-pf-03)
 
 The Cloud Run service `datahub-web` serves the web app and signs in through identity as an OAuth client, like an MCP client does. It keeps the Refresh Token in a cookie of its own address that JavaScript cannot read, is only sent over HTTPS, and is never sent along from another site (`HttpOnly`, `Secure`, `SameSite=Strict`). It gives the browser only the Access Token, with which the app calls the services itself. It holds no business logic and no data.
+
+<a id="tr-pf-28"></a>
+### TR-PF-28 · The Data Team reads the tables in Cloud SQL Studio
+
+**Status:** Implemented · **Realises:** [DEC-PF-21](#dec-pf-21), [TR-PF-22](#tr-pf-22), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+
+Terraform makes the Role Group of the Data Team, `datahub-datateam@thenextimmoscoop.be`, a database login through IAM group authentication, and gives the group the role Cloud SQL Studio User. Whoever is in the group in Workspace can log in, with their own Google account; whoever leaves it can no longer. The migration jobs of registry and catalogue give the group's login `USAGE` on their schema and `SELECT` on all its tables, again at every deploy, so new tables are included. identity's migration job gives it nothing.
+
+To look: Google Cloud console → SQL → the instance `datahub-<environment>` → Cloud SQL Studio, database `datahub`, with IAM database authentication.
 
 ## Open points
 

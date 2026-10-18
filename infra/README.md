@@ -9,7 +9,7 @@ GitHub Actions applies it, never a person ([DEC-PF-16](../docs/requirements/tech
 | File | What |
 | --- | --- |
 | `service-accounts.tf` | One service account per service, `datahub-<service>`, with only its own roles ([TR-PF-11](../docs/requirements/technical/00-platform.md#tr-pf-11)) |
-| `database.tf` | Cloud SQL Postgres 17, the database `datahub`, and a login per service that keeps data, by its Google identity: no passwords ([TR-PF-22](../docs/requirements/technical/00-platform.md#tr-pf-22)). Also the login of `datahub-migrator`, which owns the schemas |
+| `database.tf` | Cloud SQL Postgres 17, the database `datahub`, and a login per service that keeps data, by its Google identity: no passwords ([TR-PF-22](../docs/requirements/technical/00-platform.md#tr-pf-22)). Also the login of `datahub-migrator`, which owns the schemas, and of the Data Team's Role Group, which may read registry and catalogue in Cloud SQL Studio ([TR-PF-28](../docs/requirements/technical/00-platform.md#tr-pf-28)) |
 | `migrations.tf` | Per service that keeps data, the job that runs its migrations with the new image, before the service is changed ([TR-PF-09](../docs/requirements/technical/00-platform.md#tr-pf-09)) |
 | `storage.tf` | The bucket for the Artifacts, which only registry may write |
 | `secrets.tf` | The secrets, each readable by one service; a person adds the values ([TR-PF-23](../docs/requirements/technical/00-platform.md#tr-pf-23)) |

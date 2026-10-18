@@ -44,6 +44,11 @@ locals {
     DATAHUB_DB_NAME     = google_sql_database.datahub.name
   }
 
+  # People read the data as the Role Group of the Data Team, read-only, in Cloud SQL Studio, and only
+  # the schemas of registry and catalogue: identity keeps sessions and personal data (TR-PF-28).
+  database_readers  = ["datahub-datateam@${var.workspace_domain}"]
+  readable_services = toset(["registry", "catalogue"])
+
   # Each service logs in to Postgres as itself (TR-PF-22).
   database_env = {
     for name in local.database_services :

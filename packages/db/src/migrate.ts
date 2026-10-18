@@ -14,12 +14,18 @@ export interface MigrateOptions {
   migrations: Record<string, Migration>;
   /** The database login of the service: it may read and write the rows, not change the tables. */
   serviceUser: string;
+  /**
+   * The database roles that may read the rows, and nothing more: the Role Group of the Data Team,
+   * in Cloud SQL Studio (TR-PF-28). Left out for a schema no person may read, such as identity's.
+   */
+  readers?: string[];
 }
 
 /**
  * Brings the schema of a service up to date (TR-PF-09), then gives the service read and write
- * access to its tables and nothing more (TR-PF-08, TR-PF-22). Safe to run again: migrations that
- * already ran are skipped, and two runs at once wait for each other.
+ * access to its tables and nothing more (TR-PF-08, TR-PF-22), and the readers read access (TR-PF-28).
+ * The grants are given again at every run, so new tables are included. Safe to run again:
+ * migrations that already ran are skipped, and two runs at once wait for each other.
  */
 export async function migrate(options: MigrateOptions): Promise<MigrationResult[]> {
   const schema = sql.id(schemaName(options.schema));
@@ -46,5 +52,10 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
   await sql`revoke all on ${schema}.${sql.id(MIGRATION_TABLE)}, ${schema}.${sql.id(MIGRATION_LOCK_TABLE)} from ${service}`.execute(
     options.db,
   );
+  for (const reader of options.readers ?? []) {
+    const role = sql.raw(quoteIdentifier(reader));
+    await sql`grant usage on schema ${schema} to ${role}`.execute(options.db);
+    await sql`grant select on all tables in schema ${schema} to ${role}`.execute(options.db);
+  }
   return results;
 }
