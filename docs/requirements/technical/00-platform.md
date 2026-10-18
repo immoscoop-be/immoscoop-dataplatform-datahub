@@ -33,6 +33,8 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 - <a id="dec-pf-19"></a>**DEC-PF-19** · The web app is served by a small Cloud Run service of its own. That service also keeps the Refresh Token of the User, in a cookie of its own address, so that no browser treats it as a third-party cookie and Data Hub works on any address. It holds no business logic.
 - <a id="dec-pf-20"></a>**DEC-PF-20** · Heavy work that a request starts runs as a Cloud Run job, built from the same image as its service and running under the same service account. The first is the processing of an Artifact Set ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)): the service only records what has to be done and starts the job, which works through it without the time limit of a request.
 - <a id="dec-pf-21"></a>**DEC-PF-21** · People look into the database only as members of the Role Group of the Data Team, read-only, through Cloud SQL Studio, and never with a password. They see the schemas of registry and catalogue; the schema of identity, with sessions and personal data, stays closed to people.
+- <a id="dec-pf-22"></a>**DEC-PF-22** · The web app is built with the component library Mantine, in the look of the Immoscoop brandbook: its colours and the font Poppins, white and light, with plenty of space. In the terms of the brandbook, Data Hub is a trusted environment, where teal may cover larger areas than in a first contact. There is one light look; no dark mode for now. This works out [DEC-PF-06](#dec-pf-06).
+- <a id="dec-pf-23"></a>**DEC-PF-23** · semgraph, the Chart Server, becomes a backend service of Data Hub, in `services/semgraph`, next to the four of [DEC-PF-01](#dec-pf-01) ([DEC-DH-63](../../overview/data-hub.md#dec-dh-63)). It draws every chart in Data Hub, for the web app and for Claude; the web app has no chart library of its own. Like every service, it validates the Access Token itself and is publicly reachable ([DEC-PF-02](#dec-pf-02), [DEC-PF-10](#dec-pf-10)). How it moves in is open ([OP-PF-15](#op-pf-15) to [OP-PF-18](#op-pf-18)).
 
 ## Requirements
 
@@ -251,6 +253,15 @@ Terraform makes the Role Group of the Data Team, `datahub-datateam@thenextimmosc
 
 To look: Google Cloud console → SQL → the instance `datahub-<environment>` → Cloud SQL Studio, database `datahub`, with IAM database authentication.
 
+<a id="tr-pf-29"></a>
+### TR-PF-29 · The look and the page of the web app
+
+**Status:** Implemented · **Realises:** [DEC-PF-22](#dec-pf-22), [DEC-PF-06](#dec-pf-06)
+
+The Mantine theme lives in `packages/ui`, so the MCP App can use it too. Each colour of the brandbook is a scale of ten shades: magenta runs from light pink through the brand magenta into bordeaux, so hover and pressed states stay within the brand, and the greys run from light grey to the text grey. Titles are in bordeaux, text in the text grey, and both in Poppins. Links take a darker magenta: the brand magenta has a contrast of 4.4:1 on white, just under the 4.5:1 that running text needs. Buttons keep the brand magenta.
+
+Vite builds the page into `apps/web/dist/client`, with Poppins included: the page loads nothing from another address, not even Google Fonts. The server of the web app ([TR-PF-27](#tr-pf-27)) serves it under a Content-Security-Policy that allows scripts, styles and fonts only from its own address. Mantine adds `<style>` elements; they need a nonce that is new for every page.
+
 ## Open points
 
 - [x] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)). *Decided on 2026-10-18: a Cloud Run job ([DEC-PF-20](#dec-pf-20)).*
@@ -267,6 +278,10 @@ To look: Google Cloud console → SQL → the instance `datahub-<environment>` �
 - [ ] <a id="op-pf-12"></a>**OP-PF-12** · Set up the branch rules in GitHub: rulesets for `main` and `uat`, the required checks, and `uat` as the default branch ([Build and deploy](../../architecture/build-and-deploy.md#rules-in-github)).
 - [ ] <a id="op-pf-13"></a>**OP-PF-13** · Decide whether pull requests show a Terraform plan before merging. That needs a separate, read-only identity that pull requests may use, because the Terraform identities only trust `uat` and `main`.
 - [ ] <a id="op-pf-14"></a>**OP-PF-14** · Decide who gives query its read access on the Stacks: Terraform, which then needs rights on the Stacks dataset, or dbt, which creates that dataset.
+- [ ] <a id="op-pf-15"></a>**OP-PF-15** · Decide how semgraph moves into this repository ([DEC-PF-23](#dec-pf-23)): with its git history or as a copy of a named commit; and how it joins the workspace. Node runs its TypeScript directly, without a build, and its tests run with `node --test` against SVG files that hold the expected drawing; Data Hub compiles with `tsc -b` and tests with Vitest.
+- [ ] <a id="op-pf-16"></a>**OP-PF-16** · Decide how the requirements of semgraph, REQ-000 to REQ-107 in Dutch with a register of their own, become part of `docs/requirements`: translated into English, under which domain code, keeping REQ-xxx as an alias the way the Confluence IDs are kept. Decide too where new requirements of the chart language are collected from then on; today that is Confluence, and the most recent decision wins.
+- [ ] <a id="op-pf-17"></a>**OP-PF-17** · Decide how semgraph knows who calls it within Data Hub: Access Tokens of identity, instead of the login of the internal-tools platform for its API and the Cognito tokens of its MCP server. Decide too whether its MCP tools and its MCP App stay on its own `/mcp`, or move into mcp ([DEC-PF-03](#dec-pf-03)).
+- [ ] <a id="op-pf-18"></a>**OP-PF-18** · Plan the switch from AWS: the current users of the Chart Server (dashboards, documents, Claude) move to its address in Data Hub, its dev environment becomes uat and its prod becomes prod, and after that the deploy through the internal-tools platform and the old repository stop. Users find the address on [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch), which then changes.
 
 ## Builds on
 

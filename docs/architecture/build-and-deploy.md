@@ -14,8 +14,8 @@ You need Node.js 24 (see `.node-version`) and pnpm, which Corepack provides: `co
 | Command | What it does |
 | --- | --- |
 | `pnpm install` | Installs all dependencies of the workspace |
-| `pnpm build` | Compiles every package and service with TypeScript project references |
-| `pnpm typecheck` | Compiles, then type-checks the tests and the scripts |
+| `pnpm build` | Compiles every package and service with TypeScript project references, and builds the page of the web app with Vite |
+| `pnpm typecheck` | Compiles, then type-checks the tests, the page of the web app and the scripts |
 | `pnpm test` | Runs all tests with Vitest |
 | `pnpm docs:check` | Validates requirement IDs, statuses and links in `docs/` |
 | `pnpm docs:build` | Regenerates the [traceability matrix](../requirements/traceability.md) |

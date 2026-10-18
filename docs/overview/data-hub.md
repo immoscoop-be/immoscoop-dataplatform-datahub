@@ -209,8 +209,9 @@ Release happens in two steps, and Data Hub enforces that order. The librarian re
 - <a id="dec-dh-50"></a>**DEC-DH-50** · The mart views in the Stacks are the only stable layer between upstream and business; no extra intermediate names come behind them. This adjusts the earlier choice to let business work on the upstream names. What the Data Team needs besides that is insight into where a Resource is used, and Data Hub makes that visible.
 - <a id="dec-dh-51"></a>**DEC-DH-51** · The Data Team requests that usage on demand, via the API or MCP of Data Hub. No automatic notification in the pull request.
 - <a id="dec-dh-52"></a>**DEC-DH-52** · Data Hub processes the Artifacts of Colleciónes and dbt-prod, so that the full lineage of every Resource can be requested and searched, also by people without a dbt licence. See [The dbt Artifacts](#the-dbt-artifacts) above.
-- <a id="dec-dh-53"></a>**DEC-DH-53** · Data Hub runs on GCP, on Cloud Run, next to the Colleciónes server that already runs there, and close to the data it queries. The Chart Server stays on AWS; the two may run separately.
+- <a id="dec-dh-53"></a>**DEC-DH-53** · Data Hub runs on GCP, on Cloud Run, next to the Colleciónes server that already runs there, and close to the data it queries. The Chart Server stays on AWS; the two may run separately. *Note of 2026-10-18: the Chart Server becomes part of Data Hub ([DEC-DH-63](#dec-dh-63)).*
 - <a id="dec-dh-54"></a>**DEC-DH-54** · Data Hub is built in Node.js with TypeScript.
+- <a id="dec-dh-63"></a>**DEC-DH-63** · The Chart Server is part of Data Hub. Its code, semgraph, moves into the Data Hub repository as a service and runs on GCP like the other services. This replaces the part of [DEC-DH-53](#dec-dh-53) that kept the Chart Server on AWS. How it moves is in [OP-PF-15](../requirements/technical/00-platform.md#op-pf-15) to [OP-PF-18](../requirements/technical/00-platform.md#op-pf-18).
 
 ### Storage
 
@@ -236,7 +237,7 @@ For every Resource, the description, the maturity Level and all the artefacts ar
 
 - This page deepens what [EDA: understanding data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168) (Confluence, Dutch) still calls the data server: there it knows the dbt manifest, reads the EDA documents from the repository and guards the access axis. Here Lenses, Reports, communication and the maturity Levels are added, and EDAs move to Data Hub as their source.
 - [Domain tooling](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975041) (Confluence, Dutch) describes the distinction between the Domain Model and Data Hub: the Domain Model describes the Entities of the business and only produces dbt Artifacts; Data Hub describes the data. Owner Units, Collections and the Promotion Loop are worked out there from the point of view of Data Hub. The Anomalies on the Resource Card are the end point of the defensive trigger for refinement described there.
-- [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch) is the Chart Server Data Hub works with.
+- [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch) is the Chart Server Data Hub works with. It becomes part of Data Hub ([DEC-DH-63](#dec-dh-63)).
 - [Functional domains](../requirements/functional/README.md) works out Data Hub functionally, domain by domain.
 
 ## Open themes

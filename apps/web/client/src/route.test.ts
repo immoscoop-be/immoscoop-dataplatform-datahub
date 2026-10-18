@@ -1,0 +1,30 @@
+import { describe, expect, it } from 'vitest';
+import { hrefFor, parseHash, type Route } from './route.js';
+
+describe('the address of a page', () => {
+  it('reads the search, a Node, and the start', () => {
+    expect(parseHash('#/search?q=orders%20daily')).toEqual({ page: 'search', query: 'orders daily' });
+    expect(parseHash('#/nodes/model.immoscoop_dataplatform_sql.orders')).toEqual({ page: 'node', uniqueId: 'model.immoscoop_dataplatform_sql.orders' });
+    expect(parseHash('')).toEqual({ page: 'search', query: '' });
+    expect(parseHash('#/')).toEqual({ page: 'search', query: '' });
+  });
+
+  it('still opens the links of the first page, which held only the unique ID', () => {
+    expect(parseHash('#source.compilacion.raw%20leads')).toEqual({ page: 'node', uniqueId: 'source.compilacion.raw leads' });
+  });
+
+  it('survives an address that is not encoded properly', () => {
+    expect(parseHash('#/nodes/model.p.100%')).toEqual({ page: 'node', uniqueId: 'model.p.100%' });
+  });
+
+  it('writes every Route back to the address it was read from', () => {
+    const routes: Route[] = [
+      { page: 'search', query: '' },
+      { page: 'search', query: 'leads & visits' },
+      { page: 'node', uniqueId: 'model.p.a/b#c' },
+    ];
+    for (const route of routes) {
+      expect(parseHash(hrefFor(route))).toEqual(route);
+    }
+  });
+});

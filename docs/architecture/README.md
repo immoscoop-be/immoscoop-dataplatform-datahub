@@ -36,6 +36,7 @@ flowchart LR
     catalogue["catalogue"]
     registry["registry"]
     query["query"]
+    semgraph["semgraph<br/>Chart Server"]
   end
 
   google["Google<br/>Sign-In and Groups API"]
@@ -45,9 +46,9 @@ flowchart LR
   bq[("BigQuery<br/>the stacks")]
 
   browser --> web
-  web --> identity & catalogue & registry & query
+  web --> identity & catalogue & registry & query & semgraph
   claude --> mcp
-  mcp --> catalogue & registry & query
+  mcp --> catalogue & registry & query & semgraph
   excel --> query
   catalogue --> registry
   query --> catalogue
@@ -68,11 +69,12 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
 | [query](services/query.md) | Running queries on the Stacks: preview, free SQL for Claude, feeds for Excel | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
+| [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moves in from its own repository ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
 
 | Application | For | Uses |
 | --- | --- | --- |
-| [web](services/web.md) | People in the browser | identity, catalogue, registry, query |
-| [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query; signs in through identity |
+| [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph |
+| [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
 
 Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains.
 
@@ -139,19 +141,20 @@ None of the interfaces holds business logic. Lens and Report components are shar
 
 ```text
 apps/
-  web/            React app
+  web/            React app with Mantine, and its small server
   mcp/            MCP server for Claude
 services/
   identity/
   catalogue/
   registry/
   query/
+  semgraph/       the Chart Server, once it has moved in
 packages/
   auth/           token validation shared by every service and app
   contracts/      zod schemas and the generated OpenAPI per service
   server/         the common shape of every service: logs for Cloud Logging, health check, token check
   db/             the connection to Cloud SQL and the migration runner (Kysely)
-  ui/             React components shared by web and the MCP App
+  ui/             the Mantine theme of the brand, and React components shared by web and the MCP App
 infra/            Terraform, per environment (uat, prod), applied by GitHub Actions
 docs/
 scripts/          requirements.ts: checks the docs and builds the traceability matrix
@@ -159,7 +162,7 @@ Dockerfile        one image per service (build argument SERVICE)
 .github/workflows ci.yml: tests, docs, an image per service, and the one gate check ci
 ```
 
-`packages/ui` is created when the first app needs it. How the images are built and where they go is in [Build and deploy](build-and-deploy.md).
+`packages/ui` holds the theme from the Immoscoop brandbook ([TR-PF-29](../requirements/technical/00-platform.md#tr-pf-29)); the components for Lenses and Reports follow ([TR-PF-12](../requirements/technical/00-platform.md#tr-pf-12)). How the images are built and where they go is in [Build and deploy](build-and-deploy.md).
 
 Each service keeps its migrations in `services/<name>/src/migrations`. They run as a separate job, as `datahub-migrator`, before the service gets its new revision ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09), [TR-PF-22](../requirements/technical/00-platform.md#tr-pf-22)).
 
