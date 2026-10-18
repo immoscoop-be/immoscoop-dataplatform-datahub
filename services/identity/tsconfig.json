@@ -6,5 +6,9 @@
   },
   "include": ["src"],
   "exclude": ["src/**/*.test.ts"],
-  "references": [{ "path": "../../packages/auth" }, { "path": "../../packages/server" }]
+  "references": [
+    { "path": "../../packages/auth" },
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/server" }
+  ]
 }
