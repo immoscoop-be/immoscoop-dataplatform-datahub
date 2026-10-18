@@ -6,5 +6,5 @@
     "declaration": false,
     "declarationMap": false
   },
-  "include": ["packages/*/src/**/*.test.ts", "services/*/src/**/*.test.ts"]
+  "include": ["packages/*/src/**/*.test.ts", "services/*/src/**/*.test.ts", "apps/*/src/**/*.test.ts"]
 }

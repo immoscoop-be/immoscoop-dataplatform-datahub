@@ -8,6 +8,11 @@ output "identity_url" {
   value       = local.identity_url
 }
 
+output "mcp_url" {
+  description = "The address to add as a connector in Claude."
+  value       = "${local.urls["mcp"]}/mcp"
+}
+
 output "database_connection_name" {
   description = "The Cloud SQL instance, as the Cloud SQL connector names it."
   value       = google_sql_database_instance.main.connection_name

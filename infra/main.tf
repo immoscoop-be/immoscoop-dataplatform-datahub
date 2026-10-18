@@ -11,16 +11,18 @@ provider "google" {
 data "google_project" "this" {}
 
 locals {
-  # Every service of Data Hub (docs/architecture/README.md#services).
-  services = toset(["identity", "catalogue", "registry", "query"])
+  # Every service and application of Data Hub that runs on Cloud Run, with an image of its own
+  # (docs/architecture/README.md#services).
+  services = toset(["identity", "catalogue", "registry", "query", "mcp"])
 
   # The services that keep data in Postgres, each in its own schema (TR-PF-08).
   # query stores nothing in v1 (DEC-SR-18).
   database_services = toset(["identity", "catalogue", "registry"])
 
-  # Cloud Run gives every service a fixed address, so identity's address is known
-  # before it exists: every service needs it to validate Access Tokens.
-  identity_url = "https://datahub-identity-${data.google_project.this.number}.${var.region}.run.app"
+  # Cloud Run gives every service a fixed address, so addresses are known before the services
+  # exist: every service needs identity's to validate Access Tokens.
+  urls         = { for name in local.services : name => "https://datahub-${name}-${data.google_project.this.number}.${var.region}.run.app" }
+  identity_url = local.urls["identity"]
 
   common_env = {
     DATAHUB_ENVIRONMENT    = var.environment
@@ -58,5 +60,7 @@ locals {
     catalogue = local.database_env["catalogue"]
     registry  = merge(local.database_env["registry"], { DATAHUB_ARTIFACT_BUCKET = google_storage_bucket.artifacts.name })
     query     = {}
+    # The MCP endpoint Claude connects to (TR-PF-06).
+    mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
   }
 }

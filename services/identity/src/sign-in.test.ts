@@ -177,6 +177,13 @@ describe.skipIf(!url)('signing in', () => {
 
   it('lets Claude register itself, and no client with another callback', async () => {
     await registerClaude();
+    const withSecret = await app.inject({
+      method: 'POST',
+      url: '/register',
+      payload: { redirect_uris: [CLAUDE], token_endpoint_auth_method: 'client_secret_post' },
+    });
+    expect(withSecret.statusCode).toBe(201);
+    expect(withSecret.json().token_endpoint_auth_method).toBe('none');
     const other = await app.inject({ method: 'POST', url: '/register', payload: { redirect_uris: ['https://evil.test/cb'] } });
     expect(other.statusCode).toBe(400);
     expect(other.json().error).toBe('invalid_redirect_uri');

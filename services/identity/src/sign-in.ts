@@ -105,9 +105,8 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     ) {
       return refuse(reply, 'invalid_redirect_uri', 'Only known MCP clients, such as Claude, may register');
     }
-    if (body.token_endpoint_auth_method !== undefined && body.token_endpoint_auth_method !== 'none') {
-      return refuse(reply, 'invalid_client_metadata', 'Clients are public and use PKCE');
-    }
+    // Every client is public and proves itself with PKCE; a client that asks for a secret is told
+    // so in the answer, as RFC 7591 allows, rather than refused.
     const name = typeof body.client_name === 'string' ? body.client_name.slice(0, 200) : 'MCP client';
     const clientId = await store.registerClient({ name, redirectUris: redirectUris as string[] });
     reply.code(201);
