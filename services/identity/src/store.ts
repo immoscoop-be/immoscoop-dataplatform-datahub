@@ -128,11 +128,12 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
     },
 
     /**
-     * Uses a Refresh Token, which works once (TR-PF-25). A token used a second time has been
-     * copied, so the whole session ends; except within a few seconds of its first use, when two
-     * tabs of the same browser renewed at the same moment.
+     * Checks a Refresh Token, which works once (TR-PF-25), without using it yet: the checks at
+     * Workspace come first, so a short outage at Google never costs a client its token. A token
+     * that was used before has been copied, so the whole session ends; except within a few
+     * seconds of its first use, when two tabs of the same browser renewed at the same moment.
      */
-    async useRefreshToken(value: string, clientId: string): Promise<Session | RefreshRefusal> {
+    async checkRefreshToken(value: string, clientId: string): Promise<Session | RefreshRefusal> {
       const found = await db
         .selectFrom('refreshTokens')
         .innerJoin('sessions', 'sessions.id', 'refreshTokens.sessionId')
@@ -151,23 +152,25 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
       if (found.expiresAt < now()) {
         return 'expired';
       }
-      const marked = await db
-        .updateTable('refreshTokens')
-        .set({ usedAt: now() })
-        .where('tokenHash', '=', hash(value))
-        .where('usedAt', 'is', null)
-        .executeTakeFirst();
-      if (marked.numUpdatedRows === 0n) {
-        const usedAt = (
-          await db.selectFrom('refreshTokens').select('usedAt').where('tokenHash', '=', hash(value)).executeTakeFirst()
-        )?.usedAt;
-        if (usedAt && now().getTime() - usedAt.getTime() < 30_000) {
+      if (found.usedAt) {
+        if (now().getTime() - found.usedAt.getTime() < 30_000) {
           return 'used-just-now';
         }
         await this.endSession(found.id, 'refresh-token-reused');
         return 'reused';
       }
       return { id: found.id, googleId: found.googleId, clientId: found.clientId, expiresAt: found.expiresAt };
+    },
+
+    /** Uses a checked Refresh Token; false when another request used it in the meantime. */
+    async consumeRefreshToken(value: string): Promise<boolean> {
+      const marked = await db
+        .updateTable('refreshTokens')
+        .set({ usedAt: now() })
+        .where('tokenHash', '=', hash(value))
+        .where('usedAt', 'is', null)
+        .executeTakeFirst();
+      return marked.numUpdatedRows > 0n;
     },
 
     /** Moves the end of a session that is renewed as it is used (Claude: 30 days from now). */

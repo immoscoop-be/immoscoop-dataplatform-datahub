@@ -54,7 +54,11 @@ function fakeGoogle() {
 function fakeWorkspace() {
   const workspace = {
     active: true,
+    down: false,
     async isActive() {
+      if (workspace.down) {
+        throw new Error('Workspace did not say whether the account is active: 403 Admin SDK API has not been used');
+      }
       return workspace.active;
     },
     async groups() {
@@ -338,5 +342,26 @@ describe.skipIf(!url)('signing in', () => {
     const second = await signIn(clientId, CLAUDE);
     expect((await end(['datateam'])).statusCode).toBe(204);
     expect((await renew(clientId, second.refresh_token)).statusCode).toBe(400);
+  });
+
+  it('sends the User back with server_error, not a raw error, when Workspace does not answer', async () => {
+    const clientId = await registerClaude();
+    workspace.down = true;
+    const { back } = await authorize(clientId, CLAUDE);
+    expect(back.searchParams.get('error')).toBe('server_error');
+    expect(back.searchParams.has('code')).toBe(false);
+  });
+
+  it('keeps the session, and the Refresh Token, when Workspace does not answer a renewal', async () => {
+    const clientId = await registerClaude();
+    const pair = await signIn(clientId, CLAUDE);
+    workspace.down = true;
+    const failed = await renew(clientId, pair.refresh_token);
+    expect(failed.statusCode).toBe(503);
+    expect(failed.json().error).toBe('temporarily_unavailable');
+
+    workspace.down = false;
+    clock += 60_000;
+    expect((await renew(clientId, pair.refresh_token)).statusCode).toBe(200);
   });
 });

@@ -59,7 +59,8 @@ for PROJECT in "$PROD" "$UAT"; do
     cloudscheduler.googleapis.com storage.googleapis.com bigquery.googleapis.com \
     iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
     cloudresourcemanager.googleapis.com serviceusage.googleapis.com \
-    artifactregistry.googleapis.com cloudidentity.googleapis.com cloudkms.googleapis.com
+    artifactregistry.googleapis.com cloudidentity.googleapis.com cloudkms.googleapis.com \
+    admin.googleapis.com
 done
 ```
 

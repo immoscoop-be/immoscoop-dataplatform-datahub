@@ -181,21 +181,23 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       return deny(`Google returned no code: ${request.query.error ?? 'unknown'}`);
     }
     let identity: GoogleIdentity;
+    let claims: TokenSubject;
     try {
       const google = await options.google();
       identity = await google.identity({ code: request.query.code, codeVerifier: pending.googleCodeVerifier, nonce: pending.nonce });
+      if (!(await workspace.isActive(identity.sub))) {
+        return deny('The account is suspended or removed in Workspace');
+      }
+      claims = await subject({ googleId: identity.sub, email: identity.email, name: identity.name });
     } catch (error) {
       if (error instanceof SignInError) {
         return deny(error.message);
       }
-      throw error;
+      // Google or Workspace did not answer as expected: not the User's fault, and nothing to show them.
+      request.log.error({ err: error }, 'sign-in failed on the side of Google or Workspace');
+      back.searchParams.set('error', 'server_error');
+      return reply.redirect(back.toString());
     }
-    if (!(await workspace.isActive(identity.sub))) {
-      return deny('The account is suspended or removed in Workspace');
-    }
-
-    const user = { googleId: identity.sub, email: identity.email, name: identity.name };
-    const claims = await subject(user);
     await store.saveUser(identity);
     const code = await store.createCode({
       clientId: pending.clientId,
@@ -235,7 +237,8 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     }
 
     if (body.grant_type === 'refresh_token') {
-      const session = body.refresh_token ? await store.useRefreshToken(body.refresh_token, client.clientId) : 'unknown';
+      const refreshToken = body.refresh_token ?? '';
+      const session = refreshToken ? await store.checkRefreshToken(refreshToken, client.clientId) : 'unknown';
       if (typeof session === 'string') {
         if (session === 'reused') {
           request.log.warn({ clientId: client.clientId }, 'a Refresh Token was used twice; its session is ended');
@@ -243,11 +246,26 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
         return refuse(reply, 'invalid_grant', 'The Refresh Token is not valid');
       }
       const user = await store.user(session.googleId);
-      if (!user || !(await workspace.isActive(user.googleId))) {
+      let active = false;
+      let claims: TokenSubject | undefined;
+      try {
+        active = Boolean(user) && (await workspace.isActive(session.googleId));
+        claims = user && active ? await subject(user) : undefined;
+      } catch (error) {
+        // Workspace did not answer: the Refresh Token was not used yet, so the client can try
+        // again later; a short outage at Google never ends a session.
+        request.log.error({ err: error }, 'renewal failed on the side of Workspace');
+        reply.code(503).header('cache-control', 'no-store');
+        return { error: 'temporarily_unavailable', error_description: 'Workspace did not answer; try again later' };
+      }
+      if (!user || !active || !claims) {
         await store.endSessionsOf(session.googleId, 'account-inactive');
         return refuse(reply, 'invalid_grant', 'The account is no longer active');
       }
-      const claims = await subject(user);
+      if (!(await store.consumeRefreshToken(refreshToken))) {
+        // Another request used it while Workspace was asked: two tabs at the same moment.
+        return refuse(reply, 'invalid_grant', 'The Refresh Token is not valid');
+      }
       if (!client.web) {
         await store.extendSession(session.id, MCP_SESSION_SECONDS);
       }
