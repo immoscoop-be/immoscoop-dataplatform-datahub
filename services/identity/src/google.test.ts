@@ -131,7 +131,7 @@ describe('createWorkspace', () => {
       { id: 'b', email: `b@${DOMAIN}` },
       { id: 'c', email: `c@${DOMAIN}` },
     ]);
-    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloud_identity_googlegroup' in labels`);
+    expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}' && 'cloudidentity.googleapis.com/groups.discussion_forum' in labels`);
     expect(asked).toHaveLength(5);
   });
 
