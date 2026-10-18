@@ -24,4 +24,6 @@ WORKDIR /app
 COPY --from=build --chown=node:node /out ./
 USER node
 EXPOSE 8080
-CMD ["node", "dist/main.js"]
+# Every package names its entry point in "main": dist/main.js, or src/server.ts for semgraph,
+# whose TypeScript Node runs directly.
+CMD ["node", "."]

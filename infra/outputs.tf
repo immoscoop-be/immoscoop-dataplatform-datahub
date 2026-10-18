@@ -13,6 +13,11 @@ output "web_url" {
   value       = local.urls["web"]
 }
 
+output "semgraph_url" {
+  description = "The Chart Server, open to everyone; its gallery is on /gallery, its MCP server on /mcp."
+  value       = local.urls["semgraph"]
+}
+
 output "mcp_url" {
   description = "The address to add as a connector in Claude."
   value       = "${local.urls["mcp"]}/mcp"

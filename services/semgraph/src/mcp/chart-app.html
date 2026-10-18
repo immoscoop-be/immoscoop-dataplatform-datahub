@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>semgraph</title>
+<style>
+  /* REQ-094: the chart follows the theme of the conversation, in the colours of the chart language (the SVG
+     paints its own background); what lies around it follows Claude, through the host's style variables. */
+  :root { color-scheme: light dark; }
+  html, body { margin: 0; background: transparent; }
+  body {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: var(--font-text-sm-size, 14px);
+    line-height: var(--font-text-sm-line-height, 1.4);
+    color: var(--color-text-secondary, light-dark(#3d3d3a, #c2c0b6));
+  }
+  main { display: block; }
+  #chart {
+    display: block;
+    border: var(--border-width-regular, 0.5px) solid var(--color-border-tertiary, light-dark(rgba(31, 30, 29, 0.15), rgba(222, 220, 209, 0.15)));
+    border-radius: var(--border-radius-lg, 10px);
+    overflow: hidden;
+  }
+  #chart[hidden], #status[hidden], button[hidden] { display: none; }
+  .bar { display: flex; gap: 8px; justify-content: flex-end; padding-top: 8px; }
+  .bar:empty { display: none; }
+  button {
+    font: inherit;
+    font-weight: var(--font-weight-medium, 500);
+    color: var(--color-text-primary, light-dark(#141413, #faf9f5));
+    background: var(--color-background-secondary, light-dark(#f5f4ed, #262624));
+    border: var(--border-width-regular, 0.5px) solid var(--color-border-secondary, light-dark(rgba(31, 30, 29, 0.3), rgba(222, 220, 209, 0.3)));
+    border-radius: var(--border-radius-md, 8px);
+    min-height: 32px;
+    padding: 4px 12px;
+    cursor: pointer;
+  }
+  #status { margin: 0; padding: 12px 0; }
+</style>
+</head>
+<body>
+<main id="frame">
+<div id="chart" hidden></div>
+<p id="status" hidden></p>
+<div class="bar"><button id="fullscreen" type="button" hidden></button><button id="download" type="button" hidden></button></div>
+</main>
+<script type="module">
+/*BUNDLE*/
+const LABELS = /*LABELS*/null;
+const { App, applyDocumentTheme, applyHostFonts, applyHostStyleVariables } = McpApps;
+
+const frame = document.getElementById('frame');
+const chart = document.getElementById('chart');
+const status = document.getElementById('status');
+const fullscreenButton = document.getElementById('fullscreen');
+const downloadButton = document.getElementById('download');
+
+// The SVG lives in a shadow root, so its own styles (hover, panels) stay with it (REQ-016, REQ-027).
+const shadow = chart.attachShadow({ mode: 'open' });
+let request;
+// Per size: the chart as asked (light by default) and, when the request leaves the theme open, dark too.
+const versions = {};
+let size = 'default';
+let shown;
+
+const app = new App({ name: 'semgraph chart', version: '1' }, { availableDisplayModes: ['inline', 'fullscreen'] });
+
+/** Labels in the locale of the request, else of the conversation, else English: like the service (resolveLocale). */
+function labels() {
+  const wanted = (typeof request?.locale === 'string' ? request.locale : app.getHostContext()?.locale) ?? 'en';
+  const locales = Object.keys(LABELS);
+  const exact = locales.find((locale) => locale.toLowerCase() === wanted.toLowerCase());
+  const language = locales.find((locale) => locale.split('-')[0].toLowerCase() === wanted.split('-')[0].toLowerCase());
+  return LABELS[exact ?? language ?? 'en'];
+}
+
+const hostCan = (capability) => Boolean(app.getHostCapabilities()?.[capability]);
+
+async function gunzip(base64) {
+  const bytes = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+  return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+
+/** The SVGs travel gzipped in _meta, for the app only: Claude gets the report, not the picture (REQ-092). */
+async function versionsOf(result) {
+  const packed = result?._meta?.['semgraph/svg'];
+  if (typeof packed !== 'string') return undefined;
+  const dark = result._meta['semgraph/svgDark'];
+  return { asked: await gunzip(packed), dark: typeof dark === 'string' ? await gunzip(dark) : undefined };
+}
+
+async function render(size) {
+  if (!request || !hostCan('serverTools')) return undefined;
+  const result = await app.callServerTool({
+    name: 'render_semgraph',
+    arguments: { request: size ? { ...request, size } : request },
+  });
+  return versionsOf(result);
+}
+
+/** REQ-094: dark in a dark conversation, unless the request chose its theme itself. */
+function current() {
+  const version = versions[size];
+  if (!version) return undefined;
+  return app.getHostContext()?.theme === 'dark' && version.dark ? version.dark : version.asked;
+}
+
+function redraw() {
+  const svg = current();
+  if (svg) draw(svg, { grow: size === 'large' });
+  updateButtons();
+}
+
+/** Inline, a chart shrinks with the conversation but never grows past its size; full screen it may grow. */
+function draw(svg, { grow = false } = {}) {
+  shown = svg;
+  // Only the outer SVG scales; nested SVGs (icons) keep their own size.
+  shadow.innerHTML = `<style>:host{display:block}.semgraph-root{display:block;width:100%;height:auto}</style>${svg}`;
+  const root = shadow.querySelector('svg');
+  root?.classList.add('semgraph-root');
+  frame.style.maxWidth = grow || !root?.getAttribute('width') ? 'none' : `${root.getAttribute('width')}px`;
+  chart.hidden = false;
+  status.hidden = true;
+}
+
+function showStatus(result) {
+  const message = result?._meta?.['semgraph/report']?.issues?.[0]?.message;
+  if (!message) return;
+  status.textContent = labels().notDrawn.replace('{message}', message);
+  status.hidden = false;
+}
+
+function updateButtons() {
+  const context = app.getHostContext();
+  const text = labels();
+  fullscreenButton.textContent = text.fullscreen;
+  downloadButton.textContent = text.download;
+  fullscreenButton.hidden = !shown || context?.displayMode === 'fullscreen' || !context?.availableDisplayModes?.includes('fullscreen');
+  downloadButton.hidden = !shown || !hostCan('downloadFile');
+}
+
+/** Inline the default size, scaled to the width of the conversation; full screen the large size (REQ-085). */
+async function onDisplayMode(mode) {
+  if (!versions.default) return;
+  if (mode === 'fullscreen') {
+    // A KPI tile has no size: then the default is scaled up.
+    versions.large ??= (await render('large').catch(() => undefined)) ?? versions.default;
+    size = 'large';
+  } else {
+    size = 'default';
+  }
+  redraw();
+}
+
+function applyContext(context) {
+  if (!context) return;
+  if (context.theme) applyDocumentTheme(context.theme);
+  if (context.styles?.variables) applyHostStyleVariables(context.styles.variables);
+  if (context.styles?.css?.fonts) applyHostFonts(context.styles.css.fonts);
+}
+
+app.ontoolinput = ({ arguments: args }) => {
+  request = args?.request;
+};
+
+app.ontoolresult = async (result) => {
+  // When a host does not pass _meta on, the app asks the server itself.
+  const passedOn = result?._meta?.['semgraph/report'] !== undefined;
+  const version = (await versionsOf(result)) ?? (passedOn || result?.isError ? undefined : await render().catch(() => undefined));
+  if (!version) {
+    showStatus(result);
+    return;
+  }
+  versions.default = version;
+  redraw();
+};
+
+app.onhostcontextchanged = (context) => {
+  applyContext(context);
+  if (context.displayMode) onDisplayMode(context.displayMode);
+  else redraw();
+};
+
+// Links in the chart (reading card, references) open through the host: the sandbox cannot navigate.
+shadow.addEventListener('click', (event) => {
+  const link = event.composedPath().find((node) => node.localName === 'a');
+  const href = link?.getAttribute('href') ?? link?.getAttribute('xlink:href');
+  if (!href) return;
+  event.preventDefault();
+  app.openLink({ url: href });
+});
+
+fullscreenButton.addEventListener('click', () => app.requestDisplayMode({ mode: 'fullscreen' }));
+
+// REQ-096: the download is the chart as asked, light by default: it goes to a page, a slide or a mail.
+downloadButton.addEventListener('click', () => {
+  const name = String(request?.title ?? request?.semgraph ?? 'semgraph')
+    .normalize('NFKD')
+    .replace(/[^\w]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+  app.downloadFile({
+    contents: [{ type: 'resource', resource: { uri: `file:///${name || 'semgraph'}.svg`, mimeType: 'image/svg+xml', text: versions[size].asked } }],
+  });
+});
+
+await app.connect();
+applyContext(app.getHostContext());
+</script>
+</body>
+</html>

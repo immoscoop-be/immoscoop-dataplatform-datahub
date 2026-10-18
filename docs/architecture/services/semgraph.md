@@ -2,8 +2,8 @@
 
 | | |
 | --- | --- |
-| Kind | Backend service on Cloud Run, once it has moved in ([DEC-PF-23](../../requirements/technical/00-platform.md#dec-pf-23)) |
-| Code | `services/semgraph`; until the move, the repository `immoscoop-be/immoscoop-ptditt-semgraph` |
+| Kind | Backend service on Cloud Run ([DEC-PF-23](../../requirements/technical/00-platform.md#dec-pf-23)); open to everyone without login, behind a rate limit ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)) |
+| Code | `services/semgraph`, moved in from `immoscoop-be/immoscoop-ptditt-semgraph` with its history ([DEC-PF-25](../../requirements/technical/00-platform.md#dec-pf-25)); how it is built and run is in its [README](../../../services/semgraph/README.md) |
 | Schema | None: semgraph keeps no data |
 | Domains | The chart language, used by [Lenses](../../requirements/functional/09-lenses.md) and [Reports](../../requirements/functional/10-reports.md); its requirements are still in its own repository ([OP-PF-16](../../requirements/technical/00-platform.md#op-pf-16)) |
 
@@ -21,7 +21,7 @@ The data warehouse computes the values per block, a window or a period, with wha
 
 ## API
 
-As semgraph has it today; it may change with the move.
+The full list, with the contract of every chart, is in its [README](../../../services/semgraph/README.md#api) and at `/openapi.json`.
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -30,16 +30,25 @@ As semgraph has it today; it may change with the move.
 | `POST /render` | Draws the chart as SVG, or refuses it (422) |
 | `GET /openapi.json` | The API in OpenAPI |
 | `POST /mcp` | Its MCP server for Claude, with an MCP App that shows the chart in the conversation |
+| `GET /health` | The health check, as on every service; also on `/healthz`, its name before the move |
 
 ## Talks to
 
 Nothing: the data comes in the request.
 
-## Before the move
+## Who may call it
 
-Where semgraph runs now is on [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch): on AWS, through the internal-tools platform, reachable only internally. What the move has to settle:
+Everyone, worldwide, without login: the web app, Claude, dashboards and documents ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)). That is safe because semgraph holds no data and has access to none. A load balancer with Cloud Armor in front of it limits the requests per address, and Cloud Run only accepts traffic through that load balancer ([TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)).
 
-- How the code comes in, and how its build and tests join the workspace: [OP-PF-15](../../requirements/technical/00-platform.md#op-pf-15)
-- Its requirements in `docs/requirements`: [OP-PF-16](../../requirements/technical/00-platform.md#op-pf-16)
-- Who may call it, and where its MCP tools live: [OP-PF-17](../../requirements/technical/00-platform.md#op-pf-17)
+## What exists today
+
+semgraph runs on Cloud Run as `datahub-semgraph`, in uat once this code is deployed and in prod once it reaches `main`; the Terraform output `semgraph_url` is its address. It runs its TypeScript directly, and its tests run with those of Data Hub ([DEC-PF-25](../../requirements/technical/00-platform.md#dec-pf-25)). Its API and its MCP server are open, on its own address, and at most two instances run. The rate limit in front of it follows once it has a domain name ([TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)).
+
+The version on AWS keeps running, through the internal-tools platform and the former repository, until its users have moved over: see [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch).
+
+## Still to do
+
+- A domain name, for the load balancer and its rate limit: [OP-PF-08](../../requirements/technical/00-platform.md#op-pf-08), [TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)
+- Its requirements, translated into `docs/requirements`: [OP-PF-16](../../requirements/technical/00-platform.md#op-pf-16)
+- Where its MCP tools live, now that everyone may call it: [OP-PF-17](../../requirements/technical/00-platform.md#op-pf-17)
 - The switch from AWS for its current users: [OP-PF-18](../../requirements/technical/00-platform.md#op-pf-18)

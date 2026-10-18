@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc -b && pnpm --filter @datahub/web build:client",
-    "typecheck": "tsc -b && tsc -p tsconfig.test.json && tsc -p apps/web/client/tsconfig.json && tsc -p scripts/tsconfig.json",
+    "typecheck": "tsc -b && tsc -p tsconfig.test.json && tsc -p apps/web/client/tsconfig.json && tsc -p services/semgraph/tsconfig.json && tsc -p scripts/tsconfig.json",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm test && pnpm docs:check",
     "docs:check": "node scripts/requirements.ts check",

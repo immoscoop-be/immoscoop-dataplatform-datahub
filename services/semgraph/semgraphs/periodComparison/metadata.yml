@@ -1,0 +1,29 @@
+id: periodComparison
+title: semgraphs.periodComparison.title
+answers: semgraphs.periodComparison.answers
+readingCard: readingCards.periodComparison
+attributes:
+  timeAxis: [calendar]
+  breakdown: [none]
+  comparisonBasis: [previousPeriod]
+  dataGrain: [aggregated]
+  measureType: [additive, unique, perUnit]
+  accumulation: [perPeriod]
+  periodType: any
+  centralTendency: any
+exampleQuestions:
+  - semgraphs.periodComparison.examples.1
+  - semgraphs.periodComparison.examples.2
+doNotUseWhen:
+  - intent: showOneCurrentValue
+    use: kpiTile
+  - intent: showTotalSoFar
+    use: cumulative
+  - intent: compareWithTarget
+    use: kpiStatus
+data:
+  minimumPoints: 28
+links:
+  figma: https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6?node-id=184-423
+  # The reading cards do not exist yet; until then this points to the learning plan, level 1.
+  learning: https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146

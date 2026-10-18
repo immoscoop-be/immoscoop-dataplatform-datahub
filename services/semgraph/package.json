@@ -1,0 +1,28 @@
+{
+  "name": "@datahub/semgraph",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The Chart Server: draws charts by what they mean, following the Immoscoop chart language. See docs/architecture/services/semgraph.md.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "./src/server.ts",
+  "files": ["src", "semgraphs", "vocabulary", "locales", "tokens"],
+  "scripts": {
+    "start": "node src/server.ts",
+    "dev": "node --watch src/server.ts",
+    "mcp": "node src/mcp/stdio.ts",
+    "render:examples": "node scripts/render-examples.ts",
+    "schemas": "node scripts/write-schemas.ts"
+  },
+  "dependencies": {
+    "@fastify/swagger": "9.9.1",
+    "@fastify/swagger-ui": "6.1.1",
+    "@modelcontextprotocol/ext-apps": "2.0.3",
+    "@modelcontextprotocol/server": "2.3.1",
+    "ajv": "8.20.0",
+    "fastify": "^5.12.7",
+    "vega": "6.4.0",
+    "vega-lite": "6.4.3",
+    "yaml": "2.9.1"
+  }
+}

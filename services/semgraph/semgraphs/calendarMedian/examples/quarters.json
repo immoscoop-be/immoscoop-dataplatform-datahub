@@ -1,0 +1,21 @@
+{
+  "semgraph": "calendarMedian",
+  "metric": "creditLeads",
+  "measureType": "additive",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "title": "Kredietleads op een typische dag, per kwartaal (voorbeelddata)",
+  "unit": "quarter",
+  "points": [
+    { "period": "2025-Q2", "median": 46, "p25": 32, "p75": 50 },
+    { "period": "2025-Q3", "median": 38, "p25": 28.75, "p75": 46.25 },
+    { "period": "2025-Q4", "median": 44, "p25": 33.75, "p75": 50 },
+    { "period": "2026-Q1", "median": 48, "p25": 34, "p75": 52 },
+    { "period": "2026-Q2", "median": 47, "p25": 34.5, "p75": 52 },
+    { "period": "2026-Q3", "median": 41, "p25": 32, "p75": 47 }
+  ]
+}

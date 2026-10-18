@@ -20,7 +20,7 @@
 
 ## Talks to
 
-identity, catalogue, registry, query and semgraph, with the Access Token of the User; the services accept calls from the web app's address only (CORS). Its server only talks to identity, to sign in and renew.
+identity, catalogue, registry and query, with the Access Token of the User, and semgraph, which is open ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)); the services accept calls from the web app's address only (CORS). Its server only talks to identity, to sign in and renew.
 
 ## What exists today
 

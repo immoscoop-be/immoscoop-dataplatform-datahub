@@ -1,0 +1,22 @@
+{
+  "semgraph": "movingWindowMedian",
+  "metric": "hoursToFirstContact",
+  "measureType": "perUnit",
+  "window": 7,
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "title": "Uren tot het eerste contact met een lead (voorbeelddata)",
+  "points": [
+    { "end": "2026-08-19", "median": 4.5, "p25": 1.5, "p75": 9.0 },
+    { "end": "2026-08-26", "median": 4.0, "p25": 1.25, "p75": 8.5 },
+    { "end": "2026-09-02", "median": 3.75, "p25": 1.5, "p75": 7.75 },
+    { "end": "2026-09-09", "median": 3.5, "p25": 1.0, "p75": 8.0 },
+    { "end": "2026-09-16", "median": 3.25, "p25": 1.25, "p75": 7.0 },
+    { "end": "2026-09-23", "median": 3.0, "p25": 1.0, "p75": 6.5 },
+    { "end": "2026-09-30", "median": 2.75, "p25": 0.75, "p75": 6.25 }
+  ]
+}
