@@ -15,6 +15,7 @@ const suffix = randomBytes(4).toString('hex');
 const SCHEMA = `test_${suffix}`;
 const SERVICE = `test-service-${suffix}@project.iam`;
 const OTHER = `test-other-${suffix}@project.iam`;
+const READER = `datahub-datateam-${suffix}@example.be`;
 
 const users: Migration = {
   async up(db: Kysely<unknown>) {
@@ -52,7 +53,7 @@ describe.skipIf(!url)('migrate', () => {
 
   beforeAll(async () => {
     admin = createDatabase({ connectionString: url }, SCHEMA);
-    for (const role of [SERVICE, OTHER]) {
+    for (const role of [SERVICE, OTHER, READER]) {
       await sql`create role ${sql.id(role)} login`.execute(admin.db);
     }
   });
@@ -62,7 +63,7 @@ describe.skipIf(!url)('migrate', () => {
       await database.close();
     }
     await sql`drop schema if exists ${sql.id(SCHEMA)} cascade`.execute(admin.db);
-    for (const role of [SERVICE, OTHER]) {
+    for (const role of [SERVICE, OTHER, READER]) {
       await sql`drop owned by ${sql.id(role)}`.execute(admin.db);
       await sql`drop role ${sql.id(role)}`.execute(admin.db);
     }
@@ -104,6 +105,16 @@ describe.skipIf(!url)('migrate', () => {
     await expect(sql`drop table users`.execute(db)).rejects.toThrow(/must be owner/);
     await expect(sql`create table extra (id int)`.execute(db)).rejects.toThrow(/permission denied/);
     await expect(sql`delete from kysely_migration`.execute(db)).rejects.toThrow(/permission denied/);
+  });
+
+  it('lets the readers read the rows, and nothing more', async () => {
+    const reader = connectAs<TestTables>(READER);
+    // Without access to the schema, its tables are not even visible.
+    await expect(reader.selectFrom('users').select('displayName').execute()).rejects.toThrow(/relation "users" does not exist/);
+    await migrate({ db: admin.db, schema: SCHEMA, migrations: { '0001_users': users, '0002_groups': groups }, serviceUser: SERVICE, readers: [READER] });
+    await expect(reader.selectFrom('users').select('displayName').execute()).resolves.toEqual([{ displayName: 'Jan' }]);
+    await expect(reader.insertInto('users').values({ displayName: 'Piet' }).execute()).rejects.toThrow(/permission denied/);
+    await expect(sql`delete from users`.execute(reader)).rejects.toThrow(/permission denied/);
   });
 
   it('does not let any other login in', async () => {

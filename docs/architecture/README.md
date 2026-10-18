@@ -163,6 +163,8 @@ Dockerfile        one image per service (build argument SERVICE)
 
 Each service keeps its migrations in `services/<name>/src/migrations`. They run as a separate job, as `datahub-migrator`, before the service gets its new revision ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09), [TR-PF-22](../requirements/technical/00-platform.md#tr-pf-22)).
 
+The Data Team can look into the tables of registry and catalogue, read-only, in Cloud SQL Studio: Google Cloud console → SQL → `datahub-<environment>` → Cloud SQL Studio, database `datahub`, with IAM database authentication, as a member of `datahub-datateam@` ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)).
+
 ## Reachability
 
 All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10), [TR-PF-14](../requirements/technical/00-platform.md#tr-pf-14)). Nothing is protected by being hidden on an internal network; every request has to pass the login and the token check of the service it reaches.

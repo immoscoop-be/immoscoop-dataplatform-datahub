@@ -218,7 +218,7 @@ After the first Terraform run has created the service account of identity in eac
 
 1. **Groups Reader for identity.** Admin console → Account → Admin roles → **Groups Reader** → Assign service accounts → add `datahub-identity@immoscoop-dataplatform-398214.iam.gserviceaccount.com` and `datahub-identity@immoscoop-dataplatform.iam.gserviceaccount.com` ([DEC-UM-03](../requirements/functional/02-user-management.md#dec-um-03), [OP-UM-03](../requirements/functional/02-user-management.md#op-um-03)).
 2. **Data Hub user reader for identity.** Admin console → Account → Admin roles → **Create new role** `Data Hub user reader`, with only **Admin API privileges → Users → Read** → Assign service accounts → the same two addresses. identity checks with it at every renewal whether an account is still active ([TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)); it cannot change anything.
-3. **The first Groups**, following the Naming Convention: the Role Group of the Data Team, `datahub-datateam@`, and the first Owner Units ([OP-UM-04](../requirements/functional/02-user-management.md#op-um-04), [OP-CO-03](../requirements/functional/03-collections.md#op-co-03)).
+3. **The first Groups**, following the Naming Convention: the Role Group of the Data Team, `datahub-datateam@`, whose members can also read the database in Cloud SQL Studio ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)), and the first Owner Units ([OP-UM-04](../requirements/functional/02-user-management.md#op-um-04), [OP-CO-03](../requirements/functional/03-collections.md#op-co-03)).
 
 ## 10. The webhook in dbt Cloud
 

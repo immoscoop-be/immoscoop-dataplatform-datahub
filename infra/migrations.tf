@@ -27,10 +27,14 @@ resource "google_cloud_run_v2_job" "migrate" {
         command = ["node", "dist/migrate.js"]
 
         dynamic "env" {
-          for_each = merge(local.database, {
-            DATAHUB_DB_USER         = google_sql_user.migrator.name
-            DATAHUB_DB_SERVICE_USER = google_sql_user.service[each.key].name
-          })
+          for_each = merge(
+            local.database,
+            {
+              DATAHUB_DB_USER         = google_sql_user.migrator.name
+              DATAHUB_DB_SERVICE_USER = google_sql_user.service[each.key].name
+            },
+            contains(local.readable_services, each.key) ? { DATAHUB_DB_READERS = join(",", [for reader in google_sql_user.reader : reader.name]) } : {},
+          )
           content {
             name  = env.key
             value = env.value
@@ -51,6 +55,7 @@ resource "google_cloud_run_v2_job" "migrate" {
     google_project_iam_member.migrator,
     google_sql_database.datahub,
     google_sql_user.migrator,
+    google_sql_user.reader,
     google_sql_user.service,
   ]
 }

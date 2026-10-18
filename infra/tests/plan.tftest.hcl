@@ -407,6 +407,38 @@ run "source_jobs_are_named_by_their_ids" {
   expect_failures = [var.dbt_source_jobs]
 }
 
+run "the_data_team_reads_registry_and_catalogue_in_cloud_sql_studio" {
+  command = plan
+
+  assert {
+    condition     = google_sql_user.reader["datahub-datateam@thenextimmoscoop.be"].type == "CLOUD_IAM_GROUP"
+    error_message = "The Role Group of the Data Team is the database login of people, so Workspace decides who may look (TR-PF-28)."
+  }
+
+  assert {
+    condition     = length(google_sql_user.reader) == 1 && alltrue([for user in google_sql_user.reader : user.password == null])
+    error_message = "Only the Data Team may look, and never with a password."
+  }
+
+  assert {
+    condition     = google_project_iam_member.reader_studio["datahub-datateam@thenextimmoscoop.be"].role == "roles/cloudsql.studioUser" && google_project_iam_member.reader_studio["datahub-datateam@thenextimmoscoop.be"].member == "group:datahub-datateam@thenextimmoscoop.be"
+    error_message = "The Data Team reads through Cloud SQL Studio."
+  }
+
+  assert {
+    condition = alltrue([
+      for name in ["registry", "catalogue"] :
+      contains([for env in google_cloud_run_v2_job.migrate[name].template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_DB_READERS"], "datahub-datateam@thenextimmoscoop.be")
+    ])
+    error_message = "The migrations of registry and catalogue give the Data Team read access."
+  }
+
+  assert {
+    condition     = length([for env in google_cloud_run_v2_job.migrate["identity"].template[0].template[0].containers[0].env : env if env.name == "DATAHUB_DB_READERS"]) == 0
+    error_message = "Nobody reads identity's sessions and personal data."
+  }
+}
+
 run "uat_can_be_torn_down" {
   command = plan
 
