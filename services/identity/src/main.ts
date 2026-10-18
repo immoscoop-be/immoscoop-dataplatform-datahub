@@ -1,5 +1,6 @@
 import { verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
+import { metadataAccessToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
 import type { IdentityDatabase } from './database.js';
@@ -8,7 +9,7 @@ import { readGoogleClient } from './google-client.js';
 import { createGoogleSignIn, type GoogleSignIn } from './google-sign-in.js';
 import { createKmsKeyService } from './signing-keys.js';
 import { createStore } from './store.js';
-import { createWorkspace, metadataAccessToken } from './workspace.js';
+import { createWorkspace } from './workspace.js';
 
 const tokens = tokenIssuerFromEnv(createKmsKeyService());
 // Reads the public keys before taking traffic: an instance that cannot reach its key never starts.
