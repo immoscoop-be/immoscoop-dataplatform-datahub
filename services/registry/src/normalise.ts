@@ -13,6 +13,8 @@ export interface NodeRow {
   tags: string[];
   filePath: string | null;
   checksum: string | null;
+  /** The meta of the Node in the dbt project, as it is written there: any JSON object. */
+  meta: Record<string, unknown>;
 }
 
 export interface ColumnRow {
@@ -130,6 +132,8 @@ function nodeRow(uniqueId: string, node: Json, table: string | null): NodeRow {
     tags: strings(node.tags),
     filePath: string(node.original_file_path),
     checksum: string(object(node.checksum).checksum),
+    // dbt keeps the meta of a Node in two places; its config wins, as it does in dbt itself.
+    meta: { ...object(node.meta), ...object(config.meta) },
   };
 }
 

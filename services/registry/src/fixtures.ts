@@ -32,7 +32,11 @@ export function sampleManifest(overrides: { generatedAt?: string; ordersDescript
       'model.immoscoop_dataplatform_sql.orders': model('orders', {
         description: overrides.ordersDescription ?? 'One row per order.',
         tags: ['marts', 'daily'],
-        config: { materialized: 'table' },
+        config: { materialized: 'table', meta: { model: { kind: 'history', grain: 'stateChange' } } },
+        meta: {
+          model: { kind: 'outdated' },
+          domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
+        },
         columns: {
           order_id: { name: 'order_id', description: 'The order.' },
           customer_id: { name: 'customer_id', description: 'Who ordered.' },

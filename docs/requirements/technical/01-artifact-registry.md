@@ -42,7 +42,7 @@ Processing turns a set into rows in the schema `registry`, all keyed by the set:
 
 | Table | One row per | Taken from |
 | --- | --- | --- |
-| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, and the checksum of its code |
+| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, the checksum of its code, and its meta as JSON, as the dbt project writes it (`meta` of the Node and of its config, the config winning per key) |
 | `columns` | column of a Node | the catalog: actual name, type and position, with the description from the manifest, matched by name regardless of case. A Node the catalog does not know, such as an ephemeral model or an exposure, keeps the columns of the manifest, without a type |
 | `edges` | Node that depends on another Node of the same project | `depends_on.nodes` in the manifest, between Nodes only |
 | `tests` | data test on a Node | the test's name (`not_null`, `unique`, `relationships`, …), its Node and column, and its severity; a relationships test also with its target Node and target column |
@@ -77,7 +77,7 @@ Every route of registry that reads, and processing a run again, needs the role o
 
 **Status:** Implemented · **Realises:** [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-10](../functional/01-artifact-registry.md#fr-ar-10), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03)
 
-`GET /nodes/{unique ID}` gives a Node of a Current Version with its columns, in the order of the table, and its tests. `GET /nodes/{unique ID}/lineage?direction=upstream|downstream&depth=<n>` follows the Edges of the Current Versions, plus the links between the projects ([TR-AR-03](#tr-ar-03)), up to `depth` steps (10 by default, at most 50). It gives every Node reached with its shortest distance, the links between them, and whether more Nodes lie beyond the first 500.
+`GET /nodes/{unique ID}` gives a Node of a Current Version with its meta, its columns, in the order of the table, and its tests. A set processed before registry kept the meta has none until it is processed again ([TR-AR-07](#tr-ar-07)). `GET /nodes/{unique ID}/lineage?direction=upstream|downstream&depth=<n>` follows the Edges of the Current Versions, plus the links between the projects ([TR-AR-03](#tr-ar-03)), up to `depth` steps (10 by default, at most 50). It gives every Node reached with its shortest distance, the links between them, and whether more Nodes lie beyond the first 500.
 
 <a id="tr-ar-07"></a>
 ### TR-AR-07 · Processing a run again by hand

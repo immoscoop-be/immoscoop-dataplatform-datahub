@@ -36,7 +36,17 @@ describe('normalise', () => {
       tags: ['marts', 'daily'],
       filePath: 'models/orders.sql',
       checksum: 'sum-orders',
+      meta: {
+        model: { kind: 'history', grain: 'stateChange' },
+        domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
+      },
     });
+  });
+
+  it('keeps the meta of a Node as dbt has it, the meta in its config winning, and none as empty', () => {
+    // dbt writes meta both on the Node and in its config; a key in the config replaces it whole.
+    expect(node(`model.${P}.orders`)?.meta.model).toEqual({ kind: 'history', grain: 'stateChange' });
+    expect(node(`seed.${P}.countries`)?.meta).toEqual({});
   });
 
   it('names the table a Node builds or reads, the same way in both projects', () => {

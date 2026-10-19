@@ -104,6 +104,11 @@ describe.skipIf(!url)('reading the registry', () => {
       materialized: 'table',
       tags: ['marts', 'daily'],
     });
+    // The meta comes back as the JSON it was in the dbt project, nested and all.
+    expect(orders?.meta).toEqual({
+      model: { kind: 'history', grain: 'stateChange' },
+      domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
+    });
     expect(orders?.columns.map((column) => column.name)).toEqual(['ORDER_ID', 'CUSTOMER_ID', 'CREATED_AT']);
     expect(orders?.tests).toEqual([
       { name: 'relationships', columnName: 'customer_id', severity: 'warn', targetNodeId: `model.${P}.customers`, targetColumn: 'customer_key' },

@@ -45,6 +45,7 @@ export interface RegistryDatabase {
     tags: ColumnType<string[], string[], string[]>;
     filePath: string | null;
     checksum: string | null;
+    meta: ColumnType<Record<string, unknown>, Record<string, unknown> | undefined, Record<string, unknown>>;
   };
   columns: {
     setId: number;
