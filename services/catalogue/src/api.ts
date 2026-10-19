@@ -144,22 +144,32 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   // registry hands over every exposed table of one dbt project (TR-SR-01, TR-SR-03). No User starts
   // this, so it takes the Google ID token of registry instead of an Access Token.
-  app.post<{ Body: unknown }>('/internal/resources', { config: { public: true }, bodyLimit: UPDATE_LIMIT_BYTES }, async (request, reply) => {
-    const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
-    try {
-      await serviceCallers.verify(token);
-    } catch (error) {
-      request.log.warn({ err: error }, 'a call for /internal/resources was refused');
-      return reply.code(401).send({ error: 'unauthorized', message: 'Only registry hands over the exposed tables.' });
-    }
-    const update = parseUpdate(request.body);
-    if (typeof update === 'string') {
-      return reply.code(400).send({ error: 'invalid_request', message: update });
-    }
-    const outcome = await resources.apply(update);
-    request.log.info({ projectId: update.projectId, runId: update.runId, ...outcome }, 'Resources brought in line with the exposures');
-    return outcome;
-  });
+  app.post<{ Body: unknown }>(
+    '/internal/resources',
+    {
+      config: { public: true },
+      bodyLimit: UPDATE_LIMIT_BYTES,
+      // Checked before the body is read, so that no one else can make catalogue read a large one.
+      onRequest: async (request, reply) => {
+        const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+        try {
+          await serviceCallers.verify(token);
+        } catch (error) {
+          request.log.warn({ err: error }, 'a call for /internal/resources was refused');
+          return reply.code(401).send({ error: 'unauthorized', message: 'Only registry hands over the exposed tables.' });
+        }
+      },
+    },
+    async (request, reply) => {
+      const update = parseUpdate(request.body);
+      if (typeof update === 'string') {
+        return reply.code(400).send({ error: 'invalid_request', message: update });
+      }
+      const outcome = await resources.apply(update);
+      request.log.info({ projectId: update.projectId, runId: update.runId, ...outcome }, 'Resources brought in line with the exposures');
+      return outcome;
+    },
+  );
 
   app.get<{ Querystring: { collection?: string } }>('/resources', async (request, reply) => {
     if (request.query.collection !== 'none') {

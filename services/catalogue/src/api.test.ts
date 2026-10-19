@@ -189,6 +189,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
     it('takes the exposed tables from registry only, without an Access Token (TR-SR-01)', async () => {
       expect((await fromRegistry(update('1', ['visits']), 'someone-else')).statusCode).toBe(401);
+      // Refused before the body is read: a body that is not even JSON gets 401, not 400.
+      const unread = await app.inject({ method: 'POST', url: '/internal/resources', headers: { authorization: 'Bearer forged', 'content-type': 'application/json' }, payload: '{not json' });
+      expect(unread.statusCode).toBe(401);
       const an = await user('An', [DIGIKOM]);
       expect((await an('POST', '/internal/resources', update('1', ['visits']))).statusCode).toBe(401);
       expect((await fromRegistry({ projectId: 'prod', runId: '1', tables: [] })).statusCode).toBe(400);
