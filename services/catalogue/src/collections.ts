@@ -1,4 +1,4 @@
-import type { CollectionColour, CollectionVisibility } from '@datahub/contracts';
+import type { CollectionColour, CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 import type { Group } from './identity.js';
@@ -20,6 +20,7 @@ export interface Collection {
   name: string;
   description: string;
   colour: CollectionColour;
+  icon: CollectionIcon | null;
   ownerUnit: Group;
   visibility: CollectionVisibility;
   createdAt: Date;
@@ -31,6 +32,8 @@ export interface NewCollection {
   name: string;
   description: string;
   colour: CollectionColour;
+  /** Optional; null takes it away when changing. */
+  icon?: CollectionIcon | null;
   ownerUnit: Group;
   visibility: CollectionVisibility;
 }
@@ -88,6 +91,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       name: row.name,
       description: row.description,
       colour: row.colour,
+      icon: row.icon,
       ownerUnit: { id: row.ownerUnitId, email: row.ownerUnitEmail, name: row.ownerUnitName },
       visibility: row.visibility,
       createdAt: row.createdAt,
@@ -150,6 +154,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
               name: collection.name,
               description: collection.description,
               colour: collection.colour,
+              icon: collection.icon ?? null,
               ownerUnitId: collection.ownerUnit.id,
               ownerUnitEmail: collection.ownerUnit.email,
               ownerUnitName: collection.ownerUnit.name,
@@ -182,6 +187,10 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
               Object.assign(update, { [field]: value });
               entries.push(['COL-002', { field, old: before[field], new: value }]);
             }
+          }
+          if (changes.icon !== undefined && changes.icon !== before.icon) {
+            update.icon = changes.icon;
+            entries.push(['COL-002', { field: 'icon', old: before.icon ?? 'none', new: changes.icon ?? 'none' }]);
           }
           const unit = changes.ownerUnit;
           if (unit && unit.id !== before.ownerUnitId) {

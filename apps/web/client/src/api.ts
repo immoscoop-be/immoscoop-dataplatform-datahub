@@ -1,4 +1,4 @@
-import type { CollectionColour, CollectionVisibility } from '@datahub/contracts/collections';
+import type { CollectionColour, CollectionIcon, CollectionVisibility } from '@datahub/contracts/collections';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
 
@@ -25,6 +25,8 @@ export interface Collection {
   name: string;
   description: string;
   colour: CollectionColour;
+  /** The name of a Tabler icon, or none (DEC-CO-13). */
+  icon: CollectionIcon | null;
   ownerUnit: Group;
   visibility: CollectionVisibility;
   createdAt: string;
@@ -37,6 +39,7 @@ export interface CollectionFields {
   name: string;
   description: string;
   colour: CollectionColour;
+  icon: CollectionIcon | null;
   ownerUnit: string;
   visibility: CollectionVisibility;
 }

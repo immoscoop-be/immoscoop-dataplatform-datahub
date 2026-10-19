@@ -13,13 +13,14 @@ How Collections are kept and guarded, in the service [catalogue](../../architect
 <a id="tr-co-01"></a>
 ### TR-CO-01 · Collections live in the schema of catalogue
 
-**Status:** Implemented · **Realises:** [FR-CO-02](../functional/03-collections.md#fr-co-02), [FR-CO-03](../functional/03-collections.md#fr-co-03), [FR-CO-04](../functional/03-collections.md#fr-co-04), [FR-CO-16](../functional/03-collections.md#fr-co-16), [DEC-CO-07](../functional/03-collections.md#dec-co-07)
+**Status:** Implemented · **Realises:** [FR-CO-02](../functional/03-collections.md#fr-co-02), [FR-CO-03](../functional/03-collections.md#fr-co-03), [FR-CO-04](../functional/03-collections.md#fr-co-04), [FR-CO-05](../functional/03-collections.md#fr-co-05), [FR-CO-16](../functional/03-collections.md#fr-co-16), [DEC-CO-07](../functional/03-collections.md#dec-co-07), [DEC-CO-13](../functional/03-collections.md#dec-co-13)
 
 The table `collections` holds one row per Collection: a UUID as its ID, the name, the description, the colour, the Owner Unit, whether it is public, who created it and when, and when it was dissolved.
 
 - The name has 1 to 80 characters and is unique without regard to case among the Collections that are not dissolved: a unique index on `lower(name)` where `dissolved_at` is null. A name already in use is refused with `409 name_taken`.
 - The description has 1 to 500 characters.
 - The colour is the name of a colour from the palette in lower case, such as `rose`; a database check refuses any other value. The names and their hex codes live in `@datahub/contracts`, so that catalogue and the web app use one list.
+- The icon is optional: the name of a Tabler icon from the list in `@datahub/contracts` ([DEC-CO-13](../functional/03-collections.md#dec-co-13)), such as `building-estate`; any other name is refused with `400`. The web app draws it with `@tabler/icons-react`, importing only the icons of that list.
 - The Owner Unit is kept by its fixed Google ID ([FR-UM-08](../functional/02-user-management.md#fr-um-08)), with its address and name at the moment it was chosen, to show them ([TR-CO-03](#tr-co-03)).
 - Dissolving sets `dissolved_at`. The row stays, so that its Log keeps its subject; a dissolved Collection is no longer listed or found, and its name is free again.
 
@@ -35,7 +36,7 @@ Every route needs an Access Token. catalogue decides from the token alone: the `
 | `GET /collections` | The Collections the User sees, by name | Everyone; the list holds only what they see |
 | `POST /collections` | Create a Collection | Everyone, with one of their own groups as Owner Unit |
 | `GET /collections/{id}` | One Collection, with whether the User may manage it | Whoever sees it |
-| `PATCH /collections/{id}` | Change name, description, colour, Owner Unit or visibility | The Owner Unit and the Data Team |
+| `PATCH /collections/{id}` | Change name, description, colour, icon, Owner Unit or visibility; an icon of `null` takes it away | The Owner Unit and the Data Team |
 | `DELETE /collections/{id}` | Dissolve it | The Owner Unit and the Data Team |
 | `GET /collections/{id}/log` | Its Log, newest first | Whoever sees it |
 
@@ -59,7 +60,7 @@ When a Collection is created, or handed to another Owner Unit, catalogue asks id
 
 The table `collection_log` holds the Log Entries of Collections: the Log ID, the Collection, the parameters as JSON, the actor by fixed Google ID with their name at that moment, and the timestamp. A Log Entry is written in the same transaction as the change it records. A trigger refuses every update and delete of the table, also by the service itself.
 
-The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-catalogue.md): created, a field changed, the Owner Unit changed, made public or private, dissolved. catalogue builds the text from the template when the Log is read, and returns it with the Log ID and the parameters. Adding and removing a Resource writes `COL-006` or `COL-007` in the Log of the Collection, and `COL-030` or `COL-031` in the Log of the Resource ([TR-SR-04](04-stacks-and-resources.md#tr-sr-04)).
+The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-catalogue.md): created, a field changed (the name, description, colour or icon, with `none` for no icon), the Owner Unit changed, made public or private, dissolved. catalogue builds the text from the template when the Log is read, and returns it with the Log ID and the parameters. Adding and removing a Resource writes `COL-006` or `COL-007` in the Log of the Collection, and `COL-030` or `COL-031` in the Log of the Resource ([TR-SR-04](04-stacks-and-resources.md#tr-sr-04)).
 
 ## Open points
 

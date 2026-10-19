@@ -1,5 +1,5 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import { type CollectionColour, type CollectionVisibility, isCollectionColour } from '@datahub/contracts';
+import { type CollectionColour, type CollectionIcon, type CollectionVisibility, isCollectionColour, isCollectionIcon } from '@datahub/contracts';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
@@ -21,6 +21,7 @@ interface Fields {
   name?: string;
   description?: string;
   colour?: CollectionColour;
+  icon?: CollectionIcon | null;
   visibility?: CollectionVisibility;
   ownerUnit?: string;
 }
@@ -82,8 +83,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(400).send({ error: 'invalid_request', message: fields });
     }
     const { name, description, colour, ownerUnit, visibility = 'private' } = fields as Required<Fields>;
+    const icon = fields.icon ?? null;
     const group = await ownGroup(request, ownerUnit);
-    const created = await collections.create({ name, description, colour, visibility, ownerUnit: group }, viewer(request));
+    const created = await collections.create({ name, description, colour, icon, visibility, ownerUnit: group }, viewer(request));
     return reply.code(201).send(created);
   });
 
@@ -273,7 +275,7 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     return 'Send the fields of the Collection as a JSON object.';
   }
   const input = body as Record<string, unknown>;
-  const known = new Set(['name', 'description', 'colour', 'visibility', 'ownerUnit']);
+  const known = new Set(['name', 'description', 'colour', 'icon', 'visibility', 'ownerUnit']);
   const unknown = Object.keys(input).find((key) => !known.has(key));
   if (unknown !== undefined) {
     return `A Collection has no field ${unknown}.`;
@@ -300,6 +302,12 @@ export function parse(body: unknown, creating: boolean): Fields | string {
       return 'The colour is one of the palette: rose, indigo, sand, green, cyan, wine, teal, olive or purple.';
     }
     fields.colour = input.colour;
+  }
+  if (input.icon !== undefined) {
+    if (input.icon !== null && !isCollectionIcon(input.icon)) {
+      return 'The icon is one of the chosen Tabler Icons, or null for none.';
+    }
+    fields.icon = input.icon;
   }
   if (input.visibility !== undefined) {
     if (input.visibility !== 'private' && input.visibility !== 'public') {

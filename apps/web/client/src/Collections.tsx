@@ -1,4 +1,4 @@
-import { COLLECTION_COLOURS, type CollectionColour, type CollectionVisibility } from '@datahub/contracts/collections';
+import { COLLECTION_COLOURS, COLLECTION_ICONS, type CollectionColour, type CollectionIcon as IconName, type CollectionVisibility } from '@datahub/contracts/collections';
 import {
   Alert,
   Anchor,
@@ -21,11 +21,13 @@ import {
   Text,
   Textarea,
   TextInput,
+  ThemeIcon,
   Title,
 } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { type Api, type Collection, type CollectionFields, type Group as WorkspaceGroup, type LogEntry, type Resource, ServiceError } from './api.js';
+import { CollectionIcon, iconLabel } from './collectionIcons.js';
 import { formatMoment } from './format.js';
 import { BackIcon } from './icons.js';
 import { Detail } from './Node.js';
@@ -44,6 +46,18 @@ export function colourName(colour: CollectionColour): string {
 /** Who sees a Collection, in a sentence (FR-CO-17). */
 export function audience(visibility: CollectionVisibility): string {
   return visibility === 'public' ? 'Everyone at Immoscoop sees it.' : 'Only its Owner Unit and the Data Team see it.';
+}
+
+/** How a Collection is recognised: its icon on its colour, or only its colour when it has no icon. */
+export function CollectionMark({ collection, size = 28 }: { collection: Pick<Collection, 'colour' | 'icon'>; size?: number }) {
+  const label = collection.icon ? `${colourName(collection.colour)}, icon ${iconLabel(collection.icon).toLowerCase()}` : `Colour ${colourName(collection.colour)}`;
+  return collection.icon ? (
+    <ThemeIcon color={COLLECTION_COLOURS[collection.colour]} autoContrast size={size} radius="xl" role="img" aria-label={label} title={label}>
+      <CollectionIcon name={collection.icon} size={Math.round(size * 0.6)} />
+    </ThemeIcon>
+  ) : (
+    <ColorSwatch color={COLLECTION_COLOURS[collection.colour]} size={Math.round(size * 0.7)} withShadow={false} role="img" aria-label={label} title={label} />
+  );
 }
 
 function VisibilityBadge({ visibility }: { visibility: CollectionVisibility }) {
@@ -104,9 +118,12 @@ export function CollectionList({ collections, onCreate }: { collections: Collect
           style={{ textDecoration: 'none', color: 'inherit', borderTop: `4px solid ${COLLECTION_COLOURS[collection.colour]}` }}
         >
           <Group justify="space-between" wrap="nowrap" gap="sm">
-            <Text fw={600} style={{ overflowWrap: 'anywhere' }}>
-              {collection.name}
-            </Text>
+            <Group gap="sm" wrap="nowrap" miw={0}>
+              <CollectionMark collection={collection} />
+              <Text fw={600} style={{ overflowWrap: 'anywhere' }}>
+                {collection.name}
+              </Text>
+            </Group>
             <VisibilityBadge visibility={collection.visibility} />
           </Group>
           <Text size="sm" mt={6} lineClamp={2}>
@@ -361,7 +378,7 @@ export function CollectionView({ collection, log, resources, addResource, resour
       <Stack gap="sm">
         <Group justify="space-between" align="flex-start" gap="md">
           <Group gap="sm" wrap="nowrap">
-            <ColorSwatch color={COLLECTION_COLOURS[collection.colour]} size={20} withShadow={false} aria-label={`Colour ${colourName(collection.colour)}`} />
+            <CollectionMark collection={collection} size={36} />
             <Title order={1} style={{ overflowWrap: 'anywhere' }}>
               {collection.name}
             </Title>
@@ -490,8 +507,42 @@ type Draft = Omit<CollectionFields, 'colour' | 'ownerUnit'> & { colour?: Collect
 
 function draftOf(collection?: Collection): Draft {
   return collection
-    ? { name: collection.name, description: collection.description, colour: collection.colour, ownerUnit: collection.ownerUnit.id, visibility: collection.visibility }
-    : { name: '', description: '', ownerUnit: null, visibility: 'private' };
+    ? {
+        name: collection.name,
+        description: collection.description,
+        colour: collection.colour,
+        icon: collection.icon,
+        ownerUnit: collection.ownerUnit.id,
+        visibility: collection.visibility,
+      }
+    : { name: '', description: '', icon: null, ownerUnit: null, visibility: 'private' };
+}
+
+const ICON_CHOICES = COLLECTION_ICONS.map((name) => ({ value: name, label: iconLabel(name) }));
+
+/** The choice of icon: optional, one of the chosen Tabler Icons, found by typing (FR-CO-05, DEC-CO-13). */
+export function IconPicker({ value, onChange }: { value: IconName | null; onChange: (icon: IconName | null) => void }) {
+  return (
+    <Select
+      label="Icon"
+      description="Optional: to recognise the Collection by, together with its colour."
+      placeholder="No icon"
+      searchable
+      clearable
+      nothingFoundMessage="No icon by that name."
+      maxDropdownHeight={280}
+      data={ICON_CHOICES}
+      value={value}
+      onChange={(icon) => onChange(icon as IconName | null)}
+      leftSection={value ? <CollectionIcon name={value} /> : undefined}
+      renderOption={({ option }) => (
+        <Group gap="sm" wrap="nowrap">
+          <CollectionIcon name={option.value as IconName} />
+          <Text size="sm">{option.label}</Text>
+        </Group>
+      )}
+    />
+  );
 }
 
 /** The Owner Units on offer: the groups of the User, and the current one, which a Data Admin may not be in. */
@@ -554,6 +605,7 @@ export function CollectionForm({ api, opened, onClose, collection }: { api: Api;
             onChange={(event) => set('description', event.currentTarget.value)}
           />
           <ColourPicker value={draft.colour} onChange={(colour) => set('colour', colour)} />
+          <IconPicker value={draft.icon} onChange={(icon) => set('icon', icon)} />
           <Select
             label="Owner Unit"
             description="One of your Google groups. Its members own the Collection and manage it."

@@ -99,7 +99,7 @@ describe('the calls to the services', () => {
       }
       return Response.json({ groups: [], collections: [], entries: [] });
     }) as typeof fetch);
-    const fields = { name: 'Leads', description: 'Leads.', colour: 'rose' as const, ownerUnit: 'g-1', visibility: 'private' as const };
+    const fields = { name: 'Leads', description: 'Leads.', colour: 'rose' as const, icon: 'users' as const, ownerUnit: 'g-1', visibility: 'private' as const };
     await api.groups();
     await api.collections();
     await api.createCollection(fields);

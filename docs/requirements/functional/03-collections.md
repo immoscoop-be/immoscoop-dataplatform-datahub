@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon comes from Tabler Icons ([DEC-CO-13](#dec-co-13)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -33,6 +33,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-10"></a>**DEC-CO-10** · A Collection is private or public. A private Collection is visible to the members of its Owner Unit and to the Data Team; a public Collection is visible to every User. Whoever creates a Collection chooses; the Owner Unit and the Data Team can switch it later.
 - <a id="dec-co-11"></a>**DEC-CO-11** · The Data Team sees every Collection, private ones included, so that it can add Resources to them and help their Owners.
 - <a id="dec-co-12"></a>**DEC-CO-12** · A Resource is visible to everyone who sees its Collection only once its Owner has published it: the first Publication is the first Confirmation ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)). Until then, only the Owner Unit and the Data Team see it. In a public Collection, the Publication thus opens a Resource to the whole company. This replaces "visible to the whole company" in [DEC-SR-06](04-stacks-and-resources.md#dec-sr-06) and [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
+- <a id="dec-co-13"></a>**DEC-CO-13** · The icon of a Collection comes from Tabler Icons (MIT licence), the outline icons on a 24-pixel grid with a 2-pixel line, as the icons of the web app itself. Not the whole set of some 5,000 icons, but a list chosen for the functional domains of Immoscoop, kept in one place for catalogue and the web app; a new icon is a change to that list. Tabler has a Figma plugin, so designs can use the same set. This answers [OP-CO-01](#op-co-01).
 
 ## What a Collection has
 
@@ -41,7 +42,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 | Name | Yes | Unique within Data Hub |
 | Description | Yes | Short: which functional domain of Immoscoop the Collection covers |
 | Colour | Yes | From the [colour palette](#colour-palette) below |
-| Icon | No | From one fixed set of line icons in SVG |
+| Icon | No | From the chosen list of Tabler Icons ([DEC-CO-13](#dec-co-13)) |
 | Owner | Yes | Exactly one Owner Unit: a Google group of the own Workspace domain that the one choosing it is in ([DEC-CO-09](#dec-co-09)) |
 | Visibility | Yes | Private or public ([DEC-CO-10](#dec-co-10)) |
 
@@ -105,7 +106,7 @@ The colour is required and comes from the [colour palette](#colour-palette). Mor
 <a id="fr-co-05"></a>
 ### FR-CO-05 · Icon is optional and comes from the fixed set
 
-**Status:** Specified · **Confluence:** CO-05
+**Status:** Implemented · **Confluence:** CO-05
 
 The icon is optional and comes from the fixed set of line icons.
 
@@ -219,7 +220,7 @@ What someone may see and do beyond Collections ([Permissions and library cards](
 
 ## Open points
 
-- [ ] <a id="op-co-01"></a>**OP-CO-01** · Ask Daniel's team which set of SVG line icons they use, and adopt it. Candidates if they have no fixed set yet: Lucide, Tabler Icons or Phosphor.
+- [x] <a id="op-co-01"></a>**OP-CO-01** · Ask Daniel's team which set of SVG line icons they use, and adopt it. Candidates if they have no fixed set yet: Lucide, Tabler Icons or Phosphor. *Decided on 2026-10-19: Tabler Icons ([DEC-CO-13](#dec-co-13)).*
 - [ ] <a id="op-co-02"></a>**OP-CO-02** · Let Daniel know that Collections use the Paul Tol palette as a recognition colour in the interface, separate from the chart language.
 - [ ] <a id="op-co-03"></a>**OP-CO-03** · Decide the first Collections, starting from the pilot with DigiKom and the agencies case.
 - [ ] <a id="op-co-04"></a>**OP-CO-04** · Work out the line of thought of whether promotion happens within a Collection.

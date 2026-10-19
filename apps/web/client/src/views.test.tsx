@@ -6,7 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { ChartDetail, Collection, Lineage, NodeDetail, Resource, SearchHit } from './api.js';
 import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
-import { audience, CollectionList, CollectionView, ColourPicker, ownerUnitOptions, ResourceList } from './Collections.js';
+import { audience, CollectionList, CollectionMark, CollectionView, ColourPicker, IconPicker, ownerUnitOptions, ResourceList } from './Collections.js';
 import { MetaTable, metaRows } from './Meta.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
@@ -202,6 +202,7 @@ describe('the Collections', () => {
     name: 'Leads',
     description: 'Leads of the agencies.',
     colour: 'rose',
+    icon: null,
     ownerUnit: { id: 'g-digikom', email: 'digikom@thenextimmoscoop.be', name: 'DigiKom' },
     visibility: 'private',
     createdAt: '2026-10-19T08:00:00Z',
@@ -258,6 +259,20 @@ describe('the Collections', () => {
     expect(html).toContain('href="#/nodes/model.immoscoop_dataplatform_sql.orders"');
     expect(render(<ResourceList resources={[resource]} empty="None." />).html).not.toContain('href="#/nodes/');
     expect(render(<ResourceList resources={[]} empty="None." />).text).toContain('None.');
+  });
+
+  it('marks a Collection with its icon on its colour, or with its colour alone', () => {
+    const withIcon = render(<CollectionMark collection={{ colour: 'teal', icon: 'building-estate' }} />).html;
+    expect(withIcon).toContain('aria-label="Teal, icon building estate"');
+    expect(withIcon).toContain('<svg');
+    expect(render(<CollectionMark collection={{ colour: 'rose', icon: null }} />).html).toContain('aria-label="Colour Rose"');
+    expect(render(<CollectionList collections={[{ ...leads, icon: 'users' }]} />).html).toContain('aria-label="Rose, icon users"');
+  });
+
+  it('offers the icons as an optional, searchable choice', () => {
+    const { html } = render(<IconPicker value="map-pin" onChange={() => {}} />);
+    expect(html).toContain('value="Map pin"');
+    expect(render(<IconPicker value={null} onChange={() => {}} />).html).toContain('placeholder="No icon"');
   });
 
   it('offers the palette as a choice of one colour', () => {
