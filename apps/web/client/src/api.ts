@@ -1,7 +1,8 @@
+import type { CollectionColour, CollectionVisibility } from '@datahub/contracts/collections';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
 
-// The shapes the page reads from identity and registry. Once the services describe their APIs with
+// The shapes the page reads from identity, catalogue and registry. Once the services describe their APIs with
 // zod in @datahub/contracts (TR-PF-10), these come from there.
 
 export interface Me {
@@ -10,6 +11,41 @@ export interface Me {
   name: string;
   groups: string[];
   roles: string[];
+}
+
+/** A group of the User, which they can choose as Owner Unit (TR-CO-03). */
+export interface Group {
+  id: string;
+  email: string;
+  name: string;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  description: string;
+  colour: CollectionColour;
+  ownerUnit: Group;
+  visibility: CollectionVisibility;
+  createdAt: string;
+  /** Whether the User may change and dissolve it: its Owner Unit and the Data Team (FR-CO-13). */
+  canManage: boolean;
+}
+
+/** What the User fills in for a Collection; the Owner Unit by the ID of one of their groups. */
+export interface CollectionFields {
+  name: string;
+  description: string;
+  colour: CollectionColour;
+  ownerUnit: string;
+  visibility: CollectionVisibility;
+}
+
+/** A Log Entry of a Collection, with the text catalogue built from its template. */
+export interface LogEntry {
+  logId: string;
+  text: string;
+  at: string;
 }
 
 export interface Project {
@@ -104,13 +140,21 @@ export class ServiceError extends Error {
 export type Api = ReturnType<typeof createApi>;
 
 /** The calls of the page to the services, with the Access Token of the User (DEC-PF-03). */
-export function createApi(config: Pick<Config, 'identityUrl' | 'registryUrl' | 'semgraphUrl'>, session: Pick<Session, 'accessToken'>, request: typeof fetch = (input, init) => fetch(input, init)) {
-  async function get<T>(base: string, path: string, service: string): Promise<T> {
+export function createApi(
+  config: Pick<Config, 'identityUrl' | 'catalogueUrl' | 'registryUrl' | 'semgraphUrl'>,
+  session: Pick<Session, 'accessToken'>,
+  request: typeof fetch = (input, init) => fetch(input, init),
+) {
+  async function call<T>(base: string, path: string, service: string, method = 'GET', body?: object): Promise<T> {
     const token = await session.accessToken();
     if (!token) {
       throw new SignedOut();
     }
-    const response = await request(`${base}${path}`, { headers: { authorization: `Bearer ${token}` } });
+    const headers: Record<string, string> = { authorization: `Bearer ${token}` };
+    if (body) {
+      headers['content-type'] = 'application/json';
+    }
+    const response = await request(`${base}${path}`, { method, headers, ...(body ? { body: JSON.stringify(body) } : {}) });
     if (response.status === 401) {
       throw new SignedOut();
     }
@@ -118,9 +162,10 @@ export function createApi(config: Pick<Config, 'identityUrl' | 'registryUrl' | '
       const body = (await response.json().catch(() => ({}))) as { message?: string };
       throw new ServiceError(response.status, body.message ?? `${service} answered ${response.status}.`);
     }
-    return (await response.json()) as T;
+    return (response.status === 204 ? undefined : await response.json()) as T;
   }
-  const registry = <T>(path: string) => get<T>(config.registryUrl, path, 'registry');
+  const registry = <T>(path: string) => call<T>(config.registryUrl, path, 'registry');
+  const catalogue = <T>(path: string, method?: string, body?: object) => call<T>(config.catalogueUrl, path, 'catalogue', method, body);
   const id = encodeURIComponent;
 
   /** semgraph is open to everyone (DEC-PF-24): no Access Token. Its problems carry their reason in issues. */
@@ -134,7 +179,15 @@ export function createApi(config: Pick<Config, 'identityUrl' | 'registryUrl' | '
   }
 
   return {
-    me: () => get<Me>(config.identityUrl, '/me', 'identity'),
+    me: () => call<Me>(config.identityUrl, '/me', 'identity'),
+    /** The groups of the User, read from Workspace now: the Owner Units they can choose. */
+    groups: async () => (await call<{ groups: Group[] }>(config.identityUrl, '/me/groups', 'identity')).groups,
+    collections: async () => (await catalogue<{ collections: Collection[] }>('/collections')).collections,
+    collection: (collectionId: string) => catalogue<Collection>(`/collections/${id(collectionId)}`),
+    collectionLog: async (collectionId: string) => (await catalogue<{ entries: LogEntry[] }>(`/collections/${id(collectionId)}/log`)).entries,
+    createCollection: (fields: CollectionFields) => catalogue<Collection>('/collections', 'POST', fields),
+    changeCollection: (collectionId: string, fields: Partial<CollectionFields>) => catalogue<Collection>(`/collections/${id(collectionId)}`, 'PATCH', fields),
+    dissolveCollection: (collectionId: string) => catalogue<void>(`/collections/${id(collectionId)}`, 'DELETE'),
     projects: async () => (await registry<{ projects: Project[] }>('/projects')).projects,
     /** Searches the Current Versions, of every dbt project or of one. */
     search: async (query: string, project?: string) =>

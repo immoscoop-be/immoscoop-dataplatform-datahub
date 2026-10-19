@@ -1,14 +1,29 @@
 import { useSyncExternalStore } from 'react';
 
 /** Where the User is in the app; it lives in the hash of the address, so back, forward and links work. */
-export type Route = SearchRoute | { page: 'node'; uniqueId: string } | { page: 'charts' } | { page: 'chart'; id: string };
+export type Route =
+  | SearchRoute
+  | { page: 'node'; uniqueId: string }
+  | { page: 'collections' }
+  | { page: 'collection'; id: string }
+  | { page: 'charts' }
+  | { page: 'chart'; id: string };
 
 /** A search, optionally within one dbt project, by its ID. */
 export type SearchRoute = { page: 'search'; query: string; project?: string };
 
-/** `#/search?q=orders&project=17121`, `#/nodes/<unique ID>`, `#/charts`, `#/charts/<ID>`, or `#<unique ID>`, the links of the first page. */
+/**
+ * `#/search?q=orders&project=17121`, `#/nodes/<unique ID>`, `#/collections`, `#/collections/<ID>`,
+ * `#/charts`, `#/charts/<ID>`, or `#<unique ID>`, the links of the first page.
+ */
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#/, '');
+  if (path === '/collections' || path === '/collections/') {
+    return { page: 'collections' };
+  }
+  if (path.startsWith('/collections/')) {
+    return { page: 'collection', id: decode(path.slice('/collections/'.length)) };
+  }
   if (path === '/charts' || path === '/charts/') {
     return { page: 'charts' };
   }
@@ -32,6 +47,12 @@ export function parseHash(hash: string): Route {
 export function hrefFor(route: Route): string {
   if (route.page === 'node') {
     return `#/nodes/${encodeURIComponent(route.uniqueId)}`;
+  }
+  if (route.page === 'collections') {
+    return '#/collections';
+  }
+  if (route.page === 'collection') {
+    return `#/collections/${encodeURIComponent(route.id)}`;
   }
   if (route.page === 'charts') {
     return '#/charts';

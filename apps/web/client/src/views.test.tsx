@@ -4,8 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { ChartDetail, Lineage, NodeDetail, SearchHit } from './api.js';
+import type { ChartDetail, Collection, Lineage, NodeDetail, SearchHit } from './api.js';
 import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
+import { audience, CollectionList, CollectionView, ColourPicker, ownerUnitOptions } from './Collections.js';
 import { MetaTable, metaRows } from './Meta.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
@@ -192,5 +193,56 @@ describe('the metadata of a Node', () => {
     expect(text).toContain('Key Value model kind history grain stateChange layer intermediate domain entity leadSource identifiers 1 name leadSourceId');
     expect(html).toContain('padding-left:50px');
     expect(render(<MetaTable meta={{}} />).text).toContain('No metadata in the dbt project.');
+  });
+});
+
+describe('the Collections', () => {
+  const leads: Collection = {
+    id: '6f1c2e9a-3b7d-4c1e-9a2b-5d8e7f6a1b2c',
+    name: 'Leads',
+    description: 'Leads of the agencies.',
+    colour: 'rose',
+    ownerUnit: { id: 'g-digikom', email: 'digikom@thenextimmoscoop.be', name: 'DigiKom' },
+    visibility: 'private',
+    createdAt: '2026-10-19T08:00:00Z',
+    canManage: true,
+  };
+
+  it('lists each Collection in its colour, with who owns it and who sees it', () => {
+    const { html, text } = render(<CollectionList collections={[leads, { ...leads, id: 'other', name: 'Web visits', visibility: 'public', canManage: false }]} />);
+    expect(html).toContain('href="#/collections/6f1c2e9a-3b7d-4c1e-9a2b-5d8e7f6a1b2c"');
+    expect(html).toContain('border-top:4px solid #CC6677');
+    expect(text).toContain('Leads Private Leads of the agencies. Owner Unit: DigiKom');
+    expect(text).toContain('Web visits Public');
+    expect(render(<CollectionList collections={[]} onCreate={() => {}} />).text).toContain('No Collections yet');
+  });
+
+  it('shows one Collection with its history, and the buttons to manage it only to those who may', () => {
+    const log = [
+      { logId: 'COL-004', text: 'Made private by An', at: '2026-10-19T09:00:00Z' },
+      { logId: 'COL-001', text: 'Collection created by An', at: '2026-10-19T08:00:00Z' },
+    ];
+    const { text } = render(<CollectionView collection={leads} log={log} />);
+    expect(text).toContain('Owner Unit DigiKom · digikom@thenextimmoscoop.be');
+    expect(text).toContain(`Visibility Private ${audience('private')}`);
+    expect(text).toContain('No Resources yet');
+    expect(text).toContain('Made private by An');
+    expect(text).toContain('Edit');
+    expect(text).toContain('Dissolve');
+    const reader = render(<CollectionView collection={{ ...leads, visibility: 'public', canManage: false }} />).text;
+    expect(reader).not.toContain('Edit');
+    expect(reader).toContain(audience('public'));
+  });
+
+  it('offers the palette as a choice of one colour', () => {
+    const { html } = render(<ColourPicker value="teal" onChange={() => {}} />);
+    expect(html.match(/role="radio"/g)).toHaveLength(9);
+    expect(html).toMatch(/aria-checked="true"[^>]*aria-label="Teal"/);
+  });
+
+  it('offers the groups of the User as Owner Unit, and keeps the current one a Data Admin is not in', () => {
+    const sales = { id: 'g-sales', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
+    expect(ownerUnitOptions([sales], leads.ownerUnit).map((option) => option.label)).toEqual(['DigiKom', 'Sales']);
+    expect(ownerUnitOptions([sales, leads.ownerUnit], leads.ownerUnit).map((option) => option.label)).toEqual(['Sales', 'DigiKom']);
   });
 });

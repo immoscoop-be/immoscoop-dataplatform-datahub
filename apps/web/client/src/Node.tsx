@@ -105,7 +105,7 @@ export function NodeView({ node, upstream, downstream }: NodeViewProps) {
   );
 }
 
-function Detail({ label, value }: { label: string; value: ReactNode }) {
+export function Detail({ label, value }: { label: string; value: ReactNode }) {
   return (
     <DataList.Item>
       <DataList.ItemLabel>{label}</DataList.ItemLabel>

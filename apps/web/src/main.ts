@@ -7,6 +7,7 @@ const app = await buildApp({
   verifier: verifierFromEnv(),
   webUrl: required('DATAHUB_WEB_URL'),
   identityUrl: required('DATAHUB_TOKEN_ISSUER'),
+  catalogueUrl: required('DATAHUB_CATALOGUE_URL'),
   registryUrl: required('DATAHUB_REGISTRY_URL'),
   semgraphUrl: required('DATAHUB_SEMGRAPH_URL'),
   clientDir: fileURLToPath(new URL('./client/', import.meta.url)),

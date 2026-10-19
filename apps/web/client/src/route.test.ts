@@ -16,6 +16,12 @@ describe('the address of a page', () => {
     expect(hrefFor({ page: 'search', query: '' })).toBe('#/');
   });
 
+  it('reads the Collections and one Collection', () => {
+    expect(parseHash('#/collections')).toEqual({ page: 'collections' });
+    expect(parseHash('#/collections/')).toEqual({ page: 'collections' });
+    expect(parseHash('#/collections/6f1c2e9a-3b7d-4c1e-9a2b-5d8e7f6a1b2c')).toEqual({ page: 'collection', id: '6f1c2e9a-3b7d-4c1e-9a2b-5d8e7f6a1b2c' });
+  });
+
   it('reads the charts and one chart', () => {
     expect(parseHash('#/charts')).toEqual({ page: 'charts' });
     expect(parseHash('#/charts/')).toEqual({ page: 'charts' });
@@ -37,6 +43,8 @@ describe('the address of a page', () => {
       { page: 'search', query: 'orders', project: '17121' },
       { page: 'search', query: '', project: '9367' },
       { page: 'node', uniqueId: 'model.p.a/b#c' },
+      { page: 'collections' },
+      { page: 'collection', id: '6f1c2e9a-3b7d-4c1e-9a2b-5d8e7f6a1b2c' },
       { page: 'charts' },
       { page: 'chart', id: 'kpiTile' },
     ];
