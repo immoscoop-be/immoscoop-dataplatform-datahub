@@ -13,9 +13,19 @@ export interface ClientFile {
 export interface Client {
   /** The page with the addresses of the services and the nonce for its styles. */
   page(nonce: string): string;
-  /** Every other file, by the path it is served at, such as `/assets/index-1a2b3c.js`. */
+  /** Every other file but the icons, by the path it is served at, such as `/assets/index-1a2b3c.js`. */
   files: ReadonlyMap<string, ClientFile>;
+  /**
+   * The drawing of an icon of a Collection, `icons/<name>.svg` (DEC-CO-14), or nothing when there is
+   * no such icon. There are some 4,800, so each is read from disk the first time it is asked for, then
+   * kept: reading them all at start-up, each as a route of its own, made the server too slow to start.
+   */
+  icon(file: string): Promise<Buffer | undefined>;
 }
+
+/** The folder of the drawings of the icons, and the names of its files. */
+const ICONS = 'icons';
+const ICON_FILE = /^[a-z0-9-]+\.svg$/;
 
 const TYPES: Record<string, string> = {
   '.js': 'text/javascript; charset=utf-8',
@@ -51,12 +61,32 @@ export async function loadClient(dir: string, services: { identityUrl: string; c
       continue;
     }
     const served = `/${relative(dir, path).split(sep).join('/')}`;
+    if (served.startsWith(`/${ICONS}/`)) {
+      continue;
+    }
     files.set(served, { body: await readFile(path), type, immutable: served.startsWith('/assets/') });
+  }
+
+  const icons = new Map<string, Buffer>();
+  async function icon(file: string): Promise<Buffer | undefined> {
+    if (!ICON_FILE.test(file)) {
+      return undefined;
+    }
+    const known = icons.get(file);
+    if (known) {
+      return known;
+    }
+    const body = await readFile(join(dir, ICONS, file)).catch(() => undefined);
+    if (body) {
+      icons.set(file, body);
+    }
+    return body;
   }
 
   return {
     page: (nonce) => withServices.replace('</head>', `  <meta property="csp-nonce" nonce="${escapeAttribute(nonce)}" />\n  </head>`),
     files,
+    icon,
   };
 }
 

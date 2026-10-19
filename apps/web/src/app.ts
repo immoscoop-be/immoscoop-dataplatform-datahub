@@ -88,6 +88,15 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     );
   }
 
+  // The icons of Collections, one route for some 4,800 drawings, kept an hour like the favicon.
+  app.get<{ Params: { file: string } }>('/icons/:file', open, async (incoming, reply) => {
+    const body = await client.icon(incoming.params.file);
+    if (!body) {
+      return reply.code(404).send({ error: 'not_found' });
+    }
+    return reply.type('image/svg+xml').header('x-content-type-options', 'nosniff').header('cache-control', 'public, max-age=3600').send(body);
+  });
+
   // The start of signing in: off to identity, with PKCE, remembering what to check on return.
   app.get('/auth/login', open, async (_incoming, reply) => {
     const state = randomBytes(32).toString('base64url');
