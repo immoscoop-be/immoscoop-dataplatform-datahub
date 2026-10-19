@@ -1,15 +1,17 @@
 import { randomBytes } from 'node:crypto';
+import { TokenError } from '@datahub/auth';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parse } from './api.js';
+import { parse, parseUpdate } from './api.js';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
+import { createResources } from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
 if (!url && process.env.CI) {
@@ -71,6 +73,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
             return groupsOf.get(authorization) ?? [];
           },
         },
+        resources: createResources(database.db),
+        serviceCallers: {
+          async verify(token) {
+            if (token !== 'registry-id-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-registry@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -85,7 +96,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   async function user(name: string, groups: Group[], roles: string[] = []) {
     const authorization = `Bearer ${await issuer.sign({ sub: `u-${name}`, name, groups: groups.map((group) => group.id), roles })}`;
     groupsOf.set(authorization, groups);
-    return (method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, payload?: object) =>
+    return (method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, payload?: object) =>
       app.inject({ method, url: path, headers: { authorization }, ...(payload ? { payload } : {}) });
   }
 
@@ -156,6 +167,80 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
     expect((await bert('DELETE', `/collections/${id}`)).statusCode).toBe(204);
     expect((await bert('GET', `/collections/${id}`)).statusCode).toBe(404);
+  });
+
+  describe('Resources', () => {
+    const update = (runId: string, names: string[]) => ({
+      projectId: '9367',
+      projectName: 'immoscoop_dataplatform_sql',
+      runId,
+      tables: names.map((name) => ({
+        key: `immoscoop-dataplatform.dbt_marts.${name}`,
+        nodeId: `model.immoscoop_dataplatform_sql.${name}`,
+        name,
+        resourceType: 'model',
+        description: '',
+        exposures: [`datahub_${name}`],
+        label: null,
+      })),
+    });
+    const fromRegistry = (payload: object, token = 'registry-id-token') =>
+      app.inject({ method: 'POST', url: '/internal/resources', headers: { authorization: `Bearer ${token}` }, payload });
+
+    it('takes the exposed tables from registry only, without an Access Token (TR-SR-01)', async () => {
+      expect((await fromRegistry(update('1', ['visits']), 'someone-else')).statusCode).toBe(401);
+      const an = await user('An', [DIGIKOM]);
+      expect((await an('POST', '/internal/resources', update('1', ['visits']))).statusCode).toBe(401);
+      expect((await fromRegistry({ projectId: 'prod', runId: '1', tables: [] })).statusCode).toBe(400);
+
+      const answer = await fromRegistry(update('1', ['visits', 'leads']));
+      expect(answer.statusCode).toBe(200);
+      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0 });
+    });
+
+    it('lets only the Data Team see the Resources without Collection and add them to one (TR-SR-04)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const bert = await user('Bert', [SALES]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      await fromRegistry(update('2', ['visits', 'leads', 'agencies']));
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      expect(waiting.map((resource) => resource.name)).toEqual(['agencies', 'leads', 'visits']);
+      expect((await an('GET', '/resources?collection=none')).statusCode).toBe(403);
+      expect((await dirk('GET', '/resources')).statusCode).toBe(400);
+
+      const collection = (
+        await an('POST', '/collections', { name: 'Visits', description: 'Visits.', colour: 'cyan', ownerUnit: DIGIKOM.id, visibility: 'public' })
+      ).json();
+      const visits = waiting.find((resource) => resource.name === 'visits')!;
+      expect((await an('PUT', `/resources/${visits.id}/collection`, { collectionId: collection.id })).statusCode).toBe(403);
+      const added = await dirk('PUT', `/resources/${visits.id}/collection`, { collectionId: collection.id });
+      expect(added.json()).toMatchObject({ name: 'visits', collectionId: collection.id });
+      expect((await dirk('PUT', `/resources/${visits.id}/collection`, { collectionId: '00000000-0000-4000-8000-000000000000' })).statusCode).toBe(404);
+
+      // The Owner Unit sees it; someone else who sees the public Collection does not, until it is published.
+      expect((await an('GET', `/collections/${collection.id}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['visits']);
+      expect((await bert('GET', `/collections/${collection.id}/resources`)).json().resources).toEqual([]);
+      expect((await an('GET', `/resources/${visits.id}/log`)).json().entries.map((entry: { text: string }) => entry.text)).toEqual([
+        'Added to collection Visits by Dirk',
+        'Registered through exposure datahub_visits',
+      ]);
+      expect((await bert('GET', `/resources/${visits.id}/log`)).statusCode).toBe(404);
+
+      // Only an empty Collection is dissolved (FR-CO-10).
+      const refused = await an('DELETE', `/collections/${collection.id}`);
+      expect(refused.statusCode).toBe(409);
+      expect(refused.json().error).toBe('not_empty');
+      expect((await dirk('DELETE', `/resources/${visits.id}/collection`)).statusCode).toBe(204);
+      expect((await dirk('DELETE', `/resources/${visits.id}/collection`)).json().error).toBe('not_in_a_collection');
+      expect((await an('DELETE', `/collections/${collection.id}`)).statusCode).toBe(204);
+    });
+
+    it('checks what registry sends', () => {
+      expect(parseUpdate(update('3', ['visits']))).toMatchObject({ projectId: '9367', runId: '3' });
+      expect(parseUpdate({ ...update('3', []), tables: 'all' })).toBe('The exposed tables come as a list.');
+      expect(parseUpdate({ ...update('3', []), tables: [{ key: 'x' }] })).toMatch(/Every exposed table/);
+      expect(parseUpdate({ ...update('3', []), projectName: 5 })).toBe('The name of the dbt project is a text, or null.');
+    });
   });
 
   it('answers 503 rather than guess when identity cannot tell the groups', async () => {
