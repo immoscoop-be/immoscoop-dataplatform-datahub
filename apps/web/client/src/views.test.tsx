@@ -6,6 +6,7 @@ import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import type { ChartDetail, Lineage, NodeDetail, SearchHit } from './api.js';
 import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
+import { MetaTable, metaRows } from './Meta.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
 import { SignIn } from './SignIn.js';
@@ -46,6 +47,8 @@ describe('the views of the registry', () => {
     expect(html).toContain('href="#/nodes/model.immoscoop_dataplatform_sql.orders"');
     expect(text).toContain('Columns: order_id, ordered_at');
     expect(render(<SearchResults query="nothing" hits={[]} />).text).toContain('Nothing found for “nothing”');
+    expect(render(<SearchResults query="order" hits={hits} within="compilacion_colleciones_dbt" />).text).toContain('1 Node found for “order” in compilacion_colleciones_dbt');
+    expect(render(<SearchResults query="nothing" hits={[]} within="compilacion_colleciones_dbt" />).text).toContain('Try part of the name, or all projects.');
   });
 
   it('shows a Node with its details and columns', () => {
@@ -54,6 +57,7 @@ describe('the views of the registry', () => {
       materialized: 'table',
       tags: ['marts'],
       filePath: 'models/marts/orders.sql',
+      meta: {},
       columns: [{ name: 'order_id', dataType: 'STRING', description: 'The order.' }],
       tests: [{ name: 'relationships_orders_customer_id', columnName: 'customer_id', severity: 'error', targetNodeId: 'model.immoscoop_dataplatform_sql.customers', targetColumn: 'id' }],
     };
@@ -141,5 +145,52 @@ describe('the charts of semgraph', () => {
     expect(html).toContain('aria-label="Size"');
     // The KPI tile has one size: no choice of size.
     expect(render(<ChartView chart={{ ...chart, schema: {} }} titles={new Map()} semgraphUrl={SEMGRAPH} refusal={async () => undefined} />).html).not.toContain('aria-label="Size"');
+  });
+});
+
+describe('the metadata of a Node', () => {
+  // As a model of Colleciónes has it in its dbt project.
+  const meta = {
+    model: { kind: 'history', grain: 'stateChange', layer: 'intermediate' },
+    domain: {
+      entity: 'leadSource',
+      identifiers: [{ name: 'leadSourceId', type: 'string' }],
+      performedBy: ['subject', 'user'],
+      entityDescription: '',
+      parents: null,
+      deprecated: false,
+      version: 2,
+    },
+  };
+
+  it('gives every key a row, and puts the contents of an object or a list under it, indented', () => {
+    expect(metaRows(meta).map((row) => `${'  '.repeat(row.depth)}${row.key}${row.value === undefined ? '' : ` = ${row.value}`}`)).toEqual([
+      'model',
+      '  kind = history',
+      '  grain = stateChange',
+      '  layer = intermediate',
+      'domain',
+      '  entity = leadSource',
+      '  identifiers',
+      '    1',
+      '      name = leadSourceId',
+      '      type = string',
+      '  performedBy',
+      '    1 = subject',
+      '    2 = user',
+      '  entityDescription = empty',
+      '  parents = null',
+      '  deprecated = false',
+      '  version = 2',
+    ]);
+    expect(metaRows(meta).filter((row) => row.position).map((row) => row.key)).toEqual(['1', '1', '2']);
+    expect(metaRows(meta).filter((row) => row.blank).map((row) => row.key)).toEqual(['entityDescription', 'parents']);
+  });
+
+  it('shows the rows as a table of keys and values, deeper keys further in', () => {
+    const { html, text } = render(<MetaTable meta={meta} />);
+    expect(text).toContain('Key Value model kind history grain stateChange layer intermediate domain entity leadSource identifiers 1 name leadSourceId');
+    expect(html).toContain('padding-left:50px');
+    expect(render(<MetaTable meta={{}} />).text).toContain('No metadata in the dbt project.');
   });
 });

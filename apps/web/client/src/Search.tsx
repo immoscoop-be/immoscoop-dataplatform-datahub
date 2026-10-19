@@ -1,23 +1,32 @@
-import { Alert, Anchor, Badge, Box, Button, EmptyState, Group, Paper, SimpleGrid, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
+import { Alert, Anchor, Badge, Box, Button, EmptyState, Group, Paper, Select, SimpleGrid, Skeleton, Stack, Text, TextInput, Title } from '@mantine/core';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type FormEvent } from 'react';
 import type { Api, Project, SearchHit } from './api.js';
 import { formatMoment, plural, projectOf } from './format.js';
 import { SearchIcon } from './icons.js';
-import { hrefFor } from './route.js';
+import { hrefFor, type SearchRoute } from './route.js';
+
+/** The value of the project dropdown that searches every dbt project. */
+const ALL = 'all';
 
 /** The start page of the Data Team: search the dbt projects, or see how fresh they are. */
-export function SearchPage({ api, query }: { api: Api; query: string }) {
+export function SearchPage({ api, query, project }: { api: Api; query: string; project?: string }) {
   const [text, setText] = useState(query);
   useEffect(() => setText(query), [query]);
   const projects = useQuery({ queryKey: ['projects'], queryFn: api.projects, staleTime: 60_000 });
-  const hits = useQuery({ queryKey: ['search', query], queryFn: () => api.search(query), enabled: query.length > 0 });
+  const hits = useQuery({ queryKey: ['search', query, project], queryFn: () => api.search(query, project), enabled: query.length > 0 });
+  const within = projects.data?.find((candidate) => candidate.projectId === project);
+
+  /** The search and the project live in the address, so back, forward and links keep them. */
+  function go(search: Omit<SearchRoute, 'page'>) {
+    window.location.hash = hrefFor({ page: 'search', ...search });
+  }
 
   function submit(event: FormEvent) {
     event.preventDefault();
     const wanted = text.trim();
     if (wanted) {
-      window.location.hash = hrefFor({ page: 'search', query: wanted });
+      go({ query: wanted, project });
     }
   }
 
@@ -28,9 +37,10 @@ export function SearchPage({ api, query }: { api: Api; query: string }) {
         <Text c="dimmed">Models, sources, seeds, snapshots and exposures of dbt-prod and Colleciónes, as their last run left them. A name with a typo works too.</Text>
       </Stack>
       <form onSubmit={submit} role="search">
-        <Group gap="sm" wrap="nowrap">
+        <Group gap="sm">
           <TextInput
             flex={1}
+            miw={260}
             size="lg"
             radius="xl"
             type="search"
@@ -41,6 +51,19 @@ export function SearchPage({ api, query }: { api: Api; query: string }) {
             onChange={(event) => setText(event.currentTarget.value)}
             maxLength={200}
             autoFocus
+          />
+          <Select
+            aria-label="dbt project"
+            size="lg"
+            radius="xl"
+            w={360}
+            allowDeselect={false}
+            value={project ?? ALL}
+            onChange={(value) => go({ query: text.trim(), ...(value && value !== ALL ? { project: value } : {}) })}
+            data={[
+              { value: ALL, label: 'All projects' },
+              ...(projects.data ?? []).map((candidate) => ({ value: candidate.projectId, label: candidate.name ?? `Project ${candidate.projectId}` })),
+            ]}
           />
           <Button type="submit" size="lg" radius="xl">
             Search
@@ -53,7 +76,7 @@ export function SearchPage({ api, query }: { api: Api; query: string }) {
         ) : hits.isError ? (
           <Problem title="The search did not work">{hits.error.message}</Problem>
         ) : (
-          <SearchResults query={query} hits={hits.data} />
+          <SearchResults query={query} hits={hits.data} within={within ? (within.name ?? `project ${within.projectId}`) : undefined} />
         )
       ) : projects.isPending ? (
         <Loading rows={2} />
@@ -101,15 +124,23 @@ export function ProjectList({ projects }: { projects: Project[] }) {
   );
 }
 
-/** The Nodes found, the best match first. */
-export function SearchResults({ query, hits }: { query: string; hits: SearchHit[] }) {
+/** The Nodes found, the best match first; `within` names the dbt project the search was limited to. */
+export function SearchResults({ query, hits, within }: { query: string; hits: SearchHit[]; within?: string }) {
+  const where = within ? ` in ${within}` : '';
   if (hits.length === 0) {
-    return <EmptyState icon={<SearchIcon size={28} />} withIndicatorBackground title={`Nothing found for “${query}”`} description="Try part of the name, or a word from the description." />;
+    return (
+      <EmptyState
+        icon={<SearchIcon size={28} />}
+        withIndicatorBackground
+        title={`Nothing found for “${query}”${where}`}
+        description={within ? 'Try part of the name, or all projects.' : 'Try part of the name, or a word from the description.'}
+      />
+    );
   }
   return (
     <Stack gap={0}>
       <Text size="sm" c="dimmed" mb="xs">
-        {plural(hits.length, 'Node')} found for “{query}”
+        {plural(hits.length, 'Node')} found for “{query}”{where}
       </Text>
       {hits.map((hit) => (
         <Box key={hit.uniqueId} py="md" style={{ borderTop: '1px solid var(--mantine-color-gray-2)' }}>

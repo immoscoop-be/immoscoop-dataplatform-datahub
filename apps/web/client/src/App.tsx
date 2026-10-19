@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { SignedOut, type Api } from './api.js';
 import { ChartPage, ChartsPage } from './Charts.js';
 import { NodePage } from './Node.js';
-import { hrefFor, useRoute, type Route } from './route.js';
+import { hrefFor, useRoute, type Route, type SearchRoute } from './route.js';
 import { SearchPage } from './Search.js';
 import { explain, SignInProblem, type Session } from './session.js';
 import { Shell, type NavItem } from './Shell.js';
@@ -54,14 +54,15 @@ export function App({ api, session, semgraphUrl }: { api: Api; session: Pick<Ses
 
 /** The page for the address: the charts for everyone; searching the dbt projects for the Data Team. */
 function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; dataTeam: boolean; semgraphUrl: string }) {
-  // A Node leads back to the results it was found in.
-  const [lastQuery, setLastQuery] = useState('');
+  // A Node leads back to the results it was found in, within the same dbt project.
+  const [lastSearch, setLastSearch] = useState<Omit<SearchRoute, 'page'>>({ query: '' });
   const query = route.page === 'search' ? route.query : undefined;
+  const project = route.page === 'search' ? route.project : undefined;
   useEffect(() => {
     if (query !== undefined) {
-      setLastQuery(query);
+      setLastSearch({ query, ...(project ? { project } : {}) });
     }
-  }, [query]);
+  }, [query, project]);
 
   switch (route.page) {
     case 'chart':
@@ -69,9 +70,9 @@ function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; d
     case 'charts':
       return <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
     case 'node':
-      return dataTeam ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastQuery} /> : <DataTeamOnly />;
+      return dataTeam ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastSearch} /> : <DataTeamOnly />;
     case 'search':
-      return dataTeam ? <SearchPage api={api} query={route.query} /> : <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
+      return dataTeam ? <SearchPage api={api} query={route.query} project={route.project} /> : <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
   }
 }
 

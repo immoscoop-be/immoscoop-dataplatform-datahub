@@ -73,10 +73,12 @@ describe('the calls to the services', () => {
     }) as typeof fetch);
     await api.me();
     await api.search('orders & co');
+    await api.search('orders', '17121');
     await api.lineage('model.p.my model', 'upstream');
     expect(asked).toEqual([
       { url: 'https://identity.test/me', authorization: 'Bearer a-1' },
       { url: 'https://registry.test/nodes?q=orders%20%26%20co', authorization: 'Bearer a-1' },
+      { url: 'https://registry.test/nodes?q=orders&project=17121', authorization: 'Bearer a-1' },
       { url: 'https://registry.test/nodes/model.p.my%20model/lineage?direction=upstream', authorization: 'Bearer a-1' },
     ]);
   });

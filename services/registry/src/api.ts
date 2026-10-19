@@ -47,7 +47,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (type !== undefined && !NODE_TYPES.has(type)) {
       return reply.code(400).send({ error: 'invalid_request', message: `type is one of ${[...NODE_TYPES].join(', ')}.` });
     }
-    return { nodes: await options.reading.search(query, { type, limit: number(request.query.limit, 25, 100) }) };
+    const project = request.query.project;
+    if (project !== undefined && !/^\d{1,18}$/.test(project)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A dbt project is named by its numeric ID.' });
+    }
+    return { nodes: await options.reading.search(query, { type, project, limit: number(request.query.limit, 25, 100) }) };
   });
 
   app.get<{ Params: { id: string } }>('/nodes/:id', async (request, reply) => {

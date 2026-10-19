@@ -64,7 +64,7 @@ describe.skipIf(!url)('reading the registry', () => {
   });
 
   describe('search', () => {
-    const names = async (query: string, type?: string) => (await reading.search(query, { type, limit: 20 })).map((hit) => hit.name);
+    const names = async (query: string, type?: string, project?: string) => (await reading.search(query, { type, project, limit: 20 })).map((hit) => hit.name);
 
     it('puts the exact name first', async () => {
       const hits = await names('orders');
@@ -89,6 +89,16 @@ describe.skipIf(!url)('reading the registry', () => {
       expect(await names('retired')).toEqual([]);
     });
 
+    it('filters on the dbt project', async () => {
+      const everywhere = await names('orders');
+      const inColleciones = await names('orders', undefined, '17121');
+      expect(inColleciones).toContain('orders');
+      expect(inColleciones.length).toBeLessThan(everywhere.length);
+      expect((await reading.search('orders', { project: '17121', limit: 20 })).every((hit) => hit.projectId === '17121')).toBe(true);
+      expect((await reading.search('orders', { project: '9367', limit: 20 })).every((hit) => hit.projectId === '9367')).toBe(true);
+      expect(await names('orders', undefined, '1')).toEqual([]);
+    });
+
     it('takes the characters of a LIKE pattern literally', async () => {
       expect(await names('%')).toEqual([]);
     });
@@ -103,6 +113,11 @@ describe.skipIf(!url)('reading the registry', () => {
       relation: 'immoscoop-dataplatform.dbt_marts.orders',
       materialized: 'table',
       tags: ['marts', 'daily'],
+    });
+    // The meta comes back as the JSON it was in the dbt project, nested and all.
+    expect(orders?.meta).toEqual({
+      model: { kind: 'history', grain: 'stateChange' },
+      domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
     });
     expect(orders?.columns.map((column) => column.name)).toEqual(['ORDER_ID', 'CUSTOMER_ID', 'CREATED_AT']);
     expect(orders?.tests).toEqual([
