@@ -6,6 +6,7 @@ import { createTestIssuer } from '@datahub/auth/testing';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp, CLIENT_ID } from './app.js';
+import { loadClient } from './page.js';
 
 const WEB = 'https://web.test';
 const IDENTITY = 'https://identity.test';
@@ -56,7 +57,7 @@ function cookies(headers: Record<string, unknown>): Record<string, string> {
   return Object.fromEntries(list.map((cookie: string) => [cookie.split('=')[0], cookie]));
 }
 
-/** A page as Vite builds it from client/index.html, with one script and one icon. */
+/** A page as Vite builds it from client/index.html, with one script, the favicon and the drawing of one icon. */
 async function builtClient(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'datahub-web-'));
   await mkdir(join(dir, 'assets'));
@@ -66,6 +67,8 @@ async function builtClient(): Promise<string> {
   );
   await writeFile(join(dir, 'assets', 'index-a1b2.js'), 'console.log("Data Hub");');
   await writeFile(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
+  await mkdir(join(dir, 'icons'));
+  await writeFile(join(dir, 'icons', 'home.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/></svg>');
   return dir;
 }
 
@@ -142,6 +145,21 @@ describe('the server of the web app', () => {
     // Only the built files are routes; anything else meets the token check of every service.
     for (const url of ['/index.html', '/assets/../index.html', '/assets/missing.js']) {
       expect((await app.inject({ url })).statusCode).toBe(401);
+    }
+  });
+
+  it('serves the drawing of an icon through one route, reading it only when it is asked for (DEC-CO-14)', async () => {
+    const client = await loadClient(clientDir, { identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH });
+    expect([...client.files.keys()].filter((path) => path.startsWith('/icons/'))).toEqual([]);
+
+    const home = await app.inject({ url: '/icons/home.svg' });
+    expect(home.statusCode).toBe(200);
+    expect(home.headers['content-type']).toBe('image/svg+xml');
+    expect(home.headers['cache-control']).toBe('public, max-age=3600');
+    expect(home.headers['x-content-type-options']).toBe('nosniff');
+    expect(home.body).toContain('M5 12l-2 0l9 -9l9 9l-2 0');
+    for (const url of ['/icons/rocket.svg', '/icons/Home.svg', '/icons/home.js', '/icons/..%2Findex.html', '/icons/..%2F..%2Fpackage.json']) {
+      expect((await app.inject({ url })).statusCode).toBe(404);
     }
   });
 

@@ -35,7 +35,7 @@ Also for everyone: the charts of semgraph (`#/charts`), each with the question i
 
 For the Data Team, also: searching the dbt projects in registry, all of them or one, chosen in a dropdown, the Current Version of each project, and a Node with its details, columns, tests, lineage up- and downstream across both projects, and its meta from the dbt project as a table of keys and values, nested by indentation ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05), [TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)). The address keeps the page (`#/collections/<ID>`, `#/search?q=…&project=…`, `#/nodes/<unique ID>`, `#/charts/<ID>`), so back, forward and links work. Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your `thenextimmoscoop.be` account.
 
-The page is built with Vite (`pnpm build`) into `dist/client`, which the server reads once at start-up and serves from memory. The server puts the addresses of identity, catalogue, registry and semgraph in the page, so one build runs in every environment.
+The page is built with Vite (`pnpm build`) into `dist/client`, which the server reads once at start-up and serves from memory. The drawings in `icons/` are the exception: there are some 4,800, so one route reads each from disk the first time the page asks for it and keeps it from then on. A route per drawing, all read at start-up, made the server too slow to pass the startup check of Cloud Run. The server puts the addresses of identity, catalogue, registry and semgraph in the page, so one build runs in every environment.
 
 | Route of the server | Purpose |
 | --- | --- |
