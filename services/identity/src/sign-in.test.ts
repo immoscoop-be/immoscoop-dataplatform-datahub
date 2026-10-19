@@ -50,7 +50,7 @@ function fakeGoogle() {
   return google satisfies GoogleSignIn;
 }
 
-/** Workspace: Jan is in a Role Group, an Owner Unit and a group that is not Data Hub's. */
+/** Workspace: Jan is in a Role Group, a group in the old form of an Owner Unit, an ordinary group and a group of another domain. */
 function fakeWorkspace() {
   const workspace = {
     active: true,
@@ -62,10 +62,14 @@ function fakeWorkspace() {
       return workspace.active;
     },
     async groups() {
+      if (workspace.down) {
+        throw new Error('Workspace did not return the groups: 503 Service Unavailable');
+      }
       return [
-        { id: 'g-datateam', email: `datahub-datateam@${DOMAIN}` },
-        { id: 'g-digikom', email: `datahub-owner-digikom@${DOMAIN}` },
-        { id: 'g-sales', email: `sales@${DOMAIN}` },
+        { id: 'g-datateam', email: `datahub-datateam@${DOMAIN}`, name: 'Data Hub · Data Team' },
+        { id: 'g-digikom', email: `datahub-owner-digikom@${DOMAIN}`, name: 'DigiKom' },
+        { id: 'g-sales', email: `sales@${DOMAIN}`, name: 'Sales' },
+        { id: 'g-partner', email: 'team@partner.be', name: 'Partner team' },
       ];
     },
   };
@@ -204,8 +208,8 @@ describe.skipIf(!url)('signing in', () => {
     const verifier = createVerifier({ issuer: ISSUER, audience: 'datahub', keys: createLocalJWKSet(await tokens.jwks()) });
     const claims = await verifier.verify(pair.access_token);
     expect(claims).toMatchObject({ sub: JAN.sub, email: JAN.email, name: JAN.name });
-    // Only Groups that follow the Naming Convention; the Role Group gives the role.
-    expect(claims.groups).toEqual(['g-datateam', 'g-digikom']);
+    // Every group of the own domain (FR-UM-11); only the Role Group gives a role.
+    expect(claims.groups).toEqual(['g-datateam', 'g-digikom', 'g-sales']);
     expect(claims.roles).toEqual(['datateam']);
 
     const user = await database.db.selectFrom('users').selectAll().where('googleId', '=', JAN.sub).executeTakeFirst();
@@ -350,6 +354,24 @@ describe.skipIf(!url)('signing in', () => {
     const { back } = await authorize(clientId, CLAUDE);
     expect(back.searchParams.get('error')).toBe('server_error');
     expect(back.searchParams.has('code')).toBe(false);
+  });
+
+  it('lists the groups of the User of the own domain, by name, to choose an Owner Unit from', async () => {
+    const token = await caller.sign({ sub: JAN.sub, email: JAN.email });
+    const response = await app.inject({ url: '/me/groups', headers: { authorization: `Bearer ${token}` } });
+    expect(response.json()).toEqual({
+      groups: [
+        { id: 'g-datateam', email: `datahub-datateam@${DOMAIN}`, name: 'Data Hub · Data Team' },
+        { id: 'g-digikom', email: `datahub-owner-digikom@${DOMAIN}`, name: 'DigiKom' },
+        { id: 'g-sales', email: `sales@${DOMAIN}`, name: 'Sales' },
+      ],
+    });
+    expect((await app.inject({ url: '/me/groups' })).statusCode).toBe(401);
+
+    workspace.down = true;
+    const down = await app.inject({ url: '/me/groups', headers: { authorization: `Bearer ${token}` } });
+    expect(down.statusCode).toBe(503);
+    expect(down.json().error).toBe('temporarily_unavailable');
   });
 
   it('keeps the session, and the Refresh Token, when Workspace does not answer a renewal', async () => {

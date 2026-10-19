@@ -1,6 +1,7 @@
 import type { TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
+import { ownDomainGroups } from './naming-convention.js';
 import { signInRoutes, type SignInOptions } from './sign-in.js';
 import type { TokenIssuer } from './tokens.js';
 
@@ -29,6 +30,18 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   });
 
   if (options.signIn) {
+    const { workspace, domain } = options.signIn;
+    // The groups of the User to choose an Owner Unit from, read from Workspace again as at a
+    // login, so that a group joined a minute ago is there too (TR-CO-03). catalogue asks it too.
+    app.get('/me/groups', async (request, reply) => {
+      try {
+        return { groups: ownDomainGroups(await workspace.groups(request.user?.email ?? ''), domain) };
+      } catch (error) {
+        request.log.error({ err: error }, 'Workspace did not return the groups');
+        reply.code(503).header('retry-after', '30');
+        return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
+      }
+    });
     await app.register(signInRoutes, options.signIn);
   }
 

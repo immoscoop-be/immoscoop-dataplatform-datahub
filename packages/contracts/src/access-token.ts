@@ -9,7 +9,7 @@ export const accessTokenClaims = z.object({
   sub: z.string().min(1),
   email: z.email(),
   name: z.string(),
-  /** The convention groups of the user, by their fixed Google ID (FR-UM-05, FR-UM-08). */
+  /** Every group of the own domain the user is in, by its fixed Google ID (FR-UM-08, FR-UM-11). */
   groups: z.array(z.string()),
   /** Roles derived from the role groups, such as the data team. */
   roles: z.array(z.string()),
