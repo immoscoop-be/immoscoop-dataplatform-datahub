@@ -47,6 +47,8 @@ describe('the views of the registry', () => {
     expect(html).toContain('href="#/nodes/model.immoscoop_dataplatform_sql.orders"');
     expect(text).toContain('Columns: order_id, ordered_at');
     expect(render(<SearchResults query="nothing" hits={[]} />).text).toContain('Nothing found for “nothing”');
+    expect(render(<SearchResults query="order" hits={hits} within="compilacion_colleciones_dbt" />).text).toContain('1 Node found for “order” in compilacion_colleciones_dbt');
+    expect(render(<SearchResults query="nothing" hits={[]} within="compilacion_colleciones_dbt" />).text).toContain('Try part of the name, or all projects.');
   });
 
   it('shows a Node with its details and columns', () => {

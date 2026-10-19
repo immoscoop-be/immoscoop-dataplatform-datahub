@@ -9,6 +9,13 @@ describe('the address of a page', () => {
     expect(parseHash('#/')).toEqual({ page: 'search', query: '' });
   });
 
+  it('keeps the dbt project of a search, and only a numeric one', () => {
+    expect(parseHash('#/search?q=orders&project=17121')).toEqual({ page: 'search', query: 'orders', project: '17121' });
+    expect(parseHash('#/search?project=9367')).toEqual({ page: 'search', query: '', project: '9367' });
+    expect(parseHash('#/search?q=orders&project=colleciones')).toEqual({ page: 'search', query: 'orders' });
+    expect(hrefFor({ page: 'search', query: '' })).toBe('#/');
+  });
+
   it('reads the charts and one chart', () => {
     expect(parseHash('#/charts')).toEqual({ page: 'charts' });
     expect(parseHash('#/charts/')).toEqual({ page: 'charts' });
@@ -27,6 +34,8 @@ describe('the address of a page', () => {
     const routes: Route[] = [
       { page: 'search', query: '' },
       { page: 'search', query: 'leads & visits' },
+      { page: 'search', query: 'orders', project: '17121' },
+      { page: 'search', query: '', project: '9367' },
       { page: 'node', uniqueId: 'model.p.a/b#c' },
       { page: 'charts' },
       { page: 'chart', id: 'kpiTile' },

@@ -63,12 +63,12 @@ The rows are kept for the Current Version and the one before it, which the compa
 
 **Status:** Implemented · **Realises:** [FR-AR-10](../functional/01-artifact-registry.md#fr-ar-10), [DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10)
 
-`GET /nodes?q=<text>&type=<kind>` searches the Nodes of the Current Versions, in Postgres itself ([DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10)):
+`GET /nodes?q=<text>&type=<kind>&project=<ID>` searches the Nodes of the Current Versions, in Postgres itself ([DEC-SR-10](../functional/04-stacks-and-resources.md#dec-sr-10)):
 
 - **by name**, also with a typo or half a name, through trigrams (`pg_trgm`, in the schema `public`, which every schema can use);
 - **by free text** in the descriptions of Nodes and columns, and in column names, through full-text search with the `simple` configuration, which neither stems nor drops words, since the descriptions mix English and Dutch.
 
-An exact name comes first, then names that start with the text, then the closest names and the best text matches. Each hit names up to five matching columns. `type` limits the search to models, seeds, snapshots, sources or exposures.
+An exact name comes first, then names that start with the text, then the closest names and the best text matches. Each hit names up to five matching columns. `type` limits the search to models, seeds, snapshots, sources or exposures, and `project` to one dbt project, by its ID in dbt Cloud.
 
 Every route of registry that reads, and processing a run again, needs the role of the Data Team for now (`datateam`, from its Role Group). Who else may read the registry is open ([OP-AR-05](../functional/01-artifact-registry.md#op-ar-05)). `GET /projects` gives each dbt project with its Current Version; `GET /runs` gives the latest runs dbt Cloud reported, with their status and error.
 

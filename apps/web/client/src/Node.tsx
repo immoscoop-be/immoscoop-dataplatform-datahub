@@ -5,21 +5,21 @@ import type { Api, Lineage, NodeDetail } from './api.js';
 import { plural, projectOf, shortName } from './format.js';
 import { BackIcon } from './icons.js';
 import { MetaTable } from './Meta.js';
-import { hrefFor } from './route.js';
+import { hrefFor, type SearchRoute } from './route.js';
 import { Loading, Problem } from './Search.js';
 
 /** One Node of a dbt project, with its columns, tests and lineage across both projects. */
-export function NodePage({ api, uniqueId, backTo }: { api: Api; uniqueId: string; /** The search to go back to. */ backTo: string }) {
+export function NodePage({ api, uniqueId, backTo }: { api: Api; uniqueId: string; /** The search to go back to. */ backTo: Omit<SearchRoute, 'page'> }) {
   const node = useQuery({ queryKey: ['node', uniqueId], queryFn: () => api.node(uniqueId) });
   const upstream = useQuery({ queryKey: ['lineage', uniqueId, 'upstream'], queryFn: () => api.lineage(uniqueId, 'upstream') });
   const downstream = useQuery({ queryKey: ['lineage', uniqueId, 'downstream'], queryFn: () => api.lineage(uniqueId, 'downstream') });
 
   return (
     <Stack gap="xl" maw={980}>
-      <Anchor href={hrefFor({ page: 'search', query: backTo })} size="sm" c="dimmed">
+      <Anchor href={hrefFor({ page: 'search', ...backTo })} size="sm" c="dimmed">
         <Group gap={6}>
           <BackIcon size={16} />
-          {backTo ? `Results for “${backTo}”` : 'Search'}
+          {backTo.query ? `Results for “${backTo.query}”` : 'Search'}
         </Group>
       </Anchor>
       {node.isPending || upstream.isPending || downstream.isPending ? (

@@ -136,7 +136,9 @@ export function createApi(config: Pick<Config, 'identityUrl' | 'registryUrl' | '
   return {
     me: () => get<Me>(config.identityUrl, '/me', 'identity'),
     projects: async () => (await registry<{ projects: Project[] }>('/projects')).projects,
-    search: async (query: string) => (await registry<{ nodes: SearchHit[] }>(`/nodes?q=${id(query)}`)).nodes,
+    /** Searches the Current Versions, of every dbt project or of one. */
+    search: async (query: string, project?: string) =>
+      (await registry<{ nodes: SearchHit[] }>(`/nodes?q=${id(query)}${project ? `&project=${id(project)}` : ''}`)).nodes,
     node: (uniqueId: string) => registry<NodeDetail>(`/nodes/${id(uniqueId)}`),
     lineage: (uniqueId: string, direction: Direction) => registry<Lineage>(`/nodes/${id(uniqueId)}/lineage?direction=${direction}`),
     charts: () => semgraph<ChartCatalog>('/semgraphs'),

@@ -1,9 +1,12 @@
 import { useSyncExternalStore } from 'react';
 
 /** Where the User is in the app; it lives in the hash of the address, so back, forward and links work. */
-export type Route = { page: 'search'; query: string } | { page: 'node'; uniqueId: string } | { page: 'charts' } | { page: 'chart'; id: string };
+export type Route = SearchRoute | { page: 'node'; uniqueId: string } | { page: 'charts' } | { page: 'chart'; id: string };
 
-/** `#/search?q=orders`, `#/nodes/<unique ID>`, `#/charts`, `#/charts/<ID>`, or `#<unique ID>`, the links of the first page. */
+/** A search, optionally within one dbt project, by its ID. */
+export type SearchRoute = { page: 'search'; query: string; project?: string };
+
+/** `#/search?q=orders&project=17121`, `#/nodes/<unique ID>`, `#/charts`, `#/charts/<ID>`, or `#<unique ID>`, the links of the first page. */
 export function parseHash(hash: string): Route {
   const path = hash.replace(/^#/, '');
   if (path === '/charts' || path === '/charts/') {
@@ -16,7 +19,9 @@ export function parseHash(hash: string): Route {
     return { page: 'node', uniqueId: decode(path.slice('/nodes/'.length)) };
   }
   if (path.startsWith('/search')) {
-    return { page: 'search', query: new URLSearchParams(path.split('?')[1] ?? '').get('q')?.trim() ?? '' };
+    const parameters = new URLSearchParams(path.split('?')[1] ?? '');
+    const project = parameters.get('project') ?? '';
+    return { page: 'search', query: parameters.get('q')?.trim() ?? '', ...(/^\d+$/.test(project) ? { project } : {}) };
   }
   if (path.length > 0 && !path.startsWith('/')) {
     return { page: 'node', uniqueId: decode(path) };
@@ -34,7 +39,8 @@ export function hrefFor(route: Route): string {
   if (route.page === 'chart') {
     return `#/charts/${encodeURIComponent(route.id)}`;
   }
-  return route.query ? `#/search?${new URLSearchParams({ q: route.query })}` : '#/';
+  const parameters = new URLSearchParams({ ...(route.query ? { q: route.query } : {}), ...(route.project ? { project: route.project } : {}) });
+  return parameters.size > 0 ? `#/search?${parameters}` : '#/';
 }
 
 function decode(value: string): string {
