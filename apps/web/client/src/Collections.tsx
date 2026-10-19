@@ -240,6 +240,7 @@ export function CollectionView({ collection, log, onEdit, onDissolve }: Collecti
           Resources
         </Title>
         <EmptyState
+          align="left"
           title="No Resources yet"
           description="The Data Team adds Resources from the Stacks. Once the Owner Unit publishes one, everyone who sees this Collection sees it too."
         />
