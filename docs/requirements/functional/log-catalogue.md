@@ -11,6 +11,8 @@ Every Log Entry in Data Hub refers to a fixed Log ID from this catalogue, with i
 
 The prefix of a Log ID says which domain the entry comes from. The templates are in English, like everything in the app.
 
+Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
+
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
 
 | Log ID | Template | Parameters |
@@ -20,6 +22,11 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-003` | Renamed from {old} to {new} by {admin} | old, new, admin |
 | `RES-004` | Resource deregistered by {admin} | admin, reason |
 | `RES-005` | {field} updated by {actor} | field, actor |
+| `COL-001` | Collection created by {actor} | actor, name, ownerUnit, visibility |
+| `COL-002` | {field} changed by {actor} | field, old, new, actor |
+| `COL-003` | Owner Unit changed from {old} to {new} by {actor} | old, new, actor |
+| `COL-004` | Made {visibility} by {actor} | visibility, actor |
+| `COL-005` | Collection dissolved by {actor} | actor |
 | `COL-030` | Added to collection {collection} | collection |
 | `COL-031` | Removed from collection {collection} | collection |
 | `ART-010` | Structural change: field {field} {direction} | field, direction, sourceNode, distance |

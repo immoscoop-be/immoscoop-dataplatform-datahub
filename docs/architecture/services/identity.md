@@ -12,7 +12,7 @@
 ## Responsibilities
 
 - Sign in with Google through OpenID Connect, only for the own Workspace domain: [FR-UM-01](../../requirements/functional/02-user-management.md#fr-um-01), [FR-UM-02](../../requirements/functional/02-user-management.md#fr-um-02), [FR-UM-03](../../requirements/functional/02-user-management.md#fr-um-03)
-- Groups from the Cloud Identity Groups API, nested groups included, and no other Google groups: [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04) to [FR-UM-06](../../requirements/functional/02-user-management.md#fr-um-06), [FR-UM-08](../../requirements/functional/02-user-management.md#fr-um-08)
+- Groups from the Cloud Identity Groups API, nested groups included: every group of the own Workspace domain, any of which can be an Owner Unit, and roles from the Role Groups only: [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04), [FR-UM-06](../../requirements/functional/02-user-management.md#fr-um-06), [FR-UM-08](../../requirements/functional/02-user-management.md#fr-um-08), [FR-UM-11](../../requirements/functional/02-user-management.md#fr-um-11)
 - Periodic Synchronisation of the members of all Groups: [FR-UM-07](../../requirements/functional/02-user-management.md#fr-um-07), [FR-UM-10](../../requirements/functional/02-user-management.md#fr-um-10)
 - Issuing Access Tokens, signed with its key in Cloud KMS, and publishing the public keys: [TR-PF-02](../../requirements/technical/00-platform.md#tr-pf-02), [TR-PF-24](../../requirements/technical/00-platform.md#tr-pf-24)
 - OAuth authorisation server for the server of the web app and for Claude: [TR-PF-06](../../requirements/technical/00-platform.md#tr-pf-06), [TR-PF-27](../../requirements/technical/00-platform.md#tr-pf-27)
@@ -30,6 +30,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `/.well-known/oauth-authorization-server`, `/authorize`, `/token`, `/revoke`, `/register` | Signing in, renewing with a Refresh Token, and logging out, for the server of the web app and for MCP clients such as Claude; only Claude's callbacks may register |
 | `DELETE /users/{googleId}/sessions` | The Data Team ends every session of a User at once ([TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25)) |
 | `GET /me` | The current User, Groups and roles |
+| `GET /me/groups` | The groups of the current User with their address and name, read from Workspace; for choosing an Owner Unit ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
 | `POST /library-cards`, `DELETE /library-cards/{id}` | Issue and revoke a Library Card |
 | `POST /exchange` | Exchange a Library Card for an Access Token; used by `@datahub/auth` |
 | `POST /internal/sync-groups` | Synchronise the Groups; called by Cloud Scheduler with the service identity |

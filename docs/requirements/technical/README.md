@@ -4,7 +4,7 @@ How Data Hub is built. Every technical requirement realises one or more [functio
 
 | | |
 | --- | --- |
-| Status | [Platform](00-platform.md) specified; the domains follow |
+| Status | [Platform](00-platform.md) specified; [Artifact registry](01-artifact-registry.md) and [Collections](03-collections.md) under way; the other domains follow |
 | Source of truth | This folder |
 
 ## Structure

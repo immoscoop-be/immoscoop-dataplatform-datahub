@@ -12,9 +12,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub](../overview/data-hub.md) | – | – | 60 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 37 (34 open, 3 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
-| [User management](functional/02-user-management.md) | 10 (4 specified, 6 implemented) | 3 (3 proposed) | 6 | 6 (4 open, 2 done) |
-| [Collections](functional/03-collections.md) | 11 (11 specified) | 2 (2 proposed) | 7 | 5 (5 open) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 30 (30 specified) | 4 (4 proposed) | 21 | 9 (8 open, 1 done) |
+| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
+| [Collections](functional/03-collections.md) | 17 (7 specified, 8 implemented, 2 withdrawn) | 2 (2 proposed) | 12 | 7 (7 open) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 31 (30 specified, 1 withdrawn) | 4 (4 proposed) | 21 | 9 (8 open, 1 done) |
 | [Resource card](functional/05-resource-card.md) | – | – | – | – |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | – | – | – | – |
@@ -29,6 +29,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (4 proposed, 10 specified, 17 implemented) | – | 25 | 18 (10 open, 8 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 7 (7 implemented) | – | – | – |
+| [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 1 (1 open) |
 
 ## Functional requirements
 
@@ -59,28 +60,35 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-UM-02](functional/02-user-management.md#fr-um-02) | Accounts of the own Workspace domain only | Implemented | GB-02 | – | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
 | [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the User at first login, never store a password | Implemented | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18 |
 | [FR-UM-04](functional/02-user-management.md#fr-um-04) | Groups from the Cloud Identity Groups API, nested groups included | Implemented | GB-04 | – | [e391fb0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e391fb0559bf979e0619360ed9829e36420f73ed) implements, 2026-10-18<br>[395b642](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/395b64233998563c8e63051487c8254dac597060) implements, 2026-10-18<br>[196c3e1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/196c3e123e918e6fea4ed3712bfef7112d508d41) implements, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
-| [FR-UM-05](functional/02-user-management.md#fr-um-05) | Only Groups are pulled in | Implemented | GB-05 | – | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
+| [FR-UM-05](functional/02-user-management.md#fr-um-05) | Only Groups are pulled in | Withdrawn | GB-05 | – | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
 | [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the Groups at login | Specified | GB-06 | [TR-PF-02](technical/00-platform.md#tr-pf-02), [TR-PF-26](technical/00-platform.md#tr-pf-26) | – |
 | [FR-UM-07](functional/02-user-management.md#fr-um-07) | Synchronise the members of Groups periodically | Specified | GB-07 | – | – |
 | [FR-UM-08](functional/02-user-management.md#fr-um-08) | Recognise a Group by its fixed Google ID | Implemented | GB-08 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
 | [FR-UM-09](functional/02-user-management.md#fr-um-09) | Owner Units are managed in Workspace | Specified | GB-09 | – | – |
 | [FR-UM-10](functional/02-user-management.md#fr-um-10) | Removed or suspended accounts | Specified | GB-10 | [TR-PF-26](technical/00-platform.md#tr-pf-26) | [02b9680](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02b9680fa32044267f2798725615e739b8337e65) refs, 2026-10-18 |
+| [FR-UM-11](functional/02-user-management.md#fr-um-11) | Every group of the own domain is pulled in; roles come from Role Groups | Implemented | – | [TR-PF-02](technical/00-platform.md#tr-pf-02), [TR-CO-03](technical/03-collections.md#tr-co-03) | – |
 
 ### [Collections](functional/03-collections.md)
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-CO-01](functional/03-collections.md#fr-co-01) | Only the Data Team manages Collections | Specified | CO-01 | – | – |
-| [FR-CO-02](functional/03-collections.md#fr-co-02) | Name is required and unique | Specified | CO-02 | – | – |
-| [FR-CO-03](functional/03-collections.md#fr-co-03) | Description is required | Specified | CO-03 | – | – |
-| [FR-CO-04](functional/03-collections.md#fr-co-04) | Colour is required and comes from the palette | Specified | CO-04 | – | – |
+| [FR-CO-01](functional/03-collections.md#fr-co-01) | Only the Data Team manages Collections | Withdrawn | CO-01 | – | – |
+| [FR-CO-02](functional/03-collections.md#fr-co-02) | Name is required and unique | Implemented | CO-02 | [TR-CO-01](technical/03-collections.md#tr-co-01) | – |
+| [FR-CO-03](functional/03-collections.md#fr-co-03) | Description is required | Implemented | CO-03 | [TR-CO-01](technical/03-collections.md#tr-co-01) | – |
+| [FR-CO-04](functional/03-collections.md#fr-co-04) | Colour is required and comes from the palette | Implemented | CO-04 | [TR-CO-01](technical/03-collections.md#tr-co-01) | – |
 | [FR-CO-05](functional/03-collections.md#fr-co-05) | Icon is optional and comes from the fixed set | Specified | CO-05 | – | – |
-| [FR-CO-06](functional/03-collections.md#fr-co-06) | Exactly one Owner Unit | Specified | CO-06 | – | – |
+| [FR-CO-06](functional/03-collections.md#fr-co-06) | Exactly one Owner Unit | Withdrawn | CO-06 | – | – |
 | [FR-CO-07](functional/03-collections.md#fr-co-07) | A Resource is in at most one Collection | Specified | CO-07 | – | – |
 | [FR-CO-08](functional/03-collections.md#fr-co-08) | Add or remove, never move | Specified | CO-08 | – | – |
 | [FR-CO-09](functional/03-collections.md#fr-co-09) | The Owner Unit can change; Confirmations remain valid | Specified | CO-09 | – | – |
 | [FR-CO-10](functional/03-collections.md#fr-co-10) | Only an empty Collection can be dissolved | Specified | CO-10 | – | – |
-| [FR-CO-11](functional/03-collections.md#fr-co-11) | Every change is logged, append-only | Specified | CO-11 | – | – |
+| [FR-CO-11](functional/03-collections.md#fr-co-11) | Every change is logged, append-only | Specified | CO-11 | [TR-CO-04](technical/03-collections.md#tr-co-04) | – |
+| [FR-CO-12](functional/03-collections.md#fr-co-12) | Anyone creates a Collection | Implemented | – | [TR-CO-02](technical/03-collections.md#tr-co-02) | – |
+| [FR-CO-13](functional/03-collections.md#fr-co-13) | The Owner Unit and the Data Team manage a Collection | Implemented | – | [TR-CO-02](technical/03-collections.md#tr-co-02) | – |
+| [FR-CO-14](functional/03-collections.md#fr-co-14) | Only the Data Team adds and removes Resources | Specified | – | – | – |
+| [FR-CO-15](functional/03-collections.md#fr-co-15) | Exactly one Owner Unit, from the groups of whoever chooses it | Implemented | – | [TR-CO-03](technical/03-collections.md#tr-co-03) | – |
+| [FR-CO-16](functional/03-collections.md#fr-co-16) | A Collection is private or public | Implemented | – | [TR-CO-01](technical/03-collections.md#tr-co-01), [TR-CO-02](technical/03-collections.md#tr-co-02) | – |
+| [FR-CO-17](functional/03-collections.md#fr-co-17) | Who sees a Collection | Implemented | – | [TR-CO-02](technical/03-collections.md#tr-co-02) | – |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -96,14 +104,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-08](functional/04-stacks-and-resources.md#fr-sr-08) | Store a Fingerprint at Registration | Specified | SR-08 | – | – |
 | [FR-SR-09](functional/04-stacks-and-resources.md#fr-sr-09) | Open the Log at Registration | Specified | SR-09 | – | – |
 | [FR-SR-10](functional/04-stacks-and-resources.md#fr-sr-10) | Notify the Data Admins of every Registration | Specified | SR-10 | – | – |
-| [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | Structure of a Log Entry | Specified | SR-11 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | – |
-| [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12) | Log IDs come from a fixed catalogue | Specified | SR-12 | – | – |
+| [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | Structure of a Log Entry | Specified | SR-11 | [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-CO-04](technical/03-collections.md#tr-co-04) | – |
+| [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12) | Log IDs come from a fixed catalogue | Specified | SR-12 | [TR-CO-04](technical/03-collections.md#tr-co-04) | – |
 | [FR-SR-13](functional/04-stacks-and-resources.md#fr-sr-13) | Names, descriptions and Log texts are searchable | Specified | SR-13 | – | – |
 | [FR-SR-14](functional/04-stacks-and-resources.md#fr-sr-14) | Deregistration keeps the Log and history | Specified | SR-14 | – | – |
 | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | All texts in the app are in English | Specified | SR-15 | – | – |
 | [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16) | Only the Owner publishes | Specified | SR-16 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
 | [FR-SR-17](functional/04-stacks-and-resources.md#fr-sr-17) | The first Publication, from Described, is the first Confirmation | Specified | SR-17 | – | – |
-| [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on Publication | Specified | SR-18 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
+| [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on Publication | Withdrawn | SR-18 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
 | [FR-SR-19](functional/04-stacks-and-resources.md#fr-sr-19) | A published Resource stays published when its Level drops | Specified | SR-19 | – | – |
 | [FR-SR-20](functional/04-stacks-and-resources.md#fr-sr-20) | Reconfirm after a drop | Specified | SR-20 | – | – |
 | [FR-SR-21](functional/04-stacks-and-resources.md#fr-sr-21) | Search on title, description, Collection and Owner | Specified | SR-21 | – | – |
@@ -116,6 +124,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-28](functional/04-stacks-and-resources.md#fr-sr-28) | The Owner and the Data Team supplement the description | Specified | SR-28 | – | – |
 | [FR-SR-29](functional/04-stacks-and-resources.md#fr-sr-29) | React with a Question, a Remark or a Signal | Specified | SR-29 | – | – |
 | [FR-SR-30](functional/04-stacks-and-resources.md#fr-sr-30) | A Signal can become an Anomaly | Specified | SR-30 | – | – |
+| [FR-SR-31](functional/04-stacks-and-resources.md#fr-sr-31) | Visibility follows the Publication and the Collection | Specified | – | – | – |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 
@@ -174,7 +183,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Realises | Commits |
 | --- | --- | --- | --- | --- |
 | [TR-PF-01](technical/00-platform.md#tr-pf-01) | Services and runtime | Specified | [DEC-PF-01](technical/00-platform.md#dec-pf-01), [DEC-DH-53](../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../overview/data-hub.md#dec-dh-54) | [4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17<br>[195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
-| [TR-PF-02](technical/00-platform.md#tr-pf-02) | identity issues short-lived Access Tokens | Implemented | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [FR-UM-03](functional/02-user-management.md#fr-um-03), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-08](functional/02-user-management.md#fr-um-08) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[3a09298](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3a09298ea190b88c18c7036f4a451660c336352f) refs, 2026-10-18<br>[73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
+| [TR-PF-02](technical/00-platform.md#tr-pf-02) | identity issues short-lived Access Tokens | Implemented | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [FR-UM-03](functional/02-user-management.md#fr-um-03), [FR-UM-06](functional/02-user-management.md#fr-um-06), [FR-UM-08](functional/02-user-management.md#fr-um-08), [FR-UM-11](functional/02-user-management.md#fr-um-11) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[3a09298](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3a09298ea190b88c18c7036f4a451660c336352f) refs, 2026-10-18<br>[73013cb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/73013cba3a67a7a8877a4b4184effb92f62528da) refs, 2026-10-17 |
 | [TR-PF-03](technical/00-platform.md#tr-pf-03) | Every service validates the token itself | Implemented | [DEC-PF-02](technical/00-platform.md#dec-pf-02), [NFR-SEC-01](non-functional/security.md#nfr-sec-01) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) implements, 2026-10-17 |
 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | Every service authorises itself | Specified | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | – |
 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | Calls between services | Proposed | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | [99749ad](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/99749adf66519d375050d879c313644fea3fdf98) refs, 2026-10-18 |
@@ -216,6 +225,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-AR-05](technical/01-artifact-registry.md#tr-ar-05) | Searching the Nodes | Implemented | [FR-AR-10](functional/01-artifact-registry.md#fr-ar-10), [DEC-SR-10](functional/04-stacks-and-resources.md#dec-sr-10) | [415ca31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/415ca319519a10afdab6413461eb818ed571aba2) refs, 2026-10-19<br>[aa82312](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/aa823126b67b5cc0c38eabb8ba2fc6a44199d19a) implements, 2026-10-19<br>[fda53b2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fda53b234dedc5c42ef5ff86a680b4c96caaaf6c) refs, 2026-10-18<br>[76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
 | [TR-AR-06](technical/01-artifact-registry.md#tr-ar-06) | One Node and its lineage, across both projects | Implemented | [FR-AR-08](functional/01-artifact-registry.md#fr-ar-08), [FR-AR-10](functional/01-artifact-registry.md#fr-ar-10), [DEC-AR-03](functional/01-artifact-registry.md#dec-ar-03) | [e2a6071](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e2a607183096e959a65ef2bc578605af823f4370) refs, 2026-10-19<br>[6898c73](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6898c73a511c396871845b5da1f29594abf78d3c) implements, 2026-10-19<br>[fda53b2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fda53b234dedc5c42ef5ff86a680b4c96caaaf6c) refs, 2026-10-18<br>[76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
 | [TR-AR-07](technical/01-artifact-registry.md#tr-ar-07) | Processing a run again by hand | Implemented | [FR-AR-14](functional/01-artifact-registry.md#fr-ar-14), [DEC-AR-02](functional/01-artifact-registry.md#dec-ar-02) | [6898c73](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6898c73a511c396871845b5da1f29594abf78d3c) refs, 2026-10-19<br>[76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
+
+### [Collections: technical requirements](technical/03-collections.md)
+
+| ID | Title | Status | Realises | Commits |
+| --- | --- | --- | --- | --- |
+| [TR-CO-01](technical/03-collections.md#tr-co-01) | Collections live in the schema of catalogue | Implemented | [FR-CO-02](functional/03-collections.md#fr-co-02), [FR-CO-03](functional/03-collections.md#fr-co-03), [FR-CO-04](functional/03-collections.md#fr-co-04), [FR-CO-16](functional/03-collections.md#fr-co-16), [DEC-CO-07](functional/03-collections.md#dec-co-07) | – |
+| [TR-CO-02](technical/03-collections.md#tr-co-02) | The routes of Collections, and who may do what | Implemented | [FR-CO-12](functional/03-collections.md#fr-co-12), [FR-CO-13](functional/03-collections.md#fr-co-13), [FR-CO-16](functional/03-collections.md#fr-co-16), [FR-CO-17](functional/03-collections.md#fr-co-17), [DEC-CO-08](functional/03-collections.md#dec-co-08), [DEC-CO-10](functional/03-collections.md#dec-co-10), [DEC-CO-11](functional/03-collections.md#dec-co-11) | – |
+| [TR-CO-03](technical/03-collections.md#tr-co-03) | The Owner Unit is chosen from the groups identity reads | Implemented | [FR-CO-15](functional/03-collections.md#fr-co-15), [FR-UM-11](functional/02-user-management.md#fr-um-11), [DEC-CO-09](functional/03-collections.md#dec-co-09), [DEC-UM-07](functional/02-user-management.md#dec-um-07) | – |
+| [TR-CO-04](technical/03-collections.md#tr-co-04) | The Log of a Collection is append-only | Implemented | [FR-CO-11](functional/03-collections.md#fr-co-11), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12), [DEC-SR-09](functional/04-stacks-and-resources.md#dec-sr-09) | – |
 
 ## Non-functional requirements
 

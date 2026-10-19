@@ -21,25 +21,27 @@ In library terms: the library keeps no member register of its own. It uses the r
 - <a id="dec-um-01"></a>**DEC-UM-01** · Data Hub keeps no Users or passwords of its own. Users authenticate against Google, via OpenID Connect ("Sign in with Google"), and only accounts of the company's own Google Workspace domain get in.
 - <a id="dec-um-02"></a>**DEC-UM-02** · Login happens in Data Hub itself, not only via a proxy such as Identity-Aware Proxy. Claude (via MCP) and Excel (via a personal key) also come in through Data Hub, and all channels start from the same Google identity.
 - <a id="dec-um-03"></a>**DEC-UM-03** · Groups come from Google Workspace. Data Hub requests them via the Cloud Identity Groups API, with a service account that is given the Groups Reader admin role in Workspace.
-- <a id="dec-um-04"></a>**DEC-UM-04** · Owner Units are Google groups that follow a Naming Convention. They are created and managed in Workspace, not in Data Hub. This answers the open question "Workspace groups or our own lists": Workspace groups.
-- <a id="dec-um-05"></a>**DEC-UM-05** · Data Hub only pulls in the Groups that follow the convention, not all groups of the company.
+- <a id="dec-um-04"></a>**DEC-UM-04** · Owner Units are Google groups that follow a Naming Convention. They are created and managed in Workspace, not in Data Hub. This answers the open question "Workspace groups or our own lists": Workspace groups. *Note of 2026-10-19: an Owner Unit can be any Google group of the own Workspace domain; the Naming Convention now applies to Role Groups only ([DEC-CO-09](03-collections.md#dec-co-09), [DEC-UM-07](#dec-um-07)).*
+- <a id="dec-um-05"></a>**DEC-UM-05** · Data Hub only pulls in the Groups that follow the convention, not all groups of the company. *Note of 2026-10-19: replaced by [DEC-UM-07](#dec-um-07).*
 - <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`.
+- <a id="dec-um-07"></a>**DEC-UM-07** · Data Hub pulls in every group a User is in, nested groups included, as long as the group belongs to the own Workspace domain: any of them can be chosen as an Owner Unit ([DEC-CO-09](03-collections.md#dec-co-09)). Roles still come only from the Role Groups of the Naming Convention. The Synchronisation covers only the Groups Data Hub uses: the Role Groups and the Owner Units of Collections, not every group of the company. This replaces [DEC-UM-05](#dec-um-05).
 
 ## Terms
 
 | Term | Meaning |
 | --- | --- |
 | User | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once |
-| Group | A Google group from Workspace that follows the Naming Convention |
-| Owner Unit | A Group that takes care of a Collection. Deliberately not a team from the organisational structure, but a Google group that exists only for this purpose |
+| Group | A Google group of the own Workspace domain that Data Hub knows: a Role Group, or a group a User is in and can choose as Owner Unit |
+| Owner Unit | The Group that takes care of a Collection: any Google group of the own Workspace domain, chosen by whoever creates the Collection from the groups they are in |
 | Synchronisation | Periodically pulling in the members of all Groups, so that Data Hub knows who is in which Group, even when that person is not logged in |
 
 ## Naming Convention
 
 | Kind of Group | Form | Example |
 | --- | --- | --- |
-| Owner Unit | `datahub-owner-<name>@<domain>` | `datahub-owner-digikom@` |
 | Role (see the domain [Permissions and library cards](12-permissions-and-library-cards.md)) | `datahub-<role>@<domain>` | `datahub-datateam@` |
+
+An Owner Unit needs no convention since 2026-10-19: any Google group of the own Workspace domain will do ([DEC-CO-09](03-collections.md#dec-co-09)). The form `datahub-owner-<name>@<domain>` it had before is no longer needed, and such a group gives no role.
 
 ## Flow
 
@@ -82,9 +84,11 @@ Groups are requested via the Cloud Identity Groups API, not taken from the token
 <a id="fr-um-05"></a>
 ### FR-UM-05 · Only Groups are pulled in
 
-**Status:** Implemented · **Confluence:** GB-05
+**Status:** Withdrawn · **Confluence:** GB-05
 
 Only Groups that follow the [Naming Convention](#naming-convention) are pulled in.
+
+*Withdrawn on 2026-10-19: replaced by [FR-UM-11](#fr-um-11) ([DEC-UM-07](#dec-um-07)).*
 
 <a id="fr-um-06"></a>
 ### FR-UM-06 · Fetch and cache the Groups at login
@@ -121,6 +125,13 @@ Owner Units are created, filled and dissolved in Workspace. Data Hub shows them,
 
 Whoever disappears from Workspace or is suspended can no longer log in, and disappears from their Groups at the next Synchronisation. What they did, such as Confirmations and conversations, stays stored under their name.
 
+<a id="fr-um-11"></a>
+### FR-UM-11 · Every group of the own domain is pulled in; roles come from Role Groups
+
+**Status:** Implemented
+
+Every group of the own Workspace domain that the User is in, nested groups included, is pulled in, with its fixed Google ID, its address and its name. The User can choose any of them as Owner Unit. Only the Role Groups of the [Naming Convention](#naming-convention) give a role.
+
 ## Edge cases
 
 Proposals to confirm.
@@ -155,7 +166,7 @@ What someone may see and do, and issuing Library Cards ([Permissions and library
 - [x] <a id="op-um-01"></a>**OP-UM-01** · Finalise the Naming Convention for Groups.
 - [x] <a id="op-um-02"></a>**OP-UM-02** · Confirm which Workspace domain (or which domains) is allowed. *Decided on 2026-10-18: `thenextimmoscoop.be` only ([DEC-UM-06](#dec-um-06)).*
 - [ ] <a id="op-um-03"></a>**OP-UM-03** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
-- [ ] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner.
+- [x] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner. *Decided on 2026-10-19: any existing Google group can be an Owner Unit, so no groups need to be created for it ([DEC-CO-09](03-collections.md#dec-co-09)).*
 - [ ] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation.
 - [ ] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above.
 

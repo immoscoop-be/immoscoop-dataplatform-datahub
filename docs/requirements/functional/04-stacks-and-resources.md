@@ -23,7 +23,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-03"></a>**DEC-SR-03** · Only a Data Admin registers Resources: a member of the Role Group of the Data Team from [User management](02-user-management.md). At Registration, the Data Admin chooses the Collection straight away.
 - <a id="dec-sr-04"></a>**DEC-SR-04** · A Resource has two identities: a Key, the full name `project.dataset.table`, and a Display Name, readable and unique, that the Data Admin chooses.
 - <a id="dec-sr-05"></a>**DEC-SR-05** · At Registration, the Level is derived, and it is at most 2. A new Resource is not yet published, and therefore only visible to the Data Team and to the Owner of its Collection.
-- <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on Publication, not on the Level. Publishing is a deliberate switch that the Owner flips. That way, a Resource does not disappear for those who use it every time the Level briefly drops.
+- <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on Publication, not on the Level. Publishing is a deliberate switch that the Owner flips. That way, a Resource does not disappear for those who use it every time the Level briefly drops. *Note of 2026-10-19: a published Resource is visible to everyone who sees its Collection, the whole company only when the Collection is public ([DEC-CO-12](03-collections.md#dec-co-12)).*
 - <a id="dec-sr-07"></a>**DEC-SR-07** · The first Publication is only possible from Described, and is at once the first Confirmation: with it, the Resource rises to Confirmed.
 - <a id="dec-sr-08"></a>**DEC-SR-08** · A published Resource stays published, even if its Level drops afterwards. The Owner then gets an alert, the lower Level is visible on the Resource Card and on every Lens and Report built on it, and the Owner confirms again without touching the Publication.
 - <a id="dec-sr-09"></a>**DEC-SR-09** · The Log works with fixed Log IDs from a catalogue. Every Log Entry refers to a Log ID, with the extra parameters in a JSON field. The text is only built at display time from the template and the parameters, so that the Log stays compact and filterable.
@@ -42,7 +42,7 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 | Key | The full name of the view in BigQuery, `project.dataset.table` |
 | Display Name | The readable, unique name of the Resource, as business sees it, for example "Agency purity" |
 | Data Admin | A member of the Role Group of the Data Team, who registers and manages Resources |
-| Publication | The switch with which the Owner makes a Resource visible to the whole company |
+| Publication | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public |
 | Log ID | The fixed code of a kind of Log Entry, with a template and a list of parameters, for example `RES-001` |
 | Fingerprint | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment |
 | Signal | A remark reporting that something seems odd about the data; it can grow into an Anomaly |
@@ -224,9 +224,11 @@ The first Publication is only possible when the Resource is at Described. It is 
 <a id="fr-sr-18"></a>
 ### FR-SR-18 · Visibility depends only on Publication
 
-**Status:** Specified · **Confluence:** SR-18
+**Status:** Withdrawn · **Confluence:** SR-18
 
 Who sees the Resource depends only on the Publication: not published means visible to the Data Team and the Owner; published means visible to the whole company.
+
+*Withdrawn on 2026-10-19: replaced by [FR-SR-31](#fr-sr-31), where the Collection decides who "everyone" is ([DEC-CO-12](03-collections.md#dec-co-12)).*
 
 <a id="fr-sr-19"></a>
 ### FR-SR-19 · A published Resource stays published when its Level drops
@@ -311,6 +313,13 @@ Everyone who may see a Resource can react with a Question, a Remark or a Signal.
 **Status:** Specified · **Confluence:** SR-30
 
 A Signal goes to the Owner and the Data Team, and they can turn it into an Anomaly on the Resource Card.
+
+<a id="fr-sr-31"></a>
+### FR-SR-31 · Visibility follows the Publication and the Collection
+
+**Status:** Specified
+
+Who sees a Resource depends on its Publication and on its Collection. Not published: the Data Team and the members of the Owner Unit of its Collection. Published: everyone who sees its Collection ([FR-CO-17](03-collections.md#fr-co-17)), which for a public Collection is the whole company. A Resource without a Collection is visible only to the Data Team.
 
 ## Log Catalogue
 
