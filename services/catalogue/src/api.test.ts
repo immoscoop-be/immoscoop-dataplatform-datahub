@@ -44,8 +44,11 @@ describe('the fields of a Collection in a request', () => {
     expect(parse({ ...complete, visibility: 'secret' }, true)).toBe('The visibility is private or public.');
     expect(parse({ ...complete, ownerUnit: 'sales@thenextimmoscoop.be' }, true)).toBe('The Owner Unit is named by the ID of a group.');
     expect(parse({ ...complete, owner: 'me' }, true)).toBe('A Collection has no field owner.');
-    expect(parse({ ...complete, icon: 'unicorn' }, true)).toBe('The icon is one of the chosen Tabler Icons, or null for none.');
+    const refused = 'The icon is the name of an outline icon of Tabler Icons that is not the logo of a brand, or null for none.';
+    expect(parse({ ...complete, icon: 'unicorn' }, true)).toBe(refused);
+    expect(parse({ ...complete, icon: 'brand-google' }, true)).toBe(refused);
     expect(parse({ ...complete, icon: 'building-estate' }, true)).toMatchObject({ icon: 'building-estate' });
+    expect(parse({ ...complete, icon: 'rocket' }, true)).toMatchObject({ icon: 'rocket' });
     expect(parse({ icon: null }, false)).toEqual({ icon: null });
   });
 });

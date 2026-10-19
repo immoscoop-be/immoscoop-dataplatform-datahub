@@ -117,6 +117,15 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect(removed?.text).toBe('Icon changed by An');
   });
 
+  it('shows an icon that Tabler no longer has as none (DEC-CO-14)', async () => {
+    const dropped = await collections.create(
+      { name: 'Dropped icon', description: 'An icon of an older Tabler.', colour: 'cyan', icon: 'rocket', ownerUnit: DIGIKOM, visibility: 'private' },
+      an,
+    );
+    await sql`update collections set icon = 'gone-in-a-later-version' where id = ${dropped.id}`.execute(database.db);
+    expect((await collections.get(dropped.id, an))?.icon).toBeNull();
+  });
+
   it('never lets a Log Entry be changed or removed, not even by the service (FR-CO-11)', async () => {
     await expect(sql`update collection_log set log_id = 'COL-005'`.execute(database.db)).rejects.toThrow(/append-only/);
     await expect(sql`delete from collection_log`.execute(database.db)).rejects.toThrow(/append-only/);

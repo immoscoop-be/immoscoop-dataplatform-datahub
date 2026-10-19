@@ -1,4 +1,5 @@
 import type { CollectionColour, CollectionIcon, CollectionVisibility } from '@datahub/contracts';
+import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 import type { Group } from './identity.js';
@@ -91,7 +92,8 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       name: row.name,
       description: row.description,
       colour: row.colour,
-      icon: row.icon,
+      // An icon a later version of Tabler no longer has is none, so the web app never asks for a drawing that is gone.
+      icon: isCollectionIcon(row.icon) ? row.icon : null,
       ownerUnit: { id: row.ownerUnitId, email: row.ownerUnitEmail, name: row.ownerUnitName },
       visibility: row.visibility,
       createdAt: row.createdAt,

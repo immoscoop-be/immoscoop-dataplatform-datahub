@@ -13,14 +13,14 @@ How Collections are kept and guarded, in the service [catalogue](../../architect
 <a id="tr-co-01"></a>
 ### TR-CO-01 · Collections live in the schema of catalogue
 
-**Status:** Implemented · **Realises:** [FR-CO-02](../functional/03-collections.md#fr-co-02), [FR-CO-03](../functional/03-collections.md#fr-co-03), [FR-CO-04](../functional/03-collections.md#fr-co-04), [FR-CO-05](../functional/03-collections.md#fr-co-05), [FR-CO-16](../functional/03-collections.md#fr-co-16), [DEC-CO-07](../functional/03-collections.md#dec-co-07), [DEC-CO-13](../functional/03-collections.md#dec-co-13)
+**Status:** Implemented · **Realises:** [FR-CO-02](../functional/03-collections.md#fr-co-02), [FR-CO-03](../functional/03-collections.md#fr-co-03), [FR-CO-04](../functional/03-collections.md#fr-co-04), [FR-CO-05](../functional/03-collections.md#fr-co-05), [FR-CO-16](../functional/03-collections.md#fr-co-16), [DEC-CO-07](../functional/03-collections.md#dec-co-07), [DEC-CO-13](../functional/03-collections.md#dec-co-13), [DEC-CO-14](../functional/03-collections.md#dec-co-14)
 
 The table `collections` holds one row per Collection: a UUID as its ID, the name, the description, the colour, the Owner Unit, whether it is public, who created it and when, and when it was dissolved.
 
 - The name has 1 to 80 characters and is unique without regard to case among the Collections that are not dissolved: a unique index on `lower(name)` where `dissolved_at` is null. A name already in use is refused with `409 name_taken`.
 - The description has 1 to 500 characters.
 - The colour is the name of a colour from the palette in lower case, such as `rose`; a database check refuses any other value. The names and their hex codes live in `@datahub/contracts`, so that catalogue and the web app use one list.
-- The icon is optional: the name of a Tabler icon from the list in `@datahub/contracts` ([DEC-CO-13](../functional/03-collections.md#dec-co-13)), such as `building-estate`; any other name is refused with `400`. The web app draws it with `@tabler/icons-react`, importing only the icons of that list.
+- The icon is optional: the name of an outline icon of Tabler Icons that is not the logo of a brand ([DEC-CO-13](../functional/03-collections.md#dec-co-13), [DEC-CO-14](../functional/03-collections.md#dec-co-14)), such as `building-estate`; any other name is refused with `400`. The list is `@datahub/contracts/collection-icons`, generated from `@tabler/icons` by `pnpm icons:build`, with each icon's category and search words; a test fails when it no longer matches the installed version. An icon that a later version of Tabler no longer has is returned as `null`, so the web app never asks for a drawing that is gone. The web app serves each icon as its own file, `icons/<name>.svg`, and draws it as a CSS mask in the colour around it, so its build holds no icon; the list to search through is a separate script it loads when the form opens.
 - The Owner Unit is kept by its fixed Google ID ([FR-UM-08](../functional/02-user-management.md#fr-um-08)), with its address and name at the moment it was chosen, to show them ([TR-CO-03](#tr-co-03)).
 - Dissolving sets `dissolved_at`. The row stays, so that its Log keeps its subject; a dissolved Collection is no longer listed or found, and its name is free again.
 

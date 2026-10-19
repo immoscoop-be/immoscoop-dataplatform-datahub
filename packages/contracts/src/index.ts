@@ -1,9 +1,7 @@
 export { accessTokenClaims, type AccessTokenClaims } from './access-token.js';
 export {
   COLLECTION_COLOURS,
-  COLLECTION_ICONS,
   isCollectionColour,
-  isCollectionIcon,
   type CollectionColour,
   type CollectionIcon,
   type CollectionVisibility,

@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon comes from Tabler Icons ([DEC-CO-13](#dec-co-13)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -33,7 +33,8 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-10"></a>**DEC-CO-10** · A Collection is private or public. A private Collection is visible to the members of its Owner Unit and to the Data Team; a public Collection is visible to every User. Whoever creates a Collection chooses; the Owner Unit and the Data Team can switch it later.
 - <a id="dec-co-11"></a>**DEC-CO-11** · The Data Team sees every Collection, private ones included, so that it can add Resources to them and help their Owners.
 - <a id="dec-co-12"></a>**DEC-CO-12** · A Resource is visible to everyone who sees its Collection only once its Owner has published it: the first Publication is the first Confirmation ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)). Until then, only the Owner Unit and the Data Team see it. In a public Collection, the Publication thus opens a Resource to the whole company. This replaces "visible to the whole company" in [DEC-SR-06](04-stacks-and-resources.md#dec-sr-06) and [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
-- <a id="dec-co-13"></a>**DEC-CO-13** · The icon of a Collection comes from Tabler Icons (MIT licence), the outline icons on a 24-pixel grid with a 2-pixel line, as the icons of the web app itself. Not the whole set of some 5,000 icons, but a list chosen for the functional domains of Immoscoop, kept in one place for catalogue and the web app; a new icon is a change to that list. Tabler has a Figma plugin, so designs can use the same set. This answers [OP-CO-01](#op-co-01).
+- <a id="dec-co-13"></a>**DEC-CO-13** · The icon of a Collection comes from Tabler Icons (MIT licence), the outline icons on a 24-pixel grid with a 2-pixel line, as the icons of the web app itself. Not the whole set of some 5,000 icons, but a list chosen for the functional domains of Immoscoop, kept in one place for catalogue and the web app; a new icon is a change to that list. Tabler has a Figma plugin, so designs can use the same set. This answers [OP-CO-01](#op-co-01). *Note of 2026-10-19: the chosen list is replaced by [DEC-CO-14](#dec-co-14): every outline icon but the logos of brands.*
+- <a id="dec-co-14"></a>**DEC-CO-14** · A Collection can carry any outline icon of Tabler Icons except the logos of brands (Tabler's category Brand): some 4,800 icons, so that every functional domain finds its own. The web app does not take them all on board: it loads the drawing of an icon only where it shows one, and the list to choose from only when a Collection is created or edited. Choosing is searching, by the name of an icon and the words Tabler gives it, so that "house" finds the home and "money" finds coins and the wallet; the results are grouped by Tabler's category. Before anything is typed, the choice shows a short list of suggestions for the functional domains of Immoscoop. This replaces the chosen list of [DEC-CO-13](#dec-co-13).
 
 ## What a Collection has
 
@@ -42,7 +43,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 | Name | Yes | Unique within Data Hub |
 | Description | Yes | Short: which functional domain of Immoscoop the Collection covers |
 | Colour | Yes | From the [colour palette](#colour-palette) below |
-| Icon | No | From the chosen list of Tabler Icons ([DEC-CO-13](#dec-co-13)) |
+| Icon | No | Any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)) |
 | Owner | Yes | Exactly one Owner Unit: a Google group of the own Workspace domain that the one choosing it is in ([DEC-CO-09](#dec-co-09)) |
 | Visibility | Yes | Private or public ([DEC-CO-10](#dec-co-10)) |
 

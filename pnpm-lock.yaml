@@ -72,9 +72,9 @@ importers:
       '@mantine/hooks':
         specifier: 9.6.3
         version: 9.6.3(react@19.3.0)
-      '@tabler/icons-react':
+      '@tabler/icons':
         specifier: 3.48.0
-        version: 3.48.0(react@19.3.0)
+        version: 3.48.0
       '@tanstack/react-query':
         specifier: 5.104.1
         version: 5.104.1(react@19.3.0)
@@ -579,11 +579,6 @@ packages:
 
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
-
-  '@tabler/icons-react@3.48.0':
-    resolution: {integrity: sha512-OCeAlpaWHEMV+EsgdVeGQ3YuKfmfnThZhc++CaZ/ujYzi5+/DONDQlX4OGvH1ikYhIfmc0grI4otJgHy7QAvng==}
-    peerDependencies:
-      react: '>= 16'
 
   '@tabler/icons@3.48.0':
     resolution: {integrity: sha512-lQk06gVHNVBnJp0UOgtth54mcZBJM7rdYKsAxKOProj1bbSAx+/xiuOWfHlyvgdL3M+Y+I0HINrjHa3ygp8eXQ==}
@@ -2539,11 +2534,6 @@ snapshots:
   '@rolldown/pluginutils@1.0.1': {}
 
   '@standard-schema/spec@1.1.0': {}
-
-  '@tabler/icons-react@3.48.0(react@19.3.0)':
-    dependencies:
-      '@tabler/icons': 3.48.0
-      react: 19.3.0
 
   '@tabler/icons@3.48.0': {}
 

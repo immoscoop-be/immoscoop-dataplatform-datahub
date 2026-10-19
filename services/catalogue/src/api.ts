@@ -1,5 +1,6 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import { type CollectionColour, type CollectionIcon, type CollectionVisibility, isCollectionColour, isCollectionIcon } from '@datahub/contracts';
+import { type CollectionColour, type CollectionIcon, type CollectionVisibility, isCollectionColour } from '@datahub/contracts';
+import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
@@ -305,7 +306,7 @@ export function parse(body: unknown, creating: boolean): Fields | string {
   }
   if (input.icon !== undefined) {
     if (input.icon !== null && !isCollectionIcon(input.icon)) {
-      return 'The icon is one of the chosen Tabler Icons, or null for none.';
+      return 'The icon is the name of an outline icon of Tabler Icons that is not the logo of a brand, or null for none.';
     }
     fields.icon = input.icon;
   }
