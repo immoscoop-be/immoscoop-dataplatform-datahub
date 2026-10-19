@@ -57,6 +57,9 @@ importers:
         specifier: ^5.12.7
         version: 5.12.7
     devDependencies:
+      '@datahub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@datahub/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -159,6 +162,9 @@ importers:
       '@datahub/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@datahub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db

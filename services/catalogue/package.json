@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@datahub/auth": "workspace:*",
+    "@datahub/contracts": "workspace:*",
     "@datahub/db": "workspace:*",
     "@datahub/server": "workspace:*",
     "fastify": "^5.12.7",
