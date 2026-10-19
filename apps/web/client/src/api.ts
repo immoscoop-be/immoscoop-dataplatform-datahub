@@ -41,6 +41,27 @@ export interface CollectionFields {
   visibility: CollectionVisibility;
 }
 
+/** A table a dbt project exposes to Data Hub with the tag `datahub` (DEC-SR-22). */
+export interface Resource {
+  id: string;
+  /** The full name of the table in BigQuery. */
+  key: string;
+  displayName: string;
+  name: string;
+  resourceType: string;
+  projectId: string;
+  projectName: string | null;
+  /** The unique ID of its Node in registry. */
+  nodeId: string;
+  description: string;
+  /** The exposures that make it a Resource. */
+  exposures: string[];
+  collectionId: string | null;
+  registeredAt: string;
+  /** No exposure depends on it any more; it is held until one does again (DEC-SR-26). */
+  withdrawn: boolean;
+}
+
 /** A Log Entry of a Collection, with the text catalogue built from its template. */
 export interface LogEntry {
   logId: string;
@@ -188,6 +209,12 @@ export function createApi(
     createCollection: (fields: CollectionFields) => catalogue<Collection>('/collections', 'POST', fields),
     changeCollection: (collectionId: string, fields: Partial<CollectionFields>) => catalogue<Collection>(`/collections/${id(collectionId)}`, 'PATCH', fields),
     dissolveCollection: (collectionId: string) => catalogue<void>(`/collections/${id(collectionId)}`, 'DELETE'),
+    /** The Resources of a Collection, as far as the User may see them. */
+    collectionResources: async (collectionId: string) => (await catalogue<{ resources: Resource[] }>(`/collections/${id(collectionId)}/resources`)).resources,
+    /** The Resources that wait for a Collection; for the Data Team. */
+    waitingResources: async () => (await catalogue<{ resources: Resource[] }>('/resources?collection=none')).resources,
+    addToCollection: (resourceId: string, collectionId: string) => catalogue<Resource>(`/resources/${id(resourceId)}/collection`, 'PUT', { collectionId }),
+    removeFromCollection: (resourceId: string) => catalogue<void>(`/resources/${id(resourceId)}/collection`, 'DELETE'),
     projects: async () => (await registry<{ projects: Project[] }>('/projects')).projects,
     /** Searches the Current Versions, of every dbt project or of one. */
     search: async (query: string, project?: string) =>

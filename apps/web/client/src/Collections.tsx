@@ -6,6 +6,7 @@ import {
   Box,
   Button,
   CheckIcon,
+  Code,
   ColorSwatch,
   DataList,
   EmptyState,
@@ -23,8 +24,8 @@ import {
   Title,
 } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type FormEvent } from 'react';
-import { type Api, type Collection, type CollectionFields, type Group as WorkspaceGroup, type LogEntry, ServiceError } from './api.js';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { type Api, type Collection, type CollectionFields, type Group as WorkspaceGroup, type LogEntry, type Resource, ServiceError } from './api.js';
 import { formatMoment } from './format.js';
 import { BackIcon } from './icons.js';
 import { Detail } from './Node.js';
@@ -54,7 +55,7 @@ function VisibilityBadge({ visibility }: { visibility: CollectionVisibility }) {
 }
 
 /** The Collections the User sees, and the way to create one; for everyone outside the Data Team, the start page. */
-export function CollectionsPage({ api }: { api: Api }) {
+export function CollectionsPage({ api, dataTeam }: { api: Api; dataTeam: boolean }) {
   const collections = useQuery({ queryKey: ['collections'], queryFn: api.collections });
   const [creating, setCreating] = useState(false);
   return (
@@ -76,6 +77,7 @@ export function CollectionsPage({ api }: { api: Api }) {
       ) : (
         <CollectionList collections={collections.data} onCreate={() => setCreating(true)} />
       )}
+      {dataTeam && collections.isSuccess && <WaitingResources api={api} collections={collections.data} />}
       <CollectionForm api={api} opened={creating} onClose={() => setCreating(false)} />
     </Stack>
   );
@@ -119,10 +121,142 @@ export function CollectionList({ collections, onCreate }: { collections: Collect
   );
 }
 
+/**
+ * The Resources the dbt projects expose that are in no Collection yet, each with the choice of a
+ * Collection to add it to; for the Data Team only (FR-SR-35, FR-CO-14).
+ */
+function WaitingResources({ api, collections }: { api: Api; collections: Collection[] }) {
+  const queryClient = useQueryClient();
+  const waiting = useQuery({ queryKey: ['waiting'], queryFn: api.waitingResources });
+  const add = useMutation({
+    mutationFn: ({ resourceId, collectionId }: { resourceId: string; collectionId: string }) => api.addToCollection(resourceId, collectionId),
+    onSuccess: (_resource, { collectionId }) =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['waiting'] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-resources', collectionId] }),
+        queryClient.invalidateQueries({ queryKey: ['collection-log', collectionId] }),
+      ]),
+  });
+  const choices = collections.map((collection) => ({ value: collection.id, label: collection.name }));
+  return (
+    <Stack gap="sm">
+      <Title order={2} size="h4">
+        Waiting for a Collection
+      </Title>
+      <Text size="sm" c="dimmed" maw={720}>
+        Tables the dbt projects expose to Data Hub with the tag <Code>datahub</Code>, in no Collection yet. Only the Data Team sees them.
+      </Text>
+      {add.isError && <Problem title="Not added">{add.error.message}</Problem>}
+      {waiting.isPending ? (
+        <Loading rows={2} />
+      ) : waiting.isError ? (
+        <Problem title="catalogue did not answer">{waiting.error.message}</Problem>
+      ) : (
+        <ResourceList
+          resources={waiting.data}
+          linkNodes
+          empty="Every exposed table is in a Collection."
+          action={(resource) => (
+            <Select
+              aria-label={`Add ${resource.displayName} to a Collection`}
+              placeholder="Add to a Collection"
+              size="sm"
+              w={220}
+              searchable
+              data={choices}
+              value={null}
+              disabled={add.isPending || choices.length === 0}
+              onChange={(collectionId) => collectionId && add.mutate({ resourceId: resource.id, collectionId })}
+            />
+          )}
+        />
+      )}
+    </Stack>
+  );
+}
+
+/** Resources as a list: Display Name, kind, Key, description and where they come from. */
+export function ResourceList({
+  resources,
+  empty,
+  action,
+  linkNodes = false,
+}: {
+  resources: Resource[];
+  /** What shows when there are none. */
+  empty: ReactNode;
+  /** A control per Resource, such as adding it to a Collection or removing it. */
+  action?: (resource: Resource) => ReactNode;
+  /** Links each to its Node, which only the Data Team may read. */
+  linkNodes?: boolean;
+}) {
+  if (resources.length === 0) {
+    return typeof empty === 'string' ? (
+      <Text size="sm" c="dimmed">
+        {empty}
+      </Text>
+    ) : (
+      empty
+    );
+  }
+  return (
+    <Stack gap={0}>
+      {resources.map((resource) => (
+        <Group key={resource.id} justify="space-between" align="flex-start" wrap="nowrap" gap="md" py="md" style={{ borderTop: '1px solid var(--mantine-color-gray-2)' }}>
+          <Box miw={0}>
+            <Group gap="xs" wrap="wrap">
+              {linkNodes ? (
+                <Anchor href={hrefFor({ page: 'node', uniqueId: resource.nodeId })} fw={600}>
+                  {resource.displayName}
+                </Anchor>
+              ) : (
+                <Text fw={600}>{resource.displayName}</Text>
+              )}
+              <Badge variant="light" color="teal" size="sm">
+                {resource.resourceType}
+              </Badge>
+              {resource.withdrawn && (
+                <Badge variant="outline" color="bordeaux" size="sm">
+                  Withdrawn
+                </Badge>
+              )}
+            </Group>
+            <Text size="xs" c="dimmed" mt={2} style={{ overflowWrap: 'anywhere' }}>
+              {resource.key}
+            </Text>
+            {resource.description && (
+              <Text size="sm" mt={4} lineClamp={2}>
+                {resource.description}
+              </Text>
+            )}
+            <Text size="xs" c="dimmed" mt={4}>
+              {resource.withdrawn
+                ? 'No exposure tagged datahub depends on it any more; it is held until one does again.'
+                : `Exposed by ${resource.exposures.join(', ')} in ${resource.projectName ?? `project ${resource.projectId}`}`}
+            </Text>
+          </Box>
+          {action?.(resource)}
+        </Group>
+      ))}
+    </Stack>
+  );
+}
+
 /** One Collection: what it is, who owns it and who sees it, its Resources and its history. */
-export function CollectionPage({ api, id }: { api: Api; id: string }) {
+export function CollectionPage({ api, id, dataTeam }: { api: Api; id: string; dataTeam: boolean }) {
   const queryClient = useQueryClient();
   const collection = useQuery({ queryKey: ['collection', id], queryFn: () => api.collection(id) });
+  const resources = useQuery({ queryKey: ['collection-resources', id], queryFn: () => api.collectionResources(id), enabled: collection.isSuccess });
+  const waiting = useQuery({ queryKey: ['waiting'], queryFn: api.waitingResources, enabled: dataTeam && collection.isSuccess });
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['collection-resources', id] }),
+      queryClient.invalidateQueries({ queryKey: ['waiting'] }),
+      queryClient.invalidateQueries({ queryKey: ['collection-log', id] }),
+    ]);
+  const add = useMutation({ mutationFn: (resourceId: string) => api.addToCollection(resourceId, id), onSuccess: refresh });
+  const remove = useMutation({ mutationFn: (resourceId: string) => api.removeFromCollection(resourceId), onSuccess: refresh });
+  const changing = add.error ?? remove.error;
   const log = useQuery({ queryKey: ['collection-log', id], queryFn: () => api.collectionLog(id), enabled: collection.isSuccess });
   const [editing, setEditing] = useState(false);
   const [dissolving, setDissolving] = useState(false);
@@ -153,7 +287,39 @@ export function CollectionPage({ api, id }: { api: Api; id: string }) {
         )
       ) : (
         <>
-          <CollectionView collection={collection.data} log={log.data} onEdit={() => setEditing(true)} onDissolve={() => setDissolving(true)} />
+          {changing && <Problem title="The Resources did not change">{changing.message}</Problem>}
+          <CollectionView
+            collection={collection.data}
+            log={log.data}
+            resources={resources.data}
+            linkNodes={dataTeam}
+            onEdit={() => setEditing(true)}
+            onDissolve={() => setDissolving(true)}
+            addResource={
+              dataTeam && (
+                <Select
+                  aria-label="Add a Resource"
+                  placeholder={waiting.data?.length === 0 ? 'No Resource is waiting' : 'Add a Resource'}
+                  size="sm"
+                  w={280}
+                  searchable
+                  data={(waiting.data ?? []).map((resource) => ({ value: resource.id, label: resource.displayName }))}
+                  value={null}
+                  disabled={add.isPending || !waiting.data?.length}
+                  onChange={(resourceId) => resourceId && add.mutate(resourceId)}
+                />
+              )
+            }
+            resourceAction={
+              dataTeam
+                ? (resource) => (
+                    <Button variant="subtle" color="red" size="xs" loading={remove.isPending && remove.variables === resource.id} onClick={() => remove.mutate(resource.id)}>
+                      Remove
+                    </Button>
+                  )
+                : undefined
+            }
+          />
           <CollectionForm api={api} opened={editing} onClose={() => setEditing(false)} collection={collection.data} />
           <Modal opened={dissolving} onClose={() => setDissolving(false)} title={`Dissolve ${collection.data.name}?`} centered>
             <Stack gap="lg">
@@ -179,11 +345,17 @@ export interface CollectionViewProps {
   collection: Collection;
   /** The history, once it is read. */
   log?: LogEntry[];
+  /** Its Resources, as far as the User sees them, once they are read. */
+  resources?: Resource[];
+  /** For the Data Team: the choice of a Resource to add, and a control per Resource to remove it. */
+  addResource?: ReactNode;
+  resourceAction?: (resource: Resource) => ReactNode;
+  linkNodes?: boolean;
   onEdit?: () => void;
   onDissolve?: () => void;
 }
 
-export function CollectionView({ collection, log, onEdit, onDissolve }: CollectionViewProps) {
+export function CollectionView({ collection, log, resources, addResource, resourceAction, linkNodes, onEdit, onDissolve }: CollectionViewProps) {
   return (
     <Stack gap="xl">
       <Stack gap="sm">
@@ -236,14 +408,32 @@ export function CollectionView({ collection, log, onEdit, onDissolve }: Collecti
         <Detail label="Created" value={formatMoment(collection.createdAt)} />
       </DataList>
       <Stack gap="sm">
-        <Title order={2} size="h4">
-          Resources
-        </Title>
-        <EmptyState
-          align="left"
-          title="No Resources yet"
-          description="The Data Team adds Resources from the Stacks. Once the Owner Unit publishes one, everyone who sees this Collection sees it too."
-        />
+        <Group justify="space-between" align="flex-end" gap="md">
+          <Title order={2} size="h4">
+            Resources
+          </Title>
+          {addResource}
+        </Group>
+        {resources === undefined ? (
+          <Loading rows={2} />
+        ) : (
+          <ResourceList
+            resources={resources}
+            action={resourceAction}
+            linkNodes={linkNodes}
+            empty={
+              collection.canManage ? (
+                <EmptyState
+                  align="left"
+                  title="No Resources yet"
+                  description="The Data Team adds Resources: tables the dbt projects expose to Data Hub with the tag datahub. Once the Owner Unit publishes one, everyone who sees this Collection sees it too."
+                />
+              ) : (
+                <EmptyState align="left" title="No published Resources yet" description="Its Resources show here once the Owner Unit publishes them." />
+              )
+            }
+          />
+        )}
       </Stack>
       <Stack gap="sm">
         <Title order={2} size="h4">

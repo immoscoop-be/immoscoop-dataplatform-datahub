@@ -86,13 +86,13 @@ function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; d
     case 'charts':
       return <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
     case 'collection':
-      return <CollectionPage api={api} id={route.id} />;
+      return <CollectionPage api={api} id={route.id} dataTeam={dataTeam} />;
     case 'collections':
-      return <CollectionsPage api={api} />;
+      return <CollectionsPage api={api} dataTeam={dataTeam} />;
     case 'node':
       return dataTeam ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastSearch} /> : <DataTeamOnly />;
     case 'search':
-      return dataTeam ? <SearchPage api={api} query={route.query} project={route.project} /> : <CollectionsPage api={api} />;
+      return dataTeam ? <SearchPage api={api} query={route.query} project={route.project} /> : <CollectionsPage api={api} dataTeam={false} />;
   }
 }
 
