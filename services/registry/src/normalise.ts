@@ -140,7 +140,9 @@ function nodeRow(uniqueId: string, node: Json, table: string | null): NodeRow {
     relation,
     description: string(node.description) ?? '',
     materialized,
-    tags: strings(node.tags),
+    // dbt-core repeats the tags of the config at the top; read both, so that an engine that keeps
+    // them in the config only, such as for an exposure, is understood too (DEC-SR-22).
+    tags: [...new Set([...strings(node.tags), ...strings(config.tags)])],
     filePath: string(node.original_file_path),
     checksum: string(object(node.checksum).checksum),
     // dbt keeps the meta of a Node in two places; its config wins, as it does in dbt itself.
