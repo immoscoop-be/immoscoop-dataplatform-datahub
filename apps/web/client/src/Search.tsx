@@ -124,7 +124,6 @@ export function ProjectList({ projects }: { projects: Project[] }) {
   );
 }
 
-/** The Nodes found, the best match first. */
 /** The Nodes found, the best match first; `within` names the dbt project the search was limited to. */
 export function SearchResults({ query, hits, within }: { query: string; hits: SearchHit[]; within?: string }) {
   const where = within ? ` in ${within}` : '';
