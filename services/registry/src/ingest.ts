@@ -1,7 +1,8 @@
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
-import { metadataAccessToken, readSecret } from '@datahub/google';
+import { metadataAccessToken, metadataIdToken, readSecret } from '@datahub/google';
 import { createArtifactSets } from './artifact-sets.js';
 import { createBucket } from './bucket.js';
+import { createCatalogue } from './catalogue.js';
 import type { RegistryDatabase } from './database.js';
 import { createDbtCloud } from './dbt-cloud.js';
 import { createProcessing, type Log } from './processing.js';
@@ -33,6 +34,7 @@ try {
       accountId: settings.accountId,
       token: lazy(() => readSecret(settings.dbtCloudToken, accessToken)),
     }),
+    catalogue: createCatalogue(settings.catalogueUrl, metadataIdToken()),
     log,
   });
   const result = await processing.runPending();

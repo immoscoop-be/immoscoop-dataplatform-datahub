@@ -2,7 +2,7 @@
  * A small dbt project in the shape of real Artifacts, for the tests: a source, a seed, a model built
  * on both, an ephemeral model, a snapshot, an exposure, four tests and an analysis that does not count.
  */
-export function sampleManifest(overrides: { generatedAt?: string; ordersDescription?: string } = {}) {
+export function sampleManifest(overrides: { generatedAt?: string; ordersDescription?: string; datahub?: boolean } = {}) {
   const model = (name: string, extra: Record<string, unknown> = {}) => ({
     resource_type: 'model',
     name,
@@ -116,7 +116,34 @@ export function sampleManifest(overrides: { generatedAt?: string; ordersDescript
         description: 'The sales dashboard.',
         depends_on: { nodes: ['model.immoscoop_dataplatform_sql.customers', 'metric.immoscoop_dataplatform_sql.revenue'] },
       },
+      // Exposures for Data Hub (DEC-SR-22), when asked: one per table with a label, one for several
+      // tables without, and one on an ephemeral model only.
+      ...(overrides.datahub ? datahubExposures() : {}),
     },
+  };
+}
+
+function datahubExposures() {
+  const exposure = (name: string, nodes: string[], extra: Record<string, unknown> = {}) => ({
+    resource_type: 'exposure',
+    name,
+    package_name: 'immoscoop_dataplatform_sql',
+    type: 'application',
+    owner: { name: 'Data Team', email: 'datahub-datateam@thenextimmoscoop.be' },
+    tags: ['datahub'],
+    description: '',
+    depends_on: { nodes },
+    ...extra,
+  });
+  return {
+    'exposure.immoscoop_dataplatform_sql.datahub_orders': exposure('datahub_orders', ['model.immoscoop_dataplatform_sql.orders'], { label: 'Orders' }),
+    'exposure.immoscoop_dataplatform_sql.datahub_marts': exposure('datahub_marts', [
+      'model.immoscoop_dataplatform_sql.orders',
+      'model.immoscoop_dataplatform_sql.customers',
+      'seed.immoscoop_dataplatform_sql.countries',
+      'metric.immoscoop_dataplatform_sql.revenue',
+    ], { label: 'All the marts' }),
+    'exposure.immoscoop_dataplatform_sql.datahub_lines': exposure('datahub_lines', ['model.immoscoop_dataplatform_sql.order_lines'], { label: 'Order lines' }),
   };
 }
 

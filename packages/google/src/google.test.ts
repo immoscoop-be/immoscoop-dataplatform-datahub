@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { googleApiError, metadataAccessToken, readSecret } from './index.js';
+import { googleApiError, metadataAccessToken, metadataIdToken, readSecret } from './index.js';
 
 describe('metadataAccessToken', () => {
   it('asks the metadata server once per set of scopes until the token nearly expires', async () => {
@@ -14,6 +14,24 @@ describe('metadataAccessToken', () => {
     time += 3550 * 1000;
     expect(await token(['a'])).toBe('t2');
     expect(await token(['b'])).toBe('t3');
+  });
+});
+
+describe('metadataIdToken', () => {
+  it('asks the metadata server for an ID token per audience, with the address of the service account in it', async () => {
+    const asked: string[] = [];
+    let time = 0;
+    const token = metadataIdToken(async (url, init) => {
+      asked.push(String(url));
+      expect(new Headers(init?.headers).get('metadata-flavor')).toBe('Google');
+      return new Response(`id-${asked.length}\n`);
+    }, () => time);
+    expect(await token('https://catalogue.test')).toBe('id-1');
+    expect(await token('https://catalogue.test')).toBe('id-1');
+    time += 51 * 60 * 1000;
+    expect(await token('https://catalogue.test')).toBe('id-2');
+    expect(asked[0]).toBe('http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity?audience=https%3A%2F%2Fcatalogue.test&format=full');
+    await expect(metadataIdToken(async () => new Response('', { status: 404 }))('x')).rejects.toThrow('The metadata server gave no ID token: 404');
   });
 });
 

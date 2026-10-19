@@ -49,6 +49,8 @@ export interface NormalisedSet {
   columns: ColumnRow[];
   edges: EdgeRow[];
   tests: TestRow[];
+  /** The `label` of every exposure that has one, by unique ID; not stored, but handed to catalogue (TR-AR-08). */
+  labels: Record<string, string>;
 }
 
 /** The kinds of Node in `manifest.nodes`; sources and exposures have their own sections. */
@@ -99,6 +101,14 @@ export function normalise(manifest: unknown, catalog: unknown): NormalisedSet {
       return row && known.has(row.nodeId) ? [row] : [];
     });
 
+  const labels: Record<string, string> = {};
+  for (const [id, node] of exposures) {
+    const label = string(node.label)?.trim();
+    if (label) {
+      labels[id] = label;
+    }
+  }
+
   return {
     projectName: string(metadata.project_name),
     dbtVersion: string(metadata.dbt_version),
@@ -107,6 +117,7 @@ export function normalise(manifest: unknown, catalog: unknown): NormalisedSet {
     columns,
     edges,
     tests,
+    labels,
   };
 }
 

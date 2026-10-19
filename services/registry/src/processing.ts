@@ -1,7 +1,9 @@
 import type { ArtifactSets, ClaimedSet } from './artifact-sets.js';
 import type { Bucket } from './bucket.js';
+import type { Catalogue } from './catalogue.js';
 import type { DbtCloud } from './dbt-cloud.js';
-import { normalise } from './normalise.js';
+import { exposedTables } from './exposed.js';
+import { type NormalisedSet, normalise } from './normalise.js';
 
 /** Structured logging, as pino offers it. */
 export interface Log {
@@ -13,6 +15,8 @@ export interface ProcessingOptions {
   sets: Pick<ArtifactSets, 'claimNext' | 'save' | 'fail'>;
   bucket: Bucket;
   dbtCloud: Pick<DbtCloud, 'artifact'>;
+  /** Told the exposed tables of every new Current Version (TR-AR-08); left out in tests that do not need it. */
+  catalogue?: Catalogue;
   log: Log;
 }
 
@@ -21,7 +25,29 @@ export interface ProcessingOptions {
  * normalises them and saves them as the Current Version (TR-AR-04). A set that fails gets its reason
  * and the job goes on with the next one.
  */
-export function createProcessing({ sets, bucket, dbtCloud, log }: ProcessingOptions) {
+export function createProcessing({ sets, bucket, dbtCloud, catalogue, log }: ProcessingOptions) {
+  /**
+   * Tells catalogue every table the exposures tagged `datahub` of the project depend on. A failure is
+   * logged and does not fail the set: the next run of the project tells the whole state again.
+   */
+  async function tellCatalogue(set: ClaimedSet, normalised: NormalisedSet): Promise<void> {
+    if (!catalogue) {
+      return;
+    }
+    const { tables, empty } = exposedTables(normalised);
+    const about = { runId: set.runId, projectId: set.projectId };
+    if (empty.length > 0) {
+      log.info({ ...about, exposures: empty }, `Exposures tagged datahub that depend on no table: ${empty.join(', ')}`);
+    }
+    try {
+      await catalogue.resources({ projectId: set.projectId, projectName: normalised.projectName, runId: set.runId, tables });
+      log.info({ ...about, tables: tables.length }, `catalogue told the ${tables.length} exposed tables`);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      log.error({ ...about, err: error }, `catalogue was not told the exposed tables: ${reason}`);
+    }
+  }
+
   /**
    * A file of the run from the bucket; the first time from dbt Cloud, stored in the bucket byte for
    * byte, so a run processed again no longer depends on dbt Cloud.
@@ -56,6 +82,9 @@ export function createProcessing({ sets, bucket, dbtCloud, log }: ProcessingOpti
         { runId: set.runId, projectId: set.projectId, nodes: normalised.nodes.length, columns: normalised.columns.length, current },
         current ? 'Artifact Set processed and made current' : 'Artifact Set processed; a later run is current',
       );
+      if (current) {
+        await tellCatalogue(set, normalised);
+      }
       return true;
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
