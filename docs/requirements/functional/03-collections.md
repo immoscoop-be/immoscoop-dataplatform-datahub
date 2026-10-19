@@ -6,7 +6,7 @@
 | Type | Working document |
 | Tags | context, decision, governance |
 | Area | Tooling, Technical |
-| Status | Specified; creating and managing Collections implemented; Resources in a Collection follow |
+| Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
 | Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)) |
@@ -64,7 +64,7 @@ The "muted" palette by Paul Tol is designed for qualitative series: the colours 
 ## Flow
 
 1. **Create.** Anyone creates a Collection, with a name, description, colour, optionally an icon, an Owner Unit from their own groups, and private or public.
-2. **Add Resources.** The Data Team adds Resources from the Stacks. With that, the Data Team makes them available to the Owner: step one of the Release.
+2. **Add Resources.** The Data Team adds Resources, which come from the exposures in the dbt projects ([DEC-SR-22](04-stacks-and-resources.md#dec-sr-22)). With that, the Data Team makes them available to the Owner: step one of the Release.
 3. **Publish.** The Owner publishes the Resources, and thereby confirms them. They are then visible to everyone who sees the Collection: in a public Collection, the whole company.
 4. **Manage.** The Owner Unit and the Data Team change the fields, hand the Collection to another Owner Unit, or switch it between private and public.
 5. **Remove Resources.** The Data Team can take a Resource out of the Collection again.
@@ -121,14 +121,14 @@ The Owner is required: exactly one Owner Unit, a Google group following the [con
 <a id="fr-co-07"></a>
 ### FR-CO-07 · A Resource is in at most one Collection
 
-**Status:** Specified · **Confluence:** CO-07
+**Status:** Implemented · **Confluence:** CO-07
 
 A Resource is in at most one Collection. Adding a Resource to a Collection makes it available to the Owner of that Collection. A Resource without a Collection has no Owner, and so cannot go beyond Described.
 
 <a id="fr-co-08"></a>
 ### FR-CO-08 · Add or remove, never move
 
-**Status:** Specified · **Confluence:** CO-08
+**Status:** Implemented · **Confluence:** CO-08
 
 Resources are only added or removed; moving does not exist. Whoever wants a Resource in another Collection removes it and adds it again. On removal it loses its Owner and drops to Described; in the new Collection, the new Owner confirms it again.
 
@@ -142,14 +142,14 @@ The Owner Unit of a Collection can be changed. The existing Confirmations of its
 <a id="fr-co-10"></a>
 ### FR-CO-10 · Only an empty Collection can be dissolved
 
-**Status:** Specified · **Confluence:** CO-10
+**Status:** Implemented · **Confluence:** CO-10
 
 A Collection can only be dissolved when it is empty.
 
 <a id="fr-co-11"></a>
 ### FR-CO-11 · Every change is logged, append-only
 
-**Status:** Specified · **Confluence:** CO-11
+**Status:** Implemented · **Confluence:** CO-11
 
 Every change goes into the Log and is kept append-only: creating, changing fields, changing Owner, adding and removing Resources, and dissolving.
 
@@ -170,7 +170,7 @@ The members of the Owner Unit of a Collection and the members of the Role Group 
 <a id="fr-co-14"></a>
 ### FR-CO-14 · Only the Data Team adds and removes Resources
 
-**Status:** Specified
+**Status:** Implemented
 
 Only members of the Role Group of the Data Team add Resources to a Collection and remove them, also in a Collection whose Owner Unit they are not in.
 

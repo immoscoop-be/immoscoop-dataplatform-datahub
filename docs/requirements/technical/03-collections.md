@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Collections](../functional/03-collections.md) |
-| Status | Creating, reading, managing and dissolving Collections implemented, with their Log; Resources in a Collection follow |
+| Status | Implemented: Collections, their Log, and their Resources ([Stacks and resources](04-stacks-and-resources.md)) |
 | Source of truth | This file |
 
 How Collections are kept and guarded, in the service [catalogue](../../architecture/services/catalogue.md), with the Groups of the User from [identity](../../architecture/services/identity.md).
@@ -41,7 +41,7 @@ Every route needs an Access Token. catalogue decides from the token alone: the `
 
 A User sees a Collection when it is public, when its Owner Unit is among the groups of their token, or when they have the role `datateam`. A Collection someone does not see, or that is dissolved, is answered with `404`, the same as one that never existed ([FR-CO-17](../functional/03-collections.md#fr-co-17)). Changing or dissolving a Collection someone sees but does not manage is answered with `403`.
 
-Dissolving does not yet check that the Collection is empty ([FR-CO-10](../functional/03-collections.md#fr-co-10)): no Collection holds Resources yet, and the check comes with them.
+Dissolving a Collection that still holds Resources, withdrawn ones included, is refused with `409 not_empty` ([FR-CO-10](../functional/03-collections.md#fr-co-10)).
 
 <a id="tr-co-03"></a>
 ### TR-CO-03 · The Owner Unit is chosen from the groups identity reads
@@ -59,7 +59,7 @@ When a Collection is created, or handed to another Owner Unit, catalogue asks id
 
 The table `collection_log` holds the Log Entries of Collections: the Log ID, the Collection, the parameters as JSON, the actor by fixed Google ID with their name at that moment, and the timestamp. A Log Entry is written in the same transaction as the change it records. A trigger refuses every update and delete of the table, also by the service itself.
 
-The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-catalogue.md): created, a field changed, the Owner Unit changed, made public or private, dissolved. catalogue builds the text from the template when the Log is read, and returns it with the Log ID and the parameters. The entries for adding and removing Resources, `COL-030` and `COL-031`, come with the Resources.
+The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-catalogue.md): created, a field changed, the Owner Unit changed, made public or private, dissolved. catalogue builds the text from the template when the Log is read, and returns it with the Log ID and the parameters. Adding and removing a Resource writes `COL-006` or `COL-007` in the Log of the Collection, and `COL-030` or `COL-031` in the Log of the Resource ([TR-SR-04](04-stacks-and-resources.md#tr-sr-04)).
 
 ## Open points
 

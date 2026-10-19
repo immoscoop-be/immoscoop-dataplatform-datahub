@@ -9,8 +9,9 @@
 | Status | Specified; edge cases and open points remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Stacks en resources](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371078741) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17 |
+| Last decisions | 2026-10-19: a table becomes a Resource through an exposure with the tag `datahub` in its dbt project ([DEC-SR-22](#dec-sr-22) to [DEC-SR-27](#dec-sr-27)) |
 
-**In one sentence:** a Data Admin registers every Resource in Data Hub personally, with its full name in BigQuery, a Display Name and a Collection; from then on Data Hub knows it, assesses its Level and keeps its Log, until the Owner publishes it to the company, which can then find, read, query and discuss it.
+**In one sentence:** the Data Team makes a table a Resource with an exposure tagged `datahub` in its dbt project, and adds it to a Collection in Data Hub; from then on Data Hub knows it, assesses its Level and keeps its Log, until the Owner publishes it to everyone who sees the Collection, who can then find, read, query and discuss it.
 
 *Functional domain 4 of Data Hub. Overview of all domains: [Functional domains](README.md).*
 
@@ -18,10 +19,10 @@ In library terms: a book is only in the library once the librarian registers it.
 
 ## Decisions
 
-- <a id="dec-sr-01"></a>**DEC-SR-01** · There is one Stack: the dataset `dbt_prod_stacks`. Because a Resource is registered with its full name, more Stacks can be added later without changing the model.
-- <a id="dec-sr-02"></a>**DEC-SR-02** · The Registration in Data Hub is the index. Being in a Stack is necessary, because the service account of Data Hub can only read there, but it is not enough: a view only exists for Data Hub once a Data Admin registers it. This replaces the earlier decision "the Stacks are the index".
-- <a id="dec-sr-03"></a>**DEC-SR-03** · Only a Data Admin registers Resources: a member of the Role Group of the Data Team from [User management](02-user-management.md). At Registration, the Data Admin chooses the Collection straight away.
-- <a id="dec-sr-04"></a>**DEC-SR-04** · A Resource has two identities: a Key, the full name `project.dataset.table`, and a Display Name, readable and unique, that the Data Admin chooses.
+- <a id="dec-sr-01"></a>**DEC-SR-01** · There is one Stack: the dataset `dbt_prod_stacks`. Because a Resource is registered with its full name, more Stacks can be added later without changing the model. *Note of 2026-10-19: a Resource no longer has to be in a Stack ([DEC-SR-23](#dec-sr-23)).*
+- <a id="dec-sr-02"></a>**DEC-SR-02** · The Registration in Data Hub is the index. Being in a Stack is necessary, because the service account of Data Hub can only read there, but it is not enough: a view only exists for Data Hub once a Data Admin registers it. This replaces the earlier decision "the Stacks are the index". *Note of 2026-10-19: replaced by [DEC-SR-22](#dec-sr-22) and [DEC-SR-23](#dec-sr-23): the exposures in the dbt projects are the index.*
+- <a id="dec-sr-03"></a>**DEC-SR-03** · Only a Data Admin registers Resources: a member of the Role Group of the Data Team from [User management](02-user-management.md). At Registration, the Data Admin chooses the Collection straight away. *Note of 2026-10-19: replaced by [DEC-SR-22](#dec-sr-22) and [DEC-SR-27](#dec-sr-27): the Data Team registers through the dbt project, and chooses the Collection afterwards in Data Hub.*
+- <a id="dec-sr-04"></a>**DEC-SR-04** · A Resource has two identities: a Key, the full name `project.dataset.table`, and a Display Name, readable and unique, that the Data Admin chooses. *Note of 2026-10-19: the Display Name comes from the exposure ([DEC-SR-24](#dec-sr-24)).*
 - <a id="dec-sr-05"></a>**DEC-SR-05** · At Registration, the Level is derived, and it is at most 2. A new Resource is not yet published, and therefore only visible to the Data Team and to the Owner of its Collection.
 - <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on Publication, not on the Level. Publishing is a deliberate switch that the Owner flips. That way, a Resource does not disappear for those who use it every time the Level briefly drops. *Note of 2026-10-19: a published Resource is visible to everyone who sees its Collection, the whole company only when the Collection is public ([DEC-CO-12](03-collections.md#dec-co-12)).*
 - <a id="dec-sr-07"></a>**DEC-SR-07** · The first Publication is only possible from Described, and is at once the first Confirmation: with it, the Resource rises to Confirmed.
@@ -30,6 +31,12 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-10"></a>**DEC-SR-10** · Search across names, descriptions and Log texts happens in Postgres itself: full-text search, complemented by trigrams for typos and half-remembered names. Semantic search with pgvector may follow later. A separate search engine is not needed.
 - <a id="dec-sr-11"></a>**DEC-SR-11** · At Registration, Data Hub stores a Fingerprint of the Resource, as the basis for later comparisons.
 - <a id="dec-sr-12"></a>**DEC-SR-12** · Every Registration sends a message to the Message Centre of the Data Admins.
+- <a id="dec-sr-22"></a>**DEC-SR-22** · A table becomes a Resource through its dbt project: every table that an exposure with the tag `datahub` depends on, in the Current Version of a dbt project Data Hub follows, is a Resource. Registering is merging such an exposure, so the review of the dbt project is the review of the Registration, and the project itself shows what Data Hub exposes. Data Hub keeps no list of its own to type into. This replaces [DEC-SR-02](#dec-sr-02) and the Registration by a Data Admin in Data Hub of [DEC-SR-03](#dec-sr-03).
+- <a id="dec-sr-23"></a>**DEC-SR-23** · The table does not have to be in a Stack: the exposure is enough. Every model, seed, snapshot or source the exposure depends on counts, as long as it is a table or view in BigQuery; an ephemeral model is not. This replaces the requirement of a Stack in [DEC-SR-01](#dec-sr-01) and [DEC-SR-02](#dec-sr-02). How Data Hub reads the data of these tables, for the Preview and for queries, is still open ([OP-SR-10](#op-sr-10)).
+- <a id="dec-sr-24"></a>**DEC-SR-24** · How the exposures are written is up to how dbt is used: one exposure per Resource is recommended, and one exposure for several tables works too. The Display Name of a Resource is the `label` of an exposure that depends on that table alone, and otherwise the name of its Node. This replaces the Display Name chosen by a Data Admin of [DEC-SR-04](#dec-sr-04); the Key stays the full name of the table.
+- <a id="dec-sr-25"></a>**DEC-SR-25** · Data Hub ignores the `owner` and the `maturity` of an exposure: the Owner comes from the Collection, the Level from the maturity ladder. Because dbt requires an `owner`, an exposure for Data Hub names the Data Team.
+- <a id="dec-sr-26"></a>**DEC-SR-26** · A Resource on which no exposure with the tag `datahub` depends any more is withdrawn, not deleted. Only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn; it keeps its Collection, its Confirmations and its Log, and comes back as it was when an exposure depends on it again. A refactoring or a typo in the dbt project thus costs nothing.
+- <a id="dec-sr-27"></a>**DEC-SR-27** · A new Resource has no Collection: only the Data Team sees it until it adds the Resource to a Collection in Data Hub ([FR-CO-14](03-collections.md#fr-co-14)). The Collection is chosen in Data Hub, never in the dbt project, because a Collection exists only in Data Hub ([DEC-CO-02](03-collections.md#dec-co-02)).
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -38,8 +45,8 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 | Term | Meaning |
 | --- | --- |
 | Stack | A dataset in BigQuery with mart views that the Data Team releases, as authorized views onto the datasets behind them. Today there is one: `dbt_prod_stacks` |
-| Resource | A registered view from a Stack: one book on the shelves |
-| Key | The full name of the view in BigQuery, `project.dataset.table` |
+| Resource | A table of a dbt project that an exposure with the tag `datahub` depends on: one book on the shelves |
+| Key | The full name of the table in BigQuery, `project.dataset.table` |
 | Display Name | The readable, unique name of the Resource, as business sees it, for example "Agency purity" |
 | Data Admin | A member of the Role Group of the Data Team, who registers and manages Resources |
 | Publication | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public |
@@ -49,14 +56,16 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 
 ## Flow: registering a Resource
 
-1. **Register.** In the admin of Data Hub, the Data Admin enters the full name and chooses a Display Name and a Collection.
-2. **Check.** Data Hub checks that the view lies in a Stack and appears as a Node in the current Artifacts of the [Artifact registry](01-artifact-registry.md).
-3. **Link.** The Resource is linked to its Node in the manifest and the catalog.
-4. **Describe.** The description of the view and its columns comes from the Artifacts.
+1. **Expose.** In the dbt project, the Data Team adds an exposure with the tag `datahub` that depends on the table, through a reviewed pull request ([DEC-SR-22](#dec-sr-22)).
+2. **Run.** The next run of the Source Job of that project makes the exposure part of its Current Version in the [Artifact registry](01-artifact-registry.md).
+3. **Register.** Data Hub finds the table under the exposure and registers it as a Resource, linked to its Node, with its Key and its Display Name.
+4. **Describe.** The description of the table and its columns comes from the Artifacts.
 5. **Assess.** The Level is derived: Available if the description is incomplete, Described if it is complete. Never higher.
 6. **Take a Fingerprint.** Data Hub stores the hashes of structure, types and descriptions.
-7. **Open the Log.** The first Log Entries are written: the Registration, the Collection and the Level.
+7. **Open the Log.** The first Log Entries are written: the Registration and the Level.
 8. **Notify.** A message goes to the Message Centre of the Data Admins.
+9. **Assign.** The Data Team adds the Resource to a Collection in Data Hub ([DEC-SR-27](#dec-sr-27)); the Owner of that Collection then takes it from there.
+10. **Withdraw.** When no exposure with the tag `datahub` depends on the table any more, its Resource is withdrawn and held ([DEC-SR-26](#dec-sr-26)).
 
 ## Flow: publishing a Resource
 
@@ -105,42 +114,48 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 <a id="fr-sr-01"></a>
 ### FR-SR-01 · Only Data Admins register, rename and deregister
 
-**Status:** Specified · **Confluence:** SR-01
+**Status:** Withdrawn · **Confluence:** SR-01
 
 Only Data Admins can register Resources, change their name and deregister them.
+
+*Withdrawn on 2026-10-19: registering, renaming and deregistering happen in the dbt project, through exposures ([FR-SR-32](#fr-sr-32), [DEC-SR-22](#dec-sr-22)).*
 
 <a id="fr-sr-02"></a>
 ### FR-SR-02 · A Registration needs a full name, a Display Name and a Collection
 
-**Status:** Specified · **Confluence:** SR-02
+**Status:** Withdrawn · **Confluence:** SR-02
 
 A Registration requires three things: the full name, a Display Name and a Collection.
+
+*Withdrawn on 2026-10-19: the full name and the Display Name come from the dbt project ([FR-SR-32](#fr-sr-32), [FR-SR-33](#fr-sr-33)), and the Collection is chosen afterwards ([FR-SR-35](#fr-sr-35)).*
 
 <a id="fr-sr-03"></a>
 ### FR-SR-03 · The view must be in a Stack and in the current Artifacts
 
-**Status:** Specified · **Confluence:** SR-03
+**Status:** Withdrawn · **Confluence:** SR-03
 
 The view must lie in a Stack on which the service account of Data Hub has read access, and must appear as a Node in the current Artifacts. Otherwise the Registration is refused, with the reason.
+
+*Withdrawn on 2026-10-19: a Resource no longer has to be in a Stack, and being in the Current Version follows from the exposure ([FR-SR-32](#fr-sr-32), [DEC-SR-23](#dec-sr-23)).*
 
 <a id="fr-sr-04"></a>
 ### FR-SR-04 · The Key is unique
 
-**Status:** Specified · **Confluence:** SR-04
+**Status:** Implemented · **Confluence:** SR-04
 
 The Key is unique: a view can only be registered once.
 
 <a id="fr-sr-05"></a>
 ### FR-SR-05 · The Display Name is required, unique and can be changed
 
-**Status:** Specified · **Confluence:** SR-05
+**Status:** Implemented · **Confluence:** SR-05
 
 The Display Name is required and unique. It can be changed later; every change goes into the Log.
 
 <a id="fr-sr-06"></a>
 ### FR-SR-06 · The description comes from the Artifacts
 
-**Status:** Specified · **Confluence:** SR-06
+**Status:** Implemented · **Confluence:** SR-06
 
 The description comes from the Artifacts and is not retyped in Data Hub.
 
@@ -175,14 +190,14 @@ Every Registration sends a message to the Message Centre of the Data Admins.
 <a id="fr-sr-11"></a>
 ### FR-SR-11 · Structure of a Log Entry
 
-**Status:** Specified · **Confluence:** SR-11
+**Status:** Implemented · **Confluence:** SR-11
 
 A Log Entry consists of a Log ID, the Resource, the parameters as JSON, the actor (a person or Data Hub itself) and the timestamp. Free text is never stored.
 
 <a id="fr-sr-12"></a>
 ### FR-SR-12 · Log IDs come from a fixed catalogue
 
-**Status:** Specified · **Confluence:** SR-12
+**Status:** Implemented · **Confluence:** SR-12
 
 The Log IDs are in a fixed catalogue (see the [Log catalogue](log-catalogue.md)). A new kind of Log Entry means a new Log ID, not free text.
 
@@ -196,7 +211,7 @@ The built texts of names, descriptions and Log Entries are searchable, by words 
 <a id="fr-sr-14"></a>
 ### FR-SR-14 · Deregistration keeps the Log and history
 
-**Status:** Specified · **Confluence:** SR-14
+**Status:** Implemented · **Confluence:** SR-14
 
 A deregistered Resource disappears from the index and from its Collection. Its Log and history are kept.
 
@@ -321,6 +336,34 @@ A Signal goes to the Owner and the Data Team, and they can turn it into an Anoma
 
 Who sees a Resource depends on its Publication and on its Collection. Not published: the Data Team and the members of the Owner Unit of its Collection. Published: everyone who sees its Collection ([FR-CO-17](03-collections.md#fr-co-17)), which for a public Collection is the whole company. A Resource without a Collection is visible only to the Data Team.
 
+<a id="fr-sr-32"></a>
+### FR-SR-32 · A table is registered through an exposure with the tag datahub
+
+**Status:** Implemented
+
+Every table, view or seed that an exposure with the tag `datahub` depends on, in the Current Version of a dbt project Data Hub follows, is a Resource, once: several exposures on one table make one Resource. A Node that builds nothing in BigQuery, such as an ephemeral model, is not. Data Hub registers a new one when the run that brings its exposure becomes the Current Version, and writes the Registration in its Log.
+
+<a id="fr-sr-33"></a>
+### FR-SR-33 · The Display Name comes from the exposure
+
+**Status:** Implemented
+
+The Display Name is the `label` of an exposure that depends on that table alone, and otherwise the name of its Node. When another Resource already has that Display Name, the name of the dbt project is added in brackets. A change of the label in the dbt project renames the Resource, and the change goes into its Log.
+
+<a id="fr-sr-34"></a>
+### FR-SR-34 · A Resource without exposure is withdrawn and held
+
+**Status:** Implemented
+
+When the Current Version of its dbt project has no exposure with the tag `datahub` on the table any more, the Resource is withdrawn: only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn. It keeps its Collection and its Log, and comes back as it was when an exposure depends on it again. Both go into its Log.
+
+<a id="fr-sr-35"></a>
+### FR-SR-35 · A new Resource waits for a Collection
+
+**Status:** Implemented
+
+A new Resource has no Collection. Until the Data Team adds it to one, only the Data Team sees it, in a list of Resources without a Collection.
+
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
@@ -340,16 +383,20 @@ Proposals to confirm.
 <a id="ec-sr-01"></a>
 ### EC-SR-01 · The view is not (yet) in the Artifacts
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 The Registration is refused. After the next prod run, the Data Admin can try again.
+
+*Withdrawn on 2026-10-19: a Registration starts from the Artifacts themselves, so this cannot happen any more ([FR-SR-32](#fr-sr-32)).*
 
 <a id="ec-sr-02"></a>
 ### EC-SR-02 · A registered view disappears from the Artifacts
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 The Resource gets a Log Entry and is flagged as missing. It is not deregistered automatically; the Data Admin decides.
+
+*Withdrawn on 2026-10-19: replaced by [FR-SR-34](#fr-sr-34): the Resource is withdrawn and held, and comes back when its exposure does.*
 
 <a id="ec-sr-03"></a>
 ### EC-SR-03 · A view is renamed in BigQuery
@@ -358,12 +405,16 @@ The Resource gets a Log Entry and is flagged as missing. It is not deregistered 
 
 The Data Admin links the new full name to the existing Resource, so that it keeps its ID, Log and Confirmations.
 
+*Note of 2026-10-19: with Registration through exposures, the Resource of the old name is withdrawn and the new name becomes a new Resource without Collection ([FR-SR-34](#fr-sr-34), [FR-SR-35](#fr-sr-35)); linking the two is still to be built.*
+
 <a id="ec-sr-04"></a>
 ### EC-SR-04 · A second Stack is added
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 The service account of Data Hub gets read access to it, via Terraform. After that, views from that Stack can be registered like any other.
+
+*Withdrawn on 2026-10-19: a Resource no longer has to be in a Stack ([DEC-SR-23](#dec-sr-23)); reading its data is [OP-SR-10](#op-sr-10).*
 
 ## Out of scope
 
@@ -371,7 +422,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 
 ## Open points
 
-- [ ] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources.
+- [ ] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](#dec-sr-24)), so the convention applies to those labels.*
 - [ ] <a id="op-sr-02"></a>**OP-SR-02** · Complete the [Log catalogue](log-catalogue.md), with the Log IDs from the other domains.
 - [ ] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered.
 - [ ] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md).
@@ -380,6 +431,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview.
 - [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab.
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
+- [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
 
 ## Builds on
 
