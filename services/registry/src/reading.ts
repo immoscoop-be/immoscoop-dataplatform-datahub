@@ -132,7 +132,7 @@ export function createReading(db: Kysely<RegistryDatabase>) {
      * descriptions and columns (FR-AR-10). An exact name comes first, then names that start with
      * the words, then the closest.
      */
-    async search(query: string, options: { type?: string; limit: number }): Promise<SearchHit[]> {
+    async search(query: string, options: { type?: string; project?: string; limit: number }): Promise<SearchHit[]> {
       const words = sql`websearch_to_tsquery('simple', ${query})`;
       const escaped = query.replace(/[\\%_]/g, (character) => `\\${character}`);
       const pattern = `%${escaped}%`;
@@ -145,6 +145,7 @@ export function createReading(db: Kysely<RegistryDatabase>) {
           ) as matched_columns
         from nodes n join projects p on p.current_set_id = n.set_id
         where (${options.type ?? null}::text is null or n.resource_type = ${options.type ?? null})
+          and (${options.project ?? null}::bigint is null or p.project_id = ${options.project ?? null}::bigint)
           and (
             n.name ilike ${pattern}
             or n.name % ${query}

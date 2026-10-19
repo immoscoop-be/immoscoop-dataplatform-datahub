@@ -64,7 +64,7 @@ describe.skipIf(!url)('reading the registry', () => {
   });
 
   describe('search', () => {
-    const names = async (query: string, type?: string) => (await reading.search(query, { type, limit: 20 })).map((hit) => hit.name);
+    const names = async (query: string, type?: string, project?: string) => (await reading.search(query, { type, project, limit: 20 })).map((hit) => hit.name);
 
     it('puts the exact name first', async () => {
       const hits = await names('orders');
@@ -87,6 +87,16 @@ describe.skipIf(!url)('reading the registry', () => {
     it('filters on the kind of Node, and only looks at the Current Versions', async () => {
       expect((await names('orders', 'source')).sort()).toEqual(['orders', 'raw_orders']);
       expect(await names('retired')).toEqual([]);
+    });
+
+    it('filters on the dbt project', async () => {
+      const everywhere = await names('orders');
+      const inColleciones = await names('orders', undefined, '17121');
+      expect(inColleciones).toContain('orders');
+      expect(inColleciones.length).toBeLessThan(everywhere.length);
+      expect((await reading.search('orders', { project: '17121', limit: 20 })).every((hit) => hit.projectId === '17121')).toBe(true);
+      expect((await reading.search('orders', { project: '9367', limit: 20 })).every((hit) => hit.projectId === '9367')).toBe(true);
+      expect(await names('orders', undefined, '1')).toEqual([]);
     });
 
     it('takes the characters of a LIKE pattern literally', async () => {

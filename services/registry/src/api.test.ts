@@ -86,11 +86,12 @@ describe('the registry API', () => {
     expect((await call('GET', '/projects')).json()).toEqual({ projects: [] });
   });
 
-  it('searches with a text, a kind of Node and a limit within bounds', async () => {
-    const response = await call('GET', '/nodes?q=%20orders%20&type=source&limit=500');
+  it('searches with a text, a kind of Node, a dbt project and a limit within bounds', async () => {
+    const response = await call('GET', '/nodes?q=%20orders%20&type=source&project=17121&limit=500');
     expect(response.statusCode).toBe(200);
     expect(response.json().nodes[0].name).toBe('orders');
-    expect(asked).toEqual([{ search: 'orders', type: 'source', limit: 100 }]);
+    expect(asked).toEqual([{ search: 'orders', type: 'source', project: '17121', limit: 100 }]);
+    expect((await call('GET', '/nodes?q=orders&project=colleciones')).statusCode).toBe(400);
     expect((await call('GET', '/nodes?q=')).statusCode).toBe(400);
     expect((await call('GET', `/nodes?q=${'x'.repeat(201)}`)).statusCode).toBe(400);
     expect((await call('GET', '/nodes?q=orders&type=macro')).statusCode).toBe(400);
