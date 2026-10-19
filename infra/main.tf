@@ -85,12 +85,13 @@ locals {
     semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
-    # The web app signs Users in at its own address (DEC-PF-19); its page searches registry and
-    # shows the charts of semgraph.
+    # The web app signs Users in at its own address (DEC-PF-19); its page shows the Collections of
+    # catalogue, searches registry and shows the charts of semgraph.
     web = {
-      DATAHUB_WEB_URL      = local.urls["web"]
-      DATAHUB_REGISTRY_URL = local.urls["registry"]
-      DATAHUB_SEMGRAPH_URL = local.urls["semgraph"]
+      DATAHUB_WEB_URL       = local.urls["web"]
+      DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
+      DATAHUB_REGISTRY_URL  = local.urls["registry"]
+      DATAHUB_SEMGRAPH_URL  = local.urls["semgraph"]
     }
   }
 }

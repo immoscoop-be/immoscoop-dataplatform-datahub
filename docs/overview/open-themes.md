@@ -43,9 +43,9 @@ The Catalogue is layered. Whoever asks a question expects a chart or an action; 
 
 ### 2. Permissions and User/Group management
 
-- [ ] <a id="op-dh-22"></a>**OP-DH-22** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub.
+- [ ] <a id="op-dh-22"></a>**OP-DH-22** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub. *Note of 2026-10-19: who sees a Collection and its Resources is decided in [DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10) to [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12); the access axis remains open.*
 - [x] <a id="op-dh-23"></a>**OP-DH-23** · Decide who creates and manages Owner Units, and how people get into them: Workspace groups following a convention (see [User management](../requirements/functional/02-user-management.md)).
-- [ ] <a id="op-dh-24"></a>**OP-DH-24** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do.
+- [ ] <a id="op-dh-24"></a>**OP-DH-24** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).*
 - [ ] <a id="op-dh-25"></a>**OP-DH-25** · Work out the issuing, revoking and renewing of personal keys, the Library Cards.
 
 ### 3. The Promotion Loop

@@ -2,7 +2,7 @@ import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWTPayload
 import { describe, expect, it } from 'vitest';
 import { parseGoogleClient, readGoogleClient } from './google-client.js';
 import { createGoogleSignIn, SignInError } from './google-sign-in.js';
-import { applyNamingConvention } from './naming-convention.js';
+import { applyNamingConvention, ownDomainGroups } from './naming-convention.js';
 import { createWorkspace } from './workspace.js';
 
 const DOMAIN = 'thenextimmoscoop.be';
@@ -122,14 +122,19 @@ describe('createWorkspace', () => {
       const pages = parents[/member_key_id == '([^']+)'/.exec(query)?.[1] ?? ''] ?? [[]];
       const page = Number(searchParams.get('pageToken') ?? 0);
       return Response.json({
-        memberships: (pages[page] ?? []).map((id) => ({ group: `groups/${id}`, groupKey: { id: `${id}@${DOMAIN}` } })),
+        memberships: (pages[page] ?? []).map((id) => ({
+          group: `groups/${id}`,
+          groupKey: { id: `${id}@${DOMAIN}` },
+          ...(id === 'a' ? { displayName: ' Team A ' } : {}),
+        })),
         nextPageToken: page + 1 < pages.length ? String(page + 1) : undefined,
       });
     });
     await expect(workspace.groups(`jan@${DOMAIN}`)).resolves.toEqual([
-      { id: 'a', email: `a@${DOMAIN}` },
-      { id: 'b', email: `b@${DOMAIN}` },
-      { id: 'c', email: `c@${DOMAIN}` },
+      // The name Workspace shows, or else the address.
+      { id: 'a', email: `a@${DOMAIN}`, name: 'Team A' },
+      { id: 'b', email: `b@${DOMAIN}`, name: `b@${DOMAIN}` },
+      { id: 'c', email: `c@${DOMAIN}`, name: `c@${DOMAIN}` },
     ]);
     expect(asked[0]).toBe(`member_key_id == 'jan@${DOMAIN}'`);
     expect(asked).toHaveLength(5);
@@ -155,19 +160,21 @@ describe('createWorkspace', () => {
   });
 });
 
-describe('applyNamingConvention', () => {
-  it('keeps only datahub- groups of the own domain, and turns Role Groups into roles', () => {
-    const result = applyNamingConvention(
-      [
-        { id: '1', email: `datahub-datateam@${DOMAIN}` },
-        { id: '2', email: `datahub-owner-digikom@${DOMAIN}` },
-        { id: '3', email: `sales@${DOMAIN}` },
-        { id: '4', email: 'datahub-datateam@other.be' },
-        { id: '5', email: `DataHub-Admins@${DOMAIN.toUpperCase()}` },
-      ],
-      DOMAIN,
-    );
-    expect(result).toEqual({ groups: ['1', '2', '5'], roles: ['admins', 'datateam'] });
+describe('the groups of a User', () => {
+  const groups = [
+    { id: '1', email: `datahub-datateam@${DOMAIN}`, name: 'Data Team' },
+    { id: '2', email: `datahub-owner-digikom@${DOMAIN}`, name: 'DigiKom' },
+    { id: '3', email: `sales@${DOMAIN}`, name: 'Sales' },
+    { id: '4', email: 'datahub-datateam@other.be', name: 'Data Team elsewhere' },
+    { id: '5', email: `DataHub-Admins@${DOMAIN.toUpperCase()}`, name: 'admins' },
+  ];
+
+  it('keeps every group of the own domain, and turns only Role Groups into roles (FR-UM-11)', () => {
+    expect(applyNamingConvention(groups, DOMAIN)).toEqual({ groups: ['1', '2', '3', '5'], roles: ['admins', 'datateam'] });
+  });
+
+  it('offers the groups of the own domain by name, each once, to choose an Owner Unit from', () => {
+    expect(ownDomainGroups([...groups, groups[2]!], DOMAIN).map((group) => group.id)).toEqual(['5', '1', '2', '3']);
   });
 });
 

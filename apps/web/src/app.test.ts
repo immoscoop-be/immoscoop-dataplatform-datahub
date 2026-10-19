@@ -9,6 +9,7 @@ import { buildApp, CLIENT_ID } from './app.js';
 
 const WEB = 'https://web.test';
 const IDENTITY = 'https://identity.test';
+const CATALOGUE = 'https://catalogue.test';
 const REGISTRY = 'https://registry.test';
 const SEMGRAPH = 'https://semgraph.test';
 
@@ -81,7 +82,7 @@ describe('the server of the web app', () => {
 
   beforeEach(async () => {
     identity = fakeIdentity();
-    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH, clientDir, fetch: identity.fetch, logger: false });
+    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH, clientDir, fetch: identity.fetch, logger: false });
   });
 
   afterEach(() => app.close());
@@ -106,10 +107,10 @@ describe('the server of the web app', () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
     expect(page.headers['cache-control']).toBe('no-store');
-    expect(page.body).toContain(`<html lang="en" data-identity="${IDENTITY}" data-registry="${REGISTRY}" data-semgraph="${SEMGRAPH}">`);
+    expect(page.body).toContain(`<html lang="en" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-semgraph="${SEMGRAPH}">`);
     const policy = page.headers['content-security-policy'] as string;
     expect(policy).toContain("default-src 'self';");
-    expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${REGISTRY} ${SEMGRAPH};`);
+    expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${CATALOGUE} ${REGISTRY} ${SEMGRAPH};`);
     // Charts are pictures from semgraph; nothing else is loaded from another address.
     expect(policy).toContain(`img-src 'self' ${SEMGRAPH};`);
     expect(policy).not.toContain('unsafe');
@@ -146,7 +147,7 @@ describe('the server of the web app', () => {
 
   it('refuses to start without the built page', async () => {
     await expect(
-      buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH, clientDir: join(clientDir, 'missing'), logger: false }),
+      buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH, clientDir: join(clientDir, 'missing'), logger: false }),
     ).rejects.toThrow(/index\.html/);
   });
 

@@ -8,6 +8,8 @@ export interface WorkspaceGroup {
   /** The fixed Google ID of the Group (FR-UM-08). */
   id: string;
   email: string;
+  /** The name Workspace shows; the address when the group has none. */
+  name: string;
 }
 
 /** What identity asks Google Workspace about a User. */
@@ -46,12 +48,13 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
         throw await googleApiError('Workspace did not return the groups', response);
       }
       const page = (await response.json()) as {
-        memberships?: { group?: string; groupKey?: { id?: string } }[];
+        memberships?: { group?: string; groupKey?: { id?: string }; displayName?: string }[];
         nextPageToken?: string;
       };
       for (const membership of page.memberships ?? []) {
         if (membership.group && membership.groupKey?.id) {
-          groups.push({ id: membership.group.replace(/^groups\//, ''), email: membership.groupKey.id });
+          const email = membership.groupKey.id;
+          groups.push({ id: membership.group.replace(/^groups\//, ''), email, name: membership.displayName?.trim() || email });
         }
       }
       pageToken = page.nextPageToken;

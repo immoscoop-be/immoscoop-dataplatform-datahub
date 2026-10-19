@@ -50,9 +50,9 @@ Every backend service and client application is a TypeScript Node.js application
 <a id="tr-pf-02"></a>
 ### TR-PF-02 · identity issues short-lived Access Tokens
 
-**Status:** Implemented · **Realises:** [DEC-PF-02](#dec-pf-02), [FR-UM-03](../functional/02-user-management.md#fr-um-03), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-08](../functional/02-user-management.md#fr-um-08)
+**Status:** Implemented · **Realises:** [DEC-PF-02](#dec-pf-02), [FR-UM-03](../functional/02-user-management.md#fr-um-03), [FR-UM-06](../functional/02-user-management.md#fr-um-06), [FR-UM-08](../functional/02-user-management.md#fr-um-08), [FR-UM-11](../functional/02-user-management.md#fr-um-11)
 
-After a successful login, identity issues an Access Token: a JWT signed with an asymmetric key in Cloud KMS ([TR-PF-24](#tr-pf-24)), valid for 15 minutes. It carries the fixed Google ID of the User, email, name, the Groups of the User (by their fixed Google ID) and the User's roles. identity publishes its public keys at a JWKS endpoint.
+After a successful login, identity issues an Access Token: a JWT signed with an asymmetric key in Cloud KMS ([TR-PF-24](#tr-pf-24)), valid for 15 minutes. It carries the fixed Google ID of the User, email, name, the Groups of the User (by their fixed Google ID: every group of the own Workspace domain the User is in, so that a service can check membership of an Owner Unit) and the User's roles. identity publishes its public keys at a JWKS endpoint.
 
 <a id="tr-pf-03"></a>
 ### TR-PF-03 · Every service validates the token itself

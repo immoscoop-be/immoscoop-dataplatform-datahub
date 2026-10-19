@@ -28,11 +28,11 @@ const TYPES: Record<string, string> = {
 };
 
 /**
- * Reads the built page once, at start-up. The page gets the addresses of identity, registry and semgraph in
+ * Reads the built page once, at start-up. The page gets the addresses of identity, catalogue, registry and semgraph in
  * data attributes and, per request, the nonce that lets Mantine add its `<style>` elements: the page
  * itself holds no script and no style of its own.
  */
-export async function loadClient(dir: string, services: { identityUrl: string; registryUrl: string; semgraphUrl: string }): Promise<Client> {
+export async function loadClient(dir: string, services: { identityUrl: string; catalogueUrl: string; registryUrl: string; semgraphUrl: string }): Promise<Client> {
   const template = await readFile(join(dir, 'index.html'), 'utf8');
   const opening = '<html lang="en">';
   if (!template.includes(opening) || !template.includes('</head>')) {
@@ -40,7 +40,7 @@ export async function loadClient(dir: string, services: { identityUrl: string; r
   }
   const withServices = template.replace(
     opening,
-    `<html lang="en" data-identity="${escapeAttribute(services.identityUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}">`,
+    `<html lang="en" data-identity="${escapeAttribute(services.identityUrl)}" data-catalogue="${escapeAttribute(services.catalogueUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}">`,
   );
 
   const files = new Map<string, ClientFile>();

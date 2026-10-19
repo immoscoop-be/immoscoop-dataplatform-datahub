@@ -367,6 +367,22 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
     )
     error_message = "The page of the web app searches registry, at its fixed address."
   }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_URL"],
+      "https://datahub-catalogue-123456789.europe-west1.run.app"
+    )
+    error_message = "The page of the web app shows the Collections of catalogue, at its fixed address."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.value if env.name == "DATAHUB_TOKEN_ISSUER"],
+      "https://datahub-identity-123456789.europe-west1.run.app"
+    )
+    error_message = "catalogue asks identity for the groups of the User, at the address of the issuer (TR-CO-03)."
+  }
 }
 
 run "registry_starts_its_ingest_job_which_runs_its_image_as_registry" {

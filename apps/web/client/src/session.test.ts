@@ -63,7 +63,7 @@ describe('the session of the page', () => {
 });
 
 describe('the calls to the services', () => {
-  const config = { identityUrl: 'https://identity.test', registryUrl: 'https://registry.test', semgraphUrl: 'https://semgraph.test' };
+  const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', semgraphUrl: 'https://semgraph.test' };
 
   it('calls identity and registry with the Access Token, with IDs and texts escaped', async () => {
     const asked: { url: string; authorization: string | null }[] = [];
@@ -80,6 +80,39 @@ describe('the calls to the services', () => {
       { url: 'https://registry.test/nodes?q=orders%20%26%20co', authorization: 'Bearer a-1' },
       { url: 'https://registry.test/nodes?q=orders&project=17121', authorization: 'Bearer a-1' },
       { url: 'https://registry.test/nodes/model.p.my%20model/lineage?direction=upstream', authorization: 'Bearer a-1' },
+    ]);
+  });
+
+  it('reads, creates, changes and dissolves Collections at catalogue, and the groups of the User at identity', async () => {
+    const asked: { method: string; url: string; authorization: string | null; type: string | null; body?: unknown }[] = [];
+    const api = createApi(config, { accessToken: async () => 'a-1' }, (async (input: string | URL | Request, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      asked.push({
+        method: init?.method ?? 'GET',
+        url: String(input),
+        authorization: headers.get('authorization'),
+        type: headers.get('content-type'),
+        ...(init?.body ? { body: JSON.parse(String(init.body)) } : {}),
+      });
+      if (init?.method === 'DELETE') {
+        return new Response(null, { status: 204 });
+      }
+      return Response.json({ groups: [], collections: [], entries: [] });
+    }) as typeof fetch);
+    const fields = { name: 'Leads', description: 'Leads.', colour: 'rose' as const, ownerUnit: 'g-1', visibility: 'private' as const };
+    await api.groups();
+    await api.collections();
+    await api.createCollection(fields);
+    await api.changeCollection('c 1', { visibility: 'public' });
+    await api.collectionLog('c 1');
+    expect(await api.dissolveCollection('c 1')).toBeUndefined();
+    expect(asked).toEqual([
+      { method: 'GET', url: 'https://identity.test/me/groups', authorization: 'Bearer a-1', type: null },
+      { method: 'GET', url: 'https://catalogue.test/collections', authorization: 'Bearer a-1', type: null },
+      { method: 'POST', url: 'https://catalogue.test/collections', authorization: 'Bearer a-1', type: 'application/json', body: fields },
+      { method: 'PATCH', url: 'https://catalogue.test/collections/c%201', authorization: 'Bearer a-1', type: 'application/json', body: { visibility: 'public' } },
+      { method: 'GET', url: 'https://catalogue.test/collections/c%201/log', authorization: 'Bearer a-1', type: null },
+      { method: 'DELETE', url: 'https://catalogue.test/collections/c%201', authorization: 'Bearer a-1', type: null },
     ]);
   });
 

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { SignedOut, type Api } from './api.js';
 import { ChartPage, ChartsPage } from './Charts.js';
+import { CollectionPage, CollectionsPage } from './Collections.js';
 import { NodePage } from './Node.js';
 import { hrefFor, useRoute, type Route, type SearchRoute } from './route.js';
 import { SearchPage } from './Search.js';
@@ -39,10 +40,11 @@ export function App({ api, session, semgraphUrl }: { api: Api; session: Pick<Ses
   }
 
   const dataTeam = me.data.roles.includes(DATA_TEAM);
-  const charts = route.page === 'charts' || route.page === 'chart' || !dataTeam;
+  const part = partOf(route, dataTeam);
   const nav: NavItem[] = [
-    ...(dataTeam ? [{ label: 'dbt projects', href: hrefFor({ page: 'search', query: '' }), active: !charts }] : []),
-    { label: 'Charts', href: hrefFor({ page: 'charts' }), active: charts },
+    { label: 'Collections', href: hrefFor({ page: 'collections' }), active: part === 'collections' },
+    ...(dataTeam ? [{ label: 'dbt projects', href: hrefFor({ page: 'search', query: '' }), active: part === 'dbt' }] : []),
+    { label: 'Charts', href: hrefFor({ page: 'charts' }), active: part === 'charts' },
   ];
 
   return (
@@ -52,7 +54,21 @@ export function App({ api, session, semgraphUrl }: { api: Api; session: Pick<Ses
   );
 }
 
-/** The page for the address: the charts for everyone; searching the dbt projects for the Data Team. */
+/** The part of Data Hub a page belongs to, for the navigation; the start is the search for the Data Team, the Collections for everyone else. */
+function partOf(route: Route, dataTeam: boolean): 'collections' | 'dbt' | 'charts' {
+  switch (route.page) {
+    case 'collections':
+    case 'collection':
+      return 'collections';
+    case 'charts':
+    case 'chart':
+      return 'charts';
+    default:
+      return dataTeam ? 'dbt' : 'collections';
+  }
+}
+
+/** The page for the address: the Collections and the charts for everyone; searching the dbt projects for the Data Team. */
 function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; dataTeam: boolean; semgraphUrl: string }) {
   // A Node leads back to the results it was found in, within the same dbt project.
   const [lastSearch, setLastSearch] = useState<Omit<SearchRoute, 'page'>>({ query: '' });
@@ -69,10 +85,14 @@ function Page({ api, route, dataTeam, semgraphUrl }: { api: Api; route: Route; d
       return <ChartPage api={api} semgraphUrl={semgraphUrl} id={route.id} />;
     case 'charts':
       return <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
+    case 'collection':
+      return <CollectionPage api={api} id={route.id} />;
+    case 'collections':
+      return <CollectionsPage api={api} />;
     case 'node':
       return dataTeam ? <NodePage api={api} uniqueId={route.uniqueId} backTo={lastSearch} /> : <DataTeamOnly />;
     case 'search':
-      return dataTeam ? <SearchPage api={api} query={route.query} project={route.project} /> : <ChartsPage api={api} semgraphUrl={semgraphUrl} />;
+      return dataTeam ? <SearchPage api={api} query={route.query} project={route.project} /> : <CollectionsPage api={api} />;
   }
 }
 
@@ -80,7 +100,7 @@ function DataTeamOnly() {
   return (
     <Stack gap="xs" maw={640}>
       <Title order={1}>For the Data Team, for now</Title>
-      <Text c="dimmed">Reading the dbt projects is for the Data Team for now. The charts are open to everyone.</Text>
+      <Text c="dimmed">Reading the dbt projects is for the Data Team for now. The Collections and the charts are open to everyone.</Text>
     </Stack>
   );
 }

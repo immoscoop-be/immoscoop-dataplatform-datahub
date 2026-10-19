@@ -9,6 +9,7 @@ import '@mantine/core/styles.css';
 import { cssVariablesResolver, theme } from '@datahub/ui';
 import { MantineProvider } from '@mantine/core';
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { setNonce } from 'get-nonce';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createApi, ServiceError, SignedOut } from './api.js';
@@ -17,6 +18,9 @@ import { readConfig } from './config.js';
 import { createSession } from './session.js';
 
 const config = readConfig(document);
+// The scroll lock of a Mantine Modal adds a <style> of its own, through react-style-singleton; it
+// reads the nonce from get-nonce, not from Mantine.
+setNonce(config.styleNonce);
 const session = createSession();
 const api = createApi(config, session);
 
