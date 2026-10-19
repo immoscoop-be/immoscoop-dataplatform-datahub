@@ -235,7 +235,7 @@ export function ResourceList({
                 : `Exposed by ${resource.exposures.join(', ')} in ${resource.projectName ?? `project ${resource.projectId}`}`}
             </Text>
           </Box>
-          {action?.(resource)}
+          {action && <Box style={{ flexShrink: 0 }}>{action(resource)}</Box>}
         </Group>
       ))}
     </Stack>

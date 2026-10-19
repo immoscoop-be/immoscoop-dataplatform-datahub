@@ -29,9 +29,12 @@ export type ResourceLogId = keyof typeof RESOURCE_LOG;
 
 const TEMPLATES: Record<string, string> = { ...COLLECTION_LOG, ...RESOURCE_LOG };
 
-/** Fills in the template of a Log ID; the text starts with a capital, as a field name may not. */
+/**
+ * Fills in the template of a Log ID. A text that starts with a field name gets a capital; one that
+ * starts with a name, such as the Display Name of a Resource, keeps it as it is.
+ */
 export function logText(logId: string, params: Record<string, string>): string {
   const template = TEMPLATES[logId] ?? logId;
   const text = template.replace(/\{(\w+)\}/g, (_match, name: string) => params[name] ?? `{${name}}`);
-  return text.charAt(0).toUpperCase() + text.slice(1);
+  return template.startsWith('{field}') ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }

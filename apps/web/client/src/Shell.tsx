@@ -24,8 +24,8 @@ export function Shell({ me, nav, onSignOut, children }: ShellProps) {
     <>
       <Box component="header" bg="white" style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
         <Container size="lg" h={64}>
-          <Group h="100%" justify="space-between">
-            <Group gap="xl" wrap="nowrap">
+          <Group h="100%" justify="space-between" wrap="nowrap" gap="sm">
+            <Group gap="md" wrap="nowrap">
               <Anchor href="#/" underline="never" c="bordeaux.6" aria-label="Data Hub, to the start">
                 <Group gap="xs" wrap="nowrap">
                   <BrandMark />
@@ -34,7 +34,7 @@ export function Shell({ me, nav, onSignOut, children }: ShellProps) {
                   </Text>
                 </Group>
               </Anchor>
-              <Group component="nav" gap="lg" wrap="nowrap" aria-label="Parts of Data Hub">
+              <Group component="nav" gap="md" wrap="nowrap" aria-label="Parts of Data Hub">
                 {nav.map((item) => (
                   <Anchor
                     key={item.href}
