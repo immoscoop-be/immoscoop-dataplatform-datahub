@@ -101,6 +101,22 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect(await collections.change('00000000-0000-4000-8000-000000000000', { name: 'Gone' }, dataTeam)).toBeUndefined();
   });
 
+  it('carries an optional Tabler icon, which can be changed and taken away, each time logged (FR-CO-05)', async () => {
+    const agencies = await collections.create(
+      { name: 'Agency offices', description: 'Offices.', colour: 'indigo', icon: 'building-estate', ownerUnit: DIGIKOM, visibility: 'private' },
+      an,
+    );
+    expect(agencies.icon).toBe('building-estate');
+    expect((await collections.create({ name: 'No icon', description: 'None.', colour: 'sand', ownerUnit: DIGIKOM, visibility: 'private' }, an)).icon).toBeNull();
+
+    expect((await collections.change(agencies.id, { icon: 'map-pin' }, an))?.icon).toBe('map-pin');
+    expect((await collections.change(agencies.id, { icon: null }, an))?.icon).toBeNull();
+    const [removed, changed] = await collections.log(agencies.id, 10);
+    expect(changed?.params).toEqual({ field: 'icon', old: 'building-estate', new: 'map-pin', actor: 'An' });
+    expect(removed?.params).toEqual({ field: 'icon', old: 'map-pin', new: 'none', actor: 'An' });
+    expect(removed?.text).toBe('Icon changed by An');
+  });
+
   it('never lets a Log Entry be changed or removed, not even by the service (FR-CO-11)', async () => {
     await expect(sql`update collection_log set log_id = 'COL-005'`.execute(database.db)).rejects.toThrow(/append-only/);
     await expect(sql`delete from collection_log`.execute(database.db)).rejects.toThrow(/append-only/);
