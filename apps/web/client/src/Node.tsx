@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import type { Api, Lineage, NodeDetail } from './api.js';
 import { plural, projectOf, shortName } from './format.js';
 import { BackIcon } from './icons.js';
+import { MetaTable } from './Meta.js';
 import { hrefFor } from './route.js';
 import { Loading, Problem } from './Search.js';
 
@@ -82,6 +83,7 @@ export function NodeView({ node, upstream, downstream }: NodeViewProps) {
           <Tabs.Tab value="lineage">
             Lineage · {reached(upstream)} up, {reached(downstream)} down
           </Tabs.Tab>
+          <Tabs.Tab value="metadata">Metadata</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="columns" pt="lg">
           <Columns node={node} />
@@ -94,6 +96,9 @@ export function NodeView({ node, upstream, downstream }: NodeViewProps) {
             <LineageList title="Upstream" hint="What this Node is built from" lineage={upstream} />
             <LineageList title="Downstream" hint="What is built from this Node" lineage={downstream} />
           </SimpleGrid>
+        </Tabs.Panel>
+        <Tabs.Panel value="metadata" pt="lg">
+          <MetaTable meta={node.meta} />
         </Tabs.Panel>
       </Tabs>
     </Stack>

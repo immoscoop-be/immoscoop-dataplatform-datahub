@@ -38,6 +38,8 @@ export interface NodeDetail extends NodeSummary {
   materialized: string | null;
   tags: string[];
   filePath: string | null;
+  /** The meta of the Node in its dbt project: any JSON object. */
+  meta: Record<string, unknown>;
   columns: { name: string; dataType: string | null; description: string }[];
   tests: { name: string; columnName: string | null; severity: string | null; targetNodeId: string | null; targetColumn: string | null }[];
 }
