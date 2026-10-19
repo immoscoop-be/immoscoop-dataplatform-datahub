@@ -86,6 +86,15 @@ Every route of registry that reads, and processing a run again, needs the role o
 
 `POST /runs/{run ID}/reprocess` puts a processed or failed Artifact Set back in the queue and starts the ingest job, which reads the files from the bucket and only goes to dbt Cloud for a file that is not there. A set in progress is left alone (`409`). A run registry never heard of, because its webhook was lost, is first looked up in dbt Cloud: only a successful run of a Source Job of this environment is recorded and processed.
 
+<a id="tr-ar-08"></a>
+### TR-AR-08 · registry tells catalogue which tables are exposed to Data Hub
+
+**Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-PF-26](00-platform.md#dec-pf-26)
+
+When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery, so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, and the `label` of an exposure that depends on that table alone.
+
+It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
+
 ## Open points
 
 None yet.

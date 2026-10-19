@@ -51,6 +51,13 @@ export class NameTaken extends Error {
   }
 }
 
+/** A Collection that still holds Resources, withdrawn ones included, cannot be dissolved (FR-CO-10). */
+export class NotEmpty extends Error {
+  constructor(count: number) {
+    super(`The Collection still holds ${count === 1 ? '1 Resource' : `${count} Resources`}; the Data Team removes them first.`);
+  }
+}
+
 /** Collections in Postgres (TR-CO-01, TR-CO-04). Who may do what is decided by the routes. */
 export interface Collections {
   /** The Collections the viewer sees, by name (FR-CO-17). */
@@ -60,7 +67,7 @@ export interface Collections {
   create(collection: NewCollection, viewer: Viewer): Promise<Collection>;
   /** Changes what differs, with a Log Entry per change; undefined when the Collection is gone. */
   change(id: string, changes: CollectionChanges, viewer: Viewer): Promise<Collection | undefined>;
-  /** Dissolves the Collection; false when it was already gone. */
+  /** Dissolves an empty Collection (else NotEmpty); false when it was already gone. */
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
   /** The Log of a Collection, newest first. */
   log(id: string, limit: number): Promise<LogEntry[]>;
@@ -201,8 +208,20 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       if (!UUID.test(id)) {
         return false;
       }
-      // FR-CO-10: no Collection holds Resources yet; the check that it is empty comes with them.
       return db.transaction().execute(async (trx) => {
+        // Locks the Collection, so that no Resource is added while it is being dissolved.
+        const live = await trx.selectFrom('collections').select('id').where('id', '=', id).where('dissolvedAt', 'is', null).forUpdate().executeTakeFirst();
+        if (!live) {
+          return false;
+        }
+        const { count } = await trx
+          .selectFrom('resources')
+          .select((eb) => eb.fn.countAll<string>().as('count'))
+          .where('collectionId', '=', id)
+          .executeTakeFirstOrThrow();
+        if (Number(count) > 0) {
+          throw new NotEmpty(Number(count));
+        }
         const dissolved = await trx
           .updateTable('collections')
           .set({ dissolvedAt: new Date() })

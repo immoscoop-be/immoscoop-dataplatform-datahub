@@ -16,6 +16,7 @@
 - Search by name, free text and lineage: [FR-AR-10](../../requirements/functional/01-artifact-registry.md#fr-ar-10)
 - Comparing versions and following Changes downstream: [FR-AR-11](../../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../../requirements/functional/01-artifact-registry.md#fr-ar-12). registry knows the lineage; catalogue knows which Nodes are Resources. registry therefore hands over each Change with the downstream Nodes and their distance, and catalogue writes the Log Entries.
 - Fetching and processing a run again manually: [FR-AR-14](../../requirements/functional/01-artifact-registry.md#fr-ar-14)
+- Telling catalogue which tables the exposures tagged `datahub` make Resources, after every new Current Version: [FR-SR-32](../../requirements/functional/04-stacks-and-resources.md#fr-sr-32), built as [TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)
 
 In the proposal this service was called ingest, as a Cloud Run job. It became a service because catalogue, query and mcp need to read Nodes and lineage from it, and [DEC-PF-05](../../requirements/technical/00-platform.md#dec-pf-05) forbids reading its schema directly. The processing itself still runs as a job ([DEC-PF-20](../../requirements/technical/00-platform.md#dec-pf-20)).
 
@@ -45,7 +46,7 @@ Artifact Sets with their status and error, Nodes, columns, Edges, tests and Chan
 
 ## Talks to
 
-The dbt Cloud Admin API, the artifact bucket, and catalogue (to hand over Changes, with the service identity).
+The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub` ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
 
 ## Permissions
 

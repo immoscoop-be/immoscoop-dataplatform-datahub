@@ -434,6 +434,43 @@ run "registry_starts_its_ingest_job_which_runs_its_image_as_registry" {
   }
 }
 
+run "registry_hands_catalogue_the_exposed_tables_as_itself" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["registry"]
+    override_during = plan
+    values = {
+      email  = "datahub-registry@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-registry@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_URL"],
+      "https://datahub-catalogue-123456789.europe-west1.run.app"
+    )
+    error_message = "The ingest job hands the exposed tables to catalogue, at its fixed address (TR-AR-08)."
+  }
+
+  assert {
+    condition = (
+      [for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_SERVICE_ACCOUNT"]
+      == ["datahub-registry@test-project.iam.gserviceaccount.com"]
+    )
+    error_message = "catalogue takes the exposed tables from the service account of registry, and from no one else (TR-SR-01)."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_URL"],
+      "https://datahub-catalogue-123456789.europe-west1.run.app"
+    )
+    error_message = "catalogue only accepts ID tokens issued for its own address."
+  }
+}
+
 run "registry_reads_the_source_jobs_of_its_own_environment" {
   command = plan
 

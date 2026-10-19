@@ -17,6 +17,8 @@ export interface RegistrySettings {
   bucket: string;
   /** The ingest job, `projects/<project>/locations/<region>/jobs/<name>` (DATAHUB_INGEST_JOB). */
   ingestJob: string;
+  /** catalogue's address, which the ingest job tells the exposed tables (DATAHUB_CATALOGUE_URL, TR-AR-08). */
+  catalogueUrl: string;
 }
 
 export function settingsFromEnv(env: NodeJS.ProcessEnv = process.env): RegistrySettings {
@@ -28,6 +30,7 @@ export function settingsFromEnv(env: NodeJS.ProcessEnv = process.env): RegistryS
     webhookSecret: required(env, 'DATAHUB_DBT_WEBHOOK_SECRET'),
     bucket: required(env, 'DATAHUB_ARTIFACT_BUCKET'),
     ingestJob: required(env, 'DATAHUB_INGEST_JOB'),
+    catalogueUrl: required(env, 'DATAHUB_CATALOGUE_URL'),
   };
 }
 

@@ -4,9 +4,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import type { ChartDetail, Collection, Lineage, NodeDetail, SearchHit } from './api.js';
+import type { ChartDetail, Collection, Lineage, NodeDetail, Resource, SearchHit } from './api.js';
 import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
-import { audience, CollectionList, CollectionView, ColourPicker, ownerUnitOptions } from './Collections.js';
+import { audience, CollectionList, CollectionView, ColourPicker, ownerUnitOptions, ResourceList } from './Collections.js';
 import { MetaTable, metaRows } from './Meta.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
@@ -222,16 +222,42 @@ describe('the Collections', () => {
       { logId: 'COL-004', text: 'Made private by An', at: '2026-10-19T09:00:00Z' },
       { logId: 'COL-001', text: 'Collection created by An', at: '2026-10-19T08:00:00Z' },
     ];
-    const { text } = render(<CollectionView collection={leads} log={log} />);
+    const { text } = render(<CollectionView collection={leads} log={log} resources={[]} />);
     expect(text).toContain('Owner Unit DigiKom · digikom@thenextimmoscoop.be');
     expect(text).toContain(`Visibility Private ${audience('private')}`);
     expect(text).toContain('No Resources yet');
     expect(text).toContain('Made private by An');
     expect(text).toContain('Edit');
     expect(text).toContain('Dissolve');
-    const reader = render(<CollectionView collection={{ ...leads, visibility: 'public', canManage: false }} />).text;
+    const reader = render(<CollectionView collection={{ ...leads, visibility: 'public', canManage: false }} resources={[]} />).text;
     expect(reader).not.toContain('Edit');
     expect(reader).toContain(audience('public'));
+    expect(reader).toContain('No published Resources yet');
+  });
+
+  it('lists Resources with their Key, where they come from, and whether they are withdrawn', () => {
+    const resource: Resource = {
+      id: 'r-1',
+      key: 'immoscoop-dataplatform.dbt_marts.orders',
+      displayName: 'Orders',
+      name: 'orders',
+      resourceType: 'model',
+      projectId: '9367',
+      projectName: 'immoscoop_dataplatform_sql',
+      nodeId: 'model.immoscoop_dataplatform_sql.orders',
+      description: 'One row per order.',
+      exposures: ['datahub_orders'],
+      collectionId: leads.id,
+      registeredAt: '2026-10-19T08:00:00Z',
+      withdrawn: false,
+    };
+    const { html, text } = render(<ResourceList resources={[resource, { ...resource, id: 'r-2', displayName: 'Lines', withdrawn: true }]} empty="None." linkNodes />);
+    expect(text).toContain('Orders model immoscoop-dataplatform.dbt_marts.orders One row per order. Exposed by datahub_orders in immoscoop_dataplatform_sql');
+    expect(text).toContain('Lines model Withdrawn');
+    expect(text).toContain('it is held until one does again');
+    expect(html).toContain('href="#/nodes/model.immoscoop_dataplatform_sql.orders"');
+    expect(render(<ResourceList resources={[resource]} empty="None." />).html).not.toContain('href="#/nodes/');
+    expect(render(<ResourceList resources={[]} empty="None." />).text).toContain('None.');
   });
 
   it('offers the palette as a choice of one colour', () => {

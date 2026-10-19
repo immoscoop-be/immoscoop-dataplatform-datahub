@@ -74,13 +74,20 @@ locals {
     DATAHUB_DBT_CLOUD_TOKEN    = "${google_secret_manager_secret.secret["datahub-dbt-cloud-token"].id}/versions/latest"
     DATAHUB_DBT_WEBHOOK_SECRET = "${google_secret_manager_secret.secret["datahub-dbt-webhook-secret"].id}/versions/latest"
     DATAHUB_INGEST_JOB         = "projects/${var.project_id}/locations/${var.region}/jobs/${local.ingest_job}"
+    # Where the ingest job hands over the tables under the exposures tagged datahub (TR-AR-08).
+    DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
   })
 
   service_env = {
-    identity  = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
-    catalogue = local.database_env["catalogue"]
-    registry  = local.registry_env
-    query     = {}
+    identity = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
+    # catalogue takes the exposed tables only from registry, by a Google ID token for its own
+    # address (TR-SR-01).
+    catalogue = merge(local.database_env["catalogue"], {
+      DATAHUB_CATALOGUE_URL            = local.urls["catalogue"]
+      DATAHUB_REGISTRY_SERVICE_ACCOUNT = google_service_account.service["registry"].email
+    })
+    registry = local.registry_env
+    query    = {}
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06).

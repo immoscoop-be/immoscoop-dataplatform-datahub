@@ -32,4 +32,38 @@ export interface CatalogueDatabase {
     actorId: string | null;
     at: Timestamp;
   };
+  /** One row per Resource, also once withdrawn (TR-SR-02). */
+  resources: {
+    id: Generated<string>;
+    key: string;
+    projectId: string;
+    projectName: string | null;
+    nodeId: string;
+    name: string;
+    resourceType: string;
+    requestedName: string;
+    displayName: string;
+    description: string;
+    exposures: string[];
+    collectionId: string | null;
+    registeredAt: Timestamp;
+    updatedAt: Timestamp;
+    withdrawnAt: Date | null;
+  };
+  /** The Log of the Resources: append-only, with a Log ID from the Log catalogue (TR-SR-03). */
+  resourceLog: {
+    id: Generated<string>;
+    resourceId: string;
+    logId: string;
+    params: ColumnType<Record<string, string>, Record<string, string>, never>;
+    actorId: string | null;
+    at: Timestamp;
+  };
+  /** Per dbt project, the run of the last call of registry that was applied. */
+  resourceSyncs: {
+    projectId: string;
+    /** A bigint in Postgres, which pg reads as a string. */
+    runId: ColumnType<string, string, string>;
+    syncedAt: Timestamp;
+  };
 }

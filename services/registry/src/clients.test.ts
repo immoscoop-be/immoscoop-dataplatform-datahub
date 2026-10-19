@@ -1,10 +1,32 @@
 import { describe, expect, it } from 'vitest';
 import { createBucket } from './bucket.js';
+import { createCatalogue } from './catalogue.js';
 import { createDbtCloud } from './dbt-cloud.js';
 import { createIngestStarter } from './ingest-job.js';
 import { lazy, settingsFromEnv } from './settings.js';
 
 const token = async () => 'access-token';
+
+describe('catalogue', () => {
+  it('is told the exposed tables with a Google ID token of registry for its own address (DEC-PF-26)', async () => {
+    const calls: { url: string; authorization: string | null; body: unknown }[] = [];
+    const audiences: string[] = [];
+    const catalogue = createCatalogue(
+      'https://catalogue.test',
+      async (audience) => (audiences.push(audience), 'id-token'),
+      async (url, init) => {
+        calls.push({ url: String(url), authorization: new Headers(init?.headers).get('authorization'), body: JSON.parse(String(init?.body)) });
+        return Response.json({ registered: 0 });
+      },
+    );
+    await catalogue.resources({ projectId: '9367', projectName: 'p', runId: '100', tables: [] });
+    expect(audiences).toEqual(['https://catalogue.test']);
+    expect(calls).toEqual([{ url: 'https://catalogue.test/internal/resources', authorization: 'Bearer id-token', body: { projectId: '9367', projectName: 'p', runId: '100', tables: [] } }]);
+
+    const refusing = createCatalogue('https://catalogue.test', async () => 't', async () => Response.json({ message: 'Not a service that may call.' }, { status: 401 }));
+    await expect(refusing.resources({ projectId: '9367', projectName: null, runId: '100', tables: [] })).rejects.toThrow('catalogue answered 401: Not a service that may call.');
+  });
+});
 
 describe('dbt Cloud', () => {
   it('serves the Artifacts of a run with the service token', async () => {
@@ -108,6 +130,7 @@ describe('the settings', () => {
     DATAHUB_DBT_WEBHOOK_SECRET: 'projects/p/secrets/datahub-dbt-webhook-secret/versions/latest',
     DATAHUB_ARTIFACT_BUCKET: 'p-datahub-artifacts',
     DATAHUB_INGEST_JOB: 'projects/p/locations/europe-west1/jobs/datahub-registry-ingest',
+    DATAHUB_CATALOGUE_URL: 'https://catalogue.test',
   };
 
   it('reads the Source Jobs as job → project', () => {

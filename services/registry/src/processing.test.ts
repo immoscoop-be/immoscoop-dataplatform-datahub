@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ClaimedSet } from './artifact-sets.js';
 import type { Bucket } from './bucket.js';
+import type { ResourcesUpdate } from './catalogue.js';
 import type { DbtCloud } from './dbt-cloud.js';
 import { sampleCatalog, sampleManifest } from './fixtures.js';
 import type { NormalisedSet } from './normalise.js';
@@ -9,7 +10,9 @@ import { createProcessing, type Log } from './processing.js';
 const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value));
 
 /** The ingest job against fakes: a queue of sets, a bucket in memory and dbt Cloud with given files. */
-function harness(options: { dbtFiles?: Record<string, Uint8Array>; stored?: Record<string, Uint8Array>; saveFails?: boolean } = {}) {
+function harness(
+  options: { dbtFiles?: Record<string, Uint8Array>; stored?: Record<string, Uint8Array>; saveFails?: boolean; current?: boolean; catalogueFails?: boolean } = {},
+) {
   const queue: ClaimedSet[] = [
     { id: 1, projectId: '9367', jobId: '322951', runId: '100' },
     { id: 2, projectId: '17121', jobId: '739003', runId: '101' },
@@ -19,6 +22,7 @@ function harness(options: { dbtFiles?: Record<string, Uint8Array>; stored?: Reco
   const objects = new Map(Object.entries(options.stored ?? {}));
   const asked: { runId: string; file: string; wait: boolean }[] = [];
   const logged: string[] = [];
+  const told: ResourcesUpdate[] = [];
 
   const bucket: Bucket = {
     read: async (path) => objects.get(path),
@@ -41,7 +45,7 @@ function harness(options: { dbtFiles?: Record<string, Uint8Array>; stored?: Reco
           throw new Error('insert or update on table "edges" violates foreign key constraint');
         }
         saved.push({ set, normalised });
-        return { current: true };
+        return { current: options.current ?? true };
       },
       fail: async (id, error) => {
         failed.push({ id, error });
@@ -49,9 +53,17 @@ function harness(options: { dbtFiles?: Record<string, Uint8Array>; stored?: Reco
     },
     bucket,
     dbtCloud,
+    catalogue: {
+      resources: async (update) => {
+        if (options.catalogueFails) {
+          throw new Error('catalogue answered 503');
+        }
+        told.push(update);
+      },
+    },
     log,
   });
-  return { processing, saved, failed, objects, asked, logged };
+  return { processing, saved, failed, objects, asked, logged, told };
 }
 
 const run100 = { '100/manifest.json': bytes(sampleManifest()), '100/catalog.json': bytes(sampleCatalog()) };
@@ -101,5 +113,27 @@ describe('the ingest job', () => {
     await failing.processing.runPending();
     expect(failing.failed[0]?.error).toMatch(/violates foreign key constraint/);
     expect(failing.failed[1]?.error).toBe('dbt Cloud has no manifest.json for this run');
+  });
+
+  it('tells catalogue the exposed tables of every new Current Version, the whole state of the project (TR-AR-08)', async () => {
+    const withExposures = { '100/manifest.json': bytes(sampleManifest({ datahub: true })), '100/catalog.json': bytes(sampleCatalog()) };
+    const { processing, told, logged } = harness({ dbtFiles: { ...withExposures, ...run101 } });
+    await processing.runPending();
+    expect(told.map((update) => [update.projectId, update.runId, update.projectName, update.tables.map((table) => table.name)])).toEqual([
+      ['9367', '100', 'immoscoop_dataplatform_sql', ['countries', 'customers', 'orders']],
+      // A project without exposures for Data Hub is told too: none of its tables are Resources any more.
+      ['17121', '101', 'immoscoop_dataplatform_sql', []],
+    ]);
+    expect(logged).toContain('Exposures tagged datahub that depend on no table: datahub_lines');
+  });
+
+  it('tells catalogue nothing about a set that does not become current, and survives catalogue failing', async () => {
+    const older = harness({ dbtFiles: { ...run100, ...run101 }, current: false });
+    await older.processing.runPending();
+    expect(older.told).toEqual([]);
+
+    const down = harness({ dbtFiles: { ...run100, ...run101 }, catalogueFails: true });
+    expect(await down.processing.runPending()).toEqual({ processed: 2, failed: 0 });
+    expect(down.logged).toContain('catalogue was not told the exposed tables: catalogue answered 503');
   });
 });
