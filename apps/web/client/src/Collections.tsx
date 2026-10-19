@@ -1,4 +1,4 @@
-import { COLLECTION_COLOURS, COLLECTION_ICONS, type CollectionColour, type CollectionIcon as IconName, type CollectionVisibility } from '@datahub/contracts/collections';
+import { COLLECTION_COLOURS, type CollectionColour, type CollectionIcon as IconName, type CollectionVisibility } from '@datahub/contracts/collections';
 import {
   Alert,
   Anchor,
@@ -25,9 +25,9 @@ import {
   Title,
 } from '@mantine/core';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { type Api, type Collection, type CollectionFields, type Group as WorkspaceGroup, type LogEntry, type Resource, ServiceError } from './api.js';
-import { CollectionIcon, iconLabel } from './collectionIcons.js';
+import { CollectionIcon, iconItem, iconLabel, type IconIndex, searchIcons, SUGGESTED_ICONS } from './collectionIcons.js';
 import { formatMoment } from './format.js';
 import { BackIcon } from './icons.js';
 import { Detail } from './Node.js';
@@ -518,26 +518,48 @@ function draftOf(collection?: Collection): Draft {
     : { name: '', description: '', icon: null, ownerUnit: null, visibility: 'private' };
 }
 
-const ICON_CHOICES = COLLECTION_ICONS.map((name) => ({ value: name, label: iconLabel(name) }));
+/** Before anything is typed, the choice shows the suggestions. */
+const SUGGESTIONS = [{ group: 'Suggestions', items: SUGGESTED_ICONS.map(iconItem) }];
+/** While the list of every icon is still on its way, the suggestions are all there is to search. */
+const SUGGESTED_INDEX: IconIndex = { categories: ['Suggestions'], icons: SUGGESTED_ICONS.map((name) => [name, 0, '']) };
 
-/** The choice of icon: optional, one of the chosen Tabler Icons, found by typing (FR-CO-05, DEC-CO-13). */
+/** Every icon a Collection can carry: a separate script, loaded only when the form opens (DEC-CO-14). */
+async function loadIconIndex(): Promise<IconIndex> {
+  const { TABLER_CATEGORIES, TABLER_ICONS } = await import('@datahub/contracts/collection-icons');
+  return { categories: TABLER_CATEGORIES, icons: TABLER_ICONS };
+}
+
+/**
+ * The choice of icon: optional, any outline icon of Tabler Icons but the logos of brands, found by
+ * its name or Tabler's words for it and grouped by category, with suggestions before anything is
+ * typed (FR-CO-05, DEC-CO-14).
+ */
 export function IconPicker({ value, onChange }: { value: IconName | null; onChange: (icon: IconName | null) => void }) {
+  const index = useQuery({ queryKey: ['collection-icons'], queryFn: loadIconIndex, staleTime: Infinity, gcTime: Infinity }).data;
+  // Every icon that can be chosen must be in the data, the current one included, or Select cannot pick it.
+  const data = useMemo(() => {
+    const names = index ? index.icons.map(([name]) => name) : SUGGESTED_ICONS;
+    return (value && !names.includes(value) ? [value, ...names] : names).map(iconItem);
+  }, [index, value]);
+
   return (
     <Select
       label="Icon"
-      description="Optional: to recognise the Collection by, together with its colour."
+      description="Optional: to recognise the Collection by, together with its colour. Search by name or meaning, such as money."
       placeholder="No icon"
       searchable
       clearable
-      nothingFoundMessage="No icon by that name."
-      maxDropdownHeight={280}
-      data={ICON_CHOICES}
+      nothingFoundMessage="No icon for that search."
+      maxDropdownHeight={320}
+      limit={60}
+      data={data}
+      filter={({ search, limit }) => (search.trim() ? searchIcons(index ?? SUGGESTED_INDEX, search, limit) : SUGGESTIONS)}
       value={value}
-      onChange={(icon) => onChange(icon as IconName | null)}
+      onChange={(icon) => onChange(icon)}
       leftSection={value ? <CollectionIcon name={value} /> : undefined}
       renderOption={({ option }) => (
         <Group gap="sm" wrap="nowrap">
-          <CollectionIcon name={option.value as IconName} />
+          <CollectionIcon name={option.value} />
           <Text size="sm">{option.label}</Text>
         </Group>
       )}

@@ -24,25 +24,8 @@ export function isCollectionColour(value: unknown): value is CollectionColour {
 export type CollectionVisibility = 'private' | 'public';
 
 /**
- * The icons a Collection can carry: Tabler Icons, outline, by their name there (DEC-CO-13,
- * FR-CO-05). A list chosen for the functional domains of Immoscoop rather than all ~5,000, so that
- * the choice stays short and the web app only bundles these.
+ * The icon of a Collection: the name of any outline icon of Tabler Icons but the logos of brands
+ * (DEC-CO-13, DEC-CO-14), such as `building-estate`. The list and its check are large, so they live
+ * apart, in `@datahub/contracts/collection-icons`.
  */
-export const COLLECTION_ICONS = [
-  'home', 'building', 'building-estate', 'building-community', 'building-store', 'building-bank', 'buildings', 'building-cottage', 'home-search',
-  'map-pin', 'map', 'world', 'world-www', 'route', 'compass',
-  'users', 'user', 'user-check', 'users-group', 'id-badge', 'briefcase',
-  'currency-euro', 'cash', 'credit-card', 'receipt', 'report-money', 'pig-money', 'coins',
-  'chart-bar', 'chart-line', 'chart-pie', 'chart-dots', 'trending-up', 'target', 'presentation-analytics',
-  'mail', 'mail-opened', 'send', 'message-circle', 'phone', 'bell', 'speakerphone', 'ad',
-  'calendar', 'clock', 'search', 'eye', 'click', 'pointer', 'device-mobile', 'device-desktop', 'browser',
-  'tag', 'star', 'heart', 'key', 'lock', 'shield-check',
-  'file-text', 'files', 'database', 'server', 'cloud', 'plug', 'bolt',
-  'leaf', 'tree', 'car', 'train', 'school', 'tool', 'settings', 'checklist', 'clipboard-list', 'list-details', 'filter',
-] as const;
-
-export type CollectionIcon = (typeof COLLECTION_ICONS)[number];
-
-export function isCollectionIcon(value: unknown): value is CollectionIcon {
-  return typeof value === 'string' && (COLLECTION_ICONS as readonly string[]).includes(value);
-}
+export type CollectionIcon = string;

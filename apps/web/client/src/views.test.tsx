@@ -1,3 +1,4 @@
+import { TABLER_CATEGORIES, TABLER_ICONS } from '@datahub/contracts/collection-icons';
 import { cssVariablesResolver, theme } from '@datahub/ui';
 import { MantineProvider } from '@mantine/core';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -7,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import type { ChartDetail, Collection, Lineage, NodeDetail, Resource, SearchHit } from './api.js';
 import { ChartList, ChartView, exampleImage, intentInWords } from './Charts.js';
 import { audience, CollectionList, CollectionMark, CollectionView, ColourPicker, IconPicker, ownerUnitOptions, ResourceList } from './Collections.js';
+import { searchIcons } from './collectionIcons.js';
 import { MetaTable, metaRows } from './Meta.js';
 import { LineageList, NodeView } from './Node.js';
 import { ProjectList, SearchResults } from './Search.js';
@@ -264,15 +266,37 @@ describe('the Collections', () => {
   it('marks a Collection with its icon on its colour, or with its colour alone', () => {
     const withIcon = render(<CollectionMark collection={{ colour: 'teal', icon: 'building-estate' }} />).html;
     expect(withIcon).toContain('aria-label="Teal, icon building estate"');
-    expect(withIcon).toContain('<svg');
+    // The drawing is the icon's own file, fetched only where it is shown (DEC-CO-14).
+    expect(withIcon).toContain('data-icon="building-estate"');
+    expect(withIcon).toContain('/icons/building-estate.svg');
     expect(render(<CollectionMark collection={{ colour: 'rose', icon: null }} />).html).toContain('aria-label="Colour Rose"');
     expect(render(<CollectionList collections={[{ ...leads, icon: 'users' }]} />).html).toContain('aria-label="Rose, icon users"');
   });
 
-  it('offers the icons as an optional, searchable choice', () => {
-    const { html } = render(<IconPicker value="map-pin" onChange={() => {}} />);
-    expect(html).toContain('value="Map pin"');
+  it('offers the icons as an optional, searchable choice, showing the current one before the list has loaded', () => {
+    expect(render(<IconPicker value="map-pin" onChange={() => {}} />).html).toContain('value="Map pin"');
+    expect(render(<IconPicker value="rocket" onChange={() => {}} />).html).toContain('value="Rocket"');
     expect(render(<IconPicker value={null} onChange={() => {}} />).html).toContain('placeholder="No icon"');
+  });
+
+  it('finds an icon by its name or by what it means, best first, grouped by category (DEC-CO-14)', () => {
+    const index = { categories: TABLER_CATEGORIES, icons: TABLER_ICONS };
+    const names = (search: string, limit = 60) => searchIcons(index, search, limit).flatMap((group) => group.items.map((item) => item.value));
+
+    const [best] = searchIcons(index, 'home', 60);
+    expect(best?.group).toBe('Buildings');
+    expect(best?.items[0]).toEqual({ value: 'home', label: 'Home' });
+    // Tabler gives `home` the word "house" first, `door` only third.
+    expect(names('house')[0]).toBe('home');
+    expect(names('money')).toEqual(expect.arrayContaining(['coins', 'wallet']));
+    expect(names('money euro')).toContain('currency-euro');
+    expect(names('build est')).toContain('building-estate');
+    expect(names('Building-Estate')[0]).toBe('building-estate');
+    // The logos of brands are not on offer.
+    expect(names('google')).not.toContain('brand-google');
+    expect(names('a', 10)).toHaveLength(10);
+    expect(searchIcons(index, '  ', 60)).toEqual([]);
+    expect(names('no such icon anywhere')).toEqual([]);
   });
 
   it('offers the palette as a choice of one colour', () => {
