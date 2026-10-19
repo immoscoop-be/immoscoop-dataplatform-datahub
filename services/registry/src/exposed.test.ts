@@ -41,6 +41,14 @@ describe('the tables exposed to Data Hub', () => {
     expect(empty).toEqual(['datahub_lines']);
   });
 
+  it('finds the tag in the config of an exposure too, where dbt Fusion may keep it', () => {
+    const manifest = sampleManifest({ datahub: true });
+    const exposure = manifest.exposures['exposure.immoscoop_dataplatform_sql.datahub_orders'] as Record<string, unknown>;
+    exposure.tags = [];
+    exposure.config = { tags: ['datahub'] };
+    expect(exposedTables(normalise(manifest, sampleCatalog())).tables.find((table) => table.name === 'orders')?.exposures).toEqual(['datahub_marts', 'datahub_orders']);
+  });
+
   it('ignores exposures without the tag, such as a dashboard', () => {
     expect(exposedTables(normalise(sampleManifest(), sampleCatalog()))).toEqual({ tables: [], empty: [] });
   });
