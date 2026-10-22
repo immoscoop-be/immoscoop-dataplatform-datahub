@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<!--
+  Screen: Collections — start screen
+  Opens when the user clicks Collections in the rail. Panel = the index, main = the start screen.
+  Requirements: TODO link the requirement IDs this screen fulfils.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Collections</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search collections"></label>
+  <div class="panel-label">Your collections</div>
+  <a class="list-item card" href="resource-detail.html" data-name="credit leads"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><span><span class="item-title">Credit leads</span><span class="meta">18 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a>
+  <a class="list-item card" data-name="listing leads"><span class="item-icon" style="--c:var(--col-bordeaux)"><i class="ph ph-house-line"></i></span><span><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a>
+  <a class="list-item card" data-name="listings"><span class="item-icon" style="--c:var(--col-teal-ink)"><i class="ph ph-buildings"></i></span><span><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a>
+  <a class="list-item card" data-name="brokers"><span class="item-icon" style="--c:var(--col-ochre)"><i class="ph ph-briefcase"></i></span><span><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a>
+  <div class="panel-label">Shared resources</div>
+  <a class="list-item card" data-name="weekly lead volume"><span class="item-icon neutral"><i class="ph ph-chart-line"></i></span><span><span class="item-title">Weekly lead volume</span><span class="meta"><i class="ph-fill ph-users-three"></i>Data team</span></span></a>
+  <a class="list-item card" data-name="broker service packs"><span class="item-icon neutral"><i class="ph ph-table"></i></span><span><span class="item-title">Broker service packs</span><span class="meta"><i class="ph-fill ph-users-three"></i>Sales</span></span></a>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No collections match your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div id="intro-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px" hidden>
+  <h2 class="page-title" style="font-size:24px">Collections</h2>
+  <div style="display:flex;align-items:center;gap:14px"><button class="text-link" id="intro-show" style="border:0;background:none;font-family:inherit"><i class="ph-fill ph-info"></i><span>Show intro</span></button><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New collection</button></div>
+ </div>
+ <section id="intro" class="card" data-section="collections" data-version="1" style="position:relative;border-radius:20px;padding:26px 28px 24px;text-align:center">
+  <button class="icon-btn" id="intro-hide" aria-label="Hide intro" style="position:absolute;right:12px;top:12px"><i class="ph-fill ph-x-circle"></i></button>
+  <svg width="200" height="96" viewBox="0 0 200 96" aria-hidden="true"><circle cx="72" cy="48" r="40" fill="var(--col-magenta)" fill-opacity=".14"/><circle cx="128" cy="48" r="40" fill="var(--col-teal)" fill-opacity=".16"/><circle cx="100" cy="48" r="40" fill="none" stroke="var(--text-primary)" stroke-width="1.5"/><circle cx="52" cy="36" r="4" fill="var(--col-magenta)"/><circle cx="64" cy="62" r="4" fill="var(--col-magenta)"/><circle cx="90" cy="30" r="4" fill="var(--text-primary)"/><circle cx="104" cy="64" r="4" fill="var(--text-primary)"/><circle cx="116" cy="40" r="4" fill="var(--text-primary)"/><circle cx="142" cy="60" r="4" fill="var(--col-teal-ink)"/><circle cx="150" cy="34" r="4" fill="var(--col-teal-ink)"/></svg>
+  <h2 style="font-size:21px;font-weight:500;margin:10px 0 0">What are collections?</h2>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:470px;margin:6px auto 0">A collection groups the data resources that belong together around one topic, like credit leads or listings. Make one for your own work, keep it private, or share it with the team.</p>
+  <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px"><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New collection</button><a class="text-link"><span>How collections work</span><i class="ph-fill ph-arrow-right"></i></a></div>
+ </section>
+ <div class="section-head"><h2>Recently</h2><div data-group="recent" role="tablist" style="display:flex"><button class="seg on" data-target="updated" role="tab" aria-selected="true">Updated</button><button class="seg" data-target="added" role="tab" aria-selected="false">Added</button></div></div>
+ <div class="grid" data-pane-group="recent" data-pane="updated">
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">2 resources added</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">2 days ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-teal-ink)"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">Description updated</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">KL</span><span class="meta">1 week ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-slate)"><i class="ph ph-binoculars"></i></span><span class="item-title" style="font-size:14px">Search behaviour</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New resource: saved searches</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">2 weeks ago</span></div></div>
+ </div>
+ <div class="grid" data-pane-group="recent" data-pane="added" hidden>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-olive)"><i class="ph ph-megaphone"></i></span><span class="item-title" style="font-size:14px">Marketing</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New collection, 9 resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">3 days ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-ochre)"><i class="ph ph-briefcase"></i></span><span class="item-title" style="font-size:14px">Brokers</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New collection, 11 resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">3 weeks ago</span></div></div>
+ </div>
+ <div class="section-head"><h2>Popular collections</h2><span class="meta">Views this month</span></div>
+ <div class="grid">
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-bordeaux)"><i class="ph ph-house-line"></i></span><span class="item-title" style="font-size:14px">Listing leads</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">248</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-bordeaux)"><div style="width:100%"></div></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">196</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-magenta)"><div style="width:79%"></div></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon" style="--c:var(--col-teal-ink)"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">154</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-teal)"><div style="width:62%"></div></div></div>
+ </div>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
