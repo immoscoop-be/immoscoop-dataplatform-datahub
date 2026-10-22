@@ -67,3 +67,10 @@ Conceptually described in [Domain tooling](https://immoscoop.atlassian.net/wiki/
 - [ ] <a id="op-dh-35"></a>**OP-DH-35** · Connect to the existing Cloud Run setup of the Colleciónes server: deploy, internal reachability under internal-immoscoop.be, and monitoring. *Note of 2026-10-17: Data Hub is publicly reachable ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10)), so internal reachability under internal-immoscoop.be no longer applies; deploy and monitoring remain open.*
 - [ ] <a id="op-dh-36"></a>**OP-DH-36** · In the pilot with Hannelore, test whether Lenses in Excel are enough, or whether business also needs whole Resources.
 - [ ] <a id="op-dh-37"></a>**OP-DH-37** · Bring the description of Q&A in the Glossary (Woordenlijst, Confluence) in line with the principle that is still open.
+
+## From the workshop of 2026-10-22
+
+Raised by the [workshop on data agents and governance](../workshops/2026-10-22-data-agents-and-governance.md); the requirements it proposed are in the domain files.
+
+- [ ] <a id="op-dh-38"></a>**OP-DH-38** · Confirm the kinds of assets the workshop names: Resource, Collection, Lens, semgraph (a chart on a Lens or a Resource, through the Chart Server) and Report ([REQ-DH-ASSETS](../workshops/2026-10-22-data-agents-and-governance.md#req-dh-assets)). [From Stacks to Report](data-hub.md#from-stacks-to-report) has three: Resource, Lens and Report. Decide also what the Level of a Collection is, as every asset carries the lowest Level beneath it. *Raised while taking in the workshop.*
+- [ ] <a id="op-dh-39"></a>**OP-DH-39** · Later, on the roadmap: a process for data onboarding with new features, the chain IT → Data → business, which touches Data Hub through taking in new Resources (post-it 6).

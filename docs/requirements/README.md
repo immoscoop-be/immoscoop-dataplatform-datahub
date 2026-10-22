@@ -87,6 +87,7 @@ A run is ingested at most once. A duplicate signal for the same run creates no d
 
 - The anchor is the ID in lower case. Links point to the anchor, never to the heading text, so a title can change without breaking links.
 - The title after `·` is short and descriptive. The Confluence rules had no titles; the titles of migrated rules were derived from their text.
+- A requirement that came from elsewhere than Confluence, such as a [workshop](../workshops/2026-10-22-data-agents-and-governance.md), names it on its status line with `· **Source:**` and a link to the request it came from.
 - A technical requirement extends its status line with `· **Realises:**` and links to what it realises: functional requirements, edge cases, decisions or non-functional requirements. A non-functional requirement adds `· **Applies to:**` when it is about specific requirements. See the [templates](_templates/).
 
 ### Decisions and open points

@@ -14,6 +14,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
+| What a workshop asked of Data Hub, and where each request was recorded | [Workshop of 2026-10-22](workshops/2026-10-22-data-agents-and-governance.md) |
 | How the web app must look and behave: design rules, style values and prototype screens | [Design](design/README.md) |
 | How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
 | How code becomes running services, and the branches | [Build and deploy](architecture/build-and-deploy.md) |
@@ -38,13 +39,14 @@ docs/
 ├── overview/
 │   ├── data-hub.md            vision, the library metaphor, overarching decisions (DEC-DH)
 │   └── open-themes.md         themes still to be worked out (OP-DH)
-└── requirements/
-    ├── README.md              ID scheme, format, statuses, commit trailers, tooling
-    ├── traceability.md        generated: requirement → status → realised by → commits
-    ├── _templates/            starting points for new files
-    ├── functional/            one file per functional domain (FR, EC, DEC, OP)
-    ├── technical/             technical requirements (TR): the platform, then one file per domain
-    └── non-functional/        non-functional requirements (NFR), one file per category
+├── requirements/
+│   ├── README.md              ID scheme, format, statuses, commit trailers, tooling
+│   ├── traceability.md        generated: requirement → status → realised by → commits
+│   ├── _templates/            starting points for new files
+│   ├── functional/            one file per functional domain (FR, EC, DEC, OP)
+│   ├── technical/             technical requirements (TR): the platform, then one file per domain
+│   └── non-functional/        non-functional requirements (NFR), one file per category
+└── workshops/                 what a workshop asked of Data Hub, translated, with the requirements each request became
 ```
 
 ## Conventions in short
