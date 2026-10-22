@@ -22,33 +22,11 @@ Pointers to material this domain will build on, collected during the migration. 
 
 ## Requirements
 
-*The requirements below come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md). They are proposals, still to be validated, and therefore Proposed.*
-
-<a id="fr-pl-01"></a>
-### FR-PL-01 · Every Resource has a Confidentiality Level
-
-**Status:** Proposed · **Source:** [REQ-DH-CONF](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-conf)
-
-Next to its Level, every Resource has a Confidentiality Level. It is set in the dbt project, in `meta`.
-
-<a id="fr-pl-02"></a>
-### FR-PL-02 · Downstream, the Confidentiality Level can only go down
-
-**Status:** Proposed · **Source:** [REQ-DH-CONF](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-conf)
-
-Downstream, in a Lens, a Report or an export, the Confidentiality Level can only be lowered, never raised.
-
-<a id="fr-pl-03"></a>
-### FR-PL-03 · A Lens or a Report inherits the highest Confidentiality Level
-
-**Status:** Proposed · **Source:** [REQ-DH-CONF](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-conf)
-
-A Lens or a Report takes the highest Confidentiality Level of what lies beneath it.
+None yet. Start from the [functional domain template](../_templates/functional-domain.md).
 
 ## Open points
 
-- [ ] <a id="op-pl-01"></a>**OP-PL-01** · Determine the Confidentiality Levels themselves, and the matrix of Confidentiality Levels against who may do what.
-- [ ] <a id="op-pl-02"></a>**OP-PL-02** · Decide how the Confidentiality Level relates to the access classification on the Resource Card ([The Resource Card](../../overview/data-hub.md#the-resource-card)) and to the access axis of [OP-DH-22](../../overview/open-themes.md#op-dh-22): the same thing under a new name, or a second axis. *Raised while taking in the workshop of 2026-10-22.*
+- [ ] <a id="op-pl-01"></a>**OP-PL-01** · Work out confidentiality as a concept first, on Confluence, before it becomes requirements here. The starting points of the workshop ([REQ-DH-CONF](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-conf)): next to its maturity, every Resource gets a level of confidentiality, set in dbt (`meta`), only ever lowered downstream, and taken at its highest by a Lens or a Report, with a matrix of levels against who may do what. Settle as well how it relates to the access classification on the Resource Card ([The Resource Card](../../overview/data-hub.md#the-resource-card)) and to the access axis of [OP-DH-22](../../overview/open-themes.md#op-dh-22). *Decided on 2026-10-22: a concept to work out first, not yet requirements.*
 
 ## Builds on
 

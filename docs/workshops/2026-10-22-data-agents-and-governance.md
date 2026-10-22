@@ -19,7 +19,7 @@
 
 Data Hub manages five kinds of entities: **Resource** (a mart view that the Data Team offers), **Collection** (a group of Resources per functional domain, with an Owner), **Lens** (a typed query on Resources made by business: joining, filtering, aggregating), **semgraph** (a chart on a Lens or a Resource, through the Chart Server) and **Report** (one or more Lenses or charts around a question, with text). Every asset carries the maturity of the lowest Level beneath it.
 
-**Recorded as:** [OP-DH-38](../overview/open-themes.md#op-dh-38). The overview has three kinds of assets ([From Stacks to Report](../overview/data-hub.md#from-stacks-to-report)); confirming the five, and what the Level of a Collection is, is open.
+**Recorded as:** [OP-DH-38](../overview/open-themes.md#op-dh-38), decided on 2026-10-22 as [DEC-DH-64](../overview/data-hub.md#dec-dh-64): four kinds of assets, Resource, Lens, chart and Report, each with a Level; the Collection is their container and has no Level of its own.
 
 <a id="req-dh-meta"></a>
 ### REQ-DH-META · Metadata on a Resource (themes 1 and 2, post-its 8 and 10)
@@ -34,7 +34,7 @@ Every Resource has, as separate, visible metadata:
 - **Stability**: is the data still settling (late-arriving, for example event data that closes after a few days) or changeable by nature (for example an account name), and from when is it final (for example "stable = D-3").
 - The **maturity Level** (existing) and the **confidentiality level** (new, see REQ-DH-CONF).
 
-**Recorded as:** [FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01) to [FR-RC-07](../requirements/functional/05-resource-card.md#fr-rc-07), with [OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01) to [OP-RC-04](../requirements/functional/05-resource-card.md#op-rc-04) on how they relate to the description, the Questions and the Known Behaviour, and on their terms.
+**Recorded as:** [FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01) to [FR-RC-07](../requirements/functional/05-resource-card.md#fr-rc-07), the confidentiality level excepted (see REQ-DH-CONF), with [OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01) to [OP-RC-04](../requirements/functional/05-resource-card.md#op-rc-04) on how they relate to the description, the Questions and the Known Behaviour, and on their terms.
 
 <a id="req-dh-relaties"></a>
 ### REQ-DH-RELATIES · Relationships through Entity and identifier (theme 1, granularity)
@@ -48,7 +48,7 @@ With every Resource stands which other Resource you can join it to, and on which
 
 Next to its maturity, every Resource gets a confidentiality level. The level is set at dbt level (meta) and can only be **lowered, never raised** downstream (Lens, Report, export). A Lens or Report inherits the highest confidentiality level of what lies beneath it. There will be a matrix (levels × who may do what); the levels themselves are still to be determined.
 
-**Recorded as:** [FR-PL-01](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-01) to [FR-PL-03](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-03), with [OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01) for the levels and the matrix, and [OP-PL-02](../requirements/functional/12-permissions-and-library-cards.md#op-pl-02) for how they relate to the access classification already on the Resource Card.
+**Recorded as:** not yet as requirements. Decided on 2026-10-22: confidentiality is first worked out as a concept, on Confluence; the requirements follow once it is clear ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)).
 
 ## 2. Collections and ownership
 
@@ -57,7 +57,7 @@ Next to its maturity, every Resource gets a confidentiality level. The level is 
 
 A Collection is per functional domain and is **private** or **public**. Private: only the owner(s) have access, nobody else sees it; it is the workspace. The owner decides to make a Collection public, and decides **per Resource** what is in the Collection and whether it is public.
 
-**Recorded as:** already decided and built in [Collections](../requirements/functional/03-collections.md): private or public ([FR-CO-16](../requirements/functional/03-collections.md#fr-co-16), [FR-CO-17](../requirements/functional/03-collections.md#fr-co-17)), and Publication per Resource by the Owner ([FR-SR-16](../requirements/functional/04-stacks-and-resources.md#fr-sr-16)). Two differences are open points: the Data Team also sees private Collections ([OP-CO-09](../requirements/functional/03-collections.md#op-co-09)), and the Data Team, not the Owner, adds Resources to a Collection ([OP-CO-10](../requirements/functional/03-collections.md#op-co-10)).
+**Recorded as:** already decided and built in [Collections](../requirements/functional/03-collections.md): private or public ([FR-CO-16](../requirements/functional/03-collections.md#fr-co-16), [FR-CO-17](../requirements/functional/03-collections.md#fr-co-17)), and Publication per Resource by the Owner ([FR-SR-16](../requirements/functional/04-stacks-and-resources.md#fr-sr-16)). Two differences were decided on 2026-10-22 to stay as built: the Data Team also sees private Collections ([OP-CO-09](../requirements/functional/03-collections.md#op-co-09)), and the Data Team, not the Owner, adds Resources to a Collection ([OP-CO-10](../requirements/functional/03-collections.md#op-co-10)).
 
 <a id="req-dh-owners"></a>
 ### REQ-DH-OWNERS · Owners through a Google Workspace group (theme 4, validating together)
@@ -87,7 +87,7 @@ When a Lens that builds on a Resource is made **public**, the Owner of that Reso
 
 Every executed query (ad hoc, Lens, Report, export, MCP) is logged with a unique **query ID**, the SQL, who ran it, the time, the bytes processed and the underlying Resources. Every output (chart, report, PDF, export) visibly carries that ID, so that a screenshot can always be traced back to the SQL. semgraph already does this; Data Hub extends it to all assets.
 
-**Recorded as:** [FR-LN-05](../requirements/functional/07-log-and-notifications.md#fr-ln-05) and [FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06). It differs from [DEC-SR-18](../requirements/functional/04-stacks-and-resources.md#dec-sr-18), which stores no queries in v1: [OP-LN-01](../requirements/functional/07-log-and-notifications.md#op-ln-01).
+**Recorded as:** [FR-LN-05](../requirements/functional/07-log-and-notifications.md#fr-ln-05) and [FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06). It differed from [DEC-SR-18](../requirements/functional/04-stacks-and-resources.md#dec-sr-18), which stored no queries in v1 ([OP-LN-01](../requirements/functional/07-log-and-notifications.md#op-ln-01)). Decided on 2026-10-22: Data Hub keeps its own Query Log ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)), and both requirements are Specified.
 
 <a id="req-dh-preflight"></a>
 ### REQ-DH-PREFLIGHT · Pre-flight and thresholds on queries (post-it 14)

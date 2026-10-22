@@ -29,7 +29,6 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="change"></a>**Change** | A difference for one Node between a new Artifact Set and the previous Current Version: a description, logic, type or structural change, or a Node added or removed. | [Artifact registry](requirements/functional/01-artifact-registry.md#kinds-of-change) |
 | <a id="chart-server"></a>**Chart Server** | The service semgraph of Data Hub, which draws charts by what they mean, following the chart language. Until its users have moved over, its former version on AWS keeps running too. | [DEC-DH-53](overview/data-hub.md#dec-dh-53), [DEC-DH-63](overview/data-hub.md#dec-dh-63) |
 | <a id="collection"></a>**Collection** | A functional domain of Immoscoop, such as web visits, leads or agencies, in which Resources sit together under one Owner Unit. Anyone can create one, and it is private or public. Not a dataset in BigQuery. | [Collections](requirements/functional/03-collections.md) |
-| <a id="confidentiality-level"></a>**Confidentiality Level** | How confidential the data of a Resource is, next to its Level: set in its dbt project, taken at its highest by the Lenses and Reports built on it, and only ever lowered downstream. The levels themselves are still to be determined. Not to be confused with the Level, the maturity of a Resource. | [FR-PL-01](requirements/functional/12-permissions-and-library-cards.md#fr-pl-01) to [FR-PL-03](requirements/functional/12-permissions-and-library-cards.md#fr-pl-03) |
 | <a id="confirmation"></a>**Confirmation** | The declaration by the Owner that the data of a Resource is correct, stored with the Fingerprint of that moment. The first Publication is the first Confirmation. A Confirmation does not expire. | [DEC-DH-39](overview/data-hub.md#dec-dh-39), [FR-MR-08](requirements/functional/06-maturity-and-release.md#fr-mr-08) |
 | <a id="consumer"></a>**Consumer** | A User of the Lenses and Reports built on a Resource. Data Hub knows them through the lineage of those Lenses and Reports. | [FR-LN-03](requirements/functional/07-log-and-notifications.md#fr-ln-03) |
 | <a id="current-version"></a>**Current Version** | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
@@ -118,7 +117,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | bronjob | Source Job |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
-| confidentialiteitsniveau | Confidentiality Level |
+| confidentialiteitsniveau | level of confidentiality |
 | conservator | curator |
 | consumenten | Consumers |
 | controlecijfers | control figures |

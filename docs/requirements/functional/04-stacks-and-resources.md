@@ -83,7 +83,7 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 - <a id="dec-sr-15"></a>**DEC-SR-15** · Reading a Resource happens in tabs: Overview, Columns, Lineage, EDA, History, Conversations and Preview. Usage, who uses the Resource in Lenses, Reports and feeds, comes later.
 - <a id="dec-sr-16"></a>**DEC-SR-16** · Querying comes in two flavours. Via Claude, it is free SQL, also across multiple Resources, with joins. In the interface there is only a preview of the first rows, no query builder: real questions need joins, and those belong with Claude and, later, with Lenses.
 - <a id="dec-sr-17"></a>**DEC-SR-17** · When Claude queries on behalf of a User, Data Hub checks that every Resource in the query is visible to that User, and a limit on scanned bytes applies. Every query gets a label with the User.
-- <a id="dec-sr-18"></a>**DEC-SR-18** · Executed queries are not stored in Data Hub in v1. BigQuery keeps its own job log for 180 days; query history may be added later. *Note of 2026-10-22: the workshop proposes a Query Log of every query ([FR-LN-05](07-log-and-notifications.md#fr-ln-05)); whether it replaces this is open ([OP-LN-01](07-log-and-notifications.md#op-ln-01)).*
+- <a id="dec-sr-18"></a>**DEC-SR-18** · Executed queries are not stored in Data Hub in v1. BigQuery keeps its own job log for 180 days; query history may be added later. *Note of 2026-10-22: replaced by [DEC-LN-01](07-log-and-notifications.md#dec-ln-01): Data Hub keeps its own Query Log of every query.*
 - <a id="dec-sr-19"></a>**DEC-SR-19** · The Owner and the Data Team can supplement the description on top of the Artifacts: intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log, with who made it.
 - <a id="dec-sr-20"></a>**DEC-SR-20** · Everyone who may see a Resource can react to it. A Reaction has a type: a Question, a Remark or a Signal.
 - <a id="dec-sr-21"></a>**DEC-SR-21** · A Signal reports that something seems odd about the data. It goes to the Owner and to the Data Team, and they can turn it into an Anomaly on the Resource Card, with a period and the impact.
@@ -308,6 +308,8 @@ Via Claude, a User can have free SQL executed over the Resources they may see. A
 
 Every query gets a limit on scanned bytes and a label with the User. Executed queries are not stored in Data Hub in v1.
 
+*Note of 2026-10-22: queries are stored after all, in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).*
+
 <a id="fr-sr-28"></a>
 ### FR-SR-28 · The Owner and the Data Team supplement the description
 
@@ -443,7 +445,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it.
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
 - [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).*
-- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab.
+- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.*
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
 

@@ -10,20 +10,20 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 5 | 13 (13 open) |
-| [Data Hub](../overview/data-hub.md) | – | – | 60 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (36 open, 3 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 17 (1 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 9 (8 open, 1 done) |
+| [Collections](functional/03-collections.md) | 17 (1 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 9 (6 open, 3 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 37 (2 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 10 (9 open, 1 done) |
 | [Resource card](functional/05-resource-card.md) | 10 (10 proposed) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (6 proposed) | – | – | 2 (2 open) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 5 (5 proposed) | – | – | 1 (1 open) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
-| [Permissions and library cards](functional/12-permissions-and-library-cards.md) | 3 (3 proposed) | – | – | 2 (2 open) |
+| [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
@@ -144,7 +144,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | – |
 | [FR-RC-05](functional/05-resource-card.md#fr-rc-05) | A log of changes and Anomalies, for people and for Claude | Proposed | – | – | – |
 | [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | – |
-| [FR-RC-07](functional/05-resource-card.md#fr-rc-07) | The Level and the Confidentiality Level | Proposed | – | – | – |
+| [FR-RC-07](functional/05-resource-card.md#fr-rc-07) | The Level on the Resource Card | Proposed | – | – | – |
 | [FR-RC-08](functional/05-resource-card.md#fr-rc-08) | Relationships through an Entity and an identifier | Proposed | – | – | – |
 | [FR-RC-09](functional/05-resource-card.md#fr-rc-09) | A new Resource is linked through its Entity | Proposed | – | – | – |
 | [FR-RC-10](functional/05-resource-card.md#fr-rc-10) | Relationships can be visualised | Proposed | – | – | – |
@@ -172,8 +172,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LN-02](functional/07-log-and-notifications.md#fr-ln-02) | The Owner can notify the Consumers of a structural Change | Proposed | – | – | – |
 | [FR-LN-03](functional/07-log-and-notifications.md#fr-ln-03) | Data Hub knows the Consumers of a Resource | Proposed | – | – | – |
 | [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – |
-| [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Proposed | – | – | – |
-| [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Proposed | – | – | – |
+| [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Specified | – | – | – |
+| [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Specified | – | – | – |
 
 ### [Lenses](functional/09-lenses.md)
 
@@ -184,14 +184,6 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | – |
 | [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | – |
 | [FR-LE-05](functional/09-lenses.md#fr-le-05) | First the story, then the data | Proposed | – | – | – |
-
-### [Permissions and library cards](functional/12-permissions-and-library-cards.md)
-
-| ID | Title | Status | Confluence | Realised by | Commits |
-| --- | --- | --- | --- | --- | --- |
-| [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | Every Resource has a Confidentiality Level | Proposed | – | – | – |
-| [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | Downstream, the Confidentiality Level can only go down | Proposed | – | – | – |
-| [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | A Lens or a Report inherits the highest Confidentiality Level | Proposed | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

@@ -67,11 +67,11 @@ The errors, import problems and changes in the data of a Resource are kept in ch
 Every Resource states its Stability, as metadata of its own: whether its data is still settling, such as event data that closes after a few days, or can change by nature, such as an account name, and from when it is final, for example "stable = D-3".
 
 <a id="fr-rc-07"></a>
-### FR-RC-07 · The Level and the Confidentiality Level
+### FR-RC-07 · The Level on the Resource Card
 
 **Status:** Proposed · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta)
 
-The Resource Card shows the Level of the Resource and its Confidentiality Level ([FR-PL-01](12-permissions-and-library-cards.md#fr-pl-01)).
+The Resource Card shows the Level of the Resource. Its confidentiality is worked out as a concept first ([OP-PL-01](12-permissions-and-library-cards.md#op-pl-01)).
 
 <a id="fr-rc-08"></a>
 ### FR-RC-08 · Relationships through an Entity and an identifier
