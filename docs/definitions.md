@@ -30,6 +30,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="chart-server"></a>**Chart Server** | The service semgraph of Data Hub, which draws charts by what they mean, following the chart language. Until its users have moved over, its former version on AWS keeps running too. | [DEC-DH-53](overview/data-hub.md#dec-dh-53), [DEC-DH-63](overview/data-hub.md#dec-dh-63) |
 | <a id="collection"></a>**Collection** | A functional domain of Immoscoop, such as web visits, leads or agencies, in which Resources sit together under one Owner Unit. Anyone can create one, and it is private or public. Not a dataset in BigQuery. | [Collections](requirements/functional/03-collections.md) |
 | <a id="confirmation"></a>**Confirmation** | The declaration by the Owner that the data of a Resource is correct, stored with the Fingerprint of that moment. The first Publication is the first Confirmation. A Confirmation does not expire. | [DEC-DH-39](overview/data-hub.md#dec-dh-39), [FR-MR-08](requirements/functional/06-maturity-and-release.md#fr-mr-08) |
+| <a id="consumer"></a>**Consumer** | A User of the Lenses and Reports built on a Resource. Data Hub knows them through the lineage of those Lenses and Reports. | [FR-LN-03](requirements/functional/07-log-and-notifications.md#fr-ln-03) |
 | <a id="current-version"></a>**Current Version** | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="data-admin"></a>**Data Admin** | A member of the Role Group of the Data Team, who registers and manages Resources. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="data-team"></a>**Data Team** | The team that takes data in, describes it and puts it in the Stacks. In Data Hub: the members of its Role Group. | [DEC-CO-03](requirements/functional/03-collections.md#dec-co-03) |
@@ -42,6 +43,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="group"></a>**Group** | A Google group of the own Workspace domain that Data Hub knows. Owner Units and Role Groups are Groups. | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="key"></a>**Key** | The full name of the view of a Resource in BigQuery, `project.dataset.table`. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="known-behaviour"></a>**Known Behaviour** | The block on the Resource Card with the intended use, the pitfalls and the Anomalies of a Resource. | [DEC-DH-18](overview/data-hub.md#dec-dh-18) |
+| <a id="known-gap"></a>**Known Gap** | A structural gap in the data of a Resource, not an error in the strict sense: for example a field that was never stored for part of the rows. The final term is still open. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [OP-RC-03](requirements/functional/05-resource-card.md#op-rc-03) |
 | <a id="lens"></a>**Lens** | A rendering of a Resource, of a fixed type, with Parameters, made by business. Deliberately not called a view. Its Level is the lowest Level of the Resources beneath it. | [Lenses](overview/data-hub.md#lenses) |
 | <a id="level"></a>**Level** | The maturity level of a Resource, Lens or Report, from Beta (0) to Monitored (5); see [Levels](#levels). | [Maturity and release](requirements/functional/06-maturity-and-release.md) |
 | <a id="library-card"></a>**Library Card** | The personal key of a User, for example for Excel through Power Query. It can be revoked and renewed. | [DEC-DH-47](overview/data-hub.md#dec-dh-47) |
@@ -55,8 +57,10 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="owner"></a>**Owner** | The Owner Unit of the Collection a Resource is in. It vouches for the Collection and confirms its Resources. | [DEC-CO-04](requirements/functional/03-collections.md#dec-co-04) |
 | <a id="owner-unit"></a>**Owner Unit** | The Group that takes care of a Collection: any Google group of the own Workspace domain, chosen by whoever creates the Collection from the groups they are in. | [DEC-CO-09](requirements/functional/03-collections.md#dec-co-09) |
 | <a id="parameter"></a>**Parameter** | A functionally named and typed input of a Lens, for example `dateFrom`, that can be combined across Lenses. | [DEC-DH-11](overview/data-hub.md#dec-dh-11) |
+| <a id="pre-flight"></a>**Pre-flight** | What Data Hub shows before a query runs: the volume it will process, against the thresholds for approval and for a block. | [FR-SR-36](requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](requirements/functional/04-stacks-and-resources.md#fr-sr-37) |
 | <a id="promotion-loop"></a>**Promotion Loop** | Hardening a Beta Concept into a Resource, with the beta query as its specification. | [The promotion loop](overview/open-themes.md#3-the-promotion-loop) |
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
+| <a id="query-id"></a>**Query ID**, <a id="query-log"></a>**Query Log** | The Query Log keeps every query Data Hub executes, with a unique Query ID, the SQL, who ran it, when, the bytes processed and the Resources beneath it. Every output carries the Query ID of its query. Not the Log of a Resource. | [FR-LN-05](requirements/functional/07-log-and-notifications.md#fr-ln-05), [FR-LN-06](requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | <a id="reaction"></a>**Reaction** | A Question, Remark or Signal that someone who may see a Resource leaves on it. | [DEC-SR-20](requirements/functional/04-stacks-and-resources.md#dec-sr-20) |
 | <a id="question"></a>**Question**, <a id="remark"></a>**Remark** | The Reactions that ask something about a Resource, and that leave a remark or tip for others. | [Kinds of Reaction](requirements/functional/04-stacks-and-resources.md#kinds-of-reaction) |
 | <a id="refresh-token"></a>**Refresh Token** | The long-lived token, usable once, with which a client that signs in on behalf of a User (the server of the web app, or Claude) gets a new Access Token without a new login. Only identity accepts it; the other services never see it. | [DEC-PF-18](requirements/technical/00-platform.md#dec-pf-18), [TR-PF-25](requirements/technical/00-platform.md#tr-pf-25) |
@@ -68,6 +72,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="role-group"></a>**Role Group** | A Group that gives its members a role in Data Hub, such as `datahub-datateam@` for the Data Team. | [User management](requirements/functional/02-user-management.md#naming-convention) |
 | <a id="signal"></a>**Signal** | A Reaction reporting that something seems odd about the data of a Resource. It goes to the Owner and the Data Team, and can become an Anomaly. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="source-job"></a>**Source Job** | The one prod job in dbt Cloud, per dbt project, whose Artifacts Data Hub uses: a full build that also runs `dbt docs generate`. uat of Data Hub reads the UAT counterpart of each Source Job ([DEC-AR-01](requirements/functional/01-artifact-registry.md#dec-ar-01)). | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
+| <a id="stability"></a>**Stability** | Whether the data of a Resource is still settling or can change by nature, and from when it is final, for example "stable = D-3". The final term is still open. | [FR-RC-06](requirements/functional/05-resource-card.md#fr-rc-06), [OP-RC-04](requirements/functional/05-resource-card.md#op-rc-04) |
 | <a id="stack"></a>**Stack**, **the Stacks** | A dataset in BigQuery with mart views that the Data Team releases, as authorized views onto the datasets behind them. Today there is one: `dbt_prod_stacks`. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="synchronisation"></a>**Synchronisation** | Periodically pulling in the members of all Groups, so that Data Hub knows who is in which Group, also for Users who are not logged in. | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="user"></a>**User** | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once. | [User management](requirements/functional/02-user-management.md#terms) |
@@ -95,7 +100,7 @@ Data Hub is explained as a library ([DEC-DH-01](overview/data-hub.md#dec-dh-01))
 
 ## Translation reference
 
-The Confluence pages are in Dutch, and so was the session in which the [design](design/README.md) of the web app was made. This table maps their vocabulary to the English used here, so that terms can be found in both places. Defined Terms appear with their capitals. It is the only place in this repository where Dutch is used on purpose.
+The Confluence pages are in Dutch, and so were the session in which the [design](design/README.md) of the web app was made and the [workshops](workshops/2026-10-22-data-agents-and-governance.md). This table maps their vocabulary to the English used here, so that terms can be found in both places. Defined Terms appear with their capitals. It is the only place in this repository where Dutch is used on purpose.
 
 | Confluence (Dutch) | Repository (English) |
 | --- | --- |
@@ -103,6 +108,7 @@ The Confluence pages are in Dutch, and so was the session in which the [design](
 | access-as | access axis |
 | begrip, beta-begrip | concept, Beta Concept |
 | bekend gedrag | Known Behaviour |
+| bekende hiaten | Known Gaps |
 | bekrachtigen, bekrachtiging | confirm, Confirmation |
 | Beschikbaar, Beschreven, Bekrachtigd, Verkend, Bewaakt | Available, Described, Confirmed, Explored, Monitored |
 | berichtencentrum | Message Centre |
@@ -111,13 +117,18 @@ The Confluence pages are in Dutch, and so was the session in which the [design](
 | bronjob | Source Job |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
+| confidentialiteitsniveau | level of confidentiality |
 | conservator | curator |
+| consumenten | Consumers |
+| controlecijfers | control figures |
 | datateam | Data Team |
+| definitie in businesstaal | definition in business language |
 | domeinmodel | Domain Model |
 | fiche, catalogusfiche | Resource Card, catalogue card |
 | functionele regel | functional requirement |
 | Gebruikersbeheer | User management |
 | gesprek | conversation |
+| gewicht van een lens | weight of a Lens |
 | grafiekserver | Chart Server |
 | grafiektaal | chart language |
 | holle hoek | concave corner (flare) |
@@ -138,14 +149,18 @@ The Confluence pages are in Dutch, and so was the session in which the [design](
 | ontwerprichtlijnen | design principles |
 | open punten | open points |
 | open uitleen | general circulation |
+| open vragen | open questions |
 | opheffen | dissolve |
+| pre-flight | Pre-flight |
 | promotielus | Promotion Loop |
+| query-ID, SQL-log | Query ID, Query Log |
 | randgevallen | edge cases |
 | rechten | permissions |
 | rekken | shelves |
 | signaal, opmerking, vraag | Signal, Remark, Question |
 | signaalkleur | signal colour |
 | sleutel | Key |
+| stabiliteit | Stability |
 | startscherm | start screen |
 | steunt op | builds on |
 | stroom | flow |
@@ -154,6 +169,9 @@ The Confluence pages are in Dutch, and so was the session in which the [design](
 | uit te diepen | to be worked out |
 | uitschuifpaneel | slide-out panel |
 | vergrootglas | magnifying glass |
+| verhaal | story |
 | verharden | harden |
 | vingerafdruk | Fingerprint |
+| voortschrijdend | still settling |
 | wijziging | Change |
+| wijzigings- en anomalielog | log of changes and Anomalies |

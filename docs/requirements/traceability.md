@@ -10,21 +10,21 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 5 | 13 (13 open) |
-| [Data Hub](../overview/data-hub.md) | – | – | 60 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 3 | 37 (34 open, 3 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 17 (1 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 7 (6 open, 1 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 35 (21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 10 (9 open, 1 done) |
-| [Resource card](functional/05-resource-card.md) | – | – | – | – |
+| [Collections](functional/03-collections.md) | 17 (1 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 9 (6 open, 3 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 37 (2 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 10 (9 open, 1 done) |
+| [Resource card](functional/05-resource-card.md) | 10 (10 proposed) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
-| [Log and notifications](functional/07-log-and-notifications.md) | – | – | – | – |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | – | – | – | – |
+| [Lenses](functional/09-lenses.md) | 5 (5 proposed) | – | – | 1 (1 open) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
-| [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | – |
-| [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | – |
-| [Channels](functional/13-channels.md) | – | – | – | – |
+| [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
+| [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
+| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
 | [Conversations](functional/14-conversations.md) | – | – | – | – |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
@@ -131,6 +131,23 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-33](functional/04-stacks-and-resources.md#fr-sr-33) | The Display Name comes from the exposure | Implemented | – | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-34](functional/04-stacks-and-resources.md#fr-sr-34) | A Resource without exposure is withdrawn and held | Implemented | – | [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-35](functional/04-stacks-and-resources.md#fr-sr-35) | A new Resource waits for a Collection | Implemented | – | [TR-SR-05](technical/04-stacks-and-resources.md#tr-sr-05) | [5b3f5df](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5b3f5dfc60c6e994197a90e971c6e16bd5b8e079) implements, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
+| [FR-SR-36](functional/04-stacks-and-resources.md#fr-sr-36) | A Pre-flight before every query | Proposed | – | – | – |
+| [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Proposed | – | – | – |
+
+### [Resource card](functional/05-resource-card.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A definition in business language | Proposed | – | – | – |
+| [FR-RC-02](functional/05-resource-card.md#fr-rc-02) | Open questions about the data | Proposed | – | – | – |
+| [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | – |
+| [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | – |
+| [FR-RC-05](functional/05-resource-card.md#fr-rc-05) | A log of changes and Anomalies, for people and for Claude | Proposed | – | – | – |
+| [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | – |
+| [FR-RC-07](functional/05-resource-card.md#fr-rc-07) | The Level on the Resource Card | Proposed | – | – | – |
+| [FR-RC-08](functional/05-resource-card.md#fr-rc-08) | Relationships through an Entity and an identifier | Proposed | – | – | – |
+| [FR-RC-09](functional/05-resource-card.md#fr-rc-09) | A new Resource is linked through its Entity | Proposed | – | – | – |
+| [FR-RC-10](functional/05-resource-card.md#fr-rc-10) | Relationships can be visualised | Proposed | – | – | – |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 
@@ -146,6 +163,37 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-08](functional/06-maturity-and-release.md#fr-mr-08) | A Confirmation does not expire | Specified | MO-08 | – | – |
 | [FR-MR-09](functional/06-maturity-and-release.md#fr-mr-09) | Log every rise and drop, and alert the Owner on a drop | Specified | MO-09 | – | – |
 | [FR-MR-10](functional/06-maturity-and-release.md#fr-mr-10) | The Level restricts nothing and is shown everywhere | Specified | MO-10 | – | – |
+
+### [Log and notifications](functional/07-log-and-notifications.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-LN-01](functional/07-log-and-notifications.md#fr-ln-01) | A notification to an Owner reaches its whole Owner Unit | Proposed | – | – | – |
+| [FR-LN-02](functional/07-log-and-notifications.md#fr-ln-02) | The Owner can notify the Consumers of a structural Change | Proposed | – | – | – |
+| [FR-LN-03](functional/07-log-and-notifications.md#fr-ln-03) | Data Hub knows the Consumers of a Resource | Proposed | – | – | – |
+| [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – |
+| [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Specified | – | – | – |
+| [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Specified | – | – | – |
+
+### [Lenses](functional/09-lenses.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-LE-01](functional/09-lenses.md#fr-le-01) | A Lens is created only under a processing limit | Proposed | – | – | – |
+| [FR-LE-02](functional/09-lenses.md#fr-le-02) | The weight of a Lens is visible | Proposed | – | – | – |
+| [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | – |
+| [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | – |
+| [FR-LE-05](functional/09-lenses.md#fr-le-05) | First the story, then the data | Proposed | – | – | – |
+
+### [Channels](functional/13-channels.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-CH-01](functional/13-channels.md#fr-ch-01) | No high-volume or frequent exports through Data Hub | Proposed | – | – | – |
+| [FR-CH-02](functional/13-channels.md#fr-ch-02) | A structural export goes to the Data Team | Proposed | – | – | – |
+| [FR-CH-03](functional/13-channels.md#fr-ch-03) | Claude works through the MCP of Data Hub only | Proposed | – | – | – |
+| [FR-CH-04](functional/13-channels.md#fr-ch-04) | Documentation built into the interface and the MCP | Proposed | – | – | – |
+| [FR-CH-05](functional/13-channels.md#fr-ch-05) | Every feature updates the documentation | Proposed | – | – | – |
 
 ## Edge cases
 
