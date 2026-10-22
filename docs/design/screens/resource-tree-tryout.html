@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<!--
+  Screen: TRYOUT, one panel for Collections and their Resources
+  The Collection you are in unfolds in the panel and shows its Resources; the other Collections stay folded,
+  one click away. No second panel with a back arrow. Main = the same Resource detail as resource-detail.html.
+  Search filters both: a Collection whose name matches stays listed as it was; one with a matching Resource unfolds
+  and shows only those Resources.
+  Status: tryout, not decided. If kept, principles.md ("What is in the panel") changes first.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<style>
+/* TRYOUT: one panel. The Collection you are in unfolds; its Resources sit inside its card. */
+.tree-group { border-radius: var(--radius-md); margin-bottom: 7px; outline: 1px solid transparent; }
+.tree-group:not(.open):hover { outline-color: var(--tint-active); }
+.tree-head { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-radius: var(--radius-md); }
+.tree-head:focus-visible { outline: 2px solid var(--text-secondary); }
+.tree-name { flex: 1; min-width: 0; }
+.caret { color: var(--text-muted); font-size: 14px; transition: transform 200ms; }
+.tree-group:not(.open) .caret { transform: rotate(-90deg); }
+.tree-children { position: relative; display: grid; gap: 1px; padding: 0 6px 8px; }
+.tree-group:not(.open) .tree-children { display: none; }
+.tree-children::before { content: ''; position: absolute; left: 29px; top: 0; bottom: 14px; width: 1px; background: var(--tint-active); }
+.tree-res, .tree-more { position: relative; display: flex; align-items: center; gap: 8px; padding: 7px 8px 7px 46px; border-radius: var(--radius-sm);
+  color: inherit; text-decoration: none; font-size: var(--text-body); }
+.tree-res:hover { background: var(--tint-hover); }
+.tree-res.current { font-weight: var(--weight-medium); outline: 1.5px solid var(--text-muted); }
+.tree-res.current::before { content: ''; position: absolute; left: 21px; top: 50%; width: 17px; height: 17px; margin-top: -8.5px; border-radius: 50%;
+  background: radial-gradient(circle, var(--text-primary) 3px, transparent 3.5px); }
+.tree-res-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; }
+.tree-res-name i { font-size: 13px; color: var(--text-muted); }
+.tree-more { color: var(--text-muted); font-size: var(--text-small); }
+.tree-more:hover { color: var(--text-primary); }
+</style>
+<title>Data Hub — Weekly lead volume</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="tree-search" placeholder="Search collections and resources"></label>
+  <div class="panel-label">Your collections</div>
+  <div class="tree-group card open">
+   <button class="tree-head" aria-expanded="true"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta">6 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="resource-tree-tryout.html"><span class="tree-res-name">Weekly lead volume</span><span class="maturity" data-level="2" data-previous="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Credit lead funnel</span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Lead sources</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Lead response time</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Rejected leads<i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">KBC follow-up<i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <button class="tree-head" aria-expanded="false"><span class="item-icon" style="--c:var(--col-bordeaux)"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><span class="tree-res-name">Contact requests per listing</span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Lead quality score</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Visit requests</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Leads per broker</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Response by broker</span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Lead sources for listings</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Duplicate requests<i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Lead to visit</span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <button class="tree-head" aria-expanded="false"><span class="item-icon" style="--c:var(--col-teal)"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><span class="tree-res-name">Active listings per day</span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Listing views per day</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Price changes</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Listings by region</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Time on market</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">New listings per week</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Listing quality</span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Withdrawn listings<i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card">
+   <button class="tree-head" aria-expanded="false"><span class="item-icon" style="--c:var(--col-ochre)"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span><i class="ph ph-caret-down caret" aria-hidden="true"></i></button>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><span class="tree-res-name">Active brokers</span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Service packs per broker</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Broker churn</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Broker portal logins</span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Listings per broker</span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Broker regions</span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Pack upgrades</span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><span class="tree-res-name">Broker contacts<i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <div class="panel-label">Shared resources</div>
+  <a class="list-item card tree-shared" data-q="broker service packs"><span><span class="item-title">Broker service packs</span><span class="meta"><i class="ph-fill ph-users-three"></i>Sales</span></span></a>
+  <a class="list-item card tree-shared" data-q="search sessions"><span><span class="item-title">Search sessions</span><span class="meta"><i class="ph-fill ph-users-three"></i>Data team</span></span></a>
+  <p id="tree-empty" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <a class="btn-primary" href="resource-conversations.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="2" data-previous="4" data-no-tooltip></span>2 · Described</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+  <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+ </div>
+ <div class="alert" role="status"><i class="ph-fill ph-arrow-circle-down"></i><p><b style="font-weight:500">Level dropped from 4 Explored to 2 Described.</b> A structural change added the field <span class="mono">lead_channel</span>. The owner has been asked to reconfirm.</p><button>Reconfirm</button></div>
+ <div class="tabs" data-group="tabs" role="tablist">
+  <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
+  <button class="tab" data-target="columns" role="tab" aria-selected="false">Columns</button>
+  <button class="tab" data-target="later" role="tab" aria-selected="false">Lineage</button>
+  <button class="tab" data-target="later" role="tab" aria-selected="false">EDA</button>
+  <button class="tab" data-target="later" role="tab" aria-selected="false">History</button>
+  <a class="tab" href="resource-conversations.html" role="tab" aria-selected="false" style="text-decoration:none">Conversations <span class="count">3</span></a>
+  <button class="tab" data-target="later" role="tab" aria-selected="false">Preview</button>
+ </div>
+ <div class="tab-content card">
+  <div class="grid" data-pane-group="tabs" data-pane="overview">
+
+   <div class="sub-tile" style="grid-column:1/-1">
+    <div class="tile-head"><div class="label">Definition</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
+    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+   </div>
+
+   <div class="sub-tile"><div class="label">Maturity</div>
+    <svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 2 of 5, previously 4"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--tint-active)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="none" stroke="var(--signal-warn)" stroke-width="1.5" stroke-dasharray="3 3"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle" fill="var(--text-primary)" font-weight="600">2</text><text x="141" y="42" text-anchor="middle">3</text><text x="181" y="26" text-anchor="middle" fill="var(--signal-warn)">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg>
+    <div style="font-size:14px;font-weight:500;margin-top:6px">2 · Described</div><div class="meta">Was 4 · Explored until yesterday</div></div>
+
+   <div class="sub-tile">
+    <div class="tile-head"><div class="label">Publication</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <dl class="facts">
+     <dt>Published</dt><dd>2 Sep 2026 by An Claes</dd>
+     <dt>Confirmed</dt><dd>14 Oct 2026 by An Claes<div class="meta" style="margin-top:2px">Reconfirmation asked after the drop</div></dd>
+     <dt>Reliable since</dt><dd>1 Jan 2025</dd>
+    </dl>
+   </div>
+
+   <div class="sub-tile">
+    <div class="tile-head"><div class="label">Known behaviour</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-check-circle" style="color:var(--text-secondary)"></i>Intended use</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 10px 20px;line-height:1.5">Weekly trends and comparing lead sources.</p>
+    <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-warning" style="color:var(--text-secondary)"></i>Pitfalls</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 0 20px;line-height:1.5">The current week is incomplete. Don’t sum across sources for unique people.</p></div>
+
+   <div class="sub-tile">
+    <div class="tile-head"><div class="label">Known gaps</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div style="font-size:12px;line-height:1.5;display:flex;gap:8px;margin-bottom:10px"><i class="ph-fill ph-circle-dashed" style="color:var(--text-muted);margin-top:2px"></i><span><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</span></div>
+    <div style="font-size:12px;line-height:1.5;display:flex;gap:8px"><i class="ph-fill ph-circle-dashed" style="color:var(--text-muted);margin-top:2px"></i><span>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</span></div>
+   </div>
+
+   <div class="sub-tile">
+    <div class="tile-head"><div class="label">Stability</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:20px;font-weight:500">D-3</span><span class="meta">final three days after the week ends</span></div>
+    <p class="empty" style="margin-top:8px">Still settling: late leads arrive for up to three days. Values do not change by nature once final.</p>
+   </div>
+
+   <div class="sub-tile">
+    <div class="tile-head"><div class="label">Key fields</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span>
+    <div class="label" style="margin-top:12px">Parameters</div><span class="code-chip">lead_source</span><span class="code-chip">week_start</span></div>
+
+   <div class="sub-tile" style="grid-column:span 2">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="label" style="margin:0;flex:1">Entities and relationships</span><span class="origin">From the data team</span></div>
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;align-items:center">
+     <div>
+      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">leadSource</span>on <span class="mono">lead_source</span></div>
+      <p class="empty" style="margin:4px 0 12px">Joins Lead sources, Credit lead funnel and Lead response time.</p>
+      <div style="font-size:12px;font-weight:500"><span class="code-chip" style="margin:0 6px 0 0">creditLead</span><span style="color:var(--text-muted);font-weight:400">no identifier at this grain</span></div>
+      <p class="empty" style="margin-top:4px">In the lineage, but counted per week: it joins nothing here.</p>
+     </div>
+     <svg viewBox="0 0 330 150" width="100%" role="img" aria-label="Weekly lead volume joins Lead sources, Credit lead funnel and Lead response time through leadSource">
+      <g font-family="Poppins" font-size="10" fill="var(--text-primary)">
+       <path d="M118 75 C 160 75, 160 25, 206 25 M118 75 L206 75 M118 75 C 160 75, 160 125, 206 125" fill="none" stroke="var(--tint-active)" stroke-width="1.5"/>
+       <rect x="2" y="58" width="116" height="34" rx="12" fill="var(--text-primary)"/><text x="60" y="79" text-anchor="middle" fill="var(--surface-solid)" font-weight="500">Weekly lead volume</text>
+       <rect x="132" y="65" width="60" height="20" rx="10" fill="var(--surface-solid)" stroke="var(--tint-active)"/><text x="162" y="79" text-anchor="middle" font-size="8.5" fill="var(--text-secondary)">leadSource</text>
+       <rect x="206" y="10" width="120" height="30" rx="12" fill="var(--surface-solid)"/><text x="266" y="29" text-anchor="middle">Lead sources</text>
+       <rect x="206" y="60" width="120" height="30" rx="12" fill="var(--surface-solid)"/><text x="266" y="79" text-anchor="middle">Credit lead funnel</text>
+       <rect x="206" y="110" width="120" height="30" rx="12" fill="var(--surface-solid)"/><text x="266" y="129" text-anchor="middle">Lead response time</text>
+      </g>
+     </svg>
+    </div>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Monitoring</div>
+    <dl class="facts">
+     <dt>Checks</dt><dd>None active. Checks start at level 5, Monitored.</dd>
+     <dt>Incidents</dt><dd>None</dd>
+    </dl>
+   </div>
+
+   <div class="sub-tile" style="grid-column:1/-1"><div style="display:flex;align-items:center"><div class="label" style="flex:1;margin:0">Recent history</div><a class="text-link"><span>Full history</span><i class="ph-fill ph-arrow-right"></i></a></div>
+    <div style="margin-top:6px"><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">MAT-021</span><span style="flex:1">Maturity dropped to level 2; owner alerted</span><span style="color:var(--text-muted)">Yesterday</span></div><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">ART-010</span><span style="flex:1">Structural change: field lead_channel added</span><span style="color:var(--text-muted)">Yesterday</span></div><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">CNV-050</span><span style="flex:1">Signal raised by KL</span><span style="color:var(--text-muted)">3 days ago</span></div></div></div>
+  </div>
+  <div data-pane-group="tabs" data-pane="columns" hidden>
+   <table><thead><tr><th>Column</th><th>Type</th><th>Description</th><th>Entity</th><th></th></tr></thead><tbody>
+    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource</span></td><td><span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC</td><td></td><td></td></tr>
+    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
+   </tbody></table>
+  </div>
+  <p data-pane-group="tabs" data-pane="later" class="meta" style="justify-content:center;padding:40px;font-size:13px" hidden>Not designed yet.</p>
+ </div>
+</main>
+</div>
+<script src="app.js"></script>
+<script>
+// TRYOUT: unfold and fold a Collection; search filters Collections and Resources together
+document.querySelectorAll('.tree-head').forEach(h => h.addEventListener('click', () => {
+  const g = h.closest('.tree-group'), open = !g.classList.contains('open');
+  g.classList.toggle('open', open); h.setAttribute('aria-expanded', open);
+}));
+const before = new Map();
+document.getElementById('tree-search').addEventListener('input', e => {
+  const q = e.target.value.toLowerCase().trim(); let n = 0;
+  document.querySelectorAll('.tree-group').forEach(g => {
+    if (!before.has(g)) before.set(g, g.classList.contains('open'));
+    const own = g.querySelector('.tree-head .item-title').textContent.toLowerCase().includes(q);
+    let hits = 0;
+    g.querySelectorAll('.tree-res').forEach(r => { const m = own || r.textContent.toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
+    g.querySelectorAll('.tree-more').forEach(r => r.hidden = !!q && !own);
+    g.hidden = !own && hits === 0; if (!g.hidden) n++;
+    g.classList.toggle('open', q ? (!own || before.get(g)) && hits > 0 : before.get(g));
+    if (!q) before.delete(g);
+  });
+  document.querySelectorAll('.tree-shared').forEach(s => { const m = s.dataset.q.includes(q); s.hidden = !m; if (m) n++; });
+  document.getElementById('tree-empty').hidden = n > 0;
+});
+</script>
+</body>
+</html>
