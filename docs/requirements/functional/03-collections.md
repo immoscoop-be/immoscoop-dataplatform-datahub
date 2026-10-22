@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -196,6 +196,59 @@ Every Collection is private or public. Whoever creates it chooses, private unles
 **Status:** Implemented
 
 A public Collection is visible to every User. A private Collection is visible only to the members of its Owner Unit and to the Data Team. To anyone else, a private Collection does not exist: it is not listed, and asking for it gives the same answer as for a Collection that does not exist. Which of its Resources someone sees is set by [FR-SR-31](04-stacks-and-resources.md#fr-sr-31).
+
+## The panel of Collections
+
+How a User finds the Collections and their Resources in the web app: one panel, in which a Collection unfolds ([DEC-UX-10](../../design/principles.md#dec-ux-10)). The screens are in the [design](../../design/principles.md#what-is-in-the-panel).
+
+<a id="fr-co-18"></a>
+### FR-CO-18 · One list of Collections, each unfolding to what it holds
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+The panel of Collections lists every Collection the User sees ([FR-CO-17](#fr-co-17)). A Collection unfolds in place to show the Resources in it that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), and folds again when clicked a second time. Several Collections can be unfolded at once. There is no separate list per Collection. For the Data Team, the Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) are on top, and unfold the same way.
+
+<a id="fr-co-19"></a>
+### FR-CO-19 · Opening a Resource unfolds its Collection
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+When a User opens a Resource, its Collection is unfolded in the panel, and the Resource is marked as the one that is open.
+
+<a id="fr-co-20"></a>
+### FR-CO-20 · An item shows the icon of its kind, its name and its Level
+
+**Status:** Specified · **Source:** [DEC-UX-11](../../design/principles.md#dec-ux-11)
+
+Each item in an unfolded Collection shows the icon of its kind, the same for every item of that kind (a table for a Resource), its Display Name, and its Level ([FR-MR-10](06-maturity-and-release.md#fr-mr-10)).
+
+<a id="fr-co-21"></a>
+### FR-CO-21 · Every name takes one line
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+In the panel, the name of a Collection or of an item takes one line. A name that is too long ends in an ellipsis and is shown in full on hover.
+
+<a id="fr-co-22"></a>
+### FR-CO-22 · A Resource that is not published is shown as such
+
+**Status:** Specified · **Source:** [DEC-UX-12](../../design/principles.md#dec-ux-12)
+
+A Resource that is not published, which only its Owner Unit and the Data Team see ([DEC-CO-12](#dec-co-12)), is shown in a lighter grey in the panel, without an icon. Hovering over it says that it is not published, and so does a screen reader.
+
+<a id="fr-co-23"></a>
+### FR-CO-23 · A long Collection shows its first eight items
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+An unfolded Collection shows its first eight items, then "Show all" with the number of items, which shows the rest.
+
+<a id="fr-co-24"></a>
+### FR-CO-24 · Search in the panel covers Collections and their Resources
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+Search in the panel filters the Collections and their Resources together. A Collection whose name matches stays listed as it was; a Collection that holds a matching Resource unfolds and shows only the matching Resources. When nothing matches, the panel says so.
 
 ## Edge cases
 

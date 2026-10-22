@@ -275,6 +275,8 @@ Search covers title, description, Collection and Owner. A result shows those fou
 
 Browsing per Collection shows the Resources of a Collection, with the colour and the icon of that Collection.
 
+*Note of 2026-10-22: in the web app, a Collection unfolds to its Resources in the panel of Collections ([FR-CO-18](03-collections.md#fr-co-18)).*
+
 <a id="fr-sr-23"></a>
 ### FR-SR-23 · Derive the Entities from the manifest and the lineage
 

@@ -76,6 +76,7 @@ There are three layers:
 *The icon of a Collection comes from Tabler Icons today: see [OP-UX-07](#op-ux-07).*
 
 - A Resource has **no icon of its own**: icons are for the interface and for Collections ([DEC-UX-06](#dec-ux-06)).
+- In a list, an item has the **icon of its kind**: a table for a Resource, the same for every Resource. That icon is part of the interface ([DEC-UX-11](#dec-ux-11)).
 
 ## Navigation
 
@@ -88,12 +89,27 @@ There are three layers:
 1. **Click on another main item:** you go to that section and its panel slides open. The panel always belongs to the active section.
 2. **Click on the main item you are already in:** the panel slides in or out. The button in the panel does the same.
 3. **Click on an item in the panel:** the detail opens on the right; the panel stays.
-4. Whether the panel is open or closed is **remembered per User** ([OP-UX-13](#op-ux-13)).
+4. **Click on a Collection in the panel:** it unfolds, or folds again. Several can be unfolded at once ([OP-UX-14](#op-ux-14)).
+5. Whether the panel is open or closed is **remembered per User** ([OP-UX-13](#op-ux-13)).
 
 ### What is in the panel
 
-- **At the level of a section:** the index of that section. For Collections: search (filters the list), a plus button for a new Collection, "Your collections" (name, number of Resources, public or private) and "Shared resources" (name, and the team that owns the Resource).
-- **Within a Collection:** the Resources of that Collection, each with the maturity icon. Resources that are not published get a struck-through eye. An arrow takes you back to all Collections.
+The panel is **the index of its section**: one panel, never a second one for what is inside an item ([DEC-UX-10](#dec-ux-10)). Screens: every screen of Collections; [resource-detail](screens/resource-detail.html) shows a Collection unfolded.
+
+For Collections:
+
+- **On top:** the title, a plus button for a new Collection, and search.
+- **"Your collections":** each Collection with its icon, name, number of Resources and whether it is public or private, and an arrow that turns when it unfolds.
+- **An unfolded Collection** shows what it holds in its own card, as a **plain list**: no box or rounded corners per item, little space between them.
+  - Each item: the icon of its kind, under the centre of the icon of the Collection; its name; a small maturity icon on the right, in grey.
+  - The item you are on: its name in medium weight and the darkest colour. Opening a Resource unfolds its Collection.
+  - A Resource that is not published: its name in a lighter grey, without an icon. Hover says "not published" ([DEC-UX-12](#dec-ux-12)).
+  - The first eight items, then "Show all" with the number.
+  - Lenses and Reports join the list later, each with the icon of its kind ([OP-UX-15](#op-ux-15)).
+- **"Shared resources":** each with the icon of its kind, its name and the team that owns it ([OP-UX-02](#op-ux-02)).
+- **For the Data Team,** on top: "Without a collection", a Collection-like card with the Resources that wait for a Collection.
+- **One line per name:** a name that is too long ends in an ellipsis and shows in full on hover. This holds for Collections and Resources alike.
+- **Search** filters Collections and Resources together. A Collection whose name matches stays as it was; a Collection with a matching Resource unfolds and shows only the matching Resources.
 
 ## Start screen per section
 
@@ -124,6 +140,7 @@ For Collections:
 - The **maturity icon**: six bars, filled up to the current Level (0 Beta, 1 Available, 2 Described, 3 Confirmed, 4 Explored, 5 Monitored).
 - When the Level has **dropped**, the previous Level shows as an outlined bar in the signal colour.
 - The icon is the fixed symbol for maturity, wherever a Resource appears. On hover it shows the name of the Level.
+- In the panel it is smaller and grey, so the names lead; on the page of a Resource it is full size and dark.
 
 ## Detail page of a Resource
 
@@ -161,7 +178,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 
 ### A Resource without a Collection
 
-- Only the Data Team sees it. In the panel of Collections, the Data Team has a list "Without a collection".
+- Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, unfolded like a Collection.
 - Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team.
 - Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
 
@@ -185,10 +202,16 @@ All decided on 2026-10-22, in the design session.
 
 Decided on 2026-10-22, in the review of the detail page of a Resource against its requirements:
 
-- <a id="dec-ux-06"></a>**DEC-UX-06** · A Resource has no icon of its own. Icons are for the interface and for Collections.
+- <a id="dec-ux-06"></a>**DEC-UX-06** · A Resource has no icon of its own. Icons are for the interface and for Collections. *Note of 2026-10-22: the icon of its kind in a list is interface ([DEC-UX-11](#dec-ux-11)).*
 - <a id="dec-ux-07"></a>**DEC-UX-07** · The detail page of a Resource does not show its freshness.
 - <a id="dec-ux-08"></a>**DEC-UX-08** · "Ask a question" on a Resource starts a Question in its Conversations; it does not open a chat with Claude.
 - <a id="dec-ux-09"></a>**DEC-UX-09** · The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Overview. What comes from dbt is shown next to it, read-only.
+
+Decided on 2026-10-22, after a tryout of the panel:
+
+- <a id="dec-ux-10"></a>**DEC-UX-10** · One panel for Collections and what they hold: a Collection unfolds in place in the list of Collections, so switching Collection is one click. This replaces the second panel with the Resources of one Collection and an arrow back.
+- <a id="dec-ux-11"></a>**DEC-UX-11** · In a list, every item has the icon of its kind, the same for every item of that kind: a table for a Resource. It tells the kinds apart once Lenses and Reports join; it is not an icon of the item itself ([DEC-UX-06](#dec-ux-06)).
+- <a id="dec-ux-12"></a>**DEC-UX-12** · A Resource that is not published is shown in a lighter grey, without the struck-through eye.
 
 ## Open points
 
@@ -208,3 +231,8 @@ Raised while the design was taken into this repository, on 2026-10-22; not in th
 - [ ] <a id="op-ux-11"></a>**OP-UX-11** · **Sections:** the navigation holds Collections, Lenses and Reports. The web app today also has Charts, the gallery of the Chart Server, and for the Data Team the search through the dbt projects. Decide where they go.
 - [ ] <a id="op-ux-12"></a>**OP-UX-12** · **Capitals in the interface:** the documentation writes Defined Terms with capitals, and so does the interface of the web app today ("New Collection", "Owner Unit"). The prototypes write the interface in sentence case ("New collection", "Your collections", "Owner: Credit team"). Decide which applies to the interface.
 - [ ] <a id="op-ux-13"></a>**OP-UX-13** · **Settings of a User:** the state of the panel and the dismissed intros, per section and with their version, are kept per User in the settings, and the theme is remembered. Data Hub has no settings of a User yet, and no requirement for them; the prototypes keep them in the browser. Decide where they are kept: in the browser, or in Data Hub, so that they follow the User to another device.
+
+Raised on 2026-10-22, with the panel of [DEC-UX-10](#dec-ux-10):
+
+- [ ] <a id="op-ux-14"></a>**OP-UX-14** · **A page of a Collection:** clicking a Collection in the panel only unfolds it, as no page of a Collection is designed. Decide whether it also opens a page of the Collection on the right, and what that page shows. Until then, several Collections can be unfolded at once and they fold only when clicked.
+- [ ] <a id="op-ux-15"></a>**OP-UX-15** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan.

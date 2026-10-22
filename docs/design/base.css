@@ -190,3 +190,35 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 .kind.signal { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); }
 .reply { display: flex; gap: 10px; margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--tint-active); }
 .thread-actions { display: flex; gap: 14px; margin-top: 10px; }
+
+/* The panel of Collections (DEC-UX-10): one list in which a Collection unfolds in its own card */
+.tree-group { border-radius: var(--radius-md); margin-bottom: 7px; outline: 1px solid transparent; }
+.tree-group:not(.open):hover { outline-color: var(--tint-active); }
+.tree-head { all: unset; box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 12px; cursor: pointer; border-radius: var(--radius-md); }
+.tree-head:focus-visible { outline: 2px solid var(--text-secondary); }
+.tree-name { flex: 1; min-width: 0; }
+.caret { color: var(--text-muted); font-size: 14px; transition: transform 200ms; }
+.tree-group:not(.open) .caret { transform: rotate(-90deg); }
+.tree-children { display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 6px 8px; }
+.tree-group:not(.open) .tree-children { display: none; }
+/* A plain list, no box and no rounded corners. Each item: the icon of its kind under the centre of the icon of the
+   Collection (DEC-UX-11), its name, and a small grey maturity icon */
+.tree-res, .tree-more { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 16px;
+  color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); }
+.tree-res:hover { color: var(--text-primary); }
+.tree-res:focus-visible { outline: 2px solid var(--text-secondary); }
+.tree-res.current { color: var(--text-primary); font-weight: var(--weight-medium); }
+.tree-res-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; }
+.kind-icon { font-size: 14px; color: var(--text-muted); flex: none; }
+.tree-res.current .kind-icon { color: var(--text-primary); }
+.panel .list-item > .kind-icon { font-size: 16px; color: var(--text-secondary); }
+.panel .list-item > span { flex: 1; min-width: 0; }
+.tree-res .maturity svg { width: 20px; height: 11px; }
+.tree-res .maturity rect[fill="var(--text-primary)"] { fill: var(--text-muted); }
+.tree-more { color: var(--text-muted); font-size: var(--text-meta); padding-top: 6px; padding-left: 38px; }
+.tree-more:hover { color: var(--text-primary); }
+/* Not published (DEC-UX-12): only the name in a lighter grey, no icon; hover and screen readers say so */
+.tree-res.unpublished .clip { color: var(--text-muted); opacity: .75; }
+.hidden-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* One line per name: too long ends in an ellipsis, and shows in full on hover */
+.clip, .tree-name .item-title, .panel .list-item .item-title { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
