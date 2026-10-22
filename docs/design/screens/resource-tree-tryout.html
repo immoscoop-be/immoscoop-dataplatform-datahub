@@ -28,30 +28,31 @@
 .tree-name { flex: 1; min-width: 0; }
 .caret { color: var(--text-muted); font-size: 14px; transition: transform 200ms; }
 .tree-group:not(.open) .caret { transform: rotate(-90deg); }
-.tree-children { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 6px 10px; }
+.tree-children { display: grid; grid-template-columns: minmax(0, 1fr); padding: 0 6px 8px; }
 .tree-group:not(.open) .tree-children { display: none; }
-/* The thin vertical line ties the list to its Collection: it runs down from the centre of the Collection icon */
-.tree-children::before { content: ''; position: absolute; left: 29px; top: 0; bottom: 18px; width: 1px; background: var(--tint-active); }
 /* A plain list, no box and no rounded corners: each item has the icon of its kind (now only Resource; later Lens and Report),
-   the same for every item of that kind, its name and a small maturity icon */
-.tree-res, .tree-more { position: relative; display: flex; align-items: center; gap: 8px; padding: 6px 8px 6px 36px;
+   the same for every item of that kind, its name and a small maturity icon. The icon of the kind sits under the
+   centre of the Collection icon. */
+.tree-res, .tree-more { display: flex; align-items: center; gap: 8px; padding: 4px 8px 4px 16px;
   color: var(--text-secondary); text-decoration: none; font-size: var(--text-small); }
 .tree-res:hover { color: var(--text-primary); }
 .tree-res:focus-visible { outline: 2px solid var(--text-secondary); }
-/* Where you are: a dot on the line, and the name in medium weight */
+/* Where you are: the name in medium weight and the darkest colour */
 .tree-res.current { color: var(--text-primary); font-weight: var(--weight-medium); }
-.tree-res.current::before { content: ''; position: absolute; left: 20.5px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px;
-  border-radius: 50%; background: var(--text-primary); box-shadow: 0 0 0 3px var(--card); }
 .kind-icon { font-size: 14px; color: var(--text-muted); flex: none; }
 .tree-res.current .kind-icon { color: var(--text-primary); }
 .tree-shared .kind-icon { font-size: 16px; color: var(--text-secondary); }
+/* Not published: the name in a lighter grey; the struck-through eye keeps its colour */
+.tree-res.unpublished .clip { color: var(--text-muted); opacity: .75; }
 .tree-res-name { flex: 1; min-width: 0; display: flex; align-items: center; gap: 5px; }
 /* Never more than one line: a name that is too long ends in an ellipsis, and shows in full on hover */
 .clip, .tree-name .item-title, .tree-shared .item-title { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tree-shared > span { flex: 1; min-width: 0; }
 .tree-res-name i { font-size: 12px; color: var(--text-muted); }
 .tree-res .maturity svg { width: 20px; height: 11px; }
-.tree-more { color: var(--text-muted); font-size: var(--text-meta); padding-left: 58px; }
+/* The maturity icon stays quiet in the list: grey instead of black */
+.tree-res .maturity rect[fill="var(--text-primary)"] { fill: var(--text-muted); }
+.tree-more { color: var(--text-muted); font-size: var(--text-meta); padding-top: 6px; padding-left: 38px; }
 .tree-more:hover { color: var(--text-primary); }
 </style>
 <title>Data Hub — Weekly lead volume</title>
@@ -84,8 +85,8 @@
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="5"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads">Rejected leads</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up">KBC follow-up</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads">Rejected leads</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up">KBC follow-up</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
    </div>
   </div>
   <div class="tree-group card">
@@ -97,7 +98,7 @@
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests">Duplicate requests</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests">Duplicate requests</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
      <a class="tree-more" href="#">Show all 15</a>
    </div>
@@ -112,7 +113,7 @@
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings">Withdrawn listings</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings">Withdrawn listings</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="2"></span></a>
      <a class="tree-more" href="#">Show all 22</a>
    </div>
   </div>
@@ -126,7 +127,7 @@
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts">Broker contacts</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res unpublished" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts">Broker contacts</span><i class="ph-fill ph-eye-slash" aria-label="Not published"></i></span><span class="maturity" data-level="1"></span></a>
      <a class="tree-more" href="#">Show all 11</a>
    </div>
   </div>
