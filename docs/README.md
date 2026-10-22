@@ -14,6 +14,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
+| How the web app must look and behave: design rules, style values and prototype screens | [Design](design/README.md) |
 | How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
 | How code becomes running services, and the branches | [Build and deploy](architecture/build-and-deploy.md) |
 | How to set up the GCP projects, once | [GCP setup](architecture/gcp-setup.md) |
@@ -29,6 +30,11 @@ docs/
 │   ├── build-and-deploy.md    pipeline, images, branches and their rules
 │   ├── gcp-setup.md           the one-time bootstrap of the GCP projects
 │   └── services/              one page per service and application
+├── design/
+│   ├── README.md              how we work on the design, and how to view the screens
+│   ├── principles.md          the rules of the design, its decisions and open points (DEC-UX, OP-UX)
+│   ├── tokens.css, base.css   the style values and the components of the prototype
+│   └── screens/               the screens as working prototypes in HTML and CSS
 ├── overview/
 │   ├── data-hub.md            vision, the library metaphor, overarching decisions (DEC-DH)
 │   └── open-themes.md         themes still to be worked out (OP-DH)

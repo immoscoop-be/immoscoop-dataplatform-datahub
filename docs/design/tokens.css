@@ -1,0 +1,90 @@
+/* Data Hub design tokens — single source for every style value.
+   Rule: principles.md describes the rule, this file holds the value.
+   Change a value here only together with principles.md if the rule changes. */
+
+:root {
+  /* Typography */
+  --font-family: 'Poppins', system-ui, sans-serif;
+  --font-mono: ui-monospace, Menlo, monospace;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --text-page-title: 28px;
+  --text-section: 15px;
+  --text-body: 13px;
+  --text-small: 12px;
+  --text-meta: 11px;
+
+  /* Shape: rounding only, never shadows */
+  --radius-chip: 7px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 22px;
+  --radius-pill: 999px;
+  --radius-nav-icon: 16px;
+  --radius-tab: 12px;
+  --flare-tab: 12px;   /* concave corner where an active tab meets its content */
+  --flare-nav: 18px;   /* concave corner where the active nav icon meets the panel */
+
+  /* Layout */
+  --space-frame: 20px;
+  --space-gap: 16px;
+  --space-tile-gap: 12px;
+  --nav-icon-size: 44px;
+  --nav-rail-width: 52px;
+  --nav-to-panel-gap: 8px;
+  --panel-width: 300px;
+  --tile-min: 240px;          /* grid is always 100% wide; tiles grow until a column fits */
+  --tile-min-compact: 190px;
+
+  /* Motion: slow, swept, never on-off */
+  --motion-focus: 700ms ease;       /* window becoming opaque on hover */
+  --motion-panel: 350ms ease;       /* slide-out panel */
+  --motion-tooltip: 350ms ease;
+  --delay-tooltip: 150ms;
+  --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
+  --background-cycle: 36s;
+
+  /* Collection colours: colour lives on content only */
+  --col-magenta: #DD2C88;
+  --col-bordeaux: #A0326E;
+  --col-teal: #3CB8B1;
+  --col-teal-ink: #2A9690;
+  --col-ochre: #B07A28;
+  --col-slate: #4A7698;
+  --col-olive: #6E7C34;
+
+  /* Light theme: warm greys */
+  --bg-1: #EFE5DA;               /* sand */
+  --bg-2: #F2DDE2;               /* blush */
+  --bg-3: #DCE6E3;               /* mist */
+  --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
+  --surface-float-hover: rgba(255,255,255,.28);
+  --surface-solid: #FFFFFF;      /* reading surface in focus */
+  --surface-soft: rgba(255,255,255,.58);   /* reading surface out of focus */
+  --surface-sub: #F7F5F2;        /* tile inside a solid surface */
+  --tint-hover: #EFECE8;
+  --tint-active: #E3DFD9;
+  --text-primary: #34302C;       /* dark grey, never black */
+  --text-secondary: #5E5852;
+  --text-muted: #8C857E;
+  --signal-warn: #B07A28;        /* only for states that need action */
+}
+
+[data-theme="dark"] {
+  --bg-1: #2B2520;
+  --bg-2: #36292D;
+  --bg-3: #232A28;
+  --surface-glass: rgba(70,64,58,.38);
+  --surface-float-hover: rgba(255,255,255,.06);
+  --surface-solid: #322E2A;
+  --surface-soft: rgba(50,46,42,.55);
+  --surface-sub: #3A3632;
+  --tint-hover: #3B3732;
+  --tint-active: #4A453F;
+  --text-primary: #EDE9E4;
+  --text-secondary: #BDB6AE;
+  --text-muted: #8F877F;
+  --signal-warn: #D9A453;
+}

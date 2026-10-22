@@ -8,6 +8,8 @@
 
 **In one sentence:** web is the Data Hub interface in the browser; it shows what the services return and holds no business logic of its own ([DEC-PF-03](../../requirements/technical/00-platform.md#dec-pf-03)).
 
+This page describes the web app as it is built. Its new design, the rules, style values and prototype screens it will follow once the designs are final, is in [design](../../design/README.md).
+
 ## Responsibilities
 
 - Signing in through identity, and staying signed in: its server keeps the Refresh Token of the User in a cookie and gives the browser only the Access Token ([TR-PF-27](../../requirements/technical/00-platform.md#tr-pf-27))
