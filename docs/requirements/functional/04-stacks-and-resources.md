@@ -101,6 +101,8 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 | Preview | The first rows of the data | Yes |
 | Usage | Which Lenses, Reports and feeds depend on the Resource | Later |
 
+*Note of 2026-10-22: the detail page does not show freshness ([DEC-UX-07](../../design/principles.md#dec-ux-07)).*
+
 ### Kinds of Reaction
 
 | Type | For | Who gets a notification |

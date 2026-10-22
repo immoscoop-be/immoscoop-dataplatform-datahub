@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  Screen: Resource detail, the Conversations tab
+  Reached through the tab, or through "Ask a question" in the header, which opens the field with Question chosen.
+  Questions, Remarks and Signals in one list, newest first; on a Signal the Owner and the Data Team can make it an Anomaly.
+  Requirements: FR-SR-29, FR-SR-30, DEC-SR-20, DEC-SR-21, the Kinds of Reaction (who gets a notification); DEC-UX-08.
+  Related screens: resource-detail.html (the other tabs).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Weekly lead volume, conversations</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Credit leads resources">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:6px"><a class="icon-btn" href="collections-start.html" aria-label="Back to collections"><i class="ph-fill ph-arrow-left"></i></a><span class="meta" style="flex:1;font-size:12px">Collections</span><button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button></div>
+  <div style="display:flex;align-items:center;gap:10px;margin:10px 4px 14px"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><div><div style="font-size:17px;font-weight:500">Credit leads</div><div class="meta">6 resources · Public</div></div></div>
+  <label class="search card" style="margin-bottom:14px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search resources"></label>
+  <a class="list-item card current" href="resource-detail.html" data-name="weekly lead volume" aria-current="page"><span class="item-title" style="flex:1">Weekly lead volume</span><span class="maturity" data-level="2" data-previous="4"></span></a>
+  <a class="list-item card" data-name="credit lead funnel"><span class="item-title" style="flex:1">Credit lead funnel</span><span class="maturity" data-level="5"></span></a>
+  <a class="list-item card" data-name="lead sources"><span class="item-title" style="flex:1">Lead sources</span><span class="maturity" data-level="4"></span></a>
+  <a class="list-item card" data-name="lead response time"><span class="item-title" style="flex:1">Lead response time</span><span class="maturity" data-level="3"></span></a>
+  <a class="list-item card" data-name="rejected leads"><span class="item-title" style="flex:1;display:flex;align-items:center;gap:6px">Rejected leads<i class="ph-fill ph-eye-slash" aria-label="Not published" style="font-size:13px;color:var(--text-muted)"></i></span><span class="maturity" data-level="2"></span></a>
+  <a class="list-item card" data-name="kbc follow-up"><span class="item-title" style="flex:1;display:flex;align-items:center;gap:6px">KBC follow-up<i class="ph-fill ph-eye-slash" aria-label="Not published" style="font-size:13px;color:var(--text-muted)"></i></span><span class="maturity" data-level="1"></span></a>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No resources match your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <a class="btn-primary" href="resource-conversations.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="2" data-previous="4" data-no-tooltip></span>2 · Described</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+  <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+ </div>
+ <div class="tabs" role="tablist">
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">EDA</a>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">History</a>
+  <button class="tab on" role="tab" aria-selected="true">Conversations <span class="count">3</span></button>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
+ </div>
+ <div class="tab-content card">
+  <div class="composer">
+   <div style="display:flex;align-items:center;gap:8px"><span class="label" style="margin:0;flex:1">Start a conversation</span>
+    <div data-group="kind" role="tablist" style="display:flex">
+     <button class="seg on" data-target="question" role="tab" aria-selected="true">Question</button>
+     <button class="seg" data-target="remark" role="tab" aria-selected="false">Remark</button>
+     <button class="seg" data-target="signal" role="tab" aria-selected="false">Signal</button>
+    </div>
+   </div>
+   <textarea placeholder="What do you want to know about this resource?" autofocus></textarea>
+   <div class="composer-foot">
+    <p class="meta" data-pane-group="kind" data-pane="question"><i class="ph-fill ph-bell-simple"></i>The owner gets a notification, and everyone already in the conversation.</p>
+    <p class="meta" data-pane-group="kind" data-pane="remark" hidden><i class="ph-fill ph-bell-simple"></i>Everyone already in the conversation gets a notification.</p>
+    <p class="meta" data-pane-group="kind" data-pane="signal" hidden><i class="ph-fill ph-bell-simple"></i>The owner and the data team get a notification. They can make it an anomaly.</p>
+    <button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Post</button>
+   </div>
+  </div>
+
+  <div style="margin-top:10px">
+   <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind signal">Signal</span><span class="item-title">Karel Leys</span><span class="meta">3 days ago</span></div>
+     <p>The count for the source <span class="mono">partner</span> dropped to zero in the week of 13 Oct. We usually see about forty leads there.</p>
+     <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="meta">Owner · 2 days ago</span></div><p>Looking into it with the data team. The partner feed was late that week.</p></div></div>
+     <div class="thread-actions"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a><a class="text-link"><i class="ph-fill ph-note-pencil"></i><span>Make it an anomaly</span></a></div>
+    </div>
+   </div>
+   <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Question</span><span class="item-title">Mia Peeters</span><span class="meta">1 week ago</span></div>
+     <p>Is a lead counted again when the same person applies twice in one week?</p>
+     <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="meta">Owner · 6 days ago</span></div><p>Yes, every request counts. For unique people, use Credit lead funnel.</p></div></div>
+     <div class="thread-actions"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a></div>
+    </div>
+   </div>
+   <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">RA</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Remark</span><span class="item-title">Ruth Aerts</span><span class="meta">2 weeks ago</span></div>
+     <p>Tip: <span class="mono">lead_channel</span> is only filled from 23 Oct. Earlier weeks are empty, not zero.</p>
+     <div class="thread-actions"><a class="text-link"><i class="ph-fill ph-arrow-bend-up-left"></i><span>Reply</span></a></div>
+    </div>
+   </div>
+  </div>
+ </div>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

@@ -9,14 +9,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 5 | 13 (13 open) |
+| [Data Hub design principles](../design/principles.md) | – | – | 9 | 13 (13 open) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
 | [Collections](functional/03-collections.md) | 17 (1 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 9 (6 open, 3 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 37 (2 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 10 (9 open, 1 done) |
-| [Resource card](functional/05-resource-card.md) | 10 (10 proposed) | – | – | 5 (5 open) |
+| [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
@@ -148,6 +148,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-08](functional/05-resource-card.md#fr-rc-08) | Relationships through an Entity and an identifier | Proposed | – | – | – |
 | [FR-RC-09](functional/05-resource-card.md#fr-rc-09) | A new Resource is linked through its Entity | Proposed | – | – | – |
 | [FR-RC-10](functional/05-resource-card.md#fr-rc-10) | Relationships can be visualised | Proposed | – | – | – |
+| [FR-RC-11](functional/05-resource-card.md#fr-rc-11) | Model type and grain | Specified | – | – | – |
+| [FR-RC-12](functional/05-resource-card.md#fr-rc-12) | Who published and who confirmed | Specified | – | – | – |
+| [FR-RC-13](functional/05-resource-card.md#fr-rc-13) | Since when the data is reliable | Specified | – | – | – |
+| [FR-RC-14](functional/05-resource-card.md#fr-rc-14) | Checks and incidents | Specified | – | – | – |
+| [FR-RC-15](functional/05-resource-card.md#fr-rc-15) | The Owner and the Data Team edit in place | Specified | – | – | – |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 

@@ -22,7 +22,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 ## Requirements
 
-*The requirements below come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md). They are proposals, still to be validated, and therefore Proposed.*
+*[FR-RC-01](#fr-rc-01) to [FR-RC-10](#fr-rc-10) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md); they are proposals, still to be validated, and therefore Proposed. [FR-RC-11](#fr-rc-11) to [FR-RC-15](#fr-rc-15) come from the review of the [detail page of a Resource](../../design/principles.md#detail-page-of-a-resource) on the same day.*
 
 <a id="fr-rc-01"></a>
 ### FR-RC-01 · A definition in business language
@@ -93,6 +93,41 @@ A new Resource that states its Entity and identifier is linked automatically to 
 **Status:** Proposed · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties)
 
 The relationships between Resources can be shown as a picture.
+
+<a id="fr-rc-11"></a>
+### FR-RC-11 · Model type and grain
+
+**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card)
+
+The Resource Card shows the model type and the grain of the Resource, as dbt has them (`model_type` and `grain` in `meta`), next to its description.
+
+<a id="fr-rc-12"></a>
+### FR-RC-12 · Who published and who confirmed
+
+**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card)
+
+The Resource Card shows who published the Resource and when, and who confirmed it last and when.
+
+<a id="fr-rc-13"></a>
+### FR-RC-13 · Since when the data is reliable
+
+**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card)
+
+The Resource Card shows since when the data of the Resource is reliable. The Owner and the Data Team set it.
+
+<a id="fr-rc-14"></a>
+### FR-RC-14 · Checks and incidents
+
+**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card)
+
+The Resource Card shows the active checks on the Resource and its incidents.
+
+<a id="fr-rc-15"></a>
+### FR-RC-15 · The Owner and the Data Team edit in place
+
+**Status:** Specified · **Source:** [DEC-UX-09](../../design/principles.md#dec-ux-09)
+
+The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Resource Card: the definition in business language, intended use, pitfalls, Known Gaps, Stability, since when the data is reliable, and the key fields and Parameters. What comes from dbt is shown next to it, read-only. Every saved change goes into the Log ([FR-SR-28](04-stacks-and-resources.md#fr-sr-28)).
 
 ## Open points
 

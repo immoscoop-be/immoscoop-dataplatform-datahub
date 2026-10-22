@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<!--
+  Screen: Resource detail, editing the Overview
+  The Owner (or the Data Team) clicked "Edit" on a tile: the parts Data Hub keeps turn into fields, in place.
+  What comes from dbt and what the Data Team gives stays read-only, marked as such.
+  Requirements: FR-RC-15, FR-SR-28, FR-RC-01, FR-RC-04, FR-RC-06, FR-RC-13, FR-RC-11; DEC-UX-09.
+  Related screens: resource-detail.html (Cancel and Save go back there).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Editing Weekly lead volume</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Credit leads resources">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:6px"><a class="icon-btn" href="collections-start.html" aria-label="Back to collections"><i class="ph-fill ph-arrow-left"></i></a><span class="meta" style="flex:1;font-size:12px">Collections</span><button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button></div>
+  <div style="display:flex;align-items:center;gap:10px;margin:10px 4px 14px"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><div><div style="font-size:17px;font-weight:500">Credit leads</div><div class="meta">6 resources · Public</div></div></div>
+  <label class="search card" style="margin-bottom:14px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search resources"></label>
+  <a class="list-item card current" href="resource-detail.html" data-name="weekly lead volume" aria-current="page"><span class="item-title" style="flex:1">Weekly lead volume</span><span class="maturity" data-level="2" data-previous="4"></span></a>
+  <a class="list-item card" data-name="credit lead funnel"><span class="item-title" style="flex:1">Credit lead funnel</span><span class="maturity" data-level="5"></span></a>
+  <a class="list-item card" data-name="lead sources"><span class="item-title" style="flex:1">Lead sources</span><span class="maturity" data-level="4"></span></a>
+  <a class="list-item card" data-name="lead response time"><span class="item-title" style="flex:1">Lead response time</span><span class="maturity" data-level="3"></span></a>
+  <a class="list-item card" data-name="rejected leads"><span class="item-title" style="flex:1;display:flex;align-items:center;gap:6px">Rejected leads<i class="ph-fill ph-eye-slash" aria-label="Not published" style="font-size:13px;color:var(--text-muted)"></i></span><span class="maturity" data-level="2"></span></a>
+  <a class="list-item card" data-name="kbc follow-up"><span class="item-title" style="flex:1;display:flex;align-items:center;gap:6px">KBC follow-up<i class="ph-fill ph-eye-slash" aria-label="Not published" style="font-size:13px;color:var(--text-muted)"></i></span><span class="maturity" data-level="1"></span></a>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No resources match your search.</p>
+ </div>
+</aside>
+<main class="main">
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="2" data-previous="4" data-no-tooltip></span>2 · Described</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+  <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+ </div>
+ <div class="tabs" role="tablist">
+  <button class="tab on" role="tab" aria-selected="true">Overview</button>
+  <button class="tab" role="tab" aria-selected="false" disabled>Columns</button>
+  <button class="tab" role="tab" aria-selected="false" disabled>Lineage</button>
+  <button class="tab" role="tab" aria-selected="false" disabled>EDA</button>
+  <button class="tab" role="tab" aria-selected="false" disabled>History</button>
+  <button class="tab" role="tab" aria-selected="false" disabled>Conversations <span class="count">3</span></button>
+  <button class="tab" role="tab" aria-selected="false" disabled>Preview</button>
+ </div>
+ <form class="tab-content card" onsubmit="location.href='resource-detail.html';return false">
+  <div class="edit-bar"><i class="ph-fill ph-pencil-simple" style="color:var(--text-secondary)"></i><p>Editing the overview. Every change you save goes into the history, with your name.</p><a class="btn-quiet" href="resource-detail.html">Cancel</a><button class="btn-primary" type="submit"><i class="ph-fill ph-check" style="font-size:15px"></i>Save</button></div>
+  <div class="grid">
+
+   <div class="sub-tile" style="grid-column:1/-1">
+    <label class="field"><span>Definition, in business language</span><textarea rows="3">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</textarea></label>
+    <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
+    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Known behaviour</div>
+    <label class="field"><span>Intended use</span><textarea rows="2">Weekly trends and comparing lead sources.</textarea></label>
+    <label class="field"><span>Pitfalls</span><textarea rows="3">The current week is incomplete. Don’t sum across sources for unique people.</textarea></label>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Known gaps</div>
+    <label class="field"><span>Gap 1</span><textarea rows="3">visitorId is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</textarea></label>
+    <label class="field"><span>Gap 2</span><textarea rows="2">No leads from the source partner before 1 Mar 2025.</textarea></label>
+    <button class="add-chip" type="button"><i class="ph-fill ph-plus"></i> Add a gap</button>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Stability</div>
+    <div class="field"><span>The data</span>
+     <div class="options">
+      <label><input type="radio" name="stability" checked> is still settling</label>
+      <label><input type="radio" name="stability"> can change by nature, such as a name</label>
+      <label><input type="radio" name="stability"> is final once loaded</label>
+     </div>
+    </div>
+    <label class="field"><span>Final after</span><input value="D-3"></label>
+    <label class="field"><span>In a sentence</span><textarea rows="2">Late leads arrive for up to three days.</textarea></label>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Publication</div>
+    <dl class="facts" style="margin-bottom:12px">
+     <dt>Published</dt><dd>2 Sep 2026 by An Claes</dd>
+     <dt>Confirmed</dt><dd>14 Oct 2026 by An Claes</dd>
+    </dl>
+    <label class="field"><span>Reliable since</span><input type="date" value="2025-01-01"></label>
+   </div>
+
+   <div class="sub-tile">
+    <div class="label">Key fields</div>
+    <span class="code-chip">week_start<button type="button" aria-label="Remove week_start">×</button></span><span class="code-chip">lead_source<button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">lead_count<button type="button" aria-label="Remove lead_count">×</button></span><span class="code-chip">lead_channel<button type="button" aria-label="Remove lead_channel">×</button></span><button class="add-chip" type="button">+ Field</button>
+    <div class="label" style="margin-top:12px">Parameters</div>
+    <span class="code-chip">lead_source<button type="button" aria-label="Remove lead_source">×</button></span><span class="code-chip">week_start<button type="button" aria-label="Remove week_start">×</button></span><button class="add-chip" type="button">+ Field</button>
+   </div>
+
+   <div class="sub-tile">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="label" style="margin:0;flex:1">Entities and relationships</span><span class="origin">From the data team</span></div>
+    <p class="empty">leadSource on <span class="mono">lead_source</span>: joins Lead sources, Credit lead funnel and Lead response time. creditLead has no identifier at this grain.</p>
+   </div>
+  </div>
+ </form>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

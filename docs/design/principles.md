@@ -75,6 +75,8 @@ There are three layers:
 
 *The icon of a Collection comes from Tabler Icons today: see [OP-UX-07](#op-ux-07).*
 
+- A Resource has **no icon of its own**: icons are for the interface and for Collections ([DEC-UX-06](#dec-ux-06)).
+
 ## Navigation
 
 - **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Lenses, Reports; see [OP-UX-11](#op-ux-11)); at the bottom theme, settings and account.
@@ -125,11 +127,43 @@ For Collections:
 
 ## Detail page of a Resource
 
-- **Header:** icon of the Collection, name, Key with a copy button, the button "Ask a question".
-- **Status row:** maturity, Publication, Owner, freshness, open Signals.
+Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html) and [resource-unassigned](screens/resource-unassigned.html).
+
+- **Header:** the name, the Key with a copy button, and the button "Ask a question", which starts a Question in the Conversations ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
+- **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
 - **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
 - **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview.
-- **Overview:** the description across the full width, the maturity ladder, Known Behaviour (intended use, pitfalls), the key fields and Parameters, Entities, and recent history with Log IDs.
+- **Overview,** in tiles:
+  - **Definition:** the definition in business language, written in Data Hub, and under it the description from dbt with its model type and grain, marked as coming from dbt.
+  - **Maturity:** the ladder, with the previous Level after a drop.
+  - **Publication:** who published the Resource and when, who confirmed it last and when, and since when the data is reliable.
+  - **Known Behaviour:** intended use and pitfalls.
+  - **Known Gaps:** the structural gaps in the data.
+  - **Stability:** whether the data is still settling or can change by nature, and from when it is final.
+  - **Key fields and Parameters.**
+  - **Entities and relationships:** each Entity with its identifier and the Resources it joins to, also as a picture. An Entity without an identifier at this grain is shown, but joins nothing.
+  - **Monitoring:** the active checks and the incidents.
+  - **Recent history** with Log IDs, across the full width.
+- **Columns:** each column with its type, description, Entity, and whether it serves as a Parameter.
+
+### Editing a Resource
+
+- The Owner and the Data Team edit what Data Hub keeps about a Resource **in place,** on the Overview: the definition, intended use, pitfalls, Known Gaps, Stability, since when the data is reliable, and the key fields and Parameters ([DEC-UX-09](#dec-ux-09)).
+- Each tile they can edit has an "Edit" link. Editing turns the tiles into fields, with a bar on top that says every saved change goes into the history, and "Cancel" and "Save".
+- What comes from dbt (the description, model type and grain, the columns) and what the Data Team gives (the Entities and relationships) is shown next to the fields, marked as such, and not edited here.
+
+### Conversations
+
+- One list of Questions, Remarks and Signals, newest first, each with its kind, who wrote it, when, and the replies.
+- On top, a field to start one, with the kind to choose. "Ask a question" in the header opens it with Question chosen.
+- Under the field, who gets a notification for the chosen kind.
+- On a Signal, the Owner and the Data Team can make it an Anomaly.
+
+### A Resource without a Collection
+
+- Only the Data Team sees it. In the panel of Collections, the Data Team has a list "Without a collection".
+- Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team.
+- Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
 
 ## Background and motion
 
@@ -149,12 +183,19 @@ All decided on 2026-10-22, in the design session.
 - <a id="dec-ux-04"></a>**DEC-UX-04** · The "Promoted" feature on the start screen is not built yet.
 - <a id="dec-ux-05"></a>**DEC-UX-05** · Background: a gradient of three colours instead of blobs of colour.
 
+Decided on 2026-10-22, in the review of the detail page of a Resource against its requirements:
+
+- <a id="dec-ux-06"></a>**DEC-UX-06** · A Resource has no icon of its own. Icons are for the interface and for Collections.
+- <a id="dec-ux-07"></a>**DEC-UX-07** · The detail page of a Resource does not show its freshness.
+- <a id="dec-ux-08"></a>**DEC-UX-08** · "Ask a question" on a Resource starts a Question in its Conversations; it does not open a chat with Claude.
+- <a id="dec-ux-09"></a>**DEC-UX-09** · The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Overview. What comes from dbt is shown next to it, read-only.
+
 ## Open points
 
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] <a id="op-ux-02"></a>**OP-UX-02** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
 - [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports.
-- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview.
+- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.*
 - [ ] <a id="op-ux-05"></a>**OP-UX-05** · **Collection palette:** align the three additional colours with the chart language.
 - [ ] <a id="op-ux-06"></a>**OP-UX-06** · **Screens on mobile** or in narrow windows.
 

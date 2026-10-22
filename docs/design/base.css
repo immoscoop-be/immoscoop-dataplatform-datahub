@@ -136,3 +136,57 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 .maturity[data-name]:hover::after { content: attr(data-name); position: absolute; right: 0; bottom: 22px; background: var(--text-primary); color: var(--surface-solid);
   font-size: 10px; padding: 3px 8px; border-radius: var(--radius-chip); white-space: nowrap; }
 [hidden] { display: none !important; }
+
+/* Overview tiles: the label and, for the Owner and the Data Team, an edit link */
+.tile-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tile-head .label { flex: 1; margin: 0; }
+.edit-link { font: var(--text-meta) var(--font-family); color: var(--text-muted); display: inline-flex; align-items: center; gap: 4px; text-decoration: none;
+  padding: 2px 7px; border-radius: var(--radius-chip); }
+.edit-link:hover { color: var(--text-primary); background: var(--tint-hover); }
+/* Where a value comes from, when Data Hub does not keep it itself: dbt, the data team */
+.origin { font-size: 10px; color: var(--text-muted); background: var(--card); padding: 1px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.facts { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: var(--text-small); }
+.facts dt { color: var(--text-muted); }
+.facts dd { margin: 0; }
+.prose { margin: 0; line-height: 1.65; color: var(--text-secondary); }
+.empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
+
+/* Editing in place: a bar on top, the tiles turn into fields */
+.edit-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px 10px 16px; margin-bottom: 10px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.edit-bar p { flex: 1; margin: 0; font-size: var(--text-small); color: var(--text-secondary); }
+.btn-quiet { font: var(--weight-medium) var(--text-small) var(--font-family); padding: 8px 14px; border-radius: var(--radius-pill); border: 0;
+  background: var(--tint-hover); color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn-quiet:hover { background: var(--tint-active); }
+.field { display: block; margin-bottom: 12px; }
+.field:last-child { margin-bottom: 0; }
+.field > span { display: block; font-size: var(--text-meta); color: var(--text-muted); margin-bottom: 5px; }
+.field textarea, .field input, .field select { width: 100%; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 8px 10px; resize: vertical; }
+.field textarea:focus, .field input:focus, .field select:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.options { display: flex; flex-direction: column; gap: 6px; font-size: var(--text-small); }
+.options label { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.options input { width: auto; flex: none; margin: 0; padding: 0; accent-color: var(--text-primary); }
+.code-chip button { all: unset; cursor: pointer; margin-left: 4px; color: var(--text-muted); }
+.add-chip { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: none; border: 1px dashed var(--tint-active); padding: 2px 8px;
+  border-radius: var(--radius-chip); cursor: pointer; }
+
+/* A neutral notice, for a state that is no alert, such as a Resource without a Collection */
+.notice { display: flex; align-items: center; gap: 12px; margin-top: 14px; padding: 12px 16px; border-radius: 16px; background: var(--card); }
+.notice > i { font-size: 22px; color: var(--text-secondary); }
+.notice p { flex: 1; margin: 0; font-size: var(--text-small); line-height: 1.5; }
+
+/* Conversations: a field to start one, then Questions, Remarks and Signals with their replies */
+.composer { border-radius: var(--radius-lg); padding: 14px 16px; background: var(--surface-sub); }
+.composer textarea { width: 100%; min-height: 64px; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 8px 10px; resize: vertical; margin: 10px 0; }
+.composer-foot { display: flex; align-items: center; gap: 12px; }
+.composer-foot p { flex: 1; margin: 0; }
+.thread { display: flex; gap: 12px; padding: 16px 4px; border-top: 1px solid var(--tint-active); }
+.thread:first-of-type { border-top: 0; }
+.thread-body { flex: 1; min-width: 0; }
+.thread-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.thread p { margin: 6px 0 0; font-size: var(--text-small); line-height: 1.55; }
+.kind { font-size: 10px; font-weight: var(--weight-medium); padding: 2px 8px; border-radius: var(--radius-pill); background: var(--tint-hover); color: var(--text-secondary); }
+.kind.signal { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); }
+.reply { display: flex; gap: 10px; margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--tint-active); }
+.thread-actions { display: flex; gap: 14px; margin-top: 10px; }
