@@ -95,7 +95,7 @@ Data Hub is explained as a library ([DEC-DH-01](overview/data-hub.md#dec-dh-01))
 
 ## Translation reference
 
-The Confluence pages are in Dutch. This table maps their vocabulary to the English used here, so that terms can be found in both places. Defined Terms appear with their capitals. It is the only place in this repository where Dutch is used on purpose.
+The Confluence pages are in Dutch, and so was the session in which the [design](design/README.md) of the web app was made. This table maps their vocabulary to the English used here, so that terms can be found in both places. Defined Terms appear with their capitals. It is the only place in this repository where Dutch is used on purpose.
 
 | Confluence (Dutch) | Repository (English) |
 | --- | --- |
@@ -120,16 +120,22 @@ The Confluence pages are in Dutch. This table maps their vocabulary to the Engli
 | gesprek | conversation |
 | grafiekserver | Chart Server |
 | grafiektaal | chart language |
+| holle hoek | concave corner (flare) |
 | huidige versie | Current Version |
 | inschrijving | Registration |
+| kader | frame |
 | kanalen | channels |
 | kanttekeningen in de marge | margin notes |
 | leesbare naam | Display Name |
+| leesvlak | reading surface |
 | leeszaal | reading room |
 | lens, lenzen | Lens, Lenses |
 | lezerskaart | Library Card |
+| maturiteitsicoon | maturity icon |
 | melding | notification |
+| melding (op een scherm) | alert |
 | ontsluiting, ontsluiten | Release, release |
+| ontwerprichtlijnen | design principles |
 | open punten | open points |
 | open uitleen | general circulation |
 | opheffen | dissolve |
@@ -138,11 +144,15 @@ The Confluence pages are in Dutch. This table maps their vocabulary to the Engli
 | rechten | permissions |
 | rekken | shelves |
 | signaal, opmerking, vraag | Signal, Remark, Question |
+| signaalkleur | signal colour |
 | sleutel | Key |
+| startscherm | start screen |
 | steunt op | builds on |
 | stroom | flow |
+| tegel | tile |
 | toegangsclassificatie | access classification |
 | uit te diepen | to be worked out |
+| uitschuifpaneel | slide-out panel |
 | vergrootglas | magnifying glass |
 | verharden | harden |
 | vingerafdruk | Fingerprint |

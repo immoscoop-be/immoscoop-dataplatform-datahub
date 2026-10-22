@@ -17,6 +17,12 @@ Everything in this repository is in English: code, comments, documentation and c
 - Run `pnpm docs:check` before every commit that touches `docs/`; CI runs it on every pull request.
 - Content migrated from Confluence is translated faithfully. Inconsistencies are not silently fixed: record them as an open point, marked as raised during the migration or later review.
 
+## Design
+
+- `docs/design/` is the source of truth for how the web app looks and behaves: `principles.md` for the rules, `tokens.css` for the values, `screens/` for the screens as prototypes. When a rule changes, `principles.md` changes first, then the tokens, then the code.
+- Designs are finalized together before anything is built: the open points (`OP-UX`) are decided, and missing screens are designed as prototypes in `docs/design/` first. Do not build a screen or component that is not designed there, and never decide an open point by building it: ask.
+- Building the design starts from `docs/design/handover-prompt.md`, once the designs are final.
+
 ## Code
 
 - All code is TypeScript on Node 24, in one pnpm workspace: `packages/*` (shared), `services/*` (backend services), `apps/*` (web, mcp). ESM only.

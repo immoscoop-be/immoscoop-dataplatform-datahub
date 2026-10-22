@@ -46,6 +46,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `CV` | Conversations | [14-conversations.md](functional/14-conversations.md) |
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
 | `PF` | Platform: technical choices not tied to one domain (technical requirements only) | [00-platform.md](technical/00-platform.md) |
+| `UX` | Design of the web app: its look, navigation and screens (decisions and open points) | [principles.md](../design/principles.md) |
 
 Non-functional categories are listed in [`non-functional/README.md`](non-functional/README.md).
 

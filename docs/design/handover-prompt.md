@@ -1,6 +1,6 @@
 # Handover prompt for Claude Code
 
-The opening message for the Claude Code session that builds this design into the web app. Paste everything below the line as the first message.
+The opening message for the Claude Code session that builds this design into the web app. Use it only once the designs are final ([how we work](README.md#how-we-work)), and paste everything below the line as the first message.
 
 ---
 

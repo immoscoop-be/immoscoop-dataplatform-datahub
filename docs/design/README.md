@@ -1,16 +1,16 @@
 # Design of the web app
 
-The design of Data Hub as it was worked out in a design session on 2026-10-22: the rules, the style values and two screens as working prototypes.
+The design of Data Hub as it was worked out in a design session on 2026-10-22: the rules, the style values and two screens as working prototypes. The web app does not follow it yet.
 
 ## Contents
 
 ```text
 docs/design/
 ├── README.md              this file
-├── principles.md          the rules and decisions (source of truth)
+├── principles.md          the rules and decisions (source of truth; DEC-UX, OP-UX)
 ├── tokens.css             all style values
 ├── base.css               the components of the prototype
-├── handover-prompt.md     the opening message for Claude Code
+├── handover-prompt.md     the opening message for Claude Code, once the designs are final
 └── screens/
     ├── index.html         overview of the screens
     ├── collections-start.html
@@ -18,12 +18,17 @@ docs/design/
     └── app.js             behaviour of the prototype (theme, panel, tabs, search)
 ```
 
-## How to go on
+## How we work
 
-1. **View the screens** by opening `docs/design/screens/index.html` in your browser, from a checkout of this repository. You need internet for the font and the icons.
-2. **Start Claude Code** in the repository and paste [the handover prompt](handover-prompt.md) as the first message.
+1. **The design is documented here.** [`principles.md`](principles.md) holds the rules, [`tokens.css`](tokens.css) the values, and [`screens/`](screens/) the screens as prototypes in plain HTML and CSS. When a rule changes, `principles.md` changes first.
+2. **We finalize the designs together, here.** The [open points](principles.md#open-points) are decided, and the screens that are still missing are designed as prototypes, before anything is built. A decision becomes a `DEC-UX` in `principles.md`; nothing is decided by building it.
+3. **Only then does building start,** from the [handover prompt](handover-prompt.md). Until then, the web app stays as it is described in [web](../architecture/services/web.md).
 
-## What you can do in the screens
+## Viewing the screens
+
+Open `docs/design/screens/index.html` in your browser, from a checkout of this repository. You need internet for the font and the icons. GitHub shows these files as source, not as pages.
+
+What you can do in the screens:
 
 - Click the active icon on the left, or the double arrow, to slide the panel in and out.
 - Type in the search field of the panel to filter the list.
