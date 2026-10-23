@@ -71,7 +71,7 @@ There are three layers:
 
 - One family: **Phosphor**.
 - **Filled icons** for everything of the interface.
-- **Line icons** for what the User chooses, such as the icon of a Collection. They always sit in a circle with a light tint of the colour of the Collection.
+- **Line icons** for what the User chooses, such as the icon of a Collection. They always sit in a circle with a light tint of the colour of the Collection. *Under review on 2026-10-23: the circle is busy ([OP-UX-16](#op-ux-16)).*
 
 *The icon of a Collection comes from Tabler Icons today: see [OP-UX-07](#op-ux-07).*
 
@@ -89,7 +89,7 @@ There are three layers:
 1. **Click on another main item:** you go to that section and its panel slides open. The panel always belongs to the active section.
 2. **Click on the main item you are already in:** the panel slides in or out. The button in the panel does the same.
 3. **Click on an item in the panel:** the detail opens on the right; the panel stays.
-4. **Click on a Collection in the panel:** it unfolds, or folds again. Several can be unfolded at once ([OP-UX-14](#op-ux-14)).
+4. **Click on a Collection in the panel:** its page opens on the right, and it unfolds in the panel ([DEC-UX-13](#dec-ux-13)). **The arrow** next to it only folds or unfolds it. Several can be unfolded at once.
 5. Whether the panel is open or closed is **remembered per User** ([OP-UX-13](#op-ux-13)).
 
 ### What is in the panel
@@ -99,7 +99,7 @@ The panel is **the index of its section**: one panel, never a second one for wha
 For Collections:
 
 - **On top:** the title, a plus button for a new Collection, and search.
-- **"Your collections":** each Collection with its icon, name, number of Resources and whether it is public or private, and an arrow that turns when it unfolds.
+- **"Your collections":** each Collection with its icon, name, number of Resources and whether it is public or private, and an arrow that turns when it unfolds. The Collection whose page is open has an outline.
 - **An unfolded Collection** shows what it holds in its own card, as a **plain list**: no box or rounded corners per item, little space between them.
   - Each item: the icon of its kind, under the centre of the icon of the Collection; its name; a small maturity icon on the right, in grey.
   - The item you are on: its name in medium weight and the darkest colour. Opening a Resource unfolds its Collection.
@@ -107,7 +107,7 @@ For Collections:
   - The first eight items, then "Show all" with the number.
   - Lenses and Reports join the list later, each with the icon of its kind ([OP-UX-15](#op-ux-15)).
 - **"Shared resources":** each with the icon of its kind, its name and the team that owns it ([OP-UX-02](#op-ux-02)).
-- **For the Data Team,** on top: "Without a collection", a Collection-like card with the Resources that wait for a Collection.
+- **For the Data Team,** on top: "Without a collection", a Collection-like card with the Resources that wait for a Collection. Whether it gets a strong colour is open ([OP-UX-17](#op-ux-17)).
 - **One line per name:** a name that is too long ends in an ellipsis and shows in full on hover. This holds for Collections and Resources alike.
 - **Search** filters Collections and Resources together. A Collection whose name matches stays as it was; a Collection with a matching Resource unfolds and shows only the matching Resources.
 
@@ -182,6 +182,23 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 - Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team.
 - Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
 
+## Page of a Collection
+
+Screens: [collection-overview](screens/collection-overview.html), [collection-edit](screens/collection-edit.html) and [collection-add-resources](screens/collection-add-resources.html). Designed on 2026-10-23, to review; the switch at the bottom right of the overview shows it as a Data Admin, the Owner or a colleague.
+
+- **Opens** when a User clicks a Collection in the panel ([DEC-UX-13](#dec-ux-13)). The page holds what the panel cannot: what the Collection is, what needs attention, and the lists in full ([DEC-UX-14](#dec-ux-14)).
+- **Head:** the icon, the name and the description of the Collection; a row with the Owner Unit, private or public, the number of Resources and Lenses, and when and by whom it was created.
+- **Actions, on the right of the head, per role:**
+  - "New lens", the primary action, for everyone who may build on the Collection ([OP-CO-07](../requirements/functional/03-collections.md#op-co-07)). What it opens is not designed yet ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
+  - "Edit", for the Owner Unit and the Data Team.
+  - "Add resources", for the Data Admins.
+- **Needs attention,** for the Owner Unit and the Data Team, only when there is something: a Level that dropped and waits for a Confirmation, open Signals, Resources not published yet. Each line links to where it is solved.
+- **Resources:** a table of every Resource the User sees, with the icon of its kind, the Display Name, the Level, the Publication, open Signals and the last change. A Resource that is not published is in a lighter grey. Data Admins have a button to remove a Resource from the Collection.
+- **Lenses:** a table of the Lenses built on a Resource of the Collection ([OP-CO-11](../requirements/functional/03-collections.md#op-co-11)), with the icon of a Lens, the name, the type, what it is built on, its weight (light or heavy) and its Level: the lowest Level of what it is built on.
+- **Recent history:** the latest entries of the Log of the Collection, with a link to all of it. A colleague does not see the entries about Resources that are not published.
+- **Editing** happens in place, as for a Resource: the head turns into fields with the edit bar on top. Name, description, Owner Unit (only groups of whoever edits), who sees it (private or public, with what that means), colour and icon. Dissolving is at the bottom, and only possible for an empty Collection.
+- **Adding Resources** opens a **sheet** from the right over the page: the Resources without a Collection, searchable, each with its description from dbt, how it came in, and its Level, to tick one or more. A Resource is in one Collection at most, so only those without a Collection appear. The page stays visible behind it.
+
 ## Background and motion
 
 - Motion in the background is **very slow** (`--background-cycle`), felt rather than seen.
@@ -213,6 +230,11 @@ Decided on 2026-10-22, after a tryout of the panel:
 - <a id="dec-ux-11"></a>**DEC-UX-11** · In a list, every item has the icon of its kind, the same for every item of that kind: a table for a Resource. It tells the kinds apart once Lenses and Reports join; it is not an icon of the item itself ([DEC-UX-06](#dec-ux-06)).
 - <a id="dec-ux-12"></a>**DEC-UX-12** · A Resource that is not published is shown in a lighter grey, without the struck-through eye.
 
+Decided on 2026-10-23, asking for the page of a Collection:
+
+- <a id="dec-ux-13"></a>**DEC-UX-13** · Clicking a Collection in the panel opens its page and unfolds it; the arrow next to it only folds and unfolds. This answers [OP-UX-14](#op-ux-14).
+- <a id="dec-ux-14"></a>**DEC-UX-14** · From the page of a Collection, a User gets an overview of its Resources and its Lenses, creates a Lens, and edits the details of the Collection; a Data Admin also adds Resources.
+
 ## Open points
 
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
@@ -234,5 +256,10 @@ Raised while the design was taken into this repository, on 2026-10-22; not in th
 
 Raised on 2026-10-22, with the panel of [DEC-UX-10](#dec-ux-10):
 
-- [ ] <a id="op-ux-14"></a>**OP-UX-14** · **A page of a Collection:** clicking a Collection in the panel only unfolds it, as no page of a Collection is designed. Decide whether it also opens a page of the Collection on the right, and what that page shows. Until then, several Collections can be unfolded at once and they fold only when clicked.
-- [ ] <a id="op-ux-15"></a>**OP-UX-15** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan.
+- [x] <a id="op-ux-14"></a>**OP-UX-14** · **A page of a Collection:** clicking a Collection in the panel only unfolds it, as no page of a Collection is designed. Decide whether it also opens a page of the Collection on the right, and what that page shows. Until then, several Collections can be unfolded at once and they fold only when clicked. *Decided on 2026-10-23: clicking a Collection opens its page ([DEC-UX-13](#dec-ux-13)).*
+- [ ] <a id="op-ux-15"></a>**OP-UX-15** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](#dec-ux-14)); the panel does not yet.*
+
+Raised on 2026-10-23:
+
+- [ ] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). [collection-icon-variants](screens/collection-icon-variants.html) shows six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens.
+- [ ] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the variants page shows it. Decide the colour, and whether it becomes a rule beyond this list.

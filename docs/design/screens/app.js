@@ -16,11 +16,14 @@ const savePanel = () => { try { localStorage.setItem('dh-panel', app.classList.c
 document.querySelector('.nav-btn.active')?.addEventListener('click', () => { app.classList.toggle('panel-open'); savePanel(); });
 document.getElementById('collapse')?.addEventListener('click', () => { app.classList.remove('panel-open'); savePanel(); });
 
-// Panel of Collections: a Collection unfolds and folds in place (FR-CO-18)
-document.querySelectorAll('.tree-head').forEach(h => h.addEventListener('click', () => {
-  const g = h.closest('.tree-group'), open = !g.classList.contains('open');
-  g.classList.toggle('open', open); h.setAttribute('aria-expanded', open);
-}));
+// Panel of Collections: the arrow folds and unfolds a Collection in place (FR-CO-18); the Collection itself opens its page (FR-CO-25),
+// which in these prototypes exists only for Credit leads, so the others just unfold
+const fold = (g, open) => { g.classList.toggle('open', open); g.querySelector('.tree-toggle')?.setAttribute('aria-expanded', open); };
+document.querySelectorAll('.tree-toggle').forEach(t => t.addEventListener('click', () => { const g = t.closest('.tree-group'); fold(g, !g.classList.contains('open')); }));
+document.querySelectorAll('.tree-link[href="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); fold(a.closest('.tree-group'), true); }));
+
+// Prototype only: switch the role the screen is seen as
+document.querySelectorAll('.role-switch .seg').forEach(b => b.addEventListener('click', () => { document.documentElement.dataset.role = b.dataset.target; }));
 
 // Search filters Collections and their items together (FR-CO-24): a Collection whose name matches stays as it was,
 // one with a matching item unfolds and shows only those; emptying the search restores what was unfolded

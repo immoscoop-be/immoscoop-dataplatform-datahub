@@ -9,12 +9,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 12 | 15 (15 open) |
+| [Data Hub design principles](../design/principles.md) | – | – | 14 | 17 (16 open, 1 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 24 (8 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 9 (6 open, 3 done) |
+| [Collections](functional/03-collections.md) | 31 (7 proposed, 8 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 14 | 10 (7 open, 3 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 37 (2 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 10 (9 open, 1 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
@@ -91,13 +91,20 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-15](functional/03-collections.md#fr-co-15) | Exactly one Owner Unit, from the groups of whoever chooses it | Implemented | – | [TR-CO-03](technical/03-collections.md#tr-co-03) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) implements, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
 | [FR-CO-16](functional/03-collections.md#fr-co-16) | A Collection is private or public | Implemented | – | [TR-CO-01](technical/03-collections.md#tr-co-01), [TR-CO-02](technical/03-collections.md#tr-co-02) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) implements, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
 | [FR-CO-17](functional/03-collections.md#fr-co-17) | Who sees a Collection | Implemented | – | [TR-CO-02](technical/03-collections.md#tr-co-02) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) implements, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
-| [FR-CO-18](functional/03-collections.md#fr-co-18) | One list of Collections, each unfolding to what it holds | Specified | – | – | – |
-| [FR-CO-19](functional/03-collections.md#fr-co-19) | Opening a Resource unfolds its Collection | Specified | – | – | – |
-| [FR-CO-20](functional/03-collections.md#fr-co-20) | An item shows the icon of its kind, its name and its Level | Specified | – | – | – |
-| [FR-CO-21](functional/03-collections.md#fr-co-21) | Every name takes one line | Specified | – | – | – |
-| [FR-CO-22](functional/03-collections.md#fr-co-22) | A Resource that is not published is shown as such | Specified | – | – | – |
-| [FR-CO-23](functional/03-collections.md#fr-co-23) | A long Collection shows its first eight items | Specified | – | – | – |
-| [FR-CO-24](functional/03-collections.md#fr-co-24) | Search in the panel covers Collections and their Resources | Specified | – | – | – |
+| [FR-CO-18](functional/03-collections.md#fr-co-18) | One list of Collections, each unfolding to what it holds | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-19](functional/03-collections.md#fr-co-19) | Opening a Resource unfolds its Collection | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-20](functional/03-collections.md#fr-co-20) | An item shows the icon of its kind, its name and its Level | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-21](functional/03-collections.md#fr-co-21) | Every name takes one line | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-22](functional/03-collections.md#fr-co-22) | A Resource that is not published is shown as such | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-23](functional/03-collections.md#fr-co-23) | A long Collection shows its first eight items | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-24](functional/03-collections.md#fr-co-24) | Search in the panel covers Collections and their Resources | Specified | – | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
+| [FR-CO-25](functional/03-collections.md#fr-co-25) | Clicking a Collection opens its page | Proposed | – | – | – |
+| [FR-CO-26](functional/03-collections.md#fr-co-26) | The page says what the Collection is and what needs attention | Proposed | – | – | – |
+| [FR-CO-27](functional/03-collections.md#fr-co-27) | The page lists the Resources of the Collection | Proposed | – | – | – |
+| [FR-CO-28](functional/03-collections.md#fr-co-28) | The page lists the Lenses built on the Collection | Proposed | – | – | – |
+| [FR-CO-29](functional/03-collections.md#fr-co-29) | A Lens is started from the page of a Collection | Proposed | – | – | – |
+| [FR-CO-30](functional/03-collections.md#fr-co-30) | The details are edited on the page | Proposed | – | – | – |
+| [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Proposed | – | – | – |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -124,7 +131,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-19](functional/04-stacks-and-resources.md#fr-sr-19) | A published Resource stays published when its Level drops | Specified | SR-19 | – | – |
 | [FR-SR-20](functional/04-stacks-and-resources.md#fr-sr-20) | Reconfirm after a drop | Specified | SR-20 | – | – |
 | [FR-SR-21](functional/04-stacks-and-resources.md#fr-sr-21) | Search on title, description, Collection and Owner | Specified | SR-21 | – | – |
-| [FR-SR-22](functional/04-stacks-and-resources.md#fr-sr-22) | Browse per Collection | Specified | SR-22 | – | – |
+| [FR-SR-22](functional/04-stacks-and-resources.md#fr-sr-22) | Browse per Collection | Specified | SR-22 | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
 | [FR-SR-23](functional/04-stacks-and-resources.md#fr-sr-23) | Derive the Entities from the manifest and the lineage | Specified | SR-23 | – | – |
 | [FR-SR-24](functional/04-stacks-and-resources.md#fr-sr-24) | Read a Resource in tabs | Specified | SR-24 | – | – |
 | [FR-SR-25](functional/04-stacks-and-resources.md#fr-sr-25) | The preview shows a limited number of rows | Specified | SR-25 | – | – |
@@ -137,7 +144,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-32](functional/04-stacks-and-resources.md#fr-sr-32) | A table is registered through an exposure with the tag datahub | Implemented | – | [TR-AR-08](technical/01-artifact-registry.md#tr-ar-08), [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19<br>[4f3ced6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f3ced6fe82108250ba97f0cab3675a2260c03cc) refs, 2026-10-19 |
 | [FR-SR-33](functional/04-stacks-and-resources.md#fr-sr-33) | The Display Name comes from the exposure | Implemented | – | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-34](functional/04-stacks-and-resources.md#fr-sr-34) | A Resource without exposure is withdrawn and held | Implemented | – | [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
-| [FR-SR-35](functional/04-stacks-and-resources.md#fr-sr-35) | A new Resource waits for a Collection | Implemented | – | [TR-SR-05](technical/04-stacks-and-resources.md#tr-sr-05) | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22<br>[5b3f5df](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5b3f5dfc60c6e994197a90e971c6e16bd5b8e079) implements, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
+| [FR-SR-35](functional/04-stacks-and-resources.md#fr-sr-35) | A new Resource waits for a Collection | Implemented | – | [TR-SR-05](technical/04-stacks-and-resources.md#tr-sr-05) | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22<br>[5b3f5df](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5b3f5dfc60c6e994197a90e971c6e16bd5b8e079) implements, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-36](functional/04-stacks-and-resources.md#fr-sr-36) | A Pre-flight before every query | Proposed | – | – | – |
 | [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Proposed | – | – | – |
 
