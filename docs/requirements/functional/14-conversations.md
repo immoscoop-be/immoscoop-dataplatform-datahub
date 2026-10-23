@@ -32,13 +32,15 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-cv-03"></a>**DEC-CV-03** · The Subject is the same for every kind of object in Data Hub that has an ID: Resources today; Lenses, queries by their Query ID ([FR-LN-05](07-log-and-notifications.md#fr-ln-05)), Reports, Collections and later kinds alike. A new kind of object adds only its name and how to link to it; Messages, their links and their retrieval stay the same. This answers [OP-CV-03](#op-cv-03).
 - <a id="dec-cv-04"></a>**DEC-CV-04** · A Message is never private and is not a chat with a person: for that there is Slack. A Message enriches the data of its object and informs colleagues, so everyone who may see the object sees it. This answers [OP-CV-01](#op-cv-01).
 - <a id="dec-cv-05"></a>**DEC-CV-05** · A Message is about a whole object, a Collection, a Resource, a Lens or a query, and never about a part of it, such as a Column or a Parameter, nor about a second object. This answers [OP-CV-02](#op-cv-02).
+- <a id="dec-cv-06"></a>**DEC-CV-06** · What goes to and from the Data Team about an object goes through Messages too, on that object: a Request asks the Data Team for a decision, such as accepting a very large Lens ([FR-LE-09](09-lenses.md#fr-le-09)), and its reply is the decision. So the history of the decision stays with the object, for everyone who may see it.
 
 ## Terms
 
 | Term | Meaning |
 | --- | --- |
-| [Message](../../definitions.md#message) | What a User writes on an object in Data Hub, such as a Resource, a Lens or a query, to enrich its data and inform colleagues: a Question, Remark or Signal, or a reply. Never private. |
+| [Message](../../definitions.md#message) | What a User writes on an object in Data Hub, such as a Resource, a Lens or a query, to enrich its data and inform colleagues: a Question, Remark, Signal or Request, or a reply. Never private. |
 | [Subject](../../definitions.md#subject) | What a Message is about: the kind of object and its ID. |
+| [Request](../../definitions.md#request) | A Message that asks the Data Team for a decision on its object; its reply is the decision. |
 
 ## Flow
 
@@ -54,7 +56,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
-Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark or Signal on an object, and a reply alike. A reply takes the Subject of the Message it answers. There is no Message without a Subject.
+Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark, Signal or Request on an object, and a reply alike. A reply takes the Subject of the Message it answers. There is no Message without a Subject.
 
 <a id="fr-cv-02"></a>
 ### FR-CV-02 · A Message links to its object
@@ -68,7 +70,7 @@ Wherever a Message shows, in the Message Centre, in a notification, through Clau
 
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
-A Message has no recipient of its own: it is placed on its object, for everyone who may see it ([DEC-CV-04](#dec-cv-04)). Who gets a notification of it follows its kind: a Question or a Remark notifies the Owner of the object, which is its whole Owner Unit ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)); a Signal notifies the Owner and the Data Team ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)).
+A Message has no recipient of its own: it is placed on its object, for everyone who may see it ([DEC-CV-04](#dec-cv-04)). Who gets a notification of it follows its kind: a Question or a Remark notifies the Owner of the object, which is its whole Owner Unit ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)); a Signal notifies the Owner and the Data Team ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)); a Request notifies the Data Team, and its decision notifies who sent it ([FR-CV-08](#fr-cv-08)).
 
 <a id="fr-cv-04"></a>
 ### FR-CV-04 · All Messages about an object can be retrieved
@@ -97,6 +99,13 @@ Every User has a Message Centre, reached from the navigation with the number of 
 **Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages)
 
 The page of a Collection, a Resource and a Lens has "Messages", with their number, which opens the Messages on that object in a slide-in: the Message Centre filtered on the object ([DEC-CV-02](#dec-cv-02)). It starts with a field for a new Message, whose Subject is that object. A Collection takes a Question or a Remark; a Resource and a Lens also a Signal, as a Signal is about data.
+
+<a id="fr-cv-08"></a>
+### FR-CV-08 · A Request asks the Data Team for a decision
+
+**Status:** Proposed · **Source:** Max, 2026-10-23
+
+A Request is a Message on an object that asks the Data Team for a decision ([DEC-CV-06](#dec-cv-06)). The first is accepting a very large Lens: "Send to the data team" on making it sends a Request on that Lens, with what one run reads and the word of its author ([FR-LE-09](09-lenses.md#fr-le-09)). Data Hub sends one itself when a Lens grows into very large ([FR-LE-10](09-lenses.md#fr-le-10)). A Request is waiting, accepted or refused. A member of the Data Team decides in the Message Centre, and the decision is its reply, a refusal with a reason; who sent it gets a notification. Every Request waiting is in the Message Centre of the Data Team.
 
 ## Edge cases
 

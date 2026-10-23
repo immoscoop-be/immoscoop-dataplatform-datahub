@@ -25,7 +25,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
-| [Conversations](functional/14-conversations.md) | 7 (7 proposed) | 2 (2 proposed) | 5 | 4 (1 open, 3 done) |
+| [Conversations](functional/14-conversations.md) | 8 (8 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
@@ -243,8 +243,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message is placed on its object, not sent to a person | Proposed | – | – | [1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-04](functional/14-conversations.md#fr-cv-04) | All Messages about an object can be retrieved | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-05](functional/14-conversations.md#fr-cv-05) | Who sees a Message follows who sees its object | Proposed | – | – | [1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
-| [FR-CV-06](functional/14-conversations.md#fr-cv-06) | The Message Centre | Proposed | – | – | – |
-| [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | – |
+| [FR-CV-06](functional/14-conversations.md#fr-cv-06) | The Message Centre | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
+| [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
+| [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | – |
 
 ## Edge cases
 

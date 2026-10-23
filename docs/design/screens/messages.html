@@ -4,7 +4,8 @@
   "Messages" in the rail, with the number unread. The panel filters: For you, Unread, Written by you, Everything you may see;
   by kind, Question, Remark, Signal and what Data Hub tells you; and by the kind of object the Messages are on.
   The list: each Message with its object, its kind and state, who and when, and a first line; the one opened shows on the
-  right with its replies, a reply field and the way to its object (FR-CV-02). The slide-in on a Collection, Resource or
+  right with its replies and the way to its object (FR-CV-02). Opened here: a Request on a very large Lens (FR-CV-08), with
+  what one run reads; the Data Team accepts or refuses it with a reason, its author waits. The switch shows both. The slide-in on a Collection, Resource or
   Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
   Requirements: FR-CV-01 to FR-CV-07 (Proposed); DEC-CV-01 to DEC-CV-05; FR-SR-10 (a notification from Data Hub).
   Rules: ../principles.md  ·  Placeholder content only.
@@ -49,6 +50,7 @@
   <a class="mc-filter" href="#"><i class="ph ph-question"></i><span>Questions</span><span class="count">4</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-chat-text"></i><span>Remarks</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-warning-diamond"></i><span>Signals</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-seal-question"></i><span>Requests</span><span class="count">2</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-bell-simple"></i><span>From Data Hub</span><span class="count">1</span></a>
   <div class="panel-label">On</div>
   <a class="mc-filter" href="#"><i class="ph ph-coins"></i><span>Collections</span><span class="count">1</span></a>
@@ -61,12 +63,21 @@
 <div class="breadcrumb">Messages</div>
 <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
  <div style="flex:1"><h1 class="page-title">For you</h1>
- <p class="meta" style="display:block;margin-top:4px;line-height:1.5">Messages on what the credit team owns, on what you wrote or answered, and what Data Hub tells you.</p></div>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="owner">Messages on what the credit team owns, on what you wrote or answered, and what Data Hub tells you.</p>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="datateam">The requests waiting for the data team, the signals, and what Data Hub tells the data team.</p></div>
 </div>
 <div class="mc">
  <section class="card mc-list" aria-label="Messages">
   <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">6</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
   <a class="mc-item on unread" href="#">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">20 min ago</span></span>
+     <span class="mc-excerpt">Please accept this lens: one run reads 38.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
+     
+    </span>
+   </a><a class="mc-item unread" href="#" data-for="owner">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span></span>
@@ -82,7 +93,7 @@
      <span class="mc-excerpt">The count for the source partner dropped to zero in the week of 13 Oct. We usually see about forty leads there.</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
     </span>
-   </a><a class="mc-item unread" href="#">
+   </a><a class="mc-item unread" href="#" data-for="owner">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="query.html"><i class="ph ph-terminal-window" aria-hidden="true"></i><span class="mc-kind">Query</span><b>Partner leads in September</b></span></span>
@@ -91,6 +102,14 @@
      
     </span>
    </a><a class="mc-item" href="#">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Credit funnel by region</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-check-circle"></i>Accepted</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">3 days ago</span></span>
+     <span class="mc-excerpt">Accepted by Dirk Vos: it reads 31 GB, but it runs once a quarter and nothing smaller answers the question.</span>
+     <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
+    </span>
+   </a><a class="mc-item" href="#" data-for="owner">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="collection-messages.html"><i class="ph ph-coins" aria-hidden="true"></i><span class="mc-kind">Collection</span><b>Credit leads</b></span></span>
@@ -106,7 +125,7 @@
      <span class="mc-excerpt">Weekly lead volume dropped from 4 · Explored to 2 · Described: a structural change added the column lead_channel. It waits for your confirmation.</span>
      
     </span>
-   </a><a class="mc-item" href="#">
+   </a><a class="mc-item" href="#" data-for="owner">
     <span class="mc-dot" aria-label=""></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
@@ -114,31 +133,52 @@
      <span class="mc-excerpt">Is a lead counted again when the same person applies twice in one week?</span>
      <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
     </span>
+   </a><a class="mc-item" href="#" data-for="datateam">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-unassigned.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Saved searches</b></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
+     <span class="mc-excerpt">Three resources came in through an exposure and wait for a collection: Saved searches, Agency reviews and Credit simulations.</span>
+     
+    </span>
    </a>
  </section>
  <section class="card mc-detail" aria-label="The message">
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
-   <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Leads per source name</div></div>
-   <a class="btn-quiet outline" href="lens-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open the lens<i class="ph ph-arrow-right"></i></a>
+   <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads · not published</div><div style="font-size:var(--text-section);font-weight:500">Leads per source, all weeks</div></div>
+   <a class="btn-quiet outline" href="lens-new.html?size=verylarge" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open the lens<i class="ph ph-arrow-right"></i></a>
   </div>
   <div class="thread">
-    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
     <div class="thread-body">
-     <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">today 14:10</span></div>
-     <p>Why does Mailing drop after week 32? Did something change in how mailing leads are tagged?</p>
+     <div class="thread-head"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta">today 15:02</span></div>
+     <p>Please accept this lens. For the yearly review with KBC; it runs once a month.</p>
      
      <div class="thread-actions"></div>
     </div>
    </div>
-  <div class="composer" style="margin-top:6px">
-   <span class="label" style="margin:0">Reply</span>
-   <textarea placeholder="Your answer helps everyone who opens this lens."></textarea>
-   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification. Everyone who may see the lens sees your answer.</p><button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Reply</button></div>
+  <div class="req-facts">
+   <div><span class="meta">One run reads</span><b>38.2 GB</b></div>
+   <div><span class="meta">Range</span><b style="color:var(--signal-urgent)">Very large, above 30 GB</b></div>
+   <div><span class="meta">Partitions</span><b>312 of 312</b></div>
+   <div><span class="meta">With a default for From</span><b>17.9 GB at most</b></div>
   </div>
+  <div class="composer" data-for="datateam" style="margin-top:14px">
+   <span class="label" style="margin:0">Your decision</span>
+   <textarea placeholder="A reason, which Mia and everyone who may see the lens can read. Needed when you refuse."></textarea>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Mia gets a notification. Accepted, the lens is published.</p>
+    <button class="btn-quiet outline"><i class="ph ph-x"></i>Refuse</button>
+    <button class="btn-primary"><i class="ph-fill ph-check" style="font-size:15px"></i>Accept</button></div>
+  </div>
+  <div class="size-state fine" data-for="owner" style="margin-top:14px"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the data team.</b> Until they accept it, only you see the lens. Their answer comes here and as a notification.</p></div>
  </section>
 </div>
 </main>
+</div>
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+ <button class="seg on" data-target="owner" role="tab" aria-selected="true">Owner, who sent it</button>
+ <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data team</button>
 </div>
 <script src="app.js"></script>
 </body>

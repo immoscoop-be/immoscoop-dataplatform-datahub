@@ -99,6 +99,8 @@ The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-L
 
 A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author can open it, nobody else sees it yet. The Data Team is notified and accepts or refuses it; a refusal comes with a reason. The author is notified of either, and both are recorded in the Log.
 
+*Note of 2026-10-23: the request and the decision are Messages on the Lens: a Request to the Data Team with the word of its author, and the decision as its reply ([FR-CV-08](14-conversations.md#fr-cv-08)).*
+
 <a id="fr-le-10"></a>
 ### FR-LE-10 · A Lens that outgrows its range is checked again
 

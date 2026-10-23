@@ -488,3 +488,8 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .msg-sheet .composer { margin-top: 16px; }
 .msg-sheet .mc-chips { margin: 14px 0 0; }
 .btn-quiet .count, .btn-quiet.outline .count { margin-left: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+/* A Request to the Data Team, and what it asks to decide on (FR-CV-08) */
+.kind.request { color: var(--text-primary); background: var(--tint-active); }
+.req-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 2px 0 0 40px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.req-facts > div { display: flex; flex-direction: column; gap: 2px; font-size: var(--text-small); }
+.req-facts b { font-weight: var(--weight-medium); }
