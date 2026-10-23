@@ -291,6 +291,8 @@ The Entities of a Resource are derived from the manifest and the lineage, in the
 
 A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Conversations and Preview. History is filterable by kind of Log Entry.
 
+*Note of 2026-10-23: a tab Queries is proposed ([FR-SR-44](#fr-sr-44)).*
+
 <a id="fr-sr-25"></a>
 ### FR-SR-25 · The preview shows a limited number of rows
 
@@ -298,12 +300,16 @@ A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Convers
 
 The Preview shows a limited number of first rows. There is no query builder in the interface.
 
+*Note of 2026-10-23: SQL does come into the interface, in a section Query of its own ([FR-SR-41](#fr-sr-41)); the Preview itself stays without a query builder ([FR-SR-38](#fr-sr-38)).*
+
 <a id="fr-sr-26"></a>
 ### FR-SR-26 · Free SQL via Claude, over visible Resources only
 
 **Status:** Specified · **Confluence:** SR-26
 
 Via Claude, a User can have free SQL executed over the Resources they may see. A query that touches a Resource they cannot see is refused.
+
+*Note of 2026-10-23: Query is the other way, in the interface ([FR-SR-41](#fr-sr-41)).*
 
 <a id="fr-sr-27"></a>
 ### FR-SR-27 · A byte limit and a User label on every query
@@ -389,7 +395,49 @@ Above X GB, the User has to approve a query explicitly; above Y GB, the query is
 
 **Status:** Proposed · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23
 
-The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
+The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. The partition column of a partitioned Resource is always one of them, with a recent range chosen by default, so that a preview reads only the partitions it shows: in BigQuery, a `LIMIT` alone lowers nothing that is read. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
+
+<a id="fr-sr-39"></a>
+### FR-SR-39 · A Resource shows how it is partitioned and clustered
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource)
+
+The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
+
+<a id="fr-sr-40"></a>
+### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+
+The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its partitions a query reads and through which column, and calls its volume "at most" where clustering can make the real read lower. A query on a partitioned Resource without a filter on its partition column gets a warning, with what it would read with one.
+
+<a id="fr-sr-41"></a>
+### FR-SR-41 · Query, a section for SQL over everything the User may see
+
+**Status:** Proposed · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17)
+
+Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
+
+<a id="fr-sr-42"></a>
+### FR-SR-42 · The editor formats and suggests
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+
+The SQL editor in Query formats the SQL on request, and suggests while typing: the Resources the User may see, their columns and the Parameters, the partition and cluster columns first and marked as such.
+
+<a id="fr-sr-43"></a>
+### FR-SR-43 · Your queries, in a sheet
+
+**Status:** Proposed · **Source:** [DEC-UX-18](../../design/principles.md#dec-ux-18)
+
+A User sees every query they ran, through Query, a preview or Claude, newest first, with what it read, its sources, whether it was approved or blocked, and its Query ID, and opens one again in Query. The list slides in as a sheet; only the User and the Data Team see it ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
+
+<a id="fr-sr-44"></a>
+### FR-SR-44 · The page of a Resource lists the queries on it
+
+**Status:** Proposed · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19)
+
+The page of a Resource has a tab Queries with every query that ran on it: when, who, through what, what it read and its Query ID, and a few numbers over the last 30 days. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Who sees the list is open ([OP-SR-13](#op-sr-13)).
 
 ## Log Catalogue
 
@@ -456,10 +504,12 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it.
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
 - [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).*
-- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.*
+- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.*
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
-- [ ] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A [Query tab](../../design/principles.md#query-a-proposal) is designed as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.*
+- [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
+- [ ] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.*
+- [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries on a Resource ([FR-SR-44](#fr-sr-44)). The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Proposal: the Owner Unit and the Data Team see the whole list, without the SQL of others; any other User sees only their own queries. *Raised on 2026-10-23.*
 
 ## Builds on
 

@@ -81,7 +81,7 @@ There are three layers:
 
 ## Navigation
 
-- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Lenses, Reports; see [OP-UX-11](#op-ux-11)); at the bottom theme, settings and account.
+- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)); at the bottom theme, settings and account.
 - **Collapsed,** each icon shows a label after a short delay. The active icon keeps its transparent tile.
 - **A slide-out panel per main item.** The active icon and the panel form one shape: the icon has the same background as the panel and flows into it with concave corners.
 
@@ -150,7 +150,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 - **Header:** the name, the Key with a copy button, and the button "Ask a question", which starts a Question in the Conversations ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
 - **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
-- **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview.
+- **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview, Queries.
 - **Overview,** in tiles:
   - **Definition:** the definition in business language, written in Data Hub, and under it the description from dbt with its model type and grain, marked as coming from dbt.
   - **Maturity:** the ladder, with the previous Level after a drop.
@@ -161,8 +161,9 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
   - **Key fields and Parameters.**
   - **Entities and relationships:** each Entity with its identifier and the Resources it joins to, also as a picture. An Entity without an identifier at this grain is shown, but joins nothing.
   - **Monitoring:** the active checks and the incidents.
+  - **Partitions and clustering:** the partition column and its unit, the number of partitions, the cluster columns in their order, the size, and a sentence on how to query cheaply. From dbt and BigQuery, read-only.
   - **Recent history** with Log IDs, across the full width.
-- **Columns:** each column with its type, description, Entity, and whether it serves as a Parameter.
+- **Columns:** each column with its type, description, Entity, and what it serves as: the Partition, a Cluster column with its place, a Parameter.
 
 ### Editing a Resource
 
@@ -182,18 +183,18 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 Screen: [resource-preview](screens/resource-preview.html). Designed on 2026-10-23, to review.
 
 - **The first rows** of the Resource, newest first, in a plain table: the values as they are, `null` shown as such (empty is not zero), a zero that stands out in the signal colour.
-- **The Parameters** of the Resource choose which rows: a choice per Parameter above the table, such as the weeks and the lead source. Nothing to type: no SQL and no query builder ([FR-SR-25](../requirements/functional/04-stacks-and-resources.md#fr-sr-25)).
-- **The Pre-flight** sits next to the Parameters: what the preview scans ([FR-SR-36](../requirements/functional/04-stacks-and-resources.md#fr-sr-36)). Above the approval threshold it asks first ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).
+- **The Parameters** of the Resource choose which rows: a choice per Parameter above the table, such as the weeks and the lead source. Nothing to type: SQL is for [Query](#query). The partition column is always one of them, marked "Partition", and so is the first cluster column, marked "Cluster": a preview reads only what it shows. In BigQuery a `LIMIT` alone lowers nothing that is read.
+- **The Pre-flight** sits next to the Parameters: what the preview scans, and how many partitions it reads ([FR-SR-36](../requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)). Above the approval threshold it asks first ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).
 - **Under the table:** how many rows of how many, what was scanned, and the **Query ID** with a copy button and a link to the Query Log ([FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06)).
-- **Two ways further,** as tiles under the table: the own question goes to Claude with the Data Hub connector ([FR-SR-26](../requirements/functional/04-stacks-and-resources.md#fr-sr-26), [FR-CH-03](../requirements/functional/13-channels.md#fr-ch-03)), with a prompt to copy; a regular export goes to the Data Team ([FR-CH-01](../requirements/functional/13-channels.md#fr-ch-01), [FR-CH-02](../requirements/functional/13-channels.md#fr-ch-02)). No download button.
+- **Two ways further,** as tiles under the table: the own question goes to Query, with "Query this resource", or to Claude with the Data Hub connector ([FR-SR-26](../requirements/functional/04-stacks-and-resources.md#fr-sr-26), [FR-CH-03](../requirements/functional/13-channels.md#fr-ch-03)), with a prompt to copy; a regular export goes to the Data Team ([FR-CH-01](../requirements/functional/13-channels.md#fr-ch-01), [FR-CH-02](../requirements/functional/13-channels.md#fr-ch-02)). No download button.
 
-### Query, a proposal
+### Queries
 
-Screen: [resource-query](screens/resource-query.html). A variant to discuss, against today's requirements ([OP-SR-11](../requirements/functional/04-stacks-and-resources.md#op-sr-11)).
+Screen: [resource-queries](screens/resource-queries.html). Designed on 2026-10-23, to review ([DEC-UX-19](#dec-ux-19)).
 
-- A tab "Query" after Preview, marked as a proposal: SQL on this Resource, with its Parameters as named values such as `@dateFrom`.
-- **The Pre-flight** as a card next to the SQL: the volume in large, a gauge with the approval and the block threshold, what to do to scan less, and the button "Approve and run" when above the approval threshold.
-- **The result** under it, with the same line as the Preview: rows, scanned, Query ID, Query Log.
+- Every query that ran on the Resource, newest first: when, who, through what (Query, a preview, Claude, a Lens), what it was, what it read, and its Query ID. A blocked query shows its estimate.
+- **The SQL** only for whoever ran it and the Data Team, as the Query Log has it ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)); for others the line says so. Who sees the list at all is open ([OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)).
+- **On top,** a few numbers: queries in the last 30 days, what they read, how many colleagues, how many filter on the partition column. And the button "Query this resource", which opens [Query](#query) with it.
 
 ### A Resource without a Collection
 
@@ -218,6 +219,23 @@ Screens: [collection-overview](screens/collection-overview.html), [collection-ed
 - **Recent history:** the latest entries of the Log of the Collection, with a link to all of it. A colleague does not see the entries about Resources that are not published.
 - **Editing** happens in place, as for a Resource: the head turns into fields with the edit bar on top. Name, description, Owner Unit (only groups of whoever edits), who sees it (private or public, with what that means), colour and icon. Dissolving is at the bottom, and only possible for an empty Collection.
 - **Adding Resources** opens a **sheet** from the right over the page: the Resources without a Collection, searchable, each with its description from dbt, how it came in, and its Level, to tick one or more. A Resource is in one Collection at most, so only those without a Collection appear. The page stays visible behind it.
+
+## Query
+
+Screens: [query](screens/query.html) and [query-history](screens/query-history.html). Designed on 2026-10-23, to review.
+
+- **A main section of its own,** next to Collections ([DEC-UX-17](#dec-ux-17)): a query can use every Resource the User may see, and later Lenses, not just one.
+- **The panel** lists the sources to query: the Collections and their Resources, as in Collections, with search. A click puts a Resource in the query.
+- **Above the editor:** the name of the query, the sources it uses with their Level, and "Your queries" on the right.
+- **The editor** writes BigQuery SQL. It **formats** the SQL on request (a button and Shift+Alt+F), and **suggests** as you type: the Resources, their columns and the Parameters, the partition and cluster columns first and marked as such. Parameters are named values such as `@dateFrom`, filled in under the editor.
+- **The Pre-flight** is a card next to the editor: the estimate in large, marked "at most" as clustering can make the real read lower; a gauge with the approval and the block threshold ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)); per Resource the partitions it reads and through which column; what to do to read less; and "Run", or "Approve and run" above the approval threshold. A query without a filter on the partition column of a partitioned Resource gets a warning there ([FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)).
+- **The result** under it: the rows, what was read and how many partitions, and the Query ID with a copy button.
+- **Your queries** slide in as a sheet from the right ([DEC-UX-18](#dec-ux-18)): every query you ran, through Query, a preview or Claude, newest first, grouped by day, each with what it read, its sources, whether it was approved or blocked, its Query ID, and "Open". Only you and the Data Team see them.
+- **To build it,** a proposal that holds for React and for Svelte ([OP-UX-10](#op-ux-10)): the editor CodeMirror 6 with its SQL language, a BigQuery dialect on top (backtick names, its functions) and suggestions from the columns Data Hub keeps; formatting with sql-formatter, which knows BigQuery. Both MIT. The Pre-flight as a dry run of BigQuery while typing pauses: it costs nothing and returns the bytes.
+
+## Sheets
+
+- A **sheet** slides in from the right over the page, for a task or a list that belongs to the page but is not the page: adding Resources to a Collection, your queries. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
 
 ## Background and motion
 
@@ -257,12 +275,18 @@ Decided on 2026-10-23, with the page of a Collection and the icon of a Collectio
 - <a id="dec-ux-15"></a>**DEC-UX-15** · The icon of a Collection is grey, without a circle; the colour of the Collection is a thin bar on the left edge of its card, and of the head of its page. Variant E of the exploration; this answers [OP-UX-16](#op-ux-16).
 - <a id="dec-ux-16"></a>**DEC-UX-16** · "Without a collection" is not a Collection, so it never gets the colour bar of one. It is shown in an urgent red, because it waits for the Data Team and asks to be solved quickly. This answers [OP-UX-17](#op-ux-17).
 
+Decided on 2026-10-23, with the preview and the query of a Resource:
+
+- <a id="dec-ux-17"></a>**DEC-UX-17** · Query is a main section of its own, next to Collections, and not a tab of a Resource: a query goes over Resources, and later Lenses. This answers [OP-SR-11](../requirements/functional/04-stacks-and-resources.md#op-sr-11).
+- <a id="dec-ux-18"></a>**DEC-UX-18** · Your own queries are not on the page: they slide in as a sheet.
+- <a id="dec-ux-19"></a>**DEC-UX-19** · The page of a Resource has a history of the queries that ran on it, in a tab "Queries".
+
 ## Open points
 
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] <a id="op-ux-02"></a>**OP-UX-02** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
 - [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports.
-- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview is designed ([resource-preview](screens/resource-preview.html)), to review; a Query tab is a proposal ([resource-query](screens/resource-query.html)).*
+- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview and Queries are designed ([resource-preview](screens/resource-preview.html), [resource-queries](screens/resource-queries.html)), to review; SQL went to its own section ([DEC-UX-17](#dec-ux-17)).*
 - [ ] <a id="op-ux-05"></a>**OP-UX-05** · **Collection palette:** align the three additional colours with the chart language.
 - [ ] <a id="op-ux-06"></a>**OP-UX-06** · **Screens on mobile** or in narrow windows.
 
@@ -272,7 +296,7 @@ Raised while the design was taken into this repository, on 2026-10-22; not in th
 - [ ] <a id="op-ux-08"></a>**OP-UX-08** · **Collection palette:** this design has six colours (magenta, bordeaux, teal, ochre, slate blue, olive). [DEC-CO-07](../requirements/functional/03-collections.md#dec-co-07) and the app have the nine of the "muted" palette by Paul Tol, and catalogue stores those names. Decide which palette applies, and how the colours of existing Collections move over. Together with [OP-UX-05](#op-ux-05) and [OP-CO-02](../requirements/functional/03-collections.md#op-co-02).
 - [ ] <a id="op-ux-09"></a>**OP-UX-09** · **Look:** [DEC-PF-22](../requirements/technical/00-platform.md#dec-pf-22) asks for the colours of the brandbook, with teal on larger areas, and one light look without a dark mode. This design has warm greys, colour only on content, and a light and a dark theme. Decide whether this design replaces those parts of DEC-PF-22.
 - [ ] <a id="op-ux-10"></a>**OP-UX-10** · **Stack:** decide what builds this design: React with Mantine, as [DEC-PF-06](../requirements/technical/00-platform.md#dec-pf-06) and DEC-PF-22 decide, or Svelte, as other repositories of Immoscoop use (raised on 2026-10-20). The design itself does not depend on it: its values are CSS variables and its prototypes plain HTML and CSS.
-- [ ] <a id="op-ux-11"></a>**OP-UX-11** · **Sections:** the navigation holds Collections, Lenses and Reports. The web app today also has Charts, the gallery of the Chart Server, and for the Data Team the search through the dbt projects. Decide where they go.
+- [ ] <a id="op-ux-11"></a>**OP-UX-11** · **Sections:** the navigation holds Collections, Lenses and Reports. The web app today also has Charts, the gallery of the Chart Server, and for the Data Team the search through the dbt projects. Decide where they go. *Note of 2026-10-23: Query joins them as a main section ([DEC-UX-17](#dec-ux-17)).*
 - [ ] <a id="op-ux-12"></a>**OP-UX-12** · **Capitals in the interface:** the documentation writes Defined Terms with capitals, and so does the interface of the web app today ("New Collection", "Owner Unit"). The prototypes write the interface in sentence case ("New collection", "Your collections", "Owner: Credit team"). Decide which applies to the interface.
 - [ ] <a id="op-ux-13"></a>**OP-UX-13** · **Settings of a User:** the state of the panel and the dismissed intros, per section and with their version, are kept per User in the settings, and the theme is remembered. Data Hub has no settings of a User yet, and no requirement for them; the prototypes keep them in the browser. Decide where they are kept: in the browser, or in Data Hub, so that they follow the User to another device.
 

@@ -9,13 +9,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 16 | 17 (14 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 19 | 17 (14 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
 | [Collections](functional/03-collections.md) | 31 (15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 15 | 11 (7 open, 4 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 38 (3 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 11 (10 open, 1 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 44 (9 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
@@ -133,9 +133,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-21](functional/04-stacks-and-resources.md#fr-sr-21) | Search on title, description, Collection and Owner | Specified | SR-21 | – | – |
 | [FR-SR-22](functional/04-stacks-and-resources.md#fr-sr-22) | Browse per Collection | Specified | SR-22 | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
 | [FR-SR-23](functional/04-stacks-and-resources.md#fr-sr-23) | Derive the Entities from the manifest and the lineage | Specified | SR-23 | – | – |
-| [FR-SR-24](functional/04-stacks-and-resources.md#fr-sr-24) | Read a Resource in tabs | Specified | SR-24 | – | – |
-| [FR-SR-25](functional/04-stacks-and-resources.md#fr-sr-25) | The preview shows a limited number of rows | Specified | SR-25 | – | – |
-| [FR-SR-26](functional/04-stacks-and-resources.md#fr-sr-26) | Free SQL via Claude, over visible Resources only | Specified | SR-26 | – | – |
+| [FR-SR-24](functional/04-stacks-and-resources.md#fr-sr-24) | Read a Resource in tabs | Specified | SR-24 | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-25](functional/04-stacks-and-resources.md#fr-sr-25) | The preview shows a limited number of rows | Specified | SR-25 | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-26](functional/04-stacks-and-resources.md#fr-sr-26) | Free SQL via Claude, over visible Resources only | Specified | SR-26 | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-27](functional/04-stacks-and-resources.md#fr-sr-27) | A byte limit and a User label on every query | Specified | SR-27 | – | – |
 | [FR-SR-28](functional/04-stacks-and-resources.md#fr-sr-28) | The Owner and the Data Team supplement the description | Specified | SR-28 | – | – |
 | [FR-SR-29](functional/04-stacks-and-resources.md#fr-sr-29) | React with a Question, a Remark or a Signal | Specified | SR-29 | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
@@ -145,9 +145,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-33](functional/04-stacks-and-resources.md#fr-sr-33) | The Display Name comes from the exposure | Implemented | – | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-34](functional/04-stacks-and-resources.md#fr-sr-34) | A Resource without exposure is withdrawn and held | Implemented | – | [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-35](functional/04-stacks-and-resources.md#fr-sr-35) | A new Resource waits for a Collection | Implemented | – | [TR-SR-05](technical/04-stacks-and-resources.md#tr-sr-05) | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22<br>[5b3f5df](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5b3f5dfc60c6e994197a90e971c6e16bd5b8e079) implements, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
-| [FR-SR-36](functional/04-stacks-and-resources.md#fr-sr-36) | A Pre-flight before every query | Proposed | – | – | – |
-| [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Proposed | – | – | – |
-| [FR-SR-38](functional/04-stacks-and-resources.md#fr-sr-38) | The Parameters of a Resource choose the rows of its Preview | Proposed | – | – | – |
+| [FR-SR-36](functional/04-stacks-and-resources.md#fr-sr-36) | A Pre-flight before every query | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-38](functional/04-stacks-and-resources.md#fr-sr-38) | The Parameters of a Resource choose the rows of its Preview | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-39](functional/04-stacks-and-resources.md#fr-sr-39) | A Resource shows how it is partitioned and clustered | Proposed | – | – | – |
+| [FR-SR-40](functional/04-stacks-and-resources.md#fr-sr-40) | The Pre-flight counts the partitions and warns without a partition filter | Proposed | – | – | – |
+| [FR-SR-41](functional/04-stacks-and-resources.md#fr-sr-41) | Query, a section for SQL over everything the User may see | Proposed | – | – | – |
+| [FR-SR-42](functional/04-stacks-and-resources.md#fr-sr-42) | The editor formats and suggests | Proposed | – | – | – |
+| [FR-SR-43](functional/04-stacks-and-resources.md#fr-sr-43) | Your queries, in a sheet | Proposed | – | – | – |
+| [FR-SR-44](functional/04-stacks-and-resources.md#fr-sr-44) | The page of a Resource lists the queries on it | Proposed | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -193,7 +199,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LN-03](functional/07-log-and-notifications.md#fr-ln-03) | Data Hub knows the Consumers of a Resource | Proposed | – | – | – |
 | [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – |
 | [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Specified | – | – | – |
-| [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Specified | – | – | – |
+| [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Specified | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 
 ### [Lenses](functional/09-lenses.md)
 
@@ -209,9 +215,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-CH-01](functional/13-channels.md#fr-ch-01) | No high-volume or frequent exports through Data Hub | Proposed | – | – | – |
-| [FR-CH-02](functional/13-channels.md#fr-ch-02) | A structural export goes to the Data Team | Proposed | – | – | – |
-| [FR-CH-03](functional/13-channels.md#fr-ch-03) | Claude works through the MCP of Data Hub only | Proposed | – | – | – |
+| [FR-CH-01](functional/13-channels.md#fr-ch-01) | No high-volume or frequent exports through Data Hub | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-CH-02](functional/13-channels.md#fr-ch-02) | A structural export goes to the Data Team | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-CH-03](functional/13-channels.md#fr-ch-03) | Claude works through the MCP of Data Hub only | Proposed | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-CH-04](functional/13-channels.md#fr-ch-04) | Documentation built into the interface and the MCP | Proposed | – | – | – |
 | [FR-CH-05](functional/13-channels.md#fr-ch-05) | Every feature updates the documentation | Proposed | – | – | – |
 

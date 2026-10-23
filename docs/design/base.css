@@ -314,3 +314,25 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .gauge-legend { position: relative; height: 14px; margin-top: 6px; font-size: 10px; color: var(--text-muted); }
 .gauge-legend span { position: absolute; white-space: nowrap; }
 .gauge-legend span:nth-child(3) { transform: translateX(-100%); }
+/* What a column does for the cost of a query: the partition column and the cluster columns */
+.pill-strong { color: var(--text-primary); background: var(--tint-active); }
+/* The SQL editor of the Query proposal: formatting, and suggestions with the partition and cluster columns first */
+.sql-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.sql-box { position: relative; }
+.text-cursor { display: inline-block; width: 1.5px; height: 1.2em; vertical-align: text-bottom; background: var(--text-primary); }
+.suggest { position: absolute; left: 92px; top: 117px; z-index: 2; width: 330px; padding: 5px; border-radius: var(--radius-sm); background: var(--surface-solid);
+  box-shadow: 0 10px 30px rgba(0,0,0,.14); outline: 1px solid var(--tint-active); font-family: var(--font-family); font-size: var(--text-small); }
+.suggest-item { display: grid; grid-template-columns: 16px minmax(0,1fr) auto auto; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 6px; }
+.suggest-item.on { background: var(--tint-hover); }
+.suggest-item i { color: var(--text-muted); }
+.suggest-foot { padding: 6px 8px 3px; margin-top: 3px; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+/* Your queries, in the sheet; and the numbers on top of the queries of a Resource */
+.hist-item { padding: 12px 10px; border-radius: var(--radius-md); }
+.hist-item:hover { background: var(--tint-hover); }
+.hist-item .clip { font-size: var(--text-small); }
+.mini-stat { display: flex; align-items: baseline; gap: 6px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-muted); }
+.mini-stat b { font-size: 16px; font-weight: var(--weight-medium); color: var(--text-primary); }
+.status .kind-icon { font-size: 13px; }
+.pf-src { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid var(--tint-active); font-size: var(--text-small); }
+.pf-src:first-of-type { margin-top: 12px; }
+.pf-src + p { margin-top: 10px !important; }
