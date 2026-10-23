@@ -2,9 +2,10 @@
 <!--
   Screen: Lenses, the page of a Lens: run it (DEC-UX-26)
   The basic flavour of a Lens: a query with Parameters, its result a table. Other flavours (filtered, aggregation, ...) come later.
-  Two tabs. Run: the result on top, the rows, what was read, the Query ID, "Download CSV"; the request below: its
-  Parameters with their defaults, "Default" on a changed one, the Pre-flight and "Run", or "Approve and run" above the
-  approval threshold. The dropdown of a date Parameter offers a date, or a function such as "today − 3 days". About: the question, what it shows,
+  Two tabs. Run: the request on top, its Parameters in a panel that folds open and shut (folded, a line with their
+  values), "Default" on a changed one, then the Pre-flight and "Run", or "Approve and run" above the approval threshold;
+  the result below, a table, with what was read, the Query ID and "Download CSV". The dropdown of a date Parameter offers
+  a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
   The switches at the bottom show the result up to date, after a change, before the first run and while choosing a value, as the Owner Unit or a colleague.
@@ -88,45 +89,21 @@
 </div>
 <div class="tab-content card">
  <div class="lens-run" data-pane-group="lenstab" data-pane="run">
-  <section class="lens-result" aria-labelledby="lr-result">
-   <div style="display:flex;align-items:center;gap:10px">
-    <h2 id="lr-result" class="nq-title" style="flex:1">Result</h2>
-    <button class="btn-quiet outline" title="Up to 10,000 rows" data-pane-group="state" data-pane="fresh changed editing"><i class="ph ph-download-simple"></i> Download CSV</button>
-   </div>
-   <div data-pane-group="state" data-pane="fresh editing">
-    <p class="meta" style="display:block;margin:4px 0 12px">You ran it 2 minutes ago, from 1 Jan 2026 to 20 Oct 2026, all channels.</p>
-    <div class="table-scroll"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
-    <div class="result-foot">
-   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
-   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
-  </div>
-   </div>
-   <div data-pane-group="state" data-pane="changed" hidden>
-    <div class="size-state caution" style="margin:8px 0 12px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The parameters changed.</b> This result is still for From 1 Jan 2026; run again to see it for 1 Jan 2024.</p></div>
-    <div class="table-scroll result-stale"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
-    <div class="result-foot">
-   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
-   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
-  </div>
-   </div>
-   <div data-pane-group="state" data-pane="notrun" hidden>
-    <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the parameters below and run the lens. A lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
-   </div>
-  </section>
-  <section class="lens-request" aria-labelledby="lr-request">
-   <h2 id="lr-request" class="nq-title">Parameters</h2>
-   <div class="param-grid">
-    <div class="field">
-     <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
-     <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan 2026</span><i class="ph ph-caret-down"></i></button></span>
-     <span data-pane-group="state" data-pane="changed" hidden><button class="param-control changed" type="button" aria-haspopup="listbox"><span class="param-main">1 Jan 2024</span><i class="ph ph-caret-down"></i></button>
-     <span class="param-default" title="The default of this parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this year</span></span>
-    </div>
-    <div class="field param-anchor">
-     <span class="param-head">To</span>
-     <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button></span>
-     <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button>
-     <div class="param-menu" role="listbox" aria-label="To">
+  <section class="lens-request" data-pane-group="state" data-pane="fresh" aria-label="Parameters">
+   <details class="param-panel">
+    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>All channels</span></span><i class="ph ph-caret-down param-caret"></i></summary>
+    <div class="param-grid">
+     <div class="field">
+      <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
+      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="changed" hidden><button class="param-control changed" type="button" aria-haspopup="listbox"><span class="param-main">1 Jan 2024</span><i class="ph ph-caret-down"></i></button>
+      <span class="param-default" title="The default of this parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this year</span></span>
+     </div>
+     <div class="field param-anchor">
+      <span class="param-head">To</span>
+      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button>
+      <div class="param-menu" role="listbox" aria-label="To">
       <div class="menu-label">A date</div>
       <label class="menu-date"><i class="ph ph-calendar-blank"></i><input type="date" value="2026-10-20" aria-label="A date"></label>
       <div class="menu-label">A function, worked out at every run</div>
@@ -137,12 +114,13 @@
       <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>Start of this year<span class="meta">1 Jan 2026</span></div>
       <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>End of the last complete week<span class="meta">18 Oct 2026</span></div>
      </div></span>
+     </div>
+     <div class="field">
+      <span class="param-head">Lead channel</span>
+      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">All channels</span><i class="ph ph-caret-down"></i></button>
+     </div>
     </div>
-    <div class="field">
-     <span class="param-head">Lead channel</span>
-     <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">All channels</span><i class="ph ph-caret-down"></i></button>
-    </div>
-   </div>
+   </details>
    <div data-pane-group="state" data-pane="fresh notrun editing"><div class="run-row">
     <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">5.1 GB</b> <span class="meta">at most · 42 of 312 partitions</span></div>
     <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
@@ -151,6 +129,68 @@
     <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">17.9 GB</b> <span class="meta">at most · 146 of 312 partitions. Above 10 GB you approve the run yourself.</span></div>
     <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
    </div></div>
+  </section>
+  <section class="lens-request" data-pane-group="state" data-pane="changed notrun editing" hidden aria-label="Parameters">
+   <details class="param-panel" open>
+    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>All channels</span></span><i class="ph ph-caret-down param-caret"></i></summary>
+    <div class="param-grid">
+     <div class="field">
+      <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
+      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="changed" hidden><button class="param-control changed" type="button" aria-haspopup="listbox"><span class="param-main">1 Jan 2024</span><i class="ph ph-caret-down"></i></button>
+      <span class="param-default" title="The default of this parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this year</span></span>
+     </div>
+     <div class="field param-anchor">
+      <span class="param-head">To</span>
+      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button>
+      <div class="param-menu" role="listbox" aria-label="To">
+      <div class="menu-label">A date</div>
+      <label class="menu-date"><i class="ph ph-calendar-blank"></i><input type="date" value="2026-10-20" aria-label="A date"></label>
+      <div class="menu-label">A function, worked out at every run</div>
+      <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>Today<span class="meta">23 Oct 2026</span></div>
+      <div class="menu-item on" role="option" aria-selected="true"><i class="ph ph-function" aria-label="Function"></i>Today − <span class="menu-n">3</span> days<span class="meta">20 Oct 2026</span><i class="ph ph-check"></i></div>
+      <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>Start of this week<span class="meta">19 Oct 2026</span></div>
+      <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>Start of this month<span class="meta">1 Oct 2026</span></div>
+      <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>Start of this year<span class="meta">1 Jan 2026</span></div>
+      <div class="menu-item" role="option"><i class="ph ph-function" aria-label="Function"></i>End of the last complete week<span class="meta">18 Oct 2026</span></div>
+     </div></span>
+     </div>
+     <div class="field">
+      <span class="param-head">Lead channel</span>
+      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">All channels</span><i class="ph ph-caret-down"></i></button>
+     </div>
+    </div>
+   </details>
+   <div data-pane-group="state" data-pane="fresh notrun editing"><div class="run-row">
+    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">5.1 GB</b> <span class="meta">at most · 42 of 312 partitions</span></div>
+    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
+   </div></div>
+   <div data-pane-group="state" data-pane="changed" hidden><div class="run-row">
+    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">17.9 GB</b> <span class="meta">at most · 146 of 312 partitions. Above 10 GB you approve the run yourself.</span></div>
+    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
+   </div></div>
+  </section>
+  <section class="lens-result" aria-label="Result">
+   <div data-pane-group="state" data-pane="fresh editing">
+    <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Jan 2026 to 20 Oct 2026, all channels</span><button class="btn-quiet outline" title="Up to 10,000 rows"><i class="ph ph-download-simple"></i> Download CSV</button></div>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
+    <div class="result-foot">
+   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
+   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  </div>
+   </div>
+   <div data-pane-group="state" data-pane="changed" hidden>
+    <div class="size-state caution" style="margin:0 0 10px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The parameters changed.</b> This result is still for From 1 Jan 2026; run again to see it for 1 Jan 2024.</p></div>
+    <div class="table-scroll result-stale"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
+    <div class="result-foot">
+   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
+   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  </div>
+   </div>
+   <div data-pane-group="state" data-pane="notrun" hidden>
+    <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the parameters above and run the lens. A lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
+   </div>
   </section>
  </div>
  <div data-pane-group="lenstab" data-pane="about" hidden>
