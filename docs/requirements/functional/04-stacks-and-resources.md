@@ -430,7 +430,7 @@ The SQL editor in Query formats the SQL on request, and suggests while typing: t
 
 **Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20)
 
-The panel of Query lists the queries that ran, newest first and grouped by day: by default the User's own, through Query, a preview or Claude; on request everyone's on what the User may see, with who ran them. Each shows what it read and whether it was approved or blocked, and opens in Query with a click. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); whether others see the list at all is open ([OP-SR-13](#op-sr-13)).
+The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
@@ -438,6 +438,20 @@ The panel of Query lists the queries that ran, newest first and grouped by day: 
 **Status:** Proposed · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19)
 
 The page of a Resource has a tab Queries with every query that ran on it: when, who, through what, what it read and its Query ID, and a few numbers over the last 30 days. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Who sees the list is open ([OP-SR-13](#op-sr-13)).
+
+<a id="fr-sr-45"></a>
+### FR-SR-45 · Every query has a name
+
+**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
+
+A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: the Resource and the date, or for a Lens the name of the Lens. The name can be changed later; a query without a name cannot be run.
+
+<a id="fr-sr-46"></a>
+### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
+
+**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
+
+The page of a Resource has a button "Query". It opens Query with a new query: the Resource as its source, its name suggested ([FR-SR-45](#fr-sr-45)), and its SQL starting with a filter on the partition column ([FR-SR-39](#fr-sr-39)).
 
 ## Log Catalogue
 
@@ -509,7 +523,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
 - [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
 - [ ] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.*
-- [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.*
+- [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). *Note of 2026-10-23: "All" in the panel is for the Data Team only ([DEC-UX-20](../../design/principles.md#dec-ux-20)); what remains is the tab Queries of a Resource, where the same rule would show a colleague only their own queries and the numbers.* The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.*
 
 ## Builds on
 

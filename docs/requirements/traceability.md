@@ -9,13 +9,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 20 | 17 (14 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 21 | 17 (14 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
 | [Collections](functional/03-collections.md) | 31 (15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 15 | 11 (7 open, 4 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 44 (9 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 46 (11 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
@@ -152,8 +152,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-40](functional/04-stacks-and-resources.md#fr-sr-40) | The Pre-flight counts the partitions and warns without a partition filter | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-41](functional/04-stacks-and-resources.md#fr-sr-41) | Query, a section for SQL over everything the User may see | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-42](functional/04-stacks-and-resources.md#fr-sr-42) | The editor formats and suggests | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
-| [FR-SR-43](functional/04-stacks-and-resources.md#fr-sr-43) | The panel of Query lists the queries that ran | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
+| [FR-SR-43](functional/04-stacks-and-resources.md#fr-sr-43) | The panel of Query lists the queries that ran | Proposed | – | – | [f54ac5a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f54ac5a22dae793f32d036a4ce755a7ae6ba067b) refs, 2026-10-23<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-44](functional/04-stacks-and-resources.md#fr-sr-44) | The page of a Resource lists the queries on it | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
+| [FR-SR-45](functional/04-stacks-and-resources.md#fr-sr-45) | Every query has a name | Proposed | – | – | – |
+| [FR-SR-46](functional/04-stacks-and-resources.md#fr-sr-46) | "Query" on the page of a Resource starts a new query on it | Proposed | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 

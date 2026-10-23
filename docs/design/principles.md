@@ -147,7 +147,7 @@ For Collections:
 
 Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html) and [resource-unassigned](screens/resource-unassigned.html).
 
-- **Header:** the name, the Key with a copy button, and the button "Ask a question", which starts a Question in the Conversations ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
+- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), and the button "Ask a question", which starts a Question in the Conversations ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
 - **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
 - **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview, Queries.
@@ -225,8 +225,10 @@ Screens: [collection-overview](screens/collection-overview.html), [collection-ed
 Screen: [query](screens/query.html). Designed on 2026-10-23, to review.
 
 - **A main section of its own,** next to Collections ([DEC-UX-17](#dec-ux-17)): a query can use every Resource the User may see, and later Lenses, not just one.
-- **The panel** lists the queries that ran, not the Collections ([DEC-UX-20](#dec-ux-20)): **your own** by default, **everyone's** under "All", grouped by day and searchable. Each with its name, when, what it read, and how it ran (a preview, Claude, a Lens) or whether it was approved or blocked; under "All" also who. A click opens it; the SQL of others only for the Data Team ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01), [OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)).
-- **Resources come in** through the suggestions of the editor, or from "Query this resource" on the page of a Resource.
+- **The panel** lists the queries that ran, not the Collections ([DEC-UX-20](#dec-ux-20)): **your own**, grouped by day and searchable. **The Data Team** also has "All": everyone's queries, with who ran them and their SQL ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)). Nobody else sees the queries of others.
+- **Each query** in the panel: the icon of what it ran on, a table for Resources and an aperture for a Lens ([DEC-UX-11](#dec-ux-11)); its name; then what it ran on (for a Lens just "Lens", as the name is that of the Lens; for Resources the first, with "+1" for more), when and what it read; and a label for how it ran (a preview, Claude) or whether it was approved or blocked. A click opens it.
+- **Resources come in** through the suggestions of the editor, or from "Query" on the page of a Resource.
+- **A new query starts with its name** ([DEC-UX-21](#dec-ux-21)), screen [query-new](screens/query-new.html): step 1 is the name, suggested from where the query started (the Resource and the date; for a Lens the name of the Lens), with a few other suggestions and the advice to say what you want to know; under it the sources it starts from, which can be changed, and what their partitions mean for it. Step 2, the SQL, opens once the query has a name, and starts from a template that filters on the partition column. The new query is in the panel at once, as "not run yet".
 - **Above the editor:** the name of the query, the sources it uses with their Level, and "New query" on the right.
 - **The editor** writes BigQuery SQL. It **formats** the SQL on request (a button and Shift+Alt+F), and **suggests** as you type: the Resources, their columns and the Parameters, the partition and cluster columns first and marked as such. Parameters are named values such as `@dateFrom`, filled in under the editor.
 - **The Pre-flight** is a card next to the editor: the estimate in large, marked "at most" as clustering can make the real read lower; a gauge with the approval and the block threshold ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)); per Resource the partitions it reads and through which column; what to do to read less; and "Run", or "Approve and run" above the approval threshold. A query without a filter on the partition column of a partitioned Resource gets a warning there ([FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)).
@@ -280,7 +282,8 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-17"></a>**DEC-UX-17** · Query is a main section of its own, next to Collections, and not a tab of a Resource: a query goes over Resources, and later Lenses. This answers [OP-SR-11](../requirements/functional/04-stacks-and-resources.md#op-sr-11).
 - <a id="dec-ux-18"></a>**DEC-UX-18** · Your own queries are not on the page: they slide in as a sheet. *Note of 2026-10-23: replaced by [DEC-UX-20](#dec-ux-20): they are the panel of Query.*
 - <a id="dec-ux-19"></a>**DEC-UX-19** · The page of a Resource has a history of the queries that ran on it, in a tab "Queries".
-- <a id="dec-ux-20"></a>**DEC-UX-20** · The panel of Query lists the queries that ran, not the Collections: your own by default, everyone's on request. This replaces [DEC-UX-18](#dec-ux-18).
+- <a id="dec-ux-20"></a>**DEC-UX-20** · The panel of Query lists the queries that ran, not the Collections: your own by default, everyone's on request. This replaces [DEC-UX-18](#dec-ux-18). *Decided on 2026-10-23: everyone's, under "All", is for the Data Team only, as the Query Log has it ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)).*
+- <a id="dec-ux-21"></a>**DEC-UX-21** · Every query has a name, given as the first step of a new query and suggested from where it starts; a query on a Lens bears the name of the Lens. In the panel, the icon of a query shows whether it ran on Resources or on a Lens. The page of a Resource has a button "Query" that starts a new query on it, its name already filled in.
 
 ## Open points
 

@@ -340,3 +340,11 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .q-item { gap: 10px; padding: 9px 12px; }
 .panel .q-item > .pill { flex: none; }
 .q-item .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+/* A new query: first a name, then the SQL */
+.step { padding: 4px 4px 18px; }
+.step + .step { border-top: 1px solid var(--tint-hover); padding-top: 18px; }
+.step.off { opacity: .5; pointer-events: none; }
+.step-head { display: flex; align-items: center; gap: 10px; }
+.step-no { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--text-primary); color: var(--surface-solid); font-size: var(--text-small); font-weight: var(--weight-medium); }
+.step.off .step-no { background: var(--tint-active); color: var(--text-secondary); }
+.step-title { font-size: var(--text-section); font-weight: var(--weight-medium); }

@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <!--
   Screen: Query, a main section of its own (DEC-UX-17)
-  SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours by default, everyone's
-  under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query this resource".
+  SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours; for the Data Team also
+  everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
   The editor formats the SQL and suggests columns, partition and cluster columns first. The Pre-flight counts the partitions per
   Resource and asks approval above one threshold, blocks above another. Every result carries its Query ID.
-  Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01; OP-SR-13.
+  The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
+  Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
   Related screens: resource-queries.html (the queries on a Resource).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
-<html lang="en" data-role="owner">
+<html lang="en" data-role="colleague">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -37,34 +38,36 @@
  <div class="panel-inner">
   <div style="display:flex;align-items:center;gap:4px">
    <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
-   <a class="icon-btn" href="query.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
+   <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
   <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
-  <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px">
+  <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px" data-for="datateam">
    <button class="seg on" data-target="yours" role="tab" aria-selected="true">Yours</button>
    <button class="seg" data-target="all" role="tab" aria-selected="false">All</button>
+   <span class="pill" style="margin-left:auto;align-self:center">Data team only</span>
   </div>
+  <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
   <div class="panel-label">Today</div>
-  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Leads per source name</span><span class="meta">08:12 · 5.1 GB · 2 resources</span></span></a>
-  <a class="list-item card q-item" href="query.html" data-name="preview weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">07:40 · 980 MB</span></span><span class="pill">Preview</span></a>
+  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 08:12 · 5.1 GB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">Weekly lead volume · 07:40 · 980 MB</span></span><span class="pill">Preview</span></a>
   <div class="panel-label">Yesterday</div>
-  <a class="list-item card q-item" href="query.html" data-name="partner leads in september weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Partner leads in September</span><span class="meta">16:05 · 1.2 GB</span></span><span class="pill">Claude</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="weekly volume since 2024 weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">11:31 · 17.2 GB</span></span><span class="pill">Approved</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="credit lead funnel"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">All of the credit lead funnel</span><span class="meta">11:20 · 112 GB, not run</span></span><span class="pill" style="color:var(--signal-urgent)">Blocked</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="partner leads in september weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Partner leads in September</span><span class="meta">Weekly lead volume · 16:05 · 1.2 GB</span></span><span class="pill">Claude</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="lens leads per source week by week"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a lens"></i><span><span class="item-title">Leads per source, week by week</span><span class="meta">Lens · 09:30 · 1.2 GB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="weekly volume since 2024 weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">Weekly lead volume · 11:31 · 17.2 GB</span></span><span class="pill">Approved</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="credit lead funnel"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">All of the credit lead funnel</span><span class="meta">Credit lead funnel · 11:20 · 112 GB, not run</span></span><span class="pill" style="color:var(--signal-urgent)">Blocked</span></a>
   </div>
-  <div data-pane-group="scope" data-pane="all" hidden>
-  <p class="meta" style="margin:12px 4px 0;line-height:1.5;display:block">Everyone's queries on what you may see. Their SQL only for the data team.</p>
+  <div data-pane-group="scope" data-pane="all" data-for="datateam" hidden>
+  <p class="meta" style="margin:12px 4px 0;line-height:1.5;display:block">Everyone's queries, with their SQL. Only the data team sees them.</p>
   <div class="panel-label">Today</div>
-  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="you leads per source name weekly lead volume lead sources"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Leads per source name</span><span class="meta">You · 08:12 · 5.1 GB</span></span></a>
-  <a class="list-item card q-item" href="query.html" data-name="dirk vos saved searches"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Dirk Vos · Saved searches</span><span class="meta">07:58 · 3.4 GB</span></span></a>
-  <a class="list-item card q-item" href="query.html" data-name="you preview weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">You · 07:40 · 980 MB</span></span><span class="pill">Preview</span></a>
+  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="you leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">You · Weekly lead volume +1 · 5.1 GB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="dirk vos saved searches per week"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Saved searches per week</span><span class="meta">Dirk Vos · Saved searches · 3.4 GB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="you preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">You · Weekly lead volume · 980 MB</span></span><span class="pill">Preview</span></a>
   <div class="panel-label">Yesterday</div>
-  <a class="list-item card q-item" href="query.html" data-name="karel leys weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Karel Leys · Weekly lead volume</span><span class="meta">16:42 · 1.2 GB</span></span><span class="pill">Claude</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="you partner leads in september weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Partner leads in September</span><span class="meta">You · 16:05 · 1.2 GB</span></span><span class="pill">Claude</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="an claes weekly lead volume"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">An Claes · Weekly lead volume</span><span class="meta">14:10 · 17.2 GB</span></span><span class="pill">Approved</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="ruth aerts lens leads per source"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span><span class="item-title">Ruth Aerts · Leads per source, week by week</span><span class="meta">09:30 · 1.2 GB</span></span><span class="pill">Lens</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="karel leys partner share per month weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Partner share per month</span><span class="meta">Karel Leys · Weekly lead volume · 1.2 GB</span></span><span class="pill">Claude</span></a>
+  <a class="list-item card q-item" href="query.html" data-name="ruth aerts lens response time by broker"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a lens"></i><span><span class="item-title">Response time by broker</span><span class="meta">Ruth Aerts · Lens · 1.2 GB</span></span></a>
+  <a class="list-item card q-item" href="query.html" data-name="an claes weekly volume since 2024"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">An Claes · Weekly lead volume · 17.2 GB</span></span><span class="pill">Approved</span></a>
   </div>
   <p id="no-results" class="meta" style="padding:8px 4px" hidden>No queries match your search.</p>
  </div>
@@ -73,7 +76,7 @@
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1">Leads per source name</h1>
- <a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
+ <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
 </div>
 <div class="status-row"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="2"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
 <div class="tab-content card" style="margin-top:14px;border-radius:var(--radius-xl)">
@@ -124,7 +127,10 @@ order by leads desc</pre>
 </div>
 </main>
 </div>
-
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+ <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
+ <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data team</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
