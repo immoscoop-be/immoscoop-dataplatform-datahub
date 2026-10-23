@@ -458,7 +458,7 @@ The page of a Resource has a button "Query". It opens Query with a new query: th
 
 **Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22)
 
-While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use, its weight and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
+While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
 <a id="fr-sr-48"></a>
 ### FR-SR-48 · The question of a new query finds Lenses by their words
@@ -531,7 +531,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md).
 - [ ] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it.
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
-- [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).*
+- [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).* *Note of 2026-10-23: and the limit under which a Lens can be created ([FR-LE-01](09-lenses.md#fr-le-01), [OP-LE-02](09-lenses.md#op-le-02)).*
 - [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.*
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*

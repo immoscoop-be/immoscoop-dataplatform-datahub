@@ -286,6 +286,8 @@ The page lists every Resource of the Collection that the User sees ([FR-SR-31](0
 
 The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO-15](#dec-co-15)), with their name, type, what they are built on, their weight ([FR-LE-02](09-lenses.md#fr-le-02)) and their Level ([DEC-DH-10](../../overview/data-hub.md#dec-dh-10)).
 
+*Note of 2026-10-23: without their weight, since [FR-LE-02](09-lenses.md#fr-le-02) is withdrawn ([DEC-UX-24](../../design/principles.md#dec-ux-24)).*
+
 <a id="fr-co-29"></a>
 ### FR-CO-29 · A Lens is started from the page of a Collection
 
