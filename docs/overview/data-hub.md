@@ -81,7 +81,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 | Lens | A rendering of a Resource, of a fixed type, with Parameters | Business | The lowest Level of the Resources beneath it |
 | Report | One or more Lenses around a question, with text and explanation | Business | The lowest Level of the Lenses in it |
 
-- <a id="dec-dh-64"></a>**DEC-DH-64** · Data Hub has four kinds of assets: next to the Resource, the Lens and the Report above, the chart, a semgraph that the Chart Server draws on a Lens or a Resource, with the Level of what lies beneath it ([DEC-DH-37](#dec-dh-37)). A Collection is not an asset: it is the container that groups Resources under an Owner, and has no Level of its own. This extends the three kinds above. *Decided on 2026-10-22, after the [workshop on data agents and governance](../workshops/2026-10-22-data-agents-and-governance.md#req-dh-assets) ([OP-DH-38](open-themes.md#op-dh-38)).*
+- <a id="dec-dh-64"></a>**DEC-DH-64** · Data Hub has four kinds of assets: next to the Resource, the Lens and the Report above, the chart, a semgraph that the Chart Server draws on a Lens or a Resource, with the Level of what lies beneath it ([DEC-DH-37](#dec-dh-37)). A Collection is not an asset: it is the container that groups Resources under an Owner, and has no Level of its own. This extends the three kinds above. *Decided on 2026-10-22, after the [workshop on data agents and governance](../workshops/2026-10-22-data-agents-and-governance.md#req-dh-assets) ([OP-DH-38](open-themes.md#op-dh-38)).* *Note of 2026-10-23: a Collection also holds the Lenses its Owner Unit adds ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)).*
 
 ### The Stacks
 

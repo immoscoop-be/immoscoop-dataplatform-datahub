@@ -189,12 +189,13 @@ Screens: [collection-overview](screens/collection-overview.html), [collection-ed
 - **Opens** when a User clicks a Collection in the panel ([DEC-UX-13](#dec-ux-13)). The page holds what the panel cannot: what the Collection is, what needs attention, and the lists in full ([DEC-UX-14](#dec-ux-14)).
 - **Head:** the icon, the name and the description of the Collection; a row with the Owner Unit, private or public, the number of Resources and Lenses, and when and by whom it was created.
 - **Actions, on the right of the head, per role:**
-  - "New lens", the primary action, for everyone who may build on the Collection ([OP-CO-07](../requirements/functional/03-collections.md#op-co-07)). What it opens is not designed yet ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
-  - "Edit", for the Owner Unit and the Data Team.
+  - Only who owns the Collection changes it ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)). A colleague sees no actions.
+  - "New lens", the primary action, for the Owner Unit. What it opens is not designed yet ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
+  - "Edit", for the Owner Unit. The Data Team has it too today; whether that stays is open ([OP-CO-12](../requirements/functional/03-collections.md#op-co-12)).
   - "Add resources", for the Data Admins.
 - **Needs attention,** for the Owner Unit and the Data Team, only when there is something: a Level that dropped and waits for a Confirmation, open Signals, Resources not published yet. Each line links to where it is solved.
 - **Resources:** a table of every Resource the User sees, with the icon of its kind, the Display Name, the Level, the Publication, open Signals and the last change. A Resource that is not published is in a lighter grey. Data Admins have a button to remove a Resource from the Collection.
-- **Lenses:** a table of the Lenses built on a Resource of the Collection ([OP-CO-11](../requirements/functional/03-collections.md#op-co-11)), with the icon of a Lens, the name, the type, what it is built on, its weight (light or heavy) and its Level: the lowest Level of what it is built on.
+- **Lenses:** a table of the Lenses its Owner Unit added to the Collection ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)), with the icon of a Lens, the name, the type, what it is built on, its weight (light or heavy) and its Level: the lowest Level of what it is built on.
 - **Recent history:** the latest entries of the Log of the Collection, with a link to all of it. A colleague does not see the entries about Resources that are not published.
 - **Editing** happens in place, as for a Resource: the head turns into fields with the edit bar on top. Name, description, Owner Unit (only groups of whoever edits), who sees it (private or public, with what that means), colour and icon. Dissolving is at the bottom, and only possible for an empty Collection.
 - **Adding Resources** opens a **sheet** from the right over the page: the Resources without a Collection, searchable, each with its description from dbt, how it came in, and its Level, to tick one or more. A Resource is in one Collection at most, so only those without a Collection appear. The page stays visible behind it.
@@ -233,7 +234,7 @@ Decided on 2026-10-22, after a tryout of the panel:
 Decided on 2026-10-23, asking for the page of a Collection:
 
 - <a id="dec-ux-13"></a>**DEC-UX-13** · Clicking a Collection in the panel opens its page and unfolds it; the arrow next to it only folds and unfolds. This answers [OP-UX-14](#op-ux-14).
-- <a id="dec-ux-14"></a>**DEC-UX-14** · From the page of a Collection, a User gets an overview of its Resources and its Lenses, creates a Lens, and edits the details of the Collection; a Data Admin also adds Resources.
+- <a id="dec-ux-14"></a>**DEC-UX-14** · From the page of a Collection, a User gets an overview of its Resources and its Lenses, creates a Lens, and edits the details of the Collection; a Data Admin also adds Resources. *Note of 2026-10-23: only who owns the Collection creates Lenses in it and edits it ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)).*
 
 ## Open points
 
