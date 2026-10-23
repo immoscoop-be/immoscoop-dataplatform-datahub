@@ -487,6 +487,19 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .msg-sheet { width: 500px; }
 .msg-sheet .composer { margin-top: 16px; }
 .msg-sheet .mc-chips { margin: 14px 0 0; }
+/* One Message in a floating window over the page of its object (DEC-UX-30): the page stays usable and is not dimmed */
+.float-win { position: fixed; z-index: 25; right: 24px; bottom: 24px; width: 400px; max-height: calc(100vh - 48px); display: flex; flex-direction: column;
+  border-radius: var(--radius-xl); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: 0 16px 48px rgba(0,0,0,.16); padding: 10px 14px 12px; }
+.float-head { display: flex; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--tint-active); cursor: grab; user-select: none; touch-action: none; }
+.float-grip { font-size: 16px; color: var(--text-muted); }
+.float-title { font-weight: var(--weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.float-body { overflow: auto; }
+.float-body .thread { padding: 10px 0 8px; }
+.float-body .composer { padding: 10px 12px; }
+.float-body .composer textarea { min-height: 44px; margin: 0 0 8px; }
+.float-foot { display: flex; align-items: center; gap: 10px; padding-top: 10px; margin-top: 10px; border-top: 1px solid var(--tint-hover); }
+.float-win.folded .float-body, .float-win.folded .float-foot { display: none; }
+.float-win.folded .float-head { border-bottom: 0; padding-bottom: 0; }
 .btn-quiet .count, .btn-quiet.outline .count { margin-left: 2px; font-size: var(--text-meta); color: var(--text-muted); }
 /* A Request to the Data Team, and what it asks to decide on (FR-CV-08) */
 .kind.request { color: var(--text-primary); background: var(--tint-active); }

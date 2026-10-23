@@ -46,7 +46,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 1. **Writing.** On the page of a Resource, a User asks a Question about it. Data Hub gives the Message its Subject: Resource, with the ID of that Resource.
 2. **Delivering.** The Owner Unit gets the Message in its Message Centre and as a notification ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)), each with a link to the Resource, opening at the Message.
-3. **Replying.** The Owner replies; the reply has the same Subject.
+3. **Replying.** The Owner opens the Message in context: the page of the Resource, with the Question in a floating window over it ([FR-CV-09](#fr-cv-09)). They reply there, with the Resource in view; the reply has the same Subject.
 4. **Showing.** The Conversations of the Resource show every Message with its Subject, the Question and its reply among them, to everyone who may see the Resource.
 
 ## Requirements
@@ -64,6 +64,8 @@ Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark, Signa
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
 Wherever a Message shows, in the Message Centre, in a notification, through Claude or another channel, it carries a link to its object, opening at the Message in the Conversations of that object: the page of a Resource or a Lens, a query in Query. Data Hub builds the link from the Subject when it shows the Message, so that the link keeps working when the object is renamed. The Message shows the object by its kind, with its icon, and its current name.
+
+*Note of 2026-10-23: opening at the Message is "Open in context", the page of the object with the Message in a floating window ([FR-CV-09](#fr-cv-09)).*
 
 <a id="fr-cv-03"></a>
 ### FR-CV-03 · A Message is placed on its object, not sent to a person
@@ -106,6 +108,13 @@ The page of a Collection, a Resource and a Lens has "Messages", with their numbe
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
 A Request is a Message on an object that asks the Data Team for a decision ([DEC-CV-06](#dec-cv-06)). The first is accepting a very large Lens: "Send to the data team" on making it sends a Request on that Lens, with what one run reads and the word of its author ([FR-LE-09](09-lenses.md#fr-le-09)). Data Hub sends one itself when a Lens grows into very large ([FR-LE-10](09-lenses.md#fr-le-10)). A Request is waiting, accepted or refused. A member of the Data Team decides in the Message Centre, and the decision is its reply, a refusal with a reason; who sent it gets a notification. Every Request waiting is in the Message Centre of the Data Team.
+
+<a id="fr-cv-09"></a>
+### FR-CV-09 · A Message opens in its context
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages)
+
+Every Message in the Message Centre, and the link in a notification of it, has "Open in context". It opens the page of its object as it is, with the Message in a floating window over it: the Message with its replies and a field to reply, or for a Request the decision of the Data Team ([FR-CV-08](#fr-cv-08)). The page stays usable behind the window, so that the User reads the object while answering: the result of a Lens, the columns of a Resource, the size check of a Lens waiting to be accepted. The address of the page names the Message, so that the same link works from a notification ([FR-CV-02](#fr-cv-02)). The window shows one Message; the slide-in shows all Messages on the object ([FR-CV-07](#fr-cv-07)).
 
 ## Edge cases
 

@@ -4,10 +4,11 @@
   "Messages" in the rail, with the number unread. The panel filters: For you, Unread, Written by you, Everything you may see;
   by kind, Question, Remark, Signal and what Data Hub tells you; and by the kind of object the Messages are on.
   The list: each Message with its object, its kind and state, who and when, and a first line; the one opened shows on the
-  right with its replies and the way to its object (FR-CV-02). Opened here: a Request on a very large Lens (FR-CV-08), with
+  right with its replies and "Open in context" (FR-CV-09); the Request and the Question on a Lens open there. Opened here: a Request on a very large Lens (FR-CV-08), with
   what one run reads; the Data Team accepts or refuses it with a reason, its author waits. The switch shows both. The slide-in on a Collection, Resource or
   Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
-  Requirements: FR-CV-01 to FR-CV-07 (Proposed); DEC-CV-01 to DEC-CV-05; FR-SR-10 (a notification from Data Hub).
+  Opened in context: lens-context (the Question), lens-new-context (the Request).
+  Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -67,9 +68,9 @@
  <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="datateam">The requests waiting for the data team, the signals, and what Data Hub tells the data team.</p></div>
 </div>
 <div class="mc">
- <section class="card mc-list" aria-label="Messages">
+ <section class="card mc-list" aria-label="Messages" data-group="msg">
   <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">6</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
-  <a class="mc-item on unread" href="#">
+  <a class="mc-item on unread" href="#" data-target="request" role="tab" aria-selected="true">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span></span>
@@ -77,12 +78,12 @@
      <span class="mc-excerpt">Please accept this lens: one run reads 38.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
      
     </span>
-   </a><a class="mc-item unread" href="#" data-for="owner">
+   </a><a class="mc-item unread" href="#" data-for="owner" data-target="question" role="tab" aria-selected="false">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">1 hour ago</span></span>
-     <span class="mc-excerpt">Why does Mailing drop after week 32? Did something change in how mailing leads are tagged?</span>
+     <span class="mc-excerpt">Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</span>
      
     </span>
    </a><a class="mc-item unread" href="#">
@@ -143,11 +144,11 @@
     </span>
    </a>
  </section>
- <section class="card mc-detail" aria-label="The message">
+ <section class="card mc-detail" aria-label="The message" data-pane-group="msg" data-pane="request">
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads · not published</div><div style="font-size:var(--text-section);font-weight:500">Leads per source, all weeks</div></div>
-   <a class="btn-quiet outline" href="lens-new.html?size=verylarge" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open the lens<i class="ph ph-arrow-right"></i></a>
+   <a data-for="owner" class="btn-quiet outline" href="lens-new-context.html?role=owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a><a data-for="datateam" class="btn-quiet outline" href="lens-new-context.html?role=datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
@@ -172,6 +173,28 @@
     <button class="btn-primary"><i class="ph-fill ph-check" style="font-size:15px"></i>Accept</button></div>
   </div>
   <div class="size-state fine" data-for="owner" style="margin-top:14px"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the data team.</b> Until they accept it, only you see the lens. Their answer comes here and as a notification.</p></div>
+ </section>
+ <section class="card mc-detail" aria-label="The message" data-pane-group="msg" data-pane="question" hidden>
+  <div class="mc-detail-head">
+   <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Leads per source name</div></div>
+   <a class="btn-quiet outline" href="lens-context.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
+  </div>
+  <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">today 14:10</span></div>
+     <p>Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</p>
+     
+     <div class="thread-actions"></div>
+    </div>
+   </div>
+  <div class="composer" style="margin-top:6px">
+   <span class="label" style="margin:0">Your reply</span>
+   <textarea placeholder="Everyone who may see the lens can read it."></textarea>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification; the question shows as answered.</p>
+    <button class="btn-primary"><i class="ph-fill ph-arrow-bend-up-left" style="font-size:15px"></i>Reply</button></div>
+  </div>
  </section>
 </div>
 </main>

@@ -270,12 +270,13 @@ Screen: [lens](screens/lens.html). Designed on 2026-10-23, to review. Where a Le
 
 ## Messages
 
-Screens: [messages](screens/messages.html), the Message Centre; and the Messages on an object in a slide-in, on [a Collection](screens/collection-messages.html), [a Resource](screens/resource-messages.html) and [a Lens](screens/lens-messages.html). Designed on 2026-10-23, to review ([DEC-UX-29](#dec-ux-29)).
+Screens: [messages](screens/messages.html), the Message Centre; and the Messages on an object in a slide-in, on [a Collection](screens/collection-messages.html), [a Resource](screens/resource-messages.html) and [a Lens](screens/lens-messages.html); and a Message opened in context, [a Question on a Lens](screens/lens-context.html) and [a Request on a Lens to accept](screens/lens-new-context.html). Designed on 2026-10-23, to review ([DEC-UX-29](#dec-ux-29), [DEC-UX-30](#dec-ux-30)).
 
 - **What a Message is:** a Question, Remark, Signal or Request on an object, or a reply, to enrich the data and inform colleagues. Never private, never a chat with a person; it is about a whole object, never a part of it ([DEC-CV-04](../requirements/functional/14-conversations.md#dec-cv-04), [DEC-CV-05](../requirements/functional/14-conversations.md#dec-cv-05)).
 - **The Message Centre** is in the rail, under the main items, with the number unread on its icon. Its panel filters: For you, the default; Unread; Written by you; Everything you may see; then by kind, Questions, Remarks, Signals, Requests and what Data Hub tells you; and by the kind of object, Collections, Resources, Lenses, Queries ([FR-CV-06](../requirements/functional/14-conversations.md#fr-cv-06)).
 - **Its list:** each Message with its object (the icon of its kind, the kind, the name and its Collection), its kind and its state (open, answered), who and when, and its first lines; a dot when it is unread, the number of replies. Chips on top: all, open, answered.
-- **The Message opened** shows on the right: its object with "Open the …", which goes to the object with its Messages open ([FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)); the Message with its replies; a field to reply, with who gets a notification.
+- **The Message opened** shows on the right: its object with "Open in context"; the Message with its replies; a field to reply, with who gets a notification. In the prototype the Request and the Question on a Lens open there.
+- **Open in context** opens the page of the object as it is, with the Message in a floating window in the lower right ([DEC-UX-30](#dec-ux-30), [FR-CV-09](../requirements/functional/14-conversations.md#fr-cv-09)). The window has the kind of Message and its object on top; the Message with its replies; the field to reply and who gets a notification, or for a Request the reason, "Refuse" and "Accept" for the Data Team; at the bottom "All messages on this …", which opens the slide-in, and the way back to the Message Centre. The page behind stays usable: the User reads the result of a Lens or the size check of a Lens to accept while answering. The link in a notification opens the same way.
 - **On every object,** a Collection, a Resource or a Lens, "Messages" with their number in the header opens the slide-in: on top a new Message, with its kind and who gets a notification; chips by kind; the Messages on this object with their replies; at the bottom that everyone who may see the object sees them, and the way to the Message Centre ([FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07)). On a Resource, "Ask a question" opens the same slide-in with Question chosen.
 - **A Collection** takes a Question or a Remark; a Resource and a Lens also a Signal. The Messages on the Resources and Lenses of a Collection stay on those.
 - **A Request** asks the Data Team for a decision on its object; the first is accepting a very large Lens, sent with "Send to the data team" when it is made ([DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06), [FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)). Opened, it shows what it asks to decide on, such as what one run reads, its range, the partitions and what a default would read. The Data Team has a field for its reason, "Refuse" and "Accept"; its author sees that it waits, and that only they see the Lens until then. The state shows in the list: waiting, accepted, refused.
@@ -283,6 +284,11 @@ Screens: [messages](screens/messages.html), the Message Centre; and the Messages
 ## Sheets
 
 - A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
+
+## Floating window
+
+- A **floating window** sits over a page for something done while the page stays in view, such as answering a Message in context ([DEC-UX-30](#dec-ux-30)). Unlike a sheet, it does not dim the page, which stays usable behind it.
+- It opens in the lower right. Its head moves it; "Fold" shrinks it to its head, and closing it goes back to where it was opened from.
 
 ## Background and motion
 
@@ -337,6 +343,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-27"></a>**DEC-UX-27** · The page of a Lens shows no SQL and adds no Parameters. A colleague never sees the SQL of a Lens; its Owner Unit sees it, and adds Parameters, when editing. "Open in Query" is for the Owner Unit only.
 - <a id="dec-ux-28"></a>**DEC-UX-28** · On the page of a Lens the Pre-flight is in the "Run" button, in the lower right corner of the Parameters, with what the run reads; it takes no room of its own. Above the approval threshold the button turns red and asks to approve, and when the table is partitioned a pop-out on the button says how to read less.
 - <a id="dec-ux-29"></a>**DEC-UX-29** · Messages have a Message Centre of their own, in the rail with the number unread, and every object with Messages, a Collection, a Resource or a Lens, opens its own Messages in a slide-in, which is the Message Centre filtered on that object, with a field to start one.
+- <a id="dec-ux-30"></a>**DEC-UX-30** · "Open in context" on a Message opens the page of its object with the Message in a floating window over it, which does not dim the page, so that the User answers with the object in view. It replaces "Open the …" in the Message Centre. The floating window shows one Message; the slide-in of [DEC-UX-29](#dec-ux-29) all Messages on an object.
 
 ## Open points
 

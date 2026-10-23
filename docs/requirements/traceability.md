@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 29 | 19 (16 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 30 | 19 (16 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -20,12 +20,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 14 (12 proposed, 2 withdrawn) | – | – | 8 (6 open, 2 done) |
+| [Lenses](functional/09-lenses.md) | 14 (12 proposed, 2 withdrawn) | – | – | 9 (7 open, 2 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
-| [Conversations](functional/14-conversations.md) | 8 (8 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
+| [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
@@ -217,8 +217,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-06](functional/09-lenses.md#fr-le-06) | A Lens has a short description and tags | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
 | [FR-LE-07](functional/09-lenses.md#fr-le-07) | A query becomes a Lens | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
 | [FR-LE-08](functional/09-lenses.md#fr-le-08) | Making a Lens checks what one run reads, in three ranges | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
-| [FR-LE-09](functional/09-lenses.md#fr-le-09) | A very large Lens waits for the Data Team | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
-| [FR-LE-10](functional/09-lenses.md#fr-le-10) | A Lens that outgrows its range is checked again | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23 |
+| [FR-LE-09](functional/09-lenses.md#fr-le-09) | A very large Lens waits for the Data Team | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23<br>[3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
+| [FR-LE-10](functional/09-lenses.md#fr-le-10) | A Lens that outgrows its range is checked again | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23<br>[3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23 |
 | [FR-LE-11](functional/09-lenses.md#fr-le-11) | A Lens runs on a page of its own | Proposed | – | – | [8c2ef31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8c2ef31087b024f3227cb494e3b24bef75ca317b) refs, 2026-10-23<br>[3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23<br>[8cb5682](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8cb5682545e6be6bb51c6b4dfdfe4610255e5eaf) refs, 2026-10-23 |
 | [FR-LE-12](functional/09-lenses.md#fr-le-12) | Every run of a Lens is a query | Proposed | – | – | [8cb5682](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8cb5682545e6be6bb51c6b4dfdfe4610255e5eaf) refs, 2026-10-23 |
 | [FR-LE-13](functional/09-lenses.md#fr-le-13) | A Parameter takes a value or a function | Proposed | – | – | [8c2ef31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8c2ef31087b024f3227cb494e3b24bef75ca317b) refs, 2026-10-23<br>[54bd5d1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54bd5d1474d7a6a847850a379ef8444042bce8e1) refs, 2026-10-23<br>[3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
@@ -240,12 +240,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [FR-CV-01](functional/14-conversations.md#fr-cv-01) | A Message is always about something | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-02](functional/14-conversations.md#fr-cv-02) | A Message links to its object | Proposed | – | – | [10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
-| [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message is placed on its object, not sent to a person | Proposed | – | – | [1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message is placed on its object, not sent to a person | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23<br>[1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-04](functional/14-conversations.md#fr-cv-04) | All Messages about an object can be retrieved | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-05](functional/14-conversations.md#fr-cv-05) | Who sees a Message follows who sees its object | Proposed | – | – | [1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-06](functional/14-conversations.md#fr-cv-06) | The Message Centre | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
 | [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
-| [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | – |
+| [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23 |
+| [FR-CV-09](functional/14-conversations.md#fr-cv-09) | A Message opens in its context | Proposed | – | – | – |
 
 ## Edge cases
 

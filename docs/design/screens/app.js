@@ -61,6 +61,26 @@ document.querySelectorAll('[data-group]').forEach(group => {
   }));
 });
 
+// The floating window of a Message (DEC-UX-30): folds to its head, and moves when its head is dragged
+document.querySelectorAll('.float-win').forEach(w => {
+  const btn = w.querySelector('.float-fold');
+  btn?.addEventListener('click', () => {
+    const folded = w.classList.toggle('folded');
+    btn.setAttribute('aria-expanded', !folded); btn.setAttribute('aria-label', folded ? 'Unfold' : 'Fold');
+    btn.innerHTML = `<i class="ph ${folded ? 'ph-arrows-out-simple' : 'ph-minus'}"></i>`;
+  });
+  const head = w.querySelector('.float-head');
+  head?.addEventListener('pointerdown', e => {
+    if (e.target.closest('button, a')) return;
+    const r = w.getBoundingClientRect(), dx = e.clientX - r.left, dy = e.clientY - r.top;
+    head.setPointerCapture(e.pointerId);
+    const move = m => Object.assign(w.style, { right: 'auto', bottom: 'auto',
+      left: Math.max(0, Math.min(innerWidth - r.width, m.clientX - dx)) + 'px', top: Math.max(0, Math.min(innerHeight - 48, m.clientY - dy)) + 'px' });
+    head.addEventListener('pointermove', move);
+    head.addEventListener('pointerup', () => head.removeEventListener('pointermove', move), { once: true });
+  });
+});
+
 // Intro on a section start screen: dismissed per user per section (in the app: user settings, versioned)
 const intro = document.getElementById('intro');
 if (intro) {
