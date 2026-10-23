@@ -285,3 +285,32 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .tree-group.unassigned .item-title, .tree-group.unassigned .item-icon { color: var(--signal-urgent); }
 .count-badge { display: inline-flex; min-width: 16px; height: 16px; padding: 0 5px; align-items: center; justify-content: center; border-radius: 8px;
   background: var(--signal-urgent); color: #fff; font-size: 10px; font-weight: var(--weight-semibold); }
+
+/* Preview and query: the Parameters of a Resource, the Pre-flight, and every result with its Query ID */
+.param-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.param { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-muted); }
+.param select, .param input { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 5px 8px; }
+.preflight { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-solid); padding: 4px 10px; border-radius: var(--radius-pill); }
+.table-scroll { overflow: auto; margin-top: 10px; border-radius: var(--radius-md); }
+.data-table th { position: sticky; top: 0; background: var(--card); }
+.data-table td { padding: 7px 10px; }
+.result-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 8px 10px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+.result-foot .dot { color: var(--tint-active); }
+.query-id { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); }
+.query-id .icon-btn { width: 22px; height: 22px; font-size: 13px; }
+.hint { display: flex; gap: 12px; align-items: flex-start; }
+.hint > i { font-size: 18px; color: var(--text-secondary); margin-top: 1px; }
+.hint p { font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; margin: 4px 0 10px; }
+.query-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
+.sql-box { display: flex; border-radius: var(--radius-md); background: var(--surface-sub); padding: 12px 0; font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.sql-gutter { padding: 0 10px 0 14px; color: var(--text-muted); text-align: right; user-select: none; border-right: 1px solid var(--tint-active); }
+.sql { margin: 0; padding: 0 14px; white-space: pre-wrap; color: var(--text-primary); font: inherit; }
+.sql-key { color: var(--col-slate); }
+.sql-param { color: var(--col-magenta); }
+.preflight-card { border-radius: var(--radius-md); background: var(--surface-sub); padding: 14px 16px 16px; }
+.gauge { position: relative; height: 6px; margin-top: 14px; border-radius: 3px; background: var(--tint-active); }
+.gauge-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--signal-warn); }
+.gauge-mark { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; background: var(--text-primary); }
+.gauge-legend { position: relative; height: 14px; margin-top: 6px; font-size: 10px; color: var(--text-muted); }
+.gauge-legend span { position: absolute; white-space: nowrap; }
+.gauge-legend span:nth-child(3) { transform: translateX(-100%); }

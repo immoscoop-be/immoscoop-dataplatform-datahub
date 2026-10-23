@@ -384,6 +384,13 @@ Before every query, Data Hub shows a Pre-flight with the volume it will process,
 
 Above X GB, the User has to approve a query explicitly; above Y GB, the query is blocked. X and Y are configurable.
 
+<a id="fr-sr-38"></a>
+### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
+
+**Status:** Proposed · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23
+
+The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
+
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
@@ -452,6 +459,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.*
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
+- [ ] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A [Query tab](../../design/principles.md#query-a-proposal) is designed as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.*
 
 ## Builds on
 

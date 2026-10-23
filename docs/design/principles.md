@@ -177,6 +177,24 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 - Under the field, who gets a notification for the chosen kind.
 - On a Signal, the Owner and the Data Team can make it an Anomaly.
 
+### Preview
+
+Screen: [resource-preview](screens/resource-preview.html). Designed on 2026-10-23, to review.
+
+- **The first rows** of the Resource, newest first, in a plain table: the values as they are, `null` shown as such (empty is not zero), a zero that stands out in the signal colour.
+- **The Parameters** of the Resource choose which rows: a choice per Parameter above the table, such as the weeks and the lead source. Nothing to type: no SQL and no query builder ([FR-SR-25](../requirements/functional/04-stacks-and-resources.md#fr-sr-25)).
+- **The Pre-flight** sits next to the Parameters: what the preview scans ([FR-SR-36](../requirements/functional/04-stacks-and-resources.md#fr-sr-36)). Above the approval threshold it asks first ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).
+- **Under the table:** how many rows of how many, what was scanned, and the **Query ID** with a copy button and a link to the Query Log ([FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06)).
+- **Two ways further,** as tiles under the table: the own question goes to Claude with the Data Hub connector ([FR-SR-26](../requirements/functional/04-stacks-and-resources.md#fr-sr-26), [FR-CH-03](../requirements/functional/13-channels.md#fr-ch-03)), with a prompt to copy; a regular export goes to the Data Team ([FR-CH-01](../requirements/functional/13-channels.md#fr-ch-01), [FR-CH-02](../requirements/functional/13-channels.md#fr-ch-02)). No download button.
+
+### Query, a proposal
+
+Screen: [resource-query](screens/resource-query.html). A variant to discuss, against today's requirements ([OP-SR-11](../requirements/functional/04-stacks-and-resources.md#op-sr-11)).
+
+- A tab "Query" after Preview, marked as a proposal: SQL on this Resource, with its Parameters as named values such as `@dateFrom`.
+- **The Pre-flight** as a card next to the SQL: the volume in large, a gauge with the approval and the block threshold, what to do to scan less, and the button "Approve and run" when above the approval threshold.
+- **The result** under it, with the same line as the Preview: rows, scanned, Query ID, Query Log.
+
 ### A Resource without a Collection
 
 - Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, unfolded like a Collection.
@@ -244,7 +262,7 @@ Decided on 2026-10-23, with the page of a Collection and the icon of a Collectio
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] <a id="op-ux-02"></a>**OP-UX-02** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
 - [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports.
-- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.*
+- [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview is designed ([resource-preview](screens/resource-preview.html)), to review; a Query tab is a proposal ([resource-query](screens/resource-query.html)).*
 - [ ] <a id="op-ux-05"></a>**OP-UX-05** · **Collection palette:** align the three additional colours with the chart language.
 - [ ] <a id="op-ux-06"></a>**OP-UX-06** · **Screens on mobile** or in narrow windows.
 
