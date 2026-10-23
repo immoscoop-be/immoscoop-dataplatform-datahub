@@ -382,13 +382,36 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .steps-plain { margin: 0; padding-left: 20px; font-size: var(--text-small); line-height: 1.6; }
 .param-row { display: grid; grid-template-columns: 104px minmax(0, 1fr) 34px 150px; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
 .param-row input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 4px 8px; }
-/* The page of a Lens: tabs Run and About; in Run the request on the left, the result on the right (DEC-UX-26) */
-.lens-run { display: grid; grid-template-columns: 290px minmax(0, 1fr); gap: 22px; align-items: start; }
+/* The page of a Lens: tabs Run and About; in Run the result on top, the request with its Parameters below (DEC-UX-26) */
+.lens-run { display: flex; flex-direction: column; gap: 18px; }
+.param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; align-items: start; margin-top: 12px; }
+.param-grid .field { margin: 0; }
+.run-row { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding: 10px 10px 10px 14px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }
 .lens-request { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 16px 16px 16px; }
 .lens-request .field input, .lens-request .field select { background: var(--surface-solid); }
 .param-head { display: flex !important; align-items: center; gap: 8px; }
-.param-head > [data-pane] { margin-left: auto; }
-.param-default { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-muted); }
+.param-head > .param-reset { margin-left: auto; }
+.param-control { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 0; border-radius: 10px; background: var(--surface-solid);
+  font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); text-align: left; cursor: pointer; }
+.param-control .param-main { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.param-control .param-sub { color: var(--text-muted); font-size: var(--text-meta); white-space: nowrap; }
+.param-control > .ph-caret-down { margin-left: auto; color: var(--text-muted); }
+.param-control.changed { outline: 2px solid var(--signal-warn); outline-offset: 1px; }
+.param-control.open { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+.param-control .ph-function { font-size: 13px; color: var(--text-secondary); }
+.param-anchor { position: relative; }
+.param-menu { position: absolute; left: 0; width: 320px; bottom: calc(100% - 18px); z-index: 5; padding: 6px; border-radius: var(--radius-md); background: var(--surface-solid);
+  box-shadow: 0 10px 30px rgba(0,0,0,.16); outline: 1px solid var(--tint-active); font-size: var(--text-small); }
+.menu-label { padding: 8px 8px 4px; font-size: var(--text-meta); color: var(--text-muted); }
+.menu-date { display: flex; align-items: center; gap: 8px; padding: 4px 8px 6px; }
+.menu-date input { flex: 1; font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: 8px; padding: 5px 8px; }
+.menu-item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.menu-item:hover, .menu-item.on { background: var(--tint-hover); }
+.menu-item .meta { margin-left: auto; }
+.menu-item .ph-check { margin-left: 6px; }
+.menu-item .ph-function { color: var(--text-secondary); }
+.menu-n { display: inline-block; min-width: 22px; padding: 0 5px; border-radius: 5px; background: var(--surface-solid); outline: 1px solid var(--tint-active); text-align: center; }
+.param-default { display: inline-flex !important; align-items: center; gap: 4px; margin-top: 5px; font-size: var(--text-meta); color: var(--text-muted); }
 .param-default i, .param-fn i { font-size: 12px; }
 .param-reset { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font: var(--text-meta) var(--font-family); color: var(--text-primary); background: none; border: 0; padding: 0; cursor: pointer; }
 .param-fn { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 8px; background: var(--surface-solid); font-size: var(--text-small); }

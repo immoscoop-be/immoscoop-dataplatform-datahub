@@ -121,11 +121,11 @@ Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03
 Every run of a Lens passes the Pre-flight, with its thresholds ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37)), and is a query in the Query Log, with the name of the Lens ([DEC-UX-20](../../design/principles.md#dec-ux-20)). When a Parameter changes after a run, the result is marked as being for the old values until the Lens runs again. Whether a Lens runs when it is opened is open ([OP-LE-06](#op-le-06)).
 
 <a id="fr-le-13"></a>
-### FR-LE-13 · The default of a Parameter is a value or a function
+### FR-LE-13 · A Parameter takes a value or a function
 
 **Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
 
-The default of a Parameter is a value, such as "all channels", or a function that is worked out at every run, such as "today − 3 days" or "the start of this year". Its Owner Unit sets it when making or editing the Lens; every User sees it next to the Parameter. Which functions exist is open ([OP-LE-08](#op-le-08)).
+A Parameter takes a value, such as a date or "all channels", or a function that is worked out at every run, such as "today − 3 days" or "the start of this year". Both are chosen in the same dropdown, with the date a function gives today. This holds for its default, which its Owner Unit sets when making or editing the Lens, and for the value a User chooses when running it. Which functions exist is open ([OP-LE-08](#op-le-08)).
 
 <a id="fr-le-14"></a>
 ### FR-LE-14 · Only its Owner Unit sees the SQL of a Lens
