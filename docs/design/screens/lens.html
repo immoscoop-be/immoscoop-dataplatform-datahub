@@ -3,7 +3,8 @@
   Screen: Lenses, the page of a Lens: run it (DEC-UX-26)
   The basic flavour of a Lens: a query with Parameters, its result a table. Other flavours (filtered, aggregation, ...) come later.
   Two tabs. Run: the request on top, its Parameters in a panel that folds open and shut (folded, a line with their
-  values), "Default" on a changed one, then the Pre-flight and "Run", or "Approve and run" above the approval threshold;
+  values), "Default" on a changed one, and "Run" with the Pre-flight in it, red as "Approve and run" above the approval
+  threshold, with how to read less when the table has partitions;
   the result below, a table, with what was read, the Query ID and "Download CSV". The dropdown of a date Parameter offers
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
@@ -121,14 +122,11 @@
      </div>
     </div>
    </details>
-   <div data-pane-group="state" data-pane="fresh notrun editing"><div class="run-row">
-    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">5.1 GB</b> <span class="meta">at most · 42 of 312 partitions</span></div>
-    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
-   </div></div>
-   <div data-pane-group="state" data-pane="changed" hidden><div class="run-row">
-    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">17.9 GB</b> <span class="meta">at most · 146 of 312 partitions. Above 10 GB you approve the run yourself.</span></div>
-    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
-   </div></div>
+   <div class="run-cell">
+    <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 5.1 GB, 42 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">5.1 GB</span></button></span>
+    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button></span>
+   </div>
+   <p class="run-hint" data-pane-group="state" data-pane="changed" hidden><i class="ph-fill ph-info"></i><span>This run reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year it reads 5.1 GB.</span></p>
   </section>
   <section class="lens-request" data-pane-group="state" data-pane="changed notrun editing" hidden aria-label="Parameters">
    <details class="param-panel" open>
@@ -162,14 +160,11 @@
      </div>
     </div>
    </details>
-   <div data-pane-group="state" data-pane="fresh notrun editing"><div class="run-row">
-    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">5.1 GB</b> <span class="meta">at most · 42 of 312 partitions</span></div>
-    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
-   </div></div>
-   <div data-pane-group="state" data-pane="changed" hidden><div class="run-row">
-    <div style="flex:1;min-width:0"><span class="label" style="margin:0 6px 0 0;display:inline">Pre-flight</span><b style="font-weight:500">17.9 GB</b> <span class="meta">at most · 146 of 312 partitions. Above 10 GB you approve the run yourself.</span></div>
-    <button class="btn-primary"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
-   </div></div>
+   <div class="run-cell">
+    <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 5.1 GB, 42 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">5.1 GB</span></button></span>
+    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button></span>
+   </div>
+   <p class="run-hint" data-pane-group="state" data-pane="changed" hidden><i class="ph-fill ph-info"></i><span>This run reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year it reads 5.1 GB.</span></p>
   </section>
   <section class="lens-result" aria-label="Result">
    <div data-pane-group="state" data-pane="fresh editing">
