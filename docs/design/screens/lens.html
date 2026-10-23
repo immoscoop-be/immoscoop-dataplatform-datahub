@@ -3,8 +3,8 @@
   Screen: Lenses, the page of a Lens: run it (DEC-UX-26)
   The basic flavour of a Lens: a query with Parameters, its result a table. Other flavours (filtered, aggregation, ...) come later.
   Two tabs. Run: the request on top, its Parameters in a panel that folds open and shut (folded, a line with their
-  values), "Default" on a changed one, and "Run" with the Pre-flight in it, red as "Approve and run" above the approval
-  threshold, with how to read less when the table has partitions;
+  values), "Default" on a changed one, and in its lower right corner "Run" with the Pre-flight in it, red as "Approve and
+  run" above the approval threshold, with a pop-out on how to read less when the table has partitions;
   the result below, a table, with what was read, the Query ID and "Download CSV". The dropdown of a date Parameter offers
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
@@ -96,14 +96,14 @@
     <div class="param-grid">
      <div class="field">
       <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
-      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan</span><i class="ph ph-caret-down"></i></button></span>
       <span data-pane-group="state" data-pane="changed" hidden><button class="param-control changed" type="button" aria-haspopup="listbox"><span class="param-main">1 Jan 2024</span><i class="ph ph-caret-down"></i></button>
       <span class="param-default" title="The default of this parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this year</span></span>
      </div>
      <div class="field param-anchor">
       <span class="param-head">To</span>
-      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button></span>
-      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button>
+      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct</span><i class="ph ph-caret-down"></i></button>
       <div class="param-menu" role="listbox" aria-label="To">
       <div class="menu-label">A date</div>
       <label class="menu-date"><i class="ph ph-calendar-blank"></i><input type="date" value="2026-10-20" aria-label="A date"></label>
@@ -124,9 +124,9 @@
    </details>
    <div class="run-cell">
     <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 5.1 GB, 42 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">5.1 GB</span></button></span>
-    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button></span>
+    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button>
+     <span class="run-pop" role="tooltip"><b>17.9 GB, above 10 GB:</b> you approve this run yourself.<br>It reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year, 5.1 GB.</span></span>
    </div>
-   <p class="run-hint" data-pane-group="state" data-pane="changed" hidden><i class="ph-fill ph-info"></i><span>This run reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year it reads 5.1 GB.</span></p>
   </section>
   <section class="lens-request" data-pane-group="state" data-pane="changed notrun editing" hidden aria-label="Parameters">
    <details class="param-panel" open>
@@ -134,14 +134,14 @@
     <div class="param-grid">
      <div class="field">
       <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
-      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan 2026</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="fresh notrun editing"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Start of this year</span><span class="param-sub">1 Jan</span><i class="ph ph-caret-down"></i></button></span>
       <span data-pane-group="state" data-pane="changed" hidden><button class="param-control changed" type="button" aria-haspopup="listbox"><span class="param-main">1 Jan 2024</span><i class="ph ph-caret-down"></i></button>
       <span class="param-default" title="The default of this parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this year</span></span>
      </div>
      <div class="field param-anchor">
       <span class="param-head">To</span>
-      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button></span>
-      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct 2026</span><i class="ph ph-caret-down"></i></button>
+      <span data-pane-group="state" data-pane="fresh notrun changed"><button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct</span><i class="ph ph-caret-down"></i></button></span>
+      <span data-pane-group="state" data-pane="editing" hidden><button class="param-control open" type="button" aria-haspopup="listbox" aria-expanded="true"><span class="param-main"><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-sub">20 Oct</span><i class="ph ph-caret-down"></i></button>
       <div class="param-menu" role="listbox" aria-label="To">
       <div class="menu-label">A date</div>
       <label class="menu-date"><i class="ph ph-calendar-blank"></i><input type="date" value="2026-10-20" aria-label="A date"></label>
@@ -162,9 +162,9 @@
    </details>
    <div class="run-cell">
     <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 5.1 GB, 42 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">5.1 GB</span></button></span>
-    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button></span>
+    <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 10 GB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">17.9 GB</span></button>
+     <span class="run-pop" role="tooltip"><b>17.9 GB, above 10 GB:</b> you approve this run yourself.<br>It reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year, 5.1 GB.</span></span>
    </div>
-   <p class="run-hint" data-pane-group="state" data-pane="changed" hidden><i class="ph-fill ph-info"></i><span>This run reads 146 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this year it reads 5.1 GB.</span></p>
   </section>
   <section class="lens-result" aria-label="Result">
    <div data-pane-group="state" data-pane="fresh editing">

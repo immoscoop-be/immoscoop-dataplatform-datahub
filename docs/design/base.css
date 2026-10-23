@@ -398,15 +398,19 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; align-items: start; margin-top: 12px; }
 .param-grid .field { margin: 0; }
 .run-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 10px 10px 10px 14px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }
-.lens-request { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 14px; align-items: start; border-radius: var(--radius-lg); background: var(--surface-sub); padding: 12px 12px 12px 16px; }
-.lens-request > .param-panel { grid-column: 1 / -1; grid-row: 1; }
-.lens-request > .param-panel summary { padding-right: 240px; }
-.run-cell { grid-column: 2; grid-row: 1; position: relative; z-index: 1; }
+.lens-request { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 14px; align-items: end; border-radius: var(--radius-lg); background: var(--surface-sub); padding: 12px 12px 12px 16px; }
+.lens-request > .param-panel { grid-column: 1; grid-row: 1; min-width: 0; }
+.run-cell { grid-column: 2; grid-row: 1; align-self: end; position: relative; z-index: 3; }
+.run-cell > span { position: relative; display: block; }
 .run-btn { white-space: nowrap; }
 .run-btn .run-gb { margin-left: 4px; padding-left: 9px; border-left: 1px solid color-mix(in srgb, currentColor 35%, transparent); font-weight: var(--weight-regular, 400); opacity: .85; }
 .run-btn.high { background: var(--signal-urgent); color: #fff; }
-.run-hint { grid-column: 1 / -1; display: flex; gap: 8px; align-items: flex-start; margin: 12px 0 0; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
-.run-hint > i { color: var(--signal-urgent); font-size: 16px; margin-top: 1px; flex: none; }
+/* How to read less: a pop-out on the red Run button */
+.run-pop { position: absolute; right: 0; top: calc(100% + 10px); width: 300px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-solid);
+  box-shadow: 0 10px 30px rgba(0,0,0,.16); outline: 1px solid var(--tint-active); font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); white-space: normal; }
+.run-pop b { font-weight: var(--weight-medium); color: var(--signal-urgent); }
+.run-pop::before { content: ''; position: absolute; top: -6px; right: 28px; width: 12px; height: 12px; background: var(--surface-solid); transform: rotate(45deg);
+  box-shadow: -1px -1px 0 var(--tint-active); }
 .lens-request .field input, .lens-request .field select { background: var(--surface-solid); }
 .param-head { display: flex !important; align-items: center; gap: 8px; }
 .param-head > .param-reset { margin-left: auto; }
