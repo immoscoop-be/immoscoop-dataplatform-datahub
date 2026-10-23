@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 26 | 18 (15 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 27 | 18 (15 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -20,7 +20,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 12 (10 proposed, 2 withdrawn) | – | – | 7 (5 open, 2 done) |
+| [Lenses](functional/09-lenses.md) | 14 (12 proposed, 2 withdrawn) | – | – | 8 (6 open, 2 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -219,8 +219,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-08](functional/09-lenses.md#fr-le-08) | Making a Lens checks what one run reads, in three ranges | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
 | [FR-LE-09](functional/09-lenses.md#fr-le-09) | A very large Lens waits for the Data Team | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
 | [FR-LE-10](functional/09-lenses.md#fr-le-10) | A Lens that outgrows its range is checked again | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23 |
-| [FR-LE-11](functional/09-lenses.md#fr-le-11) | A Lens runs on a page of its own | Proposed | – | – | – |
-| [FR-LE-12](functional/09-lenses.md#fr-le-12) | Every run of a Lens is a query | Proposed | – | – | – |
+| [FR-LE-11](functional/09-lenses.md#fr-le-11) | A Lens runs on a page of its own | Proposed | – | – | [8cb5682](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8cb5682545e6be6bb51c6b4dfdfe4610255e5eaf) refs, 2026-10-23 |
+| [FR-LE-12](functional/09-lenses.md#fr-le-12) | Every run of a Lens is a query | Proposed | – | – | [8cb5682](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8cb5682545e6be6bb51c6b4dfdfe4610255e5eaf) refs, 2026-10-23 |
+| [FR-LE-13](functional/09-lenses.md#fr-le-13) | The default of a Parameter is a value or a function | Proposed | – | – | – |
+| [FR-LE-14](functional/09-lenses.md#fr-le-14) | Only its Owner Unit sees the SQL of a Lens | Proposed | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

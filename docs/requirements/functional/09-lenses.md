@@ -111,7 +111,7 @@ The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After th
 
 **Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
 
-Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03-collections.md#dec-co-16)): a request with its Parameters, and the result. Its Parameters are filled in with their defaults; the User changes their values without touching the SQL ([FR-LE-04](#fr-le-04)), adds an optional Parameter the Lens offers, and puts them all back to their defaults. The result shows the rows, what was read and its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)), and can be downloaded within the row limit ([FR-CH-01](13-channels.md#fr-ch-01)). This is the basic flavour of a Lens: a query with Parameters, its result a table ([OP-LE-07](#op-le-07)).
+Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03-collections.md#dec-co-16)): a request with its Parameters, and the result. Its Parameters are filled in with their defaults ([FR-LE-13](#fr-le-13)); the User changes their values without touching the SQL ([FR-LE-04](#fr-le-04)) and puts a changed one back to its default. Adding Parameters is editing the Lens, for its Owner Unit. A second part of the page tells what the Lens answers, what it does step by step ([FR-LE-03](#fr-le-03)), what it is built on and its history. The result shows the rows, what was read and its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)), and can be downloaded within the row limit ([FR-CH-01](13-channels.md#fr-ch-01)). This is the basic flavour of a Lens: a query with Parameters, its result a table ([OP-LE-07](#op-le-07)).
 
 <a id="fr-le-12"></a>
 ### FR-LE-12 · Every run of a Lens is a query
@@ -119,6 +119,20 @@ Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03
 **Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
 
 Every run of a Lens passes the Pre-flight, with its thresholds ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37)), and is a query in the Query Log, with the name of the Lens ([DEC-UX-20](../../design/principles.md#dec-ux-20)). When a Parameter changes after a run, the result is marked as being for the old values until the Lens runs again. Whether a Lens runs when it is opened is open ([OP-LE-06](#op-le-06)).
+
+<a id="fr-le-13"></a>
+### FR-LE-13 · The default of a Parameter is a value or a function
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
+
+The default of a Parameter is a value, such as "all channels", or a function that is worked out at every run, such as "today − 3 days" or "the start of this year". Its Owner Unit sets it when making or editing the Lens; every User sees it next to the Parameter. Which functions exist is open ([OP-LE-08](#op-le-08)).
+
+<a id="fr-le-14"></a>
+### FR-LE-14 · Only its Owner Unit sees the SQL of a Lens
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#dec-ux-27)
+
+A colleague never sees the SQL of a Lens: not on its page, and not through "Open in Query", which is for its Owner Unit only. The Owner Unit sees the SQL when editing the Lens. What the Lens does is told in plain language instead ([FR-LE-03](#fr-le-03)). The Data Team keeps seeing the SQL of every query in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
 
 ## Open points
 
@@ -129,6 +143,7 @@ Every run of a Lens passes the Pre-flight, with its thresholds ([FR-SR-36](04-st
 - [ ] <a id="op-le-05"></a>**OP-LE-05** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
 - [ ] <a id="op-le-06"></a>**OP-LE-06** · Decide whether a Lens runs when it is opened ([FR-LE-12](#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.*
 - [ ] <a id="op-le-07"></a>**OP-LE-07** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.*
+- [ ] <a id="op-le-08"></a>**OP-LE-08** · Decide which functions a default may use ([FR-LE-13](#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.*
 
 ## Builds on
 
