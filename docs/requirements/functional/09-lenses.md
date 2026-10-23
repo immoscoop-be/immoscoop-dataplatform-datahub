@@ -26,9 +26,11 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-le-01"></a>
 ### FR-LE-01 · A Lens is created only under a processing limit
 
-**Status:** Proposed · **Source:** [REQ-DH-LENSWEIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lensweight)
+**Status:** Withdrawn · **Source:** [REQ-DH-LENSWEIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lensweight)
 
 A Lens can only be created when the processing at its creation stays under a configurable number of GB.
+
+*Withdrawn on 2026-10-23 by Max: one hard limit becomes a check in three ranges, in which only a very large Lens waits for the Data Team ([FR-LE-08](#fr-le-08)).*
 
 <a id="fr-le-02"></a>
 ### FR-LE-02 · The weight of a Lens is visible
@@ -70,10 +72,39 @@ Whoever starts a Lens is first asked to record the question and the story, what 
 
 Every Lens has a description of a sentence or two on what it shows, in business language, and tags: a few words its maker chooses. Next to the description of its steps ([FR-LE-03](#fr-le-03)), they make a Lens findable: a new query matches its words against them ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)).
 
+<a id="fr-le-07"></a>
+### FR-LE-07 · A query becomes a Lens
+
+**Status:** Proposed · **Source:** Max, 2026-10-23
+
+Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) can make a Lens of it: the logical next step once a query answers a question that will come back. Its name, its question and its Resources come along; its question is where the story of the Lens starts ([FR-LE-05](#fr-le-05)). Starting a Lens from the page of a Collection ([FR-CO-29](03-collections.md#fr-co-29)) stays possible. Where a Lens made from a query belongs is open ([OP-LE-04](#op-le-04)).
+
+<a id="fr-le-08"></a>
+### FR-LE-08 · Making a Lens checks what one run reads, in three ranges
+
+**Status:** Proposed · **Source:** Max, 2026-10-23, in place of [FR-LE-01](#fr-le-01)
+
+When a Lens is made, Data Hub measures what one run of it reads, with a dry run as in the Pre-flight ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36)). Two configurable thresholds make three ranges:
+
+- **Within range:** the author makes and publishes the Lens freely.
+- **Large,** above the first threshold: the author is warned, with what one run reads and, where it applies, what would make it read less, such as a filter on the partition column ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)). The author is still free to publish.
+- **Very large,** above the second threshold: a member of the Data Team accepts the Lens before it is published ([FR-LE-09](#fr-le-09)).
+
+The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-LE-02](#fr-le-02), [DEC-UX-24](../../design/principles.md#dec-ux-24)). The thresholds are set apart from those of a single query ([FR-SR-37](04-stacks-and-resources.md#fr-sr-37)) and decided with the other limits ([OP-SR-07](04-stacks-and-resources.md#op-sr-07)).
+
+<a id="fr-le-09"></a>
+### FR-LE-09 · A very large Lens waits for the Data Team
+
+**Status:** Proposed · **Source:** Max, 2026-10-23
+
+A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author can open it, nobody else sees it yet. The Data Team is notified and accepts or refuses it; a refusal comes with a reason. The author is notified of either, and both are recorded in the Log.
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
-- [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. The limit of [FR-LE-01](#fr-le-01) stays, and its number is decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
+- [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. Making a Lens is checked in three ranges instead ([FR-LE-08](#fr-le-08)), whose two thresholds are decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
+- [ ] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.*
+- [ ] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.*
 
 ## Builds on
 
