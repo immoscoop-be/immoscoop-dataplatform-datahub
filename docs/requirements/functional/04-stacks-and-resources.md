@@ -426,11 +426,11 @@ Data Hub has a section Query, next to Collections, in which a User writes SQL ov
 The SQL editor in Query formats the SQL on request, and suggests while typing: the Resources the User may see, their columns and the Parameters, the partition and cluster columns first and marked as such.
 
 <a id="fr-sr-43"></a>
-### FR-SR-43 · Your queries, in a sheet
+### FR-SR-43 · The panel of Query lists the queries that ran
 
-**Status:** Proposed · **Source:** [DEC-UX-18](../../design/principles.md#dec-ux-18)
+**Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20)
 
-A User sees every query they ran, through Query, a preview or Claude, newest first, with what it read, its sources, whether it was approved or blocked, and its Query ID, and opens one again in Query. The list slides in as a sheet; only the User and the Data Team see it ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
+The panel of Query lists the queries that ran, newest first and grouped by day: by default the User's own, through Query, a preview or Claude; on request everyone's on what the User may see, with who ran them. Each shows what it read and whether it was approved or blocked, and opens in Query with a click. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); whether others see the list at all is open ([OP-SR-13](#op-sr-13)).
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
@@ -509,7 +509,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.*
 - [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
 - [ ] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.*
-- [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries on a Resource ([FR-SR-44](#fr-sr-44)). The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Proposal: the Owner Unit and the Data Team see the whole list, without the SQL of others; any other User sees only their own queries. *Raised on 2026-10-23.*
+- [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.*
 
 ## Builds on
 

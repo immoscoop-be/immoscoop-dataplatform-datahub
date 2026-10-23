@@ -336,3 +336,7 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .pf-src { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-top: 1px solid var(--tint-active); font-size: var(--text-small); }
 .pf-src:first-of-type { margin-top: 12px; }
 .pf-src + p { margin-top: 10px !important; }
+/* The queries that ran, in the panel of Query */
+.q-item { gap: 10px; padding: 9px 12px; }
+.panel .q-item > .pill { flex: none; }
+.q-item .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }

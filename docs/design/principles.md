@@ -222,20 +222,20 @@ Screens: [collection-overview](screens/collection-overview.html), [collection-ed
 
 ## Query
 
-Screens: [query](screens/query.html) and [query-history](screens/query-history.html). Designed on 2026-10-23, to review.
+Screen: [query](screens/query.html). Designed on 2026-10-23, to review.
 
 - **A main section of its own,** next to Collections ([DEC-UX-17](#dec-ux-17)): a query can use every Resource the User may see, and later Lenses, not just one.
-- **The panel** lists the sources to query: the Collections and their Resources, as in Collections, with search. A click puts a Resource in the query.
-- **Above the editor:** the name of the query, the sources it uses with their Level, and "Your queries" on the right.
+- **The panel** lists the queries that ran, not the Collections ([DEC-UX-20](#dec-ux-20)): **your own** by default, **everyone's** under "All", grouped by day and searchable. Each with its name, when, what it read, and how it ran (a preview, Claude, a Lens) or whether it was approved or blocked; under "All" also who. A click opens it; the SQL of others only for the Data Team ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01), [OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)).
+- **Resources come in** through the suggestions of the editor, or from "Query this resource" on the page of a Resource.
+- **Above the editor:** the name of the query, the sources it uses with their Level, and "New query" on the right.
 - **The editor** writes BigQuery SQL. It **formats** the SQL on request (a button and Shift+Alt+F), and **suggests** as you type: the Resources, their columns and the Parameters, the partition and cluster columns first and marked as such. Parameters are named values such as `@dateFrom`, filled in under the editor.
 - **The Pre-flight** is a card next to the editor: the estimate in large, marked "at most" as clustering can make the real read lower; a gauge with the approval and the block threshold ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)); per Resource the partitions it reads and through which column; what to do to read less; and "Run", or "Approve and run" above the approval threshold. A query without a filter on the partition column of a partitioned Resource gets a warning there ([FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)).
 - **The result** under it: the rows, what was read and how many partitions, and the Query ID with a copy button.
-- **Your queries** slide in as a sheet from the right ([DEC-UX-18](#dec-ux-18)): every query you ran, through Query, a preview or Claude, newest first, grouped by day, each with what it read, its sources, whether it was approved or blocked, its Query ID, and "Open". Only you and the Data Team see them.
 - **To build it,** a proposal that holds for React and for Svelte ([OP-UX-10](#op-ux-10)): the editor CodeMirror 6 with its SQL language, a BigQuery dialect on top (backtick names, its functions) and suggestions from the columns Data Hub keeps; formatting with sql-formatter, which knows BigQuery. Both MIT. The Pre-flight as a dry run of BigQuery while typing pauses: it costs nothing and returns the bytes.
 
 ## Sheets
 
-- A **sheet** slides in from the right over the page, for a task or a list that belongs to the page but is not the page: adding Resources to a Collection, your queries. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
+- A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
 
 ## Background and motion
 
@@ -278,8 +278,9 @@ Decided on 2026-10-23, with the page of a Collection and the icon of a Collectio
 Decided on 2026-10-23, with the preview and the query of a Resource:
 
 - <a id="dec-ux-17"></a>**DEC-UX-17** · Query is a main section of its own, next to Collections, and not a tab of a Resource: a query goes over Resources, and later Lenses. This answers [OP-SR-11](../requirements/functional/04-stacks-and-resources.md#op-sr-11).
-- <a id="dec-ux-18"></a>**DEC-UX-18** · Your own queries are not on the page: they slide in as a sheet.
+- <a id="dec-ux-18"></a>**DEC-UX-18** · Your own queries are not on the page: they slide in as a sheet. *Note of 2026-10-23: replaced by [DEC-UX-20](#dec-ux-20): they are the panel of Query.*
 - <a id="dec-ux-19"></a>**DEC-UX-19** · The page of a Resource has a history of the queries that ran on it, in a tab "Queries".
+- <a id="dec-ux-20"></a>**DEC-UX-20** · The panel of Query lists the queries that ran, not the Collections: your own by default, everyone's on request. This replaces [DEC-UX-18](#dec-ux-18).
 
 ## Open points
 
