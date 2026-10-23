@@ -444,7 +444,7 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 **Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
 
-A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: the Resource and the date, or for a Lens the name of the Lens. The name can be changed later; a query without a name cannot be run.
+A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. The name can be changed later; a query without a name cannot be run.
 
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
@@ -452,6 +452,13 @@ A new query starts with its name, before its SQL. Data Hub suggests one from whe
 **Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
 
 The page of a Resource has a button "Query". It opens Query with a new query: the Resource as its source, its name suggested ([FR-SR-45](#fr-sr-45)), and its SQL starting with a filter on the partition column ([FR-SR-39](#fr-sr-39)).
+
+<a id="fr-sr-47"></a>
+### FR-SR-47 · A new query first shows the Lenses on its Resources
+
+**Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22)
+
+While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: first the Lenses on exactly these Resources, then those on these Resources and more. Each Lens shows what it shows, its Resources, its maker, its use, its weight and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
 ## Log Catalogue
 

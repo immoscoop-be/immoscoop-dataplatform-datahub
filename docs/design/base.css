@@ -348,3 +348,17 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .step-no { width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--text-primary); color: var(--surface-solid); font-size: var(--text-small); font-weight: var(--weight-medium); }
 .step.off .step-no { background: var(--tint-active); color: var(--text-secondary); }
 .step-title { font-size: var(--text-section); font-weight: var(--weight-medium); }
+/* A new query: left your query, right the lenses that already use its resources (DEC-UX-22) */
+.new-query { display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 14px; margin-top: 14px; align-items: start; }
+.nq-left, .nq-right { border-radius: var(--radius-xl); padding: 18px 20px 20px; }
+.nq-title { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0; }
+.src-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px 9px 10px; border-radius: var(--radius-md); background: var(--surface-sub); margin-bottom: 6px; }
+.src-row .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+.lens-card { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; align-items: center; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); margin-bottom: 8px; }
+.lens-card p { font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; margin: 6px 0 10px; }
+.use-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.use-chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); padding: 3px 9px; border-radius: var(--radius-pill); color: var(--text-muted); outline: 1px dashed var(--tint-active); }
+.use-chip.on { color: var(--text-primary); background: var(--surface-solid); outline: 1px solid var(--tint-active); }
+.use-chip .kind-icon { font-size: 12px; }
+.lens-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.own-way { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--tint-hover); }
