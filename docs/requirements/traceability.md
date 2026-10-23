@@ -9,18 +9,18 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 22 | 17 (14 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 23 | 17 (14 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 31 (15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 15 | 11 (7 open, 4 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 47 (12 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
+| [Collections](functional/03-collections.md) | 31 (15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 11 (7 open, 4 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 48 (13 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 5 (5 proposed) | – | – | 1 (1 open) |
+| [Lenses](functional/09-lenses.md) | 6 (6 proposed) | – | – | 2 (2 open) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -154,9 +154,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-42](functional/04-stacks-and-resources.md#fr-sr-42) | The editor formats and suggests | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-43](functional/04-stacks-and-resources.md#fr-sr-43) | The panel of Query lists the queries that ran | Proposed | – | – | [0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23<br>[f54ac5a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f54ac5a22dae793f32d036a4ce755a7ae6ba067b) refs, 2026-10-23<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-44](functional/04-stacks-and-resources.md#fr-sr-44) | The page of a Resource lists the queries on it | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
-| [FR-SR-45](functional/04-stacks-and-resources.md#fr-sr-45) | Every query has a name | Proposed | – | – | [0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
-| [FR-SR-46](functional/04-stacks-and-resources.md#fr-sr-46) | "Query" on the page of a Resource starts a new query on it | Proposed | – | – | [0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
-| [FR-SR-47](functional/04-stacks-and-resources.md#fr-sr-47) | A new query first shows the Lenses on its Resources | Proposed | – | – | – |
+| [FR-SR-45](functional/04-stacks-and-resources.md#fr-sr-45) | Every query has a name | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23<br>[0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
+| [FR-SR-46](functional/04-stacks-and-resources.md#fr-sr-46) | "Query" on the page of a Resource starts a new query on it | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23<br>[0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
+| [FR-SR-47](functional/04-stacks-and-resources.md#fr-sr-47) | A new query first shows the Lenses on its Resources | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
+| [FR-SR-48](functional/04-stacks-and-resources.md#fr-sr-48) | The question of a new query finds Lenses by their words | Proposed | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -209,10 +210,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
 | [FR-LE-01](functional/09-lenses.md#fr-le-01) | A Lens is created only under a processing limit | Proposed | – | – | – |
-| [FR-LE-02](functional/09-lenses.md#fr-le-02) | The weight of a Lens is visible | Proposed | – | – | – |
+| [FR-LE-02](functional/09-lenses.md#fr-le-02) | The weight of a Lens is visible | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
 | [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | – |
 | [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | – |
 | [FR-LE-05](functional/09-lenses.md#fr-le-05) | First the story, then the data | Proposed | – | – | – |
+| [FR-LE-06](functional/09-lenses.md#fr-le-06) | A Lens has a short description and tags | Proposed | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

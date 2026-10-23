@@ -444,7 +444,7 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 **Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
 
-A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. The name can be changed later; a query without a name cannot be run.
+A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
 
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
@@ -458,7 +458,14 @@ The page of a Resource has a button "Query". It opens Query with a new query: th
 
 **Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22)
 
-While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: first the Lenses on exactly these Resources, then those on these Resources and more. Each Lens shows what it shows, its Resources, its maker, its use, its weight and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
+While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use, its weight and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
+
+<a id="fr-sr-48"></a>
+### FR-SR-48 · The question of a new query finds Lenses by their words
+
+**Status:** Proposed · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23)
+
+A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
 
 ## Log Catalogue
 

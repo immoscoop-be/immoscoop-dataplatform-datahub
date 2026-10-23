@@ -362,3 +362,10 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .use-chip .kind-icon { font-size: 12px; }
 .lens-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .own-way { display: flex; align-items: center; gap: 14px; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--tint-hover); }
+/* The words a lens shares with the question of a query (DEC-UX-23) */
+.lens-card mark { background: color-mix(in srgb, var(--col-teal) 22%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+.tags { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 8px; }
+.tag { font-size: var(--text-meta); color: var(--text-muted); }
+.tag.hit { color: var(--text-primary); background: color-mix(in srgb, var(--col-teal) 22%, transparent); border-radius: 3px; padding: 0 4px; }
+.lens-card.best { outline: 1.5px solid var(--text-muted); }
+.pill-best { color: var(--surface-solid); background: var(--text-primary); }

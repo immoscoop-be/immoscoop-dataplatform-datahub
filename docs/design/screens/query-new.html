@@ -4,7 +4,8 @@
   Two halves. Left: your query, its name (required, suggested from its resources) and its resources. Right: the lenses that
   already use these resources, first those on exactly these, then those on these and more; reusing one is the first choice,
   "Start your own" the alternative, so that nobody builds twice what exists.
-  Requirements: FR-SR-45, FR-SR-46, FR-SR-47 (Proposed); DEC-UX-22; DEC-DH-10 (the Level of a Lens), FR-LE-02 (its weight).
+  The lenses rank by the words they share with the question of the query (name, description and tags of the lens), common words left out;
+  the shared words are marked. Requirements: FR-SR-45, FR-SR-46, FR-SR-47, FR-SR-48, FR-LE-06 (Proposed); DEC-UX-22, DEC-UX-23, DEC-CO-16; FR-LE-02.
   Related screens: resource-detail.html (the button "Query"), query.html (Start your own).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -78,8 +79,9 @@
  <section class="card nq-left" aria-labelledby="nq-mine">
   <h2 id="nq-mine" class="nq-title">Your query</h2>
   <label class="field" style="margin-top:12px"><span>Name</span><input value="Credit lead funnel and search sessions, 23 Oct" required></label>
-  <p class="meta" style="display:block;line-height:1.5;margin:-4px 0 8px">Suggested from its resources. Better: say what you want to know.</p>
-  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><button class="add-chip" type="button">Sessions before a credit request</button><button class="add-chip" type="button">Credit requests per session</button></div>
+  <p class="meta" style="display:block;line-height:1.5;margin:-4px 0 4px">Suggested from its resources and the date; change it as you like.</p>
+  <label class="field" style="margin-top:12px"><span>What do you want to know?</span><textarea rows="3">How many search sessions does a visitor have before asking for a credit?</textarea></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:-4px 0 0">Its words find the lenses that answer the same question.</p>
   <div class="label" style="margin-top:18px">Resources</div>
   <div class="src-row"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><div style="flex:1;min-width:0"><div class="item-title clip">Credit lead funnel</div><div class="meta" style="display:block">Credit leads · partitioned by request_date</div></div><span class="maturity" data-level="5"></span><button class="icon-btn" type="button" aria-label="Remove Credit lead funnel" title="Remove"><i class="ph ph-x"></i></button></div>
   <div class="src-row"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><div style="flex:1;min-width:0"><div class="item-title clip">Search sessions</div><div class="meta" style="display:block">Data team · partitioned by session_date</div></div><span class="maturity" data-level="3"></span><button class="icon-btn" type="button" aria-label="Remove Search sessions" title="Remove"><i class="ph ph-x"></i></button></div>
@@ -88,42 +90,46 @@
  </section>
  <section class="card nq-right" aria-labelledby="nq-made">
   <h2 id="nq-made" class="nq-title">Already made: lenses on these resources</h2>
-  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">Before you write your own, see whether a colleague did it already. A lens you reuse is checked, described and kept up to date.</p>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 0">Before you write your own, see whether a colleague did it already. A lens you reuse is checked, described and kept up to date. In each group, the lenses that share most words with your question come first; words like "the" or "a" don't count. Only lenses whose resources you may all use are shown.</p>
   <div class="panel-label" style="margin:16px 0 8px">On exactly these two resources <span class="count">2</span></div>
-   <article class="lens-card">
+   <article class="lens-card best">
     <div>
-     <div style="display:flex;align-items:center;gap:8px"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Sessions before a credit request</span><span class="maturity" data-level="3"></span></div>
-     <p>How many search sessions a visitor has before asking for a credit, per week.</p>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title"><mark>Sessions</mark> before a <mark>credit</mark> request</span><span class="maturity" data-level="3"></span><span class="pill pill-best">Best match</span></div>
+     <p>How many <mark>search</mark> <mark>sessions</mark> a <mark>visitor</mark> has before <mark>asking</mark> for a <mark>credit</mark>, per week.</p>
      <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span></div>
-     <div class="lens-foot"><span class="meta">Funnel · Credit leads · by Mia Peeters · 14 uses this month</span><span class="pill"><i class="ph ph-feather"></i> Light</span></div>
+     <div class="tags"><span class="tag hit">#sessions</span><span class="tag hit">#credit</span><span class="tag hit">#visitor</span><span class="tag">#funnel</span><span class="meta" style="margin-left:4px">5 words in common</span></div>
+     <div class="lens-foot"><span class="meta">Funnel · Credit leads · by Mia Peeters · 14 uses this month</span><span class="pill" title="The weight of the lens: what one run reads"><i class="ph ph-feather"></i> Light · 0.8 GB a run</span></div>
     </div>
     <a class="btn-primary" href="#" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
    </article>
    <article class="lens-card">
     <div>
-     <div style="display:flex;align-items:center;gap:8px"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Credit requests per session source</span><span class="maturity" data-level="3"></span></div>
-     <p>Which traffic sources bring the sessions that end in a credit request.</p>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title"><mark>Credit</mark> requests per <mark>session</mark> source</span><span class="maturity" data-level="3"></span></div>
+     <p>Which traffic sources bring the <mark>sessions</mark> that end in a <mark>credit</mark> request.</p>
      <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span></div>
-     <div class="lens-foot"><span class="meta">Comparison · Credit leads · by An Claes · 6 uses this month</span><span class="pill"><i class="ph ph-feather"></i> Light</span></div>
+     <div class="tags"><span class="tag hit">#credit</span><span class="tag">#traffic</span><span class="tag">#source</span><span class="meta" style="margin-left:4px">2 words in common</span></div>
+     <div class="lens-foot"><span class="meta">Comparison · Credit leads · by An Claes · 6 uses this month</span><span class="pill" title="The weight of the lens: what one run reads"><i class="ph ph-feather"></i> Light · 1.1 GB a run</span></div>
     </div>
     <a class="btn-primary" href="#" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
    </article>
   <div class="panel-label" style="margin:18px 0 8px">On these two and more <span class="count">2</span></div>
    <article class="lens-card">
     <div>
-     <div style="display:flex;align-items:center;gap:8px"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">From visit to KBC</span><span class="maturity" data-level="3"></span></div>
-     <p>Every step from the first visit to the lead sent to KBC, per lead source.</p>
-     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Lead sources</span></div>
-     <div class="lens-foot"><span class="meta">Funnel · Credit leads · by Karel Leys · 22 uses this month</span><span class="pill"><i class="ph ph-barbell"></i> Heavy</span></div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title"><mark>Search</mark> to lead journey</span><span class="maturity" data-level="1"></span></div>
+     <p>What <mark>visitors</mark> <mark>search</mark> and save before they <mark>ask</mark> for a <mark>credit</mark> or a visit.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Saved searches</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Listing views per day</span></div>
+     <div class="tags"><span class="tag hit">#search</span><span class="tag">#journey</span><span class="tag">#listing</span><span class="meta" style="margin-left:4px">4 words in common</span></div>
+     <div class="lens-foot"><span class="meta">Trend · Listing leads · by Ruth Aerts · 3 uses this month</span><span class="pill" title="The weight of the lens: what one run reads"><i class="ph ph-barbell"></i> Heavy · 14 GB a run</span></div>
     </div>
     <a class="btn-primary" href="#" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
    </article>
    <article class="lens-card">
     <div>
-     <div style="display:flex;align-items:center;gap:8px"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Search to lead journey</span><span class="maturity" data-level="1"></span></div>
-     <p>What visitors search and save before they ask for a credit or a visit.</p>
-     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Saved searches</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Listing views per day</span></div>
-     <div class="lens-foot"><span class="meta">Trend · Listing leads · by Ruth Aerts · 3 uses this month</span><span class="pill"><i class="ph ph-barbell"></i> Heavy</span></div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">From visit to KBC</span><span class="maturity" data-level="3"></span></div>
+     <p>Every step from the first visit to the lead sent to KBC, per lead source.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Credit lead funnel</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Search sessions</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Lead sources</span></div>
+     <div class="tags"><span class="tag">#funnel</span><span class="tag">#kbc</span><span class="tag hit">#credit</span><span class="meta" style="margin-left:4px">1 word in common</span></div>
+     <div class="lens-foot"><span class="meta">Funnel · Credit leads · by Karel Leys · 22 uses this month</span><span class="pill" title="The weight of the lens: what one run reads"><i class="ph ph-barbell"></i> Heavy · 22 GB a run</span></div>
     </div>
     <a class="btn-primary" href="#" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
    </article>

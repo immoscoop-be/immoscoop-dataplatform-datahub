@@ -37,6 +37,8 @@ A Lens can only be created when the processing at its creation stays under a con
 
 The weight of a Lens, light or heavy, is visible to every User, so that whoever works with data knows what they set in motion.
 
+*Note of 2026-10-23: the [design](../../design/principles.md#query) shows it as "Light" or "Heavy" with what one run reads, such as "Light · 0.8 GB a run"; where the line lies is open ([OP-LE-02](#op-le-02)).*
+
 <a id="fr-le-03"></a>
 ### FR-LE-03 · A Lens is described in plain language
 
@@ -58,9 +60,18 @@ Business can adjust certain Parameters of a Lens without touching its SQL, for e
 
 Whoever starts a Lens is first asked to record the question and the story, what they want to know and what they will do with it, before the query is built. The story becomes metadata of the Lens.
 
+
+<a id="fr-le-06"></a>
+### FR-LE-06 · A Lens has a short description and tags
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+
+Every Lens has a description of a sentence or two on what it shows, in business language, and tags: a few words its maker chooses. Next to the description of its steps ([FR-LE-03](#fr-le-03)), they make a Lens findable: a new query matches its words against them ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)).
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
+- [ ] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.*
 
 ## Builds on
 
