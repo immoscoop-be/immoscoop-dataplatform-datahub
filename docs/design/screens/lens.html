@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<!--
+  Screen: Lenses, the page of a Lens: run it (DEC-UX-26)
+  The basic flavour of a Lens: a query with Parameters, its result a table. Other flavours (filtered, aggregation, ...) come later.
+  Left the request: its Parameters, filled in with their defaults; an optional one is added with "Add a parameter";
+  "Reset to the defaults"; the Pre-flight and "Run", or "Approve and run" above the approval threshold; what it is built on,
+  what it does step by step, and its SQL folded away. Right the result: the rows, what was read, the Query ID, "Download CSV".
+  The switch at the bottom shows the result up to date, after a change of the Parameters, and before the first run.
+  The panel of Lenses, the Lenses the User may use grouped by Collection, is a proposal (OP-UX-18).
+  Requirements: FR-LE-11, FR-LE-12, FR-LE-04, FR-LE-03, FR-LE-06 (Proposed); FR-SR-36, FR-SR-37, FR-LN-06, FR-CH-01; DEC-DH-10, DEC-DH-11, DEC-CO-16.
+  Related screens: lens-new.html (Make it a lens), query-new.html (Use this lens), collection-overview.html (its Lenses).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Leads per source name</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></button>
+  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
+  <button class="nav-btn active" data-label="Lenses" aria-label="Lenses" aria-current="page"><i class="ph-fill ph-aperture"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Lenses">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Lenses</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search lenses"></label>
+  <div class="panel-label">By collection</div>
+  <div class="tree-group card coll-edge open" style="--c:var(--col-magenta)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta">6 lenses</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show the lenses of Credit leads"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Sessions before a credit request">Sessions before a credit request</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Credit requests per session source">Credit requests per session source</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">1 lens</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show the lenses of Listing leads"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Search to lead journey">Search to lead journey</span></span><span class="maturity" data-level="1"></span></a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>No lenses match your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Lenses · Credit leads</div>
+<div style="display:flex;align-items:flex-start;gap:12px;margin-top:8px">
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-aperture" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i>Leads per source name</h1>
+  <p style="margin:6px 0 0;color:var(--text-secondary);font-size:var(--text-small);line-height:1.5;max-width:640px">How many leads each lead source brings in, from a week you choose.</p>
+ </div>
+ <a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Start a query from the SQL of this lens"><i class="ph ph-terminal-window"></i>Open in Query</a>
+ <a class="btn-quiet outline" href="lens-new.html" data-for="owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
+</div>
+<div class="status-row">
+ <span class="status"><span class="maturity" data-level="2"></span>2 · Described</span>
+ <span class="status">Comparison</span>
+ <span class="status coll-chip" style="--c:var(--col-magenta)">Credit leads</span>
+ <span class="status">Made by Mia Peeters · 23 Oct 2026</span>
+ <span class="tags" style="margin:0 0 0 4px"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span></span>
+</div>
+<div class="lens-run">
+ <section class="card nq-left" aria-labelledby="lr-request">
+  <h2 id="lr-request" class="nq-title">Parameters</h2>
+  <label class="field" style="margin-top:12px"><span>From</span>
+   <input type="date" value="2026-01-01" data-pane-group="state" data-pane="fresh notrun">
+   <input type="date" value="2024-01-01" class="changed" data-pane-group="state" data-pane="changed" hidden>
+  </label>
+  <label class="field"><span>To</span><input type="date" value="2026-10-18"></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">By default the last complete week.</p>
+  <div class="field"><span style="display:flex;align-items:center">Lead channel<button class="icon-btn" style="margin-left:auto;width:20px;height:20px;font-size:12px" aria-label="Remove lead channel" title="Remove"><i class="ph ph-x"></i></button></span>
+   <select><option>All channels</option><option>Web form</option><option>Phone</option><option>Chat</option></select>
+  </div>
+  <button class="add-chip" type="button"><i class="ph ph-plus" style="font-size:11px"></i> Add a parameter</button>
+  <a class="text-link" href="#" style="display:flex;margin-top:10px"><span>Reset to the defaults</span></a>
+  <div data-pane-group="state" data-pane="fresh notrun"><div class="run-box">
+    <div class="label" style="margin:0">Pre-flight</div>
+    <div style="margin-top:4px"><b style="font-weight:500;font-size:18px">5.1 GB</b> <span class="meta">at most · 42 of 312 partitions</span></div>
+    <button class="btn-primary" style="width:100%;justify-content:center;margin-top:10px"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
+   </div></div>
+  <div data-pane-group="state" data-pane="changed" hidden><div class="run-box">
+    <div class="label" style="margin:0">Pre-flight</div>
+    <div style="margin-top:4px"><b style="font-weight:500;font-size:18px">17.9 GB</b> <span class="meta">at most · 146 of 312 partitions</span></div>
+    <p class="meta" style="display:block;line-height:1.5;margin:6px 0 10px">Above 10 GB you approve the run yourself. A later From reads less.</p>
+    <button class="btn-primary" style="width:100%;justify-content:center"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
+   </div></div>
+  <div class="lens-about">
+   <div class="label" style="margin:0 0 6px">Built on</div>
+   <a class="built-on" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly lead volume</span><span class="maturity" data-level="2"></span></a>
+   <a class="built-on" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead sources</span><span class="maturity" data-level="4"></span></a>
+   <div class="label" style="margin:14px 0 6px">What it does, step by step</div>
+   <ol class="steps-plain">
+    <li>Takes the weekly lead volume between From and To.</li>
+    <li>Adds the name of each lead source.</li>
+    <li>Adds up the leads per source and puts the largest first.</li>
+   </ol>
+   <details class="sql-more"><summary>Show the SQL</summary><pre class="sql" style="margin-top:8px;padding:10px 12px;border-radius:var(--radius-md);background:var(--surface-sub);font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap">select s.source_name,
+       sum(v.lead_count) as leads
+from weekly_lead_volume as v
+join lead_sources as s using (lead_source)
+where v.week_start between <span class="sql-param">@dateFrom</span> and <span class="sql-param">@dateTo</span>
+group by s.source_name
+order by leads desc</pre></details>
+  </div>
+ </section>
+ <section class="card nq-right" aria-labelledby="lr-result">
+  <div style="display:flex;align-items:center;gap:10px">
+   <h2 id="lr-result" class="nq-title" style="flex:1">Result</h2>
+   <button class="btn-quiet outline" title="Up to 10,000 rows" data-pane-group="state" data-pane="fresh changed"><i class="ph ph-download-simple"></i> Download CSV</button>
+  </div>
+  <div data-pane-group="state" data-pane="fresh">
+   <p class="meta" style="display:block;margin:4px 0 12px">You ran it 2 minutes ago, from 1 Jan 2026 to 18 Oct 2026, all channels.</p>
+   <div class="table-scroll"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
+   <div class="result-foot">
+   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
+   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  </div>
+  </div>
+  <div data-pane-group="state" data-pane="changed" hidden>
+   <div class="size-state caution" style="margin:8px 0 12px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The parameters changed.</b> This result is still for From 1 Jan 2026; run again to see it for 1 Jan 2024.</p></div>
+   <div class="table-scroll result-stale"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">18,412</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">4,210</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">1,530</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">966</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
+   <div class="result-foot">
+   <span>4 rows</span><span class="dot">·</span><span>scanned 5.1 GB, 42 of 312 partitions</span><span class="dot">·</span>
+   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  </div>
+  </div>
+  <div data-pane-group="state" data-pane="notrun" hidden>
+   <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the parameters and run the lens. A lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
+  </div>
+ </section>
+</div>
+</main>
+</div>
+<div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: state of the result">Result
+ <button class="seg on" data-target="fresh" role="tab" aria-selected="true">Up to date</button>
+ <button class="seg" data-target="changed" role="tab" aria-selected="false">Parameters changed</button>
+ <button class="seg" data-target="notrun" role="tab" aria-selected="false">Not run yet</button>
+</div>
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="bottom:72px">Seen as
+ <button class="seg" data-target="owner" role="tab" aria-selected="false">Owner</button>
+ <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

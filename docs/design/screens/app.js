@@ -56,7 +56,8 @@ document.querySelectorAll('[data-group]').forEach(group => {
   buttons.forEach(b => b.addEventListener('click', () => {
     buttons.forEach(x => { x.classList.remove('on'); x.setAttribute('aria-selected', 'false'); });
     b.classList.add('on'); b.setAttribute('aria-selected', 'true');
-    document.querySelectorAll(`[data-pane-group="${group.dataset.group}"]`).forEach(p => p.hidden = p.dataset.pane !== b.dataset.target);
+    // A pane may belong to more than one target: data-pane="fresh changed"
+    document.querySelectorAll(`[data-pane-group="${group.dataset.group}"]`).forEach(p => p.hidden = !p.dataset.pane.split(' ').includes(b.dataset.target));
   }));
 });
 
