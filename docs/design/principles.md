@@ -46,8 +46,9 @@ There are three layers:
 - Hover and active are **shades of grey**, not colour.
 - The palette is **warm grey**. A deliberate deviation from the cool greys in the brandbook, because Data Hub is an internal tool.
 - Text is **warm dark grey, never black**.
-- Collections get a colour from the Collection palette. Magenta, bordeaux and teal come from the brand; ochre, slate blue and olive are additions.
+- Collections get a colour from the Collection palette. Magenta, bordeaux and teal come from the brand; ochre, slate blue and olive are additions. The colour shows as **a thin bar on the left edge** of the card of a Collection, and of the head of its page ([DEC-UX-15](#dec-ux-15)).
 - **Signal colour** (ochre) only for a state that calls for action, such as a Level that has dropped.
+- **Urgent colour** (red, `--signal-urgent`) only for "Without a collection": Resources that wait for the Data Team ([DEC-UX-16](#dec-ux-16)).
 
 *The app today uses the colours of the brandbook and nine Collection colours of its own: see [OP-UX-08](#op-ux-08) and [OP-UX-09](#op-ux-09).*
 
@@ -71,7 +72,7 @@ There are three layers:
 
 - One family: **Phosphor**.
 - **Filled icons** for everything of the interface.
-- **Line icons** for what the User chooses, such as the icon of a Collection. They always sit in a circle with a light tint of the colour of the Collection. *Under review on 2026-10-23: the circle is busy ([OP-UX-16](#op-ux-16)).*
+- **Line icons** for what the User chooses, such as the icon of a Collection. The icon of a Collection is **grey, without a circle**; its colour is the bar on the edge of its card ([DEC-UX-15](#dec-ux-15)). Only a real Collection has that bar.
 
 *The icon of a Collection comes from Tabler Icons today: see [OP-UX-07](#op-ux-07).*
 
@@ -107,7 +108,7 @@ For Collections:
   - The first eight items, then "Show all" with the number.
   - Lenses and Reports join the list later, each with the icon of its kind ([OP-UX-15](#op-ux-15)).
 - **"Shared resources":** each with the icon of its kind, its name and the team that owns it ([OP-UX-02](#op-ux-02)).
-- **For the Data Team,** on top: "Without a collection", a Collection-like card with the Resources that wait for a Collection. Whether it gets a strong colour is open ([OP-UX-17](#op-ux-17)).
+- **For the Data Team,** on top: "Without a collection", a card with the Resources that wait for a Collection. It is no Collection, so it has no colour bar: it is in the urgent red instead, with a red tint, a red name and icon, and the number waiting in a red badge ([DEC-UX-16](#dec-ux-16)).
 - **One line per name:** a name that is too long ends in an ellipsis and shows in full on hover. This holds for Collections and Resources alike.
 - **Search** filters Collections and Resources together. A Collection whose name matches stays as it was; a Collection with a matching Resource unfolds and shows only the matching Resources.
 
@@ -184,7 +185,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 
 ## Page of a Collection
 
-Screens: [collection-overview](screens/collection-overview.html), [collection-edit](screens/collection-edit.html) and [collection-add-resources](screens/collection-add-resources.html). Designed on 2026-10-23, to review; the switch at the bottom right of the overview shows it as a Data Admin, the Owner or a colleague.
+Screens: [collection-overview](screens/collection-overview.html), [collection-edit](screens/collection-edit.html) and [collection-add-resources](screens/collection-add-resources.html). Designed and approved on 2026-10-23; the switch at the bottom right of the overview, for the prototype only, shows it as a Data Admin, the Owner or a colleague.
 
 - **Opens** when a User clicks a Collection in the panel ([DEC-UX-13](#dec-ux-13)). The page holds what the panel cannot: what the Collection is, what needs attention, and the lists in full ([DEC-UX-14](#dec-ux-14)).
 - **Head:** the icon, the name and the description of the Collection; a row with the Owner Unit, private or public, the number of Resources and Lenses, and when and by whom it was created.
@@ -231,10 +232,12 @@ Decided on 2026-10-22, after a tryout of the panel:
 - <a id="dec-ux-11"></a>**DEC-UX-11** · In a list, every item has the icon of its kind, the same for every item of that kind: a table for a Resource. It tells the kinds apart once Lenses and Reports join; it is not an icon of the item itself ([DEC-UX-06](#dec-ux-06)).
 - <a id="dec-ux-12"></a>**DEC-UX-12** · A Resource that is not published is shown in a lighter grey, without the struck-through eye.
 
-Decided on 2026-10-23, asking for the page of a Collection:
+Decided on 2026-10-23, with the page of a Collection and the icon of a Collection:
 
 - <a id="dec-ux-13"></a>**DEC-UX-13** · Clicking a Collection in the panel opens its page and unfolds it; the arrow next to it only folds and unfolds. This answers [OP-UX-14](#op-ux-14).
-- <a id="dec-ux-14"></a>**DEC-UX-14** · From the page of a Collection, a User gets an overview of its Resources and its Lenses, creates a Lens, and edits the details of the Collection; a Data Admin also adds Resources. *Note of 2026-10-23: only who owns the Collection creates Lenses in it and edits it ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)).*
+- <a id="dec-ux-14"></a>**DEC-UX-14** · From the page of a Collection, a User gets an overview of its Resources and its Lenses, creates a Lens, and edits the details of the Collection; a Data Admin also adds Resources. *Note of 2026-10-23: only who owns the Collection creates Lenses in it and edits it ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)).* *Approved on 2026-10-23, as designed in [collection-overview](screens/collection-overview.html).*
+- <a id="dec-ux-15"></a>**DEC-UX-15** · The icon of a Collection is grey, without a circle; the colour of the Collection is a thin bar on the left edge of its card, and of the head of its page. Variant E of the exploration; this answers [OP-UX-16](#op-ux-16).
+- <a id="dec-ux-16"></a>**DEC-UX-16** · "Without a collection" is not a Collection, so it never gets the colour bar of one. It is shown in an urgent red, because it waits for the Data Team and asks to be solved quickly. This answers [OP-UX-17](#op-ux-17).
 
 ## Open points
 
@@ -262,5 +265,5 @@ Raised on 2026-10-22, with the panel of [DEC-UX-10](#dec-ux-10):
 
 Raised on 2026-10-23:
 
-- [ ] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). [collection-icon-variants](screens/collection-icon-variants.html) shows six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens.
-- [ ] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the variants page shows it. Decide the colour, and whether it becomes a rule beyond this list.
+- [x] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). An exploration page showed six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens. *Decided on 2026-10-23: E, the colour on the edge, for real Collections only ([DEC-UX-15](#dec-ux-15)); the exploration page is removed.*
+- [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*

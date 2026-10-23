@@ -70,6 +70,7 @@
   --text-secondary: #5E5852;
   --text-muted: #8C857E;
   --signal-warn: #B07A28;        /* only for states that need action */
+  --signal-urgent: #C4432F;      /* only for what waits for the Data Team: "Without a collection" */
 }
 
 [data-theme="dark"] {
@@ -87,4 +88,5 @@
   --text-secondary: #BDB6AE;
   --text-muted: #8F877F;
   --signal-warn: #D9A453;
+  --signal-urgent: #E2725E;
 }

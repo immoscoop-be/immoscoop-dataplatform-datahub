@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection, proposed ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)), and only its Owner Unit adds Lenses and edits it ([DEC-CO-15](#dec-co-15)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -255,54 +255,54 @@ Search in the panel filters the Collections and their Resources together. A Coll
 
 ## The page of a Collection
 
-What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Proposed until the design is reviewed.
+What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.
 
 <a id="fr-co-25"></a>
 ### FR-CO-25 · Clicking a Collection opens its page
 
-**Status:** Proposed · **Source:** [DEC-UX-13](../../design/principles.md#dec-ux-13)
+**Status:** Specified · **Source:** [DEC-UX-13](../../design/principles.md#dec-ux-13)
 
 Clicking a Collection in the panel opens its page and unfolds it in the panel ([FR-CO-18](#fr-co-18)).
 
 <a id="fr-co-26"></a>
 ### FR-CO-26 · The page says what the Collection is and what needs attention
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 The page shows the icon, name and description of the Collection, its Owner Unit, whether it is private or public, the number of Resources and Lenses, and when and by whom it was created. To the Owner Unit and the Data Team it also shows what needs attention: a Level that dropped and waits for a Confirmation, open Signals, and Resources not published yet, each with a link to where it is solved.
 
 <a id="fr-co-27"></a>
 ### FR-CO-27 · The page lists the Resources of the Collection
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 The page lists every Resource of the Collection that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), with its Display Name, Level, Publication, open Signals and last change.
 
 <a id="fr-co-28"></a>
 ### FR-CO-28 · The page lists the Lenses built on the Collection
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO-15](#dec-co-15)), with their name, type, what they are built on, their weight ([FR-LE-02](09-lenses.md#fr-le-02)) and their Level ([DEC-DH-10](../../overview/data-hub.md#dec-dh-10)).
 
 <a id="fr-co-29"></a>
 ### FR-CO-29 · A Lens is started from the page of a Collection
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-15](#dec-co-15)); nobody else can. Whether such a Lens may also use Resources of other Collections is open ([OP-CO-07](#op-co-07)), and so is how the story is asked first ([FR-LE-05](09-lenses.md#fr-le-05), [OP-LE-01](09-lenses.md#op-le-01)).
 
 <a id="fr-co-30"></a>
 ### FR-CO-30 · The details are edited on the page
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec-co-15)); whether the Data Team does too, as [FR-CO-13](#fr-co-13) has it, is open ([OP-CO-12](#op-co-12)). The details are the name, description, colour, icon, Owner Unit and whether it is private or public. Dissolving is offered there too, and only possible for an empty Collection ([FR-CO-10](#fr-co-10)).
 
 <a id="fr-co-31"></a>
 ### FR-CO-31 · A Data Admin adds Resources from the page
 
-**Status:** Proposed · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
 From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
 

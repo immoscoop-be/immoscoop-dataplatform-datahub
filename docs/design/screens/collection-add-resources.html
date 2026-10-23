@@ -38,8 +38,8 @@
   </div>
   <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search collections and resources"></label>
   <div style="height:14px" data-for="datateam"></div>
-  <div class="tree-group card" data-for="datateam">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon neutral"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a collection</span><span class="meta">3 resources · Data team only</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Without a collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card unassigned" data-for="datateam">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a collection</span><span class="meta"><b class="count-badge">3</b> waiting · Data team only</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Without a collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="resource-unassigned.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Saved searches">Saved searches</span></span><span class="maturity" data-level="1"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency reviews">Agency reviews</span></span><span class="maturity" data-level="2"></span></a>
@@ -47,8 +47,8 @@
    </div>
   </div>
   <div class="panel-label">Your collections</div>
-  <div class="tree-group card open current">
-   <div class="tree-head"><a class="tree-link" href="collection-overview.html" aria-current="page"><span class="item-icon" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge open current" style="--c:var(--col-magenta)">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html" aria-current="page"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="2" data-previous="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="5"></span></a>
@@ -58,8 +58,8 @@
      <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
    </div>
   </div>
-  <div class="tree-group card">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon" style="--c:var(--col-bordeaux)"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="5"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
@@ -72,8 +72,8 @@
      <a class="tree-more" href="#">Show all 15</a>
    </div>
   </div>
-  <div class="tree-group card">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon" style="--c:var(--col-teal)"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-teal)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="5"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
@@ -86,8 +86,8 @@
      <a class="tree-more" href="#">Show all 22</a>
    </div>
   </div>
-  <div class="tree-group card">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon" style="--c:var(--col-ochre)"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-ochre)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="5"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
@@ -108,8 +108,8 @@
 </aside>
 <main class="main">
 <div class="breadcrumb">Collections</div>
-<div class="coll-head">
- <span class="item-icon large" style="--c:var(--col-magenta)"><i class="ph ph-coins"></i></span>
+<div class="coll-head" style="--c:var(--col-magenta)">
+ <span class="item-icon large"><i class="ph ph-coins"></i></span>
  <div style="flex:1;min-width:0">
   <h1 class="page-title">Credit leads</h1>
   <p class="prose">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</p>
