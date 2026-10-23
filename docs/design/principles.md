@@ -177,7 +177,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 - On top, a field to start one, with the kind to choose. "Ask a question" in the header opens it with Question chosen.
 - Under the field, who gets a notification for the chosen kind.
 - On a Signal, the Owner and the Data Team can make it an Anomaly.
-- Every Message knows its Subject, the asset it is about ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01)). Outside the page of its asset, in the Message Centre or a notification, a Message shows that asset with its icon and name and links to it, opening at the Message ([FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)).
+- Every Message knows its Subject, the object it is about: a Resource here, a Lens or a query elsewhere, the same way ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [DEC-CV-03](../requirements/functional/14-conversations.md#dec-cv-03)). Outside the page of its object, in the Message Centre or a notification, a Message shows that object with its icon and name and links to it, opening at the Message ([FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)).
 
 ### Preview
 

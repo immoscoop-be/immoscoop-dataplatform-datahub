@@ -25,7 +25,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
-| [Conversations](functional/14-conversations.md) | 5 (5 proposed) | 2 (2 proposed) | 2 | 3 (3 open) |
+| [Conversations](functional/14-conversations.md) | 5 (5 proposed) | 2 (2 proposed) | 3 | 3 (2 open, 1 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
@@ -238,11 +238,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-CV-01](functional/14-conversations.md#fr-cv-01) | A Message is always about something | Proposed | – | – | – |
-| [FR-CV-02](functional/14-conversations.md#fr-cv-02) | A Message links to its asset | Proposed | – | – | – |
-| [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message goes to a person, to the Owner or to the Data Team | Proposed | – | – | – |
-| [FR-CV-04](functional/14-conversations.md#fr-cv-04) | All Messages about an asset can be retrieved | Proposed | – | – | – |
-| [FR-CV-05](functional/14-conversations.md#fr-cv-05) | Who sees a Message follows who sees its asset | Proposed | – | – | – |
+| [FR-CV-01](functional/14-conversations.md#fr-cv-01) | A Message is always about something | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-02](functional/14-conversations.md#fr-cv-02) | A Message links to its object | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message goes to a person, to the Owner or to the Data Team | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-04](functional/14-conversations.md#fr-cv-04) | All Messages about an object can be retrieved | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-05](functional/14-conversations.md#fr-cv-05) | Who sees a Message follows who sees its object | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 
 ## Edge cases
 
@@ -283,7 +283,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-CV-01](functional/14-conversations.md#ec-cv-01) | The asset no longer exists | Proposed | – | – |
+| [EC-CV-01](functional/14-conversations.md#ec-cv-01) | The object no longer exists | Proposed | – | – |
 | [EC-CV-02](functional/14-conversations.md#ec-cv-02) | A Resource moves to another Collection | Proposed | – | – |
 
 ## Technical requirements
