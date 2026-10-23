@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)), and only its Owner Unit adds Lenses and edits it ([DEC-CO-15](#dec-co-15)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -35,6 +35,8 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-12"></a>**DEC-CO-12** · A Resource is visible to everyone who sees its Collection only once its Owner has published it: the first Publication is the first Confirmation ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)). Until then, only the Owner Unit and the Data Team see it. In a public Collection, the Publication thus opens a Resource to the whole company. This replaces "visible to the whole company" in [DEC-SR-06](04-stacks-and-resources.md#dec-sr-06) and [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 - <a id="dec-co-13"></a>**DEC-CO-13** · The icon of a Collection comes from Tabler Icons (MIT licence), the outline icons on a 24-pixel grid with a 2-pixel line, as the icons of the web app itself. Not the whole set of some 5,000 icons, but a list chosen for the functional domains of Immoscoop, kept in one place for catalogue and the web app; a new icon is a change to that list. Tabler has a Figma plugin, so designs can use the same set. This answers [OP-CO-01](#op-co-01). *Note of 2026-10-19: the chosen list is replaced by [DEC-CO-14](#dec-co-14): every outline icon but the logos of brands.*
 - <a id="dec-co-14"></a>**DEC-CO-14** · A Collection can carry any outline icon of Tabler Icons except the logos of brands (Tabler's category Brand): some 4,800 icons, so that every functional domain finds its own. The web app does not take them all on board: it loads the drawing of an icon only where it shows one, and the list to choose from only when a Collection is created or edited. Choosing is searching, by the name of an icon and the words Tabler gives it, so that "house" finds the home and "money" finds coins and the wallet; the results are grouped by Tabler's category. Before anything is typed, the choice shows a short list of suggestions for the functional domains of Immoscoop. This replaces the chosen list of [DEC-CO-13](#dec-co-13). *Note of 2026-10-22: the [design](../../design/principles.md#icons) takes Phosphor for every icon; which family applies is open ([OP-UX-07](../../design/principles.md#op-ux-07)).*
+- <a id="dec-co-15"></a>**DEC-CO-15** · A Collection also holds Lenses. Only its Owner Unit adds Lenses to it, changes them, and edits the Collection: a User who does not own a Collection cannot change it. This extends [DEC-DH-64](../../overview/data-hub.md#dec-dh-64), where a Collection groups Resources only. Adding and removing Resources stays with the Data Admins ([DEC-CO-08](#dec-co-08)); whether the Data Team keeps editing every Collection is open ([OP-CO-12](#op-co-12)). *Decided on 2026-10-23, with the page of a Collection.*
+- <a id="dec-co-16"></a>**DEC-CO-16** · A User sees a Lens only when they may use every Resource beneath it ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)). *Decided on 2026-10-23, for the Lenses of [OP-CO-07](#op-co-07).*
 
 ## What a Collection has
 
@@ -197,6 +199,116 @@ Every Collection is private or public. Whoever creates it chooses, private unles
 
 A public Collection is visible to every User. A private Collection is visible only to the members of its Owner Unit and to the Data Team. To anyone else, a private Collection does not exist: it is not listed, and asking for it gives the same answer as for a Collection that does not exist. Which of its Resources someone sees is set by [FR-SR-31](04-stacks-and-resources.md#fr-sr-31).
 
+## The panel of Collections
+
+How a User finds the Collections and their Resources in the web app: one panel, in which a Collection unfolds ([DEC-UX-10](../../design/principles.md#dec-ux-10)). The screens are in the [design](../../design/principles.md#what-is-in-the-panel).
+
+<a id="fr-co-18"></a>
+### FR-CO-18 · One list of Collections, each unfolding to what it holds
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+The panel of Collections lists every Collection the User sees ([FR-CO-17](#fr-co-17)). A Collection unfolds in place to show the Resources in it that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)); the arrow next to it folds and unfolds it. Several Collections can be unfolded at once. There is no separate list per Collection. For the Data Team, the Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) are on top, and unfold the same way.
+
+*Note of 2026-10-23: clicking the Collection itself opens its page ([FR-CO-25](#fr-co-25)); only the arrow folds it.*
+
+<a id="fr-co-19"></a>
+### FR-CO-19 · Opening a Resource unfolds its Collection
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+When a User opens a Resource, its Collection is unfolded in the panel, and the Resource is marked as the one that is open.
+
+<a id="fr-co-20"></a>
+### FR-CO-20 · An item shows the icon of its kind, its name and its Level
+
+**Status:** Specified · **Source:** [DEC-UX-11](../../design/principles.md#dec-ux-11)
+
+Each item in an unfolded Collection shows the icon of its kind, the same for every item of that kind (a table for a Resource), its Display Name, and its Level ([FR-MR-10](06-maturity-and-release.md#fr-mr-10)).
+
+<a id="fr-co-21"></a>
+### FR-CO-21 · Every name takes one line
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+In the panel, the name of a Collection or of an item takes one line. A name that is too long ends in an ellipsis and is shown in full on hover.
+
+<a id="fr-co-22"></a>
+### FR-CO-22 · A Resource that is not published is shown as such
+
+**Status:** Specified · **Source:** [DEC-UX-12](../../design/principles.md#dec-ux-12)
+
+A Resource that is not published, which only its Owner Unit and the Data Team see ([DEC-CO-12](#dec-co-12)), is shown in a lighter grey in the panel, without an icon. Hovering over it says that it is not published, and so does a screen reader.
+
+<a id="fr-co-23"></a>
+### FR-CO-23 · A long Collection shows its first eight items
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+An unfolded Collection shows its first eight items, then "Show all" with the number of items, which shows the rest.
+
+<a id="fr-co-24"></a>
+### FR-CO-24 · Search in the panel covers Collections and their Resources
+
+**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
+
+Search in the panel filters the Collections and their Resources together. A Collection whose name matches stays listed as it was; a Collection that holds a matching Resource unfolds and shows only the matching Resources. When nothing matches, the panel says so.
+
+## The page of a Collection
+
+What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.
+
+<a id="fr-co-25"></a>
+### FR-CO-25 · Clicking a Collection opens its page
+
+**Status:** Specified · **Source:** [DEC-UX-13](../../design/principles.md#dec-ux-13)
+
+Clicking a Collection in the panel opens its page and unfolds it in the panel ([FR-CO-18](#fr-co-18)).
+
+<a id="fr-co-26"></a>
+### FR-CO-26 · The page says what the Collection is and what needs attention
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+The page shows the icon, name and description of the Collection, its Owner Unit, whether it is private or public, the number of Resources and Lenses, and when and by whom it was created. To the Owner Unit and the Data Team it also shows what needs attention: a Level that dropped and waits for a Confirmation, open Signals, and Resources not published yet, each with a link to where it is solved.
+
+<a id="fr-co-27"></a>
+### FR-CO-27 · The page lists the Resources of the Collection
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+The page lists every Resource of the Collection that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), with its Display Name, Level, Publication, open Signals and last change.
+
+<a id="fr-co-28"></a>
+### FR-CO-28 · The page lists the Lenses built on the Collection
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO-15](#dec-co-15)), with their name, type, what they are built on, their weight ([FR-LE-02](09-lenses.md#fr-le-02)) and their Level ([DEC-DH-10](../../overview/data-hub.md#dec-dh-10)).
+
+*Note of 2026-10-23: without their weight, since [FR-LE-02](09-lenses.md#fr-le-02) is withdrawn ([DEC-UX-24](../../design/principles.md#dec-ux-24)).*
+
+<a id="fr-co-29"></a>
+### FR-CO-29 · A Lens is started from the page of a Collection
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-15](#dec-co-15)); nobody else can. Whether such a Lens may also use Resources of other Collections is open ([OP-CO-07](#op-co-07)), and so is how the story is asked first ([FR-LE-05](09-lenses.md#fr-le-05), [OP-LE-01](09-lenses.md#op-le-01)).
+
+<a id="fr-co-30"></a>
+### FR-CO-30 · The details are edited on the page
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec-co-15)); whether the Data Team does too, as [FR-CO-13](#fr-co-13) has it, is open ([OP-CO-12](#op-co-12)). The details are the name, description, colour, icon, Owner Unit and whether it is private or public. Dissolving is offered there too, and only possible for an empty Collection ([FR-CO-10](#fr-co-10)).
+
+<a id="fr-co-31"></a>
+### FR-CO-31 · A Data Admin adds Resources from the page
+
+**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
+
+From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
+
 ## Edge cases
 
 Proposals to confirm.
@@ -227,9 +339,11 @@ What someone may see and do beyond Collections ([Permissions and library cards](
 - [ ] <a id="op-co-04"></a>**OP-CO-04** · Work out the line of thought of whether promotion happens within a Collection.
 - [ ] <a id="op-co-05"></a>**OP-CO-05** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-co-06"></a>**OP-CO-06** · Decide how the Data Team hands a Collection to an Owner Unit it is not in itself, for example when the Owner Unit is dissolved in Workspace ([EC-CO-01](#ec-co-01)). Today, only a group of whoever changes the Owner Unit can be chosen ([FR-CO-15](#fr-co-15)). *Raised on 2026-10-19.*
-- [ ] <a id="op-co-07"></a>**OP-CO-07** · Decide who may see and build dashboards, Lenses and Reports, on the Resources of a Collection. Proposal of 2026-10-19: everyone may build on every Resource they can see, and a dashboard is visible only to whoever sees its Collection and every Resource under it, so that a public dashboard never shows a private Resource. *Raised on 2026-10-19.*
+- [ ] <a id="op-co-07"></a>**OP-CO-07** · Decide who may see and build dashboards, Lenses and Reports, on the Resources of a Collection. Proposal of 2026-10-19: everyone may build on every Resource they can see, and a dashboard is visible only to whoever sees its Collection and every Resource under it, so that a public dashboard never shows a private Resource. *Raised on 2026-10-19.* *Note of 2026-10-23: only the Owner Unit adds Lenses to its Collection ([DEC-CO-15](#dec-co-15)); open remains whether such a Lens may use Resources of other Collections.* *Decided on 2026-10-23 for Lenses: a User sees a Lens only when they may use every Resource beneath it ([DEC-CO-16](#dec-co-16)). Reports and dashboards remain.*
 - [x] <a id="op-co-09"></a>**OP-CO-09** · The workshop of 2026-10-22 proposes that a private Collection is visible only to its owners, and to nobody else ([REQ-DH-COLL](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-coll)). [DEC-CO-10](#dec-co-10), [DEC-CO-11](#dec-co-11) and [FR-CO-17](#fr-co-17) let the Data Team see every private Collection too, so that it can add Resources and help their Owners. Decide whether that stays. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-22: the Data Team keeps seeing private Collections ([DEC-CO-11](#dec-co-11)); "nobody else" in the workshop means no other colleagues.*
 - [x] <a id="op-co-10"></a>**OP-CO-10** · The workshop of 2026-10-22 proposes that the Owner decides, per Resource, what is in a Collection and whether it is public ([REQ-DH-COLL](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-coll)). Publishing is already up to the Owner ([FR-SR-16](04-stacks-and-resources.md#fr-sr-16)); adding and removing Resources is up to the Data Team ([DEC-CO-08](#dec-co-08), [FR-CO-14](#fr-co-14)). Decide whether the Owner also chooses the Resources of their Collection. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-22: the Data Team keeps adding and removing Resources ([DEC-CO-08](#dec-co-08)); the Owner decides per Resource whether it is published ([FR-SR-16](04-stacks-and-resources.md#fr-sr-16)).*
+- [x] <a id="op-co-11"></a>**OP-CO-11** · Decide which Lenses the page of a Collection lists ([FR-CO-28](#fr-co-28)). Proposal: every Lens built on at least one of its Resources, so that a Lens over two Collections shows in both and needs no Collection of its own; this keeps a Collection a container of Resources ([DEC-DH-64](../../overview/data-hub.md#dec-dh-64)). *Raised on 2026-10-23.* *Decided on 2026-10-23: the Lenses its Owner Unit adds to it ([DEC-CO-15](#dec-co-15)).*
+- [ ] <a id="op-co-12"></a>**OP-CO-12** · Decide what the Data Team may do in a Collection it does not own. [DEC-CO-08](#dec-co-08) and [FR-CO-13](#fr-co-13), already built, let it edit every Collection; [DEC-CO-15](#dec-co-15) says that only who owns a Collection edits it and adds Lenses. Decide whether the Data Team keeps editing the details of every Collection, and whether it adds Lenses. Adding and removing Resources stays with the Data Admins either way. *Raised on 2026-10-23.*
 
 ## Builds on
 

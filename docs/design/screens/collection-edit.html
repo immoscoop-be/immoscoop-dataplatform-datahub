@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<!--
+  Screen: the page of a Collection, editing its details
+  The Owner Unit or the Data Team clicked "Edit": the head of the page turns into fields, in place.
+  Requirements: FR-CO-30 (Proposed); FR-CO-02 to FR-CO-05, FR-CO-10, FR-CO-13, FR-CO-15, FR-CO-16; Log COL-002 to COL-004.
+  Related screens: collection-overview.html (Cancel and Save go back there).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Editing Credit leads</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">DV</div>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search collections and resources"></label>
+  <div style="height:14px" data-for="datateam"></div>
+  <div class="tree-group card unassigned" data-for="datateam">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a collection</span><span class="meta"><b class="count-badge">3</b> waiting · Data team only</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Without a collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-unassigned.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Saved searches">Saved searches</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Agency reviews">Agency reviews</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit simulations">Credit simulations</span></span><span class="maturity" data-level="1"></span></a>
+   </div>
+  </div>
+  <div class="panel-label">Your collections</div>
+  <div class="tree-group card coll-edge open current" style="--c:var(--col-magenta)">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html" aria-current="page"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="2" data-previous="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests · not published">Duplicate requests<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-teal)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-ochre)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts · not published">Broker contacts<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <div class="panel-label">Shared resources</div>
+  <a class="list-item card" data-name="broker service packs"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Broker service packs</span><span class="meta"><i class="ph-fill ph-users-three"></i>Sales</span></span></a>
+  <a class="list-item card" data-name="search sessions"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Search sessions</span><span class="meta"><i class="ph-fill ph-users-three"></i>Data team</span></span></a>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Collections</div>
+<form class="card" style="margin-top:10px;border-radius:var(--radius-xl);padding:16px 18px 18px" onsubmit="location.href='collection-overview.html';return false">
+ <div class="edit-bar"><i class="ph-fill ph-pencil-simple" style="color:var(--text-secondary)"></i><p>Editing the collection. Every change you save goes into its history, with your name.</p><a class="btn-quiet" href="collection-overview.html">Cancel</a><button class="btn-primary" type="submit"><i class="ph-fill ph-check" style="font-size:15px"></i>Save</button></div>
+ <div class="grid" style="grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:10px">
+  <div class="sub-tile">
+   <label class="field"><span>Name</span><input value="Credit leads" maxlength="80"></label>
+   <label class="field"><span>Description</span><textarea rows="3">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</textarea></label>
+   <label class="field"><span>Owner unit</span><select><option>Credit team · credit-team@immoscoop.be</option><option>Data team · datahub-datateam@immoscoop.be</option><option>Sales · sales@immoscoop.be</option></select></label>
+   <div class="meta" style="margin:-6px 0 12px">Only groups you are in. The owner unit answers for the resources of the collection.</div>
+   <div class="field"><span>Who sees it</span>
+    <div data-group="vis" role="tablist" style="display:flex;gap:4px"><button type="button" class="seg" data-target="private" role="tab" aria-selected="false"><i class="ph-fill ph-lock-simple"></i> Private</button><button type="button" class="seg on" data-target="public" role="tab" aria-selected="true"><i class="ph-fill ph-globe-simple"></i> Public</button></div>
+    <p class="meta" data-pane-group="vis" data-pane="public" style="margin-top:6px">Every colleague sees the collection, and the resources in it once they are published.</p>
+    <p class="meta" data-pane-group="vis" data-pane="private" style="margin-top:6px" hidden>Only the credit team and the data team see the collection.</p>
+   </div>
+  </div>
+  <div class="sub-tile">
+   <div class="field"><span>Colour</span>
+    <div class="swatches" role="radiogroup" aria-label="Colour">
+     <button type="button" class="swatch on" style="--c:var(--col-magenta)" aria-label="Magenta"></button><button type="button" class="swatch" style="--c:var(--col-bordeaux)" aria-label="Bordeaux"></button><button type="button" class="swatch" style="--c:var(--col-teal)" aria-label="Teal"></button><button type="button" class="swatch" style="--c:var(--col-ochre)" aria-label="Ochre"></button><button type="button" class="swatch" style="--c:var(--col-slate)" aria-label="Slate blue"></button><button type="button" class="swatch" style="--c:var(--col-olive)" aria-label="Olive"></button>
+    </div>
+   </div>
+   <div class="field" style="margin-top:14px"><span>Icon</span>
+    <label class="search card" style="background:var(--surface-solid)"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search icons, such as money or house"></label>
+    <div class="icon-grid" role="radiogroup" aria-label="Icon">
+     <button type="button" class="on" aria-label="Coins"><i class="ph ph-coins"></i></button><button type="button" aria-label="Wallet"><i class="ph ph-wallet"></i></button><button type="button" aria-label="Bank"><i class="ph ph-bank"></i></button><button type="button" aria-label="House"><i class="ph ph-house-line"></i></button><button type="button" aria-label="Buildings"><i class="ph ph-buildings"></i></button><button type="button" aria-label="Briefcase"><i class="ph ph-briefcase"></i></button><button type="button" aria-label="Handshake"><i class="ph ph-handshake"></i></button><button type="button" aria-label="Megaphone"><i class="ph ph-megaphone"></i></button><button type="button" aria-label="Binoculars"><i class="ph ph-binoculars"></i></button><button type="button" aria-label="Key"><i class="ph ph-key"></i></button><button type="button" aria-label="Chart"><i class="ph ph-chart-line-up"></i></button><button type="button" aria-label="Users"><i class="ph ph-users"></i></button>
+    </div>
+   </div>
+  </div>
+ </div>
+ <div class="notice" style="margin-top:12px;background:var(--surface-sub)" data-for="owner datateam"><i class="ph-fill ph-trash"></i><p style="flex:1;margin:0;font-size:var(--text-small)"><b style="font-weight:500">Dissolve the collection.</b> Only an empty collection can be dissolved; this one still holds 6 resources. The data team removes them first.</p><button type="button" class="btn-quiet" disabled style="opacity:.5;cursor:not-allowed">Dissolve</button></div>
+</form>
+<div class="section-head"><h2>Resources</h2><a class="text-link" href="collection-add-resources.html" data-for="datateam"><i class="ph-fill ph-plus-circle"></i><span>Add resources</span></a></div>
+<div class="table-card card"><table>
+ <thead><tr><th>Name</th><th>Level</th><th>Publication</th><th>Signals</th><th>Last change</th><th data-for="datateam"></th></tr></thead>
+ <tbody>
+  <tr><td><a class="name-cell" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly lead volume</span></a></td><td><span class="level-cell"><span class="maturity" data-level="2" data-previous="4"></span>2 · Described</span></td><td>Published</td><td><span class="warn">1 open</span></td><td class="muted">Level dropped · 2 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Weekly lead volume from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Credit lead funnel</span></a></td><td><span class="level-cell"><span class="maturity" data-level="5"></span>5 · Monitored</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">Check passed · today</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Credit lead funnel from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead sources</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">EDA linked · 1 week ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Lead sources from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead response time</span></a></td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td>Published</td><td><span class="muted">—</span></td><td class="muted">Confirmed · 3 weeks ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Lead response time from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr class="unpublished" data-for="owner datateam"><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></a></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td><span class="muted">Not published</span></td><td><span class="muted">—</span></td><td class="muted">Added · 5 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove Rejected leads from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+  <tr class="unpublished" data-for="owner datateam"><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>KBC follow-up</span></a></td><td><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></td><td><span class="muted">Not published</span></td><td><span class="muted">—</span></td><td class="muted">Added · 2 days ago</td><td data-for="datateam" style="width:1%"><button class="icon-btn" aria-label="Remove KBC follow-up from the collection" title="Remove from the collection"><i class="ph ph-minus-circle"></i></button></td></tr>
+ </tbody></table></div>
+<div class="section-head"><h2>Lenses</h2><a class="text-link" href="#" data-for="owner"><i class="ph-fill ph-plus-circle"></i><span>New lens</span></a></div>
+<div class="table-card card"><table>
+ <thead><tr><th>Name</th><th>Type</th><th>Built on</th><th>Level</th><th>Made by</th></tr></thead>
+ <tbody>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Leads per source, week by week</span></a></td><td class="muted">Trend</td><td style="color:var(--text-secondary)">Weekly lead volume</td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted nowrap">An Claes</td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>From request to KBC</span></a></td><td class="muted">Funnel</td><td style="color:var(--text-secondary)">Credit lead funnel, Lead sources</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted nowrap">Mia Peeters</td></tr>
+  <tr><td><a class="name-cell" href="#"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Response time and conversion</span></a></td><td class="muted">Comparison</td><td style="color:var(--text-secondary)">Lead response time, Credit lead funnel</td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td class="muted nowrap">An Claes</td></tr>
+ </tbody></table>
+ <p class="meta" style="padding:8px 10px 2px">The lenses the credit team added to this collection. Only the owner unit adds and changes them. A lens takes the lowest level of what it is built on.</p></div>
+<div style="height:30px"></div>
+</main>
+</div>
+
+
+<script src="app.js"></script>
+</body>
+</html>

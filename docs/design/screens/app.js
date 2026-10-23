@@ -16,10 +16,37 @@ const savePanel = () => { try { localStorage.setItem('dh-panel', app.classList.c
 document.querySelector('.nav-btn.active')?.addEventListener('click', () => { app.classList.toggle('panel-open'); savePanel(); });
 document.getElementById('collapse')?.addEventListener('click', () => { app.classList.remove('panel-open'); savePanel(); });
 
-// Search filters the panel list
+// Panel of Collections: the arrow folds and unfolds a Collection in place (FR-CO-18); the Collection itself opens its page (FR-CO-25),
+// which in these prototypes exists only for Credit leads, so the others just unfold
+const fold = (g, open) => { g.classList.toggle('open', open); g.querySelector('.tree-toggle')?.setAttribute('aria-expanded', open); };
+document.querySelectorAll('.tree-toggle').forEach(t => t.addEventListener('click', () => { const g = t.closest('.tree-group'); fold(g, !g.classList.contains('open')); }));
+document.querySelectorAll('.tree-link[href="#"]').forEach(a => a.addEventListener('click', e => { e.preventDefault(); fold(a.closest('.tree-group'), true); }));
+
+// Prototype only: switch the role the screen is seen as
+document.querySelectorAll('.role-switch .seg').forEach(b => b.addEventListener('click', () => { document.documentElement.dataset.role = b.dataset.target; }));
+
+// Search filters Collections and their items together (FR-CO-24): a Collection whose name matches stays as it was,
+// one with a matching item unfolds and shows only those; emptying the search restores what was unfolded
+const unfolded = new Map();
 document.getElementById('panel-search')?.addEventListener('input', e => {
   const q = e.target.value.toLowerCase().trim(); let n = 0;
-  document.querySelectorAll('.panel [data-name]').forEach(el => { const m = el.dataset.name.includes(q); el.hidden = !m; if (m) n++; });
+  document.querySelectorAll('.tree-group').forEach(g => {
+    if (!unfolded.has(g)) unfolded.set(g, g.classList.contains('open'));
+    const own = g.querySelector('.tree-head .item-title').textContent.toLowerCase().includes(q);
+    let hits = 0;
+    g.querySelectorAll('.tree-res').forEach(r => { const m = own || r.querySelector('.clip').firstChild.textContent.toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
+    g.querySelectorAll('.tree-more').forEach(r => r.hidden = !!q && !own);
+    g.hidden = !own && hits === 0; if (!g.hidden) n++;
+    g.classList.toggle('open', q ? (!own || unfolded.get(g)) && hits > 0 : unfolded.get(g));
+    if (!q) unfolded.delete(g);
+  });
+  document.querySelectorAll('.panel .list-item[data-name]').forEach(el => { const m = el.dataset.name.includes(q); el.hidden = !m; if (m) n++; });
+  // A heading such as "Shared resources" goes when nothing under it is left
+  document.querySelectorAll('.panel-label').forEach(label => {
+    let el = label.nextElementSibling, shown = false;
+    while (el && !el.classList.contains('panel-label') && el.id !== 'no-results') { if (!el.hidden) shown = true; el = el.nextElementSibling; }
+    label.hidden = !shown;
+  });
   const empty = document.getElementById('no-results'); if (empty) empty.hidden = n > 0;
 });
 
@@ -58,4 +85,11 @@ document.querySelectorAll('.maturity').forEach(m => {
   const name = `${l} · ${LEVELS[l]}` + (p >= 0 ? ` (was ${p} · ${LEVELS[p]})` : '');
   m.setAttribute('role', 'img'); m.setAttribute('aria-label', 'Maturity ' + name);
   if (!m.hasAttribute('data-no-tooltip')) m.dataset.name = name;
+});
+
+// Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
+// ?role=owner, ?size=large
+new URLSearchParams(location.search).forEach((value, key) => {
+  if (key === 'role') document.documentElement.dataset.role = value;
+  document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
 });
