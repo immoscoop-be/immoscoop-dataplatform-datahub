@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--
+  Screen: the Message Centre (DEC-UX-29)
+  "Messages" in the rail, with the number unread. The panel filters: For you, Unread, Written by you, Everything you may see;
+  by kind, Question, Remark, Signal and what Data Hub tells you; and by the kind of object the Messages are on.
+  The list: each Message with its object, its kind and state, who and when, and a first line; the one opened shows on the
+  right with its replies, a reply field and the way to its object (FR-CV-02). The slide-in on a Collection, Resource or
+  Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
+  Requirements: FR-CV-01 to FR-CV-07 (Proposed); DEC-CV-01 to DEC-CV-05; FR-SR-10 (a notification from Data Hub).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Messages</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></button>
+  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
+  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <a class="nav-btn active" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread" aria-current="page"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span><span class="flare top"></span><span class="flare bottom"></span></a>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
+  <div class="avatar" aria-label="Your account">MP</div>
+</nav>
+<aside class="panel" aria-label="Messages">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Messages</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search messages"></label>
+  <a class="mc-filter on" href="#" aria-current="page"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-circle"></i><span>Unread</span><span class="count">3</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-pencil-simple-line"></i><span>Written by you</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-globe-simple"></i><span>Everything you may see</span></a>
+  <div class="panel-label">Kind</div>
+  <a class="mc-filter" href="#"><i class="ph ph-question"></i><span>Questions</span><span class="count">4</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-chat-text"></i><span>Remarks</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-warning-diamond"></i><span>Signals</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-bell-simple"></i><span>From Data Hub</span><span class="count">1</span></a>
+  <div class="panel-label">On</div>
+  <a class="mc-filter" href="#"><i class="ph ph-coins"></i><span>Collections</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-table"></i><span>Resources</span><span class="count">3</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-aperture"></i><span>Lenses</span><span class="count">1</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-terminal-window"></i><span>Queries</span><span class="count">1</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Messages</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
+ <div style="flex:1"><h1 class="page-title">For you</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">Messages on what the credit team owns, on what you wrote or answered, and what Data Hub tells you.</p></div>
+</div>
+<div class="mc">
+ <section class="card mc-list" aria-label="Messages">
+  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">6</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
+  <a class="mc-item on unread" href="#">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">1 hour ago</span></span>
+     <span class="mc-excerpt">Why does Mailing drop after week 32? Did something change in how mailing leads are tagged?</span>
+     
+    </span>
+   </a><a class="mc-item unread" href="#">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">3 days ago</span></span>
+     <span class="mc-excerpt">The count for the source partner dropped to zero in the week of 13 Oct. We usually see about forty leads there.</span>
+     <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
+    </span>
+   </a><a class="mc-item unread" href="#">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="query.html"><i class="ph ph-terminal-window" aria-hidden="true"></i><span class="mc-kind">Query</span><b>Partner leads in September</b></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">yesterday</span></span>
+     <span class="mc-excerpt">Can this become a lens? I run it every month for the partner review.</span>
+     
+    </span>
+   </a><a class="mc-item" href="#">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="collection-messages.html"><i class="ph ph-coins" aria-hidden="true"></i><span class="mc-kind">Collection</span><b>Credit leads</b></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">Ruth Aerts</span><span class="meta" style="margin-left:auto">yesterday</span></span>
+     <span class="mc-excerpt">Will KBC follow-up be published this month? We would like to use it in the monthly report.</span>
+     <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
+    </span>
+   </a><a class="mc-item" href="#">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
+     <span class="mc-excerpt">Weekly lead volume dropped from 4 · Explored to 2 · Described: a structural change added the column lead_channel. It waits for your confirmation.</span>
+     
+    </span>
+   </a><a class="mc-item" href="#">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">You</span><span class="meta" style="margin-left:auto">1 week ago</span></span>
+     <span class="mc-excerpt">Is a lead counted again when the same person applies twice in one week?</span>
+     <span class="mc-row" style="margin-top:4px"><span class="meta"><i class="ph ph-chat-circle"></i> 1</span></span>
+    </span>
+   </a>
+ </section>
+ <section class="card mc-detail" aria-label="The message">
+  <div class="mc-detail-head">
+   <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Leads per source name</div></div>
+   <a class="btn-quiet outline" href="lens-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px">Open the lens<i class="ph ph-arrow-right"></i></a>
+  </div>
+  <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">today 14:10</span></div>
+     <p>Why does Mailing drop after week 32? Did something change in how mailing leads are tagged?</p>
+     
+     <div class="thread-actions"></div>
+    </div>
+   </div>
+  <div class="composer" style="margin-top:6px">
+   <span class="label" style="margin:0">Reply</span>
+   <textarea placeholder="Your answer helps everyone who opens this lens."></textarea>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification. Everyone who may see the lens sees your answer.</p><button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Reply</button></div>
+  </div>
+ </section>
+</div>
+</main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

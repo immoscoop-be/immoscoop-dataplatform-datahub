@@ -31,6 +31,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-cv-02"></a>**DEC-CV-02** · Messages are kept in one place, by Subject. The Conversations of an object, the Message Centre of a User and every notification read from that one place, so that a Message exists once, wherever it shows.
 - <a id="dec-cv-03"></a>**DEC-CV-03** · The Subject is the same for every kind of object in Data Hub that has an ID: Resources today; Lenses, queries by their Query ID ([FR-LN-05](07-log-and-notifications.md#fr-ln-05)), Reports, Collections and later kinds alike. A new kind of object adds only its name and how to link to it; Messages, their links and their retrieval stay the same. This answers [OP-CV-03](#op-cv-03).
 - <a id="dec-cv-04"></a>**DEC-CV-04** · A Message is never private and is not a chat with a person: for that there is Slack. A Message enriches the data of its object and informs colleagues, so everyone who may see the object sees it. This answers [OP-CV-01](#op-cv-01).
+- <a id="dec-cv-05"></a>**DEC-CV-05** · A Message is about a whole object, a Collection, a Resource, a Lens or a query, and never about a part of it, such as a Column or a Parameter, nor about a second object. This answers [OP-CV-02](#op-cv-02).
 
 ## Terms
 
@@ -83,6 +84,20 @@ Data Hub finds every Message about an object by its Subject, kind and ID, with t
 
 Only a User who may see the object of a Message sees the Message and follows its link: a Resource by its Publication and Collection ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), a Lens by its Resources ([DEC-CO-16](03-collections.md#dec-co-16)), a query by who ran it and the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Everyone who may see the object sees all its Messages: none is private ([DEC-CV-04](#dec-cv-04)).
 
+<a id="fr-cv-06"></a>
+### FR-CV-06 · The Message Centre
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages)
+
+Every User has a Message Centre, reached from the navigation with the number of unread Messages. It shows, by default, the Messages for them: on the objects their Owner Unit owns, the Messages they wrote or answered, the Signals for the Data Team, and what Data Hub itself tells them, such as a Level that dropped. It filters on unread, written by them and everything they may see; on the kind of Message; and on the kind of object. Each Message shows its object and links to it ([FR-CV-02](#fr-cv-02)); opened, it shows its replies and a field to answer.
+
+<a id="fr-cv-07"></a>
+### FR-CV-07 · The Messages of an object, on the object
+
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages)
+
+The page of a Collection, a Resource and a Lens has "Messages", with their number, which opens the Messages on that object in a slide-in: the Message Centre filtered on the object ([DEC-CV-02](#dec-cv-02)). It starts with a field for a new Message, whose Subject is that object. A Collection takes a Question or a Remark; a Resource and a Lens also a Signal, as a Signal is about data.
+
 ## Edge cases
 
 <a id="ec-cv-01"></a>
@@ -106,6 +121,6 @@ Who gets which notification, when and through which channel belongs to [Log and 
 ## Open points
 
 - [x] <a id="op-cv-01"></a>**OP-CV-01** · Decide whether a Message to one person shows in the Conversations of its object for everyone who may see the object, or only for its writer and its recipient. Proposal: for everyone who may see the object, as the Reactions do ([DEC-SR-20](04-stacks-and-resources.md#dec-sr-20)), so that an answer helps the next person with the same question. *Raised on 2026-10-23.* *Decided on 2026-10-23: there are no private Messages and no Messages to a person; a Message enriches the data and informs colleagues, and a chat belongs in Slack ([DEC-CV-04](#dec-cv-04)).*
-- [ ] <a id="op-cv-02"></a>**OP-CV-02** · Decide whether a Message can point to a part of its object besides its Subject, such as a Column of a Resource or a Parameter of a Lens, or to a second object, such as the query behind a figure on a Resource. *Raised on 2026-10-23.* *Note of 2026-10-23, from Max: no second object. A part is in doubt: picking a Column while writing asks more of the writer, but every remark about a field is good documentation of the data. A proposal that asks nothing extra: a Message written from the row of a Column, on the Columns tab, carries that Column as well, the way the Subject is set from where a Message is written; it shows on the Column and in the Conversations of the Resource.*
+- [x] <a id="op-cv-02"></a>**OP-CV-02** · Decide whether a Message can point to a part of its object besides its Subject, such as a Column of a Resource or a Parameter of a Lens, or to a second object, such as the query behind a figure on a Resource. *Raised on 2026-10-23.* *Note of 2026-10-23, from Max: no second object. A part is in doubt: picking a Column while writing asks more of the writer, but every remark about a field is good documentation of the data. A proposal that asks nothing extra: a Message written from the row of a Column, on the Columns tab, carries that Column as well, the way the Subject is set from where a Message is written; it shows on the Column and in the Conversations of the Resource.* *Decided on 2026-10-23: no; a Message stays on the level of the objects themselves ([DEC-CV-05](#dec-cv-05)).*
 - [ ] <a id="op-cv-04"></a>**OP-CV-04** · Discuss Messages as a whole before they are built: what they are for, enriching the data and informing colleagues, their kinds, and who is notified of which, as Max asked. *Raised on 2026-10-23.*
 - [x] <a id="op-cv-03"></a>**OP-CV-03** · Decide which kinds of Subject come first. Resources have Conversations today ([design](../../design/principles.md#conversations)); Lenses, Reports and Collections would follow with the same Subject. *Raised on 2026-10-23.* *Decided on 2026-10-23: the Subject works the same for every kind of object, Resources, Lenses and queries among them, and later kinds ([DEC-CV-03](#dec-cv-03)).*

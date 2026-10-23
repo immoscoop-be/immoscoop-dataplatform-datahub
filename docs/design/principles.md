@@ -81,7 +81,7 @@ There are three layers:
 
 ## Navigation
 
-- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)); at the bottom theme, settings and account.
+- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)); at the bottom Messages, with the number unread ([DEC-UX-29](#dec-ux-29)), then theme, settings and account.
 - **Collapsed,** each icon shows a label after a short delay. The active icon keeps its transparent tile.
 - **A slide-out panel per main item.** The active icon and the panel form one shape: the icon has the same background as the panel and flows into it with concave corners.
 
@@ -147,7 +147,7 @@ For Collections:
 
 Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html) and [resource-unassigned](screens/resource-unassigned.html).
 
-- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), and the button "Ask a question", which starts a Question in the Conversations ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
+- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
 - **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
 - **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview, Queries.
@@ -268,6 +268,17 @@ Screen: [lens](screens/lens.html). Designed on 2026-10-23, to review. Where a Le
 - **No SQL** on this page, on either tab: a colleague never sees the SQL of a Lens; its Owner Unit sees it when editing ([DEC-UX-27](#dec-ux-27), [FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)).
 - The prototype shows the result up to date, after a change, before the first run and while choosing the value of To, with a switch at the bottom, and the page as the Owner Unit or a colleague.
 
+## Messages
+
+Screens: [messages](screens/messages.html), the Message Centre; and the Messages on an object in a slide-in, on [a Collection](screens/collection-messages.html), [a Resource](screens/resource-messages.html) and [a Lens](screens/lens-messages.html). Designed on 2026-10-23, to review ([DEC-UX-29](#dec-ux-29)).
+
+- **What a Message is:** a Question, Remark or Signal on an object, or a reply, to enrich the data and inform colleagues. Never private, never a chat with a person; it is about a whole object, never a part of it ([DEC-CV-04](../requirements/functional/14-conversations.md#dec-cv-04), [DEC-CV-05](../requirements/functional/14-conversations.md#dec-cv-05)).
+- **The Message Centre** is in the rail, under the main items, with the number unread on its icon. Its panel filters: For you, the default; Unread; Written by you; Everything you may see; then by kind, Questions, Remarks, Signals and what Data Hub tells you; and by the kind of object, Collections, Resources, Lenses, Queries ([FR-CV-06](../requirements/functional/14-conversations.md#fr-cv-06)).
+- **Its list:** each Message with its object (the icon of its kind, the kind, the name and its Collection), its kind and its state (open, answered), who and when, and its first lines; a dot when it is unread, the number of replies. Chips on top: all, open, answered.
+- **The Message opened** shows on the right: its object with "Open the …", which goes to the object with its Messages open ([FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)); the Message with its replies; a field to reply, with who gets a notification.
+- **On every object,** a Collection, a Resource or a Lens, "Messages" with their number in the header opens the slide-in: on top a new Message, with its kind and who gets a notification; chips by kind; the Messages on this object with their replies; at the bottom that everyone who may see the object sees them, and the way to the Message Centre ([FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07)). On a Resource, "Ask a question" opens the same slide-in with Question chosen.
+- **A Collection** takes a Question or a Remark; a Resource and a Lens also a Signal. The Messages on the Resources and Lenses of a Collection stay on those.
+
 ## Sheets
 
 - A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
@@ -294,7 +305,7 @@ Decided on 2026-10-22, in the review of the detail page of a Resource against it
 
 - <a id="dec-ux-06"></a>**DEC-UX-06** · A Resource has no icon of its own. Icons are for the interface and for Collections. *Note of 2026-10-22: the icon of its kind in a list is interface ([DEC-UX-11](#dec-ux-11)).*
 - <a id="dec-ux-07"></a>**DEC-UX-07** · The detail page of a Resource does not show its freshness.
-- <a id="dec-ux-08"></a>**DEC-UX-08** · "Ask a question" on a Resource starts a Question in its Conversations; it does not open a chat with Claude.
+- <a id="dec-ux-08"></a>**DEC-UX-08** · "Ask a question" on a Resource starts a Question in its Conversations; it does not open a chat with Claude. *Note of 2026-10-23: it opens the Messages of the Resource in a slide-in, with Question chosen ([DEC-UX-29](#dec-ux-29)).*
 - <a id="dec-ux-09"></a>**DEC-UX-09** · The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Overview. What comes from dbt is shown next to it, read-only.
 
 Decided on 2026-10-22, after a tryout of the panel:
@@ -324,6 +335,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-26"></a>**DEC-UX-26** · A Lens runs on a page of its own in the section Lenses, with two tabs. Run: the request on top, its Parameters in a panel that folds open and shut, the Pre-flight and "Run"; below it the result, a table. About: what it answers, what it does, what it is built on, its Parameters and its history. This is the basic flavour, a query with Parameters and a table.
 - <a id="dec-ux-27"></a>**DEC-UX-27** · The page of a Lens shows no SQL and adds no Parameters. A colleague never sees the SQL of a Lens; its Owner Unit sees it, and adds Parameters, when editing. "Open in Query" is for the Owner Unit only.
 - <a id="dec-ux-28"></a>**DEC-UX-28** · On the page of a Lens the Pre-flight is in the "Run" button, in the lower right corner of the Parameters, with what the run reads; it takes no room of its own. Above the approval threshold the button turns red and asks to approve, and when the table is partitioned a pop-out on the button says how to read less.
+- <a id="dec-ux-29"></a>**DEC-UX-29** · Messages have a Message Centre of their own, in the rail with the number unread, and every object with Messages, a Collection, a Resource or a Lens, opens its own Messages in a slide-in, which is the Message Centre filtered on that object, with a field to start one.
 
 ## Open points
 
@@ -353,3 +365,4 @@ Raised on 2026-10-23:
 - [x] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). An exploration page showed six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens. *Decided on 2026-10-23: E, the colour on the edge, for real Collections only ([DEC-UX-15](#dec-ux-15)); the exploration page is removed.*
 - [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*
 - [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.*
+- [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*
