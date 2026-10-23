@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<!--
+  Walkthrough: from exposure to Lens, in seven steps (docs/overview/data-hub.md#from-exposure-to-lens)
+  To present the flow: each step names who does it and opens the screens it happens on, as that role
+  (?role=) or with the outcome to show (?size=). Not a screen of Data Hub itself.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — from exposure to lens</title>
+<style>
+  body { background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%) fixed; min-height: 100%; height: auto; }
+  .flow { --card: var(--surface-solid); max-width: 860px; margin: 0 auto; padding: 48px 24px 64px; }
+  .flow h1 { font-size: 30px; font-weight: var(--weight-medium); letter-spacing: -.4px; margin: 0; }
+  .flow .lead { color: var(--text-secondary); font-size: var(--text-body); line-height: 1.6; margin: 10px 0 0; max-width: 640px; }
+  .who { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); padding: 3px 9px; border-radius: var(--radius-pill); background: var(--surface-solid); color: var(--text-secondary); }
+  .who i { font-size: 13px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 16px; }
+  .steps { list-style: none; margin: 32px 0 0; padding: 0; position: relative; }
+  .steps::before { content: ""; position: absolute; left: 17px; top: 18px; bottom: 18px; width: 2px; background: var(--tint-active); }
+  .flow-step { position: relative; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 16px; margin-bottom: 14px; }
+  .flow-no { position: relative; z-index: 1; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    background: var(--text-primary); color: var(--surface-solid); font-weight: var(--weight-medium); }
+  .flow-card { border-radius: var(--radius-xl); padding: 16px 20px 18px; }
+  .flow-card h2 { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 0; }
+  .flow-card .top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .flow-card p { font-size: var(--text-small); color: var(--text-secondary); line-height: 1.6; margin: 8px 0 0; }
+  .screens { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .screens a { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-primary); text-decoration: none;
+    padding: 6px 12px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+  .screens a:hover { background: var(--tint-active); }
+  .screens a i { font-size: 14px; color: var(--text-secondary); }
+  .yaml { margin: 12px 0 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); font: 12.5px/1.6 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; overflow-x: auto; }
+  .yaml .k { color: var(--col-slate); }
+  .yaml .t { color: var(--col-magenta); }
+  .phase { margin: 26px 0 12px 52px; font-size: var(--text-meta); color: var(--text-muted); text-transform: none; }
+  .foot { margin-top: 28px; font-size: var(--text-meta); color: var(--text-muted); }
+  .foot a { color: inherit; }
+  @media (max-width: 600px) { .flow { padding: 28px 16px 48px; } .flow-step { grid-template-columns: 28px minmax(0, 1fr); gap: 10px; } .flow-no { width: 28px; height: 28px; font-size: var(--text-small); } .steps::before { left: 13px; } .phase { margin-left: 38px; } }
+</style>
+</head>
+<body>
+<main class="flow">
+ <div class="breadcrumb">Data Hub · walkthrough</div>
+ <h1 style="margin-top:8px">From exposure to lens</h1>
+ <p class="lead">How data comes into Data Hub and becomes a lens for the whole company, in seven steps. Each step says who does it and opens the screens it happens on, seen as that role.</p>
+ <div class="legend">
+  <span class="who"><i class="ph-fill ph-database"></i>Data team</span>
+  <span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span>
+  <span class="who"><i class="ph-fill ph-users-three"></i>Colleagues</span>
+ </div>
+
+ <ol class="steps">
+  <li class="phase" aria-hidden="true">The data team makes it available</li>
+  <li class="flow-step">
+   <span class="flow-no">1</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The data team exposes a table in dbt</h2><span class="who"><i class="ph-fill ph-database"></i>Data team</span></div>
+    <p>An exposure with the tag <span class="mono">datahub</span> in the dbt project. Merging it is the registration: every table it depends on arrives in Data Hub as a resource, still without a collection.</p>
+<pre class="yaml"><span class="k">exposures:</span>
+  - <span class="k">name:</span> datahub_credit_leads
+    <span class="k">type:</span> application
+    <span class="k">owner:</span> { <span class="k">name:</span> Data Team }
+    <span class="k">tags:</span> [<span class="t">'datahub'</span>]
+    <span class="k">depends_on:</span>
+      - ref('weekly_lead_volume')
+      - ref('lead_sources')</pre>
+    <div class="screens">
+     <a href="resource-unassigned.html?role=datateam"><i class="ph ph-tray"></i>A resource without a collection</a>
+    </div>
+   </section>
+  </li>
+  <li class="flow-step">
+   <span class="flow-no">2</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The data team adds it to a collection</h2><span class="who"><i class="ph-fill ph-database"></i>Data team</span></div>
+    <p>From the page of a collection, a data admin picks the resources without a collection. From then on they belong to the owner unit of that collection, and only it and the data team see them.</p>
+    <div class="screens">
+     <a href="collection-overview.html?role=datateam"><i class="ph ph-stack"></i>The page of a collection</a>
+     <a href="collection-add-resources.html?role=datateam"><i class="ph ph-plus-circle"></i>Adding resources</a>
+    </div>
+   </section>
+  </li>
+
+  <li class="phase" aria-hidden="true">The owner takes it over</li>
+  <li class="flow-step">
+   <span class="flow-no">3</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The owner takes control</h2><span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span></div>
+    <p>The page of the collection tells the owner what waits for them: resources not published yet, a level that dropped, open signals.</p>
+    <div class="screens">
+     <a href="collections-start.html?role=owner"><i class="ph ph-house"></i>Collections</a>
+     <a href="collection-overview.html?role=owner"><i class="ph ph-stack"></i>The page of a collection, as owner</a>
+    </div>
+   </section>
+  </li>
+  <li class="flow-step">
+   <span class="flow-no">4</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The owner checks the data and describes it</h2><span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span></div>
+    <p>With the preview, the owner looks at the first rows. On the page of the resource, they describe it and its fields: what it holds, how it behaves, its gaps and its key fields.</p>
+    <div class="screens">
+     <a href="resource-preview.html?role=owner"><i class="ph ph-eye"></i>Preview</a>
+     <a href="resource-detail.html?role=owner"><i class="ph ph-table"></i>The page of a resource</a>
+     <a href="resource-edit.html?role=owner"><i class="ph ph-pencil-simple"></i>Describing it</a>
+    </div>
+   </section>
+  </li>
+  <li class="flow-step">
+   <span class="flow-no">5</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The owner publishes the resource</h2><span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span></div>
+    <p>Publishing is the first confirmation: the resource rises to level 3, Confirmed, and everyone who sees the collection finds it.</p>
+    <div class="screens">
+     <a href="resource-edit.html?role=owner"><i class="ph ph-globe-hemisphere-west"></i>Publication</a>
+    </div>
+   </section>
+  </li>
+
+  <li class="phase" aria-hidden="true">The company works with it</li>
+  <li class="flow-step">
+   <span class="flow-no">6</span>
+   <section class="card flow-card">
+    <div class="top"><h2>The owner and colleagues query it</h2><span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span><span class="who"><i class="ph-fill ph-users-three"></i>Colleagues</span></div>
+    <p>"Query" on a resource starts a new query with its name filled in. First the lenses that already answer the question; otherwise their own SQL, with other resources they may see.</p>
+    <div class="screens">
+     <a href="resource-detail.html?role=owner"><i class="ph ph-terminal-window"></i>"Query" on a resource</a>
+     <a href="query-new.html?role=colleague"><i class="ph ph-plus-circle"></i>A new query</a>
+     <a href="query.html?role=colleague"><i class="ph ph-terminal-window"></i>The query</a>
+    </div>
+   </section>
+  </li>
+  <li class="flow-step">
+   <span class="flow-no">7</span>
+   <section class="card flow-card">
+    <div class="top"><h2>A query becomes a lens</h2><span class="who"><i class="ph-fill ph-crown-simple"></i>Owner</span></div>
+    <p>When a query answers a question that comes back, "Make it a lens" turns it into a lens. Its size is checked: within range it is published at once, a large one gets a warning, a very large one waits for the data team. Then everyone who may use its resources finds it.</p>
+    <div class="screens">
+     <a href="query.html?role=owner"><i class="ph ph-aperture"></i>"Make it a lens"</a>
+     <a href="lens-new.html?size=within"><i class="ph ph-check-circle"></i>Within range</a>
+     <a href="lens-new.html?size=large"><i class="ph ph-warning"></i>Large</a>
+     <a href="lens-new.html?size=verylarge"><i class="ph ph-hourglass-medium"></i>Very large</a>
+    </div>
+   </section>
+  </li>
+ </ol>
+ <p class="foot">Prototypes with placeholder content. All screens: <a href="index.html">index</a> · rules: <a href="../principles.md">principles.md</a> · the flow in the docs: <a href="../../overview/data-hub.md#from-exposure-to-lens">overview</a>.</p>
+</main>
+<script>
+  try { document.documentElement.dataset.theme = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); } catch (e) {}
+</script>
+</body>
+</html>

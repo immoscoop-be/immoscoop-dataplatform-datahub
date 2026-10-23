@@ -7,7 +7,8 @@
   Resource and asks approval above one threshold, blocks above another. Every result carries its Query ID.
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
-  Related screens: resource-queries.html (the queries on a Resource).
+  "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25).
+  Related screens: resource-queries.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -77,6 +78,7 @@
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1">Leads per source name</h1>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
+ <a class="btn-primary" href="lens-new.html" style="text-decoration:none" title="Turn this query into a lens for everyone who may use its resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a lens</a>
 </div>
 <div class="status-row"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="2"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
 <div class="tab-content card" style="margin-top:14px;border-radius:var(--radius-xl)">

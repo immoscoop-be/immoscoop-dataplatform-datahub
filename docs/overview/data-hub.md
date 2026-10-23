@@ -191,6 +191,18 @@ Release happens in two steps, and Data Hub enforces that order. The librarian re
 - <a id="dec-dh-39"></a>**DEC-DH-39** · Step two, Owner to company: the Owner publishes the Resource to the rest of the company. The first Publication is only possible from Described, and is at once the first Confirmation: by publishing, the Owner declares that the data is correct, and the Resource rises to Level 3, Confirmed.
 - <a id="dec-dh-40"></a>**DEC-DH-40** · Visibility follows the Publication, not the Level. Not published means visible to the Data Team and to the Owner; published means visible to the whole company. A published Resource stays published when its Level later drops: the Owner gets an alert, the lower Level is visible everywhere, and the Owner confirms again without touching the Publication. That way a Resource does not disappear for those who use it. This replaces the earlier decision that visibility follows the Level; worked out in [Stacks and resources](../requirements/functional/04-stacks-and-resources.md). *Note of 2026-10-19: published means visible to everyone who sees the Collection, which is the whole company only for a public Collection ([DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12)).*
 
+### From exposure to Lens
+
+How data comes into Data Hub and becomes a Lens for the company, in seven steps, as Max described it on 2026-10-23. It carries the [Release in two steps](#release-in-two-steps) on into Query and Lenses. The [walkthrough](../design/screens/flow.html) opens the screens of each step, to present the flow.
+
+1. **The Data Team exposes a table in dbt,** with an exposure with the tag `datahub`. Merging it registers a Resource, without a Collection yet ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22)).
+2. **The Data Team adds it to a Collection.** A Data Admin adds the Resource to a Collection, which makes it available to the Owner of that Collection ([DEC-DH-38](#dec-dh-38)).
+3. **The Owner takes control.** The page of the Collection shows the Owner what waits for them ([FR-CO-25](../requirements/functional/03-collections.md#fr-co-25)).
+4. **The Owner checks the data and describes it and its fields,** with the Preview and on the page of the Resource ([FR-SR-38](../requirements/functional/04-stacks-and-resources.md#fr-sr-38), [DEC-UX-09](../design/principles.md#dec-ux-09)).
+5. **The Owner publishes the Resource.** The first Publication is the first Confirmation, and the Resource becomes visible to everyone who sees the Collection ([DEC-DH-39](#dec-dh-39), [DEC-DH-40](#dec-dh-40)).
+6. **The Owner and colleagues query it,** in Query, together with other Resources they may see ([FR-SR-41](../requirements/functional/04-stacks-and-resources.md#fr-sr-41), [FR-SR-46](../requirements/functional/04-stacks-and-resources.md#fr-sr-46)).
+7. **A query becomes a Lens.** With "Make it a lens" and once its size is checked, the Lens is published for everyone who may use its Resources ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07), [FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08), [DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)).
+
 ### Collections and ownership
 
 - <a id="dec-dh-41"></a>**DEC-DH-41** · Ownership, meaning Owner Units and their assignments, lives in Data Hub and never in the Domain Model. Owner Units are Google groups following a convention; see [User management](../requirements/functional/02-user-management.md). *Note of 2026-10-19: any Google group of the own Workspace domain can be an Owner Unit, without a convention ([DEC-CO-09](../requirements/functional/03-collections.md#dec-co-09)).*

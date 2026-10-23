@@ -77,7 +77,7 @@ Every Lens has a description of a sentence or two on what it shows, in business 
 
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
-Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) can make a Lens of it: the logical next step once a query answers a question that will come back. Its name, its question and its Resources come along; its question is where the story of the Lens starts ([FR-LE-05](#fr-le-05)). Starting a Lens from the page of a Collection ([FR-CO-29](03-collections.md#fr-co-29)) stays possible. Where a Lens made from a query belongs is open ([OP-LE-04](#op-le-04)).
+Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) can make a Lens of it, with the button "Make it a lens" on the query ([DEC-UX-25](../../design/principles.md#dec-ux-25)): the logical next step once a query answers a question that will come back. Its name, its question and its Resources come along; its question is where the story of the Lens starts ([FR-LE-05](#fr-le-05)). Starting a Lens from the page of a Collection ([FR-CO-29](03-collections.md#fr-co-29)) stays possible. Where a Lens made from a query belongs is open ([OP-LE-04](#op-le-04)).
 
 <a id="fr-le-08"></a>
 ### FR-LE-08 · Making a Lens checks what one run reads, in three ranges
@@ -99,12 +99,20 @@ The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-L
 
 A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author can open it, nobody else sees it yet. The Data Team is notified and accepts or refuses it; a refusal comes with a reason. The author is notified of either, and both are recorded in the Log.
 
+<a id="fr-le-10"></a>
+### FR-LE-10 · A Lens that outgrows its range is checked again
+
+**Status:** Proposed · **Source:** Max, 2026-10-23
+
+The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After that, Data Hub follows what each run of the Lens reads. When a run reads more than the range the Lens was made in, or last accepted in, the Lens is checked again as when it was made: grown into large, its author is warned; grown into very large, the Data Team accepts it again ([FR-LE-09](#fr-le-09)). Whether it keeps running for its Users in the meantime is open ([OP-LE-05](#op-le-05)).
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
 - [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. Making a Lens is checked in three ranges instead ([FR-LE-08](#fr-le-08)), whose two thresholds are decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
-- [ ] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.*
-- [ ] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.*
+- [x] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.* *Decided on 2026-10-23: the size is measured when the Lens is made, as its author sets it up. Growth is followed while the Lens runs: a run that reads more than its range sets off the check again ([FR-LE-10](#fr-le-10)).*
+- [ ] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.*
+- [ ] <a id="op-le-05"></a>**OP-LE-05** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
 
 ## Builds on
 

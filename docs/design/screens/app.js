@@ -86,3 +86,10 @@ document.querySelectorAll('.maturity').forEach(m => {
   m.setAttribute('role', 'img'); m.setAttribute('aria-label', 'Maturity ' + name);
   if (!m.hasAttribute('data-no-tooltip')) m.dataset.name = name;
 });
+
+// Prototype only: the address picks what a switch shows, so the walkthrough (flow.html) opens a screen as the right role
+// or outcome: ?role=owner, ?size=large
+new URLSearchParams(location.search).forEach((value, key) => {
+  if (key === 'role') document.documentElement.dataset.role = value;
+  document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
+});

@@ -232,9 +232,9 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 html[data-role="datateam"] [data-for]:not([data-for~="datateam"]),
 html[data-role="owner"] [data-for]:not([data-for~="owner"]),
 html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: none !important; }
-.role-switch { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px;
+.role-switch, .proto-switch { position: fixed; right: 34px; bottom: 26px; z-index: 20; display: flex; align-items: center; gap: 4px; padding: 5px 6px 5px 12px;
   border-radius: var(--radius-pill); background: var(--surface-solid); outline: 1px dashed var(--text-muted); box-shadow: 0 6px 24px rgba(0,0,0,.08); font-size: var(--text-meta); color: var(--text-muted); }
-.role-switch .seg { font-size: var(--text-meta); }
+.role-switch .seg, .proto-switch .seg { font-size: var(--text-meta); }
 
 /* The page of a Collection */
 .coll-head { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
@@ -369,3 +369,16 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .tag.hit { color: var(--text-primary); background: color-mix(in srgb, var(--col-teal) 22%, transparent); border-radius: 3px; padding: 0 4px; }
 .lens-card.best { outline: 1.5px solid var(--text-muted); }
 .pill-best { color: var(--surface-solid); background: var(--text-primary); }
+/* Make it a lens: left the lens, right its size check (DEC-UX-25) */
+.make-lens { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 14px; margin-top: 14px; align-items: start; }
+.size-state { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 10px 12px; border-radius: var(--radius-md); font-size: var(--text-small); line-height: 1.5; }
+.size-state p { margin: 0; }
+.size-state b { font-weight: var(--weight-medium); }
+.size-state > i { font-size: 18px; flex: none; margin-top: 1px; color: var(--text-secondary); }
+.size-state.fine { background: var(--surface-sub); }
+.size-state.caution { background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); }
+.size-state.caution > i { color: var(--signal-warn); }
+.gauge-legend.mid span:nth-child(n+2) { transform: translateX(-50%); }
+.steps-plain { margin: 0; padding-left: 20px; font-size: var(--text-small); line-height: 1.6; }
+.param-row { display: grid; grid-template-columns: 90px minmax(0, 1fr) 40px 150px; gap: 10px; align-items: center; padding: 8px 10px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.param-row input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.5 var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 0; border-radius: 8px; padding: 4px 8px; }

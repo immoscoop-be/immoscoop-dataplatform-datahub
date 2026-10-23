@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 24 | 17 (14 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 25 | 17 (14 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -20,7 +20,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 9 (7 proposed, 2 withdrawn) | – | – | 4 (3 open, 1 done) |
+| [Lenses](functional/09-lenses.md) | 10 (8 proposed, 2 withdrawn) | – | – | 5 (3 open, 2 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -209,15 +209,16 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-LE-01](functional/09-lenses.md#fr-le-01) | A Lens is created only under a processing limit | Withdrawn | – | – | [f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23 |
+| [FR-LE-01](functional/09-lenses.md#fr-le-01) | A Lens is created only under a processing limit | Withdrawn | – | – | [0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23<br>[f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23 |
 | [FR-LE-02](functional/09-lenses.md#fr-le-02) | The weight of a Lens is visible | Withdrawn | – | – | [f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23<br>[48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23<br>[6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
 | [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | – |
 | [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | – |
 | [FR-LE-05](functional/09-lenses.md#fr-le-05) | First the story, then the data | Proposed | – | – | – |
 | [FR-LE-06](functional/09-lenses.md#fr-le-06) | A Lens has a short description and tags | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
-| [FR-LE-07](functional/09-lenses.md#fr-le-07) | A query becomes a Lens | Proposed | – | – | – |
-| [FR-LE-08](functional/09-lenses.md#fr-le-08) | Making a Lens checks what one run reads, in three ranges | Proposed | – | – | – |
-| [FR-LE-09](functional/09-lenses.md#fr-le-09) | A very large Lens waits for the Data Team | Proposed | – | – | – |
+| [FR-LE-07](functional/09-lenses.md#fr-le-07) | A query becomes a Lens | Proposed | – | – | [0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
+| [FR-LE-08](functional/09-lenses.md#fr-le-08) | Making a Lens checks what one run reads, in three ranges | Proposed | – | – | [0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
+| [FR-LE-09](functional/09-lenses.md#fr-le-09) | A very large Lens waits for the Data Team | Proposed | – | – | [0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
+| [FR-LE-10](functional/09-lenses.md#fr-le-10) | A Lens that outgrows its range is checked again | Proposed | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

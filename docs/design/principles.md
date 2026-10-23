@@ -233,11 +233,24 @@ Screen: [query](screens/query.html). Designed on 2026-10-23, to review.
   - **Right, what is already made:** the Lenses that use these Resources, only those whose Resources the User may all use ([DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)). First those on **exactly** these Resources, then those on **these and more**, where the other Resources are shown as dashed chips. Within each group, the Lenses that share most words with the question come first ([DEC-UX-23](#dec-ux-23)); the first is marked "Best match". Each with its name and a sentence on what it shows, the shared words marked in both; its Resources; its tags, the shared ones marked, and how many words it shares; its type, Collection, maker and use this month; its Level; and "Use this lens" as the primary button.
   - **At the bottom right,** "None of these fits?" with "Start your own" as a quiet button: reusing a Lens is the expected way, writing your own the alternative. Your own opens the editor with a template that filters on the partition column.
   - The new query is in the panel at once, as "not run yet".
-- **Above the editor:** the name of the query, the sources it uses with their Level, and "New query" on the right.
+- **Above the editor:** the name of the query, the sources it uses with their Level, and on the right "New query" and "Make it a lens", the primary button: a query that answers a question that comes back becomes a Lens ([DEC-UX-25](#dec-ux-25)).
 - **The editor** writes BigQuery SQL. It **formats** the SQL on request (a button and Shift+Alt+F), and **suggests** as you type: the Resources, their columns and the Parameters, the partition and cluster columns first and marked as such. Parameters are named values such as `@dateFrom`, filled in under the editor.
 - **The Pre-flight** is a card next to the editor: the estimate in large, marked "at most" as clustering can make the real read lower; a gauge with the approval and the block threshold ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)); per Resource the partitions it reads and through which column; what to do to read less; and "Run", or "Approve and run" above the approval threshold. A query without a filter on the partition column of a partitioned Resource gets a warning there ([FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)).
 - **The result** under it: the rows, what was read and how many partitions, and the Query ID with a copy button.
 - **To build it,** a proposal that holds for React and for Svelte ([OP-UX-10](#op-ux-10)): the editor CodeMirror 6 with its SQL language, a BigQuery dialect on top (backtick names, its functions) and suggestions from the columns Data Hub keeps; formatting with sql-formatter, which knows BigQuery. Both MIT. The Pre-flight as a dry run of BigQuery while typing pauses: it costs nothing and returns the bytes.
+
+## Making a Lens
+
+Screen: [lens-new](screens/lens-new.html). Designed on 2026-10-23, to review. The [walkthrough](screens/flow.html) shows where it sits in the flow from exposure to Lens.
+
+- **From a query.** "Make it a lens" on a query in Query opens this screen, still in the section Query ([DEC-UX-25](#dec-ux-25), [FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07)). The SQL, the Parameters and the Resources of the query come along; "Cancel" goes back to it.
+- **Left, the lens:** its name, from the query; its type ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)); the question it answers, from the query; what it shows in a sentence and its tags ([FR-LE-06](../requirements/functional/09-lenses.md#fr-le-06)); what it does step by step, written by Data Hub from the SQL and editable ([FR-LE-03](../requirements/functional/09-lenses.md#fr-le-03)); its Parameters, each with the name Users see, its type, its default and whether Users may change it ([FR-LE-04](../requirements/functional/09-lenses.md#fr-le-04), [DEC-DH-11](../overview/data-hub.md#dec-dh-11)); the Collection it goes into, with its colour bar; its Resources and its Level, the lowest of theirs ([DEC-DH-10](../overview/data-hub.md#dec-dh-10)).
+- **Right, the size check** ([FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08)): what one run reads, measured now; a gauge with the two thresholds; per Resource the partitions it reads; then the outcome:
+  - **Within range:** "Publish lens".
+  - **Large:** a warning in the warning colour, what would make it read less, "Publish anyway" and "Back to the query".
+  - **Very large:** it waits for the Data Team ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)): an optional word for the Data Team and "Send to the data team".
+- **Under it,** that a Lens that later reads more than its range is checked again ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)).
+- The prototype shows the three outcomes as scenarios, with a switch at the bottom. It shows an author in the Owner Unit; where the Lens of a colleague outside it goes is open ([OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)), and so is how the rest of the story of a Lens is asked ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
 
 ## Sheets
 
@@ -291,6 +304,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-22"></a>**DEC-UX-22** · A new query shows, next to its name and Resources, the Lenses that already use these Resources: first those on exactly these, then those on these and more. Reusing a Lens is the first choice, "Start your own" the alternative, to prevent double work. The SQL is not on this screen.
 - <a id="dec-ux-23"></a>**DEC-UX-23** · The Lenses suggested to a new query match on more than the Resources: on the words its question shares with their name, description and tags, common words left out, and the shared words are marked. No other names are suggested for the query than the one from its Resources and the date.
 - <a id="dec-ux-24"></a>**DEC-UX-24** · A Lens shows no weight, light or heavy: whoever asks for data wants the answer, and a label does not stop them. What a query reads is shown in its Pre-flight. [FR-LE-02](../requirements/functional/09-lenses.md#fr-le-02) is withdrawn. Its size is checked once, for its author, when it is made ([FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08)).
+- <a id="dec-ux-25"></a>**DEC-UX-25** · "Make it a lens" is a button on a query in Query. It opens a screen with the Lens on the left, filled in from the query, and its size check on the right, which decides how it is published: at once, after a warning, or once the Data Team accepts it.
 
 ## Open points
 
