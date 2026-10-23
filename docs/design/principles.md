@@ -241,7 +241,7 @@ Screen: [query](screens/query.html). Designed on 2026-10-23, to review.
 
 ## Making a Lens
 
-Screen: [lens-new](screens/lens-new.html). Designed on 2026-10-23, to review. The [walkthrough](screens/flow.html) shows where it sits in the flow from exposure to Lens.
+Screen: [lens-new](screens/lens-new.html). Designed on 2026-10-23, to review. The [walkthrough on Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1380253717) shows where it sits in the flow from exposure to Lens.
 
 - **From a query.** "Make it a lens" on a query in Query opens this screen, still in the section Query ([DEC-UX-25](#dec-ux-25), [FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07)). The SQL, the Parameters and the Resources of the query come along; "Cancel" goes back to it.
 - **Left, the lens:** its name, from the query; its type ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)); the question it answers, from the query; what it shows in a sentence and its tags ([FR-LE-06](../requirements/functional/09-lenses.md#fr-le-06)); what it does step by step, written by Data Hub from the SQL and editable ([FR-LE-03](../requirements/functional/09-lenses.md#fr-le-03)); its Parameters, each with the name Users see, its type, its default and whether Users may change it ([FR-LE-04](../requirements/functional/09-lenses.md#fr-le-04), [DEC-DH-11](../overview/data-hub.md#dec-dh-11)); the Collection it goes into, with its colour bar; its Resources and its Level, the lowest of theirs ([DEC-DH-10](../overview/data-hub.md#dec-dh-10)).

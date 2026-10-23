@@ -193,7 +193,7 @@ Release happens in two steps, and Data Hub enforces that order. The librarian re
 
 ### From exposure to Lens
 
-How data comes into Data Hub and becomes a Lens for the company, in seven steps, as Max described it on 2026-10-23. It carries the [Release in two steps](#release-in-two-steps) on into Query and Lenses. The [walkthrough](../design/screens/flow.html) opens the screens of each step, to present the flow.
+How data comes into Data Hub and becomes a Lens for the company, in seven steps, as Max described it on 2026-10-23. It carries the [Release in two steps](#release-in-two-steps) on into Query and Lenses. The [walkthrough on Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1380253717) shows each step with its screens, to present the flow.
 
 1. **The Data Team exposes a table in dbt,** with an exposure with the tag `datahub`. Merging it registers a Resource, without a Collection yet ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22)).
 2. **The Data Team adds it to a Collection.** A Data Admin adds the Resource to a Collection, which makes it available to the Owner of that Collection ([DEC-DH-38](#dec-dh-38)).
