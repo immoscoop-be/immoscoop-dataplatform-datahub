@@ -70,7 +70,7 @@
   --text-secondary: #5E5852;
   --text-muted: #8C857E;
   --signal-warn: #B07A28;        /* only for states that need action */
-  --signal-urgent: #C4432F;      /* only for what waits for the Data Team: "Without a collection" */
+  --signal-urgent: #C4432F;      /* only for what waits for the Data Team ("Without a collection") and a run above the approval threshold */
 }
 
 [data-theme="dark"] {

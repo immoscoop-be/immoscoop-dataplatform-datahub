@@ -31,6 +31,7 @@
   <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
   <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
   <div class="spacer"></div>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
   <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
   <div class="avatar" aria-label="Your account">MP</div>
@@ -106,8 +107,11 @@
    <p class="meta" style="display:block;line-height:1.5;margin:6px 0 0">Written by Data Hub from the SQL, in plain language. <a class="text-link" href="#" style="display:inline-flex"><span>Edit</span></a></p>
   </div>
   <div class="field" style="margin-top:16px"><span>Parameters</span>
-   <div class="param-row"><span class="mono">@dateFrom</span><input value="From" aria-label="Name users see"><span class="meta">Date</span><input type="date" value="2024-01-01" aria-label="Default"></div>
-   <div class="options" style="margin-top:8px"><label><input type="checkbox" checked>Users can change it, without touching the SQL</label></div>
+   <div class="param-row"><span class="mono">@dateFrom</span><input value="From" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Start of this year<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@dateTo</span><input value="To" aria-label="Name users see"><span class="meta">Date</span><span class="param-fn" title="A function, worked out at every run"><i class="ph ph-function"></i>Today − 3 days<i class="ph ph-caret-down" style="margin-left:auto"></i></span></div>
+   <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><input value="All channels" aria-label="Default"></div>
+   <div class="options" style="margin-top:8px"><label><input type="checkbox" checked>Users can change them, without touching the SQL</label></div>
+   <p class="meta" style="display:block;line-height:1.5;margin:6px 0 0">A default is a value, or a function worked out at every run, such as today − 3 days or the start of this year.</p>
    <button class="add-chip" type="button" style="margin-top:8px">+ Parameter</button>
   </div>
   <div class="field" style="margin-top:16px"><span>Goes into</span>
@@ -126,7 +130,7 @@
    <div class="pf-src"><span>Lead sources</span><span class="meta">not partitioned · 2 MB</span></div>
    <div class="size-state fine"><i class="ph-fill ph-check-circle"></i><p><b>Within range.</b> You publish it yourself.</p></div>
 
-   <button class="btn-primary" style="width:100%;justify-content:center;margin-top:12px">Publish lens</button>
+   <a class="btn-primary" href="lens.html" style="width:100%;justify-content:center;margin-top:12px;text-decoration:none;box-sizing:border-box">Publish lens</a>
   </div>
   <div data-pane-group="size" data-pane="large" hidden>
    <div style="font-size:24px;font-weight:500;letter-spacing:-.3px;margin-top:6px">17.9 GB <span style="font-size:var(--text-small);font-weight:400;color:var(--text-muted)">a run</span></div>
@@ -145,7 +149,7 @@
    <div class="size-state caution"><i class="ph-fill ph-hourglass-medium"></i><p><b>Very large.</b> One run reads more than 30 GB. Someone of the data team accepts it before it is published; until then only you see it.</p></div>
    <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">With a default for From, such as 1 Jan 2024, it reads at most 17.9 GB.</p>
    <label class="field" style="margin-top:12px"><span>A word for the data team (optional)</span><textarea rows="2">For the yearly review with KBC; it runs once a month.</textarea></label>
-   <button class="btn-primary" style="width:100%;justify-content:center;margin-top:4px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send to the data team</button><p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">You get a notification when they accept or refuse it.</p>
+   <button class="btn-primary" style="width:100%;justify-content:center;margin-top:4px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send to the data team</button><p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">It goes as a request on the lens to the data team; their answer comes back in your Message Centre.</p>
   </div>
   <p class="meta" style="display:block;line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--tint-hover)">If a run later reads more than this range, the lens is checked again.</p>
  </aside>
