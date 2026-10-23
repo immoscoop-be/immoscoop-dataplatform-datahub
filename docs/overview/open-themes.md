@@ -62,7 +62,7 @@ Conceptually described in [Domain tooling](https://immoscoop.atlassian.net/wiki/
 - [ ] <a id="op-dh-30"></a>**OP-DH-30** · Decide the scope of the documentation: which forms, in which order, and what the pilot needs.
 - [ ] <a id="op-dh-31"></a>**OP-DH-31** · Decide whether Data Hub stays a separate application next to Domain Hub or merges with it.
 - [ ] <a id="op-dh-32"></a>**OP-DH-32** · Decide the relation to our own manifest MCP server under construction, and to the broader connector rollout.
-- [ ] <a id="op-dh-33"></a>**OP-DH-33** · Choose the form of the communication between colleagues.
+- [ ] <a id="op-dh-33"></a>**OP-DH-33** · Choose the form of the communication between colleagues. *Note of 2026-10-23: every Message carries its Subject, the asset it is about, links to it, and can be found by it ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [FR-CV-04](../requirements/functional/14-conversations.md#fr-cv-04)); the form remains open.*
 - [ ] <a id="op-dh-34"></a>**OP-DH-34** · Check with Sibe and Philippe whether Colleciónes can provide `model_type` and `grain`.
 - [ ] <a id="op-dh-35"></a>**OP-DH-35** · Connect to the existing Cloud Run setup of the Colleciónes server: deploy, internal reachability under internal-immoscoop.be, and monitoring. *Note of 2026-10-17: Data Hub is publicly reachable ([DEC-PF-10](../requirements/technical/00-platform.md#dec-pf-10)), so internal reachability under internal-immoscoop.be no longer applies; deploy and monitoring remain open.*
 - [ ] <a id="op-dh-36"></a>**OP-DH-36** · In the pilot with Hannelore, test whether Lenses in Excel are enough, or whether business also needs whole Resources.

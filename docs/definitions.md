@@ -51,6 +51,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="log-catalogue"></a>**Log Catalogue** | The fixed list of all Log IDs. | [Log catalogue](requirements/functional/log-catalogue.md) |
 | <a id="log-entry"></a>**Log Entry** | One line in a Log: a Log ID, the Resource, the parameters as JSON, the actor and the time. Never free text. | [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
 | <a id="log-id"></a>**Log ID** | The fixed code of a kind of Log Entry, with a template and a list of parameters, for example `RES-001`. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
+| <a id="message"></a>**Message** | What a User writes to others in Data Hub about an asset or a Collection: a Question, Remark or Signal on it, a message to a person or to its Owner, or a reply. It always carries its Subject. | [DEC-CV-01](requirements/functional/14-conversations.md#dec-cv-01) |
 | <a id="message-centre"></a>**Message Centre** | Where Data Hub delivers its messages, for example to the Data Admins on every Registration. | [FR-SR-10](requirements/functional/04-stacks-and-resources.md#fr-sr-10) |
 | <a id="naming-convention"></a>**Naming Convention** | The rule for the names of Role Groups: `datahub-<role>@<domain>`. An Owner Unit needs no convention. | [User management](requirements/functional/02-user-management.md#naming-convention) |
 | <a id="node"></a>**Node** | A model, seed, snapshot, source or exposure in the manifest of a dbt project, with its columns. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
@@ -74,6 +75,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="source-job"></a>**Source Job** | The one prod job in dbt Cloud, per dbt project, whose Artifacts Data Hub uses: a full build that also runs `dbt docs generate`. uat of Data Hub reads the UAT counterpart of each Source Job ([DEC-AR-01](requirements/functional/01-artifact-registry.md#dec-ar-01)). | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="stability"></a>**Stability** | Whether the data of a Resource is still settling or can change by nature, and from when it is final, for example "stable = D-3". The final term is still open. | [FR-RC-06](requirements/functional/05-resource-card.md#fr-rc-06), [OP-RC-04](requirements/functional/05-resource-card.md#op-rc-04) |
 | <a id="stack"></a>**Stack**, **the Stacks** | A dataset in BigQuery with mart views that the Data Team releases, as authorized views onto the datasets behind them. Today there is one: `dbt_prod_stacks`. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
+| <a id="subject"></a>**Subject** | What a Message is about: the kind of asset, such as a Resource or a Lens, or a Collection, and its ID. Data Hub sets it from where the Message is written, builds the link to it, and finds all Messages about an asset by it. | [DEC-CV-01](requirements/functional/14-conversations.md#dec-cv-01) |
 | <a id="synchronisation"></a>**Synchronisation** | Periodically pulling in the members of all Groups, so that Data Hub knows who is in which Group, also for Users who are not logged in. | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="user"></a>**User** | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once. | [User management](requirements/functional/02-user-management.md#terms) |
 
@@ -111,6 +113,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | bekende hiaten | Known Gaps |
 | bekrachtigen, bekrachtiging | confirm, Confirmation |
 | Beschikbaar, Beschreven, Bekrachtigd, Verkend, Bewaakt | Available, Described, Confirmed, Explored, Monitored |
+| bericht | Message |
 | berichtencentrum | Message Centre |
 | beslissing | decision |
 | bibliothecaris | librarian |
@@ -145,6 +148,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | maturiteitsicoon | maturity icon |
 | melding | notification |
 | melding (op een scherm) | alert |
+| onderwerp (van een bericht) | Subject |
 | ontsluiting, ontsluiten | Release, release |
 | ontwerprichtlijnen | design principles |
 | open punten | open points |
