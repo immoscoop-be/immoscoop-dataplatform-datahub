@@ -318,7 +318,7 @@ Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC
 - **The sign-in sits on a glass card** that blurs what lies behind it: the mark and "Data Hub", "Sign in", one sentence on what Data Hub is, and "Sign in with Google", the only way in ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01)). Under the button: it takes the Immoscoop account, and Data Hub keeps no password of its own ([FR-UM-03](../requirements/functional/02-user-management.md#fr-um-03)).
 - **The story of the photo** in the lower left, on glass too: its title, a few lines and who took it.
 - **An account of another domain is refused** ([FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)): the card says which account was refused and to sign in with the account of work, and the button reads "Sign in with another account".
-- It follows the theme of the system, as the User is not known yet, and shows a photo of the set of that theme. The dark set has no photo yet, so the dark theme shows its gradient behind the card.
+- It follows the theme of the system, as the User is not known yet, and shows a photo of the set of that theme. The light set has two photos so far, Alpenglow and Spring snow, which a switch in the prototype shows. The dark set has no photo yet, so the dark theme shows its gradient behind the card.
 - Where a browser cannot blur, the card is nearly opaque.
 
 ## Sheets
