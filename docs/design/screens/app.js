@@ -34,7 +34,7 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     if (!unfolded.has(g)) unfolded.set(g, g.classList.contains('open'));
     const own = g.querySelector('.tree-head .item-title').textContent.toLowerCase().includes(q);
     let hits = 0;
-    g.querySelectorAll('.tree-res').forEach(r => { const m = own || r.querySelector('.clip').firstChild.textContent.toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
+    g.querySelectorAll('.tree-res').forEach(r => { const m = own || (r.dataset.search || r.querySelector('.clip').firstChild.textContent).toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
     g.querySelectorAll('.tree-more').forEach(r => r.hidden = !!q && !own);
     g.hidden = !own && hits === 0; if (!g.hidden) n++;
     g.classList.toggle('open', q ? (!own || unfolded.get(g)) && hits > 0 : unfolded.get(g));
@@ -81,6 +81,10 @@ document.querySelectorAll('.float-win').forEach(w => {
   });
 });
 
+// A sheet that belongs to its page: what opened it opens it again; Close, Cancel or a click beside it closes it
+document.querySelectorAll('[data-sheet-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); document.getElementById(b.dataset.sheetOpen).hidden = false; }));
+document.querySelectorAll('[data-sheet-close]').forEach(b => b.addEventListener('click', () => { b.closest('.sheet-wrap').hidden = true; }));
+
 // Intro on a section start screen: dismissed per user per section (in the app: user settings, versioned)
 const intro = document.getElementById('intro');
 if (intro) {
@@ -109,8 +113,9 @@ document.querySelectorAll('.maturity').forEach(m => {
 });
 
 // Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
-// ?role=owner, ?size=large
+// ?role=owner, ?size=large; ?bg=ski shows the picture as the background (DEC-UX-34)
 new URLSearchParams(location.search).forEach((value, key) => {
   if (key === 'role') document.documentElement.dataset.role = value;
+  if (key === 'bg') document.documentElement.dataset.bg = value;
   document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
 });

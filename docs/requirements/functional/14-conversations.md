@@ -56,7 +56,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
-Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark, Signal or Request on an object, and a reply alike. A reply takes the Subject of the Message it answers. There is no Message without a Subject.
+Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark, Signal or Request on an object, and a reply alike. A reply takes the Subject of the Message it answers. There is no Message without a Subject. *Note of 2026-10-24: a Learning Card is an object of Messages too, and a Message can carry one ([FR-LR-06](16-learning.md#fr-lr-06), [FR-LR-07](16-learning.md#fr-lr-07)).*
 
 <a id="fr-cv-02"></a>
 ### FR-CV-02 · A Message links to its object

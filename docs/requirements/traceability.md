@@ -9,24 +9,25 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 30 | 19 (16 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 44 | 21 (18 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 31 (15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 11 (7 open, 4 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 48 (13 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 13 (11 open, 2 done) |
-| [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 5 (5 open) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 10 (10 specified) | – | 6 | 5 (5 open) |
+| [Collections](functional/03-collections.md) | 32 (1 proposed, 15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 12 (8 open, 4 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 14 (12 open, 2 done) |
+| [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 6 (6 open) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 14 (12 proposed, 2 withdrawn) | – | – | 9 (7 open, 2 done) |
+| [Lenses](functional/09-lenses.md) | 15 (13 proposed, 2 withdrawn) | – | – | 9 (7 open, 2 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
-| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 1 (1 open) |
+| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
+| [Learning](functional/16-learning.md) | 20 (20 proposed) | – | 6 | 14 (14 open) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -58,9 +59,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-UM-01](functional/02-user-management.md#fr-um-01) | Sign in with Google only | Implemented | GB-01 | – | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
-| [FR-UM-02](functional/02-user-management.md#fr-um-02) | Accounts of the own Workspace domain only | Implemented | GB-02 | – | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
-| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the User at first login, never store a password | Implemented | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | [2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18 |
+| [FR-UM-01](functional/02-user-management.md#fr-um-01) | Sign in with Google only | Implemented | GB-01 | – | [27ca599](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/27ca59908ac6b807ec3620e857cbc0e6ac6d688b) refs, 2026-10-24<br>[c4a7aa3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c4a7aa30475448b627011a8f97faf6f244287736) refs, 2026-10-24<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
+| [FR-UM-02](functional/02-user-management.md#fr-um-02) | Accounts of the own Workspace domain only | Implemented | GB-02 | – | [27ca599](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/27ca59908ac6b807ec3620e857cbc0e6ac6d688b) refs, 2026-10-24<br>[c4a7aa3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c4a7aa30475448b627011a8f97faf6f244287736) refs, 2026-10-24<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
+| [FR-UM-03](functional/02-user-management.md#fr-um-03) | Create the User at first login, never store a password | Implemented | GB-03 | [TR-PF-02](technical/00-platform.md#tr-pf-02) | [27ca599](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/27ca59908ac6b807ec3620e857cbc0e6ac6d688b) refs, 2026-10-24<br>[c4a7aa3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c4a7aa30475448b627011a8f97faf6f244287736) refs, 2026-10-24<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18<br>[a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18 |
 | [FR-UM-04](functional/02-user-management.md#fr-um-04) | Groups from the Cloud Identity Groups API, nested groups included | Implemented | GB-04 | – | [e391fb0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e391fb0559bf979e0619360ed9829e36420f73ed) implements, 2026-10-18<br>[395b642](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/395b64233998563c8e63051487c8254dac597060) implements, 2026-10-18<br>[196c3e1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/196c3e123e918e6fea4ed3712bfef7112d508d41) implements, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
 | [FR-UM-05](functional/02-user-management.md#fr-um-05) | Only Groups are pulled in | Withdrawn | GB-05 | – | [3d452ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3d452cafcc9b1320488669bfbf93d7f3dcc6f879) refs, 2026-10-19<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) implements, 2026-10-18 |
 | [FR-UM-06](functional/02-user-management.md#fr-um-06) | Fetch and cache the Groups at login | Specified | GB-06 | [TR-PF-02](technical/00-platform.md#tr-pf-02), [TR-PF-26](technical/00-platform.md#tr-pf-26) | – |
@@ -105,6 +106,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-29](functional/03-collections.md#fr-co-29) | A Lens is started from the page of a Collection | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[88dcf42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/88dcf428bb19051ca1fc875e5e5909cc2c720076) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-30](functional/03-collections.md#fr-co-30) | The details are edited on the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[88dcf42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/88dcf428bb19051ca1fc875e5e5909cc2c720076) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
+| [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -158,6 +160,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-46](functional/04-stacks-and-resources.md#fr-sr-46) | "Query" on the page of a Resource starts a new query on it | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23<br>[0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
 | [FR-SR-47](functional/04-stacks-and-resources.md#fr-sr-47) | A new query first shows the Lenses on its Resources | Proposed | – | – | [f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23<br>[48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23<br>[6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
 | [FR-SR-48](functional/04-stacks-and-resources.md#fr-sr-48) | The question of a new query finds Lenses by their words | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
+| [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -165,7 +168,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A definition in business language | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-02](functional/05-resource-card.md#fr-rc-02) | Open questions about the data | Proposed | – | – | – |
-| [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | – |
+| [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-05](functional/05-resource-card.md#fr-rc-05) | A log of changes and Anomalies, for people and for Claude | Proposed | – | – | – |
 | [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
@@ -193,6 +196,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-08](functional/06-maturity-and-release.md#fr-mr-08) | A Confirmation does not expire | Specified | MO-08 | – | – |
 | [FR-MR-09](functional/06-maturity-and-release.md#fr-mr-09) | Log every rise and drop, and alert the Owner on a drop | Specified | MO-09 | – | – |
 | [FR-MR-10](functional/06-maturity-and-release.md#fr-mr-10) | The Level restricts nothing and is shown everywhere | Specified | MO-10 | – | – |
+| [FR-MR-11](functional/06-maturity-and-release.md#fr-mr-11) | Confirming again shows what changed | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 
@@ -223,6 +227,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-12](functional/09-lenses.md#fr-le-12) | Every run of a Lens is a query | Proposed | – | – | [8cb5682](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8cb5682545e6be6bb51c6b4dfdfe4610255e5eaf) refs, 2026-10-23 |
 | [FR-LE-13](functional/09-lenses.md#fr-le-13) | A Parameter takes a value or a function | Proposed | – | – | [8c2ef31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8c2ef31087b024f3227cb494e3b24bef75ca317b) refs, 2026-10-23<br>[54bd5d1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54bd5d1474d7a6a847850a379ef8444042bce8e1) refs, 2026-10-23<br>[3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
 | [FR-LE-14](functional/09-lenses.md#fr-le-14) | Only its Owner Unit sees the SQL of a Lens | Proposed | – | – | [3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
+| [FR-LE-15](functional/09-lenses.md#fr-le-15) | The section Lenses starts with the Lenses a User may use | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 
 ### [Channels](functional/13-channels.md)
 
@@ -239,14 +244,39 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
 | [FR-CV-01](functional/14-conversations.md#fr-cv-01) | A Message is always about something | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
-| [FR-CV-02](functional/14-conversations.md#fr-cv-02) | A Message links to its object | Proposed | – | – | [10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
+| [FR-CV-02](functional/14-conversations.md#fr-cv-02) | A Message links to its object | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23<br>[10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-03](functional/14-conversations.md#fr-cv-03) | A Message is placed on its object, not sent to a person | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23<br>[1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-04](functional/14-conversations.md#fr-cv-04) | All Messages about an object can be retrieved | Proposed | – | – | [8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-05](functional/14-conversations.md#fr-cv-05) | Who sees a Message follows who sees its object | Proposed | – | – | [1b06de5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1b06de57f21cc0b0726ba03fc189bb208e1c6fde) refs, 2026-10-23<br>[10c7bd5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/10c7bd5687e1180186094ffd6e1f2fb458a218be) refs, 2026-10-23<br>[8fe1b4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8fe1b4efe56d05563a92154c4327021adf6ca682) refs, 2026-10-23 |
 | [FR-CV-06](functional/14-conversations.md#fr-cv-06) | The Message Centre | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
 | [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
-| [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | [a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23 |
-| [FR-CV-09](functional/14-conversations.md#fr-cv-09) | A Message opens in its context | Proposed | – | – | – |
+| [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23<br>[a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23 |
+| [FR-CV-09](functional/14-conversations.md#fr-cv-09) | A Message opens in its context | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23 |
+
+### [Learning](functional/16-learning.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-02](functional/16-learning.md#fr-lr-02) | A Learning Card holds an article, a video and test questions | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-04](functional/16-learning.md#fr-lr-04) | Test questions say right or wrong, and why | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-07](functional/16-learning.md#fr-lr-07) | A Message can carry a Learning Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Proposed | – | – | – |
+| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | – |
+| [FR-LR-13](functional/16-learning.md#fr-lr-13) | A Badge for a milestone | Proposed | – | – | – |
+| [FR-LR-14](functional/16-learning.md#fr-lr-14) | A Rank per Learning Level | Proposed | – | – | – |
+| [FR-LR-15](functional/16-learning.md#fr-lr-15) | A Weekly Goal, and a Streak counted in weeks | Proposed | – | – | – |
+| [FR-LR-16](functional/16-learning.md#fr-lr-16) | Quests by the Data Team | Proposed | – | – | – |
+| [FR-LR-17](functional/16-learning.md#fr-lr-17) | Team progress, without ranking colleagues | Proposed | – | – | – |
+| [FR-LR-18](functional/16-learning.md#fr-lr-18) | A Learning Profile | Proposed | – | – | – |
+| [FR-LR-19](functional/16-learning.md#fr-lr-19) | A success is a quiet note | Proposed | – | – | – |
+| [FR-LR-20](functional/16-learning.md#fr-lr-20) | The game can be hidden | Proposed | – | – | – |
 
 ## Edge cases
 

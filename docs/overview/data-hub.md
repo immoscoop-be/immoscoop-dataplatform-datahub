@@ -199,9 +199,9 @@ How data comes into Data Hub and becomes a Lens for the company, in seven steps,
 2. **The Data Team adds it to a Collection.** A Data Admin adds the Resource to a Collection, which makes it available to the Owner of that Collection ([DEC-DH-38](#dec-dh-38)).
 3. **The Owner takes control.** The page of the Collection shows the Owner what waits for them ([FR-CO-25](../requirements/functional/03-collections.md#fr-co-25)).
 4. **The Owner checks the data and describes it and its fields,** with the Preview and on the page of the Resource ([FR-SR-38](../requirements/functional/04-stacks-and-resources.md#fr-sr-38), [DEC-UX-09](../design/principles.md#dec-ux-09)).
-5. **The Owner publishes the Resource.** The first Publication is the first Confirmation, and the Resource becomes visible to everyone who sees the Collection ([DEC-DH-39](#dec-dh-39), [DEC-DH-40](#dec-dh-40)).
+5. **The Owner publishes the Resource.** The first Publication is the first Confirmation, and the Resource becomes visible to everyone who sees the Collection ([DEC-DH-39](#dec-dh-39), [DEC-DH-40](#dec-dh-40)). A sheet on the page of the Resource says who will see it and asks for the Confirmation ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49)).
 6. **The Owner and colleagues query it,** in Query, together with other Resources they may see ([FR-SR-41](../requirements/functional/04-stacks-and-resources.md#fr-sr-41), [FR-SR-46](../requirements/functional/04-stacks-and-resources.md#fr-sr-46)).
-7. **A query becomes a Lens.** With "Make it a lens" and once its size is checked, the Lens is published for everyone who may use its Resources ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07), [FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08), [DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)).
+7. **A query becomes a Lens.** With "Make it a lens" and once its size is checked, the Lens is published for everyone who may use its Resources ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07), [FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08), [DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)). Colleagues find it in the section Lenses ([FR-LE-15](../requirements/functional/09-lenses.md#fr-le-15)).
 
 ### Collections and ownership
 

@@ -136,6 +136,14 @@ A Parameter takes a value, such as a date or "all channels", or a function that 
 
 A colleague never sees the SQL of a Lens: not on its page, and not through "Open in Query", which is for its Owner Unit only. The Owner Unit sees the SQL when editing the Lens. What the Lens does is told in plain language instead ([FR-LE-03](#fr-le-03)). The Data Team keeps seeing the SQL of every query in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
 
+
+<a id="fr-le-15"></a>
+### FR-LE-15 · The section Lenses starts with the Lenses a User may use
+
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#start-screen-per-section)
+
+The section Lenses opens on a start screen. It finds Lenses by the words of a question, as a new query does ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)); shows the Lenses of the User and their Owner Unit, those waiting for the Data Team among them ([FR-LE-09](#fr-le-09)); and Lenses to discover, popular and new. Its panel lists the Lenses the User may use ([DEC-CO-16](03-collections.md#dec-co-16)), by Collection.
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.

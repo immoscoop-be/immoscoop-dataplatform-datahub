@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!--
+  Screen: signing in (DEC-UX-35, DEC-UX-36)
+  A photo of the set, as it is, fills the screen. The sign-in sits on a glass card that blurs what lies behind it: the mark
+  and the name, "Sign in", one sentence on what Data Hub is, and "Sign in with Google", the only way in (FR-UM-01). Under
+  the button: it takes the Immoscoop account, and Data Hub keeps no password (FR-UM-03). An account of another domain is
+  refused (FR-UM-02): the card then says which account and to sign in with the account of work. In a corner, on glass too,
+  the story of the photo: its title, a few lines and who took it. Each theme has photos of its own, never darkened ones;
+  the dark set has one photo, Lights on, a blue-hour photo made into a night picture. The switches show the photos of the light set, and signing in or a refused account.
+  Requirements: FR-UM-01, FR-UM-02, FR-UM-03 (Implemented). Open: OP-UX-20.
+  Rules: ../principles.md  ·  Placeholder content only: the stories are stand-ins for the ones Max writes.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Sign in</title>
+</head>
+<body class="signin">
+<div class="signin-photo" data-set="light" data-pane-group="photo" data-pane="alpenglow" style="background-image:url(../backgrounds/photos/light/alpenglow.jpg);background-position:50% 82%" aria-hidden="true"></div>
+<div class="signin-photo" data-set="light" data-pane-group="photo" data-pane="spring" hidden style="background-image:url(../backgrounds/photos/light/spring-snow.jpg);background-position:30% 22%" aria-hidden="true"></div>
+<div class="signin-photo" data-set="dark" style="background-image:url(../backgrounds/photos/dark/village-lights.jpg);background-position:50% 40%" aria-hidden="true"></div>
+<main class="signin-card glass">
+ <div class="signin-brand"><svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="1.6"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="1.6"/></svg>Data Hub</div>
+ <h1>Sign in</h1>
+ <p>The data of Immoscoop, described, confirmed and ready to use.</p>
+ <div class="signin-refused" data-pane-group="state" data-pane="refused" role="alert" hidden><i class="ph-fill ph-warning-circle"></i><span><b>an.claes@gmail.com</b> is not an Immoscoop account, so Data Hub cannot let it in. Sign in with the Google account of your work.</span></div>
+ <a class="btn-primary signin-btn" href="collections-start.html"><i class="ph ph-google-logo" style="font-size:17px"></i><span data-pane-group="state" data-pane="signin">Sign in with Google</span><span data-pane-group="state" data-pane="refused" hidden>Sign in with another account</span></a>
+ <span class="meta">With your Immoscoop account. Data Hub keeps no password of its own.</span>
+</main>
+<figure class="photo-story glass" data-set="light" data-pane-group="photo" data-pane="alpenglow"><b>Alpenglow over the valley</b><p>For a few minutes after sunset the peaks catch the last light and turn pink, while the valley is already in shadow.</p><span class="meta">Photo: Max</span></figure>
+<figure class="photo-story glass" data-set="light" data-pane-group="photo" data-pane="spring" hidden><b>Spring snow under the ridge</b><p>By late morning the wind has rippled the whole face; by afternoon the sun will have softened every wave.</p><span class="meta">Photo: Max</span></figure>
+<figure class="photo-story glass" data-set="dark"><b>Lights on in the village</b><p>When the lifts stop, the valley turns blue and the chalets light up one by one.</p><span class="meta">Photo: Max, made into a night picture</span></figure>
+<div class="proto-switch" data-group="photo" role="tablist" aria-label="Prototype: photo of the light set" data-set="light" style="bottom:72px">Photo
+ <button class="seg on" data-target="alpenglow" role="tab" aria-selected="true">Alpenglow</button><button class="seg" data-target="spring" role="tab" aria-selected="false">Spring snow</button>
+</div>
+<div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: state">Screen
+ <button class="seg on" data-target="signin" role="tab" aria-selected="true">Sign in</button>
+ <button class="seg" data-target="refused" role="tab" aria-selected="false">Account refused</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

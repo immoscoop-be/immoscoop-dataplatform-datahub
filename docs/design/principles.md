@@ -29,7 +29,7 @@ Data Hub is an internal tool and has no Figma. The design lives in code ([DEC-UX
 
 There are three layers:
 
-1. **Background:** a slow transition between three warm colours (sand, blush, mist).
+1. **Background:** a slow transition between three warm colours (sand, blush, mist), or a picture painted as a watercolour ([DEC-UX-34](#dec-ux-34)).
 2. **Frames:** the tab of the active navigation icon, the panel and the main area. Slightly transparent, they blend into the background.
 3. **Reading surfaces:** everything with text on it that you actually read. Fully opaque (white, or warm grey within a white surface).
 
@@ -81,7 +81,7 @@ There are three layers:
 
 ## Navigation
 
-- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)); at the bottom Messages, with the number unread ([DEC-UX-29](#dec-ux-29)), then theme, settings and account.
+- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)), and Learning as a fifth ([DEC-UX-38](#dec-ux-38), [OP-UX-21](#op-ux-21)); at the bottom Messages, with the number unread ([DEC-UX-29](#dec-ux-29)), then theme, settings and account.
 - **Collapsed,** each icon shows a label after a short delay. The active icon keeps its transparent tile.
 - **A slide-out panel per main item.** The active icon and the panel form one shape: the icon has the same background as the panel and flows into it with concave corners.
 
@@ -125,6 +125,17 @@ For Collections:
 - **Recently**, switchable between **Updated** and **Added**: what changed, by whom and when.
 - **Popular collections.**
 
+For Lenses ([lenses-start](screens/lenses-start.html), [DEC-UX-33](#dec-ux-33)):
+
+- **Intro,** as for Collections: "What are lenses?", with "Make one from a query", as a Lens is made from a query ([DEC-UX-25](#dec-ux-25)).
+- **A search for a question:** "What do you want to know?" finds Lenses by the words they share with it, as a new query does ([FR-SR-48](../requirements/functional/04-stacks-and-resources.md#fr-sr-48)).
+- **Yours:** the Lenses of the User and their Owner Unit, with when they last ran them. A Lens that waits for the Data Team says so; only its author sees it.
+- **Discover,** switchable between **Popular** ([OP-UX-01](#op-ux-01)) and **New**.
+- Each Lens as a tile: its name, the question it answers, its Level, and when it ran or how often.
+- **The panel** holds the Lenses the User may use, by Collection ([OP-UX-18](#op-ux-18)).
+
+For Learning ([learning-start](screens/learning-start.html), [DEC-UX-38](#dec-ux-38)): an intro, "What is learning?", with "Start with the compass"; a search; "Continue" with the card the User was reading; "Required for you"; and "New and changed". See [Learning](#learning).
+
 ## Grid
 
 - The grid is **always 100% wide**.
@@ -145,11 +156,11 @@ For Collections:
 
 ## Detail page of a Resource
 
-Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html) and [resource-unassigned](screens/resource-unassigned.html).
+Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html), [resource-unassigned](screens/resource-unassigned.html), [resource-publish](screens/resource-publish.html) and [resource-reconfirm](screens/resource-reconfirm.html).
 
-- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
+- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). For its Owner, while it is not published, "Publish" takes the place of "Ask a question" ([DEC-UX-31](#dec-ux-31)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
-- **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
+- **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner, which opens the sheet to confirm it again ([DEC-UX-31](#dec-ux-31)). It disappears when all is well.
 - **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview, Queries.
 - **Overview,** in tiles:
   - **Definition:** the definition in business language, written in Data Hub, and under it the description from dbt with its model type and grain, marked as coming from dbt.
@@ -202,6 +213,18 @@ Screen: [resource-queries](screens/resource-queries.html). Designed on 2026-10-2
 - Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, unfolded like a Collection.
 - Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team.
 - Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
+
+### Publishing and confirming
+
+Screens: [resource-publish](screens/resource-publish.html) and [resource-reconfirm](screens/resource-reconfirm.html). Designed on 2026-10-24, to review ([DEC-UX-31](#dec-ux-31)).
+
+- **Not published yet:** the status row says so, and a notice says who sees it now, its Owner Unit and the Data Team, and who will once it is published. In the panel it is grey, as every Resource that is not published. For its Owner, "Publish" is the main button of the header.
+- **"Publish"** opens a sheet in three parts ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49)):
+  - **Who will see it:** everyone who sees its Collection, the whole company when the Collection is public ([FR-SR-31](../requirements/functional/04-stacks-and-resources.md#fr-sr-31)).
+  - **What Data Hub checked:** that the User may publish it, and that it is Described. When a column has no description, the sheet names the columns, says that descriptions come from dbt, and "Publish and confirm" stays off.
+  - **The confirmation,** as publishing is the first one: the figures the Owner checked it with, each with its value and what it was checked against ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)); since when the data is reliable ([FR-RC-13](../requirements/functional/05-resource-card.md#fr-rc-13)); and the declaration, for the Owner Unit, that the data is correct.
+- **"Reconfirm"** on the alert after a drop opens the same sheet as "Confirm again" ([FR-MR-11](../requirements/functional/06-maturity-and-release.md#fr-mr-11)): why the Level dropped and what changed, who confirmed it last and when, the figures of that confirmation with their values of last time, to check them again, since when it is reliable, and the declaration. Who sees the Resource does not change.
+- At the bottom, both say that Data Hub keeps the confirmation with the fingerprint of that moment, and that it does not expire.
 
 ## Page of a Collection
 
@@ -268,6 +291,53 @@ Screen: [lens](screens/lens.html). Designed on 2026-10-23, to review. Where a Le
 - **No SQL** on this page, on either tab: a colleague never sees the SQL of a Lens; its Owner Unit sees it when editing ([DEC-UX-27](#dec-ux-27), [FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)).
 - The prototype shows the result up to date, after a change, before the first run and while choosing the value of To, with a switch at the bottom, and the page as the Owner Unit or a colleague.
 
+## Learning
+
+The Learning Centre ([DEC-LR-04](../requirements/functional/16-learning.md#dec-lr-04)). Screens:
+
+- [learning-start](screens/learning-start.html): the start screen with the panel.
+- [learning-card](screens/learning-card.html): a Learning Card.
+- [learning-message](screens/learning-message.html): a Message that carries a Learning Card.
+- [learning-float](screens/learning-float.html): a link to a card in a text, opened in a floating window.
+- [learning-profile](screens/learning-profile.html): the Learning Profile.
+
+Designed on 2026-10-24, to review ([DEC-UX-38](#dec-ux-38) to [DEC-UX-44](#dec-ux-44), [Learning](../requirements/functional/16-learning.md)).
+
+- **A main section,** the learning centre, in the rail under Reports, with a graduation cap ([DEC-UX-38](#dec-ux-38)). Whether it stays a main item is [OP-UX-21](#op-ux-21).
+- **The panel is the index of every Learning Card** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03)):
+  - On top the title, search, and a small card with the progress of the User: their Weekly Goal as a ring, their Streak, and how far they are towards their next Rank. It opens the Learning Profile.
+  - Then the Compass, then the four Learning Levels from easy to advanced, each a card in the tree, as a Collection is: its name with its step, a mark of four short bars filled up to the step ([DEC-UX-39](#dec-ux-39)), how many of its cards the User understood, and an arrow to unfold it.
+  - Unfolded, it lists its sections, each with its number, name and how many cards the User understood, and under each its cards: the icon of their kind (a book for a Learning Card, a compass for a card of the Compass, a chart for a Reading Card), the number and the name on one line, and a check when the User marked it understood.
+  - The card that is open is in medium weight and the darkest colour; opening a card unfolds its Learning Level.
+  - A Learning Level gets no colour: colour stays on content. The mark of four bars tells the step.
+- **The page of a Learning Card** ([DEC-UX-40](#dec-ux-40), [FR-LR-01](../requirements/functional/16-learning.md#fr-lr-01), [FR-LR-02](../requirements/functional/16-learning.md#fr-lr-02)):
+  - On top, the way to it, its Learning Level and section; its number and title; its priority, its thinking level, and what it holds: the reading time, the length of the video, the number of questions.
+  - In the header: "Messages" with their number, "Share in a message", and "Mark as understood" as the main button. Marked, it becomes a quiet "Understood" with a check, and "Undo" ([FR-LR-05](../requirements/functional/16-learning.md#fr-lr-05)).
+  - **One reading column:** "What you will be able to do", the learning goal; the article with its graphics, drawn as the charts of the chart language; "The common mistake"; "At Immoscoop", with the examples; the video; "Check yourself", with the questions.
+  - **A question** shows its answers. Answered, it marks the right answer and the chosen one, and says why; "Try again" clears it ([FR-LR-04](../requirements/functional/16-learning.md#fr-lr-04)).
+  - **Beside the column:** "Before this", the cards it builds on and whether the User understood them; "Next in this section"; "Related"; "Where you meet this in Data Hub"; and the source in the master learning plan ([FR-LR-09](../requirements/functional/16-learning.md#fr-lr-09)).
+- **In a Message** ([DEC-UX-41](#dec-ux-41), [FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)): "Add a learning card" next to the field of a new Message finds a card by its words. In the Message it shows as a small card: the book, its number and title, its Learning Level, and "Understood" when the reader marked it. A click opens the card.
+- **Messages on a card** ([FR-LR-06](../requirements/functional/16-learning.md#fr-lr-06)): "Messages" opens the slide-in, as on every object; a card takes a Question or a Remark, which go to the Data Team.
+- **A card wherever it helps** ([DEC-UX-42](#dec-ux-42), [FR-LR-11](../requirements/functional/16-learning.md#fr-lr-11), [FR-LR-12](../requirements/functional/16-learning.md#fr-lr-12)):
+  - A link to a Learning Card stands inline in a text: in the words of the sentence, underlined in teal, with a small graduation cap before them. Hovering it shows the number and title of the card, and whether the User understood it.
+  - A click opens the card in a floating window over the page, as a Message opens in context ([DEC-UX-30](#dec-ux-30)). The link stays marked while its card is open.
+  - The window has on its head the graduation cap, "Learning card", the number and title, fold and close. Its body holds the Learning Level, priority and length; what the reader will be able to do; the article and its graphics; the video; the questions.
+  - At its foot: "Mark as understood", and "Open in the learning centre", which opens the full page of the card.
+- **Game elements** ([DEC-UX-43](#dec-ux-43), [DEC-LR-06](../requirements/functional/16-learning.md#dec-lr-06)), calm and optional:
+  - **Progress:** a check per card, counts per section and Learning Level, a thin bar per Learning Level.
+  - **Rank:** the highest Learning Level whose required cards the User understood, and how far they are towards the next ([FR-LR-14](../requirements/functional/16-learning.md#fr-lr-14)).
+  - **Weekly Goal and Streak:** a ring that fills with the cards of this week; the Streak in weeks, as a row of small squares, a paused week hatched ([FR-LR-15](../requirements/functional/16-learning.md#fr-lr-15)).
+  - **Badges:** a round mark with a line icon, in teal when earned, in grey with a dashed edge and what it takes while still to earn ([FR-LR-13](../requirements/functional/16-learning.md#fr-lr-13)).
+  - **Quests:** a tile on the start screen with the theme, who set it, its cards and how far the User is ([FR-LR-16](../requirements/functional/16-learning.md#fr-lr-16)).
+  - **Your teams:** per team a bar with the share of required cards understood, without names ([FR-LR-17](../requirements/functional/16-learning.md#fr-lr-17)).
+  - **A quiet note** in the lower left for a few seconds when a card is understood, a Weekly Goal met or a Badge earned; no confetti, and no motion when the system asks for less ([FR-LR-19](../requirements/functional/16-learning.md#fr-lr-19)).
+  - No points and no ranking of colleagues ([OP-LR-10](../requirements/functional/16-learning.md#op-lr-10)). A switch in the settings hides the game ([FR-LR-20](../requirements/functional/16-learning.md#fr-lr-20)).
+- **The Learning Profile** ([DEC-UX-44](#dec-ux-44), [FR-LR-18](../requirements/functional/16-learning.md#fr-lr-18)) opens from the progress card in the panel and from the start screen. It shows:
+  - the Rank, with the four Learning Levels and their progress;
+  - the Weekly Goal and the Streak over the last twelve weeks;
+  - the Badges, earned and to earn;
+  - the cards understood, newest first.
+
 ## Messages
 
 Screens: [messages](screens/messages.html), the Message Centre; and the Messages on an object in a slide-in, on [a Collection](screens/collection-messages.html), [a Resource](screens/resource-messages.html) and [a Lens](screens/lens-messages.html); and a Message opened in context, [a Question on a Lens](screens/lens-context.html) and [a Request on a Lens to accept](screens/lens-new-context.html). Designed on 2026-10-23, to review ([DEC-UX-29](#dec-ux-29), [DEC-UX-30](#dec-ux-30)).
@@ -280,6 +350,25 @@ Screens: [messages](screens/messages.html), the Message Centre; and the Messages
 - **On every object,** a Collection, a Resource or a Lens, "Messages" with their number in the header opens the slide-in: on top a new Message, with its kind and who gets a notification; chips by kind; the Messages on this object with their replies; at the bottom that everyone who may see the object sees them, and the way to the Message Centre ([FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07)). On a Resource, "Ask a question" opens the same slide-in with Question chosen.
 - **A Collection** takes a Question or a Remark; a Resource and a Lens also a Signal. The Messages on the Resources and Lenses of a Collection stay on those.
 - **A Request** asks the Data Team for a decision on its object; the first is accepting a very large Lens, sent with "Send to the data team" when it is made ([DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06), [FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)). Opened, it shows what it asks to decide on, such as what one run reads, its range, the partitions and what a default would read. The Data Team has a field for its reason, "Refuse" and "Accept"; its author sees that it waits, and that only they see the Lens until then. The state shows in the list: waiting, accepted, refused.
+
+## A link to something you may not see
+
+Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review ([DEC-UX-32](#dec-ux-32)).
+
+- **One page** for a link to something that does not exist and to something the User may not see: a private Collection of another Owner Unit, a Resource that is not published, a Lens on a Resource they may not use, a query of someone else ([FR-CO-32](../requirements/functional/03-collections.md#fr-co-32)). It does not say which of the two it is: a private Collection does not exist for whoever is not in its Owner Unit ([FR-CO-17](../requirements/functional/03-collections.md#fr-co-17)).
+- **It says what to do:** ask whoever sent the link, as its owner decides who sees it; or search what the User may see. Then the way to Collections and Lenses.
+- **No "Ask for access":** it would tell that the object exists. Whether a User can ask for access, and how, is open ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)).
+
+## Sign in
+
+Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC-UX-35](#dec-ux-35)).
+
+- **A photo of the set, as it is,** fills the screen, placed on its focus point ([DEC-UX-36](#dec-ux-36)). It moves very slowly, as every background.
+- **The sign-in sits on a glass card** that blurs what lies behind it: the mark and "Data Hub", "Sign in", one sentence on what Data Hub is, and "Sign in with Google", the only way in ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01)). Under the button: it takes the Immoscoop account, and Data Hub keeps no password of its own ([FR-UM-03](../requirements/functional/02-user-management.md#fr-um-03)).
+- **The story of the photo** in the lower left, on glass too: its title, a few lines and who took it.
+- **An account of another domain is refused** ([FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)): the card says which account was refused and to sign in with the account of work, and the button reads "Sign in with another account".
+- It follows the theme of the system, as the User is not known yet, and shows a photo of the set of that theme. The light set has two photos so far, Alpenglow and Spring snow, which a switch in the prototype shows; the dark set has one, Lights on.
+- Where a browser cannot blur, the card is nearly opaque.
 
 ## Sheets
 
@@ -297,6 +386,8 @@ Screens: [messages](screens/messages.html), the Message Centre; and the Messages
 - **"Reduce motion"** in the system turns all animation off. A switch in the settings can do so too.
 - Light for the computer: CSS, no video.
 - An alternative we tried: three blurred blobs of colour that move slowly. The gradient is the current choice.
+- **A picture** can take the place of the gradient ([DEC-UX-34](#dec-ux-34)): the painted counterpart of a photo of the set, a watercolour made from the photo itself, so that it blends into the colours of the app ([DEC-UX-37](#dec-ux-37)). It drifts as slowly as the gradient. The frames then blur it lightly, so that it never competes with the text. The photos are in `backgrounds/photos/`, their paintings in `backgrounds/painted/`: Alpenglow and Spring snow, and the ski lift, the first painting, whose photo is not in the set; for the dark theme, Lights on. Any screen shows one with `?bg=alpenglow`, `?bg=spring` or `?bg=ski` in its address, such as `lens.html?bg=alpenglow`; in the dark theme it shows Lights on.
+- **Each theme has pictures of its own** ([DEC-UX-36](#dec-ux-36)): a photo is never darkened for the dark theme. The dark set has one photo so far, Lights on: a blue-hour photo from Max, made into a night picture with the lights of the village on, at the request of Max. Its painting keeps the lights as warm dabs of bare paper. Until there are more, the dark theme shows it, whatever the light theme shows. Who chooses the background, and how, is open ([OP-UX-20](#op-ux-20)).
 
 ## Decisions
 
@@ -306,7 +397,7 @@ All decided on 2026-10-22, in the design session.
 - <a id="dec-ux-02"></a>**DEC-UX-02** · Navigation on the left with a slide-out panel, instead of navigation at the top.
 - <a id="dec-ux-03"></a>**DEC-UX-03** · Each section opens on a start screen; the panel is the index. No separate overview screen that repeats the panel.
 - <a id="dec-ux-04"></a>**DEC-UX-04** · The "Promoted" feature on the start screen is not built yet.
-- <a id="dec-ux-05"></a>**DEC-UX-05** · Background: a gradient of three colours instead of blobs of colour.
+- <a id="dec-ux-05"></a>**DEC-UX-05** · Background: a gradient of three colours instead of blobs of colour. *Note of 2026-10-24: a picture can take its place ([DEC-UX-34](#dec-ux-34)).*
 
 Decided on 2026-10-22, in the review of the detail page of a Resource against its requirements:
 
@@ -344,12 +435,26 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-28"></a>**DEC-UX-28** · On the page of a Lens the Pre-flight is in the "Run" button, in the lower right corner of the Parameters, with what the run reads; it takes no room of its own. Above the approval threshold the button turns red and asks to approve, and when the table is partitioned a pop-out on the button says how to read less.
 - <a id="dec-ux-29"></a>**DEC-UX-29** · Messages have a Message Centre of their own, in the rail with the number unread, and every object with Messages, a Collection, a Resource or a Lens, opens its own Messages in a slide-in, which is the Message Centre filtered on that object, with a field to start one.
 - <a id="dec-ux-30"></a>**DEC-UX-30** · "Open in context" on a Message opens the page of its object with the Message in a floating window over it, which does not dim the page, so that the User answers with the object in view. It replaces "Open the …" in the Message Centre. The floating window shows one Message; the slide-in of [DEC-UX-29](#dec-ux-29) all Messages on an object.
+- <a id="dec-ux-31"></a>**DEC-UX-31** · Publishing and confirming a Resource happen in a sheet over its page. "Publish" is the first time, from Described, and is also the first confirmation; "Reconfirm" after a drop opens the same sheet as "Confirm again". The sheet says who will see the Resource and what Data Hub checked, and asks for the confirmation: the figures it was checked with, since when the data is reliable, and the declaration.
+- <a id="dec-ux-32"></a>**DEC-UX-32** · A link to something the User may not see opens the same page as a link to something that does not exist, without saying which of the two it is, and with what to do instead. It has no "Ask for access".
+- <a id="dec-ux-33"></a>**DEC-UX-33** · The section Lenses opens on a start screen: an intro, a search that finds Lenses by the words of a question, the Lenses of the User and their Owner Unit, and Lenses to discover, popular or new. Its panel holds the Lenses by Collection, as [OP-UX-18](#op-ux-18) proposes.
+- <a id="dec-ux-34"></a>**DEC-UX-34** · A picture can be the background, in place of the gradient: the painted counterpart of a photo ([DEC-UX-37](#dec-ux-37)), drifting as slowly. With a picture, the frames blur what is behind them lightly. The dark theme takes a picture of its own ([DEC-UX-36](#dec-ux-36)). The first pictures are ski slopes.
+- <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it: the mark and the name, "Sign in", one sentence and "Sign in with Google". In a corner, on glass too, the story of the photo. A refused account is named on the card, with the button to try another.
+- <a id="dec-ux-36"></a>**DEC-UX-36** · The pictures come as sets, each photo with its story: a title, a few lines and who took it. Max provides the photos and writes the stories. The light theme and the dark theme each have a set of their own: a photo is never darkened for the dark theme. Until the dark set has a photo, the dark theme keeps its gradient. *Note of 2026-10-24: the dark set has its first photo, a blue-hour photo from Max made into a night picture with its lights on, at the request of Max.*
+- <a id="dec-ux-37"></a>**DEC-UX-37** · Each photo of a set has a painted counterpart, a watercolour made from the photo itself: the photo as it is for signing in, the painting for the background of the app. Both carry the same story. The dark set works the same way: its own photos, painted, never darkened ones.
+- <a id="dec-ux-38"></a>**DEC-UX-38** · Learning is a main section, under Reports in the rail, with a start screen and a panel that is the index of every Learning Card: the Compass first, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. The panel shows how many cards the User understood, per Learning Level and per section, and per card whether they did. *Designed on 2026-10-24, at the request of Max, to review.* *Note of 2026-10-24: the section is called the learning centre ([DEC-LR-04](../requirements/functional/16-learning.md#dec-lr-04)).*
+- <a id="dec-ux-39"></a>**DEC-UX-39** · In the interface a Learning Level is named by its audience with its step, "1 · User" to "4 · Data owner and expert", with a mark of four short bars from easy to advanced. The word "Level" alone stays for the maturity of a Resource, Lens or Report, and a Learning Level gets no colour of its own. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-40"></a>**DEC-UX-40** · The page of a Learning Card reads as one column: what you will be able to do, the article with its graphics, the common mistake, the examples, the video, then the questions to check yourself. What comes before and after is beside it. "Mark as understood" is the main button of its header. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-41"></a>**DEC-UX-41** · A Message can carry a Learning Card, which shows in it as a small card with whether the reader understood it. A Learning Card has Messages of its own, like every object. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-42"></a>**DEC-UX-42** · A link to a Learning Card stands inline in a text, underlined in teal with a small graduation cap. A click opens the card in a floating window over the page, as a Message in context ([DEC-UX-30](#dec-ux-30)), with "Mark as understood" and "Open in the learning centre". *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-43"></a>**DEC-UX-43** · The game elements of the learning centre are calm. They are progress, a Rank per Learning Level, a Weekly Goal as a ring, a Streak in weeks, Badges as round line marks in teal, Quests and team progress without names. A success is a quiet note in the lower left. There are no points, no ranking of colleagues and no confetti. *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-44"></a>**DEC-UX-44** · Every User has a Learning Profile, opened from the progress card at the top of the panel of the learning centre and from its start screen. *Designed on 2026-10-24, to review.*
 
 ## Open points
 
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] <a id="op-ux-02"></a>**OP-UX-02** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
-- [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports.
+- [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports. *Note of 2026-10-24: Lenses is designed ([lenses-start](screens/lenses-start.html), [DEC-UX-33](#dec-ux-33)); Reports remains.*
 - [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview and Queries are designed ([resource-preview](screens/resource-preview.html), [resource-queries](screens/resource-queries.html)), to review; SQL went to its own section ([DEC-UX-17](#dec-ux-17)).*
 - [ ] <a id="op-ux-05"></a>**OP-UX-05** · **Collection palette:** align the three additional colours with the chart language.
 - [ ] <a id="op-ux-06"></a>**OP-UX-06** · **Screens on mobile** or in narrow windows.
@@ -372,5 +477,10 @@ Raised on 2026-10-23:
 
 - [x] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). An exploration page showed six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens. *Decided on 2026-10-23: E, the colour on the edge, for real Collections only ([DEC-UX-15](#dec-ux-15)); the exploration page is removed.*
 - [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*
-- [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.*
+- [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](screens/lenses-start.html)).*
 - [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*
+- [ ] <a id="op-ux-20"></a>**OP-UX-20** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](#dec-ux-34)), from the sets of [DEC-UX-36](#dec-ux-36), each photo with its painting ([DEC-UX-37](#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in. *Raised on 2026-10-24.*
+
+Raised on 2026-10-24, while designing Learning:
+
+- [ ] <a id="op-ux-21"></a>**OP-UX-21** · **A fifth main item:** the rail holds three to four main items, and with Learning it holds five (Collections, Query, Lenses, Reports, Learning). Decide whether Learning is a main item, or is reached elsewhere, for example from the menu of the account or a help button. The design puts it in the rail ([DEC-UX-38](#dec-ux-38)).
