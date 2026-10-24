@@ -14,12 +14,12 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
 @keyframes bg-drift { 0% { background-position: 0% 20%; } 50% { background-position: 60% 80%; } 100% { background-position: 100% 40%; } }
 /* A picture in place of the gradient (DEC-UX-34): the painted counterpart of a photo of the set, a watercolour (DEC-UX-37),
    drifting as slowly. The frames then blur it lightly, so that it never competes with the text. The dark theme takes a
-   picture of its own, never a darkened one (DEC-UX-36); until there is one, it keeps the gradient */
+   picture of its own set (DEC-UX-36): for now its one painting, whatever the light theme shows */
 html[data-bg] .app { background: 50% 30% / 112% auto no-repeat var(--bg-1); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
 html[data-bg="ski"] .app { background-image: url(backgrounds/painted/light/ski-lift.jpg); }
 html[data-bg="alpenglow"] .app { background-image: url(backgrounds/painted/light/alpenglow.jpg); }
 html[data-bg="spring"] .app { background-image: url(backgrounds/painted/light/spring-snow.jpg); }
-html[data-bg][data-theme="dark"] .app { background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%); background-size: 260% 260%; }
+html[data-bg][data-theme="dark"] .app { background-image: url(backgrounds/painted/dark/village-lights.jpg); }
 html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: blur(8px) saturate(1.05); backdrop-filter: blur(8px) saturate(1.05); }
 @keyframes picture-drift { 0% { background-position: 40% 25%; } 100% { background-position: 60% 35%; } }
 @media (prefers-reduced-motion: reduce) { .app, html[data-bg] .app, .signin-photo { animation: none; } }
