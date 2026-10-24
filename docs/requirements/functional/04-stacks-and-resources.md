@@ -467,6 +467,14 @@ While a User names a new query and chooses its Resources, Data Hub shows the Len
 
 A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
 
+
+<a id="fr-sr-49"></a>
+### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
+
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
+
+The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step: with the control figures they checked it with ([FR-RC-03](05-resource-card.md#fr-rc-03)), since when the data is reliable ([FR-RC-13](05-resource-card.md#fr-rc-13)), and the declaration that the data is correct.
+
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
@@ -538,6 +546,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
 - [ ] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.*
 - [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). *Note of 2026-10-23: "All" in the panel is for the Data Team only ([DEC-UX-20](../../design/principles.md#dec-ux-20)); what remains is the tab Queries of a Resource, where the same rule would show a colleague only their own queries and the numbers.* The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.*
+- [ ] <a id="op-sr-14"></a>**OP-SR-14** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](05-resource-card.md#fr-rc-04), [FR-RC-05](05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.*
 
 ## Builds on
 

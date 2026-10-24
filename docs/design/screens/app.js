@@ -81,6 +81,10 @@ document.querySelectorAll('.float-win').forEach(w => {
   });
 });
 
+// A sheet that belongs to its page: what opened it opens it again; Close, Cancel or a click beside it closes it
+document.querySelectorAll('[data-sheet-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); document.getElementById(b.dataset.sheetOpen).hidden = false; }));
+document.querySelectorAll('[data-sheet-close]').forEach(b => b.addEventListener('click', () => { b.closest('.sheet-wrap').hidden = true; }));
+
 // Intro on a section start screen: dismissed per user per section (in the app: user settings, versioned)
 const intro = document.getElementById('intro');
 if (intro) {

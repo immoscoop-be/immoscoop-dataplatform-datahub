@@ -125,6 +125,15 @@ For Collections:
 - **Recently**, switchable between **Updated** and **Added**: what changed, by whom and when.
 - **Popular collections.**
 
+For Lenses ([lenses-start](screens/lenses-start.html), [DEC-UX-33](#dec-ux-33)):
+
+- **Intro,** as for Collections: "What are lenses?", with "Make one from a query", as a Lens is made from a query ([DEC-UX-25](#dec-ux-25)).
+- **A search for a question:** "What do you want to know?" finds Lenses by the words they share with it, as a new query does ([FR-SR-48](../requirements/functional/04-stacks-and-resources.md#fr-sr-48)).
+- **Yours:** the Lenses of the User and their Owner Unit, with when they last ran them. A Lens that waits for the Data Team says so; only its author sees it.
+- **Discover,** switchable between **Popular** ([OP-UX-01](#op-ux-01)) and **New**.
+- Each Lens as a tile: its name, the question it answers, its Level, and when it ran or how often.
+- **The panel** holds the Lenses the User may use, by Collection ([OP-UX-18](#op-ux-18)).
+
 ## Grid
 
 - The grid is **always 100% wide**.
@@ -145,11 +154,11 @@ For Collections:
 
 ## Detail page of a Resource
 
-Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html) and [resource-unassigned](screens/resource-unassigned.html).
+Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-conversations](screens/resource-conversations.html), [resource-unassigned](screens/resource-unassigned.html), [resource-publish](screens/resource-publish.html) and [resource-reconfirm](screens/resource-reconfirm.html).
 
-- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). No icon: a Resource has none of its own.
+- **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). For its Owner, while it is not published, "Publish" takes the place of "Ask a question" ([DEC-UX-31](#dec-ux-31)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
-- **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner. It disappears when all is well.
+- **Alert on a drop:** what happened, and a button "Reconfirm" for the Owner, which opens the sheet to confirm it again ([DEC-UX-31](#dec-ux-31)). It disappears when all is well.
 - **Tabs:** Overview, Columns, Lineage, EDA, History, Conversations, Preview, Queries.
 - **Overview,** in tiles:
   - **Definition:** the definition in business language, written in Data Hub, and under it the description from dbt with its model type and grain, marked as coming from dbt.
@@ -202,6 +211,18 @@ Screen: [resource-queries](screens/resource-queries.html). Designed on 2026-10-2
 - Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, unfolded like a Collection.
 - Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team.
 - Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
+
+### Publishing and confirming
+
+Screens: [resource-publish](screens/resource-publish.html) and [resource-reconfirm](screens/resource-reconfirm.html). Designed on 2026-10-24, to review ([DEC-UX-31](#dec-ux-31)).
+
+- **Not published yet:** the status row says so, and a notice says who sees it now, its Owner Unit and the Data Team, and who will once it is published. In the panel it is grey, as every Resource that is not published. For its Owner, "Publish" is the main button of the header.
+- **"Publish"** opens a sheet in three parts ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49)):
+  - **Who will see it:** everyone who sees its Collection, the whole company when the Collection is public ([FR-SR-31](../requirements/functional/04-stacks-and-resources.md#fr-sr-31)).
+  - **What Data Hub checked:** that the User may publish it, and that it is Described. When a column has no description, the sheet names the columns, says that descriptions come from dbt, and "Publish and confirm" stays off.
+  - **The confirmation,** as publishing is the first one: the figures the Owner checked it with, each with its value and what it was checked against ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)); since when the data is reliable ([FR-RC-13](../requirements/functional/05-resource-card.md#fr-rc-13)); and the declaration, for the Owner Unit, that the data is correct.
+- **"Reconfirm"** on the alert after a drop opens the same sheet as "Confirm again" ([FR-MR-11](../requirements/functional/06-maturity-and-release.md#fr-mr-11)): why the Level dropped and what changed, who confirmed it last and when, the figures of that confirmation with their values of last time, to check them again, since when it is reliable, and the declaration. Who sees the Resource does not change.
+- At the bottom, both say that Data Hub keeps the confirmation with the fingerprint of that moment, and that it does not expire.
 
 ## Page of a Collection
 
@@ -281,6 +302,14 @@ Screens: [messages](screens/messages.html), the Message Centre; and the Messages
 - **A Collection** takes a Question or a Remark; a Resource and a Lens also a Signal. The Messages on the Resources and Lenses of a Collection stay on those.
 - **A Request** asks the Data Team for a decision on its object; the first is accepting a very large Lens, sent with "Send to the data team" when it is made ([DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06), [FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)). Opened, it shows what it asks to decide on, such as what one run reads, its range, the partitions and what a default would read. The Data Team has a field for its reason, "Refuse" and "Accept"; its author sees that it waits, and that only they see the Lens until then. The state shows in the list: waiting, accepted, refused.
 
+## A link to something you may not see
+
+Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review ([DEC-UX-32](#dec-ux-32)).
+
+- **One page** for a link to something that does not exist and to something the User may not see: a private Collection of another Owner Unit, a Resource that is not published, a Lens on a Resource they may not use, a query of someone else ([FR-CO-32](../requirements/functional/03-collections.md#fr-co-32)). It does not say which of the two it is: a private Collection does not exist for whoever is not in its Owner Unit ([FR-CO-17](../requirements/functional/03-collections.md#fr-co-17)).
+- **It says what to do:** ask whoever sent the link, as its owner decides who sees it; or search what the User may see. Then the way to Collections and Lenses.
+- **No "Ask for access":** it would tell that the object exists. Whether a User can ask for access, and how, is open ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)).
+
 ## Sheets
 
 - A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
@@ -344,12 +373,15 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-28"></a>**DEC-UX-28** · On the page of a Lens the Pre-flight is in the "Run" button, in the lower right corner of the Parameters, with what the run reads; it takes no room of its own. Above the approval threshold the button turns red and asks to approve, and when the table is partitioned a pop-out on the button says how to read less.
 - <a id="dec-ux-29"></a>**DEC-UX-29** · Messages have a Message Centre of their own, in the rail with the number unread, and every object with Messages, a Collection, a Resource or a Lens, opens its own Messages in a slide-in, which is the Message Centre filtered on that object, with a field to start one.
 - <a id="dec-ux-30"></a>**DEC-UX-30** · "Open in context" on a Message opens the page of its object with the Message in a floating window over it, which does not dim the page, so that the User answers with the object in view. It replaces "Open the …" in the Message Centre. The floating window shows one Message; the slide-in of [DEC-UX-29](#dec-ux-29) all Messages on an object.
+- <a id="dec-ux-31"></a>**DEC-UX-31** · Publishing and confirming a Resource happen in a sheet over its page. "Publish" is the first time, from Described, and is also the first confirmation; "Reconfirm" after a drop opens the same sheet as "Confirm again". The sheet says who will see the Resource and what Data Hub checked, and asks for the confirmation: the figures it was checked with, since when the data is reliable, and the declaration.
+- <a id="dec-ux-32"></a>**DEC-UX-32** · A link to something the User may not see opens the same page as a link to something that does not exist, without saying which of the two it is, and with what to do instead. It has no "Ask for access".
+- <a id="dec-ux-33"></a>**DEC-UX-33** · The section Lenses opens on a start screen: an intro, a search that finds Lenses by the words of a question, the Lenses of the User and their Owner Unit, and Lenses to discover, popular or new. Its panel holds the Lenses by Collection, as [OP-UX-18](#op-ux-18) proposes.
 
 ## Open points
 
 - [ ] <a id="op-ux-01"></a>**OP-UX-01** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] <a id="op-ux-02"></a>**OP-UX-02** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
-- [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports.
+- [ ] <a id="op-ux-03"></a>**OP-UX-03** · **Start screens** for Lenses and Reports. *Note of 2026-10-24: Lenses is designed ([lenses-start](screens/lenses-start.html), [DEC-UX-33](#dec-ux-33)); Reports remains.*
 - [ ] <a id="op-ux-04"></a>**OP-UX-04** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview and Queries are designed ([resource-preview](screens/resource-preview.html), [resource-queries](screens/resource-queries.html)), to review; SQL went to its own section ([DEC-UX-17](#dec-ux-17)).*
 - [ ] <a id="op-ux-05"></a>**OP-UX-05** · **Collection palette:** align the three additional colours with the chart language.
 - [ ] <a id="op-ux-06"></a>**OP-UX-06** · **Screens on mobile** or in narrow windows.
@@ -372,5 +404,5 @@ Raised on 2026-10-23:
 
 - [x] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). An exploration page showed six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens. *Decided on 2026-10-23: E, the colour on the edge, for real Collections only ([DEC-UX-15](#dec-ux-15)); the exploration page is removed.*
 - [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*
-- [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.*
+- [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](screens/lenses-start.html)).*
 - [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*

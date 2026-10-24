@@ -62,6 +62,7 @@ Updating that documentation is part of every feature.
 ## Open points
 
 - [ ] <a id="op-ch-01"></a>**OP-CH-01** · Decide where the documentation of [FR-CH-04](#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.*
+- [ ] <a id="op-ch-02"></a>**OP-CH-02** · Design a page that tells a User how to connect Claude to Data Hub: the address of the MCP server, the steps in Claude, and what Claude can then do ([FR-CH-03](#fr-ch-03), [FR-CH-04](#fr-ch-04)). Today the address has to be asked for. *Raised on 2026-10-24, while checking the screens against the requirements.*
 
 ## Builds on
 

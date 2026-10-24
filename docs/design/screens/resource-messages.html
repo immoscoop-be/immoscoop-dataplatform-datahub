@@ -23,8 +23,8 @@
 <nav class="rail" aria-label="Main navigation">
   <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
   <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
-  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
-  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="lenses-start.html" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></a>
   <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
   <div class="spacer"></div>
   <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
@@ -114,7 +114,7 @@
   <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
   <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
  </div>
- <div class="alert" role="status"><i class="ph-fill ph-arrow-circle-down"></i><p><b style="font-weight:500">Level dropped from 4 Explored to 2 Described.</b> A structural change added the field <span class="mono">lead_channel</span>. The owner has been asked to reconfirm.</p><button>Reconfirm</button></div>
+ <div class="alert" role="status"><i class="ph-fill ph-arrow-circle-down"></i><p><b style="font-weight:500">Level dropped from 4 Explored to 2 Described.</b> A structural change added the field <span class="mono">lead_channel</span>. The owner has been asked to reconfirm.</p><a class="alert-btn" href="resource-reconfirm.html">Reconfirm</a></div>
  <div class="tabs" data-group="tabs" role="tablist">
   <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
   <button class="tab" data-target="columns" role="tab" aria-selected="false">Columns</button>

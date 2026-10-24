@@ -104,6 +104,14 @@ Every rise and drop goes into the Log, and every drop gives the Owner an alert.
 
 The Level restricts no access or channel. It is shown everywhere, also by Claude.
 
+
+<a id="fr-mr-11"></a>
+### FR-MR-11 · Confirming again shows what changed
+
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
+
+When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-resources.md#fr-sr-20)), Data Hub shows why it dropped and what changed, who confirmed it last and when ([FR-RC-12](05-resource-card.md#fr-rc-12)), and the control figures of that Confirmation with their values, to check them again. The new Confirmation is kept with the Fingerprint of that moment, next to the earlier ones. It changes nothing about the Publication.
+
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch).

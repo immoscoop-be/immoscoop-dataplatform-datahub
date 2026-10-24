@@ -506,3 +506,44 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .req-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 2px 0 0 40px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
 .req-facts > div { display: flex; flex-direction: column; gap: 2px; font-size: var(--text-small); }
 .req-facts b { font-weight: var(--weight-medium); }
+
+/* Publishing and confirming a Resource, in a sheet over its page (DEC-UX-31) */
+.alert .alert-btn { font: var(--weight-medium) var(--text-small) var(--font-family); padding: 7px 14px; border-radius: var(--radius-pill); background: var(--surface-solid); color: var(--text-primary); text-decoration: none; }
+.pub-sheet { width: 560px; }
+.pub-sheet .sheet-list { margin: 8px -4px 0; padding: 0 4px; }
+.pub-block { padding: 14px 0; border-top: 1px solid var(--tint-active); }
+.pub-block:first-child { border-top: 0; padding-top: 4px; }
+.check-line { display: flex; gap: 10px; align-items: flex-start; padding: 3px 0; font-size: var(--text-small); line-height: 1.5; }
+.check-line > i { font-size: 17px; margin-top: 1px; color: var(--text-secondary); }
+.check-line.missing > i { color: var(--signal-warn); }
+.check-line b { font-weight: var(--weight-medium); }
+.change-line { display: flex; align-items: center; gap: 10px; margin: 8px 0 0 27px; font-size: var(--text-small); }
+.figures { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.figures th { text-align: left; font-weight: 400; font-size: var(--text-meta); color: var(--text-muted); padding: 0 6px 6px 0; }
+.figures td { padding: 3px 6px 3px 0; vertical-align: middle; }
+.figures th:nth-last-child(2), .figures td:nth-last-child(2) { width: 80px; }
+.figures th:last-child, .figures td:last-child { width: 150px; }
+.figures input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 6px 8px; }
+.confirm-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub);
+  font-size: var(--text-small); line-height: 1.5; cursor: pointer; }
+.confirm-check input { margin-top: 3px; accent-color: var(--text-primary); }
+.btn-primary[disabled] { opacity: .4; cursor: not-allowed; }
+
+/* A link to something the User may not see: the same page as for what does not exist (DEC-UX-32) */
+.gone { max-width: 520px; margin: 11vh auto 0; text-align: center; }
+.gone h1 { font-size: 24px; font-weight: var(--weight-medium); margin: 12px 0 0; }
+.gone > p { margin: 8px 0 0; font-size: var(--text-small); line-height: 1.6; color: var(--text-secondary); }
+.gone-ways { display: grid; gap: 8px; margin-top: 22px; text-align: left; }
+.gone-way { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md); background: var(--card); font-size: var(--text-small); line-height: 1.5; }
+.gone-way > i { font-size: 20px; color: var(--text-secondary); }
+.gone-way b { font-weight: var(--weight-medium); }
+.gone-way > span { flex: 1; min-width: 0; }
+
+/* The start screen of Lenses (DEC-UX-33) */
+a.tile { display: block; color: inherit; text-decoration: none; }
+.lens-find { display: flex; align-items: center; gap: 10px; margin-top: 18px; padding: 13px 16px; border-radius: var(--radius-lg); background: var(--surface-solid); }
+.lens-find input { flex: 1; min-width: 0; border: 0; background: none; outline: none; font: var(--text-body) var(--font-family); color: var(--text-primary); }
+.lens-tile p { margin: 8px 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+.lens-tile-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lens-tile-foot .pill { display: inline-flex; align-items: center; gap: 4px; }

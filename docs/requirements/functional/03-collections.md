@@ -309,6 +309,14 @@ The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec
 
 From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
 
+
+<a id="fr-co-32"></a>
+### FR-CO-32 · A link to something a User may not see looks like a link to nothing
+
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#a-link-to-something-you-may-not-see)
+
+A link to a Collection, Resource, Lens or query that a User may not see opens the same page as a link to something that does not exist ([FR-CO-17](#fr-co-17), [FR-SR-31](04-stacks-and-resources.md#fr-sr-31), [DEC-CO-16](#dec-co-16)). The page does not say which of the two it is. It tells the User to ask whoever sent the link, and lets them search what they may see.
+
 ## Edge cases
 
 Proposals to confirm.
@@ -344,6 +352,7 @@ What someone may see and do beyond Collections ([Permissions and library cards](
 - [x] <a id="op-co-10"></a>**OP-CO-10** · The workshop of 2026-10-22 proposes that the Owner decides, per Resource, what is in a Collection and whether it is public ([REQ-DH-COLL](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-coll)). Publishing is already up to the Owner ([FR-SR-16](04-stacks-and-resources.md#fr-sr-16)); adding and removing Resources is up to the Data Team ([DEC-CO-08](#dec-co-08), [FR-CO-14](#fr-co-14)). Decide whether the Owner also chooses the Resources of their Collection. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-22: the Data Team keeps adding and removing Resources ([DEC-CO-08](#dec-co-08)); the Owner decides per Resource whether it is published ([FR-SR-16](04-stacks-and-resources.md#fr-sr-16)).*
 - [x] <a id="op-co-11"></a>**OP-CO-11** · Decide which Lenses the page of a Collection lists ([FR-CO-28](#fr-co-28)). Proposal: every Lens built on at least one of its Resources, so that a Lens over two Collections shows in both and needs no Collection of its own; this keeps a Collection a container of Resources ([DEC-DH-64](../../overview/data-hub.md#dec-dh-64)). *Raised on 2026-10-23.* *Decided on 2026-10-23: the Lenses its Owner Unit adds to it ([DEC-CO-15](#dec-co-15)).*
 - [ ] <a id="op-co-12"></a>**OP-CO-12** · Decide what the Data Team may do in a Collection it does not own. [DEC-CO-08](#dec-co-08) and [FR-CO-13](#fr-co-13), already built, let it edit every Collection; [DEC-CO-15](#dec-co-15) says that only who owns a Collection edits it and adds Lenses. Decide whether the Data Team keeps editing the details of every Collection, and whether it adds Lenses. Adding and removing Resources stays with the Data Admins either way. *Raised on 2026-10-23.*
+- [ ] <a id="op-co-13"></a>**OP-CO-13** · Decide whether a User can ask for access to something they may not see, and how ([FR-CO-32](#fr-co-32)). Asking on the page would tell them that it exists, which [FR-CO-17](#fr-co-17) rules out for a private Collection; and access comes from the Owner Unit, a group in Workspace ([FR-UM-09](02-user-management.md#fr-um-09)), or from a public Collection and a Publication. Proposal: no asking in Data Hub; whoever shared the link speaks to the owner. *Raised on 2026-10-24, while designing the page for a link to something a User may not see.*
 
 ## Builds on
 
