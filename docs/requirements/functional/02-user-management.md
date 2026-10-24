@@ -56,14 +56,14 @@ An Owner Unit needs no convention since 2026-10-19: any Google group of the own 
 <a id="fr-um-01"></a>
 ### FR-UM-01 · Sign in with Google only
 
-**Status:** Implemented · **Confluence:** GB-01
+**Status:** Implemented · **Confluence:** GB-01 · [design](../../design/principles.md#sign-in)
 
 Logging in is only possible with Google, via OpenID Connect. Data Hub verifies the signature of the ID token, the audience and the Workspace domain.
 
 <a id="fr-um-02"></a>
 ### FR-UM-02 · Accounts of the own Workspace domain only
 
-**Status:** Implemented · **Confluence:** GB-02
+**Status:** Implemented · **Confluence:** GB-02 · [design](../../design/principles.md#sign-in)
 
 Only accounts of the company's own Workspace domain get in. Personal Gmail accounts and accounts of other domains are refused.
 

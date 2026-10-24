@@ -29,7 +29,7 @@ Data Hub is an internal tool and has no Figma. The design lives in code ([DEC-UX
 
 There are three layers:
 
-1. **Background:** a slow transition between three warm colours (sand, blush, mist).
+1. **Background:** a slow transition between three warm colours (sand, blush, mist), or a picture painted as a watercolour ([DEC-UX-34](#dec-ux-34)).
 2. **Frames:** the tab of the active navigation icon, the panel and the main area. Slightly transparent, they blend into the background.
 3. **Reading surfaces:** everything with text on it that you actually read. Fully opaque (white, or warm grey within a white surface).
 
@@ -310,6 +310,15 @@ Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review (
 - **It says what to do:** ask whoever sent the link, as its owner decides who sees it; or search what the User may see. Then the way to Collections and Lenses.
 - **No "Ask for access":** it would tell that the object exists. Whether a User can ask for access, and how, is open ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)).
 
+## Sign in
+
+Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC-UX-35](#dec-ux-35)).
+
+- **The background picture,** strongly blurred, fills the screen. Over it, without a frame: the mark, "Data Hub", one sentence on what it is, and "Sign in with Google", the only way in ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01)).
+- **Under the button:** it takes the Immoscoop account, and Data Hub keeps no password of its own ([FR-UM-03](../requirements/functional/02-user-management.md#fr-um-03)).
+- **An account of another domain is refused** ([FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)): the screen says which account was refused and to sign in with the account of work, and the button reads "Sign in with another account".
+- It follows the theme of the system, as the User is not known yet.
+
 ## Sheets
 
 - A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
@@ -326,6 +335,7 @@ Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review (
 - **"Reduce motion"** in the system turns all animation off. A switch in the settings can do so too.
 - Light for the computer: CSS, no video.
 - An alternative we tried: three blurred blobs of colour that move slowly. The gradient is the current choice.
+- **A picture** can take the place of the gradient ([DEC-UX-34](#dec-ux-34)): a photo painted as a watercolour, light on paper for the light theme and at dusk for the dark one, so that it blends into the colours of the app. It drifts as slowly as the gradient. The frames then blur it lightly, so that it never competes with the text. The first picture is a ski slope, in `backgrounds/`; any screen shows it with `?bg=ski` in its address, such as `lens.html?bg=ski`. Who chooses the background, and from which pictures, is open ([OP-UX-20](#op-ux-20)).
 
 ## Decisions
 
@@ -335,7 +345,7 @@ All decided on 2026-10-22, in the design session.
 - <a id="dec-ux-02"></a>**DEC-UX-02** · Navigation on the left with a slide-out panel, instead of navigation at the top.
 - <a id="dec-ux-03"></a>**DEC-UX-03** · Each section opens on a start screen; the panel is the index. No separate overview screen that repeats the panel.
 - <a id="dec-ux-04"></a>**DEC-UX-04** · The "Promoted" feature on the start screen is not built yet.
-- <a id="dec-ux-05"></a>**DEC-UX-05** · Background: a gradient of three colours instead of blobs of colour.
+- <a id="dec-ux-05"></a>**DEC-UX-05** · Background: a gradient of three colours instead of blobs of colour. *Note of 2026-10-24: a picture can take its place ([DEC-UX-34](#dec-ux-34)).*
 
 Decided on 2026-10-22, in the review of the detail page of a Resource against its requirements:
 
@@ -376,6 +386,8 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-31"></a>**DEC-UX-31** · Publishing and confirming a Resource happen in a sheet over its page. "Publish" is the first time, from Described, and is also the first confirmation; "Reconfirm" after a drop opens the same sheet as "Confirm again". The sheet says who will see the Resource and what Data Hub checked, and asks for the confirmation: the figures it was checked with, since when the data is reliable, and the declaration.
 - <a id="dec-ux-32"></a>**DEC-UX-32** · A link to something the User may not see opens the same page as a link to something that does not exist, without saying which of the two it is, and with what to do instead. It has no "Ask for access".
 - <a id="dec-ux-33"></a>**DEC-UX-33** · The section Lenses opens on a start screen: an intro, a search that finds Lenses by the words of a question, the Lenses of the User and their Owner Unit, and Lenses to discover, popular or new. Its panel holds the Lenses by Collection, as [OP-UX-18](#op-ux-18) proposes.
+- <a id="dec-ux-34"></a>**DEC-UX-34** · A picture can be the background, in place of the gradient: a photo painted as a watercolour, a light version for the light theme and a version at dusk for the dark one, drifting as slowly. With a picture, the frames blur what is behind them lightly. The first picture is a ski slope.
+- <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows the background picture, strongly blurred, with over it only the mark, the name, one sentence and "Sign in with Google". A refused account is named on the same screen, with the button to try another.
 
 ## Open points
 
@@ -406,3 +418,4 @@ Raised on 2026-10-23:
 - [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*
 - [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](screens/lenses-start.html)).*
 - [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*
+- [ ] <a id="op-ux-20"></a>**OP-UX-20** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](#dec-ux-34)). Decide who chooses it, each User in their settings ([OP-UX-13](#op-ux-13)) or one for everyone; which pictures there are, a set chosen for Data Hub or one of their own; and which background is the default. Signing in shows the picture, as no User is known yet ([DEC-UX-35](#dec-ux-35)). *Raised on 2026-10-24.*

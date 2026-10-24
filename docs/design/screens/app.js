@@ -113,8 +113,9 @@ document.querySelectorAll('.maturity').forEach(m => {
 });
 
 // Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
-// ?role=owner, ?size=large
+// ?role=owner, ?size=large; ?bg=ski shows the picture as the background (DEC-UX-34)
 new URLSearchParams(location.search).forEach((value, key) => {
   if (key === 'role') document.documentElement.dataset.role = value;
+  if (key === 'bg') document.documentElement.dataset.bg = value;
   document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
 });
