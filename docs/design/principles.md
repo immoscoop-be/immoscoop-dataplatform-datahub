@@ -314,10 +314,12 @@ Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review (
 
 Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC-UX-35](#dec-ux-35)).
 
-- **The background picture,** strongly blurred, fills the screen. Over it, without a frame: the mark, "Data Hub", one sentence on what it is, and "Sign in with Google", the only way in ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01)).
-- **Under the button:** it takes the Immoscoop account, and Data Hub keeps no password of its own ([FR-UM-03](../requirements/functional/02-user-management.md#fr-um-03)).
-- **An account of another domain is refused** ([FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)): the screen says which account was refused and to sign in with the account of work, and the button reads "Sign in with another account".
-- It follows the theme of the system, as the User is not known yet.
+- **A photo of the set, as it is,** fills the screen, placed on its focus point ([DEC-UX-36](#dec-ux-36)). It moves very slowly, as every background.
+- **The sign-in sits on a glass card** that blurs what lies behind it: the mark and "Data Hub", "Sign in", one sentence on what Data Hub is, and "Sign in with Google", the only way in ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01)). Under the button: it takes the Immoscoop account, and Data Hub keeps no password of its own ([FR-UM-03](../requirements/functional/02-user-management.md#fr-um-03)).
+- **The story of the photo** in the lower left, on glass too: its title, a few lines and who took it.
+- **An account of another domain is refused** ([FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)): the card says which account was refused and to sign in with the account of work, and the button reads "Sign in with another account".
+- It follows the theme of the system, as the User is not known yet, and shows a photo of the set of that theme. The dark set has no photo yet, so the dark theme shows its gradient behind the card.
+- Where a browser cannot blur, the card is nearly opaque.
 
 ## Sheets
 
@@ -335,7 +337,8 @@ Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC
 - **"Reduce motion"** in the system turns all animation off. A switch in the settings can do so too.
 - Light for the computer: CSS, no video.
 - An alternative we tried: three blurred blobs of colour that move slowly. The gradient is the current choice.
-- **A picture** can take the place of the gradient ([DEC-UX-34](#dec-ux-34)): a photo painted as a watercolour, light on paper for the light theme and at dusk for the dark one, so that it blends into the colours of the app. It drifts as slowly as the gradient. The frames then blur it lightly, so that it never competes with the text. The first picture is a ski slope, in `backgrounds/`; any screen shows it with `?bg=ski` in its address, such as `lens.html?bg=ski`. Who chooses the background, and from which pictures, is open ([OP-UX-20](#op-ux-20)).
+- **A picture** can take the place of the gradient ([DEC-UX-34](#dec-ux-34)): a photo painted as a watercolour, so that it blends into the colours of the app. It drifts as slowly as the gradient. The frames then blur it lightly, so that it never competes with the text. The first picture is a ski slope, in `backgrounds/`; any screen shows it with `?bg=ski` in its address, such as `lens.html?bg=ski`.
+- **Each theme has pictures of its own** ([DEC-UX-36](#dec-ux-36)): a photo is never darkened for the dark theme. Until the dark theme has one, it keeps its gradient. Who chooses the background, and how, is open ([OP-UX-20](#op-ux-20)).
 
 ## Decisions
 
@@ -386,8 +389,9 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-31"></a>**DEC-UX-31** · Publishing and confirming a Resource happen in a sheet over its page. "Publish" is the first time, from Described, and is also the first confirmation; "Reconfirm" after a drop opens the same sheet as "Confirm again". The sheet says who will see the Resource and what Data Hub checked, and asks for the confirmation: the figures it was checked with, since when the data is reliable, and the declaration.
 - <a id="dec-ux-32"></a>**DEC-UX-32** · A link to something the User may not see opens the same page as a link to something that does not exist, without saying which of the two it is, and with what to do instead. It has no "Ask for access".
 - <a id="dec-ux-33"></a>**DEC-UX-33** · The section Lenses opens on a start screen: an intro, a search that finds Lenses by the words of a question, the Lenses of the User and their Owner Unit, and Lenses to discover, popular or new. Its panel holds the Lenses by Collection, as [OP-UX-18](#op-ux-18) proposes.
-- <a id="dec-ux-34"></a>**DEC-UX-34** · A picture can be the background, in place of the gradient: a photo painted as a watercolour, a light version for the light theme and a version at dusk for the dark one, drifting as slowly. With a picture, the frames blur what is behind them lightly. The first picture is a ski slope.
-- <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows the background picture, strongly blurred, with over it only the mark, the name, one sentence and "Sign in with Google". A refused account is named on the same screen, with the button to try another.
+- <a id="dec-ux-34"></a>**DEC-UX-34** · A picture can be the background, in place of the gradient: a photo painted as a watercolour, drifting as slowly. With a picture, the frames blur what is behind them lightly. The dark theme takes a picture of its own ([DEC-UX-36](#dec-ux-36)). The first picture is a ski slope.
+- <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it: the mark and the name, "Sign in", one sentence and "Sign in with Google". In a corner, on glass too, the story of the photo. A refused account is named on the card, with the button to try another.
+- <a id="dec-ux-36"></a>**DEC-UX-36** · The pictures come as sets, each photo with its story: a title, a few lines and who took it. Max provides the photos and writes the stories. The light theme and the dark theme each have a set of their own: a photo is never darkened for the dark theme. Until the dark set has a photo, the dark theme keeps its gradient.
 
 ## Open points
 
@@ -418,4 +422,4 @@ Raised on 2026-10-23:
 - [x] <a id="op-ux-17"></a>**OP-UX-17** · **A strong colour for "Without a collection":** Max asked on 2026-10-23 for red or another strong colour, as it is for the Data Team only and needs solving quickly. The signal colour today is ochre, which is also a colour of the Collection palette. Proposal: a new token for what needs the Data Team now, a warm red (`#C4432F`, in dark `#E2725E`), with the number waiting in a small red badge; the exploration page showed it. Decide the colour, and whether it becomes a rule beyond this list. *Decided on 2026-10-23: the red, for "Without a collection" only, without a colour bar as it is no Collection ([DEC-UX-16](#dec-ux-16)).*
 - [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](screens/lenses-start.html)).*
 - [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*
-- [ ] <a id="op-ux-20"></a>**OP-UX-20** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](#dec-ux-34)). Decide who chooses it, each User in their settings ([OP-UX-13](#op-ux-13)) or one for everyone; which pictures there are, a set chosen for Data Hub or one of their own; and which background is the default. Signing in shows the picture, as no User is known yet ([DEC-UX-35](#dec-ux-35)). *Raised on 2026-10-24.*
+- [ ] <a id="op-ux-20"></a>**OP-UX-20** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](#dec-ux-34)), from the sets of [DEC-UX-36](#dec-ux-36). Decide who chooses it, each User in their settings ([OP-UX-13](#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; and how signing in picks its photo, such as a new one each day. *Raised on 2026-10-24.*
