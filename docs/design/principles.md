@@ -81,7 +81,7 @@ There are three layers:
 
 ## Navigation
 
-- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)); at the bottom Messages, with the number unread ([DEC-UX-29](#dec-ux-29)), then theme, settings and account.
+- **On the left, floating:** the icons have no bar or background of their own. Three to four main items (now Collections, Query, Lenses, Reports; see [OP-UX-11](#op-ux-11) and [DEC-UX-17](#dec-ux-17)), and Learning as a fifth ([DEC-UX-38](#dec-ux-38), [OP-UX-21](#op-ux-21)); at the bottom Messages, with the number unread ([DEC-UX-29](#dec-ux-29)), then theme, settings and account.
 - **Collapsed,** each icon shows a label after a short delay. The active icon keeps its transparent tile.
 - **A slide-out panel per main item.** The active icon and the panel form one shape: the icon has the same background as the panel and flows into it with concave corners.
 
@@ -133,6 +133,8 @@ For Lenses ([lenses-start](screens/lenses-start.html), [DEC-UX-33](#dec-ux-33)):
 - **Discover,** switchable between **Popular** ([OP-UX-01](#op-ux-01)) and **New**.
 - Each Lens as a tile: its name, the question it answers, its Level, and when it ran or how often.
 - **The panel** holds the Lenses the User may use, by Collection ([OP-UX-18](#op-ux-18)).
+
+For Learning ([learning-start](screens/learning-start.html), [DEC-UX-38](#dec-ux-38)): an intro, "What is learning?", with "Start with the compass"; a search; "Continue" with the card the User was reading; "Required for you"; and "New and changed". See [Learning](#learning).
 
 ## Grid
 
@@ -289,6 +291,26 @@ Screen: [lens](screens/lens.html). Designed on 2026-10-23, to review. Where a Le
 - **No SQL** on this page, on either tab: a colleague never sees the SQL of a Lens; its Owner Unit sees it when editing ([DEC-UX-27](#dec-ux-27), [FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)).
 - The prototype shows the result up to date, after a change, before the first run and while choosing the value of To, with a switch at the bottom, and the page as the Owner Unit or a colleague.
 
+## Learning
+
+Screens: [learning-start](screens/learning-start.html), the start screen with the panel; [learning-card](screens/learning-card.html), a Learning Card; [learning-message](screens/learning-message.html), a Message that carries a Learning Card. Designed on 2026-10-24, to review ([DEC-UX-38](#dec-ux-38) to [DEC-UX-41](#dec-ux-41), [Learning](../requirements/functional/16-learning.md)).
+
+- **A main section,** in the rail under Reports, with a graduation cap ([DEC-UX-38](#dec-ux-38)). Whether it stays a main item is [OP-UX-21](#op-ux-21).
+- **The panel is the index of every Learning Card** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03)):
+  - On top the title, search, and how many cards the User understood in all.
+  - Then the Compass, then the four Learning Levels from easy to advanced, each a card in the tree, as a Collection is: its name with its step, a mark of four short bars filled up to the step ([DEC-UX-39](#dec-ux-39)), how many of its cards the User understood, and an arrow to unfold it.
+  - Unfolded, it lists its sections, each with its number, name and how many cards the User understood, and under each its cards: the icon of their kind (a book for a Learning Card, a compass for a card of the Compass, a chart for a Reading Card), the number and the name on one line, and a check when the User marked it understood.
+  - The card that is open is in medium weight and the darkest colour; opening a card unfolds its Learning Level.
+  - A Learning Level gets no colour: colour stays on content. The mark of four bars tells the step.
+- **The page of a Learning Card** ([DEC-UX-40](#dec-ux-40), [FR-LR-01](../requirements/functional/16-learning.md#fr-lr-01), [FR-LR-02](../requirements/functional/16-learning.md#fr-lr-02)):
+  - On top, the way to it, its Learning Level and section; its number and title; its priority, its thinking level, and what it holds: the reading time, the length of the video, the number of questions.
+  - In the header: "Messages" with their number, "Share in a message", and "Mark as understood" as the main button. Marked, it becomes a quiet "Understood" with a check, and "Undo" ([FR-LR-05](../requirements/functional/16-learning.md#fr-lr-05)).
+  - **One reading column:** "What you will be able to do", the learning goal; the article with its graphics, drawn as the charts of the chart language; "The common mistake"; "At Immoscoop", with the examples; the video; "Check yourself", with the questions.
+  - **A question** shows its answers. Answered, it marks the right answer and the chosen one, and says why; "Try again" clears it ([FR-LR-04](../requirements/functional/16-learning.md#fr-lr-04)).
+  - **Beside the column:** "Before this", the cards it builds on and whether the User understood them; "Next in this section"; "Related"; "Where you meet this in Data Hub"; and the source in the master learning plan ([FR-LR-09](../requirements/functional/16-learning.md#fr-lr-09)).
+- **In a Message** ([DEC-UX-41](#dec-ux-41), [FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)): "Add a learning card" next to the field of a new Message finds a card by its words. In the Message it shows as a small card: the book, its number and title, its Learning Level, and "Understood" when the reader marked it. A click opens the card.
+- **Messages on a card** ([FR-LR-06](../requirements/functional/16-learning.md#fr-lr-06)): "Messages" opens the slide-in, as on every object; a card takes a Question or a Remark, which go to the Data Team.
+
 ## Messages
 
 Screens: [messages](screens/messages.html), the Message Centre; and the Messages on an object in a slide-in, on [a Collection](screens/collection-messages.html), [a Resource](screens/resource-messages.html) and [a Lens](screens/lens-messages.html); and a Message opened in context, [a Question on a Lens](screens/lens-context.html) and [a Request on a Lens to accept](screens/lens-new-context.html). Designed on 2026-10-23, to review ([DEC-UX-29](#dec-ux-29), [DEC-UX-30](#dec-ux-30)).
@@ -393,6 +415,10 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it: the mark and the name, "Sign in", one sentence and "Sign in with Google". In a corner, on glass too, the story of the photo. A refused account is named on the card, with the button to try another.
 - <a id="dec-ux-36"></a>**DEC-UX-36** · The pictures come as sets, each photo with its story: a title, a few lines and who took it. Max provides the photos and writes the stories. The light theme and the dark theme each have a set of their own: a photo is never darkened for the dark theme. Until the dark set has a photo, the dark theme keeps its gradient. *Note of 2026-10-24: the dark set has its first photo, a blue-hour photo of Max made into a night picture with its lights on, at his request.*
 - <a id="dec-ux-37"></a>**DEC-UX-37** · Each photo of a set has a painted counterpart, a watercolour made from the photo itself: the photo as it is for signing in, the painting for the background of the app. Both carry the same story. The dark set works the same way: its own photos, painted, never darkened ones.
+- <a id="dec-ux-38"></a>**DEC-UX-38** · Learning is a main section, under Reports in the rail, with a start screen and a panel that is the index of every Learning Card: the Compass first, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. The panel shows how many cards the User understood, per Learning Level and per section, and per card whether they did. *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-39"></a>**DEC-UX-39** · In the interface a Learning Level is named by its audience with its step, "1 · User" to "4 · Data owner and expert", with a mark of four short bars from easy to advanced. The word "Level" alone stays for the maturity of a Resource, Lens or Report, and a Learning Level gets no colour of its own. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-40"></a>**DEC-UX-40** · The page of a Learning Card reads as one column: what you will be able to do, the article with its graphics, the common mistake, the examples, the video, then the questions to check yourself. What comes before and after is beside it. "Mark as understood" is the main button of its header. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-41"></a>**DEC-UX-41** · A Message can carry a Learning Card, which shows in it as a small card with whether the reader understood it. A Learning Card has Messages of its own, like every object. *Designed on 2026-10-24, to review.*
 
 ## Open points
 
@@ -424,3 +450,7 @@ Raised on 2026-10-23:
 - [ ] <a id="op-ux-18"></a>**OP-UX-18** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](screens/lenses-start.html)).*
 - [ ] <a id="op-ux-19"></a>**OP-UX-19** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.*
 - [ ] <a id="op-ux-20"></a>**OP-UX-20** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](#dec-ux-34)), from the sets of [DEC-UX-36](#dec-ux-36), each photo with its painting ([DEC-UX-37](#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in. *Raised on 2026-10-24.*
+
+Raised on 2026-10-24, while designing Learning:
+
+- [ ] <a id="op-ux-21"></a>**OP-UX-21** · **A fifth main item:** the rail holds three to four main items, and with Learning it holds five (Collections, Query, Lenses, Reports, Learning). Decide whether Learning is a main item, or is reached elsewhere, for example from the menu of the account or a help button. The design puts it in the rail ([DEC-UX-38](#dec-ux-38)).

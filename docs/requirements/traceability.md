@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 37 | 20 (17 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 41 | 21 (18 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -27,6 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
+| [Learning](functional/16-learning.md) | 10 (10 proposed) | – | 3 | 9 (9 open) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -251,6 +252,21 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
 | [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23<br>[a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23 |
 | [FR-CV-09](functional/14-conversations.md#fr-cv-09) | A Message opens in its context | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23 |
+
+### [Learning](functional/16-learning.md)
+
+| ID | Title | Status | Confluence | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | – | – |
+| [FR-LR-02](functional/16-learning.md#fr-lr-02) | A Learning Card holds an article, a video and test questions | Proposed | – | – | – |
+| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Proposed | – | – | – |
+| [FR-LR-04](functional/16-learning.md#fr-lr-04) | Test questions say right or wrong, and why | Proposed | – | – | – |
+| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Proposed | – | – | – |
+| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Proposed | – | – | – |
+| [FR-LR-07](functional/16-learning.md#fr-lr-07) | A Message can carry a Learning Card | Proposed | – | – | – |
+| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | – |
+| [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | – |
+| [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | – |
 
 ## Edge cases
 

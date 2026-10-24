@@ -76,7 +76,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph |
 | [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
 
-Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains.
+Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md), [EDA](../requirements/functional/15-eda.md) and [Learning](../requirements/functional/16-learning.md) live is decided with those domains.
 
 ## How a User is validated
 

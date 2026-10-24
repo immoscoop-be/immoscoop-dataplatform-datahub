@@ -4,7 +4,7 @@ This folder holds every requirement for Data Hub: what it must do (functional), 
 
 | Folder | What it holds | State |
 | --- | --- | --- |
-| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, ten still to be specified |
+| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, eleven still to be specified |
 | [`technical/`](technical/README.md) | How each functional requirement is realised | Platform specified; domains to follow |
 | [`non-functional/`](non-functional/README.md) | Security, performance, cost, localisation and other qualities | Security started; other categories to follow |
 | [`traceability.md`](traceability.md) | Generated matrix: requirement → status → realised by → commits | Generated, never edit by hand |
@@ -45,6 +45,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `CH` | Channels | [13-channels.md](functional/13-channels.md) |
 | `CV` | Conversations | [14-conversations.md](functional/14-conversations.md) |
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
+| `LR` | Learning | [16-learning.md](functional/16-learning.md) |
 | `PF` | Platform: technical choices not tied to one domain (technical requirements only) | [00-platform.md](technical/00-platform.md) |
 | `UX` | Design of the web app: its look, navigation and screens (decisions and open points) | [principles.md](../design/principles.md) |
 

@@ -29,6 +29,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="change"></a>**Change** | A difference for one Node between a new Artifact Set and the previous Current Version: a description, logic, type or structural change, or a Node added or removed. | [Artifact registry](requirements/functional/01-artifact-registry.md#kinds-of-change) |
 | <a id="chart-server"></a>**Chart Server** | The service semgraph of Data Hub, which draws charts by what they mean, following the chart language. Until its users have moved over, its former version on AWS keeps running too. | [DEC-DH-53](overview/data-hub.md#dec-dh-53), [DEC-DH-63](overview/data-hub.md#dec-dh-63) |
 | <a id="collection"></a>**Collection** | A functional domain of Immoscoop, such as web visits, leads or agencies, in which Resources sit together under one Owner Unit. Anyone can create one, and it is private or public. Not a dataset in BigQuery. | [Collections](requirements/functional/03-collections.md) |
+| <a id="compass"></a>**Compass** | The Learning Cards on how data works at Immoscoop: the landscape, the tooling, governance and processes. Orientation for everyone, not a step from easy to advanced. | [Learning](requirements/functional/16-learning.md#terms) |
 | <a id="confirmation"></a>**Confirmation** | The declaration by the Owner that the data of a Resource is correct, stored with the Fingerprint of that moment. The first Publication is the first Confirmation. A Confirmation does not expire. | [DEC-DH-39](overview/data-hub.md#dec-dh-39), [FR-MR-08](requirements/functional/06-maturity-and-release.md#fr-mr-08) |
 | <a id="consumer"></a>**Consumer** | A User of the Lenses and Reports built on a Resource. Data Hub knows them through the lineage of those Lenses and Reports. | [FR-LN-03](requirements/functional/07-log-and-notifications.md#fr-ln-03) |
 | <a id="current-version"></a>**Current Version** | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
@@ -44,6 +45,8 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="key"></a>**Key** | The full name of the view of a Resource in BigQuery, `project.dataset.table`. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="known-behaviour"></a>**Known Behaviour** | The block on the Resource Card with the intended use, the pitfalls and the Anomalies of a Resource. | [DEC-DH-18](overview/data-hub.md#dec-dh-18) |
 | <a id="known-gap"></a>**Known Gap** | A structural gap in the data of a Resource, not an error in the strict sense: for example a field that was never stored for part of the rows. The final term is still open. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [OP-RC-03](requirements/functional/05-resource-card.md#op-rc-03) |
+| <a id="learning-card"></a>**Learning Card** | One topic of the master learning plan, with a page in Data Hub: an article with graphics, optionally a video and test questions. A User can mark it understood. | [DEC-LR-01](requirements/functional/16-learning.md#dec-lr-01), [FR-LR-01](requirements/functional/16-learning.md#fr-lr-01) |
+| <a id="learning-level"></a>**Learning Level** | One of the four levels of the master learning plan, from easy to advanced: 1 User, 2 Data-aware user, 3 Data analyst, 4 Data owner and expert. Not to be confused with the Level of a Resource. | [DEC-LR-02](requirements/functional/16-learning.md#dec-lr-02) |
 | <a id="lens"></a>**Lens** | A rendering of a Resource, of a fixed type, with Parameters, made by business. Deliberately not called a view. Its Level is the lowest Level of the Resources beneath it. | [Lenses](overview/data-hub.md#lenses) |
 | <a id="level"></a>**Level** | The maturity level of a Resource, Lens or Report, from Beta (0) to Monitored (5); see [Levels](#levels). | [Maturity and release](requirements/functional/06-maturity-and-release.md) |
 | <a id="library-card"></a>**Library Card** | The personal key of a User, for example for Excel through Power Query. It can be revoked and renewed. | [DEC-DH-47](overview/data-hub.md#dec-dh-47) |
@@ -63,6 +66,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Stacks and resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="query-id"></a>**Query ID**, <a id="query-log"></a>**Query Log** | The Query Log keeps every query Data Hub executes, with a unique Query ID, the SQL, who ran it, when, the bytes processed and the Resources beneath it. Every output carries the Query ID of its query. Not the Log of a Resource. | [FR-LN-05](requirements/functional/07-log-and-notifications.md#fr-ln-05), [FR-LN-06](requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | <a id="reaction"></a>**Reaction** | A Question, Remark or Signal that someone who may see a Resource leaves on it. | [DEC-SR-20](requirements/functional/04-stacks-and-resources.md#dec-sr-20) |
+| <a id="reading-card"></a>**Reading Card** | A Learning Card that explains how to read one standard chart of the chart language, and the trap it avoids. Every standard chart links to its Reading Card. | [FR-LR-10](requirements/functional/16-learning.md#fr-lr-10) |
 | <a id="question"></a>**Question**, <a id="remark"></a>**Remark** | The Reactions that ask something about a Resource, and that leave a remark or tip for others. | [Kinds of Reaction](requirements/functional/04-stacks-and-resources.md#kinds-of-reaction) |
 | <a id="refresh-token"></a>**Refresh Token** | The long-lived token, usable once, with which a client that signs in on behalf of a User (the server of the web app, or Claude) gets a new Access Token without a new login. Only identity accepts it; the other services never see it. | [DEC-PF-18](requirements/technical/00-platform.md#dec-pf-18), [TR-PF-25](requirements/technical/00-platform.md#tr-pf-25) |
 | <a id="registration"></a>**Registration** | Making a table a Resource: an exposure with the tag `datahub` in its dbt project that depends on it. The Registrations together are the index of Data Hub. | [DEC-SR-22](requirements/functional/04-stacks-and-resources.md#dec-sr-22) |
@@ -107,6 +111,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 
 | Confluence (Dutch) | Repository (English) |
 | --- | --- |
+| aanbevolen, verdieping, verplicht | recommended, in depth, required |
 | aanwinstenregister | accession register |
 | access-as | access axis |
 | begrip, beta-begrip | concept, Beta Concept |
@@ -127,6 +132,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | controlecijfers | control figures |
 | datateam | Data Team |
 | definitie in businesstaal | definition in business language |
+| denkniveau: herkennen, toepassen, beoordelen | thinking level: recognise, apply, judge |
 | domeinmodel | Domain Model |
 | fiche, catalogusfiche | Resource Card, catalogue card |
 | functionele regel | functional requirement |
@@ -141,15 +147,21 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | kader | frame |
 | kanalen | channels |
 | kanttekeningen in de marge | margin notes |
+| kompas | Compass |
+| leerdoel, kern, misvatting | learning goal, core, misconception |
 | leesbare naam | Display Name |
+| leeskaart | Reading Card |
 | leesvlak | reading surface |
 | leeszaal | reading room |
 | lens, lenzen | Lens, Lenses |
 | lezerskaart | Library Card |
+| master-leerplan | master learning plan |
 | maturiteitsicoon | maturity icon |
 | melding | notification |
 | melding (op een scherm) | alert |
+| niveau (van het master-leerplan) | Learning Level |
 | onderwerp (van een bericht) | Subject |
+| onderwerp (van het master-leerplan) | Learning Card |
 | ontsluiting, ontsluiten | Release, release |
 | ontwerprichtlijnen | design principles |
 | open punten | open points |

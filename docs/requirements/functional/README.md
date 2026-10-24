@@ -32,9 +32,11 @@
 | 13 | [Channels](13-channels.md) | `CH` | Data Hub itself, Claude as an MCP App, Excel and HTML reports | To be specified |
 | 14 | [Conversations](14-conversations.md) | `CV` | Questions, Remarks and margin notes on an object | To be specified |
 | 15 | [EDA](15-eda.md) | `ED` | How an exploration runs and is linked to a Resource | To be specified ² |
+| 16 | [Learning](16-learning.md) | `LR` | A page for every Learning Card of the master learning plan, by Learning Level and section, with an article, a video and test questions | To be specified ³ |
 
 ¹ The Confluence overview still listed this domain as "to be described", but its page already holds six decisions and ten rules.
 ² Not in the Confluence overview; proposed in [OP-MR-01](06-maturity-and-release.md#op-mr-01).
+³ Not in the Confluence overview; asked for by Max on 2026-10-24 ([DEC-LR-01](16-learning.md#dec-lr-01)).
 
 The number of requirements per domain and status is in the [traceability matrix](../traceability.md).
 

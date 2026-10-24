@@ -585,3 +585,64 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
 .photo-story p { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
 .photo-story .meta { display: block; margin-top: 8px; color: var(--text-secondary); }
 @media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px 140px; } .signin-card { grid-column: 1; } .photo-story { right: 16px; left: 16px; max-width: none; } }
+
+/* Learning (DEC-UX-38 to DEC-UX-41): the step of a Learning Level, the panel by section, the page of a Learning Card */
+.lv-mark { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; flex: none; }
+.lv-mark i { display: block; width: 3px; border-radius: 1px; background: var(--tint-active); }
+.lv-mark i:nth-child(1) { height: 5px; } .lv-mark i:nth-child(2) { height: 8px; } .lv-mark i:nth-child(3) { height: 11px; } .lv-mark i:nth-child(4) { height: 14px; }
+.lv-mark i.on { background: var(--text-secondary); }
+.tree-sec { display: flex; align-items: baseline; gap: 6px; padding: 10px 8px 3px 16px; font-size: var(--text-meta); color: var(--text-muted); }
+.tree-sec span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lc-num { color: var(--text-muted); font-variant-numeric: tabular-nums; margin-right: 5px; font-weight: var(--weight-regular, 400); }
+.lc-done { font-size: 14px; color: var(--text-secondary); flex: none; }
+.lc-tile p { margin: 8px 0 12px; font-size: 12px; line-height: 1.5; color: var(--text-secondary); }
+.lc-tile-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.lc-bar { height: 4px; border-radius: 2px; background: var(--tint-active); overflow: hidden; margin-top: 10px; }
+.lc-bar span { display: block; height: 100%; background: var(--text-secondary); }
+.lc-body { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 24px; align-items: start; margin-top: 20px; }
+.lc-col { max-width: 720px; display: grid; gap: 14px; }
+.lc-goal { border-radius: var(--radius-lg); padding: 14px 18px; background: color-mix(in srgb, var(--col-teal) 11%, var(--card)); }
+.lc-goal p { margin: 0; font-size: 15px; line-height: 1.6; }
+.lc-article { border-radius: var(--radius-lg); padding: 20px 22px; }
+.lc-article p, .lc-article li { font-size: 14px; line-height: 1.7; color: var(--text-primary); }
+.lc-article p { margin: 0 0 12px; }
+.lc-article h3 { font-size: 15px; font-weight: var(--weight-medium); margin: 18px 0 6px; }
+.lc-article ul { margin: 0; padding-left: 20px; }
+.lc-figure { margin: 6px 0 16px; border-radius: var(--radius-md); padding: 14px 16px 10px; background: var(--surface-sub); }
+.lc-figure figcaption { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.lc-mistake { display: flex; gap: 12px; padding: 12px 16px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.lc-mistake > i { font-size: 20px; color: var(--text-secondary); margin-top: 2px; }
+.lc-mistake p { margin: 2px 0 0; font-size: 13px; }
+.lc-video { position: relative; aspect-ratio: 16 / 9; border-radius: var(--radius-lg); overflow: hidden; background: #2E2A26; color: #F4F1EC; display: grid; place-items: center; }
+.lc-video .play { width: 64px; height: 64px; border-radius: 50%; background: rgba(244,241,236,.92); color: #2E2A26; display: grid; place-items: center; font-size: 28px; }
+.lc-video .video-meta { position: absolute; left: 18px; bottom: 14px; right: 18px; display: flex; align-items: baseline; gap: 12px; font-size: 13px; }
+.lc-video .video-meta span { opacity: .75; font-size: 12px; }
+.lc-h { font-size: var(--text-section); font-weight: var(--weight-medium); margin: 10px 0 0; }
+.lc-q { border-radius: var(--radius-lg); padding: 14px 16px; }
+.lc-q h4 { font-size: 14px; font-weight: var(--weight-medium); margin: 2px 0 10px; line-height: 1.5; }
+.lc-opt { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; margin-top: 6px; border-radius: 12px; outline: 1px solid var(--tint-active); font-size: 13px; line-height: 1.45; cursor: pointer; }
+.lc-opt:hover { background: var(--tint-hover); }
+.lc-opt > .ph, .lc-opt > .ph-fill { font-size: 16px; color: var(--text-muted); margin-top: 1px; flex: none; }
+.lc-opt > span:first-of-type { flex: 1; }
+.lc-opt .meta { white-space: nowrap; }
+.lc-opt.right { outline: 1.5px solid var(--col-teal-ink); }
+.lc-opt.right > .ph-fill, .lc-opt.right > .ph { color: var(--col-teal-ink); }
+.lc-opt.chosen.wrong { background: var(--tint-hover); }
+.lc-opt.chosen.wrong > .ph-fill { color: var(--text-secondary); }
+.lc-why { margin: 10px 2px 0; font-size: 12.5px; line-height: 1.55; color: var(--text-secondary); }
+.lc-aside { position: sticky; top: 0; }
+.lc-aside h3 { font-size: var(--text-meta); font-weight: 400; color: var(--text-muted); margin: 16px 4px 6px; }
+.lc-aside h3:first-child { margin-top: 0; }
+.lc-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 10px; font-size: 13px; color: var(--text-primary); text-decoration: none; background: var(--card); margin-bottom: 4px; }
+.lc-link:hover { background: var(--tint-hover); }
+.lc-link > .ph { font-size: 15px; color: var(--text-secondary); flex: none; }
+.lc-link > span:first-of-type { flex: 1; min-width: 0; }
+.lc-link .meta { display: block; margin-top: 1px; }
+.lc-attach { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 10px 12px; border-radius: 12px; outline: 1px solid var(--tint-active); background: var(--card); color: inherit; text-decoration: none; }
+.lc-attach:hover { background: var(--tint-hover); }
+.lc-attach > .ph { font-size: 20px; color: var(--text-secondary); flex: none; }
+.lc-attach-body { flex: 1; min-width: 0; }
+.lc-attach-title { display: block; font-size: 13px; font-weight: var(--weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-attach-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
+.composer-attach { display: flex; gap: 8px; margin: 2px 0 8px; }
+@media (max-width: 1100px) { .lc-body { grid-template-columns: minmax(0, 1fr); } .lc-aside { position: static; } }

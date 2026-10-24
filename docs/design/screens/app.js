@@ -34,7 +34,7 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     if (!unfolded.has(g)) unfolded.set(g, g.classList.contains('open'));
     const own = g.querySelector('.tree-head .item-title').textContent.toLowerCase().includes(q);
     let hits = 0;
-    g.querySelectorAll('.tree-res').forEach(r => { const m = own || r.querySelector('.clip').firstChild.textContent.toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
+    g.querySelectorAll('.tree-res').forEach(r => { const m = own || (r.dataset.search || r.querySelector('.clip').firstChild.textContent).toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
     g.querySelectorAll('.tree-more').forEach(r => r.hidden = !!q && !own);
     g.hidden = !own && hits === 0; if (!g.hidden) n++;
     g.classList.toggle('open', q ? (!own || unfolded.get(g)) && hits > 0 : unfolded.get(g));
