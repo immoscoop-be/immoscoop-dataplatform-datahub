@@ -29,21 +29,21 @@
   <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
   <a class="nav-btn" href="lenses-start.html" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></a>
   <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
-  <button class="nav-btn active" data-label="Learning" aria-label="Learning" aria-current="page"><i class="ph-fill ph-graduation-cap"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <button class="nav-btn active" data-label="Learning centre" aria-label="Learning centre" aria-current="page"><i class="ph-fill ph-graduation-cap"></i><span class="flare top"></span><span class="flare bottom"></span></button>
   <div class="spacer"></div>
   <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
   <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
   <div class="avatar" aria-label="Your account">MP</div>
 </nav>
-<aside class="panel" aria-label="Learning">
+<aside class="panel" aria-label="Learning centre">
  <div class="panel-inner">
   <div style="display:flex;align-items:center;gap:4px">
-   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Learning</h1>
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Learning centre</h1>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
   <label class="search card" style="margin:16px 0 8px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search learning cards"></label>
-  <p class="meta" style="margin:0 4px 4px"><i class="ph-fill ph-check-circle"></i>8 of 113 cards understood</p>
+  <a class="lc-me card" href="learning-profile.html" title="Your learning profile"><svg class="ring" width="40" height="40" viewBox="0 0 40 40" role="img" aria-label="2 of 3 this week"><circle class="track" cx="20.0" cy="20.0" r="17.0"/><circle class="fill" cx="20.0" cy="20.0" r="17.0" stroke-dasharray="71.2 106.8"/><text x="50%" y="54%" text-anchor="middle" dominant-baseline="middle">2/3</text></svg><span><b>2 of 3 this week</b><span class="meta">4-week streak</span><span class="meta">8 of 113 cards understood</span></span></a>
   <div class="panel-label">Orientation</div>
   <div class="tree-group card">
    <div class="tree-head"><a class="tree-link" href="learning-start.html"><span class="item-icon"><i class="ph ph-compass"></i></span><span class="tree-name"><span class="item-title">Compass</span><span class="meta">Orientation · 3 of 17 understood</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show the cards of Compass"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
@@ -223,7 +223,7 @@
  </div>
 </aside>
 <main class="main">
- <div class="breadcrumb">Learning / 1 · User / 1.2 Definition awareness</div>
+ <div class="breadcrumb">Learning centre / 1 · User / 1.2 Definition awareness</div>
  <div style="display:flex;align-items:flex-start;gap:12px;margin-top:8px;flex-wrap:wrap">
   <div style="flex:1;min-width:280px"><h1 class="page-title"><span class="lc-num">1.2.2</span>Unique counts don't add up</h1></div>
   <a class="btn-quiet outline" href="learning-message.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this card, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
@@ -271,6 +271,7 @@
   </aside>
  </div>
 </main>
+<div class="toast" role="status" data-pane-group="state" data-pane="understood" hidden><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>Understood.</b> Your weekly goal is met: 3 of 3 this week. Definition awareness: 2 of 7.</span></div>
 <div class="proto-switch" data-group="answers" role="tablist" aria-label="Prototype: questions" style="bottom:72px">Questions
  <button class="seg on" data-target="open" role="tab" aria-selected="true">Not answered</button>
  <button class="seg" data-target="answered" role="tab" aria-selected="false">Answered</button>

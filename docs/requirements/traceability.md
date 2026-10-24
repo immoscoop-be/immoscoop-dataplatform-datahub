@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 41 | 21 (18 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 44 | 21 (18 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 10 (10 proposed) | – | 3 | 9 (9 open) |
+| [Learning](functional/16-learning.md) | 20 (20 proposed) | – | 6 | 14 (14 open) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -257,16 +257,26 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | – | – |
-| [FR-LR-02](functional/16-learning.md#fr-lr-02) | A Learning Card holds an article, a video and test questions | Proposed | – | – | – |
-| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Proposed | – | – | – |
-| [FR-LR-04](functional/16-learning.md#fr-lr-04) | Test questions say right or wrong, and why | Proposed | – | – | – |
-| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Proposed | – | – | – |
-| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Proposed | – | – | – |
-| [FR-LR-07](functional/16-learning.md#fr-lr-07) | A Message can carry a Learning Card | Proposed | – | – | – |
-| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | – |
-| [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | – |
-| [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | – |
+| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-02](functional/16-learning.md#fr-lr-02) | A Learning Card holds an article, a video and test questions | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-04](functional/16-learning.md#fr-lr-04) | Test questions say right or wrong, and why | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-07](functional/16-learning.md#fr-lr-07) | A Message can carry a Learning Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
+| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Proposed | – | – | – |
+| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | – |
+| [FR-LR-13](functional/16-learning.md#fr-lr-13) | A Badge for a milestone | Proposed | – | – | – |
+| [FR-LR-14](functional/16-learning.md#fr-lr-14) | A Rank per Learning Level | Proposed | – | – | – |
+| [FR-LR-15](functional/16-learning.md#fr-lr-15) | A Weekly Goal, and a Streak counted in weeks | Proposed | – | – | – |
+| [FR-LR-16](functional/16-learning.md#fr-lr-16) | Quests by the Data Team | Proposed | – | – | – |
+| [FR-LR-17](functional/16-learning.md#fr-lr-17) | Team progress, without ranking colleagues | Proposed | – | – | – |
+| [FR-LR-18](functional/16-learning.md#fr-lr-18) | A Learning Profile | Proposed | – | – | – |
+| [FR-LR-19](functional/16-learning.md#fr-lr-19) | A success is a quiet note | Proposed | – | – | – |
+| [FR-LR-20](functional/16-learning.md#fr-lr-20) | The game can be hidden | Proposed | – | – | – |
 
 ## Edge cases
 

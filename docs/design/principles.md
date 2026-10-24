@@ -293,11 +293,19 @@ Screen: [lens](screens/lens.html). Designed on 2026-10-23, to review. Where a Le
 
 ## Learning
 
-Screens: [learning-start](screens/learning-start.html), the start screen with the panel; [learning-card](screens/learning-card.html), a Learning Card; [learning-message](screens/learning-message.html), a Message that carries a Learning Card. Designed on 2026-10-24, to review ([DEC-UX-38](#dec-ux-38) to [DEC-UX-41](#dec-ux-41), [Learning](../requirements/functional/16-learning.md)).
+The Learning Centre ([DEC-LR-04](../requirements/functional/16-learning.md#dec-lr-04)). Screens:
 
-- **A main section,** in the rail under Reports, with a graduation cap ([DEC-UX-38](#dec-ux-38)). Whether it stays a main item is [OP-UX-21](#op-ux-21).
+- [learning-start](screens/learning-start.html): the start screen with the panel.
+- [learning-card](screens/learning-card.html): a Learning Card.
+- [learning-message](screens/learning-message.html): a Message that carries a Learning Card.
+- [learning-float](screens/learning-float.html): a link to a card in a text, opened in a floating window.
+- [learning-profile](screens/learning-profile.html): the Learning Profile.
+
+Designed on 2026-10-24, to review ([DEC-UX-38](#dec-ux-38) to [DEC-UX-44](#dec-ux-44), [Learning](../requirements/functional/16-learning.md)).
+
+- **A main section,** the learning centre, in the rail under Reports, with a graduation cap ([DEC-UX-38](#dec-ux-38)). Whether it stays a main item is [OP-UX-21](#op-ux-21).
 - **The panel is the index of every Learning Card** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03)):
-  - On top the title, search, and how many cards the User understood in all.
+  - On top the title, search, and a small card with the progress of the User: their Weekly Goal as a ring, their Streak, and how far they are towards their next Rank. It opens the Learning Profile.
   - Then the Compass, then the four Learning Levels from easy to advanced, each a card in the tree, as a Collection is: its name with its step, a mark of four short bars filled up to the step ([DEC-UX-39](#dec-ux-39)), how many of its cards the User understood, and an arrow to unfold it.
   - Unfolded, it lists its sections, each with its number, name and how many cards the User understood, and under each its cards: the icon of their kind (a book for a Learning Card, a compass for a card of the Compass, a chart for a Reading Card), the number and the name on one line, and a check when the User marked it understood.
   - The card that is open is in medium weight and the darkest colour; opening a card unfolds its Learning Level.
@@ -310,6 +318,25 @@ Screens: [learning-start](screens/learning-start.html), the start screen with th
   - **Beside the column:** "Before this", the cards it builds on and whether the User understood them; "Next in this section"; "Related"; "Where you meet this in Data Hub"; and the source in the master learning plan ([FR-LR-09](../requirements/functional/16-learning.md#fr-lr-09)).
 - **In a Message** ([DEC-UX-41](#dec-ux-41), [FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)): "Add a learning card" next to the field of a new Message finds a card by its words. In the Message it shows as a small card: the book, its number and title, its Learning Level, and "Understood" when the reader marked it. A click opens the card.
 - **Messages on a card** ([FR-LR-06](../requirements/functional/16-learning.md#fr-lr-06)): "Messages" opens the slide-in, as on every object; a card takes a Question or a Remark, which go to the Data Team.
+- **A card wherever it helps** ([DEC-UX-42](#dec-ux-42), [FR-LR-11](../requirements/functional/16-learning.md#fr-lr-11), [FR-LR-12](../requirements/functional/16-learning.md#fr-lr-12)):
+  - A link to a Learning Card stands inline in a text: in the words of the sentence, underlined in teal, with a small graduation cap before them. Hovering it shows the number and title of the card, and whether the User understood it.
+  - A click opens the card in a floating window over the page, as a Message opens in context ([DEC-UX-30](#dec-ux-30)). The link stays marked while its card is open.
+  - The window has on its head the graduation cap, "Learning card", the number and title, fold and close. Its body holds the Learning Level, priority and length; what the reader will be able to do; the article and its graphics; the video; the questions.
+  - At its foot: "Mark as understood", and "Open in the learning centre", which opens the full page of the card.
+- **Game elements** ([DEC-UX-43](#dec-ux-43), [DEC-LR-06](../requirements/functional/16-learning.md#dec-lr-06)), calm and optional:
+  - **Progress:** a check per card, counts per section and Learning Level, a thin bar per Learning Level.
+  - **Rank:** the highest Learning Level whose required cards the User understood, and how far they are towards the next ([FR-LR-14](../requirements/functional/16-learning.md#fr-lr-14)).
+  - **Weekly Goal and Streak:** a ring that fills with the cards of this week; the Streak in weeks, as a row of small squares, a paused week hatched ([FR-LR-15](../requirements/functional/16-learning.md#fr-lr-15)).
+  - **Badges:** a round mark with a line icon, in teal when earned, in grey with a dashed edge and what it takes while still to earn ([FR-LR-13](../requirements/functional/16-learning.md#fr-lr-13)).
+  - **Quests:** a tile on the start screen with the theme, who set it, its cards and how far the User is ([FR-LR-16](../requirements/functional/16-learning.md#fr-lr-16)).
+  - **Your teams:** per team a bar with the share of required cards understood, without names ([FR-LR-17](../requirements/functional/16-learning.md#fr-lr-17)).
+  - **A quiet note** in the lower left for a few seconds when a card is understood, a Weekly Goal met or a Badge earned; no confetti, and no motion when the system asks for less ([FR-LR-19](../requirements/functional/16-learning.md#fr-lr-19)).
+  - No points and no ranking of colleagues ([OP-LR-10](../requirements/functional/16-learning.md#op-lr-10)). A switch in the settings hides the game ([FR-LR-20](../requirements/functional/16-learning.md#fr-lr-20)).
+- **The Learning Profile** ([DEC-UX-44](#dec-ux-44), [FR-LR-18](../requirements/functional/16-learning.md#fr-lr-18)) opens from the progress card in the panel and from the start screen. It shows:
+  - the Rank, with the four Learning Levels and their progress;
+  - the Weekly Goal and the Streak over the last twelve weeks;
+  - the Badges, earned and to earn;
+  - the cards understood, newest first.
 
 ## Messages
 
@@ -360,7 +387,7 @@ Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC
 - Light for the computer: CSS, no video.
 - An alternative we tried: three blurred blobs of colour that move slowly. The gradient is the current choice.
 - **A picture** can take the place of the gradient ([DEC-UX-34](#dec-ux-34)): the painted counterpart of a photo of the set, a watercolour made from the photo itself, so that it blends into the colours of the app ([DEC-UX-37](#dec-ux-37)). It drifts as slowly as the gradient. The frames then blur it lightly, so that it never competes with the text. The photos are in `backgrounds/photos/`, their paintings in `backgrounds/painted/`: Alpenglow and Spring snow, and the ski lift, the first painting, whose photo is not in the set; for the dark theme, Lights on. Any screen shows one with `?bg=alpenglow`, `?bg=spring` or `?bg=ski` in its address, such as `lens.html?bg=alpenglow`; in the dark theme it shows Lights on.
-- **Each theme has pictures of its own** ([DEC-UX-36](#dec-ux-36)): a photo is never darkened for the dark theme. The dark set has one photo so far, Lights on: a blue-hour photo of Max, made into a night picture with the lights of the village on, at his request. Its painting keeps the lights as warm dabs of bare paper. Until there are more, the dark theme shows it, whatever the light theme shows. Who chooses the background, and how, is open ([OP-UX-20](#op-ux-20)).
+- **Each theme has pictures of its own** ([DEC-UX-36](#dec-ux-36)): a photo is never darkened for the dark theme. The dark set has one photo so far, Lights on: a blue-hour photo from Max, made into a night picture with the lights of the village on, at the request of Max. Its painting keeps the lights as warm dabs of bare paper. Until there are more, the dark theme shows it, whatever the light theme shows. Who chooses the background, and how, is open ([OP-UX-20](#op-ux-20)).
 
 ## Decisions
 
@@ -413,12 +440,15 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-33"></a>**DEC-UX-33** · The section Lenses opens on a start screen: an intro, a search that finds Lenses by the words of a question, the Lenses of the User and their Owner Unit, and Lenses to discover, popular or new. Its panel holds the Lenses by Collection, as [OP-UX-18](#op-ux-18) proposes.
 - <a id="dec-ux-34"></a>**DEC-UX-34** · A picture can be the background, in place of the gradient: the painted counterpart of a photo ([DEC-UX-37](#dec-ux-37)), drifting as slowly. With a picture, the frames blur what is behind them lightly. The dark theme takes a picture of its own ([DEC-UX-36](#dec-ux-36)). The first pictures are ski slopes.
 - <a id="dec-ux-35"></a>**DEC-UX-35** · Signing in shows a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it: the mark and the name, "Sign in", one sentence and "Sign in with Google". In a corner, on glass too, the story of the photo. A refused account is named on the card, with the button to try another.
-- <a id="dec-ux-36"></a>**DEC-UX-36** · The pictures come as sets, each photo with its story: a title, a few lines and who took it. Max provides the photos and writes the stories. The light theme and the dark theme each have a set of their own: a photo is never darkened for the dark theme. Until the dark set has a photo, the dark theme keeps its gradient. *Note of 2026-10-24: the dark set has its first photo, a blue-hour photo of Max made into a night picture with its lights on, at his request.*
+- <a id="dec-ux-36"></a>**DEC-UX-36** · The pictures come as sets, each photo with its story: a title, a few lines and who took it. Max provides the photos and writes the stories. The light theme and the dark theme each have a set of their own: a photo is never darkened for the dark theme. Until the dark set has a photo, the dark theme keeps its gradient. *Note of 2026-10-24: the dark set has its first photo, a blue-hour photo from Max made into a night picture with its lights on, at the request of Max.*
 - <a id="dec-ux-37"></a>**DEC-UX-37** · Each photo of a set has a painted counterpart, a watercolour made from the photo itself: the photo as it is for signing in, the painting for the background of the app. Both carry the same story. The dark set works the same way: its own photos, painted, never darkened ones.
-- <a id="dec-ux-38"></a>**DEC-UX-38** · Learning is a main section, under Reports in the rail, with a start screen and a panel that is the index of every Learning Card: the Compass first, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. The panel shows how many cards the User understood, per Learning Level and per section, and per card whether they did. *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-38"></a>**DEC-UX-38** · Learning is a main section, under Reports in the rail, with a start screen and a panel that is the index of every Learning Card: the Compass first, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. The panel shows how many cards the User understood, per Learning Level and per section, and per card whether they did. *Designed on 2026-10-24, at the request of Max, to review.* *Note of 2026-10-24: the section is called the learning centre ([DEC-LR-04](../requirements/functional/16-learning.md#dec-lr-04)).*
 - <a id="dec-ux-39"></a>**DEC-UX-39** · In the interface a Learning Level is named by its audience with its step, "1 · User" to "4 · Data owner and expert", with a mark of four short bars from easy to advanced. The word "Level" alone stays for the maturity of a Resource, Lens or Report, and a Learning Level gets no colour of its own. *Designed on 2026-10-24, to review.*
 - <a id="dec-ux-40"></a>**DEC-UX-40** · The page of a Learning Card reads as one column: what you will be able to do, the article with its graphics, the common mistake, the examples, the video, then the questions to check yourself. What comes before and after is beside it. "Mark as understood" is the main button of its header. *Designed on 2026-10-24, to review.*
 - <a id="dec-ux-41"></a>**DEC-UX-41** · A Message can carry a Learning Card, which shows in it as a small card with whether the reader understood it. A Learning Card has Messages of its own, like every object. *Designed on 2026-10-24, to review.*
+- <a id="dec-ux-42"></a>**DEC-UX-42** · A link to a Learning Card stands inline in a text, underlined in teal with a small graduation cap. A click opens the card in a floating window over the page, as a Message in context ([DEC-UX-30](#dec-ux-30)), with "Mark as understood" and "Open in the learning centre". *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-43"></a>**DEC-UX-43** · The game elements of the learning centre are calm. They are progress, a Rank per Learning Level, a Weekly Goal as a ring, a Streak in weeks, Badges as round line marks in teal, Quests and team progress without names. A success is a quiet note in the lower left. There are no points, no ranking of colleagues and no confetti. *Designed on 2026-10-24, at the request of Max, to review.*
+- <a id="dec-ux-44"></a>**DEC-UX-44** · Every User has a Learning Profile, opened from the progress card at the top of the panel of the learning centre and from its start screen. *Designed on 2026-10-24, to review.*
 
 ## Open points
 

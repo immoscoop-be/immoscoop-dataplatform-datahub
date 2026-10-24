@@ -646,3 +646,53 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
 .lc-attach-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
 .composer-attach { display: flex; gap: 8px; margin: 2px 0 8px; }
 @media (max-width: 1100px) { .lc-body { grid-template-columns: minmax(0, 1fr); } .lc-aside { position: static; } }
+
+/* Learning: a card inline and in a floating window (DEC-UX-42); the game elements and the profile (DEC-UX-43, DEC-UX-44) */
+a.lc-inline { color: inherit; text-decoration: underline; text-decoration-color: var(--col-teal-ink); text-decoration-thickness: 1.5px; text-underline-offset: 3px; cursor: pointer; border-radius: 4px; }
+a.lc-inline .ph-fill { font-size: .9em; color: var(--col-teal-ink); margin-right: 3px; vertical-align: -1px; }
+a.lc-inline:hover, a.lc-inline.open { background: color-mix(in srgb, var(--col-teal) 16%, transparent); }
+.lc-float { width: 440px; max-height: calc(100vh - 48px); }
+.lc-float .float-body { display: grid; gap: 12px; padding-top: 12px; }
+.lc-float .lc-goal p { font-size: 13.5px; }
+.lc-float .lc-text p { font-size: 13px; line-height: 1.65; margin: 0 0 8px; }
+.lc-float .lc-figure { margin: 0; }
+.lc-float .lc-video { aspect-ratio: 16 / 7; }
+.lc-float .lc-video .play { width: 44px; height: 44px; font-size: 20px; }
+.lc-float .lc-q { padding: 12px 0 0; background: none; }
+.toast { position: fixed; left: 24px; bottom: 24px; z-index: 40; display: flex; align-items: center; gap: 12px; max-width: 420px; padding: 12px 16px; border-radius: 16px; background: var(--text-primary); color: var(--surface-solid); font-size: 13px; line-height: 1.45; box-shadow: 0 8px 24px rgba(40,34,30,.18); }
+.toast > .ph-fill { font-size: 22px; color: var(--col-teal); flex: none; }
+.toast b { font-weight: var(--weight-medium); }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: toast-in .4s ease-out; } @keyframes toast-in { from { opacity: 0; transform: translateY(8px); } } }
+.ring { flex: none; display: block; }
+.ring circle { fill: none; stroke-width: 5; }
+.ring .track { stroke: var(--tint-active); }
+.ring .fill { stroke: var(--col-teal-ink); stroke-linecap: round; transform: rotate(-90deg); transform-origin: center; }
+.ring text { font: var(--weight-medium) 12px var(--font-family); fill: var(--text-primary); }
+.lc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: var(--space-tile-gap); margin-top: 18px; }
+.lc-stat { display: flex; align-items: center; gap: 14px; border-radius: var(--radius-lg); padding: 14px 16px; color: inherit; text-decoration: none; }
+.lc-stat b { display: block; font-size: 15px; font-weight: var(--weight-medium); }
+.lc-stat .meta { display: block; margin-top: 2px; }
+.weeks { display: flex; gap: 4px; }
+.weeks i { display: block; width: 14px; height: 14px; border-radius: 4px; background: var(--tint-active); }
+.weeks i.met { background: var(--col-teal-ink); }
+.weeks i.paused { background: repeating-linear-gradient(45deg, var(--tint-active) 0 3px, transparent 3px 6px); outline: 1px solid var(--tint-active); }
+.weeks.big i { width: 22px; height: 22px; border-radius: 6px; }
+.lc-me { display: flex; align-items: center; gap: 12px; margin: 0 0 4px; padding: 10px 12px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
+.lc-me:hover { outline: 1px solid var(--tint-active); }
+.lc-me b { font-weight: var(--weight-medium); font-size: 13px; }
+.lc-me .meta { display: block; margin-top: 1px; }
+.badge-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.badge { border-radius: var(--radius-lg); padding: 16px 12px 14px; text-align: center; }
+.badge-medal { width: 56px; height: 56px; margin: 0 auto; border-radius: 50%; display: grid; place-items: center; font-size: 26px; color: var(--col-teal-ink); background: color-mix(in srgb, var(--col-teal) 14%, var(--card)); outline: 1.5px solid var(--col-teal-ink); outline-offset: 3px; }
+.badge.locked .badge-medal { color: var(--text-muted); background: var(--tint-hover); outline: 1.5px dashed var(--tint-active); }
+.badge b { display: block; margin-top: 12px; font-size: 13px; font-weight: var(--weight-medium); }
+.badge .meta { display: block; margin-top: 3px; line-height: 1.4; }
+.team-row { display: grid; grid-template-columns: minmax(0, 1fr) 160px 46px; gap: 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--tint-hover); font-size: 13px; }
+.team-row:last-child { border-bottom: 0; }
+.team-row .lc-bar { margin: 0; }
+.team-row .pct { text-align: right; font-variant-numeric: tabular-nums; color: var(--text-secondary); }
+.rank-row { display: grid; grid-template-columns: 22px minmax(0, 1fr) 200px 90px; gap: 12px; align-items: center; padding: 12px 4px; border-bottom: 1px solid var(--tint-hover); font-size: 13px; }
+.rank-row:last-child { border-bottom: 0; }
+.rank-row .lc-bar { margin: 0; }
+.rank-row > .meta { justify-content: flex-end; }
+.rank-row span > .meta { margin-top: 2px; }
