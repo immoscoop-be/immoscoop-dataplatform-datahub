@@ -15,7 +15,7 @@
 *Built up from conversations with Max, on 2026-10-07 and later, about documentation in ptditt. This is a direction, not a design. Earlier we spoke of "the data server", "the data tool" and "Data-Desk"; since 2026-10-12 it has been called Data Hub, next to Domain Hub. Whether Data Hub stays a separate application or merges with Domain Hub is still open. The functional elaboration per domain is in [Functional domains](../requirements/functional/README.md).*
 
 - <a id="dec-dh-01"></a>**DEC-DH-01** · The name is Data Hub, next to Domain Hub: Domain Hub for the meaning, Data Hub for the data. The image behind it is a library, with the Data Team as librarian and the Stacks as shelves.
-- <a id="dec-dh-02"></a>**DEC-DH-02** · The app is entirely in English: the interface, the names and the texts of the Log. The documentation on Confluence stays in Dutch.
+- <a id="dec-dh-02"></a>**DEC-DH-02** · The app is entirely in English: the interface, the names and the texts of the Log. The documentation on Confluence stays in Dutch. *Note of 2026-10-25: the language principle Max proposed keeps names English and puts sentences in the language of the User ([localisation](../requirements/non-functional/localisation.md)); whether it replaces this decision is [OP-DH-43](open-themes.md#op-dh-43).*
 
 *Migration note: the documentation has since moved to this repository, in English. The Confluence pages remain in Dutch.*
 

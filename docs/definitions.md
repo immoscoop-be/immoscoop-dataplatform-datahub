@@ -148,6 +148,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | huidige versie | Current Version |
 | Ik heb het begrepen | "I understand it" |
 | inschrijving | Registration |
+| interface-chrome | interface |
 | kader | frame |
 | kan-nu, opbrengst, keuzes (van "Je kan nu") | can now, gain, choices (of You can now) |
 | kanalen | channels |
@@ -164,6 +165,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | maturiteitsicoon | maturity icon |
 | melding | notification |
 | melding (op een scherm) | alert |
+| naam (niet vertalen) | name (do not translate) |
 | niveau (van het master-leerplan) | Learning Level |
 | onderwerp (van een bericht) | Subject |
 | onderwerp (van het master-leerplan) | Learning Card |
@@ -188,6 +190,8 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | steunt op | builds on |
 | stille telling van bekeken kaarten | silent count of the cards seen |
 | stroom | flow |
+| taalprincipe | language principle |
+| taalvoorkeur | language preference |
 | tegel | tile |
 | toegangsclassificatie | access classification |
 | uit te diepen | to be worked out |
@@ -195,9 +199,12 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | vergrootglas | magnifying glass |
 | verhaal | story |
 | verharden | harden |
+| vertaalbestand | translation file |
 | vingerafdruk | Fingerprint |
 | voorspel, dan onthul | predict, then reveal |
 | voortschrijdend | still settling |
 | Waarom nu, Kernidee, Zie het, Check je begrip, Je kan nu | Why now, Core idea, See it, Check your understanding, You can now |
 | wijziging | Change |
 | wijzigings- en anomalielog | log of changes and Anomalies |
+| Woordenlijst | Glossary |
+| zin (tegenover naam) | sentence (as opposed to a name) |

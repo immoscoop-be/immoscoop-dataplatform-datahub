@@ -224,6 +224,8 @@ A deregistered Resource disappears from the index and from its Collection. Its L
 
 All texts in the app are in English: the interface, the names and the templates of the Log.
 
+*Note of 2026-10-25: the language principle proposes Dutch and English sentences, with English names ([NFR-LOC-01](../non-functional/localisation.md#nfr-loc-01), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)); open in [OP-DH-43](../../overview/open-themes.md#op-dh-43).*
+
 <a id="fr-sr-16"></a>
 ### FR-SR-16 · Only the Owner publishes
 

@@ -4,7 +4,7 @@ The qualities Data Hub must have, across domains: how secure, how fast, how chea
 
 | | |
 | --- | --- |
-| Status | [Security](security.md) started; the other categories follow |
+| Status | [Security](security.md) started; [Localisation](localisation.md) proposed; the other categories follow |
 | Source of truth | This folder |
 
 ## Categories
@@ -20,7 +20,7 @@ Each category gets its own file and code. The categories below are a proposal; a
 | `CST` | Cost: BigQuery scanning, infrastructure | `cost.md` |
 | `OBS` | Observability: logging, monitoring, alerting of Data Hub itself | `observability.md` |
 | `MNT` | Maintainability: migrations, deployment, tests | `maintainability.md` |
-| `LOC` | Localisation: language of the app | `localisation.md` |
+| `LOC` | Localisation: language of the app | [localisation.md](localisation.md) |
 | `ACC` | Accessibility: colour, contrast, keyboard use | `accessibility.md` |
 
 IDs follow `NFR-<code>-<NN>`, for example `NFR-SEC-01`. Start a new file from the [non-functional requirements template](../_templates/non-functional-category.md). The ID scheme, statuses and commit conventions are in the [requirements conventions](../README.md).
@@ -31,7 +31,7 @@ Some rules and decisions migrated from Confluence are, by nature, non-functional
 
 | Candidate | Category |
 | --- | --- |
-| All texts in the app are in English: [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02) | `LOC` |
+| All texts in the app are in English: [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02); the language principle of 2026-10-25 proposes otherwise for sentences ([localisation](localisation.md)) | `LOC` |
 | A limit on scanned bytes for every query: [FR-SR-27](../functional/04-stacks-and-resources.md#fr-sr-27), [DEC-SR-17](../functional/04-stacks-and-resources.md#dec-sr-17) | `CST` |
 | Costs tracked via the own service account: [DEC-DH-49](../../overview/data-hub.md#dec-dh-49) | `CST` |
 | The service account reaches only the Stacks: [DEC-DH-08](../../overview/data-hub.md#dec-dh-08); now covered by [NFR-SEC-02](security.md#nfr-sec-02) | `SEC` |
