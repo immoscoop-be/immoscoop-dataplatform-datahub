@@ -220,11 +220,13 @@ A deregistered Resource disappears from the index and from its Collection. Its L
 <a id="fr-sr-15"></a>
 ### FR-SR-15 · All texts in the app are in English
 
-**Status:** Specified · **Confluence:** SR-15
+**Status:** Withdrawn · **Confluence:** SR-15
 
 All texts in the app are in English: the interface, the names and the templates of the Log.
 
 *Note of 2026-10-25: the language principle proposes Dutch and English sentences, with English names ([NFR-LOC-01](../non-functional/localisation.md#nfr-loc-01), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)); open in [OP-DH-43](../../overview/open-themes.md#op-dh-43).*
+
+*Withdrawn on 2026-10-25: replaced by the language principle, decided by Max: names English, sentences Dutch by default with English available ([DEC-DH-65](../../overview/data-hub.md#dec-dh-65), [NFR-LOC-01](../non-functional/localisation.md#nfr-loc-01), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)).*
 
 <a id="fr-sr-16"></a>
 ### FR-SR-16 · Only the Owner publishes

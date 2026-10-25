@@ -21,7 +21,7 @@ Data Hub is an internal tool and has no Figma. The design lives in code ([DEC-UX
 
 ## General
 
-- The interface is in **English** ([FR-SR-15](../requirements/functional/04-stacks-and-resources.md#fr-sr-15)). *Note of 2026-10-25: the language principle proposes Dutch by default and English available for sentences, with names always English ([localisation](../requirements/non-functional/localisation.md)); open in [OP-DH-43](../overview/open-themes.md#op-dh-43).*
+- The interface is in **Dutch** by default, with English available; names stay English and are never translated ([DEC-DH-65](../overview/data-hub.md#dec-dh-65), [localisation](../requirements/non-functional/localisation.md)). *Note of 2026-10-25: this replaces "the interface is in English". The prototypes still show the interface in English.*
 - **Calm and air:** plenty of negative space. Rather less on a screen than a full screen.
 - **Full screen.** The content uses the full width, divided into blocks, never long rows or lines across the full width.
 
@@ -328,7 +328,7 @@ Designed on 2026-10-24 and 2026-10-25, to review ([DEC-UX-38](#dec-ux-38) to [DE
 - **In a Message** ([DEC-UX-41](#dec-ux-41), [FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)): "Add a learning card" next to the field of a new Message finds a card by its words. In the Message it shows as a small card: the book, its number and title, its Learning Level, and "Understood" when the reader marked it ([OP-LR-04](../requirements/functional/16-learning.md#op-lr-04)). A click opens the card.
 - **Messages on a card** ([FR-LR-06](../requirements/functional/16-learning.md#fr-lr-06)): "Messages" opens the slide-in, as on every object; a card takes a Question or a Remark, which go to the Data Team.
 - **A card wherever it helps** ([DEC-UX-56](#dec-ux-56), [DEC-UX-57](#dec-ux-57), [FR-LR-35](../requirements/functional/16-learning.md#fr-lr-35), [FR-LR-36](../requirements/functional/16-learning.md#fr-lr-36)):
-  - **Only system text:** a button, a label, a chip or a status Data Hub writes itself can carry the marker; text that Users provide never does. On the page of a Resource, for example, its Level, its grain and "Reconfirm".
+  - **Only system text:** a button, a label, a chip or a status Data Hub writes itself can carry the marker; text that Users provide never does. On the page of a Resource, for example, its Level, its grain and "Reconfirm". A name, such as `creditLead`, always carries one, with at least its own card ([DEC-UX-59](#dec-ux-59), [FR-LR-37](../requirements/functional/16-learning.md#fr-lr-37)).
   - **The marker:** ⓘ (U+24D8, circled small i) right after the text ([OP-UX-22](#op-ux-22)), a Unicode character in the colour of its text, at about three quarters of its size and slightly raised, from a symbol font, as Poppins has none. No underline and no colour. Hovering the text tints it lightly, so its extent shows.
   - **A one-second hold:** the pop-out opens only when the pointer rests on the text for a second, so passing over the page opens nothing. Keyboard focus opens it at once.
   - **A text bubble:** the pop-out hangs under the text, or above it near the foot of the window, and its arrow points at the marker. On its head, quietly, how many cards explain the text: "Explained in 3 learning cards".
@@ -465,6 +465,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-56"></a>**DEC-UX-56** · Only system text carries the marker: a button, a label, a chip or a status. Text that Users provide never does. *Decided on 2026-10-25, at the request of Max.*
 - <a id="dec-ux-57"></a>**DEC-UX-57** · The pop-out is a text bubble whose arrow points at its marker, and opens after the pointer rests on the text for a second. It says how many cards explain the text, and shows each as a tile: number and title, "See it" on every item, the gain of the card, and whether and when the User saw it. A click on an item opens the card in the floating window over the page. This replaces [DEC-UX-55](#dec-ux-55). *Designed on 2026-10-25, at the request of Max, to review.*
 - <a id="dec-ux-58"></a>**DEC-UX-58** · Adding Resources is a sheet in two steps: choose the Resources, then the relation of every field. The second step lists the fields of each Resource with a choice of "No relation", "Identifies each row" or "Refers to", and the Entity identifier, filled in from the docs of a Colleciónes model or suggested from the name of the field, and says how many Resources each reference links to. *Designed on 2026-10-25, at the request of Max, to review.*
+- <a id="dec-ux-59"></a>**DEC-UX-59** · A name on a screen, such as `creditLead` or `visitorId`, carries the marker ⓘ like other system text, and its pop-out lists at least its own Learning Card, a minimal one if need be ([FR-LR-37](../requirements/functional/16-learning.md#fr-lr-37)). *Decided on 2026-10-25, by Max; not designed in the prototypes yet.*
 
 ## Open points
 

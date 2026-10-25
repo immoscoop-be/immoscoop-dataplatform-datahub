@@ -428,6 +428,8 @@ A button, a label, a heading, or a text that Data Hub writes itself, such as a s
 
 *Note of 2026-10-25: the marker is ⓘ (U+24D8), decided by Max ([OP-UX-22](../../design/principles.md#op-ux-22)).*
 
+*Note of 2026-10-25: a name on a screen is system text too, and carries a marker with at least its own Learning Card ([FR-LR-37](#fr-lr-37)).*
+
 <a id="fr-lr-36"></a>
 ### FR-LR-36 · The pop-out: a text bubble with the cards that explain it
 
@@ -442,6 +444,13 @@ Holding the pointer on a marked text or button for a second opens its pop-out; f
 
 A click on an item opens the card in the floating window over the page; the User stays where they are ([FR-LR-12](#fr-lr-12)). The foot of the pop-out opens the Learning Centre. The pop-out stays open while the pointer is on it, and closes when the pointer leaves, on Escape or on scrolling. On a touch screen a tap on the marker opens it; a button keeps its own action.
 
+<a id="fr-lr-37"></a>
+### FR-LR-37 · Every name on a screen has a Learning Card
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 ([OP-DH-44](../../overview/open-themes.md#op-dh-44)) · [design](../../design/principles.md#learning)
+
+A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-03](../non-functional/localisation.md#nfr-loc-03)), carries the marker like other system text ([FR-LR-35](#fr-lr-35)), and its pop-out lists at least one Learning Card that explains it. A name used on a screen is used as a definition, so it gets a card even before there is a full one: a minimal card, whose Core idea is the explanation of the name in the Glossary ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)). What a minimal card holds is [OP-LR-27](#op-lr-27).
+
 
 ## Out of scope
 
@@ -452,7 +461,7 @@ A click on an item opens the card in the floating window over the page; the User
 ## Open points
 
 - [ ] <a id="op-lr-01"></a>**OP-LR-01** · Decide where the content of a Learning Card lives: the master learning plan on Confluence stays the source and Data Hub shows it, or the cards move into Data Hub, for example as files in this repository. Today the master learning plan describes each topic (learning goal, core, misconception, examples), not the lesson itself: the articles, videos and questions are still to be made ("learning material: —"). *Raised on 2026-10-24, while designing Learning.*
-- [ ] <a id="op-lr-02"></a>**OP-LR-02** · Decide the language of the Learning Cards: the master learning plan is in Dutch, and Data Hub is in English only ([FR-SR-15](04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02)). Translate the cards, or make Learning the exception. *Raised on 2026-10-24.* *Note of 2026-10-25: the language principle proposes Dutch for the first version, with English names and never a Dutch synonym ([NFR-LOC-08](../non-functional/localisation.md#nfr-loc-08), [OP-DH-40](../../overview/open-themes.md#op-dh-40)).*
+- [x] <a id="op-lr-02"></a>**OP-LR-02** · Decide the language of the Learning Cards: the master learning plan is in Dutch, and Data Hub is in English only ([FR-SR-15](04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02)). Translate the cards, or make Learning the exception. *Raised on 2026-10-24.* *Note of 2026-10-25: the language principle proposes Dutch for the first version, with English names and never a Dutch synonym ([NFR-LOC-08](../non-functional/localisation.md#nfr-loc-08), [OP-DH-40](../../overview/open-themes.md#op-dh-40)).* *Decided on 2026-10-25, by Max: Dutch sentences and English names, never a Dutch synonym; the first version is Dutch ([DEC-DH-65](../../overview/data-hub.md#dec-dh-65), [NFR-LOC-08](../non-functional/localisation.md#nfr-loc-08)). Whether cards ever come in English too is [OP-DH-40](../../overview/open-themes.md#op-dh-40).*
 - [ ] <a id="op-lr-03"></a>**OP-LR-03** · Decide where the videos live and who makes them, and whether they have captions. *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-04"></a>**OP-LR-04** · Decide who sees what a User marked understood and how they answered: only the User, or also the Data Team, as numbers per card or per person. *Raised on 2026-10-24.* *Note of 2026-10-24: the design shows team progress as shares without names ([FR-LR-17](#fr-lr-17)).* *Note of 2026-10-25: team progress is withdrawn. A Message that carries a card still shows its writer whether the reader understood it ([FR-LR-07](#fr-lr-07)), which touches the autonomy of the reader ([principles, 2](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)); to decide there.*
 - [x] <a id="op-lr-05"></a>**OP-LR-05** · Decide whether marking a card understood needs its test questions answered right first. The design lets a User mark it at any time. *Raised on 2026-10-24.* *Decided on 2026-10-25 on the principles page: no question is mandatory, and "I understand it" is enough ([DEC-LR-09](#dec-lr-09), [FR-LR-28](#fr-lr-28)).*
@@ -477,7 +486,8 @@ A click on an item opens the card in the floating window over the page; the User
 - [ ] <a id="op-lr-23"></a>**OP-LR-23** · The example of a card is drawn by the Chart Server, from figures in the card ([FR-LR-29](#fr-lr-29)), so it looks like the charts the User meets. The principles want no live data and no technical links, so that the example stays stable ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). Decide there whether drawing through the Chart Server is such a link, or the example is kept as a picture. *Raised on 2026-10-25, while applying the principles.*
 - [ ] <a id="op-lr-24"></a>**OP-LR-24** · The principles give "a lens always inherits the highest level of what lies beneath it" as an example of a decision rule ([principles, 3.3](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). In Data Hub the Level of a Lens is the lowest Level of the Resources beneath it ([Lens](../../definitions.md#lens)). Correct the example on the principles page, or this. *Raised on 2026-10-25, while reading the principles.*
 - [x] <a id="op-lr-25"></a>**OP-LR-25** · Decide who writes the sentence of a reference, why or how the card helps here, for each place a marker stands ([FR-LR-34](#fr-lr-34)), and whether the gain of the card ([FR-LR-31](#fr-lr-31)) stands in when a place has none. Together with [OP-LR-13](#op-lr-13), who adds the markers. *Raised on 2026-10-25.* *Decided on 2026-10-25: the sentence belongs to the card, not to the place: it is the gain of the card, the same everywhere ([FR-LR-36](#fr-lr-36)).*
-- [ ] <a id="op-lr-26"></a>**OP-LR-26** · Decide who places the markers on system text and which cards each lists, and how they stay right when a card or a screen changes ([FR-LR-35](#fr-lr-35)). *Raised on 2026-10-25.*
+- [ ] <a id="op-lr-26"></a>**OP-LR-26** · Decide who places the markers on system text and which cards each lists, and how they stay right when a card or a screen changes ([FR-LR-35](#fr-lr-35)). *Raised on 2026-10-25.* *Note of 2026-10-25: for names, where the markers stand follows from the list of names ([FR-LR-37](#fr-lr-37), [OP-DH-42](../../overview/open-themes.md#op-dh-42)).*
+- [ ] <a id="op-lr-27"></a>**OP-LR-27** · Decide what a minimal Learning Card for a name holds, and who writes it ([FR-LR-37](#fr-lr-37)). Proposal: the quick path, Why now, Core idea and You can now, with the Core idea taken from the explanation of the name in the Glossary; See it and Check your understanding come when the card grows. Check it against the principles page, which wants every card to work with a recognisable example ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). *Raised on 2026-10-25, while recording the decision of Max.*
 
 ## Builds on
 

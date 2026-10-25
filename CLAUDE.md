@@ -2,7 +2,7 @@
 
 ## Language
 
-Everything in this repository is in English: code, comments, documentation and commit messages. The app itself is English-only too (FR-SR-15). The Confluence pages the documentation came from are in Dutch; when translating from them, use the vocabulary in the translation reference of `docs/definitions.md`, and add new term pairs there.
+Everything in this repository is in English: code, comments, documentation and commit messages. The app follows the language principle (DEC-DH-65, `docs/requirements/non-functional/localisation.md`): names are English and never translated, sentences are Dutch by default with English available. Dutch therefore appears in the Dutch texts of the app, such as its translation files, besides the translation reference. The Confluence pages the documentation came from are in Dutch; when translating from them, use the vocabulary in the translation reference of `docs/definitions.md`, and add new term pairs there.
 
 ## Documentation
 
