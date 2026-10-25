@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 53 | 21 (17 open, 4 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 55 | 22 (18 open, 4 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 32 (19 proposed, 13 withdrawn) | – | 10 | 24 (19 open, 5 done) |
+| [Learning](functional/16-learning.md) | 34 (21 proposed, 13 withdrawn) | – | 10 | 25 (20 open, 5 done) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -289,6 +289,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-30](functional/16-learning.md#fr-lr-30) | Check your understanding: predict, then reveal | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-31](functional/16-learning.md#fr-lr-31) | You can now: what you can do, what it brings, and where to go | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
+| [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Proposed | – | – | – |
+| [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Proposed | – | – | – |
 
 ## Edge cases
 

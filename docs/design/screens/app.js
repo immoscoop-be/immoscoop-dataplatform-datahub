@@ -97,6 +97,42 @@ document.querySelectorAll('.lc-quiz').forEach(quiz => {
   });
 });
 
+// A marked phrase or button and its pop-out (FR-LR-34, DEC-UX-55): hover or focus opens it after a short pause, under the
+// trigger or above it near the foot of the window; it stays while the pointer is on it, and closes on leaving, Escape or
+// scrolling. A tap on the marker opens it, and keeps a button from doing its own action.
+const pops = new Map();
+document.querySelectorAll('[data-pop]').forEach(t => {
+  const pop = document.getElementById(t.dataset.pop); if (!pop) return;
+  let timer;
+  const show = () => {
+    pops.forEach(other => other !== api && other.hide());
+    pop.hidden = false;
+    const r = t.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    const top = r.bottom + 8 + h > innerHeight - 12 ? r.top - h - 8 : r.bottom + 8;
+    Object.assign(pop.style, { left: Math.min(Math.max(12, r.left), innerWidth - w - 12) + 'px', top: Math.max(12, top) + 'px' });
+    t.classList.add('open'); t.setAttribute('aria-expanded', 'true');
+  };
+  const hide = () => { clearTimeout(timer); pop.hidden = true; t.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); };
+  const api = { show, hide };
+  pops.set(t.dataset.pop, api);
+  const open = () => { clearTimeout(timer); timer = setTimeout(show, 250); };
+  const close = () => { clearTimeout(timer); timer = setTimeout(hide, 200); };
+  t.addEventListener('mouseenter', open); t.addEventListener('mouseleave', close);
+  t.addEventListener('focus', open);
+  t.addEventListener('blur', e => { if (!pop.contains(e.relatedTarget)) close(); });
+  pop.addEventListener('mouseenter', () => clearTimeout(timer)); pop.addEventListener('mouseleave', close);
+  pop.addEventListener('focusout', e => { if (!pop.contains(e.relatedTarget) && e.relatedTarget !== t) close(); });
+  t.querySelector('.lc-mark')?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); clearTimeout(timer); show(); });
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') pops.forEach(p => p.hide()); });
+document.addEventListener('scroll', () => pops.forEach(p => p.hide()), true);
+// Prototype only: open a pop-out from a switch or the address (?pop=pop-def), and try another marker (OP-UX-22)
+const openPop = id => setTimeout(() => pops.get(id)?.show(), 300);
+document.querySelectorAll('[data-pop-open]').forEach(b => b.addEventListener('click', () => openPop(b.dataset.popOpen)));
+document.querySelectorAll('[data-mark]').forEach(b => b.addEventListener('click', () => document.querySelectorAll('.lc-mark').forEach(m => m.textContent = b.dataset.mark)));
+const firstPop = new URLSearchParams(location.search).get('pop') || document.body.dataset.pop;
+if (firstPop) document.fonts.ready.then(() => openPop(firstPop));
+
 // The floating window of a Message (DEC-UX-30): folds to its head, and moves when its head is dragged
 document.querySelectorAll('.float-win').forEach(w => {
   const btn = w.querySelector('.float-fold');

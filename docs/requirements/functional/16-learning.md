@@ -62,7 +62,7 @@
 3. **A User meets it where the question comes up:** through a link in context, on a Lens, a Pre-flight or a Resource. They can also find it in the panel of the Learning Centre, by Learning Level and section, or on its start screen.
 4. **The User goes through the steps,** on the quick or the full path, and checks their understanding one question at a time, for as long as they like. "I understand it" closes the card at any moment. You can now names what they can do now, and offers two or three ways on.
 5. **Colleagues refer to it in Messages,** for example when answering a Question about a Resource, and the Data Team tells about new cards.
-6. **A link to a card stands where the topic comes up:** in a description, a Message, the footer of a chart. A click opens the card in a floating window over the page; a link can also open See it on its own. In Claude, the same steps show in the conversation.
+6. **A marker stands where the topic comes up:** after a phrase in a description, a Message or the footer of a chart, or on a button. Hovering it opens a pop-out that says why the cards help here, and whether the User saw them. A card opens in a floating window over the page, See it on its own. In Claude, the same steps show in the conversation.
 7. **The offer grows with the User:** after a card, the next relevant cards are offered. The panel keeps a silent count of the cards they have seen; nothing is scored.
 
 ## Requirements
@@ -160,6 +160,8 @@ The footer of every standard chart reads "How do I read this chart?" and links t
 
 Wherever Data Hub shows text, a link to a Learning Card can stand inline: in what Data Hub writes itself, such as the footer of a chart, the Pre-flight or the explanation of a Level, and in what Users write, such as a description, a Message or Known Behaviour. It reads as a link with a small graduation cap. Hovering it shows the number and title of the card, and whether the User understood it.
 
+*Note of 2026-10-25: the link no longer reads as a link with a graduation cap. A small marker stands after the words, and hovering opens a pop-out ([FR-LR-33](#fr-lr-33), [FR-LR-34](#fr-lr-34)).*
+
 <a id="fr-lr-12"></a>
 ### FR-LR-12 · The link opens the card in a floating window
 
@@ -168,6 +170,8 @@ Wherever Data Hub shows text, a link to a Learning Card can stand inline: in wha
 A click on the link opens the Learning Card in a floating window over the page, as a Message opens in context ([FR-CV-09](14-conversations.md#fr-cv-09)): its head moves it and folds it, and the page stays usable behind it. The window shows the card in short: its Learning Level, what the reader will be able to do, the article, the video, the questions and "Mark as understood". "Open in the learning centre" opens the full page of the card in the Learning Centre.
 
 *Note of 2026-10-25: the window shows the same five steps as the page, with "Next" at its foot, and its button is "I understand it" ([DEC-LR-08](#dec-lr-08), [FR-LR-27](#fr-lr-27), [FR-LR-28](#fr-lr-28)).*
+
+*Note of 2026-10-25: the window opens from a reference in the pop-out ([FR-LR-34](#fr-lr-34)).*
 
 <a id="fr-lr-13"></a>
 ### FR-LR-13 · A Badge for a milestone
@@ -354,6 +358,8 @@ The header of every step holds "I understand it", so it stands on every question
 
 See it has a page of its own, with its own address. The User reaches it from the card, as its third step, and from the context in Data Hub without going through the card, for example from a pitfall in the Known Behaviour of a Resource. Opened from context, it shows the example with "Look at …" and "You see …", the way back to where the User came from, and the whole card. Its example is static content of the card: the chart is drawn from figures in the card, never from a query on live data.
 
+*Note of 2026-10-25: from context, See it opens from a reference in the pop-out of a phrase ([FR-LR-34](#fr-lr-34)).*
+
 <a id="fr-lr-30"></a>
 ### FR-LR-30 · Check your understanding: predict, then reveal
 
@@ -381,6 +387,29 @@ These choices are how a closed card offers the next relevant card ([principles, 
 
 The Learning Centre counts the cards a User has seen, and shows it quietly: in the panel, such as "You have seen 14 of 113 cards", and per Learning Level and section. It calculates no score, and shows no badge, no red indicator, no ranking, no number still to do and no deadline.
 
+*Note of 2026-10-25: per card it keeps when the User first saw it and when they understood it, for the pop-out ([FR-LR-34](#fr-lr-34)).*
+
+<a id="fr-lr-33"></a>
+### FR-LR-33 · A small marker shows what the Learning Centre explains
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+A phrase or a button that the Learning Centre explains carries a small marker right after it: a Unicode character in the colour of its text, a little smaller and raised, such as ⓘ ([OP-UX-22](../../design/principles.md#op-ux-22)). It is the only sign: no underline and no colour. It stands wherever a link to a card may stand ([FR-LR-11](#fr-lr-11)), and on a button whose action a card explains, such as "Reconfirm".
+
+<a id="fr-lr-34"></a>
+### FR-LR-34 · A pop-out says why the cards help here
+
+**Status:** Proposed · **Source:** Max, 2026-10-25; [principles, 1 and 3.1](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) · [design](../../design/principles.md#learning)
+
+Hovering a marked phrase or button, or focusing it with the keyboard, opens a pop-out after a short pause. It holds one or more references to Learning Cards. Each reference:
+
+- says in one sentence why or how the knowledge helps the User here, written for this place, not the title of the card;
+- names the card by its number and title;
+- shows whether and when the User saw the card: "Not seen yet", "Seen 3 days ago" or "Understood on 14 Oct", in quiet grey, never as a colour or a number still to do ([FR-LR-32](#fr-lr-32)).
+
+A click on a reference opens the card in the floating window ([FR-LR-12](#fr-lr-12)); "See it" opens See it on its own, when the card has it ([FR-LR-29](#fr-lr-29)). The foot of the pop-out opens the Learning Centre. The pop-out stays open while the pointer is on it, and closes when the pointer leaves, on Escape or on scrolling. On a touch screen a tap on the marker opens it. A button keeps its own action: only a tap on its marker opens the pop-out.
+
+
 ## Out of scope
 
 - **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).
@@ -402,7 +431,7 @@ The Learning Centre counts the cards a User has seen, and shows it quietly: in t
 - [x] <a id="op-lr-10"></a>**OP-LR-10** · Decide whether points and a ranking are wanted. The design leaves them out ([DEC-LR-06](#dec-lr-06)): points reward volume over understanding, and a ranking of colleagues puts pressure on those at the bottom. *Raised on 2026-10-24, while designing the game elements.* *Decided on 2026-10-25 on the principles page: no scores, badges, rankings or deadlines ([DEC-LR-09](#dec-lr-09)).*
 - [x] <a id="op-lr-11"></a>**OP-LR-11** · Decide who sees the Badges and Rank of a User. It can be only the User, colleagues on their Learning Profile, or next to their name in Messages, where a Rank could show who knows a topic well. *Raised on 2026-10-24.* *Decided on 2026-10-25: no longer applies, as there are no Badges or Ranks ([DEC-LR-09](#dec-lr-09)).*
 - [ ] <a id="op-lr-12"></a>**OP-LR-12** · Decide whether learning is recognised outside Data Hub, for example with a certificate per Rank, or in team meetings. *Raised on 2026-10-24.* *Note of 2026-10-25: a certificate or other recognition is an extrinsic reward, which the principles say undermines the motivation they build ([principles, 2 and 3.7](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). To decide there.*
-- [ ] <a id="op-lr-13"></a>**OP-LR-13** · Decide in which texts a User can add a link to a Learning Card, and how: for example typing "#" and the number or words of the card. Also decide whether Data Hub suggests a card for a known term, such as "unique" or "grain". *Raised on 2026-10-24.*
+- [ ] <a id="op-lr-13"></a>**OP-LR-13** · Decide in which texts a User can add a link to a Learning Card, and how: for example typing "#" and the number or words of the card. Also decide whether Data Hub suggests a card for a known term, such as "unique" or "grain". *Raised on 2026-10-24.* *Note of 2026-10-25: a link is now a marker with a pop-out that can hold several cards ([FR-LR-33](#fr-lr-33), [FR-LR-34](#fr-lr-34)).*
 - [x] <a id="op-lr-14"></a>**OP-LR-14** · Decide which Badges for learning by doing exist, and how Data Hub notices them, such as a first Question on a Resource after 1.9.1 ([FR-LR-13](#fr-lr-13)). *Raised on 2026-10-24.* *Decided on 2026-10-25: no longer applies; a try-it task is a kind of question, without a Badge ([DEC-LR-09](#dec-lr-09), [FR-LR-30](#fr-lr-30)).*
 - [x] <a id="op-lr-15"></a>**OP-LR-15** · Decide the steps of a Learning Card and their names. The design uses What it is, Visualised, Check yourself and Congrats ([DEC-LR-07](#dec-lr-07)); Max is not yet sure of the structure. Also decide whether every card has all four, for example a card of the Compass without a chart. *Raised on 2026-10-25, with the steps.* *Decided on 2026-10-25 on the principles page: every card has five steps, Why now, Core idea, See it, Check your understanding and You can now ([DEC-LR-10](#dec-lr-10)).*
 - [ ] <a id="op-lr-16"></a>**OP-LR-16** · Decide whether what a User does in Claude counts towards their progress: their answers, the cards they understood, their Weekly Goal. The design counts it, as the MCP App acts for the signed-in User ([FR-LR-26](#fr-lr-26)). *Raised on 2026-10-25.* *Note of 2026-10-25: with nothing scored, only a card seen and "I understand it" can count ([DEC-LR-09](#dec-lr-09)).*
@@ -414,6 +443,7 @@ The Learning Centre counts the cards a User has seen, and shows it quietly: in t
 - [ ] <a id="op-lr-22"></a>**OP-LR-22** · Without Quests ([FR-LR-16](#fr-lr-16)), decide whether the Data Team can still offer a few cards around a theme, for example before a new dashboard goes live. It fits offering knowledge at the right moment ([principles, 3.1](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)), as long as it carries no deadline and no count to complete ([principles, 3.7](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). *Raised on 2026-10-25, while applying the principles.*
 - [ ] <a id="op-lr-23"></a>**OP-LR-23** · The example of a card is drawn by the Chart Server, from figures in the card ([FR-LR-29](#fr-lr-29)), so it looks like the charts the User meets. The principles want no live data and no technical links, so that the example stays stable ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). Decide there whether drawing through the Chart Server is such a link, or the example is kept as a picture. *Raised on 2026-10-25, while applying the principles.*
 - [ ] <a id="op-lr-24"></a>**OP-LR-24** · The principles give "a lens always inherits the highest level of what lies beneath it" as an example of a decision rule ([principles, 3.3](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). In Data Hub the Level of a Lens is the lowest Level of the Resources beneath it ([Lens](../../definitions.md#lens)). Correct the example on the principles page, or this. *Raised on 2026-10-25, while reading the principles.*
+- [ ] <a id="op-lr-25"></a>**OP-LR-25** · Decide who writes the sentence of a reference, why or how the card helps here, for each place a marker stands ([FR-LR-34](#fr-lr-34)), and whether the gain of the card ([FR-LR-31](#fr-lr-31)) stands in when a place has none. Together with [OP-LR-13](#op-lr-13), who adds the markers. *Raised on 2026-10-25.*
 
 ## Builds on
 
