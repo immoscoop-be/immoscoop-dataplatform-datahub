@@ -341,6 +341,8 @@ After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resour
 
 A field that identifies each row or refers to an Entity gets an Entity identifier, written as `entity.identifier`, such as `agency.agencyId` ([FR-RC-08](05-resource-card.md#fr-rc-08)). It is a reference, not a join: Data Hub links every Resource that carries the same reference ([FR-RC-09](05-resource-card.md#fr-rc-09)), and says next to the field how many Resources that is. For a Resource built on a Colleciónes model, Data Hub fills in the relations its docs give; for another model, it suggests a reference where the name of a field matches an identifier of the Domain Model. The Data Admin checks them and can change each one. No relation is required. The Resources are added, with their relations, in one go, and the relations go into the Log with the addition.
 
+*Note of 2026-10-25: what a relation records about its cardinality is under discussion ([OP-RC-07](05-resource-card.md#op-rc-07) to [OP-RC-17](05-resource-card.md#op-rc-17)); this step changes with it.*
+
 <a id="fr-co-34"></a>
 ### FR-CO-34 · Adding a Resource records how it is stored
 

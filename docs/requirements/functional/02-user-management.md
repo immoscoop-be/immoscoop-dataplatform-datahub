@@ -23,7 +23,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 - <a id="dec-um-03"></a>**DEC-UM-03** · Groups come from Google Workspace. Data Hub requests them via the Cloud Identity Groups API, with a service account that is given the Groups Reader admin role in Workspace.
 - <a id="dec-um-04"></a>**DEC-UM-04** · Owner Units are Google groups that follow a Naming Convention. They are created and managed in Workspace, not in Data Hub. This answers the open question "Workspace groups or our own lists": Workspace groups. *Note of 2026-10-19: an Owner Unit can be any Google group of the own Workspace domain; the Naming Convention now applies to Role Groups only ([DEC-CO-09](03-collections.md#dec-co-09), [DEC-UM-07](#dec-um-07)).*
 - <a id="dec-um-05"></a>**DEC-UM-05** · Data Hub only pulls in the Groups that follow the convention, not all groups of the company. *Note of 2026-10-19: replaced by [DEC-UM-07](#dec-um-07).*
-- <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`.
+- <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`. *Note of 2026-10-25: whether `immoscoop.be` gets in too is open ([OP-UM-07](#op-um-07)).*
 - <a id="dec-um-07"></a>**DEC-UM-07** · Data Hub pulls in every group a User is in, nested groups included, as long as the group belongs to the own Workspace domain: any of them can be chosen as an Owner Unit ([DEC-CO-09](03-collections.md#dec-co-09)). Roles still come only from the Role Groups of the Naming Convention. The Synchronisation covers only the Groups Data Hub uses: the Role Groups and the Owner Units of Collections, not every group of the company. This replaces [DEC-UM-05](#dec-um-05).
 
 ## Terms
@@ -169,6 +169,7 @@ What someone may see and do, and issuing Library Cards ([Permissions and library
 - [x] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner. *Decided on 2026-10-19: any existing Google group can be an Owner Unit, so no groups need to be created for it ([DEC-CO-09](03-collections.md#dec-co-09)).*
 - [ ] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation.
 - [ ] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above.
+- [ ] <a id="op-um-07"></a>**OP-UM-07** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.*
 
 ## Builds on
 

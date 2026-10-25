@@ -34,21 +34,21 @@ In this file, *name* and *sentence* are ordinary words with the meaning below. T
 <a id="nfr-loc-01"></a>
 ### NFR-LOC-01 · Names are English and never translated
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [DEC-DH-02](../../overview/data-hub.md#dec-dh-02), [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [DEC-DH-02](../../overview/data-hub.md#dec-dh-02), [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
 
 A name, as defined above, is English in every language version of Data Hub and in every text: the interface, notifications, the Learning Centre, the answers of the MCP server and the metadata people write. Switching the language changes only sentences: names, data, Query IDs and Lenses stay identical.
 
 <a id="nfr-loc-02"></a>
 ### NFR-LOC-02 · Translation files hold sentences only
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 Translation files contain sentences only, never a name of the Domain Model or a kind of asset. A name goes into a sentence as a parameter and is not translated with it. For example, the key `lens.publish.confirm` reads "Wil je deze lens publiek maken?" in Dutch and "Do you want to make this lens public?" in English: `lens` stays `lens` in both.
 
 <a id="nfr-loc-03"></a>
 ### NFR-LOC-03 · A name always stands in a sentence that says what it is
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 A name never stands alone, without context: not "creditLeads: 1 204" as the only explanation, but "1 204 creditLeads (leads die naar KBC gaan)", the leads that go to KBC. Every name that appears on a screen is treated like other system text: it carries the marker of the Learning Centre, and its pop-out lists at least one Learning Card that explains it, a minimal one if there is nothing more yet ([FR-LR-35](../functional/16-learning.md#fr-lr-35), [FR-LR-37](../functional/16-learning.md#fr-lr-37)). The explanation comes from the Glossary ([NFR-LOC-05](#nfr-loc-05)). A name a User gives is explained by what it names ([NFR-LOC-11](#nfr-loc-11)).
 
@@ -57,42 +57,42 @@ A name never stands alone, without context: not "creditLeads: 1 204" as the only
 <a id="nfr-loc-04"></a>
 ### NFR-LOC-04 · No Dutch synonyms for names
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 A name has no Dutch synonym, not even in free text: not "kredietleads", not "credit leads", but `creditLead(s)`.
 
 <a id="nfr-loc-05"></a>
 ### NFR-LOC-05 · The Glossary is the source of names and their explanation
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-LR-27](../functional/16-learning.md#fr-lr-27)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-LR-27](../functional/16-learning.md#fr-lr-27)
 
 The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063) (Woordenlijst, Confluence) is the source of names and of their explanation in Dutch. Every name is marked there "name, do not translate", with an explanation in one sentence. Data Hub uses that explanation in the Learning Card of the name, in its step Core idea ([NFR-LOC-03](#nfr-loc-03)). Where the list of names lives is [OP-DH-42](../../overview/open-themes.md#op-dh-42).
 
 <a id="nfr-loc-06"></a>
 ### NFR-LOC-06 · The interface follows the language of the User
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
 
 The interface follows the language preference of the User: Dutch by default, English available. The choice changes nothing about names, data or Query IDs. Notifications, Pre-flights and the texts of the Log have a Dutch and an English version, with the same parameters ([NFR-LOC-10](#nfr-loc-10)). Where a User chooses the language is [OP-DH-46](../../overview/open-themes.md#op-dh-46).
 
 <a id="nfr-loc-07"></a>
 ### NFR-LOC-07 · The answers of the MCP server follow the same rule
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 Claude gets names in English and explanations in the language of the User, so that people and agent use the same words.
 
 <a id="nfr-loc-08"></a>
 ### NFR-LOC-08 · Learning Cards: Dutch sentences, English names
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [OP-LR-02](../functional/16-learning.md#op-lr-02)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [OP-LR-02](../functional/16-learning.md#op-lr-02)
 
 A Learning Card has Dutch sentences and English names, and never a Dutch synonym for a name. The first version is in Dutch; whether cards ever come in English too is [OP-DH-40](../../overview/open-themes.md#op-dh-40). The structure of a card, its five steps, does not depend on the language ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)).
 
 <a id="nfr-loc-09"></a>
 ### NFR-LOC-09 · Metadata written by people is in the language of the writer
 
-**Status:** Proposed · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 Metadata people write, such as the definition, open questions, Known Gaps and the log of changes, is in the language of the writer. The guideline is Dutch, with English names. Whether it stays a guideline is [OP-DH-41](../../overview/open-themes.md#op-dh-41).
 
