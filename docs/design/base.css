@@ -757,20 +757,27 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
-/* Learning: the marker and its pop-out, on a phrase or a button (DEC-UX-54, DEC-UX-55) */
+/* Learning: the marker and its pop-out, on system text (DEC-UX-54, DEC-UX-56, DEC-UX-57) */
 .lc-ref { border-radius: 4px; cursor: help; transition: background-color .15s; }
 .lc-ref:hover, .lc-ref:focus-visible, .lc-ref.open { background: var(--tint-active); outline: none; }
 .lc-mark { font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif; font-size: .78em; font-weight: 400; font-style: normal; margin-left: 2px; vertical-align: .2em; line-height: 0; color: currentColor; cursor: help; }
-.lc-pop { position: fixed; z-index: 30; width: 420px; max-width: calc(100vw - 24px); padding: 8px; border-radius: var(--radius-lg); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: 0 12px 36px rgba(0,0,0,.14); font-size: 13px; }
-.lc-pop-head { display: flex; align-items: center; gap: 6px; padding: 4px 8px 6px; font-size: var(--text-meta); color: var(--text-muted); }
+/* a text bubble: its arrow points at the marker it belongs to */
+.lc-pop { position: fixed; z-index: 30; width: 400px; max-width: calc(100vw - 24px); padding: 8px; border-radius: var(--radius-lg); background: var(--surface-solid); border: 1px solid var(--tint-active); box-shadow: 0 12px 36px rgba(0,0,0,.14); font-size: 13px; }
+.lc-pop::before { content: ""; position: absolute; left: var(--arrow-x, 28px); width: 12px; height: 12px; background: var(--surface-solid); transform: translateX(-50%) rotate(45deg); }
+.lc-pop[data-side="below"]::before { top: -7px; border-left: 1px solid var(--tint-active); border-top: 1px solid var(--tint-active); }
+.lc-pop[data-side="above"]::before { bottom: -7px; border-right: 1px solid var(--tint-active); border-bottom: 1px solid var(--tint-active); }
+.lc-pop-head { display: flex; align-items: center; gap: 6px; padding: 4px 6px 8px; font-size: var(--text-meta); color: var(--text-muted); }
 .lc-pop-head .lc-mark { margin: 0; vertical-align: 0; font-size: 12px; line-height: 1; }
-.lc-pop-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px; border-radius: 10px; }
-.lc-pop-row:hover { background: var(--tint-hover); }
-.lc-pop-main { flex: 1; min-width: 0; color: inherit; text-decoration: none; }
-.lc-pop-why { display: block; color: var(--text-primary); line-height: 1.45; }
-.lc-pop-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-top: 4px; font-size: var(--text-meta); color: var(--text-muted); }
-.lc-pop-seen { display: inline-flex; align-items: center; gap: 4px; }
-.lc-pop-see { flex: none; margin-top: 1px; font-size: var(--text-meta); }
-.lc-pop-foot { margin-top: 4px; padding: 8px 8px 4px; border-top: 1px solid var(--tint-hover); }
+.lc-pop-items { display: grid; gap: 6px; }
+.lc-pop-item { position: relative; border-radius: 12px; background: var(--surface-sub); }
+.lc-pop-open { display: block; width: 100%; padding: 10px 12px 10px; border: 0; border-radius: 12px; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.lc-pop-open:hover { background: var(--tint-hover); }
+.lc-pop-open:focus-visible { outline: 2px solid var(--text-primary); outline-offset: -2px; }
+.lc-pop-title { display: flex; align-items: center; gap: 6px; padding-right: 64px; font-size: 12.5px; font-weight: var(--weight-medium); }
+.lc-pop-title > .ph { font-size: 14px; color: var(--text-secondary); flex: none; }
+.lc-pop-gain { display: block; margin-top: 5px; color: var(--text-primary); line-height: 1.45; }
+.lc-pop-seen { display: flex; align-items: center; gap: 4px; margin-top: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.lc-pop-see { position: absolute; top: 9px; right: 12px; font-size: var(--text-meta); }
+.lc-pop-foot { margin-top: 6px; padding: 8px 6px 4px; }
 .lc-pop-foot .text-link { font-size: var(--text-meta); }
-@media (prefers-reduced-motion: no-preference) { .lc-pop:not([hidden]) { animation: lc-pop-in .15s ease-out; } @keyframes lc-pop-in { from { opacity: 0; transform: translateY(-3px); } } }
+@media (prefers-reduced-motion: no-preference) { .lc-pop:not([hidden]) { animation: lc-pop-in .15s ease-out; } @keyframes lc-pop-in { from { opacity: 0; } } }

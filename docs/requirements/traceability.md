@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 55 | 22 (18 open, 4 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 57 | 22 (18 open, 4 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 34 (21 proposed, 13 withdrawn) | – | 10 | 25 (20 open, 5 done) |
+| [Learning](functional/16-learning.md) | 36 (20 proposed, 16 withdrawn) | – | 10 | 26 (19 open, 7 done) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -267,8 +267,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
 | [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
 | [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
-| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
-| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Withdrawn | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
 | [FR-LR-13](functional/16-learning.md#fr-lr-13) | A Badge for a milestone | Withdrawn | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25<br>[ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
 | [FR-LR-14](functional/16-learning.md#fr-lr-14) | A Rank per Learning Level | Withdrawn | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25<br>[ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
 | [FR-LR-15](functional/16-learning.md#fr-lr-15) | A Weekly Goal, and a Streak counted in weeks | Withdrawn | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25<br>[ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
@@ -285,12 +285,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-26](functional/16-learning.md#fr-lr-26) | The steps of a card in Claude | Proposed | – | – | [6e53032](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6e53032f4b8f97465b02271f3c1e7bc9f63cdaeb) refs, 2026-10-25 |
 | [FR-LR-27](functional/16-learning.md#fr-lr-27) | A Learning Card follows five steps, on a quick or a full path | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-28](functional/16-learning.md#fr-lr-28) | "I understand it" is always there, and closes the card | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
-| [FR-LR-29](functional/16-learning.md#fr-lr-29) | See it is a page of its own | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
+| [FR-LR-29](functional/16-learning.md#fr-lr-29) | See it is a page of its own | Proposed | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-30](functional/16-learning.md#fr-lr-30) | Check your understanding: predict, then reveal | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-31](functional/16-learning.md#fr-lr-31) | You can now: what you can do, what it brings, and where to go | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
-| [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | – | [f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
-| [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Proposed | – | – | – |
-| [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Proposed | – | – | – |
+| [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
+| [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Withdrawn | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
+| [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Withdrawn | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
+| [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | – |
+| [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | – |
 
 ## Edge cases
 

@@ -97,40 +97,58 @@ document.querySelectorAll('.lc-quiz').forEach(quiz => {
   });
 });
 
-// A marked phrase or button and its pop-out (FR-LR-34, DEC-UX-55): hover or focus opens it after a short pause, under the
-// trigger or above it near the foot of the window; it stays while the pointer is on it, and closes on leaving, Escape or
-// scrolling. A tap on the marker opens it, and keeps a button from doing its own action.
+// A marked system text or button and its pop-out (FR-LR-36, DEC-UX-57): it opens only when the pointer rests on it for a
+// second, so passing over the page opens nothing; keyboard focus opens it at once. A text bubble under the text, or above
+// it near the foot of the window, its arrow on the marker. It stays while the pointer is on it, and closes on leaving,
+// Escape or scrolling. A tap on the marker opens it, and keeps a button from doing its own action.
 const pops = new Map();
+let popOwner = null;
 document.querySelectorAll('[data-pop]').forEach(t => {
   const pop = document.getElementById(t.dataset.pop); if (!pop) return;
   let timer;
   const show = () => {
+    clearTimeout(timer);
     pops.forEach(other => other !== api && other.hide());
     pop.hidden = false;
-    const r = t.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
-    const top = r.bottom + 8 + h > innerHeight - 12 ? r.top - h - 8 : r.bottom + 8;
-    Object.assign(pop.style, { left: Math.min(Math.max(12, r.left), innerWidth - w - 12) + 'px', top: Math.max(12, top) + 'px' });
-    t.classList.add('open'); t.setAttribute('aria-expanded', 'true');
+    const r = t.getBoundingClientRect(), m = (t.querySelector('.lc-mark') || t).getBoundingClientRect();
+    const w = pop.offsetWidth, h = pop.offsetHeight, x = m.left + m.width / 2;
+    const below = r.bottom + 12 + h <= innerHeight - 12;
+    const left = Math.min(Math.max(12, x - 32), innerWidth - w - 12);
+    pop.dataset.side = below ? 'below' : 'above';
+    pop.style.setProperty('--arrow-x', Math.min(Math.max(18, x - left), w - 18) + 'px');
+    Object.assign(pop.style, { left: left + 'px', top: (below ? r.bottom + 12 : r.top - h - 12) + 'px' });
+    t.classList.add('open'); t.setAttribute('aria-expanded', 'true'); popOwner = t;
   };
-  const hide = () => { clearTimeout(timer); pop.hidden = true; t.classList.remove('open'); t.setAttribute('aria-expanded', 'false'); };
-  const api = { show, hide };
+  const hide = () => { clearTimeout(timer); pop.hidden = true; t.setAttribute('aria-expanded', 'false'); if (!document.getElementById('lc-float')?.hidden && popOwner === t) return; t.classList.remove('open'); };
+  const api = { show, hide, pop, t };
   pops.set(t.dataset.pop, api);
-  const open = () => { clearTimeout(timer); timer = setTimeout(show, 250); };
-  const close = () => { clearTimeout(timer); timer = setTimeout(hide, 200); };
-  t.addEventListener('mouseenter', open); t.addEventListener('mouseleave', close);
-  t.addEventListener('focus', open);
+  const close = () => { clearTimeout(timer); timer = setTimeout(hide, 300); };
+  t.addEventListener('mouseenter', () => { clearTimeout(timer); if (pop.hidden) timer = setTimeout(show, 1000); });
+  t.addEventListener('mouseleave', close);
+  t.addEventListener('focus', () => { if (t.matches(':focus-visible')) show(); });
   t.addEventListener('blur', e => { if (!pop.contains(e.relatedTarget)) close(); });
   pop.addEventListener('mouseenter', () => clearTimeout(timer)); pop.addEventListener('mouseleave', close);
   pop.addEventListener('focusout', e => { if (!pop.contains(e.relatedTarget) && e.relatedTarget !== t) close(); });
-  t.querySelector('.lc-mark')?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); clearTimeout(timer); show(); });
+  t.querySelector('.lc-mark')?.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); show(); });
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') pops.forEach(p => p.hide()); });
-document.addEventListener('scroll', () => pops.forEach(p => p.hide()), true);
-// Prototype only: open a pop-out from a switch or the address (?pop=pop-def), and try another marker (OP-UX-22)
+document.addEventListener('scroll', e => { if (!e.target.closest?.('.lc-pop')) pops.forEach(p => p.hide()); }, true);
+// An item of a pop-out opens its card in the floating window over this page; the User stays where they are (FR-LR-36)
+document.querySelectorAll('[data-float-open]').forEach(b => b.addEventListener('click', () => {
+  const win = document.getElementById('lc-float'); if (!win) return;
+  win.querySelector('#float-title').innerHTML = `<span class="lc-num">${b.dataset.num}</span>${b.dataset.title}`;
+  win.hidden = false; win.classList.remove('folded');
+  pops.forEach(p => p.hide()); popOwner?.classList.add('open');
+}));
+document.querySelectorAll('[data-float-close]').forEach(b => b.addEventListener('click', () => {
+  b.closest('.float-win').hidden = true;
+  document.querySelectorAll('.lc-ref.open, [data-pop].open').forEach(t => t.classList.remove('open'));
+}));
+// Prototype only: open a pop-out from a switch or the address (?pop=pop-grain), and try another marker (OP-UX-22)
 const openPop = id => setTimeout(() => pops.get(id)?.show(), 300);
 document.querySelectorAll('[data-pop-open]').forEach(b => b.addEventListener('click', () => openPop(b.dataset.popOpen)));
 document.querySelectorAll('[data-mark]').forEach(b => b.addEventListener('click', () => document.querySelectorAll('.lc-mark').forEach(m => m.textContent = b.dataset.mark)));
-const firstPop = new URLSearchParams(location.search).get('pop') || document.body.dataset.pop;
+const firstPop = new URLSearchParams(location.search).get('pop') || document.body.dataset.firstPop;
 if (firstPop) document.fonts.ready.then(() => openPop(firstPop));
 
 // The floating window of a Message (DEC-UX-30): folds to its head, and moves when its head is dragged
