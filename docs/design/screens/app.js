@@ -61,6 +61,55 @@ document.querySelectorAll('[data-group]').forEach(group => {
   }));
 });
 
+// Prototype: a button that switches one or more groups, such as "Next" on a step: data-go="state:understood step:congrats"
+const go = spec => spec.split(' ').forEach(p => { const [g, t] = p.split(':'); document.querySelector(`[data-group="${g}"] [data-target="${t}"]`)?.click(); });
+document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => {
+  e.preventDefault();
+  if (b.getAttribute('aria-disabled') !== 'true') go(b.dataset.go);
+}));
+// A group marked data-scroll brings what it switches back to the top
+document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelectorAll('[data-target]').forEach(b => b.addEventListener('click', () => {
+  const box = g.closest('.float-win')?.querySelector('.float-body') || g.closest('.main');
+  if (box) box.scrollTop = 0;
+})));
+
+// Check yourself on a Learning Card (FR-LR-23): one question at a time; after three right answers, go on or take another round
+document.querySelectorAll('.lc-quiz').forEach(quiz => {
+  const qs = [...quiz.querySelectorAll('.lc-q')], need = +quiz.dataset.need || 3;
+  const dots = [...quiz.querySelectorAll('.lc-dots i')], done = quiz.querySelector('.lc-quiz-done');
+  const scope = quiz.closest('.float-win, .mcp-app, .lc-flow') || document;
+  let at = 0, right = 0;
+  const bar = state => scope.querySelectorAll('[data-quiz]').forEach(el => el.hidden = el.dataset.quiz !== state);
+  const count = () => {
+    dots.forEach((d, k) => d.classList.toggle('on', k < right));
+    quiz.querySelector('.lc-dots').setAttribute('aria-label', `${right} of ${need} right`);
+    scope.querySelectorAll('.lc-quiz-left').forEach(el => el.textContent = `${need - right} still to go.`);
+  };
+  const reset = q => {
+    q.classList.remove('answered');
+    q.querySelectorAll('.lc-opt').forEach(o => { o.classList.remove('chosen', 'right', 'wrong'); o.querySelector('i').className = 'ph ph-circle'; });
+    q.querySelector('.lc-why').hidden = true; q.querySelector('.lc-q-foot').hidden = true;
+  };
+  const show = k => { at = k % qs.length; reset(qs[at]); qs.forEach((q, i) => q.hidden = i !== at); };
+  qs.forEach(q => {
+    q.querySelectorAll('.lc-opt').forEach(o => o.addEventListener('click', () => {
+      if (q.classList.contains('answered')) return;
+      const ok = o.hasAttribute('data-right'), r = q.querySelector('[data-right]');
+      q.classList.add('answered'); o.classList.add('chosen'); r.classList.add('right');
+      r.querySelector('i').className = (ok ? 'ph-fill' : 'ph') + ' ph-check-circle';
+      if (!ok) { o.classList.add('wrong'); o.querySelector('i').className = 'ph-fill ph-x-circle'; }
+      q.querySelector('.verdict').textContent = ok ? 'Right.' : 'Not quite.';
+      q.querySelector('.lc-why').hidden = false;
+      if (ok) right++;
+      count();
+      if (right >= need) { done.hidden = false; bar('open'); if (quiz.dataset.doneGo) go(quiz.dataset.doneGo); }
+      else q.querySelector('.lc-q-foot').hidden = false;
+    }));
+    q.querySelector('.lc-q-next').addEventListener('click', () => show(at + 1));
+  });
+  scope.querySelectorAll('[data-quiz-again]').forEach(b => b.addEventListener('click', () => { right = 0; done.hidden = true; count(); bar('locked'); show(at + 1); }));
+});
+
 // The floating window of a Message (DEC-UX-30): folds to its head, and moves when its head is dragged
 document.querySelectorAll('.float-win').forEach(w => {
   const btn = w.querySelector('.float-fold');

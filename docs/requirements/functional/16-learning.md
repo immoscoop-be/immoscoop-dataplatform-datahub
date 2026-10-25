@@ -25,6 +25,8 @@
   5. **Together, not against each other:** progress per team, without names; no ranking of colleagues.
   6. **Learn by doing:** some Badges come from using Data Hub as a card teaches.
   7. **Optional and calm:** a User can hide the game, nothing is restricted ([DEC-LR-03](#dec-lr-03)), and a success is a quiet note, not a fanfare.
+- <a id="dec-lr-07"></a>**DEC-LR-07** · A Learning Card is worked through in four steps, one at a time: What it is, Visualised, Check yourself and Congrats. Each page carries less, so what matters stands out. *Decided on 2026-10-25, at the request of Max; the steps and their names are to review ([OP-LR-15](#op-lr-15)).*
+- <a id="dec-lr-08"></a>**DEC-LR-08** · The steps of a Learning Card stand on their own, without the navigation of Data Hub. The same steps show on the page of the card, in the floating window and in Claude as an MCP App, as Lenses and Reports do ([DEC-DH-15](../../overview/data-hub.md#dec-dh-15)). *Decided on 2026-10-25, at the request of Max.*
 
 ## Terms
 
@@ -44,15 +46,17 @@
 | Streak | The number of weeks in a row a User met their Weekly Goal |
 | Quest | A few Learning Cards around one theme, put together by the Data Team, with a Badge; for example before a new dashboard goes live |
 | Learning Profile | The page of a User with their Rank and progress, their Badges, their Streak and the cards they understood |
+| Knowledge Matrix | Every Learning Card as a small square, by Learning Level and section, marked understood or not for the User |
+| step | One of the four parts a Learning Card is worked through in: What it is, Visualised, Check yourself, Congrats. Ordinary word, not a Defined Term |
 
 ## Flow
 
 1. **The Data Team writes the topic** in the master learning plan: its learning goal, core, misconception and examples ([OP-LR-01](#op-lr-01)).
-2. **The topic becomes a Learning Card** with a page in Data Hub: the article with its graphics, and where they exist a video and test questions.
+2. **The topic becomes a Learning Card** with a page in Data Hub, in four steps: what it is, the topic visualised with a chart and a video, test questions, and congrats.
 3. **A User finds it** in the panel of Learning, by Learning Level and section, on the start screen, or through a link: from a chart, a Message or another card.
-4. **The User reads, watches and checks themselves,** then marks the card understood.
+4. **The User works through the steps:** reads what it is, sees it visualised, and checks themselves one question at a time. Three right answers, or "Mark as understood", lead to Congrats, which shows what they now know and what comes next.
 5. **Colleagues refer to it in Messages,** for example when answering a Question about a Resource, and the Data Team tells about new cards.
-6. **A link to a card stands where the topic comes up:** in a description, a Message, the footer of a chart. A click opens the card in a floating window over the page.
+6. **A link to a card stands where the topic comes up:** in a description, a Message, the footer of a chart. A click opens the card in a floating window over the page. In Claude, the same steps show in the conversation.
 7. **The game keeps the rhythm:** the User sees their progress, works towards a Rank and their Weekly Goal, earns Badges and follows the Quests of the Data Team.
 
 ## Requirements
@@ -64,12 +68,16 @@
 
 Every topic of the master learning plan, the Compass included, is a Learning Card with a page of its own in Data Hub. The page shows its number and title, its Learning Level and section, its priority (required, recommended or in depth), its thinking level (recognise, apply or judge), and the cards it builds on.
 
+*Note of 2026-10-25: the page shows no labels any more ([FR-LR-21](#fr-lr-21)). The Learning Level and section stand in the way to it, the cards it builds on on Congrats ([FR-LR-24](#fr-lr-24)); the priority and the thinking level show in the panel and on the start screen.*
+
 <a id="fr-lr-02"></a>
 ### FR-LR-02 · A Learning Card holds an article, a video and test questions
 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
 
 A Learning Card holds an article with text and graphics. It can also hold a video and test questions; a card without them shows only what it has. The article follows the topic in the master learning plan: what the reader will be able to do, the core, the common mistake, and examples from Immoscoop. Its charts are drawn by the Chart Server ([DEC-PF-23](../technical/00-platform.md#dec-pf-23)).
+
+*Note of 2026-10-25: the article is split over the steps What it is and Visualised ([FR-LR-21](#fr-lr-21)).*
 
 <a id="fr-lr-03"></a>
 ### FR-LR-03 · The panel of Learning lists every card by Learning Level and section
@@ -85,12 +93,16 @@ The panel of the section Learning lists every Learning Card: first the Compass, 
 
 A test question has one right answer among a few. When the User answers, the card says whether it was right and explains why, for the wrong answers too. The User can answer again. Who else sees the answers is open ([OP-LR-04](#op-lr-04)).
 
+*Note of 2026-10-25: the questions come one at a time, and "another round" asks again ([FR-LR-23](#fr-lr-23)).*
+
 <a id="fr-lr-05"></a>
 ### FR-LR-05 · A User marks a Learning Card understood
 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
 
 A User marks a Learning Card understood, and can undo it. The mark is kept per User and shows in the panel, on the card and wherever the card appears in a Message. Whether marking needs the test questions answered first is open ([OP-LR-05](#op-lr-05)).
+
+*Note of 2026-10-25: "Mark as understood" is the only button in the header of the card, and leads to Congrats. Three right answers in Check yourself mark the card understood too ([FR-LR-23](#fr-lr-23)).*
 
 <a id="fr-lr-06"></a>
 ### FR-LR-06 · A Learning Card has Messages of its own
@@ -120,6 +132,8 @@ The section Learning opens on a start screen: an intro, a search, the card the U
 
 The page of a Learning Card links to the cards it builds on, with whether the User understood them; to the next card in its section; to related cards; and to where the reader meets the topic in Data Hub, such as a field on a Resource Card or a Lens.
 
+*Note of 2026-10-25: these links stand on Congrats, at the end of the card, no longer beside it ([FR-LR-24](#fr-lr-24)).*
+
 <a id="fr-lr-10"></a>
 ### FR-LR-10 · Every standard chart links to its Reading Card
 
@@ -140,6 +154,8 @@ Wherever Data Hub shows text, a link to a Learning Card can stand inline: in wha
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
 
 A click on the link opens the Learning Card in a floating window over the page, as a Message opens in context ([FR-CV-09](14-conversations.md#fr-cv-09)): its head moves it and folds it, and the page stays usable behind it. The window shows the card in short: its Learning Level, what the reader will be able to do, the article, the video, the questions and "Mark as understood". "Open in the learning centre" opens the full page of the card in the Learning Centre.
+
+*Note of 2026-10-25: the window shows the same four steps as the page, with "Next" at its foot ([DEC-LR-08](#dec-lr-08), [FR-LR-21](#fr-lr-21)).*
 
 <a id="fr-lr-13"></a>
 ### FR-LR-13 · A Badge for a milestone
@@ -207,12 +223,69 @@ Who else sees it is open ([OP-LR-11](#op-lr-11)).
 
 When a User understands a card, meets their Weekly Goal, or earns a Badge or a Rank, a quiet note says so for a few seconds. It moves only when the system of the User allows motion.
 
+*Note of 2026-10-25: on the page of a card, Congrats takes the place of the quiet note ([FR-LR-24](#fr-lr-24)).*
+
 <a id="fr-lr-20"></a>
 ### FR-LR-20 · The game can be hidden
 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
 
 A User can hide the game elements: Badges, Ranks, the Weekly Goal, the Streak and team progress. The cards, the questions and the mark "understood" stay.
+
+<a id="fr-lr-21"></a>
+### FR-LR-21 · A Learning Card is worked through in four steps
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+The page of a Learning Card shows one step at a time, in this order:
+
+1. **What it is:** what the reader will be able to do, the core, where it goes wrong, and the signals to look for.
+2. **Visualised:** the topic in practice, with a chart drawn by the Chart Server and a video.
+3. **Check yourself:** the test questions ([FR-LR-23](#fr-lr-23)).
+4. **Congrats:** what the User now knows, and what comes next ([FR-LR-24](#fr-lr-24)).
+
+Above the step, the four steps stand in a row with arrows between them. The current step is marked, and the steps before it have a check. The User can go back to any step. Congrats opens after Check yourself, or after "Mark as understood". The header holds the title and "Mark as understood", nothing else; the card shows no labels.
+
+<a id="fr-lr-22"></a>
+### FR-LR-22 · Every step ends with "Next", always in the same place
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+At the foot of every step, always in the same place, "Next" leads to the next step. Beside it, one sentence says what comes next and how what the User just learned helps there. On Congrats it leads to the next card. On Check yourself it opens once three answers are right.
+
+<a id="fr-lr-23"></a>
+### FR-LR-23 · Check yourself asks one question at a time
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+Check yourself asks the test questions of the card one at a time, from a set of many. After each answer it says right or wrong, and why ([FR-LR-04](#fr-lr-04)), then offers the next question. It shows how many right answers the User has, out of three. After the third right answer the card counts as understood, and the User chooses: go on to Congrats, or take another round of questions.
+
+<a id="fr-lr-24"></a>
+### FR-LR-24 · Congrats shows what the User now knows
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+Congrats closes a card with:
+- something visual and fun, without confetti ([DEC-LR-06](#dec-lr-06));
+- the progress of the User: their Weekly Goal, the section and the Learning Level;
+- the Knowledge Matrix, with this card in it ([FR-LR-25](#fr-lr-25));
+- related cards, with whether the User understood them, and where the reader meets the topic in Data Hub ([FR-LR-09](#fr-lr-09));
+- the next topics;
+- "Share in a message", and the Messages on the card ([FR-LR-06](#fr-lr-06), [FR-LR-07](#fr-lr-07)).
+
+<a id="fr-lr-25"></a>
+### FR-LR-25 · The Knowledge Matrix
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+The Knowledge Matrix shows every Learning Card as a small square, by Learning Level and section. A square is filled for a card the User understood. The card just understood stands out, and the cards related to it are marked. Hovering a square shows its card; a click opens it.
+
+<a id="fr-lr-26"></a>
+### FR-LR-26 · The steps of a card in Claude
+
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+
+Through the MCP server, Claude can show every step of a Learning Card in the conversation as an MCP App ([DEC-LR-08](#dec-lr-08)). They are the same steps as on the page, without the rail, the panel or any other navigation of Data Hub. A User can check themselves in Claude. "Open in Data Hub" opens the card in the Learning Centre. What the User answers there counts as on the page, as the MCP App acts for the signed-in User; to confirm ([OP-LR-16](#op-lr-16)).
 
 ## Out of scope
 
@@ -226,9 +299,9 @@ A User can hide the game elements: Badges, Ranks, the Weekly Goal, the Streak an
 - [ ] <a id="op-lr-02"></a>**OP-LR-02** · Decide the language of the Learning Cards: the master learning plan is in Dutch, and Data Hub is in English only ([FR-SR-15](04-stacks-and-resources.md#fr-sr-15), [DEC-DH-02](../../overview/data-hub.md#dec-dh-02)). Translate the cards, or make Learning the exception. *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-03"></a>**OP-LR-03** · Decide where the videos live and who makes them, and whether they have captions. *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-04"></a>**OP-LR-04** · Decide who sees what a User marked understood and how they answered: only the User, or also the Data Team, as numbers per card or per person. *Raised on 2026-10-24.* *Note of 2026-10-24: the design shows team progress as shares without names ([FR-LR-17](#fr-lr-17)).*
-- [ ] <a id="op-lr-05"></a>**OP-LR-05** · Decide whether marking a card understood needs its test questions answered right first. The design lets a User mark it at any time. *Raised on 2026-10-24.*
+- [ ] <a id="op-lr-05"></a>**OP-LR-05** · Decide whether marking a card understood needs its test questions answered right first. The design lets a User mark it at any time. *Raised on 2026-10-24.* *Note of 2026-10-25: three right answers now mark the card understood ([FR-LR-23](#fr-lr-23)); "Mark as understood" stays for whoever already knows the topic.*
 - [ ] <a id="op-lr-06"></a>**OP-LR-06** · Decide whether Data Hub suggests the Learning Levels a User works on, for example from their role (an Owner the cards of Learning Level 4), or the User chooses them. The master learning plan adds priorities and role profiles to the Compass later. *Raised on 2026-10-24.*
-- [ ] <a id="op-lr-07"></a>**OP-LR-07** · Decide whether a Learning Card shows in context, where the reader meets the topic: next to a field on a Resource Card, in the footer of a chart ([FR-LR-10](#fr-lr-10)), in Claude through the MCP server, or in the Domain Hub, where the Compass says the explanations of the master learning plan show up. *Raised on 2026-10-24.* *Note of 2026-10-24: a link inline anywhere in Data Hub that opens the card in a floating window is designed ([DEC-LR-05](#dec-lr-05), [FR-LR-11](#fr-lr-11), [FR-LR-12](#fr-lr-12)); Claude and the Domain Hub remain open.*
+- [ ] <a id="op-lr-07"></a>**OP-LR-07** · Decide whether a Learning Card shows in context, where the reader meets the topic: next to a field on a Resource Card, in the footer of a chart ([FR-LR-10](#fr-lr-10)), in Claude through the MCP server, or in the Domain Hub, where the Compass says the explanations of the master learning plan show up. *Raised on 2026-10-24.* *Note of 2026-10-24: a link inline anywhere in Data Hub that opens the card in a floating window is designed ([DEC-LR-05](#dec-lr-05), [FR-LR-11](#fr-lr-11), [FR-LR-12](#fr-lr-12)); Claude and the Domain Hub remain open.* *Note of 2026-10-25: Claude is designed too, with the steps of a card as an MCP App ([FR-LR-26](#fr-lr-26)); the Domain Hub remains open.*
 - [ ] <a id="op-lr-08"></a>**OP-LR-08** · Confirm that learning restricts nothing ([DEC-LR-03](#dec-lr-03)), or decide that some cards are needed first, for example before an Owner publishes a Resource. *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-09"></a>**OP-LR-09** · Decide what happens to the mark "understood" when a card changes: it stays, or the User sees that the card changed since. *Raised on 2026-10-24.*
 
@@ -237,6 +310,9 @@ A User can hide the game elements: Badges, Ranks, the Weekly Goal, the Streak an
 - [ ] <a id="op-lr-12"></a>**OP-LR-12** · Decide whether learning is recognised outside Data Hub, for example with a certificate per Rank, or in team meetings. *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-13"></a>**OP-LR-13** · Decide in which texts a User can add a link to a Learning Card, and how: for example typing "#" and the number or words of the card. Also decide whether Data Hub suggests a card for a known term, such as "unique" or "grain". *Raised on 2026-10-24.*
 - [ ] <a id="op-lr-14"></a>**OP-LR-14** · Decide which Badges for learning by doing exist, and how Data Hub notices them, such as a first Question on a Resource after 1.9.1 ([FR-LR-13](#fr-lr-13)). *Raised on 2026-10-24.*
+- [ ] <a id="op-lr-15"></a>**OP-LR-15** · Decide the steps of a Learning Card and their names. The design uses What it is, Visualised, Check yourself and Congrats ([DEC-LR-07](#dec-lr-07)); Max is not yet sure of the structure. Also decide whether every card has all four, for example a card of the Compass without a chart. *Raised on 2026-10-25, with the steps.*
+- [ ] <a id="op-lr-16"></a>**OP-LR-16** · Decide whether what a User does in Claude counts towards their progress: their answers, the cards they understood, their Weekly Goal. The design counts it, as the MCP App acts for the signed-in User ([FR-LR-26](#fr-lr-26)). *Raised on 2026-10-25.*
+- [ ] <a id="op-lr-17"></a>**OP-LR-17** · Decide how many questions a card needs for Check yourself, in which order they come, and what another round asks once they run out ([FR-LR-23](#fr-lr-23)). Today the master learning plan has no questions yet ([OP-LR-01](#op-lr-01)). *Raised on 2026-10-25.*
 
 ## Builds on
 

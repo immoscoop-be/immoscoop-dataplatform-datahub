@@ -134,6 +134,8 @@ The request and response schemas of every service are defined with zod in `packa
 
 The React components that render Lenses and Reports live in `packages/ui`, and are used both by the web app and by the MCP App in mcp.
 
+*Note of 2026-10-25: the steps of a Learning Card are designed to be shared the same way ([DEC-LR-08](../functional/16-learning.md#dec-lr-08)); not yet specified.*
+
 <a id="tr-pf-13"></a>
 ### TR-PF-13 · Infrastructure as code
 

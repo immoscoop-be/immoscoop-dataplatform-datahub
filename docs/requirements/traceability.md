@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 44 | 21 (18 open, 3 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 47 | 21 (18 open, 3 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 20 (20 proposed) | – | 6 | 14 (14 open) |
+| [Learning](functional/16-learning.md) | 26 (26 proposed) | – | 8 | 17 (17 open) |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
@@ -267,16 +267,22 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
 | [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
 | [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | [1e46a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e46a4b17e152823b119a7313e3dc74f665b5ac4) refs, 2026-10-24 |
-| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Proposed | – | – | – |
-| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | – |
-| [FR-LR-13](functional/16-learning.md#fr-lr-13) | A Badge for a milestone | Proposed | – | – | – |
-| [FR-LR-14](functional/16-learning.md#fr-lr-14) | A Rank per Learning Level | Proposed | – | – | – |
-| [FR-LR-15](functional/16-learning.md#fr-lr-15) | A Weekly Goal, and a Streak counted in weeks | Proposed | – | – | – |
-| [FR-LR-16](functional/16-learning.md#fr-lr-16) | Quests by the Data Team | Proposed | – | – | – |
-| [FR-LR-17](functional/16-learning.md#fr-lr-17) | Team progress, without ranking colleagues | Proposed | – | – | – |
-| [FR-LR-18](functional/16-learning.md#fr-lr-18) | A Learning Profile | Proposed | – | – | – |
-| [FR-LR-19](functional/16-learning.md#fr-lr-19) | A success is a quiet note | Proposed | – | – | – |
-| [FR-LR-20](functional/16-learning.md#fr-lr-20) | The game can be hidden | Proposed | – | – | – |
+| [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-12](functional/16-learning.md#fr-lr-12) | The link opens the card in a floating window | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-13](functional/16-learning.md#fr-lr-13) | A Badge for a milestone | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-14](functional/16-learning.md#fr-lr-14) | A Rank per Learning Level | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-15](functional/16-learning.md#fr-lr-15) | A Weekly Goal, and a Streak counted in weeks | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-16](functional/16-learning.md#fr-lr-16) | Quests by the Data Team | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-17](functional/16-learning.md#fr-lr-17) | Team progress, without ranking colleagues | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-18](functional/16-learning.md#fr-lr-18) | A Learning Profile | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-19](functional/16-learning.md#fr-lr-19) | A success is a quiet note | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-20](functional/16-learning.md#fr-lr-20) | The game can be hidden | Proposed | – | – | [ca883b3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ca883b311aa2509c7e2a65fdba2bb591782eacab) refs, 2026-10-24 |
+| [FR-LR-21](functional/16-learning.md#fr-lr-21) | A Learning Card is worked through in four steps | Proposed | – | – | – |
+| [FR-LR-22](functional/16-learning.md#fr-lr-22) | Every step ends with "Next", always in the same place | Proposed | – | – | – |
+| [FR-LR-23](functional/16-learning.md#fr-lr-23) | Check yourself asks one question at a time | Proposed | – | – | – |
+| [FR-LR-24](functional/16-learning.md#fr-lr-24) | Congrats shows what the User now knows | Proposed | – | – | – |
+| [FR-LR-25](functional/16-learning.md#fr-lr-25) | The Knowledge Matrix | Proposed | – | – | – |
+| [FR-LR-26](functional/16-learning.md#fr-lr-26) | The steps of a card in Claude | Proposed | – | – | – |
 
 ## Edge cases
 
