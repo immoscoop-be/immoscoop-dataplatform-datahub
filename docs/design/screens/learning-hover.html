@@ -7,8 +7,8 @@
   bubble whose arrow points at the marker, saying how many cards explain it, with a tile per card: number and title,
   "See it", the gain of the card (the same sentence wherever the card appears), and whether and when the User saw it.
   A click on a tile opens the card in the floating window over this page. On a touch screen a tap on the marker opens
-  the pop-out; a button keeps its own action. The switches open each pop-out, and show the marker as ⓘ, † or ※ (OP-UX-22).
-  Requirements: FR-LR-35, FR-LR-36 (Proposed). Open: OP-UX-22, OP-LR-26.
+  the pop-out; a button keeps its own action. The switch opens each pop-out. The marker is ⓘ (OP-UX-22, decided).
+  Requirements: FR-LR-35, FR-LR-36 (Proposed). Open: OP-LR-26.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -292,15 +292,10 @@
  </div>
  <div class="float-foot lc-compact"><div class="lc-next" role="navigation" aria-label="Next"><div data-pane-group="step" data-pane="why"><div class="lc-next-in"><div class="lc-next-text"><b>Next: Core idea</b>The rule behind the two reports, in one sentence.</div><a class="btn-primary lc-next-btn" data-go="step:core">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="core" hidden><div class="lc-next-in" data-pane-group="path" data-pane="full"><div class="lc-next-text"><b>Next: See it</b>The same rule in one picture, with the part that matters marked.</div><a class="btn-primary lc-next-btn" data-go="step:see">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-next-in" data-pane-group="path" data-pane="quick" hidden><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="see" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: Check your understanding</b>Predict first, then see why. As many questions as you like.</div><a class="btn-primary lc-next-btn" data-go="step:check">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="check" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><a class="text-link lc-open" href="learning-card.html"><span>Open in the learning centre</span><i class="ph ph-arrow-right"></i></a></div></div>
 </section>
-<div class="proto-switch" data-group="pop" role="tablist" aria-label="Prototype: which pop-out" style="bottom:72px">Pop-out
+<div class="proto-switch" data-group="pop" role="tablist" aria-label="Prototype: which pop-out">Pop-out
  <button class="seg" data-target="level" data-pop-open="pop-level" role="tab" aria-selected="false">On a label</button>
  <button class="seg on" data-target="grain" data-pop-open="pop-grain" role="tab" aria-selected="true">On a chip</button>
  <button class="seg" data-target="rec" data-pop-open="pop-rec" role="tab" aria-selected="false">On a button</button>
-</div>
-<div class="proto-switch" data-group="mark" role="tablist" aria-label="Prototype: the marker">Marker
- <button class="seg on" data-target="i" data-mark="ⓘ" role="tab" aria-selected="true">ⓘ</button>
- <button class="seg" data-target="dagger" data-mark="†" role="tab" aria-selected="false">†</button>
- <button class="seg" data-target="ref" data-mark="※" role="tab" aria-selected="false">※</button>
 </div>
 <script src="app.js"></script>
 </body>

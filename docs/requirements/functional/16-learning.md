@@ -426,6 +426,8 @@ A click on a reference opens the card in the floating window ([FR-LR-12](#fr-lr-
 
 A button, a label, a heading, or a text that Data Hub writes itself, such as a status, the name of a field, the Pre-flight or the footer of a chart, can carry a marker when a Learning Card explains it. The marker is a small Unicode character right after the text, in its colour, a little smaller and raised, such as ⓘ ([OP-UX-22](../../design/principles.md#op-ux-22)). It is the only sign: no underline and no colour. Text that Users provide never carries one: a description, a definition, Known Behaviour, a Message or a name.
 
+*Note of 2026-10-25: the marker is ⓘ (U+24D8), decided by Max ([OP-UX-22](../../design/principles.md#op-ux-22)).*
+
 <a id="fr-lr-36"></a>
 ### FR-LR-36 · The pop-out: a text bubble with the cards that explain it
 

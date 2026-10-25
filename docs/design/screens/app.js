@@ -144,10 +144,9 @@ document.querySelectorAll('[data-float-close]').forEach(b => b.addEventListener(
   b.closest('.float-win').hidden = true;
   document.querySelectorAll('.lc-ref.open, [data-pop].open').forEach(t => t.classList.remove('open'));
 }));
-// Prototype only: open a pop-out from a switch or the address (?pop=pop-grain), and try another marker (OP-UX-22)
+// Prototype only: open a pop-out from a switch or the address (?pop=pop-grain)
 const openPop = id => setTimeout(() => pops.get(id)?.show(), 300);
 document.querySelectorAll('[data-pop-open]').forEach(b => b.addEventListener('click', () => openPop(b.dataset.popOpen)));
-document.querySelectorAll('[data-mark]').forEach(b => b.addEventListener('click', () => document.querySelectorAll('.lc-mark').forEach(m => m.textContent = b.dataset.mark)));
 const firstPop = new URLSearchParams(location.search).get('pop') || document.body.dataset.firstPop;
 if (firstPop) document.fonts.ready.then(() => openPop(firstPop));
 
