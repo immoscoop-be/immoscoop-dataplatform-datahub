@@ -73,24 +73,16 @@ document.querySelectorAll('[data-group][data-scroll]').forEach(g => g.querySelec
   if (box) box.scrollTop = 0;
 })));
 
-// Check yourself on a Learning Card (FR-LR-23): one question at a time; after three right answers, go on or take another round
+// Check your understanding on a Learning Card (FR-LR-30): predict, then see the answer and why; another question, or stop.
+// Nothing is counted.
 document.querySelectorAll('.lc-quiz').forEach(quiz => {
-  const qs = [...quiz.querySelectorAll('.lc-q')], need = +quiz.dataset.need || 3;
-  const dots = [...quiz.querySelectorAll('.lc-dots i')], done = quiz.querySelector('.lc-quiz-done');
-  const scope = quiz.closest('.float-win, .mcp-app, .lc-flow') || document;
-  let at = 0, right = 0;
-  const bar = state => scope.querySelectorAll('[data-quiz]').forEach(el => el.hidden = el.dataset.quiz !== state);
-  const count = () => {
-    dots.forEach((d, k) => d.classList.toggle('on', k < right));
-    quiz.querySelector('.lc-dots').setAttribute('aria-label', `${right} of ${need} right`);
-    scope.querySelectorAll('.lc-quiz-left').forEach(el => el.textContent = `${need - right} still to go.`);
-  };
+  const qs = [...quiz.querySelectorAll('.lc-q')];
+  let at = 0;
   const reset = q => {
     q.classList.remove('answered');
     q.querySelectorAll('.lc-opt').forEach(o => { o.classList.remove('chosen', 'right', 'wrong'); o.querySelector('i').className = 'ph ph-circle'; });
     q.querySelector('.lc-why').hidden = true; q.querySelector('.lc-q-foot').hidden = true;
   };
-  const show = k => { at = k % qs.length; reset(qs[at]); qs.forEach((q, i) => q.hidden = i !== at); };
   qs.forEach(q => {
     q.querySelectorAll('.lc-opt').forEach(o => o.addEventListener('click', () => {
       if (q.classList.contains('answered')) return;
@@ -99,15 +91,10 @@ document.querySelectorAll('.lc-quiz').forEach(quiz => {
       r.querySelector('i').className = (ok ? 'ph-fill' : 'ph') + ' ph-check-circle';
       if (!ok) { o.classList.add('wrong'); o.querySelector('i').className = 'ph-fill ph-x-circle'; }
       q.querySelector('.verdict').textContent = ok ? 'Right.' : 'Not quite.';
-      q.querySelector('.lc-why').hidden = false;
-      if (ok) right++;
-      count();
-      if (right >= need) { done.hidden = false; bar('open'); if (quiz.dataset.doneGo) go(quiz.dataset.doneGo); }
-      else q.querySelector('.lc-q-foot').hidden = false;
+      q.querySelector('.lc-why').hidden = false; q.querySelector('.lc-q-foot').hidden = false;
     }));
-    q.querySelector('.lc-q-next').addEventListener('click', () => show(at + 1));
+    q.querySelector('.lc-q-next').addEventListener('click', () => { at = (at + 1) % qs.length; reset(qs[at]); qs.forEach((x, i) => x.hidden = i !== at); });
   });
-  scope.querySelectorAll('[data-quiz-again]').forEach(b => b.addEventListener('click', () => { right = 0; done.hidden = true; count(); bar('locked'); show(at + 1); }));
 });
 
 // The floating window of a Message (DEC-UX-30): folds to its head, and moves when its head is dragged
