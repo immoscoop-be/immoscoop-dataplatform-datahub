@@ -42,7 +42,7 @@ The page is built with Vite (`pnpm build`) into `dist/client`, which the server 
 | Route of the server | Purpose |
 | --- | --- |
 | `GET /` | The page; it may only load from its own address, pictures from semgraph too, and only talk to its own server, identity, catalogue, registry and semgraph. Each page gets a new nonce for the styles Mantine adds ([TR-PF-29](../../requirements/technical/00-platform.md#tr-pf-29)) |
-| `GET /assets/…`, `/favicon.svg`, `/icons/<name>.svg` | The built scripts, styles and fonts; those in `assets/` carry their content in their name and are cached for good. `icons/` holds the drawing of every icon a Collection can carry, copied from `@tabler/icons` at build time; the page loads one only where it shows it, and keeps it an hour like the favicon, since its name does not change with a new version of Tabler |
+| `GET /assets/…`, `/favicon.svg`, `/icons/<name>.svg` | The built scripts, styles and fonts; those in `assets/` carry their content in their name and are cached for good. `icons/` holds the drawing of every icon a Collection can carry, copied from `@tabler/icons` at build time (to move to Phosphor: [DEC-CO-19](../../requirements/functional/03-collections.md#dec-co-19)); the page loads one only where it shows it, and keeps it an hour like the favicon, since its name does not change with a new version of Tabler |
 | `GET /auth/login` | Sends the User to identity, with PKCE, as the client `datahub-web` |
 | `GET /auth/callback` | Back from identity: exchanges the code and keeps the Refresh Token in the cookie |
 | `POST /auth/token` | Gives the page an Access Token for the Refresh Token in the cookie; only from the web app's own pages |

@@ -9,12 +9,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 60 | 22 (15 open, 7 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 60 | 22 (14 open, 8 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 35 (3 proposed, 16 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 18 | 14 (6 open, 8 done) |
+| [Collections](functional/03-collections.md) | 35 (3 proposed, 16 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 19 | 16 (8 open, 8 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 20 specified, 10 implemented, 5 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 15 (13 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 6 (6 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
@@ -109,8 +109,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records the relation of every field | Proposed | – | – | [57f20cf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/57f20cfae74e1434889583262f8e263cfbe38f13) refs, 2026-10-25 |
-| [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Proposed | – | – | – |
-| [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Specified | – | – | – |
+| [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Proposed | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
+| [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Specified | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -155,7 +155,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-37](functional/04-stacks-and-resources.md#fr-sr-37) | Approval above one threshold, a block above another | Proposed | – | – | [dae3937](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dae3937f62754e9f77504583c56851110bb2cd5b) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-38](functional/04-stacks-and-resources.md#fr-sr-38) | The Parameters of a Resource choose the rows of its Preview | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-39](functional/04-stacks-and-resources.md#fr-sr-39) | A Resource shows how it is partitioned and clustered | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
-| [FR-SR-40](functional/04-stacks-and-resources.md#fr-sr-40) | The Pre-flight counts the partitions and warns without a partition filter | Proposed | – | – | [dae3937](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dae3937f62754e9f77504583c56851110bb2cd5b) refs, 2026-10-23<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
+| [FR-SR-40](functional/04-stacks-and-resources.md#fr-sr-40) | The Pre-flight counts the partitions and warns without a partition filter | Proposed | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25<br>[dae3937](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dae3937f62754e9f77504583c56851110bb2cd5b) refs, 2026-10-23<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-41](functional/04-stacks-and-resources.md#fr-sr-41) | Query, a section for SQL over everything the User may see | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-42](functional/04-stacks-and-resources.md#fr-sr-42) | The editor formats and suggests | Proposed | – | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
 | [FR-SR-43](functional/04-stacks-and-resources.md#fr-sr-43) | The panel of Query lists the queries that ran | Proposed | – | – | [0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23<br>[f54ac5a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f54ac5a22dae793f32d036a4ce755a7ae6ba067b) refs, 2026-10-23<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23 |
