@@ -9,13 +9,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 59 | 22 (17 open, 5 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 60 | 22 (15 open, 7 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 33 (2 proposed, 15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 14 (10 open, 4 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 20 specified, 10 implemented, 5 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 14 (12 open, 2 done) |
+| [Collections](functional/03-collections.md) | 35 (3 proposed, 16 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 18 | 14 (6 open, 8 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 20 specified, 10 implemented, 5 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 15 (13 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 6 (6 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
@@ -32,7 +32,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
-| [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 1 (1 open) |
+| [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 1 (1 done) |
 | [Stacks and resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
 
 ## Functional requirements
@@ -109,6 +109,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records the relation of every field | Proposed | – | – | [57f20cf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/57f20cfae74e1434889583262f8e263cfbe38f13) refs, 2026-10-25 |
+| [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Proposed | – | – | – |
+| [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Specified | – | – | – |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -128,7 +130,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12) | Log IDs come from a fixed catalogue | Implemented | SR-12 | [TR-CO-04](technical/03-collections.md#tr-co-04) | [8e6ff4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e6ff4eb6383bdbe04664755a5ec81593cbc9cc5) refs, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-13](functional/04-stacks-and-resources.md#fr-sr-13) | Names, descriptions and Log texts are searchable | Specified | SR-13 | – | – |
 | [FR-SR-14](functional/04-stacks-and-resources.md#fr-sr-14) | Deregistration keeps the Log and history | Implemented | SR-14 | [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
-| [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | All texts in the app are in English | Withdrawn | SR-15 | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
+| [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | All texts in the app are in English | Withdrawn | SR-15 | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16) | Only the Owner publishes | Specified | SR-16 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
 | [FR-SR-17](functional/04-stacks-and-resources.md#fr-sr-17) | The first Publication, from Described, is the first Confirmation | Specified | SR-17 | – | – |
 | [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on Publication | Withdrawn | SR-18 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | [3d452ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3d452cafcc9b1320488669bfbf93d7f3dcc6f879) refs, 2026-10-19 |
@@ -293,9 +295,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Withdrawn | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25<br>[54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
 | [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Withdrawn | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25<br>[54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
-| [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [c422d19](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c422d1911d5b9f393a516e9bee6a01b1ce2c4298) refs, 2026-10-25<br>[7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
+| [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[c422d19](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c422d1911d5b9f393a516e9bee6a01b1ce2c4298) refs, 2026-10-25<br>[7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
-| [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | – |
+| [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
 
 ## Edge cases
 
@@ -415,17 +417,17 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Applies to | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [NFR-LOC-01](non-functional/localisation.md#nfr-loc-01) | Names are English and never translated | Proposed | [DEC-DH-02](../overview/data-hub.md#dec-dh-02), [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
+| [NFR-LOC-01](non-functional/localisation.md#nfr-loc-01) | Names are English and never translated | Proposed | [DEC-DH-02](../overview/data-hub.md#dec-dh-02), [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-02](non-functional/localisation.md#nfr-loc-02) | Translation files hold sentences only | Proposed | – | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
-| [NFR-LOC-03](non-functional/localisation.md#nfr-loc-03) | A name always stands in a sentence that says what it is | Proposed | – | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
+| [NFR-LOC-03](non-functional/localisation.md#nfr-loc-03) | A name always stands in a sentence that says what it is | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-04](non-functional/localisation.md#nfr-loc-04) | No Dutch synonyms for names | Proposed | – | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
-| [NFR-LOC-05](non-functional/localisation.md#nfr-loc-05) | The Glossary is the source of names and their explanation | Proposed | [FR-LR-27](functional/16-learning.md#fr-lr-27) | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
-| [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | The interface follows the language of the User | Proposed | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
+| [NFR-LOC-05](non-functional/localisation.md#nfr-loc-05) | The Glossary is the source of names and their explanation | Proposed | [FR-LR-27](functional/16-learning.md#fr-lr-27) | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
+| [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | The interface follows the language of the User | Proposed | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-07](non-functional/localisation.md#nfr-loc-07) | The answers of the MCP server follow the same rule | Proposed | – | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-08](non-functional/localisation.md#nfr-loc-08) | Learning Cards: Dutch sentences, English names | Proposed | [OP-LR-02](functional/16-learning.md#op-lr-02) | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-09](non-functional/localisation.md#nfr-loc-09) | Metadata written by people is in the language of the writer | Proposed | – | – | [7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
-| [NFR-LOC-10](non-functional/localisation.md#nfr-loc-10) | The texts of the Log are sentences | Specified | – | – | – |
-| [NFR-LOC-11](non-functional/localisation.md#nfr-loc-11) | Names Users give are names | Specified | – | – | – |
+| [NFR-LOC-10](non-functional/localisation.md#nfr-loc-10) | The texts of the Log are sentences | Specified | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
+| [NFR-LOC-11](non-functional/localisation.md#nfr-loc-11) | Names Users give are names | Specified | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
 
 ### [Security](non-functional/security.md)
 

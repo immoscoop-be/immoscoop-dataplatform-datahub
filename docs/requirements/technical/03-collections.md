@@ -64,4 +64,4 @@ The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-
 
 ## Open points
 
-- [ ] <a id="op-co-08"></a>**OP-CO-08** · Keep the address and name of an Owner Unit up to date when the group changes in Workspace, for example with the Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)). *Raised on 2026-10-19.*
+- [x] <a id="op-co-08"></a>**OP-CO-08** · Keep the address and name of an Owner Unit up to date when the group changes in Workspace, for example with the Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)). *Raised on 2026-10-19.* *Decided on 2026-10-25, by Max: by hand, in the form to edit the Collection: choosing the group again brings its name and address up to date, which its Owner Unit and the Data Team can do ([FR-CO-35](../functional/03-collections.md#fr-co-35), [DEC-CO-18](../functional/03-collections.md#dec-co-18)). The Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)) can take it over later.*

@@ -4,7 +4,10 @@
   After choosing Resources (collection-add-resources.html), the Data Admin says per field which relation it has:
   none, it identifies each row, or it refers to an Entity, as entity.identifier. Filled in from the docs of a
   Colleciónes model, or suggested from the name of the field.
-  Requirements: FR-CO-33 (Proposed); FR-CO-31, FR-RC-08, FR-RC-09; open: OP-RC-05, OP-CO-14, OP-CO-15.
+  Per Resource it also records how it is stored: its partition column and unit, its cluster columns, and whether a
+  partition filter is required; derived from dbt where possible, set by the Data Admin where not (FR-CO-34).
+  Requirements: FR-CO-33, FR-CO-34 (Proposed); FR-CO-31, FR-RC-08, FR-RC-09, FR-SR-39, FR-SR-40; open: OP-RC-05,
+  OP-CO-14, OP-CO-15, OP-SR-12, OP-SR-15.
   Related screens: collection-add-resources.html, collection-overview.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -158,12 +161,17 @@
 <div class="sheet-backdrop" onclick="location.href='collection-overview.html'"></div>
 <section class="sheet rel-sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
  <div class="sheet-steps" aria-label="Steps"><a class="done" href="collection-add-resources.html"><b><i class="ph ph-check"></i></b>Choose resources</a><i class="ph ph-arrow-right" aria-hidden="true"></i><span class="on"><b>2</b>Relations</span></div>
- <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">Relations of 2 resources</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">For each field, say which relation it has. A field that identifies something gets its entity, as <code>entity.identifier</code>. Data Hub then links every resource with the same reference: you don't join tables here.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
+ <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">Relations of 2 resources</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">Per resource, check how it is stored: Data Hub filters on its partition column, and asks for a filter where one is required. Then say for each field which relation it has. A field that identifies something gets its entity, as <code>entity.identifier</code>. Data Hub then links every resource with the same reference: you don't join tables here.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
  <div class="rel-filter"><span class="meta">Show</span><span class="seg-group"><button class="seg on" data-rel-filter="all">All 13 fields</button><button class="seg" data-rel-filter="set">With a relation, 5</button></span></div>
  <div class="sheet-list">
   <div class="rel-block">
    <div class="rel-head"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="item-title">Credit simulations</span><span style="flex:1"></span><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></div>
    <p class="meta rel-built">Built on the Colleciónes model <code>creditSimulations</code> · 7 fields, 3 with a relation</p>
+   <div class="rel-store" aria-label="How it is stored">
+    <span class="meta">Partitioned by</span><span class="rel-store-val"><select aria-label="Partition column"><option selected>simulatedAt</option><option>No partitioning</option></select><select aria-label="Unit of the partitions"><option>per hour</option><option selected>per day</option><option>per month</option><option>per year</option></select></span><span class="rel-src" title="From the dbt manifest of the model beneath the view, through the lineage"><i class="ph ph-file-text"></i>From dbt</span>
+    <span class="meta">Clustered by</span><span class="rel-store-val"><span class="code-chip">visitorId<button aria-label="Remove visitorId">×</button></span><span class="code-chip">listingId<button aria-label="Remove listingId">×</button></span><button class="text-link rel-add"><i class="ph ph-plus"></i>Column</button></span><span class="rel-src"><i class="ph ph-file-text"></i>From dbt</span>
+    <span class="meta">Partition filter</span><label class="rel-store-val rel-check"><input type="checkbox" checked disabled>Required in every query</label><span class="rel-src" title="The table beneath sets require_partition_filter, so BigQuery refuses a query without one"><i class="ph ph-lock-simple"></i>Required by BigQuery</span>
+   </div>
    <p class="check-line"><i class="ph ph-file-text"></i><span><b>3 relations come from the docs of the model.</b> Check them, and change one that is wrong.</span></p>
    <table class="rel-table">
    <thead><tr><th>Field</th><th>Relation</th><th>Entity identifier</th></tr></thead>
@@ -208,6 +216,11 @@
   <div class="rel-block">
    <div class="rel-head"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="item-title">Agency reviews</span><span style="flex:1"></span><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></div>
    <p class="meta rel-built">Built on the model <code>mrt_agencyReviews</code> · 6 fields, 2 with a relation</p>
+   <div class="rel-store" aria-label="How it is stored">
+    <span class="meta">Partitioned by</span><span class="rel-store-val"><select aria-label="Partition column"><option selected>reviewedAt</option><option>No partitioning</option></select><select aria-label="Unit of the partitions"><option>per hour</option><option>per day</option><option selected>per month</option><option>per year</option></select></span><span class="rel-src" title="From the dbt manifest of the model beneath the view, through the lineage"><i class="ph ph-file-text"></i>From dbt</span>
+    <span class="meta">Clustered by</span><span class="rel-store-val"><span class="code-chip">agencyId<button aria-label="Remove agencyId">×</button></span><button class="text-link rel-add"><i class="ph ph-plus"></i>Column</button></span><span class="rel-src"><i class="ph ph-file-text"></i>From dbt</span>
+    <span class="meta">Partition filter</span><label class="rel-store-val rel-check"><input type="checkbox">Required in every query</label><span class="rel-src suggested" title="BigQuery does not require one here; turn it on and Data Hub asks for a filter on reviewedAt in every query">Optional in BigQuery</span>
+   </div>
    <p class="check-line"><i class="ph ph-lightbulb"></i><span><b>No Colleciónes docs to derive from.</b> Where the name of a field matches an identifier of the domain model, Data Hub suggests it; confirm or change it.</span></p>
    <table class="rel-table">
    <thead><tr><th>Field</th><th>Relation</th><th>Entity identifier</th></tr></thead>

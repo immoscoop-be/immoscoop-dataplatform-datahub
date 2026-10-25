@@ -818,3 +818,14 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .rel-src { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); }
 .rel-src.suggested { color: var(--text-muted); }
 .rel-sheet .sheet-foot .btn-quiet { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
+
+/* Adding Resources, step 2: how a Resource is stored, derived from dbt and set by the Data Admin (FR-CO-34) */
+.rel-store { display: grid; grid-template-columns: 112px 1fr auto; align-items: center; gap: 8px 12px; margin: 0 0 10px 23px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.rel-store-val { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-small); }
+.rel-store-val .code-chip { margin: 0; background: var(--surface-solid); }
+.rel-store select { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 4px 6px; }
+.rel-store select:first-child { font-family: var(--font-mono); }
+.rel-check { gap: 8px; cursor: pointer; }
+.rel-check input { accent-color: var(--text-primary); }
+.rel-check input:disabled { cursor: not-allowed; }
+.rel-add { font-size: var(--text-meta); display: inline-flex; align-items: center; gap: 3px; background: none; border: 0; cursor: pointer; color: var(--text-secondary); font-family: inherit; }
