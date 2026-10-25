@@ -9,7 +9,7 @@
 | Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
-| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)), and only its Owner Unit adds Lenses and edits it ([DEC-CO-15](#dec-co-15)) |
+| Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)), and only its Owner Unit adds Lenses and edits it ([DEC-CO-15](#dec-co-15)). 2026-10-25: adding Resources records the relation of every field ([FR-CO-33](#fr-co-33)) |
 
 **In one sentence:** a Collection is a functional domain of Immoscoop, such as web visits, leads or agencies, in which the Resources of that domain sit together under one Owner Unit; anyone can create one, and it is private or public.
 
@@ -309,6 +309,8 @@ The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec
 
 From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
 
+*Note of 2026-10-25: adding takes two steps; the second records the relation of every field of the Resources picked ([FR-CO-33](#fr-co-33)).*
+
 
 <a id="fr-co-32"></a>
 ### FR-CO-32 · A link to something a User may not see looks like a link to nothing
@@ -316,6 +318,19 @@ From the page of a Collection, a Data Admin picks one or more Resources without 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#a-link-to-something-you-may-not-see)
 
 A link to a Collection, Resource, Lens or query that a User may not see opens the same page as a link to something that does not exist ([FR-CO-17](#fr-co-17), [FR-SR-31](04-stacks-and-resources.md#fr-sr-31), [DEC-CO-16](#dec-co-16)). The page does not say which of the two it is. It tells the User to ask whoever sent the link, and lets them search what they may see.
+
+<a id="fr-co-33"></a>
+### FR-CO-33 · Adding a Resource records the relation of every field
+
+**Status:** Proposed · **Source:** Max, 2026-10-24 and 2026-10-25 · [design](../../design/principles.md#page-of-a-collection)
+
+After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resource, every field with its type and description from dbt. For each field they say which relation it has:
+
+- **no relation;**
+- **it identifies each row** of the Resource;
+- **it refers to** an Entity.
+
+A field that identifies each row or refers to an Entity gets an Entity identifier, written as `entity.identifier`, such as `agency.agencyId` ([FR-RC-08](05-resource-card.md#fr-rc-08)). It is a reference, not a join: Data Hub links every Resource that carries the same reference ([FR-RC-09](05-resource-card.md#fr-rc-09)), and says next to the field how many Resources that is. For a Resource built on a Colleciónes model, Data Hub fills in the relations its docs give; for another model, it suggests a reference where the name of a field matches an identifier of the Domain Model. The Data Admin checks them and can change each one. No relation is required. The Resources are added, with their relations, in one go, and the relations go into the Log with the addition.
 
 ## Edge cases
 
@@ -353,6 +368,8 @@ What someone may see and do beyond Collections ([Permissions and library cards](
 - [x] <a id="op-co-11"></a>**OP-CO-11** · Decide which Lenses the page of a Collection lists ([FR-CO-28](#fr-co-28)). Proposal: every Lens built on at least one of its Resources, so that a Lens over two Collections shows in both and needs no Collection of its own; this keeps a Collection a container of Resources ([DEC-DH-64](../../overview/data-hub.md#dec-dh-64)). *Raised on 2026-10-23.* *Decided on 2026-10-23: the Lenses its Owner Unit adds to it ([DEC-CO-15](#dec-co-15)).*
 - [ ] <a id="op-co-12"></a>**OP-CO-12** · Decide what the Data Team may do in a Collection it does not own. [DEC-CO-08](#dec-co-08) and [FR-CO-13](#fr-co-13), already built, let it edit every Collection; [DEC-CO-15](#dec-co-15) says that only who owns a Collection edits it and adds Lenses. Decide whether the Data Team keeps editing the details of every Collection, and whether it adds Lenses. Adding and removing Resources stays with the Data Admins either way. *Raised on 2026-10-23.*
 - [ ] <a id="op-co-13"></a>**OP-CO-13** · Decide whether a User can ask for access to something they may not see, and how ([FR-CO-32](#fr-co-32)). Asking on the page would tell them that it exists, which [FR-CO-17](#fr-co-17) rules out for a private Collection; and access comes from the Owner Unit, a group in Workspace ([FR-UM-09](02-user-management.md#fr-um-09)), or from a public Collection and a Publication. Proposal: no asking in Data Hub; whoever shared the link speaks to the owner. *Raised on 2026-10-24, while designing the page for a link to something a User may not see.*
+- [ ] <a id="op-co-14"></a>**OP-CO-14** · Decide what happens to a field that identifies something the Domain Model has no Entity for yet, such as the ID of an agency review ([FR-CO-33](#fr-co-33)): it stays without a relation until the Entity exists, or the Data Admin proposes the Entity from here. The design leaves it without a relation. *Raised on 2026-10-25, while designing the relations.*
+- [ ] <a id="op-co-15"></a>**OP-CO-15** · Decide where the relations of a Resource can be changed after it is added, and by whom: on the page of the Resource, by a Data Admin only, or also by its Owner ([FR-CO-33](#fr-co-33)). *Raised on 2026-10-25, while designing the relations.*
 
 ## Builds on
 

@@ -2,8 +2,9 @@
 <!--
   Screen: the page of a Collection, adding Resources
   A Data Admin clicked "Add resources": a sheet lists the Resources without a Collection, to pick from.
+  Step 1 of 2; step 2 records the relation of every field (collection-add-relations.html, FR-CO-33).
   Requirements: FR-CO-31 (Proposed); FR-CO-07, FR-CO-08, FR-CO-14, FR-SR-35; Log COL-006 and COL-030.
-  Related screens: collection-overview.html, resource-unassigned.html.
+  Related screens: collection-overview.html, collection-add-relations.html, resource-unassigned.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="datateam">
@@ -155,6 +156,7 @@
 
 <div class="sheet-backdrop" onclick="location.href='collection-overview.html'"></div>
 <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-title">
+ <div class="sheet-steps" aria-label="Steps"><span class="on"><b>1</b>Choose resources</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>2</b>Relations</a></div>
  <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="sheet-title">Add resources to Credit leads</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">Only resources without a collection can be added: a resource is in one collection at most. The owner publishes them afterwards.</p></div><a class="icon-btn" href="collection-overview.html" aria-label="Close"><i class="ph ph-x"></i></a></div>
  <label class="search card" style="margin-top:14px;background:var(--surface-sub)"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search resources without a collection"></label>
  <div class="sheet-list">
@@ -164,11 +166,11 @@
   <label class="pick"><input type="checkbox"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="item-title">Saved searches</span><span style="flex:1"></span><span class="level-cell"><span class="maturity" data-level="1"></span>1 · Available</span></span>
    <span class="prose" style="display:block;margin-top:4px;font-size:var(--text-small);color:var(--text-secondary)">One row per saved search, with the filters a visitor saved and when they last received an alert for it.</span>
    <span class="meta" style="margin-top:4px">Came in on 21 Oct through the exposure datahub_savedSearches</span></span></label>
-  <label class="pick"><input type="checkbox"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="item-title">Agency reviews</span><span style="flex:1"></span><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></span>
+  <label class="pick on"><input type="checkbox" checked><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="item-title">Agency reviews</span><span style="flex:1"></span><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></span>
    <span class="prose" style="display:block;margin-top:4px;font-size:var(--text-small);color:var(--text-secondary)">One row per review of an agency, with the score and whether the agency replied.</span>
    <span class="meta" style="margin-top:4px">Came in on 19 Oct through the exposure datahub_agencyReviews</span></span></label>
  </div>
- <div class="sheet-foot"><p class="meta">1 selected · every addition goes into the history</p><a class="btn-quiet" href="collection-overview.html">Cancel</a><a class="btn-primary" href="collection-overview.html" style="text-decoration:none"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>Add 1 resource</a></div>
+ <div class="sheet-foot"><p class="meta">2 selected · next, the relations of their fields</p><a class="btn-quiet" href="collection-overview.html">Cancel</a><a class="btn-primary" href="collection-add-relations.html" style="text-decoration:none">Next: relations<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
 </section>
 <script src="app.js"></script>
 </body>

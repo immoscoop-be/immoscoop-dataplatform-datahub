@@ -781,3 +781,40 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .lc-pop-foot { margin-top: 6px; padding: 8px 6px 4px; }
 .lc-pop-foot .text-link { font-size: var(--text-meta); }
 @media (prefers-reduced-motion: no-preference) { .lc-pop:not([hidden]) { animation: lc-pop-in .15s ease-out; } @keyframes lc-pop-in { from { opacity: 0; } } }
+
+/* Adding Resources in two steps: choose them, then the relation of every field (DEC-UX-58) */
+.sheet-steps { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: var(--text-meta); color: var(--text-muted); }
+.sheet-steps > i { font-size: 12px; }
+.sheet-steps a, .sheet-steps span { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+.sheet-steps b { display: inline-grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; border: 1px solid var(--tint-active); font-weight: var(--weight-medium); font-size: 11px; }
+.sheet-steps .on { color: var(--text-primary); font-weight: var(--weight-medium); }
+.sheet-steps .on b { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-solid); }
+.sheet-steps .done b { color: var(--text-secondary); }
+.rel-sheet { width: 720px; }
+.rel-sheet .sheet-list { margin: 6px -4px 0; padding: 0 4px; }
+.rel-filter { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; margin-top: 12px; padding: 3px; border-radius: var(--radius-pill); background: var(--tint-hover); }
+.rel-filter .meta { padding: 0 6px 0 8px; }
+.rel-filter .seg-group { display: contents; }
+.rel-block { padding: 14px 0 6px; border-top: 1px solid var(--tint-active); }
+.rel-block:first-child { border-top: 0; padding-top: 6px; }
+.rel-head { display: flex; align-items: center; gap: 8px; }
+.rel-built { display: block; margin: 4px 0 6px 23px; }
+.rel-block .check-line { margin: 0 0 6px; }
+.rel-table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.rel-table th { text-align: left; font-weight: 400; font-size: var(--text-meta); color: var(--text-muted); padding: 6px 8px 6px 0; }
+.rel-table td { padding: 8px 8px 8px 0; vertical-align: top; border-top: 1px solid var(--tint-hover); }
+.rel-table th:nth-child(2) { width: 166px; }
+.rel-table th:nth-child(3) { width: 268px; }
+.rel-field { display: flex; align-items: baseline; gap: 8px; }
+.rel-field code { font: var(--text-small) var(--font-mono); color: var(--text-primary); }
+.rel-desc { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.45; }
+.rel-table select, .rel-table input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
+  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 5px 8px; }
+.rel-table input { font-family: var(--font-mono); }
+.rel-row[data-rel="none"] select { color: var(--text-muted); }
+.rel-ref { display: block; }
+.rel-ref[hidden] { display: none; }
+.rel-under { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; }
+.rel-src { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); }
+.rel-src.suggested { color: var(--text-muted); }
+.rel-sheet .sheet-foot .btn-quiet { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }

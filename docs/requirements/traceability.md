@@ -9,12 +9,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 57 | 22 (17 open, 5 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 58 | 22 (17 open, 5 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 61 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 39 (35 open, 4 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 6 (3 open, 3 done) |
-| [Collections](functional/03-collections.md) | 32 (1 proposed, 15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 12 (8 open, 4 done) |
+| [Collections](functional/03-collections.md) | 33 (2 proposed, 15 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 16 | 14 (10 open, 4 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 21 specified, 10 implemented, 4 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 14 (12 open, 2 done) |
 | [Resource card](functional/05-resource-card.md) | 15 (10 proposed, 5 specified) | – | – | 6 (6 open) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
@@ -107,6 +107,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-30](functional/03-collections.md#fr-co-30) | The details are edited on the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[88dcf42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/88dcf428bb19051ca1fc875e5e5909cc2c720076) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
+| [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records the relation of every field | Proposed | – | – | – |
 
 ### [Stacks and resources](functional/04-stacks-and-resources.md)
 
@@ -291,7 +292,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | – | [54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25<br>[f08a773](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f08a773415e5a515952ba04df0215cbd8ee15b40) refs, 2026-10-25 |
 | [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Withdrawn | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25<br>[54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
 | [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Withdrawn | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25<br>[54e8530](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54e8530e986bb3cdf41fd1660bef5da6f4e0183d) refs, 2026-10-25 |
-| [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
+| [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [c422d19](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c422d1911d5b9f393a516e9bee6a01b1ce2c4298) refs, 2026-10-25<br>[7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 
 ## Edge cases
