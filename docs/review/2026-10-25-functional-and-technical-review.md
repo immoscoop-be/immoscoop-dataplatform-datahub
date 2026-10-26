@@ -31,7 +31,7 @@ Every part follows the same order:
 | Functional requirements | 214: 41 Implemented, 65 Specified, 77 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 67 |
+| Design decisions (DEC-UX) | 68 |
 | Prototype screens | 31, plus the index |
 | Open points | 141 open, of 208 |
 

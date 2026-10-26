@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 67 | 25 (13 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 68 | 25 (13 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -141,7 +141,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-21](functional/04-stacks-and-resources.md#fr-sr-21) | Search on title, description, Collection and Owner | Specified | SR-21 | – | – |
 | [FR-SR-22](functional/04-stacks-and-resources.md#fr-sr-22) | Browse per Collection | Specified | SR-22 | – | [2f906a2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f906a2c2c65c5b9bfbe7286de300b2e2cca898c) refs, 2026-10-22 |
 | [FR-SR-23](functional/04-stacks-and-resources.md#fr-sr-23) | Derive the Entities from the manifest and the lineage | Specified | SR-23 | – | – |
-| [FR-SR-24](functional/04-stacks-and-resources.md#fr-sr-24) | Read a Resource in tabs | Specified | SR-24 | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
+| [FR-SR-24](functional/04-stacks-and-resources.md#fr-sr-24) | Read a Resource in tabs | Specified | SR-24 | – | [a6cf747](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a6cf747be3571585ee64a75190cd1c44d7659831) refs, 2026-10-26<br>[462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-25](functional/04-stacks-and-resources.md#fr-sr-25) | The preview shows a limited number of rows | Specified | SR-25 | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-26](functional/04-stacks-and-resources.md#fr-sr-26) | Free SQL via Claude, over visible Resources only | Specified | SR-26 | – | [462a7bf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/462a7bf13d1d099b4f9f746e9a724abaaa51bae9) refs, 2026-10-23<br>[acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-SR-27](functional/04-stacks-and-resources.md#fr-sr-27) | A byte limit and a User label on every query | Specified | SR-27 | – | – |

@@ -24,6 +24,7 @@
   --radius-pill: 999px;
   --radius-nav-icon: 16px;
   --radius-tab: 12px;
+  --coll-edge: 7px;        /* the stripe in the colour of a Collection, on the left edge of its card (DEC-UX-68) */
   --flare-tab: 12px;   /* concave corner where an active tab meets its content */
   --flare-nav: 18px;   /* concave corner where the active nav icon meets the panel */
 

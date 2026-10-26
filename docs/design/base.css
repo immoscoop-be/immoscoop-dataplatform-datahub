@@ -84,8 +84,11 @@ html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webk
 /* User-chosen icon, such as that of a Collection: a grey line icon, without a circle (DEC-UX-15) */
 .item-icon { width: 26px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--text-secondary); }
 .item-icon.large { width: 34px; height: 44px; font-size: 28px; }
-/* The colour of a Collection is a thin bar on the left edge of its card (DEC-UX-15). Only a real Collection has it */
-.coll-edge { box-shadow: inset 3px 0 0 var(--c); }
+/* The colour of a Collection is a stripe on the left edge of its card, open or not (DEC-UX-68). Only a real Collection has it */
+.coll-edge { position: relative; }
+.coll-edge::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: var(--coll-edge); background: var(--c); pointer-events: none;
+  border-top-left-radius: inherit; border-bottom-left-radius: inherit; }
+.tree-group.coll-edge .tree-head, .tree-group.coll-edge .tree-children { margin-left: var(--coll-edge); }
 
 /* Main area */
 .main { flex: 1; min-width: 0; background: var(--surface-glass); border-radius: var(--radius-xl); padding: 26px 30px; overflow: auto; }
