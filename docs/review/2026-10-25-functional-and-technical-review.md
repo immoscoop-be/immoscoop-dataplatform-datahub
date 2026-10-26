@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 212: 41 Implemented, 63 Specified, 78 Proposed, 30 Withdrawn |
+| Functional requirements | 213: 41 Implemented, 64 Specified, 78 Proposed, 30 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 64 |
+| Design decisions (DEC-UX) | 65 |
 | Prototype screens | 33, plus the index |
-| Open points | 144 open, of 207 |
+| Open points | 143 open, of 207 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, the start of Lenses, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -348,7 +348,7 @@ A Collection is a functional domain of Immoscoop, such as leads or agencies, in 
 
 ![The start of Collections: the panel with every Collection on the left, the intro and the recent and popular Collections](images/03-collections-start.jpg)
 
-**The panel** ([FR-CO-18](../requirements/functional/03-collections.md#fr-co-18) to [FR-CO-24](../requirements/functional/03-collections.md#fr-co-24), Specified). One list of Collections, each unfolding to what it holds. An item shows the icon of its kind, its name on one line, and its Level; a Resource not published yet is shown as such. A long Collection shows its first eight items, then Show all. Search in the panel covers Collections and their Resources. Opening a Resource unfolds its Collection. Screen: `collections-start`.
+**The panel** ([FR-CO-18](../requirements/functional/03-collections.md#fr-co-18) to [FR-CO-24](../requirements/functional/03-collections.md#fr-co-24), Specified). One list of Collections, each unfolding to what it holds: first its Resources, then its Lenses, told apart by their icon ([FR-CO-36](../requirements/functional/03-collections.md#fr-co-36), [DEC-UX-65](../design/principles.md#dec-ux-65), from your review, 2026-10-26). An item shows the icon of its kind, its name on one line, and its Level; a Resource not published yet is shown as such. A long Collection shows its first eight items, then Show all. Search in the panel covers Collections and their Resources. Opening a Resource unfolds its Collection. Screen: `collections-start`.
 
 ![The page of a Collection for its Owner: what needs attention, its Resources with their Level, and its Lenses](images/04-collection-overview.jpg)
 
@@ -930,7 +930,7 @@ The design is independent of the stack: its values are CSS variables, its protot
 - **The look:** [DEC-PF-22](../requirements/technical/00-platform.md#dec-pf-22) asks for the brandbook colours, teal on larger areas, and one light look. This design has warm greys, colour on content only, and a dark theme. Whether the design replaces those parts ([OP-UX-09](../design/principles.md#op-ux-09)).
 - **Where Charts and the registry search go** in the navigation ([OP-UX-11](../design/principles.md#op-ux-11)); **capitals in the interface** or sentence case ([OP-UX-12](../design/principles.md#op-ux-12)); **settings of a User** in the browser or in Data Hub ([OP-UX-13](../design/principles.md#op-ux-13)); **mobile** ([OP-UX-06](../design/principles.md#op-ux-06)).
 - **The background of a User:** who chooses it, whether a User adds their own, the default, and how the sign-in picks its photo ([OP-UX-20](../design/principles.md#op-ux-20)).
-- The start screens of Reports, and the panel of Lenses in a Collection ([OP-UX-03](../design/principles.md#op-ux-03), [OP-UX-15](../design/principles.md#op-ux-15)).
+- The start screens of Reports ([OP-UX-03](../design/principles.md#op-ux-03)).
 - **Dutch prototypes:** a translation table with a switch to English, or the texts translated in place ([OP-UX-23](../design/principles.md#op-ux-23)).
 
 ## Language
@@ -1121,7 +1121,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 144 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 143 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1171,7 +1171,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 16 open
+Source: [design/principles.md](../design/principles.md) · 15 open
 
 - [ ] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
@@ -1183,7 +1183,7 @@ Source: [design/principles.md](../design/principles.md) · 16 open
 - [ ] **[OP-UX-11](../design/principles.md#op-ux-11)** · **Sections:** the navigation holds Collections, Lenses and Reports. The web app today also has Charts, the gallery of the Chart Server, and for the Data Team the search through the dbt projects. Decide where they go. *Note of 2026-10-23: Query joins them as a main section ([DEC-UX-17](../design/principles.md#dec-ux-17)).*
 - [ ] **[OP-UX-12](../design/principles.md#op-ux-12)** · **Capitals in the interface:** the documentation writes Defined Terms with capitals, and so does the interface of the web app today ("New Collection", "Owner Unit"). The prototypes write the interface in sentence case ("New collection", "Your collections", "Owner: Credit team"). Decide which applies to the interface. *Note of 2026-10-25: the language principle writes the kinds of assets as names in lower case inside a sentence ("Wil je deze lens publiek maken?"), which fits sentence case ([NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02)).*
 - [ ] **[OP-UX-13](../design/principles.md#op-ux-13)** · **Settings of a User:** the state of the panel and the dismissed intros, per section and with their version, are kept per User in the settings, and the theme is remembered. Data Hub has no settings of a User yet, and no requirement for them; the prototypes keep them in the browser. Decide where they are kept: in the browser, or in Data Hub, so that they follow the User to another device. *Note of 2026-10-25: the rail no longer has a button for settings ([DEC-UX-53](../design/principles.md#dec-ux-53)). Where the switches of a User live, such as "reduce motion" and the background ([OP-UX-20](../design/principles.md#op-ux-20)), is part of this.* *Note of 2026-10-25: the language of a User is one more such choice ([OP-DH-46](../overview/open-themes.md#op-dh-46)).*
-- [ ] **[OP-UX-15](../design/principles.md#op-ux-15)** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](../design/principles.md#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](../design/principles.md#dec-ux-14)); the panel does not yet.*
+- [x] **[OP-UX-15](../design/principles.md#op-ux-15)** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](../design/principles.md#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](../design/principles.md#dec-ux-14)); the panel does not yet.* *Decided on 2026-10-26, by Max: the panel lists the Lenses of a Collection too, as a group of their own after the Resources ([DEC-UX-65](../design/principles.md#dec-ux-65)).*
 - [ ] **[OP-UX-18](../design/principles.md#op-ux-18)** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](../design/screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](../design/principles.md#op-ux-15)). *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](../design/screens/lenses-start.html)).*
 - [ ] **[OP-UX-19](../design/principles.md#op-ux-19)** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](../design/principles.md#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes.
 - [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in.

@@ -37,6 +37,12 @@ document.getElementById('panel-search')?.addEventListener('input', e => {
     g.querySelectorAll('.tree-res').forEach(r => { const m = own || (r.dataset.search || r.querySelector('.clip').firstChild.textContent).toLowerCase().includes(q); r.hidden = !m; if (m) hits++; });
     g.querySelectorAll('.tree-more').forEach(r => r.hidden = !!q && !own);
     g.hidden = !own && hits === 0; if (!g.hidden) n++;
+    // A section label, such as a section of the learning centre, goes when nothing under it is left
+    g.querySelectorAll('.tree-sec').forEach(sec => {
+      let el = sec.nextElementSibling, any = false;
+      while (el && !el.classList.contains('tree-sec')) { if (el.matches('.tree-res') && !el.hidden) any = true; el = el.nextElementSibling; }
+      sec.hidden = !any;
+    });
     g.classList.toggle('open', q ? (!own || unfolded.get(g)) && hits > 0 : unfolded.get(g));
     if (!q) unfolded.delete(g);
   });

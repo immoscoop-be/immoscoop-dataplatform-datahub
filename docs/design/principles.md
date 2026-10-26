@@ -106,11 +106,11 @@ For Collections:
   - The item you are on: its name in medium weight and the darkest colour. Opening a Resource unfolds its Collection.
   - A Resource that is not published: its name in a lighter grey, without an icon. Hover says "not published" ([DEC-UX-12](#dec-ux-12)).
   - The first eight items, then "Show all" with the number.
-  - Lenses and Reports join the list later, each with the icon of its kind ([OP-UX-15](#op-ux-15)).
+  - **Then its Lenses,** right after the Resources, without a label of their own: the icon tells them apart. The Lenses of the Collection that the User sees, each with the lens icon, its name and its Level. Each group shows its first eight, then "Show all". Reports join later as a group of their own ([DEC-UX-65](#dec-ux-65), [FR-CO-36](../requirements/functional/03-collections.md#fr-co-36)).
 - **"Shared resources":** each with the icon of its kind, its name and the team that owns it ([OP-UX-02](#op-ux-02)).
 - **For the Data Team,** on top: "Without a collection", a card with the Resources that wait for a Collection. It is no Collection, so it has no colour bar: it is in the urgent red instead, with a red tint, a red name and icon, and the number waiting in a red badge ([DEC-UX-16](#dec-ux-16)).
 - **One line per name:** a name that is too long ends in an ellipsis and shows in full on hover. This holds for Collections and Resources alike.
-- **Search** filters Collections and Resources together. A Collection whose name matches stays as it was; a Collection with a matching Resource unfolds and shows only the matching Resources.
+- **Search** filters Collections, Resources and Lenses together. A Collection whose name matches stays as it was; a Collection with a matching Resource or Lens unfolds and shows only those.
 
 ## Start screen per section
 
@@ -475,6 +475,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-62"></a>**DEC-UX-62** · Each Learning Level has an icon of its own, for its audience: `user`, `user-focus`, `chart-scatter` and `user-gear`. The bars of the maturity icon belong to the maturity of a Resource, Lens or Report alone, and no other mark looks like them or is filled up to a step. *Decided on 2026-10-26, by Max: the maturity icon is not reused.*
 - <a id="dec-ux-63"></a>**DEC-UX-63** · A declaration that a button acts on, such as confirming a Resource, stands in one bar with that button: the checkbox and its sentence on the left, the button at the right end. The button is off until the box is ticked, so it is clear that they are one. *Decided on 2026-10-26, by Max.*
 - <a id="dec-ux-64"></a>**DEC-UX-64** · A change to the schema of a Resource since its last Confirmation shows as a warning on its page, for everyone, in the signal colour: what changed, when, and that the Level stays. "Mark as seen", for the Owner and the Data Team, takes it away. There is no Reconfirm and no sheet to confirm again ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)). *Decided on 2026-10-26, by Max.*
+- <a id="dec-ux-65"></a>**DEC-UX-65** · An unfolded Collection in the panel shows what it holds in a group per kind: first its Resources, then its Lenses, each with the icon of its kind and its Level, without a label for the group: the icon is clear. Reports join later as a third group. Not one mixed list, which is hard to scan. *Decided on 2026-10-26, by Max ([OP-UX-15](#op-ux-15)).*
 
 ## Open points
 
@@ -498,7 +499,7 @@ Raised while the design was taken into this repository, on 2026-10-22; not in th
 Raised on 2026-10-22, with the panel of [DEC-UX-10](#dec-ux-10):
 
 - [x] <a id="op-ux-14"></a>**OP-UX-14** · **A page of a Collection:** clicking a Collection in the panel only unfolds it, as no page of a Collection is designed. Decide whether it also opens a page of the Collection on the right, and what that page shows. Until then, several Collections can be unfolded at once and they fold only when clicked. *Decided on 2026-10-23: clicking a Collection opens its page ([DEC-UX-13](#dec-ux-13)).*
-- [ ] <a id="op-ux-15"></a>**OP-UX-15** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](#dec-ux-14)); the panel does not yet.*
+- [x] <a id="op-ux-15"></a>**OP-UX-15** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](#dec-ux-14)); the panel does not yet.* *Decided on 2026-10-26, by Max: the panel lists the Lenses of a Collection too, as a group of their own after the Resources ([DEC-UX-65](#dec-ux-65)).*
 Raised on 2026-10-23:
 
 - [x] <a id="op-ux-16"></a>**OP-UX-16** · **The icon of a Collection:** the tinted circle behind it is busy (Max, 2026-10-23). An exploration page showed six treatments side by side, in the panel and in the head of the page: A today, B only the icon, C a grey icon with a colour dot, D a thin ring, E the colour on the edge of the card, F a neutral tile. Choose one; it then moves into `base.css` and the screens. *Decided on 2026-10-23: E, the colour on the edge, for real Collections only ([DEC-UX-15](#dec-ux-15)); the exploration page is removed.*

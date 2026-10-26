@@ -217,6 +217,8 @@ The panel of Collections lists every Collection the User sees ([FR-CO-17](#fr-co
 
 *Note of 2026-10-23: clicking the Collection itself opens its page ([FR-CO-25](#fr-co-25)); only the arrow folds it.*
 
+*Note of 2026-10-26: the Lenses of the Collection are listed too, after its Resources ([FR-CO-36](#fr-co-36)).*
+
 <a id="fr-co-19"></a>
 ### FR-CO-19 · Opening a Resource unfolds its Collection
 
@@ -252,12 +254,23 @@ A Resource that is not published, which only its Owner Unit and the Data Team se
 
 An unfolded Collection shows its first eight items, then "Show all" with the number of items, which shows the rest.
 
+*Note of 2026-10-26: the Lenses of the Collection are listed too, after its Resources ([FR-CO-36](#fr-co-36)).*
+
 <a id="fr-co-24"></a>
 ### FR-CO-24 · Search in the panel covers Collections and their Resources
 
 **Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10)
 
 Search in the panel filters the Collections and their Resources together. A Collection whose name matches stays listed as it was; a Collection that holds a matching Resource unfolds and shows only the matching Resources. When nothing matches, the panel says so.
+
+*Note of 2026-10-26: the Lenses of the Collection are listed too, after its Resources ([FR-CO-36](#fr-co-36)).*
+
+<a id="fr-co-36"></a>
+### FR-CO-36 · An unfolded Collection lists its Lenses too
+
+**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-UX-15](../../design/principles.md#op-ux-15))
+
+An unfolded Collection lists, after its Resources and without a label of their own, the Lenses its Owner Unit added to it ([FR-CO-28](#fr-co-28)) that the User sees ([DEC-CO-16](#dec-co-16)), each with the icon of its kind, its name and its Level. Each group shows its first eight, then "Show all". Search in the panel covers the Lenses as well. Reports join later as a group of their own.
 
 ## The page of a Collection
 
