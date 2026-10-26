@@ -170,6 +170,13 @@ document.querySelectorAll('.float-win').forEach(w => {
   });
 });
 
+// A declaration and its button are one (DEC-UX-63): the button stays off until the box is ticked
+document.querySelectorAll('.confirm-bar').forEach(bar => {
+  const box = bar.querySelector('input[type="checkbox"]'), btn = bar.querySelector('button');
+  const sync = () => { btn.disabled = box.disabled || !box.checked; };
+  box.addEventListener('change', sync); sync();
+});
+
 // A sheet that belongs to its page: what opened it opens it again; Close, Cancel or a click beside it closes it
 document.querySelectorAll('[data-sheet-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); document.getElementById(b.dataset.sheetOpen).hidden = false; }));
 document.querySelectorAll('[data-sheet-close]').forEach(b => b.addEventListener('click', () => { b.closest('.sheet-wrap').hidden = true; }));

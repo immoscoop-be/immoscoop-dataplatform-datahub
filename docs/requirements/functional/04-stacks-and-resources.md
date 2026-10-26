@@ -481,7 +481,9 @@ A new query has a question: what the User wants to know, in a sentence. Its word
 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
 
-The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step: with the control figures they checked it with ([FR-RC-03](05-resource-card.md#fr-rc-03)), since when the data is reliable ([FR-RC-13](05-resource-card.md#fr-rc-13)), and the declaration that the data is correct.
+The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step, with the declaration that the Resource is correct: what it is and what it stands for ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). They tick the declaration right next to the button that publishes; until it is ticked, the button stays off.
+
+*Note of 2026-10-26: the control figures and since when the data is reliable are no longer asked here; a Confirmation makes no claim about the data ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). Since when the data is reliable stays on the Resource Card ([FR-RC-13](05-resource-card.md#fr-rc-13)).*
 
 ## Log Catalogue
 

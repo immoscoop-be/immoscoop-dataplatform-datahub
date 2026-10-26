@@ -131,11 +131,18 @@
   <div class="grid" data-pane-group="tabs" data-pane="overview">
 
    <div class="sub-tile" style="grid-column:1/-1">
-    <div class="tile-head"><div class="label">Definition</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
-    <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people, so the weeks don't add up to unique people.</p>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
-    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
-    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip lc-ref open" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span></div>
+    <div class="tile-head"><div class="label">Description</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="desc-pair">
+     <div>
+      <div class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></div>
+      <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people, so the weeks don't add up to unique people.</p>
+     </div>
+     <div>
+      <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+      <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+      <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip lc-ref open" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span></div>
+     </div>
+    </div>
    </div>
 
    <div class="sub-tile"><div class="label">Maturity</div>

@@ -50,12 +50,15 @@ Every Resource keeps the open questions about its data, as metadata of its own t
 <a id="fr-rc-03"></a>
 ### FR-RC-03 · The control figures behind a Confirmation
 
-**Status:** Proposed · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta)
+**Status:** Withdrawn · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta)
 
 Every Resource shows the control figures that were run to confirm it, as metadata of their own.
 
 
 *Note of 2026-10-24: the Owner records the control figures when publishing and when confirming again, each with its value and what it was checked against ([FR-SR-49](04-stacks-and-resources.md#fr-sr-49), [FR-MR-11](06-maturity-and-release.md#fr-mr-11)).*
+
+*Note of 2026-10-26: withdrawn by Max. A Confirmation is business confirming what a Resource is and what it stands for, with no link to the data inside it ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). Figures that check the data belong to the EDA ([EDA](15-eda.md)), which learns far more about a Resource.*
+
 <a id="fr-rc-04"></a>
 ### FR-RC-04 · Known Gaps
 
@@ -174,7 +177,7 @@ Wherever Data Hub shows or hands over the description of a Resource or of a fiel
 - [ ] <a id="op-rc-03"></a>**OP-RC-03** · Choose the term for Known Gaps and for the log of changes: the meeting notes say "audit log" does not quite cover it. Decide whether Known Gaps belong to the Known Behaviour ([DEC-DH-18](../../overview/data-hub.md#dec-dh-18)), next to intended use, pitfalls and Anomalies.
 - [ ] <a id="op-rc-04"></a>**OP-RC-04** · Choose the term for Stability. The meeting notes name the professional terms: late-arriving data with a settling period, and slowly changing dimensions for attributes that change. Add it to the EDA template on Confluence as well.
 - [ ] <a id="op-rc-05"></a>**OP-RC-05** · Decide where the Entity and identifier of a Resource ([FR-RC-08](#fr-rc-08)) are recorded: in the dbt project, in the Domain Model or in Data Hub, building on the Entities derived from the manifest and the lineage ([FR-SR-23](04-stacks-and-resources.md#fr-sr-23)) and on the relationships tests in dbt. *Raised while taking in the workshop of 2026-10-22.* *Note of 2026-10-25: after the review of Max (2026-10-24), the Data Admin records the reference of each field when adding a Resource, filled in from the docs for a Colleciónes model ([FR-CO-33](03-collections.md#fr-co-33)). Open remains where it is kept for other models: only in Data Hub, or also in the meta of the dbt project.*
-- [ ] <a id="op-rc-06"></a>**OP-RC-06** · Decide whether a Confirmation needs at least one control figure ([FR-RC-03](#fr-rc-03)). Proposal: no; the figures are asked for, but a Confirmation is possible without them, so that an Owner is never blocked, and the Resource Card then shows that there are none. *Raised on 2026-10-24, while designing publishing.*
+- [x] <a id="op-rc-06"></a>**OP-RC-06** · Decide whether a Confirmation needs at least one control figure ([FR-RC-03](#fr-rc-03)). Proposal: no; the figures are asked for, but a Confirmation is possible without them, so that an Owner is never blocked, and the Resource Card then shows that there are none. *Raised on 2026-10-24, while designing publishing.* *Decided on 2026-10-26, by Max: no control figures at all at a Confirmation; they belong to the EDA ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)).*
 - [ ] <a id="op-rc-07"></a>**OP-RC-07** · Decide what a relationship records about its cardinality ([FR-RC-08](#fr-rc-08), [FR-CO-33](03-collections.md#fr-co-33)). For Max the relation is above all the cardinality it holds. Proposal: per field, towards its Entity, so that Data Hub derives the cardinality between any two Resources that share the Entity and warns of a join that fans out; not directly between Resources. *Raised on 2026-10-25, in the discussion of the relations with Max.*
 - [ ] <a id="op-rc-08"></a>**OP-RC-08** · Decide how a Resource built on a Colleciónes model shows its relations. In the Domain Model the [relation type](https://github.com/immoscoop-be/compilacion-colleciones-domain-model/blob/main/models/root/vocabulary/relationTypes.yaml) implies the cardinality, but on one side only, the number of targets per row; the other side comes from its inverse type, which is almost always many. Proposal: the relation type and the cardinality it implies, read-only, with the description of the type, for the Data Admin to confirm. *Raised on 2026-10-25, in the discussion of the relations with Max.*
 - [ ] <a id="op-rc-09"></a>**OP-RC-09** · Decide what a Resource built on another model records: only its cardinality, prefilled from dbt (an array column means many per row; a unique test means one row per value), or also a relation type from the sixteen of the Domain Model. Proposal: the cardinality, with the type optional. *Raised on 2026-10-25, in the discussion of the relations with Max.*

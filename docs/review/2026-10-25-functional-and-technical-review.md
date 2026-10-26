@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 210: 41 Implemented, 64 Specified, 79 Proposed, 26 Withdrawn |
+| Functional requirements | 210: 41 Implemented, 64 Specified, 78 Proposed, 27 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 62 |
+| Design decisions (DEC-UX) | 63 |
 | Prototype screens | 34, plus the index |
-| Open points | 145 open, of 205 |
+| Open points | 144 open, of 205 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, the start of Lenses, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -398,7 +398,7 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 - **The Log** keeps everything that happened to it, with fixed Log IDs, and survives a deregistration ([FR-SR-11](../requirements/functional/04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](../requirements/functional/04-stacks-and-resources.md#fr-sr-12), [FR-SR-14](../requirements/functional/04-stacks-and-resources.md#fr-sr-14)).
 - **The Resource Card** is everything we know about one Resource. Part is derived (description, columns, lineage, freshness, usage) and never stored again as a source ([DEC-DH-17](../overview/data-hub.md#dec-dh-17)). The rest only Data Hub knows:
   - **Specified:** model type and grain ([FR-RC-11](../requirements/functional/05-resource-card.md#fr-rc-11)), who published and who confirmed ([FR-RC-12](../requirements/functional/05-resource-card.md#fr-rc-12)), since when the data is reliable ([FR-RC-13](../requirements/functional/05-resource-card.md#fr-rc-13)), checks and incidents ([FR-RC-14](../requirements/functional/05-resource-card.md#fr-rc-14)), edited in place by the Owner and the Data Team ([FR-RC-15](../requirements/functional/05-resource-card.md#fr-rc-15)).
-  - **Proposed:** a definition in business language, open questions, the control figures behind a Confirmation, Known Gaps, a log of changes and Anomalies for people and for Claude, Stability, and relationships through an Entity and an identifier ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01) to [FR-RC-10](../requirements/functional/05-resource-card.md#fr-rc-10)).
+  - **Proposed:** a definition in business language, open questions, Known Gaps, a log of changes and Anomalies for people and for Claude, Stability, and relationships through an Entity and an identifier ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01) to [FR-RC-10](../requirements/functional/05-resource-card.md#fr-rc-10)).
 - **The Levels** ([FR-MR-01](../requirements/functional/06-maturity-and-release.md#fr-mr-01) to [FR-MR-10](../requirements/functional/06-maturity-and-release.md#fr-mr-10), all Specified):
   - Described when the table and every column have a description; Confirmed when the Owner confirms, from Described; Explored with a linked EDA document; Monitored with at least one active check.
   - A structural Change resets the Level to Described. A failing check does not lower it; losing the last check or the EDA document does. A Confirmation does not expire.
@@ -462,21 +462,21 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 
 Release happens in two steps. The Data Team makes a Resource available to one Owner; only that Owner releases it to everyone who sees the Collection.
 
-- **Only the Owner publishes** ([FR-SR-16](../requirements/functional/04-stacks-and-resources.md#fr-sr-16)), and only from Described. **The first Publication is the first Confirmation:** by publishing, the Owner declares the data is correct, and the Resource rises to Confirmed ([FR-SR-17](../requirements/functional/04-stacks-and-resources.md#fr-sr-17)).
+- **Only the Owner publishes** ([FR-SR-16](../requirements/functional/04-stacks-and-resources.md#fr-sr-16)), and only from Described. **The first Publication is the first Confirmation:** by publishing, the Owner confirms what the Resource is and what it stands for, and it rises to Confirmed. A Confirmation makes no claim about the data inside it; that is for the EDA ([DEC-MR-07](../requirements/functional/06-maturity-and-release.md#dec-mr-07), from your review, 2026-10-26) ([FR-SR-17](../requirements/functional/04-stacks-and-resources.md#fr-sr-17)).
 - **Who sees it** follows the Publication and the Collection, not the Level ([FR-SR-31](../requirements/functional/04-stacks-and-resources.md#fr-sr-31)). Not published: the Data Team and the Owner Unit. Published: everyone who sees the Collection, which for a public Collection is the whole company.
 - **A published Resource stays published when its Level drops** ([FR-SR-19](../requirements/functional/04-stacks-and-resources.md#fr-sr-19)). The Owner gets an alert, the lower Level shows everywhere, and the Owner confirms again without touching the Publication ([FR-SR-20](../requirements/functional/04-stacks-and-resources.md#fr-sr-20)). That way a Resource never disappears for those who use it.
 - **At every Confirmation** Data Hub keeps a Fingerprint of the schema; when the schema no longer matches it, the Resource drops to Described ([DEC-DH-35](../overview/data-hub.md#dec-dh-35)). A Confirmation does not expire ([FR-MR-08](../requirements/functional/06-maturity-and-release.md#fr-mr-08)).
-- **Proposed:** publishing says who will see the Resource and asks for the Confirmation, with the control figures it was checked with and since when the data is reliable ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49), [FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)); confirming again shows what changed ([FR-MR-11](../requirements/functional/06-maturity-and-release.md#fr-mr-11)).
+- **Proposed:** publishing says who will see the Resource and asks for the Confirmation: the declaration, ticked in one bar with the button, which stays off until it is ticked ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49), [DEC-UX-63](../design/principles.md#dec-ux-63)). The control figures are withdrawn ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)); confirming again shows what changed ([FR-MR-11](../requirements/functional/06-maturity-and-release.md#fr-mr-11)).
 
 ### The screens
 
-![Publishing: a sheet over the page of the Resource says who will see it, what Data Hub checked, and asks for the Confirmation](images/09-resource-publish.jpg)
+![Publishing: a sheet over the page of the Resource says who will see it, what Data Hub checked, and what the Owner confirms; at the foot the declaration and "Publish and confirm" in one bar, the button off until the box is ticked](images/09-resource-publish.jpg)
 
-**Publish** opens a sheet over the page of the Resource, in three parts ([DEC-UX-31](../design/principles.md#dec-ux-31)): who will see it; what Data Hub checked (that the User may publish it, and that it is Described, naming any column without a description); and the Confirmation, with the control figures, since when the data is reliable, and the declaration. Until then the Resource reads "not published" in its status row and is grey in the panel. Screen: `resource-publish`.
+**Publish** opens a sheet over the page of the Resource, in three parts ([DEC-UX-31](../design/principles.md#dec-ux-31)): who will see it; what Data Hub checked (that the User may publish it, and that it is Described, naming any column without a description); and what the Owner confirms: what the Resource is and what it stands for, its Business Description and its description from dbt. At the foot, the declaration and the button are one bar; the button is off until the box is ticked. Until then the Resource reads "not published" in its status row and is grey in the panel. Screen: `resource-publish`.
 
-![Confirming again after a drop: why it dropped, what changed, and the figures of the last Confirmation to check again](images/10-resource-reconfirm.jpg)
+![Confirming again after a drop: why it dropped, what changed, who confirmed it last, and what the Owner confirms, with the new column marked](images/10-resource-reconfirm.jpg)
 
-**Reconfirm,** after a drop, opens the same sheet as Confirm again: why it dropped and what changed, who confirmed it last, and the figures of that Confirmation to check again. The Publication does not change. Screen: `resource-reconfirm`.
+**Reconfirm,** after a drop, opens the same sheet as Confirm again: why it dropped and what changed, who confirmed it last, and what the Owner confirms, with the new column marked. The Publication does not change. Screen: `resource-reconfirm`.
 
 ### Behind it: proposal
 
@@ -485,7 +485,7 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 | Table | What it would keep |
 | --- | --- |
 | `resources` (two new columns) | `published_at` and `published_by`: the current state, read on every request to decide who sees the Resource |
-| `confirmations` | Append-only, one row per Confirmation: who and when, the Artifact Set it was made on, the Fingerprint (the columns and their types from the catalog), since when the data is reliable, the control figures, and whether it was the first Publication or a reconfirmation after a drop |
+| `confirmations` | Append-only, one row per Confirmation: who and when, the Artifact Set it was made on, the Fingerprint (the columns and their types from the catalog), and whether it was the first Publication or a reconfirmation after a drop |
 | `resource_log` (built) | The events themselves, with their Log IDs: published, confirmed, dropped |
 
 | Endpoint | Purpose |
@@ -497,12 +497,10 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 **Points for the analysis:**
 
 - **Who sees what is one rule in one place:** catalogue answers it for its own pages, and for query through `POST /visibility`. A Resource the User may not see answers exactly like one that does not exist.
-- **The control figures** could carry the Query ID of the query that produced them ([FR-LN-05](../requirements/functional/07-log-and-notifications.md#fr-ln-05)), so a colleague can see where a figure came from.
 - **The alert on a drop** needs the Message Centre (see Messages), which reaches the whole Owner Unit ([FR-LN-01](../requirements/functional/07-log-and-notifications.md#fr-ln-01)). Until then, the page of the Collection lists what needs attention.
 
 ### Open
 
-- Whether a Confirmation needs at least one control figure ([OP-RC-06](../requirements/functional/05-resource-card.md#op-rc-06)).
 - Later: whether an Owner can unpublish, and what then happens to the Lenses of colleagues built on it ([OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05)).
 - Which part of the Fingerprint makes a Resource drop ([OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)).
 
@@ -1088,7 +1086,6 @@ Excel and the Library Card ([OP-DH-25](../overview/open-themes.md#op-dh-25), [OP
 - **The edge cases** of each domain ([OP-AR-03](../requirements/functional/01-artifact-registry.md#op-ar-03), [OP-UM-06](../requirements/functional/02-user-management.md#op-um-06), [OP-CO-05](../requirements/functional/03-collections.md#op-co-05), [OP-SR-09](../requirements/functional/04-stacks-and-resources.md#op-sr-09)), worked out with each part as it is built.
 - **Platform:** domain names ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)), a Terraform plan in pull requests ([OP-PF-13](../requirements/technical/00-platform.md#op-pf-13)), the semgraph points ([OP-PF-16](../requirements/technical/00-platform.md#op-pf-16) to [OP-PF-18](../requirements/technical/00-platform.md#op-pf-18)).
 - **Design details:** the palette and icons are decided ([OP-UX-05](../design/principles.md#op-ux-05), [OP-UX-07](../design/principles.md#op-ux-07), [OP-UX-08](../design/principles.md#op-ux-08)); open are moving the icons ([OP-CO-16](../requirements/functional/03-collections.md#op-co-16)) and their weight ([OP-CO-17](../requirements/functional/03-collections.md#op-co-17)), the background of a User ([OP-UX-20](../design/principles.md#op-ux-20)), the page to connect Claude ([OP-CH-02](../requirements/functional/13-channels.md#op-ch-02)), where the in-app documentation lives ([OP-CH-01](../requirements/functional/13-channels.md#op-ch-01)).
-- **Whether a Confirmation needs a control figure** ([OP-RC-06](../requirements/functional/05-resource-card.md#op-rc-06)).
 - **Language:** English Learning Cards later ([OP-DH-40](../overview/open-themes.md#op-dh-40)), Dutch metadata as a guideline ([OP-DH-41](../overview/open-themes.md#op-dh-41)), the list of names ([OP-DH-42](../overview/open-themes.md#op-dh-42)).
 - **The learning centre:** its clashes with the principles page are decided on that page ([OP-LR-18](../requirements/functional/16-learning.md#op-lr-18) to [OP-LR-24](../requirements/functional/16-learning.md#op-lr-24)); where the cards live ([OP-LR-01](../requirements/functional/16-learning.md#op-lr-01)), now that their language is decided ([OP-LR-02](../requirements/functional/16-learning.md#op-lr-02)), what a minimal card holds ([OP-LR-27](../requirements/functional/16-learning.md#op-lr-27)), and who places the markers ([OP-LR-26](../requirements/functional/16-learning.md#op-lr-26)) before its first card is built.
 
@@ -1127,7 +1124,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 145 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 144 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1245,14 +1242,14 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 
 ### Resource card
 
-Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 17 open
+Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 16 open
 
 - [x] **[OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01)** · Decide how the definition in business language ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01)) relates to the description from the Artifacts ([FR-SR-06](../requirements/functional/04-stacks-and-resources.md#fr-sr-06)): a separate text kept in Data Hub, and if so who writes it, given that what can be derived is not stored again ([DEC-DH-17](../overview/data-hub.md#dec-dh-17)). *Raised while taking in the workshop of 2026-10-22.* *Note of 2026-10-26: answered with [OP-RC-18](../requirements/functional/05-resource-card.md#op-rc-18), if its proposal holds.* *Decided on 2026-10-26, by Max: the definition in business language is the Business Description of the Resource; it and the description from dbt live side by side, and their only relation is that they describe the same table ([DEC-RC-01](../requirements/functional/05-resource-card.md#dec-rc-01)).*
 - [ ] **[OP-RC-02](../requirements/functional/05-resource-card.md#op-rc-02)** · Decide whether the open questions ([FR-RC-02](../requirements/functional/05-resource-card.md#fr-rc-02)) are the open Questions on a Resource ([FR-SR-29](../requirements/functional/04-stacks-and-resources.md#fr-sr-29)), or a list of their own.
 - [ ] **[OP-RC-03](../requirements/functional/05-resource-card.md#op-rc-03)** · Choose the term for Known Gaps and for the log of changes: the meeting notes say "audit log" does not quite cover it. Decide whether Known Gaps belong to the Known Behaviour ([DEC-DH-18](../overview/data-hub.md#dec-dh-18)), next to intended use, pitfalls and Anomalies.
 - [ ] **[OP-RC-04](../requirements/functional/05-resource-card.md#op-rc-04)** · Choose the term for Stability. The meeting notes name the professional terms: late-arriving data with a settling period, and slowly changing dimensions for attributes that change. Add it to the EDA template on Confluence as well.
 - [ ] **[OP-RC-05](../requirements/functional/05-resource-card.md#op-rc-05)** · Decide where the Entity and identifier of a Resource ([FR-RC-08](../requirements/functional/05-resource-card.md#fr-rc-08)) are recorded: in the dbt project, in the Domain Model or in Data Hub, building on the Entities derived from the manifest and the lineage ([FR-SR-23](../requirements/functional/04-stacks-and-resources.md#fr-sr-23)) and on the relationships tests in dbt. *Note of 2026-10-25: after the review of Max (2026-10-24), the Data Admin records the reference of each field when adding a Resource, filled in from the docs for a Colleciónes model ([FR-CO-33](../requirements/functional/03-collections.md#fr-co-33)). Open remains where it is kept for other models: only in Data Hub, or also in the meta of the dbt project.*
-- [ ] **[OP-RC-06](../requirements/functional/05-resource-card.md#op-rc-06)** · Decide whether a Confirmation needs at least one control figure ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)). Proposal: no; the figures are asked for, but a Confirmation is possible without them, so that an Owner is never blocked, and the Resource Card then shows that there are none.
+- [x] **[OP-RC-06](../requirements/functional/05-resource-card.md#op-rc-06)** · Decide whether a Confirmation needs at least one control figure ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)). Proposal: no; the figures are asked for, but a Confirmation is possible without them, so that an Owner is never blocked, and the Resource Card then shows that there are none. *Raised on 2026-10-24, while designing publishing.* *Decided on 2026-10-26, by Max: no control figures at all at a Confirmation; they belong to the EDA ([DEC-MR-07](../requirements/functional/06-maturity-and-release.md#dec-mr-07)).*
 - [ ] **[OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07)** · Decide what a relationship records about its cardinality ([FR-RC-08](../requirements/functional/05-resource-card.md#fr-rc-08), [FR-CO-33](../requirements/functional/03-collections.md#fr-co-33)). For Max the relation is above all the cardinality it holds. Proposal: per field, towards its Entity, so that Data Hub derives the cardinality between any two Resources that share the Entity and warns of a join that fans out; not directly between Resources.
 - [ ] **[OP-RC-08](../requirements/functional/05-resource-card.md#op-rc-08)** · Decide how a Resource built on a Colleciónes model shows its relations. In the Domain Model the [relation type](https://github.com/immoscoop-be/compilacion-colleciones-domain-model/blob/main/models/root/vocabulary/relationTypes.yaml) implies the cardinality, but on one side only, the number of targets per row; the other side comes from its inverse type, which is almost always many. Proposal: the relation type and the cardinality it implies, read-only, with the description of the type, for the Data Admin to confirm.
 - [ ] **[OP-RC-09](../requirements/functional/05-resource-card.md#op-rc-09)** · Decide what a Resource built on another model records: only its cardinality, prefilled from dbt (an array column means many per row; a unique test means one row per value), or also a relation type from the sixteen of the Domain Model. Proposal: the cardinality, with the type optional.

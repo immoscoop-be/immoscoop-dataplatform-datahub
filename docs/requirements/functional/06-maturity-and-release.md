@@ -19,6 +19,7 @@
 - <a id="dec-mr-04"></a>**DEC-MR-04** · A failing check does not lower the Level: that is the monitoring doing its job. It becomes an incident in the Log.
 - <a id="dec-mr-05"></a>**DEC-MR-05** · A Confirmation does not expire. There is no expiry date and no reminder.
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
+- <a id="dec-mr-07"></a>**DEC-MR-07** · A Confirmation is business confirming what a Resource is and what it stands for, as its descriptions say. It has no link to the data inside it: no control figures, no checks on values. Exploring the data belongs to the EDA, Level 4, Explored, where far more is learned about a Resource than a Confirmation can carry. *Decided on 2026-10-26, by Max.*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -110,7 +111,9 @@ The Level restricts no access or channel. It is shown everywhere, also by Claude
 
 **Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
 
-When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-resources.md#fr-sr-20)), Data Hub shows why it dropped and what changed, who confirmed it last and when ([FR-RC-12](05-resource-card.md#fr-rc-12)), and the control figures of that Confirmation with their values, to check them again. The new Confirmation is kept with the Fingerprint of that moment, next to the earlier ones. It changes nothing about the Publication.
+When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-resources.md#fr-sr-20)), Data Hub shows why it dropped and what changed, who confirmed it last and when ([FR-RC-12](05-resource-card.md#fr-rc-12)), and what the Owner confirms: what the Resource is and what it stands for ([DEC-MR-07](#dec-mr-07)). The new Confirmation is kept with the Fingerprint of that moment, next to the earlier ones. It changes nothing about the Publication.
+
+*Note of 2026-10-26: the control figures are left out; a Confirmation makes no claim about the data ([DEC-MR-07](#dec-mr-07)).*
 
 ## Open points
 

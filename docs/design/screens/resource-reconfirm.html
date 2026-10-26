@@ -2,9 +2,10 @@
 <!--
   Screen: confirming a Resource again after a drop (FR-MR-11, DEC-UX-31)
   A structural change dropped the Level of a published Resource to Described. "Reconfirm" on its page opens a sheet: why
-  it dropped and what changed, who confirmed it last and when, the control figures of that Confirmation to run again,
-  since when the data is reliable, and the declaration. The Publication does not change.
-  Requirements: FR-SR-20, FR-MR-05, FR-MR-11, FR-RC-03, FR-RC-12, FR-RC-13 (Proposed and Specified).
+  it dropped and what changed, who confirmed it last and when, and what the Owner confirms: what the Resource is and what
+  it stands for, with the new column marked; no figures (DEC-MR-07). At the foot, the declaration and "Confirm again" are
+  one bar: the button is off until the box is ticked (DEC-UX-63). The Publication does not change.
+  Requirements: FR-SR-20, FR-MR-05, FR-MR-11, FR-RC-12 (Proposed and Specified); DEC-MR-07, DEC-UX-63.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -129,11 +130,18 @@
   <div class="grid" data-pane-group="tabs" data-pane="overview">
 
    <div class="sub-tile" style="grid-column:1/-1">
-    <div class="tile-head"><div class="label">Definition</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
-    <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
-    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
-    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+    <div class="tile-head"><div class="label">Description</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="desc-pair">
+     <div>
+      <div class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></div>
+      <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
+     </div>
+     <div>
+      <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+      <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+      <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+     </div>
+    </div>
    </div>
 
    <div class="sub-tile"><div class="label">Maturity</div>
@@ -241,18 +249,24 @@
    <div class="change-line"><span class="pill">New</span><span class="mono">lead_channel</span><span class="muted">STRING</span><span>Channel of the first visit</span></div>
   </div><div class="pub-block">
    <div class="label">Last confirmed</div>
-   <div class="check-line"><i class="ph-fill ph-seal-check"></i><span>By An Claes, for the credit team, on 14 Oct 2026. Reliable from 1 Jan 2025.</span></div>
+   <div class="check-line"><i class="ph-fill ph-seal-check"></i><span>By An Claes, for the credit team, on 14 Oct 2026.</span></div>
   </div><div class="pub-block">
-   <div class="label">Your confirmation</div>
-   <div class="label" style="margin:0 0 6px">How you checked it: the figures of last time, to run again</div>
-   <table class="figures"><thead><tr><th>Figure</th><th style="width:70px">Last time</th><th>Value</th><th>Checked against</th></tr></thead><tbody><tr><td><input value="Leads sent to KBC in September 2026"></td><td class="muted">4,812</td><td><input value="4,812"></td><td><input value="The monthly KBC report"></td></tr><tr><td><input value="Leads from the partner feed, week 41"></td><td class="muted">41</td><td><input value="38"></td><td><input value="The partner portal"></td></tr></tbody></table>
-   <a class="text-link" style="margin-top:8px"><i class="ph ph-plus"></i><span>Add a figure</span></a>
-   <label class="field" style="margin-top:12px"><span>Reliable from</span><input value="1 Jan 2025" style="max-width:160px"></label>
-   <label class="confirm-check"><input type="checkbox"><span>For the credit team, I confirm that the data of this resource is correct, with its new column.</span></label>
+   <div class="label">What you confirm</div>
+   <p class="meta" style="display:block;line-height:1.5;margin:0">For the credit team, you confirm again what this resource is and what it stands for, now with its new column.</p>
+   <div class="confirm-what">
+    <div class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></div>
+    <p class="lead">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
+    <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+    <p>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+    <div class="change-line" style="margin:0 0 10px"><span class="pill">New</span><span class="mono">lead_channel</span><span>Channel of the first visit</span><span class="origin">From dbt</span></div>
+    <a class="text-link" href="resource-detail.html?tabs=columns"><span>And its 4 fields, each with a description</span><i class="ph ph-arrow-right"></i></a>
+   </div>
    <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">The level rises to 3 · Confirmed, and on to 4 · Explored, as its EDA document is still linked. It stays published: who sees it does not change.</p>
   </div>
  </div>
- <div class="sheet-foot"><p class="meta">Data Hub keeps the confirmation with the fingerprint of today, next to the earlier ones in its History.</p><button class="btn-quiet outline" data-sheet-close>Cancel</button><button class="btn-primary"><i class="ph-fill ph-seal-check" style="font-size:15px"></i>Confirm again</button></div>
+ <div class="sheet-foot confirm-foot"><p class="meta">Data Hub keeps the confirmation with the fingerprint of today, next to the earlier ones in its History.</p><button class="btn-quiet outline" data-sheet-close>Cancel</button>
+  <div class="confirm-bar"><label><input type="checkbox"><span>For the credit team, I confirm that this resource is correct, with its new column: what it is and what it stands for.</span></label><button class="btn-primary"><i class="ph-fill ph-seal-check" style="font-size:15px"></i>Confirm again</button></div>
+ </div>
 </section>
 </div>
 <script src="app.js"></script>

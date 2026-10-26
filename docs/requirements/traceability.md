@@ -9,15 +9,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 62 | 24 (15 open, 9 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 63 | 24 (15 open, 9 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 35 (3 proposed, 16 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 19 | 16 (8 open, 8 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 20 specified, 10 implemented, 5 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 15 (13 open, 2 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (9 proposed, 9 specified) | – | 4 | 21 (17 open, 4 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 4 | 21 (16 open, 5 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 7 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 15 (13 proposed, 2 withdrawn) | – | – | 9 (7 open, 2 done) |
@@ -172,7 +172,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A Business Description of the Resource | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-02](functional/05-resource-card.md#fr-rc-02) | Open questions about the data | Proposed | – | – | – |
-| [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
+| [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Withdrawn | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-05](functional/05-resource-card.md#fr-rc-05) | A log of changes and Anomalies, for people and for Claude | Proposed | – | – | – |
 | [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |

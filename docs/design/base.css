@@ -528,16 +528,21 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .check-line.missing > i { color: var(--signal-warn); }
 .check-line b { font-weight: var(--weight-medium); }
 .change-line { display: flex; align-items: center; gap: 10px; margin: 8px 0 0 27px; font-size: var(--text-small); }
-.figures { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
-.figures th { text-align: left; font-weight: 400; font-size: var(--text-meta); color: var(--text-muted); padding: 0 6px 6px 0; }
-.figures td { padding: 3px 6px 3px 0; vertical-align: middle; }
-.figures th:nth-last-child(2), .figures td:nth-last-child(2) { width: 80px; }
-.figures th:last-child, .figures td:last-child { width: 150px; }
-.figures input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
-  border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 6px 8px; }
-.confirm-check { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub);
-  font-size: var(--text-small); line-height: 1.5; cursor: pointer; }
-.confirm-check input { margin-top: 3px; accent-color: var(--text-primary); }
+/* What the Owner confirms: what the Resource is and what it stands for, as its descriptions say (DEC-MR-07) */
+.confirm-what { margin-top: 8px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
+.confirm-what .desc-head { margin-bottom: 4px; }
+.confirm-what p { margin: 0 0 10px; color: var(--text-secondary); }
+.confirm-what p.lead { color: var(--text-primary); }
+/* The declaration and its button are one (DEC-UX-63): one bar, the button at its right end, off until the box is ticked */
+.confirm-foot { flex-wrap: wrap; }
+.confirm-foot > p { flex: 1 1 100%; }
+.confirm-bar { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 8px 8px 8px 14px; border-radius: var(--radius-md);
+  background: var(--surface-sub); border: 1px solid var(--tint-active); }
+.confirm-bar:has(input:checked) { border-color: var(--text-primary); }
+.confirm-bar label { flex: 1; min-width: 0; display: flex; gap: 10px; align-items: flex-start; font-size: var(--text-small); line-height: 1.45; cursor: pointer; }
+.confirm-bar input { flex: none; margin: 3px 0 0; accent-color: var(--text-primary); }
+.confirm-bar input:disabled + span { color: var(--text-muted); }
+.confirm-bar .btn-primary { flex: none; }
 .btn-primary[disabled] { opacity: .4; cursor: not-allowed; }
 
 /* A link to something the User may not see: the same page as for what does not exist (DEC-UX-32) */
