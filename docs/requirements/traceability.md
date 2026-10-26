@@ -12,11 +12,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub design principles](../design/principles.md) | – | – | 68 | 25 (13 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 50 (15 proposed, 19 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 28 | 16 (13 open, 3 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 4 | 21 (16 open, 5 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 23 (9 open, 14 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 12 (10 specified, 2 withdrawn) | – | 8 | 5 (4 open, 1 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
@@ -55,6 +55,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12) | Propagate every Change downstream | Specified | AR-12 | – | – |
 | [FR-AR-13](functional/01-artifact-registry.md#fr-ar-13) | Anyone with access can read the Log | Specified | AR-13 | – | – |
 | [FR-AR-14](functional/01-artifact-registry.md#fr-ar-14) | Fetch and process a run again manually | Implemented | AR-14 | [TR-AR-07](technical/01-artifact-registry.md#tr-ar-07) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
+| [FR-AR-15](functional/01-artifact-registry.md#fr-ar-15) | Read the Domain Model in use | Proposed | – | – | – |
 
 ### [User management](functional/02-user-management.md)
 
@@ -110,7 +111,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-30](functional/03-collections.md#fr-co-30) | The details are edited on the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[88dcf42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/88dcf428bb19051ca1fc875e5e5909cc2c720076) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-31](functional/03-collections.md#fr-co-31) | A Data Admin adds Resources from the page | Specified | – | – | [56fc43f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/56fc43f0e126a196fd9bf50dbb5d5d8eadaa6439) refs, 2026-10-23<br>[be7bdf4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be7bdf4ceb1dcb5d82229b9ccc43e1004688c577) refs, 2026-10-23 |
 | [FR-CO-32](functional/03-collections.md#fr-co-32) | A link to something a User may not see looks like a link to nothing | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
-| [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records the relation of every field | Proposed | – | – | [57f20cf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/57f20cfae74e1434889583262f8e263cfbe38f13) refs, 2026-10-25 |
+| [FR-CO-33](functional/03-collections.md#fr-co-33) | Adding a Resource records its grain and the mapping of every field | Proposed | – | – | [57f20cf](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/57f20cfae74e1434889583262f8e263cfbe38f13) refs, 2026-10-25 |
 | [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Proposed | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
 | [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Specified | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
 

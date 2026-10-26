@@ -226,12 +226,27 @@ new URLSearchParams(location.search).forEach((value, key) => {
   document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
 });
 
-// Adding Resources, step 2: "No relation" hides the identifier; the filter shows only the fields with a relation (DEC-UX-58)
-document.querySelectorAll('.rel-row select').forEach(s => s.addEventListener('change', () => {
-  const row = s.closest('.rel-row'); row.dataset.rel = s.value;
+// Adding Resources, step 2: a field maps to nothing, to `is` or to a relation type; "No mapping" hides the identity.
+// A list on a relation type that holds one is refused on the spot; ?mismatch shows it. The filter shows only the mapped
+// fields (DEC-RC-05, DEC-UX-58)
+document.querySelectorAll('.rel-row .rel-map').forEach(s => s.addEventListener('change', () => {
+  const row = s.closest('.rel-row');
+  row.dataset.map = s.value === 'none' ? 'none' : s.value === 'is' ? 'is' : 'rel';
   row.querySelector('.rel-ref').hidden = s.value === 'none';
+  const error = row.querySelector('.rel-error');
+  if (!error) return;
+  const mismatch = row.dataset.array === 'true' && s.selectedOptions[0].dataset.card === 'one';
+  error.hidden = !mismatch;
+  error.querySelector('code.t').textContent = s.selectedOptions[0].textContent;
+  row.toggleAttribute('data-mismatch', mismatch);
+  const card = row.querySelector('.rel-card');
+  if (card) card.hidden = mismatch;
 }));
 document.querySelectorAll('[data-rel-filter]').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('[data-rel-filter]').forEach(o => o.classList.toggle('on', o === b));
-  document.querySelectorAll('.rel-row').forEach(r => { r.hidden = b.dataset.relFilter === 'set' && r.dataset.rel === 'none'; });
+  document.querySelectorAll('.rel-row').forEach(r => { r.hidden = b.dataset.relFilter === 'set' && r.dataset.map === 'none'; });
 }));
+if (new URLSearchParams(location.search).has('mismatch')) {
+  const demo = document.querySelector('[data-mismatch-demo]');
+  if (demo) { demo.value = 'placedIn'; demo.dispatchEvent(new Event('change')); }
+}

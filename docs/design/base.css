@@ -797,7 +797,7 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .sheet-steps .on { color: var(--text-primary); font-weight: var(--weight-medium); }
 .sheet-steps .on b { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-solid); }
 .sheet-steps .done b { color: var(--text-secondary); }
-.rel-sheet { width: 720px; }
+.rel-sheet { width: 840px; }
 .rel-sheet .sheet-list { margin: 6px -4px 0; padding: 0 4px; }
 .rel-filter { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; margin-top: 12px; padding: 3px; border-radius: var(--radius-pill); background: var(--tint-hover); }
 .rel-filter .meta { padding: 0 6px 0 8px; }
@@ -810,15 +810,15 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .rel-table { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
 .rel-table th { text-align: left; font-weight: 400; font-size: var(--text-meta); color: var(--text-muted); padding: 6px 8px 6px 0; }
 .rel-table td { padding: 8px 8px 8px 0; vertical-align: top; border-top: 1px solid var(--tint-hover); }
-.rel-table th:nth-child(2) { width: 166px; }
-.rel-table th:nth-child(3) { width: 268px; }
+.rel-table th:nth-child(2) { width: 150px; }
+.rel-table th:nth-child(3) { width: 360px; }
 .rel-field { display: flex; align-items: baseline; gap: 8px; }
 .rel-field code { font: var(--text-small) var(--font-mono); color: var(--text-primary); }
 .rel-desc { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.45; }
 .rel-table select, .rel-table input { width: 100%; box-sizing: border-box; font: var(--text-small)/1.4 var(--font-family); color: var(--text-primary); background: var(--surface-solid);
   border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 5px 8px; }
 .rel-table input { font-family: var(--font-mono); }
-.rel-row[data-rel="none"] select { color: var(--text-muted); }
+.rel-row[data-map="none"] select { color: var(--text-muted); }
 .rel-ref { display: block; }
 .rel-ref[hidden] { display: none; }
 .rel-under { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; }
@@ -870,3 +870,29 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .fd-headrow { border-top: 0; padding-bottom: 2px; }
 .fd-row .fd-narrow { display: none; }
 @media (max-width: 900px) { .fd-headrow { display: none; } .fd-row .fd-narrow { display: block; } .fd-row .origin.fd-narrow { display: table; margin-bottom: 5px; } .fd-dbt .desc-head .origin.fd-narrow { margin-bottom: 0; } }
+
+/* Adding Resources, step 2: the grain of a Resource and the mapping of its fields: `is` or a relation type, with the
+   cardinality shown, never chosen (DEC-RC-05 to DEC-RC-08) */
+.rel-store-rule { grid-column: 1 / -1; height: 1px; background: var(--tint-active); margin: 2px 0; }
+.rel-grain-text { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 4px 8px; width: 220px; }
+.rel-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
+.rel-ok code { font: var(--text-meta) var(--font-mono); }
+.rel-dup { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); padding: 3px 10px; }
+.rel-kw { font: var(--weight-medium) var(--text-small) var(--font-mono); color: var(--text-primary); }
+.rel-dm { margin: 8px 0 0; color: var(--text-secondary); }
+.rel-dm .text-link { margin-left: 4px; }
+.grain-mark { display: inline-flex; align-items: center; gap: 3px; font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-sub); border-radius: var(--radius-pill); padding: 0 7px 0 5px; }
+.rel-table .rel-map { font-family: var(--font-mono); }
+.rel-row[data-map="none"] .rel-map { font-family: var(--font-family); }
+.rel-from { display: flex; align-items: center; gap: 6px; margin-top: 5px; font-size: var(--text-meta); color: var(--text-secondary); }
+.rel-from code { font: var(--text-meta) var(--font-mono); color: var(--text-primary); }
+.rel-table .rel-from select { width: auto; padding: 1px 4px; font: var(--text-meta) var(--font-mono); }
+.rel-card { display: flex; align-items: baseline; gap: 6px; margin-top: 5px; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.4; }
+.card-badge { flex: none; font: var(--weight-medium) 10.5px/1.5 var(--font-mono); padding: 0 5px; border-radius: var(--radius-chip); border: 1px solid var(--tint-active); color: var(--text-primary); }
+.rel-note, .rel-error { display: flex; align-items: flex-start; gap: 6px; margin-top: 5px; font-size: var(--text-meta); line-height: 1.4; }
+.rel-note { color: var(--text-secondary); }
+.rel-note > i, .rel-error > i { font-size: 14px; margin-top: 1px; }
+.rel-error { color: var(--signal-warn); }
+.rel-error[hidden], .rel-card[hidden] { display: none; }
+.rel-note code, .rel-error code { font: var(--text-meta) var(--font-mono); }
+.rel-row[data-mismatch] input { border-color: var(--signal-warn); }

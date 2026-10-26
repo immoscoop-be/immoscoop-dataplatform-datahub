@@ -160,6 +160,13 @@ Anyone with access to a Resource can read its Log.
 
 A run can be fetched and processed again manually, for recovery and tests.
 
+<a id="fr-ar-15"></a>
+### FR-AR-15 · Read the Domain Model in use
+
+**Status:** Proposed · **Source:** Max, 2026-10-26
+
+Data Hub reads the Domain Model as it runs on prod, from the overview the server of Colleciónes deploys: its Entities with their identities, its relation types with their cardinality and inverse, and the references of every Entity and action. It uses them for every Resource, also one not built on a Colleciónes model, to suggest and check the mappings of its fields ([FR-CO-33](03-collections.md#fr-co-33), [DEC-RC-05](05-resource-card.md#dec-rc-05)). It reads it again when a new version is deployed, and records with each mapping the version it was made with.
+
 ## Kinds of Change
 
 This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
@@ -214,6 +221,7 @@ Which views are Resources and how their ID stays stable ([Stacks and resources](
 - [x] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Decided on 2026-10-18: a webhook ([DEC-AR-02](#dec-ar-02)).*
 - [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
+- [ ] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.*
 - [ ] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and library cards](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)).
 
 ## Builds on
