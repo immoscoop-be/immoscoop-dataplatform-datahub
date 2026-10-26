@@ -586,11 +586,10 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
 .photo-story .meta { display: block; margin-top: 8px; color: var(--text-secondary); }
 @media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px 140px; } .signin-card { grid-column: 1; } .photo-story { right: 16px; left: 16px; max-width: none; } }
 
-/* Learning (DEC-UX-38 to DEC-UX-41): the step of a Learning Level, the panel by section, the page of a Learning Card */
-.lv-mark { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; flex: none; }
-.lv-mark i { display: block; width: 3px; border-radius: 1px; background: var(--tint-active); }
-.lv-mark i:nth-child(1) { height: 5px; } .lv-mark i:nth-child(2) { height: 8px; } .lv-mark i:nth-child(3) { height: 11px; } .lv-mark i:nth-child(4) { height: 14px; }
-.lv-mark i.on { background: var(--text-secondary); }
+/* Learning (DEC-UX-38 to DEC-UX-41): the icon of a Learning Level for its audience, never bars, which belong to maturity (DEC-UX-62);
+   the panel by section, the page of a Learning Card */
+.lv-icon { font-size: 15px; line-height: 1; color: var(--text-secondary); flex: none; }
+.item-icon .lv-icon { font-size: inherit; }
 .tree-sec { display: flex; align-items: baseline; gap: 6px; padding: 10px 8px 3px 16px; font-size: var(--text-meta); color: var(--text-muted); }
 .tree-sec span:first-child { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lc-num { color: var(--text-muted); font-variant-numeric: tabular-nums; margin-right: 5px; font-weight: var(--weight-regular, 400); }

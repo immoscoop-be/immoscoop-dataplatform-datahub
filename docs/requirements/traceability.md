@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 61 | 24 (15 open, 9 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 62 | 24 (15 open, 9 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
@@ -121,7 +121,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-03](functional/04-stacks-and-resources.md#fr-sr-03) | The view must be in a Stack and in the current Artifacts | Withdrawn | SR-03 | – | [c492133](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c492133aab788465b9c59a9bf9cd9344ecfb13c4) refs, 2026-10-19 |
 | [FR-SR-04](functional/04-stacks-and-resources.md#fr-sr-04) | The Key is unique | Implemented | SR-04 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-05](functional/04-stacks-and-resources.md#fr-sr-05) | The Display Name is required, unique and can be changed | Implemented | SR-05 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
-| [FR-SR-06](functional/04-stacks-and-resources.md#fr-sr-06) | The description comes from the Artifacts | Implemented | SR-06 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
+| [FR-SR-06](functional/04-stacks-and-resources.md#fr-sr-06) | The description comes from the Artifacts | Implemented | SR-06 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-07](functional/04-stacks-and-resources.md#fr-sr-07) | The Level at Registration is at most Described | Specified | SR-07 | – | – |
 | [FR-SR-08](functional/04-stacks-and-resources.md#fr-sr-08) | Store a Fingerprint at Registration | Specified | SR-08 | – | – |
 | [FR-SR-09](functional/04-stacks-and-resources.md#fr-sr-09) | Open the Log at Registration | Specified | SR-09 | – | – |
@@ -170,7 +170,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A Business Description of the Resource | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
+| [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A Business Description of the Resource | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-02](functional/05-resource-card.md#fr-rc-02) | Open questions about the data | Proposed | – | – | – |
 | [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
@@ -184,10 +184,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-12](functional/05-resource-card.md#fr-rc-12) | Who published and who confirmed | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-13](functional/05-resource-card.md#fr-rc-13) | Since when the data is reliable | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-14](functional/05-resource-card.md#fr-rc-14) | Checks and incidents | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
-| [FR-RC-15](functional/05-resource-card.md#fr-rc-15) | The Owner and the Data Team edit in place | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
-| [FR-RC-16](functional/05-resource-card.md#fr-rc-16) | A Business Description of every field | Specified | – | – | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
-| [FR-RC-17](functional/05-resource-card.md#fr-rc-17) | A changed description in dbt is told to the Owner | Specified | – | – | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
-| [FR-RC-18](functional/05-resource-card.md#fr-rc-18) | Both descriptions, wherever a description is used | Specified | – | – | – |
+| [FR-RC-15](functional/05-resource-card.md#fr-rc-15) | The Owner and the Data Team edit in place | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
+| [FR-RC-16](functional/05-resource-card.md#fr-rc-16) | A Business Description of every field | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
+| [FR-RC-17](functional/05-resource-card.md#fr-rc-17) | A changed description in dbt is told to the Owner | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26<br>[f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
+| [FR-RC-18](functional/05-resource-card.md#fr-rc-18) | Both descriptions, wherever a description is used | Specified | – | – | [9d0e6c0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9d0e6c04ed9af4b74af8d705ab1608f1ef80518f) refs, 2026-10-26 |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 
