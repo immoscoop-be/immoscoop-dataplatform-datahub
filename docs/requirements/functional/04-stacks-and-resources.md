@@ -25,7 +25,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-04"></a>**DEC-SR-04** · A Resource has two identities: a Key, the full name `project.dataset.table`, and a Display Name, readable and unique, that the Data Admin chooses. *Note of 2026-10-19: the Display Name comes from the exposure ([DEC-SR-24](#dec-sr-24)).*
 - <a id="dec-sr-05"></a>**DEC-SR-05** · At Registration, the Level is derived, and it is at most 2. A new Resource is not yet published, and therefore only visible to the Data Team and to the Owner of its Collection.
 - <a id="dec-sr-06"></a>**DEC-SR-06** · Visibility depends on Publication, not on the Level. Publishing is a deliberate switch that the Owner flips. That way, a Resource does not disappear for those who use it every time the Level briefly drops. *Note of 2026-10-19: a published Resource is visible to everyone who sees its Collection, the whole company only when the Collection is public ([DEC-CO-12](03-collections.md#dec-co-12)).*
-- <a id="dec-sr-07"></a>**DEC-SR-07** · The first Publication is only possible from Described, and is at once the first Confirmation: with it, the Resource rises to Confirmed.
+- <a id="dec-sr-07"></a>**DEC-SR-07** · The first Publication is only possible from Described, and is at once the first Confirmation: with it, the Resource rises to Confirmed. *Note of 2026-10-26: or over Described, where Business Descriptions cover every description dbt lacks ([DEC-MR-09](06-maturity-and-release.md#dec-mr-09)).*
 - <a id="dec-sr-08"></a>**DEC-SR-08** · A published Resource stays published, even if its Level drops afterwards. The Owner then gets an alert, the lower Level is visible on the Resource Card and on every Lens and Report built on it, and the Owner confirms again without touching the Publication.
 - <a id="dec-sr-09"></a>**DEC-SR-09** · The Log works with fixed Log IDs from a catalogue. Every Log Entry refers to a Log ID, with the extra parameters in a JSON field. The text is only built at display time from the template and the parameters, so that the Log stays compact and filterable.
 - <a id="dec-sr-10"></a>**DEC-SR-10** · Search across names, descriptions and Log texts happens in Postgres itself: full-text search, complemented by trigrams for typos and half-remembered names. Semantic search with pgvector may follow later. A separate search engine is not needed.
@@ -244,6 +244,8 @@ Only the Owner of the Collection can publish a Resource.
 **Status:** Specified · **Confluence:** SR-17
 
 The first Publication is only possible when the Resource is at Described. It is at once the first Confirmation: the Resource rises to Confirmed.
+
+*Note of 2026-10-26: or over Described, where Business Descriptions cover every description dbt lacks ([DEC-MR-09](06-maturity-and-release.md#dec-mr-09)).*
 
 <a id="fr-sr-18"></a>
 ### FR-SR-18 · Visibility depends only on Publication
@@ -490,6 +492,7 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 
 *Note of 2026-10-26: the control figures and since when the data is reliable are no longer asked here; a Confirmation makes no claim about the data ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). Since when the data is reliable stays on the Resource Card ([FR-RC-13](05-resource-card.md#fr-rc-13)).*
 
+*Note of 2026-10-26: when the Resource is not Described, the sheet names what dbt lacks and whether a Business Description covers it; once every gap is covered, publishing is possible, and the Resource is Confirmed with a mark ([FR-MR-13](06-maturity-and-release.md#fr-mr-13)).*
 
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated

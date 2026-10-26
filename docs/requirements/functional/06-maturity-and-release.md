@@ -21,6 +21,7 @@
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
 - <a id="dec-mr-07"></a>**DEC-MR-07** · A Confirmation is business confirming what a Resource is and what it stands for, as its descriptions say. It has no link to the data inside it: no control figures, no checks on values. Exploring the data belongs to the EDA, Level 4, Explored, where far more is learned about a Resource than a Confirmation can carry. *Decided on 2026-10-26, by Max.*
 - <a id="dec-mr-08"></a>**DEC-MR-08** · A change to the schema of a Resource never lowers its Level, and asks for no new Confirmation. A field added, removed, renamed or retyped since the last Confirmation gives a warning on the Resource, to everyone who sees it, and the Owner a Message; the warning stays until the Owner or the Data Team marks it seen. The Level still follows its traces: a missing description, a removed EDA document or the last check switched off still lower it ([DEC-DH-31](../../overview/data-hub.md#dec-dh-31)). *Decided on 2026-10-26, by Max.*
+- <a id="dec-mr-09"></a>**DEC-MR-09** · Described is done by the Data Team: a Resource is Described as soon as dbt has a description of the table and of every field. A Business Description does not count towards it. Where dbt has none, the Owner may jump over Described: once a Business Description covers every field, and the table, without a description in dbt, the Owner can publish and confirm. The Resource is then Confirmed, marked as confirmed without every description in dbt; the mark goes once dbt has them. *Decided on 2026-10-26, by Max ([OP-RC-20](05-resource-card.md#op-rc-20)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -30,7 +31,7 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 | --- | --- | --- |
 | 1 Available | Registered, description incomplete | – |
 | 2 Described | The view and every column have a description | A description is missing: to Available |
-| 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation) | – (a change to the schema gives a warning, [DEC-MR-08](#dec-mr-08)) |
+| 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation), from Described or over it, where Business Descriptions cover what dbt lacks ([DEC-MR-09](#dec-mr-09)) | – (a change to the schema gives a warning, [DEC-MR-08](#dec-mr-08)) |
 | 4 Explored | An EDA document is linked | The EDA document disappears: to Confirmed |
 | 5 Monitored | At least one active check | The last active check is switched off: to Explored |
 
@@ -43,12 +44,16 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 
 Described requires a description of the view and of every column.
 
+*Note of 2026-10-26: only the descriptions from dbt count; a Business Description does not ([DEC-MR-09](#dec-mr-09)).*
+
 <a id="fr-mr-02"></a>
 ### FR-MR-02 · Confirmed: the Owner confirms, from Described
 
 **Status:** Specified · **Confluence:** MO-02
 
 Confirmed requires a Confirmation by the Owner, from Described.
+
+*Note of 2026-10-26: or over Described, where Business Descriptions cover every description dbt lacks ([DEC-MR-09](#dec-mr-09), [FR-MR-13](#fr-mr-13)).*
 
 <a id="fr-mr-03"></a>
 ### FR-MR-03 · Explored: a linked EDA document
@@ -128,6 +133,13 @@ When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-
 **Status:** Specified · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05))
 
 When a field of a Resource is added, removed, renamed or gets another type after its last Confirmation, Data Hub shows a warning on the Resource to everyone who sees it, with what changed and when, and tells the Owner in the Message Centre. The Level and the Publication stay as they are. The Owner or the Data Team marks the warning seen; it then goes, and the change stays in the History. Changes that come before it is seen show together in the same warning.
+
+<a id="fr-mr-13"></a>
+### FR-MR-13 · Jumping over Described with Business Descriptions
+
+**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-RC-20](05-resource-card.md#op-rc-20))
+
+When the table or fields of a Resource have no description in dbt, its Owner can still publish and confirm it, once a Business Description covers each of them ([FR-RC-16](05-resource-card.md#fr-rc-16)). The Resource is then Confirmed, and its Level carries a mark that it was confirmed without every description in dbt, naming what is missing. The mark goes by itself once dbt has the descriptions. A description that later goes missing in dbt lowers the Level only when no Business Description covers it.
 
 ## Open points
 
