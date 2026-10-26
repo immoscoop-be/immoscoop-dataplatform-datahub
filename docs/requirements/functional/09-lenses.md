@@ -115,6 +115,8 @@ The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After th
 
 Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03-collections.md#dec-co-16)): a request with its Parameters, and the result. Its Parameters are filled in with their defaults ([FR-LE-13](#fr-le-13)); the User changes their values without touching the SQL ([FR-LE-04](#fr-le-04)) and puts a changed one back to its default. Adding Parameters is editing the Lens, for its Owner Unit. A second part of the page tells what the Lens answers, what it does step by step ([FR-LE-03](#fr-le-03)), what it is built on and its history. The result shows the rows, what was read and its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)), and can be downloaded within the row limit ([FR-CH-01](13-channels.md#fr-ch-01)). This is the basic flavour of a Lens: a query with Parameters, its result a table ([OP-LE-07](#op-le-07)).
 
+*Note of 2026-10-26: the page of a Lens sits under Collections, with its Collection unfolded in the panel; there is no section Lenses ([DEC-UX-66](../../design/principles.md#dec-ux-66)).*
+
 <a id="fr-le-12"></a>
 ### FR-LE-12 · Every run of a Lens is a query
 
@@ -140,16 +142,18 @@ A colleague never sees the SQL of a Lens: not on its page, and not through "Open
 <a id="fr-le-15"></a>
 ### FR-LE-15 · The section Lenses starts with the Lenses a User may use
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#start-screen-per-section)
+**Status:** Withdrawn · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#start-screen-per-section)
 
 The section Lenses opens on a start screen. It finds Lenses by the words of a question, as a new query does ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)); shows the Lenses of the User and their Owner Unit, those waiting for the Data Team among them ([FR-LE-09](#fr-le-09)); and Lenses to discover, popular and new. Its panel lists the Lenses the User may use ([DEC-CO-16](03-collections.md#dec-co-16)), by Collection.
+
+*Note of 2026-10-26: withdrawn by Max. Lenses have no section of their own; the start screen of Collections finds them ([FR-CO-37](03-collections.md#fr-co-37)).*
 
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
 - [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. Making a Lens is checked in three ranges instead ([FR-LE-08](#fr-le-08)), whose two thresholds are decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
 - [x] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.* *Decided on 2026-10-23: the size is measured when the Lens is made, as its author sets it up. Growth is followed while the Lens runs: a run that reads more than its range sets off the check again ([FR-LE-10](#fr-le-10)).*
-- [ ] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.*
+- [x] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.* *Decided on 2026-10-26, by Max: a Lens always goes into a Collection its author owns, even with Resources of other Collections ([DEC-CO-20](03-collections.md#dec-co-20)).*
 - [ ] <a id="op-le-05"></a>**OP-LE-05** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
 - [ ] <a id="op-le-06"></a>**OP-LE-06** · Decide whether a Lens runs when it is opened ([FR-LE-12](#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.*
 - [ ] <a id="op-le-07"></a>**OP-LE-07** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.*

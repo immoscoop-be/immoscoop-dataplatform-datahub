@@ -28,14 +28,14 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 213: 41 Implemented, 64 Specified, 78 Proposed, 30 Withdrawn |
+| Functional requirements | 214: 41 Implemented, 65 Specified, 77 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 65 |
-| Prototype screens | 33, plus the index |
-| Open points | 143 open, of 207 |
+| Design decisions (DEC-UX) | 66 |
+| Prototype screens | 32, plus the index |
+| Open points | 142 open, of 208 |
 
-The newest screens and rules (publishing and confirming, the page for a link to nothing, the start of Lenses, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
+The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
 ### Short on time?
 
@@ -133,7 +133,7 @@ Release happens in two steps, and Data Hub keeps that order: the Data Team makes
 | 4 | The Owner checks the data with the Preview and describes it and its fields | `resource-preview`, `resource-edit` | Designed |
 | 5 | The Owner publishes; a sheet says who will see it and asks for the Confirmation | `resource-publish` | Designed |
 | 6 | The Owner and colleagues query it, with other Resources they may see | `query-new`, `query` | Designed |
-| 7 | With Make it a lens, and once its size is checked, the query becomes a Lens | `lens-new`, `lens`, `lenses-start` | Designed |
+| 7 | With Make it a lens, and once its size is checked, the query becomes a Lens | `lens-new`, `lens`, `collections-start` | Designed |
 
 The [walkthrough on Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1380253717) shows each step with its screens.
 
@@ -582,7 +582,7 @@ A Lens is a way of looking at Resources, made by and for business: a query with 
 - **It runs on a page of its own** for everyone who may use it ([FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11)). Its Parameters start at their defaults; a Parameter takes a value or a function, such as "today − 3 days" ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). Every run is a query, with the Pre-flight and a Query ID ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)).
 - **Plain language instead of SQL.** A colleague never sees the SQL of a Lens; only its Owner Unit does, when editing ([FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)). What it does is told step by step, written by a skill when the Lens is made ([FR-LE-03](../requirements/functional/09-lenses.md#fr-le-03)).
 - **Who sees a Lens:** only whoever may use every Resource beneath it ([DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)). A Lens sits in a Collection, which its Owner Unit adds it to.
-- **The section Lenses** opens on a start screen: find a Lens by the words of a question, your own Lenses (with those waiting for the Data Team), and Lenses to discover. Its panel lists the Lenses by Collection ([FR-LE-15](../requirements/functional/09-lenses.md#fr-le-15)).
+- **No section Lenses** (from your review, 2026-10-26): a Lens lives in its Collection, listed in the panel and on the page of the Collection, and its page sits under Collections ([DEC-UX-66](../design/principles.md#dec-ux-66)). The start screen of Collections finds Lenses by the words of a question, shows your own Lenses (with those waiting for the Data Team) and Lenses to discover ([FR-CO-37](../requirements/functional/03-collections.md#fr-co-37)). **A Lens always goes into a Collection its author owns,** even when its Resources are in other Collections: that is how Resources are inherited across Collections ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)).
 
 ### The screens
 
@@ -594,9 +594,9 @@ A Lens is a way of looking at Resources, made by and for business: a query with 
 
 **The page of a Lens** runs it: its Parameters, Run, and the result with its Query ID. A second part, About, tells what it answers and what it does step by step. Screen: `lens`.
 
-![The start of Lenses: the search by question, your own Lenses, and Lenses to discover](images/17-lenses-start.jpg)
+![The start of Collections, which finds Lenses too: the search by question, your Collections and Lenses, and further down Lenses to discover](images/17-collections-start-lenses.jpg)
 
-**The start of Lenses**, with the panel by Collection. Screen: `lenses-start`.
+**The start of Collections** finds Lenses too: the search by question, "Yours" and Lenses to discover. Screen: `collections-start`.
 
 ### Behind it: proposal
 
@@ -619,7 +619,7 @@ The architecture leaves Lenses for later, "once their domain is specified". A st
 ### Open
 
 - **The flavours of a Lens** next to the basic one, a query with Parameters: filtered, aggregated and others ([OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)). The overview still says a Lens is always of a type that follows the chart language, with the funnel as example ([DEC-DH-13](../overview/data-hub.md#dec-dh-13), [OP-DH-09](../overview/open-themes.md#op-dh-09)), while the designed Lens returns a table. These two need to meet.
-- Whether a Lens runs when it is opened ([OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)), which functions a default may use ([OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)), and where a Lens made from a query belongs ([OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)).
+- Whether a Lens runs when it is opened ([OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)), which functions a default may use ([OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)). Where a Lens made from a query belongs is decided: in a Collection its author owns ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)); open is the author who owns none yet ([OP-CO-19](../requirements/functional/03-collections.md#op-co-19)).
 - A very large Lens: does it keep running while it waits ([OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)), and can it change while its Request waits ([OP-LE-09](../requirements/functional/09-lenses.md#op-le-09))?
 - How the story is asked: a skill, a form or the interface ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
 - What happens to a Lens when a column it uses disappears, or its Resource is deregistered ([OP-DH-21](../overview/open-themes.md#op-dh-21), [OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)).
@@ -891,7 +891,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 ### Navigation and structure
 
-- **A rail on the left with a slide-out panel,** not navigation at the top ([DEC-UX-02](../design/principles.md#dec-ux-02)). The sections: Collections, Query, Lenses and Reports. At the bottom: Messages with its count unread, the theme, the learning centre and the account; there is no button for settings ([DEC-UX-52](../design/principles.md#dec-ux-52), [DEC-UX-53](../design/principles.md#dec-ux-53)).
+- **A rail on the left with a slide-out panel,** not navigation at the top ([DEC-UX-02](../design/principles.md#dec-ux-02)). The sections: Collections, Query and Reports; Lenses live in their Collections ([DEC-UX-66](../design/principles.md#dec-ux-66)). At the bottom: Messages with its count unread, the theme, the learning centre and the account; there is no button for settings ([DEC-UX-52](../design/principles.md#dec-ux-52), [DEC-UX-53](../design/principles.md#dec-ux-53)).
 - **Each section opens on a start screen; the panel is its index** ([DEC-UX-03](../design/principles.md#dec-ux-03)). One panel for Collections and what they hold: a Collection unfolds in place, so switching is one click ([DEC-UX-10](../design/principles.md#dec-ux-10)).
 - **Every item has the icon of its kind,** the same for every item of that kind, with its name on one line and its Level ([DEC-UX-11](../design/principles.md#dec-ux-11)). An unpublished Resource is a lighter grey.
 - **Layers:** a sheet over a page for a task that belongs to it (publishing, your own queries), a slide-in for the Messages of an object, and a floating window for Open in context, which does not dim the page ([DEC-UX-30](../design/principles.md#dec-ux-30)).
@@ -916,7 +916,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 ![The page of a Lens over the painted ski picture, the frames lightly blurring it](images/34-lens-picture.jpg)
 
-![The start of Lenses in the dark theme over the village at night](images/35-lenses-night.jpg)
+![The start of Collections in the dark theme over the village at night](images/35-collections-night.jpg)
 
 Any screen shows a picture with `?bg=alpenglow`, `?bg=spring` or `?bg=ski`; in the dark theme it shows the village at night.
 
@@ -1121,7 +1121,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 143 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 142 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1171,11 +1171,11 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 15 open
+Source: [design/principles.md](../design/principles.md) · 14 open
 
 - [ ] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
-- [ ] **[OP-UX-03](../design/principles.md#op-ux-03)** · **Start screens** for Lenses and Reports. *Note of 2026-10-24: Lenses is designed ([lenses-start](../design/screens/lenses-start.html), [DEC-UX-33](../design/principles.md#dec-ux-33)); Reports remains.*
+- [ ] **[OP-UX-03](../design/principles.md#op-ux-03)** · **Start screens** for Lenses and Reports. *Note of 2026-10-24: Lenses is designed (`lenses-start`, withdrawn on 2026-10-26, [DEC-UX-33](../design/principles.md#dec-ux-33)); Reports remains.* *Note of 2026-10-26: the start screen of Lenses is withdrawn with its section ([DEC-UX-66](../design/principles.md#dec-ux-66)); Reports remains.*
 - [ ] **[OP-UX-04](../design/principles.md#op-ux-04)** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed ([resource-conversations](../design/screens/resource-conversations.html)); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview and Queries are designed ([resource-preview](../design/screens/resource-preview.html), [resource-queries](../design/screens/resource-queries.html)), to review; SQL went to its own section ([DEC-UX-17](../design/principles.md#dec-ux-17)).*
 - [ ] **[OP-UX-06](../design/principles.md#op-ux-06)** · **Screens on mobile** or in narrow windows.
 - [ ] **[OP-UX-09](../design/principles.md#op-ux-09)** · **Look:** [DEC-PF-22](../requirements/technical/00-platform.md#dec-pf-22) asks for the colours of the brandbook, with teal on larger areas, and one light look without a dark mode. This design has warm greys, colour only on content, and a light and a dark theme. Decide whether this design replaces those parts of DEC-PF-22.
@@ -1184,7 +1184,7 @@ Source: [design/principles.md](../design/principles.md) · 15 open
 - [ ] **[OP-UX-12](../design/principles.md#op-ux-12)** · **Capitals in the interface:** the documentation writes Defined Terms with capitals, and so does the interface of the web app today ("New Collection", "Owner Unit"). The prototypes write the interface in sentence case ("New collection", "Your collections", "Owner: Credit team"). Decide which applies to the interface. *Note of 2026-10-25: the language principle writes the kinds of assets as names in lower case inside a sentence ("Wil je deze lens publiek maken?"), which fits sentence case ([NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02)).*
 - [ ] **[OP-UX-13](../design/principles.md#op-ux-13)** · **Settings of a User:** the state of the panel and the dismissed intros, per section and with their version, are kept per User in the settings, and the theme is remembered. Data Hub has no settings of a User yet, and no requirement for them; the prototypes keep them in the browser. Decide where they are kept: in the browser, or in Data Hub, so that they follow the User to another device. *Note of 2026-10-25: the rail no longer has a button for settings ([DEC-UX-53](../design/principles.md#dec-ux-53)). Where the switches of a User live, such as "reduce motion" and the background ([OP-UX-20](../design/principles.md#op-ux-20)), is part of this.* *Note of 2026-10-25: the language of a User is one more such choice ([OP-DH-46](../overview/open-themes.md#op-dh-46)).*
 - [x] **[OP-UX-15](../design/principles.md#op-ux-15)** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](../design/principles.md#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](../design/principles.md#dec-ux-14)); the panel does not yet.* *Decided on 2026-10-26, by Max: the panel lists the Lenses of a Collection too, as a group of their own after the Resources ([DEC-UX-65](../design/principles.md#dec-ux-65)).*
-- [ ] **[OP-UX-18](../design/principles.md#op-ux-18)** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](../design/screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](../design/principles.md#op-ux-15)). *Note of 2026-10-24: the start screen of Lenses has the same panel ([lenses-start](../design/screens/lenses-start.html)).*
+- [x] **[OP-UX-18](../design/principles.md#op-ux-18)** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](../design/screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](../design/principles.md#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel (`lenses-start`, withdrawn on 2026-10-26).* *Decided on 2026-10-26, by Max: there is no section Lenses and no panel of Lenses; Lenses are listed in their Collection ([DEC-UX-66](../design/principles.md#dec-ux-66)).*
 - [ ] **[OP-UX-19](../design/principles.md#op-ux-19)** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](../design/principles.md#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes.
 - [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in.
 - [ ] **[OP-UX-23](../design/principles.md#op-ux-23)** · **Dutch prototypes:** decide how the prototypes follow the language principle ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)). Proposal: a translation table in the prototypes, a key per sentence with its Dutch and English text, Dutch by default and a switch to English, so that [NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02) shows at work and a name in the table stands out. The alternative is translating the texts in place, which is faster and keeps no English. Either way names stay untouched, and the markers on names ([DEC-UX-59](../design/principles.md#dec-ux-59)) come in the same pass.
@@ -1283,10 +1283,10 @@ Source: [requirements/functional/07-log-and-notifications.md](../requirements/fu
 
 ### Lenses
 
-Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 7 open
+Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 6 open
 
 - [ ] **[OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)** · Decide the form in which the story of a Lens is asked ([FR-LE-05](../requirements/functional/09-lenses.md#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
-- [ ] **[OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)** · Decide where a Lens made from a query belongs ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Note of 2026-10-23: the [design](../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.*
+- [x] **[OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)** · Decide where a Lens made from a query belongs ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.* *Decided on 2026-10-26, by Max: a Lens always goes into a Collection its author owns, even with Resources of other Collections ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)).*
 - [ ] **[OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../overview/data-hub.md#dec-dh-40)).
 - [ ] **[OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)** · Decide whether a Lens runs when it is opened ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too.
 - [ ] **[OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)).
@@ -1358,9 +1358,10 @@ Source: [requirements/technical/00-platform.md](../requirements/technical/00-pla
 
 ### Collections: technical requirements
 
-Source: [requirements/technical/03-collections.md](../requirements/technical/03-collections.md) · 1 open
+Source: [requirements/technical/03-collections.md](../requirements/technical/03-collections.md) · 2 open
 
 - [ ] **[OP-CO-18](../requirements/technical/03-collections.md#op-co-18)** · Decide how the Data Team finds every group of the domain to hand a Collection to ([FR-CO-35](../requirements/functional/03-collections.md#fr-co-35)): identity lists only the groups of the User today (`GET /me/groups`). Proposal: an endpoint in identity that searches the groups of the domain, for the Data Team only.
+- [ ] **[OP-CO-19](../requirements/functional/03-collections.md#op-co-19)** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](../requirements/functional/03-collections.md#fr-co-12)). *Raised on 2026-10-26, in the review of Max.*
 
 ### To confirm
 

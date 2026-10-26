@@ -40,6 +40,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-17"></a>**DEC-CO-17** · Everyone may build Lenses on every Resource they can see. Who sees a Lens stays [DEC-CO-16](#dec-co-16); adding a Lens to a Collection stays with its Owner Unit and the Data Team ([DEC-CO-15](#dec-co-15), [DEC-CO-18](#dec-co-18)). *Decided on 2026-10-25, by Max ([OP-CO-07](#op-co-07)).*
 - <a id="dec-co-18"></a>**DEC-CO-18** · The Data Team may do everything in every Collection, also one it does not own: change its details, hand it to another Owner Unit ([FR-CO-35](#fr-co-35)), add and change its Lenses, add and remove its Resources, and dissolve it. *Decided on 2026-10-25, by Max ([OP-CO-12](#op-co-12)).*
 - <a id="dec-co-19"></a>**DEC-CO-19** · The icon of a Collection comes from [Phosphor](https://phosphoricons.com) (MIT licence), the one family of the design ([icons](../../design/principles.md#icons)). The light weight is favoured and is the default; the other weights of Phosphor are possible too. As before, choosing is searching by the name of an icon and its words, and the logos of brands are left out. This replaces Tabler Icons of [DEC-CO-13](#dec-co-13) and [DEC-CO-14](#dec-co-14). *Decided on 2026-10-25, by Max ([OP-UX-07](../../design/principles.md#op-ux-07)).*
+- <a id="dec-co-20"></a>**DEC-CO-20** · A Lens always goes into a Collection that its author owns, through their Owner Unit, even when the Resources it is built on are in other Collections. That is how Resources are inherited across Collections, a part of Data Hub itself. Who sees the Lens stays [DEC-CO-16](#dec-co-16). *Decided on 2026-10-26, by Max ([OP-LE-04](09-lenses.md#op-le-04)).*
 
 ## What a Collection has
 
@@ -272,6 +273,13 @@ Search in the panel filters the Collections and their Resources together. A Coll
 
 An unfolded Collection lists, after its Resources and without a label of their own, the Lenses its Owner Unit added to it ([FR-CO-28](#fr-co-28)) that the User sees ([DEC-CO-16](#dec-co-16)), each with the icon of its kind, its name and its Level. Each group shows its first eight, then "Show all". Search in the panel covers the Lenses as well. Reports join later as a group of their own.
 
+<a id="fr-co-37"></a>
+### FR-CO-37 · The start screen of Collections finds Lenses too
+
+**Status:** Specified · **Source:** Max, 2026-10-26
+
+Lenses have no section of their own; everything is reached through its Collection ([DEC-UX-66](../../design/principles.md#dec-ux-66)). The start screen of Collections therefore finds Lenses as well: a search by the words of a question over Collections, Resources and Lenses ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)); under "Yours", the Collections of the User's Owner Units and the Lenses of the User and their Owner Unit, those waiting for the Data Team among them ([FR-LE-09](09-lenses.md#fr-le-09)); and Lenses to discover, popular and new, next to the popular Collections.
+
 ## The page of a Collection
 
 What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.
@@ -314,6 +322,8 @@ The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO
 From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-15](#dec-co-15)); nobody else can. Whether such a Lens may also use Resources of other Collections is open ([OP-CO-07](#op-co-07)), and so is how the story is asked first ([FR-LE-05](09-lenses.md#fr-le-05), [OP-LE-01](09-lenses.md#op-le-01)).
 
 *Note of 2026-10-25: the Data Team can start one too ([DEC-CO-18](#dec-co-18)), and everyone may build Lenses on every Resource they can see ([DEC-CO-17](#dec-co-17)), so such a Lens can use Resources of other Collections.*
+
+*Note of 2026-10-26: such a Lens may use Resources of other Collections, and a Lens made from a query goes into a Collection its author owns ([DEC-CO-20](#dec-co-20)).*
 
 <a id="fr-co-30"></a>
 ### FR-CO-30 · The details are edited on the page
@@ -410,6 +420,7 @@ What someone may see and do beyond Collections ([Permissions and library cards](
 - [ ] <a id="op-co-15"></a>**OP-CO-15** · Decide where the relations of a Resource can be changed after it is added, and by whom: on the page of the Resource, by a Data Admin only, or also by its Owner ([FR-CO-33](#fr-co-33)). *Raised on 2026-10-25, while designing the relations.*
 - [ ] <a id="op-co-16"></a>**OP-CO-16** · Decide how the icons of existing Collections move from Tabler to Phosphor ([DEC-CO-19](#dec-co-19)): the two sets name their icons differently. Proposal: map the names, by name and search words, and show the Data Team the icons without a match, to choose again. *Raised on 2026-10-25, while recording the decision.*
 - [ ] <a id="op-co-17"></a>**OP-CO-17** · Decide who chooses the weight of the icon of a Collection, now that the light weight is favoured and the others are possible ([DEC-CO-19](#dec-co-19)): whoever chooses the icon, next to it, or Data Hub, light everywhere. Proposal: light by default, with the weight to choose next to the icon. *Raised on 2026-10-25, while recording the decision.*
+- [ ] <a id="op-co-19"></a>**OP-CO-19** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](#fr-co-12)). *Raised on 2026-10-26, in the review of Max.*
 
 ## Builds on
 
