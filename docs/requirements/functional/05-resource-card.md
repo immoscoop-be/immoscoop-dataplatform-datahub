@@ -22,7 +22,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 ## Requirements
 
-*[FR-RC-01](#fr-rc-01) to [FR-RC-10](#fr-rc-10) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md); they are proposals, still to be validated, and therefore Proposed. [FR-RC-11](#fr-rc-11) to [FR-RC-15](#fr-rc-15) come from the review of the [detail page of a Resource](../../design/principles.md#detail-page-of-a-resource) on the same day.*
+*[FR-RC-01](#fr-rc-01) to [FR-RC-10](#fr-rc-10) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md); they are proposals, still to be validated, and therefore Proposed. [FR-RC-11](#fr-rc-11) to [FR-RC-15](#fr-rc-15) come from the review of the [detail page of a Resource](../../design/principles.md#detail-page-of-a-resource) on the same day. [FR-RC-16](#fr-rc-16) and [FR-RC-17](#fr-rc-17) come from the review of Max on 2026-10-26, and are Proposed.*
 
 <a id="fr-rc-01"></a>
 ### FR-RC-01 · A definition in business language
@@ -133,9 +133,23 @@ The Resource Card shows the active checks on the Resource and its incidents.
 
 The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Resource Card: the definition in business language, intended use, pitfalls, Known Gaps, Stability, since when the data is reliable, and the key fields and Parameters. What comes from dbt is shown next to it, read-only. Every saved change goes into the Log ([FR-SR-28](04-stacks-and-resources.md#fr-sr-28)).
 
+<a id="fr-rc-16"></a>
+### FR-RC-16 · A description from dbt is overridden only on purpose
+
+**Status:** Proposed · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels)
+
+The description from dbt, of a Resource and of each of its fields, is never edited in Data Hub ([FR-SR-06](04-stacks-and-resources.md#fr-sr-06)). The Owner and the Data Team can write a text of their own over it, for the Resource and per field, but only by choosing to: an explicit action to override the description from dbt, which says that their text will be shown first and the description from dbt beneath it. Typing in a field never overrides a description. The description from dbt stays visible, marked as coming from dbt; removing the text shows the description from dbt alone again. Every override, every change to it and every removal goes into the Log.
+
+<a id="fr-rc-17"></a>
+### FR-RC-17 · A changed description in dbt asks the Owner to review their text
+
+**Status:** Proposed · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels)
+
+When the description from dbt changes under a text that overrides it ([FR-RC-16](#fr-rc-16)), Data Hub tells the Owner in the Message Centre and asks them to review their text, showing the description from dbt before and after the Change next to their text. The Owner keeps their text, changes it, or removes it so that the new description from dbt is shown alone. Until they do, the text is marked on the Resource Card, for every reader and for Claude, as written before the last change in dbt. The answer goes into the Log.
+
 ## Open points
 
-- [ ] <a id="op-rc-01"></a>**OP-RC-01** · Decide how the definition in business language ([FR-RC-01](#fr-rc-01)) relates to the description from the Artifacts ([FR-SR-06](04-stacks-and-resources.md#fr-sr-06)): a separate text kept in Data Hub, and if so who writes it, given that what can be derived is not stored again ([DEC-DH-17](../../overview/data-hub.md#dec-dh-17)). *Raised while taking in the workshop of 2026-10-22.*
+- [ ] <a id="op-rc-01"></a>**OP-RC-01** · Decide how the definition in business language ([FR-RC-01](#fr-rc-01)) relates to the description from the Artifacts ([FR-SR-06](04-stacks-and-resources.md#fr-sr-06)): a separate text kept in Data Hub, and if so who writes it, given that what can be derived is not stored again ([DEC-DH-17](../../overview/data-hub.md#dec-dh-17)). *Raised while taking in the workshop of 2026-10-22.* *Note of 2026-10-26: answered with [OP-RC-18](#op-rc-18), if its proposal holds.*
 - [ ] <a id="op-rc-02"></a>**OP-RC-02** · Decide whether the open questions ([FR-RC-02](#fr-rc-02)) are the open Questions on a Resource ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)), or a list of their own. *Raised while taking in the workshop of 2026-10-22.*
 - [ ] <a id="op-rc-03"></a>**OP-RC-03** · Choose the term for Known Gaps and for the log of changes: the meeting notes say "audit log" does not quite cover it. Decide whether Known Gaps belong to the Known Behaviour ([DEC-DH-18](../../overview/data-hub.md#dec-dh-18)), next to intended use, pitfalls and Anomalies.
 - [ ] <a id="op-rc-04"></a>**OP-RC-04** · Choose the term for Stability. The meeting notes name the professional terms: late-arriving data with a settling period, and slowly changing dimensions for attributes that change. Add it to the EDA template on Confluence as well.
@@ -152,6 +166,10 @@ The Owner and the Data Team edit what Data Hub keeps about a Resource in place, 
 - [ ] <a id="op-rc-15"></a>**OP-RC-15** · Decide whether and how Data Hub shows a reference that holds only while attributes are equal on both sides: `matchOn` in the Domain Model, such as `homeLoanBorrowingCapacity` to `homeLoanProfile` on `inputSignature`. The join then needs the identifier and the attribute. *Raised on 2026-10-25, in the discussion of the relations with Max.*
 - [ ] <a id="op-rc-16"></a>**OP-RC-16** · Decide how Data Hub shows a reference with cardinality many that lands as an array column, such as the `listingId`s of an `email`, which must be unnested before a join; next to a many that means many rows per value. *Raised on 2026-10-25, in the discussion of the relations with Max.*
 - [ ] <a id="op-rc-17"></a>**OP-RC-17** · Decide what Data Hub derives and what it asks. dbt gives the type of a column and its tests (`unique`, `not_null`, `relationships`); the Colleciónes models give the relation type and cardinality, but for a state mart only as text in the description of a column. Proposal: derive what dbt gives, and ask the domain model to carry the references of an entity in structured meta. *Raised on 2026-10-25, in the discussion of the relations with Max.*
+- [ ] <a id="op-rc-18"></a>**OP-RC-18** · Decide whether a text that overrides a description from dbt ([FR-RC-16](#fr-rc-16)) hides it or stands above it, and whether the definition in business language ([FR-RC-01](#fr-rc-01)) is that text for the Resource itself. Proposal: above it, never hiding it, as the Overview already shows the definition above the description from dbt; and yes, the definition is the override of the Resource, which answers [OP-RC-01](#op-rc-01). Hiding the description from dbt would make Data Hub a second source next to dbt, which [DEC-DH-17](../../overview/data-hub.md#dec-dh-17) rules out. *Raised on 2026-10-26, in the review of Max.*
+- [ ] <a id="op-rc-19"></a>**OP-RC-19** · Decide which Changes ask for a review ([FR-RC-17](#fr-rc-17)). A description Change is followed downstream through the whole lineage, into the Log of every Resource it reaches ([FR-AR-12](01-artifact-registry.md#fr-ar-12)). Proposal: only a Change to the description of the Resource itself, or of the field the text is on; a Change further upstream stays an entry in the Log. A field that is renamed or removed is a structural Change: its text is kept and asks for a review as well. *Raised on 2026-10-26, in the review of Max.*
+- [ ] <a id="op-rc-20"></a>**OP-RC-20** · Decide whether a text on a field counts towards Described when the field has no description in dbt ([FR-MR-01](06-maturity-and-release.md#fr-mr-01)). Proposal: no; Described stays measured on dbt ([DEC-MR-01](06-maturity-and-release.md#dec-mr-01)), so a missing description is written at its source, and an override is not a way around it. *Raised on 2026-10-26, in the review of Max.*
+- [ ] <a id="op-rc-21"></a>**OP-RC-21** · Decide what happens when nobody reviews a text after a Change in dbt ([FR-RC-17](#fr-rc-17)), and who may answer. Proposal: the text stays, with its marker; the Message Centre reminds the Owner after two weeks; the Level does not change, because the description from dbt is still there; and the Data Team can answer as well, as it can edit the text ([FR-RC-15](#fr-rc-15)). *Raised on 2026-10-26, in the review of Max.*
 
 ## Builds on
 

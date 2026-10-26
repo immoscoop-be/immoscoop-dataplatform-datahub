@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 207: 41 Implemented, 60 Specified, 80 Proposed, 26 Withdrawn |
+| Functional requirements | 209: 41 Implemented, 60 Specified, 82 Proposed, 26 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 60 |
 | Prototype screens | 33, plus the index |
-| Open points | 145 open, of 200 |
+| Open points | 150 open, of 205 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, the start of Lenses, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -444,6 +444,7 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 
 - What Described requires: only descriptions, or also `model_type` and `grain` ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03)); which part of the Fingerprint makes a Resource drop ([OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)); the full list of drop causes ([OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)).
 - How the definition in business language relates to the description from dbt ([OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01)), and where the Entity of a Resource is recorded ([OP-RC-05](../requirements/functional/05-resource-card.md#op-rc-05)).
+- **Overriding a description from dbt, and reviewing it after a Change** (from your review, 2026-10-26). Today the Owner cannot edit a description: the description of the Resource and of every field comes from dbt, read-only ([FR-SR-06](../requirements/functional/04-stacks-and-resources.md#fr-sr-06)). The Owner writes only the definition in business language next to it ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01)), and nothing per field. A Change to a description in dbt only lands in the Log, without telling anyone ([Kinds of Change](../requirements/functional/01-artifact-registry.md#kinds-of-change)). Now proposed: the Owner overrides a description from dbt, of the Resource or of a field, only by choosing to, and the description from dbt stays visible beneath it ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16)); when the description from dbt changes under it, the Owner gets a Message asking to review their text, which stays marked until they do ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Open: whether the override hides the description from dbt, which Changes ask for a review, whether an override counts towards Described, what happens when nobody reviews, and the screens ([OP-RC-18](../requirements/functional/05-resource-card.md#op-rc-18) to [OP-RC-21](../requirements/functional/05-resource-card.md#op-rc-21), [OP-UX-24](../design/principles.md#op-ux-24)).
 - The words for Known Gaps, the log of changes and Stability ([OP-RC-03](../requirements/functional/05-resource-card.md#op-rc-03), [OP-RC-04](../requirements/functional/05-resource-card.md#op-rc-04)), and a convention for Display Names ([OP-SR-01](../requirements/functional/04-stacks-and-resources.md#op-sr-01)).
 - The tabs Lineage, EDA and History ([OP-UX-04](../design/principles.md#op-ux-04)), and the schema of the Resource Card ([OP-DH-14](../overview/open-themes.md#op-dh-14)).
 
@@ -1116,7 +1117,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that is still open in the documentation, 145 in all, generated on 2026-10-25 from the files under `docs/`, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that is still open in the documentation, 150 in all, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1166,7 +1167,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 15 open
+Source: [design/principles.md](../design/principles.md) · 16 open
 
 - [ ] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
@@ -1183,6 +1184,7 @@ Source: [design/principles.md](../design/principles.md) · 15 open
 - [ ] **[OP-UX-19](../design/principles.md#op-ux-19)** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](../design/principles.md#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes.
 - [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in.
 - [ ] **[OP-UX-23](../design/principles.md#op-ux-23)** · **Dutch prototypes:** decide how the prototypes follow the language principle ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)). Proposal: a translation table in the prototypes, a key per sentence with its Dutch and English text, Dutch by default and a switch to English, so that [NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02) shows at work and a name in the table stands out. The alternative is translating the texts in place, which is faster and keeps no English. Either way names stay untouched, and the markers on names ([DEC-UX-59](../design/principles.md#dec-ux-59)) come in the same pass.
+- [ ] **[OP-UX-24](../design/principles.md#op-ux-24)** · **Overriding a description from dbt, and reviewing it** ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16), [FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)): editing in place ([DEC-UX-09](../design/principles.md#dec-ux-09)) covers the Overview only, and no screen yet overrides the description of a field or reviews a text after a Change in dbt. Proposal: on the Columns tab, an action per field, "Override the description from dbt", that opens a field with the description from dbt under it; on the Overview, the definition takes the same action. The review is a sheet over the page, reached from the Message, with the description from dbt before and after the Change, the text of the Owner, and three choices: keep, change, or remove it. *Raised on 2026-10-26, in the review of Max.*
 
 ### Artifact registry
 
@@ -1233,7 +1235,7 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 
 ### Resource card
 
-Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 17 open
+Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 21 open
 
 - [ ] **[OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01)** · Decide how the definition in business language ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01)) relates to the description from the Artifacts ([FR-SR-06](../requirements/functional/04-stacks-and-resources.md#fr-sr-06)): a separate text kept in Data Hub, and if so who writes it, given that what can be derived is not stored again ([DEC-DH-17](../overview/data-hub.md#dec-dh-17)).
 - [ ] **[OP-RC-02](../requirements/functional/05-resource-card.md#op-rc-02)** · Decide whether the open questions ([FR-RC-02](../requirements/functional/05-resource-card.md#fr-rc-02)) are the open Questions on a Resource ([FR-SR-29](../requirements/functional/04-stacks-and-resources.md#fr-sr-29)), or a list of their own.
@@ -1252,6 +1254,10 @@ Source: [requirements/functional/05-resource-card.md](../requirements/functional
 - [ ] **[OP-RC-15](../requirements/functional/05-resource-card.md#op-rc-15)** · Decide whether and how Data Hub shows a reference that holds only while attributes are equal on both sides: `matchOn` in the Domain Model, such as `homeLoanBorrowingCapacity` to `homeLoanProfile` on `inputSignature`. The join then needs the identifier and the attribute.
 - [ ] **[OP-RC-16](../requirements/functional/05-resource-card.md#op-rc-16)** · Decide how Data Hub shows a reference with cardinality many that lands as an array column, such as the `listingId`s of an `email`, which must be unnested before a join; next to a many that means many rows per value.
 - [ ] **[OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)** · Decide what Data Hub derives and what it asks. dbt gives the type of a column and its tests (`unique`, `not_null`, `relationships`); the Colleciónes models give the relation type and cardinality, but for a state mart only as text in the description of a column. Proposal: derive what dbt gives, and ask the domain model to carry the references of an entity in structured meta.
+- [ ] **[OP-RC-18](../requirements/functional/05-resource-card.md#op-rc-18)** · Decide whether a text that overrides a description from dbt ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16)) hides it or stands above it, and whether the definition in business language ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01)) is that text for the Resource itself. Proposal: above it, never hiding it, as the Overview already shows the definition above the description from dbt; and yes, the definition is the override of the Resource, which answers [OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01). Hiding the description from dbt would make Data Hub a second source next to dbt, which [DEC-DH-17](../overview/data-hub.md#dec-dh-17) rules out. *Raised on 2026-10-26, in the review of Max.*
+- [ ] **[OP-RC-19](../requirements/functional/05-resource-card.md#op-rc-19)** · Decide which Changes ask for a review ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). A description Change is followed downstream through the whole lineage, into the Log of every Resource it reaches ([FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)). Proposal: only a Change to the description of the Resource itself, or of the field the text is on; a Change further upstream stays an entry in the Log. A field that is renamed or removed is a structural Change: its text is kept and asks for a review as well. *Raised on 2026-10-26, in the review of Max.*
+- [ ] **[OP-RC-20](../requirements/functional/05-resource-card.md#op-rc-20)** · Decide whether a text on a field counts towards Described when the field has no description in dbt ([FR-MR-01](../requirements/functional/06-maturity-and-release.md#fr-mr-01)). Proposal: no; Described stays measured on dbt ([DEC-MR-01](../requirements/functional/06-maturity-and-release.md#dec-mr-01)), so a missing description is written at its source, and an override is not a way around it. *Raised on 2026-10-26, in the review of Max.*
+- [ ] **[OP-RC-21](../requirements/functional/05-resource-card.md#op-rc-21)** · Decide what happens when nobody reviews a text after a Change in dbt ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)), and who may answer. Proposal: the text stays, with its marker; the Message Centre reminds the Owner after two weeks; the Level does not change, because the description from dbt is still there; and the Data Team can answer as well, as it can edit the text ([FR-RC-15](../requirements/functional/05-resource-card.md#fr-rc-15)). *Raised on 2026-10-26, in the review of Max.*
 
 ### Maturity and release
 
