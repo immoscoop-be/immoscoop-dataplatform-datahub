@@ -166,7 +166,7 @@ This domain detects the Change and passes it on. What happens next (lowering the
 
 | Kind | When | Consequence, in another domain |
 | --- | --- | --- |
-| Description | A text on a table or field changes | In the Log; when a text in Data Hub overrides it, a request to review that text (proposed in [FR-RC-17](05-resource-card.md#fr-rc-17)) |
+| Description | A text on a table or field changes | In the Log; for the description of the Resource itself or one of its fields, a Message to the Owner ([FR-RC-17](05-resource-card.md#fr-rc-17)) |
 | Logic | The code of a Node changes (a filter, a join); the schema stays the same | In the Log, notification to the Owner |
 | Type | A field keeps its name but gets a different data type | In the Log, notification to the Owner |
 | Structural | A field is added or removed, including a rename | In the Log; the Resource drops to Described |

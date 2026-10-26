@@ -829,3 +829,37 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .rel-check input { accent-color: var(--text-primary); }
 .rel-check input:disabled { cursor: not-allowed; }
 .rel-add { font-size: var(--text-meta); display: inline-flex; align-items: center; gap: 3px; background: none; border: 0; cursor: pointer; color: var(--text-secondary); font-family: inherit; }
+
+/* Two descriptions side by side: the Business Description, from the owner, and the description from dbt (DEC-UX-61) */
+.desc-pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px 28px; }
+.desc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.desc-head .label { margin: 0; }
+.field > .desc-head { display: flex; margin-bottom: 6px; }
+.desc-pair .field { margin: 0; }
+.desc-alone { color: var(--text-primary); }
+.none { color: var(--text-muted); }
+
+/* The Business Description of every field, edited next to the description from dbt (FR-RC-16) */
+.fd-tools { display: flex; align-items: center; gap: 2px; margin: 4px 0 6px; }
+.fd-row { display: grid; grid-template-columns: minmax(150px, .6fr) minmax(0, 1.2fr) minmax(0, 1fr); gap: 16px; padding: 14px 4px; border-top: 1px solid var(--tint-hover); }
+.fd-name code { font: var(--weight-medium) var(--text-small) var(--font-mono); color: var(--text-primary); }
+.fd-name .meta { display: flex; margin-top: 4px; }
+.fd-name .pill { display: inline-block; margin: 6px 4px 0 0; }
+.fd-row .field { margin: 0; }
+.fd-dbt { font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.fd-dbt .desc-head { margin-bottom: 5px; }
+.fd-was { display: block; margin-top: 8px; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.45; }
+.fd-was del { text-decoration: none; }
+@media (max-width: 900px) { .fd-row { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
+
+/* A changed description in dbt, told to the Owner in a Message (FR-RC-17): before and after, the Business Description next to it */
+.desc-change { margin: 10px 0 0 40px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.desc-change h4 { margin: 0 0 8px; font-size: var(--text-small); font-weight: var(--weight-medium); display: flex; align-items: center; gap: 8px; }
+.desc-change dl { margin: 0; display: grid; grid-template-columns: 128px minmax(0, 1fr); gap: 6px 12px; font-size: var(--text-small); line-height: 1.5; }
+.desc-change dt { color: var(--text-muted); }
+.desc-change dd { margin: 0; }
+.desc-change del { color: var(--text-muted); text-decoration: none; }
+@media (max-width: 760px) { .desc-change { margin-left: 0; } .desc-change dl { grid-template-columns: minmax(0, 1fr); gap: 2px; } .desc-change dd { margin-bottom: 6px; } }
+.fd-headrow { border-top: 0; padding-bottom: 2px; }
+.fd-row .fd-narrow { display: none; }
+@media (max-width: 900px) { .fd-headrow { display: none; } .fd-row .fd-narrow { display: block; } .fd-row .origin.fd-narrow { display: table; margin-bottom: 5px; } .fd-dbt .desc-head .origin.fd-narrow { margin-bottom: 0; } }

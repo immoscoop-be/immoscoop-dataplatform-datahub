@@ -3,8 +3,9 @@
   Screen: Resource detail, editing the Overview
   The Owner (or the Data Team) clicked "Edit" on a tile: the parts Data Hub keeps turn into fields, in place.
   What comes from dbt and what the Data Team gives stays read-only, marked as such.
-  Requirements: FR-RC-15, FR-SR-28, FR-RC-01, FR-RC-04, FR-RC-06, FR-RC-13, FR-RC-11; DEC-UX-09. Panel: FR-CO-18 to FR-CO-24.
-  Related screens: resource-detail.html (Cancel and Save go back there).
+  The Business Description is a field next to the description from dbt, which stays read-only (DEC-UX-61).
+  Requirements: FR-RC-15, FR-SR-28, FR-RC-01, FR-RC-04, FR-RC-06, FR-RC-13, FR-RC-11; DEC-UX-09, DEC-UX-61. Panel: FR-CO-18 to FR-CO-24.
+  Related screens: resource-detail.html (Cancel and Save go back there), resource-columns-edit.html (the fields).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -126,10 +127,16 @@
   <div class="grid">
 
    <div class="sub-tile" style="grid-column:1/-1">
-    <label class="field"><span>Definition, in business language</span><textarea rows="3">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</textarea></label>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
-    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
-    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+    <div class="label">Description</div>
+    <div class="desc-pair">
+     <label class="field"><span class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></span><textarea rows="4">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</textarea><span class="meta" style="margin-top:6px">In business language, next to the description from dbt. Left empty, readers see the one from dbt alone.</span></label>
+     <div>
+      <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+      <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+      <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip">grain: week × lead source</span></div>
+      <p class="meta" style="margin-top:4px">Changed in dbt yesterday. Not edited here: it changes in the dbt project.</p>
+     </div>
+    </div>
    </div>
 
    <div class="sub-tile">

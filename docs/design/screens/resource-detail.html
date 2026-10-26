@@ -5,8 +5,10 @@
   Shown in the "dropped, awaiting reconfirmation" state; the alert disappears when all is well.
   Requirements: FR-SR-04, FR-SR-05, FR-SR-06, FR-SR-11, FR-SR-19, FR-SR-20, FR-SR-22, FR-SR-23, FR-SR-24, FR-SR-28, FR-SR-29, FR-SR-31,
     FR-MR-05, FR-MR-09, FR-MR-10, FR-RC-01, FR-RC-04, FR-RC-06, FR-RC-07, FR-RC-08, FR-RC-10, FR-RC-11, FR-RC-12, FR-RC-13, FR-RC-14,
-    FR-RC-15, FR-SR-39; DEC-UX-06 to DEC-UX-09. Tabs Lineage, EDA, History and Preview: not designed yet (OP-UX-04).
-  Related screens: resource-edit.html (editing), resource-conversations.html (Conversations, Ask a question).
+    FR-RC-15, FR-RC-16, FR-RC-18, FR-SR-39; DEC-UX-06 to DEC-UX-09, DEC-UX-61. Tabs Lineage, EDA, History and Preview: not designed yet (OP-UX-04).
+  The Description tile and the Columns tab show the Business Description and the description from dbt side by side;
+  a field without a Business Description shows the one from dbt alone. ?tabs=columns opens the Columns tab.
+  Related screens: resource-edit.html (editing), resource-columns-edit.html (editing the fields), resource-conversations.html (Conversations, Ask a question).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -131,11 +133,18 @@
   <div class="grid" data-pane-group="tabs" data-pane="overview">
 
    <div class="sub-tile" style="grid-column:1/-1">
-    <div class="tile-head"><div class="label">Definition</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
-    <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people, so the weeks don't add up to unique people.</p>
-    <div style="display:flex;align-items:center;gap:8px;margin-top:14px"><span class="label" style="margin:0">Description</span><span class="origin">From dbt</span></div>
-    <p class="prose" style="margin-top:6px">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
-    <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span></div>
+    <div class="tile-head"><div class="label">Description</div><a class="edit-link" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+    <div class="desc-pair">
+     <div>
+      <div class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></div>
+      <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people, so the weeks don't add up to unique people.</p>
+     </div>
+     <div>
+      <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+      <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+      <div style="margin-top:10px"><span class="code-chip">model type: mart</span><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span></div>
+     </div>
+    </div>
    </div>
 
    <div class="sub-tile"><div class="label">Maturity</div>
@@ -217,11 +226,12 @@
     <div style="margin-top:6px"><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">MAT-021</span><span style="flex:1">Maturity dropped to level 2; owner alerted</span><span style="color:var(--text-muted)">Yesterday</span></div><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">ART-010</span><span style="flex:1">Structural change: field lead_channel added</span><span style="color:var(--text-muted)">Yesterday</span></div><div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">CNV-050</span><span style="flex:1">Signal raised by KL</span><span style="color:var(--text-muted)">3 days ago</span></div></div></div>
   </div>
   <div data-pane-group="tabs" data-pane="columns" hidden>
-   <table><thead><tr><th>Column</th><th>Type</th><th>Description</th><th>Entity</th><th></th></tr></thead><tbody>
-    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
-    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource</span></td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
-    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC</td><td></td><td></td></tr>
-    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
+   <div class="tile-head" style="margin:0 6px 4px"><p class="meta" style="flex:1;margin:0">Every field with its business description, from the owner, next to its description from dbt.</p><a class="edit-link" href="resource-columns-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
+   <table><thead><tr><th>Column</th><th>Type</th><th>Business description <span class="origin">From the owner</span></th><th>Description <span class="origin">From dbt</span></th><th>Entity</th><th></th></tr></thead><tbody>
+    <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No business description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td></td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="code-chip" style="margin:0">leadSource</span></td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+    <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td><td></td></tr>
+    <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No business description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td></td><td><span class="pill pill-strong">Cluster 2</span> <span class="pill" style="color:var(--signal-warn)">New</span></td></tr>
    </tbody></table>
   </div>
   <p data-pane-group="tabs" data-pane="later" class="meta" style="justify-content:center;padding:40px;font-size:13px" hidden>Not designed yet.</p>

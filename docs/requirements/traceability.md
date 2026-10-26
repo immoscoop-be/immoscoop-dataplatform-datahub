@@ -9,14 +9,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 60 | 24 (16 open, 8 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 61 | 24 (15 open, 9 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 14 (3 specified, 11 implemented) | 4 (4 proposed) | 3 | 5 (2 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 35 (3 proposed, 16 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 19 | 16 (8 open, 8 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 49 (14 proposed, 20 specified, 10 implemented, 5 withdrawn) | 4 (1 proposed, 3 withdrawn) | 27 | 15 (13 open, 2 done) |
-| [Resource card](functional/05-resource-card.md) | 17 (12 proposed, 5 specified) | – | – | 21 (21 open) |
+| [Resource card](functional/05-resource-card.md) | 18 (9 proposed, 9 specified) | – | 4 | 21 (17 open, 4 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 11 (1 proposed, 10 specified) | – | 6 | 5 (5 open) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
@@ -51,7 +51,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-AR-08](functional/01-artifact-registry.md#fr-ar-08) | Lineage across the dbt projects | Implemented | AR-08 | [TR-AR-03](technical/01-artifact-registry.md#tr-ar-03), [TR-AR-06](technical/01-artifact-registry.md#tr-ar-06) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
 | [FR-AR-09](functional/01-artifact-registry.md#fr-ar-09) | Switch to a set only after complete processing | Implemented | AR-09 | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | [91d2093](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91d2093d7ef73248c0ac1e156490f6a685786082) implements, 2026-10-18 |
 | [FR-AR-10](functional/01-artifact-registry.md#fr-ar-10) | Search by name, free text and lineage | Implemented | AR-10 | [TR-AR-05](technical/01-artifact-registry.md#tr-ar-05), [TR-AR-06](technical/01-artifact-registry.md#tr-ar-06) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
-| [FR-AR-11](functional/01-artifact-registry.md#fr-ar-11) | Compare every new version Node by Node | Specified | AR-11 | – | – |
+| [FR-AR-11](functional/01-artifact-registry.md#fr-ar-11) | Compare every new version Node by Node | Specified | AR-11 | – | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
 | [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12) | Propagate every Change downstream | Specified | AR-12 | – | – |
 | [FR-AR-13](functional/01-artifact-registry.md#fr-ar-13) | Anyone with access can read the Log | Specified | AR-13 | – | – |
 | [FR-AR-14](functional/01-artifact-registry.md#fr-ar-14) | Fetch and process a run again manually | Implemented | AR-14 | [TR-AR-07](technical/01-artifact-registry.md#tr-ar-07) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
@@ -121,7 +121,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-03](functional/04-stacks-and-resources.md#fr-sr-03) | The view must be in a Stack and in the current Artifacts | Withdrawn | SR-03 | – | [c492133](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c492133aab788465b9c59a9bf9cd9344ecfb13c4) refs, 2026-10-19 |
 | [FR-SR-04](functional/04-stacks-and-resources.md#fr-sr-04) | The Key is unique | Implemented | SR-04 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-05](functional/04-stacks-and-resources.md#fr-sr-05) | The Display Name is required, unique and can be changed | Implemented | SR-05 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
-| [FR-SR-06](functional/04-stacks-and-resources.md#fr-sr-06) | The description comes from the Artifacts | Implemented | SR-06 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
+| [FR-SR-06](functional/04-stacks-and-resources.md#fr-sr-06) | The description comes from the Artifacts | Implemented | SR-06 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02) | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-07](functional/04-stacks-and-resources.md#fr-sr-07) | The Level at Registration is at most Described | Specified | SR-07 | – | – |
 | [FR-SR-08](functional/04-stacks-and-resources.md#fr-sr-08) | Store a Fingerprint at Registration | Specified | SR-08 | – | – |
 | [FR-SR-09](functional/04-stacks-and-resources.md#fr-sr-09) | Open the Log at Registration | Specified | SR-09 | – | – |
@@ -170,7 +170,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A definition in business language | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
+| [FR-RC-01](functional/05-resource-card.md#fr-rc-01) | A Business Description of the Resource | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-02](functional/05-resource-card.md#fr-rc-02) | Open questions about the data | Proposed | – | – | – |
 | [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Proposed | – | – | [33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Proposed | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
@@ -185,8 +185,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-13](functional/05-resource-card.md#fr-rc-13) | Since when the data is reliable | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-14](functional/05-resource-card.md#fr-rc-14) | Checks and incidents | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-15](functional/05-resource-card.md#fr-rc-15) | The Owner and the Data Team edit in place | Specified | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
-| [FR-RC-16](functional/05-resource-card.md#fr-rc-16) | A description from dbt is overridden only on purpose | Proposed | – | – | – |
-| [FR-RC-17](functional/05-resource-card.md#fr-rc-17) | A changed description in dbt asks the Owner to review their text | Proposed | – | – | – |
+| [FR-RC-16](functional/05-resource-card.md#fr-rc-16) | A Business Description of every field | Specified | – | – | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
+| [FR-RC-17](functional/05-resource-card.md#fr-rc-17) | A changed description in dbt is told to the Owner | Specified | – | – | [f39b66d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f39b66d61c8918f154b390754ba5e635d5c21d3b) refs, 2026-10-26 |
+| [FR-RC-18](functional/05-resource-card.md#fr-rc-18) | Both descriptions, wherever a description is used | Specified | – | – | – |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 

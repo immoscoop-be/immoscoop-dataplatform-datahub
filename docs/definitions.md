@@ -25,6 +25,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="artifact-set"></a>**Artifact Set** | The Artifacts of one successful run of a Source Job, with run ID, git SHA and timestamp. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="artifacts"></a>**Artifacts** | `manifest.json` and `catalog.json`, the files dbt produces about a dbt project. Not to be confused with GCP's Artifact Registry, which holds the Docker images. | [The dbt Artifacts](overview/data-hub.md#the-dbt-artifacts) |
 | <a id="beta-concept"></a>**Beta Concept** | A concept that business defines itself, such as buy session. It lives only in its own context in Data Hub and is at Level 0, Beta; whatever is built on it is Beta too. | [DEC-DH-61](overview/open-themes.md#dec-dh-61) |
+| <a id="business-description"></a>**Business Description** | The description of a Resource, or of one of its fields, that its Owner or the Data Team writes in Data Hub. It stands next to the description from dbt and never replaces it; where there is none, the description from dbt stands alone. | [DEC-RC-01](requirements/functional/05-resource-card.md#dec-rc-01) |
 | <a id="catalogue"></a>**Catalogue** | Everything Data Hub offers to find and browse, layered from Resources through Lenses to Reports. Not to be confused with the catalogue service or with dbt's catalog. | [1. Catalogue management](overview/open-themes.md#1-catalogue-management) |
 | <a id="change"></a>**Change** | A difference for one Node between a new Artifact Set and the previous Current Version: a description, logic, type or structural change, or a Node added or removed. | [Artifact registry](requirements/functional/01-artifact-registry.md#kinds-of-change) |
 | <a id="chart-server"></a>**Chart Server** | The service semgraph of Data Hub, which draws charts by what they mean, following the chart language. Until its users have moved over, its former version on AWS keeps running too. | [DEC-DH-53](overview/data-hub.md#dec-dh-53), [DEC-DH-63](overview/data-hub.md#dec-dh-63) |
@@ -126,6 +127,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | beslissing | decision |
 | bibliothecaris | librarian |
 | bronjob | Source Job |
+| businessbeschrijving | Business Description |
 | collectie | Collection |
 | collectiebeheer en wieden | collection management and weeding |
 | confidentialiteitsniveau | level of confidentiality |

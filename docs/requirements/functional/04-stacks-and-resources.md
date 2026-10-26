@@ -161,6 +161,8 @@ The Display Name is required and unique. It can be changed later; every change g
 
 The description comes from the Artifacts and is not retyped in Data Hub.
 
+*Note of 2026-10-26: next to it, the Owner and the Data Team can write a Business Description, of the Resource and of each field ([DEC-RC-01](05-resource-card.md#dec-rc-01)); the description from dbt itself is still never edited in Data Hub.*
+
 <a id="fr-sr-07"></a>
 ### FR-SR-07 · The Level at Registration is at most Described
 

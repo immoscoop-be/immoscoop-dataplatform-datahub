@@ -8,7 +8,9 @@
   what one run reads; the Data Team accepts or refuses it with a reason, its author waits. The switch shows both. The slide-in on a Collection, Resource or
   Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
   Opened in context: lens-context (the Question), lens-new-context (the Request).
-  Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub).
+  Also for the Owner: what Data Hub tells them when descriptions changed in dbt (FR-RC-17, DEC-RC-03): before and after, with their
+  Business Description next to it; it asks for nothing. ?msg=described opens it.
+  Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub); FR-RC-17.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -76,6 +78,14 @@
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">20 min ago</span></span>
      <span class="mc-excerpt">Please accept this lens: one run reads 38.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
+     
+    </span>
+   </a><a class="mc-item unread" href="#" data-for="owner" data-target="described" role="tab" aria-selected="false">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">yesterday</span></span>
+     <span class="mc-excerpt">Two descriptions changed in dbt: the one of the table and the one of lead_count. Your business descriptions stay as they are, next to them.</span>
      
     </span>
    </a><a class="mc-item unread" href="#" data-for="owner" data-target="question" role="tab" aria-selected="false">
@@ -194,6 +204,40 @@
    <textarea placeholder="Everyone who may see the lens can read it."></textarea>
    <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification; the question shows as answered.</p>
     <button class="btn-primary"><i class="ph-fill ph-arrow-bend-up-left" style="font-size:15px"></i>Reply</button></div>
+  </div>
+ </section>
+ <section class="card mc-detail" aria-label="The message" data-pane-group="msg" data-pane="described" hidden>
+  <div class="mc-detail-head">
+   <i class="ph ph-table" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><div class="meta">Resource · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Weekly lead volume</div></div>
+   <a class="btn-quiet outline" href="resource-detail.html?tabs=columns" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-square-out"></i>Open the resource</a>
+  </div>
+  <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">DH</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta">yesterday 06:40 · dbt run of 25 Oct</span></div>
+     <p>Two descriptions of Weekly lead volume changed in dbt. Your business descriptions stay as they are, next to them: read them again, and change yours where it no longer fits. Nothing is asked of you, and the level and the publication do not change.</p>
+    </div>
+  </div>
+  <div class="desc-change">
+   <h4><i class="ph ph-table" aria-hidden="true"></i>The table</h4>
+   <dl>
+    <dt>Before, in dbt</dt><dd><del>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted.</del></dd>
+    <dt>Now, in dbt</dt><dd>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</dd>
+    <dt>Your business description</dt><dd>The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</dd>
+   </dl>
+  </div>
+  <div class="desc-change">
+   <h4><span class="mono">lead_count</span><span class="meta">INT64</span></h4>
+   <dl>
+    <dt>Before, in dbt</dt><dd><del>Number of credit leads sent to KBC</del></dd>
+    <dt>Now, in dbt</dt><dd>Number of credit leads sent to KBC, without test and duplicate requests</dd>
+    <dt>Your business description</dt><dd>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</dd>
+   </dl>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0 40px">
+   <a class="btn-primary" href="resource-columns-edit.html?fd=changed" style="text-decoration:none"><i class="ph-fill ph-pencil-simple" style="font-size:15px"></i>Edit business descriptions</a>
+   <p class="meta" style="flex:1;min-width:200px;margin:0;line-height:1.5">Readers see both descriptions, each with where it comes from. A description in dbt changes in the dbt project; ask the data team if it is wrong.</p>
   </div>
  </section>
 </div>
