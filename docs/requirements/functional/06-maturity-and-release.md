@@ -7,7 +7,7 @@
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Maturiteit en ontsluiting](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1373274123) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17. The Confluence page has no properties table, and the domain overview still listed it as "to be described". |
 
-**In one sentence:** the Level of a Resource rises through demonstrable steps and drops only for concrete causes; it is information for everyone, while the Publication determines who has access.
+**In one sentence:** the Level of a Resource rises through demonstrable steps and drops only when a trace it rests on goes, never for a change to its schema; it is information for everyone, while the Publication determines who has access.
 
 *Functional domain 6 of Data Hub. Overview: [Functional domains](README.md). The ladder itself: [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858) (Confluence, Dutch); the Level names are in the [definitions](../../definitions.md#maturity-levels).*
 
@@ -20,6 +20,7 @@
 - <a id="dec-mr-05"></a>**DEC-MR-05** · A Confirmation does not expire. There is no expiry date and no reminder.
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
 - <a id="dec-mr-07"></a>**DEC-MR-07** · A Confirmation is business confirming what a Resource is and what it stands for, as its descriptions say. It has no link to the data inside it: no control figures, no checks on values. Exploring the data belongs to the EDA, Level 4, Explored, where far more is learned about a Resource than a Confirmation can carry. *Decided on 2026-10-26, by Max.*
+- <a id="dec-mr-08"></a>**DEC-MR-08** · A change to the schema of a Resource never lowers its Level, and asks for no new Confirmation. A field added, removed, renamed or retyped since the last Confirmation gives a warning on the Resource, to everyone who sees it, and the Owner a Message; the warning stays until the Owner or the Data Team marks it seen. The Level still follows its traces: a missing description, a removed EDA document or the last check switched off still lower it ([DEC-DH-31](../../overview/data-hub.md#dec-dh-31)). *Decided on 2026-10-26, by Max.*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -29,7 +30,7 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 | --- | --- | --- |
 | 1 Available | Registered, description incomplete | – |
 | 2 Described | The view and every column have a description | A description is missing: to Available |
-| 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation) | Structural Change: to Described |
+| 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation) | – (a change to the schema gives a warning, [DEC-MR-08](#dec-mr-08)) |
 | 4 Explored | An EDA document is linked | The EDA document disappears: to Confirmed |
 | 5 Monitored | At least one active check | The last active check is switched off: to Explored |
 
@@ -66,9 +67,11 @@ Monitored requires at least one active check, on top of Explored.
 <a id="fr-mr-05"></a>
 ### FR-MR-05 · A structural Change resets the Level to Described
 
-**Status:** Specified · **Confluence:** MO-05
+**Status:** Withdrawn · **Confluence:** MO-05
 
 A structural Change (hash of the structure) puts the Resource back to Described, whatever its Level. Type and logic Changes only notify the Owner.
+
+*Note of 2026-10-26: withdrawn by Max. A change to the schema no longer lowers the Level; it gives a warning ([DEC-MR-08](#dec-mr-08), [FR-MR-12](#fr-mr-12)).*
 
 <a id="fr-mr-06"></a>
 ### FR-MR-06 · A failing check does not lower the Level
@@ -91,6 +94,8 @@ If the last active check is switched off, the Resource drops to Explored. If the
 
 A Confirmation stays valid as long as there is no drop. There is no expiry date or reminder.
 
+*Note of 2026-10-26: a change to the schema is no drop any more ([DEC-MR-08](#dec-mr-08)), so a Confirmation stays valid through it.*
+
 <a id="fr-mr-09"></a>
 ### FR-MR-09 · Log every rise and drop, and alert the Owner on a drop
 
@@ -109,11 +114,20 @@ The Level restricts no access or channel. It is shown everywhere, also by Claude
 <a id="fr-mr-11"></a>
 ### FR-MR-11 · Confirming again shows what changed
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
+**Status:** Withdrawn · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
 
 When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-resources.md#fr-sr-20)), Data Hub shows why it dropped and what changed, who confirmed it last and when ([FR-RC-12](05-resource-card.md#fr-rc-12)), and what the Owner confirms: what the Resource is and what it stands for ([DEC-MR-07](#dec-mr-07)). The new Confirmation is kept with the Fingerprint of that moment, next to the earlier ones. It changes nothing about the Publication.
 
 *Note of 2026-10-26: the control figures are left out; a Confirmation makes no claim about the data ([DEC-MR-07](#dec-mr-07)).*
+
+*Note of 2026-10-26: withdrawn by Max. There is no reconfirmation: a change to the schema gives a warning, which the Owner marks seen ([DEC-MR-08](#dec-mr-08), [FR-MR-12](#fr-mr-12)). When a Level that dropped for another cause comes back, the earlier Confirmation still holds.*
+
+<a id="fr-mr-12"></a>
+### FR-MR-12 · A change since the last Confirmation gives a warning
+
+**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05))
+
+When a field of a Resource is added, removed, renamed or gets another type after its last Confirmation, Data Hub shows a warning on the Resource to everyone who sees it, with what changed and when, and tells the Owner in the Message Centre. The Level and the Publication stay as they are. The Owner or the Data Team marks the warning seen; it then goes, and the change stays in the History. Changes that come before it is seen show together in the same warning.
 
 ## Open points
 
@@ -123,11 +137,11 @@ When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-
 Raised during the migration to this repository; not on the Confluence page:
 
 - [ ] <a id="op-mr-03"></a>**OP-MR-03** · Align the definition of Described. [DEC-DH-34](../../overview/data-hub.md#dec-dh-34) requires, at a minimum, a description on the table and on every column plus `model_type` and `grain` in `meta`. [DEC-MR-01](#dec-mr-01) and [FR-MR-01](#fr-mr-01) only require the descriptions.
-- [ ] <a id="op-mr-04"></a>**OP-MR-04** · Complete the drop causes in [Rising and dropping](#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](02-user-management.md#ec-um-01), [EC-CO-01](03-collections.md#ec-co-01)).
+- [ ] <a id="op-mr-04"></a>**OP-MR-04** · Complete the drop causes in [Rising and dropping](#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](02-user-management.md#ec-um-01), [EC-CO-01](03-collections.md#ec-co-01)). *Note of 2026-10-26: a structural Change is no longer a cause of a drop ([DEC-MR-08](#dec-mr-08)); the causes named here remain to complete.*
 
 Raised during the review of the migration; not on the Confluence page:
 
-- [ ] <a id="op-mr-05"></a>**OP-MR-05** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../../overview/data-hub.md#dec-dh-26) and [FR-MR-05](#fr-mr-05) say a type Change does not lower the Level; only the structure hash does.
+- [x] <a id="op-mr-05"></a>**OP-MR-05** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../../overview/data-hub.md#dec-dh-26) and [FR-MR-05](#fr-mr-05) say a type Change does not lower the Level; only the structure hash does. *Decided on 2026-10-26, by Max: no part of the Fingerprint makes a Resource drop; a change to the schema gives a warning ([DEC-MR-08](#dec-mr-08)).*
 
 ## Builds on
 

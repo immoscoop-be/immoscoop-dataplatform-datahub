@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 210: 41 Implemented, 64 Specified, 78 Proposed, 27 Withdrawn |
+| Functional requirements | 212: 41 Implemented, 63 Specified, 78 Proposed, 30 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 63 |
-| Prototype screens | 34, plus the index |
-| Open points | 144 open, of 205 |
+| Design decisions (DEC-UX) | 64 |
+| Prototype screens | 33, plus the index |
+| Open points | 144 open, of 207 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, the start of Lenses, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -401,8 +401,8 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
   - **Proposed:** a definition in business language, open questions, Known Gaps, a log of changes and Anomalies for people and for Claude, Stability, and relationships through an Entity and an identifier ([FR-RC-01](../requirements/functional/05-resource-card.md#fr-rc-01) to [FR-RC-10](../requirements/functional/05-resource-card.md#fr-rc-10)).
 - **The Levels** ([FR-MR-01](../requirements/functional/06-maturity-and-release.md#fr-mr-01) to [FR-MR-10](../requirements/functional/06-maturity-and-release.md#fr-mr-10), all Specified):
   - Described when the table and every column have a description; Confirmed when the Owner confirms, from Described; Explored with a linked EDA document; Monitored with at least one active check.
-  - A structural Change resets the Level to Described. A failing check does not lower it; losing the last check or the EDA document does. A Confirmation does not expire.
-  - Every rise and drop is logged, and the Owner is alerted on a drop. The Level restricts nothing and is shown everywhere.
+  - A change to the schema never lowers the Level: a field added, removed, renamed or retyped since the last Confirmation gives a warning on the Resource and a Message to the Owner, until the Owner or the Data Team marks it seen ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08), [FR-MR-12](../requirements/functional/06-maturity-and-release.md#fr-mr-12), from your review, 2026-10-26). A failing check does not lower it either; losing the last check or the EDA document does. A Confirmation does not expire, and there is no reconfirmation.
+  - Every rise and drop is logged, and the Owner is alerted on a drop, which now only follows a trace that goes. The Level restricts nothing and is shown everywhere.
 
 **Relationships, set up when a Resource is added** (from your review, 2026-10-24). At step 2 the Data Admin records the reference of the Resource: which column is which Entity identifier, such as `agency.agencyId`. Not the join itself: Data Hub links every Resource that carries the same reference ([FR-RC-08](../requirements/functional/05-resource-card.md#fr-rc-08), [FR-RC-09](../requirements/functional/05-resource-card.md#fr-rc-09)). For a Resource built on a Colleciónes model, the reference can normally be derived from the docs of that model, so the Data Admin confirms it rather than typing it. This answers where the reference is recorded ([OP-RC-05](../requirements/functional/05-resource-card.md#op-rc-05)), and is now [FR-CO-33](../requirements/functional/03-collections.md#fr-co-33). What a relation records about its cardinality is under discussion ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)).
 
@@ -410,9 +410,9 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 
 ### The screens
 
-![The page of a Resource, here after a drop: the alert asks the Owner to reconfirm, the Overview tiles show the Resource Card, and its Level, grain and Reconfirm carry the marker of the learning centre](images/07-resource-detail.jpg)
+![The page of a Resource, here with a change since its last Confirmation: the warning says a field was added and the Level stays, the Overview tiles show the Resource Card, and its Level, grain and Mark as seen carry the marker of the learning centre](images/07-resource-detail.jpg)
 
-**The page of a Resource.** The header carries the Display Name, the Level, the Collection and a status row. Below it the tabs ([FR-SR-24](../requirements/functional/04-stacks-and-resources.md#fr-sr-24)): the Overview holds the Resource Card as tiles, then Columns, Preview, Queries and Conversations. Lineage, EDA and History are tabs without a design yet. The Description tile and the Columns tab show the Business Description and the description from dbt side by side ([DEC-UX-61](../design/principles.md#dec-ux-61)). The screen shows the state after a drop: an alert asks the Owner to reconfirm, and the Level reads Described. Screen: `resource-detail`.
+**The page of a Resource.** The header carries the Display Name, the Level, the Collection and a status row. Below it the tabs ([FR-SR-24](../requirements/functional/04-stacks-and-resources.md#fr-sr-24)): the Overview holds the Resource Card as tiles, then Columns, Preview, Queries and Conversations. Lineage, EDA and History are tabs without a design yet. The Description tile and the Columns tab show the Business Description and the description from dbt side by side ([DEC-UX-61](../design/principles.md#dec-ux-61)). The screen shows a change since the last Confirmation: a warning says a field was added, the Level stays 4 · Explored, and the Owner and the Data Team can mark it as seen ([DEC-UX-64](../design/principles.md#dec-ux-64)). Screen: `resource-detail`.
 
 ![Editing the Overview in place: the parts Data Hub keeps become fields; the Business Description is a field next to the description from dbt, which stays read-only and says so](images/08-resource-edit.jpg)
 
@@ -442,13 +442,13 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 **Proposal for the Resource Card and the Levels**, for the technical analysis:
 
 - **One append-only table per kind of knowledge,** in line with [DEC-DH-57](../overview/data-hub.md#dec-dh-57): the texts the Owner writes (definition, Known Gaps, Stability, since when reliable) as versions, each with who and when; Anomalies with their period and impact; links to EDA documents; and Confirmations with their Fingerprint (see Publishing and confirming). The current card is the latest version of each.
-- **The Level is computed, its history logged.** catalogue computes the Level from the traces when it is asked: the descriptions from registry, the latest Confirmation and whether the schema still matches its Fingerprint, a linked EDA document, an active check. After every event that can move it (a new Artifact Set, a Confirmation, an EDA link, a check added or removed) it computes it again and writes a Log Entry when it differs from the last one. That keeps [DEC-DH-31](../overview/data-hub.md#dec-dh-31) (never stored as a label) and [FR-MR-09](../requirements/functional/06-maturity-and-release.md#fr-mr-09) (every rise and drop logged).
-- **The drop needs the Changes:** a structural Change only resets the Level once registry compares versions and hands the Changes over ([FR-AR-11](../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)), so those come first in the build.
+- **The Level is computed, its history logged.** catalogue computes the Level from the traces when it is asked: the descriptions from registry, the latest Confirmation, a linked EDA document, an active check. After every event that can move it (a new Artifact Set, a Confirmation, an EDA link, a check added or removed) it computes it again and writes a Log Entry when it differs from the last one. That keeps [DEC-DH-31](../overview/data-hub.md#dec-dh-31) (never stored as a label) and [FR-MR-09](../requirements/functional/06-maturity-and-release.md#fr-mr-09) (every rise and drop logged).
+- **The warning needs the Changes:** a change since the last Confirmation only shows once registry compares versions and hands the Changes over ([FR-AR-11](../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)), so those come first in the build.
 - **The page in one call:** `GET /resources/{id}` assembles the card from catalogue's own tables and registry's Node, and answers "not found" for a Resource the User may not see.
 
 ### Open
 
-- What Described requires: only descriptions, or also `model_type` and `grain` ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03)); which part of the Fingerprint makes a Resource drop ([OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)); the full list of drop causes ([OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)).
+- What Described requires: only descriptions, or also `model_type` and `grain` ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03)); the full list of drop causes ([OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)).
 - How the definition in business language relates to the description from dbt ([OP-RC-01](../requirements/functional/05-resource-card.md#op-rc-01)), and where the Entity of a Resource is recorded ([OP-RC-05](../requirements/functional/05-resource-card.md#op-rc-05)).
 - Whether a Business Description counts towards Described: proposed not, Described stays measured on dbt ([OP-RC-20](../requirements/functional/05-resource-card.md#op-rc-20)).
 - The words for Known Gaps, the log of changes and Stability ([OP-RC-03](../requirements/functional/05-resource-card.md#op-rc-03), [OP-RC-04](../requirements/functional/05-resource-card.md#op-rc-04)), and a convention for Display Names ([OP-SR-01](../requirements/functional/04-stacks-and-resources.md#op-sr-01)).
@@ -464,8 +464,8 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 - **Only the Owner publishes** ([FR-SR-16](../requirements/functional/04-stacks-and-resources.md#fr-sr-16)), and only from Described. **The first Publication is the first Confirmation:** by publishing, the Owner confirms what the Resource is and what it stands for, and it rises to Confirmed. A Confirmation makes no claim about the data inside it; that is for the EDA ([DEC-MR-07](../requirements/functional/06-maturity-and-release.md#dec-mr-07), from your review, 2026-10-26) ([FR-SR-17](../requirements/functional/04-stacks-and-resources.md#fr-sr-17)).
 - **Who sees it** follows the Publication and the Collection, not the Level ([FR-SR-31](../requirements/functional/04-stacks-and-resources.md#fr-sr-31)). Not published: the Data Team and the Owner Unit. Published: everyone who sees the Collection, which for a public Collection is the whole company.
-- **A published Resource stays published when its Level drops** ([FR-SR-19](../requirements/functional/04-stacks-and-resources.md#fr-sr-19)). The Owner gets an alert, the lower Level shows everywhere, and the Owner confirms again without touching the Publication ([FR-SR-20](../requirements/functional/04-stacks-and-resources.md#fr-sr-20)). That way a Resource never disappears for those who use it.
-- **At every Confirmation** Data Hub keeps a Fingerprint of the schema; when the schema no longer matches it, the Resource drops to Described ([DEC-DH-35](../overview/data-hub.md#dec-dh-35)). A Confirmation does not expire ([FR-MR-08](../requirements/functional/06-maturity-and-release.md#fr-mr-08)).
+- **A published Resource stays published when its Level drops** ([FR-SR-19](../requirements/functional/04-stacks-and-resources.md#fr-sr-19)). The Owner gets an alert and the lower Level shows everywhere. That way a Resource never disappears for those who use it. **An Owner cannot unpublish** (from your review, 2026-10-26): a Resource can be marked deprecated instead, its use discouraged, hiding and blocking nothing ([DEC-SR-28](../requirements/functional/04-stacks-and-resources.md#dec-sr-28), [FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50)).
+- **At every Confirmation** Data Hub keeps a Fingerprint of the schema; when the schema no longer matches it, a warning says what changed, and the Level stays ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)). A Confirmation does not expire ([FR-MR-08](../requirements/functional/06-maturity-and-release.md#fr-mr-08)).
 - **Proposed:** publishing says who will see the Resource and asks for the Confirmation: the declaration, ticked in one bar with the button, which stays off until it is ticked ([FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49), [DEC-UX-63](../design/principles.md#dec-ux-63)). The control figures are withdrawn ([FR-RC-03](../requirements/functional/05-resource-card.md#fr-rc-03)); confirming again shows what changed ([FR-MR-11](../requirements/functional/06-maturity-and-release.md#fr-mr-11)).
 
 ### The screens
@@ -474,9 +474,6 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 **Publish** opens a sheet over the page of the Resource, in three parts ([DEC-UX-31](../design/principles.md#dec-ux-31)): who will see it; what Data Hub checked (that the User may publish it, and that it is Described, naming any column without a description); and what the Owner confirms: what the Resource is and what it stands for, its Business Description and its description from dbt. At the foot, the declaration and the button are one bar; the button is off until the box is ticked. Until then the Resource reads "not published" in its status row and is grey in the panel. Screen: `resource-publish`.
 
-![Confirming again after a drop: why it dropped, what changed, who confirmed it last, and what the Owner confirms, with the new column marked](images/10-resource-reconfirm.jpg)
-
-**Reconfirm,** after a drop, opens the same sheet as Confirm again: why it dropped and what changed, who confirmed it last, and what the Owner confirms, with the new column marked. The Publication does not change. Screen: `resource-reconfirm`.
 
 ### Behind it: proposal
 
@@ -485,24 +482,24 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 | Table | What it would keep |
 | --- | --- |
 | `resources` (two new columns) | `published_at` and `published_by`: the current state, read on every request to decide who sees the Resource |
-| `confirmations` | Append-only, one row per Confirmation: who and when, the Artifact Set it was made on, the Fingerprint (the columns and their types from the catalog), and whether it was the first Publication or a reconfirmation after a drop |
-| `resource_log` (built) | The events themselves, with their Log IDs: published, confirmed, dropped |
+| `confirmations` | Append-only, one row per Confirmation: who and when, the Artifact Set it was made on, the Fingerprint (the columns and their types from the catalog), and whether it was the first Publication |
+| `resource_log` (built) | The events themselves, with their Log IDs: published, confirmed, a change marked seen, deprecated |
 
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /resources/{id}/publication-check` | What the sheet shows before anything happens: who would see it, whether the User may publish, whether it is Described and which columns lack a description |
 | `PUT /resources/{id}/publication` | Publish, together with the first Confirmation, in one transaction (Owner only) |
-| `POST /resources/{id}/confirmations` | Confirm again after a drop (Owner only) |
+| `POST /resources/{id}/changes/seen` | Mark the changes since the last Confirmation as seen (Owner and Data Team) |
+| `PUT`, `DELETE /resources/{id}/deprecation` | Mark deprecated, or take it away (Owner and Data Team) |
 
 **Points for the analysis:**
 
 - **Who sees what is one rule in one place:** catalogue answers it for its own pages, and for query through `POST /visibility`. A Resource the User may not see answers exactly like one that does not exist.
-- **The alert on a drop** needs the Message Centre (see Messages), which reaches the whole Owner Unit ([FR-LN-01](../requirements/functional/07-log-and-notifications.md#fr-ln-01)). Until then, the page of the Collection lists what needs attention.
+- **The warning on a change and the alert on a drop** need the Message Centre (see Messages), which reaches the whole Owner Unit ([FR-LN-01](../requirements/functional/07-log-and-notifications.md#fr-ln-01)). Until then, the page of the Collection lists what needs attention.
 
 ### Open
 
-- Later: whether an Owner can unpublish, and what then happens to the Lenses of colleagues built on it ([OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05)).
-- Which part of the Fingerprint makes a Resource drop ([OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)).
+- What marking a Resource deprecated holds, and how it shows ([OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16), [OP-UX-25](../design/principles.md#op-ux-25)).
 
 ## Query
 
@@ -646,7 +643,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 | Request | A Lens, for now | The Data Team, which accepts or refuses; the decision notifies the sender ([FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)) |
 
 - **Who sees a Message** follows who sees its object, and none is private ([FR-CV-05](../requirements/functional/14-conversations.md#fr-cv-05)).
-- **The Message Centre** in the top navigation, with the number unread: by default the Messages for you, on what your Owner Unit owns, what you wrote or answered, Signals for the Data Team, and what Data Hub itself tells you, such as a Level that dropped ([FR-CV-06](../requirements/functional/14-conversations.md#fr-cv-06)).
+- **The Message Centre** in the top navigation, with the number unread: by default the Messages for you, on what your Owner Unit owns, what you wrote or answered, Signals for the Data Team, and what Data Hub itself tells you, such as a field changed since the last Confirmation ([FR-CV-06](../requirements/functional/14-conversations.md#fr-cv-06)).
 - **On the object:** Messages on a Collection, Resource or Lens open in a slide-in, the Message Centre filtered on that object ([FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07)).
 - **Open in context** opens the page of the object with the Message in a floating window over it, so you read the object while you answer ([FR-CV-09](../requirements/functional/14-conversations.md#fr-cv-09)).
 
@@ -677,7 +674,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 | `messages` | ID, the object (kind and ID), the Message it answers, kind, text, who and when; append-only, an edit is a new version |
 | `requests` | Per Request: its state (waiting, accepted, refused), who decided, when, and the reason |
 | `message_reads` | Per User, what they have read, for the count of unread |
-| `notifications` | What Data Hub tells a User or an Owner Unit itself, such as a drop, with a link to the object |
+| `notifications` | What Data Hub tells a User or an Owner Unit itself, such as a change since the last Confirmation, with a link to the object |
 
 - **Who gets notified** is worked out when a Message is placed: the Owner Unit is a group ID, so a notification to an Owner reaches every member ([FR-LN-01](../requirements/functional/07-log-and-notifications.md#fr-ln-01)). For the Message Centre, matching group IDs from the Access Token is enough. For e-mail or Slack later, identity needs the members of a group: that is the group synchronisation of [FR-UM-07](../requirements/functional/02-user-management.md#fr-um-07).
 - **Unread counts** are read when a page loads; no live connection is needed for v1.
@@ -739,9 +736,9 @@ In the rail the learning centre sits at the bottom, above the account, not among
 
 ![The pop-out on the grain chip of a Resource: a text bubble with three learning cards, each with its gain, whether the User saw it, and See it](images/27-learning-pop-out-chip.jpg)
 
-**The marker and its pop-out** ([DEC-UX-56](../design/principles.md#dec-ux-56), [DEC-UX-57](../design/principles.md#dec-ux-57)). On the page of a Resource, its Level, its grain and "Reconfirm" carry ⓘ. The pop-out opens after a one-second hold, so passing over the page opens nothing; keyboard focus opens it at once. Screens: `resource-detail` (rest the pointer on the grain), `learning-hover`.
+**The marker and its pop-out** ([DEC-UX-56](../design/principles.md#dec-ux-56), [DEC-UX-57](../design/principles.md#dec-ux-57)). On the page of a Resource, its Level, its grain and "Mark as seen" carry ⓘ. The pop-out opens after a one-second hold, so passing over the page opens nothing; keyboard focus opens it at once. Screens: `resource-detail` (rest the pointer on the grain), `learning-hover`.
 
-![The pop-out on the Reconfirm button, its arrow on the marker](images/28-learning-pop-out-button.jpg)
+![The pop-out on the Mark as seen button, its arrow on the marker](images/28-learning-pop-out-button.jpg)
 
 **On a button** the pop-out works the same, and the button keeps its own action; on a touch screen only a tap on the marker opens it.
 
@@ -1018,7 +1015,7 @@ Five domains have no requirements yet, and two have only a few proposals. None o
 | [Reports](../requirements/functional/10-reports.md) | Lenses bundled around a question, with text and shared Parameters | To be specified; the section is in the navigation, without a start screen ([OP-UX-03](../design/principles.md#op-ux-03)) | Lenses first; Parameters named so they combine across Lenses ([DEC-DH-11](../overview/data-hub.md#dec-dh-11)) |
 | [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) | Concepts business defines itself, and how they harden into a Resource | To be specified ([OP-DH-07](../overview/open-themes.md#op-dh-07), [OP-DH-08](../overview/open-themes.md#op-dh-08), [OP-DH-26](../overview/open-themes.md#op-dh-26), [OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)) | Level 0, Beta; whether a Lens can define a new concept |
 | [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) | Roles, access and personal keys | To be specified; confidentiality first as a concept ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)) | Excel; what may reach Claude; the access axis |
-| [Log and notifications](../requirements/functional/07-log-and-notifications.md) | The Log Catalogue, the Message Centre, who hears what, through which channel | Two Specified (the Query Log), four Proposed | Alerts on a drop, Requests, notifying Consumers of a structural Change |
+| [Log and notifications](../requirements/functional/07-log-and-notifications.md) | The Log Catalogue, the Message Centre, who hears what, through which channel | Two Specified (the Query Log), four Proposed | Alerts on a drop, warnings on a change, Requests, notifying Consumers of a changed field |
 | [Channels](../requirements/functional/13-channels.md) | Through which channels each asset is released | Five Proposed | Excel feeds, exports, HTML reports |
 
 ### Postponing EDA: what it means
@@ -1053,8 +1050,8 @@ Of the 145 open points, most can wait. This section sorts the ones that matter f
 | A2 | **How query reads Resources** ([OP-SR-10](../requirements/functional/04-stacks-and-resources.md#op-sr-10), [OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)) | Nothing can be queried without it, and it is where A1 meets BigQuery | Decide together with A1 |
 | A3 | **The stack and the look of the web app** ([OP-UX-10](../design/principles.md#op-ux-10), [OP-UX-09](../design/principles.md#op-ux-09)) | The rebuild of web starts from it; the design itself is stack-independent | Decide before the first screen is built |
 | A4 | **What a Lens is: flavours or types** ([OP-LE-07](../requirements/functional/09-lenses.md#op-le-07), [OP-DH-09](../overview/open-themes.md#op-dh-09)) | The overview's Lens follows the chart language; the designed one returns a table. The tables of Lenses depend on which | Start with the basic flavour (a query with Parameters), with room for a type later |
-| A5 | **Messages as a whole** ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)) and where they live ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) | The alerts on a drop and the Requests for a very large Lens run through them | In catalogue for v1; in Data Hub only, no e-mail or Slack yet |
-| A6 | **What Described requires, and which part of the Fingerprint drops a Resource** ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03), [OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)) | The Level computation and the Confirmation table depend on it | Decide with the Resource Card |
+| A5 | **Messages as a whole** ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)) and where they live ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) | The warnings on a change and the Requests for a very large Lens run through them | In catalogue for v1; in Data Hub only, no e-mail or Slack yet |
+| A6 | **What Described requires** ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03); which part of the Fingerprint drops a Resource is decided: none, [OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)) | The Level computation and the Confirmation table depend on it | Decide with the Resource Card |
 | A7 | **Who reads the registry** ([OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)) | Lineage on a Resource, and Claude's lineage tool, need it for everyone | Everyone, for the Nodes beneath what they may see |
 | A8 | **Who sees the queries of others** ([OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)) | Shapes the Query Log's read rules | Who, when, how and what it read; never the SQL |
 | A9 | **The Data Team in a Collection it does not own** ([OP-CO-12](../requirements/functional/03-collections.md#op-co-12)) | Today's code lets it edit every Collection | **Decided on 25 October:** the Data Team may do everything in every Collection ([DEC-CO-18](../requirements/functional/03-collections.md#dec-co-18)) |
@@ -1072,7 +1069,7 @@ Of the 145 open points, most can wait. This section sorts the ones that matter f
 | Beta and promotion | [OP-DH-07](../overview/open-themes.md#op-dh-07), [OP-DH-08](../overview/open-themes.md#op-dh-08), [OP-DH-26](../overview/open-themes.md#op-dh-26), [OP-DH-28](../overview/open-themes.md#op-dh-28), [OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01) | Level 0, concepts made by business |
 | The Domain Model | [OP-DH-06](../overview/open-themes.md#op-dh-06), [OP-RC-05](../requirements/functional/05-resource-card.md#op-rc-05) | Browsing to Entities; the Entity reference of a Resource moved to step 2 (A11) |
 | Notifications outside Data Hub | [OP-DH-20](../overview/open-themes.md#op-dh-20), Slack | E-mail, Slack, digests; the group synchronisation can wait with it |
-| Unpublishing, asking for access | [OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05), [OP-CO-13](../requirements/functional/03-collections.md#op-co-13) | Nothing in the first build |
+| Deprecating, asking for access | [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16), [OP-CO-13](../requirements/functional/03-collections.md#op-co-13) | Nothing in the first build |
 | Data Hub and Domain Hub | [OP-DH-31](../overview/open-themes.md#op-dh-31) | Whether they merge |
 | Mobile | [OP-UX-06](../design/principles.md#op-ux-06) | Narrow screens |
 
@@ -1174,7 +1171,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 15 open
+Source: [design/principles.md](../design/principles.md) · 16 open
 
 - [ ] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
@@ -1192,6 +1189,7 @@ Source: [design/principles.md](../design/principles.md) · 15 open
 - [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in.
 - [ ] **[OP-UX-23](../design/principles.md#op-ux-23)** · **Dutch prototypes:** decide how the prototypes follow the language principle ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)). Proposal: a translation table in the prototypes, a key per sentence with its Dutch and English text, Dutch by default and a switch to English, so that [NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02) shows at work and a name in the table stands out. The alternative is translating the texts in place, which is faster and keeps no English. Either way names stay untouched, and the markers on names ([DEC-UX-59](../design/principles.md#dec-ux-59)) come in the same pass.
 - [x] **[OP-UX-24](../design/principles.md#op-ux-24)** · **Overriding a description from dbt, and reviewing it** ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16), [FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)): editing in place ([DEC-UX-09](../design/principles.md#dec-ux-09)) covers the Overview only, and no screen yet overrides the description of a field or reviews a text after a Change in dbt. Proposal: on the Columns tab, an action per field, "Override the description from dbt", that opens a field with the description from dbt under it; on the Overview, the definition takes the same action. The review is a sheet over the page, reached from the Message, with the description from dbt before and after the Change, the text of the Owner, and three choices: keep, change, or remove it. *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-26: Max chose two descriptions side by side instead of an override, and a Message without a review; designed in resource-detail, resource-edit, resource-columns-edit and messages, to review ([DEC-UX-61](../design/principles.md#dec-ux-61)).*
+- [ ] **[OP-UX-25](../design/principles.md#op-ux-25)** · **A deprecated Resource** ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)): design how the mark shows on the page of the Resource, in the panel, in search and on the Lenses built on it, and where the Owner and the Data Team set it. Proposal: a label "Deprecated" next to the Level, with the reason on hover and on the page; set from the header of the Resource. *Raised on 2026-10-26, in the review of Max.*
 
 ### Artifact registry
 
@@ -1230,7 +1228,7 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 - [ ] **[OP-SR-02](../requirements/functional/04-stacks-and-resources.md#op-sr-02)** · Complete the [Log catalogue](../requirements/functional/log-catalogue.md), with the Log IDs from the other domains.
 - [ ] **[OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)** · Work out what happens to Lenses and Reports when their Resource is deregistered.
 - [ ] **[OP-SR-04](../requirements/functional/04-stacks-and-resources.md#op-sr-04)** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](../requirements/functional/07-log-and-notifications.md).
-- [ ] **[OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05)** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it.
+- [x] **[OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05)** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](../requirements/functional/04-stacks-and-resources.md#dec-sr-28), [FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50)).*
 - [ ] **[OP-SR-07](../requirements/functional/04-stacks-and-resources.md#op-sr-07)** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08)).*
 - [ ] **[OP-SR-08](../requirements/functional/04-stacks-and-resources.md#op-sr-08)** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](../requirements/functional/04-stacks-and-resources.md#fr-sr-43)) and per Resource ([FR-SR-44](../requirements/functional/04-stacks-and-resources.md#fr-sr-44)) are proposed.*
 - [ ] **[OP-SR-09](../requirements/functional/04-stacks-and-resources.md#op-sr-09)** · Confirm or adjust the edge cases above.
@@ -1239,6 +1237,7 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 - [ ] **[OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)** · Decide who sees the queries of others: on a Resource ([FR-SR-44](../requirements/functional/04-stacks-and-resources.md#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](../requirements/functional/04-stacks-and-resources.md#fr-sr-43)). *Note of 2026-10-23: "All" in the panel is for the Data Team only ([DEC-UX-20](../design/principles.md#dec-ux-20)); what remains is the tab Queries of a Resource, where the same rule would show a colleague only their own queries and the numbers.* The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL.
 - [ ] **[OP-SR-14](../requirements/functional/04-stacks-and-resources.md#op-sr-14)** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](../requirements/functional/05-resource-card.md#fr-rc-04), [FR-RC-05](../requirements/functional/05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed.
 - [ ] **[OP-SR-15](../requirements/functional/04-stacks-and-resources.md#op-sr-15)** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](../requirements/functional/03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40).
+- [ ] **[OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)** · Work out what marking a Resource deprecated holds ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50)): whether it asks for a reason and what to use instead, how it shows in search, on a Lens and for Claude, and whether a new Lens can still be built on it. Proposal: a reason is asked, what to use instead is optional; a label next to the Level, wherever the Level shows; a new Lens on it is possible, with a warning. *Raised on 2026-10-26, in the review of Max.*
 
 ### Resource card
 
@@ -1268,13 +1267,13 @@ Source: [requirements/functional/05-resource-card.md](../requirements/functional
 
 ### Maturity and release
 
-Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 5 open
+Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 4 open
 
 - [ ] **[OP-MR-01](../requirements/functional/06-maturity-and-release.md#op-mr-01)** · Work out a new domain, [EDA](../requirements/functional/15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch).
 - [ ] **[OP-MR-02](../requirements/functional/06-maturity-and-release.md#op-mr-02)** · Work out the domain [Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md): kinds of checks, incidents and alerts.
 - [ ] **[OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03)** · Align the definition of Described. [DEC-DH-34](../overview/data-hub.md#dec-dh-34) requires, at a minimum, a description on the table and on every column plus `model_type` and `grain` in `meta`. [DEC-MR-01](../requirements/functional/06-maturity-and-release.md#dec-mr-01) and [FR-MR-01](../requirements/functional/06-maturity-and-release.md#fr-mr-01) only require the descriptions.
-- [ ] **[OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)** · Complete the drop causes in [Rising and dropping](../requirements/functional/06-maturity-and-release.md#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](../requirements/functional/03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](../requirements/functional/02-user-management.md#ec-um-01), [EC-CO-01](../requirements/functional/03-collections.md#ec-co-01)).
-- [ ] **[OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](../requirements/functional/04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../overview/data-hub.md#dec-dh-26) and [FR-MR-05](../requirements/functional/06-maturity-and-release.md#fr-mr-05) say a type Change does not lower the Level; only the structure hash does.
+- [ ] **[OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)** · Complete the drop causes in [Rising and dropping](../requirements/functional/06-maturity-and-release.md#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](../requirements/functional/03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](../requirements/functional/02-user-management.md#ec-um-01), [EC-CO-01](../requirements/functional/03-collections.md#ec-co-01)). *Note of 2026-10-26: a structural Change is no longer a cause of a drop ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)); the causes named here remain to complete.*
+- [x] **[OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](../requirements/functional/04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../overview/data-hub.md#dec-dh-26) and [FR-MR-05](../requirements/functional/06-maturity-and-release.md#fr-mr-05) say a type Change does not lower the Level; only the structure hash does. *Decided on 2026-10-26, by Max: no part of the Fingerprint makes a Resource drop; a change to the schema gives a warning ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
 
 ### Log and notifications
 

@@ -162,14 +162,14 @@ A run can be fetched and processed again manually, for recovery and tests.
 
 ## Kinds of Change
 
-This domain detects the Change and passes it on. What happens next (lowering the Level, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
+This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
 
 | Kind | When | Consequence, in another domain |
 | --- | --- | --- |
 | Description | A text on a table or field changes | In the Log; for the description of the Resource itself or one of its fields, a Message to the Owner ([FR-RC-17](05-resource-card.md#fr-rc-17)) |
 | Logic | The code of a Node changes (a filter, a join); the schema stays the same | In the Log, notification to the Owner |
-| Type | A field keeps its name but gets a different data type | In the Log, notification to the Owner |
-| Structural | A field is added or removed, including a rename | In the Log; the Resource drops to Described |
+| Type | A field keeps its name but gets a different data type | In the Log; a warning on the Resource and a Message to the Owner ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) |
+| Structural | A field is added or removed, including a rename | In the Log; a warning on the Resource and a Message to the Owner ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)); the Level stays |
 | Node added or removed | A model appears or disappears | In the Log of the Resources that depended on it |
 
 ## Edge cases

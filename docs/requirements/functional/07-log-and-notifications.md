@@ -41,7 +41,7 @@ A notification to the Owner of a Collection or a Resource reaches every member o
 
 **Status:** Proposed · **Source:** [REQ-DH-NOTIFY-SCHEMA](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-notify-schema)
 
-When a structural Change makes a Resource drop to Described and its Owner gets a notification ([FR-MR-05](06-maturity-and-release.md#fr-mr-05)), the Owner can notify the Consumers of the Resource from Data Hub.
+When a field of a Resource changes and its Owner gets the warning ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)), the Owner can notify the Consumers of the Resource from Data Hub.
 
 <a id="fr-ln-03"></a>
 ### FR-LN-03 · Data Hub knows the Consumers of a Resource

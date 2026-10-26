@@ -25,6 +25,8 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-004` | Withdrawn: no exposure with the tag datahub depends on it any more | run |
 | `RES-005` | {field} updated by {actor} | field, actor |
 | `RES-006` | Back through exposure {exposure} | exposure, run |
+| `RES-007` | Marked deprecated by {actor} | actor, reason |
+| `RES-008` | Deprecation taken away by {actor} | actor |
 | `COL-001` | Collection created by {actor} | actor, name, ownerUnit, visibility |
 | `COL-002` | {field} changed by {actor} | field, old, new, actor |
 | `COL-003` | Owner Unit changed from {old} to {new} by {actor} | old, new, actor |
@@ -40,6 +42,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `ART-013` | Description changed in {sourceNode} | sourceNode, distance |
 | `MAT-020` | Confirmed by {owner} | owner, fingerprint |
 | `MAT-021` | Maturity dropped to level {level}; owner alerted | level, reason |
+| `MAT-022` | Changes since the last confirmation marked seen by {actor} | actor, changes |
 | `PUB-040` | Published by {owner} | owner, level |
 | `CNV-050` | Signal raised by {actor} | actor, conversation |
 | `CNV-051` | Signal turned into anomaly by {actor} | actor, conversation, anomaly |

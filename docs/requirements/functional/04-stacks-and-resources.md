@@ -37,6 +37,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-25"></a>**DEC-SR-25** · Data Hub ignores the `owner` and the `maturity` of an exposure: the Owner comes from the Collection, the Level from the maturity ladder. Because dbt requires an `owner`, an exposure for Data Hub names the Data Team.
 - <a id="dec-sr-26"></a>**DEC-SR-26** · A Resource on which no exposure with the tag `datahub` depends any more is withdrawn, not deleted. Only the Data Team and the Owner Unit of its Collection still see it, marked as withdrawn; it keeps its Collection, its Confirmations and its Log, and comes back as it was when an exposure depends on it again. A refactoring or a typo in the dbt project thus costs nothing.
 - <a id="dec-sr-27"></a>**DEC-SR-27** · A new Resource has no Collection: only the Data Team sees it until it adds the Resource to a Collection in Data Hub ([FR-CO-14](03-collections.md#fr-co-14)). The Collection is chosen in Data Hub, never in the dbt project, because a Collection exists only in Data Hub ([DEC-CO-02](03-collections.md#dec-co-02)).
+- <a id="dec-sr-28"></a>**DEC-SR-28** · An Owner cannot unpublish a Resource: once published, it stays available to whoever builds on it. Instead, the Owner and the Data Team can mark it deprecated, which discourages its use without hiding or blocking anything. *Decided on 2026-10-26, by Max ([OP-SR-05](#op-sr-05)).*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -71,8 +72,8 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 
 1. **Ready.** The Resource is at Described and visible to the Owner of its Collection.
 2. **Publish.** The Owner checks the documentation and switches the Publication on. That is at once the first Confirmation: the Resource rises to Confirmed and is visible to the whole company.
-3. **Drop.** If the Level drops later, for example because of a structural Change, the Resource stays published. The Owner gets an alert, and the lower Level is visible everywhere.
-4. **Reconfirm.** The Owner confirms again, without touching the Publication.
+3. **Change.** If a field changes later, the Level and the Publication stay. A warning on the Resource says what changed, and the Owner is told ([DEC-MR-08](06-maturity-and-release.md#dec-mr-08)).
+4. **Seen.** The Owner or the Data Team marks the change as seen; no new Confirmation is needed.
 
 ## Using a Resource
 
@@ -263,9 +264,11 @@ A published Resource stays published when its Level drops. The Owner gets an ale
 <a id="fr-sr-20"></a>
 ### FR-SR-20 · Reconfirm after a drop
 
-**Status:** Specified · **Confluence:** SR-20
+**Status:** Withdrawn · **Confluence:** SR-20
 
 After a drop, the Owner confirms again. Reconfirming changes nothing about the Publication.
+
+*Note of 2026-10-26: withdrawn by Max. There is no reconfirmation; a change to the schema gives a warning ([DEC-MR-08](06-maturity-and-release.md#dec-mr-08)).*
 
 <a id="fr-sr-21"></a>
 ### FR-SR-21 · Search on title, description, Collection and Owner
@@ -485,6 +488,13 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 
 *Note of 2026-10-26: the control figures and since when the data is reliable are no longer asked here; a Confirmation makes no claim about the data ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). Since when the data is reliable stays on the Resource Card ([FR-RC-13](05-resource-card.md#fr-rc-13)).*
 
+
+<a id="fr-sr-50"></a>
+### FR-SR-50 · A Resource can be marked deprecated
+
+**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05))
+
+The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
@@ -547,7 +557,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-02"></a>**OP-SR-02** · Complete the [Log catalogue](log-catalogue.md), with the Log IDs from the other domains.
 - [ ] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered.
 - [ ] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md).
-- [ ] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it.
+- [x] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](#dec-sr-28), [FR-SR-50](#fr-sr-50)).*
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
 - [ ] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](09-lenses.md#fr-le-08)).*
 - [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.*
@@ -558,6 +568,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [ ] <a id="op-sr-13"></a>**OP-SR-13** · Decide who sees the queries of others: on a Resource ([FR-SR-44](#fr-sr-44)) and under "All" in the panel of Query ([FR-SR-43](#fr-sr-43)). *Note of 2026-10-23: "All" in the panel is for the Data Team only ([DEC-UX-20](../../design/principles.md#dec-ux-20)); what remains is the tab Queries of a Resource, where the same rule would show a colleague only their own queries and the numbers.* The Query Log is readable only by the Data Team and whoever ran a query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Max asked on 2026-10-23 for an "All" in the panel of Query, next to your own. Proposal: every User sees the queries of others on what they may see, with who, when, how and what it read, but not their SQL. *Raised on 2026-10-23.*
 - [ ] <a id="op-sr-14"></a>**OP-SR-14** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](05-resource-card.md#fr-rc-04), [FR-RC-05](05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.*
 - [ ] <a id="op-sr-15"></a>**OP-SR-15** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](#fr-sr-40). *Raised on 2026-10-25, while designing how a Resource is stored.*
+- [ ] <a id="op-sr-16"></a>**OP-SR-16** · Work out what marking a Resource deprecated holds ([FR-SR-50](#fr-sr-50)): whether it asks for a reason and what to use instead, how it shows in search, on a Lens and for Claude, and whether a new Lens can still be built on it. Proposal: a reason is asked, what to use instead is optional; a label next to the Level, wherever the Level shows; a new Lens on it is possible, with a warning. *Raised on 2026-10-26, in the review of Max.*
 
 ## Builds on
 

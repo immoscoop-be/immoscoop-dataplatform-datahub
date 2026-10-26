@@ -177,6 +177,10 @@ document.querySelectorAll('.confirm-bar').forEach(bar => {
   box.addEventListener('change', sync); sync();
 });
 
+// A change since the last Confirmation (DEC-MR-08): "Mark as seen" takes the warning away; the change stays in the History.
+// A tap on its marker opens the pop-out instead (the marker stops the click)
+document.querySelectorAll('[data-seen]').forEach(b => b.addEventListener('click', () => { b.closest('.alert').hidden = true; }));
+
 // A sheet that belongs to its page: what opened it opens it again; Close, Cancel or a click beside it closes it
 document.querySelectorAll('[data-sheet-open]').forEach(b => b.addEventListener('click', e => { e.preventDefault(); document.getElementById(b.dataset.sheetOpen).hidden = false; }));
 document.querySelectorAll('[data-sheet-close]').forEach(b => b.addEventListener('click', () => { b.closest('.sheet-wrap').hidden = true; }));

@@ -162,9 +162,9 @@ By comparing every new version with the previous one, Data Hub sees what has cha
 | Description | A text on a table or field changes | In the Log |
 | Logic | A filter or join changes; the schema stays the same | In the Log, notification to the Owner |
 | Type | A field gets a different data type, with the same name | In the Log, notification to the Owner |
-| Structural | A field is added or removed, including a rename | In the Log; the Resource drops to Described |
+| Structural | A field is added or removed, including a rename | In the Log; a warning on the Resource, the Level stays ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)) |
 
-- <a id="dec-dh-26"></a>**DEC-DH-26** · Only a structural Change makes a Resource drop: a field added or removed. As long as the field name stays the same, a changed type is not a structural Change; the Owner does get a notification.
+- <a id="dec-dh-26"></a>**DEC-DH-26** · Only a structural Change makes a Resource drop: a field added or removed. As long as the field name stays the same, a changed type is not a structural Change; the Owner does get a notification. *Note of 2026-10-26: a change to the schema never lowers the Level; it gives a warning on the Resource and a Message to the Owner ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
 - <a id="dec-dh-27"></a>**DEC-DH-27** · On a logic Change, the Owner gets a notification, without the Level dropping.
 - <a id="dec-dh-28"></a>**DEC-DH-28** · Everything goes into the Log of the Resource, including Changes deeper in the lineage. Everyone with access to the Resource can read the Log.
 - <a id="dec-dh-29"></a>**DEC-DH-29** · For a Resource that is Monitored, Data Hub runs automatic checks after every Change, following from the EDA and the monitors, to check that everything still holds after the migration.
@@ -178,7 +178,7 @@ By comparing every new version with the previous one, Data Hub sees what has cha
 - <a id="dec-dh-32"></a>**DEC-DH-32** · The Level is determined entirely in Data Hub, from Level 2 upwards. Git and dbt are input, not authority.
 - <a id="dec-dh-33"></a>**DEC-DH-33** · Data Hub reads the dbt manifest (descriptions and meta) and the dbt catalog (the actual columns in BigQuery). A column in the catalog without a description in the manifest means: not Described.
 - <a id="dec-dh-34"></a>**DEC-DH-34** · Described requires, at a minimum: a description on the table and on every column, plus `model_type` and `grain` in `meta`. The test is automatic.
-- <a id="dec-dh-35"></a>**DEC-DH-35** · At every Confirmation, Data Hub stores a Fingerprint of the schema from the catalog. If the schema deviates from it, the table drops to Described.
+- <a id="dec-dh-35"></a>**DEC-DH-35** · At every Confirmation, Data Hub stores a Fingerprint of the schema from the catalog. If the schema deviates from it, the table drops to Described. *Note of 2026-10-26: a change to the schema never lowers the Level; it gives a warning on the Resource and a Message to the Owner ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
 - <a id="dec-dh-36"></a>**DEC-DH-36** · Business manages everything from Level 3 upwards in Data Hub, not via git: Confirmations, EDAs and monitors have Data Hub as their source.
 - <a id="dec-dh-37"></a>**DEC-DH-37** · Static artefacts (a rendered chart, an export) carry the Level at the moment of the build, with a date and a link to the current Level, one click away.
 
