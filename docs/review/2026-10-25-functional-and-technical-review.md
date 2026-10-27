@@ -4,7 +4,7 @@ Snapshot of 2026-10-25 · Maxime Passenier
 
 What Data Hub must do, how each part looks, and what is behind it: the services, what they store and what is built today. Your read-through before the technical analysis and the (re)build.
 
-> This file replaces the review in Claude Docs, which was hard to work with. It is a snapshot: the files it links to stay the source, and where they differ, the source wins. Every open point is at the end, in [Every open point](#every-open-point), as a checkbox with its ID, to answer one by one.
+> This file replaces the review in Claude Docs, which was hard to work with. It shows no screenshots, which drift from the prototypes: every screen is a link to its prototype, to open in a browser, with the state it shows in its address where it has one. It is a snapshot: the files it links to stay the source, and where they differ, the source wins. Every open point is at the end, in [Every open point](#every-open-point), as a checkbox with its ID, to answer one by one.
 
 ## How to read this document
 
@@ -31,9 +31,9 @@ Every part follows the same order:
 | Functional requirements | 217: 41 Implemented, 67 Specified, 78 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 69 |
+| Design decisions (DEC-UX) | 75 |
 | Prototype screens | 31, plus the index |
-| Open points | 130 open, of 211 |
+| Open points | 135 open, of 216 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -242,9 +242,9 @@ The shared code lives in `packages/`: `auth` validates tokens in every service, 
 
 ### The screens
 
-![The sign-in screen, light theme: the glass card over the alpenglow photo, with its story in the corner](images/01-sign-in-light.jpg)
+**Screen:** [sign-in.html](../design/screens/sign-in.html). The sign-in screen, light theme: the glass card over the alpenglow photo, with its story in the corner.
 
-![The sign-in screen, dark theme: the village with its lights on, a photo of the dark set](images/02-sign-in-dark.jpg)
+**Screen:** [sign-in.html](../design/screens/sign-in.html). The sign-in screen, dark theme: the village with its lights on, a photo of the dark set. In the dark theme of your system.
 
 A photo of the set, as it is, fills the screen. The sign-in sits on a glass card that blurs what lies behind it: the name, one sentence on what Data Hub is, and Sign in with Google. In a corner, also on glass, the story of the photo: a title, a few lines and who took it. The dark theme has its own photos, never darkened copies ([DEC-UX-35](../design/principles.md#dec-ux-35), [DEC-UX-36](../design/principles.md#dec-ux-36)). An account of another domain is refused on the same card, naming the account. Screen: `sign-in`.
 
@@ -346,19 +346,19 @@ A Collection is a functional domain of Immoscoop, such as leads or agencies, in 
 
 ### The screens
 
-![The start of Collections: the panel with every Collection on the left, the intro and the recent and popular Collections](images/03-collections-start.jpg)
+**Screen:** [collections-start.html](../design/screens/collections-start.html). The start of Collections: the panel with every Collection on the left, the intro and the recent and popular Collections.
 
 **The panel** ([FR-CO-18](../requirements/functional/03-collections.md#fr-co-18) to [FR-CO-24](../requirements/functional/03-collections.md#fr-co-24), Specified). One list of Collections, each unfolding to what it holds: first its Resources, then its Lenses, told apart by their icon ([FR-CO-36](../requirements/functional/03-collections.md#fr-co-36), [DEC-UX-65](../design/principles.md#dec-ux-65), from your review, 2026-10-26). An item shows the icon of its kind, its name on one line, and its Level; a Resource not published yet is shown as such. A long Collection shows its first eight items, then Show all. Search in the panel covers Collections and their Resources. Opening a Resource unfolds its Collection. Screen: `collections-start`.
 
-![The page of a Collection for its Owner: what needs attention, its Resources with their Level, and its Lenses](images/04-collection-overview.jpg)
+**Screen:** [collection-overview.html](../design/screens/collection-overview.html). The page of a Collection for its Owner: what needs attention, its Resources with their Level, and its Lenses.
 
 **The page of a Collection** ([FR-CO-25](../requirements/functional/03-collections.md#fr-co-25) to [FR-CO-31](../requirements/functional/03-collections.md#fr-co-31), Specified). Icon, name, description, Owner Unit, private or public, how many Resources and Lenses, and who created it when. To the Owner Unit and the Data Team it also shows what needs attention: a Level that dropped and waits for a Confirmation, open Signals, Resources not published yet, each with a link to where it is solved. Then the Resources and the Lenses of the Collection. The Owner Unit starts a new Lens from here, and edits the details in place. Screens: `collection-overview`, `collection-edit`.
 
-![A Data Admin adds Resources to a Collection from its page, from the Resources waiting for one](images/05-collection-add-resources.jpg)
+**Screen:** [collection-add-resources.html](../design/screens/collection-add-resources.html). A Data Admin adds Resources to a Collection from its page, from the Resources waiting for one.
 
 **Adding Resources** is the Data Team's job: from the page of a Collection, or from a Resource that waits for one. Screens: `collection-add-resources`, `resource-unassigned`.
 
-![Adding Resources, step 2: per Resource every field with its type and description, a relation per field, and its Entity identifier, filled in from the Colleciónes docs or suggested from the field name](images/06-collection-add-relations.jpg)
+**Screen:** [collection-add-relations.html](../design/screens/collection-add-relations.html). Adding Resources, step 2: per Resource every field with its type and description, a relation per field, and its Entity identifier, filled in from the Colleciónes docs or suggested from the field name.
 
 **Step 2: how each Resource is stored, and the relation of every field** ([FR-CO-33](../requirements/functional/03-collections.md#fr-co-33), [FR-CO-34](../requirements/functional/03-collections.md#fr-co-34), [DEC-UX-58](../design/principles.md#dec-ux-58), Proposed). "Next: relations" on the first step widens the sheet. Per Resource it first shows how it is stored: the partition column and the unit of its partitions, the cluster columns in their order, and whether a partition filter is required. Data Hub derives these from the dbt manifest and BigQuery where it can, marked "From dbt" ([OP-SR-12](../requirements/functional/04-stacks-and-resources.md#op-sr-12)); a filter that BigQuery requires is locked, and the Data Admin can require one where BigQuery does not. Then it lists every field with its type and description from dbt. For each field the Data Admin picks No relation, Identifies each row or Refers to, and gives the Entity identifier as `entity.identifier`. For a Colleciónes model the relations come from its docs; for another model Data Hub suggests them from the field names. Each reference says how many Resources it links to, and "Show" narrows the table to the fields with a relation. **What a relation records about its cardinality is under discussion:** eleven questions, each with a proposal ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)). Also open: a field with no Entity in the Domain Model yet ([OP-CO-14](../requirements/functional/03-collections.md#op-co-14)), where relations change later ([OP-CO-15](../requirements/functional/03-collections.md#op-co-15)), and how the Pre-flight treats a query without a required partition filter ([OP-SR-15](../requirements/functional/04-stacks-and-resources.md#op-sr-15)). Screens: `collection-add-resources`, `collection-add-relations`.
 
@@ -410,15 +410,15 @@ The Owner Unit is chosen from `GET /me/groups` at identity. Whether a User is in
 
 ### The screens
 
-![The page of a Resource, here with a change since its last Confirmation: the warning says a field was added and the Level stays, the Overview tiles show the Resource Card, and its Level, grain and Mark as seen carry the marker of the learning centre](images/07-resource-detail.jpg)
+**Screen:** [resource-detail.html](../design/screens/resource-detail.html). The page of a Resource, here with a change since its last Confirmation: the warning says a field was added and the Level stays, the Overview tiles show the Resource Card, and its Level, grain and Mark as seen carry the marker of the learning centre.
 
 **The page of a Resource.** The header carries the Display Name, the Level, the Collection and a status row. Below it the tabs ([FR-SR-24](../requirements/functional/04-stacks-and-resources.md#fr-sr-24)): the Overview holds the Resource Card as tiles, then Columns, Preview and Queries; the Messages open from "Messages" in the header, without a tab of their own ([DEC-UX-67](../design/principles.md#dec-ux-67)). Lineage, EDA and History are tabs without a design yet. The Description tile and the Columns tab show the Business Description and the description from dbt side by side ([DEC-UX-61](../design/principles.md#dec-ux-61)). The screen shows a change since the last Confirmation: a warning says a field was added, the Level stays 4 · Explored, and the Owner and the Data Team can mark it as seen ([DEC-UX-64](../design/principles.md#dec-ux-64)). Screen: `resource-detail`.
 
-![Editing the Overview in place: the parts Data Hub keeps become fields; the Business Description is a field next to the description from dbt, which stays read-only and says so](images/08-resource-edit.jpg)
+**Screen:** [resource-edit.html](../design/screens/resource-edit.html). Editing the Overview in place: the parts Data Hub keeps become fields; the Business Description is a field next to the description from dbt, which stays read-only and says so.
 
 **Editing in place.** Edit on a tile turns the parts Data Hub keeps into fields, where they are. What comes from dbt or from the Data Team stays read-only and is marked as such ([DEC-UX-09](../design/principles.md#dec-ux-09)). Screen: `resource-edit`.
 
-![Editing the business descriptions of the fields: per field its name and type, its Business Description as a field, and its description from dbt, here one that changed yesterday, with the text before](images/36-resource-columns-edit.jpg)
+**Screen:** [resource-columns-edit.html](../design/screens/resource-columns-edit.html). Editing the business descriptions of the fields: per field its name and type, its Business Description as a field, and its description from dbt, here one that changed yesterday, with the text before.
 
 **Editing the fields.** Edit on the Columns tab gives one row per field: its Business Description as a field, its description from dbt next to it. A description from dbt that changed in the last 30 days says so, with the text before; a filter shows only those ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16)). Screen: `resource-columns-edit`.
 
@@ -469,7 +469,7 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 ### The screens
 
-![Publishing: a sheet over the page of the Resource says who will see it, what Data Hub checked, and what the Owner confirms; at the foot the declaration and "Publish and confirm" in one bar, the button off until the box is ticked](images/09-resource-publish.jpg)
+**Screen:** [resource-publish.html](../design/screens/resource-publish.html). Publishing: a sheet over the page of the Resource says who will see it, what Data Hub checked, and what the Owner confirms; at the foot the declaration and "Publish and confirm" in one bar, the button off until the box is ticked.
 
 **Publish** opens a sheet over the page of the Resource, in three parts ([DEC-UX-31](../design/principles.md#dec-ux-31)): who will see it; what Data Hub checked (that the User may publish it, and that it is Described, naming any column without a description); and what the Owner confirms: what the Resource is and what it stands for, its Business Description and its description from dbt. At the foot, the declaration and the button are one bar; the button is off until the box is ticked. Until then the Resource reads "not published" in its status row and is grey in the panel. Screen: `resource-publish`.
 
@@ -518,19 +518,19 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 ### The screens
 
-![The Preview tab: the first rows, chosen with the Parameters of the Resource, the Pre-flight and the Query ID](images/11-resource-preview.jpg)
+**Screen:** [resource-preview.html](../design/screens/resource-preview.html). The Preview tab: the first rows, chosen with the Parameters of the Resource, the Pre-flight and the Query ID.
 
 **The Preview** is a tab of the Resource: its Parameters choose which rows, a Pre-flight says what it scans, and the result carries its Query ID. Screen: `resource-preview`.
 
-![A new query: its name and question, its Resources, and the Lenses that already use them, shown first](images/12-query-new.jpg)
+**Screen:** [query-new.html](../design/screens/query-new.html). A new query: its name and question, its Resources, and the Lenses that already use them, shown first.
 
 **A new query** asks for a name and the question, and its Resources. Before the editor, it shows the Lenses on those Resources. Screen: `query-new`.
 
-![The section Query: the editor, the Pre-flight with partitions read, the result with its Query ID, and Make it a lens](images/13-query.jpg)
+**Screen:** [query.html](../design/screens/query.html). The section Query: the editor, the Pre-flight with partitions read, the result with its Query ID, and Make it a lens.
 
 **Query** holds the editor, the Pre-flight with the partitions it reads, and the result with its Query ID. Its panel lists the queries that ran, grouped by day. For the Owner, Make it a lens starts step 7. Screen: `query`.
 
-![The tab Queries on a Resource: every query that ran on it, with who, how, what it read, and a few numbers over 30 days](images/14-resource-queries.jpg)
+**Screen:** [resource-queries.html](../design/screens/resource-queries.html). The tab Queries on a Resource: every query that ran on it, with who, how, what it read, and a few numbers over 30 days.
 
 **The tab Queries** on a Resource lists every query on it, with a few numbers over the last 30 days. The SQL shows only to whoever ran it and the Data Team. Screen: `resource-queries`.
 
@@ -578,21 +578,21 @@ A Lens is a way of looking at Resources, made by and for business: a query with 
 - **A query becomes a Lens** with Make it a lens; its name, question and Resources come along, and the question is where its story starts ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07), [FR-LE-05](../requirements/functional/09-lenses.md#fr-le-05)). It can also start from the page of a Collection, by its Owner Unit.
 - **Its size is checked when it is made,** with a dry run, in three ranges ([FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08)): within, published straight away; large, published with a warning to its author; very large, saved but not published until the Data Team accepts it ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)). A Lens that later outgrows its range is checked again ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)).
 - **It runs on a page of its own** for everyone who may use it ([FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11)). Its Parameters start at their defaults; a Parameter takes a value or a function, such as "today − 3 days" ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). Every run is a query, with the Pre-flight and a Query ID ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)).
-- **Plain language instead of SQL.** A colleague never sees the SQL of a Lens; only its Owner Unit does, when editing ([FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)). What it does is told step by step, written by a skill when the Lens is made ([FR-LE-03](../requirements/functional/09-lenses.md#fr-le-03)).
+- **Plain language instead of SQL.** A colleague never sees the SQL of a Lens; only its Owner Unit does, when editing ([FR-LE-14](../requirements/functional/09-lenses.md#fr-le-14)). What it does is told step by step, written by a skill when the Lens is saved, and shown on its page, not while it is made ([FR-LE-03](../requirements/functional/09-lenses.md#fr-le-03), [DEC-LE-02](../requirements/functional/09-lenses.md#dec-le-02)). Its Parameters come from the query, and Users can always change them ([DEC-LE-01](../requirements/functional/09-lenses.md#dec-le-01), from your review, 2026-10-27).
 - **Who sees a Lens:** only whoever may use every Resource beneath it ([DEC-CO-16](../requirements/functional/03-collections.md#dec-co-16)). A Lens sits in a Collection, which its Owner Unit adds it to.
 - **No section Lenses** (from your review, 2026-10-26): a Lens lives in its Collection, listed in the panel and on the page of the Collection, and its page sits under Collections ([DEC-UX-66](../design/principles.md#dec-ux-66)). The start screen of Collections finds Lenses by the words of a question, shows your own Lenses (with those waiting for the Data Team) and Lenses to discover ([FR-CO-37](../requirements/functional/03-collections.md#fr-co-37)). **A Lens always goes into a Collection its author owns,** even when its Resources are in other Collections: that is how Resources are inherited across Collections ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)).
 
 ### The screens
 
-![Making a Lens: its name, question and story, its Parameters with their defaults, and the size check in its range](images/15-lens-new.jpg)
+**Screen:** [lens-new.html](../design/screens/lens-new.html). Making a Lens: its name, question and story, its Parameters with their defaults, and the size check in its range.
 
-**Make it a lens** opens with what came from the query: name, question, Resources. The author adds the story and the Parameters with their defaults; the size check shows the range and what that means. Screen: `lens-new` (with `?size=within`, `large` or `verylarge`).
+**Make it a lens** opens with what came from the query: name, question, Resources. The author adds the story and names the Parameters as Users see them; the Parameters themselves and their defaults come from the query, with no "+ Parameter" and no lock ([DEC-UX-75](../design/principles.md#dec-ux-75)). The size check shows the range and what that means. Screen: `lens-new` (with `?size=within`, `large` or `verylarge`).
 
-![The page of a Lens: its Parameters at their defaults, Run, and the result with its Query ID](images/16-lens.jpg)
+**Screen:** [lens.html](../design/screens/lens.html). The page of a Lens: its Parameters at their defaults, Run, and the result with its Query ID.
 
 **The page of a Lens** runs it: its Parameters, Run, and the result with its Query ID. A second part, About, tells what it answers and what it does step by step. Screen: `lens`.
 
-![The start of Collections, which finds Lenses too: the search by question, your Collections and Lenses, and further down Lenses to discover](images/17-collections-start-lenses.jpg)
+**Screen:** [collections-start.html](../design/screens/collections-start.html). The start of Collections, which finds Lenses too: the search by question, your Collections and Lenses, and further down Lenses to discover.
 
 **The start of Collections** finds Lenses too: the search by question, "Yours" and Lenses to discover. Screen: `collections-start`.
 
@@ -647,19 +647,19 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 
 ### The screens
 
-![The Message Centre: the Messages for you, filtered by kind and object, each linking to its object](images/18-messages.jpg)
+**Screen:** [messages.html](../design/screens/messages.html). The Message Centre: the Messages for you, filtered by kind and object, each linking to its object.
 
 **The Message Centre.** Screen: `messages`.
 
-![A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing](images/37-messages-described.jpg)
+**Screen:** [messages.html?msg=described](../design/screens/messages.html?msg=described). A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing.
 
 **A changed description in dbt** is told to the Owner, one Message per Resource and run: the text before and now, and their Business Description next to it. It asks for no review; "Edit business descriptions" opens the fields ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Screen: `messages?msg=described`.
 
-![Open in context: the page of a Lens, with the Message and its replies in a floating window that can be folded and moved](images/19-lens-context.jpg)
+**Screen:** [lens-context.html](../design/screens/lens-context.html). Open in context: the page of a Lens, with the Message and its replies in a floating window that can be folded and moved.
 
 **Open in context.** The floating window can be folded and moved; the page stays usable behind it. For a Request it shows the decision of the Data Team, over the size check of the Lens. Screens: `lens-context`, `lens-new-context`.
 
-![The Messages of a Resource in a slide-in, starting with a field for a new Message on that Resource](images/20-resource-messages.jpg)
+**Screen:** [resource-messages.html](../design/screens/resource-messages.html). The Messages of a Resource in a slide-in, starting with a field for a new Message on that Resource.
 
 **The Messages of an object** in a slide-in, starting with a field for a new Message. Screens: `resource-messages`, `collection-messages`, `lens-messages`. A Resource has no tab Conversations any more: its Messages are here, from "Messages" in its header ([DEC-UX-67](../design/principles.md#dec-ux-67), from your review, 2026-10-26).
 
@@ -708,47 +708,47 @@ In the rail the learning centre sits at the bottom, above the account, not among
 
 ### The screens
 
-![The start of the learning centre: the panel with the Compass and the four Learning Levels, the silent count of cards seen, and the start screen](images/21-learning-start.jpg)
+**Screen:** [learning-start.html](../design/screens/learning-start.html). The start of the learning centre: the panel with the Compass and the four Learning Levels, the silent count of cards seen, and the start screen.
 
 **The start screen and its panel** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03), [DEC-UX-38](../design/principles.md#dec-ux-38), [DEC-UX-51](../design/principles.md#dec-ux-51)). The panel is the index of every card: the Compass, then the four Learning Levels, each unfolding to its sections and cards, with how many the User has seen and a check where they understood one. On top a single count of the cards seen; no ring, no streak. Screen: `learning-start`.
 
-![Why now, the first step of a card: a colleague's question, the row of five steps, I understand it, and the bar with Next](images/22-learning-card-why.jpg)
+**Screen:** [learning-card.html?step=why](../design/screens/learning-card.html?step=why). Why now, the first step of a card: a colleague's question, the row of five steps, I understand it, and the bar with Next.
 
 **A card in five steps** ([DEC-UX-48](../design/principles.md#dec-ux-48)). The steps stand in a row under the title, Quick and Full next to them; "I understand it" is the only button of the header. The bar at the foot, always in the same place, says what Next brings. Screen: `learning-card` (with `?step=core`, `see`, `check` or `can`, and `?path=quick`).
 
-![Core idea on the quick path: the decision rule large, with See it and Check your understanding muted in the row](images/23-learning-card-core-quick.jpg)
+**Screen:** [learning-card.html?step=core&path=quick](../design/screens/learning-card.html?step=core&path=quick). Core idea on the quick path: the decision rule large, with See it and Check your understanding muted in the row.
 
 **The quick path** mutes See it and Check your understanding in the row; a click still opens them. Core idea holds the decision rule, one metaphor and one example.
 
-![Check your understanding: a try-it question, answered, with the answer and why, and Another question](images/24-learning-card-check.jpg)
+**Screen:** [learning-card.html?step=check](../design/screens/learning-card.html?step=check). Check your understanding: a try-it question, answered, with the answer and why, and Another question. Answer the question to see the answer and why.
 
 **Check your understanding** ([FR-LR-30](../requirements/functional/16-learning.md#fr-lr-30)). One question per screen; a click shows the answer and why, then "Another question", for as long as the User likes. This one is a try-it question, with a link to what to open. Whether the card says "Not quite." before the why is open ([OP-LR-19](../requirements/functional/16-learning.md#op-lr-19)).
 
-![You can now: what the User can do now, what it brings them, and three ways on as tiles](images/25-learning-card-can.jpg)
+**Screen:** [learning-card.html?step=can](../design/screens/learning-card.html?step=can). You can now: what the User can do now, what it brings them, and three ways on as tiles.
 
 **You can now** ([DEC-UX-49](../design/principles.md#dec-ux-49)): the three fields, and at the foot "Share in a message" and the Messages on the card. Whether the small drawing of two circles stays is open ([OP-LR-21](../requirements/functional/16-learning.md#op-lr-21)).
 
-![See it on its own: the example with Look at and You see, the way back and Open the whole card](images/26-learning-see.jpg)
+**Screen:** [learning-see.html](../design/screens/learning-see.html). See it on its own: the example with Look at and You see, the way back and Open the whole card.
 
 **See it on its own** ([DEC-UX-50](../design/principles.md#dec-ux-50)): the example of the card with "Look at …" and "You see …", the way back to where the User came from, and the whole card. Screen: `learning-see`.
 
-![The pop-out on the grain chip of a Resource: a text bubble with three learning cards, each with its gain, whether the User saw it, and See it](images/27-learning-pop-out-chip.jpg)
+**Screen:** [learning-hover.html](../design/screens/learning-hover.html). The pop-out on the grain chip of a Resource: a text bubble with three learning cards, each with its gain, whether the User saw it, and See it.
 
 **The marker and its pop-out** ([DEC-UX-56](../design/principles.md#dec-ux-56), [DEC-UX-57](../design/principles.md#dec-ux-57)). On the page of a Resource, its Level, its grain and "Mark as seen" carry ⓘ. The pop-out opens after a one-second hold, so passing over the page opens nothing; keyboard focus opens it at once. Screens: `resource-detail` (rest the pointer on the grain), `learning-hover`.
 
-![The pop-out on the Mark as seen button, its arrow on the marker](images/28-learning-pop-out-button.jpg)
+**Screen:** [learning-hover.html?pop=pop-rec](../design/screens/learning-hover.html?pop=pop-rec). The pop-out on the Mark as seen button, its arrow on the marker.
 
 **On a button** the pop-out works the same, and the button keeps its own action; on a touch screen only a tap on the marker opens it.
 
-![A card opened from the pop-out, in a floating window over the page of the Resource](images/29-learning-float.jpg)
+**Screen:** [learning-float.html](../design/screens/learning-float.html). A card opened from the pop-out, in a floating window over the page of the Resource.
 
 **Opening in place** ([DEC-UX-42](../design/principles.md#dec-ux-42), [FR-LR-12](../requirements/functional/16-learning.md#fr-lr-12)): a click on a tile opens the card in a floating window, as a Message opens in context; the User stays on the page. Screen: `learning-float`.
 
-![A Message carries a learning card: the answer of the Owner points to card 1.2.2](images/30-learning-message.jpg)
+**Screen:** [learning-message.html](../design/screens/learning-message.html). A Message carries a learning card: the answer of the Owner points to card 1.2.2.
 
 **In a Message** ([DEC-UX-41](../design/principles.md#dec-ux-41), [FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)): "Add a learning card" next to a new Message; the card shows as a small tile with its Learning Level and whether the reader read it. Screen: `learning-message`.
 
-![The steps of a card in Claude, as an MCP App: number and title, the five steps, Next and Open in Data Hub](images/31-learning-mcp.jpg)
+**Screen:** [learning-mcp.html](../design/screens/learning-mcp.html). The steps of a card in Claude, as an MCP App: number and title, the five steps, Next and Open in Data Hub.
 
 **In Claude** ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)): only the number and title above the five steps, "Next" at the foot, and "Open in Data Hub". Screen: `learning-mcp`.
 
@@ -839,7 +839,7 @@ Every service decides this itself, on every request, with the Groups in the Acce
 
 ### A link to something you may not see
 
-![The page for a link to nothing: the same answer whether the object does not exist or you may not see it, with what to do instead](images/32-not-found.jpg)
+**Screen:** [not-found.html](../design/screens/not-found.html). The page for a link to nothing: the same answer whether the object does not exist or you may not see it, with what to do instead.
 
 A link to anything a User may not see opens the same page as a link to nothing ([FR-CO-32](../requirements/functional/03-collections.md#fr-co-32), [DEC-UX-32](../design/principles.md#dec-ux-32)). It says what to do instead: ask whoever sent the link, or search. It has no Ask for access, since that would tell the object exists. Whether asking for access should be possible, and how, is open ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)). Screen: `not-found`.
 
@@ -903,7 +903,7 @@ None of the designed screens shows a level of confidentiality yet.
 - **Light and dark,** following the system by default; the User can switch. **Dutch by default,** with English available ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)); see Language.
 - **Icons:** Phosphor as the one family, the light weight favoured; the other weights stay possible ([DEC-CO-19](../requirements/functional/03-collections.md#dec-co-19)). Today's app still uses Tabler ([OP-CO-16](../requirements/functional/03-collections.md#op-co-16)).
 
-![The page of a Resource in the dark theme: warm dark grey, colour only on content](images/33-resource-detail-dark.jpg)
+**Screen:** [resource-detail.html](../design/screens/resource-detail.html). The page of a Resource in the dark theme: warm dark grey, colour only on content. Switch to dark with the moon in the rail.
 
 ### Backgrounds and their photo sets
 
@@ -912,9 +912,9 @@ None of the designed screens shows a level of confidentiality yet.
 - **Sets with a story:** each photo has a title, a few lines and who took it. The light and the dark theme each have their own set; a photo is never darkened for the dark theme ([DEC-UX-36](../design/principles.md#dec-ux-36)). You provide the photos and write the stories; the prototype's stories are stand-ins.
 - **So far:** light set Alpenglow and Spring snow; dark set Lights on, your blue-hour photo made into a night picture. The first ski painting, with the lift, has no photo in the set yet.
 
-![The page of a Lens over the painted ski picture, the frames lightly blurring it](images/34-lens-picture.jpg)
+**Screen:** [lens.html?bg=ski](../design/screens/lens.html?bg=ski). The page of a Lens over the painted ski picture, the frames lightly blurring it.
 
-![The start of Collections in the dark theme over the village at night](images/35-collections-night.jpg)
+**Screen:** [collections-start.html?bg=alpenglow](../design/screens/collections-start.html?bg=alpenglow). The start of Collections in the dark theme over the village at night. Switch to dark with the moon in the rail.
 
 Any screen shows a picture with `?bg=alpenglow`, `?bg=spring` or `?bg=ski`; in the dark theme it shows the village at night.
 
@@ -1119,7 +1119,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 130 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 135 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1169,7 +1169,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 13 open
+Source: [design/principles.md](../design/principles.md) · 18 open
 
 - [ ] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses.
 - [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection).
@@ -1188,6 +1188,11 @@ Source: [design/principles.md](../design/principles.md) · 13 open
 - [ ] **[OP-UX-23](../design/principles.md#op-ux-23)** · **Dutch prototypes:** decide how the prototypes follow the language principle ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)). Proposal: a translation table in the prototypes, a key per sentence with its Dutch and English text, Dutch by default and a switch to English, so that [NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02) shows at work and a name in the table stands out. The alternative is translating the texts in place, which is faster and keeps no English. Either way names stay untouched, and the markers on names ([DEC-UX-59](../design/principles.md#dec-ux-59)) come in the same pass. *Raised on 2026-10-25.*
 - [x] **[OP-UX-24](../design/principles.md#op-ux-24)** · **Overriding a description from dbt, and reviewing it** ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16), [FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)): editing in place ([DEC-UX-09](../design/principles.md#dec-ux-09)) covers the Overview only, and no screen yet overrides the description of a field or reviews a text after a Change in dbt. Proposal: on the Columns tab, an action per field, "Override the description from dbt", that opens a field with the description from dbt under it; on the Overview, the definition takes the same action. The review is a sheet over the page, reached from the Message, with the description from dbt before and after the Change, the text of the Owner, and three choices: keep, change, or remove it. *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-26: Max chose two descriptions side by side instead of an override, and a Message without a review; designed in resource-detail, resource-edit, resource-columns-edit and messages, to review ([DEC-UX-61](../design/principles.md#dec-ux-61)).*
 - [ ] **[OP-UX-25](../design/principles.md#op-ux-25)** · **A deprecated Resource** ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)): design how the mark shows on the page of the Resource, in the panel, in search and on the Lenses built on it, and where the Owner and the Data Team set it. Proposal: a label "Deprecated" next to the Level, with the reason on hover and on the page; set from the header of the Resource. *Raised on 2026-10-26, in the review of Max.*
+- [ ] **[OP-UX-26](../design/principles.md#op-ux-26)** · **The colour of an error in a query:** a table outside its Resources and an `@name` that is not a Parameter keep it from running. The design shows both in the warning colour, as the signal for a state that needs action; the urgent red is kept for what waits for the Data Team and for a run above the approval threshold. Decide whether an error that blocks a run takes the warning colour, the red, or a colour of its own. *Raised on 2026-10-27.*
+- [ ] **[OP-UX-27](../design/principles.md#op-ux-27)** · **How long the result of a run is kept,** for its history to show it ([FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51)). The design shows "Show its result" on a recent run and "Its result is no longer kept" on an older one. Proposal: as long as BigQuery keeps the result of the job, about a day; after that the run shows its SQL and values, and can run again. *Raised on 2026-10-27.*
+- [ ] **[OP-UX-28](../design/principles.md#op-ux-28)** · **Back to an earlier run:** "Back to this SQL and values" takes the SQL and the values of an earlier run into the query, and its next run is a new variation. Decide whether that is the way back, or whether an earlier run opens on its own, read only, to copy from. *Raised on 2026-10-27.*
+- [ ] **[OP-UX-29](../design/principles.md#op-ux-29)** · **The name of a query started from another:** the name is suggested from its Resources and the date only ([DEC-UX-23](../design/principles.md#dec-ux-23)), which gives long names, such as "Weekly lead volume, lead sources and partner contracts, 27 Oct". Decide whether it may be suggested from the query it started from and the Resource added, such as "Leads per source name + partner contracts". *Raised on 2026-10-27.*
+- [ ] **[OP-UX-30](../design/principles.md#op-ux-30)** · **Removing a Resource as a new query:** decided to try ([DEC-UX-73](../design/principles.md#dec-ux-73)), as a query on fewer Resources has a very different list of Lenses. Review after testing whether it is too heavy in use, for instance when the SQL still reads the Resource and the new query starts with an error. *Raised on 2026-10-27, by Max.*
 
 ### Artifact registry
 
@@ -1291,7 +1296,7 @@ Source: [requirements/functional/09-lenses.md](../requirements/functional/09-len
 - [ ] **[OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
 - [ ] **[OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)** · Decide whether a Lens runs when it is opened ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.*
 - [ ] **[OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.*
-- [ ] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.*
+- [ ] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../design/principles.md#dec-ux-71)).*
 - [ ] **[OP-LE-09](../requirements/functional/09-lenses.md#op-le-09)** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.*
 
 ### Beta and promotion

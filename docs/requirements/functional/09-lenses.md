@@ -19,6 +19,11 @@ Pointers to material this domain will build on, collected during the migration. 
 - Same look in Data Hub and in Claude: [DEC-DH-15](../../overview/data-hub.md#dec-dh-15)
 - Open themes: [OP-DH-08](../../overview/open-themes.md#op-dh-08) to [OP-DH-11](../../overview/open-themes.md#op-dh-11), [OP-DH-21](../../overview/open-themes.md#op-dh-21)
 
+## Decisions
+
+- <a id="dec-le-01"></a>**DEC-LE-01** · A Lens takes its Parameters from the query it is made from: making a Lens adds none, and a Parameter is added in the query. Its Users can always change the value of every Parameter, without touching the SQL; there is no choice to lock one. *Decided on 2026-10-27, by Max.*
+- <a id="dec-le-02"></a>**DEC-LE-02** · Making a Lens does not show what it does step by step. Data Hub writes that description in plain language when the Lens is saved ([FR-LE-03](#fr-le-03)), and the page of the Lens shows it. *Decided on 2026-10-27, by Max.*
+
 ## Requirements
 
 *The requirements below come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md). They are proposals, still to be validated, and therefore Proposed.*
@@ -50,12 +55,16 @@ The weight of a Lens, light or heavy, is visible to every User, so that whoever 
 
 When a Lens is created, Data Hub generates, through a skill, a description in business language of its steps, queries and CTEs, so that business sees what happens in the Lens without reading SQL.
 
+*Note of 2026-10-27: not shown while the Lens is made; the page of the Lens shows it ([DEC-LE-02](#dec-le-02)).*
+
 <a id="fr-le-04"></a>
 ### FR-LE-04 · Business adjusts Parameters without touching the SQL
 
 **Status:** Proposed · **Source:** [REQ-DH-LENSPARAMS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lensparams)
 
 Business can adjust certain Parameters of a Lens without touching its SQL, for example the bounds of a `WHERE ... BETWEEN`. Parameters are typed and named functionally ([DEC-DH-11](../../overview/data-hub.md#dec-dh-11)).
+
+*Note of 2026-10-27: every Parameter, not certain ones; they come from the query, and Users can always change them ([DEC-LE-01](#dec-le-01)).*
 
 <a id="fr-le-05"></a>
 ### FR-LE-05 · First the story, then the data
