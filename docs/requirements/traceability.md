@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 78 | 30 (18 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 79 | 30 (18 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 63 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (38 open, 8 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 37 (21 proposed, 16 withdrawn) | – | 10 | 27 (19 open, 8 done) |
+| [Learning](functional/16-learning.md) | 38 (21 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (8 open, 10 done) |
@@ -309,6 +309,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[c422d19](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c422d1911d5b9f393a516e9bee6a01b1ce2c4298) refs, 2026-10-25<br>[7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
+| [FR-LR-38](functional/16-learning.md#fr-lr-38) | A Message from Data Hub links to the card that explains it | Specified | – | – | – |
 
 ## Edge cases
 

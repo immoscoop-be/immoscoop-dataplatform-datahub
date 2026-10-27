@@ -28,10 +28,10 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 218: 41 Implemented, 68 Specified, 78 Proposed, 31 Withdrawn |
+| Functional requirements | 219: 41 Implemented, 69 Specified, 78 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 78 |
+| Design decisions (DEC-UX) | 79 |
 | Prototype screens | 31, plus the index |
 | Open points | 134 open, of 217 |
 
@@ -653,7 +653,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 
 **The Message Centre.** Screen: `messages`.
 
-**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing.
+**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing. It ends with "Understand what is happening here" and the Learning Card that explains it, K3.4 Where definitions live, as every Message that Data Hub writes itself does ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38), [DEC-UX-79](../design/principles.md#dec-ux-79), from your review, 2026-10-27)
 
 **A changed description in dbt** is told to the Owner, one Message per Resource and run: the text before and now, and their Business Description next to it. It asks for no review; "Edit business descriptions" opens the fields ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Screen: `messages?msg=described`.
 

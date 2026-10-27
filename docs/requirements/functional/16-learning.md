@@ -37,6 +37,7 @@
 
   Whatever in this file clashes with a principle, and is not settled by those decisions or by the checklist of its section 6, is an open point here, to be decided on that page. This replaces [DEC-LR-06](#dec-lr-06). *Decided on 2026-10-25, by Max.*
 - <a id="dec-lr-10"></a>**DEC-LR-10** · A Learning Card follows five steps, in this order: Why now, Core idea, See it, Check your understanding and You can now. The User chooses the depth: the quick path (Why now, Core idea, You can now) or the full path. This replaces [DEC-LR-07](#dec-lr-07). *Decided on 2026-10-25, from the principles page ([principles, 3.9 and 4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)).*
+- <a id="dec-lr-11"></a>**DEC-LR-11** · Every Message that Data Hub writes itself points to the Learning Card that explains what is happening, with a clear link of its own, "Understand what is happening here", not with a marker inside its text. *Decided on 2026-10-27, by Max.*
 
 ## Terms
 
@@ -451,6 +452,12 @@ A click on an item opens the card in the floating window over the page; the User
 
 A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-03](../non-functional/localisation.md#nfr-loc-03)), carries the marker like other system text ([FR-LR-35](#fr-lr-35)), and its pop-out lists at least one Learning Card that explains it. A name used on a screen is used as a definition, so it gets a card even before there is a full one: a minimal card, whose Core idea is the explanation of the name in the Glossary ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)). What a minimal card holds is [OP-LR-27](#op-lr-27).
 
+<a id="fr-lr-38"></a>
+### FR-LR-38 · A Message from Data Hub links to the card that explains it
+
+**Status:** Specified · **Source:** Max, 2026-10-27
+
+A Message that Data Hub writes itself, such as a changed description in dbt ([FR-RC-17](05-resource-card.md#fr-rc-17)), a change since the last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) or a Registration ([FR-SR-10](04-stacks-and-resources.md#fr-sr-10)), ends with a clear link under the heading "Understand what is happening here": the Learning Card that explains it, with its number, its title and whether the User has seen it. The link opens the card. It is not a marker inside the text of the Message ([DEC-LR-11](#dec-lr-11)). Each kind of Message names its card; a kind without a card yet needs one before it is built ([FR-LR-37](#fr-lr-37)).
 
 ## Out of scope
 

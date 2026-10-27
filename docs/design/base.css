@@ -1097,6 +1097,10 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .fd-was del { text-decoration: none; }
 @media (max-width: 900px) { .fd-row { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
 
+/* What Data Hub writes itself ends with the Learning Card that explains it (DEC-UX-79) */
+.lc-understand { margin: 16px 0 0 40px; }
+.lc-understand .label { margin-bottom: 6px; }
+@media (max-width: 760px) { .lc-understand { margin-left: 0; } }
 /* A changed description in dbt, told to the Owner in a Message (FR-RC-17): before and after, the Business Description next to it */
 .desc-change { margin: 10px 0 0 40px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
 .desc-change h4 { margin: 0 0 8px; font-size: var(--text-small); font-weight: var(--weight-medium); display: flex; align-items: center; gap: 8px; }

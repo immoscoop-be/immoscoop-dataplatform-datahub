@@ -169,6 +169,8 @@ When the description from dbt of a Resource or of one of its fields changes, Dat
 
 *Note of 2026-10-26: first proposed as a request to review the text that overrides the description; Max decided on a Message without a review.*
 
+*Note of 2026-10-27: the Message ends with a link to the Learning Card that explains it, K3.4 Where definitions live ([FR-LR-38](16-learning.md#fr-lr-38)).*
+
 <a id="fr-rc-18"></a>
 ### FR-RC-18 · Both descriptions, wherever a description is used
 
