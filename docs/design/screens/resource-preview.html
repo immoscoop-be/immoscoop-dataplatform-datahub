@@ -3,7 +3,8 @@
   The first rows of the Resource, with its Parameters to choose which rows, and nothing to type: no SQL, no query builder.
   Every preview is a query: a Pre-flight says what it scans, and the result carries its Query ID, kept in the Query Log.
   The weeks are the partition column and the lead source the first cluster column, so a preview reads only what it shows.
-  Requirements: FR-SR-24, FR-SR-25, FR-SR-27, FR-SR-31, FR-SR-36, FR-SR-37, FR-SR-38, FR-SR-39, FR-SR-40, FR-SR-41, FR-LN-05, FR-LN-06, FR-CH-01, FR-CH-02, FR-CH-03, FR-SR-26.
+  A result shows 100 rows a page; a page is read from the same run, never a new query (FR-SR-51, DEC-SR-30).
+  Requirements: FR-SR-51, FR-SR-24, FR-SR-25, FR-SR-27, FR-SR-31, FR-SR-36, FR-SR-37, FR-SR-38, FR-SR-39, FR-SR-40, FR-SR-41, FR-LN-05, FR-LN-06, FR-CH-01, FR-CH-02, FR-CH-03, FR-SR-26.
   Related screens: resource-detail.html (the other tabs), resource-queries.html (the queries on it), query.html (Query).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -130,14 +131,14 @@
  <div class="tab-content card">
   <div class="param-bar">
    <span class="label" style="margin:0">Parameters</span>
-   <label class="param"><span>Weeks</span><span class="pill pill-strong" title="The partition column: choosing weeks reads only those partitions">Partition</span><select><option>Last 8 weeks</option><option>Last 4 weeks</option><option>This year</option></select></label>
+   <label class="param"><span>Weeks</span><span class="pill pill-strong" title="The partition column: choosing weeks reads only those partitions">Partition</span><select><option>Last 4 weeks</option><option>Last 8 weeks</option><option>This year</option></select></label>
    <label class="param"><span>Lead source</span><span class="pill pill-strong" title="The first cluster column: choosing a source reads less">Cluster</span><select><option>All sources</option><option>website</option><option>app</option><option>partner</option><option>mail</option></select></label>
    <span style="flex:1"></span>
-   <span class="preflight ok"><i class="ph-fill ph-gauge"></i>Scans about 980 MB · 8 of 312 partitions</span>
+   <span class="preflight ok"><i class="ph-fill ph-gauge"></i>Scans about 80 MB · 4 of 312 partitions</span>
   </div>
   <div class="table-scroll"><table class="data-table"><thead><tr><th>week_start</th><th>lead_source</th><th style="text-align:right">lead_count</th><th>lead_channel</th></tr></thead><tbody><tr><td class="mono">2026-10-19</td><td class="mono">website</td><td style="text-align:right" >412</td><td class="mono">search</td></tr><tr><td class="mono">2026-10-19</td><td class="mono">app</td><td style="text-align:right" >96</td><td class="mono">push</td></tr><tr><td class="mono">2026-10-19</td><td class="mono">partner</td><td style="text-align:right" >37</td><td class="mono">email</td></tr><tr><td class="mono">2026-10-19</td><td class="mono">mail</td><td style="text-align:right" >21</td><td class="mono">email</td></tr><tr><td class="mono">2026-10-12</td><td class="mono">website</td><td style="text-align:right" >398</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-12</td><td class="mono">app</td><td style="text-align:right" >101</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-12</td><td class="mono">partner</td><td style="text-align:right" class="warn">0</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-12</td><td class="mono">mail</td><td style="text-align:right" >18</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-05</td><td class="mono">website</td><td style="text-align:right" >405</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-05</td><td class="mono">app</td><td style="text-align:right" >88</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-05</td><td class="mono">partner</td><td style="text-align:right" >41</td><td class="muted mono" title="empty, not zero">null</td></tr><tr><td class="mono">2026-10-05</td><td class="mono">mail</td><td style="text-align:right" >24</td><td class="muted mono" title="empty, not zero">null</td></tr></tbody></table></div>
   <div class="result-foot">
-   <span>32 rows, the last 8 weeks · newest first</span><span class="dot">·</span><span>scanned 980 MB, 8 of 312 partitions</span><span class="dot">·</span>
+   <span class="pager" aria-label="Pages of 100 rows"><button class="icon-btn" disabled aria-label="Previous page"><i class="ph ph-caret-left"></i></button><span>Rows 1–16 of 16</span><button class="icon-btn" disabled aria-label="Next page"><i class="ph ph-caret-right"></i></button></span><span class="dot">·</span><span>the last 4 weeks · newest first · 100 rows a page</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
    <span class="query-id">Query ID <span class="mono">q-20261023-7f3a21</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
    <span style="flex:1"></span><a class="text-link" href="#"><i class="ph ph-list-magnifying-glass"></i><span>In your query log</span></a>
   </div>

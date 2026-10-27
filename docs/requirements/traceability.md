@@ -15,7 +15,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 50 (15 proposed, 19 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 28 | 16 (13 open, 3 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 51 (15 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 16 (10 open, 6 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 23 (8 open, 15 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 13 (11 specified, 2 withdrawn) | – | 9 | 5 (4 open, 1 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 37 (21 proposed, 16 withdrawn) | – | 10 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (9 open, 9 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (8 open, 10 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Stacks and resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
@@ -135,7 +135,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-14](functional/04-stacks-and-resources.md#fr-sr-14) | Deregistration keeps the Log and history | Implemented | SR-14 | [TR-SR-03](technical/04-stacks-and-resources.md#tr-sr-03) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | All texts in the app are in English | Withdrawn | SR-15 | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16) | Only the Owner publishes | Specified | SR-16 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | – |
-| [FR-SR-17](functional/04-stacks-and-resources.md#fr-sr-17) | The first Publication, from Described, is the first Confirmation | Specified | SR-17 | – | – |
+| [FR-SR-17](functional/04-stacks-and-resources.md#fr-sr-17) | The first Publication, from Described, is the first Confirmation | Specified | SR-17 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 | [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | Visibility depends only on Publication | Withdrawn | SR-18 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | [3d452ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3d452cafcc9b1320488669bfbf93d7f3dcc6f879) refs, 2026-10-19 |
 | [FR-SR-19](functional/04-stacks-and-resources.md#fr-sr-19) | A published Resource stays published when its Level drops | Specified | SR-19 | – | – |
 | [FR-SR-20](functional/04-stacks-and-resources.md#fr-sr-20) | Reconfirm after a drop | Withdrawn | SR-20 | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
@@ -167,8 +167,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-46](functional/04-stacks-and-resources.md#fr-sr-46) | "Query" on the page of a Resource starts a new query on it | Proposed | – | – | [6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23<br>[0ce6f1d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0ce6f1d3bfded567e01b52b5090f0d15aa103f7f) refs, 2026-10-23 |
 | [FR-SR-47](functional/04-stacks-and-resources.md#fr-sr-47) | A new query first shows the Lenses on its Resources | Proposed | – | – | [f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23<br>[48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23<br>[6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
 | [FR-SR-48](functional/04-stacks-and-resources.md#fr-sr-48) | The question of a new query finds Lenses by their words | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
-| [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Proposed | – | – | [7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
+| [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Proposed | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-SR-50](functional/04-stacks-and-resources.md#fr-sr-50) | A Resource can be marked deprecated | Proposed | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
+| [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -197,8 +198,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-MR-01](functional/06-maturity-and-release.md#fr-mr-01) | Described: the view and every column have a description | Specified | MO-01 | – | – |
-| [FR-MR-02](functional/06-maturity-and-release.md#fr-mr-02) | Confirmed: the Owner confirms, from Described | Specified | MO-02 | – | – |
+| [FR-MR-01](functional/06-maturity-and-release.md#fr-mr-01) | Described: the view and every column have a description | Specified | MO-01 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
+| [FR-MR-02](functional/06-maturity-and-release.md#fr-mr-02) | Confirmed: the Owner confirms, from Described | Specified | MO-02 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 | [FR-MR-03](functional/06-maturity-and-release.md#fr-mr-03) | Explored: a linked EDA document | Specified | MO-03 | – | – |
 | [FR-MR-04](functional/06-maturity-and-release.md#fr-mr-04) | Monitored: at least one active check | Specified | MO-04 | – | – |
 | [FR-MR-05](functional/06-maturity-and-release.md#fr-mr-05) | A structural Change resets the Level to Described | Withdrawn | MO-05 | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
@@ -209,7 +210,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-10](functional/06-maturity-and-release.md#fr-mr-10) | The Level restricts nothing and is shown everywhere | Specified | MO-10 | – | – |
 | [FR-MR-11](functional/06-maturity-and-release.md#fr-mr-11) | Confirming again shows what changed | Withdrawn | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-MR-12](functional/06-maturity-and-release.md#fr-mr-12) | A change since the last Confirmation gives a warning | Specified | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
-| [FR-MR-13](functional/06-maturity-and-release.md#fr-mr-13) | Jumping over Described with Business Descriptions | Specified | – | – | – |
+| [FR-MR-13](functional/06-maturity-and-release.md#fr-mr-13) | Jumping over Described with Business Descriptions | Specified | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 

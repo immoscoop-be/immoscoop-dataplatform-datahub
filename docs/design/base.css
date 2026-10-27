@@ -408,6 +408,10 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .param-chip .ph-function { font-size: 12px; color: var(--text-secondary); }
 .result-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 .result-bar .meta { flex: 1; }
+/* A result is shown 100 rows a page, read from the same run (FR-SR-51) */
+.pager { display: inline-flex; align-items: center; gap: 2px; }
+.pager .icon-btn { width: 24px; height: 24px; font-size: 13px; }
+.pager .icon-btn:disabled { opacity: .35; cursor: default; }
 .param-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; align-items: start; margin-top: 12px; }
 .param-grid .field { margin: 0; }
 .run-row { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding: 10px 10px 10px 14px; border-radius: var(--radius-md); background: var(--surface-solid); font-size: var(--text-small); }

@@ -88,7 +88,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 
 - <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the Stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one Stack; because Resources are registered with their full name, more can be added later.
 - <a id="dec-dh-07"></a>**DEC-DH-07** · The Registration in Data Hub is the index. Putting a view in the Stacks is necessary, but not sufficient: only when a Data Admin registers it, with a Display Name and a Collection, is it a Resource. This replaces the earlier decision "the Stacks are the index". Worked out in [Stacks and resources](../requirements/functional/04-stacks-and-resources.md).
-- <a id="dec-dh-08"></a>**DEC-DH-08** · The service account of Data Hub only has access to the Stacks. The views in the Stacks are authorized views onto the other datasets, so that the account cannot reach anything else.
+- <a id="dec-dh-08"></a>**DEC-DH-08** · The service account of Data Hub only has access to the Stacks. The views in the Stacks are authorized views onto the other datasets, so that the account cannot reach anything else. *Note of 2026-10-26: replaced by [DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32): the service account of Data Hub reads every table in the GCP projects of the dbt projects it follows; there is no curated Stack to limit it to.*
 
 ### Lenses
 

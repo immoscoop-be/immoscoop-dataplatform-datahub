@@ -23,7 +23,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 ## Decisions
 
-- <a id="dec-ln-01"></a>**DEC-LN-01** · Data Hub keeps its own Query Log of every query it executes, with the Query ID, the SQL, who ran it, when, the bytes processed, the Resources beneath it and the ID of the job in BigQuery. It does not rely on the job log of BigQuery, which keeps 180 days, so that a Report or a screenshot can be traced back for as long as it exists. Because SQL can hold values, the Query Log is readable only by the Data Team and by whoever ran the query. This replaces [DEC-SR-18](04-stacks-and-resources.md#dec-sr-18). *Decided on 2026-10-22, after the workshop ([OP-LN-01](#op-ln-01)).*
+- <a id="dec-ln-01"></a>**DEC-LN-01** · Data Hub keeps its own Query Log of every query it executes, with the Query ID, the SQL, who ran it, when, the bytes processed, the Resources beneath it and the ID of the job in BigQuery. It does not rely on the job log of BigQuery, which keeps 180 days, so that a Report or a screenshot can be traced back for as long as it exists. Because SQL can hold values, the Query Log is readable only by the Data Team and by whoever ran the query. This replaces [DEC-SR-18](04-stacks-and-resources.md#dec-sr-18). *Decided on 2026-10-22, after the workshop ([OP-LN-01](#op-ln-01)).* *Note of 2026-10-26: the Owner Unit of a Resource also reads the SQL of the queries on it ([DEC-SR-31](04-stacks-and-resources.md#dec-sr-31)).*
 
 ## Requirements
 

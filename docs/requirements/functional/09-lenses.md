@@ -92,6 +92,8 @@ When a Lens is made, Data Hub measures what one run of it reads, with a dry run 
 
 The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-LE-02](#fr-le-02), [DEC-UX-24](../../design/principles.md#dec-ux-24)). The thresholds are set apart from those of a single query ([FR-SR-37](04-stacks-and-resources.md#fr-sr-37)) and decided with the other limits ([OP-SR-07](04-stacks-and-resources.md#op-sr-07)).
 
+*Note of 2026-10-26: the two thresholds are 100 MB and 1 GB, as for every query ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)).*
+
 <a id="fr-le-09"></a>
 ### FR-LE-09 · A very large Lens waits for the Data Team
 
