@@ -3,6 +3,14 @@
   Screen: Query, a main section of its own (DEC-UX-17)
   SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours; for the Data Team also
   everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
+  A query is bounded by its Resources (DEC-UX-73, DEC-UX-74; open: OP-UX-26 to OP-UX-30): on top of its frame "Reads only" and its Resources; the
+  editor suggests only their columns, and a table in the SQL outside them is an error, with a new query to start with
+  it. Adding or removing a Resource starts a new query in a sheet: the new set, the name suggested from it and the date,
+  the question, the lenses on the new set; the SQL and the Parameters come along, the old query stays, and the new one
+  says where it started from. "Lenses on these resources" opens the overview of a new query while writing. Several
+  queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
+  how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, of its
+  values, its SQL or both, opened to what changed. The switch "SQL" shows a table outside the Resources.
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
   number, Text, Choice, Several choices, Yes or no, each with its BigQuery type) and a value: a value such as 2026-10-25,
@@ -66,13 +74,35 @@
   <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
   <div class="panel-label">Today</div>
-  <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 08:12 · 80 MB</span></span></a>
-  <a class="list-item card q-item" href="query.html" data-name="preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">Weekly lead volume · 07:40 · 980 MB</span></span><span class="pill">Preview</span></a>
+  <div class="q-entry open" id="q-current">
+   <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
+   <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
+   <div class="q-runs" aria-label="Its last runs">
+    <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">08:12 · SQL and values</span></button>
+    <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">08:05 · values</span></button>
+    <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday · SQL</span></button>
+    <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
+   </div>
+  </div>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="partner share per week weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Partner share per week</span><span class="meta">Weekly lead volume +1 · 3 runs · 07:58</span></span></a>
+  </div>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">Weekly lead volume · 6 runs · 07:40</span></span><span class="pill">Preview</span></a>
+  </div>
   <div class="panel-label">Yesterday</div>
-  <a class="list-item card q-item" href="query.html" data-name="partner leads in september weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Partner leads in September</span><span class="meta">Weekly lead volume · 16:05 · 640 MB</span></span><span class="pill">Claude</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="lens leads per source week by week"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a lens"></i><span><span class="item-title">Leads per source, week by week</span><span class="meta">Lens · 09:30 · 640 MB</span></span></a>
-  <a class="list-item card q-item" href="query.html" data-name="weekly volume since 2024 weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">Weekly lead volume · 11:31 · 2.9 GB</span></span><span class="pill">Accepted</span></a>
-  <a class="list-item card q-item" href="query.html" data-name="credit lead funnel"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">All of the credit lead funnel</span><span class="meta">Credit lead funnel · 11:20 · 112 GB, not run</span></span><span class="pill" style="color:var(--signal-urgent)">To the data team</span></a>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="partner leads in september weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Partner leads in September</span><span class="meta">Weekly lead volume · 4 runs · 16:05</span></span><span class="pill">Claude</span></a>
+  </div>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="lens leads per source week by week"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a lens"></i><span><span class="item-title">Leads per source, week by week</span><span class="meta">Lens · 2 runs · 09:30</span></span></a>
+  </div>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="weekly volume since 2024 weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">Weekly lead volume · 1 run · 11:31</span></span><span class="pill">Accepted</span></a>
+  </div>
+  <div class="q-entry">
+   <a class="list-item card q-item" href="query.html" data-name="credit lead funnel"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">All of the credit lead funnel</span><span class="meta">Credit lead funnel · not run</span></span><span class="pill" style="color:var(--signal-urgent)">To the data team</span></a>
+  </div>
   </div>
   <div data-pane-group="scope" data-pane="all" data-for="datateam" hidden>
   <p class="meta" style="margin:12px 4px 0;line-height:1.5;display:block">Everyone's queries, with their SQL. Only the data team sees them.</p>
@@ -91,12 +121,26 @@
 <main class="main">
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
- <h1 class="page-title" style="flex:1">Leads per source name</h1>
+ <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
  <a class="btn-primary" href="lens-new.html" style="text-decoration:none" title="Turn this query into a lens for everyone who may use its resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a lens</a>
 </div>
-<div class="status-row"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
+<p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
+<p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
 <section class="query-card card" aria-label="The query">
+ <div class="q-scope" id="q-scope">
+  <span class="label" style="margin:0">Reads only</span>
+  <span class="scope-chips" id="scope-chips">
+   <span class="scope-chip" data-res="weekly_lead_volume"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="weekly_lead_volume" aria-label="Remove Weekly lead volume" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
+   <span class="scope-chip" data-res="lead_sources"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="lead_sources" aria-label="Remove Lead sources" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
+   <span class="scope-chip new" data-res="listings" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Listings<span class="muted">· Listings and sales</span><span class="maturity" data-level="3"></span><button class="scope-x" data-remove-res="listings" aria-label="Remove Listings" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
+   <span class="scope-chip new" data-res="partner_contracts" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Partner contracts<span class="muted">· Partners</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="partner_contracts" aria-label="Remove Partner contracts" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
+   <span class="scope-chip new" data-res="saved_searches" hidden><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Saved searches<span class="muted">· Search</span><span class="maturity" data-level="4"></span><button class="scope-x" data-remove-res="saved_searches" aria-label="Remove Saved searches" title="Remove it: that starts a new query without it"><i class="ph ph-x"></i></button></span>
+   <span id="scope-outside"></span>
+   <button class="scope-add" type="button" data-add-res><i class="ph ph-plus"></i>Add a resource</button>
+  </span>
+  <button class="btn-quiet outline" type="button" data-sheet-open="lenses-sheet" id="lenses-btn" title="See which lenses already use these resources"><i class="ph ph-aperture"></i><span>Lenses on these resources</span><span class="count">3</span></button>
+ </div>
  <div class="q-box">
   <div class="q-box-head">
    <span class="label" style="margin:0">BigQuery SQL</span>
@@ -110,23 +154,24 @@
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code">  select week_start,</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code">         lead_source,</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">         lead_count</span></div>
-    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume`</span></span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key" data-table="weekly_lead_volume">`immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume`</span></span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">  where week_start between <span class="sql-param" data-param="dateFrom">@dateFrom</span> and <span class="sql-param" data-param="dateTo">@dateTo</span></span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">    and lead_channel = <span class="sql-param" data-param="leadChannel">@leadChannel</span></span></div>
-    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and <span class="text-cursor"></span></span><div class="suggest" role="listbox" aria-label="Suggestions" style="top:calc(100% + 2px);left:128px" hidden>
+    <div class="ln" data-fold-in="weekly_lead_volume" data-variant="ok"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and <span class="text-cursor"></span></span><div class="suggest" role="listbox" aria-label="Suggestions" style="top:calc(100% + 2px);left:128px" hidden>
       <div class="suggest-item on" role="option" aria-selected="true"><i class="ph ph-columns"></i><span class="mono">lead_source</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 1</span></div>
       <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_channel</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 2</span></div>
       <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">week_start</span><span class="muted">DATE</span><span class="pill pill-strong">Partition</span></div>
       <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_count</span><span class="muted">INT64</span></div>
-      <div class="suggest-foot">Columns of Weekly lead volume. Cluster and partition columns first: a filter on them reads less.</div>
+      <div class="suggest-foot">Columns of the resources of this query only, cluster and partition columns first. Another resource starts a new query.</div>
      </div></div>
+    <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="outside"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_source in (select lead_source from <span class="sql-key" data-table="partner_contracts">`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`</span>)</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
     <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code"></span></div>
     <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- The readable name of every lead source</span></span></div>
     <div class="ln folded" data-fold-start="lead_sources"><span class="ln-no">13</span><button class="ln-fold" type="button" aria-expanded="false" aria-label="Unfold lead_sources"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">lead_sources</span> as (<button class="fold-ph" type="button" aria-label="Unfold lead_sources">⋯ 3 lines</button><span class="fold-close">),</span></span></div>
     <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">  select lead_source,</span></div>
     <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">         source_name</span></div>
-    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources`</span></span></div>
+    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key" data-table="lead_sources">`immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources`</span></span></div>
     <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
     <div class="ln"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code"></span></div>
     <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Every week's leads, with the name of their source, if it has one</span></span></div>
@@ -183,9 +228,13 @@
 
 <section class="result-card card" aria-label="Result of your last run">
  <div class="result-head">
-  <h2>Result of your last run</h2>
-  <span class="meta">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
+  <div data-group="rtab" role="tablist" aria-label="Result or history" class="rtabs">
+   <button class="seg on" data-target="result" role="tab" aria-selected="true">Result of run 14</button>
+   <button class="seg" data-target="history" role="tab" aria-selected="false" id="hist-tab">History · 14 runs</button>
+  </div>
+  <span class="meta" data-pane-group="rtab" data-pane="result">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
  </div>
+ <div data-pane-group="rtab" data-pane="result" id="result-pane">
  <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
   <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
  </div>
@@ -201,6 +250,39 @@
     <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
    </span>
   </span>
+ </div>
+ </div>
+ <p class="empty-run" id="not-run" data-pane-group="rtab" data-pane="result" hidden><i class="ph ph-play-circle"></i>Not run yet. Its first run comes into its history.</p>
+ <div data-pane-group="rtab" data-pane="history" hidden>
+  <p class="meta hist-intro" style="display:block">Every run is a variation of this query: other values, another SQL, or both. Its resources stay the same; another resource is another query.</p>
+  <div class="hist-list" id="hist-list">
+   <div class="hist-run open" data-run="14">
+    <button class="hist-head" type="button"><span class="hist-no">Run 14</span><span class="meta">today, 08:12</span><span class="hist-what"><span class="chg">SQL +1</span><span class="chg"><span class="mono">@leadChannel</span> Form</span></span><span class="meta hist-num">412 MB · 210 rows</span><span class="mono meta">q-20261027-4c2e1a</span><i class="ph ph-caret-down hist-caret"></i></button>
+    <div class="hist-body"><div class="diff"><div class="d-add"><span class="d-no">8</span>    and lead_channel = @leadChannel</div><div class="d-val"><span class="mono">@leadChannel</span> new, Form</div></div>
+     <div class="hist-actions"><span class="pill">Its result is shown</span></div></div>
+   </div>
+   <div class="hist-run" data-run="13">
+    <button class="hist-head" type="button"><span class="hist-no">Run 13</span><span class="meta">today, 08:05</span><span class="hist-what"><span class="chg"><span class="mono">@dateFrom</span> 1 Mar → 1 Jan 2026</span></span><span class="meta hist-num">380 MB · 220 rows</span><span class="mono meta">q-20261027-0b9d77</span><i class="ph ph-caret-down hist-caret"></i></button>
+    <div class="hist-body"><div class="diff"><div class="d-val"><span class="mono">@dateFrom</span> <del>DATE_SUB(CURRENT_DATE(), INTERVAL 8 MONTH)</del> → DATE_TRUNC(CURRENT_DATE(), YEAR)</div></div>
+     <div class="hist-actions"><button class="btn-quiet outline" type="button"><i class="ph ph-table"></i>Show its result</button><button class="btn-quiet outline" type="button"><i class="ph ph-arrow-counter-clockwise"></i>Back to this SQL and values</button></div></div>
+   </div>
+   <div class="hist-run" data-run="12">
+    <button class="hist-head" type="button"><span class="hist-no">Run 12</span><span class="meta">yesterday, 17:40</span><span class="hist-what"><span class="chg">SQL +5 −2</span></span><span class="meta hist-num">96 MB · 155 rows</span><span class="mono meta">q-20261026-77a310</span><i class="ph ph-caret-down hist-caret"></i></button>
+    <div class="hist-body"><div class="diff"><div class="d-del"><span class="d-no">26</span>select source_name,</div><div class="d-add"><span class="d-no">26</span>select week_start,</div><div class="d-add"><span class="d-no">27</span>       lead_source,</div><div class="d-add"><span class="d-no">28</span>       source_name,</div><div class="d-del"><span class="d-no">29</span>group by source_name</div><div class="d-add"><span class="d-no">32</span>group by week_start, lead_source, source_name</div><div class="d-add"><span class="d-no">33</span>order by week_start desc, leads desc</div></div>
+     <div class="hist-actions"><span class="meta">Its result is no longer kept.</span><button class="btn-quiet outline" type="button"><i class="ph ph-arrow-counter-clockwise"></i>Back to this SQL and values</button></div></div>
+   </div>
+   <div class="hist-run" data-run="11">
+    <button class="hist-head" type="button"><span class="hist-no">Run 11</span><span class="meta">yesterday, 17:31</span><span class="hist-what"><span class="chg"><span class="mono">@dateTo</span> 18 → 25 Oct 2026</span></span><span class="meta hist-num">90 MB · 5 rows</span><span class="mono meta">q-20261026-5e01c2</span><i class="ph ph-caret-down hist-caret"></i></button>
+    <div class="hist-body"><div class="diff"><div class="d-val"><span class="mono">@dateTo</span> <del>2026-10-18</del> → 2026-10-25</div></div><div class="hist-actions"><span class="meta">Its result is no longer kept.</span></div></div>
+   </div>
+   <div class="hist-run" data-run="10">
+    <button class="hist-head" type="button"><span class="hist-no">Run 10</span><span class="meta">23 Oct, 10:02</span><span class="hist-what"><span class="chg">SQL +1 −1</span></span><span class="meta hist-num">88 MB · 5 rows</span><span class="mono meta">q-20261023-91c0b4</span><i class="ph ph-caret-down hist-caret"></i></button>
+    <div class="hist-body"><div class="diff"><div class="d-del"><span class="d-no">26</span>  join lead_sources as s using (lead_source)</div><div class="d-add"><span class="d-no">26</span>  left join lead_sources as s using (lead_source)</div></div><div class="hist-actions"><span class="meta">Its result is no longer kept.</span></div></div>
+   </div>
+   <button class="hist-more" type="button">Runs 1 to 9, from 21 Oct</button>
+   <div class="hist-start"><i class="ph ph-flag"></i>21 Oct, 09:14 · a new query on Weekly lead volume and Lead sources</div>
+  </div>
+  <p class="empty-run" id="no-history" hidden>No runs yet.</p>
  </div>
  <div class="rg-menu" id="rg-menu" role="menu" hidden>
   <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
@@ -255,6 +337,126 @@
   <option value="LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))" data-gives="2026-09-30">End of the last complete month</option>
  </datalist>
 </section>
+<div class="sheet-wrap" id="lenses-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet lens-sheet" role="dialog" aria-modal="true" aria-labelledby="lenses-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">While you write your query</div><h2 id="lenses-title">Lenses on these resources</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">The same overview as for a new query: a lens a colleague made may already answer your question. Only lenses whose resources you may all use.</p>
+ <div class="sheet-list">
+  <div data-lens-set="start">
+  <div class="panel-label" style="margin:10px 0 8px">On exactly these two resources <span class="count">2</span></div>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Leads per source, week by week</span><span class="maturity" data-level="4"></span></div>
+     <p>How many leads each source brings, every week, and its share.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources</span></div>
+     <div class="lens-foot"><span class="meta">Trend · Credit leads · by Ruth Aerts · 31 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Partner share per month</span><span class="maturity" data-level="4"></span></div>
+     <p>The share of the partner network in the leads, month by month.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources</span></div>
+     <div class="lens-foot"><span class="meta">Comparison · Credit leads · by Karel Leys · 9 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+  <div class="panel-label" style="margin:16px 0 8px">On these two and more <span class="count">1</span></div>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Response time per source</span><span class="maturity" data-level="3"></span></div>
+     <p>How fast a broker answers a lead, per lead source.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Lead responses</span></div>
+     <div class="lens-foot"><span class="meta">Trend · Credit leads · by An Claes · 12 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+  </div>
+  <div data-lens-set="listings" hidden>
+  <div class="panel-label" style="margin:10px 0 8px">On exactly these three resources <span class="count">0</span></div>
+  <p class="empty">No lens uses exactly these three yet.</p>
+  <div class="panel-label" style="margin:16px 0 8px">On these three and more <span class="count">1</span></div>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Leads per listing and source</span><span class="maturity" data-level="3"></span></div>
+     <p>Which listings bring leads from which source.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources</span><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Listings</span><span class="use-chip"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>+ Listing views per day</span></div>
+     <div class="lens-foot"><span class="meta">Comparison · Listing leads · by Mia Peeters · 4 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+  </div>
+  <div data-lens-set="other" hidden>
+  <div class="panel-label" style="margin:10px 0 8px">On exactly these resources <span class="count">0</span></div>
+  <p class="empty">No lens uses exactly these resources yet, nor these and more.</p>
+  </div>
+  <div data-lens-set="wlv" hidden>
+  <div class="panel-label" style="margin:10px 0 8px">On exactly this resource <span class="count">4</span></div>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Weekly lead volume, last 12 weeks</span><span class="maturity" data-level="4"></span></div>
+     <p>The leads of the last twelve complete weeks.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span></div>
+     <div class="lens-foot"><span class="meta">Trend · Credit leads · by Ruth Aerts · 58 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+   <article class="lens-card">
+    <div>
+     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Leads per channel</span><span class="maturity" data-level="4"></span></div>
+     <p>How many leads come in by form, phone, e-mail or chat.</p>
+     <div class="use-chips"><span class="use-chip on"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume</span></div>
+     <div class="lens-foot"><span class="meta">Comparison · Credit leads · by Dirk Vos · 17 uses this month</span></div>
+    </div>
+    <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this lens</a>
+   </article>
+  <p class="meta" style="display:block;margin:6px 4px 0">And 2 more on exactly this resource, and 6 on it and more.</p>
+  </div>
+ </div>
+ <div class="sheet-foot"><p class="meta">None fits? Go on with your own query.</p><button class="btn-quiet" data-sheet-close>Back to the query</button></div>
+</section>
+</div>
+
+<div class="sheet-wrap" id="newq-sheet" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet newq-sheet" role="dialog" aria-modal="true" aria-labelledby="newq-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-git-branch" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">A new query, from Leads per source name</div><h2 id="newq-title">With one more resource</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list newq-body">
+  <p class="newq-why">A query reads only its own resources. <span id="newq-why-what">Adding one</span> starts a new query, which takes the SQL and its parameters along. Leads per source name stays as it is, with its history; the new query remembers where it came from.</p>
+  <div data-newq="add">
+   <div class="label">Add</div>
+   <label class="search" style="background:var(--surface-sub);margin-bottom:6px"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search the resources you may see"></label>
+   <label class="pick" data-pick="listings" data-name="listings"><input type="radio" name="newq-pick" value="listings" checked><span style="flex:1;min-width:0"><span class="item-title">Listings</span><span class="meta" style="display:block">Listings and sales · partitioned by listed_date</span></span><span class="maturity" data-level="3"></span></label>
+   <label class="pick" data-pick="partner_contracts" data-name="partner contracts"><input type="radio" name="newq-pick" value="partner_contracts"><span style="flex:1;min-width:0"><span class="item-title">Partner contracts</span><span class="meta" style="display:block">Partners · not partitioned</span></span><span class="maturity" data-level="4"></span></label>
+   <label class="pick" data-pick="saved_searches" data-name="saved searches"><input type="radio" name="newq-pick" value="saved_searches"><span style="flex:1;min-width:0"><span class="item-title">Saved searches</span><span class="meta" style="display:block">Search · partitioned by saved_date</span></span><span class="maturity" data-level="4"></span></label>
+  </div>
+  <div data-newq="remove" hidden>
+   <div class="newq-note"><i class="ph ph-warning"></i><span>The SQL still reads <span class="mono" id="newq-removed-table">lead_sources</span>. In the new query that is an error, until you take it out.</span></div>
+  </div>
+  <div class="label" style="margin-top:14px">Its resources</div>
+  <div class="use-chips" id="newq-set"></div>
+  <label class="field" style="margin-top:14px"><span>Name</span><input id="newq-name" value="Weekly lead volume, lead sources and listings, 27 Oct"></label>
+  <label class="field"><span>What do you want to know?</span><textarea id="newq-question" rows="2">Which sources bring our leads, week by week?</textarea></label>
+  <div class="newq-lenses" id="newq-lenses"></div>
+ </div>
+ <div class="sheet-foot"><p class="meta">Leads per source name stays in your queries.</p><button class="btn-quiet" data-sheet-close>Cancel</button><button class="btn-primary" id="newq-start" type="button"><i class="ph ph-git-branch"></i>Start the new query</button></div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:28px;bottom:auto;right:290px">SQL
+ <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
+ <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>
+</div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:28px;bottom:auto">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data team</button>

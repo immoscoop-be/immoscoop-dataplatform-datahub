@@ -282,6 +282,34 @@ if (sqlEditor) {
   document.addEventListener('keydown', e => { if (suggest && e.key === 'Escape') suggest.hidden = true; });
 }
 
+// What keeps a query from running (Proposal): an @name in the SQL that is not a Parameter, or a table that is not one of
+// the Resources of the query. Both stand out in the SQL, a folded CTE shows it on its "⋯ n lines", and the bar at the
+// foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with a
+// new query to start with it
+let removedRes = null;
+const syncRun = () => {
+  const btn = document.getElementById('run-btn'), editor = document.querySelector('.sql-editor');
+  if (!btn || !editor) return;
+  const live = sel => [...editor.querySelectorAll(sel)].filter(el => !el.closest('.ln.off'));
+  const scope = new Set([...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res));
+  live('.sql-key[data-table]').forEach(t => { const out = !scope.has(t.dataset.table); t.classList.toggle('outside', out); t.title = out ? 'Not a resource of this query' : ''; });
+  const tables = [...new Set(live('.sql-key.outside').map(t => t.dataset.table))];
+  const params = [...new Set(live('.sql-param.undefined').map(t => t.dataset.param))];
+  editor.querySelectorAll('[data-fold-start]').forEach(st => st.classList.toggle('has-error',
+    [...editor.querySelectorAll(`[data-fold-in="${st.dataset.foldStart}"]:not(.off)`)].some(l => l.querySelector('.sql-key.outside, .sql-param.undefined'))));
+  const out = document.getElementById('scope-outside');
+  if (out) out.innerHTML = tables.map(t => `<span class="scope-chip outside"><i class="ph-fill ph-warning"></i><span class="mono">${t}</span> is not a resource of this query`
+    + (t === removedRes ? '' : `<button class="text-link" type="button" data-add-res="${t}">Start a new query with it</button>`) + '</span>').join('');
+  const notes = [];
+  if (tables.length) notes.push(`${tables.map(t => `<span class="mono">${t}</span>`).join(', ')} ${tables.length > 1 ? 'are' : 'is'} not a resource of this query.`);
+  if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
+  btn.disabled = notes.length > 0;
+  document.getElementById('run-pf').hidden = notes.length > 0;
+  document.getElementById('run-note').hidden = !notes.length;
+  document.getElementById('run-note-text').innerHTML = notes.join(' ');
+  document.querySelector('[data-define-first]').hidden = !params.length;
+};
+
 // The Parameters of a query (Proposal). Each has a name, a kind from the standard list and a value: a value such as
 // 2026-10-25, or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run. Under the query
 // they fold open and shut; they are made and changed in a floating window that moves by its head. A Parameter that is
@@ -344,10 +372,7 @@ if (pbox) {
         + `<span class="ptile-state">${line ? 'In the query on line ' + line : 'Not in the query: it is not sent'}</span></button>`;
     }).join('') + undef.map(n => `<button class="ptile undefined" data-define="${n}"><span class="ptile-head"><i class="ph-fill ph-warning"></i><span class="mono">@${n}</span></span>`
       + `<span class="ptile-state">In the query on line ${at.get(n)}, but not a parameter. Define it</span></button>`).join('');
-    $('run-btn').disabled = undef.length > 0;
-    $('run-pf').hidden = undef.length > 0;
-    $('run-note').hidden = !undef.length;
-    $('run-note-text').innerHTML = `${undef.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${undef.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`;
+    syncRun();
   };
 
   // The box folds open and shut by its head; its chips and tiles open the window
@@ -558,4 +583,117 @@ if (grid) {
 
   applyWidths(); draw();
   document.fonts.ready.then(() => COLS.forEach((c, i) => fit(i)));
+}
+
+// A query is bounded by its Resources (Proposal): it reads only those, on top of its frame. Adding or removing one
+// starts a new query in a sheet, which takes the SQL and its Parameters along and remembers where it came from; the old
+// query stays as it was. "Lenses on these resources" shows the lenses that already use them, as for a new query. The
+// panel lists one item per query, with its last runs; the history holds every run, each a variation
+const scopeBox = document.getElementById('q-scope');
+if (scopeBox) {
+  const $ = id => document.getElementById(id);
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const NAMES = { weekly_lead_volume: 'Weekly lead volume', lead_sources: 'Lead sources', listings: 'Listings', partner_contracts: 'Partner contracts', saved_searches: 'Saved searches' };
+  const scopeNow = () => [...document.querySelectorAll('#scope-chips [data-res]:not([hidden])')].map(c => c.dataset.res);
+  // Prototype only: the lenses on a set of Resources
+  const LENSES = set => ({
+    'lead_sources,weekly_lead_volume': { pane: 'start', exact: 2, more: 1, names: ['Leads per source, week by week', 'Partner share per month'] },
+    'lead_sources,listings,weekly_lead_volume': { pane: 'listings', exact: 0, more: 1, names: ['Leads per listing and source'] },
+    'weekly_lead_volume': { pane: 'wlv', exact: 4, more: 6, names: ['Weekly lead volume, last 12 weeks', 'Leads per channel', 'and 2 more'] },
+  })[set.slice().sort().join(',')] || { pane: 'other', exact: 0, more: 0, names: [] };
+  const lensButton = () => {
+    const set = scopeNow(), l = LENSES(set);
+    $('lenses-btn').querySelector('span').textContent = set.length === 1 ? 'Lenses on this resource' : 'Lenses on these resources';
+    $('lenses-btn').querySelector('.count').textContent = l.exact + l.more;
+    document.querySelectorAll('[data-lens-set]').forEach(pane => { pane.hidden = pane.dataset.lensSet !== l.pane; });
+  };
+
+  // Prototype: the SQL as written, or with a table outside the Resources of the query
+  document.querySelectorAll('[data-group="sqlstate"] [data-target]').forEach(b => b.addEventListener('click', () => {
+    const outside = b.dataset.target === 'outside';
+    document.querySelectorAll('.ln[data-variant]').forEach(l => l.classList.toggle('off', (l.dataset.variant === 'outside') !== outside));
+    syncRun();
+  }));
+
+  // A new query, with one more Resource or one less
+  const sheet = $('newq-sheet');
+  let mode = 'add', removing = null;
+  const newSet = () => {
+    const cur = scopeNow();
+    if (mode === 'remove') return cur.filter(r => r !== removing);
+    const pick = sheet.querySelector('input[name="newq-pick"]:checked').value;
+    return cur.includes(pick) ? cur : [...cur, pick];
+  };
+  // Its name is suggested from its Resources and the date, as for every new query (DEC-UX-21, DEC-UX-23)
+  const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
+  const update = () => {
+    const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
+    $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' gone'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
+    $('newq-name').value = nameFor(set);
+    const l = LENSES(set), list = l.names.length ? `<ul>${l.names.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+    $('newq-lenses').innerHTML = '<i class="ph ph-aperture"></i><div>' + (l.exact
+      ? `<b>${l.exact} lens${l.exact > 1 ? 'es' : ''}</b> use${l.exact > 1 ? '' : 's'} exactly ${these}${l.more ? `, ${l.more} use ${n === 1 ? 'it' : 'them'} and more` : ''}.`
+      : l.more ? `No lens uses exactly ${these} yet; <b>${l.more}</b> use${l.more > 1 ? '' : 's'} them and more.` : `No lens uses ${these} yet.`)
+      + (mode === 'remove' ? ' A different list from that of Leads per source name.' : '') + list + '</div>';
+    if (mode === 'remove') sheet.querySelector('[data-newq="remove"]').hidden = !document.querySelector(`.sql-editor .sql-key[data-table="${removing}"]`);
+  };
+  const openNew = (m, res) => {
+    mode = m; removing = m === 'remove' ? res : null;
+    $('newq-title').textContent = m === 'add' ? 'With one more resource' : `Without ${NAMES[res]}`;
+    $('newq-why-what').textContent = m === 'add' ? 'Adding one' : 'Removing one';
+    sheet.querySelector('[data-newq="add"]').hidden = m !== 'add';
+    sheet.querySelector('[data-newq="remove"]').hidden = m !== 'remove';
+    if (m === 'add' && res) sheet.querySelector(`input[name="newq-pick"][value="${res}"]`).checked = true;
+    if (m === 'remove') $('newq-removed-table').textContent = res;
+    update(); sheet.hidden = false;
+  };
+  sheet.querySelectorAll('input[name="newq-pick"]').forEach(i => i.addEventListener('change', update));
+  document.addEventListener('click', e => {
+    const add = e.target.closest('[data-add-res]'), remove = e.target.closest('[data-remove-res]');
+    if (add) openNew('add', add.dataset.addRes || null);
+    if (remove) openNew('remove', remove.dataset.removeRes);
+    if (e.target.closest('#lenses-btn')) lensButton();
+  });
+  $('newq-start').addEventListener('click', () => {
+    const set = newSet(), name = $('newq-name').value.trim() || nameFor(set), from = $('q-title').textContent;
+    // The panel: the new query on top, open; the old one stays, folded
+    const old = document.querySelector('.q-item.current');
+    old.classList.remove('current'); old.removeAttribute('aria-current'); old.closest('.q-entry').classList.remove('open');
+    const entry = document.createElement('div');
+    entry.className = 'q-entry new-q';
+    entry.innerHTML = `<a class="list-item card q-item current" aria-current="page" href="query.html" data-name="${esc(name.toLowerCase())}"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i>`
+      + `<span><span class="item-title">${esc(name)}</span><span class="meta">from ${esc(from)} · not run yet</span></span></a>`;
+    document.querySelector('[data-pane="yours"] .panel-label').after(entry);
+    // The page: its name, its question, where it came from, its Resources; no result and no history yet
+    $('q-title').textContent = name;
+    $('q-question').textContent = $('newq-question').value;
+    $('q-origin').hidden = false; $('q-origin').querySelector('a').textContent = from;
+    document.querySelectorAll('#scope-chips [data-res]').forEach(c => { c.hidden = !set.includes(c.dataset.res); });
+    removedRes = mode === 'remove' ? removing : null;
+    const card = document.querySelector('.result-card');
+    card.classList.add('not-run');
+    document.querySelector('[data-group="rtab"] [data-target="result"]').textContent = 'Result';
+    $('hist-tab').textContent = 'History · no runs';
+    $('not-run').hidden = !document.querySelector('[data-group="rtab"] [data-target="result"]').classList.contains('on');
+    $('no-history').hidden = false;
+    sheet.hidden = true;
+    lensButton(); syncRun();
+  });
+
+  // The panel: a query unfolds to its last runs; a run opens in its history
+  document.querySelector('.panel').addEventListener('click', e => {
+    const unfold = e.target.closest('.q-unfold');
+    if (unfold) { const entry = unfold.closest('.q-entry'); entry.classList.toggle('open'); unfold.setAttribute('aria-expanded', entry.classList.contains('open')); return; }
+    const run = e.target.closest('.q-run'); if (!run) return;
+    document.querySelector('[data-group="rtab"] [data-target="history"]').click();
+    const row = document.querySelector(`.hist-run[data-run="${run.dataset.run}"]`);
+    if (row) {
+      row.classList.add('open', 'flash'); setTimeout(() => row.classList.remove('flash'), 1200);
+      row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    } else document.querySelector('.result-card').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  });
+  // The history: a run opens to what changed, in its SQL and its values
+  document.getElementById('hist-list').addEventListener('click', e => { e.target.closest('.hist-head')?.closest('.hist-run').classList.toggle('open'); });
+
+  lensButton(); syncRun();
 }

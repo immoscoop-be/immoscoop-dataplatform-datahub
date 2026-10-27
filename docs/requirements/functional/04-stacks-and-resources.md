@@ -439,6 +439,8 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 
 Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
 
+*Note of 2026-10-27: a query reads only its own Resources; a table outside them is an error, and another set of Resources is another query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).*
+
 <a id="fr-sr-42"></a>
 ### FR-SR-42 · The editor formats and suggests
 
@@ -452,6 +454,8 @@ The SQL editor in Query formats the SQL on request, and suggests while typing: t
 **Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20)
 
 The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
+
+*Note of 2026-10-27: one item per query, not per run; every run is a variation in the history of its query ([DEC-UX-74](../../design/principles.md#dec-ux-74)).*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it

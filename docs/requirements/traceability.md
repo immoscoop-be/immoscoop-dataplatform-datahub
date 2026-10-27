@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 72 | 25 (13 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 74 | 30 (18 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
@@ -169,7 +169,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-48](functional/04-stacks-and-resources.md#fr-sr-48) | The question of a new query finds Lenses by their words | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
 | [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Proposed | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-SR-50](functional/04-stacks-and-resources.md#fr-sr-50) | A Resource can be marked deprecated | Proposed | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
-| [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | – | [c50d2ee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c50d2ee4a3bab7b176e713209dcae4befbb8eb88) refs, 2026-10-27 |
+| [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | – | [0607009](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0607009473956ebff7d787c6450d09c8d3327407) refs, 2026-10-27<br>[c50d2ee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c50d2ee4a3bab7b176e713209dcae4befbb8eb88) refs, 2026-10-27 |
 
 ### [Resource card](functional/05-resource-card.md)
 
