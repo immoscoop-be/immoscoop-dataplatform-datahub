@@ -21,7 +21,7 @@ The Catalogue is layered. Whoever asks a question expects a chart or an action; 
 
 - [x] <a id="op-dh-01"></a>**OP-DH-01** · Work out how the Data Team puts a Resource in the Stacks and takes it out again: Registration and deregistration by a Data Admin (see [Stacks and resources](../requirements/functional/04-stacks-and-resources.md)).
 - [x] <a id="op-dh-02"></a>**OP-DH-02** · Decide who classifies Resources into Collections: the Data Team, and moving between Collections does not exist (see [Collections](../requirements/functional/03-collections.md)).
-- [ ] <a id="op-dh-03"></a>**OP-DH-03** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed.
+- [ ] <a id="op-dh-03"></a>**OP-DH-03** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed. *Note of 2026-10-27: deregistering does not happen yet; a column that disappears stops what needs it ([DEC-DH-66](data-hub.md#dec-dh-66)).*
 - [ ] <a id="op-dh-04"></a>**OP-DH-04** · Work out how Data Hub keeps track, per Resource, of which Lenses, Reports, feeds and EDAs use it, for example via the tables touched in the BigQuery job log of its own account.
 - [ ] <a id="op-dh-05"></a>**OP-DH-05** · Find out whether model contracts on the mart views in the Stacks make sense, so that structural Changes become a deliberate step.
 - [ ] <a id="op-dh-06"></a>**OP-DH-06** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model.
@@ -39,7 +39,7 @@ The Catalogue is layered. Whoever asks a question expects a chart or an action; 
 - [ ] <a id="op-dh-18"></a>**OP-DH-18** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time.
 - [ ] <a id="op-dh-19"></a>**OP-DH-19** · Decide which automatic checks follow from the EDA and the monitors, and what happens when a check fails.
 - [ ] <a id="op-dh-20"></a>**OP-DH-20** · Choose the channel and rhythm of notifications: Slack, email or only in Data Hub, immediately or as a digest.
-- [ ] <a id="op-dh-21"></a>**OP-DH-21** · Work out what happens to a Lens when a column it uses disappears.
+- [x] <a id="op-dh-21"></a>**OP-DH-21** · Work out what happens to a Lens when a column it uses disappears. *Decided on 2026-10-27, by Max: it stops working, without special handling ([DEC-DH-66](data-hub.md#dec-dh-66)).*
 
 ### 2. Permissions and User/Group management
 

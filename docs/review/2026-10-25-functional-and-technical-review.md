@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 78 |
 | Prototype screens | 31, plus the index |
-| Open points | 135 open, of 217 |
+| Open points | 134 open, of 217 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -622,7 +622,7 @@ The architecture leaves Lenses for later, "once their domain is specified". A st
 - Whether a Lens runs when it is opened ([OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)), which functions a default may use ([OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)). Where a Lens made from a query belongs is decided: in a Collection its author owns ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)); open is the author who owns none yet ([OP-CO-19](../requirements/functional/03-collections.md#op-co-19)).
 - A very large Lens: does it keep running while it waits ([OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)), and can it change while its Request waits ([OP-LE-09](../requirements/functional/09-lenses.md#op-le-09))?
 - How the story is asked: a skill, a form or the interface ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
-- What happens to a Lens when a column it uses disappears, or its Resource is deregistered ([OP-DH-21](../overview/open-themes.md#op-dh-21), [OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)).
+- **A column that disappears** (from your review, 2026-10-27) simply no longer exists: a Lens or query that needs it stops working, without special handling; deregistering does not happen yet ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)). What follows when a Resource is withdrawn remains open ([OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)).
 
 ## Messages
 
@@ -1121,15 +1121,15 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 135 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 134 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
 ### Open themes
 
-Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
+Source: [overview/open-themes.md](../overview/open-themes.md) · 38 open
 
-- [ ] **[OP-DH-03](../overview/open-themes.md#op-dh-03)** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed.
+- [ ] **[OP-DH-03](../overview/open-themes.md#op-dh-03)** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed. *Note of 2026-10-27: deregistering does not happen yet; a column that disappears stops what needs it ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)).*
 - [ ] **[OP-DH-04](../overview/open-themes.md#op-dh-04)** · Work out how Data Hub keeps track, per Resource, of which Lenses, Reports, feeds and EDAs use it, for example via the tables touched in the BigQuery job log of its own account.
 - [ ] **[OP-DH-05](../overview/open-themes.md#op-dh-05)** · Find out whether model contracts on the mart views in the Stacks make sense, so that structural Changes become a deliberate step.
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model.
@@ -1147,7 +1147,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 39 open
 - [ ] **[OP-DH-18](../overview/open-themes.md#op-dh-18)** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time.
 - [ ] **[OP-DH-19](../overview/open-themes.md#op-dh-19)** · Decide which automatic checks follow from the EDA and the monitors, and what happens when a check fails.
 - [ ] **[OP-DH-20](../overview/open-themes.md#op-dh-20)** · Choose the channel and rhythm of notifications: Slack, email or only in Data Hub, immediately or as a digest.
-- [ ] **[OP-DH-21](../overview/open-themes.md#op-dh-21)** · Work out what happens to a Lens when a column it uses disappears.
+- [x] **[OP-DH-21](../overview/open-themes.md#op-dh-21)** · Work out what happens to a Lens when a column it uses disappears. *Decided on 2026-10-27, by Max: it stops working, without special handling ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)).*
 - [ ] **[OP-DH-22](../overview/open-themes.md#op-dh-22)** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub. *Note of 2026-10-19: who sees a Collection and its Resources is decided in [DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10) to [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12); the access axis remains open.*
 - [ ] **[OP-DH-24](../overview/open-themes.md#op-dh-24)** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).*
 - [ ] **[OP-DH-25](../overview/open-themes.md#op-dh-25)** · Work out the issuing, revoking and renewing of personal keys, the Library Cards.
