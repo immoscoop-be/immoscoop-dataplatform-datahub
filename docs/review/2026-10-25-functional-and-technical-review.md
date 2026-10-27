@@ -651,7 +651,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 
 **The Message Centre.** Screen: `messages`.
 
-**Screen:** [messages.html?msg=described](../design/screens/messages.html?msg=described). A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing.
+**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing.
 
 **A changed description in dbt** is told to the Owner, one Message per Resource and run: the text before and now, and their Business Description next to it. It asks for no review; "Edit business descriptions" opens the fields ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Screen: `messages?msg=described`.
 
@@ -712,19 +712,19 @@ In the rail the learning centre sits at the bottom, above the account, not among
 
 **The start screen and its panel** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03), [DEC-UX-38](../design/principles.md#dec-ux-38), [DEC-UX-51](../design/principles.md#dec-ux-51)). The panel is the index of every card: the Compass, then the four Learning Levels, each unfolding to its sections and cards, with how many the User has seen and a check where they understood one. On top a single count of the cards seen; no ring, no streak. Screen: `learning-start`.
 
-**Screen:** [learning-card.html?step=why](../design/screens/learning-card.html?step=why). Why now, the first step of a card: a colleague's question, the row of five steps, I understand it, and the bar with Next.
+**Screen:** [learning-card.html](../design/screens/learning-card.html), with `?step=why` in the address. Why now, the first step of a card: a colleague's question, the row of five steps, I understand it, and the bar with Next.
 
 **A card in five steps** ([DEC-UX-48](../design/principles.md#dec-ux-48)). The steps stand in a row under the title, Quick and Full next to them; "I understand it" is the only button of the header. The bar at the foot, always in the same place, says what Next brings. Screen: `learning-card` (with `?step=core`, `see`, `check` or `can`, and `?path=quick`).
 
-**Screen:** [learning-card.html?step=core&path=quick](../design/screens/learning-card.html?step=core&path=quick). Core idea on the quick path: the decision rule large, with See it and Check your understanding muted in the row.
+**Screen:** [learning-card.html](../design/screens/learning-card.html), with `?step=core&path=quick` in the address. Core idea on the quick path: the decision rule large, with See it and Check your understanding muted in the row.
 
 **The quick path** mutes See it and Check your understanding in the row; a click still opens them. Core idea holds the decision rule, one metaphor and one example.
 
-**Screen:** [learning-card.html?step=check](../design/screens/learning-card.html?step=check). Check your understanding: a try-it question, answered, with the answer and why, and Another question. Answer the question to see the answer and why.
+**Screen:** [learning-card.html](../design/screens/learning-card.html), with `?step=check` in the address. Check your understanding: a try-it question, answered, with the answer and why, and Another question. Answer the question to see the answer and why.
 
 **Check your understanding** ([FR-LR-30](../requirements/functional/16-learning.md#fr-lr-30)). One question per screen; a click shows the answer and why, then "Another question", for as long as the User likes. This one is a try-it question, with a link to what to open. Whether the card says "Not quite." before the why is open ([OP-LR-19](../requirements/functional/16-learning.md#op-lr-19)).
 
-**Screen:** [learning-card.html?step=can](../design/screens/learning-card.html?step=can). You can now: what the User can do now, what it brings them, and three ways on as tiles.
+**Screen:** [learning-card.html](../design/screens/learning-card.html), with `?step=can` in the address. You can now: what the User can do now, what it brings them, and three ways on as tiles.
 
 **You can now** ([DEC-UX-49](../design/principles.md#dec-ux-49)): the three fields, and at the foot "Share in a message" and the Messages on the card. Whether the small drawing of two circles stays is open ([OP-LR-21](../requirements/functional/16-learning.md#op-lr-21)).
 
@@ -736,7 +736,7 @@ In the rail the learning centre sits at the bottom, above the account, not among
 
 **The marker and its pop-out** ([DEC-UX-56](../design/principles.md#dec-ux-56), [DEC-UX-57](../design/principles.md#dec-ux-57)). On the page of a Resource, its Level, its grain and "Mark as seen" carry ⓘ. The pop-out opens after a one-second hold, so passing over the page opens nothing; keyboard focus opens it at once. Screens: `resource-detail` (rest the pointer on the grain), `learning-hover`.
 
-**Screen:** [learning-hover.html?pop=pop-rec](../design/screens/learning-hover.html?pop=pop-rec). The pop-out on the Mark as seen button, its arrow on the marker.
+**Screen:** [learning-hover.html](../design/screens/learning-hover.html), with `?pop=pop-rec` in the address. The pop-out on the Mark as seen button, its arrow on the marker.
 
 **On a button** the pop-out works the same, and the button keeps its own action; on a touch screen only a tap on the marker opens it.
 
@@ -912,9 +912,9 @@ None of the designed screens shows a level of confidentiality yet.
 - **Sets with a story:** each photo has a title, a few lines and who took it. The light and the dark theme each have their own set; a photo is never darkened for the dark theme ([DEC-UX-36](../design/principles.md#dec-ux-36)). You provide the photos and write the stories; the prototype's stories are stand-ins.
 - **So far:** light set Alpenglow and Spring snow; dark set Lights on, your blue-hour photo made into a night picture. The first ski painting, with the lift, has no photo in the set yet.
 
-**Screen:** [lens.html?bg=ski](../design/screens/lens.html?bg=ski). The page of a Lens over the painted ski picture, the frames lightly blurring it.
+**Screen:** [lens.html](../design/screens/lens.html), with `?bg=ski` in the address. The page of a Lens over the painted ski picture, the frames lightly blurring it.
 
-**Screen:** [collections-start.html?bg=alpenglow](../design/screens/collections-start.html?bg=alpenglow). The start of Collections in the dark theme over the village at night. Switch to dark with the moon in the rail.
+**Screen:** [collections-start.html](../design/screens/collections-start.html), with `?bg=alpenglow` in the address. The start of Collections in the dark theme over the village at night. Switch to dark with the moon in the rail.
 
 Any screen shows a picture with `?bg=alpenglow`, `?bg=spring` or `?bg=ski`; in the dark theme it shows the village at night.
 
