@@ -315,6 +315,12 @@ const syncRun = () => {
 // they fold open and shut; they are made and changed in a floating window that moves by its head. A Parameter that is
 // not in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under
 // it, and keeps the query from running, as BigQuery would refuse it; a click on it defines it
+// The box of the SQL folds open and shut, as the Parameters do (DEC-UX-76)
+const sqlBox = document.getElementById('sql-box');
+if (sqlBox) {
+  const foldSql = open => { sqlBox.classList.toggle('open', open); sqlBox.querySelector('.pbox-toggle').setAttribute('aria-expanded', open); };
+  sqlBox.querySelector('.sql-head').addEventListener('click', e => { if (!e.target.closest('button') || e.target.closest('.pbox-toggle')) foldSql(!sqlBox.classList.contains('open')); });
+}
 const pbox = document.getElementById('param-box');
 if (pbox) {
   const KINDS = {

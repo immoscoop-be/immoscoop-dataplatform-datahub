@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 75 | 30 (18 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 78 | 30 (18 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 62 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (39 open, 7 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
@@ -20,7 +20,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Maturity and release](functional/06-maturity-and-release.md) | 13 (11 specified, 2 withdrawn) | – | 9 | 5 (4 open, 1 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 15 (12 proposed, 3 withdrawn) | – | 2 | 9 (6 open, 3 done) |
+| [Lenses](functional/09-lenses.md) | 16 (12 proposed, 1 specified, 3 withdrawn) | – | 5 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -229,8 +229,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- | --- |
 | [FR-LE-01](functional/09-lenses.md#fr-le-01) | A Lens is created only under a processing limit | Withdrawn | – | – | [0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23<br>[f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23 |
 | [FR-LE-02](functional/09-lenses.md#fr-le-02) | The weight of a Lens is visible | Withdrawn | – | – | [f87817e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f87817ee1943ab435daf7377fed782e8423a59cd) refs, 2026-10-23<br>[48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23<br>[6954a97](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6954a97bccbbbe5261b631d8c42b34cd17fe9365) refs, 2026-10-23 |
-| [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | – |
-| [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | – |
+| [FR-LE-03](functional/09-lenses.md#fr-le-03) | A Lens is described in plain language | Proposed | – | – | [4a53ed4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4a53ed4aecbbfdb3aea9f31829647449c3f82360) refs, 2026-10-27 |
+| [FR-LE-04](functional/09-lenses.md#fr-le-04) | Business adjusts Parameters without touching the SQL | Proposed | – | – | [4a53ed4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4a53ed4aecbbfdb3aea9f31829647449c3f82360) refs, 2026-10-27 |
 | [FR-LE-05](functional/09-lenses.md#fr-le-05) | First the story, then the data | Proposed | – | – | – |
 | [FR-LE-06](functional/09-lenses.md#fr-le-06) | A Lens has a short description and tags | Proposed | – | – | [48f0c24](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/48f0c249567a1396d0071eb34280156d9b5d13a3) refs, 2026-10-23 |
 | [FR-LE-07](functional/09-lenses.md#fr-le-07) | A query becomes a Lens | Proposed | – | – | [3db2ff6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3db2ff69826cdefbef8ff15318b767ca4a18f1eb) refs, 2026-10-23<br>[0edaf10](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0edaf10d4d2f8ff5996268abfad75a733b198516) refs, 2026-10-23 |
@@ -242,6 +242,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-13](functional/09-lenses.md#fr-le-13) | A Parameter takes a value or a function | Proposed | – | – | [4459f23](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4459f23ea398663761e966d74c8385f55cf20402) refs, 2026-10-27<br>[8c2ef31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8c2ef31087b024f3227cb494e3b24bef75ca317b) refs, 2026-10-23<br>[54bd5d1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/54bd5d1474d7a6a847850a379ef8444042bce8e1) refs, 2026-10-23<br>[3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
 | [FR-LE-14](functional/09-lenses.md#fr-le-14) | Only its Owner Unit sees the SQL of a Lens | Proposed | – | – | [3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
 | [FR-LE-15](functional/09-lenses.md#fr-le-15) | The section Lenses starts with the Lenses a User may use | Withdrawn | – | – | [8ffc8bd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8ffc8bd1e4f6dd6cb4800fe29651f264d7069ddf) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
+| [FR-LE-16](functional/09-lenses.md#fr-le-16) | A Lens is updated from its query | Specified | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

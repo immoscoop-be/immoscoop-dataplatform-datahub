@@ -5,11 +5,11 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
 :focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
 .mono { font-family: var(--font-mono); }
 
-/* Background: slow three-colour gradient */
+/* Background: in light, soft clouds of colour on white (DEC-UX-78); in dark, a slow three-colour gradient. Both drift */
 .app {
   height: 100vh; display: flex; gap: var(--space-gap); padding: var(--space-frame);
-  background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
-  background-size: 260% 260%; animation: bg-drift var(--background-cycle) ease-in-out infinite alternate;
+  background: var(--app-bg);
+  background-size: var(--app-bg-size); animation: bg-drift var(--background-cycle) ease-in-out infinite alternate;
 }
 @keyframes bg-drift { 0% { background-position: 0% 20%; } 50% { background-position: 60% 80%; } 100% { background-position: 100% 40%; } }
 /* A picture in place of the gradient (DEC-UX-34): the painted counterpart of a photo of the set, a watercolour (DEC-UX-37),
@@ -351,6 +351,13 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .pbox-summary { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
 .param-box.open .pbox-summary { display: none; }
 .param-box:not(.open) .ptiles { display: none; }
+/* The box of the SQL folds as the Parameters do (DEC-UX-76) */
+.sql-head { cursor: pointer; }
+.sql-fold:not(.open) .pbox-toggle i { transform: rotate(-90deg); }
+.sql-fold:not(.open) > :not(.q-box-head) { display: none; }
+.sql-fold:not(.open) .q-box-head { margin-bottom: 0; }
+.sql-fold:not(.open) .q-box-head .btn-quiet { display: none; }
+.sql-fold.open .sql-summary { display: none; }
 .pchip { display: inline-flex; align-items: center; gap: 6px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: var(--surface-solid);
   border: 0; border-radius: var(--radius-pill); padding: 3px 10px; cursor: pointer; }
 .pchip .mono { color: var(--text-primary); }

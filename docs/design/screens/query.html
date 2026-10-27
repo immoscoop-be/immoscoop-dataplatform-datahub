@@ -29,7 +29,9 @@
   Ctrl+C copies it; null in grey. Every result carries its Query ID. The result is a proposal, to test.
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
-  "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25).
+  "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
+  takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
+  FR-LE-16, DEC-UX-77); the switch "Lens" shows both. The box of the SQL folds as the Parameters do (DEC-UX-76).
   Related screens: resource-queries.html (the queries on a Resource), lens-new.html (Make it a lens).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -123,9 +125,11 @@
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
- <a class="btn-primary" href="lens-new.html" style="text-decoration:none" title="Turn this query into a lens for everyone who may use its resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a lens</a>
+ <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a lens for everyone who may use its resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a lens</a>
+ <button class="btn-primary" data-pane-group="lens" data-pane="linked" type="button" data-sheet-open="update-lens" title="Overwrite the lens with this query: its SQL and parameters"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Update the lens</button>
 </div>
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
+<p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
 <section class="query-card card" aria-label="The query">
  <div class="q-scope" id="q-scope">
@@ -139,11 +143,13 @@
    <span id="scope-outside"></span>
    <button class="scope-add" type="button" data-add-res><i class="ph ph-plus"></i>Add a resource</button>
   </span>
-  <button class="btn-quiet outline" type="button" data-sheet-open="lenses-sheet" id="lenses-btn" title="See which lenses already use these resources"><i class="ph ph-aperture"></i><span>Lenses on these resources</span><span class="count">3</span></button>
+  <button class="btn-quiet outline" type="button" data-pane-group="lens" data-pane="free" hidden data-sheet-open="lenses-sheet" id="lenses-btn" title="See which lenses already use these resources"><i class="ph ph-aperture"></i><span>Lenses on these resources</span><span class="count">3</span></button>
  </div>
- <div class="q-box">
-  <div class="q-box-head">
+ <div class="q-box sql-fold open" id="sql-box">
+  <div class="q-box-head sql-head">
+   <button class="icon-btn pbox-toggle" aria-expanded="true" aria-label="Fold or unfold the SQL"><i class="ph ph-caret-down"></i></button>
    <span class="label" style="margin:0">BigQuery SQL</span>
+   <span class="sql-summary meta">36 lines · 3 CTEs</span>
    <span style="flex:1"></span>
    <button class="btn-quiet outline" id="fold-all" title="Fold or unfold every CTE"><i class="ph ph-arrows-in-line-vertical"></i><span>Fold all</span></button>
    <button class="btn-quiet outline" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i>Format</button>
@@ -453,6 +459,34 @@
 </section>
 </div>
 
+<div class="sheet-wrap" id="update-lens" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet pub-sheet" role="dialog" aria-modal="true" aria-labelledby="update-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Update the lens</div><h2 id="update-title">Leads per source name</h2><p class="meta" style="display:block;margin-top:2px">Lens · Credit leads · made from this query</p></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list">
+  <div class="pub-block">
+   <div class="label">What it replaces</div>
+   <div class="check-line"><i class="ph-fill ph-arrows-clockwise"></i><span><b>The SQL and the Parameters</b> of the lens, by those of this query as it is now.</span></div>
+  </div><div class="pub-block">
+   <div class="label">What stays</div>
+   <div class="check-line"><i class="ph-fill ph-check-circle"></i><span>Its name, question, story, tags and collection, and the resources it reads. The version it has now stays in its history.</span></div>
+  </div><div class="pub-block">
+   <div class="label">Size check</div>
+   <div class="check-line"><i class="ph-fill ph-check-circle"></i><span><b>80 MB a run, within range:</b> the lens is updated at once. Above 100 MB you are warned; above 1 GB it waits for the data team.</span></div>
+  </div>
+ </div>
+ <div class="sheet-foot"><p class="meta">Everyone who uses the lens gets the new version at their next run.</p><button class="btn-quiet outline" data-sheet-close>Cancel</button><button class="btn-primary"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Update the lens</button></div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="lens" role="tablist" aria-label="Prototype: used as a lens" style="top:28px;bottom:auto;right:600px">Lens
+ <button class="seg on" data-target="linked" role="tab" aria-selected="true">Used as a lens</button>
+ <button class="seg" data-target="free" role="tab" aria-selected="false">Not a lens</button>
+</div>
 <div class="proto-switch" data-group="sqlstate" role="tablist" aria-label="Prototype: the SQL" style="top:28px;bottom:auto;right:290px">SQL
  <button class="seg on" data-target="ok" role="tab" aria-selected="true">As written</button>
  <button class="seg" data-target="outside" role="tab" aria-selected="false">With a table outside</button>

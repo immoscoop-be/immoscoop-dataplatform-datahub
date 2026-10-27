@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 217: 41 Implemented, 67 Specified, 78 Proposed, 31 Withdrawn |
+| Functional requirements | 218: 41 Implemented, 68 Specified, 78 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 75 |
+| Design decisions (DEC-UX) | 78 |
 | Prototype screens | 31, plus the index |
-| Open points | 135 open, of 216 |
+| Open points | 135 open, of 217 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -530,6 +530,8 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 **Query** holds the editor, the Pre-flight with the partitions it reads, and the result with its Query ID. Its panel lists the queries that ran, grouped by day. For the Owner, Make it a lens starts step 7. Screen: `query`.
 
+**A query used as a Lens** (from your review, 2026-10-27) stays a query and says so, with a link to the Lens. "Update the lens" takes the place of "Make it a lens" and overwrites the Lens with the query after its size check; the Lens keeps its name, story and Collection, and its earlier version stays in its history. "Lenses on these resources" goes for such a query, and using other Resources is a new query ([DEC-LE-03](../requirements/functional/09-lenses.md#dec-le-03), [DEC-LE-04](../requirements/functional/09-lenses.md#dec-le-04), [FR-LE-16](../requirements/functional/09-lenses.md#fr-le-16)). The box of the SQL folds open and shut, as the Parameters do ([DEC-UX-76](../design/principles.md#dec-ux-76)). Screen: [query.html](../design/screens/query.html), with the switch "Lens".
+
 **Screen:** [resource-queries.html](../design/screens/resource-queries.html). The tab Queries on a Resource: every query that ran on it, with who, how, what it read, and a few numbers over 30 days.
 
 **The tab Queries** on a Resource lists every query on it, with a few numbers over the last 30 days. The SQL shows only to whoever ran it and the Data Team. Screen: `resource-queries`.
@@ -907,7 +909,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 ### Backgrounds and their photo sets
 
-- **The default background** is a gradient of three colours, drifting slowly ([DEC-UX-05](../design/principles.md#dec-ux-05)).
+- **The default background** is, in the light theme, soft clouds of colour on white, from a picture of yours turned a quarter, without a pink field ([DEC-UX-78](../design/principles.md#dec-ux-78), 2026-10-27); in the dark theme a gradient of three colours. Both drift slowly ([DEC-UX-05](../design/principles.md#dec-ux-05)).
 - **A picture can take its place:** the painted counterpart of a photo, a watercolour made from the photo itself, drifting as slowly; the frames then blur it lightly ([DEC-UX-34](../design/principles.md#dec-ux-34), [DEC-UX-37](../design/principles.md#dec-ux-37)).
 - **Sets with a story:** each photo has a title, a few lines and who took it. The light and the dark theme each have their own set; a photo is never darkened for the dark theme ([DEC-UX-36](../design/principles.md#dec-ux-36)). You provide the photos and write the stories; the prototype's stories are stand-ins.
 - **So far:** light set Alpenglow and Spring snow; dark set Lights on, your blue-hour photo made into a night picture. The first ski painting, with the lift, has no photo in the set yet.
@@ -1293,11 +1295,12 @@ Source: [requirements/functional/09-lenses.md](../requirements/functional/09-len
 
 - [ ] **[OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)** · Decide the form in which the story of a Lens is asked ([FR-LE-05](../requirements/functional/09-lenses.md#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
 - [x] **[OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)** · Decide where a Lens made from a query belongs ([FR-LE-07](../requirements/functional/09-lenses.md#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.* *Decided on 2026-10-26, by Max: a Lens always goes into a Collection its author owns, even with Resources of other Collections ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)).*
-- [ ] **[OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
+- [ ] **[OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.* *Note of 2026-10-27: Max asked what this means. It is about a Lens that is already published and used, and that later reads more than 1 GB in a run, for example as its data grows: does it keep running for its Users until the Data Team accepts it again, or does it stop?*
 - [ ] **[OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)** · Decide whether a Lens runs when it is opened ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.*
 - [ ] **[OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.*
 - [ ] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../design/principles.md#dec-ux-71)).*
-- [ ] **[OP-LE-09](../requirements/functional/09-lenses.md#op-le-09)** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.*
+- [x] **[OP-LE-09](../requirements/functional/09-lenses.md#op-le-09)** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.* *Decided on 2026-10-27, by Max: no; the Lens is frozen and waits, with a reasonable timeout ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)).*
+- [ ] **[OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.*
 
 ### Beta and promotion
 

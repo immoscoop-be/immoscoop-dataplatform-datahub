@@ -23,6 +23,9 @@ Pointers to material this domain will build on, collected during the migration. 
 
 - <a id="dec-le-01"></a>**DEC-LE-01** · A Lens takes its Parameters from the query it is made from: making a Lens adds none, and a Parameter is added in the query. Its Users can always change the value of every Parameter, without touching the SQL; there is no choice to lock one. *Decided on 2026-10-27, by Max.*
 - <a id="dec-le-02"></a>**DEC-LE-02** · Making a Lens does not show what it does step by step. Data Hub writes that description in plain language when the Lens is saved ([FR-LE-03](#fr-le-03)), and the page of the Lens shows it. *Decided on 2026-10-27, by Max.*
+- <a id="dec-le-03"></a>**DEC-LE-03** · A query that becomes a Lens stays a query, and says that it is used as that Lens, with a link to it; the Lens links back to its query. *Decided on 2026-10-27, by Max.*
+- <a id="dec-le-04"></a>**DEC-LE-04** · Opening a query that is used as a Lens offers to overwrite the Lens with the query: its SQL and Parameters replace those of the Lens, after a new size check, as a new version of the Lens. Such a query no longer suggests the Lenses on its Resources. Using other Resources is a new query, as always ([DEC-UX-73](../../design/principles.md#dec-ux-73)); that one is not used as the Lens, and can become a Lens of its own. *Decided on 2026-10-27, by Max.*
+- <a id="dec-le-05"></a>**DEC-LE-05** · While its Request waits for the Data Team, a very large Lens is frozen: nobody changes it, neither its author nor the Data Team, and it waits for the answer. A Request has a reasonable timeout ([OP-LE-10](#op-le-10)). *Decided on 2026-10-27, by Max ([OP-LE-09](#op-le-09)).*
 
 ## Requirements
 
@@ -87,6 +90,8 @@ Every Lens has a description of a sentence or two on what it shows, in business 
 **Status:** Proposed · **Source:** Max, 2026-10-23
 
 Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) can make a Lens of it, with the button "Make it a lens" on the query ([DEC-UX-25](../../design/principles.md#dec-ux-25)): the logical next step once a query answers a question that will come back. Its name, its question and its Resources come along; its question is where the story of the Lens starts ([FR-LE-05](#fr-le-05)). Starting a Lens from the page of a Collection ([FR-CO-29](03-collections.md#fr-co-29)) stays possible. Where a Lens made from a query belongs is open ([OP-LE-04](#op-le-04)).
+
+*Note of 2026-10-27: the query stays, used as the Lens ([DEC-LE-03](#dec-le-03)).*
 
 <a id="fr-le-08"></a>
 ### FR-LE-08 · Making a Lens checks what one run reads, in three ranges
@@ -159,17 +164,25 @@ The section Lenses opens on a start screen. It finds Lenses by the words of a qu
 
 *Note of 2026-10-26: withdrawn by Max. Lenses have no section of their own; the start screen of Collections finds them ([FR-CO-37](03-collections.md#fr-co-37)).*
 
+<a id="fr-le-16"></a>
+### FR-LE-16 · A Lens is updated from its query
+
+**Status:** Specified · **Source:** Max, 2026-10-27
+
+A query used as a Lens says so, with a link to the Lens ([DEC-LE-03](#dec-le-03)). Whoever may change the Lens, its Owner Unit and the Data Team ([DEC-CO-15](03-collections.md#dec-co-15), [DEC-CO-18](03-collections.md#dec-co-18)), can update the Lens from the query: the SQL and the Parameters of the query replace those of the Lens, a new size check decides how it is published again ([FR-LE-08](#fr-le-08)), and the Lens keeps its name, question, story, tags and Collection. The earlier version stays in the history of the Lens. The query does not suggest the Lenses on its Resources ([DEC-LE-04](#dec-le-04)).
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
 - [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. Making a Lens is checked in three ranges instead ([FR-LE-08](#fr-le-08)), whose two thresholds are decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
 - [x] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.* *Decided on 2026-10-23: the size is measured when the Lens is made, as its author sets it up. Growth is followed while the Lens runs: a run that reads more than its range sets off the check again ([FR-LE-10](#fr-le-10)).*
 - [x] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.* *Decided on 2026-10-26, by Max: a Lens always goes into a Collection its author owns, even with Resources of other Collections ([DEC-CO-20](03-collections.md#dec-co-20)).*
-- [ ] <a id="op-le-05"></a>**OP-LE-05** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.*
+- [ ] <a id="op-le-05"></a>**OP-LE-05** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.* *Note of 2026-10-27: Max asked what this means. It is about a Lens that is already published and used, and that later reads more than 1 GB in a run, for example as its data grows: does it keep running for its Users until the Data Team accepts it again, or does it stop?*
 - [ ] <a id="op-le-06"></a>**OP-LE-06** · Decide whether a Lens runs when it is opened ([FR-LE-12](#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.*
 - [ ] <a id="op-le-07"></a>**OP-LE-07** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.*
 - [ ] <a id="op-le-08"></a>**OP-LE-08** · Decide which functions a default may use ([FR-LE-13](#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../../design/principles.md#dec-ux-71)).*
-- [ ] <a id="op-le-09"></a>**OP-LE-09** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.*
+- [x] <a id="op-le-09"></a>**OP-LE-09** · Decide whether a very large Lens can change while its Request waits for the Data Team ([FR-LE-09](#fr-le-09)), by its author or by the Data Team, and what then happens to the Request: a change can bring the Lens into another range, such as a default for From that makes it large. *Raised on 2026-10-23, while designing a Request opened in context.* *Decided on 2026-10-27, by Max: no; the Lens is frozen and waits, with a reasonable timeout ([DEC-LE-05](#dec-le-05)).*
+- [ ] <a id="op-le-10"></a>**OP-LE-10** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.*
 
 ## Builds on
 

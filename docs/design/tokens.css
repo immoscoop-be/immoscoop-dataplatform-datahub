@@ -60,6 +60,21 @@
   --bg-1: #EFE5DA;               /* sand */
   --bg-2: #F2DDE2;               /* blush */
   --bg-3: #DCE6E3;               /* mist */
+  /* Light theme: soft clouds of colour on white, from Max's picture turned a quarter (DEC-UX-78) */
+  --bg-base: #FFFFFF;
+  --bg-sun: #FFE6A3;             /* warm yellow, upper right */
+  --bg-peach: #FFCDA2;
+  --bg-rose: #F8BCC6;            /* kept soft: no pink field */
+  --bg-lilac: #D8D4F3;
+  --bg-sky: #A8EEFB;             /* sky blue, lower left */
+  --app-bg:
+    radial-gradient(30% 48% at 90% 30%, var(--bg-sun) 0%, transparent 70%),
+    radial-gradient(30% 46% at 76% 26%, var(--bg-peach) 0%, transparent 70%),
+    radial-gradient(28% 42% at 60% 24%, var(--bg-rose) 0%, transparent 72%),
+    radial-gradient(30% 46% at 40% 38%, var(--bg-lilac) 0%, transparent 72%),
+    radial-gradient(36% 58% at 20% 72%, var(--bg-sky) 0%, transparent 72%),
+    var(--bg-base);
+  --app-bg-size: 130% 130%;
   --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
   --surface-float-hover: rgba(255,255,255,.28);
   --surface-solid: #FFFFFF;      /* reading surface in focus */
@@ -78,6 +93,8 @@
   --bg-1: #2B2520;
   --bg-2: #36292D;
   --bg-3: #232A28;
+  --app-bg: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+  --app-bg-size: 260% 260%;
   --surface-glass: rgba(70,64,58,.38);
   --surface-float-hover: rgba(255,255,255,.06);
   --surface-solid: #322E2A;
