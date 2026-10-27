@@ -9,8 +9,8 @@
   Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
   Opened in context: lens-context (the Question), lens-new-context (the Request).
   Also for the Owner: what Data Hub tells them when descriptions changed in dbt (FR-RC-17, DEC-RC-03): before and after, with their
-  Business Description next to it; it asks for nothing. It ends with "Understand what is happening here" and the Learning Card
-  K3.4 that explains it (FR-LR-38, DEC-UX-79). ?msg=described opens it.
+  Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds
+  the Learning Card K3.4, which opens inline in the Message (FR-LR-38, DEC-UX-79). ?msg=described opens it.
   Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub); FR-RC-17.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -220,6 +220,17 @@
      <p>Two descriptions of Weekly lead volume changed in dbt. Your business descriptions stay as they are, next to them: read them again, and change yours where it no longer fits. Nothing is asked of you, and the level and the publication do not change.</p>
     </div>
   </div>
+  <div class="lc-understand">
+   <div class="label">Understand what is happening here</div>
+   <details class="lc-inline">
+    <summary class="lc-attach"><i class="ph ph-compass" aria-hidden="true"></i><span class="lc-attach-body"><span class="lc-attach-title"><span class="lc-num">K3.4</span>Where definitions live</span><span class="meta">Learning card · Compass · 4 min · why dbt and you each describe a field</span></span><span class="lc-attach-state"><i class="ph ph-circle"></i>Not read yet</span><i class="ph ph-caret-down lc-inline-caret" aria-hidden="true"></i></summary>
+    <div class="lc-inline-body">
+     <p class="lc-inline-rule">A field has two descriptions, each with a home of its own: the one from dbt is the definition, kept by the data team next to the code; yours explains it in business language. When the definition changes, read your explanation again.</p>
+     <p class="lc-inline-can"><b>You can now</b> tell where a description comes from, and keep yours in step when the one from dbt changes.</p>
+     <div class="lc-inline-foot"><a class="text-link" href="learning-card.html"><span>Open the whole card</span><i class="ph ph-arrow-right"></i></a><button class="btn-quiet outline" type="button"><i class="ph-fill ph-check-circle"></i>I understand it</button></div>
+    </div>
+   </details>
+  </div>
   <div class="desc-change">
    <h4><i class="ph ph-table" aria-hidden="true"></i>The table</h4>
    <dl>
@@ -235,10 +246,6 @@
     <dt>Now, in dbt</dt><dd>Number of credit leads sent to KBC, without test and duplicate requests</dd>
     <dt>Your business description</dt><dd>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</dd>
    </dl>
-  </div>
-  <div class="lc-understand">
-   <div class="label">Understand what is happening here</div>
-   <a class="lc-attach" href="learning-card.html"><i class="ph ph-compass" aria-hidden="true"></i><span class="lc-attach-body"><span class="lc-attach-title"><span class="lc-num">K3.4</span>Where definitions live</span><span class="meta">Learning card · Compass · 4 min · why dbt and you each describe a field</span></span><span class="lc-attach-state"><i class="ph ph-circle"></i>Not read yet</span></a>
   </div>
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0 40px">
    <a class="btn-primary" href="resource-columns-edit.html?fd=changed" style="text-decoration:none"><i class="ph-fill ph-pencil-simple" style="font-size:15px"></i>Edit business descriptions</a>

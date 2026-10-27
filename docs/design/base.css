@@ -1098,7 +1098,16 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 @media (max-width: 900px) { .fd-row { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
 
 /* What Data Hub writes itself ends with the Learning Card that explains it (DEC-UX-79) */
-.lc-understand { margin: 16px 0 0 40px; }
+.lc-understand { margin: 12px 0 4px 40px; }
+.lc-inline > summary { list-style: none; cursor: pointer; }
+.lc-inline > summary::-webkit-details-marker { display: none; }
+.lc-inline-caret { margin-left: 8px; color: var(--text-muted); transition: transform 200ms ease; }
+.lc-inline[open] .lc-inline-caret { transform: rotate(180deg); }
+.lc-inline-body { margin-top: 8px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.55; }
+.lc-inline-rule { margin: 0 0 10px; font-size: 14px; color: var(--text-primary); }
+.lc-inline-can { margin: 0 0 12px; color: var(--text-secondary); }
+.lc-inline-can b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.lc-inline-foot { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .lc-understand .label { margin-bottom: 6px; }
 @media (max-width: 760px) { .lc-understand { margin-left: 0; } }
 /* A changed description in dbt, told to the Owner in a Message (FR-RC-17): before and after, the Business Description next to it */

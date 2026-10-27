@@ -653,7 +653,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 
 **The Message Centre.** Screen: `messages`.
 
-**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing. It ends with "Understand what is happening here" and the Learning Card that explains it, K3.4 Where definitions live, as every Message that Data Hub writes itself does ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38), [DEC-UX-79](../design/principles.md#dec-ux-79), from your review, 2026-10-27)
+**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds the Learning Card that explains it, K3.4 Where definitions live, which opens inline in the Message, as in every Message that Data Hub writes itself ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38), [DEC-UX-79](../design/principles.md#dec-ux-79), from your review, 2026-10-27)
 
 **A changed description in dbt** is told to the Owner, one Message per Resource and run: the text before and now, and their Business Description next to it. It asks for no review; "Edit business descriptions" opens the fields ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Screen: `messages?msg=described`.
 
