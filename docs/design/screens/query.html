@@ -3,8 +3,19 @@
   Screen: Query, a main section of its own (DEC-UX-17)
   SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours; for the Data Team also
   everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
-  The editor formats the SQL and suggests columns, partition and cluster columns first. The Pre-flight counts the partitions per
-  Resource and asks approval above one threshold, blocks above another. Every result carries its Query ID.
+  One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
+  shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
+  number, Text, Choice, Several choices, Yes or no, each with its BigQuery type) and a value: a value such as 2026-10-25,
+  or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run, with the date it gives today
+  (FR-LE-13, OP-LE-08); the value of a Choice comes from a column or a typed list. A Parameter is made or changed in a
+  floating window that moves by its head (DEC-UX-30), one at a time: "Add parameter", or a click on a Parameter. A Parameter that is not
+  in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under it, and
+  keeps the query from running; a click on it defines it, suggested from the column it is compared with.
+  The editor folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
+  one, "⋯ n lines" unfolds it, "Fold all" folds them together. At the foot of the frame, and staying in view, the Pre-flight
+  and the Run button with what the query reads; red with "Approve and run" above the approval threshold, a pop-out on how to
+  read less. The editor formats the SQL and suggests columns, partition and cluster columns first (a click in the SQL shows
+  them here). Every result carries its Query ID. Proposal, to test: no requirement or decision yet.
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25).
@@ -82,55 +93,140 @@
  <a class="btn-primary" href="lens-new.html" style="text-decoration:none" title="Turn this query into a lens for everyone who may use its resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a lens</a>
 </div>
 <div class="status-row"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
-<div class="tab-content card" style="margin-top:14px;border-radius:var(--radius-xl)">
- <div class="query-grid">
-  <div>
-   <div class="sql-tools"><span class="label" style="margin:0;flex:1">BigQuery SQL</span><button class="btn-quiet outline" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i> Format</button></div>
-   <div class="sql-box"><div class="sql-gutter">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9</div><pre class="sql">select s.source_name,
-       sum(v.lead_count) as leads
-from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume`</span> as v
-join <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources`</span> as s
-  using (lead_source)
-where v.week_start &gt;= <span class="sql-param">@dateFrom</span>
-  and v.<span class="text-cursor"></span>
-group by s.source_name
-order by leads desc</pre>
-    <div class="suggest" role="listbox" aria-label="Suggestions" style="top:157px;left:118px">
-     <div class="suggest-item on" role="option" aria-selected="true"><i class="ph ph-columns"></i><span class="mono">lead_source</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 1</span></div>
-     <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_channel</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 2</span></div>
-     <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">week_start</span><span class="muted">DATE</span><span class="pill pill-strong">Partition</span></div>
-     <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_count</span><span class="muted">INT64</span></div>
-     <div class="suggest-foot">Columns of v, Weekly lead volume. Cluster and partition columns first: a filter on them reads less.</div>
-    </div>
-   </div>
-   <div class="param-bar" style="margin-top:10px">
-    <span class="label" style="margin:0">Parameters</span>
-    <label class="param"><span class="mono">@dateFrom</span><input type="date" value="2026-01-01"></label>
-    <span class="meta">Only resources you may see.</span>
-   </div>
+<section class="query-card card" aria-label="The query">
+ <div class="q-box">
+  <div class="q-box-head">
+   <span class="label" style="margin:0">BigQuery SQL</span>
+   <span style="flex:1"></span>
+   <button class="btn-quiet outline" id="fold-all" title="Fold or unfold every CTE"><i class="ph ph-arrows-in-line-vertical"></i><span>Fold all</span></button>
+   <button class="btn-quiet outline" title="Format the SQL (Shift+Alt+F)"><i class="ph ph-text-align-left"></i>Format</button>
   </div>
-  <aside class="preflight-card">
-   <div class="label">Pre-flight</div>
-   <div style="font-size:24px;font-weight:500;letter-spacing:-.3px">840 MB</div>
-   <div class="meta" style="margin-top:2px">at most, for both resources</div>
-   <div class="gauge" aria-hidden="true"><span class="gauge-fill" style="width:84%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></div>
-   <div class="gauge-legend"><span>0</span><span style="left:10%">100 MB · approve</span><span style="left:100%">1 GB · data team</span></div>
-   <div class="pf-src"><span>Weekly lead volume</span><span class="meta">42 of 312 partitions, through <span class="mono">week_start</span></span></div>
-   <div class="pf-src"><span>Lead sources</span><span class="meta">not partitioned · 2 MB</span></div>
-   <p style="font-size:var(--text-small);margin:0 0 12px;line-height:1.5">Above 100 MB you approve the query yourself. A later <span class="mono">@dateFrom</span>, or a filter on <span class="mono">v.lead_source</span>, reads less.</p>
-   <button class="btn-primary" style="width:100%;justify-content:center"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run</button>
-  </aside>
+  <div class="sql-editor" aria-label="SQL">
+    <div class="ln"><span class="ln-no">1</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Leads per week and source, from @dateFrom to @dateTo</span></span></div>
+    <div class="ln" data-fold-start="weekly_lead_volume"><span class="ln-no">2</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold weekly_lead_volume"><i class="ph ph-caret-down"></i></button><span class="ln-code">with <span class="sql-ref">weekly_lead_volume</span> as (<button class="fold-ph" type="button" aria-label="Unfold weekly_lead_volume" hidden>⋯ 7 lines</button><span class="fold-close" hidden>),</span></span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">3</span><span class="ln-fold"></span><span class="ln-code">  select week_start,</span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">4</span><span class="ln-fold"></span><span class="ln-code">         lead_source,</span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">5</span><span class="ln-fold"></span><span class="ln-code">         lead_count</span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">6</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume`</span></span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">7</span><span class="ln-fold"></span><span class="ln-code">  where week_start between <span class="sql-param" data-param="dateFrom">@dateFrom</span> and <span class="sql-param" data-param="dateTo">@dateTo</span></span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">8</span><span class="ln-fold"></span><span class="ln-code">    and lead_channel = <span class="sql-param" data-param="leadChannel">@leadChannel</span></span></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and <span class="text-cursor"></span></span><div class="suggest" role="listbox" aria-label="Suggestions" style="top:calc(100% + 2px);left:128px" hidden>
+      <div class="suggest-item on" role="option" aria-selected="true"><i class="ph ph-columns"></i><span class="mono">lead_source</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 1</span></div>
+      <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_channel</span><span class="muted">STRING</span><span class="pill pill-strong">Cluster 2</span></div>
+      <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">week_start</span><span class="muted">DATE</span><span class="pill pill-strong">Partition</span></div>
+      <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_count</span><span class="muted">INT64</span></div>
+      <div class="suggest-foot">Columns of Weekly lead volume. Cluster and partition columns first: a filter on them reads less.</div>
+     </div></div>
+    <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">11</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">12</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- The readable name of every lead source</span></span></div>
+    <div class="ln folded" data-fold-start="lead_sources"><span class="ln-no">13</span><button class="ln-fold" type="button" aria-expanded="false" aria-label="Unfold lead_sources"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">lead_sources</span> as (<button class="fold-ph" type="button" aria-label="Unfold lead_sources">⋯ 3 lines</button><span class="fold-close">),</span></span></div>
+    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">14</span><span class="ln-fold"></span><span class="ln-code">  select lead_source,</span></div>
+    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">15</span><span class="ln-fold"></span><span class="ln-code">         source_name</span></div>
+    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources`</span></span></div>
+    <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
+    <div class="ln"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Every week's leads, with the name of their source</span></span></div>
+    <div class="ln" data-fold-start="leads_with_source"><span class="ln-no">20</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold leads_with_source"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">leads_with_source</span> as (<button class="fold-ph" type="button" aria-label="Unfold leads_with_source" hidden>⋯ 4 lines</button><span class="fold-close" hidden>)</span></span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">  select s.source_name,</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">         v.lead_count</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-ref">weekly_lead_volume</span> as v</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">  join <span class="sql-ref">lead_sources</span> as s using (lead_source)</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">select source_name,</span></div>
+    <div class="ln"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code">       sum(lead_count) as leads</span></div>
+    <div class="ln"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">leads_with_source</span></span></div>
+    <div class="ln"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">group by source_name</span></div>
+    <div class="ln"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code">order by leads desc</span></div>
+  </div>
  </div>
- <div class="section-head" style="margin-top:18px"><h2 style="font-size:var(--text-body)">Result of your last run</h2><span class="meta">2 minutes ago</span></div>
+
+ <div class="q-box param-box open" id="param-box">
+  <div class="pbox-head">
+   <button class="icon-btn pbox-toggle" aria-expanded="true" aria-label="Fold or unfold the parameters"><i class="ph ph-caret-down"></i></button>
+   <span class="label" style="margin:0">Parameters</span>
+   <span class="pbox-summary" id="pbox-summary"></span>
+   <span style="flex:1"></span>
+   <button class="btn-quiet outline" id="param-add"><i class="ph ph-plus"></i>Add parameter</button>
+  </div>
+  <div class="ptiles" id="ptiles"></div>
+  <script type="application/json" id="param-data">[
+   { "name": "dateFrom", "kind": "date", "value": "DATE_TRUNC(CURRENT_DATE(), YEAR)" },
+   { "name": "dateTo", "kind": "date", "value": "2026-10-25" },
+   { "name": "minLeads", "kind": "number", "value": "10" }
+  ]</script>
+ </div>
+
+ <div class="run-bar">
+  <span class="run-note" id="run-note" hidden><i class="ph-fill ph-warning"></i><span id="run-note-text"></span><button class="text-link" type="button" data-define-first><span>Define it</span></button></span>
+  <span class="run-pf" id="run-pf">
+   <span class="meta">Pre-flight</span>
+   <span class="run-gauge" aria-hidden="true"><span class="gauge"><span class="gauge-fill" style="width:84%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+   <span class="meta">42 of 312 partitions of Weekly lead volume, through <span class="mono">week_start</span></span>
+  </span>
+  <span style="flex:1"></span>
+  <span class="run-anchor">
+   <button class="btn-primary run-btn high" id="run-btn"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
+   <span class="run-pop up" role="tooltip"><b>840 MB at most, above 100 MB:</b> you approve this query yourself; above 1 GB it goes to the data team.<br>It reads 42 of the 312 partitions of Weekly lead volume, through <span class="mono">week_start</span>, and all of Lead sources, 2 MB, as it is not partitioned. A later <span class="mono">@dateFrom</span>, or a filter on <span class="mono">lead_source</span>, reads less.</span>
+  </span>
+ </div>
+</section>
+
+<section class="result-card card" aria-label="Result of your last run">
+ <div class="section-head" style="margin:0"><h2 style="font-size:var(--text-body)">Result of your last run</h2><span class="meta">2 minutes ago</span></div>
  <div class="table-scroll"><table class="data-table"><thead><tr><th>source_name</th><th style="text-align:right">leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">1,841</td></tr><tr><td>App</td><td style="text-align:right">421</td></tr><tr><td>Partner network</td><td style="text-align:right">153</td></tr><tr><td>Mailing</td><td style="text-align:right">97</td></tr></tbody></table></div>
  <div class="result-foot">
   <span>4 rows</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
   <span class="query-id">Query ID <span class="mono">q-20261023-91c0b4</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
  </div>
-</div>
+</section>
 </main>
 </div>
-<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
+<section class="float-win pm-win" id="pm" role="dialog" aria-modal="false" aria-labelledby="pm-title" hidden>
+ <div class="float-head" title="Drag to move">
+  <i class="ph ph-dots-six-vertical float-grip" aria-hidden="true"></i>
+  <i class="ph ph-sliders-horizontal" style="font-size:17px;color:var(--text-secondary)" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Parameter of Leads per source name</div><div class="float-title" id="pm-title">New parameter</div></div>
+  <button class="icon-btn float-fold" aria-label="Fold" aria-expanded="true"><i class="ph ph-minus"></i></button>
+  <button class="icon-btn" data-float-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="float-body pm-body">
+  <div class="pm-form">
+   <div class="pe-row"><label class="pe-label" for="pm-name">Name</label><div><input id="pm-name" class="pm-input" placeholder="dateFrom" spellcheck="false" autocomplete="off"><p class="pe-hint" id="pm-state"></p></div></div>
+   <div class="pe-row"><span class="pe-label">Kind</span><div class="kind-grid" id="pm-kinds" role="radiogroup" aria-label="Kind"></div></div>
+   <div class="pe-row" data-row="scalar"><label class="pe-label" for="pm-value">Value</label><div><input id="pm-value" class="pm-input" spellcheck="false" autocomplete="off"><p class="pe-hint" id="pm-gives"></p></div></div>
+   <div class="pe-row" data-row="period"><span class="pe-label">Value</span><div class="pm-pair">
+    <label><span class="pe-label">From</span><input id="pm-from" class="pm-input" list="pm-date-fns" spellcheck="false" autocomplete="off"></label>
+    <label><span class="pe-label">To</span><input id="pm-to" class="pm-input" list="pm-date-fns" spellcheck="false" autocomplete="off"></label>
+    <p class="pe-hint" id="pm-pgives"></p></div></div>
+   <div class="pe-row" data-row="list"><span class="pe-label">Its list</span><div class="pe-opts">
+    <label><input type="radio" name="pm-src" value="column" checked>From a column<span class="pe-when-on"><select id="pm-col" aria-label="Column"><option>source_name · Lead sources</option><option>lead_channel · Weekly lead volume</option></select></span></label>
+    <label><input type="radio" name="pm-src" value="typed">Typed here, one per line<span class="pe-when-on"><textarea id="pm-typed" rows="3" aria-label="Values">Website&#10;App</textarea></span></label>
+   </div></div>
+   <div class="pe-row" data-row="choice"><label class="pe-label" for="pm-pick">Value</label><div class="pe-opts"><select id="pm-pick"></select></div></div>
+   <div class="pe-row" data-row="several"><span class="pe-label">Value</span><div class="pe-opts"><span class="use-chips" id="pm-chips"></span></div></div>
+   <div class="pe-row" data-row="yesno"><label class="pe-label" for="pm-bool">Value</label><div class="pe-opts"><select id="pm-bool"><option>Yes</option><option>No</option></select></div></div>
+  </div>
+ </div>
+ <div class="float-foot">
+  <button class="text-link" id="pm-remove" type="button"><i class="ph ph-trash"></i><span>Remove</span></button>
+  <span class="pe-hint" id="pm-saved" style="margin:0" hidden><i class="ph ph-check"></i> Saved</span>
+  <span style="flex:1"></span>
+  <button class="btn-primary" id="pm-save" type="button">Save</button>
+ </div>
+ <datalist id="pm-date-fns">
+  <option value="CURRENT_DATE()" data-gives="2026-10-27">Today</option>
+  <option value="DATE_SUB(CURRENT_DATE(), INTERVAL 3 DAY)" data-gives="2026-10-24">Today − 3 days</option>
+  <option value="DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY))" data-gives="2026-10-26">Start of this week</option>
+  <option value="DATE_TRUNC(CURRENT_DATE(), MONTH)" data-gives="2026-10-01">Start of this month</option>
+  <option value="DATE_TRUNC(CURRENT_DATE(), QUARTER)" data-gives="2026-10-01">Start of this quarter</option>
+  <option value="DATE_TRUNC(CURRENT_DATE(), YEAR)" data-gives="2026-01-01">Start of this year</option>
+  <option value="DATE_SUB(DATE_TRUNC(CURRENT_DATE(), WEEK(MONDAY)), INTERVAL 1 DAY)" data-gives="2026-10-25">End of the last complete week</option>
+  <option value="LAST_DAY(DATE_SUB(CURRENT_DATE(), INTERVAL 1 MONTH))" data-gives="2026-09-30">End of the last complete month</option>
+ </datalist>
+</section>
+<div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="top:28px;bottom:auto">Seen as
  <button class="seg on" data-target="colleague" role="tab" aria-selected="true">Colleague</button>
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data team</button>
 </div>

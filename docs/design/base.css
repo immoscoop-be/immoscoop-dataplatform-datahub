@@ -314,13 +314,11 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .hint { display: flex; gap: 12px; align-items: flex-start; }
 .hint > i { font-size: 18px; color: var(--text-secondary); margin-top: 1px; }
 .hint p { font-size: var(--text-small); color: var(--text-secondary); line-height: 1.5; margin: 4px 0 10px; }
-.query-grid { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 12px; align-items: start; }
 .sql-box { display: flex; border-radius: var(--radius-md); background: var(--surface-sub); padding: 12px 0; font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
 .sql-gutter { padding: 0 10px 0 14px; color: var(--text-muted); text-align: right; user-select: none; border-right: 1px solid var(--tint-active); }
 .sql { margin: 0; padding: 0 14px; white-space: pre-wrap; color: var(--text-primary); font: inherit; }
 .sql-key { color: var(--col-slate); }
 .sql-param { color: var(--col-magenta); }
-.preflight-card { border-radius: var(--radius-md); background: var(--surface-sub); padding: 14px 16px 16px; }
 .gauge { position: relative; height: 6px; margin-top: 14px; border-radius: 3px; background: var(--tint-active); }
 .gauge-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--signal-warn); }
 .gauge-mark { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; background: var(--text-primary); }
@@ -330,7 +328,6 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 /* What a column does for the cost of a query: the partition column and the cluster columns */
 .pill-strong { color: var(--text-primary); background: var(--tint-active); }
 /* The SQL editor of the Query proposal: formatting, and suggestions with the partition and cluster columns first */
-.sql-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .sql-box { position: relative; }
 .text-cursor { display: inline-block; width: 1.5px; height: 1.2em; vertical-align: text-bottom; background: var(--text-primary); }
 .suggest { position: absolute; left: 92px; top: 117px; z-index: 2; width: 330px; padding: 5px; border-radius: var(--radius-sm); background: var(--surface-solid);
@@ -339,6 +336,111 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .suggest-item.on { background: var(--tint-hover); }
 .suggest-item i { color: var(--text-muted); }
 .suggest-foot { padding: 6px 8px 3px; margin-top: 3px; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+/* A query: one white frame with two dark boxes, the editor at the full width and the Parameters, and the bar with the
+   Pre-flight and Run at its foot (Proposal) */
+.query-card { margin-top: 14px; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+.q-box { border-radius: var(--radius-lg); background: var(--surface-sub); padding: 10px 14px 14px; }
+.q-box-head { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-bottom: 6px; flex-wrap: wrap; }
+/* The Parameters of a query, under it, folding open and shut: folded, a chip each; open, a tile each with its kind, its
+   value and what that gives today. A Parameter that is not in the SQL is grey; an @name in the SQL that is not a
+   Parameter stands out, there and in the SQL. They are made and changed in a floating window (Proposal) */
+.pbox-head { display: flex; align-items: center; gap: 8px; min-height: 34px; flex-wrap: wrap; cursor: pointer; }
+.pbox-toggle { width: 26px; height: 26px; font-size: 13px; margin-left: -6px; }
+.pbox-toggle i { transition: transform 200ms ease; }
+.param-box:not(.open) .pbox-toggle i { transform: rotate(-90deg); }
+.pbox-summary { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.param-box.open .pbox-summary { display: none; }
+.param-box:not(.open) .ptiles { display: none; }
+.pchip { display: inline-flex; align-items: center; gap: 6px; font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: var(--surface-solid);
+  border: 0; border-radius: var(--radius-pill); padding: 3px 10px; cursor: pointer; }
+.pchip .mono { color: var(--text-primary); }
+.pchip .ph-function { font-size: 12px; }
+.ptiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin-top: 8px; }
+.ptile { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 9px 12px 10px; border-radius: var(--radius-md);
+  background: var(--surface-solid); cursor: pointer; outline: 1px solid transparent; }
+.ptile:hover { outline-color: var(--tint-active); }
+.ptile:focus-visible, .pchip:focus-visible { outline: 2px solid var(--text-secondary); }
+.ptile-head { display: flex; align-items: center; gap: 7px; }
+.ptile-head .mono { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.ptile-value { font: var(--text-small) var(--font-mono); color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ptile-gives, .ptile-state { font-size: var(--text-meta); color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.ptile-gives .ph-function { font-size: 12px; }
+/* Not in the SQL: grey, it is not sent with the query */
+.ptile.unused, .pchip.unused { background: none; outline: 1px dashed var(--tint-active); }
+.ptile.unused > *, .pchip.unused > * { opacity: .55; }
+.ptile.unused .ptile-state { opacity: 1; }
+/* In the SQL but not a Parameter: it stands out, and the query cannot run */
+.ptile.undefined, .pchip.undefined { background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); outline: 1.5px solid var(--signal-warn); }
+.ptile.undefined .ptile-state, .pchip.undefined, .pchip.undefined .mono { color: var(--signal-warn); }
+.ptile.undefined .ptile-head .ph-warning { color: var(--signal-warn); font-size: 14px; }
+.sql-param.undefined { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; cursor: pointer;
+  background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: 3px; }
+.kind-chip { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-sub); padding: 1px 8px; border-radius: var(--radius-pill); }
+.kind-chip i { font-size: 12px; }
+/* The floating window in which a Parameter is made or changed, one at a time: it moves by its head and folds to it (DEC-UX-30) */
+.float-win.pm-win { width: 470px; max-width: calc(100vw - 48px); }
+.pm-body { padding: 12px 3px 3px 0; }
+.pm-input:focus-visible { outline-offset: 0; }
+.pm-form { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.pm-form .pe-row[hidden] { display: none; }
+.pe-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.pe-label { font-size: var(--text-meta); color: var(--text-muted); }
+.pe-hint { margin: 5px 0 0; font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
+.pe-hint.warn { color: var(--signal-warn); }
+.pe-hint .ph-function { font-size: 12px; vertical-align: -1px; }
+.pm-input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-mono); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: 8px; padding: 7px 9px; }
+.pm-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pm-pair label { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.pm-pair .pe-hint { grid-column: 1 / -1; margin: 0; }
+.kind-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }
+.kind-opt { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 7px; padding: 5px 9px; border-radius: 8px; cursor: pointer; font-size: var(--text-small); }
+.kind-opt:hover { background: var(--tint-hover); }
+.kind-opt:focus-visible { outline: 2px solid var(--text-secondary); }
+.kind-opt.on { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); font-weight: var(--weight-medium); }
+.kind-opt i { font-size: 15px; color: var(--text-secondary); }
+.pe-opts { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; font-size: var(--text-small); }
+.pe-opts > label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; cursor: pointer; }
+.pe-opts input[type="radio"] { margin: 0; accent-color: var(--text-primary); }
+.pe-opts select, .pe-opts textarea { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-sub); border: 0; border-radius: 8px; padding: 6px 8px; }
+.pe-opts textarea { width: 220px; resize: vertical; }
+.pe-when-on { display: inline-flex; align-items: center; gap: 8px; }
+.pe-opts label:has(> input[type="radio"]:not(:checked)) .pe-when-on { display: none; }
+button.use-chip { border: 0; background: none; font-family: inherit; cursor: pointer; }
+.pm-win .use-chip.on { background: var(--surface-sub); }
+button.text-link { background: none; border: 0; padding: 0; font-family: inherit; }
+/* The editor folds every CTE to its first line, as a code editor does: an arrow in the gutter, "⋯ n lines" in its place */
+.sql-editor { font: 12.5px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ln { position: relative; display: grid; grid-template-columns: 30px 22px minmax(0, 1fr); }
+.ln-no { padding-right: 8px; text-align: right; color: var(--text-muted); user-select: none; }
+.ln-fold { border-right: 1px solid var(--tint-active); }
+button.ln-fold { all: unset; display: flex; justify-content: center; padding-top: 4px; border-right: 1px solid var(--tint-active); color: var(--text-muted); cursor: pointer; font-size: 12px; }
+button.ln-fold:hover { color: var(--text-primary); }
+button.ln-fold:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: -2px; border-radius: 4px; }
+button.ln-fold i { transition: transform 200ms ease; }
+.ln.folded button.ln-fold i { transform: rotate(-90deg); }
+.ln-code { padding-left: 12px; white-space: pre-wrap; color: var(--text-primary); min-width: 0; }
+.fold-ph { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: var(--tint-active); border: 0; border-radius: 6px; padding: 0 7px; margin: 0 3px; cursor: pointer; vertical-align: 1px; }
+.fold-ph:hover { color: var(--text-primary); }
+.sql-ref { color: var(--col-teal-ink); }
+.sql-comment { color: var(--text-muted); }
+[data-theme="dark"] .sql-ref { color: var(--col-teal); }
+/* The bar at the foot of the query stays in view while the SQL scrolls: the Pre-flight and Run */
+.run-bar { position: sticky; bottom: -26px; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 2px -14px 0;
+  padding: 12px 14px; border-top: 1px solid var(--tint-hover); border-radius: 0 0 var(--radius-xl) var(--radius-xl); background: var(--card); }
+.run-pf { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.run-gauge { display: block; width: 130px; }
+.run-gauge .gauge, .run-gauge .gauge-legend { display: block; }
+.run-gauge .gauge { margin-top: 0; }
+.run-gauge .gauge-legend { margin-top: 4px; height: 12px; }
+.run-anchor { position: relative; display: inline-block; }
+.run-note { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); color: var(--signal-warn); }
+.run-note .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
+.run-btn:disabled { opacity: .4; cursor: default; }
+.run-btn:disabled + .run-pop.up { display: none !important; }
+.run-pop.up { display: none; top: auto; bottom: calc(100% + 10px); z-index: 5; }
+.run-pop.up::before { top: auto; bottom: -6px; box-shadow: 1px 1px 0 var(--tint-active); }
+.run-anchor:hover .run-pop.up, .run-anchor:focus-within .run-pop.up { display: block; }
+.result-card { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px; }
 /* Your queries, in the sheet; and the numbers on top of the queries of a Resource */
 .hist-item { padding: 12px 10px; border-radius: var(--radius-md); }
 .hist-item:hover { background: var(--tint-hover); }

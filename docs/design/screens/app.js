@@ -250,3 +250,194 @@ if (new URLSearchParams(location.search).has('mismatch')) {
   const demo = document.querySelector('[data-mismatch-demo]');
   if (demo) { demo.value = 'placedIn'; demo.dispatchEvent(new Event('change')); }
 }
+
+// The editor of Query folds every CTE to its first line, as a code editor does: the arrow in the gutter folds or unfolds
+// one, "⋯ n lines" unfolds it, and "Fold all" folds them together; the line numbers keep their count (Proposal)
+const sqlEditor = document.querySelector('.sql-editor');
+if (sqlEditor) {
+  const starts = () => [...sqlEditor.querySelectorAll('[data-fold-start]')];
+  const foldAll = document.getElementById('fold-all');
+  const fold = (start, folded) => {
+    const name = start.dataset.foldStart;
+    start.classList.toggle('folded', folded);
+    const arrow = start.querySelector('.ln-fold');
+    arrow.setAttribute('aria-expanded', !folded); arrow.setAttribute('aria-label', (folded ? 'Unfold ' : 'Fold ') + name);
+    start.querySelectorAll('.fold-ph, .fold-close').forEach(el => { el.hidden = !folded; });
+    sqlEditor.querySelectorAll(`[data-fold-in="${name}"]`).forEach(line => { line.hidden = folded; });
+  };
+  const sync = () => {
+    const anyOpen = starts().some(s => !s.classList.contains('folded'));
+    foldAll.querySelector('span').textContent = anyOpen ? 'Fold all' : 'Unfold all';
+    foldAll.querySelector('i').className = 'ph ' + (anyOpen ? 'ph-arrows-in-line-vertical' : 'ph-arrows-out-line-vertical');
+  };
+  sqlEditor.addEventListener('click', e => {
+    const start = e.target.closest('.ln-fold, .fold-ph')?.closest('[data-fold-start]');
+    if (start) { fold(start, !start.classList.contains('folded')); sync(); }
+  });
+  foldAll.addEventListener('click', () => { const folded = starts().some(s => !s.classList.contains('folded')); starts().forEach(s => fold(s, folded)); sync(); });
+  sync();
+  // The suggestions: a click in the SQL opens them where the cursor is, as typing would; a click beside them or Escape closes them
+  const suggest = sqlEditor.querySelector('.suggest');
+  document.addEventListener('click', e => { if (suggest) suggest.hidden = !sqlEditor.contains(e.target) || !!e.target.closest('button, .sql-param.undefined'); });
+  document.addEventListener('keydown', e => { if (suggest && e.key === 'Escape') suggest.hidden = true; });
+}
+
+// The Parameters of a query (Proposal). Each has a name, a kind from the standard list and a value: a value such as
+// 2026-10-25, or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run. Under the query
+// they fold open and shut; they are made and changed in a floating window that moves by its head. A Parameter that is
+// not in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under
+// it, and keeps the query from running, as BigQuery would refuse it; a click on it defines it
+const pbox = document.getElementById('param-box');
+if (pbox) {
+  const KINDS = {
+    date: ['Date', 'ph-calendar-blank', 'DATE'], period: ['Period', 'ph-calendar-dots', '2 × DATE'], number: ['Whole number', 'ph-hash', 'INT64'],
+    decimal: ['Decimal number', 'ph-percent', 'NUMERIC'], text: ['Text', 'ph-text-aa', 'STRING'], choice: ['Choice', 'ph-list-bullets', 'STRING'],
+    several: ['Several choices', 'ph-list-checks', 'ARRAY<STRING>'], yesno: ['Yes or no', 'ph-toggle-left', 'BOOL'],
+  };
+  const HINTS = {
+    date: 'A date, such as 2026-01-01, or an SQL function, such as DATE_TRUNC(CURRENT_DATE(), YEAR).',
+    number: 'A number, such as 10, or an SQL function.', decimal: 'A number, such as 350000.50, or an SQL function.',
+    text: 'A text, such as 8000, or an SQL function.',
+  };
+  const COLUMNS = { 'source_name · Lead sources': ['Website', 'App', 'Partner network', 'Mailing'], 'lead_channel · Weekly lead volume': ['Form', 'Phone', 'Email', 'Chat'] };
+  // What a function gives today; in the app BigQuery works it out, which reads nothing
+  const GIVES = new Map([...document.querySelectorAll('#pm-date-fns option')].map(o => [o.value.replace(/\s+/g, '').toUpperCase(), o.dataset.gives]));
+  const params = JSON.parse(document.getElementById('param-data').textContent);
+  const $ = id => document.getElementById(id);
+  const pm = $('pm'), nameIn = $('pm-name'), kindsBox = $('pm-kinds');
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const day = iso => new Date(iso + 'T12:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const fnIcon = '<i class="ph ph-function" aria-label="Function"></i>';
+  const isFn = v => String(v).includes('(');
+  const names = p => p.kind === 'period' ? [p.name + '_from', p.name + '_to'] : [p.name];
+  const shown = p => p.kind === 'several' ? p.value.join(', ') || 'none' : p.kind === 'period' ? `${p.value} → ${p.to}` : String(p.value);
+  // A date value in words: a function gives a date today, a date is itself
+  const dateOf = v => { const g = GIVES.get(v.replace(/\s+/g, '').toUpperCase()) || (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null); return g ? day(g) : null; };
+  const gives = p => {
+    if (p.kind === 'date' && isFn(p.value)) return fnIcon + (dateOf(p.value) ? dateOf(p.value) + ' today' : 'worked out at every run');
+    if (p.kind === 'period' && (isFn(p.value) || isFn(p.to))) return fnIcon + `${dateOf(p.value) || '…'} to ${dateOf(p.to) || '…'} today`;
+    return '';
+  };
+  // Where an @name is in the SQL: the line it is first on
+  const inSql = () => {
+    const at = new Map();
+    document.querySelectorAll('.sql-editor .sql-param[data-param]').forEach(s => { if (!at.has(s.dataset.param)) at.set(s.dataset.param, +s.closest('.ln').querySelector('.ln-no').textContent); });
+    return at;
+  };
+  const lineOf = (p, at) => names(p).map(n => at.get(n)).find(Boolean);
+  const missing = at => { const known = new Set(params.flatMap(names)); return [...at.keys()].filter(n => !known.has(n)); };
+
+  const render = () => {
+    const at = inSql(), undef = missing(at);
+    document.querySelectorAll('.sql-editor .sql-param[data-param]').forEach(s => {
+      const u = undef.includes(s.dataset.param);
+      s.classList.toggle('undefined', u); s.title = u ? 'Not among the parameters: click to define it' : '';
+    });
+    $('pbox-summary').innerHTML = params.map(p => {
+      const line = lineOf(p, at), g = gives(p);
+      return `<button class="pchip${line ? '' : ' unused'}" data-edit="${p.name}" title="${line ? 'In the query on line ' + line : 'Not in the query'}"><span class="mono">@${p.name}</span><span>${g ? g.replace(' today', '') : esc(shown(p))}</span></button>`;
+    }).join('') + undef.map(n => `<button class="pchip undefined" data-define="${n}" title="In the query, not a parameter: click to define it"><i class="ph-fill ph-warning"></i><span class="mono">@${n}</span><span>not defined</span></button>`).join('');
+    $('ptiles').innerHTML = params.map(p => {
+      const line = lineOf(p, at), [kind, icon] = KINDS[p.kind], g = gives(p);
+      return `<button class="ptile${line ? '' : ' unused'}" data-edit="${p.name}"><span class="ptile-head"><span class="mono">@${p.name}</span><span class="kind-chip"><i class="ph ${icon}"></i>${kind}</span></span>`
+        + `<span class="ptile-value" title="${esc(shown(p))}">${esc(shown(p))}</span>${g ? `<span class="ptile-gives">${g}</span>` : ''}`
+        + `<span class="ptile-state">${line ? 'In the query on line ' + line : 'Not in the query: it is not sent'}</span></button>`;
+    }).join('') + undef.map(n => `<button class="ptile undefined" data-define="${n}"><span class="ptile-head"><i class="ph-fill ph-warning"></i><span class="mono">@${n}</span></span>`
+      + `<span class="ptile-state">In the query on line ${at.get(n)}, but not a parameter. Define it</span></button>`).join('');
+    $('run-btn').disabled = undef.length > 0;
+    $('run-pf').hidden = undef.length > 0;
+    $('run-note').hidden = !undef.length;
+    $('run-note-text').innerHTML = `${undef.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${undef.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`;
+  };
+
+  // The box folds open and shut by its head; its chips and tiles open the window
+  const fold = open => { pbox.classList.toggle('open', open); pbox.querySelector('.pbox-toggle').setAttribute('aria-expanded', open); };
+  pbox.querySelector('.pbox-head').addEventListener('click', e => { if (!e.target.closest('button') || e.target.closest('.pbox-toggle')) fold(!pbox.classList.contains('open')); });
+
+  // The window holds one Parameter: the one chosen, or a new one
+  let current = null;
+  kindsBox.innerHTML = Object.entries(KINDS).map(([k, [n, icon, type]]) => `<button class="kind-opt" type="button" role="radio" aria-checked="false" data-kind="${k}" title="${type}"><i class="ph ${icon}"></i>${n}</button>`).join('');
+  const values = () => document.querySelector('input[name="pm-src"]:checked').value === 'typed'
+    ? $('pm-typed').value.split('\n').map(v => v.trim()).filter(Boolean) : COLUMNS[$('pm-col').value];
+  const fillList = (value, kind) => {
+    const vals = values();
+    $('pm-pick').innerHTML = vals.map(v => `<option${v === value ? ' selected' : ''}>${esc(v)}</option>`).join('');
+    $('pm-chips').innerHTML = vals.map(v => `<button class="use-chip${kind === 'several' && value.includes(v) ? ' on' : ''}" type="button">${esc(v)}</button>`).join('');
+  };
+  const showKind = kind => {
+    kindsBox.querySelectorAll('.kind-opt').forEach(b => { const on = b.dataset.kind === kind; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    const rows = { scalar: ['date', 'number', 'decimal', 'text'], period: ['period'], list: ['choice', 'several'], choice: ['choice'], several: ['several'], yesno: ['yesno'] };
+    pm.querySelectorAll('.pe-row[data-row]').forEach(r => { r.hidden = !rows[r.dataset.row].includes(kind); });
+    if (kind === 'date') $('pm-value').setAttribute('list', 'pm-date-fns'); else $('pm-value').removeAttribute('list');
+    $('pm-value').placeholder = { date: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', number: '10', decimal: '350000.50', text: '8000' }[kind] || '';
+    gave();
+  };
+  const kindNow = () => kindsBox.querySelector('.kind-opt.on').dataset.kind;
+  const gave = () => {
+    const k = kindNow(), v = $('pm-value').value.trim();
+    $('pm-gives').innerHTML = (k === 'date' && v && isFn(v) ? fnIcon + (dateOf(v) ? dateOf(v) + ' today, worked out at every run. ' : 'Worked out at every run. ') : '') + (HINTS[k] || '');
+    const f = $('pm-from').value.trim(), t = $('pm-to').value.trim();
+    $('pm-pgives').innerHTML = (isFn(f) || isFn(t) ? fnIcon + `${dateOf(f) || '…'} to ${dateOf(t) || '…'} today. ` : '') + `Each a date or an SQL function. In the SQL: <span class="mono">@${esc(nameIn.value || 'name')}_from</span> and <span class="mono">@${esc(nameIn.value || 'name')}_to</span>.`;
+  };
+  // What the window says about the Parameter; a refusal of Save goes again once its name or value changes
+  let said = ['', false];
+  const state = (text, warn) => { $('pm-state').textContent = text; $('pm-state').classList.toggle('warn', !!warn); };
+  const say = (text, warn) => { said = [text, warn]; state(text, warn); };
+  const open = (name, defines) => {
+    const p = params.find(x => x.name === name);
+    current = p ? p.name : null;
+    const at = inSql();
+    // A new Parameter defined from the SQL starts as a choice from the column it is compared with
+    const q = p || (defines === 'leadChannel' ? { name: defines, kind: 'choice', value: 'Form', column: 'lead_channel · Weekly lead volume' } : { name: defines || '', kind: 'date', value: '' });
+    $('pm-title').textContent = p ? '@' + p.name : defines ? 'Define @' + defines : 'New parameter';
+    $('pm-save').textContent = p ? 'Save' : 'Add';
+    $('pm-remove').hidden = !p; $('pm-saved').hidden = true;
+    nameIn.value = q.name;
+    $('pm-value').value = ['date', 'number', 'decimal', 'text'].includes(q.kind) ? q.value : '';
+    $('pm-from').value = q.kind === 'period' ? q.value : ''; $('pm-to').value = q.kind === 'period' ? q.to : '';
+    $('pm-bool').value = q.kind === 'yesno' ? q.value : 'No';
+    pm.querySelector(`input[name="pm-src"][value="${q.typed ? 'typed' : 'column'}"]`).checked = true;
+    if (q.column) $('pm-col').value = q.column;
+    fillList(q.value, q.kind);
+    showKind(q.kind);
+    const line = p ? lineOf(p, at) : at.get(defines);
+    if (defines) say(`In the query on line ${line}, but not a parameter yet.` + (defines === 'leadChannel' ? ' Suggested as a choice: in the SQL it is compared with lead_channel.' : ''), true);
+    else if (p) say(line ? `In the query on line ${line}.` : 'Not in the query: it is not sent with it.');
+    else say('');
+    pm.hidden = false;
+    if (pm.classList.contains('folded')) pm.querySelector('.float-fold').click();
+    nameIn.focus({ preventScroll: true });
+  };
+  kindsBox.addEventListener('click', e => { const b = e.target.closest('.kind-opt'); if (b) { showKind(b.dataset.kind); fillList($('pm-pick').value, b.dataset.kind); } });
+  ['pm-value', 'pm-from', 'pm-to'].forEach(id => $(id).addEventListener('input', () => { gave(); state(...said); }));
+  // A name is an SQL name: letters, digits and underscores
+  nameIn.addEventListener('input', () => { nameIn.value = nameIn.value.replace(/[^A-Za-z0-9_]/g, ''); gave(); state(...said); });
+  pm.querySelectorAll('input[name="pm-src"], #pm-col, #pm-typed').forEach(el => el.addEventListener('change', () => fillList($('pm-pick').value, kindNow())));
+  $('pm-chips').addEventListener('click', e => e.target.closest('.use-chip')?.classList.toggle('on'));
+  $('pm-save').addEventListener('click', () => {
+    const name = nameIn.value, kind = kindNow();
+    if (!name) return state('Give it a name.', true);
+    if (params.some(x => x.name === name && x.name !== current)) return state(`@${name} is already a parameter.`, true);
+    const p = { name, kind };
+    if (kind === 'period') Object.assign(p, { value: $('pm-from').value.trim(), to: $('pm-to').value.trim() });
+    else if (kind === 'choice') p.value = $('pm-pick').value;
+    else if (kind === 'several') p.value = [...$('pm-chips').querySelectorAll('.use-chip.on')].map(c => c.textContent);
+    else if (kind === 'yesno') p.value = $('pm-bool').value;
+    else p.value = $('pm-value').value.trim();
+    if (p.value === '' || (kind === 'period' && !p.to)) return state('Give it a value.', true);
+    if (kind === 'choice' || kind === 'several') Object.assign(p, { column: $('pm-col').value, typed: document.querySelector('input[name="pm-src"]:checked').value === 'typed' });
+    const i = params.findIndex(x => x.name === current);
+    if (i >= 0) params[i] = p; else params.push(p);
+    render(); open(p.name); $('pm-saved').hidden = false;
+  });
+  $('pm-remove').addEventListener('click', () => { const i = params.findIndex(x => x.name === current); if (i >= 0) params.splice(i, 1); render(); pm.hidden = true; });
+  $('param-add').addEventListener('click', () => open(null));
+  // Everything that names a Parameter opens it; an @name that is not one opens it to be defined
+  document.addEventListener('click', e => {
+    const edit = e.target.closest('[data-edit]'), define = e.target.closest('[data-define], .sql-param.undefined');
+    if (edit) open(edit.dataset.edit);
+    else if (define) open(null, define.dataset.define || define.dataset.param);
+    else if (e.target.closest('[data-define-first]')) open(null, missing(inSql())[0]);
+  });
+  render();
+}
