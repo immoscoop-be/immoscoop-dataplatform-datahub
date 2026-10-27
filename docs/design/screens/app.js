@@ -219,12 +219,188 @@ document.querySelectorAll('.maturity').forEach(m => {
 });
 
 // Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
-// ?role=owner, ?size=large; ?bg=ski shows the picture as the background (DEC-UX-34)
+// ?role=owner, ?size=large; ?bg=ski shows the picture as the background (DEC-UX-34), ?bg=flow a flowing gradient
 new URLSearchParams(location.search).forEach((value, key) => {
   if (key === 'role') document.documentElement.dataset.role = value;
   if (key === 'bg') document.documentElement.dataset.bg = value;
   document.querySelector(`[data-group="${key}"] [data-target="${value}"]`)?.click();
 });
+
+// ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app.
+// By day sky blue, a warm orange band and cream; by night, in the dark theme, a dark sky with a band of teal, violet and
+// magenta and a warm coral glow, along the same rising line. The mouse leans the field and bends the band towards it,
+// eased over seconds. One loop of 60 seconds meets its start exactly; 30 frames a
+// second at half resolution, paused with the tab; a still frame for reduced motion, drawn again when the theme changes.
+// Without WebGL the usual background of the app stays
+if (document.documentElement.dataset.bg === 'flow') (() => {
+  const LOOP = 60, RESOLUTION = 0.5, FPS = 30;
+  const canvas = Object.assign(document.createElement('canvas'), { className: 'bg-flow' });
+  const gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'low-power' });
+  const fallback = () => { delete document.documentElement.dataset.bg; };
+  if (!gl) return fallback();
+  const VERTEX = `
+    attribute vec2 aPos;
+    varying vec2 vUv;
+    void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+  const DAY = `
+    precision highp float;
+    uniform float uPhase;
+    uniform vec2 uRes;
+    uniform vec2 uPointer;   // the eased pointer, 0 to 1 from the bottom left
+    uniform float uPull;     // how present the pointer is, 0 to 1
+    varying vec2 vUv;
+    vec3 rgb(float r, float g, float b) { return vec3(r, g, b) / 255.0; }
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main() {
+      float a = uPhase;
+      vec2 uv = vUv;
+      // A slow, soft warp of the whole field
+      vec2 p = uv;
+      p.x += 0.030 * sin(uv.y * 3.1 + a) + 0.012 * sin(uv.y * 5.3 - 2.0 * a);
+      p.y += 0.022 * sin(uv.x * 2.7 - a) + 0.010 * cos(uv.x * 6.1 + 3.0 * a);
+      // The pointer: the whole field leans a little towards it
+      p -= 0.035 * (uPointer - 0.5) * uPull;
+
+      // The centre line of the orange band: low on the left, high on the right, in a soft S
+      float c = 0.30 + 0.56 * smoothstep(0.02, 1.05, p.x) + 0.035 * sin(p.x * 3.0 + a) + 0.02 * sin(2.0 * a);
+      // ... and the band bends towards it where it is near
+      c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
+      float d = p.y - c;
+
+      // Below: cream, warming to peach towards the band
+      vec3 base = mix(rgb(243.0, 226.0, 212.0), rgb(238.0, 196.0, 164.0), smoothstep(0.0, 0.6, p.y + 0.18 * p.x));
+
+      // Above: sky blue, deepest in the top left, paler towards the band
+      float tl = clamp((1.0 - p.x) * 0.9 + p.y * 0.7 - 0.45, 0.0, 1.0);
+      vec3 sky = mix(rgb(188.0, 204.0, 226.0), rgb(108.0, 165.0, 234.0), tl);
+      vec3 col = mix(base, sky, smoothstep(0.0, 0.36, d));
+
+      // The band: softer and lighter on the left, wider and deeper on the right
+      float w = 0.085 + 0.085 * p.x + 0.015 * sin(a + 1.3);
+      float band = exp(-(d * d) / (w * w));
+      vec3 orange = mix(rgb(240.0, 166.0, 112.0), rgb(232.0, 132.0, 60.0), smoothstep(0.15, 0.85, p.x + 0.25 * band));
+      col = mix(col, orange, band * (0.72 + 0.24 * p.x));
+
+      // A trace of noise against banding in the smooth steps
+      col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+  const NIGHT = `
+    precision highp float;
+    uniform float uPhase;
+    uniform vec2 uRes;
+    uniform vec2 uPointer;   // the eased pointer, 0 to 1 from the bottom left
+    uniform float uPull;     // how present the pointer is, 0 to 1
+    varying vec2 vUv;
+    vec3 rgb(float r, float g, float b) { return vec3(r, g, b) / 255.0; }
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    // Light added as on a screen: it brightens, but never past white, and black stays black where nothing glows
+    vec3 screen(vec3 base, vec3 light, float amount) { return 1.0 - (1.0 - base) * (1.0 - light * amount); }
+    void main() {
+      float a = uPhase;
+      vec2 uv = vUv;
+      vec2 p = uv;
+      p.x += 0.030 * sin(uv.y * 3.1 + a) + 0.012 * sin(uv.y * 5.3 - 2.0 * a);
+      p.y += 0.022 * sin(uv.x * 2.7 - a) + 0.010 * cos(uv.x * 6.1 + 3.0 * a);
+      // The pointer: the whole field leans a little towards it
+      p -= 0.035 * (uPointer - 0.5) * uPull;
+
+      // The same rising line as by day: the glowing band runs along it
+      float c = 0.40 + 0.42 * smoothstep(0.0, 1.05, p.x) + 0.035 * sin(p.x * 3.0 + a) + 0.02 * sin(2.0 * a);
+      // ... and the band bends towards it where it is near
+      c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
+      float d = p.y - c;
+
+      // Above: the night sky, black in the top left, a trace of navy towards the band
+      vec3 col = mix(rgb(5.0, 5.0, 9.0), rgb(16.0, 22.0, 44.0), smoothstep(0.32, 0.0, d) * (0.4 + 0.6 * p.x));
+      // Below: deep purple
+      col = mix(col, rgb(52.0, 16.0, 64.0), smoothstep(0.0, -0.35, d));
+
+      // The band, in layers across its width: teal on top, then violet, then magenta; brightest on the right
+      float lift = 0.015 * sin(a + 1.3);
+      float teal = exp(-pow((d - 0.01 - lift) / (0.10 + 0.05 * p.x), 2.0)) * (0.28 + 0.52 * p.x);
+      float violet = exp(-pow((d + 0.15) / 0.13, 2.0)) * (0.55 + 0.35 * (1.0 - abs(p.x - 0.45)));
+      float magenta = exp(-pow((d + 0.36) / 0.15, 2.0)) * (0.55 + 0.4 * smoothstep(0.9, 0.3, p.x)) * smoothstep(-0.1, 0.35, p.x);
+      col = screen(col, rgb(46.0, 122.0, 178.0), teal);
+      col = screen(col, rgb(100.0, 82.0, 168.0), violet * 0.8);
+      col = screen(col, rgb(150.0, 34.0, 118.0), magenta * 0.9);
+
+      // A warm coral glow in the bottom left, breathing slowly
+      vec2 q = (p - vec2(-0.06, -0.02)) / vec2(0.34 + 0.02 * sin(a), 0.44);
+      col = mix(col, rgb(206.0, 124.0, 92.0), exp(-dot(q, q)) * 0.82);
+
+      // A trace of noise against banding in the smooth steps
+      col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+  const shader = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); return sh; };
+  const build = fragment => {
+    const program = gl.createProgram();
+    gl.attachShader(program, shader(gl.VERTEX_SHADER, VERTEX));
+    gl.attachShader(program, shader(gl.FRAGMENT_SHADER, fragment));
+    gl.bindAttribLocation(program, 0, 'aPos');
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.warn('?bg=flow: WebGL could not build the gradient.', gl.getProgramInfoLog(program)); return null; }
+    const u = name => gl.getUniformLocation(program, name);
+    return { program, uPhase: u('uPhase'), uRes: u('uRes'), uPointer: u('uPointer'), uPull: u('uPull') };
+  };
+  const day = build(DAY), night = build(NIGHT);
+  if (!day || !night) return fallback();
+  gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  const grain = Object.assign(document.createElement('div'), { className: 'bg-grain' });
+  canvas.setAttribute('aria-hidden', 'true'); grain.setAttribute('aria-hidden', 'true');
+  document.body.prepend(canvas, grain);
+
+  // The pointer, when it is a mouse: the field leans towards it and the band bends towards it, eased over seconds, so a
+  // passing mouse barely stirs it; it settles back when the mouse leaves the window. Not with reduced motion
+  const pointer = { x: 0.5, y: 0.5, pull: 0, tx: 0.5, ty: 0.5, tpull: 0, t: 0 };
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    addEventListener('pointermove', e => { if (e.pointerType === 'mouse') Object.assign(pointer, { tx: e.clientX / innerWidth, ty: 1 - e.clientY / innerHeight, tpull: 1 }); });
+    document.documentElement.addEventListener('mouseleave', () => { pointer.tpull = 0; });
+    addEventListener('blur', () => { pointer.tpull = 0; });
+  }
+  const ease = t => {
+    const dt = Math.min(0.1, Math.max(0, (t - pointer.t) / 1000)); pointer.t = t;
+    const k = 1 - Math.exp(-dt / 1.8), kPull = 1 - Math.exp(-dt / 3);
+    pointer.x += (pointer.tx - pointer.x) * k; pointer.y += (pointer.ty - pointer.y) * k; pointer.pull += (pointer.tpull - pointer.pull) * kPull;
+  };
+  let seconds = 0;
+  const draw = s => {
+    const g = document.documentElement.dataset.theme === 'dark' ? night : day;
+    gl.useProgram(g.program);
+    gl.uniform2f(g.uRes, canvas.width, canvas.height);
+    gl.uniform1f(g.uPhase, ((s % LOOP) / LOOP) * Math.PI * 2);
+    gl.uniform2f(g.uPointer, pointer.x, pointer.y);
+    gl.uniform1f(g.uPull, pointer.pull);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+  const resize = () => {
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    canvas.width = Math.max(1, Math.round(innerWidth * dpr * RESOLUTION));
+    canvas.height = Math.max(1, Math.round(innerHeight * dpr * RESOLUTION));
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    draw(seconds);
+  };
+  addEventListener('resize', resize);
+  resize();
+  new MutationObserver(() => draw(seconds)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  const still = matchMedia('(prefers-reduced-motion: reduce)');
+  let last = -Infinity;
+  const frame = t => {
+    if (still.matches) return;
+    requestAnimationFrame(frame);
+    if (t - last < 1000 / FPS) return;
+    ease(t); last = t; seconds = t / 1000; draw(seconds);
+  };
+  requestAnimationFrame(frame);
+  still.addEventListener?.('change', () => { if (!still.matches) requestAnimationFrame(frame); });
+  // Prototype only: show the frame at a given second
+  window.flowAt = s => { seconds = s; draw(s); };
+  window.flowPointer = (x, y, pull = 1) => { Object.assign(pointer, { x, y, pull, tx: x, ty: y, tpull: pull }); draw(seconds); };
+})();
 
 // Adding Resources, step 2: a field maps to nothing, to `is` or to a relation type; "No mapping" hides the identity.
 // A list on a relation type that holds one is refused on the spot; ?mismatch shows it. The filter shows only the mapped

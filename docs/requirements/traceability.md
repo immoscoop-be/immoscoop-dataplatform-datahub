@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 79 | 30 (18 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 80 | 30 (18 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 63 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (38 open, 8 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
@@ -309,7 +309,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25<br>[c422d19](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c422d1911d5b9f393a516e9bee6a01b1ce2c4298) refs, 2026-10-25<br>[7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
-| [FR-LR-38](functional/16-learning.md#fr-lr-38) | A Message from Data Hub links to the card that explains it | Specified | – | – | [d485d23](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d485d23e6058c2d79d79f47432195c8d10ad377f) refs, 2026-10-27 |
+| [FR-LR-38](functional/16-learning.md#fr-lr-38) | A Message from Data Hub links to the card that explains it | Specified | – | – | [b783fe2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b783fe21991672df0f10dcd8b28e90883ca55ba3) refs, 2026-10-27<br>[d485d23](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d485d23e6058c2d79d79f47432195c8d10ad377f) refs, 2026-10-27 |
 
 ## Edge cases
 
