@@ -441,3 +441,121 @@ if (pbox) {
   });
   render();
 }
+
+// The result of a query, as a grid like that of BigQuery (Proposal): the row number, then a column per field with its
+// type. The edge of a column head makes it narrower or wider; a double click fits it to its values. 100 rows a page,
+// read from the same run (FR-SR-51); the menu of a column sorts this page only. A click selects a cell, and Ctrl+C
+// copies it
+const grid = document.getElementById('result-grid');
+if (grid) {
+  // Prototype only: the 210 rows of the last run, made up the same way every time
+  const random = (seed => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; })(27);
+  const SOURCES = [['website', 'Website', 430], ['app', 'App', 104], ['partner', 'Partner network', 38], ['mailing', 'Mailing', 24], ['imported_2019', null, 3]];
+  const COLS = [{ name: 'week_start', type: 'DATE' }, { name: 'lead_source', type: 'STRING' }, { name: 'source_name', type: 'STRING' }, { name: 'leads', type: 'INT64' }, { name: 'share_of_week', type: 'FLOAT64' }];
+  const rows = [];
+  for (let w = 0; w < 42; w++) {
+    const week = new Date(Date.UTC(2026, 9, 19 - 7 * w)).toISOString().slice(0, 10);
+    const counts = SOURCES.map(([code, name, base]) => [week, code, name, Math.round(base * (0.8 + 0.4 * random()))]);
+    const total = counts.reduce((n, r) => n + r[3], 0);
+    counts.sort((a, b) => b[3] - a[3]).forEach(r => rows.push([...r, Math.round(1000 * r[3] / total) / 10]));
+  }
+  const PAGE = 100, pages = Math.ceil(rows.length / PAGE);
+  const table = grid.querySelector('table'), colgroup = table.querySelector('colgroup'), thead = table.querySelector('thead'), tbody = table.querySelector('tbody');
+  const esc = v => String(v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const isNum = c => ['INT64', 'FLOAT64', 'NUMERIC'].includes(c.type);
+  // As BigQuery shows them: a FLOAT64 keeps its decimal, so 71 reads 71.0
+  const text = (v, c) => v === null ? 'null' : c.type === 'FLOAT64' && Number.isInteger(v) ? v.toFixed(1) : String(v);
+  let page = 0, sort = null, widths = COLS.map(c => isNum(c) ? 110 : 150);
+  const ROW_W = 56;
+
+  colgroup.innerHTML = `<col style="width:${ROW_W}px">` + COLS.map(() => '<col>').join('');
+  const cols = [...colgroup.children].slice(1);
+  const applyWidths = () => {
+    cols.forEach((c, i) => { c.style.width = widths[i] + 'px'; });
+    table.style.width = ROW_W + widths.reduce((a, b) => a + b, 0) + 'px';
+  };
+  thead.innerHTML = `<tr><th class="rn" scope="col">Row</th>${COLS.map((c, i) => `<th scope="col" data-col="${i}"><span class="rh"><span class="rh-text"><span class="rh-name"><span>${c.name}</span><i class="ph rh-sorted" hidden></i></span><span class="rh-type">${c.type}</span></span>`
+    + `<button class="icon-btn rh-menu" aria-label="Menu of ${c.name}" aria-haspopup="menu"><i class="ph ph-caret-down"></i></button></span><span class="rh-resize" title="Drag to resize, double-click to fit"></span></th>`).join('')}</tr>`;
+
+  const draw = () => {
+    const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
+    if (sort) slice.sort((a, b) => {
+      const x = a[sort.col], y = b[sort.col];
+      const d = x === null ? 1 : y === null ? -1 : x < y ? -1 : x > y ? 1 : 0;
+      return sort.dir === 'asc' ? d : -d;
+    });
+    tbody.innerHTML = slice.map((r, i) => `<tr><td class="rn">${page * PAGE + i + 1}</td>${r.map((v, j) =>
+      `<td class="${isNum(COLS[j]) ? 'num' : ''}" title="${esc(text(v, COLS[j]))}">${v === null ? '<span class="null">null</span>' : esc(text(v, COLS[j]))}</td>`).join('')}</tr>`).join('');
+    thead.querySelectorAll('.rh-sorted').forEach((icon, j) => {
+      icon.hidden = !sort || sort.col !== j;
+      icon.className = 'ph rh-sorted ' + (sort?.dir === 'desc' ? 'ph-arrow-down' : 'ph-arrow-up');
+    });
+    document.getElementById('rg-range').textContent = `${page * PAGE + 1} – ${Math.min(rows.length, (page + 1) * PAGE)} of ${rows.length}`;
+    document.getElementById('rg-total').textContent = `${rows.length} rows`;
+    const at = { first: page === 0, prev: page === 0, next: page === pages - 1, last: page === pages - 1 };
+    document.querySelectorAll('[data-page]').forEach(b => { b.disabled = at[b.dataset.page]; });
+  };
+  // A column fits the longest of its head and its values on this page
+  const measure = document.createElement('canvas').getContext('2d');
+  const fit = i => {
+    const font = el => { const f = getComputedStyle(el); return `${f.fontWeight} ${f.fontSize} ${f.fontFamily}`; };
+    measure.font = font(thead.querySelector('.rh-name'));
+    let w = measure.measureText(COLS[i].name).width;
+    measure.font = font(thead.querySelector('.rh-type'));
+    w = Math.max(w, measure.measureText(COLS[i].type).width) + 52;
+    measure.font = font(tbody.querySelector('td:not(.rn)') || grid);
+    tbody.querySelectorAll(`tr td:nth-child(${i + 2})`).forEach(td => { w = Math.max(w, measure.measureText(td.textContent).width + 24); });
+    widths[i] = Math.min(Math.ceil(w), 420); applyWidths();
+  };
+  document.querySelectorAll('[data-page]').forEach(b => b.addEventListener('click', () => {
+    page = { first: 0, prev: page - 1, next: page + 1, last: pages - 1 }[b.dataset.page];
+    sort = null; draw(); grid.scrollTop = 0;
+  }));
+
+  // Narrower or wider by the edge of a head: dragged, or double-clicked to fit
+  thead.addEventListener('pointerdown', e => {
+    const handle = e.target.closest('.rh-resize'); if (!handle) return;
+    e.preventDefault();
+    const i = +handle.closest('th').dataset.col, x0 = e.clientX, w0 = widths[i];
+    handle.setPointerCapture(e.pointerId); handle.classList.add('on');
+    const move = m => { widths[i] = Math.max(60, Math.round(w0 + m.clientX - x0)); applyWidths(); };
+    handle.addEventListener('pointermove', move);
+    handle.addEventListener('pointerup', () => { handle.removeEventListener('pointermove', move); handle.classList.remove('on'); }, { once: true });
+  });
+  thead.addEventListener('dblclick', e => { const handle = e.target.closest('.rh-resize'); if (handle) fit(+handle.closest('th').dataset.col); });
+
+  // The menu of a column
+  const menu = document.getElementById('rg-menu');
+  let menuCol = null;
+  thead.addEventListener('click', e => {
+    const b = e.target.closest('.rh-menu'); if (!b) return;
+    menuCol = +b.closest('th').dataset.col;
+    const r = b.getBoundingClientRect();
+    menu.hidden = false;
+    Object.assign(menu.style, { top: r.bottom + 6 + 'px', left: Math.min(r.right - menu.offsetWidth, innerWidth - menu.offsetWidth - 12) + 'px' });
+    e.stopPropagation();
+  });
+  menu.addEventListener('click', e => {
+    const act = e.target.closest('[data-act]')?.dataset.act; if (!act) return;
+    if (act === 'asc' || act === 'desc') { sort = { col: menuCol, dir: act }; draw(); }
+    if (act === 'fit') fit(menuCol);
+    if (act === 'copy') navigator.clipboard?.writeText(COLS[menuCol].name).catch(() => {});
+    menu.hidden = true;
+  });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) menu.hidden = true; });
+  grid.addEventListener('scroll', () => { menu.hidden = true; });
+
+  // A cell is selected with a click, and copied with Ctrl+C or Cmd+C
+  let selected = null;
+  tbody.addEventListener('click', e => {
+    const td = e.target.closest('td'); if (!td || td.classList.contains('rn')) return;
+    selected?.classList.remove('sel'); selected = td; td.classList.add('sel'); grid.focus({ preventScroll: true });
+  });
+  grid.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { selected?.classList.remove('sel'); selected = null; menu.hidden = true; }
+    if (selected && (e.ctrlKey || e.metaKey) && e.key === 'c') { e.preventDefault(); navigator.clipboard?.writeText(selected.title).catch(() => {}); }
+  });
+
+  applyWidths(); draw();
+  document.fonts.ready.then(() => COLS.forEach((c, i) => fit(i)));
+}

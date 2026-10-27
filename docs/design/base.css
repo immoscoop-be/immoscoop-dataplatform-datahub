@@ -441,6 +441,42 @@ button.ln-fold i { transition: transform 200ms ease; }
 .run-pop.up::before { top: auto; bottom: -6px; box-shadow: 1px 1px 0 var(--tint-active); }
 .run-anchor:hover .run-pop.up, .run-anchor:focus-within .run-pop.up { display: block; }
 .result-card { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px; }
+/* The result of a query, as a grid like that of BigQuery: the row number, then a column per field with its type; a column
+   is made narrower or wider by the edge of its head, double-clicked to fit; 100 rows a page, read from the same run (FR-SR-51)
+   (Proposal) */
+.result-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.result-head h2 { font-size: var(--text-body); font-weight: var(--weight-medium); margin: 0; }
+.rgrid-scroll { overflow: auto; max-height: min(620px, calc(100vh - 220px)); border-radius: var(--radius-md); outline: 1px solid var(--tint-active); background: var(--surface-solid); }
+.rgrid-scroll:focus-visible { outline: 2px solid var(--text-secondary); }
+.rgrid { table-layout: fixed; border-collapse: separate; border-spacing: 0; width: auto; font-size: var(--text-small); font-variant-numeric: tabular-nums; }
+.rgrid th, .rgrid td { padding: 7px 10px; border-top: 0; border-right: 1px solid var(--tint-hover); border-bottom: 1px solid var(--tint-hover); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; text-align: left; }
+.rgrid th { position: sticky; top: 0; z-index: 2; padding: 0; background: var(--surface-sub); color: var(--text-primary); font-size: var(--text-small); font-weight: var(--weight-medium); border-bottom-color: var(--tint-active); }
+.rgrid .rh { display: flex; align-items: center; gap: 6px; padding: 6px 4px 6px 10px; min-width: 0; }
+.rgrid .rh-text { display: flex; flex-direction: column; min-width: 0; line-height: 1.35; }
+.rgrid .rh-name { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.rgrid .rh-name > span { overflow: hidden; text-overflow: ellipsis; }
+.rgrid .rh-type { font: 10.5px var(--font-mono); color: var(--text-muted); font-weight: var(--weight-regular); overflow: hidden; text-overflow: ellipsis; }
+.rgrid .rh-menu { width: 22px; height: 22px; font-size: 12px; margin-left: auto; flex: none; }
+.rgrid .rh-sorted { font-size: 12px; color: var(--text-secondary); }
+.rgrid .rh-resize { position: absolute; top: 0; right: -4px; bottom: 0; width: 9px; cursor: col-resize; z-index: 3; touch-action: none; }
+.rgrid .rh-resize::after { content: ''; position: absolute; top: 6px; bottom: 6px; left: 4px; width: 1px; background: transparent; }
+.rgrid th:hover .rh-resize::after, .rgrid .rh-resize.on::after { background: var(--text-muted); width: 2px; left: 3px; }
+.rgrid td { color: var(--text-primary); }
+.rgrid td.num { text-align: right; }
+.rgrid .rn { position: sticky; left: 0; z-index: 1; background: var(--surface-sub); color: var(--text-muted); text-align: right; font-size: var(--text-meta); }
+.rgrid th.rn { z-index: 3; padding: 7px 10px; font-weight: var(--weight-regular); }
+/* Alternate rows lightly shaded, so a row is easy to follow across */
+.rgrid tbody tr:nth-child(even) td { background: var(--surface-sub); }
+.rgrid tbody tr:nth-child(even) td.rn { background: var(--tint-hover); }
+.rgrid tbody tr:hover td { background: var(--tint-hover); }
+.rgrid tbody tr:hover td.rn { background: var(--tint-active); }
+.rgrid tbody tr td.sel { outline: 2px solid var(--text-secondary); outline-offset: -2px; background: var(--surface-solid); }
+.rgrid .null { color: var(--text-muted); font-style: italic; }
+.result-foot .rg-pager { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.rg-menu { position: fixed; z-index: 30; width: 270px; padding: 6px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: 0 10px 30px rgba(0,0,0,.14); }
+button.menu-item { width: 100%; border: 0; background: none; font: var(--text-small) var(--font-family); color: var(--text-primary); text-align: left; }
+.rg-menu .menu-item i { color: var(--text-secondary); }
+.rg-menu-note { margin: 4px 8px 4px; padding-top: 6px; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
 /* Your queries, in the sheet; and the numbers on top of the queries of a Resource */
 .hist-item { padding: 12px 10px; border-radius: var(--radius-md); }
 .hist-item:hover { background: var(--tint-hover); }

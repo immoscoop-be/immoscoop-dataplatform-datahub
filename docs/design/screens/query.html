@@ -15,7 +15,10 @@
   one, "⋯ n lines" unfolds it, "Fold all" folds them together. At the foot of the frame, and staying in view, the Pre-flight
   and the Run button with what the query reads; red with "Approve and run" above the approval threshold, a pop-out on how to
   read less. The editor formats the SQL and suggests columns, partition and cluster columns first (a click in the SQL shows
-  them here). Every result carries its Query ID. Proposal, to test: no requirement or decision yet.
+  them here). The result is a grid like that of BigQuery: the row number, then a column per field with its
+  type under its name, a row on one line, alternate rows lightly shaded; the edge of a column head makes it narrower or wider, a double click fits it;
+  100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
+  Ctrl+C copies it; null in grey. Every result carries its Query ID. The result is a proposal, to test.
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
   Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25).
@@ -126,19 +129,24 @@
     <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">16</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-key">`immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources`</span></span></div>
     <div class="ln" data-fold-in="lead_sources" hidden><span class="ln-no">17</span><span class="ln-fold"></span><span class="ln-code">),</span></div>
     <div class="ln"><span class="ln-no">18</span><span class="ln-fold"></span><span class="ln-code"></span></div>
-    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Every week's leads, with the name of their source</span></span></div>
-    <div class="ln" data-fold-start="leads_with_source"><span class="ln-no">20</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold leads_with_source"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">leads_with_source</span> as (<button class="fold-ph" type="button" aria-label="Unfold leads_with_source" hidden>⋯ 4 lines</button><span class="fold-close" hidden>)</span></span></div>
-    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">  select s.source_name,</span></div>
-    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">         v.lead_count</span></div>
-    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-ref">weekly_lead_volume</span> as v</span></div>
-    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">  join <span class="sql-ref">lead_sources</span> as s using (lead_source)</span></div>
-    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
-    <div class="ln"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code"></span></div>
-    <div class="ln"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">select source_name,</span></div>
-    <div class="ln"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code">       sum(lead_count) as leads</span></div>
-    <div class="ln"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">leads_with_source</span></span></div>
-    <div class="ln"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">group by source_name</span></div>
-    <div class="ln"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code">order by leads desc</span></div>
+    <div class="ln"><span class="ln-no">19</span><span class="ln-fold"></span><span class="ln-code"><span class="sql-comment">-- Every week's leads, with the name of their source, if it has one</span></span></div>
+    <div class="ln" data-fold-start="leads_with_source"><span class="ln-no">20</span><button class="ln-fold" type="button" aria-expanded="true" aria-label="Fold leads_with_source"><i class="ph ph-caret-down"></i></button><span class="ln-code"><span class="sql-ref">leads_with_source</span> as (<button class="fold-ph" type="button" aria-label="Unfold leads_with_source" hidden>⋯ 6 lines</button><span class="fold-close" hidden>)</span></span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">21</span><span class="ln-fold"></span><span class="ln-code">  select v.week_start,</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">22</span><span class="ln-fold"></span><span class="ln-code">         lead_source,</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">23</span><span class="ln-fold"></span><span class="ln-code">         s.source_name,</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">24</span><span class="ln-fold"></span><span class="ln-code">         v.lead_count</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">25</span><span class="ln-fold"></span><span class="ln-code">  from <span class="sql-ref">weekly_lead_volume</span> as v</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">26</span><span class="ln-fold"></span><span class="ln-code">  left join <span class="sql-ref">lead_sources</span> as s using (lead_source)</span></div>
+    <div class="ln" data-fold-in="leads_with_source"><span class="ln-no">27</span><span class="ln-fold"></span><span class="ln-code">)</span></div>
+    <div class="ln"><span class="ln-no">28</span><span class="ln-fold"></span><span class="ln-code"></span></div>
+    <div class="ln"><span class="ln-no">29</span><span class="ln-fold"></span><span class="ln-code">select week_start,</span></div>
+    <div class="ln"><span class="ln-no">30</span><span class="ln-fold"></span><span class="ln-code">       lead_source,</span></div>
+    <div class="ln"><span class="ln-no">31</span><span class="ln-fold"></span><span class="ln-code">       source_name,</span></div>
+    <div class="ln"><span class="ln-no">32</span><span class="ln-fold"></span><span class="ln-code">       sum(lead_count) as leads,</span></div>
+    <div class="ln"><span class="ln-no">33</span><span class="ln-fold"></span><span class="ln-code">       round(100 * sum(lead_count) / sum(sum(lead_count)) over (partition by week_start), 1) as share_of_week</span></div>
+    <div class="ln"><span class="ln-no">34</span><span class="ln-fold"></span><span class="ln-code">from <span class="sql-ref">leads_with_source</span></span></div>
+    <div class="ln"><span class="ln-no">35</span><span class="ln-fold"></span><span class="ln-code">group by week_start, lead_source, source_name</span></div>
+    <div class="ln"><span class="ln-no">36</span><span class="ln-fold"></span><span class="ln-code">order by week_start desc, leads desc</span></div>
   </div>
  </div>
 
@@ -174,11 +182,32 @@
 </section>
 
 <section class="result-card card" aria-label="Result of your last run">
- <div class="section-head" style="margin:0"><h2 style="font-size:var(--text-body)">Result of your last run</h2><span class="meta">2 minutes ago</span></div>
- <div class="table-scroll"><table class="data-table"><thead><tr><th>source_name</th><th style="text-align:right">leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">1,841</td></tr><tr><td>App</td><td style="text-align:right">421</td></tr><tr><td>Partner network</td><td style="text-align:right">153</td></tr><tr><td>Mailing</td><td style="text-align:right">97</td></tr></tbody></table></div>
+ <div class="result-head">
+  <h2>Result of your last run</h2>
+  <span class="meta">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
+ </div>
+ <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
+  <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
+ </div>
  <div class="result-foot">
-  <span>4 rows</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
-  <span class="query-id">Query ID <span class="mono">q-20261023-91c0b4</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  <span id="rg-total">210 rows</span><span class="dot">·</span><span>scanned 412 MB, 42 of 312 partitions</span><span class="dot">·</span>
+  <span class="query-id">Query ID <span class="mono">q-20261027-4c2e1a</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+  <span class="rg-pager">
+   <span>100 rows a page</span><span class="dot">·</span><span id="rg-range">1 – 100 of 210</span>
+   <span class="pager">
+    <button class="icon-btn" data-page="first" aria-label="First page" title="First page"><i class="ph ph-caret-double-left"></i></button>
+    <button class="icon-btn" data-page="prev" aria-label="Previous page" title="Previous page"><i class="ph ph-caret-left"></i></button>
+    <button class="icon-btn" data-page="next" aria-label="Next page" title="Next page"><i class="ph ph-caret-right"></i></button>
+    <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
+   </span>
+  </span>
+ </div>
+ <div class="rg-menu" id="rg-menu" role="menu" hidden>
+  <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
+  <button class="menu-item" role="menuitem" data-act="desc"><i class="ph ph-sort-descending"></i>Sort this page, largest first</button>
+  <button class="menu-item" role="menuitem" data-act="fit"><i class="ph ph-arrows-out-line-horizontal"></i>Fit the width to its values</button>
+  <button class="menu-item" role="menuitem" data-act="copy"><i class="ph ph-copy"></i>Copy the name</button>
+  <p class="rg-menu-note">Sorting reorders the 100 rows on this page only. To sort every row, use <span class="mono">order by</span>.</p>
  </div>
 </section>
 </main>
