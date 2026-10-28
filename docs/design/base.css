@@ -304,7 +304,7 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .table-scroll { overflow: auto; margin-top: 10px; border-radius: var(--radius-md); }
 .data-table th { position: sticky; top: 0; background: var(--card); }
 .data-table td { padding: 7px 10px; }
-.result-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 8px 10px 0; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+.result-foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 6px; padding: 8px 10px 0; font-size: var(--text-meta); color: var(--text-muted); }
 .result-foot .dot { color: var(--tint-active); }
 .query-id { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); }
 .query-id .icon-btn { width: 22px; height: 22px; font-size: 13px; }
