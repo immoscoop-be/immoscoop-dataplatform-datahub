@@ -22,7 +22,7 @@ The one exception is semgraph, the Chart Server: it holds no data and has access
 
 **Status:** Specified · **Applies to:** [DEC-PF-08](../technical/00-platform.md#dec-pf-08), [DEC-DH-08](../../overview/data-hub.md#dec-dh-08)
 
-Every service runs under its own identity, with only the permissions its responsibility needs. Only query can read the Stacks, only registry can reach dbt Cloud and the artifact bucket, and only identity can read the Groups in Workspace.
+Every service runs under its own identity, with only the permissions its responsibility needs. Only query can read the tables of the Resources, only registry can reach dbt Cloud and the artifact bucket, and only identity can read the Groups in Workspace.
 
 <a id="nfr-sec-03"></a>
 ### NFR-SEC-03 · Lost access takes effect quickly

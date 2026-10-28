@@ -1,4 +1,4 @@
-# Stacks and resources
+# Resources
 
 | | |
 | --- | --- |
@@ -49,7 +49,6 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 
 | Term | Meaning |
 | --- | --- |
-| Stack | A dataset in BigQuery with mart views that the Data Team releases, as authorized views onto the datasets behind them. Today there is one: `dbt_prod_stacks` |
 | Resource | A table of a dbt project that an exposure with the tag `datahub` depends on: one book on the shelves |
 | Key | The full name of the table in BigQuery, `project.dataset.table` |
 | Display Name | The readable, unique name of the Resource, as business sees it, for example "Agency purity" |
@@ -65,7 +64,7 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 2. **Run.** The next run of the Source Job of that project makes the exposure part of its Current Version in the [Artifact registry](01-artifact-registry.md).
 3. **Register.** Data Hub finds the table under the exposure and registers it as a Resource, linked to its Node, with its Key and its Display Name.
 4. **Describe.** The description of the table and its columns comes from the Artifacts.
-5. **Assess.** The Level is derived: Available, or Described once dbt describes the table and at least one field and its `meta` holds `model_type` and `grain` ([DEC-MR-11](06-maturity-and-release.md#dec-mr-11)). Never higher.
+5. **Assess.** The Level is derived: Available, or Described once dbt describes the table and at least one field ([DEC-MR-12](06-maturity-and-release.md#dec-mr-12)). Never higher.
 6. **Take a Fingerprint.** Data Hub stores the hashes of structure, types and descriptions.
 7. **Open the Log.** The first Log Entries are written: the Registration and the Level.
 8. **Notify.** A message goes to the Message Centre of the Data Admins.
@@ -606,7 +605,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](#dec-sr-28), [FR-SR-50](#fr-sr-50)).*
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
 - [x] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](09-lenses.md#fr-le-08)).* *Decided on 2026-10-26, by Max: 100 MB, 1 GB and pages of 100 rows ([DEC-SR-29](#dec-sr-29), [DEC-SR-30](#dec-sr-30)).*
-- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.*
+- [ ] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.* *Note of 2026-10-28: the Usage tab is usage reporting, which is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)); the history of queries stays.*
 - [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
 - [x] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.* *Decided on 2026-10-26, by Max: Data Hub reads every table in the projects it follows ([DEC-SR-32](#dec-sr-32)).*
 - [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*

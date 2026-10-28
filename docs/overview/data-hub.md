@@ -31,7 +31,7 @@ Whoever explains Data Hub can best start from a library. Most terms on this page
 | In the library | In Data Hub |
 | --- | --- |
 | The librarian | The Data Team: takes data in, describes it and puts it on the shelves |
-| The stacks | The dataset `dbt_prod_stacks`: the shelves holding only what may be released |
+| The shelves | The tables an exposure with the tag `datahub` makes Resources: what may be released |
 | Registering a book | The Registration of a Resource by a Data Admin: only then does it exist for Data Hub |
 | A book on the shelves | A Resource |
 | General circulation | A published Resource: the curator has released it for the whole company |
@@ -61,7 +61,7 @@ Part of that knowledge already exists, in Colleciónes and the dbt manifests, bu
 
 | Function | What |
 | --- | --- |
-| Connectivity | Access to the Stacks, for people and for Claude. |
+| Connectivity | Access to the Resources, for people and for Claude. |
 | Documentation | What is on the shelves and how you may use it: the Resource Card of every Resource, with field descriptions, EDA results and questions with their data answer. We determine the exact scope in the analysis. |
 | Keeping | Storing Lenses and Reports, together with the Chart Server. |
 | Communication | Colleagues talk to each other about data, and that conversation stays attached as a margin note to the object it is about. |
@@ -76,22 +76,27 @@ Part of that knowledge already exists, in Colleciónes and the dbt manifests, bu
 
 Data Hub carries the maturity Levels according to [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858) (Confluence, Dutch), from Beta (Level 0) to Monitored (Level 5), and the Chart Server shows the Level on every chart. A Lens and a Report carry the lowest Level of what lies beneath them. The Level names are in the [definitions](../definitions.md#maturity-levels).
 
-## From Stacks to Report
+## From Resource to Report
 
 Data Hub offers three kinds of assets, which build on each other: the Resource from the shelves, the Lens you look at it through, and the Report that bundles Lenses around a question.
 
 | Asset | What it is | Who makes it | Level |
 | --- | --- | --- | --- |
-| Resource | A registered mart view from the Stacks, offered by the Data Team | Data Team | 1 to 5, per Resource |
+| Resource | A table of a dbt project, exposed with the tag `datahub` and offered by the Data Team | Data Team | 1 to 5, per Resource |
 | Lens | A rendering of a Resource, of a fixed type, with Parameters | Business | The lowest Level of the Resources beneath it |
 | Report | One or more Lenses around a question, with text and explanation | Business | The lowest Level of the Lenses in it |
 
 - <a id="dec-dh-64"></a>**DEC-DH-64** · Data Hub has four kinds of assets: next to the Resource, the Lens and the Report above, the chart, a semgraph that the Chart Server draws on a Lens or a Resource, with the Level of what lies beneath it ([DEC-DH-37](#dec-dh-37)). A Collection is not an asset: it is the container that groups Resources under an Owner, and has no Level of its own. This extends the three kinds above. *Decided on 2026-10-22, after the [workshop on data agents and governance](../workshops/2026-10-22-data-agents-and-governance.md#req-dh-assets) ([OP-DH-38](open-themes.md#op-dh-38)).* *Note of 2026-10-23: a Collection also holds the Lenses its Owner Unit adds ([DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15)).*
 
-### The Stacks
+### Where Resources come from
 
-- <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the Stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one Stack; because Resources are registered with their full name, more can be added later.
-- <a id="dec-dh-07"></a>**DEC-DH-07** · The Registration in Data Hub is the index. Putting a view in the Stacks is necessary, but not sufficient: only when a Data Admin registers it, with a Display Name and a Collection, is it a Resource. This replaces the earlier decision "the Stacks are the index". Worked out in [Stacks and resources](../requirements/functional/04-stacks-and-resources.md).
+- <a id="dec-dh-71"></a>**DEC-DH-71** · The word Stacks is no longer used. It named a curated dataset of mart views, `dbt_prod_stacks`; since a table becomes a Resource through an exposure with the tag `datahub` on any model ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)), there is no such dataset. Where the decisions below and other older decisions say the Stacks, read: the tables that are Resources. *Decided on 2026-10-28, by Max ([OP-DH-47](open-themes.md#op-dh-47)).*
+- <a id="dec-dh-73"></a>**DEC-DH-73** · A Resource can be any dbt model, in any layer, staging, intermediate or mart, and in any dbt project Data Hub follows, dbt-prod or Colleciónes: an exposure with the tag `datahub` on it is all it takes ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)). There is no dataset to name: where its table sits is abstract to Data Hub. *Decided on 2026-10-28, by Max ([OP-DH-13](open-themes.md#op-dh-13)).*
+- <a id="dec-dh-74"></a>**DEC-DH-74** · What is built today may be thrown away. The design and the rebuild need not stay compatible with it: not with its code, its schema in Postgres or its data. *Decided on 2026-10-28, by Max ([OP-DH-14](open-themes.md#op-dh-14)).*
+- <a id="dec-dh-75"></a>**DEC-DH-75** · Everything about usage reporting on Data Hub is not part of v1: who uses what, the Usage tab of a Resource, and reporting on the Catalogue. It is a Could, after the first build ([Could: not in v1](../requirements/README.md#could-not-in-v1)). *Decided on 2026-10-28, by Max ([OP-DH-16](open-themes.md#op-dh-16)).*
+
+- <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the Stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one Stack; because Resources are registered with their full name, more can be added later. *Note of 2026-10-28: there is no such dataset ([DEC-DH-71](#dec-dh-71), [DEC-DH-73](#dec-dh-73)).*
+- <a id="dec-dh-07"></a>**DEC-DH-07** · The Registration in Data Hub is the index. Putting a view in the Stacks is necessary, but not sufficient: only when a Data Admin registers it, with a Display Name and a Collection, is it a Resource. This replaces the earlier decision "the Stacks are the index". Worked out in [Resources](../requirements/functional/04-stacks-and-resources.md).
 - <a id="dec-dh-08"></a>**DEC-DH-08** · The service account of Data Hub only has access to the Stacks. The views in the Stacks are authorized views onto the other datasets, so that the account cannot reach anything else. *Note of 2026-10-26: replaced by [DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32): the service account of Data Hub reads every table in the GCP projects of the dbt projects it follows; there is no curated Stack to limit it to.*
 
 ### Lenses
@@ -181,7 +186,7 @@ By comparing every new version with the previous one, Data Hub sees what has cha
 - <a id="dec-dh-31"></a>**DEC-DH-31** · Levels are derived from the traces that exist, not stored as a label. That way they can never get out of step with reality.
 - <a id="dec-dh-32"></a>**DEC-DH-32** · The Level is determined entirely in Data Hub, from Level 2 upwards. Git and dbt are input, not authority.
 - <a id="dec-dh-33"></a>**DEC-DH-33** · Data Hub reads the dbt manifest (descriptions and meta) and the dbt catalog (the actual columns in BigQuery). A column in the catalog without a description in the manifest means: not Described. *Note of 2026-10-28: a column without a description no longer keeps a Resource from Described, if the table and another field have one ([DEC-MR-11](../requirements/functional/06-maturity-and-release.md#dec-mr-11)).*
-- <a id="dec-dh-34"></a>**DEC-DH-34** · Described requires, at a minimum: a description on the table and on every column, plus `model_type` and `grain` in `meta`. The test is automatic. *Note of 2026-10-28: the table and at least one field, not every column; `model_type` and `grain` stay ([DEC-MR-11](../requirements/functional/06-maturity-and-release.md#dec-mr-11)).*
+- <a id="dec-dh-34"></a>**DEC-DH-34** · Described requires, at a minimum: a description on the table and on every column, plus `model_type` and `grain` in `meta`. The test is automatic. *Note of 2026-10-28: the table and at least one field, not every column; `model_type` and `grain` stay ([DEC-MR-11](../requirements/functional/06-maturity-and-release.md#dec-mr-11)).* *Note of 2026-10-28: and no `model_type` or `grain` from dbt ([DEC-MR-12](../requirements/functional/06-maturity-and-release.md#dec-mr-12)).*
 - <a id="dec-dh-35"></a>**DEC-DH-35** · At every Confirmation, Data Hub stores a Fingerprint of the schema from the catalog. If the schema deviates from it, the table drops to Described. *Note of 2026-10-26: a change to the schema never lowers the Level; it gives a warning on the Resource and a Message to the Owner ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
 - <a id="dec-dh-36"></a>**DEC-DH-36** · Business manages everything from Level 3 upwards in Data Hub, not via git: Confirmations, EDAs and monitors have Data Hub as their source.
 - <a id="dec-dh-37"></a>**DEC-DH-37** · Static artefacts (a rendered chart, an export) carry the Level at the moment of the build, with a date and a link to the current Level, one click away.
@@ -194,7 +199,7 @@ Release happens in two steps, and Data Hub enforces that order. The librarian re
 
 - <a id="dec-dh-38"></a>**DEC-DH-38** · Step one, Data Team to Owner: the Data Team puts a view in the Stacks, and a Data Admin registers it in Data Hub and adds it to a Collection. With that, the Data Team makes it available to the Owner of that Collection. Levels 1 and 2, Available and Described, are thereby a responsibility of the Data Team. *Note of 2026-10-19: the Data Team registers a table with an exposure in its dbt project, without a Stack, and adds it to a Collection in Data Hub ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)).*
 - <a id="dec-dh-39"></a>**DEC-DH-39** · Step two, Owner to company: the Owner publishes the Resource to the rest of the company. The first Publication is only possible from Described, and is at once the first Confirmation: by publishing, the Owner declares that the data is correct, and the Resource rises to Level 3, Confirmed. *Note of 2026-10-26: the Owner declares what the Resource is and what it stands for, not that its data is correct; the data is for the EDA ([DEC-MR-07](../requirements/functional/06-maturity-and-release.md#dec-mr-07)).*
-- <a id="dec-dh-40"></a>**DEC-DH-40** · Visibility follows the Publication, not the Level. Not published means visible to the Data Team and to the Owner; published means visible to the whole company. A published Resource stays published when its Level later drops: the Owner gets an alert, the lower Level is visible everywhere, and the Owner confirms again without touching the Publication. That way a Resource does not disappear for those who use it. This replaces the earlier decision that visibility follows the Level; worked out in [Stacks and resources](../requirements/functional/04-stacks-and-resources.md). *Note of 2026-10-19: published means visible to everyone who sees the Collection, which is the whole company only for a public Collection ([DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12)).*
+- <a id="dec-dh-40"></a>**DEC-DH-40** · Visibility follows the Publication, not the Level. Not published means visible to the Data Team and to the Owner; published means visible to the whole company. A published Resource stays published when its Level later drops: the Owner gets an alert, the lower Level is visible everywhere, and the Owner confirms again without touching the Publication. That way a Resource does not disappear for those who use it. This replaces the earlier decision that visibility follows the Level; worked out in [Resources](../requirements/functional/04-stacks-and-resources.md). *Note of 2026-10-19: published means visible to everyone who sees the Collection, which is the whole company only for a public Collection ([DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12)).*
 
 ### From exposure to Lens
 

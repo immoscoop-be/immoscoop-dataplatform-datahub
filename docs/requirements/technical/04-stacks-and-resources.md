@@ -1,8 +1,8 @@
-# Stacks and resources: technical requirements
+# Resources: technical requirements
 
 | | |
 | --- | --- |
-| Realises | [Stacks and resources](../functional/04-stacks-and-resources.md) |
+| Realises | [Resources](../functional/04-stacks-and-resources.md) |
 | Status | Registration through exposures, Resources in Collections and their Log implemented; the Level, the Fingerprint, Publication and reading the data follow |
 | Source of truth | This file |
 

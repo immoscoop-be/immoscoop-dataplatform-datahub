@@ -66,9 +66,9 @@ Every service also fetches the public keys of identity to validate tokens; those
 | Service | Responsibility | Functional domains | Schema |
 | --- | --- | --- | --- |
 | [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Library Cards, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
-| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
+| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
-| [query](services/query.md) | Running queries on the Stacks: preview, free SQL for Claude, feeds for Excel | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
+| [query](services/query.md) | Running queries on the Resources: preview, free SQL for Claude, feeds for Excel | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
 | [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
 
 | Application | For | Uses |
@@ -135,7 +135,7 @@ None of the interfaces holds business logic. Lens and Report components are shar
 | Postgres schema `catalogue` | Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour, Anomalies, Reactions, messages | catalogue |
 | Postgres schema `registry` | Artifact Sets, Nodes, columns, Edges, tests, Changes | registry |
 | GCS bucket | The Artifact files, unchanged, per project and per run ([FR-AR-06](../requirements/functional/01-artifact-registry.md#fr-ar-06)) | registry |
-| BigQuery, the Stacks | The data itself; only read | query |
+| BigQuery, the tables of the Resources | The data itself; only read | query |
 
 ## Repository layout
 
@@ -182,7 +182,7 @@ All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](.
 
 Two environments, each in the existing GCP project of the data platform for that environment ([DEC-PF-13](../requirements/technical/00-platform.md#dec-pf-13)), with its own Cloud SQL instance, service accounts, bucket and Cloud Run services, defined in Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)):
 
-| Environment | Branch | GCP project | Region | Reads the Stacks of |
+| Environment | Branch | GCP project | Region | Reads the Resources of |
 | --- | --- | --- | --- | --- |
 | prod | `main` | `immoscoop-dataplatform-398214` | `europe-west1` | the prod dbt job, in the same project |
 | uat | `uat` | `immoscoop-dataplatform` | `europe-west1` | the uat dbt job, in the same project |

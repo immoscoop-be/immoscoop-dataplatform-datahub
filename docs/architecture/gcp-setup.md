@@ -239,5 +239,5 @@ After the first deploy of registry, dbt Cloud must tell it about every finished 
 
 ## Not part of this setup
 
-- **Read access to the Stacks for query.** The Stacks dataset does not exist yet. Whether Terraform or dbt grants query its read access is still open ([OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)).
+- **Read access to the tables of the Resources for query:** on every table in the GCP projects of the dbt projects Data Hub follows, granted in Terraform ([DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32), [OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)).
 - **Domain names** for the services ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)).

@@ -17,7 +17,7 @@
 
 In library terms: just as a library arranges its shelves into collections, each with a curator who vouches for it, Data Hub arranges its Resources into Collections, each with an Owner Unit.
 
-> **Note:** not to be confused with a dataset in BigQuery, such as the Stacks themselves. That is why we deliberately speak of a Collection.
+> **Note:** not to be confused with a dataset in BigQuery. That is why we deliberately speak of a Collection.
 
 ## Decisions
 
@@ -394,15 +394,17 @@ Proposals to confirm.
 The Collection is then without an Owner. It is flagged, the Data Team gets a notification, and for its Resources the rule that [User management](02-user-management.md) sets for an Owner Unit that empties applies (see [EC-UM-01](02-user-management.md#ec-um-01)).
 
 <a id="ec-co-02"></a>
-### EC-CO-02 · A Resource disappears from the Stacks
+### EC-CO-02 · A Resource disappears
 
 **Status:** Proposed
 
 It also disappears from its Collection, and that goes into the Log of the Collection.
 
+
+*Note of 2026-10-28: reworded without the Stacks, which no longer exist ([DEC-DH-71](../../overview/data-hub.md#dec-dh-71)).*
 ## Out of scope
 
-What someone may see and do beyond Collections ([Permissions and library cards](12-permissions-and-library-cards.md)), how the Level of a Resource is determined ([Maturity and release](06-maturity-and-release.md)), and which views in the Stacks are Resources ([Stacks and resources](04-stacks-and-resources.md)).
+What someone may see and do beyond Collections ([Permissions and library cards](12-permissions-and-library-cards.md)), how the Level of a Resource is determined ([Maturity and release](06-maturity-and-release.md)), and which tables are Resources ([Resources](04-stacks-and-resources.md)).
 
 ## Open points
 

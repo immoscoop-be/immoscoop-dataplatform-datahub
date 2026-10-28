@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Collections](../functional/03-collections.md) |
-| Status | Implemented: Collections, their Log, and their Resources ([Stacks and resources](04-stacks-and-resources.md)) |
+| Status | Implemented: Collections, their Log, and their Resources ([Resources](04-stacks-and-resources.md)) |
 | Source of truth | This file |
 
 How Collections are kept and guarded, in the service [catalogue](../../architecture/services/catalogue.md), with the Groups of the User from [identity](../../architecture/services/identity.md).

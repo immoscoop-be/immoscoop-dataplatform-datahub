@@ -5,7 +5,7 @@
 | Kind | Backend service on Cloud Run |
 | Code | `services/catalogue` |
 | Schema | `catalogue` |
-| Domains | [Stacks and resources](../../requirements/functional/04-stacks-and-resources.md), [Collections](../../requirements/functional/03-collections.md), [Maturity and release](../../requirements/functional/06-maturity-and-release.md), [Resource card](../../requirements/functional/05-resource-card.md), [Log and notifications](../../requirements/functional/07-log-and-notifications.md), [Conversations](../../requirements/functional/14-conversations.md) |
+| Domains | [Resources](../../requirements/functional/04-stacks-and-resources.md), [Collections](../../requirements/functional/03-collections.md), [Maturity and release](../../requirements/functional/06-maturity-and-release.md), [Resource card](../../requirements/functional/05-resource-card.md), [Log and notifications](../../requirements/functional/07-log-and-notifications.md), [Conversations](../../requirements/functional/14-conversations.md) |
 
 **In one sentence:** catalogue is the library itself: what is on the shelves, in which Collection, at which Level, who may see it, and everything that happened to it.
 

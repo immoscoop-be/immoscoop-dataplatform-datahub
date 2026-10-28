@@ -9,15 +9,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 81 | 34 (22 open, 12 done) |
-| [Data Hub](../overview/data-hub.md) | – | – | 66 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 4 | 47 (33 open, 14 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 82 | 34 (20 open, 14 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 70 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (28 open, 19 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 24 (9 open, 15 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 14 (10 specified, 4 withdrawn) | – | 11 | 6 (4 open, 2 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 9 | 25 (9 open, 16 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 12 | 6 (3 open, 3 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 6 | 10 (6 open, 4 done) |
@@ -33,7 +33,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (8 open, 10 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
-| [Stacks and resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
+| [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
 
 ## Functional requirements
 
@@ -117,7 +117,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-34](functional/03-collections.md#fr-co-34) | Adding a Resource records how it is stored | Proposed | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
 | [FR-CO-35](functional/03-collections.md#fr-co-35) | The Data Team hands a Collection to any group | Specified | – | – | [2e45aec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e45aeca7c26ae07c5a9c0d36e875f8192deade6) refs, 2026-10-25 |
 
-### [Stacks and resources](functional/04-stacks-and-resources.md)
+### [Resources](functional/04-stacks-and-resources.md)
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
@@ -215,7 +215,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-11](functional/06-maturity-and-release.md#fr-mr-11) | Confirming again shows what changed | Withdrawn | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-MR-12](functional/06-maturity-and-release.md#fr-mr-12) | A change since the last Confirmation gives a warning | Specified | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
 | [FR-MR-13](functional/06-maturity-and-release.md#fr-mr-13) | Jumping over Described with Business Descriptions | Withdrawn | – | – | [566fe56](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/566fe56238a90194c2c327b36cfdb3feead65088) refs, 2026-10-28<br>[cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
-| [FR-MR-14](functional/06-maturity-and-release.md#fr-mr-14) | Described: the table, a field, its model type and grain | Specified | – | – | – |
+| [FR-MR-14](functional/06-maturity-and-release.md#fr-mr-14) | Described: the table, a field, its model type and grain | Withdrawn | – | – | – |
+| [FR-MR-15](functional/06-maturity-and-release.md#fr-mr-15) | Described: the table and a field, described in dbt | Specified | – | – | – |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 
@@ -331,7 +332,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01) | An older run arrives after a newer one | Proposed | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | – |
 | [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Proposed | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | – |
-| [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | A view in the Stacks is renamed | Proposed | – | – |
+| [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | The table of a Resource is renamed | Proposed | – | – |
 | [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Proposed | – | – |
 
 ### [User management](functional/02-user-management.md)
@@ -347,9 +348,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
 | [EC-CO-01](functional/03-collections.md#ec-co-01) | The Owner Unit is dissolved in Workspace | Proposed | – | – |
-| [EC-CO-02](functional/03-collections.md#ec-co-02) | A Resource disappears from the Stacks | Proposed | – | – |
+| [EC-CO-02](functional/03-collections.md#ec-co-02) | A Resource disappears | Proposed | – | – |
 
-### [Stacks and resources](functional/04-stacks-and-resources.md)
+### [Resources](functional/04-stacks-and-resources.md)
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
@@ -425,7 +426,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-CO-03](technical/03-collections.md#tr-co-03) | The Owner Unit is chosen from the groups identity reads | Implemented | [FR-CO-15](functional/03-collections.md#fr-co-15), [FR-UM-11](functional/02-user-management.md#fr-um-11), [DEC-CO-09](functional/03-collections.md#dec-co-09), [DEC-UM-07](functional/02-user-management.md#dec-um-07) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) refs, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19<br>[02340f3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/02340f3c08399e96c3536c93bb2e23bbce50246a) implements, 2026-10-19 |
 | [TR-CO-04](technical/03-collections.md#tr-co-04) | The Log of a Collection is append-only | Implemented | [FR-CO-11](functional/03-collections.md#fr-co-11), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12), [DEC-SR-09](functional/04-stacks-and-resources.md#dec-sr-09) | [31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
 
-### [Stacks and resources: technical requirements](technical/04-stacks-and-resources.md)
+### [Resources: technical requirements](technical/04-stacks-and-resources.md)
 
 | ID | Title | Status | Realises | Commits |
 | --- | --- | --- | --- | --- |

@@ -121,7 +121,7 @@ The request and response schemas of every service are defined with zod in `packa
 | identity | Groups Reader and Data Hub user reader admin roles in Workspace ([OP-UM-03](../functional/02-user-management.md#op-um-03), [TR-PF-26](#tr-pf-26)); Cloud SQL client; signing with its key in Cloud KMS ([TR-PF-24](#tr-pf-24)) |
 | catalogue | Cloud SQL client |
 | registry | Cloud SQL client; write access to the artifact bucket; the dbt Cloud token and the webhook secret from Secret Manager; starting its ingest job ([TR-AR-01](01-artifact-registry.md#tr-ar-01)), which runs as the same service account |
-| query | Read access to the Stacks and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
+| query | Read access to the tables of the Resources and permission to run BigQuery jobs; no database access, because query stores nothing in v1 |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
 | `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |

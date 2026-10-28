@@ -33,7 +33,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `AR` | Artifact registry | [01-artifact-registry.md](functional/01-artifact-registry.md) |
 | `UM` | User management | [02-user-management.md](functional/02-user-management.md) |
 | `CO` | Collections | [03-collections.md](functional/03-collections.md) |
-| `SR` | Stacks and resources | [04-stacks-and-resources.md](functional/04-stacks-and-resources.md) |
+| `SR` | Resources | [04-stacks-and-resources.md](functional/04-stacks-and-resources.md) |
 | `RC` | Resource card | [05-resource-card.md](functional/05-resource-card.md) |
 | `MR` | Maturity and release | [06-maturity-and-release.md](functional/06-maturity-and-release.md) |
 | `LN` | Log and notifications | [07-log-and-notifications.md](functional/07-log-and-notifications.md) |
@@ -113,6 +113,10 @@ Always link an ID when you mention it outside its own definition: `[FR-AR-05](fu
 | Implemented | Built. At least one commit references it with `Implements:`. |
 | Verified | Built and tested. |
 | Withdrawn | No longer wanted. Kept for history, never deleted. |
+
+## Could: not in v1
+
+A requirement or open point that is not part of the first build ends with *Could, not in v1*, with the date and who set it, and a link to the decision. It keeps its status and stays open; the review lists such open points apart, after those v1 needs. What is not marked is part of v1. Usage reporting on Data Hub is not part of v1 ([DEC-DH-75](../overview/data-hub.md#dec-dh-75)).
 
 "Specified" is deliberately not called "Described": Described is a maturity level of a Resource (see the [definitions](../definitions.md#maturity-levels)), and the two must not be confused.
 

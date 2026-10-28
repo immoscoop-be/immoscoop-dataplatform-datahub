@@ -20,7 +20,7 @@
 | 1 | [Artifact registry](01-artifact-registry.md) | `AR` | Fetching the dbt Artifacts, storing them, processing them into searchable tables, and detecting and propagating Changes | Specified |
 | 2 | [User management](02-user-management.md) | `UM` | Who uses Data Hub: logging in with Google, Groups and Owner Units from Google Workspace, and how people join and leave | Specified |
 | 3 | [Collections](03-collections.md) | `CO` | The functional domains of Immoscoop in which Resources sit together, each with one Owner Unit, managed by the Data Team | Specified |
-| 4 | [Stacks and resources](04-stacks-and-resources.md) | `SR` | Registering a Resource in Data Hub: Key, Display Name, Collection, initial Level, Fingerprint, and a Log with fixed Log IDs | Specified |
+| 4 | [Resources](04-stacks-and-resources.md) | `SR` | Registering a Resource in Data Hub: Key, Display Name, Collection, initial Level, Fingerprint, and a Log with fixed Log IDs | Specified |
 | 5 | [Resource card](05-resource-card.md) | `RC` | What Data Hub derives about a Resource and keeps itself, with Known Behaviour and Anomalies | To be specified |
 | 6 | [Maturity and release](06-maturity-and-release.md) | `MR` | Deriving Levels, confirming by publishing, visibility in two steps | Specified ¹ |
 | 7 | [Log and notifications](07-log-and-notifications.md) | `LN` | The Log Catalogue across all domains, the Message Centre, who gets which notification when, and through which channel | To be specified |
@@ -44,7 +44,7 @@ Shared across domains: the [Log catalogue](log-catalogue.md) and the [Message ca
 
 ## Every domain file follows the same structure
 
-Goal, terms, flow, functional requirements with their own numbering per domain (such as `FR-AR-01` for the Artifact registry, `FR-UM-01` for User management, `FR-CO-01` for Collections and `FR-SR-01` for Stacks and resources), edge cases, what falls outside the domain, open points as tasks, and "Builds on". Decisions that touch only the domain are at the top (on Confluence, as a decision macro).
+Goal, terms, flow, functional requirements with their own numbering per domain (such as `FR-AR-01` for the Artifact registry, `FR-UM-01` for User management, `FR-CO-01` for Collections and `FR-SR-01` for Resources), edge cases, what falls outside the domain, open points as tasks, and "Builds on". Decisions that touch only the domain are at the top (on Confluence, as a decision macro).
 
 Domain status is either Specified (Confluence: "Beschreven") or To be specified (Confluence: "Nog te beschrijven"). The word Described is avoided here because it is a maturity level of a Resource. The ID scheme and the format are in the [requirements conventions](../README.md); a new domain starts from the [functional domain template](../_templates/functional-domain.md).
 
