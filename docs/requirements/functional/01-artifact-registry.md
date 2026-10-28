@@ -60,6 +60,39 @@ Decisions taken while building this domain:
 6. **Compare.** The new version is compared with the previous one, and every Change is recorded.
 7. **Propagate.** Every Change is followed through the lineage to the Resources that depend on it, and lands in their Log.
 
+## The Domain Model in the manifest
+
+What the dbt project that Colleciónes generates from the Domain Model tells Data Hub about Entities, as found on 2026-10-28 in `immoscoop_generated` 1.0.0, built by `compilacion-colleciones-domain-model`: 556 models over 42 Entities, in the layers `stg`, `intm` and `mrt`. Each model is made by a strategy of the generator, such as `Event`, `AtomicEvent`, `TransposedEvent`, `EntityStateMart`; the generator writes the facts below in one place for every strategy (`lib/domainMeta.js`).
+
+**Per model, today.** Under `config`, every model carries:
+
+- **tags** to select it by: `colleciones:entity:<entity>`, `colleciones:action:<action>`, `colleciones:actor:<actor>`, `colleciones:strategy:<strategy>` and `colleciones:layer:<layer>`;
+- **`meta.domain`**: its Entity with its description, identifiers (name, description, type), adjectives and parents (`extends`); for a model of one action also the action, who performs it (`performedBy`), its contexts and its references, each with its target Entity, relation type and cardinality;
+- **`meta.model`**: its strategy, kind and layer, its grain as a word (`event`, `state`, `stateChange`, `currentState`, `identifier`), and in plain language what it is and how to read it (`explanation`, `usage`).
+
+**Per column, today:** only a name and a description.
+
+**What Data Hub needs, and what is there:**
+
+| Data Hub needs | In the manifest today | Missing |
+| --- | --- | --- |
+| The Entity of a Node ([FR-SR-23](04-stacks-and-resources.md#fr-sr-23)) | `meta.domain.entity` and the tag `colleciones:entity` | Nothing |
+| The Entities of a Resource outside Colleciónes, such as a view in dbt-prod | The Colleciónes Nodes in its lineage ([FR-AR-08](#fr-ar-08)), each with its Entity | Nothing; Data Hub suggests, the Data Admin confirms |
+| A field that `is` the identity of an Entity ([DEC-RC-06](05-resource-card.md#dec-rc-06)) | Only by name: a column named as an identifier of `meta.domain.identifiers`. On a state mart, the identity is in `identifierValue`, keyed by `identifierName` | Said per column |
+| A field with a relation type ([DEC-RC-05](05-resource-card.md#dec-rc-05)) | On event models, the references of the action, in the generic columns `references` and `collections`. On state models, one column per reference of the Entity, such as `userId` on `homeLoanProfile`, whose relation type is only in its description; the references of an Entity are not in `meta.domain` | Said per column, and the references of an Entity in `meta.domain` |
+| The grain as fields ([DEC-RC-07](05-resource-card.md#dec-rc-07)) | `meta.model.grain` names the kind of grain, not its columns | The columns |
+| The version of the Domain Model ([FR-AR-15](#fr-ar-15)) | `RELEASE.json` of the package, outside the manifest | The release, per model |
+
+**Proposed extension of the strategies** ([OP-AR-07](#op-ar-07)). All of it in the shared code of the generator, so every strategy follows: `lib/domainMeta.js`, the field kinds of `lib/fields.js`, which already tell primary, natural and foreign keys apart, and `DbtDocument.js`, which writes the yaml.
+
+1. **`meta.domain` per column**, wherever the Domain Model says what the column is:
+   - `maps: is`, with the Entity and identifier, such as `listing` `listingId`; for `eventId`, the Entity and action, such as `listing` `view`; on a state mart, `identifierValue` names `identifierName` as the column that says which identifier it is;
+   - `maps: relation`, with the relation type, target Entity, identifier and cardinality, such as `references` `user` `userId` `one`;
+   - `maps: generic`, for `identifiers`, `references` and `collections`, which hold several, each described in `meta.domain` of the model.
+2. **The references of an Entity** in `meta.domain`, next to those of an action, so a state model says them as an event model does.
+3. **The grain as columns:** `meta.model.grainColumns`, such as `[eventId]` or `[uniqueId]`, next to the grain as a word.
+4. **The release of the Domain Model** in `meta.domain.release` of every model: the version and commit of `RELEASE.json`.
+
 ## Requirements
 
 <a id="fr-ar-01"></a>
@@ -167,6 +200,21 @@ A run can be fetched and processed again manually, for recovery and tests.
 
 Data Hub reads the Domain Model as it runs on prod, from the overview the server of Colleciónes deploys: its Entities with their identities, its relation types with their cardinality and inverse, and the references of every Entity and action. It uses them for every Resource, also one not built on a Colleciónes model, to suggest and check the mappings of its fields ([FR-CO-33](03-collections.md#fr-co-33), [DEC-RC-05](05-resource-card.md#dec-rc-05)). It reads it again when a new version is deployed, and records with each mapping the version it was made with.
 
+
+<a id="fr-ar-16"></a>
+### FR-AR-16 · A Node built from the Domain Model knows its Entity
+
+**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06), the manifest of `immoscoop_generated` read on 2026-10-28
+
+registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every Node and keeps per Node its Entity, its action, its strategy and its layer. The Entities of a Node outside Colleciónes are those of the Colleciónes Nodes in its lineage ([FR-SR-23](04-stacks-and-resources.md#fr-sr-23), [FR-AR-08](#fr-ar-08)).
+
+<a id="fr-ar-17"></a>
+### FR-AR-17 · The meta of a column fills in its mapping
+
+**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07)
+
+When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain arrives from `meta.model.grainColumns`; the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
+
 ## Kinds of Change
 
 This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
@@ -222,6 +270,7 @@ Which views are Resources and how their ID stays stable ([Stacks and resources](
 - [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
 - [ ] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.*
+- [ ] <a id="op-ar-07"></a>**OP-AR-07** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity, the grain as columns and the release of the Domain Model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
 - [ ] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and library cards](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)).
 
 ## Builds on
