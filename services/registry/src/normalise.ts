@@ -1,3 +1,5 @@
+import type { PartitionUnit } from './database.js';
+
 /** A Node of an Artifact Set: a model, seed, snapshot, source or exposure (TR-AR-03). */
 export interface NodeRow {
   uniqueId: string;
@@ -20,6 +22,11 @@ export interface NodeRow {
   action: string | null;
   strategy: string | null;
   layer: string | null;
+  /** How its table is stored in BigQuery, as its dbt config says (FR-CO-34); none for a view. */
+  partitionField: string | null;
+  partitionUnit: PartitionUnit | null;
+  clusterBy: string[];
+  requirePartitionFilter: boolean;
 }
 
 export interface ColumnRow {
@@ -157,6 +164,28 @@ function nodeRow(uniqueId: string, node: Json, table: string | null): NodeRow {
     checksum: string(object(node.checksum).checksum),
     meta,
     ...domainOf(tags, meta),
+    ...storageOf(config),
+  };
+}
+
+const UNITS: readonly PartitionUnit[] = ['hour', 'day', 'month', 'year'];
+
+/**
+ * How the table of a Node is stored, from the config dbt-bigquery reads (FR-CO-34): `partition_by`
+ * with its field and granularity, a day unless it says otherwise; an integer range has no unit.
+ * `cluster_by` is one column or a list of them, in their order.
+ */
+function storageOf(config: Json): Pick<NodeRow, 'partitionField' | 'partitionUnit' | 'clusterBy' | 'requirePartitionFilter'> {
+  const partition = object(config.partition_by);
+  const partitionField = string(partition.field);
+  const ranged = isObject(partition.range) || string(partition.data_type)?.toLowerCase() === 'int64';
+  const granularity = string(partition.granularity)?.toLowerCase() ?? 'day';
+  const cluster = config.cluster_by;
+  return {
+    partitionField,
+    partitionUnit: partitionField && !ranged ? (UNITS.find((unit) => unit === granularity) ?? null) : null,
+    clusterBy: typeof cluster === 'string' ? [cluster] : strings(cluster),
+    requirePartitionFilter: partitionField !== null && config.require_partition_filter === true,
   };
 }
 

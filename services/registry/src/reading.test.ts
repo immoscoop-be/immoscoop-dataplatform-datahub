@@ -113,6 +113,11 @@ describe.skipIf(!url)('reading the registry', () => {
       relation: 'immoscoop-dataplatform.dbt_marts.orders',
       materialized: 'table',
       tags: ['marts', 'daily'],
+      // How its table is stored, for the step that adds a Resource (FR-CO-34).
+      partitionField: 'ordered_at',
+      partitionUnit: 'month',
+      clusterBy: ['customer_id'],
+      requirePartitionFilter: true,
     });
     // The meta comes back as the JSON it was in the dbt project, nested and all.
     expect(orders?.meta).toEqual({

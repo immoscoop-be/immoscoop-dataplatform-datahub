@@ -6,7 +6,9 @@ import { buildApp } from './app.js';
 import { createArtifactSets } from './artifact-sets.js';
 import type { RegistryDatabase } from './database.js';
 import { createDbtCloud } from './dbt-cloud.js';
+import { COLLECTOR_URL, createDomainModelSource } from './domain-model.js';
 import { createIngestStarter } from './ingest-job.js';
+import { createProposals } from './proposal.js';
 import { createReading } from './reading.js';
 import { lazy, settingsFromEnv } from './settings.js';
 
@@ -15,6 +17,9 @@ const accessToken = metadataAccessToken();
 const database = await connectCloudSql<RegistryDatabase>(cloudSqlOptionsFromEnv('registry'));
 const sets = createArtifactSets(database.db);
 const startIngest = createIngestStarter(settings.ingestJob, accessToken);
+const reading = createReading(database.db);
+// The collector of Colleciónes, for the Domain Model in use (DEC-AR-04); the same for every environment.
+const domainModel = createDomainModelSource(process.env.DATAHUB_COLLECTOR_URL || COLLECTOR_URL);
 
 const app = await buildApp({
   verifier: verifierFromEnv(),
@@ -26,7 +31,7 @@ const app = await buildApp({
     startIngest,
   },
   api: {
-    reading: createReading(database.db),
+    reading,
     sets,
     dbtCloud: createDbtCloud({
       url: settings.dbtCloudUrl,
@@ -35,6 +40,8 @@ const app = await buildApp({
     }),
     sourceJobs: settings.sourceJobs,
     startIngest,
+    domainModel,
+    proposals: createProposals(reading, domainModel),
   },
 });
 app.addHook('onClose', () => database.close());

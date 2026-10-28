@@ -4,6 +4,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { Run } from './artifact-sets.js';
 import type { SetStatus } from './database.js';
+import { DomainModelUnavailable, parseDomainModel } from './domain-model.js';
+import { domainModelContract } from './fixtures.js';
+import { createProposals } from './proposal.js';
 import type { Reading } from './reading.js';
 
 /** What the routes are asked; the queries themselves are tested against Postgres in reading.test.ts. */
@@ -19,7 +22,7 @@ function fakeReading(asked: unknown[]): Reading {
       asked.push({ search: query, ...options });
       return [{ ...node, matchedColumns: [] }];
     },
-    node: async (id) => (id === 'model.p.orders' ? { ...node, packageName: 'p', databaseName: null, schemaName: null, tableName: null, materialized: 'view', tags: [], filePath: null, meta: {}, entity: null, action: null, strategy: null, layer: null, columns: [], tests: [] } : undefined),
+    node: async (id) => (id === 'model.p.orders' ? { ...node, packageName: 'p', databaseName: null, schemaName: null, tableName: null, materialized: 'view', tags: [], filePath: null, meta: {}, entity: null, action: null, strategy: null, layer: null, partitionField: null, partitionUnit: null, clusterBy: [], requirePartitionFilter: false, columns: [{ name: 'listingId', position: 1, dataType: 'STRING', description: '', meta: {} }], tests: [] } : undefined),
     lineage: async (id, direction, depth) => {
       asked.push({ lineage: id, direction, depth });
       return id === 'model.p.orders' ? { direction, nodes: [{ ...node, distance: 0 }], edges: [], truncated: false } : undefined;
@@ -35,6 +38,7 @@ describe('the registry API', () => {
   let recorded: Run[];
   let started: number;
   let dbtRuns: Record<string, { jobId: string; projectId: string; success: boolean }>;
+  let collectorDown: boolean;
 
   beforeEach(async () => {
     issuer = await createTestIssuer();
@@ -45,16 +49,24 @@ describe('the registry API', () => {
     ]);
     recorded = [];
     started = 0;
+    collectorDown = false;
     dbtRuns = {
       '300': { jobId: '322951', projectId: '9367', success: true },
       '301': { jobId: '322951', projectId: '9367', success: false },
       '302': { jobId: '324451', projectId: '9367', success: true },
     };
+    const reading = fakeReading(asked);
+    const domainModel = async () => {
+      if (collectorDown) {
+        throw new DomainModelUnavailable('The collector of Colleciónes answered 502 for the Domain Model');
+      }
+      return parseDomainModel(domainModelContract());
+    };
     app = await buildApp({
       verifier: issuer.verifier,
       logger: false,
       api: {
-        reading: fakeReading(asked),
+        reading,
         sets: {
           reprocess: async (runId) => known.get(runId),
           record: async (run) => {
@@ -67,6 +79,8 @@ describe('the registry API', () => {
         startIngest: async () => {
           started++;
         },
+        domainModel,
+        proposals: createProposals(reading, domainModel),
       },
     });
   });
@@ -110,6 +124,26 @@ describe('the registry API', () => {
     ]);
     expect((await call('GET', '/nodes/model.p.orders/lineage?direction=sideways')).statusCode).toBe(400);
     expect((await call('GET', '/nodes/model.p.gone/lineage')).statusCode).toBe(404);
+  });
+
+  it('gives the Domain Model in use, or says the collector did not answer (FR-AR-15, EC-AR-05)', async () => {
+    const answer = (await call('GET', '/domain-model')).json();
+    expect(answer).toMatchObject({ domain: 'immoscoop', version: '0.1.0', release: '0.0.70' });
+    expect(answer.relationTypes.map((type: { name: string }) => type.name)).toEqual(['basedOn', 'occurredWithin', 'placedIn', 'represents', 'hasType']);
+    expect(answer.identities).toContain('homeLoanSimulation.generate');
+    collectorDown = true;
+    const down = await call('GET', '/domain-model');
+    expect(down.statusCode).toBe(503);
+    expect(down.json().error).toBe('domain_model_unavailable');
+  });
+
+  it('proposes the grain, storage and mappings of the Resource on a Node, also without the Domain Model (FR-CO-33, EC-AR-05)', async () => {
+    const proposal = (await call('GET', '/nodes/model.p.orders/proposal')).json();
+    expect(proposal).toMatchObject({ nodeId: 'model.p.orders', domainModel: { release: '0.0.70' } });
+    expect(proposal.mappings).toEqual([{ field: 'listingId', kind: 'is', relationType: null, identity: 'listing.listingId', origin: 'name' }]);
+    collectorDown = true;
+    expect((await call('GET', '/nodes/model.p.orders/proposal')).json()).toMatchObject({ mappings: [], domainModel: null });
+    expect((await call('GET', '/nodes/model.p.gone/proposal')).statusCode).toBe(404);
   });
 
   it('lists the latest runs', async () => {

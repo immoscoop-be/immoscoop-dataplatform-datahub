@@ -1,5 +1,5 @@
 import { type Kysely, sql } from 'kysely';
-import type { RegistryDatabase, SetStatus } from './database.js';
+import type { PartitionUnit, RegistryDatabase, SetStatus } from './database.js';
 
 /** A Node in a list: enough to recognise it and find its table. */
 export interface NodeSummary {
@@ -32,6 +32,11 @@ export interface NodeDetail extends NodeSummary {
   action: string | null;
   strategy: string | null;
   layer: string | null;
+  /** How its table is stored in BigQuery, from its dbt config (FR-CO-34). */
+  partitionField: string | null;
+  partitionUnit: PartitionUnit | null;
+  clusterBy: string[];
+  requirePartitionFilter: boolean;
   /** Each column with its meta, such as what Colleciónes says it maps to (DEC-AR-07). */
   columns: { name: string; position: number | null; dataType: string | null; description: string; meta: Record<string, unknown> }[];
   tests: { name: string; columnName: string | null; severity: string | null; targetNodeId: string | null; targetColumn: string | null }[];
@@ -198,6 +203,10 @@ export function createReading(db: Kysely<RegistryDatabase>) {
           'n.action',
           'n.strategy',
           'n.layer',
+          'n.partitionField',
+          'n.partitionUnit',
+          'n.clusterBy',
+          'n.requirePartitionFilter',
         ])
         .where('n.uniqueId', '=', uniqueId)
         .executeTakeFirst();
