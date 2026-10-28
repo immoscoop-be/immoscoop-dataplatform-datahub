@@ -40,7 +40,7 @@
 
 The number of requirements per domain and status is in the [traceability matrix](../traceability.md).
 
-Shared across domains: the [Log catalogue](log-catalogue.md).
+Shared across domains: the [Log catalogue](log-catalogue.md) and the [Message catalogue](message-catalogue.md), generated from the source code.
 
 ## Every domain file follows the same structure
 

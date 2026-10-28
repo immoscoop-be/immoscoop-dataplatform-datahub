@@ -15,17 +15,17 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 51 (15 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 16 (10 open, 6 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 51 (15 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (11 open, 6 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 23 (8 open, 15 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 13 (11 specified, 2 withdrawn) | – | 9 | 5 (4 open, 1 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 2 (1 open, 1 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 16 (12 proposed, 1 specified, 3 withdrawn) | – | 5 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
-| [Conversations](functional/14-conversations.md) | 9 (9 proposed) | 2 (2 proposed) | 6 | 4 (1 open, 3 done) |
+| [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 7 | 9 (6 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 38 (21 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
@@ -267,6 +267,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-07](functional/14-conversations.md#fr-cv-07) | The Messages of an object, on the object | Proposed | – | – | [28627f0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28627f0466fb4b71196e5325b9a8bd22cdd1931b) refs, 2026-10-23 |
 | [FR-CV-08](functional/14-conversations.md#fr-cv-08) | A Request asks the Data Team for a decision | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23<br>[a0c90b4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0c90b41b31de62fe823c69035c3240186335642) refs, 2026-10-23 |
 | [FR-CV-09](functional/14-conversations.md#fr-cv-09) | A Message opens in its context | Proposed | – | – | [a914353](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9143531fbb7d75728e6d2e800d193429c886969) refs, 2026-10-23 |
+| [FR-CV-10](functional/14-conversations.md#fr-cv-10) | Every type of Message is in the Message Catalogue | Implemented | – | – | – |
+| [FR-CV-11](functional/14-conversations.md#fr-cv-11) | A Message has a plain and a laid-out text | Implemented | – | – | – |
+| [FR-CV-12](functional/14-conversations.md#fr-cv-12) | What Data Hub writes is system text with placeholders | Implemented | – | – | – |
+| [FR-CV-13](functional/14-conversations.md#fr-cv-13) | Every type of Message says what it asks of whoever receives it | Implemented | – | – | – |
+| [FR-CV-14](functional/14-conversations.md#fr-cv-14) | Every type of Message from Data Hub has its Learning Card | Implemented | – | – | – |
+| [FR-CV-15](functional/14-conversations.md#fr-cv-15) | A Message reaches every channel from the same texts | Proposed | – | – | – |
 
 ### [Learning](functional/16-learning.md)
 

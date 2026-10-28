@@ -459,6 +459,8 @@ A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-0
 
 A Message that Data Hub writes itself, such as a changed description in dbt ([FR-RC-17](05-resource-card.md#fr-rc-17)), a change since the last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) or a Registration ([FR-SR-10](04-stacks-and-resources.md#fr-sr-10)), carries a clear link under the heading "Understand what is happening here", right under its own text: the Learning Card that explains it, with its number, its title and whether the User has seen it. The card opens inline, in the Message: its core idea and what the User can do with it, with a way to the whole card in the Learning Centre and "I understand it". It is not a marker inside the text of the Message ([DEC-LR-11](#dec-lr-11)). Each kind of Message names its card; a kind without a card yet needs one before it is built ([FR-LR-37](#fr-lr-37)).
 
+*Note of 2026-10-28: the [Message catalogue](message-catalogue.md) names the card of every type of Message from Data Hub, or the card still to write ([FR-CV-14](14-conversations.md#fr-cv-14)).*
+
 ## Out of scope
 
 - **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).

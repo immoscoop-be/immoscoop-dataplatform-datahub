@@ -20,6 +20,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - The Message Centre of the Data Admins: [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [OP-SR-04](04-stacks-and-resources.md#op-sr-04)
 - Completing the Log Catalogue: [OP-SR-02](04-stacks-and-resources.md#op-sr-02)
 - Channel and rhythm of notifications: [OP-DH-20](../../overview/open-themes.md#op-dh-20)
+- Every type of Message, who gets a notification of it, and its texts: the [Message catalogue](message-catalogue.md) ([DEC-CV-07](14-conversations.md#dec-cv-07))
 
 ## Decisions
 
@@ -74,6 +75,7 @@ Every output, a chart, a Report, a PDF or an export, visibly carries the Query I
 ## Open points
 
 - [x] <a id="op-ln-01"></a>**OP-LN-01** · The Query Log ([FR-LN-05](#fr-ln-05)) differs from [DEC-SR-18](04-stacks-and-resources.md#dec-sr-18) and [FR-SR-27](04-stacks-and-resources.md#fr-sr-27): executed queries are not stored in Data Hub in v1. Decide whether the Query Log replaces that, and how long it is kept; see also [OP-SR-08](04-stacks-and-resources.md#op-sr-08) (query history later) and [OP-DH-04](../../overview/open-themes.md#op-dh-04) (usage per Resource). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-22: Data Hub keeps its own Query Log ([DEC-LN-01](#dec-ln-01)).*
+- [ ] <a id="op-ln-03"></a>**OP-LN-03** · Decide which logic Changes notify the Owner of a Resource ([DEC-DH-27](../../overview/data-hub.md#dec-dh-27)): only a Change in the Node of the Resource itself, or also one further upstream, which the artifact registry follows into the Log of every Resource downstream ([FR-AR-12](01-artifact-registry.md#fr-ar-12)). Proposal: as for descriptions ([FR-RC-17](05-resource-card.md#fr-rc-17)), only the Node of the Resource itself; a Change further upstream stays an entry in the Log. The catalogue names the Node and how far upstream it is ([MSG-RES-04](message-catalogue.md#msg-res-04)). *Raised on 2026-10-28, while making the Message Catalogue.*
 - [ ] <a id="op-ln-02"></a>**OP-LN-02** · Work out what making a Lens public means, on which [FR-LN-04](#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.*
 
 ## Builds on

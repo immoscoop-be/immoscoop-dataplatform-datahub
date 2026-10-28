@@ -15,6 +15,14 @@
     "./collection-icons": {
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
+    },
+    "./messages": {
+      "types": "./dist/messages.d.ts",
+      "default": "./dist/messages.js"
+    },
+    "./message-catalogue": {
+      "types": "./dist/messageCatalogue.d.ts",
+      "default": "./dist/messageCatalogue.js"
     }
   },
   "files": ["dist"],

@@ -55,7 +55,7 @@ Non-functional categories are listed in [`non-functional/README.md`](non-functio
 
 - An ID is never reused or renumbered. A requirement that is no longer wanted gets status `Withdrawn` and stays in place.
 - A new requirement takes the next free number in its type and code.
-- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [Log catalogue](functional/log-catalogue.md).
+- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [Log catalogue](functional/log-catalogue.md). So are Message IDs, such as `MSG-RES-02`, in the [Message catalogue](functional/message-catalogue.md).
 
 ### Confluence IDs
 

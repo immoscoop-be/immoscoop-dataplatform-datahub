@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 219: 41 Implemented, 69 Specified, 78 Proposed, 31 Withdrawn |
+| Functional requirements | 225: 46 Implemented, 69 Specified, 79 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 79 |
+| Design decisions (DEC-UX) | 80 |
 | Prototype screens | 31, plus the index |
-| Open points | 134 open, of 217 |
+| Open points | 141 open, of 224 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -568,6 +568,7 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 ### Open
 
+- The Request to run a query above 1 GB: what accepting it allows, and for how long ([OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17)).
 
 ## Lenses
 
@@ -626,26 +627,61 @@ The architecture leaves Lenses for later, "once their domain is specified". A st
 
 ## Messages
 
-**Designed, all requirements Proposed.** Nothing is built. You asked to discuss Messages as a whole before they are built ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)); this part is the input for that. Slack is on hold.
+**Designed, all requirements Proposed, but for the Message Catalogue, which is built.** Every type of Message is in the source code, with its texts ([DEC-CV-07](../requirements/functional/14-conversations.md#dec-cv-07), from your request, 2026-10-28); nothing that sends or shows a Message is built yet. You asked to discuss Messages as a whole before they are built ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)); this part is the input for that. Slack is on hold.
 
 ### What it does
 
 Messages are the margin notes of the library: colleagues talk about data, and the conversation stays attached to what it is about.
 
 - **A Message is always about something,** a Collection, a Resource, a Lens or a query, and links to it ([FR-CV-01](../requirements/functional/14-conversations.md#fr-cv-01), [FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)). It is placed on its object, not sent to a person ([FR-CV-03](../requirements/functional/14-conversations.md#fr-cv-03)).
-- **Four kinds,** each notifying different people:
+- **Four kinds a person writes, and what Data Hub writes itself,** each notifying different people:
 
 | Kind | On | Notifies |
 | --- | --- | --- |
 | Question | Collection, Resource, Lens | The Owner Unit of the object |
-| Remark | Collection, Resource, Lens | The Owner Unit of the object |
+| Remark | Collection, Resource, Lens | The Owner Unit of the object; the Kinds of Reaction of a Resource say otherwise ([OP-CV-05](../requirements/functional/14-conversations.md#op-cv-05)) |
 | Signal | Resource, Lens: it is about data | The Owner Unit and the Data Team; it can become an Anomaly on the Resource Card ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)) |
-| Request | A Lens, for now | The Data Team, which accepts or refuses; the decision notifies the sender ([FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)) |
+| Request | A Lens that reads more than 1 GB, or a query above 1 GB ([DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29)) | The Data Team, which accepts or refuses; the decision notifies the sender ([FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)) |
+| Data Hub | Any object | Whoever it concerns: the Owner, the Data Team or the author of a Lens; each type in the Message Catalogue below |
 
 - **Who sees a Message** follows who sees its object, and none is private ([FR-CV-05](../requirements/functional/14-conversations.md#fr-cv-05)).
 - **The Message Centre** in the top navigation, with the number unread: by default the Messages for you, on what your Owner Unit owns, what you wrote or answered, Signals for the Data Team, and what Data Hub itself tells you, such as a field changed since the last Confirmation ([FR-CV-06](../requirements/functional/14-conversations.md#fr-cv-06)).
 - **On the object:** Messages on a Collection, Resource or Lens open in a slide-in, the Message Centre filtered on that object ([FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07)).
 - **Open in context** opens the page of the object with the Message in a floating window over it, so you read the object while you answer ([FR-CV-09](../requirements/functional/14-conversations.md#fr-cv-09)).
+
+**The Message Catalogue** ([message-catalogue.md](../requirements/functional/message-catalogue.md), [DEC-CV-07](../requirements/functional/14-conversations.md#dec-cv-07), [FR-CV-10](../requirements/functional/14-conversations.md#fr-cv-10)). Every type of Message between the four actors, a User, the Owner, the Data Team and Data Hub itself, is in the source code, in `packages/contracts/src/messageCatalogue.ts`; the page in docs is generated from it. For each type it holds:
+
+- who sends it to whom, when, and how many there are;
+- its texts, plain and laid out, in Dutch and English, with placeholders that are filled in when the Message shows ([FR-CV-11](../requirements/functional/14-conversations.md#fr-cv-11), [FR-CV-12](../requirements/functional/14-conversations.md#fr-cv-12)). Plain is for a notification, the fallback in Slack or a screen reader; laid out is a small part of Markdown that the web app, Slack and Claude can all render ([FR-CV-15](../requirements/functional/14-conversations.md#fr-cv-15));
+- for what Data Hub writes itself, the Learning Card that explains it: named, proposed from the master learning plan, or still to write ([FR-CV-14](../requirements/functional/14-conversations.md#fr-cv-14));
+- what it asks of whoever receives it, of whom, the buttons that link that action to the Message, and what ends it ([FR-CV-13](../requirements/functional/14-conversations.md#fr-cv-13)).
+
+The 20 types today; the page of the catalogue shows each one laid out, in both languages, with an example:
+
+| Message | About | From → to | Asks | Learning Card |
+| --- | --- | --- | --- | --- |
+| [MSG-CNV-01](../requirements/functional/message-catalogue.md#msg-cnv-01) · Question | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | An answer | Added by the writer |
+| [MSG-CNV-02](../requirements/functional/message-catalogue.md#msg-cnv-02) · Remark | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | Nothing | Added by the writer |
+| [MSG-CNV-03](../requirements/functional/message-catalogue.md#msg-cnv-03) · Signal | Resource or Lens | User → Owner and Data Team | Something to do | Added by the writer |
+| [MSG-CNV-04](../requirements/functional/message-catalogue.md#msg-cnv-04) · Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | Added by the writer |
+| [MSG-CNV-05](../requirements/functional/message-catalogue.md#msg-cnv-05) · Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | Added by the writer |
+| [MSG-CNV-06](../requirements/functional/message-catalogue.md#msg-cnv-06) · A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write |
+| [MSG-COL-01](../requirements/functional/message-catalogue.md#msg-col-01) · A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | K3.2 Ownership at Immoscoop, proposed |
+| [MSG-RES-01](../requirements/functional/message-catalogue.md#msg-res-01) · A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | K5.1 What a resource is |
+| [MSG-RES-02](../requirements/functional/message-catalogue.md#msg-res-02) · Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | K3.4 Where definitions live |
+| [MSG-RES-03](../requirements/functional/message-catalogue.md#msg-res-03) · The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | 4.3.2 Versions and agreements with users |
+| [MSG-RES-04](../requirements/functional/message-catalogue.md#msg-res-04) · The logic changed | Resource | Data Hub → Owner | Nothing | 4.3.1 Changing a definition, keeping trust, proposed |
+| [MSG-RES-05](../requirements/functional/message-catalogue.md#msg-res-05) · The Level dropped | Resource | Data Hub → Owner | Something to do | 4.4.1 The maturity ladder, proposed |
+| [MSG-RES-06](../requirements/functional/message-catalogue.md#msg-res-06) · A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | K5.1 What a resource is, proposed |
+| [MSG-RES-07](../requirements/functional/message-catalogue.md#msg-res-07) · The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | Added by the writer |
+| [MSG-RES-08](../requirements/functional/message-catalogue.md#msg-res-08) · A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | 4.7.1 Owner and steward, proposed |
+| [MSG-LEN-01](../requirements/functional/message-catalogue.md#msg-len-01) · Request to accept a very large Lens | Lens | User → Data Team | A decision | Added by the writer |
+| [MSG-LEN-02](../requirements/functional/message-catalogue.md#msg-len-02) · A Lens grew into large | Lens | Data Hub → its author | Nothing | To write |
+| [MSG-LEN-03](../requirements/functional/message-catalogue.md#msg-len-03) · A Lens grew into very large | Lens | Data Hub → Data Team and its author | A decision | To write |
+| [MSG-LEN-04](../requirements/functional/message-catalogue.md#msg-len-04) · A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | 4.5.1 Who consumes outside your domain, proposed |
+| [MSG-QRY-01](../requirements/functional/message-catalogue.md#msg-qry-01) · Request to run a very large query | query | User → Data Team | A decision | Added by the writer |
+
+Three of them no requirement asks for yet; the catalogue proposes them: a Resource that arrives in a Collection ([OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)), a Resource that is withdrawn ([OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)) and a Request that lapses ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Dutch texts are a first version, to read with Flemish eyes ([OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)).
 
 ### The screens
 
@@ -679,6 +715,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 - **Who gets notified** is worked out when a Message is placed: the Owner Unit is a group ID, so a notification to an Owner reaches every member ([FR-LN-01](../requirements/functional/07-log-and-notifications.md#fr-ln-01)). For the Message Centre, matching group IDs from the Access Token is enough. For e-mail or Slack later, identity needs the members of a group: that is the group synchronisation of [FR-UM-07](../requirements/functional/02-user-management.md#fr-um-07).
 - **Unread counts** are read when a page loads; no live connection is needed for v1.
 - **The link in Open in context** is the address of the object's page with the Message ID in it, so it also works from an e-mail or Slack later.
+- **The texts are built: they come from the Message Catalogue** in `@datahub/contracts`, which every service and the web app can import. `renderMessage` fills in a text for a language and a layout, writing counts, sizes and dates the way that language does. A Message from Data Hub would be stored as its Message ID and its parameters as JSON, never as text, like a Log Entry ([DEC-SR-09](../requirements/functional/04-stacks-and-resources.md#dec-sr-09)), so that it shows in the language of whoever reads it and with the current name of its object.
 
 ### Open
 
@@ -686,6 +723,9 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 - The channel and rhythm of notifications: in Data Hub only, e-mail or Slack, at once or as a digest ([OP-DH-20](../overview/open-themes.md#op-dh-20)).
 - What follows Make it an anomaly on a Signal ([OP-SR-14](../requirements/functional/04-stacks-and-resources.md#op-sr-14)).
 - When the object is gone, or a Resource moves to another Collection ([EC-CV-01](../requirements/functional/14-conversations.md#ec-cv-01), [EC-CV-02](../requirements/functional/14-conversations.md#ec-cv-02)).
+- Who gets a notification of a Remark ([OP-CV-05](../requirements/functional/14-conversations.md#op-cv-05)); one Message per Resource or per run for a Registration ([OP-CV-06](../requirements/functional/14-conversations.md#op-cv-06)).
+- Whether the Owner hears when a Resource arrives in their Collection ([OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)) or is withdrawn ([OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)), and which logic Changes notify the Owner ([OP-LN-03](../requirements/functional/07-log-and-notifications.md#op-ln-03)).
+- The Dutch texts of the Message Catalogue, and the Dutch words for Owner and Request ([OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)).
 
 ## The learning centre
 
@@ -1050,7 +1090,7 @@ Of the 145 open points, most can wait. This section sorts the ones that matter f
 | A2 | **How query reads Resources** ([OP-SR-10](../requirements/functional/04-stacks-and-resources.md#op-sr-10), [OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)) | Nothing can be queried without it, and it is where A1 meets BigQuery | Decided on 2026-10-26: every table in the projects followed, by Terraform ([DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32)) |
 | A3 | **The stack and the look of the web app** ([OP-UX-10](../design/principles.md#op-ux-10), [OP-UX-09](../design/principles.md#op-ux-09)) | The rebuild of web starts from it; the design itself is stack-independent | Decide before the first screen is built |
 | A4 | **What a Lens is: flavours or types** ([OP-LE-07](../requirements/functional/09-lenses.md#op-le-07), [OP-DH-09](../overview/open-themes.md#op-dh-09)) | The overview's Lens follows the chart language; the designed one returns a table. The tables of Lenses depend on which | Start with the basic flavour (a query with Parameters), with room for a type later |
-| A5 | **Messages as a whole** ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)) and where they live ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) | The warnings on a change and the Requests for a very large Lens run through them | In catalogue for v1; in Data Hub only, no e-mail or Slack yet |
+| A5 | **Messages as a whole** ([OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)) and where they live ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)) | The warnings on a change and the Requests for a very large Lens run through them | In catalogue for v1; in Data Hub only, no e-mail or Slack yet. Every type of Message and its texts are now in the Message Catalogue ([DEC-CV-07](../requirements/functional/14-conversations.md#dec-cv-07)), a start for this discussion |
 | A6 | **What Described requires** ([OP-MR-03](../requirements/functional/06-maturity-and-release.md#op-mr-03); which part of the Fingerprint drops a Resource is decided: none, [OP-MR-05](../requirements/functional/06-maturity-and-release.md#op-mr-05)) | The Level computation and the Confirmation table depend on it | Decide with the Resource Card |
 | A7 | **Who reads the registry** ([OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)) | Lineage on a Resource, and Claude's lineage tool, need it for everyone | Everyone, for the Nodes beneath what they may see |
 | A8 | **Who sees the queries of others** ([OP-SR-13](../requirements/functional/04-stacks-and-resources.md#op-sr-13)) | Shapes the Query Log's read rules | Decided on 2026-10-26: who, when, how and what it read for everyone; the SQL for its author, the Owner Unit and the Data Team ([DEC-SR-31](../requirements/functional/04-stacks-and-resources.md#dec-sr-31)) |
@@ -1106,6 +1146,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 | What Data Hub is, and the decisions that span domains | [overview/data-hub.md](../overview/data-hub.md), [overview/open-themes.md](../overview/open-themes.md) |
 | The Defined Terms and the Levels | [definitions.md](../definitions.md) |
 | The functional requirements, per domain | [requirements/functional/](../requirements/functional) |
+| Every type of Message, its texts and what it asks | [requirements/functional/message-catalogue.md](../requirements/functional/message-catalogue.md) (generated from `packages/contracts/src/messageCatalogue.ts`) |
 | The language principle | [requirements/non-functional/localisation.md](../requirements/non-functional/localisation.md), and the translation reference in [definitions.md](../definitions.md) |
 | The technical requirements and platform decisions | [requirements/technical/00-platform.md](../requirements/technical/00-platform.md), and one file per built domain |
 | Status per requirement, with the commits | [requirements/traceability.md](../requirements/traceability.md) (generated) |
@@ -1121,7 +1162,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 134 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 141 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1228,7 +1269,7 @@ Source: [requirements/functional/03-collections.md](../requirements/functional/0
 
 ### Stacks and resources
 
-Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 10 open
+Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 11 open
 
 - [ ] **[OP-SR-01](../requirements/functional/04-stacks-and-resources.md#op-sr-01)** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](../requirements/functional/04-stacks-and-resources.md#dec-sr-24)), so the convention applies to those labels.*
 - [ ] **[OP-SR-02](../requirements/functional/04-stacks-and-resources.md#op-sr-02)** · Complete the [Log catalogue](../requirements/functional/log-catalogue.md), with the Log IDs from the other domains.
@@ -1244,6 +1285,7 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 - [ ] **[OP-SR-14](../requirements/functional/04-stacks-and-resources.md#op-sr-14)** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](../requirements/functional/05-resource-card.md#fr-rc-04), [FR-RC-05](../requirements/functional/05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.*
 - [ ] **[OP-SR-15](../requirements/functional/04-stacks-and-resources.md#op-sr-15)** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](../requirements/functional/03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40). *Raised on 2026-10-25, while designing how a Resource is stored.*
 - [ ] **[OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)** · Work out what marking a Resource deprecated holds ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50)): whether it asks for a reason and what to use instead, how it shows in search, on a Lens and for Claude, and whether a new Lens can still be built on it. Proposal: a reason is asked, what to use instead is optional; a label next to the Level, wherever the Level shows; a new Lens on it is possible, with a warning. *Raised on 2026-10-26, in the review of Max.*
+- [ ] **[OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17)** · Work out the Request to run a query above 1 GB ([DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29)): what accepting it allows, one run or the query as it is, and for how long; whether a change to its SQL needs a new Request; and its timeout, as for a Lens ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Message Catalogue has the Request ([MSG-QRY-01](../requirements/functional/message-catalogue.md#msg-qry-01)) and its decision ([MSG-CNV-05](../requirements/functional/message-catalogue.md#msg-cnv-05)). *Raised on 2026-10-28, while making the Message Catalogue.*
 
 ### Resource card
 
@@ -1285,9 +1327,10 @@ Source: [requirements/functional/06-maturity-and-release.md](../requirements/fun
 
 ### Log and notifications
 
-Source: [requirements/functional/07-log-and-notifications.md](../requirements/functional/07-log-and-notifications.md) · 1 open
+Source: [requirements/functional/07-log-and-notifications.md](../requirements/functional/07-log-and-notifications.md) · 2 open
 
 - [ ] **[OP-LN-02](../requirements/functional/07-log-and-notifications.md#op-ln-02)** · Work out what making a Lens public means, on which [FR-LN-04](../requirements/functional/07-log-and-notifications.md#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](../requirements/functional/03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.*
+- [ ] **[OP-LN-03](../requirements/functional/07-log-and-notifications.md#op-ln-03)** · Decide which logic Changes notify the Owner of a Resource ([DEC-DH-27](../overview/data-hub.md#dec-dh-27)): only a Change in the Node of the Resource itself, or also one further upstream, which the artifact registry follows into the Log of every Resource downstream ([FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)). Proposal: as for descriptions ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)), only the Node of the Resource itself; a Change further upstream stays an entry in the Log. The catalogue names the Node and how far upstream it is ([MSG-RES-04](../requirements/functional/message-catalogue.md#msg-res-04)). *Raised on 2026-10-28, while making the Message Catalogue.*
 
 ### Lenses
 
@@ -1323,9 +1366,14 @@ Source: [requirements/functional/13-channels.md](../requirements/functional/13-c
 
 ### Conversations
 
-Source: [requirements/functional/14-conversations.md](../requirements/functional/14-conversations.md) · 1 open
+Source: [requirements/functional/14-conversations.md](../requirements/functional/14-conversations.md) · 6 open
 
 - [ ] **[OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)** · Discuss Messages as a whole before they are built: what they are for, enriching the data and informing colleagues, their kinds, and who is notified of which, as Max asked. *Raised on 2026-10-23.*
+- [ ] **[OP-CV-05](../requirements/functional/14-conversations.md#op-cv-05)** · Decide who gets a notification of a Remark. [FR-CV-03](../requirements/functional/14-conversations.md#fr-cv-03) says a Question or a Remark notifies the Owner of the object; the [Kinds of Reaction](../requirements/functional/04-stacks-and-resources.md#kinds-of-reaction) of a Resource say a Remark notifies only whoever is already in the conversation, and a Question the Owner and them. The Message Catalogue follows [FR-CV-03](../requirements/functional/14-conversations.md#fr-cv-03), with whoever is in the conversation added ([MSG-CNV-02](../requirements/functional/message-catalogue.md#msg-cnv-02)). *Raised on 2026-10-28, while making the Message Catalogue.*
+- [ ] **[OP-CV-06](../requirements/functional/14-conversations.md#op-cv-06)** · Decide whether a Registration gives one Message per Resource or one per run. The design shows one Message for three Resources that came in together ([messages](../design/screens/messages.html)), while a Message has one Subject, a whole object ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [DEC-CV-05](../requirements/functional/14-conversations.md#dec-cv-05)). The catalogue has one per Resource ([MSG-RES-01](../requirements/functional/message-catalogue.md#msg-res-01)). Proposal: one per Resource, which the Message Centre groups by run in its list. *Raised on 2026-10-28, while making the Message Catalogue.*
+- [ ] **[OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)** · Decide whether Data Hub tells the Owner when the Data Team adds a Resource to their Collection ([MSG-RES-08](../requirements/functional/message-catalogue.md#msg-res-08)). No requirement asks for it, but the Owner takes the Resource from there ([Flow: registering a Resource](../requirements/functional/04-stacks-and-resources.md#flow-registering-a-resource), step 9), and without a Message finds it only by looking. The catalogue has it, Proposed. *Raised on 2026-10-28, while making the Message Catalogue.*
+- [ ] **[OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)** · Decide whether Data Hub tells the Owner when a Resource is withdrawn ([DEC-SR-26](../requirements/functional/04-stacks-and-resources.md#dec-sr-26), [MSG-RES-06](../requirements/functional/message-catalogue.md#msg-res-06)), and whether its Consumers hear it too. The catalogue has it for the Owner, Proposed. *Raised on 2026-10-28, while making the Message Catalogue.*
+- [ ] **[OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)** · Review the Dutch texts of the [Message catalogue](../requirements/functional/message-catalogue.md), a first version, and decide the Dutch words for the terms the translation reference lacks: Owner and Owner Unit (written owner and owner unit for now), Request (aanvraag) and withdrawn (ingetrokken). *Raised on 2026-10-28, while making the Message Catalogue.*
 
 ### Learning
 
