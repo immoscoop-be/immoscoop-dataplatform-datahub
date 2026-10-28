@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 5 | 3 (1 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 21 | 28 (6 open, 22 done) |
+| [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 22 | 28 (5 open, 23 done) |
 | [Localisation](non-functional/localisation.md) | 12 (11 specified, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 28 | 20 (9 open, 11 done) |
