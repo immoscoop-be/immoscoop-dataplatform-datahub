@@ -163,8 +163,8 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
   - **Maturity:** the ladder, with the previous Level after a drop.
   - **Publication:** who published the Resource and when, who confirmed it last and when, and since when the data is reliable.
   - **Known Behaviour:** intended use and pitfalls.
-  - **Known Gaps:** the structural gaps in the data.
-  - **Stability:** whether the data is still settling or can change by nature, and from when it is final.
+  - **Known Gaps:** the structural gaps in the data; part of the Known Behaviour, in a tile of their own right after it ([DEC-RC-12](../requirements/functional/05-resource-card.md#dec-rc-12)).
+  - **Stability:** whether the data is still settling or can change by nature, and from when it is final. Not in version 1: the prototypes show the tile, the build leaves it out ([FR-RC-06](../requirements/functional/05-resource-card.md#fr-rc-06)).
   - **Key fields and Parameters.**
   - **Entities and relationships:** each Entity with its identifier and the Resources it joins to, also as a picture. An Entity without an identifier at this grain is shown, but joins nothing.
   - **Monitoring:** the active checks and the incidents.

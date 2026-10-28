@@ -130,7 +130,7 @@ Just as every book in a library has a catalogue card, every Resource in Data Hub
 
 - <a id="dec-dh-16"></a>**DEC-DH-16** · A Resource gets an internal ID in Data Hub. The full name, `project.dataset.view`, is the findable Key, and in addition it gets a Display Name, readable and unique. Renames are tracked, so that Confirmations, EDAs and Questions are not lost on a rename.
 - <a id="dec-dh-17"></a>**DEC-DH-17** · What can be derived is not stored again as a source: descriptions, columns, lineage and usage come from their origin. Data Hub only stores what is nowhere else.
-- <a id="dec-dh-18"></a>**DEC-DH-18** · Every Resource Card has a "Known Behaviour" block: intended use, pitfalls and a log of Anomalies. An Anomaly has a period, a description of what happened, the impact on the figures and who recorded it, so that everyone can take it into account.
+- <a id="dec-dh-18"></a>**DEC-DH-18** · Every Resource Card has a "Known Behaviour" block: intended use, pitfalls and a log of Anomalies. An Anomaly has a period, a description of what happened, the impact on the figures and who recorded it, so that everyone can take it into account. *Note of 2026-10-28: the Known Gaps are part of it too ([DEC-RC-12](../requirements/functional/05-resource-card.md#dec-rc-12)).*
 
 | Part | What | Source |
 | --- | --- | --- |
