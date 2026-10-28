@@ -280,6 +280,8 @@ An unfolded Collection lists, after its Resources and without a label of their o
 
 Lenses have no section of their own; everything is reached through its Collection ([DEC-UX-66](../../design/principles.md#dec-ux-66)). The start screen of Collections therefore finds Lenses as well: a search by the words of a question over Collections, Resources and Lenses ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)); under "Yours", the Collections of the User's Owner Units and the Lenses of the User and their Owner Unit, those waiting for the Data Team among them ([FR-LE-09](09-lenses.md#fr-le-09)); and Lenses to discover, popular and new, next to the popular Collections.
 
+
+*Note of 2026-10-28: without popular Collections or Lenses for now; only new Lenses ([DEC-UX-86](../../design/principles.md#dec-ux-86)).*
 ## The page of a Collection
 
 What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.
