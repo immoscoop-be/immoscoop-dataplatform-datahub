@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 60 open, of 244: 44 for v1 and 16 marked Could |
+| Open points | 59 open, of 244: 43 for v1 and 16 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 60 still open, 16 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 59 still open, 16 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1267,9 +1267,8 @@ Source: [requirements/functional/13-channels.md](../requirements/functional/13-c
 
 ### Conversations
 
-Source: [requirements/functional/14-conversations.md](../requirements/functional/14-conversations.md) · 6 open
+Source: [requirements/functional/14-conversations.md](../requirements/functional/14-conversations.md) · 5 open
 
-- [ ] **[OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)** · Discuss Messages as a whole before they are built: what they are for, enriching the data and informing colleagues, their kinds, and who is notified of which, as Max asked. *Raised on 2026-10-23.*
 - [ ] **[OP-CV-05](../requirements/functional/14-conversations.md#op-cv-05)** · Decide who gets a notification of a Remark. [FR-CV-03](../requirements/functional/14-conversations.md#fr-cv-03) says a Question or a Remark notifies the Owner of the object; the [Kinds of Reaction](../requirements/functional/04-stacks-and-resources.md#kinds-of-reaction) of a Resource say a Remark notifies only whoever is already in the conversation, and a Question the Owner and them. The Message Catalogue follows [FR-CV-03](../requirements/functional/14-conversations.md#fr-cv-03), with whoever is in the conversation added ([MSG-CNV-02](../requirements/functional/message-catalogue.md#msg-cnv-02)). *Raised on 2026-10-28, while making the Message Catalogue.*
 - [ ] **[OP-CV-06](../requirements/functional/14-conversations.md#op-cv-06)** · Decide whether a Registration gives one Message per Resource or one per run. The design shows one Message for three Resources that came in together ([messages](../design/screens/messages.html)), while a Message has one Subject, a whole object ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [DEC-CV-05](../requirements/functional/14-conversations.md#dec-cv-05)). The catalogue has one per Resource ([MSG-RES-01](../requirements/functional/message-catalogue.md#msg-res-01)). Proposal: one per Resource, which the Message Centre groups by run in its list. *Raised on 2026-10-28, while making the Message Catalogue.*
 - [ ] **[OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)** · Decide whether Data Hub tells the Owner when the Data Team adds a Resource to their Collection ([MSG-RES-08](../requirements/functional/message-catalogue.md#msg-res-08)). No requirement asks for it, but the Owner takes the Resource from there ([Flow: registering a Resource](../requirements/functional/04-stacks-and-resources.md#flow-registering-a-resource), step 9), and without a Message finds it only by looking. The catalogue has it, Proposed. *Raised on 2026-10-28, while making the Message Catalogue.*
@@ -1513,6 +1512,10 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Beta and promotion**
 
 - [x] **[OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15). *Done on 2026-10-28, by Max: handled as a concept. A derived concept is at Level 0, Beta, which is abstract, and becomes formal only when the Data Team hardens it into a Resource ([DEC-DH-72](../overview/open-themes.md#dec-dh-72)).*
+
+**Conversations**
+
+- [x] **[OP-CV-04](../requirements/functional/14-conversations.md#op-cv-04)** · Discuss Messages as a whole before they are built: what they are for, enriching the data and informing colleagues, their kinds, and who is notified of which, as Max asked. *Raised on 2026-10-23.* *Done on 2026-10-28, by Max.*
 
 ### To confirm
 
