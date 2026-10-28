@@ -27,7 +27,13 @@ export interface NodeDetail extends NodeSummary {
   filePath: string | null;
   /** The meta of the Node in its dbt project. */
   meta: Record<string, unknown>;
-  columns: { name: string; position: number | null; dataType: string | null; description: string }[];
+  /** What a Node of Colleciónes is built from (FR-AR-16). */
+  entity: string | null;
+  action: string | null;
+  strategy: string | null;
+  layer: string | null;
+  /** Each column with its meta, such as what Colleciónes says it maps to (DEC-AR-07). */
+  columns: { name: string; position: number | null; dataType: string | null; description: string; meta: Record<string, unknown> }[];
   tests: { name: string; columnName: string | null; severity: string | null; targetNodeId: string | null; targetColumn: string | null }[];
 }
 
@@ -188,6 +194,10 @@ export function createReading(db: Kysely<RegistryDatabase>) {
           'n.tags',
           'n.filePath',
           'n.meta',
+          'n.entity',
+          'n.action',
+          'n.strategy',
+          'n.layer',
         ])
         .where('n.uniqueId', '=', uniqueId)
         .executeTakeFirst();
@@ -197,7 +207,7 @@ export function createReading(db: Kysely<RegistryDatabase>) {
       const { setId, ...node } = found;
       const columns = await db
         .selectFrom('columns')
-        .select(['name', 'position', 'dataType', 'description'])
+        .select(['name', 'position', 'dataType', 'description', 'meta'])
         .where('setId', '=', setId)
         .where('nodeId', '=', uniqueId)
         .orderBy(sql`position nulls last`)

@@ -213,7 +213,7 @@ Data Hub reads the Domain Model as it runs on prod, from the overview the server
 <a id="fr-ar-16"></a>
 ### FR-AR-16 · A Node built from the Domain Model knows its Entity
 
-**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06), the manifest of `immoscoop_generated` read on 2026-10-28 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06), the manifest of `immoscoop_generated` read on 2026-10-28 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every Node and keeps per Node its Entity, its action, its strategy and its layer. The Entities of a Node outside Colleciónes are those of the Colleciónes Nodes in its lineage ([FR-SR-23](04-stacks-and-resources.md#fr-sr-23), [FR-AR-08](#fr-ar-08)).
 

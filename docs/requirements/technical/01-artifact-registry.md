@@ -36,14 +36,14 @@ A set without a catalog, or with a file that cannot be read, gets the status `fa
 <a id="tr-ar-03"></a>
 ### TR-AR-03 · The normalised tables
 
-**Status:** Implemented · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23)
+**Status:** Implemented · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23)
 
 Processing turns a set into rows in the schema `registry`, all keyed by the set:
 
 | Table | One row per | Taken from |
 | --- | --- | --- |
-| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, the checksum of its code, and its meta as JSON, as the dbt project writes it (`meta` of the Node and of its config, the config winning per key) |
-| `columns` | column of a Node | the catalog: actual name, type and position, with the description from the manifest, matched by name regardless of case. A Node the catalog does not know, such as an ephemeral model or an exposure, keeps the columns of the manifest, without a type |
+| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, the checksum of its code, and its meta as JSON, as the dbt project writes it (`meta` of the Node and of its config, the config winning per key). For a Node of Colleciónes also its Entity, action, strategy and layer, from the tags its generator writes (`colleciones:entity:<entity>` and so on) or else from `meta.domain` and `meta.model` ([FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16)) |
+| `columns` | column of a Node | the catalog: actual name, type and position, with the description and the meta from the manifest, matched by name regardless of case; the meta is kept as the dbt project writes it, so what Colleciónes says a column maps to is there as it wrote it ([DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07)). A Node the catalog does not know, such as an ephemeral model or an exposure, keeps the columns of the manifest, without a type |
 | `edges` | Node that depends on another Node of the same project | `depends_on.nodes` in the manifest, between Nodes only |
 | `tests` | data test on a Node | the test's name (`not_null`, `unique`, `relationships`, …), its Node and column, and its severity; a relationships test also with its target Node and target column |
 
@@ -77,7 +77,7 @@ Every route of registry that reads, and processing a run again, needs the role o
 
 **Status:** Implemented · **Realises:** [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-10](../functional/01-artifact-registry.md#fr-ar-10), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03)
 
-`GET /nodes/{unique ID}` gives a Node of a Current Version with its meta, its columns, in the order of the table, and its tests. A set processed before registry kept the meta has none until it is processed again ([TR-AR-07](#tr-ar-07)). `GET /nodes/{unique ID}/lineage?direction=upstream|downstream&depth=<n>` follows the Edges of the Current Versions, plus the links between the projects ([TR-AR-03](#tr-ar-03)), up to `depth` steps (10 by default, at most 50). It gives every Node reached with its shortest distance, the links between them, and whether more Nodes lie beyond the first 500.
+`GET /nodes/{unique ID}` gives a Node of a Current Version with its meta, its Entity, action, strategy and layer, its columns with their meta, in the order of the table, and its tests. A set processed before registry kept the meta has none until it is processed again ([TR-AR-07](#tr-ar-07)). `GET /nodes/{unique ID}/lineage?direction=upstream|downstream&depth=<n>` follows the Edges of the Current Versions, plus the links between the projects ([TR-AR-03](#tr-ar-03)), up to `depth` steps (10 by default, at most 50). It gives every Node reached with its shortest distance, the links between them, and whether more Nodes lie beyond the first 500.
 
 <a id="tr-ar-07"></a>
 ### TR-AR-07 · Processing a run again by hand
@@ -91,7 +91,7 @@ Every route of registry that reads, and processing a run again, needs the role o
 
 **Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-PF-26](00-platform.md#dec-pf-26)
 
-When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, and the `label` of an exposure that depends on that table alone.
+When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
 
 It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
 

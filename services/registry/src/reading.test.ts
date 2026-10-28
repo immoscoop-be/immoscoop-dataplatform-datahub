@@ -127,6 +127,14 @@ describe.skipIf(!url)('reading the registry', () => {
     expect(await reading.node(`model.${P}.retired`)).toBeUndefined();
   });
 
+  it('reads what a Node of Colleciónes is built from, and the meta of its columns (FR-AR-16, DEC-AR-07)', async () => {
+    const agencyOrders = await reading.node(`model.${C}.agency_orders`);
+    expect(agencyOrders).toMatchObject({ entity: 'agency', action: 'order', strategy: 'AtomicEvent', layer: 'mrt' });
+    expect(agencyOrders?.columns).toEqual([
+      { name: 'agency_id', position: 1, dataType: 'STRING', description: 'The agency.', meta: { domain: { maps: 'is', entity: 'agency', identifier: 'agencyId' } } },
+    ]);
+  });
+
   it('follows the lineage downstream, into the other dbt project (DEC-AR-03)', async () => {
     const lineage = await reading.lineage(`source.${P}.shop.raw_orders`, 'downstream', 10);
     const distances = Object.fromEntries((lineage?.nodes ?? []).map((node) => [node.uniqueId, node.distance]));

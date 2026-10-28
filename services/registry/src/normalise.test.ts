@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { sampleCatalog, sampleManifest } from './fixtures.js';
+import { collecionesCatalog, collecionesManifest, sampleCatalog, sampleManifest } from './fixtures.js';
 import { normalise, relationOf } from './normalise.js';
 
 const P = 'immoscoop_dataplatform_sql';
@@ -40,7 +40,31 @@ describe('normalise', () => {
         model: { kind: 'history', grain: 'stateChange' },
         domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
       },
+      // Without the tags of Colleciónes, its Entity comes from meta.domain (FR-AR-16).
+      entity: 'order',
+      action: null,
+      strategy: null,
+      layer: null,
     });
+  });
+
+  it('knows what a Node of Colleciónes is built from, by the tags of its generator (FR-AR-16)', () => {
+    const colleciones = normalise(collecionesManifest(), collecionesCatalog());
+    expect(colleciones.nodes.find((row) => row.name === 'agency_orders')).toMatchObject({
+      entity: 'agency',
+      action: 'order',
+      strategy: 'AtomicEvent',
+      layer: 'mrt',
+    });
+    // A source says nothing about the Domain Model.
+    expect(colleciones.nodes.find((row) => row.resourceType === 'source')).toMatchObject({ entity: null, action: null, strategy: null, layer: null });
+  });
+
+  it('keeps the meta of every column, where Colleciónes says what it maps to (DEC-AR-07)', () => {
+    const colleciones = normalise(collecionesManifest(), collecionesCatalog());
+    const column = colleciones.columns.find((row) => row.name === 'agency_id');
+    expect(column?.meta).toEqual({ domain: { maps: 'is', entity: 'agency', identifier: 'agencyId' } });
+    expect(set.columns.find((row) => row.name === 'ORDER_ID')?.meta).toEqual({});
   });
 
   it('keeps the meta of a Node as dbt has it, the meta in its config winning, and none as empty', () => {
@@ -60,13 +84,13 @@ describe('normalise', () => {
 
   it('takes the actual columns from the catalog, with the descriptions of the manifest', () => {
     expect(set.columns.filter((column) => column.nodeId === `model.${P}.orders`)).toEqual([
-      { nodeId: `model.${P}.orders`, name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'The order.' },
-      { nodeId: `model.${P}.orders`, name: 'CUSTOMER_ID', position: 2, dataType: 'INT64', description: 'Who ordered.' },
-      { nodeId: `model.${P}.orders`, name: 'CREATED_AT', position: 3, dataType: 'TIMESTAMP', description: 'From the warehouse.' },
+      { nodeId: `model.${P}.orders`, name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'The order.', meta: {} },
+      { nodeId: `model.${P}.orders`, name: 'CUSTOMER_ID', position: 2, dataType: 'INT64', description: 'Who ordered.', meta: {} },
+      { nodeId: `model.${P}.orders`, name: 'CREATED_AT', position: 3, dataType: 'TIMESTAMP', description: 'From the warehouse.', meta: {} },
     ]);
     // A Node the catalog does not know keeps the columns of the manifest, without an actual type.
     expect(set.columns.filter((column) => column.nodeId === `model.${P}.order_lines`)).toEqual([
-      { nodeId: `model.${P}.order_lines`, name: 'line_id', position: 1, dataType: 'string', description: 'A line.' },
+      { nodeId: `model.${P}.order_lines`, name: 'line_id', position: 1, dataType: 'string', description: 'A line.', meta: {} },
     ]);
   });
 

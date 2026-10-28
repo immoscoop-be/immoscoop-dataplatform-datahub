@@ -3,6 +3,14 @@ import type { NormalisedSet } from './normalise.js';
 /** The tag with which an exposure makes the tables it depends on Resources of Data Hub (DEC-SR-22). */
 export const DATAHUB_TAG = 'datahub';
 
+/** A column of an exposed table, as the catalog has it, with its description from the manifest. */
+export interface ExposedColumn {
+  name: string;
+  position: number | null;
+  dataType: string | null;
+  description: string;
+}
+
 /** A table that an exposure with the tag `datahub` depends on: a Resource to be (TR-AR-08). */
 export interface ExposedTable {
   /** The Key of the Resource: `database.schema.table` in lowercase, as `relation` (DEC-SR-04). */
@@ -15,6 +23,10 @@ export interface ExposedTable {
   exposures: string[];
   /** The label of an exposure with the tag that depends on this table alone, if it has one (DEC-SR-24). */
   label: string | null;
+  /** The checksum of its code in the manifest, for the Fingerprint (FR-SR-08); a source has none. */
+  checksum: string | null;
+  /** Its columns, in the order of the table (FR-SR-06). */
+  columns: ExposedColumn[];
 }
 
 /**
@@ -24,6 +36,10 @@ export interface ExposedTable {
  */
 export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; empty: string[] } {
   const nodes = new Map(set.nodes.map((node) => [node.uniqueId, node]));
+  const columnsOf = new Map<string, ExposedColumn[]>();
+  for (const { nodeId, name, position, dataType, description } of set.columns) {
+    (columnsOf.get(nodeId) ?? columnsOf.set(nodeId, []).get(nodeId)!).push({ name, position, dataType, description });
+  }
   const exposures = set.nodes.filter((node) => node.resourceType === 'exposure' && node.tags.includes(DATAHUB_TAG));
   const tablesOf = new Map<string, string[]>(exposures.map((exposure) => [exposure.uniqueId, []]));
   for (const edge of set.edges) {
@@ -48,7 +64,17 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
       const table =
         tables.get(node.relation) ??
         tables
-          .set(node.relation, { key: node.relation, nodeId: node.uniqueId, name: node.name, resourceType: node.resourceType, description: node.description, exposures: [], label: null })
+          .set(node.relation, {
+            key: node.relation,
+            nodeId: node.uniqueId,
+            name: node.name,
+            resourceType: node.resourceType,
+            description: node.description,
+            exposures: [],
+            label: null,
+            checksum: node.checksum,
+            columns: (columnsOf.get(node.uniqueId) ?? []).toSorted((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.name.localeCompare(b.name)),
+          })
           .get(node.relation)!;
       table.exposures.push(exposure.name);
       // The first exposure by name that depends on this table alone names it.
