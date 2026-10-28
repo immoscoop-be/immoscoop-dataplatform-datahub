@@ -23,7 +23,7 @@ What I ask of you:
 1. Explore the repo: the stack, the existing frontend and the folder with the requirements. Briefly summarise what you find before you change anything.
 2. For each screen in `docs/design/screens/`, find the requirements it fulfils. Put their IDs at the top, in the comment of the screen, and add a reference to the screen to those requirements. Report which requirements have no screen yet, and which parts of the screens have no requirement.
 3. Propose how `tokens.css` ends up in the styling of the app (CSS variables, a theme file, or whatever fits the stack), so that there is only one place for each value.
-4. Propose a list of components based on the prototypes: navigation with floating icons, slide-out panel, list item, tile, tabs with concave corners, status chip, alert, maturity icon, intro of a start screen.
+4. Build the components from [`components.md`](components.md), layer by layer: it lists every component, its behaviour and what it depends on, and what to consolidate first. A behaviour lives in its component, never in a screen. Propose any change to that list before you build it.
 5. Wait for my approval before you build the components and screens. Then start with the navigation and the panel, because every screen rests on them.
 
 The open points at the bottom of `principles.md` are not decided yet. Ask me about them when you run into them, and make no choice of your own.

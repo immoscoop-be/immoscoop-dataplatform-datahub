@@ -14,7 +14,7 @@ Its decisions and open points carry IDs with the code `UX`, numbered and linked 
 | --- | --- |
 | Rules, navigation behaviour, decisions | this file |
 | Style values | [`tokens.css`](tokens.css) |
-| Components | [`base.css`](base.css) (prototype), later the components in the app |
+| Components: their groups, behaviour and dependencies | [`components.md`](components.md); their look in [`base.css`](base.css) (prototype), later the components in `packages/ui` |
 | Screens | [`screens/*.html`](screens/), each with the requirements it fulfils |
 
 Data Hub is an internal tool and has no Figma. The design lives in code ([DEC-UX-01](#dec-ux-01)).
