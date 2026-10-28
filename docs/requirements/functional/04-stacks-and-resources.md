@@ -610,7 +610,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 
 ## Open points
 
-- [ ] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](#dec-sr-24)), so the convention applies to those labels.*
+- [x] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](#dec-sr-24)), so the convention applies to those labels.* *Decided on 2026-10-28, by Max: agreed; the convention for Display Names is the one for the `label` of an exposure ([DEC-SR-24](#dec-sr-24)).*
 - [ ] <a id="op-sr-02"></a>**OP-SR-02** · Complete the [Log catalogue](log-catalogue.md), with the Log IDs from the other domains.
 - [x] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered. *Decided on 2026-10-28, by Max: they become Broken until it comes back ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-52](#fr-sr-52)).*
 - [ ] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md).

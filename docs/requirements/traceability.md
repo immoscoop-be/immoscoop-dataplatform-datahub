@@ -9,16 +9,16 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 104 | 35 (35 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 104 | 36 (1 open, 35 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
+| [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 7 | 8 (1 open, 7 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (2 open, 5 done) |
-| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (8 open, 9 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 33 | 17 (9 open, 8 done) |
+| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 specified) | 22 | 17 (2 open, 15 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 33 | 17 (8 open, 9 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 2 | 5 (4 open, 1 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (3 open, 2 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 8 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -359,8 +359,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-CO-01](functional/03-collections.md#ec-co-01) | The Owner Unit is dissolved in Workspace | Proposed | – | – |
-| [EC-CO-02](functional/03-collections.md#ec-co-02) | A Resource disappears | Proposed | – | – |
+| [EC-CO-01](functional/03-collections.md#ec-co-01) | The Owner Unit is dissolved in Workspace | Specified | – | – |
+| [EC-CO-02](functional/03-collections.md#ec-co-02) | A Resource disappears | Specified | – | – |
 
 ### [Resources](functional/04-stacks-and-resources.md)
 
