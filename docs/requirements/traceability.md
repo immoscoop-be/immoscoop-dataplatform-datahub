@@ -9,9 +9,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 88 | 34 (17 open, 17 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 89 | 34 (16 open, 18 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (9 open, 38 done) |
+| [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 proposed) | 5 | 8 (4 open, 4 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |

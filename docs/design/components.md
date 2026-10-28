@@ -124,7 +124,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 
 | Component | What it is | Behaviour | Built from | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
-| Rail | Floating icons of the main sections; Messages with its count; theme, Learning Centre, and the initials that open My page ([DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
+| Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre; at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
 | Panel | The index of its section, sliding out next to the rail | Opens and shuts; remembers it | surfaces | every screen | [What is in the panel](principles.md#what-is-in-the-panel) |
 | Tree of Collections | Each Collection a card that unfolds to its Resources, then its Lenses | **Fold**, **Filter a list** | fold box, list item, stripe, maturity | Collections screens | [DEC-UX-10](principles.md#dec-ux-10), [DEC-UX-65](principles.md#dec-ux-65) |
 | List item | Kind icon, name on one line, Level | Ellipsis and full name on hover | kind icon, maturity | panels, lists | [DEC-UX-11](principles.md#dec-ux-11) |
