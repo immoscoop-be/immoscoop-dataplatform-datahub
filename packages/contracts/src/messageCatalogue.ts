@@ -376,8 +376,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['dataTeam'],
     when: 'The Owner Unit of a Collection is dissolved in Workspace, or has no members left, at a Synchronisation.',
-    status: 'Proposed',
-    sources: ['EC-CO-01', 'EC-UM-01'],
+    status: 'Withdrawn',
+    sources: ['EC-CO-01', 'EC-UM-01', 'EC-UM-04'],
     openPoints: ['OP-MR-04'],
     parameters: [
       { name: 'group', type: 'group', about: 'The Owner Unit it had' },

@@ -25,6 +25,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 - <a id="dec-um-05"></a>**DEC-UM-05** · Data Hub only pulls in the Groups that follow the convention, not all groups of the company. *Note of 2026-10-19: replaced by [DEC-UM-07](#dec-um-07).*
 - <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`. *Note of 2026-10-25: whether `immoscoop.be` gets in too is open ([OP-UM-07](#op-um-07)).*
 - <a id="dec-um-07"></a>**DEC-UM-07** · Data Hub pulls in every group a User is in, nested groups included, as long as the group belongs to the own Workspace domain: any of them can be chosen as an Owner Unit ([DEC-CO-09](03-collections.md#dec-co-09)). Roles still come only from the Role Groups of the Naming Convention. The Synchronisation covers only the Groups Data Hub uses: the Role Groups and the Owner Units of Collections, not every group of the company. This replaces [DEC-UM-05](#dec-um-05).
+- <a id="dec-um-08"></a>**DEC-UM-08** · The Synchronisation happens when a User signs in: then Data Hub pulls in the Groups that User is in. It does not pull in all Groups on a schedule; who has never signed in, Data Hub does not know. *Decided on 2026-10-28, by Max ([OP-UM-05](#op-um-05)).*
 
 ## Terms
 
@@ -33,7 +34,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 | User | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once |
 | Group | A Google group of the own Workspace domain that Data Hub knows: a Role Group, or a group a User is in and can choose as Owner Unit |
 | Owner Unit | The Group that takes care of a Collection: any Google group of the own Workspace domain, chosen by whoever creates the Collection from the groups they are in |
-| Synchronisation | Periodically pulling in the members of all Groups, so that Data Hub knows who is in which Group, even when that person is not logged in |
+| Synchronisation | Pulling in the Groups of a User when they sign in ([DEC-UM-08](#dec-um-08)) |
 
 ## Naming Convention
 
@@ -139,24 +140,37 @@ Proposals to confirm.
 <a id="ec-um-01"></a>
 ### EC-UM-01 · An Owner Unit becomes empty
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 The Resources of that Owner Unit then have no one left who vouches for them. According to the maturity ladder they drop, because their basis falls away; the [Maturity and release](06-maturity-and-release.md) domain defines how (see [OP-MR-04](06-maturity-and-release.md#op-mr-04)).
+
+*Withdrawn on 2026-10-28, by Max: replaced by [EC-UM-04](#ec-um-04); the Level does not drop.*
 
 <a id="ec-um-02"></a>
 ### EC-UM-02 · A Group is deleted in Workspace
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 At the next Synchronisation, Data Hub marks it as dissolved, and keeps its history.
+
+*Withdrawn on 2026-10-28, by Max: replaced by [EC-UM-04](#ec-um-04): the Data Team manages a Group deleted in Workspace.*
 
 <a id="ec-um-03"></a>
 ### EC-UM-03 · Google is briefly unreachable
 
-**Status:** Proposed
+**Status:** Withdrawn
 
 Whoever is already logged in continues with the Groups from the cache; new logins only succeed once Google is reachable again.
 
+
+*Withdrawn on 2026-10-28, by Max: Data Hub does not take this into account.*
+
+<a id="ec-um-04"></a>
+### EC-UM-04 · An Owner Unit becomes empty or is deleted, without Data Hub knowing
+
+**Status:** Specified · **Source:** Max, 2026-10-28
+
+Data Hub learns the Groups of a User only when they sign in ([DEC-UM-08](#dec-um-08)), so it does not notice that an Owner Unit has become empty or was deleted in Workspace, and notifies nobody. The Data Team reassigns its Collections to another Group when it finds out. The Level of their Resources does not drop.
 ## Out of scope
 
 What someone may see and do, and issuing Excel keys ([Permissions and Excel keys](12-permissions-and-library-cards.md)), assigning an Owner Unit to a Collection ([Collections](03-collections.md)), and what happens to the Level of a Resource when its Owner Unit empties ([Maturity and release](06-maturity-and-release.md)).
@@ -167,7 +181,7 @@ What someone may see and do, and issuing Excel keys ([Permissions and Excel keys
 - [x] <a id="op-um-02"></a>**OP-UM-02** · Confirm which Workspace domain (or which domains) is allowed. *Decided on 2026-10-18: `thenextimmoscoop.be` only ([DEC-UM-06](#dec-um-06)).*
 - [ ] <a id="op-um-03"></a>**OP-UM-03** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
 - [x] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner. *Decided on 2026-10-19: any existing Google group can be an Owner Unit, so no groups need to be created for it ([DEC-CO-09](03-collections.md#dec-co-09)).*
-- [ ] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation.
+- [x] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation. *Decided on 2026-10-28, by Max: at every sign-in ([DEC-UM-08](#dec-um-08)).*
 - [ ] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above.
 - [ ] <a id="op-um-07"></a>**OP-UM-07** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.*
 

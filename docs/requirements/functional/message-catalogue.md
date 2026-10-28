@@ -42,7 +42,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Proposed |
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Proposed |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Proposed |
-| [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Proposed |
+| [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
@@ -944,8 +944,8 @@ The data team did not decide within {days, plural, one {# working day} other {# 
 | About | Collection |
 | From → to | Data Hub → Data Team |
 | When | The Owner Unit of a Collection is dissolved in Workspace, or has no members left, at a Synchronisation. |
-| Status | Proposed |
-| Comes from | [EC-CO-01](03-collections.md#ec-co-01), [EC-UM-01](02-user-management.md#ec-um-01) |
+| Status | Withdrawn |
+| Comes from | [EC-CO-01](03-collections.md#ec-co-01), [EC-UM-01](02-user-management.md#ec-um-01), [EC-UM-04](02-user-management.md#ec-um-04) |
 | Open points | [OP-MR-04](06-maturity-and-release.md#op-mr-04) |
 
 **What it asks:** Something to do, of the Data Team. The Data Team gives the Collection a new Owner Unit, with whoever took over the domain.

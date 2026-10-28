@@ -366,7 +366,7 @@ After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resour
   - **`is`** the identity of an Entity: the field is the identity of an Entity the row is about, such as `listing.listingId` ([DEC-RC-06](05-resource-card.md#dec-rc-06));
   - **a relation type** of the Domain Model towards the identity of an Entity, such as `basedOn` `listing.listingId` ([DEC-RC-05](05-resource-card.md#dec-rc-05)). With more than one `is` field, it names the one it starts from.
 
-Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08](05-resource-card.md#dec-rc-08)), and refuses a relation type of one on an array column. A mapping is a reference, not a join: Data Hub links every Resource that carries the same identity ([FR-RC-09](05-resource-card.md#fr-rc-09)), and says how many that are. For a Resource built on a Colleciónes model, the grain and the mappings come from the Domain Model; for another model, Data Hub derives the grain from a `unique` test and suggests a mapping where the name of a field matches an identity of the Domain Model in use ([FR-AR-15](01-artifact-registry.md#fr-ar-15)). The Data Admin checks them and can change each one. No mapping is required. The Resources are added, with their grain and mappings, in one go, and both go into the Log with the addition.
+Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08](05-resource-card.md#dec-rc-08)), and refuses a relation type of one on an array column. *Changed on 2026-10-28: a Resource has no array columns; the ones of its model are left out and named ([DEC-SR-33](04-stacks-and-resources.md#dec-sr-33)).* A mapping is a reference, not a join: Data Hub links every Resource that carries the same identity ([FR-RC-09](05-resource-card.md#fr-rc-09)), and says how many that are. For a Resource built on a Colleciónes model, the grain and the mappings come from the Domain Model; for another model, Data Hub derives the grain from a `unique` test and suggests a mapping where the name of a field matches an identity of the Domain Model in use ([FR-AR-15](01-artifact-registry.md#fr-ar-15)). The Data Admin checks them and can change each one. No mapping is required. The Resources are added, with their grain and mappings, in one go, and both go into the Log with the addition.
 
 *Rewritten on 2026-10-26, after the discussion of relations and grain with Max: "identifies each row" became `is` and the grain, and "refers to" became the relation types of the Domain Model ([DEC-RC-05](05-resource-card.md#dec-rc-05) to [DEC-RC-08](05-resource-card.md#dec-rc-08)).*
 
@@ -396,6 +396,8 @@ Proposals to confirm.
 **Status:** Proposed
 
 The Collection is then without an Owner. It is flagged, the Data Team gets a notification, and for its Resources the rule that [User management](02-user-management.md) sets for an Owner Unit that empties applies (see [EC-UM-01](02-user-management.md#ec-um-01)).
+
+*Note of 2026-10-28: Data Hub learns the Groups of a User only at sign-in ([DEC-UM-08](02-user-management.md#dec-um-08)), so it may not notice; as for an Owner Unit that empties, the Data Team reassigns the Collection to another Group ([EC-UM-04](02-user-management.md#ec-um-04)).*
 
 <a id="ec-co-02"></a>
 ### EC-CO-02 · A Resource disappears

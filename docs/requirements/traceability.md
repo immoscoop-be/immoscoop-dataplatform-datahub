@@ -13,12 +13,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 7 | 8 (1 open, 7 done) |
-| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
+| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 8 | 7 (3 open, 4 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (9 open, 8 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 33 | 17 (9 open, 8 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 2 | 4 (3 open, 1 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 2 | 5 (4 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 8 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -57,7 +57,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-AR-14](functional/01-artifact-registry.md#fr-ar-14) | Fetch and process a run again manually | Implemented | AR-14 | [TR-AR-07](technical/01-artifact-registry.md#tr-ar-07) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
 | [FR-AR-15](functional/01-artifact-registry.md#fr-ar-15) | Read the Domain Model in use | Proposed | – | – | [84b935b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/84b935bd18234a526ee0465d6e31080556957bad) refs, 2026-10-28<br>[2f56320](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f56320d76a7c94618dbbca399281c56a0b53d97) refs, 2026-10-28<br>[443f40a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/443f40ac3ffebd152e33ac4dd4e43c6576257b57) refs, 2026-10-26 |
 | [FR-AR-16](functional/01-artifact-registry.md#fr-ar-16) | A Node built from the Domain Model knows its Entity | Proposed | – | – | [2008b48](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2008b48dbba767acf58c564c43eb409f393f94bf) refs, 2026-10-28 |
-| [FR-AR-17](functional/01-artifact-registry.md#fr-ar-17) | The meta of a column fills in its mapping | Proposed | – | – | [2008b48](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2008b48dbba767acf58c564c43eb409f393f94bf) refs, 2026-10-28 |
+| [FR-AR-17](functional/01-artifact-registry.md#fr-ar-17) | The meta of a column fills in its mapping | Proposed | – | – | [70a4ea7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/70a4ea7c9610965da18f224b3fd47a034ab10465) refs, 2026-10-28<br>[2008b48](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2008b48dbba767acf58c564c43eb409f393f94bf) refs, 2026-10-28 |
 
 ### [User management](functional/02-user-management.md)
 
@@ -350,9 +350,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-UM-01](functional/02-user-management.md#ec-um-01) | An Owner Unit becomes empty | Proposed | – | – |
-| [EC-UM-02](functional/02-user-management.md#ec-um-02) | A Group is deleted in Workspace | Proposed | – | – |
-| [EC-UM-03](functional/02-user-management.md#ec-um-03) | Google is briefly unreachable | Proposed | – | – |
+| [EC-UM-01](functional/02-user-management.md#ec-um-01) | An Owner Unit becomes empty | Withdrawn | – | – |
+| [EC-UM-02](functional/02-user-management.md#ec-um-02) | A Group is deleted in Workspace | Withdrawn | – | – |
+| [EC-UM-03](functional/02-user-management.md#ec-um-03) | Google is briefly unreachable | Withdrawn | – | – |
+| [EC-UM-04](functional/02-user-management.md#ec-um-04) | An Owner Unit becomes empty or is deleted, without Data Hub knowing | Specified | – | – |
 
 ### [Collections](functional/03-collections.md)
 
