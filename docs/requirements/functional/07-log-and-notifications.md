@@ -17,7 +17,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 - The [Log catalogue](log-catalogue.md), and the structure of a Log Entry: [FR-SR-11](04-stacks-and-resources.md#fr-sr-11), [FR-SR-12](04-stacks-and-resources.md#fr-sr-12)
 - Propagating Changes into the Log: [FR-AR-12](01-artifact-registry.md#fr-ar-12), [FR-AR-13](01-artifact-registry.md#fr-ar-13)
-- The Message Centre of the Data Admins: [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [OP-SR-04](04-stacks-and-resources.md#op-sr-04)
+- The Message to the Data Team on every Registration: [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [OP-SR-04](04-stacks-and-resources.md#op-sr-04)
 - Completing the Log Catalogue: [OP-SR-02](04-stacks-and-resources.md#op-sr-02)
 - Channel and rhythm of notifications: [OP-DH-20](../../overview/open-themes.md#op-dh-20)
 - Every type of Message, who gets a notification of it, and its texts: the [Message catalogue](message-catalogue.md) ([DEC-CV-07](14-conversations.md#dec-cv-07))
