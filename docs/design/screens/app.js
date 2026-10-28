@@ -872,12 +872,10 @@ if (scopeBox) {
     document.querySelector('[data-group="rtab"] [data-target="history"]').click();
     const row = document.querySelector(`.hist-run[data-run="${run.dataset.run}"]`);
     if (row) {
-      row.classList.add('open', 'flash'); setTimeout(() => row.classList.remove('flash'), 1200);
+      row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1200);
       row.scrollIntoView({ block: 'center', behavior: 'smooth' });
     } else document.querySelector('.result-card').scrollIntoView({ block: 'start', behavior: 'smooth' });
   });
-  // The history: a run opens to what changed, in its SQL and its values
-  document.getElementById('hist-list').addEventListener('click', e => { e.target.closest('.hist-head')?.closest('.hist-run').classList.toggle('open'); });
 
   lensButton(); syncRun();
 }

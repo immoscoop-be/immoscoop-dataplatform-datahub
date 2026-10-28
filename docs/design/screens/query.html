@@ -9,7 +9,7 @@
   the question, the lenses on the new set; the SQL and the Parameters come along, the old query stays, and the new one
   says where it started from. "Lenses on these resources" opens the overview of a new query while writing. Several
   queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
-  how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, of its
+  how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, a row with when it ran, Preview and Apply (DEC-UX-88), of its
   values, its SQL or both, opened to what changed. The switch "SQL" shows a table outside the Resources.
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
@@ -80,9 +80,9 @@
    <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
    <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
    <div class="q-runs" aria-label="Its last runs">
-    <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">08:12 · SQL and values</span></button>
-    <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">08:05 · values</span></button>
-    <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday · SQL</span></button>
+    <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
+    <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">today, 08:05</span></button>
+    <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday, 17:40</span></button>
     <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
    </div>
   </div>
@@ -240,6 +240,11 @@
   <span class="meta" data-pane-group="rtab" data-pane="result">2 minutes ago, with <span class="mono">@dateFrom</span> 1 Jan 2026, <span class="mono">@dateTo</span> 25 Oct 2026, <span class="mono">@leadChannel</span> Form</span>
  </div>
  <div data-pane-group="rtab" data-pane="result" id="result-pane">
+  <span data-group="hprev" hidden><button data-target="off"></button><button data-target="p13"></button><button data-target="p12"></button><button data-target="p11"></button><button data-target="p10"></button></span>
+  <div class="size-state caution hist-preview" data-pane-group="hprev" data-pane="p13" hidden><i class="ph-fill ph-eye"></i><p><b>Preview of run 13, today, 08:05.</b> Its SQL and values, read only; the query has not changed. Apply takes them into the query, and its next run is a new variation.</p><button class="btn-quiet outline" type="button" data-go="hprev:off">Close</button><button class="btn-primary" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></div>
+  <div class="size-state caution hist-preview" data-pane-group="hprev" data-pane="p12" hidden><i class="ph-fill ph-eye"></i><p><b>Preview of run 12, yesterday, 17:40.</b> Its SQL and values, read only; the query has not changed. Apply takes them into the query, and its next run is a new variation.</p><button class="btn-quiet outline" type="button" data-go="hprev:off">Close</button><button class="btn-primary" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></div>
+  <div class="size-state caution hist-preview" data-pane-group="hprev" data-pane="p11" hidden><i class="ph-fill ph-eye"></i><p><b>Preview of run 11, yesterday, 17:31.</b> Its SQL and values, read only; the query has not changed. Apply takes them into the query, and its next run is a new variation.</p><button class="btn-quiet outline" type="button" data-go="hprev:off">Close</button><button class="btn-primary" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></div>
+  <div class="size-state caution hist-preview" data-pane-group="hprev" data-pane="p10" hidden><i class="ph-fill ph-eye"></i><p><b>Preview of run 10, 23 Oct, 10:02.</b> Its SQL and values, read only; the query has not changed. Apply takes them into the query, and its next run is a new variation.</p><button class="btn-quiet outline" type="button" data-go="hprev:off">Close</button><button class="btn-primary" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></div>
  <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
   <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
  </div>
@@ -261,29 +266,11 @@
  <div data-pane-group="rtab" data-pane="history" hidden>
   <p class="meta hist-intro" style="display:block">Every run is a variation of this query: other values, another SQL, or both. Its resources stay the same; another resource is another query.</p>
   <div class="hist-list" id="hist-list">
-   <div class="hist-run open" data-run="14">
-    <button class="hist-head" type="button"><span class="hist-no">Run 14</span><span class="meta">today, 08:12</span><span class="hist-what"><span class="chg">SQL +1</span><span class="chg"><span class="mono">@leadChannel</span> Form</span></span><span class="meta hist-num">412 MB · 210 rows</span><span class="mono meta">q-20261027-4c2e1a</span><i class="ph ph-caret-down hist-caret"></i></button>
-    <div class="hist-body"><div class="diff"><div class="d-add"><span class="d-no">8</span>    and lead_channel = @leadChannel</div><div class="d-val"><span class="mono">@leadChannel</span> new, Form</div></div>
-     <div class="hist-actions"><span class="pill">Its result is shown</span></div></div>
-   </div>
-   <div class="hist-run" data-run="13">
-    <button class="hist-head" type="button"><span class="hist-no">Run 13</span><span class="meta">today, 08:05</span><span class="hist-what"><span class="chg"><span class="mono">@dateFrom</span> 1 Mar → 1 Jan 2026</span></span><span class="meta hist-num">380 MB · 220 rows</span><span class="mono meta">q-20261027-0b9d77</span><i class="ph ph-caret-down hist-caret"></i></button>
-    <div class="hist-body"><div class="diff"><div class="d-val"><span class="mono">@dateFrom</span> <del>DATE_SUB(CURRENT_DATE(), INTERVAL 8 MONTH)</del> → DATE_TRUNC(CURRENT_DATE(), YEAR)</div></div>
-     <div class="hist-actions"><button class="btn-quiet outline" type="button"><i class="ph ph-table"></i>Show its result</button><button class="btn-quiet outline" type="button"><i class="ph ph-arrow-counter-clockwise"></i>Back to this SQL and values</button></div></div>
-   </div>
-   <div class="hist-run" data-run="12">
-    <button class="hist-head" type="button"><span class="hist-no">Run 12</span><span class="meta">yesterday, 17:40</span><span class="hist-what"><span class="chg">SQL +5 −2</span></span><span class="meta hist-num">96 MB · 155 rows</span><span class="mono meta">q-20261026-77a310</span><i class="ph ph-caret-down hist-caret"></i></button>
-    <div class="hist-body"><div class="diff"><div class="d-del"><span class="d-no">26</span>select source_name,</div><div class="d-add"><span class="d-no">26</span>select week_start,</div><div class="d-add"><span class="d-no">27</span>       lead_source,</div><div class="d-add"><span class="d-no">28</span>       source_name,</div><div class="d-del"><span class="d-no">29</span>group by source_name</div><div class="d-add"><span class="d-no">32</span>group by week_start, lead_source, source_name</div><div class="d-add"><span class="d-no">33</span>order by week_start desc, leads desc</div></div>
-     <div class="hist-actions"><span class="meta">Its result is no longer kept.</span><button class="btn-quiet outline" type="button"><i class="ph ph-arrow-counter-clockwise"></i>Back to this SQL and values</button></div></div>
-   </div>
-   <div class="hist-run" data-run="11">
-    <button class="hist-head" type="button"><span class="hist-no">Run 11</span><span class="meta">yesterday, 17:31</span><span class="hist-what"><span class="chg"><span class="mono">@dateTo</span> 18 → 25 Oct 2026</span></span><span class="meta hist-num">90 MB · 5 rows</span><span class="mono meta">q-20261026-5e01c2</span><i class="ph ph-caret-down hist-caret"></i></button>
-    <div class="hist-body"><div class="diff"><div class="d-val"><span class="mono">@dateTo</span> <del>2026-10-18</del> → 2026-10-25</div></div><div class="hist-actions"><span class="meta">Its result is no longer kept.</span></div></div>
-   </div>
-   <div class="hist-run" data-run="10">
-    <button class="hist-head" type="button"><span class="hist-no">Run 10</span><span class="meta">23 Oct, 10:02</span><span class="hist-what"><span class="chg">SQL +1 −1</span></span><span class="meta hist-num">88 MB · 5 rows</span><span class="mono meta">q-20261023-91c0b4</span><i class="ph ph-caret-down hist-caret"></i></button>
-    <div class="hist-body"><div class="diff"><div class="d-del"><span class="d-no">26</span>  join lead_sources as s using (lead_source)</div><div class="d-add"><span class="d-no">26</span>  left join lead_sources as s using (lead_source)</div></div><div class="hist-actions"><span class="meta">Its result is no longer kept.</span></div></div>
-   </div>
+   <div class="hist-run" data-run="14"><div class="hist-head"><span class="hist-no">Run 14</span><span class="meta">today, 08:12</span><span class="hist-acts"><span class="pill">Shown now</span></span></div></div>
+   <div class="hist-run" data-run="13"><div class="hist-head"><span class="hist-no">Run 13</span><span class="meta">today, 08:05</span><span class="hist-acts"><button class="btn-quiet outline" type="button" data-go="rtab:result hprev:p13"><i class="ph ph-eye"></i>Preview</button><button class="btn-quiet outline" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></span></div></div>
+   <div class="hist-run" data-run="12"><div class="hist-head"><span class="hist-no">Run 12</span><span class="meta">yesterday, 17:40</span><span class="hist-acts"><button class="btn-quiet outline" type="button" data-go="rtab:result hprev:p12"><i class="ph ph-eye"></i>Preview</button><button class="btn-quiet outline" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></span></div></div>
+   <div class="hist-run" data-run="11"><div class="hist-head"><span class="hist-no">Run 11</span><span class="meta">yesterday, 17:31</span><span class="hist-acts"><button class="btn-quiet outline" type="button" data-go="rtab:result hprev:p11"><i class="ph ph-eye"></i>Preview</button><button class="btn-quiet outline" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></span></div></div>
+   <div class="hist-run" data-run="10"><div class="hist-head"><span class="hist-no">Run 10</span><span class="meta">23 Oct, 10:02</span><span class="hist-acts"><button class="btn-quiet outline" type="button" data-go="rtab:result hprev:p10"><i class="ph ph-eye"></i>Preview</button><button class="btn-quiet outline" type="button" data-go="hprev:off"><i class="ph ph-arrow-counter-clockwise"></i>Apply</button></span></div></div>
    <button class="hist-more" type="button">Runs 1 to 9, from 21 Oct</button>
    <div class="hist-start"><i class="ph ph-flag"></i>21 Oct, 09:14 · a new query on Weekly lead volume and Lead sources</div>
   </div>
