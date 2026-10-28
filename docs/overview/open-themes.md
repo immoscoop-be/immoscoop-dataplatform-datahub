@@ -63,7 +63,7 @@ Conceptually described in [Domain tooling](https://immoscoop.atlassian.net/wiki/
 
 - [ ] <a id="op-dh-29"></a>**OP-DH-29** · Draw up the functional and technical analysis of Data Hub, following the example of the one for the Chart Server. *Migration note: this analysis is now being built up under [requirements](../requirements/README.md).*
 - [ ] <a id="op-dh-30"></a>**OP-DH-30** · Decide the scope of the documentation: which forms, in which order, and what the pilot needs.
-- [ ] <a id="op-dh-31"></a>**OP-DH-31** · Decide whether Data Hub stays a separate application next to Domain Hub or merges with it.
+- [x] <a id="op-dh-31"></a>**OP-DH-31** · Decide whether Data Hub stays a separate application next to Domain Hub or merges with it. *Decided on 2026-10-28, by Max: a separate application ([DEC-DH-82](data-hub.md#dec-dh-82)).*
 - [ ] <a id="op-dh-32"></a>**OP-DH-32** · Decide the relation to our own manifest MCP server under construction, and to the broader connector rollout. *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-dh-33"></a>**OP-DH-33** · Choose the form of the communication between colleagues. *Note of 2026-10-23: every Message carries its Subject, the object it is about, a Resource, a Lens, a query or any other, links to it, and can be found by it ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [FR-CV-04](../requirements/functional/14-conversations.md#fr-cv-04)); the form remains open.*
 - [ ] <a id="op-dh-34"></a>**OP-DH-34** · Check with Sibe and Philippe whether Colleciónes can provide `model_type` and `grain`.
