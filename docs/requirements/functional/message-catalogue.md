@@ -48,9 +48,9 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
 | [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
 | [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Proposed: 4.4.1 | Specified |
-| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Proposed |
+| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Specified |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
-| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Proposed |
+| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Specified |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Proposed |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Proposed |
@@ -157,8 +157,7 @@ Template, English, laid out:
 | From → to | User → Owner and who wrote in the conversation |
 | When | A User leaves a remark or a tip on an object, from "Messages" on its page. |
 | Status | Proposed |
-| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06) |
-| Open points | [OP-CV-05](14-conversations.md#op-cv-05) |
+| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06), [DEC-CV-09](14-conversations.md#dec-cv-09) |
 
 **What it asks:** Nothing. A Remark informs and asks for nothing; whoever wants to can reply.
 
@@ -1029,10 +1028,9 @@ Its owner unit, {group}, {cause, select, dissolved {was dissolved in Workspace} 
 | About | Resource |
 | From → to | Data Hub → Data Team |
 | When | A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on. |
-| How many | One per Resource; one per run is [OP-CV-06](14-conversations.md#op-cv-06). |
+| How many | One per Resource, never one per run ([DEC-CV-10](14-conversations.md#dec-cv-10)). |
 | Status | Specified |
-| Comes from | [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [DEC-SR-12](04-stacks-and-resources.md#dec-sr-12), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27) |
-| Open points | [OP-CV-06](14-conversations.md#op-cv-06) |
+| Comes from | [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [DEC-SR-12](04-stacks-and-resources.md#dec-sr-12), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [DEC-CV-10](14-conversations.md#dec-cv-10) |
 
 **What it asks:** Something to do, of the Data Team. The Data Team adds the Resource to a Collection, in Data Hub, never in the dbt project ([FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27)).
 
@@ -1584,9 +1582,8 @@ Template, English, laid out:
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection. |
-| Status | Proposed |
-| Comes from | [DEC-SR-26](04-stacks-and-resources.md#dec-sr-26) |
-| Open points | [OP-CV-08](14-conversations.md#op-cv-08) |
+| Status | Specified |
+| Comes from | [DEC-SR-26](04-stacks-and-resources.md#dec-sr-26), [DEC-CV-12](14-conversations.md#dec-cv-12) |
 
 **What it asks:** Nothing. If it was not intended, the Owner asks the Data Team, which restores the exposure in the dbt project.
 
@@ -1677,9 +1674,8 @@ If that was not intended, ask the data team.
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). |
-| Status | Proposed |
-| Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07) |
-| Open points | [OP-CV-07](14-conversations.md#op-cv-07) |
+| Status | Specified |
+| Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07), [DEC-CV-11](14-conversations.md#dec-cv-11) |
 
 **What it asks:** Something to do, of the Owner. The Owner reads the Resource, adds Business Descriptions where they help, and publishes it from Described ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)).
 

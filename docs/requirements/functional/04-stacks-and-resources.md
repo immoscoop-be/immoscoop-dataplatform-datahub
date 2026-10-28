@@ -72,7 +72,7 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 6. **Take a Fingerprint.** Data Hub stores the hashes of structure, types and descriptions.
 7. **Open the Log.** The first Log Entries are written: the Registration and the Level.
 8. **Notify.** A message goes to the Message Centre of the Data Admins.
-9. **Assign.** The Data Team adds the Resource to a Collection in Data Hub ([DEC-SR-27](#dec-sr-27)); the Owner of that Collection then takes it from there.
+9. **Assign.** The Data Team adds the Resource to a Collection in Data Hub ([DEC-SR-27](#dec-sr-27)); the Owner of that Collection gets a Message ([DEC-CV-11](14-conversations.md#dec-cv-11)) and takes it from there.
 10. **Withdraw.** When no exposure with the tag `datahub` depends on the table any more, its Resource is withdrawn and held ([DEC-SR-26](#dec-sr-26)).
 
 ## Flow: publishing a Resource
@@ -116,7 +116,7 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 | Type | For | Who gets a notification |
 | --- | --- | --- |
 | Question | A question about the Resource, for example how to read a field | The Owner, and whoever is already in the conversation |
-| Remark | A remark or tip for others | Whoever is already in the conversation |
+| Remark | A remark or tip for others | The Owner, and whoever is already in the conversation ([DEC-CV-09](14-conversations.md#dec-cv-09)) |
 | Signal | Something seems odd about the data; it can become an Anomaly | The Owner and the Data Team |
 
 ## Requirements

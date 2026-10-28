@@ -160,8 +160,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner', 'participants'],
     when: 'A User leaves a remark or a tip on an object, from "Messages" on its page.',
     status: 'Proposed',
-    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06'],
-    openPoints: ['OP-CV-05'],
+    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06', 'DEC-CV-09'],
     parameters: [],
     text: {
       nl: {
@@ -425,10 +424,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['dataTeam'],
     when: 'A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on.',
-    per: 'One per Resource; one per run is OP-CV-06.',
+    per: 'One per Resource, never one per run (DEC-CV-10).',
     status: 'Specified',
-    sources: ['FR-SR-10', 'DEC-SR-12', 'DEC-SR-27'],
-    openPoints: ['OP-CV-06'],
+    sources: ['FR-SR-10', 'DEC-SR-12', 'DEC-SR-27', 'DEC-CV-10'],
     parameters: [
       { name: 'exposure', type: 'name', about: 'The exposure it came in through' },
       { name: 'project', type: 'name', about: 'The dbt project of the exposure' },
@@ -767,9 +765,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection.',
-    status: 'Proposed',
-    sources: ['DEC-SR-26'],
-    openPoints: ['OP-CV-08'],
+    status: 'Specified',
+    sources: ['DEC-SR-26', 'DEC-CV-12'],
     parameters: [{ name: 'run', type: 'date', about: 'The day of the run of the Source Job' }],
     text: {
       nl: {
@@ -873,9 +870,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
-    status: 'Proposed',
-    sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07'],
-    openPoints: ['OP-CV-07'],
+    status: 'Specified',
+    sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
       { name: 'collection', type: 'object', about: 'The Collection it is in now' },
       { name: 'actor', type: 'person', about: 'The member of the Data Team who added it' },

@@ -25,7 +25,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 proposed) | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 5 | 3 (1 open, 2 done) |
-| [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 8 | 9 (5 open, 4 done) |
+| [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 12 | 9 (1 open, 8 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 28 (20 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 12 (11 specified, 1 withdrawn) | – | – | – |
