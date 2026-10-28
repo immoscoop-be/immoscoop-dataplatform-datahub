@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 61 open, of 244: 45 for v1 and 16 marked Could |
+| Open points | 60 open, of 244: 44 for v1 and 16 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,14 +1183,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 61 still open, 16 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 60 still open, 16 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06) who owns the Slack app · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-UX-36](../design/principles.md#op-ux-36) changing the relations on the page of a Resource
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06) who owns the Slack app · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-UX-36](../design/principles.md#op-ux-36) changing the relations on the page of a Resource
 
 ### Open themes
 
@@ -1262,9 +1262,8 @@ Source: [requirements/functional/12-permissions-and-library-cards.md](../require
 
 ### Channels
 
-Source: [requirements/functional/13-channels.md](../requirements/functional/13-channels.md) · 1 open
+Source: [requirements/functional/13-channels.md](../requirements/functional/13-channels.md) · 0 open
 
-- [ ] **[OP-CH-03](../requirements/functional/13-channels.md#op-ch-03)** · Decide whether the HTML report is a channel of v1, and for which assets. Proposal: not in v1; it comes with Reports and their visualisations ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)). *Raised on 2026-10-28, in the review of Max, which named Data Hub, Claude and Excel.*
 
 ### Conversations
 
@@ -1480,6 +1479,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Channels**
 
 - [x] **[OP-CH-01](../requirements/functional/13-channels.md#op-ch-01)** · Decide where the documentation of [FR-CH-04](../requirements/functional/13-channels.md#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the Learning Cards in Data Hub are the documentation ([DEC-CH-04](../requirements/functional/13-channels.md#dec-ch-04)).*
+- [x] **[OP-CH-03](../requirements/functional/13-channels.md#op-ch-03)** · Decide whether the HTML report is a channel of v1, and for which assets. Proposal: not in v1; it comes with Reports and their visualisations ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)). *Raised on 2026-10-28, in the review of Max, which named Data Hub, Claude and Excel.* *Decided on 2026-10-28, by Max: not in v1 ([DEC-CH-05](../requirements/functional/13-channels.md#dec-ch-05)).*
 
 **Artifact registry**
 
