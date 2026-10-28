@@ -20,7 +20,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 6 | 6 (6 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 14 | 10 (1 open, 9 done) |
+| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 15 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 proposed) | – | – | 1 (1 open) |

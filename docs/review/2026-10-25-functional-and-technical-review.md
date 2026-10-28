@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 48 open, of 245: 31 for v1 and 17 marked Could |
+| Open points | 47 open, of 245: 30 for v1 and 17 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -699,7 +699,7 @@ The 23 types today; the page of the catalogue shows each one laid out, in both l
 | [MSG-QRY-02](../requirements/functional/message-catalogue.md#msg-qry-02) · A query is Broken | query | Data Hub → who made it | Something to do | To write |
 | [MSG-RPT-01](../requirements/functional/message-catalogue.md#msg-rpt-01) · A Report is Broken | Report | Data Hub → Owner | Something to do | To write |
 
-Three of them no requirement asks for yet; the catalogue proposes them: a Resource that arrives in a Collection ([OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)), a Resource that is withdrawn ([OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)) and a Request that lapses ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Dutch texts are a first version, to read with Flemish eyes ([OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)).
+Three of them no requirement asked for; on 2026-10-28 you decided them: a Resource that arrives in a Collection is told to its Owner ([OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)), so is a Resource that is withdrawn ([OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)), and a Request never lapses, so that Message is withdrawn ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Dutch texts are accepted as a first version ([OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)).
 
 ### The screens
 
@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 48 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 47 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1243,9 +1243,8 @@ Source: [requirements/functional/07-log-and-notifications.md](../requirements/fu
 
 ### Lenses
 
-Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 1 open
+Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 0 open
 
-- [ ] **[OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.*
 
 ### Beta and promotion
 
@@ -1459,6 +1458,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)** · Decide whether a Lens runs when it is opened ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.* *Decided on 2026-10-28, by Max: no, only when it is run ([DEC-LE-12](../requirements/functional/09-lenses.md#dec-le-12)).*
 - [x] **[OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.* *Note of 2026-10-28: a Lens has no type from a fixed list ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)); the flavours remain to decide.* *Decided on 2026-10-28, by Max: v1 has only the one kind, a query with its Parameters ([DEC-LE-13](../requirements/functional/09-lenses.md#dec-le-13)).*
 - [x] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../design/principles.md#dec-ux-71)).* *Decided on 2026-10-28, by Max: as suggested ([DEC-LE-14](../requirements/functional/09-lenses.md#dec-le-14)).*
+- [x] **[OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.* *Decided on 2026-10-28, by Max: no timeout; a Request waits indefinitely ([DEC-LE-15](../requirements/functional/09-lenses.md#dec-le-15)).*
 
 **Platform: technical requirements**
 

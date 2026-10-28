@@ -330,10 +330,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['lens', 'query'],
     from: 'dataHub',
     to: ['writer', 'author'],
-    when: 'The Data Team did not decide on a Request within its timeout (DEC-LE-05).',
-    status: 'Proposed',
-    sources: ['DEC-LE-05'],
-    openPoints: ['OP-LE-10'],
+    when: 'The Data Team did not decide on a Request within its timeout (DEC-LE-05). A Request has no timeout (DEC-LE-15).',
+    status: 'Withdrawn',
+    sources: ['DEC-LE-05', 'DEC-LE-15'],
     parameters: [{ name: 'days', type: 'count', about: 'The working days the Data Team had to decide' }],
     text: {
       nl: {
@@ -922,7 +921,6 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     when: 'The author of a Lens that reads more than 1 GB in one run sends it to the Data Team with "Send to the data team" (FR-LE-09).',
     status: 'Proposed',
     sources: ['FR-LE-08', 'FR-LE-09', 'FR-CV-08', 'DEC-LE-05'],
-    openPoints: ['OP-LE-10'],
     parameters: [...SIZE, ...PARTITIONS, { name: 'smaller', type: 'size', about: 'What one run reads at most with a default for From, when Data Hub can tell', optional: true }],
     text: {
       nl: {
@@ -960,8 +958,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen (DEC-LE-05).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused', 'lapsed'],
-      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer; without a decision in time it lapses (MSG-CNV-06).',
+      states: ['waiting', 'accepted', 'refused'],
+      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer. It waits until the Data Team decides (DEC-LE-15).',
     },
     example: {
       writer: 'Mia Peeters',
@@ -1027,7 +1025,6 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     when: 'A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself (FR-CV-08), and the Lens stops until it is accepted again (DEC-LE-11).',
     status: 'Proposed',
     sources: ['FR-LE-10', 'FR-CV-08', 'DEC-LE-11'],
-    openPoints: ['OP-LE-10'],
     parameters: [...SIZE, ...PARTITIONS],
     text: {
       nl: {
@@ -1057,7 +1054,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'As for a Request by its author (MSG-LEN-01): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run (DEC-LE-11).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused', 'lapsed'],
+      states: ['waiting', 'accepted', 'refused'],
       done: 'The decision is its reply (MSG-CNV-05), which notifies the author of the Lens.',
     },
     example: { subject: 'Leads per source name', reads: 1_400_000_000, threshold: 1_000_000_000, partitions: 104, partitionsTotal: 104 },
@@ -1170,7 +1167,6 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     when: 'The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team (DEC-SR-29).',
     status: 'Proposed',
     sources: ['DEC-SR-29', 'DEC-SR-36', 'FR-SR-37', 'FR-CV-08'],
-    openPoints: ['OP-LE-10'],
     parameters: [...SIZE],
     text: {
       nl: {
@@ -1204,7 +1200,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
         ACCEPT,
         REFUSE,
       ],
-      states: ['waiting', 'accepted', 'refused', 'lapsed'],
+      states: ['waiting', 'accepted', 'refused'],
       done: 'The decision is its reply (MSG-CNV-05), which notifies its writer.',
     },
     example: {

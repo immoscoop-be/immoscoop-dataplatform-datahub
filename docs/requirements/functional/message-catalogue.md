@@ -41,7 +41,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-03](#msg-cnv-03) | Signal | Resource or Lens | User → Owner and Data Team | Something to do | By the writer | Specified |
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Proposed |
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Proposed |
-| [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Proposed |
+| [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
@@ -636,11 +636,10 @@ One item of `changes`, English, laid out:
 | When | The author of a Lens that reads more than 1 GB in one run sends it to the Data Team with "Send to the data team" ([FR-LE-09](09-lenses.md#fr-le-09)). |
 | Status | Proposed |
 | Comes from | [FR-LE-08](09-lenses.md#fr-le-08), [FR-LE-09](09-lenses.md#fr-le-09), [FR-CV-08](14-conversations.md#fr-cv-08), [DEC-LE-05](09-lenses.md#dec-le-05) |
-| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen ([DEC-LE-05](09-lenses.md#dec-le-05)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer; without a decision in time it lapses ([MSG-CNV-06](#msg-cnv-06)). It starts `waiting` and ends `accepted`, `refused` or `lapsed`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It waits until the Data Team decides ([DEC-LE-15](09-lenses.md#dec-le-15)). It starts `waiting` and ends `accepted` or `refused`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -755,11 +754,10 @@ Until the data team decides, only {writer} sees the lens, and nobody changes it.
 | When | The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)). |
 | Status | Proposed |
 | Comes from | [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37), [FR-CV-08](14-conversations.md#fr-cv-08) |
-| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. What accepting allows, one run or the query as it is, is open ([OP-SR-17](04-stacks-and-resources.md#op-sr-17)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It starts `waiting` and ends `accepted`, `refused` or `lapsed`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It starts `waiting` and ends `accepted` or `refused`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -856,10 +854,9 @@ System text with placeholders, in Dutch and English, each with its Learning Card
 | Kind | Data Hub |
 | About | Lens or query |
 | From → to | Data Hub → its writer and its author |
-| When | The Data Team did not decide on a Request within its timeout ([DEC-LE-05](09-lenses.md#dec-le-05)). |
-| Status | Proposed |
-| Comes from | [DEC-LE-05](09-lenses.md#dec-le-05) |
-| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
+| When | The Data Team did not decide on a Request within its timeout ([DEC-LE-05](09-lenses.md#dec-le-05)). A Request has no timeout ([DEC-LE-15](09-lenses.md#dec-le-15)). |
+| Status | Withdrawn |
+| Comes from | [DEC-LE-05](09-lenses.md#dec-le-05), [DEC-LE-15](09-lenses.md#dec-le-15) |
 
 **What it asks:** Something to do, of the its writer and its author. Its writer changes the Lens or the query, or sends the Request again.
 
@@ -1857,11 +1854,10 @@ A filter on `{column}`, the partition column, would make it read less.
 | When | A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself ([FR-CV-08](14-conversations.md#fr-cv-08)), and the Lens stops until it is accepted again ([DEC-LE-11](09-lenses.md#dec-le-11)). |
 | Status | Proposed |
 | Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-CV-08](14-conversations.md#fr-cv-08), [DEC-LE-11](09-lenses.md#dec-le-11) |
-| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
 
 **What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run ([DEC-LE-11](09-lenses.md#dec-le-11)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted`, `refused` or `lapsed`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted` or `refused`.
 
 | Button | Opens | For |
 | --- | --- | --- |
