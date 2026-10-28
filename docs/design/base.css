@@ -703,6 +703,8 @@ button.menu-item { width: 100%; border: 0; background: none; font: var(--text-sm
 .built-on .maturity svg { width: 20px; height: 11px; }
 .field input.changed { outline: 2px solid var(--signal-warn); outline-offset: 1px; }
 .result-stale { opacity: .45; }
+/* The result of a Lens is the grid of Query (DEC-UX-83); it fades while its Parameters changed since the run */
+.lens-result:has([data-pane="changed"]:not([hidden])) .rgrid-scroll { opacity: .45; }
 .result-empty { display: flex; gap: 12px; align-items: flex-start; margin-top: 12px; padding: 28px 22px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
 .result-empty > i { font-size: 26px; color: var(--text-secondary); flex: none; }
 .result-empty p { margin: 2px 0 0; }

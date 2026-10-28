@@ -218,19 +218,29 @@
   <section class="lens-result" aria-label="Result">
    <div data-pane-group="state" data-pane="fresh editing">
     <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Oct 2026 to 20 Oct 2026, all channels</span><button class="btn-quiet outline" title="Up to 10,000 rows"><i class="ph ph-download-simple"></i> Download CSV</button></div>
-    <div class="table-scroll"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">1,841</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">421</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">153</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">97</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
-    <div class="result-foot">
-   <span>4 rows</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
-   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
-  </div>
    </div>
    <div data-pane-group="state" data-pane="changed" hidden>
     <div class="size-state caution" style="margin:0 0 10px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The parameters changed.</b> This result is still for From 1 Oct 2026; run again to see it for 1 Jan 2026.</p></div>
-    <div class="table-scroll result-stale"><table class="data-table"><thead><tr><th>Lead source</th><th style="text-align:right">Leads</th><th style="text-align:right">Share of leads</th></tr></thead><tbody><tr><td>Website</td><td style="text-align:right">1,841</td><td style="text-align:right">73.3%</td></tr><tr><td>App</td><td style="text-align:right">421</td><td style="text-align:right">16.8%</td></tr><tr><td>Partner network</td><td style="text-align:right">153</td><td style="text-align:right">6.1%</td></tr><tr><td>Mailing</td><td style="text-align:right">97</td><td style="text-align:right">3.8%</td></tr></tbody></table></div>
+   </div>
+   <div data-pane-group="state" data-pane="fresh editing changed">
+    <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
+     <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
+    </div>
+    <script type="application/json" id="result-data">{"cols":[{"name":"lead_source","type":"STRING"},{"name":"source_name","type":"STRING"},{"name":"leads","type":"INT64"},{"name":"share_of_leads","type":"FLOAT64"}],
+     "rows":[["website","Website",1841,73.3],["app","App",421,16.8],["partner","Partner network",153,6.1],["mailing","Mailing",97,3.8]]}</script>
     <div class="result-foot">
-   <span>4 rows</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
-   <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
-  </div>
+     <span id="rg-total">4 rows</span><span class="dot">·</span><span>scanned 80 MB, 4 of 312 partitions</span><span class="dot">·</span>
+     <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
+     <span class="rg-pager">
+      <span>100 rows a page</span><span class="dot">·</span><span id="rg-range">1 – 4 of 4</span>
+      <span class="pager">
+       <button class="icon-btn" data-page="first" aria-label="First page" title="First page"><i class="ph ph-caret-double-left"></i></button>
+       <button class="icon-btn" data-page="prev" aria-label="Previous page" title="Previous page"><i class="ph ph-caret-left"></i></button>
+       <button class="icon-btn" data-page="next" aria-label="Next page" title="Next page"><i class="ph ph-caret-right"></i></button>
+       <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
+      </span>
+     </span>
+    </div>
    </div>
    <div data-pane-group="state" data-pane="broken" hidden>
     <div class="result-empty broken"><i class="ph ph-link-break"></i><p><b>Can't run.</b> The lens reads <span class="mono">lead_channel</span> of Weekly lead volume, which no longer exists. Its last result is not shown, so that nobody takes it for today's.</p></div>
@@ -280,6 +290,13 @@
  </div>
  </div>
 </div>
+ <div class="rg-menu" id="rg-menu" role="menu" hidden>
+  <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
+  <button class="menu-item" role="menuitem" data-act="desc"><i class="ph ph-sort-descending"></i>Sort this page, largest first</button>
+  <button class="menu-item" role="menuitem" data-act="fit"><i class="ph ph-arrows-out-line-horizontal"></i>Fit the width to its values</button>
+  <button class="menu-item" role="menuitem" data-act="copy"><i class="ph ph-copy"></i>Copy the name</button>
+  <p class="rg-menu-note">Sorting reorders the 100 rows on this page only. To sort every row, use <span class="mono">order by</span>.</p>
+ </div>
 </main>
 </div>
 <div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: state of the result">Result

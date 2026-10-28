@@ -31,9 +31,9 @@ Every part follows the same order:
 | Functional requirements | 233: 46 Implemented, 68 Specified, 85 Proposed, 34 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 82 |
+| Design decisions (DEC-UX) | 83 |
 | Prototype screens | 31, plus the index |
-| Open points | 132 open, of 234: 130 for v1 and 2 marked Could |
+| Open points | 131 open, of 234: 129 for v1 and 2 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -871,7 +871,7 @@ The gallery in today's web app (`#/charts`) lists each chart with the question i
 - The requirements of semgraph, REQ-000 to REQ-107, are still in Dutch in its own register: translate them into `docs/requirements` or keep them apart ([OP-PF-16](../requirements/technical/00-platform.md#op-pf-16)).
 - How semgraph knows who calls it within Data Hub, and where its MCP tools live, now that everyone may call it ([OP-PF-17](../requirements/technical/00-platform.md#op-pf-17)).
 - The switch from AWS for its current users ([OP-PF-18](../requirements/technical/00-platform.md#op-pf-18)), and a domain name for the rate limit ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)).
-- Whether Lenses render in the browser or as SVG on the server ([OP-DH-11](../overview/open-themes.md#op-dh-11)); with semgraph drawing SVG, the second is already the practice.
+- *Decided on 2026-10-28:* in v1 a Lens shows a simple table, the grid of Query; charts, and whether they render in the browser or as SVG, come with Reports ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08), [DEC-UX-83](../design/principles.md#dec-ux-83)).
 - How Anomalies show as annotations on charts that cover their period ([OP-DH-15](../overview/open-themes.md#op-dh-15)).
 
 ## Access, visibility and confidentiality
@@ -1180,7 +1180,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 132 still open, 2 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 131 still open, 2 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1191,10 +1191,9 @@ Where to start: the points that shape the build are in group A of **Decisions be
 
 ### Open themes
 
-Source: [overview/open-themes.md](../overview/open-themes.md) · 25 open
+Source: [overview/open-themes.md](../overview/open-themes.md) · 24 open
 
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model. *Note of 2026-10-28: the generated project already links every model to its Entity, its action and its references in `meta.domain` ([FR-AR-16](../requirements/functional/01-artifact-registry.md#fr-ar-16)); per column it says nothing structured yet. The extension is proposed in [The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest) ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07), [FR-AR-17](../requirements/functional/01-artifact-registry.md#fr-ar-17)).*
-- [ ] **[OP-DH-11](../overview/open-themes.md#op-dh-11)** · Choose whether Lenses render in the browser (interactive) or on the server as SVG (guaranteed identical), and whether the rendering in Claude follows the light or dark mode of the host.
 - [ ] **[OP-DH-12](../overview/open-themes.md#op-dh-12)** · Exercise: for each asset (Resource, Lens, Report), map through which channels it is released (Data Hub itself, Claude as an MCP App, HTML report, Excel connector) and which form each channel carries, data or visual.
 - [ ] **[OP-DH-14](../overview/open-themes.md#op-dh-14)** · Work out the schema of the Resource Card in Postgres, with migrations in the Data Hub repository. *Note of 2026-10-28: the schema is worked out fresh: what is built today may be thrown away ([DEC-DH-74](../overview/data-hub.md#dec-dh-74)).*
 - [ ] **[OP-DH-19](../overview/open-themes.md#op-dh-19)** · Decide which automatic checks follow from the EDA and the monitors, and what happens when a check fails.
@@ -1430,6 +1429,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-DH-18](../overview/open-themes.md#op-dh-18)** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Done on 2026-10-18, as [OP-AR-02](../requirements/functional/01-artifact-registry.md#op-ar-02): a webhook ([DEC-AR-02](../requirements/functional/01-artifact-registry.md#dec-ar-02)), built in [TR-AR-01](../requirements/technical/01-artifact-registry.md#tr-ar-01). Max set it up in dbt Cloud to fire only for the proper jobs; registry still checks that a run comes from a Source Job ([OP-DH-17](../overview/open-themes.md#op-dh-17)).*
 - [x] **[OP-DH-47](../overview/open-themes.md#op-dh-47)** · Decide whether the word Stacks stays. A table no longer has to be in a Stack to be a Resource: an exposure makes it one, on any model ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)), and [OP-DH-05](../overview/open-themes.md#op-dh-05) still spoke of mart views in the Stacks. *Raised on 2026-10-27, in the review of Max; recorded here on 2026-10-28.* *Decided on 2026-10-28, by Max: it goes ([DEC-DH-71](../overview/data-hub.md#dec-dh-71)).*
 - [x] **[OP-DH-10](../overview/open-themes.md#op-dh-10)** · Work out how Parameters are named and typed, and whether Entity Parameters such as agency or office take their type from the Domain Model. *Decided on 2026-10-28, by Max: basic types, aligned with the primitives of the datatypes of the Domain Model but not derived from them; the same for names ([DEC-LE-07](../requirements/functional/09-lenses.md#dec-le-07)).*
+- [x] **[OP-DH-11](../overview/open-themes.md#op-dh-11)** · Choose whether Lenses render in the browser (interactive) or on the server as SVG (guaranteed identical), and whether the rendering in Claude follows the light or dark mode of the host. *Decided on 2026-10-28, by Max: in v1 a Lens shows a simple table, as the result in Query; visualisations, and how they render, come with Reports ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)).*
 
 **Data Hub design principles**
 

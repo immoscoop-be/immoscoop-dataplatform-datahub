@@ -652,15 +652,17 @@ if (pbox) {
 // The result of a query, as a grid like that of BigQuery (Proposal): the row number, then a column per field with its
 // type. The edge of a column head makes it narrower or wider; a double click fits it to its values. 100 rows a page,
 // read from the same run (FR-SR-51); the menu of a column sorts this page only. A click selects a cell, and Ctrl+C
-// copies it
+// copies it. The same grid shows the result of a Lens (DEC-UX-83): a page gives its rows in #result-data
 const grid = document.getElementById('result-grid');
 if (grid) {
-  // Prototype only: the 210 rows of the last run, made up the same way every time
+  const given = document.getElementById('result-data');
+  // Prototype only: without #result-data, the 210 rows of the last run of the query, made up the same way every time
   const random = (seed => () => { seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; })(27);
   const SOURCES = [['website', 'Website', 430], ['app', 'App', 104], ['partner', 'Partner network', 38], ['mailing', 'Mailing', 24], ['imported_2019', null, 3]];
-  const COLS = [{ name: 'week_start', type: 'DATE' }, { name: 'lead_source', type: 'STRING' }, { name: 'source_name', type: 'STRING' }, { name: 'leads', type: 'INT64' }, { name: 'share_of_week', type: 'FLOAT64' }];
-  const rows = [];
-  for (let w = 0; w < 42; w++) {
+  const data = given ? JSON.parse(given.textContent) : null;
+  const COLS = data ? data.cols : [{ name: 'week_start', type: 'DATE' }, { name: 'lead_source', type: 'STRING' }, { name: 'source_name', type: 'STRING' }, { name: 'leads', type: 'INT64' }, { name: 'share_of_week', type: 'FLOAT64' }];
+  const rows = data ? data.rows : [];
+  if (!data) for (let w = 0; w < 42; w++) {
     const week = new Date(Date.UTC(2026, 9, 19 - 7 * w)).toISOString().slice(0, 10);
     const counts = SOURCES.map(([code, name, base]) => [week, code, name, Math.round(base * (0.8 + 0.4 * random()))]);
     const total = counts.reduce((n, r) => n + r[3], 0);

@@ -105,7 +105,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 - <a id="dec-dh-10"></a>**DEC-DH-10** · A Lens reflects the maturity of what lies beneath it: the lowest Level of the underlying Resources determines the Level of the Lens.
 - <a id="dec-dh-11"></a>**DEC-DH-11** · A Lens has Parameters with which you adjust it, such as the name of a client or a start date. Parameters are named functionally and by data type, for example `dateFrom`, so that they can be combined across several Lenses.
 - <a id="dec-dh-12"></a>**DEC-DH-12** · From a Lens you can fetch the data, or you can view it in the interface.
-- <a id="dec-dh-13"></a>**DEC-DH-13** · A Lens is always of a particular type, so that the visualisation in the interface complies with the chart language. An example is the funnel: from one table, a drill-down with filters, where at each step what remains stays visible. *Note of 2026-10-28: a Lens has no type from a fixed list; it is a query with its Parameters ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)).*
+- <a id="dec-dh-13"></a>**DEC-DH-13** · A Lens is always of a particular type, so that the visualisation in the interface complies with the chart language. An example is the funnel: from one table, a drill-down with filters, where at each step what remains stays visible. *Note of 2026-10-28: a Lens has no type from a fixed list; it is a query with its Parameters ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)).* *Note of 2026-10-28: in v1 a Lens shows a table, no chart ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)).*
 
 ### Reports
 

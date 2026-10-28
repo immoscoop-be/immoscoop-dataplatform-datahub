@@ -152,7 +152,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Parameters | A Parameter per tile, folded to chips; made in a floating window | **Fold**, **Lay over** | fold box, floating window, chip | Query, Lens | [DEC-UX-71](principles.md#dec-ux-71) |
 | Pre-flight | What a run reads, partitions, and the range: up to 100 MB, warned, Data Team | – | gauge, callout | Query, Preview, Make it a lens | [DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29) |
 | Run button | Run, with what it reads in the button; red above the approval threshold | **Explain on rest** for how to read less | button, pop-out | Query, Lens | [DEC-UX-28](principles.md#dec-ux-28) |
-| Data grid | The result as a grid: row number, typed columns, resizable, a page of 100 | **Page through**, sort the page, **Copy** a cell | table, pager, menu | Query, Preview | [DEC-UX-72](principles.md#dec-ux-72) |
+| Data grid | The result as a grid: row number, typed columns, resizable, a page of 100 | **Page through**, sort the page, **Copy** a cell | table, pager, menu | Query, Preview, Lens | [DEC-UX-72](principles.md#dec-ux-72) |
 | Pager | Rows from to, previous and next | **Page through** | button | results | [FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51) |
 | Size check | What one run of a new Lens reads, in three ranges, and the outcome | – | gauge, callout | Make it a lens | [FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08) |
 | Lens tile | A Lens with its question, Level and how it ran | – | tile, maturity | start of Collections | [FR-CO-37](../requirements/functional/03-collections.md#fr-co-37) |
