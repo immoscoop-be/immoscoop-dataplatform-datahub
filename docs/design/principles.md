@@ -372,7 +372,7 @@ Screen: [my-page](screens/my-page.html). Designed on 2026-10-28, at the request 
 
 - **The initials** at the foot of the rail open it; on My page they carry a ring, as the active icon does.
 - **Head:** the initials large, the name and the Google account the User signs in with. Under it two tabs, Profile and Excel keys ([DEC-UX-85](#dec-ux-85)).
-- **Profile, Language:** Nederlands or English, for the sentences of Data Hub: its screens, Messages and e-mails; names stay English, and the Learning Cards are in Dutch for now ([NFR-LOC-06](../requirements/non-functional/localisation.md#nfr-loc-06), [OP-DH-40](../overview/open-themes.md#op-dh-40)).
+- **Profile, Language:** Nederlands or English, for the sentences of Data Hub: its screens, Messages and e-mails; names stay English, and the Learning Cards follow the language too ([NFR-LOC-06](../requirements/non-functional/localisation.md#nfr-loc-06), [NFR-LOC-12](../requirements/non-functional/localisation.md#nfr-loc-12)).
 - **Profile, You own:** the Collections of the User's groups, each with its group, what it holds and whether it is public, and one line on being a Reader of all else ([DEC-DH-78](../overview/data-hub.md#dec-dh-78)). Groups come from Google and are not changed here.
 - **Profile, Your queries:** how many, and when the last ran, with a link to Query.
 - **The tab Excel keys** ([DEC-DH-79](../overview/data-hub.md#dec-dh-79)): a sentence on what a key does, "New Excel key", and a table with each key, when it was made, last used and expires; a key that expires within a month shows its date in the warning colour. A revoked key stays in the list, struck through, with when it was revoked ([FR-PL-02](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-02)).

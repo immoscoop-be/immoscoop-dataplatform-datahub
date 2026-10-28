@@ -91,9 +91,11 @@ Claude gets names in English and explanations in the language of the User, so th
 <a id="nfr-loc-08"></a>
 ### NFR-LOC-08 · Learning Cards: Dutch sentences, English names
 
-**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [OP-LR-02](../functional/16-learning.md#op-lr-02)
+**Status:** Withdrawn · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [OP-LR-02](../functional/16-learning.md#op-lr-02)
 
 A Learning Card has Dutch sentences and English names, and never a Dutch synonym for a name. The first version is in Dutch; whether cards ever come in English too is [OP-DH-40](../../overview/open-themes.md#op-dh-40). The structure of a card, its five steps, does not depend on the language ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)).
+
+*Withdrawn on 2026-10-28, by Max: replaced by [NFR-LOC-12](#nfr-loc-12): the cards come in English too ([OP-DH-40](../../overview/open-themes.md#op-dh-40)).*
 
 <a id="nfr-loc-09"></a>
 ### NFR-LOC-09 · Metadata written by people is in the language of the writer
@@ -118,6 +120,13 @@ The texts of the Log are sentences: each template has a Dutch and an English ver
 
 A name a User gives, such as the Display Name of a Resource or the name of a Collection, a Lens or a query, is a name: its spelling is fixed, and it is never translated. It is the input of whoever gave it, and their choice. Such a name is not in the Glossary; what it names explains it.
 
+
+<a id="nfr-loc-12"></a>
+### NFR-LOC-12 · Learning Cards in Dutch and English, with English names
+
+**Status:** Specified · **Source:** Max, 2026-10-28 ([OP-DH-40](../../overview/open-themes.md#op-dh-40)) · **Applies to:** [DEC-DH-65](../../overview/data-hub.md#dec-dh-65)
+
+A Learning Card follows the language the User chose, as everything in the interface does: Dutch or English. Its names stay English in both, and never get a Dutch synonym. The structure of a card, its five steps, is the same in both languages ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)). How the English version is made is [OP-LR-28](../functional/16-learning.md#op-lr-28).
 ## Acceptance criteria
 
 For the functional analysis, from the proposal:
