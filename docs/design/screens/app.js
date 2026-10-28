@@ -283,7 +283,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
   const DAY = `
     precision highp float;
-    uniform float uPhase;
+    uniform vec4 uA;         // by day: four angles, each turning at a random speed from a random start, so it never repeats
     uniform vec2 uRes;
     uniform vec2 uPointer;   // the eased pointer, 0 to 1 from the bottom left
     uniform float uPull;     // how present the pointer is, 0 to 1
@@ -291,17 +291,16 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     vec3 rgb(float r, float g, float b) { return vec3(r, g, b) / 255.0; }
     float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
     void main() {
-      float a = uPhase;
       vec2 uv = vUv;
       // A soft warp of the whole field, large enough to be seen
       vec2 p = uv;
-      p.x += 0.090 * sin(uv.y * 3.1 + a) + 0.036 * sin(uv.y * 5.3 - 2.0 * a);
-      p.y += 0.066 * sin(uv.x * 2.7 - a) + 0.030 * cos(uv.x * 6.1 + 3.0 * a);
+      p.x += 0.090 * sin(uv.y * 3.1 + uA.x) + 0.036 * sin(uv.y * 5.3 - uA.y);
+      p.y += 0.066 * sin(uv.x * 2.7 - uA.z) + 0.030 * cos(uv.x * 6.1 + uA.w);
       // The pointer: the whole field leans a little towards it
       p -= 0.035 * (uPointer - 0.5) * uPull;
 
       // The centre line of the orange band: low on the left, high on the right, in a soft S
-      float c = 0.30 + 0.56 * smoothstep(0.02, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + a) + 0.06 * sin(2.0 * a);
+      float c = 0.30 + 0.56 * smoothstep(0.02, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + uA.x) + 0.06 * sin(uA.y);
       // ... and the band bends towards it where it is near
       c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
       float d = p.y - c;
@@ -315,7 +314,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       vec3 col = mix(base, sky, smoothstep(0.0, 0.36, d));
 
       // The band: softer and lighter on the left, wider and deeper on the right
-      float w = 0.085 + 0.085 * p.x + 0.04 * sin(a + 1.3);
+      float w = 0.085 + 0.085 * p.x + 0.04 * sin(uA.w + 1.3);
       float band = exp(-(d * d) / (w * w));
       vec3 orange = mix(rgb(240.0, 166.0, 112.0), rgb(232.0, 132.0, 60.0), smoothstep(0.15, 0.85, p.x + 0.25 * band));
       col = mix(col, orange, band * (0.72 + 0.24 * p.x));
@@ -381,7 +380,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.warn('?bg=flow: WebGL could not build the gradient.', gl.getProgramInfoLog(program)); return null; }
     const u = name => gl.getUniformLocation(program, name);
-    return { program, uPhase: u('uPhase'), uRes: u('uRes'), uPointer: u('uPointer'), uPull: u('uPull') };
+    return { program, uPhase: u('uPhase'), uA: u('uA'), uRes: u('uRes'), uPointer: u('uPointer'), uPull: u('uPull') };
   };
   const day = build(DAY), night = build(NIGHT);
   if (!day || !night) return fallback();
@@ -407,11 +406,17 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     pointer.x += (pointer.tx - pointer.x) * k; pointer.y += (pointer.ty - pointer.y) * k; pointer.pull += (pointer.tpull - pointer.pull) * kPull;
   };
   let seconds = 0;
+  // By day, a test of Max of 2026-10-28: no loop. Four movements, each at its own speed, between three quarters and one and
+  // a third of its usual one, from a random start; their speeds share no common beat, so the field never repeats, and it
+  // is different every time Data Hub starts. By night, the loop of LOOP seconds stays
+  const TURN = Math.PI * 2, base = [1, 2, 1, 3].map(k => k * TURN / LOOP);
+  const speed = base.map(w => w * (0.75 + Math.random() * 0.58)), start = base.map(() => Math.random() * TURN);
   const draw = s => {
     const g = document.documentElement.dataset.theme === 'dark' ? night : day;
     gl.useProgram(g.program);
     gl.uniform2f(g.uRes, canvas.width, canvas.height);
-    gl.uniform1f(g.uPhase, ((s % LOOP) / LOOP) * Math.PI * 2);
+    if (g === day) { const a = speed.map((w, i) => (start[i] + w * s) % TURN); gl.uniform4f(g.uA, a[0], a[1], a[2], a[3]); }
+    else gl.uniform1f(g.uPhase, ((s % LOOP) / LOOP) * Math.PI * 2);
     gl.uniform2f(g.uPointer, pointer.x, pointer.y);
     gl.uniform1f(g.uPull, pointer.pull);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
