@@ -68,6 +68,8 @@ A name has no Dutch synonym, not even in free text: not "kredietleads", not "cre
 
 The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063) (Woordenlijst, Confluence) is the source of names and of their explanation in Dutch. Every name is marked there "name, do not translate", with an explanation in one sentence. Data Hub uses that explanation in the Learning Card of the name, in its step Core idea ([NFR-LOC-03](#nfr-loc-03)). Where the list of names lives is [OP-DH-42](../../overview/open-themes.md#op-dh-42).
 
+*Note of 2026-10-28: which words are names comes from the code of Data Hub and the Domain Model ([DEC-DH-83](../../overview/data-hub.md#dec-dh-83)); the Glossary gives their explanation.*
+
 <a id="nfr-loc-06"></a>
 ### NFR-LOC-06 · The interface follows the language of the User
 
