@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 83 |
 | Prototype screens | 31, plus the index |
-| Open points | 130 open, of 235: 125 for v1 and 5 marked Could |
+| Open points | 130 open, of 235: 124 for v1 and 6 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1182,7 +1182,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 130 still open, 5 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 130 still open, 6 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1193,10 +1193,9 @@ Where to start: the points that shape the build are in group A of **Decisions be
 
 ### Open themes
 
-Source: [overview/open-themes.md](../overview/open-themes.md) · 21 open
+Source: [overview/open-themes.md](../overview/open-themes.md) · 20 open
 
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model. *Note of 2026-10-28: the generated project already links every model to its Entity, its action and its references in `meta.domain` ([FR-AR-16](../requirements/functional/01-artifact-registry.md#fr-ar-16)); per column it says nothing structured yet. The extension is proposed in [The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest) ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07), [FR-AR-17](../requirements/functional/01-artifact-registry.md#fr-ar-17)).*
-- [ ] **[OP-DH-19](../overview/open-themes.md#op-dh-19)** · Decide which automatic checks follow from the EDA and the monitors, and what happens when a check fails.
 - [ ] **[OP-DH-20](../overview/open-themes.md#op-dh-20)** · Choose the channel and rhythm of notifications: Slack, email or only in Data Hub, immediately or as a digest.
 - [ ] **[OP-DH-22](../overview/open-themes.md#op-dh-22)** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub. *Note of 2026-10-19: who sees a Collection and its Resources is decided in [DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10) to [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12); the access axis remains open.*
 - [ ] **[OP-DH-24](../overview/open-themes.md#op-dh-24)** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).*
@@ -1408,6 +1407,7 @@ Open points Max marked as a Could: not part of the first build ([Could: not in v
 - [ ] **[OP-CH-02](../requirements/functional/13-channels.md#op-ch-02)** · Design a page that tells a User how to connect Claude to Data Hub: the address of the MCP server, the steps in Claude, and what Claude can then do ([FR-CH-03](../requirements/functional/13-channels.md#fr-ch-03), [FR-CH-04](../requirements/functional/13-channels.md#fr-ch-04)). Today the address has to be asked for. *Raised on 2026-10-24, while checking the screens against the requirements.* *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 - [ ] **[OP-DH-15](../overview/open-themes.md#op-dh-15)** · Work out how Anomalies, with their period, appear as annotations on Lenses and charts that cover that period. *Could, not in v1: set on 2026-10-28, by Max ([Could: not in v1](../requirements/README.md#could-not-in-v1)).*
 - [ ] **[OP-DH-16](../overview/open-themes.md#op-dh-16)** · Find out whether the Resource Cards are exported periodically to BigQuery, so that reporting on the Catalogue is possible as well. *Could, not in v1: set on 2026-10-28, by Max, as all usage reporting on Data Hub ([DEC-DH-75](../overview/data-hub.md#dec-dh-75)).*
+- [ ] **[OP-DH-19](../overview/open-themes.md#op-dh-19)** · Decide which automatic checks follow from the EDA and the monitors, and what happens when a check fails. *Could, not in v1: set on 2026-10-28, by Max, for version 2 ([Could: not in v1](../requirements/README.md#could-not-in-v1)).*
 - [ ] **[OP-DH-32](../overview/open-themes.md#op-dh-32)** · Decide the relation to our own manifest MCP server under construction, and to the broader connector rollout. *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 - [ ] **[OP-LR-16](../requirements/functional/16-learning.md#op-lr-16)** · Decide whether what a User does in Claude counts towards their progress: their answers, the cards they understood, their Weekly Goal. The design counts it, as the MCP App acts for the signed-in User ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)). *Raised on 2026-10-25.* *Note of 2026-10-25: with nothing scored, only a card seen and "I understand it" can count ([DEC-LR-09](../requirements/functional/16-learning.md#dec-lr-09)).* *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 
