@@ -27,7 +27,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-04"></a>**DEC-CO-04** · Every Collection has exactly one Owner Unit, a Group from [User management](02-user-management.md). The Owner of a Resource is the Owner of its Collection. *Note of 2026-10-19: the Owner Unit can be any Google group of the own Workspace domain, without a Naming Convention ([DEC-CO-09](#dec-co-09)).*
 - <a id="dec-co-05"></a>**DEC-CO-05** · A Resource is in at most one Collection. It can be added and removed, but not moved. *Confirmed on 2026-10-19: one Owner Unit vouches for a Resource; everyone who can see it can still use it.*
 - <a id="dec-co-06"></a>**DEC-CO-06** · When the Owner Unit of a Collection changes, the existing Confirmations remain valid.
-- <a id="dec-co-07"></a>**DEC-CO-07** · The colour of a Collection comes from a researched, colour-blind-safe palette for charts: the "muted" palette by Paul Tol. *Note of 2026-10-22: the [design](../../design/principles.md#colour) has a palette of six colours; which one applies is open ([OP-UX-08](../../design/principles.md#op-ux-08)).* *Note of 2026-10-25: the palette now lives in a configuration file that grows over time; it keeps the nine colours of the muted palette next to the six of the design, until testing on uat shows which stay ([DEC-UX-60](../../design/principles.md#dec-ux-60)).*
+- <a id="dec-co-07"></a>**DEC-CO-07** · The colour of a Collection comes from a researched, colour-blind-safe palette for charts: the "muted" palette by Paul Tol. *Note of 2026-10-22: the [design](../../design/principles.md#colour) has a palette of six colours; which one applies is open ([OP-UX-08](../../design/principles.md#op-ux-08)).* *Note of 2026-10-25: the palette now lives in a configuration file that grows over time; it keeps the nine colours of the muted palette next to the six of the design, until testing on uat shows which stay ([DEC-UX-60](../../design/principles.md#dec-ux-60)).* *Replaced on 2026-10-28: a Collection has no colour ([DEC-CO-23](#dec-co-23)).*
 - <a id="dec-co-08"></a>**DEC-CO-08** · Anyone who can sign in to Data Hub can create a Collection. Its Owner Unit and the Data Team manage it: they change its fields, its Owner Unit and whether it is public, and dissolve it. Adding and removing Resources stays with the Data Team, as part of the Registration ([DEC-SR-03](04-stacks-and-resources.md#dec-sr-03)). This replaces [DEC-CO-03](#dec-co-03). Whoever creates a Collection owns Resources only once the Data Team adds them to it. *Note of 2026-10-22: confirmed after the workshop proposed that the Owner chooses the Resources ([OP-CO-10](#op-co-10)).*
 - <a id="dec-co-09"></a>**DEC-CO-09** · The Owner Unit of a Collection is one Google group of the own Workspace domain, chosen from the groups the person choosing it is in, nested groups included. It needs no Naming Convention. It stays exactly one Owner Unit ([DEC-CO-04](#dec-co-04)); the Owner Unit can be changed, again to one of the groups of whoever changes it. This replaces the Naming Convention for Owner Units of [DEC-UM-04](02-user-management.md#dec-um-04).
 - <a id="dec-co-10"></a>**DEC-CO-10** · A Collection is private or public. A private Collection is visible to the members of its Owner Unit and to the Data Team; a public Collection is visible to every User. Whoever creates a Collection chooses; the Owner Unit and the Data Team can switch it later.
@@ -43,6 +43,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-20"></a>**DEC-CO-20** · A Lens always goes into a Collection that its author owns, through their Owner Unit, even when the Resources it is built on are in other Collections. That is how Resources are inherited across Collections, a part of Data Hub itself. Who sees the Lens stays [DEC-CO-16](#dec-co-16). *Decided on 2026-10-26, by Max ([OP-LE-04](09-lenses.md#op-le-04)).*
 - <a id="dec-co-21"></a>**DEC-CO-21** · A Data Admin may map a field to an Entity and its identity that the Domain Model does not have, such as `review.reviewId`, as written. Data Hub keeps it marked as not in the Domain Model, and does one thing with it: it links the Resources that carry the same Entity and identity ([FR-RC-09](05-resource-card.md#fr-rc-09)). *Decided on 2026-10-28, by Max ([OP-CO-14](#op-co-14)).*
 - <a id="dec-co-22"></a>**DEC-CO-22** · After a Resource is added, only a Data Admin changes its grain and the mappings of its fields, on the page of the Resource. Its Owner does not. *Decided on 2026-10-28, by Max ([OP-CO-15](#op-co-15)).*
+- <a id="dec-co-23"></a>**DEC-CO-23** · A Collection has no colour. Its icon is the only thing chosen to recognise it. This replaces the colour of [DEC-CO-07](#dec-co-07) and [FR-CO-04](#fr-co-04), the Collection palette, and the stripe on the edge of its card ([DEC-UX-105](../../design/principles.md#dec-ux-105)). *Decided on 2026-10-28, by Max: the colour does not work.*
 
 ## What a Collection has
 
@@ -50,12 +51,13 @@ In library terms: just as a library arranges its shelves into collections, each 
 | --- | --- | --- |
 | Name | Yes | Unique within Data Hub |
 | Description | Yes | Short: which functional domain of Immoscoop the Collection covers |
-| Colour | Yes | From the [colour palette](#colour-palette) below |
 | Icon | No | Any icon of Phosphor but the logos of brands, the light weight by default ([DEC-CO-19](#dec-co-19)) |
 | Owner | Yes | Exactly one Owner Unit: a Google group of the own Workspace domain that the one choosing it is in ([DEC-CO-09](#dec-co-09)) |
 | Visibility | Yes | Private or public ([DEC-CO-10](#dec-co-10)) |
 
 ## Colour palette
+
+*Withdrawn on 2026-10-28, by Max: a Collection has no colour ([DEC-CO-23](#dec-co-23)). Kept for the history.*
 
 The "muted" palette by Paul Tol is designed for qualitative series: the colours are easy to tell apart, also for people with a colour vision deficiency. The colour of a Collection serves to recognise it in the interface, not as the colour of a series in a chart; for that, the chart language in Figma remains the source.
 
@@ -73,7 +75,7 @@ The "muted" palette by Paul Tol is designed for qualitative series: the colours 
 
 ## Flow
 
-1. **Create.** Anyone creates a Collection, with a name, description, colour, optionally an icon, an Owner Unit from their own groups, and private or public.
+1. **Create.** Anyone creates a Collection, with a name, description, optionally an icon, an Owner Unit from their own groups, and private or public.
 2. **Add Resources.** The Data Team adds Resources, which come from the exposures in the dbt projects ([DEC-SR-22](04-stacks-and-resources.md#dec-sr-22)). With that, the Data Team makes them available to the Owner: step one of the Release.
 3. **Publish.** The Owner publishes the Resources, and thereby confirms them. They are then visible to everyone who sees the Collection: in a public Collection, the whole company.
 4. **Manage.** The Owner Unit and the Data Team change the fields, hand the Collection to another Owner Unit, or switch it between private and public.
@@ -108,7 +110,9 @@ The description is required, and says which functional domain of Immoscoop the C
 <a id="fr-co-04"></a>
 ### FR-CO-04 · Colour is required and comes from the palette
 
-**Status:** Implemented · **Confluence:** CO-04
+**Status:** Withdrawn · **Confluence:** CO-04
+
+*Withdrawn on 2026-10-28, by Max: a Collection has no colour ([DEC-CO-23](#dec-co-23)).*
 
 The colour is required and comes from the [colour palette](#colour-palette). More Collections are possible than there are colours: a colour may therefore recur, and together with the icon a Collection stays recognisable.
 
@@ -175,7 +179,7 @@ Every User can create a Collection. Creating one gives no Resources: those come 
 
 **Status:** Implemented
 
-The members of the Owner Unit of a Collection and the members of the Role Group of the Data Team can change its name, description, colour and icon, hand it to another Owner Unit, make it private or public, and dissolve it. Nobody else can.
+The members of the Owner Unit of a Collection and the members of the Role Group of the Data Team can change its name, description and icon, hand it to another Owner Unit, make it private or public, and dissolve it. Nobody else can.
 
 <a id="fr-co-14"></a>
 ### FR-CO-14 · Only the Data Team adds and removes Resources
@@ -334,7 +338,7 @@ From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-1
 
 **Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14)
 
-The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec-co-15)); whether the Data Team does too, as [FR-CO-13](#fr-co-13) has it, is open ([OP-CO-12](#op-co-12)). The details are the name, description, colour, icon, Owner Unit and whether it is private or public. Dissolving is offered there too, and only possible for an empty Collection ([FR-CO-10](#fr-co-10)).
+The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec-co-15)); whether the Data Team does too, as [FR-CO-13](#fr-co-13) has it, is open ([OP-CO-12](#op-co-12)). The details are the name, description, icon, Owner Unit and whether it is private or public. Dissolving is offered there too, and only possible for an empty Collection ([FR-CO-10](#fr-co-10)).
 
 *Note of 2026-10-25: the Data Team edits the details too, on every Collection ([DEC-CO-18](#dec-co-18)).*
 

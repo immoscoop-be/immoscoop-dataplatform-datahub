@@ -40,4 +40,3 @@ Some rules and decisions migrated from Confluence are, by nature, non-functional
 | Horizontal scalability is not a requirement: [DEC-DH-59](../../overview/data-hub.md#dec-dh-59) | `PRF` |
 | Logged-in Users keep working while Google is briefly unreachable: [EC-UM-03](../functional/02-user-management.md#ec-um-03) | `AVL` |
 | Database migrations run in a separate step before a new version goes live: [DEC-DH-59](../../overview/data-hub.md#dec-dh-59) | `MNT` |
-| A colour-blind-safe palette for Collections: [DEC-CO-07](../functional/03-collections.md#dec-co-07) | `ACC` |

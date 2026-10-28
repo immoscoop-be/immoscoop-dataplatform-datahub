@@ -20,10 +20,10 @@ Every component sits in one layer and depends only on the layers above it in thi
 
 | Layer | What it holds | Knows about Data Hub? | Examples |
 | --- | --- | --- | --- |
-| 0 · Tokens | Values only | No | colours, radii, spacing, durations, `--coll-edge` |
+| 0 · Tokens | Values only | No | colours, radii, spacing, durations |
 | 1 · Foundations | What every surface stands on | No | background, surfaces, type, icons, colour roles, motion |
 | 2 · Primitives | Small building blocks | No | button, chip, field, segmented control, avatar, tooltip |
-| 3 · Data Hub marks | Small signs of a Data Hub concept | Yes | maturity icon, Learning Level icon, kind icon, Collection stripe, origin tag, marker ⓘ |
+| 3 · Data Hub marks | Small signs of a Data Hub concept | Yes | maturity icon, Learning Level icon, kind icon, origin tag, marker ⓘ |
 | 4 · Containers and layers | What holds or lays over content | No | card, tile, fold box, tabs, sheet, floating window, pop-out, callout |
 | 5 · Data Hub components | A Data Hub object or task, built from the layers above | Yes | object header, tree of Collections, description pair, Pre-flight, data grid, Message, Learning steps |
 | 6 · Templates | The frame of a kind of page | Yes | app shell, start screen, object page, Message Centre |
@@ -34,7 +34,7 @@ flowchart TB
   T["0 · Tokens<br/>tokens.css"] --> F["1 · Foundations<br/>background · surfaces · type · icons · motion"]
   F --> P["2 · Primitives<br/>button · chip · field · segmented · avatar · tooltip"]
   F --> C["4 · Containers and layers<br/>card · fold box · tabs · sheet · floating window · pop-out · callout"]
-  P --> M["3 · Data Hub marks<br/>maturity · Learning Level · kind · stripe · origin · marker"]
+  P --> M["3 · Data Hub marks<br/>maturity · Learning Level · kind · origin · marker"]
   P --> C
   M --> D["5 · Data Hub components<br/>object header · tree · description pair · Pre-flight · data grid · Message · Learning steps"]
   C --> D
@@ -71,7 +71,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Surfaces | Glass (rail tab, panel, main frame), solid (reading surface in focus), sub (a tile inside a surface) | Focus follows the mouse | tokens | [Layers and focus](principles.md#layers-and-focus) |
 | Type | Poppins in a few sizes and two weights; a mono for names and SQL | – | tokens | [Typography](principles.md#typography) |
 | Icons | Phosphor, regular and fill, light favoured | – | – | [Icons](principles.md#icons) |
-| Colour roles | Text in three greys; signal (ochre) for action; urgent (red) for what waits for the Data Team; Collection colours only on Collections | – | tokens | [Colour](principles.md#colour) |
+| Colour roles | Text in three greys; signal (ochre) for action; urgent (red) for what waits for the Data Team; no colour on Collections ([DEC-UX-105](principles.md#dec-ux-105)) | – | tokens | [Colour](principles.md#colour) |
 | Motion | Short transitions; none with reduced motion | – | tokens | [Background and motion](principles.md#background-and-motion) |
 
 ## 2 · Primitives
@@ -92,7 +92,6 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Maturity icon | The Level of a Resource or Lens, six bars; the previous Level outlined after a drop | Draws itself from the Level; its name on hover | tokens | 24 screens | [Maturity](principles.md#maturity) |
 | Learning Level icon | The audience of a Learning Level, never bars | – | icons | learning screens | [DEC-UX-62](principles.md#dec-ux-62) |
 | Kind icon | What an item is: table, lens, compass card, query, Collection icon | – | icons | every list | [DEC-UX-11](principles.md#dec-ux-11) |
-| Collection stripe | The colour of a Collection, 5 pixels on the left of its card | – | tokens (`--coll-edge`) | panel, tiles | [DEC-UX-68](principles.md#dec-ux-68) |
 | Origin tag | Where a value comes from: From dbt, From the owner, From the data team | – | chip | Resource screens | [DEC-UX-61](principles.md#dec-ux-61) |
 | Marker ⓘ | The Learning Centre explains this system text | Explain on rest | pop-out | Resource page, learning | [DEC-UX-54](principles.md#dec-ux-54) |
 | Not published | A Resource only its Owner Unit and the Data Team see: a lighter name, no icon | – | – | panel | [DEC-UX-12](principles.md#dec-ux-12) |
@@ -103,7 +102,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Component | What it is | Behaviour | Depends on | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
 | Card | A solid surface with rounded corners | Focus follows the mouse | surfaces | every screen | – |
-| Tile | A card in a grid that grows to fill the width; may carry a Collection stripe | Hover outline when it opens something | card, grid | start screens, Collection page | [Grid](principles.md#grid) |
+| Tile | A card in a grid that grows to fill the width | Hover outline when it opens something | card, grid | start screens, Collection page | [Grid](principles.md#grid) |
 | Sub-tile | A tile inside a reading surface, tinted, with a label and an Edit link | Turns into fields when editing | card | Resource Overview | [DEC-UX-09](principles.md#dec-ux-09) |
 | Fold box | A box with a head that folds its body away; folded it shows a summary | **Fold** | card, button | panel, Query, Lens, Messages | [DEC-UX-76](principles.md#dec-ux-76) |
 | Tabs | Real tabs flowing into their content | Switch a pane | – | object pages | [Tabs](principles.md#tabs) |
@@ -126,7 +125,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | --- | --- | --- | --- | --- | --- |
 | Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre; at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
 | Panel | The index of its section, sliding out next to the rail | Opens and shuts; remembers it | surfaces | every screen | [What is in the panel](principles.md#what-is-in-the-panel) |
-| Tree of Collections | Each Collection a card that unfolds to its Resources, then its Lenses | **Fold**, **Filter a list** | fold box, list item, stripe, maturity | Collections screens | [DEC-UX-10](principles.md#dec-ux-10), [DEC-UX-65](principles.md#dec-ux-65) |
+| Tree of Collections | Each Collection a card that unfolds to its Resources, then its Lenses | **Fold**, **Filter a list** | fold box, list item, maturity | Collections screens | [DEC-UX-10](principles.md#dec-ux-10), [DEC-UX-65](principles.md#dec-ux-65) |
 | List item | Kind icon, name on one line, Level | Ellipsis and full name on hover | kind icon, maturity | panels, lists | [DEC-UX-11](principles.md#dec-ux-11) |
 | Search | A field that filters its list, or a search by question | **Filter a list** | field | panels, start screens | [FR-CO-37](../requirements/functional/03-collections.md#fr-co-37) |
 | Breadcrumb | Where the page sits | – | – | object pages | – |

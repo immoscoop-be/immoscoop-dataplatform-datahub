@@ -9,12 +9,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 104 | 36 (1 open, 35 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 105 | 36 (1 open, 35 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 7 | 8 (1 open, 7 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (2 open, 5 done) |
-| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 specified) | 22 | 17 (2 open, 15 done) |
+| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 13 implemented, 3 withdrawn) | 2 (2 specified) | 23 | 17 (2 open, 15 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 25 (2 open, 23 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
@@ -82,7 +82,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CO-01](functional/03-collections.md#fr-co-01) | Only the Data Team manages Collections | Withdrawn | CO-01 | – | [3d452ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3d452cafcc9b1320488669bfbf93d7f3dcc6f879) refs, 2026-10-19 |
 | [FR-CO-02](functional/03-collections.md#fr-co-02) | Name is required and unique | Implemented | CO-02 | [TR-CO-01](technical/03-collections.md#tr-co-01) | [31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
 | [FR-CO-03](functional/03-collections.md#fr-co-03) | Description is required | Implemented | CO-03 | [TR-CO-01](technical/03-collections.md#tr-co-01) | [31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
-| [FR-CO-04](functional/03-collections.md#fr-co-04) | Colour is required and comes from the palette | Implemented | CO-04 | [TR-CO-01](technical/03-collections.md#tr-co-01) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) refs, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
+| [FR-CO-04](functional/03-collections.md#fr-co-04) | Colour is required and comes from the palette | Withdrawn | CO-04 | [TR-CO-01](technical/03-collections.md#tr-co-01) | [2bf4878](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2bf4878beab9ede9d8f390bc7ef2078a48503ac7) refs, 2026-10-19<br>[31aeadd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/31aeadd8faca7d792b8149ed74eef2d7ed6d1a08) implements, 2026-10-19 |
 | [FR-CO-05](functional/03-collections.md#fr-co-05) | Icon is optional and comes from the fixed set | Implemented | CO-05 | [TR-CO-01](technical/03-collections.md#tr-co-01) | [25c347b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/25c347b43c8cd46062dd014df11f20355928d06a) implements, 2026-10-19<br>[90e8b73](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/90e8b73762cce6a20007b21c892adb7bdc896b5a) implements, 2026-10-19 |
 | [FR-CO-06](functional/03-collections.md#fr-co-06) | Exactly one Owner Unit | Withdrawn | CO-06 | – | [3d452ca](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3d452cafcc9b1320488669bfbf93d7f3dcc6f879) refs, 2026-10-19 |
 | [FR-CO-07](functional/03-collections.md#fr-co-07) | A Resource is in at most one Collection | Implemented | CO-07 | [TR-SR-02](technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-04](technical/04-stacks-and-resources.md#tr-sr-04) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
