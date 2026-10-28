@@ -6,8 +6,8 @@
   (Described, and that they may publish it), and what they confirm: what the Resource is and what it stands for, as its
   descriptions say; no figures, the data is for the EDA (DEC-MR-07). At the foot, the declaration and "Publish and confirm"
   are one bar: the button is off until the box is ticked (DEC-UX-63). The switch shows it ready and not ready: a column
-  without a description in dbt keeps it from being published, unless a Business Description covers each one: then publishing
-  jumps over Described, and the Resource shows Confirmed with a mark (DEC-MR-09, FR-MR-13). ?ready=covered shows that.
+  without a description in dbt keeps it from being published: the Data Team describes it in dbt, and until then it stays
+  1 · Available (DEC-MR-10). ?ready=notready shows that.
   Requirements: FR-SR-16, FR-SR-17, FR-SR-31, FR-SR-49, FR-MR-01, FR-MR-02 (Proposed and Specified); DEC-MR-07, DEC-UX-63.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -117,7 +117,7 @@
   <a class="btn-primary" href="#" data-sheet-open="publish" style="text-decoration:none"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish</a>
  </div>
  <div class="status-row">
-  <span class="status" data-pane-group="ready" data-pane="ready"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span><span class="status" data-pane-group="ready" data-pane="notready covered" hidden><span class="maturity" data-level="1" data-no-tooltip></span>1 · Available</span>
+  <span class="status" data-pane-group="ready" data-pane="ready"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span><span class="status" data-pane-group="ready" data-pane="notready" hidden><span class="maturity" data-level="1" data-no-tooltip></span>1 · Available</span>
   <span class="status"><i class="ph-fill ph-eye-slash"></i>Not published</span>
   <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
  </div>
@@ -251,12 +251,10 @@
    <div class="label">What Data Hub checked</div>
    <div class="check-line"><i class="ph-fill ph-check-circle"></i><span>In Credit leads, owned by the credit team: you may publish it.</span></div>
    <div class="check-line" data-pane-group="ready" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Described:</b> the view and its 4 columns have a description.</span></div>
-   <div class="check-line missing" data-pane-group="ready" data-pane="notready" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Not described in dbt:</b> 2 of its 4 columns, <span class="mono">lead_count</span> and <span class="mono">lead_channel</span>. <a class="text-link" href="resource-columns-edit.html" style="display:inline"><span>Write a business description</span></a> for each to publish now, or <a class="text-link" href="resource-messages.html" style="display:inline"><span>ask the data team</span></a> to describe them in dbt.</span></div>
-   <div class="check-line" data-pane-group="ready" data-pane="covered" hidden><i class="ph-fill ph-check-circle"></i><span><b>Covered by your business descriptions:</b> <span class="mono">lead_count</span> and <span class="mono">lead_channel</span> have no description in dbt, but each has yours. Publishing jumps over Described: the resource shows 3 · Confirmed, marked until dbt has the descriptions.</span></div>
-  </div><div class="pub-block" data-pane-group="ready" data-pane="ready covered">
+   <div class="check-line missing" data-pane-group="ready" data-pane="notready" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Not described in dbt:</b> 2 of its 4 columns, <span class="mono">lead_count</span> and <span class="mono">lead_channel</span>. The data team describes them in dbt; until then the resource stays 1 · Available and cannot be published. <a class="text-link" href="resource-messages.html" style="display:inline"><span>Ask the data team</span></a></span></div>
+  </div><div class="pub-block" data-pane-group="ready" data-pane="ready">
    <div class="label">What you confirm</div>
    <p class="meta" data-pane-group="ready" data-pane="ready" style="display:block;line-height:1.5;margin:0">Publishing is also the first confirmation: for the credit team, you confirm what this resource is and what it stands for, as its descriptions say. The level rises from 2 · Described to 3 · Confirmed.</p>
-   <p class="meta" data-pane-group="ready" data-pane="covered" hidden style="display:block;line-height:1.5;margin:0">Publishing is also the first confirmation: for the credit team, you confirm what this resource is and what it stands for, as its descriptions and yours say. The level goes from 1 · Available to 3 · Confirmed, over Described.</p>
    <div class="confirm-what">
     <div class="desc-head"><span class="label">Business description</span><span class="origin">From the owner</span></div>
     <p class="lead">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
@@ -267,11 +265,11 @@
    <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">You confirm what the resource is, not the figures in it: its data is explored in the EDA.</p>
   </div><div class="pub-block" data-pane-group="ready" data-pane="notready" hidden>
    <div class="label">Your confirmation</div>
-   <p class="meta" style="display:block;line-height:1.5;margin:0">A resource is published from 2 · Described, or over it once a business description covers every column dbt does not describe. Then you confirm it here.</p>
+   <p class="meta" style="display:block;line-height:1.5;margin:0">A resource is published from 2 · Described, which it reaches once the data team describes it in dbt. Then you confirm it here.</p>
   </div>
  </div>
  <div class="sheet-foot confirm-foot"><p class="meta">Data Hub keeps the confirmation with the fingerprint of today. It does not expire; a field that changes later gives a warning, and the level stays.</p><button class="btn-quiet outline" data-sheet-close>Cancel</button>
-  <div class="confirm-bar" data-pane-group="ready" data-pane="ready covered"><label><input type="checkbox"><span>For the credit team, I confirm that this resource is correct: what it is and what it stands for.</span></label><button class="btn-primary"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
+  <div class="confirm-bar" data-pane-group="ready" data-pane="ready"><label><input type="checkbox"><span>For the credit team, I confirm that this resource is correct: what it is and what it stands for.</span></label><button class="btn-primary"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
   <div class="confirm-bar" data-pane-group="ready" data-pane="notready" hidden><label><input type="checkbox" disabled><span>For the credit team, I confirm that this resource is correct: what it is and what it stands for.</span></label><button class="btn-primary" disabled><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
  </div>
 </section>
@@ -279,7 +277,6 @@
 <div class="proto-switch" data-group="ready" role="tablist" aria-label="Prototype: ready to publish">Resource
  <button class="seg on" data-target="ready" role="tab" aria-selected="true">Described</button>
  <button class="seg" data-target="notready" role="tab" aria-selected="false">Columns not described</button>
- <button class="seg" data-target="covered" role="tab" aria-selected="false">Covered by business</button>
 </div>
 <script src="app.js"></script>
 </body>
