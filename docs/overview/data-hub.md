@@ -183,7 +183,7 @@ By comparing every new version with the previous one, Data Hub sees what has cha
 | Structural | A field is added or removed, including a rename | In the Log; a warning on the Resource, the Level stays ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)) |
 
 - <a id="dec-dh-26"></a>**DEC-DH-26** · Only a structural Change makes a Resource drop: a field added or removed. As long as the field name stays the same, a changed type is not a structural Change; the Owner does get a notification. *Note of 2026-10-26: a change to the schema never lowers the Level; it gives a warning on the Resource and a Message to the Owner ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
-- <a id="dec-dh-27"></a>**DEC-DH-27** · On a logic Change, the Owner gets a notification, without the Level dropping.
+- <a id="dec-dh-27"></a>**DEC-DH-27** · On a logic Change, the Owner gets a notification, without the Level dropping. *Note of 2026-10-28: also on a Change further upstream ([DEC-LN-04](../requirements/functional/07-log-and-notifications.md#dec-ln-04)).*
 - <a id="dec-dh-28"></a>**DEC-DH-28** · Everything goes into the Log of the Resource, including Changes deeper in the lineage. Everyone with access to the Resource can read the Log.
 - <a id="dec-dh-29"></a>**DEC-DH-29** · For a Resource that is Monitored, Data Hub runs automatic checks after every Change, following from the EDA and the monitors, to check that everything still holds after the migration.
 - <a id="dec-dh-30"></a>**DEC-DH-30** · The Owner gets no notification before the merge, in the pull request of the Data Team: today they cannot contribute anything there. We may evolve towards that, but only with a very mature business.

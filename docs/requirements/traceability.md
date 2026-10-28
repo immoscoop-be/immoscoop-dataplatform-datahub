@@ -18,7 +18,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 25 (2 open, 23 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (2 open, 3 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 5 | 6 (1 open, 5 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 9 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -226,7 +226,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LN-01](functional/07-log-and-notifications.md#fr-ln-01) | A notification to an Owner reaches its whole Owner Unit | Proposed | – | – | – |
 | [FR-LN-02](functional/07-log-and-notifications.md#fr-ln-02) | The Owner can notify the Consumers of a structural Change | Proposed | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
 | [FR-LN-03](functional/07-log-and-notifications.md#fr-ln-03) | Data Hub knows the Consumers of a Resource | Proposed | – | – | – |
-| [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | – |
+| [FR-LN-04](functional/07-log-and-notifications.md#fr-ln-04) | The Owner hears when a Lens on their Resource becomes public | Proposed | – | – | [59971b7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59971b72949b124df6db5d0e9fa69c02bda0664c) refs, 2026-10-28 |
 | [FR-LN-05](functional/07-log-and-notifications.md#fr-ln-05) | Every query gets a Query ID in the Query Log | Specified | – | – | – |
 | [FR-LN-06](functional/07-log-and-notifications.md#fr-ln-06) | Every output carries its Query ID | Specified | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 

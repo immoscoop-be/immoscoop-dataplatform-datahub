@@ -406,8 +406,7 @@ Template, English, laid out:
 | From → to | Data Team → its writer and its author |
 | When | A member of the Data Team accepts or refuses a Request ([MSG-LEN-01](#msg-len-01), [MSG-LEN-03](#msg-len-03), [MSG-QRY-01](#msg-qry-01)). The decision is its reply. |
 | Status | Proposed |
-| Comes from | [FR-CV-08](14-conversations.md#fr-cv-08), [FR-LE-09](09-lenses.md#fr-le-09), [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29) |
-| Open points | [OP-SR-17](04-stacks-and-resources.md#op-sr-17) |
+| Comes from | [FR-CV-08](14-conversations.md#fr-cv-08), [FR-LE-09](09-lenses.md#fr-le-09), [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36) |
 
 **What it asks:** Nothing. It tells the writer of the Request the decision; a refused Lens or query is theirs to change.
 
@@ -1399,8 +1398,7 @@ One item of `changes`, English, laid out:
 | When | An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema. |
 | How many | One per Resource and Artifact Set. |
 | Status | Specified |
-| Comes from | [DEC-DH-27](../../overview/data-hub.md#dec-dh-27), [FR-AR-12](01-artifact-registry.md#fr-ar-12) |
-| Open points | [OP-LN-03](07-log-and-notifications.md#op-ln-03) |
+| Comes from | [DEC-DH-27](../../overview/data-hub.md#dec-dh-27), [DEC-LN-04](07-log-and-notifications.md#dec-ln-04), [FR-AR-12](01-artifact-registry.md#fr-ar-12) |
 
 **What it asks:** Nothing. The Owner reads the descriptions again, and changes theirs where they no longer fit; nothing more is needed.
 
@@ -1961,8 +1959,7 @@ One run now reads **{reads}**, above {threshold}: more than in the range it was 
 | When | A Lens is made public ([FR-LN-04](07-log-and-notifications.md#fr-ln-04)). Before that, there is no Message. |
 | How many | One per Resource beneath the Lens, to its Owner. |
 | Status | Proposed |
-| Comes from | [FR-LN-04](07-log-and-notifications.md#fr-ln-04) |
-| Open points | [OP-LN-02](07-log-and-notifications.md#op-ln-02) |
+| Comes from | [FR-LN-04](07-log-and-notifications.md#fr-ln-04), [DEC-LE-09](09-lenses.md#dec-le-09) |
 
 **What it asks:** Nothing. The Owner of the Resource now knows who reads its data, and can ask or remark on the Lens.
 

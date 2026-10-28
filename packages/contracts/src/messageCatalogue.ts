@@ -282,8 +282,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['writer', 'author'],
     when: 'A member of the Data Team accepts or refuses a Request (MSG-LEN-01, MSG-LEN-03, MSG-QRY-01). The decision is its reply.',
     status: 'Proposed',
-    sources: ['FR-CV-08', 'FR-LE-09', 'DEC-SR-29'],
-    openPoints: ['OP-SR-17'],
+    sources: ['FR-CV-08', 'FR-LE-09', 'DEC-SR-29', 'DEC-SR-36'],
     parameters: [
       { name: 'outcome', type: 'choice', about: 'The decision', values: ['accepted', 'refused'] },
       { name: 'text', type: 'text', about: 'The reason; needed for a refusal', optional: true },
@@ -666,8 +665,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     when: 'An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema.',
     per: 'One per Resource and Artifact Set.',
     status: 'Specified',
-    sources: ['DEC-DH-27', 'FR-AR-12'],
-    openPoints: ['OP-LN-03'],
+    sources: ['DEC-DH-27', 'DEC-LN-04', 'FR-AR-12'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
       { name: 'node', type: 'name', about: 'The Node whose code changed' },
@@ -1078,8 +1076,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     when: 'A Lens is made public (FR-LN-04). Before that, there is no Message.',
     per: 'One per Resource beneath the Lens, to its Owner.',
     status: 'Proposed',
-    sources: ['FR-LN-04'],
-    openPoints: ['OP-LN-02'],
+    sources: ['FR-LN-04', 'DEC-LE-09'],
     parameters: [{ name: 'resource', type: 'object', about: 'The Resource of the receiver that the Lens builds on' }],
     text: {
       nl: {
