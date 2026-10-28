@@ -130,7 +130,6 @@ html[data-bg="flow"][data-theme] .app { background: none; animation: none; }
 
 /* Tabs: rounded top, concave bottom corners flowing into the content, thin line under the row */
 .tabs { display: flex; gap: 2px; padding: 0 26px; position: relative; margin-top: 20px; flex-wrap: wrap; }
-.tabs::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--tint-active); }
 .tab { font: var(--text-body) var(--font-family); color: var(--text-muted); padding: 9px 16px 10px; border-radius: var(--radius-tab) var(--radius-tab) 0 0;
   cursor: pointer; display: inline-flex; align-items: center; gap: 5px; position: relative; z-index: 1; border: 0; background: none; }
 .tab:hover { color: var(--text-primary); background: var(--surface-float-hover); }
