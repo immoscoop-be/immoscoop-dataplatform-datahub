@@ -38,7 +38,7 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
 
-Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)).
+Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is to be readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)); not built yet.*
 
 ## Data
 
@@ -47,6 +47,8 @@ Artifact Sets with their status and error, Nodes, columns, Edges, tests and Chan
 ## Talks to
 
 The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub` ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
+
+Once [FR-AR-15](../../requirements/functional/01-artifact-registry.md#fr-ar-15) is built: the collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04)).
 
 ## Permissions
 

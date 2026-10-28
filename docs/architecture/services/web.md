@@ -8,6 +8,8 @@
 
 **In one sentence:** web is the Data Hub interface in the browser; it shows what the services return and holds no business logic of its own ([DEC-PF-03](../../requirements/technical/00-platform.md#dec-pf-03)).
 
+*Note of 2026-10-28: built in React with Mantine today; to be rebuilt in Svelte, with the look of the design ([DEC-PF-28](../../requirements/technical/00-platform.md#dec-pf-28)).*
+
 This page describes the web app as it is built. Its new design, the rules, style values and prototype screens it will follow once the designs are final, is in [design](../../design/README.md).
 
 ## Responsibilities
@@ -17,7 +19,7 @@ This page describes the web app as it is built. Its new design, the rules, style
 - Creating and managing Collections, for everyone ([FR-CO-12](../../requirements/functional/03-collections.md#fr-co-12), [FR-CO-13](../../requirements/functional/03-collections.md#fr-co-13))
 - The admin for Data Admins: registering Resources and adding them to Collections
 - Showing the Level everywhere ([FR-MR-10](../../requirements/functional/06-maturity-and-release.md#fr-mr-10))
-- All texts in English ([FR-SR-15](../../requirements/functional/04-stacks-and-resources.md#fr-sr-15))
+- Names in English, sentences in Dutch by default with English available, through translation files that hold sentences only ([DEC-DH-65](../../overview/data-hub.md#dec-dh-65), [NFR-LOC-02](../../requirements/non-functional/localisation.md#nfr-loc-02), [NFR-LOC-06](../../requirements/non-functional/localisation.md#nfr-loc-06)). The web app built today is still in English.
 - The look of the Immoscoop brandbook, from the theme in `packages/ui` ([TR-PF-29](../../requirements/technical/00-platform.md#tr-pf-29))
 - Later: Lenses and Reports, with the shared components in `packages/ui` ([TR-PF-12](../../requirements/technical/00-platform.md#tr-pf-12)), and their charts drawn by semgraph ([DEC-PF-23](../../requirements/technical/00-platform.md#dec-pf-23)). The web app has no chart library of its own. Lineage stays a list: the chart language has no network diagram.
 
@@ -42,7 +44,7 @@ The page is built with Vite (`pnpm build`) into `dist/client`, which the server 
 | Route of the server | Purpose |
 | --- | --- |
 | `GET /` | The page; it may only load from its own address, pictures from semgraph too, and only talk to its own server, identity, catalogue, registry and semgraph. Each page gets a new nonce for the styles Mantine adds ([TR-PF-29](../../requirements/technical/00-platform.md#tr-pf-29)) |
-| `GET /assets/…`, `/favicon.svg`, `/icons/<name>.svg` | The built scripts, styles and fonts; those in `assets/` carry their content in their name and are cached for good. `icons/` holds the drawing of every icon a Collection can carry, copied from `@tabler/icons` at build time; the page loads one only where it shows it, and keeps it an hour like the favicon, since its name does not change with a new version of Tabler |
+| `GET /assets/…`, `/favicon.svg`, `/icons/<name>.svg` | The built scripts, styles and fonts; those in `assets/` carry their content in their name and are cached for good. `icons/` holds the drawing of every icon a Collection can carry, copied from `@tabler/icons` at build time (to move to Phosphor: [DEC-CO-19](../../requirements/functional/03-collections.md#dec-co-19)); the page loads one only where it shows it, and keeps it an hour like the favicon, since its name does not change with a new version of Tabler |
 | `GET /auth/login` | Sends the User to identity, with PKCE, as the client `datahub-web` |
 | `GET /auth/callback` | Back from identity: exchanges the code and keeps the Refresh Token in the cookie |
 | `POST /auth/token` | Gives the page an Access Token for the Refresh Token in the cookie; only from the web app's own pages |

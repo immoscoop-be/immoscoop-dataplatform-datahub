@@ -8,7 +8,10 @@
   what one run reads; the Data Team accepts or refuses it with a reason, its author waits. The switch shows both. The slide-in on a Collection, Resource or
   Lens shows the same Messages, filtered on that object (collection-messages, resource-messages, lens-messages).
   Opened in context: lens-context (the Question), lens-new-context (the Request).
-  Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub).
+  Also for the Owner: what Data Hub tells them when descriptions changed in dbt (FR-RC-17, DEC-RC-03): before and after, with their
+  Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds
+  the Learning Card K3.4, which opens inline in the Message (FR-LR-38, DEC-UX-79). ?msg=described opens it.
+  Requirements: FR-CV-01 to FR-CV-09 (Proposed); DEC-CV-01 to DEC-CV-06; FR-SR-10 (a notification from Data Hub); FR-RC-17.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -26,15 +29,14 @@
 <div class="app panel-open">
 <nav class="rail" aria-label="Main navigation">
   <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
-  <button class="nav-btn" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></button>
-  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
-  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
-  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
-  <div class="spacer"></div>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
   <a class="nav-btn active" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread" aria-current="page"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
-  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
-  <div class="avatar" aria-label="Your account">MP</div>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
 </nav>
 <aside class="panel" aria-label="Messages">
  <div class="panel-inner">
@@ -42,7 +44,7 @@
    <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Messages</h1>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
-  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search messages"></label>
+  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Messages"></label>
   <a class="mc-filter on" href="#" aria-current="page"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-circle"></i><span>Unread</span><span class="count">3</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-pencil-simple-line"></i><span>Written by you</span><span class="count">1</span></a>
@@ -65,7 +67,7 @@
 <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
  <div style="flex:1"><h1 class="page-title">For you</h1>
  <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="owner">Messages on what the credit team owns, on what you wrote or answered, and what Data Hub tells you.</p>
- <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="datateam">The requests waiting for the data team, the signals, and what Data Hub tells the data team.</p></div>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="datateam">The requests waiting for the Data Team, the signals, and what Data Hub tells the Data Team.</p></div>
 </div>
 <div class="mc">
  <section class="card mc-list" aria-label="Messages" data-group="msg">
@@ -75,7 +77,15 @@
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source, all weeks</b><span class="meta">· Credit leads</span></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta" style="margin-left:auto">20 min ago</span></span>
-     <span class="mc-excerpt">Please accept this lens: one run reads 38.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
+     <span class="mc-excerpt">Please accept this Lens: one run reads 6.2 GB, all 312 partitions of Weekly lead volume. For the yearly review with KBC; it runs once a month.</span>
+     
+    </span>
+   </a><a class="mc-item unread" href="#" data-for="owner" data-target="described" role="tab" aria-selected="false">
+    <span class="mc-dot" aria-label="Unread"></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">yesterday</span></span>
+     <span class="mc-excerpt">Two descriptions changed in dbt: the one of the table and the one of lead_count. Your Business Descriptions stay as they are, next to them.</span>
      
     </span>
    </a><a class="mc-item unread" href="#" data-for="owner" data-target="question" role="tab" aria-selected="false">
@@ -99,7 +109,7 @@
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="query.html"><i class="ph ph-terminal-window" aria-hidden="true"></i><span class="mc-kind">Query</span><b>Partner leads in September</b></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">yesterday</span></span>
-     <span class="mc-excerpt">Can this become a lens? I run it every month for the partner review.</span>
+     <span class="mc-excerpt">Can this become a Lens? I run it every month for the partner review.</span>
      
     </span>
    </a><a class="mc-item" href="#">
@@ -123,7 +133,7 @@
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="resource-detail.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
-     <span class="mc-excerpt">Weekly lead volume dropped from 4 · Explored to 2 · Described: a structural change added the column lead_channel. It waits for your confirmation.</span>
+     <span class="mc-excerpt">A field was added to Weekly lead volume since you confirmed it: lead_channel. Its Level stays 4 · Explored; mark it as seen on its page.</span>
      
     </span>
    </a><a class="mc-item" href="#" data-for="owner">
@@ -139,46 +149,46 @@
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="resource-unassigned.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Saved searches</b></span></span>
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
-     <span class="mc-excerpt">Three resources came in through an exposure and wait for a collection: Saved searches, Agency reviews and Credit simulations.</span>
+     <span class="mc-excerpt">Saved searches came in through the exposure <span class="mono">saved_searches</span> and waits for a Collection.</span>
      
     </span>
    </a>
  </section>
- <section class="card mc-detail" aria-label="The message" data-pane-group="msg" data-pane="request">
+ <section class="card mc-detail" aria-label="The Message" data-pane-group="msg" data-pane="request">
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads · not published</div><div style="font-size:var(--text-section);font-weight:500">Leads per source, all weeks</div></div>
-   <a data-for="owner" class="btn-quiet outline" href="lens-new-context.html?role=owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a><a data-for="datateam" class="btn-quiet outline" href="lens-new-context.html?role=datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
+   <a data-for="owner" class="btn-quiet outline" href="lens-new-context.html?role=owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a><a data-for="datateam" class="btn-quiet outline" href="lens-new-context.html?role=datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
     <div class="thread-body">
      <div class="thread-head"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta">today 15:02</span></div>
-     <p>Please accept this lens. For the yearly review with KBC; it runs once a month.</p>
+     <p>Please accept this Lens. For the yearly review with KBC; it runs once a month.</p>
      
      <div class="thread-actions"></div>
     </div>
    </div>
   <div class="req-facts">
-   <div><span class="meta">One run reads</span><b>38.2 GB</b></div>
-   <div><span class="meta">Range</span><b style="color:var(--signal-urgent)">Very large, above 30 GB</b></div>
+   <div><span class="meta">One run reads</span><b>6.2 GB</b></div>
+   <div><span class="meta">Range</span><b style="color:var(--signal-urgent)">Very large, above 1 GB</b></div>
    <div><span class="meta">Partitions</span><b>312 of 312</b></div>
-   <div><span class="meta">With a default for From</span><b>17.9 GB at most</b></div>
+   <div><span class="meta">With a default for From</span><b>840 MB at most</b></div>
   </div>
   <div class="composer" data-for="datateam" style="margin-top:14px">
    <span class="label" style="margin:0">Your decision</span>
-   <textarea placeholder="A reason, which Mia and everyone who may see the lens can read. Needed when you refuse."></textarea>
-   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Mia gets a notification. Accepted, the lens is published.</p>
+   <textarea placeholder="A reason, which Mia and everyone who may see the Lens can read. Needed when you refuse."></textarea>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Mia gets a notification. Accepted, the Lens is published.</p>
     <button class="btn-quiet outline"><i class="ph ph-x"></i>Refuse</button>
     <button class="btn-primary"><i class="ph-fill ph-check" style="font-size:15px"></i>Accept</button></div>
   </div>
-  <div class="size-state fine" data-for="owner" style="margin-top:14px"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the data team.</b> Until they accept it, only you see the lens. Their answer comes here and as a notification.</p></div>
+  <div class="size-state fine" data-for="owner" style="margin-top:14px"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the Data Team.</b> Until they accept it, only you see the Lens. Their answer comes here and as a notification.</p></div>
  </section>
- <section class="card mc-detail" aria-label="The message" data-pane-group="msg" data-pane="question" hidden>
+ <section class="card mc-detail" aria-label="The Message" data-pane-group="msg" data-pane="question" hidden>
   <div class="mc-detail-head">
    <i class="ph ph-aperture" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><div class="meta">Lens · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Leads per source name</div></div>
-   <a class="btn-quiet outline" href="lens-context.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
+   <a class="btn-quiet outline" href="lens-context.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Open the object with this Message in a floating window, to answer it with the object in view"><i class="ph ph-arrow-square-out"></i>Open in context</a>
   </div>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
@@ -191,9 +201,54 @@
    </div>
   <div class="composer" style="margin-top:6px">
    <span class="label" style="margin:0">Your reply</span>
-   <textarea placeholder="Everyone who may see the lens can read it."></textarea>
+   <textarea placeholder="Everyone who may see the Lens can read it."></textarea>
    <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification; the question shows as answered.</p>
     <button class="btn-primary"><i class="ph-fill ph-arrow-bend-up-left" style="font-size:15px"></i>Reply</button></div>
+  </div>
+ </section>
+ <section class="card mc-detail" aria-label="The Message" data-pane-group="msg" data-pane="described" hidden>
+  <div class="mc-detail-head">
+   <i class="ph ph-table" style="font-size:22px;color:var(--text-secondary)" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><div class="meta">Resource · Credit leads</div><div style="font-size:var(--text-section);font-weight:500">Weekly lead volume</div></div>
+   <a class="btn-quiet outline" href="resource-detail.html?tabs=columns" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-square-out"></i>Open the Resource</a>
+  </div>
+  <div class="thread">
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">DH</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta">yesterday 06:40 · dbt run of 25 Oct</span></div>
+     <p>Two descriptions of Weekly lead volume changed in dbt. Your Business Descriptions stay as they are, next to them: read them again, and change yours where it no longer fits. Nothing is asked of you, and the Level and the Publication do not change.</p>
+    </div>
+  </div>
+  <div class="lc-understand">
+   <div class="label">Understand what is happening here</div>
+   <details class="lc-inline">
+    <summary class="lc-attach"><i class="ph ph-compass" aria-hidden="true"></i><span class="lc-attach-body"><span class="lc-attach-title"><span class="lc-num">K3.4</span>Where definitions live</span><span class="meta">Learning Card · Compass · 4 min · why dbt and you each describe a field</span></span><span class="lc-attach-state"><i class="ph ph-circle"></i>Not read yet</span><i class="ph ph-caret-down lc-inline-caret" aria-hidden="true"></i></summary>
+    <div class="lc-inline-body">
+     <p class="lc-inline-rule">A field has two descriptions, each with a home of its own: the one from dbt is the definition, kept by the Data Team next to the code; yours explains it in business language. When the definition changes, read your explanation again.</p>
+     <p class="lc-inline-can"><b>You can now</b> tell where a description comes from, and keep yours in step when the one from dbt changes.</p>
+     <div class="lc-inline-foot"><a class="text-link" href="learning-card.html"><span>Open the whole card</span><i class="ph ph-arrow-right"></i></a><button class="btn-quiet outline" type="button"><i class="ph-fill ph-check-circle"></i>I understand it</button></div>
+    </div>
+   </details>
+  </div>
+  <div class="desc-change">
+   <h4><i class="ph ph-table" aria-hidden="true"></i>The table</h4>
+   <dl>
+    <dt>Before, in dbt</dt><dd><del>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted.</del></dd>
+    <dt>Now, in dbt</dt><dd>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</dd>
+    <dt>Your Business Description</dt><dd>The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</dd>
+   </dl>
+  </div>
+  <div class="desc-change">
+   <h4><span class="mono">lead_count</span><span class="meta">INT64</span></h4>
+   <dl>
+    <dt>Before, in dbt</dt><dd><del>Number of credit leads sent to KBC</del></dd>
+    <dt>Now, in dbt</dt><dd>Number of credit leads sent to KBC, without test and duplicate requests</dd>
+    <dt>Your Business Description</dt><dd>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</dd>
+   </dl>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 0 40px">
+   <a class="btn-primary" href="resource-columns-edit.html?fd=changed" style="text-decoration:none"><i class="ph-fill ph-pencil-simple" style="font-size:15px"></i>Edit Business Descriptions</a>
+   <p class="meta" style="flex:1;min-width:200px;margin:0;line-height:1.5">Readers see both descriptions, each with where it comes from. A description in dbt changes in the dbt project; ask the Data Team if it is wrong.</p>
   </div>
  </section>
 </div>
@@ -201,7 +256,7 @@
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
  <button class="seg on" data-target="owner" role="tab" aria-selected="true">Owner, who sent it</button>
- <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data team</button>
+ <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
 </div>
 <script src="app.js"></script>
 </body>

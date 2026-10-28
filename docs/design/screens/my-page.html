@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<!--
+  Screen: My page, behind the initials at the foot of the rail (DEC-UX-84)
+  Two tabs (DEC-UX-85). Profile: who the User is in Data Hub, their name and Google account, the language of Data Hub
+  (OP-DH-46), the Owner Units they belong to and so the Collections they own, and what they read (DEC-DH-78). Excel keys: the personal keys with which Excel signs in through Power
+  Query (DEC-DH-79). "New Excel key" opens a sheet: a name that says where the key is used, then the key, shown once, to
+  copy, with how to use it. The list shows each key with when it was made, last used and expires; revoking one asks to
+  confirm, and the list keeps it, marked revoked. The switch at the bottom shows the states: ?metab=keys&keys=new,
+  ?metab=keys&keys=made, ?metab=keys&keys=revoking.
+  Requirements: FR-PL-01, FR-PL-02, FR-PL-03 (Proposed); DEC-DH-78, DEC-DH-79.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — My page</title>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar active" href="my-page.html" aria-label="My page" aria-current="page">MP</a>
+</nav>
+<main class="main">
+<div class="me-head">
+ <div class="me-avatar" aria-hidden="true">MP</div>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">Maxime Passenier</h1>
+  <p class="meta" style="display:block;margin-top:4px"><i class="ph ph-google-logo"></i> maxime.passenier@immoscoop.be · signed in with Google</p>
+ </div>
+</div>
+
+<div class="tabs" data-group="metab" role="tablist" style="margin-top:22px">
+ <button class="tab on" data-target="profile" role="tab" aria-selected="true">Profile</button>
+ <button class="tab" data-target="keys" role="tab" aria-selected="false">Excel keys</button>
+ <button class="tab" data-target="background" role="tab" aria-selected="false">Background</button>
+</div>
+<div class="tab-content card">
+<div data-pane-group="metab" data-pane="profile">
+<div class="me-grid" style="margin-top:0">
+ <section class="sub-tile me-tile">
+  <div class="label">Language</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 12px">The language of the sentences of Data Hub: its screens, Messages and e-mails. Names stay English, such as <span class="mono">creditLead</span> or Resource.</p>
+  <div data-group="lang" role="radiogroup" aria-label="Language" style="display:inline-flex;gap:2px;padding:3px;border-radius:var(--radius-pill);background:var(--surface-solid)">
+   <button class="seg on" data-target="nl" role="radio" aria-checked="true">Nederlands</button>
+   <button class="seg" data-target="en" role="radio" aria-checked="false">English</button>
+  </div>
+  <p class="meta" style="display:block;margin-top:12px">The Learning Cards follow it too.</p>
+ </section>
+ <section class="sub-tile me-tile">
+  <div class="label">You own</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Everything in the Collections of your groups: their Resources, and every Lens made in them. Of all else you see, you are a Reader.</p>
+  <a class="me-row" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span style="flex:1;min-width:0"><span class="item-title">Credit leads</span><span class="meta" style="display:block">6 Resources · 4 Lenses · public</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Credit team</span></a>
+  <a class="me-row" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span style="flex:1;min-width:0"><span class="item-title">Brokers</span><span class="meta" style="display:block">11 Resources · private</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Broker team</span></a>
+  <p class="meta" style="display:block;margin-top:10px">Your groups come from Google; ask IT to join or leave one.</p>
+ </section>
+ <section class="sub-tile me-tile">
+  <div class="label">Your queries</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">The queries you made are yours too, wherever their Resources are.</p>
+  <a class="me-row" href="query.html"><span class="item-icon"><i class="ph ph-terminal-window"></i></span><span style="flex:1;min-width:0"><span class="item-title">23 queries</span><span class="meta" style="display:block">The last today, 09:41</span></span><i class="ph ph-arrow-right" style="color:var(--text-muted)"></i></a>
+ </section>
+</div>
+</div>
+<div data-pane-group="metab" data-pane="background" hidden>
+<p class="meta" style="display:block;line-height:1.5;max-width:720px;margin:4px 0 14px">Your background by <span class="bg-theme-name">day</span>. You choose one for day and one for night: switch the theme to choose your background by <span class="bg-theme-other">night</span>. Random picks another one each time Data Hub starts.</p>
+<div class="bg-grid" role="radiogroup" aria-label="Background">
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="random" data-themes="light dark"><span class="bg-prev bg-prev-random"><i class="ph ph-shuffle" aria-hidden="true"></i></span><span class="item-title">Random</span><span class="meta">Another one each time</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="" data-themes="light dark"><span class="bg-prev bg-prev-gradient"></span><span class="item-title">Gradient</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="flow" data-themes="light dark"><span class="bg-prev bg-prev-flow"></span><span class="item-title">Flowing gradient</span><span class="meta">Moves slowly</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="periwinkle" data-themes="light"><span class="bg-prev bg-prev-periwinkle"></span><span class="item-title">Periwinkle</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="sunrise" data-themes="light"><span class="bg-prev bg-prev-sunrise"></span><span class="item-title">Sunrise</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="apricot" data-themes="light"><span class="bg-prev bg-prev-apricot"></span><span class="item-title">Apricot</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="blush" data-themes="light"><span class="bg-prev bg-prev-blush"></span><span class="item-title">Blush</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="sky" data-themes="light"><span class="bg-prev bg-prev-sky"></span><span class="item-title">Sky</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="aurora" data-themes="dark"><span class="bg-prev bg-prev-aurora"></span><span class="item-title">Aurora</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="ember" data-themes="dark"><span class="bg-prev bg-prev-ember"></span><span class="item-title">Embers</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="dusk" data-themes="dark"><span class="bg-prev bg-prev-dusk"></span><span class="item-title">Dusk</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="horizon" data-themes="dark"><span class="bg-prev bg-prev-horizon"></span><span class="item-title">Horizon</span><span class="meta">Flowing lights</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="ski" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/ski-lift.jpg)"></span><span class="item-title">Ski lift</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="alpenglow" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/alpenglow.jpg)"></span><span class="item-title">Alpenglow</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="spring" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/spring-snow.jpg)"></span><span class="item-title">Spring snow</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="fusilli" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/fusilli.jpg)"></span><span class="item-title">Fusilli</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="piste" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/piste.jpg);background-position:50% 35%"></span><span class="item-title">Fresh piste</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="concrete" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/concrete.jpg)"></span><span class="item-title">Concrete</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="village" data-themes="dark"><span class="bg-prev" style="background-image:url(../backgrounds/painted/dark/village-lights.jpg)"></span><span class="item-title">Lights on</span></button>
+</div>
+</div>
+<div data-pane-group="metab" data-pane="keys" hidden>
+<div class="section-head" style="margin-top:4px"><h2>Excel keys</h2><button class="btn-primary" data-sheet-open="newkey"><i class="ph-fill ph-key" style="font-size:15px"></i>New Excel key</button></div>
+<p class="meta" style="display:block;line-height:1.5;max-width:720px;margin:-4px 0 12px">An Excel key lets Excel fetch the result of a Lens in your name, through Power Query, with its Parameters at their defaults. Make one for every place you use, so that you can stop one without the others.</p>
+<div class="table-card">
+ <table>
+ <thead><tr><th>Name</th><th>Made</th><th>Last used</th><th>Expires</th><th></th></tr></thead>
+ <tbody>
+  <tr data-pane-group="keys" data-pane="made" hidden><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Monthly KBC report</span></span></td><td class="muted nowrap">today</td><td class="muted">not yet</td><td class="muted nowrap">28 Oct 2027</td><td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+  <tr><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Excel on my laptop</span></span></td><td class="muted nowrap">2 Sep 2026</td><td class="nowrap">today, 08:12</td><td class="muted nowrap">2 Sep 2027</td><td style="text-align:right"><button class="btn-quiet outline" data-go="keys:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="keys" data-pane="list new made"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="nowrap"><span class="key-soon">14 Mar 2027</span></td><td style="text-align:right"><button class="btn-quiet outline" data-go="keys:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="keys" data-pane="revoking" hidden class="key-confirm"><td colspan="5"><span class="key-confirm-row"><i class="ph-fill ph-warning"></i><span style="flex:1"><b>Revoke "Sales dashboard, shared drive"?</b> Excel stops getting data with it at once. This cannot be undone: to use Excel there again, make a new key.</span><button class="btn-quiet outline" data-go="keys:list">Cancel</button><button class="btn-primary danger" data-go="keys:revoked">Revoke</button></span></td></tr>
+  <tr data-pane-group="keys" data-pane="revoked" hidden class="key-revoked"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="muted">revoked today</td><td></td></tr>
+  <tr class="key-revoked"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Old laptop</span></span></td><td class="muted nowrap">20 Jan 2026</td><td class="muted nowrap">31 Aug 2026</td><td class="muted">revoked 2 Sep 2026</td><td></td></tr>
+ </tbody>
+ </table>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">A key lasts a year; a month before, you get a Message. It stops at once when you can no longer sign in with Google. The Data Team can revoke any key, and tells you when it does.</p>
+</div>
+</div>
+</div>
+</main>
+</div>
+
+<div class="sheet-wrap" id="newkey" data-pane-group="keys" data-pane="new made" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="newkey-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-key" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">My page</div><h2 id="newkey-title">New Excel key</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" data-pane-group="keys" data-pane="list new">
+  <label class="field" style="margin-top:6px"><span>Name</span><input value="Monthly KBC report" placeholder="Where you use it, such as Excel on my laptop"></label>
+  <p class="meta" style="display:block;line-height:1.5">The name tells your keys apart in the list. Make one for every place you use: one key can then stop without the others.</p>
+  <div class="check-line"><i class="ph ph-calendar-blank"></i><span>It lasts a year, until 28 Oct 2027.</span></div>
+ </div>
+ <div class="sheet-list" data-pane-group="keys" data-pane="made" hidden>
+  <div class="key-once">
+   <div class="label">Your key</div>
+   <div class="key-box"><span class="mono">dhx_7Kq2-mP9v-Xc4R-8tLw-Zn3e-Hb6Y</span><button class="btn-quiet outline"><i class="ph ph-copy"></i>Copy</button></div>
+   <p class="key-warn"><i class="ph-fill ph-eye-slash"></i><span><b>You see it only now.</b> Data Hub keeps only a fingerprint of it, and cannot show it again. Lost it? Revoke it and make a new one.</span></p>
+  </div>
+  <div class="label" style="margin-top:16px">In Excel</div>
+  <ol class="steps-plain">
+   <li>Data › Get data › From web, with the address of a Lens: "Open in Excel" on its page.</li>
+   <li>Choose Web API as how to sign in, and paste the key.</li>
+   <li>Refresh whenever you like: Excel gets the result with the Parameters at their defaults.</li>
+  </ol>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta" data-pane-group="keys" data-pane="list new">Keys are personal: they act in your name.</p>
+  <p class="meta" data-pane-group="keys" data-pane="made" hidden>The key is in your list now.</p>
+  <button class="btn-quiet outline" data-sheet-close data-pane-group="keys" data-pane="list new">Cancel</button>
+  <button class="btn-primary" data-go="keys:made" data-pane-group="keys" data-pane="list new"><i class="ph-fill ph-key" style="font-size:15px"></i>Make the key</button>
+  <button class="btn-primary" data-sheet-close data-go="keys:list" data-pane-group="keys" data-pane="made" hidden>Done</button>
+ </div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="keys" role="tablist" aria-label="Prototype: Excel keys">Excel keys
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">Making one</button>
+ <button class="seg" data-target="made" role="tab" aria-selected="false">Made, shown once</button>
+ <button class="seg" data-target="revoking" role="tab" aria-selected="false">Revoking</button>
+ <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

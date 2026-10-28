@@ -16,6 +16,7 @@
 - Tools, as a first sketch: search Resources, read a Resource Card, read lineage, preview a Resource, run SQL ([FR-SR-26](../../requirements/functional/04-stacks-and-resources.md#fr-sr-26))
 - Mentioning the Level of every Resource it uses ([DEC-MR-06](../../requirements/functional/06-maturity-and-release.md#dec-mr-06), [FR-MR-10](../../requirements/functional/06-maturity-and-release.md#fr-mr-10))
 - Later: Lenses and Reports as an MCP App, with the same components as web ([DEC-DH-15](../../overview/data-hub.md#dec-dh-15), [TR-PF-12](../../requirements/technical/00-platform.md#tr-pf-12))
+- Later: the steps of a Learning Card as an MCP App, the same blocks as on the page in web ([DEC-LR-08](../../requirements/functional/16-learning.md#dec-lr-08), [FR-LR-26](../../requirements/functional/16-learning.md#fr-lr-26)); designed, not specified
 
 ## Talks to
 

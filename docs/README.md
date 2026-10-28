@@ -14,6 +14,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
+| Everything in one read: each part with its screens and what is behind it, and every open point as a checklist | [Review of 2026-10-25](review/2026-10-25-functional-and-technical-review.md) |
 | What a workshop asked of Data Hub, and where each request was recorded | [Workshop of 2026-10-22](workshops/2026-10-22-data-agents-and-governance.md) |
 | How the web app must look and behave: design rules, style values and prototype screens | [Design](design/README.md) |
 | How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
@@ -46,12 +47,13 @@ docs/
 │   ├── functional/            one file per functional domain (FR, EC, DEC, OP)
 │   ├── technical/             technical requirements (TR): the platform, then one file per domain
 │   └── non-functional/        non-functional requirements (NFR), one file per category
+├── review/                    the functional and technical review, a dated snapshot with its screenshots and every open point
 └── workshops/                 what a workshop asked of Data Hub, translated, with the requirements each request became
 ```
 
 ## Conventions in short
 
-- Everything is in English, as is the app itself.
+- Everything is in English. The app follows the language principle: names in English, sentences in Dutch by default with English available ([localisation](requirements/non-functional/localisation.md)).
 - Every requirement, edge case, decision and open point has a stable ID, such as `FR-AR-05`, and an anchor to link to.
 - Commits name what they implement with `Implements:` and `Refs:` trailers.
 - `pnpm docs:check` validates IDs and links; `pnpm docs:build` regenerates the traceability matrix.

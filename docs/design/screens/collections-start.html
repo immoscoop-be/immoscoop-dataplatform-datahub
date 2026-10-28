@@ -2,7 +2,10 @@
 <!--
   Screen: Collections — start screen
   Opens when the user clicks Collections in the rail. Panel = the index, every Collection folded; main = the start screen.
-  Requirements: FR-CO-17, FR-CO-18, FR-CO-20 to FR-CO-24 (the panel); DEC-UX-10 to DEC-UX-12. The start screen itself: TODO.
+  The start screen finds Lenses too, as Lenses have no section of their own (DEC-UX-66): a search by question over Collections,
+  Resources and Lenses; Yours, the Collections of the User's Owner Units and the Lenses of the User and their Owner Unit,
+  one waiting for the Data Team; Recently; and new Lenses. Nothing popular for now (DEC-UX-86).
+  Requirements: FR-CO-17, FR-CO-18, FR-CO-20 to FR-CO-24, FR-CO-36 (the panel); FR-CO-37 (the start screen); DEC-UX-10 to DEC-UX-12, DEC-UX-66.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -21,39 +24,45 @@
 <nav class="rail" aria-label="Main navigation">
   <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
   <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
-  <button class="nav-btn" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></button>
-  <button class="nav-btn" data-label="Lenses" aria-label="Lenses"><i class="ph-fill ph-aperture"></i></button>
-  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
-  <div class="spacer"></div>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
   <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
-  <button class="nav-btn" data-label="Settings" aria-label="Settings"><i class="ph-fill ph-gear-six"></i></button>
-  <div class="avatar" aria-label="Your account">MP</div>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
 </nav>
 <aside class="panel" aria-label="Collections">
  <div class="panel-inner">
   <div style="display:flex;align-items:center;gap:4px">
    <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
-   <button class="icon-btn" aria-label="New collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
-  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search collections and resources"></label>
-  <div class="panel-label">Your collections</div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-magenta)">
-   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <div class="coll-filter" data-group="collfilter" role="tablist" aria-label="Which Collections">
+   <button class="seg on" data-target="all" role="tab" aria-selected="true">All</button>
+   <button class="seg" data-target="mine" role="tab" aria-selected="false">Yours</button>
+  </div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
-     <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="2" data-previous="4"></span></a>
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
      <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html" title="Broken: the column first_reply_at of Lead response time no longer exists"><i class="ph ph-aperture kind-icon broken-mark" role="img" aria-label="Lens, broken"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion · Broken: the column first_reply_at of Lead response time no longer exists">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
    </div>
   </div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
@@ -64,10 +73,10 @@
      <a class="tree-more" href="#">Show all 15</a>
    </div>
   </div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-teal)">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 Resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
@@ -78,10 +87,10 @@
      <a class="tree-more" href="#">Show all 22</a>
    </div>
   </div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-ochre)">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 Resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
-     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="5"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
@@ -92,39 +101,43 @@
      <a class="tree-more" href="#">Show all 11</a>
    </div>
   </div>
-  <div class="panel-label">Shared resources</div>
-  <a class="list-item card" data-name="broker service packs"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Broker service packs</span><span class="meta"><i class="ph-fill ph-users-three"></i>Sales</span></span></a>
-  <a class="list-item card" data-name="search sessions"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Search sessions</span><span class="meta"><i class="ph-fill ph-users-three"></i>Data team</span></span></a>
   <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
  </div>
 </aside>
 <main class="main">
  <div id="intro-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px" hidden>
   <h2 class="page-title" style="font-size:24px">Collections</h2>
-  <div style="display:flex;align-items:center;gap:14px"><button class="text-link" id="intro-show" style="border:0;background:none;font-family:inherit"><i class="ph-fill ph-info"></i><span>Show intro</span></button><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New collection</button></div>
+  <div style="display:flex;align-items:center;gap:14px"><button class="text-link" id="intro-show" style="border:0;background:none;font-family:inherit"><i class="ph-fill ph-info"></i><span>Show intro</span></button><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New Collection</button></div>
  </div>
  <section id="intro" class="card" data-section="collections" data-version="1" style="position:relative;border-radius:20px;padding:26px 28px 24px;text-align:center">
   <button class="icon-btn" id="intro-hide" aria-label="Hide intro" style="position:absolute;right:12px;top:12px"><i class="ph-fill ph-x-circle"></i></button>
   <svg width="200" height="96" viewBox="0 0 200 96" aria-hidden="true"><circle cx="72" cy="48" r="40" fill="var(--col-magenta)" fill-opacity=".14"/><circle cx="128" cy="48" r="40" fill="var(--col-teal)" fill-opacity=".16"/><circle cx="100" cy="48" r="40" fill="none" stroke="var(--text-primary)" stroke-width="1.5"/><circle cx="52" cy="36" r="4" fill="var(--col-magenta)"/><circle cx="64" cy="62" r="4" fill="var(--col-magenta)"/><circle cx="90" cy="30" r="4" fill="var(--text-primary)"/><circle cx="104" cy="64" r="4" fill="var(--text-primary)"/><circle cx="116" cy="40" r="4" fill="var(--text-primary)"/><circle cx="142" cy="60" r="4" fill="var(--col-teal-ink)"/><circle cx="150" cy="34" r="4" fill="var(--col-teal-ink)"/></svg>
-  <h2 style="font-size:21px;font-weight:500;margin:10px 0 0">What are collections?</h2>
-  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:470px;margin:6px auto 0">A collection groups the data resources that belong together around one topic, like credit leads or listings. Make one for your own work, keep it private, or share it with the team.</p>
-  <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px"><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New collection</button><a class="text-link"><span>How collections work</span><i class="ph-fill ph-arrow-right"></i></a></div>
+  <h2 style="font-size:21px;font-weight:500;margin:10px 0 0">What are Collections?</h2>
+  <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:470px;margin:6px auto 0">A Collection groups the data Resources and the Lenses that belong together around one topic, like credit leads or listings. A Lens answers one question with data that is ready to use; it lives in the Collection of whoever made it. Make a Collection for your own work, keep it private, or share it with the team.</p>
+  <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px"><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New Collection</button><a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Make a Lens from a query</a><a class="text-link"><span>How Collections work</span><i class="ph-fill ph-arrow-right"></i></a></div>
  </section>
+ <label class="lens-find"><i class="ph ph-magnifying-glass" style="font-size:18px;color:var(--text-secondary)"></i><input placeholder="What do you want to know? Search Collections, Resources and Lenses, for example: which sources bring the most leads"></label>
+ <div class="section-head"><h2>Yours</h2><span class="meta">Your Collections, and Lenses made by you or the credit team</span></div>
+ <div class="grid">
+  <a class="tile card" style="text-decoration:none;color:inherit" href="collection-overview.html"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">6 Resources · 4 Lenses</p><span class="meta">Owned by the credit team</span></a>
+  <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Leads per source name</span></div><p>Which sources bring the most leads?</p><div class="lens-tile-foot"><span class="maturity" data-level="4"></span><span class="meta">Ran by you 2 minutes ago</span></div></a>
+  <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon broken-mark" style="font-size:18px" role="img" aria-label="Lens, broken"></i><span class="item-title" style="font-size:14px">Response time and conversion</span></div><p>Do leads that get an answer within the hour convert more?</p><div class="lens-tile-foot"><span class="maturity" data-level="3"></span><span class="status broken">Broken</span><span class="meta"><span class="mono">first_reply_at</span> no longer exists</span></div></a>
+  <a class="tile card lens-tile" href="lens-new-context.html?role=owner"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Leads per source, all weeks</span></div><p>How did every source do since the start?</p><div class="lens-tile-foot"><span class="maturity" data-level="4"></span><span class="pill"><i class="ph ph-hourglass-medium"></i> Waiting for the Data Team</span><span class="meta">Only you see it</span></div></a>
+ </div>
  <div class="section-head"><h2>Recently</h2><div data-group="recent" role="tablist" style="display:flex"><button class="seg on" data-target="updated" role="tab" aria-selected="true">Updated</button><button class="seg" data-target="added" role="tab" aria-selected="false">Added</button></div></div>
  <div class="grid" data-pane-group="recent" data-pane="updated">
-  <div class="tile card coll-edge" style="--c:var(--col-magenta)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">2 resources added</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">2 days ago</span></div></div>
-  <div class="tile card coll-edge" style="--c:var(--col-teal-ink)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">Description updated</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">KL</span><span class="meta">1 week ago</span></div></div>
-  <div class="tile card coll-edge" style="--c:var(--col-slate)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-binoculars"></i></span><span class="item-title" style="font-size:14px">Search behaviour</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New resource: saved searches</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">2 weeks ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">2 Resources added</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">2 days ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">Description updated</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">KL</span><span class="meta">1 week ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-binoculars"></i></span><span class="item-title" style="font-size:14px">Search behaviour</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New Resource: saved searches</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">2 weeks ago</span></div></div>
  </div>
  <div class="grid" data-pane-group="recent" data-pane="added" hidden>
-  <div class="tile card coll-edge" style="--c:var(--col-olive)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-megaphone"></i></span><span class="item-title" style="font-size:14px">Marketing</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New collection, 9 resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">3 days ago</span></div></div>
-  <div class="tile card coll-edge" style="--c:var(--col-ochre)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="item-title" style="font-size:14px">Brokers</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New collection, 11 resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">3 weeks ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-megaphone"></i></span><span class="item-title" style="font-size:14px">Marketing</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New Collection, 9 Resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">AR</span><span class="meta">3 days ago</span></div></div>
+  <div class="tile card"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="item-title" style="font-size:14px">Brokers</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">New Collection, 11 Resources</p><div style="display:flex;align-items:center;gap:6px"><span class="mini-avatar">MP</span><span class="meta">3 weeks ago</span></div></div>
  </div>
- <div class="section-head"><h2>Popular collections</h2><span class="meta">Views this month</span></div>
+<div class="section-head"><h2>New Lenses</h2><span class="meta">Made public lately</span></div>
  <div class="grid">
-  <div class="tile card coll-edge" style="--c:var(--col-bordeaux)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="item-title" style="font-size:14px">Listing leads</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">248</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-bordeaux)"><div style="width:100%"></div></div></div>
-  <div class="tile card coll-edge" style="--c:var(--col-magenta)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">196</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-magenta)"><div style="width:79%"></div></div></div>
-  <div class="tile card coll-edge" style="--c:var(--col-teal-ink)"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="item-title" style="font-size:14px">Listings</span></div><div style="display:flex;align-items:baseline;gap:6px;margin-top:12px"><span style="font-size:20px;font-weight:500">154</span><span class="meta">views</span></div><div class="bar" style="--c:var(--col-teal)"><div style="width:62%"></div></div></div>
+  <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Credit funnel by region</span></div><p>Where do credit requests drop out, per region?</p><div class="lens-tile-foot"><span class="maturity" data-level="3"></span><span class="meta">New since 3 days, by Mia Peeters</span></div></a>
+  <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Credit requests per session source</span></div><p>Which first visits lead to a credit request?</p><div class="lens-tile-foot"><span class="maturity" data-level="2"></span><span class="meta">New since last week, by Karel Leys</span></div></a>
  </div>
 </main>
 </div>

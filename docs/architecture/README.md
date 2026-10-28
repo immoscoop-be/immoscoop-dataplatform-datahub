@@ -65,10 +65,10 @@ Every service also fetches the public keys of identity to validate tokens; those
 
 | Service | Responsibility | Functional domains | Schema |
 | --- | --- | --- | --- |
-| [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Library Cards, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
-| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
+| [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Excel keys, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
+| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
-| [query](services/query.md) | Running queries on the Stacks: preview, free SQL for Claude, feeds for Excel | [Stacks and resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
+| [query](services/query.md) | Running queries on the Resources: preview, free SQL for Claude, feeds for Excel | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
 | [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
 
 | Application | For | Uses |
@@ -76,7 +76,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph |
 | [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
 
-Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains.
+Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md), [EDA](../requirements/functional/15-eda.md) and [Learning](../requirements/functional/16-learning.md) live is decided with those domains.
 
 ## How a User is validated
 
@@ -113,7 +113,7 @@ sequenceDiagram
 | `sub` | The fixed Google ID of the User |
 | `email`, `name` | From Google |
 | `groups` | The Groups of the User, by fixed Google ID ([FR-UM-05](../requirements/functional/02-user-management.md#fr-um-05), [FR-UM-08](../requirements/functional/02-user-management.md#fr-um-08)) |
-| `roles` | Derived from the Role Groups, such as the Data Team ([Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md)) |
+| `roles` | Derived from the Role Groups, such as the Data Team ([Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md)) |
 | `iss`, `aud`, `exp` | identity, the Data Hub services, 15 minutes after issue |
 
 ## One set of APIs, several interfaces
@@ -122,7 +122,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Browser | web | Google, through identity |
 | Claude | mcp | OAuth through identity, which delegates to Google ([TR-PF-06](../requirements/technical/00-platform.md#tr-pf-06)) |
-| Excel | query, as a Power Query feed | The Library Card, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
+| Excel | query, as a Power Query feed | The Excel key, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
 | Later: HTML reports, others | The same APIs | One of the above |
 
 None of the interfaces holds business logic. Lens and Report components are shared between web and the MCP App ([TR-PF-12](../requirements/technical/00-platform.md#tr-pf-12)).
@@ -131,11 +131,11 @@ None of the interfaces holds business logic. Lens and Report components are shar
 
 | Store | What | Owner |
 | --- | --- | --- |
-| Postgres schema `identity` | Users, Groups and memberships, Library Card hashes, OAuth clients | identity |
+| Postgres schema `identity` | Users, Groups and memberships, Excel key hashes, OAuth clients | identity |
 | Postgres schema `catalogue` | Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour, Anomalies, Reactions, messages | catalogue |
 | Postgres schema `registry` | Artifact Sets, Nodes, columns, Edges, tests, Changes | registry |
 | GCS bucket | The Artifact files, unchanged, per project and per run ([FR-AR-06](../requirements/functional/01-artifact-registry.md#fr-ar-06)) | registry |
-| BigQuery, the Stacks | The data itself; only read | query |
+| BigQuery, the tables of the Resources | The data itself; only read | query |
 
 ## Repository layout
 
@@ -182,7 +182,7 @@ All services and applications are publicly reachable on Cloud Run ([DEC-PF-10](.
 
 Two environments, each in the existing GCP project of the data platform for that environment ([DEC-PF-13](../requirements/technical/00-platform.md#dec-pf-13)), with its own Cloud SQL instance, service accounts, bucket and Cloud Run services, defined in Terraform ([TR-PF-13](../requirements/technical/00-platform.md#tr-pf-13)):
 
-| Environment | Branch | GCP project | Region | Reads the Stacks of |
+| Environment | Branch | GCP project | Region | Reads the Resources of |
 | --- | --- | --- | --- | --- |
 | prod | `main` | `immoscoop-dataplatform-398214` | `europe-west1` | the prod dbt job, in the same project |
 | uat | `uat` | `immoscoop-dataplatform` | `europe-west1` | the uat dbt job, in the same project |

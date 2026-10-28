@@ -46,7 +46,7 @@
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
   --background-cycle: 36s;
 
-  /* Collection colours: colour lives on content only */
+  /* Content colours: colour lives on content only; Collections have none (DEC-UX-105) */
   --col-magenta: #DD2C88;
   --col-bordeaux: #A0326E;
   --col-teal: #3CB8B1;
@@ -59,6 +59,32 @@
   --bg-1: #EFE5DA;               /* sand */
   --bg-2: #F2DDE2;               /* blush */
   --bg-3: #DCE6E3;               /* mist */
+  /* Light theme: soft clouds of colour on white, from Max's picture turned a quarter and mirrored (DEC-UX-78) */
+  --bg-base: #FFFFFF;
+  --bg-sun: #FFE6A3;             /* warm yellow, upper left */
+  --bg-peach: #FFCDA2;
+  --bg-rose: #F8BCC6;            /* kept soft: no pink field */
+  --bg-lilac: #D8D4F3;
+  --bg-sky: #A8EEFB;             /* sky blue, lower right */
+  --app-bg:
+    radial-gradient(30% 48% at 10% 30%, var(--bg-sun) 0%, transparent 70%),
+    radial-gradient(30% 46% at 24% 26%, var(--bg-peach) 0%, transparent 70%),
+    radial-gradient(28% 42% at 40% 24%, var(--bg-rose) 0%, transparent 72%),
+    radial-gradient(30% 46% at 60% 38%, var(--bg-lilac) 0%, transparent 72%),
+    radial-gradient(36% 58% at 80% 72%, var(--bg-sky) 0%, transparent 72%),
+    var(--bg-base);
+  --app-bg-size: 130% 130%;
+  --bg-prev-flow: linear-gradient(160deg, #BFD9F2 0%, #F2C49A 48%, #F7EEDF 100%);  /* a still picture of the flowing gradient, for My page */
+  /* Still pictures of the flowing lights, for My page (DEC-UX-109) */
+  --bg-prev-aurora: radial-gradient(70% 90% at 100% 40%, #FF9AD8 0%, #E0306A 30%, transparent 62%), radial-gradient(120% 120% at 120% 100%, transparent 52%, #1B2BFF 60%, transparent 70%), #000;
+  --bg-prev-ember: radial-gradient(40% 40% at 20% 100%, #FF7A00, transparent 70%), radial-gradient(35% 35% at 55% 100%, #E01848, transparent 70%), radial-gradient(35% 40% at 85% 95%, #0070E0, transparent 70%), radial-gradient(30% 30% at 20% 0%, #00B8D0, transparent 70%), radial-gradient(30% 30% at 60% 0%, #E01810, transparent 70%), #000;
+  --bg-prev-dusk: radial-gradient(40% 40% at 10% 62%, #FFC000, transparent 70%), radial-gradient(35% 35% at 50% 55%, #F06090, transparent 70%), radial-gradient(35% 35% at 65% 30%, #6010C0, transparent 70%), radial-gradient(35% 35% at 85% 68%, #D01030, transparent 70%), #000;
+  --bg-prev-horizon: radial-gradient(60% 60% at 85% 0%, #FFFFFF, transparent 70%), radial-gradient(40% 40% at 25% 0%, #60C8D8, transparent 70%), radial-gradient(50% 50% at 10% 90%, #F04010, transparent 70%), radial-gradient(40% 40% at 50% 100%, #F09030, transparent 70%), #0A2A3A;
+  --bg-prev-periwinkle: radial-gradient(25% 30% at 38% 20%, #FFFFFF, transparent 70%), radial-gradient(25% 30% at 52% 32%, #5A8CF8, transparent 70%), radial-gradient(28% 34% at 36% 60%, #FFFFFF, transparent 70%), radial-gradient(30% 36% at 56% 70%, #4C80F5, transparent 70%), #B0C9FF;
+  --bg-prev-sunrise: radial-gradient(40% 50% at 0% 60%, #FF6B38, transparent 70%), radial-gradient(45% 50% at 35% 50%, #FFC850, transparent 70%), radial-gradient(40% 40% at 100% 100%, #D2F7FF, transparent 70%), #FFFAE6;
+  --bg-prev-apricot: radial-gradient(50% 50% at 90% 5%, #FF8C26, transparent 70%), radial-gradient(35% 45% at 0% 45%, #FF8C4D, transparent 70%), radial-gradient(40% 40% at 60% 65%, #FBFBB8, transparent 70%), radial-gradient(40% 40% at 95% 95%, #FFE040, transparent 70%), #FFCC73;
+  --bg-prev-blush: radial-gradient(25% 25% at 92% 5%, #FF785C, transparent 70%), radial-gradient(45% 45% at 85% 65%, #FF668C, transparent 70%), radial-gradient(40% 45% at 15% 75%, #FFB38C, transparent 70%), #FFDCDC;
+  --bg-prev-sky: radial-gradient(40% 40% at 95% 80%, #2E78ED, transparent 70%), radial-gradient(40% 40% at 75% 65%, #8CBFFA, transparent 70%), #DCEDFC;
   --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
   --surface-float-hover: rgba(255,255,255,.28);
   --surface-solid: #FFFFFF;      /* reading surface in focus */
@@ -70,13 +96,16 @@
   --text-secondary: #5E5852;
   --text-muted: #8C857E;
   --signal-warn: #B07A28;        /* only for states that need action */
-  --signal-urgent: #C4432F;      /* only for what waits for the Data Team ("Without a collection") and a run above the approval threshold */
+  --signal-urgent: #C4432F;      /* only for what waits for the Data Team ("Without a collection"), a run above the approval threshold, and what is Broken */
 }
 
 [data-theme="dark"] {
   --bg-1: #2B2520;
   --bg-2: #36292D;
   --bg-3: #232A28;
+  --app-bg: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
+  --app-bg-size: 260% 260%;
+  --bg-prev-flow: radial-gradient(60% 60% at 10% 100%, #8A4A3C 0%, transparent 70%), linear-gradient(160deg, #141A2B 0%, #1F5B5E 45%, #4A2F6B 62%, #6B2A55 78%, #1A1422 100%);
   --surface-glass: rgba(70,64,58,.38);
   --surface-float-hover: rgba(255,255,255,.06);
   --surface-solid: #322E2A;

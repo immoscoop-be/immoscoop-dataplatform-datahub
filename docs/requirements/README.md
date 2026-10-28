@@ -4,7 +4,7 @@ This folder holds every requirement for Data Hub: what it must do (functional), 
 
 | Folder | What it holds | State |
 | --- | --- | --- |
-| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, ten still to be specified |
+| [`functional/`](functional/README.md) | What Data Hub does, domain by domain | Five domains specified, eleven still to be specified |
 | [`technical/`](technical/README.md) | How each functional requirement is realised | Platform specified; domains to follow |
 | [`non-functional/`](non-functional/README.md) | Security, performance, cost, localisation and other qualities | Security started; other categories to follow |
 | [`traceability.md`](traceability.md) | Generated matrix: requirement → status → realised by → commits | Generated, never edit by hand |
@@ -33,7 +33,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `AR` | Artifact registry | [01-artifact-registry.md](functional/01-artifact-registry.md) |
 | `UM` | User management | [02-user-management.md](functional/02-user-management.md) |
 | `CO` | Collections | [03-collections.md](functional/03-collections.md) |
-| `SR` | Stacks and resources | [04-stacks-and-resources.md](functional/04-stacks-and-resources.md) |
+| `SR` | Resources | [04-stacks-and-resources.md](functional/04-stacks-and-resources.md) |
 | `RC` | Resource card | [05-resource-card.md](functional/05-resource-card.md) |
 | `MR` | Maturity and release | [06-maturity-and-release.md](functional/06-maturity-and-release.md) |
 | `LN` | Log and notifications | [07-log-and-notifications.md](functional/07-log-and-notifications.md) |
@@ -41,10 +41,11 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `LE` | Lenses | [09-lenses.md](functional/09-lenses.md) |
 | `RP` | Reports | [10-reports.md](functional/10-reports.md) |
 | `BP` | Beta and promotion | [11-beta-and-promotion.md](functional/11-beta-and-promotion.md) |
-| `PL` | Permissions and library cards | [12-permissions-and-library-cards.md](functional/12-permissions-and-library-cards.md) |
+| `PL` | Permissions and Excel keys | [12-permissions-and-library-cards.md](functional/12-permissions-and-library-cards.md) |
 | `CH` | Channels | [13-channels.md](functional/13-channels.md) |
 | `CV` | Conversations | [14-conversations.md](functional/14-conversations.md) |
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
+| `LR` | Learning | [16-learning.md](functional/16-learning.md) |
 | `PF` | Platform: technical choices not tied to one domain (technical requirements only) | [00-platform.md](technical/00-platform.md) |
 | `UX` | Design of the web app: its look, navigation and screens (decisions and open points) | [principles.md](../design/principles.md) |
 
@@ -54,7 +55,7 @@ Non-functional categories are listed in [`non-functional/README.md`](non-functio
 
 - An ID is never reused or renumbered. A requirement that is no longer wanted gets status `Withdrawn` and stays in place.
 - A new requirement takes the next free number in its type and code.
-- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [Log catalogue](functional/log-catalogue.md).
+- Log IDs of the app itself, such as `RES-001`, are a different thing: they live in the [Log catalogue](functional/log-catalogue.md). So are Message IDs, such as `MSG-RES-02`, in the [Message catalogue](functional/message-catalogue.md).
 
 ### Confluence IDs
 
@@ -112,6 +113,10 @@ Always link an ID when you mention it outside its own definition: `[FR-AR-05](fu
 | Implemented | Built. At least one commit references it with `Implements:`. |
 | Verified | Built and tested. |
 | Withdrawn | No longer wanted. Kept for history, never deleted. |
+
+## Could: not in v1
+
+A requirement or open point that is not part of the first build ends with *Could, not in v1*, with the date and who set it, and a link to the decision. It keeps its status and stays open; the review lists such open points apart, after those v1 needs. What is not marked is part of v1. Usage reporting on Data Hub is not part of v1 ([DEC-DH-75](../overview/data-hub.md#dec-dh-75)).
 
 "Specified" is deliberately not called "Described": Described is a maturity level of a Resource (see the [definitions](../definitions.md#maturity-levels)), and the two must not be confused.
 

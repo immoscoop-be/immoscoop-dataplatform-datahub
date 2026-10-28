@@ -5,9 +5,9 @@
 | Kind | Backend service on Cloud Run |
 | Code | `services/query` |
 | Schema | None in v1 |
-| Domains | [Stacks and resources](../../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../../requirements/functional/13-channels.md) |
+| Domains | [Resources](../../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../../requirements/functional/13-channels.md) |
 
-**In one sentence:** query is the only service that reads the Stacks: it shows previews, runs free SQL for Claude, and serves feeds to Excel, always only over Resources the User may see.
+**In one sentence:** query is the only service that reads the tables of the Resources: it shows previews, runs free SQL for Claude, and serves feeds to Excel, always only over Resources the User may see.
 
 ## Responsibilities
 
@@ -32,12 +32,12 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | --- | --- |
 | `GET /resources/{id}/preview` | The first rows of a Resource |
 | `POST /queries` | Run free SQL |
-| `GET /feeds/{id}` | A feed for Power Query, with a Library Card ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
+| `GET /feeds/{id}` | A feed for Power Query, with a Excel key ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
 
 ## Talks to
 
-BigQuery (the Stacks only) and catalogue (visibility, with the token of the User).
+BigQuery (the tables of the Resources only) and catalogue (visibility, with the token of the User).
 
 ## Permissions
 
-See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): read access to the Stacks and permission to run BigQuery jobs. The only service with access to data.
+See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): read access to the tables of the Resources and permission to run BigQuery jobs. The only service with access to data.

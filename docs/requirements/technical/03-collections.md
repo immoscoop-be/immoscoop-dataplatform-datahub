@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Collections](../functional/03-collections.md) |
-| Status | Implemented: Collections, their Log, and their Resources ([Stacks and resources](04-stacks-and-resources.md)) |
+| Status | Implemented: Collections, their Log, and their Resources ([Resources](04-stacks-and-resources.md)) |
 | Source of truth | This file |
 
 How Collections are kept and guarded, in the service [catalogue](../../architecture/services/catalogue.md), with the Groups of the User from [identity](../../architecture/services/identity.md).
@@ -20,7 +20,7 @@ The table `collections` holds one row per Collection: a UUID as its ID, the name
 - The name has 1 to 80 characters and is unique without regard to case among the Collections that are not dissolved: a unique index on `lower(name)` where `dissolved_at` is null. A name already in use is refused with `409 name_taken`.
 - The description has 1 to 500 characters.
 - The colour is the name of a colour from the palette in lower case, such as `rose`; a database check refuses any other value. The names and their hex codes live in `@datahub/contracts`, so that catalogue and the web app use one list.
-- The icon is optional: the name of an outline icon of Tabler Icons that is not the logo of a brand ([DEC-CO-13](../functional/03-collections.md#dec-co-13), [DEC-CO-14](../functional/03-collections.md#dec-co-14)), such as `building-estate`; any other name is refused with `400`. The list is `@datahub/contracts/collection-icons`, generated from `@tabler/icons` by `pnpm icons:build`, with each icon's category and search words; a test fails when it no longer matches the installed version. An icon that a later version of Tabler no longer has is returned as `null`, so the web app never asks for a drawing that is gone. The web app serves each icon as its own file, `icons/<name>.svg`, and draws it as a CSS mask in the colour around it, so its build holds no icon; the list to search through is a separate script it loads when the form opens.
+- The icon is optional: the name of an outline icon of Tabler Icons that is not the logo of a brand ([DEC-CO-13](../functional/03-collections.md#dec-co-13), [DEC-CO-14](../functional/03-collections.md#dec-co-14)), such as `building-estate`; any other name is refused with `400`. The list is `@datahub/contracts/collection-icons`, generated from `@tabler/icons` by `pnpm icons:build`, with each icon's category and search words; a test fails when it no longer matches the installed version. An icon that a later version of Tabler no longer has is returned as `null`, so the web app never asks for a drawing that is gone. The web app serves each icon as its own file, `icons/<name>.svg`, and draws it as a CSS mask in the colour around it, so its build holds no icon; the list to search through is a separate script it loads when the form opens. *Note of 2026-10-25: the icons move to Phosphor ([DEC-CO-19](../functional/03-collections.md#dec-co-19), [OP-CO-16](../functional/03-collections.md#op-co-16)); not built yet.*
 - The Owner Unit is kept by its fixed Google ID ([FR-UM-08](../functional/02-user-management.md#fr-um-08)), with its address and name at the moment it was chosen, to show them ([TR-CO-03](#tr-co-03)).
 - Dissolving sets `dissolved_at`. The row stays, so that its Log keeps its subject; a dissolved Collection is no longer listed or found, and its name is free again.
 
@@ -64,4 +64,5 @@ The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-
 
 ## Open points
 
-- [ ] <a id="op-co-08"></a>**OP-CO-08** · Keep the address and name of an Owner Unit up to date when the group changes in Workspace, for example with the Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)). *Raised on 2026-10-19.*
+- [x] <a id="op-co-08"></a>**OP-CO-08** · Keep the address and name of an Owner Unit up to date when the group changes in Workspace, for example with the Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)). *Raised on 2026-10-19.* *Decided on 2026-10-25, by Max: by hand, in the form to edit the Collection: choosing the group again brings its name and address up to date, which its Owner Unit and the Data Team can do ([FR-CO-35](../functional/03-collections.md#fr-co-35), [DEC-CO-18](../functional/03-collections.md#dec-co-18)). The Synchronisation ([FR-UM-07](../functional/02-user-management.md#fr-um-07)) can take it over later.*
+- [ ] <a id="op-co-18"></a>**OP-CO-18** · Decide how the Data Team finds every group of the domain to hand a Collection to ([FR-CO-35](../functional/03-collections.md#fr-co-35)): identity lists only the groups of the User today (`GET /me/groups`). Proposal: an endpoint in identity that searches the groups of the domain, for the Data Team only. *Raised on 2026-10-25, while recording the decision.*
