@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 77 open, of 243: 67 for v1 and 10 marked Could |
+| Open points | 77 open, of 243: 66 for v1 and 11 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1184,7 +1184,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 77 still open, 10 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 77 still open, 11 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1225,10 +1225,9 @@ Source: [requirements/functional/03-collections.md](../requirements/functional/0
 
 ### Stacks and resources
 
-Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 4 open
+Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 3 open
 
 - [ ] **[OP-SR-02](../requirements/functional/04-stacks-and-resources.md#op-sr-02)** · Complete the [Log catalogue](../requirements/functional/log-catalogue.md), with the Log IDs from the other domains.
-- [ ] **[OP-SR-14](../requirements/functional/04-stacks-and-resources.md#op-sr-14)** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](../requirements/functional/05-resource-card.md#fr-rc-04), [FR-RC-05](../requirements/functional/05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.*
 - [ ] **[OP-SR-15](../requirements/functional/04-stacks-and-resources.md#op-sr-15)** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](../requirements/functional/03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40). *Raised on 2026-10-25, while designing how a Resource is stored.*
 - [ ] **[OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17)** · Work out the Request to run a query above 1 GB ([DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29)): what accepting it allows, one run or the query as it is, and for how long; whether a change to its SQL needs a new Request; and its timeout, as for a Lens ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Message Catalogue has the Request ([MSG-QRY-01](../requirements/functional/message-catalogue.md#msg-qry-01)) and its decision ([MSG-CNV-05](../requirements/functional/message-catalogue.md#msg-cnv-05)). *Raised on 2026-10-28, while making the Message Catalogue.*
 
@@ -1359,6 +1358,7 @@ Open points Max marked as a Could: not part of the first build ([Could: not in v
 - [ ] **[OP-DH-32](../overview/open-themes.md#op-dh-32)** · Decide the relation to our own manifest MCP server under construction, and to the broader connector rollout. *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 - [ ] **[OP-LR-16](../requirements/functional/16-learning.md#op-lr-16)** · Decide whether what a User does in Claude counts towards their progress: their answers, the cards they understood, their Weekly Goal. The design counts it, as the MCP App acts for the signed-in User ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)). *Raised on 2026-10-25.* *Note of 2026-10-25: with nothing scored, only a card seen and "I understand it" can count ([DEC-LR-09](../requirements/functional/16-learning.md#dec-lr-09)).* *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 - [ ] **[OP-MR-02](../requirements/functional/06-maturity-and-release.md#op-mr-02)** · Work out the domain [Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md): kinds of checks, incidents and alerts. *Could, not in v1: set on 2026-10-28, by Max; checks and monitoring come in version 2 ([DEC-MR-13](../requirements/functional/06-maturity-and-release.md#dec-mr-13)).*
+- [ ] **[OP-SR-14](../requirements/functional/04-stacks-and-resources.md#op-sr-14)** · Work out what follows "Make it an anomaly" on a Signal ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)): how the Anomaly shows on the Resource Card and in its History ([FR-RC-04](../requirements/functional/05-resource-card.md#fr-rc-04), [FR-RC-05](../requirements/functional/05-resource-card.md#fr-rc-05)), who resolves it, and when it is closed. The link is in the Messages on a Resource; what it leads to is not designed. *Raised on 2026-10-24, while checking the screens against the requirements.* *Could, not in v1: set on 2026-10-28, by Max; making a Signal an Anomaly is left out of version 1 ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)).*
 
 ### Decided during the review
 

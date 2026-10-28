@@ -183,7 +183,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
 ### Messages on a Resource
 
 - **No tab of their own** ([DEC-UX-67](#dec-ux-67)): the Messages on a Resource open in the slide-in from "Messages" in its header, as on every object ([DEC-UX-29](#dec-ux-29)); "Ask a question" opens it with Question chosen. See [Messages](#messages).
-- On a Signal, the Owner and the Data Team can make it an Anomaly.
+- On a Signal, the Owner and the Data Team can make it an Anomaly. Not in version 1: the prototypes show the link, the build leaves it out ([FR-SR-30](../requirements/functional/04-stacks-and-resources.md#fr-sr-30)).
 - Every Message knows its Subject, the object it is about: a Resource here, a Lens or a query elsewhere, the same way ([DEC-CV-01](../requirements/functional/14-conversations.md#dec-cv-01), [DEC-CV-03](../requirements/functional/14-conversations.md#dec-cv-03)). Outside the page of its object, in the Message Centre or a notification, a Message shows that object with its icon and name and links to it, opening at the Message ([FR-CV-02](../requirements/functional/14-conversations.md#fr-cv-02)).
 
 ### Preview
