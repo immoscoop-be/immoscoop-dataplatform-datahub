@@ -15,7 +15,9 @@
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import { NotFound as Missing, Refused } from '../lib/api.js';
   import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, OwnerUnit, Resource } from '../lib/catalogue.js';
+  import type { requestOf } from '../lib/grain.js';
   import type { Identity } from '../lib/identity.js';
+  import type { Registry } from '../lib/registry.js';
   import { collectionPath, resourcePath } from '../lib/routes.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
@@ -31,6 +33,7 @@
     id,
     catalogue,
     identity,
+    registry,
     dataTeam,
     own,
     waiting,
@@ -40,6 +43,7 @@
     id: string | undefined;
     catalogue: Catalogue;
     identity: Identity;
+    registry: Registry;
     dataTeam: boolean;
     /** The fixed IDs of the groups of the User. */
     own: readonly string[];
@@ -132,22 +136,22 @@
     }
   }
 
-  async function add(ids: string[]): Promise<'added' | 'elsewhere' | 'failed'> {
+  async function add(items: ReturnType<typeof requestOf>[]): Promise<{ outcome: 'added' | 'elsewhere' | 'refused' | 'failed'; message?: string }> {
     if (!collection) {
-      return 'failed';
+      return { outcome: 'failed' };
     }
     try {
-      resources = await catalogue.addResources(collection.id, ids);
+      resources = await catalogue.addResources(collection.id, items);
       adding = false;
       await Promise.all([load(collection.id), onchanged()]);
-      return 'added';
+      return { outcome: 'added' };
     } catch (error) {
       if (error instanceof Refused && error.code === 'in_another_collection') {
         await onchanged();
-        return 'elsewhere';
+        return { outcome: 'elsewhere' };
       }
       console.error('The Resources could not be added', error);
-      return 'failed';
+      return error instanceof Refused && error.code === 'invalid_request' ? { outcome: 'refused', message: error.detail } : { outcome: 'failed' };
     }
   }
 
@@ -272,7 +276,7 @@
   {/if}
 
   {#if adding && waiting}
-    <AddResources collection={shown.name} {waiting} onadd={add} onclose={() => (adding = false)} />
+    <AddResources collection={shown.name} {waiting} {catalogue} {registry} onadd={add} onclose={() => (adding = false)} />
   {/if}
 {/if}
 

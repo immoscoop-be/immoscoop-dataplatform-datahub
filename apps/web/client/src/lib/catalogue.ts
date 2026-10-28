@@ -11,6 +11,8 @@ export interface Resource {
   resourceType: string;
   projectId: string;
   projectName: string | null;
+  /** The Node of the registry it is the table of. */
+  nodeId: string;
   description: string;
   exposures: string[];
   collectionId: string | null;
@@ -125,8 +127,11 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async dissolveCollection(id: string): Promise<void> {
       await call(collection(id), { method: 'DELETE' });
     },
-    /** Adds Resources without a Collection to it, all of them or none (FR-CO-31): only the Data Team may. */
-    async addResources(id: string, resources: readonly string[]): Promise<CollectionResource[]> {
+    /**
+     * Adds Resources without a Collection to it, all of them or none (FR-CO-31): only the Data Team may.
+     * Each by its ID, or with what the Data Admin recorded for it (FR-CO-33, FR-CO-34).
+     */
+    async addResources(id: string, resources: readonly (string | ({ id: string } & Record<string, unknown>))[]): Promise<CollectionResource[]> {
       return ((await (await call(`${collection(id)}/resources`, { method: 'POST', body: { resources } })).json()) as { resources: CollectionResource[] }).resources;
     },
     /** Takes a Resource out of its Collection: only the Data Team may (FR-CO-14). */

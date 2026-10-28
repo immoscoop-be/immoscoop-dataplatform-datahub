@@ -10,11 +10,23 @@
    */
   let {
     title,
+    wide = false,
     onclose,
+    top,
     head,
     children,
     foot,
-  }: { title: string; onclose: () => void; head?: Snippet; children: Snippet; foot: Snippet } = $props();
+  }: {
+    title: string;
+    /** Wider, for a task with a table, such as the grain and relations of Resources (DEC-UX-58). */
+    wide?: boolean;
+    onclose: () => void;
+    /** What stands above its title, such as its steps. */
+    top?: Snippet;
+    head?: Snippet;
+    children: Snippet;
+    foot: Snippet;
+  } = $props();
 
   let sheet: HTMLElement | undefined = $state();
   $effect(() => {
@@ -28,7 +40,8 @@
 <svelte:window onkeydown={(event) => event.key === 'Escape' && onclose()} />
 
 <div class="backdrop" aria-hidden="true" onclick={onclose}></div>
-<div class="sheet" role="dialog" aria-modal="true" aria-label={title} tabindex="-1" bind:this={sheet}>
+<div class="sheet" class:wide role="dialog" aria-modal="true" aria-label={title} tabindex="-1" bind:this={sheet}>
+  {@render top?.()}
   <div class="head">
     <div class="titles">
       <h2>{title}</h2>
@@ -44,6 +57,7 @@
   .backdrop { position: fixed; inset: 0; z-index: 30; background: var(--sheet-backdrop); }
   .sheet { position: fixed; z-index: 31; top: 20px; right: 20px; bottom: 20px; width: 460px; max-width: calc(100vw - 40px); display: flex; flex-direction: column;
     border-radius: var(--radius-xl); background: var(--surface-solid); box-shadow: var(--sheet-shadow); padding: 22px 22px 18px; outline: none; }
+  .wide { width: 840px; }
   .head { display: flex; align-items: flex-start; gap: 8px; }
   .titles { flex: 1; min-width: 0; }
   h2 { font-size: 19px; font-weight: var(--weight-medium); margin: 0; }

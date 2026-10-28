@@ -10,6 +10,7 @@
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { initialsOf } from './lib/initials.js';
+  import { createRegistry } from './lib/registry.js';
   import { NEW_COLLECTION, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { SECTIONS, sectionLabel } from './lib/sections.js';
@@ -34,6 +35,7 @@
   const session = createSession();
   const identity = $derived(createIdentity(config, session));
   const catalogue = $derived(createCatalogue(config, session));
+  const registry = $derived(createRegistry(config, session));
   const router = new Router();
   const system = new SystemTheme();
 
@@ -236,6 +238,7 @@
         id={page.kind === 'collection' ? page.id : undefined}
         {catalogue}
         {identity}
+        {registry}
         {dataTeam}
         own={signedIn.me.groups}
         {waiting}

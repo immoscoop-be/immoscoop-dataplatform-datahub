@@ -23,16 +23,29 @@ import trayFill from '@phosphor-icons/core/assets/fill/tray-fill.svg?raw';
 import usersThreeFill from '@phosphor-icons/core/assets/fill/users-three-fill.svg?raw';
 import warningCircleFill from '@phosphor-icons/core/assets/fill/warning-circle-fill.svg?raw';
 import xCircleFill from '@phosphor-icons/core/assets/fill/x-circle-fill.svg?raw';
+import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
+import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
+import bracketsSquare from '@phosphor-icons/core/assets/regular/brackets-square.svg?raw';
 import caretDown from '@phosphor-icons/core/assets/regular/caret-down.svg?raw';
+import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
+import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
 import googleLogo from '@phosphor-icons/core/assets/regular/google-logo.svg?raw';
+import graph from '@phosphor-icons/core/assets/regular/graph.svg?raw';
+import info from '@phosphor-icons/core/assets/regular/info.svg?raw';
+import key from '@phosphor-icons/core/assets/regular/key.svg?raw';
+import lightbulb from '@phosphor-icons/core/assets/regular/lightbulb.svg?raw';
+import lockSimple from '@phosphor-icons/core/assets/regular/lock-simple.svg?raw';
 import magnifyingGlass from '@phosphor-icons/core/assets/regular/magnifying-glass.svg?raw';
 import minusCircle from '@phosphor-icons/core/assets/regular/minus-circle.svg?raw';
 import monitor from '@phosphor-icons/core/assets/regular/monitor.svg?raw';
 import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt.svg?raw';
+import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
 import shuffle from '@phosphor-icons/core/assets/regular/shuffle.svg?raw';
 import table from '@phosphor-icons/core/assets/regular/table.svg?raw';
 import tray from '@phosphor-icons/core/assets/regular/tray.svg?raw';
+import user from '@phosphor-icons/core/assets/regular/user.svg?raw';
 import usersThree from '@phosphor-icons/core/assets/regular/users-three.svg?raw';
+import warning from '@phosphor-icons/core/assets/regular/warning.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 
 export const ICONS = {
@@ -58,16 +71,29 @@ export const ICONS = {
   'users-three-fill': usersThreeFill,
   'warning-circle-fill': warningCircleFill,
   'x-circle-fill': xCircleFill,
+  'arrow-left': arrowLeft,
+  'arrow-right': arrowRight,
+  'brackets-square': bracketsSquare,
   'caret-down': caretDown,
+  check,
+  'file-text': fileText,
   'google-logo': googleLogo,
+  graph,
+  info,
+  key,
+  lightbulb,
+  'lock-simple': lockSimple,
   'magnifying-glass': magnifyingGlass,
   'minus-circle': minusCircle,
   monitor,
   'paper-plane-tilt': paperPlaneTilt,
+  plus,
   shuffle,
   table,
   tray,
+  user,
   'users-three': usersThree,
+  warning,
   x,
 } as const;
 
