@@ -44,6 +44,8 @@ In library terms: just as a library arranges its shelves into collections, each 
 - <a id="dec-co-21"></a>**DEC-CO-21** · A Data Admin may map a field to an Entity and its identity that the Domain Model does not have, such as `review.reviewId`, as written. Data Hub keeps it marked as not in the Domain Model, and does one thing with it: it links the Resources that carry the same Entity and identity ([FR-RC-09](05-resource-card.md#fr-rc-09)). *Decided on 2026-10-28, by Max ([OP-CO-14](#op-co-14)).*
 - <a id="dec-co-22"></a>**DEC-CO-22** · After a Resource is added, only a Data Admin changes its grain and the mappings of its fields, on the page of the Resource. Its Owner does not. *Decided on 2026-10-28, by Max ([OP-CO-15](#op-co-15)).*
 - <a id="dec-co-23"></a>**DEC-CO-23** · A Collection has no colour. Its icon is the only thing chosen to recognise it. This replaces the colour of [DEC-CO-07](#dec-co-07) and [FR-CO-04](#fr-co-04), the Collection palette, and the stripe on the edge of its card ([DEC-UX-105](../../design/principles.md#dec-ux-105)). *Decided on 2026-10-28, by Max: the colour does not work.*
+- <a id="dec-co-24"></a>**DEC-CO-24** · When the author of a Lens owns no Collection yet, "Make it a lens" offers to make one in the same step: a name, one of their groups as its Owner Unit, and an icon; it is private, and can be shared later. The Lens then goes into it ([DEC-CO-20](#dec-co-20), [FR-CO-12](#fr-co-12)). Someone who is in no group can own no Collection, and keeps their query as a query. *Decided on 2026-10-28, by Max ([OP-CO-19](#op-co-19)).*
+- <a id="dec-co-25"></a>**DEC-CO-25** · The icon of a Collection is required, as it is the only thing that sets a Collection apart ([DEC-CO-23](#dec-co-23)). This replaces [FR-CO-05](#fr-co-05). *Decided on 2026-10-28, by Max ([OP-CO-20](#op-co-20)).*
 
 ## What a Collection has
 
@@ -51,7 +53,7 @@ In library terms: just as a library arranges its shelves into collections, each 
 | --- | --- | --- |
 | Name | Yes | Unique within Data Hub |
 | Description | Yes | Short: which functional domain of Immoscoop the Collection covers |
-| Icon | No | Any icon of Phosphor but the logos of brands, the light weight by default ([DEC-CO-19](#dec-co-19)) |
+| Icon | Yes ([DEC-CO-25](#dec-co-25)) | Any icon of Phosphor but the logos of brands, the light weight by default ([DEC-CO-19](#dec-co-19)) |
 | Owner | Yes | Exactly one Owner Unit: a Google group of the own Workspace domain that the one choosing it is in ([DEC-CO-09](#dec-co-09)) |
 | Visibility | Yes | Private or public ([DEC-CO-10](#dec-co-10)) |
 
@@ -75,7 +77,7 @@ The "muted" palette by Paul Tol is designed for qualitative series: the colours 
 
 ## Flow
 
-1. **Create.** Anyone creates a Collection, with a name, description, optionally an icon, an Owner Unit from their own groups, and private or public.
+1. **Create.** Anyone creates a Collection, with a name, description, an icon, an Owner Unit from their own groups, and private or public.
 2. **Add Resources.** The Data Team adds Resources, which come from the exposures in the dbt projects ([DEC-SR-22](04-stacks-and-resources.md#dec-sr-22)). With that, the Data Team makes them available to the Owner: step one of the Release.
 3. **Publish.** The Owner publishes the Resources, and thereby confirms them. They are then visible to everyone who sees the Collection: in a public Collection, the whole company.
 4. **Manage.** The Owner Unit and the Data Team change the fields, hand the Collection to another Owner Unit, or switch it between private and public.
@@ -119,7 +121,9 @@ The colour is required and comes from the [colour palette](#colour-palette). Mor
 <a id="fr-co-05"></a>
 ### FR-CO-05 · Icon is optional and comes from the fixed set
 
-**Status:** Implemented · **Confluence:** CO-05
+**Status:** Withdrawn · **Confluence:** CO-05
+
+*Withdrawn on 2026-10-28, by Max: the icon is required ([DEC-CO-25](#dec-co-25)).*
 
 The icon is optional and comes from the fixed set of line icons.
 
@@ -436,8 +440,8 @@ What someone may see and do beyond Collections ([Permissions and Excel keys](12-
 - [x] <a id="op-co-15"></a>**OP-CO-15** · Decide where the relations of a Resource can be changed after it is added, and by whom: on the page of the Resource, by a Data Admin only, or also by its Owner ([FR-CO-33](#fr-co-33)). *Raised on 2026-10-25, while designing the relations.* *Decided on 2026-10-28, by Max: a Data Admin only, on the page of the Resource ([DEC-CO-22](#dec-co-22)); how it looks there is [OP-UX-36](../../design/principles.md#op-ux-36).*
 - [x] <a id="op-co-16"></a>**OP-CO-16** · Decide how the icons of existing Collections move from Tabler to Phosphor ([DEC-CO-19](#dec-co-19)): the two sets name their icons differently. Proposal: map the names, by name and search words, and show the Data Team the icons without a match, to choose again. *Raised on 2026-10-25, while recording the decision.* *Decided on 2026-10-28, by Max: nothing moves; Data Hub starts from zero, so there are no existing icons to map.*
 - [x] <a id="op-co-17"></a>**OP-CO-17** · Decide who chooses the weight of the icon of a Collection, now that the light weight is favoured and the others are possible ([DEC-CO-19](#dec-co-19)): whoever chooses the icon, next to it, or Data Hub, light everywhere. Proposal: light by default, with the weight to choose next to the icon. *Raised on 2026-10-25, while recording the decision.* *Decided on 2026-10-28, by Max: for now Data Hub uses only the light weight, so there is nothing to choose ([DEC-CO-19](#dec-co-19)).*
-- [ ] <a id="op-co-19"></a>**OP-CO-19** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](#fr-co-12)). *Raised on 2026-10-26, in the review of Max.*
-- [ ] <a id="op-co-20"></a>**OP-CO-20** · Decide whether the icon of a Collection becomes required, now that it is the only thing that sets a Collection apart ([DEC-CO-23](#dec-co-23), [FR-CO-05](#fr-co-05)). Proposal: yes. *Raised on 2026-10-28, in the review of Max.*
+- [x] <a id="op-co-19"></a>**OP-CO-19** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](#fr-co-12)). *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-28, by Max: "Make it a lens" offers to make one in the same step ([DEC-CO-24](#dec-co-24)).*
+- [x] <a id="op-co-20"></a>**OP-CO-20** · Decide whether the icon of a Collection becomes required, now that it is the only thing that sets a Collection apart ([DEC-CO-23](#dec-co-23), [FR-CO-05](#fr-co-05)). Proposal: yes. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: required ([DEC-CO-25](#dec-co-25)).*
 
 ## Builds on
 

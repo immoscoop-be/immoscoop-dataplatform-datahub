@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 31 open, of 245: 13 for v1 and 18 marked Could |
+| Open points | 29 open, of 245: 11 for v1 and 18 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,14 +1183,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 31 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 29 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail
 
 ### Open themes
 
@@ -1284,11 +1284,9 @@ Source: [requirements/technical/00-platform.md](../requirements/technical/00-pla
 
 ### Collections: technical requirements
 
-Source: [requirements/technical/03-collections.md](../requirements/technical/03-collections.md) · 3 open
+Source: [requirements/technical/03-collections.md](../requirements/technical/03-collections.md) · 1 open
 
 - [ ] **[OP-CO-18](../requirements/technical/03-collections.md#op-co-18)** · Decide how the Data Team finds every group of the domain to hand a Collection to ([FR-CO-35](../requirements/functional/03-collections.md#fr-co-35)): identity lists only the groups of the User today (`GET /me/groups`). Proposal: an endpoint in identity that searches the groups of the domain, for the Data Team only. *Raised on 2026-10-25, while recording the decision.*
-- [ ] **[OP-CO-19](../requirements/functional/03-collections.md#op-co-19)** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](../requirements/functional/03-collections.md#fr-co-12)). *Raised on 2026-10-26, in the review of Max.*
-- [ ] **[OP-CO-20](../requirements/functional/03-collections.md#op-co-20)** · Decide whether the icon of a Collection becomes required, now that it is the only thing that sets a Collection apart ([DEC-CO-23](../requirements/functional/03-collections.md#dec-co-23), [FR-CO-05](../requirements/functional/03-collections.md#fr-co-05)). Proposal: yes. *Raised on 2026-10-28, in the review of Max.*
 
 ### Could: not in v1
 
@@ -1520,6 +1518,11 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-LR-26](../requirements/functional/16-learning.md#op-lr-26)** · Decide who places the markers on system text and which cards each lists, and how they stay right when a card or a screen changes ([FR-LR-35](../requirements/functional/16-learning.md#fr-lr-35)). *Raised on 2026-10-25.* *Note of 2026-10-25: for names, where the markers stand follows from the list of names ([FR-LR-37](../requirements/functional/16-learning.md#fr-lr-37), [OP-DH-42](../overview/open-themes.md#op-dh-42)).* *Decided on 2026-10-28, by Max: part of the release checks of every functionality ([DEC-LR-22](../requirements/functional/16-learning.md#dec-lr-22)).*
 - [x] **[OP-LR-27](../requirements/functional/16-learning.md#op-lr-27)** · Decide what a minimal Learning Card for a name holds, and who writes it ([FR-LR-37](../requirements/functional/16-learning.md#fr-lr-37)). Proposal: the quick path, Why now, Core idea and You can now, with the Core idea taken from the explanation of the name in the Glossary; See it and Check your understanding come when the card grows. Check it against the principles page, which wants every card to work with a recognisable example ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). *Raised on 2026-10-25, while recording the decision of Max.* *Decided on 2026-10-28, by Max: as proposed ([DEC-LR-23](../requirements/functional/16-learning.md#dec-lr-23)).*
 - [x] **[OP-LR-28](../requirements/functional/16-learning.md#op-lr-28)** · Decide how the English version of a Learning Card is made ([NFR-LOC-12](../requirements/non-functional/localisation.md#nfr-loc-12)): the master learning plan and its cards are written in Dutch. Proposal: each card is written in Dutch, translated into English with Claude, and checked by the Data Team before it is published; both versions are kept, and a change to one marks the other as to update. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: written in English in this repository, with a Dutch translation of each ([DEC-LR-24](../requirements/functional/16-learning.md#dec-lr-24)).*
+
+**Collections: technical requirements**
+
+- [x] **[OP-CO-19](../requirements/functional/03-collections.md#op-co-19)** · Decide what happens when the author of a Lens owns no Collection yet ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)). Proposal: "Make it a lens" offers to make a Collection in the same step, private by default, for their own Owner Unit; anyone may create one ([FR-CO-12](../requirements/functional/03-collections.md#fr-co-12)). *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-28, by Max: "Make it a lens" offers to make one in the same step ([DEC-CO-24](../requirements/functional/03-collections.md#dec-co-24)).*
+- [x] **[OP-CO-20](../requirements/functional/03-collections.md#op-co-20)** · Decide whether the icon of a Collection becomes required, now that it is the only thing that sets a Collection apart ([DEC-CO-23](../requirements/functional/03-collections.md#dec-co-23), [FR-CO-05](../requirements/functional/03-collections.md#fr-co-05)). Proposal: yes. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: required ([DEC-CO-25](../requirements/functional/03-collections.md#dec-co-25)).*
 
 ### To confirm
 

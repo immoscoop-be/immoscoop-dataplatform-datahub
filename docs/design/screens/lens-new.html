@@ -96,10 +96,19 @@
    <div class="param-row" style="margin-top:6px"><span class="mono">@leadChannel</span><input value="Lead channel" aria-label="Name users see"><span class="meta">List</span><input value="All channels" aria-label="Default"></div>
    <p class="meta" style="display:block;line-height:1.5;margin:8px 0 0">From your query, with the defaults it has. Name each one as users see it; users can always change their values. To add one, add it in the query.</p>
   </div>
-  <label class="field" style="margin-top:16px"><span>Goes into a Collection you own</span>
+  <label class="field" style="margin-top:16px" data-pane-group="owns" data-pane="some"><span>Goes into a Collection you own</span>
    <select><option selected>Credit leads · the credit team</option><option>KBC follow-up work · only you, private</option></select>
    <span class="meta" style="display:block;line-height:1.5;margin-top:6px">A Lens always goes into a Collection you own, even when its Resources are in other Collections: they come along, each with its own Level. <a class="text-link" style="display:inline"><span>New Collection</span></a></span>
   </label>
+  <div class="sub-tile" style="margin-top:16px;padding:14px 16px" data-pane-group="owns" data-pane="none" hidden>
+   <div class="label">Goes into a new Collection</div>
+   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">You own no Collection yet, and a Lens always goes into one you own. Make it here; it is private, and you can share it later.</p>
+   <label class="field"><span>Name</span><input value="Mia's lenses"></label>
+   <label class="field" style="margin-top:10px"><span>Owned by</span><select><option selected>Marketing team · marketing@immoscoop.be</option><option>Brussels office · brussels@immoscoop.be</option></select></label>
+   <div class="field" style="margin-top:10px"><span>Icon</span>
+    <div class="icon-grid" role="radiogroup" aria-label="Icon" style="margin-top:4px"><button type="button" class="on" aria-label="Lightbulb"><i class="ph ph-lightbulb"></i></button><button type="button" aria-label="Chart"><i class="ph ph-chart-line-up"></i></button><button type="button" aria-label="Megaphone"><i class="ph ph-megaphone"></i></button><button type="button" aria-label="House"><i class="ph ph-house"></i></button><button type="button" aria-label="Users"><i class="ph ph-users-three"></i></button><button type="button" aria-label="More icons"><i class="ph ph-dots-three"></i></button></div>
+   </div>
+  </div>
   <div class="status-row" style="margin-top:4px"><span class="meta" style="margin-right:2px">Uses</span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Weekly lead volume<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span><span class="status"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>Lead sources<span class="muted">· Credit leads</span><span class="maturity" data-level="4"></span></span></div>
   <p class="meta" style="display:block;line-height:1.5;margin-top:10px">Level 4 · Explored, the lowest of its Resources. Everyone who may use both Resources finds it.</p>
  </section>
@@ -138,6 +147,10 @@
  </aside>
 </div>
 </main>
+</div>
+<div class="proto-switch" data-group="owns" role="tablist" aria-label="Prototype: whether the author owns a Collection" style="bottom:72px">Owns
+ <button class="seg on" data-target="some" role="tab" aria-selected="true">A Collection</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">None yet</button>
 </div>
 <div class="proto-switch" data-group="size" role="tablist" aria-label="Prototype: size of the Lens">Size
  <button class="seg on" data-target="within" role="tab" aria-selected="true">Within range</button>

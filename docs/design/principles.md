@@ -284,7 +284,8 @@ Screen: [lens-new](screens/lens-new.html). Designed on 2026-10-23, to review. Th
   - **Large:** a warning in the warning colour, what would make it read less, "Publish anyway" and "Back to the query".
   - **Very large:** it waits for the Data Team ([FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)): an optional word for the Data Team and "Send to the data team".
 - **Under it,** that a Lens that later reads more than its range is checked again ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)).
-- The prototype shows the three outcomes as scenarios, with a switch at the bottom. It shows an author in the Owner Unit; where the Lens of a colleague outside it goes is open ([OP-LE-04](../requirements/functional/09-lenses.md#op-le-04)), and so is how the rest of the story of a Lens is asked ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
+- **An author who owns no Collection yet** ([DEC-UX-111](#dec-ux-111)): in place of "Goes into a Collection you own", a tile "Goes into a new Collection" says so in a sentence and asks for its name, one of their groups as its owner, and its icon; it is private, to share later.
+- The prototype shows the three outcomes of the size check as scenarios, with a switch at the bottom, and above it a switch for an author who owns a Collection or none yet (`?owns=none`).
 
 ## Page of a Lens
 
@@ -550,6 +551,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-108"></a>**DEC-UX-108** · The User chooses the background on My page, in a tab Background: two choices, one for day and one for night. The tab shows the backgrounds of the current theme only, Random first, the default, then each background with a small picture; to choose the other, the User switches the theme. The choices are settings of the User, kept in Data Hub ([DEC-UX-96](#dec-ux-96)). This replaces "nobody chooses it" of [DEC-UX-94](#dec-ux-94). *Decided on 2026-10-28, by Max; first with one choice that went back to Random on a switch of theme, then, the same day, one choice per theme.*
 - <a id="dec-ux-109"></a>**DEC-UX-109** · The flowing backgrounds move at random, without a loop: every movement turns at a random speed of its own from a random start, so that they never repeat and differ each time Data Hub starts. Nine flowing lights join them, after pictures Max chose: four by night (Aurora, Embers, Dusk, Horizon) and five by day (Periwinkle, Sunrise, Apricot, Blush, Sky), each to choose on My page. *Decided on 2026-10-28, by Max, after a test by day.*
 - <a id="dec-ux-110"></a>**DEC-UX-110** · Fusilli joins the backgrounds of the day: a photo of pasta that Max chose, shown as it is, not painted, and blurred by the frames as the other pictures are. *Decided on 2026-10-28, by Max.*
+- <a id="dec-ux-111"></a>**DEC-UX-111** · On "Make it a lens", an author who owns no Collection makes one in the same screen: a tile in place of the choice of Collection, with its name, one of their groups and its icon, private by default. *Decided on 2026-10-28, by Max ([DEC-CO-24](../requirements/functional/03-collections.md#dec-co-24)).*
 
 ## Open points
 
