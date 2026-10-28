@@ -898,3 +898,45 @@ if (scopeBox) {
 
   lensButton(); syncRun();
 }
+
+// The Lineage (DEC-UX-95): one smooth curve per edge, from the right side of a model to the left side of the next, with an
+// arrowhead, drawn on a layer over the lineage from where the cards are. Data flows left to right: an upstream model to
+// what it feeds, this Resource to each model built on it, a clicked model to the column it adds
+const drawLineage = () => document.querySelectorAll('.lin').forEach(lin => {
+  if (lin.hidden) return;
+  let svg = lin.querySelector(':scope > svg.lin-edges');
+  if (!svg) {
+    svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); svg.classList.add('lin-edges'); svg.setAttribute('aria-hidden', 'true');
+    svg.innerHTML = '<defs><marker id="lin-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor"/></marker></defs><g></g>';
+    lin.prepend(svg);
+  }
+  const box = lin.getBoundingClientRect(), g = svg.querySelector('g');
+  const at = (el, side) => { const r = el.getBoundingClientRect(); return [(side === 'right' ? r.right : r.left) - box.left, r.top + r.height / 2 - box.top]; };
+  // A card scrolled out of its side draws no line
+  const shown = el => { const w = el.closest('.lin-wing'); if (!w) return true; const r = el.getBoundingClientRect(), v = w.getBoundingClientRect(); return r.right > v.left + 4 && r.left < v.right - 4; };
+  const curve = (from, to, on) => {
+    if (!shown(from) || !shown(to)) return '';
+    const [x1, y1] = at(from, 'right'), [x2, y2] = at(to, 'left'), dx = Math.max(18, (x2 - x1) / 2);
+    return `<path class="edge${on ? ' on' : ''}" d="M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2 - 2},${y2}" marker-end="url(#lin-arrow)"/>`;
+  };
+  const center = lin.querySelector('.lin-center .lin-node');
+  const fans = side => [...lin.querySelectorAll(`.lin-wing.${side} .lin-fan`)];
+  let paths = '';
+  // Right: this Resource feeds the first column; a clicked model feeds the column it added
+  let from = center;
+  fans('right').forEach(fan => { const nodes = [...fan.children]; nodes.forEach(n => { paths += curve(from, n, n.classList.contains('sel')); }); from = fan.querySelector('.sel'); if (!from) return; });
+  // Left, from the outside in: each column feeds the model clicked in the next, the last one this Resource
+  const left = fans('left');
+  left.forEach((fan, i) => { const to = i === left.length - 1 ? center : left[i + 1].querySelector('.sel'); if (!to) return;
+    [...fan.children].forEach(n => { paths += curve(n, to, n.classList.contains('sel')); }); });
+  g.innerHTML = paths;
+});
+if (document.querySelector('.lin')) {
+  const redraw = () => requestAnimationFrame(drawLineage);
+  // The left side shows the columns nearest the middle; columns further out scroll away to the left
+  const toMiddle = () => document.querySelectorAll('.lin:not([hidden]) .lin-wing.left').forEach(w => { w.scrollLeft = w.scrollWidth; });
+  const refresh = () => requestAnimationFrame(() => { toMiddle(); drawLineage(); });
+  refresh(); addEventListener('resize', refresh); addEventListener('load', refresh);
+  document.addEventListener('click', refresh);
+  document.querySelectorAll('.lin-wing').forEach(w => w.addEventListener('scroll', redraw));
+}
