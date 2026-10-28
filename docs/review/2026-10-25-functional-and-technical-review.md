@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 89 open, of 242: 80 for v1 and 9 marked Could |
+| Open points | 88 open, of 242: 79 for v1 and 9 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1184,7 +1184,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 89 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 88 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1220,9 +1220,8 @@ Source: [requirements/functional/02-user-management.md](../requirements/function
 
 ### Collections
 
-Source: [requirements/functional/03-collections.md](../requirements/functional/03-collections.md) · 7 open
+Source: [requirements/functional/03-collections.md](../requirements/functional/03-collections.md) · 6 open
 
-- [ ] **[OP-CO-04](../requirements/functional/03-collections.md#op-co-04)** · Work out the line of thought of whether promotion happens within a Collection.
 - [ ] **[OP-CO-05](../requirements/functional/03-collections.md#op-co-05)** · Confirm or adjust the edge cases above.
 - [ ] **[OP-CO-13](../requirements/functional/03-collections.md#op-co-13)** · Decide whether a User can ask for access to something they may not see, and how ([FR-CO-32](../requirements/functional/03-collections.md#fr-co-32)). Asking on the page would tell them that it exists, which [FR-CO-17](../requirements/functional/03-collections.md#fr-co-17) rules out for a private Collection; and access comes from the Owner Unit, a group in Workspace ([FR-UM-09](../requirements/functional/02-user-management.md#fr-um-09)), or from a public Collection and a Publication. Proposal: no asking in Data Hub; whoever shared the link speaks to the owner. *Raised on 2026-10-24, while designing the page for a link to something a User may not see.*
 - [ ] **[OP-CO-14](../requirements/functional/03-collections.md#op-co-14)** · Decide what happens to a field that identifies something the Domain Model has no Entity for yet, such as the ID of an agency review ([FR-CO-33](../requirements/functional/03-collections.md#fr-co-33)): it stays without a relation until the Entity exists, or the Data Admin proposes the Entity from here. The design leaves it without a relation. *Raised on 2026-10-25, while designing the relations.* *Note of 2026-10-26: the design now shows two cases. A field such as `reviewId` maps to nothing and can still make up the grain; a mapping to an Entity that is not in the Domain Model yet, such as `city.cityId`, is kept as written, marked as such, and linked once the Entity exists. To decide.*
@@ -1506,6 +1505,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Collections**
 
 - [x] **[OP-CO-02](../requirements/functional/03-collections.md#op-co-02)** · Let Daniel know that Collections use the Paul Tol palette as a recognition colour in the interface, separate from the chart language. *Done on 2026-10-28, by Max.*
+- [x] **[OP-CO-04](../requirements/functional/03-collections.md#op-co-04)** · Work out the line of thought of whether promotion happens within a Collection. *Done on 2026-10-28, by Max: promotion is the Data Team hardening a Lens or query into a dbt model ([DEC-DH-70](../overview/open-themes.md#dec-dh-70)); the request for it is a Could ([OP-DH-27](../overview/open-themes.md#op-dh-27)).*
 
 ### To confirm
 
