@@ -18,6 +18,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - Beta Concepts and the absence of an alpha step: [DEC-DH-60](../../overview/open-themes.md#dec-dh-60) to [DEC-DH-62](../../overview/open-themes.md#dec-dh-62)
 - [The promotion loop](../../overview/open-themes.md#3-the-promotion-loop): [OP-DH-26](../../overview/open-themes.md#op-dh-26) to [OP-DH-28](../../overview/open-themes.md#op-dh-28)
 - Sharing beta work and its relation to Lenses: [OP-DH-07](../../overview/open-themes.md#op-dh-07), [OP-DH-08](../../overview/open-themes.md#op-dh-08)
+- A Beta Concept is a Lens or a query, shared as one, and hardened by the Data Team into a dbt model from its SQL: [DEC-DH-70](../../overview/open-themes.md#dec-dh-70)
 - Promotion within a Collection: [OP-CO-04](03-collections.md#op-co-04)
 
 ## Requirements

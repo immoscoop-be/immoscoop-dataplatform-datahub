@@ -24,7 +24,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="anomaly"></a>**Anomaly** | A recorded deviation in the data of a Resource, with a period, a description of what happened, the impact on the figures and who recorded it. Part of the Known Behaviour; a Signal can become one. | [DEC-DH-18](overview/data-hub.md#dec-dh-18), [FR-SR-30](requirements/functional/04-stacks-and-resources.md#fr-sr-30) |
 | <a id="artifact-set"></a>**Artifact Set** | The Artifacts of one successful run of a Source Job, with run ID, git SHA and timestamp. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="artifacts"></a>**Artifacts** | `manifest.json` and `catalog.json`, the files dbt produces about a dbt project. Not to be confused with GCP's Artifact Registry, which holds the Docker images. | [The dbt Artifacts](overview/data-hub.md#the-dbt-artifacts) |
-| <a id="beta-concept"></a>**Beta Concept** | A concept that business defines itself, such as buy session. It lives only in its own context in Data Hub and is at Level 0, Beta; whatever is built on it is Beta too. | [DEC-DH-61](overview/open-themes.md#dec-dh-61) |
+| <a id="beta-concept"></a>**Beta Concept** | A concept that business defines itself, such as buy session. It lives only in its own context in Data Hub and is at Level 0, Beta; whatever is built on it is Beta too. In Data Hub it is a Lens or a query, shared as one ([DEC-DH-70](overview/open-themes.md#dec-dh-70)). | [DEC-DH-61](overview/open-themes.md#dec-dh-61) |
 | <a id="broken"></a>**Broken** | The state of a Lens, Report, feed or query that reads a Resource or a column that no longer exists. It cannot run, it carries a red dot wherever it is listed, and its Owner gets a Message; it works again by itself once everything it reads exists again. | [DEC-DH-67](overview/data-hub.md#dec-dh-67) |
 | <a id="business-description"></a>**Business Description** | The description of a Resource, or of one of its fields, that its Owner or the Data Team writes in Data Hub. It stands next to the description from dbt and never replaces it; where there is none, the description from dbt stands alone. | [DEC-RC-01](requirements/functional/05-resource-card.md#dec-rc-01) |
 | <a id="catalogue"></a>**Catalogue** | Everything Data Hub offers to find and browse, layered from Resources through Lenses to Reports. Not to be confused with the catalogue service or with dbt's catalog. | [1. Catalogue management](overview/open-themes.md#1-catalogue-management) |
@@ -101,7 +101,7 @@ The ladder itself is defined on [Maturity levels of data](https://immoscoop.atla
 | --- | --- | --- |
 | 0 | <a id="beta"></a>**Beta** | A Beta Concept, living only in its own context |
 | 1 | <a id="available"></a>**Available** | Registered; the description is incomplete |
-| 2 | <a id="described"></a>**Described** | The view and every column have a description |
+| 2 | <a id="described"></a>**Described** | The table and at least one field have a description in dbt, and its `meta` holds `model_type` and `grain` |
 | 3 | <a id="confirmed"></a>**Confirmed** | The Owner has confirmed the Resource |
 | 4 | <a id="explored"></a>**Explored** | An EDA document is linked |
 | 5 | <a id="monitored"></a>**Monitored** | At least one check is active |

@@ -90,7 +90,7 @@ What the dbt project that Colleciónes generates from the Domain Model tells Dat
    - `maps: relation`, with the relation type, target Entity, identifier and cardinality, such as `references` `user` `userId` `one`;
    - `maps: generic`, for `identifiers`, `references` and `collections`, which hold several, each described in `meta.domain` of the model.
 2. **The references of an Entity** in `meta.domain`, next to those of an action, so a state model says them as an event model does.
-3. **The grain as columns:** `meta.model.grainColumns`, such as `[eventId]` or `[uniqueId]`, next to the grain as a word.
+3. **The grain as columns, and the model type,** in the keys Described asks for ([DEC-MR-11](06-maturity-and-release.md#dec-mr-11)): `meta.grain`, such as `[eventId]` or `[uniqueId]`, and `meta.model_type`. *Changed on 2026-10-28: was `meta.model.grainColumns`.*
 4. **The release of the Domain Model** in `meta.domain.release` of every model: the version and commit of `RELEASE.json`.
 
 ## Requirements
@@ -213,7 +213,7 @@ registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every N
 
 **Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07)
 
-When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain arrives from `meta.model.grainColumns`; the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
+When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain arrives from `meta.grain`; the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 
 ## Kinds of Change
 
@@ -271,6 +271,7 @@ Which views are Resources and how their ID stays stable ([Stacks and resources](
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
 - [ ] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.*
 - [ ] <a id="op-ar-07"></a>**OP-AR-07** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity, the grain as columns and the release of the Domain Model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
+- [ ] <a id="op-ar-08"></a>**OP-AR-08** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
 - [ ] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and library cards](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)).
 
 ## Builds on

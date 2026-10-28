@@ -9,18 +9,18 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 81 | 30 (18 open, 12 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 81 | 34 (22 open, 12 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 66 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (35 open, 11 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 7 (4 open, 3 done) |
+| [Open themes](../overview/open-themes.md) | – | – | 4 | 47 (33 open, 14 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Stacks and resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 23 (8 open, 15 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 13 (10 specified, 3 withdrawn) | – | 10 | 5 (4 open, 1 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 24 (9 open, 15 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 14 (10 specified, 4 withdrawn) | – | 11 | 6 (4 open, 2 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 5 | 10 (6 open, 4 done) |
+| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 6 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -202,7 +202,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-MR-01](functional/06-maturity-and-release.md#fr-mr-01) | Described: the view and every column have a description | Specified | MO-01 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
+| [FR-MR-01](functional/06-maturity-and-release.md#fr-mr-01) | Described: the view and every column have a description | Withdrawn | MO-01 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 | [FR-MR-02](functional/06-maturity-and-release.md#fr-mr-02) | Confirmed: the Owner confirms, from Described | Specified | MO-02 | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
 | [FR-MR-03](functional/06-maturity-and-release.md#fr-mr-03) | Explored: a linked EDA document | Specified | MO-03 | – | – |
 | [FR-MR-04](functional/06-maturity-and-release.md#fr-mr-04) | Monitored: at least one active check | Specified | MO-04 | – | – |
@@ -214,7 +214,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-MR-10](functional/06-maturity-and-release.md#fr-mr-10) | The Level restricts nothing and is shown everywhere | Specified | MO-10 | – | – |
 | [FR-MR-11](functional/06-maturity-and-release.md#fr-mr-11) | Confirming again shows what changed | Withdrawn | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-MR-12](functional/06-maturity-and-release.md#fr-mr-12) | A change since the last Confirmation gives a warning | Specified | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
-| [FR-MR-13](functional/06-maturity-and-release.md#fr-mr-13) | Jumping over Described with Business Descriptions | Withdrawn | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
+| [FR-MR-13](functional/06-maturity-and-release.md#fr-mr-13) | Jumping over Described with Business Descriptions | Withdrawn | – | – | [566fe56](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/566fe56238a90194c2c327b36cfdb3feead65088) refs, 2026-10-28<br>[cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26 |
+| [FR-MR-14](functional/06-maturity-and-release.md#fr-mr-14) | Described: the table, a field, its model type and grain | Specified | – | – | – |
 
 ### [Log and notifications](functional/07-log-and-notifications.md)
 

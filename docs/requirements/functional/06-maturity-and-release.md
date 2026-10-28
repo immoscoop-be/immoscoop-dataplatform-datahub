@@ -13,7 +13,7 @@
 
 ## Decisions
 
-- <a id="dec-mr-01"></a>**DEC-MR-01** · Fully described means measurable: the view has a description and every column has one. The Owner judges length and quality when confirming.
+- <a id="dec-mr-01"></a>**DEC-MR-01** · Fully described means measurable: the view has a description and every column has one. The Owner judges length and quality when confirming. *Note of 2026-10-28: replaced by [DEC-MR-11](#dec-mr-11): the table and at least one field, with `model_type` and `grain`.*
 - <a id="dec-mr-02"></a>**DEC-MR-02** · Explored: an EDA document is linked to the Resource.
 - <a id="dec-mr-03"></a>**DEC-MR-03** · Monitored: at least one active check runs on the Resource.
 - <a id="dec-mr-04"></a>**DEC-MR-04** · A failing check does not lower the Level: that is the monitoring doing its job. It becomes an incident in the Log.
@@ -21,8 +21,9 @@
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
 - <a id="dec-mr-07"></a>**DEC-MR-07** · A Confirmation is business confirming what a Resource is and what it stands for, as its descriptions say. It has no link to the data inside it: no control figures, no checks on values. Exploring the data belongs to the EDA, Level 4, Explored, where far more is learned about a Resource than a Confirmation can carry. *Decided on 2026-10-26, by Max.*
 - <a id="dec-mr-08"></a>**DEC-MR-08** · A change to the schema of a Resource never lowers its Level, and asks for no new Confirmation. A field added, removed, renamed or retyped since the last Confirmation gives a warning on the Resource, to everyone who sees it, and the Owner a Message; the warning stays until the Owner or the Data Team marks it seen. The Level still follows its traces: a missing description, a removed EDA document or the last check switched off still lower it ([DEC-DH-31](../../overview/data-hub.md#dec-dh-31)). *Decided on 2026-10-26, by Max.*
-- <a id="dec-mr-09"></a>**DEC-MR-09** · Described is done by the Data Team: a Resource is Described as soon as dbt has a description of the table and of every field. A Business Description does not count towards it. Where dbt has none, the Owner may jump over Described: once a Business Description covers every field, and the table, without a description in dbt, the Owner can publish and confirm. The Resource is then Confirmed, marked as confirmed without every description in dbt; the mark goes once dbt has them. *Decided on 2026-10-26, by Max ([OP-RC-20](05-resource-card.md#op-rc-20)).* *Note of 2026-10-28: the jump over Described is withdrawn: a Resource the Data Team has not described in dbt stays at Available ([DEC-MR-10](#dec-mr-10)).*
+- <a id="dec-mr-09"></a>**DEC-MR-09** · Described is done by the Data Team: a Resource is Described as soon as dbt has a description of the table and of every field. A Business Description does not count towards it. Where dbt has none, the Owner may jump over Described: once a Business Description covers every field, and the table, without a description in dbt, the Owner can publish and confirm. The Resource is then Confirmed, marked as confirmed without every description in dbt; the mark goes once dbt has them. *Decided on 2026-10-26, by Max ([OP-RC-20](05-resource-card.md#op-rc-20)).* *Note of 2026-10-28: the jump over Described is withdrawn: a Resource the Data Team has not described in dbt stays at Available ([DEC-MR-10](#dec-mr-10)).* *Note of 2026-10-28: what Described asks is now [DEC-MR-11](#dec-mr-11).*
 - <a id="dec-mr-10"></a>**DEC-MR-10** · Only the Data Team describes a Resource into Described, in dbt. A Resource without its descriptions from dbt stays at 1 · Available: its Owner cannot write Business Descriptions on it and cannot publish it. A yaml next to the model is not required for a table to be a Resource ([FR-SR-32](04-stacks-and-resources.md#fr-sr-32)), but without its descriptions it cannot leave Available. Business Descriptions are written from Described on. This replaces the jump over Described of [DEC-MR-09](#dec-mr-09). *Decided on 2026-10-28, by Max ([OP-DH-05](../../overview/open-themes.md#op-dh-05)).*
+- <a id="dec-mr-11"></a>**DEC-MR-11** · A Resource is Described as soon as dbt has a description of its table and of at least one of its fields, and the `meta` of its model holds `model_type` and `grain`. Business Descriptions start from there, at the level of the whole Resource: then its Owner and the Data Team can write one for the table and for every field, also a field dbt does not describe ([DEC-MR-10](#dec-mr-10)). The Owner judges whether it is described well enough when confirming. This replaces "every column" of [DEC-MR-01](#dec-mr-01) and [DEC-DH-34](../../overview/data-hub.md#dec-dh-34). *Decided on 2026-10-28, by Max ([OP-MR-03](#op-mr-03)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -31,7 +32,7 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 | Level | Reached when | Drops when |
 | --- | --- | --- |
 | 1 Available | Registered, description incomplete | – |
-| 2 Described | The view and every column have a description | A description is missing: to Available |
+| 2 Described | The table and at least one field have a description in dbt, and its `meta` holds `model_type` and `grain` ([DEC-MR-11](#dec-mr-11)) | One of these is missing: to Available |
 | 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation), from Described only ([DEC-MR-10](#dec-mr-10)) | – (a change to the schema gives a warning, [DEC-MR-08](#dec-mr-08)) |
 | 4 Explored | An EDA document is linked | The EDA document disappears: to Confirmed |
 | 5 Monitored | At least one active check | The last active check is switched off: to Explored |
@@ -41,11 +42,13 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 <a id="fr-mr-01"></a>
 ### FR-MR-01 · Described: the view and every column have a description
 
-**Status:** Specified · **Confluence:** MO-01
+**Status:** Withdrawn · **Confluence:** MO-01
 
 Described requires a description of the view and of every column.
 
 *Note of 2026-10-26: only the descriptions from dbt count; a Business Description does not ([DEC-MR-09](#dec-mr-09)).* *Note of 2026-10-28: and without them a Resource cannot leave Available ([DEC-MR-10](#dec-mr-10)).*
+
+*Withdrawn on 2026-10-28, by Max: replaced by [FR-MR-14](#fr-mr-14): the table and at least one field, with `model_type` and `grain` ([DEC-MR-11](#dec-mr-11)).*
 
 <a id="fr-mr-02"></a>
 ### FR-MR-02 · Confirmed: the Owner confirms, from Described
@@ -144,6 +147,13 @@ When the table or fields of a Resource have no description in dbt, its Owner can
 
 
 *Withdrawn on 2026-10-28, by Max: a Resource without its descriptions from dbt stays at Available and cannot be published ([DEC-MR-10](#dec-mr-10)).*
+
+<a id="fr-mr-14"></a>
+### FR-MR-14 · Described: the table, a field, its model type and grain
+
+**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-MR-11](#dec-mr-11))
+
+Data Hub derives Described from the Current Version of the dbt project: the table has a description, at least one field has one, and the `meta` of the model holds `model_type` and `grain` ([OP-MR-06](#op-mr-06)). Only what is in dbt counts; a Business Description does not. When one of these goes missing, the Level drops to Available.
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch).
@@ -151,8 +161,9 @@ When the table or fields of a Resource have no description in dbt, its Owner can
 
 Raised during the migration to this repository; not on the Confluence page:
 
-- [ ] <a id="op-mr-03"></a>**OP-MR-03** · Align the definition of Described. [DEC-DH-34](../../overview/data-hub.md#dec-dh-34) requires, at a minimum, a description on the table and on every column plus `model_type` and `grain` in `meta`. [DEC-MR-01](#dec-mr-01) and [FR-MR-01](#fr-mr-01) only require the descriptions.
+- [x] <a id="op-mr-03"></a>**OP-MR-03** · Align the definition of Described. [DEC-DH-34](../../overview/data-hub.md#dec-dh-34) requires, at a minimum, a description on the table and on every column plus `model_type` and `grain` in `meta`. [DEC-MR-01](#dec-mr-01) and [FR-MR-01](#fr-mr-01) only require the descriptions. *Decided on 2026-10-28, by Max: the table, at least one field, and `model_type` and `grain` in `meta` ([DEC-MR-11](#dec-mr-11), [FR-MR-14](#fr-mr-14)).*
 - [ ] <a id="op-mr-04"></a>**OP-MR-04** · Complete the drop causes in [Rising and dropping](#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](02-user-management.md#ec-um-01), [EC-CO-01](03-collections.md#ec-co-01)). *Note of 2026-10-26: a structural Change is no longer a cause of a drop ([DEC-MR-08](#dec-mr-08)); the causes named here remain to complete.*
+- [ ] <a id="op-mr-06"></a>**OP-MR-06** · Decide the values of `model_type` and the form of `grain` in the `meta` of a model ([DEC-MR-11](#dec-mr-11)). dbt has no property of its own for either; `meta` is free and holds both. Proposal: `grain` is the list of the columns that together identify a row, as [DEC-RC-07](05-resource-card.md#dec-rc-07) says, such as `[week_start, lead_source]`; `model_type` is one of a short list, such as `event`, `state`, `fact`, `dimension` and `aggregate`. *Raised on 2026-10-28, in the review of Max.*
 
 Raised during the review of the migration; not on the Confluence page:
 

@@ -100,7 +100,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 - <a id="dec-dh-10"></a>**DEC-DH-10** · A Lens reflects the maturity of what lies beneath it: the lowest Level of the underlying Resources determines the Level of the Lens.
 - <a id="dec-dh-11"></a>**DEC-DH-11** · A Lens has Parameters with which you adjust it, such as the name of a client or a start date. Parameters are named functionally and by data type, for example `dateFrom`, so that they can be combined across several Lenses.
 - <a id="dec-dh-12"></a>**DEC-DH-12** · From a Lens you can fetch the data, or you can view it in the interface.
-- <a id="dec-dh-13"></a>**DEC-DH-13** · A Lens is always of a particular type, so that the visualisation in the interface complies with the chart language. An example is the funnel: from one table, a drill-down with filters, where at each step what remains stays visible.
+- <a id="dec-dh-13"></a>**DEC-DH-13** · A Lens is always of a particular type, so that the visualisation in the interface complies with the chart language. An example is the funnel: from one table, a drill-down with filters, where at each step what remains stays visible. *Note of 2026-10-28: a Lens has no type from a fixed list; it is a query with its Parameters ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)).*
 
 ### Reports
 
@@ -180,8 +180,8 @@ By comparing every new version with the previous one, Data Hub sees what has cha
 
 - <a id="dec-dh-31"></a>**DEC-DH-31** · Levels are derived from the traces that exist, not stored as a label. That way they can never get out of step with reality.
 - <a id="dec-dh-32"></a>**DEC-DH-32** · The Level is determined entirely in Data Hub, from Level 2 upwards. Git and dbt are input, not authority.
-- <a id="dec-dh-33"></a>**DEC-DH-33** · Data Hub reads the dbt manifest (descriptions and meta) and the dbt catalog (the actual columns in BigQuery). A column in the catalog without a description in the manifest means: not Described.
-- <a id="dec-dh-34"></a>**DEC-DH-34** · Described requires, at a minimum: a description on the table and on every column, plus `model_type` and `grain` in `meta`. The test is automatic.
+- <a id="dec-dh-33"></a>**DEC-DH-33** · Data Hub reads the dbt manifest (descriptions and meta) and the dbt catalog (the actual columns in BigQuery). A column in the catalog without a description in the manifest means: not Described. *Note of 2026-10-28: a column without a description no longer keeps a Resource from Described, if the table and another field have one ([DEC-MR-11](../requirements/functional/06-maturity-and-release.md#dec-mr-11)).*
+- <a id="dec-dh-34"></a>**DEC-DH-34** · Described requires, at a minimum: a description on the table and on every column, plus `model_type` and `grain` in `meta`. The test is automatic. *Note of 2026-10-28: the table and at least one field, not every column; `model_type` and `grain` stay ([DEC-MR-11](../requirements/functional/06-maturity-and-release.md#dec-mr-11)).*
 - <a id="dec-dh-35"></a>**DEC-DH-35** · At every Confirmation, Data Hub stores a Fingerprint of the schema from the catalog. If the schema deviates from it, the table drops to Described. *Note of 2026-10-26: a change to the schema never lowers the Level; it gives a warning on the Resource and a Message to the Owner ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)).*
 - <a id="dec-dh-36"></a>**DEC-DH-36** · Business manages everything from Level 3 upwards in Data Hub, not via git: Confirmations, EDAs and monitors have Data Hub as their source.
 - <a id="dec-dh-37"></a>**DEC-DH-37** · Static artefacts (a rendered chart, an export) carry the Level at the moment of the build, with a date and a link to the current Level, one click away.

@@ -65,7 +65,7 @@ Further decisions on using a Resource are under [Using a Resource](#using-a-reso
 2. **Run.** The next run of the Source Job of that project makes the exposure part of its Current Version in the [Artifact registry](01-artifact-registry.md).
 3. **Register.** Data Hub finds the table under the exposure and registers it as a Resource, linked to its Node, with its Key and its Display Name.
 4. **Describe.** The description of the table and its columns comes from the Artifacts.
-5. **Assess.** The Level is derived: Available if the description is incomplete, Described if it is complete. Never higher.
+5. **Assess.** The Level is derived: Available, or Described once dbt describes the table and at least one field and its `meta` holds `model_type` and `grain` ([DEC-MR-11](06-maturity-and-release.md#dec-mr-11)). Never higher.
 6. **Take a Fingerprint.** Data Hub stores the hashes of structure, types and descriptions.
 7. **Open the Log.** The first Log Entries are written: the Registration and the Level.
 8. **Notify.** A message goes to the Message Centre of the Data Admins.
