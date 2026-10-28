@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 32 open, of 245: 14 for v1 and 18 marked Could |
+| Open points | 31 open, of 245: 13 for v1 and 18 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,14 +1183,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 32 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 31 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
 
 ### Open themes
 
@@ -1205,9 +1205,8 @@ Source: [design/principles.md](../design/principles.md) · 0 open
 
 ### Artifact registry
 
-Source: [requirements/functional/01-artifact-registry.md](../requirements/functional/01-artifact-registry.md) · 1 open
+Source: [requirements/functional/01-artifact-registry.md](../requirements/functional/01-artifact-registry.md) · 0 open
 
-- [ ] **[OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08)** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](../requirements/functional/05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).*
 
 ### User management
 
@@ -1463,6 +1462,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-AR-03](../requirements/functional/01-artifact-registry.md#op-ar-03)** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; EC-AR-01 to EC-AR-05 are Specified.*
 - [x] **[OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../requirements/technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) decides ([OP-DH-24](../overview/open-themes.md#op-dh-24)). *Decided on 2026-10-28, by Max: the lineage around a Resource for everyone who sees it, the rest for the Data Team ([DEC-AR-06](../requirements/functional/01-artifact-registry.md#dec-ar-06)).*
 - [x] **[OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).* *Decided on 2026-10-28, by Max: extend Colleciónes ([DEC-AR-07](../requirements/functional/01-artifact-registry.md#dec-ar-07)).*
+- [x] **[OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08)** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](../requirements/functional/05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).* *Decided on 2026-10-28, by Max: as is, by any of its identifiers ([DEC-AR-08](../requirements/functional/01-artifact-registry.md#dec-ar-08)).*
 
 **User management**
 
