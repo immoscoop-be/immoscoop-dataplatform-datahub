@@ -58,7 +58,10 @@ describe.skipIf(!url)('catalogue migrations', () => {
       values ('MSG-RES-01', 'resource', '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', 'inCollection')`.execute(admin.db);
 
     const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
-    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0005-collections-afresh', 'Success']]);
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([
+      ['0005-collections-afresh', 'Success'],
+      ['0006-grain-and-mappings', 'Success'],
+    ]);
 
     expect(await count('collections')).toBe(0);
     expect(await count('collection_log')).toBe(0);

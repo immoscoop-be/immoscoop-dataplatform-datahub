@@ -1,6 +1,8 @@
 import type { FastifyInstance } from 'fastify';
 import type { ArtifactSets } from './artifact-sets.js';
 import type { DbtCloud } from './dbt-cloud.js';
+import { type DomainModel, DomainModelUnavailable, identitiesOf, offeredTypes } from './domain-model.js';
+import type { Proposals } from './proposal.js';
 import type { Direction, Reading } from './reading.js';
 
 export interface ApiOptions {
@@ -11,6 +13,10 @@ export interface ApiOptions {
   sourceJobs: ReadonlyMap<string, string>;
   /** Starts the ingest job, which processes the pending sets. */
   startIngest: () => Promise<void>;
+  /** The Domain Model in use, read from the collector each time (DEC-AR-05). */
+  domainModel: () => Promise<DomainModel>;
+  /** What Data Hub proposes for a Resource when it is added (FR-CO-33, FR-CO-34). */
+  proposals: Proposals;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -57,6 +63,34 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   app.get<{ Params: { id: string } }>('/nodes/:id', async (request, reply) => {
     const node = await options.reading.node(request.params.id);
     return node ?? reply.code(404).send({ error: 'not_found', message: 'No such Node in the Current Version of a dbt project.' });
+  });
+
+  // The grain, storage and mappings Data Hub proposes for the Resource on a Node (FR-CO-33, FR-CO-34,
+  // FR-AR-17); without the Domain Model when the collector does not answer (EC-AR-05).
+  app.get<{ Params: { id: string } }>('/nodes/:id/proposal', async (request, reply) => {
+    const proposal = await options.proposals.proposal(request.params.id);
+    return proposal ?? reply.code(404).send({ error: 'not_found', message: 'No such Node in the Current Version of a dbt project.' });
+  });
+
+  // The Domain Model in use, as the step that adds a Resource needs it (FR-AR-15): its release, the
+  // relation types a field can map to, and every identity.
+  app.get('/domain-model', async (request, reply) => {
+    try {
+      const model = await options.domainModel();
+      return {
+        domain: model.domain,
+        version: model.version,
+        release: model.release,
+        relationTypes: offeredTypes(model),
+        identities: identitiesOf(model),
+      };
+    } catch (error) {
+      if (!(error instanceof DomainModelUnavailable)) {
+        throw error;
+      }
+      request.log.warn({ err: error }, 'the collector did not give the Domain Model');
+      return reply.code(503).header('retry-after', '30').send({ error: 'domain_model_unavailable', message: 'The collector of Colleciónes did not answer; try again.' });
+    }
   });
 
   app.get<{ Params: { id: string }; Querystring: Query }>('/nodes/:id/lineage', async (request, reply) => {

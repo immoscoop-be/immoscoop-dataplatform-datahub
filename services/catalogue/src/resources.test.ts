@@ -5,7 +5,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type Collections, createCollections, NotEmpty, type Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
-import { createResources, type ExposedTable, type Resources, type ResourcesUpdate } from './resources.js';
+import { checkDetails, createResources, type Details, type ExposedTable, type Resources, type ResourcesUpdate } from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
 if (!url && process.env.CI) {
@@ -185,20 +185,20 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect((await message()).state).toBe('waiting');
     // One that cannot be added stops them all.
     const missing = '00000000-0000-4000-8000-000000000000';
-    expect(await resources.add([order.id, missing], leads, dirk)).toEqual({ outcome: 'not_found', ids: [missing] });
-    expect(await resources.add([order.id, 'not-a-uuid'], leads, dirk)).toEqual({ outcome: 'not_found', ids: ['not-a-uuid'] });
-    expect(await resources.add([customers!.id], other, dirk)).toEqual({ outcome: 'added', added: 1 });
-    expect(await resources.add([order.id, customers!.id], leads, dirk)).toEqual({ outcome: 'in_another_collection', ids: [customers!.id] });
+    expect(await resources.add([{ id: order.id }, { id: missing }], leads, dirk)).toEqual({ outcome: 'not_found', ids: [missing] });
+    expect(await resources.add([{ id: order.id }, { id: 'not-a-uuid' }], leads, dirk)).toEqual({ outcome: 'not_found', ids: ['not-a-uuid'] });
+    expect(await resources.add([{ id: customers!.id }], other, dirk)).toEqual({ outcome: 'added', added: 1 });
+    expect(await resources.add([{ id: order.id }, { id: customers!.id }], leads, dirk)).toEqual({ outcome: 'in_another_collection', ids: [customers!.id] });
     expect((await message()).state).toBe('waiting');
 
-    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'added', added: 1 });
+    expect(await resources.add([{ id: order.id }], leads, dirk)).toEqual({ outcome: 'added', added: 1 });
     // The Message to the Data Team has done what it asked (MSG-RES-01), and the Owner is told (MSG-RES-08, DEC-CV-11).
     expect((await message()).state).toBe('inCollection');
     const arrived = await database.db.selectFrom('messages').select(['subjectKind', 'writerId', 'params', 'state']).where('type', '=', 'MSG-RES-08').where('subjectId', '=', order.id).execute();
     expect(arrived).toEqual([{ subjectKind: 'resource', writerId: null, params: { collection: 'Leads', actor: 'Dirk', level: '2' }, state: null }]);
     // Already in it: nothing changes, and nobody is told again.
-    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'added', added: 0 });
-    expect(await resources.add([order.id], other, dirk)).toEqual({ outcome: 'in_another_collection', ids: [order.id] });
+    expect(await resources.add([{ id: order.id }], leads, dirk)).toEqual({ outcome: 'added', added: 0 });
+    expect(await resources.add([{ id: order.id }], other, dirk)).toEqual({ outcome: 'in_another_collection', ids: [order.id] });
     const listed = await resources.inCollection(leads.id);
     expect(listed.map((resource) => resource.displayName)).toEqual(['Orders']);
     expect(listed[0]?.lastChange?.text).toBe('Added to the Collection Leads by Dirk');
@@ -215,7 +215,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect((await message()).state).toBe('waiting');
     expect(await resources.remove(order.id, dirk)).toBe(false);
     expect(await collections.dissolve(leads.id, dirk)).toBe(true);
-    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'collection_gone' });
+    expect(await resources.add([{ id: order.id }], leads, dirk)).toEqual({ outcome: 'collection_gone' });
 
     expect((await collections.log({ id: leads.id, canManage: true }, 50)).map((entry) => entry.text).slice(0, 3)).toEqual([
       'Collection dissolved by Dirk',
@@ -227,6 +227,45 @@ describe.skipIf(!url)('Resources in Postgres', () => {
       'Withdrawn: no exposure with the tag datahub depends on it any more',
       'Added to the Collection Leads by Dirk',
     ]);
+  });
+
+  it('records how a Resource is stored, its grain, model type and mappings when it is added, and logs them (FR-CO-33, FR-CO-34)', async () => {
+    const credit = await collections.create({ name: 'Credit', description: 'Credit.', icon: 'coins', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    await resources.apply(prod('105', [table('simulations'), table('reviews')]));
+    const { simulations, reviews } = await byKey();
+    const details: Details = {
+      partition: { field: 'created_at', unit: 'day' },
+      clusterBy: ['simulations_id'],
+      partitionFilter: 'bigQuery',
+      grain: ['simulations_id'],
+      grainSentence: 'generated simulation',
+      modelType: 'event',
+      origins: { partition: 'dbt', clusterBy: 'dbt', partitionFilter: 'dbt', grain: 'domainModel', grainSentence: 'here', modelType: 'domainModel' },
+      release: '0.0.70',
+      mappings: [{ field: 'simulations_id', kind: 'is', relationType: null, identity: 'homeLoanSimulation.homeLoanSimulationId', subject: null, origin: 'domainModel', inDomainModel: true }],
+    };
+    // A field the Resource does not have stops them all.
+    const wrong = await resources.add([{ id: simulations!.id, details }, { id: reviews!.id, details: { ...details, grain: ['nope'] } }], credit, dirk);
+    expect(wrong).toMatchObject({ outcome: 'invalid', id: reviews!.id });
+    expect((await resources.get(simulations!.id))?.collectionId).toBeNull();
+
+    expect(await resources.add([{ id: simulations!.id, details }, { id: reviews!.id }], credit, dirk)).toEqual({ outcome: 'added', added: 2 });
+    expect((await resources.detail(simulations!.id))?.details).toEqual({ ...details, mappings: details.mappings });
+    expect((await texts(simulations!.id))[0]).toBe('Grain and mappings recorded by Dirk: 1 of 2 fields mapped');
+    // Added without them: nothing recorded, and no entry that says so.
+    expect((await resources.detail(reviews!.id))?.details).toMatchObject({ grain: [], partition: null, mappings: [], partitionFilter: 'none' });
+    expect((await texts(reviews!.id))[0]).toBe('Added to the Collection Credit by Dirk');
+  });
+
+  it('checks what was recorded against the fields of the Resource (FR-CO-33, DEC-RC-08)', () => {
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] };
+    const is = { kind: 'is' as const, relationType: null, subject: null, origin: 'here' as const, inDomainModel: true };
+    expect(checkDetails({ ...base, grain: ['a'] }, ['a', 'b'])).toBeUndefined();
+    expect(checkDetails({ ...base, clusterBy: ['c'] }, ['a'])).toBe('it has no field c.');
+    expect(checkDetails({ ...base, mappings: [{ field: 'a', identity: 'x.a', ...is }, { field: 'a', identity: 'x.b', ...is }] }, ['a'])).toBe('the field a maps twice.');
+    expect(
+      checkDetails({ ...base, mappings: [{ field: 'b', kind: 'relation', relationType: 'basedOn', identity: 'y.b', subject: 'a', origin: 'here', inDomainModel: true }] }, ['a', 'b']),
+    ).toBe('the relation of b starts from a, which is not mapped as is.');
   });
 
   it('never lets a Log Entry of a Resource be changed or removed (FR-SR-11)', async () => {

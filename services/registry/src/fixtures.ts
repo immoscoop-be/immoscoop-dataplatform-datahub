@@ -32,7 +32,13 @@ export function sampleManifest(overrides: { generatedAt?: string; ordersDescript
       'model.immoscoop_dataplatform_sql.orders': model('orders', {
         description: overrides.ordersDescription ?? 'One row per order.',
         tags: ['marts', 'daily'],
-        config: { materialized: 'table', meta: { model: { kind: 'history', grain: 'stateChange' } } },
+        config: {
+          materialized: 'table',
+          meta: { model: { kind: 'history', grain: 'stateChange' } },
+          partition_by: { field: 'ordered_at', data_type: 'timestamp', granularity: 'month' },
+          cluster_by: 'customer_id',
+          require_partition_filter: true,
+        },
         meta: {
           model: { kind: 'outdated' },
           domain: { entity: 'order', entityDescription: '', identifiers: [{ name: 'orderId', type: 'string' }], performedBy: ['user', 'visitor'] },
@@ -58,6 +64,7 @@ export function sampleManifest(overrides: { generatedAt?: string; ordersDescript
       }),
       'model.immoscoop_dataplatform_sql.customers': model('customers', {
         alias: 'dim_customers',
+        config: { materialized: 'table', partition_by: { field: 'customer_id', data_type: 'int64', range: { start: 0, end: 100, interval: 10 } }, cluster_by: ['country', 'customer_id'] },
         depends_on: { nodes: ['model.immoscoop_dataplatform_sql.orders'] },
       }),
       'seed.immoscoop_dataplatform_sql.countries': {
@@ -230,6 +237,73 @@ export function collecionesCatalog() {
     },
     sources: {
       [`source.${P}.dbt_prod.orders`]: { columns: { ORDER_ID: { name: 'ORDER_ID', type: 'INT64', index: 1 } } },
+    },
+  };
+}
+
+/**
+ * A small Domain Model in the shape of the runtime contract the collector of Colleciónes answers with
+ * (DEC-AR-04), taken from `@compilacion/colleciones-domain-model` 0.0.70: a few Entities, an event with
+ * its actors and references, and relation types with their inverses.
+ */
+export function domainModelContract() {
+  const entity = (identifiers: string[], extra: Record<string, unknown> = {}) => ({
+    description: '',
+    identifiers: Object.fromEntries(identifiers.map((name) => [name, { description: '', datatype: 'identifier', primitiveDatatype: 'string' }])),
+    adjectives: {},
+    attributes: {},
+    references: [],
+    actions: {},
+    ...extra,
+  });
+  return {
+    meta: { domain: 'immoscoop', version: '0.1.0', release: { version: '0.0.70', name: 'v0.0.70', tag: 'v0.0.70', commit: '84d3030' } },
+    entities: {
+      subject: entity(['subjectId']),
+      user: entity(['subjectId', 'userId']),
+      visitor: entity(['subjectId', 'userId', 'visitorId']),
+      session: entity(['sessionId']),
+      property: entity(['propertyId']),
+      listing: entity(['listingId'], {
+        references: [{ type: 'represents', target: 'property', cardinality: 'one' }],
+        actions: { view: { performedBy: ['subject', 'visitor'], references: [{ target: 'session', type: 'occurredWithin', cardinality: 'one' }] } },
+      }),
+      activationCampaign: entity(['campaignId', 'activationCampaignId']),
+      homeLoanSimulation: entity(['homeLoanSimulationId'], {
+        references: [{ type: 'basedOn', target: 'listing', cardinality: 'one' }],
+        actions: {
+          generate: {
+            performedBy: ['subject', 'visitor', 'user'],
+            references: [
+              { target: 'activationCampaign', type: 'placedIn', cardinality: 'many' },
+              { target: 'listing', type: 'basedOn', cardinality: 'one' },
+              { target: 'session', type: 'occurredWithin', cardinality: 'one' },
+            ],
+          },
+        },
+      }),
+      agency: entity(['subjectId', 'agencyId']),
+      office: entity(['subjectId', 'officeId']),
+    },
+    contexts: {},
+    eventGroups: {},
+    actors: ['subject', 'system', 'visitor', 'emailAddress'],
+    domains: {},
+    vocabulary: {
+      relationTypes: {
+        basedOn: { transpose: false, cardinality: ['one', 'many'], description: 'Derived from or about a source entity.', inverse: 'basisFor' },
+        basisFor: { transpose: false, cardinality: ['many'], description: 'The basis for subjects derived from it.', inverse: 'basedOn' },
+        occurredWithin: { transpose: true, cardinality: ['one'], description: 'The event took place within this context.', inverse: 'contextFor' },
+        contextFor: { transpose: false, cardinality: ['many'], description: 'Hosts the events within it.', inverse: 'occurredWithin' },
+        placedIn: { transpose: false, cardinality: ['one', 'many'], description: 'Placement or grouping.', inverse: 'placementFor' },
+        placementFor: { transpose: false, cardinality: ['many'], description: 'The placement of the elements.', inverse: 'placedIn' },
+        represents: { transpose: false, cardinality: ['one', 'many'], description: 'The concrete manifestation of a definition.', inverse: 'isRepresentedBy' },
+        isRepresentedBy: { transpose: true, cardinality: ['many'], description: 'Represented by its manifestations.', inverse: 'represents' },
+        hasType: { transpose: false, cardinality: ['one'], description: 'Classification against a type vocabulary.', inverse: 'classifies' },
+        classifies: { transpose: false, cardinality: ['many'], description: 'Classifies its instances.', inverse: 'hasType' },
+      },
+      datatypes: {},
+      actions: {},
     },
   };
 }

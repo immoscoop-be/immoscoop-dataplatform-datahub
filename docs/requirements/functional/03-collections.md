@@ -363,6 +363,8 @@ From the page of a Collection, a Data Admin picks one or more Resources without 
 
 *Note of 2026-10-28: built in one step for now: the Resources picked are added from the sheet; the second step, their grain and relations, follows in part 3 of the [build order](../../design/build-order.md) ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)).*
 
+*Note of 2026-10-28, later: the second step is built; the Resources picked are added with their grain, model type, storage and mappings in one go ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)).*
+
 <a id="fr-co-32"></a>
 ### FR-CO-32 · A link to something a User may not see looks like a link to nothing
 
@@ -373,7 +375,7 @@ A link to a Collection, Resource, Lens or query that a User may not see opens th
 <a id="fr-co-33"></a>
 ### FR-CO-33 · Adding a Resource records its grain and the mapping of every field
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 to 2026-10-26 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 After picking Resources ([FR-CO-31](#fr-co-31)), the Data Admin sees, per Resource, its grain and every field with its type and description from dbt.
 
@@ -392,12 +394,16 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 
 *Note of 2026-10-28: a field can also map to an Entity the Domain Model does not have; it then only links the Resources that carry the same one ([DEC-CO-21](#dec-co-21)).*
 
+*Note of 2026-10-28, on building it: the step shows the relation types the Domain Model uses, each with the cardinality its vocabulary gives; a type that the Domain Model gives both one and many, such as `basedOn`, is shown as one or many per subject until the Domain Model settles it. How many Resources carry the same identity is said with the links themselves, on the Resource Card ([FR-RC-09](05-resource-card.md#fr-rc-09)). The grain, the model type and the mappings are recorded as [TR-CO-05](../technical/03-collections.md#tr-co-05) and proposed as [TR-AR-10](../technical/01-artifact-registry.md#tr-ar-10).*
+
 <a id="fr-co-34"></a>
 ### FR-CO-34 · Adding a Resource records how it is stored
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#page-of-a-collection) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees per Resource how it is stored: its partition column and the unit of its partitions, its cluster columns in their order, and whether a partition filter is required. Data Hub derives them where it can, from the dbt manifest of the model beneath the view, through the lineage, and from BigQuery ([OP-SR-12](04-stacks-and-resources.md#op-sr-12)), and marks them "From dbt". The Data Admin sets what cannot be derived and can correct the rest. A partition filter that BigQuery requires stays required; the Data Admin can also require one where BigQuery does not, so that Data Hub asks for a filter on the partition column in every query on the Resource. Data Hub uses them on the page of the Resource ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)) and in the Pre-flight ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)).
+
+*Note of 2026-10-28, on building it: Data Hub derives the storage from the dbt manifest only, through the lineage ([TR-AR-03](../technical/01-artifact-registry.md#tr-ar-03)); reading it from BigQuery waits on [OP-SR-12](04-stacks-and-resources.md#op-sr-12). The facts come with the next run of a dbt project, or when a run is processed again.*
 
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group

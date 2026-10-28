@@ -201,7 +201,7 @@ A run can be fetched and processed again manually, for recovery and tests.
 <a id="fr-ar-15"></a>
 ### FR-AR-15 · Read the Domain Model in use
 
-**Status:** Proposed · **Source:** Max, 2026-10-26 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 Data Hub reads the Domain Model as it runs on prod, from the overview the server of Colleciónes deploys: its Entities with their identities, its relation types with their cardinality and inverse, and the references of every Entity and action. It uses them for every Resource, also one not built on a Colleciónes model, to suggest and check the mappings of its fields ([FR-CO-33](03-collections.md#fr-co-33), [DEC-RC-05](05-resource-card.md#dec-rc-05)). It reads it again when a new version is deployed, and records with each mapping the version it was made with.
 
@@ -220,7 +220,7 @@ registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every N
 <a id="fr-ar-17"></a>
 ### FR-AR-17 · The meta of a column fills in its mapping
 
-**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
+**Status:** Implemented · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain is suggested from what the model declares, for the Data Admin to confirm ([DEC-RC-09](05-resource-card.md#dec-rc-09)); the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 

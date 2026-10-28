@@ -6,6 +6,9 @@ type Timestamp = ColumnType<Date, Date | undefined, Date>;
 /** A dbt Cloud ID: a bigint in Postgres, which pg reads as a string. */
 type DbtId = ColumnType<string, string | number, string | number>;
 
+/** The unit of the partitions of a table partitioned by time. */
+export type PartitionUnit = 'hour' | 'day' | 'month' | 'year';
+
 /** Where an Artifact Set stands (TR-AR-01 to TR-AR-04). */
 export type SetStatus = 'pending' | 'processing' | 'processed' | 'failed';
 
@@ -50,6 +53,11 @@ export interface RegistryDatabase {
     action: string | null;
     strategy: string | null;
     layer: string | null;
+    /** How its table is stored in BigQuery, from its dbt config (FR-CO-34). */
+    partitionField: string | null;
+    partitionUnit: PartitionUnit | null;
+    clusterBy: ColumnType<string[], string[] | undefined, string[]>;
+    requirePartitionFilter: ColumnType<boolean, boolean | undefined, boolean>;
   };
   columns: {
     setId: number;

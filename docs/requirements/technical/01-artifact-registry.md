@@ -36,13 +36,13 @@ A set without a catalog, or with a file that cannot be read, gets the status `fa
 <a id="tr-ar-03"></a>
 ### TR-AR-03 · The normalised tables
 
-**Status:** Implemented · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23)
+**Status:** Implemented · **Realises:** [FR-AR-07](../functional/01-artifact-registry.md#fr-ar-07), [FR-AR-08](../functional/01-artifact-registry.md#fr-ar-08), [FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-03](../functional/01-artifact-registry.md#dec-ar-03), [DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07), [DEC-DH-23](../../overview/data-hub.md#dec-dh-23), [DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)
 
 Processing turns a set into rows in the schema `registry`, all keyed by the set:
 
 | Table | One row per | Taken from |
 | --- | --- | --- |
-| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, the checksum of its code, and its meta as JSON, as the dbt project writes it (`meta` of the Node and of its config, the config winning per key). For a Node of Colleciónes also its Entity, action, strategy and layer, from the tags its generator writes (`colleciones:entity:<entity>` and so on) or else from `meta.domain` and `meta.model` ([FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16)) |
+| `nodes` | model, seed, snapshot, source or exposure | the manifest: unique ID, kind, name, database, schema, table name, description, materialisation, tags, file path, the checksum of its code, and its meta as JSON, as the dbt project writes it (`meta` of the Node and of its config, the config winning per key). For a Node of Colleciónes also its Entity, action, strategy and layer, from the tags its generator writes (`colleciones:entity:<entity>` and so on) or else from `meta.domain` and `meta.model` ([FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16)). How its table is stored in BigQuery, from its config: the field of `partition_by` and the unit of its partitions (`granularity`, a day unless it says otherwise; none for an integer range), the columns of `cluster_by` in their order, and whether `require_partition_filter` is set ([FR-CO-34](../functional/03-collections.md#fr-co-34)) |
 | `columns` | column of a Node | the catalog: actual name, type and position, with the description and the meta from the manifest, matched by name regardless of case; the meta is kept as the dbt project writes it, so what Colleciónes says a column maps to is there as it wrote it ([DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07)). A Node the catalog does not know, such as an ephemeral model or an exposure, keeps the columns of the manifest, without a type |
 | `edges` | Node that depends on another Node of the same project | `depends_on.nodes` in the manifest, between Nodes only |
 | `tests` | data test on a Node | the test's name (`not_null`, `unique`, `relationships`, …), its Node and column, and its severity; a relationships test also with its target Node and target column |
@@ -94,6 +94,30 @@ Every route of registry that reads, and processing a run again, needs the role o
 When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
 
 It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
+
+<a id="tr-ar-09"></a>
+### TR-AR-09 · registry reads the Domain Model from the collector, every time
+
+**Status:** Implemented · **Realises:** [FR-AR-15](../functional/01-artifact-registry.md#fr-ar-15), [EC-AR-05](../functional/01-artifact-registry.md#ec-ar-05), [DEC-AR-04](../functional/01-artifact-registry.md#dec-ar-04), [DEC-AR-05](../functional/01-artifact-registry.md#dec-ar-05)
+
+registry reads the Domain Model in use from `GET /domain-model` of the collector of Colleciónes, `https://colleciones-eventos.immoscoop.be` (`DATAHUB_COLLECTOR_URL` overrides it), each time it needs it, and keeps no copy. It takes from the runtime contract its name and version, the release of the package it comes from, its Entities with their identifiers, references and actions, who performs each action, and its relation types with their cardinalities and inverses. A collector that does not answer within ten seconds, or not with a Domain Model, is reported as such ([EC-AR-05](../functional/01-artifact-registry.md#ec-ar-05)).
+
+`GET /domain-model`, for the Data Team, answers with the name, version and release, the relation types a field can map to, and every identity: `entity.identifier`, and `entity.action` for the ID of an event. The relation types are those the Domain Model uses in its references; their inverses, such as `basisFor`, count from the other side and are left out ([DEC-RC-05](../functional/05-resource-card.md#dec-rc-05)). Each type comes with its cardinality, one or many, or both while the Domain Model gives it both. Without the collector it answers `503 domain_model_unavailable`.
+
+<a id="tr-ar-10"></a>
+### TR-AR-10 · registry proposes the grain, storage and mappings of a Resource
+
+**Status:** Implemented · **Realises:** [FR-AR-17](../functional/01-artifact-registry.md#fr-ar-17), [FR-CO-33](../functional/03-collections.md#fr-co-33), [FR-CO-34](../functional/03-collections.md#fr-co-34), [DEC-RC-07](../functional/05-resource-card.md#dec-rc-07), [DEC-RC-09](../functional/05-resource-card.md#dec-rc-09), [DEC-RC-14](../functional/05-resource-card.md#dec-rc-14), [DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)
+
+`GET /nodes/{id}/proposal`, for the Data Team, proposes for the Resource on a Node what the step that adds it shows ([FR-CO-33](../functional/03-collections.md#fr-co-33)). Each value says where it comes from; all are suggestions ([DEC-RC-09](../functional/05-resource-card.md#dec-rc-09)).
+
+- **How it is stored:** from the nearest model up the lineage, the Node itself first, that is partitioned or clustered ([DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)). Only a column the Node has under the same name counts: a view that derives its own column promises nothing. A partition filter that model requires is required by BigQuery.
+- **What it is built on:** the Node itself, or the nearest Colleciónes model up the lineage, with its Entity and action ([FR-AR-16](../functional/01-artifact-registry.md#fr-ar-16)).
+- **The grain:** the field of a `unique` test on the Node, from a dbt test; else the field the Colleciónes model declares by the word of its grain, `eventId` for an event, its identifier for a state, from the Domain Model.
+- **The model type:** `event` or `state` from the strategy of the Colleciónes model; nothing otherwise.
+- **The mappings, per field:** first what `meta.domain` of the column says, on the Node or on the same column of the Colleciónes model ([DEC-AR-07](../functional/01-artifact-registry.md#dec-ar-07)); then, from the Domain Model, for a Colleciónes model: `eventId` is `entity.action`, an identifier of its Entity is that identity, a field named as an identifier of the target of one of its references maps with that relation type, and the field named as an identifier of who performs the action is "performed by", one per event ([DEC-RC-14](../functional/05-resource-card.md#dec-rc-14)); last, for any Node, a field named as the identifier of one Entity, or of the Entity named after it when several share it, is that identity, suggested from its name.
+
+Without the Domain Model the proposal still holds what dbt says, without a mapping from the Domain Model, and says the Domain Model is missing ([EC-AR-05](../functional/01-artifact-registry.md#ec-ar-05)); otherwise it names the release it was made with.
 
 ## Open points
 

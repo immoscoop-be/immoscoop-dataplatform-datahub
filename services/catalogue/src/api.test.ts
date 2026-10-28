@@ -5,7 +5,7 @@ import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parse, parseUpdate } from './api.js';
+import { parse, parseAdd, parseUpdate } from './api.js';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
@@ -50,6 +50,38 @@ describe('the fields of a Collection in a request', () => {
     expect(parse({ ...complete, icon: 'house-line' }, true)).toMatchObject({ icon: 'house-line' });
     // The icon is required: it cannot be taken away (DEC-CO-25).
     expect(parse({ icon: null }, false)).toBe(refused);
+  });
+});
+
+describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', () => {
+  const details = {
+    partition: { field: 'created_at', unit: 'day' },
+    clusterBy: ['listing_id'],
+    partitionFilter: 'dataHub',
+    grain: ['event_id'],
+    grainSentence: ' generated simulation ',
+    modelType: 'event',
+    origins: { partition: 'dbt', grain: 'domainModel', grainSentence: 'here' },
+    release: '0.0.70',
+    mappings: [{ field: 'listing_id', kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: 'event_id', origin: 'domainModel', inDomainModel: true }],
+  };
+
+  it('are IDs, or objects with what the Data Admin recorded', () => {
+    expect(parseAdd({ resources: ['r1'] })).toEqual([{ id: 'r1' }]);
+    expect(parseAdd({ resources: [{ id: 'r2', ...details }] })).toEqual([{ id: 'r2', details: { ...details, grainSentence: 'generated simulation' } }]);
+  });
+
+  it('refuses what does not fit', () => {
+    expect(parseAdd({ resources: [] })).toMatch(/list of 1 to 200/);
+    expect(parseAdd({ resources: [{ ...details }] })).toBe('Each Resource to add has its ID.');
+    expect(parseAdd({ resources: [{ id: 'r', ...details, partition: null }] })).toMatch(/needs a partition/);
+    expect(parseAdd({ resources: [{ id: 'r', ...details, clusterBy: ['a', 'b', 'c', 'd', 'e'] }] })).toMatch(/at most four/);
+    expect(parseAdd({ resources: [{ id: 'r', ...details, modelType: 'cube' }] })).toMatch(/model type/);
+    expect(parseAdd({ resources: [{ id: 'r', ...details, origins: { grain: 'guessed' } }] })).toMatch(/origins/);
+    const mapping = details.mappings[0]!;
+    for (const wrong of [{ identity: 'listing' }, { kind: 'relation', relationType: null }, { kind: 'is', relationType: 'basedOn' }, { origin: 'dbt' }, { inDomainModel: 'yes' }]) {
+      expect(parseAdd({ resources: [{ id: 'r', ...details, mappings: [{ ...mapping, ...wrong }] }] })).toMatch(/Each mapping/);
+    }
   });
 });
 
@@ -260,6 +292,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
         ['leads', 'Added to the Collection Visits by Dirk'],
         ['visits', 'Added to the Collection Visits by Dirk'],
       ]);
+      expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
+      // With what the Data Admin recorded at step 2: a field the Resource lacks is refused (FR-CO-33).
+      const recorded = { partition: null, clusterBy: [], partitionFilter: 'none', grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact', origins: { grain: 'here' }, release: null, mappings: [] };
+      const lacking = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, grain: ['nope'] }] });
+      expect(lacking.statusCode).toBe(400);
+      expect(lacking.json().message).toBe('leads: it has no field nope.');
+      expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded }] })).statusCode).toBe(200);
+      expect((await dirk('GET', `/resources/${leads.id}`)).json().resource.details).toMatchObject({ grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact' });
       expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
       expect((await an('GET', `/collections/${collection.id}`)).json().resources.map((resource: { displayName: string }) => resource.displayName)).toEqual(['visits']);
 

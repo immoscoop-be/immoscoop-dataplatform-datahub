@@ -28,6 +28,7 @@ const SAVED_SEARCHES = {
   resourceType: 'model',
   projectId: '9367',
   projectName: 'immoscoop_dataplatform_sql',
+  nodeId: 'model.immoscoop_dataplatform_sql.saved_searches',
   description: 'One row per saved search.',
   exposures: ['datahub_savedSearches'],
   collectionId: null,
@@ -93,7 +94,7 @@ function serve({
   const calls: Saved[] = [];
   vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET';
-    const path = input.replace(CONFIG.identityUrl, '').replace(CONFIG.catalogueUrl, '');
+    const path = input.replace(CONFIG.identityUrl, '').replace(CONFIG.catalogueUrl, '').replace(CONFIG.registryUrl, '');
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
     if (path === '/auth/token') {
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
@@ -130,6 +131,26 @@ function serve({
     }
     if (/^\/collections\/(c1|c2|c-new)\/log$/.test(path)) {
       return json({ entries: [{ logId: 'COL-001', params: { actor: 'An Claes', name: 'Credit leads' }, at: '2026-09-03T08:00:00Z' }] });
+    }
+    if (path === '/domain-model') {
+      return json({
+        domain: 'immoscoop',
+        version: '0.1.0',
+        release: '0.0.70',
+        relationTypes: [{ name: 'occurredWithin', cardinality: 'one', description: '' }],
+        identities: ['visitor.visitorId', 'search.searchId'],
+      });
+    }
+    if (path === `/nodes/${encodeURIComponent(SAVED_SEARCHES.nodeId)}/proposal`) {
+      return json({
+        nodeId: SAVED_SEARCHES.nodeId,
+        builtOn: { name: 'saved_searches', entity: null, action: null, colleciones: false },
+        storage: { partition: null, clusterBy: [], requirePartitionFilter: false, from: null },
+        grain: { fields: ['search_id'], origin: 'test' },
+        modelType: null,
+        mappings: [{ field: 'search_id', kind: 'is', relationType: null, identity: 'search.searchId', origin: 'name' }],
+        domainModel: { release: '0.0.70' },
+      });
     }
     if (path === '/groups') {
       return dataTeam ? json({ groups: [DATA, SALES] }) : json({ error: 'forbidden' }, 403);
@@ -465,7 +486,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
   });
 
-  it('adds Resources without a Collection from the page of a Collection, in a sheet (FR-CO-31)', async () => {
+  it('adds Resources without a Collection from the page of a Collection, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34)', async () => {
     const calls = serve({ roles: ['datateam'] });
     open('/collections/c1');
     render(App, { config: CONFIG });
@@ -473,11 +494,51 @@ describe('the web app, for the Data Team, with Collections', () => {
     await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
     const sheet = within(screen.getByRole('dialog', { name: 'Resources toevoegen aan Credit leads' }));
     expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
-    const add = sheet.getByRole('button', { name: 'Toevoegen' }) as HTMLButtonElement;
-    expect(add.disabled).toBe(true);
+    const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
     await fireEvent.click(sheet.getByRole('checkbox'));
-    await fireEvent.click(sheet.getByRole('button', { name: '1 Resource toevoegen' }));
+    await fireEvent.click(next);
+
+    // Step 2: what dbt and the Domain Model propose, each with where it came from.
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van 1 Resource' }));
+    expect(await second.findByText(/versie 0\.0\.70, zoals het op prod draait/)).toBeTruthy();
+    expect(await second.findByText('Uit een dbt-test')).toBeTruthy();
+    const mapping = second.getByRole('combobox', { name: 'Mapping van search_id' }) as HTMLSelectElement;
+    expect(mapping.value).toBe('is');
+    expect((second.getByRole('combobox', { name: 'Entity-identiteit van search_id' }) as HTMLInputElement).value).toBe('search.searchId');
+    expect(second.getByText('Voorgesteld op basis van de naam')).toBeTruthy();
+    expect(second.getByText('Eén rij per search: de grain is dit veld')).toBeTruthy();
+    // A field mapped by hand, with an Entity the Domain Model does not have yet (DEC-CO-21).
+    await fireEvent.change(second.getByRole('combobox', { name: 'Mapping van filters' }), { target: { value: 'occurredWithin' } });
+    const identity = second.getByRole('combobox', { name: 'Entity-identiteit van filters' });
+    expect((second.getByRole('button', { name: '1 Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(identity, { target: { value: 'filter.filterId' } });
+    expect(second.getByText(/zit nog niet in het Domain Model/)).toBeTruthy();
+    await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(second.getByRole('button', { name: '1 Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(calls).toContainEqual({ method: 'POST', path: '/collections/c1/resources', body: { resources: ['r1'] } });
+    expect(calls).toContainEqual({
+      method: 'POST',
+      path: '/collections/c1/resources',
+      body: {
+        resources: [
+          {
+            id: 'r1',
+            partition: null,
+            clusterBy: [],
+            partitionFilter: 'none',
+            grain: ['search_id'],
+            grainSentence: 'saved search',
+            modelType: null,
+            origins: { grain: 'test', grainSentence: 'here' },
+            release: '0.0.70',
+            mappings: [
+              { field: 'search_id', kind: 'is', relationType: null, identity: 'search.searchId', subject: null, origin: 'name', inDomainModel: true },
+              { field: 'filters', kind: 'relation', relationType: 'occurredWithin', identity: 'filter.filterId', subject: 'search_id', origin: 'here', inDomainModel: false },
+            ],
+          },
+        ],
+      },
+    });
   });
 });

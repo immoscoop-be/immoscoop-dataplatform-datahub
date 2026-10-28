@@ -20,6 +20,8 @@ export class Refused extends Error {
     message: string,
     readonly status: number,
     readonly code: string | undefined,
+    /** What the service said about it, in its own words. */
+    readonly detail?: string,
   ) {
     super(message);
   }
@@ -55,8 +57,13 @@ export function createCall(
       throw new NotFound(path);
     }
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { error?: unknown };
-      throw new Refused(`${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`, response.status, typeof body.error === 'string' ? body.error : undefined);
+      const body = (await response.json().catch(() => ({}))) as { error?: unknown; message?: unknown };
+      throw new Refused(
+        `${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`,
+        response.status,
+        typeof body.error === 'string' ? body.error : undefined,
+        typeof body.message === 'string' ? body.message : undefined,
+      );
     }
     return response;
   };

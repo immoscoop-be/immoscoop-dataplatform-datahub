@@ -45,7 +45,18 @@ describe('normalise', () => {
       action: null,
       strategy: null,
       layer: null,
+      partitionField: 'ordered_at',
+      partitionUnit: 'month',
+      clusterBy: ['customer_id'],
+      requirePartitionFilter: true,
     });
+  });
+
+  it('reads how a table is stored from its dbt config, for the step that adds a Resource (FR-CO-34)', () => {
+    // Partitioned by an integer range: a column without a unit; clustered by a list of columns.
+    expect(node(`model.${P}.customers`)).toMatchObject({ partitionField: 'customer_id', partitionUnit: null, clusterBy: ['country', 'customer_id'], requirePartitionFilter: false });
+    // A view is not partitioned.
+    expect(node(`seed.${P}.countries`)).toMatchObject({ partitionField: null, partitionUnit: null, clusterBy: [], requirePartitionFilter: false });
   });
 
   it('knows what a Node of Colleciónes is built from, by the tags of its generator (FR-AR-16)', () => {

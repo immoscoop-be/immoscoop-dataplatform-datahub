@@ -65,6 +65,14 @@ export const LOG_CATALOGUE = {
     parameters: ['actor'],
     text: { en: 'Deprecation taken away by {actor}', nl: 'Deprecated weggenomen door {actor}' },
   },
+  'RES-009': {
+    about: 'resource',
+    parameters: ['mapped', 'fields', 'grain', 'modelType', 'release', 'actor'],
+    text: {
+      en: 'Grain and mappings recorded by {actor}: {mapped} of {fields} fields mapped',
+      nl: 'Grain en mappings vastgelegd door {actor}: {mapped} van de {fields} velden gemapt',
+    },
+  },
   'COL-001': {
     about: 'collection',
     parameters: ['actor', 'name', 'ownerUnit', 'visibility'],

@@ -1,6 +1,6 @@
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
-import type { CatalogueDatabase } from './database.js';
+import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit } from './database.js';
 import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 
@@ -48,10 +48,50 @@ export interface Resource {
   withdrawn: boolean;
 }
 
+/** The mapping of a field (DEC-RC-05, DEC-RC-06, DEC-RC-14). */
+export interface Mapping {
+  field: string;
+  kind: MappingKind;
+  /** The relation type, for a relation. */
+  relationType: string | null;
+  /** `entity.identifier`, or `entity.action` for the ID of an event. */
+  identity: string;
+  /** The field mapped as `is` that a relation starts from, when there is more than one (DEC-RC-08). */
+  subject: string | null;
+  origin: MappingOrigin;
+  /** False for an Entity the Domain Model does not have yet, kept as written (DEC-CO-21). */
+  inDomainModel: boolean;
+}
+
+/**
+ * What the Data Admin records when adding a Resource (FR-CO-33, FR-CO-34): how it is stored, what one
+ * row is, its model type and the mapping of its fields, with where each came from and the release of the
+ * Domain Model the mappings were made with (FR-AR-17).
+ */
+export interface Details {
+  partition: { field: string; unit: PartitionUnit | null } | null;
+  clusterBy: string[];
+  partitionFilter: PartitionFilter;
+  grain: string[];
+  grainSentence: string;
+  modelType: ModelType | null;
+  origins: Origins;
+  release: string | null;
+  mappings: Mapping[];
+}
+
 /** A Resource with its fields, and the columns of its table left out of it (FR-SR-06, DEC-SR-33). */
 export interface ResourceDetail extends Resource {
   fields: Column[];
   leftOut: LeftOut[];
+  /** Empty until it is added to a Collection with them. */
+  details: Details;
+}
+
+/** A Resource to add, with what the Data Admin recorded for it, if anything. */
+export interface AddItem {
+  id: string;
+  details?: Details;
 }
 
 export interface UpdateOutcome {
@@ -80,7 +120,9 @@ export type AddOutcome =
   | { outcome: 'added'; added: number }
   | { outcome: 'collection_gone' }
   | { outcome: 'not_found'; ids: string[] }
-  | { outcome: 'in_another_collection'; ids: string[] };
+  | { outcome: 'in_another_collection'; ids: string[] }
+  /** What was recorded names a field the Resource does not have, or a subject that is no `is` field. */
+  | { outcome: 'invalid'; id: string; message: string };
 
 /** Resources in Postgres (TR-SR-02 to TR-SR-04). Who may do what is decided by the routes. */
 export interface Resources {
@@ -97,7 +139,7 @@ export interface Resources {
    * Adds Resources to a Collection in one go, never from another one (FR-CO-08, FR-CO-31): all of
    * them, or none when one cannot be added. One already in the Collection stays as it is.
    */
-  add(ids: readonly string[], collection: { id: string; name: string }, viewer: Viewer): Promise<AddOutcome>;
+  add(items: readonly AddItem[], collection: { id: string; name: string }, viewer: Viewer): Promise<AddOutcome>;
   /** Takes a Resource out of its Collection; false when it was in none. */
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
@@ -159,6 +201,49 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       .where('subjectKind', '=', 'resource')
       .where('subjectId', '=', resourceId)
       .execute();
+  }
+
+  /**
+   * Records how a Resource is stored, its grain, model type and mappings, and logs it with the addition
+   * (FR-CO-33): a mapping in the same transaction as the Log Entry that tells it.
+   */
+  async function record(trx: Database, resourceId: string, details: Details, fieldCount: number, viewer: Viewer) {
+    await trx
+      .updateTable('resources')
+      .set({
+        grain: details.grain,
+        grainSentence: details.grainSentence,
+        modelType: details.modelType,
+        partitionField: details.partition?.field ?? null,
+        partitionUnit: details.partition?.unit ?? null,
+        clusterBy: details.clusterBy,
+        partitionFilter: details.partition ? details.partitionFilter : 'none',
+        origins: details.origins,
+        domainModelRelease: details.release,
+      })
+      .where('id', '=', resourceId)
+      .execute();
+    await trx.deleteFrom('resourceMappings').where('resourceId', '=', resourceId).execute();
+    if (details.mappings.length > 0) {
+      await trx
+        .insertInto('resourceMappings')
+        .values(details.mappings.map((mapping) => ({ resourceId, ...mapping, release: details.release })))
+        .execute();
+    }
+    await write(
+      trx,
+      resourceId,
+      'RES-009',
+      {
+        mapped: String(details.mappings.length),
+        fields: String(fieldCount),
+        grain: details.grain.join(', '),
+        modelType: details.modelType ?? '',
+        release: details.release ?? '',
+        actor: viewer.name,
+      },
+      viewer.id,
+    );
   }
 
   /**
@@ -331,12 +416,29 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         .orderBy('name')
         .execute();
       const leftOut = await db.selectFrom('resourceLeftOut').select(['name', 'dataType', 'reason']).where('resourceId', '=', id).orderBy('name').execute();
-      return { ...present(row), fields, leftOut };
+      const mappings = await db
+        .selectFrom('resourceMappings')
+        .select(['field', 'kind', 'relationType', 'identity', 'subject', 'origin', 'inDomainModel'])
+        .where('resourceId', '=', id)
+        .execute();
+      const order = new Map(fields.map((field, index) => [field.name, index]));
+      const details: Details = {
+        partition: row.partitionField ? { field: row.partitionField, unit: row.partitionUnit } : null,
+        clusterBy: row.clusterBy,
+        partitionFilter: row.partitionFilter,
+        grain: row.grain,
+        grainSentence: row.grainSentence,
+        modelType: row.modelType,
+        origins: row.origins,
+        release: row.domainModelRelease,
+        mappings: mappings.sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0)),
+      };
+      return { ...present(row), fields, leftOut, details };
     },
 
-    async add(ids, collection, viewer) {
-      const wanted = [...new Set(ids)];
-      const unknown = wanted.filter((id) => !UUID.test(id));
+    async add(items, collection, viewer) {
+      const wanted = [...new Map(items.map((item) => [item.id, item])).values()];
+      const unknown = wanted.filter((item) => !UUID.test(item.id)).map((item) => item.id);
       if (unknown.length > 0) {
         return { outcome: 'not_found', ids: unknown };
       }
@@ -346,8 +448,9 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (!live) {
           return { outcome: 'collection_gone' };
         }
-        const rows = wanted.length === 0 ? [] : await trx.selectFrom('resources').selectAll().where('id', 'in', wanted).orderBy('id').forUpdate().execute();
-        const missing = wanted.filter((id) => !rows.some((row) => row.id === id));
+        const ids = wanted.map((item) => item.id);
+        const rows = ids.length === 0 ? [] : await trx.selectFrom('resources').selectAll().where('id', 'in', ids).orderBy('id').forUpdate().execute();
+        const missing = ids.filter((id) => !rows.some((row) => row.id === id));
         if (missing.length > 0) {
           return { outcome: 'not_found', ids: missing };
         }
@@ -356,10 +459,27 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { outcome: 'in_another_collection', ids: elsewhere.map((row) => row.id) };
         }
         const adding = rows.filter((row) => row.collectionId === null).sort((a, b) => a.displayName.localeCompare(b.displayName));
+        const fieldsOf = new Map<string, string[]>();
+        if (adding.length > 0) {
+          for (const field of await trx.selectFrom('resourceFields').select(['resourceId', 'name']).where('resourceId', 'in', adding.map((row) => row.id)).execute()) {
+            fieldsOf.set(field.resourceId, [...(fieldsOf.get(field.resourceId) ?? []), field.name]);
+          }
+        }
         for (const row of adding) {
+          const details = wanted.find((item) => item.id === row.id)?.details;
+          const problem = details && checkDetails(details, fieldsOf.get(row.id) ?? []);
+          if (problem) {
+            return { outcome: 'invalid', id: row.id, message: `${row.displayName}: ${problem}` };
+          }
+        }
+        for (const row of adding) {
+          const details = wanted.find((item) => item.id === row.id)?.details;
           await trx.updateTable('resources').set({ collectionId: collection.id, updatedAt: new Date() }).where('id', '=', row.id).execute();
           await registrationMessage(trx, row.id, 'inCollection');
           await write(trx, row.id, 'COL-030', { collection: collection.name, actor: viewer.name }, viewer.id);
+          if (details) {
+            await record(trx, row.id, details, (fieldsOf.get(row.id) ?? []).length, viewer);
+          }
           await trx
             .insertInto('collectionLog')
             .values({ collectionId: collection.id, logId: 'COL-006', params: { resource: row.displayName, actor: viewer.name }, actorId: viewer.id })
@@ -408,4 +528,33 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       return rows.map((row) => ({ logId: row.logId, text: logText(row.logId, row.params), params: row.params, at: row.at }));
     },
   };
+}
+
+/**
+ * What the Data Admin recorded fits the Resource: every field it names is a field of it, a field maps
+ * once, and a relation starts from a field mapped as `is` (DEC-RC-08). Returns the problem, if any.
+ */
+export function checkDetails(details: Details, fields: readonly string[]): string | undefined {
+  const known = new Set(fields);
+  const named = [
+    ...details.grain,
+    ...details.clusterBy,
+    ...(details.partition ? [details.partition.field] : []),
+    ...details.mappings.flatMap((mapping) => [mapping.field, ...(mapping.subject ? [mapping.subject] : [])]),
+  ];
+  const stranger = named.find((field) => !known.has(field));
+  if (stranger !== undefined) {
+    return `it has no field ${stranger}.`;
+  }
+  const mapped = details.mappings.map((mapping) => mapping.field);
+  const twice = mapped.find((field, index) => mapped.indexOf(field) !== index);
+  if (twice !== undefined) {
+    return `the field ${twice} maps twice.`;
+  }
+  const subjects = new Set(details.mappings.filter((mapping) => mapping.kind === 'is').map((mapping) => mapping.field));
+  const loose = details.mappings.find((mapping) => mapping.subject !== null && !subjects.has(mapping.subject));
+  if (loose) {
+    return `the relation of ${loose.field} starts from ${loose.subject}, which is not mapped as is.`;
+  }
+  return undefined;
 }

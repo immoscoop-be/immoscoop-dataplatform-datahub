@@ -4,7 +4,8 @@ import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
-import type { AddOutcome, Resource, Resources, ResourcesUpdate } from './resources.js';
+import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
+import type { AddItem, AddOutcome, Details, Mapping, Resource, Resources, ResourcesUpdate } from './resources.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -97,6 +98,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         return reply
           .code(409)
           .send({ error: 'in_another_collection', message: 'A Resource is in another Collection; remove it there first.', resources: outcome.ids });
+      case 'invalid':
+        return reply.code(400).send({ error: 'invalid_request', message: outcome.message, resources: [outcome.id] });
     }
   }
 
@@ -213,15 +216,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!who.dataTeam) {
       return reply.code(403).send(DATA_TEAM_ONLY);
     }
-    const ids = (request.body as { resources?: unknown } | null)?.resources;
-    if (!Array.isArray(ids) || ids.length === 0 || ids.length > ADD_LIMIT || !ids.every((id) => typeof id === 'string')) {
-      return reply.code(400).send({ error: 'invalid_request', message: `Send the Resources to add as a list of 1 to ${ADD_LIMIT} IDs.` });
+    const items = parseAdd(request.body);
+    if (typeof items === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: items });
     }
     const collection = await collections.get(request.params.id, who);
     if (!collection) {
       return reply.code(404).send(NOT_FOUND);
     }
-    return addOutcome(reply, await resources.add(ids as string[], collection, who), async () => ({ resources: await resources.inCollection(collection.id) }));
+    return addOutcome(reply, await resources.add(items, collection, who), async () => ({ resources: await resources.inCollection(collection.id) }));
   });
 
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/collection', async (request, reply) => {
@@ -238,7 +241,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!collection) {
       return reply.code(404).send(NOT_FOUND);
     }
-    return addOutcome(reply, await resources.add([resource.id], collection, who), () => resources.get(resource.id));
+    return addOutcome(reply, await resources.add([{ id: resource.id }], collection, who), () => resources.get(resource.id));
   });
 
   app.delete<{ Params: { id: string } }>('/resources/:id/collection', async (request, reply) => {
@@ -389,4 +392,109 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     return 'Send at least one field to change.';
   }
   return fields;
+}
+
+const UNITS = ['hour', 'day', 'month', 'year'] as const;
+const FILTERS = ['none', 'dataHub', 'bigQuery'] as const;
+const KINDS = ['is', 'relation', 'performedBy'] as const;
+const MAPPING_ORIGINS = ['domainModel', 'name', 'here'] as const;
+const ORIGINS = ['dbt', 'test', 'domainModel', 'here'] as const;
+const ORIGIN_KEYS = ['partition', 'clusterBy', 'partitionFilter', 'grain', 'grainSentence', 'modelType'] as const;
+const IDENTITY = /^[a-z][A-Za-z0-9]*\.[a-z][A-Za-z0-9]*$/;
+const NAME = (value: unknown, max = 1024): value is string => typeof value === 'string' && value.length > 0 && value.length <= max;
+const one = <T extends string>(values: readonly T[], value: unknown): value is T => values.includes(value as T);
+
+/**
+ * Checks the Resources to add (FR-CO-31): each by its ID, or as an object with its ID and what the Data
+ * Admin recorded for it at step 2 (FR-CO-33, FR-CO-34). Whether the fields exist is checked when it is
+ * added. Returns the problem as a sentence when there is one.
+ */
+export function parseAdd(body: unknown): AddItem[] | string {
+  const list = (body as { resources?: unknown } | null)?.resources;
+  if (!Array.isArray(list) || list.length === 0 || list.length > ADD_LIMIT) {
+    return `Send the Resources to add as a list of 1 to ${ADD_LIMIT}.`;
+  }
+  const items: AddItem[] = [];
+  for (const entry of list as unknown[]) {
+    if (typeof entry === 'string') {
+      items.push({ id: entry });
+      continue;
+    }
+    const input = (entry ?? {}) as Record<string, unknown>;
+    if (!NAME(input.id, 64)) {
+      return 'Each Resource to add has its ID.';
+    }
+    const details = parseDetails(input);
+    if (typeof details === 'string') {
+      return details;
+    }
+    items.push({ id: input.id, details });
+  }
+  return items;
+}
+
+function parseDetails(input: Record<string, unknown>): Details | string {
+  const names = (value: unknown, max: number) => Array.isArray(value) && value.length <= max && value.every((name) => NAME(name));
+  const partition = input.partition as Record<string, unknown> | null | undefined;
+  if (partition !== null && !(typeof partition === 'object' && partition !== undefined && NAME(partition.field) && (partition.unit === null || one(UNITS, partition.unit)))) {
+    return 'The partition is null, or a field with its unit: hour, day, month, year or null.';
+  }
+  if (!names(input.clusterBy, 4)) {
+    return 'A Resource is clustered by at most four fields.';
+  }
+  if (!one(FILTERS, input.partitionFilter) || (input.partitionFilter !== 'none' && partition === null)) {
+    return 'A partition filter is none, dataHub or bigQuery, and needs a partition.';
+  }
+  if (!names(input.grain, 20) || typeof input.grainSentence !== 'string' || input.grainSentence.length > 200) {
+    return 'The grain is a list of fields, with a sentence of at most 200 characters.';
+  }
+  if (input.modelType !== null && !one(MODEL_TYPES, input.modelType)) {
+    return `The model type is one of ${MODEL_TYPES.join(', ')}, or null.`;
+  }
+  const origins = (input.origins ?? {}) as Record<string, unknown>;
+  if (typeof origins !== 'object' || Array.isArray(origins) || !Object.entries(origins).every(([key, value]) => one(ORIGIN_KEYS, key) && one(ORIGINS, value))) {
+    return 'The origins name where the partition, cluster, filter, grain, sentence and model type come from.';
+  }
+  if (input.release !== null && !NAME(input.release, 40)) {
+    return 'The release of the Domain Model is a version, or null.';
+  }
+  if (!Array.isArray(input.mappings) || input.mappings.length > 1000) {
+    return 'The mappings come as a list.';
+  }
+  const mappings: Mapping[] = [];
+  for (const raw of input.mappings as Record<string, unknown>[]) {
+    const mapping = raw ?? {};
+    const fits =
+      NAME(mapping.field) &&
+      one(KINDS, mapping.kind) &&
+      (mapping.kind === 'relation' ? NAME(mapping.relationType, 64) && /^[a-z][A-Za-z]*$/.test(mapping.relationType as string) : mapping.relationType === null) &&
+      typeof mapping.identity === 'string' &&
+      IDENTITY.test(mapping.identity) &&
+      (mapping.subject === null || NAME(mapping.subject)) &&
+      one(MAPPING_ORIGINS, mapping.origin) &&
+      typeof mapping.inDomainModel === 'boolean';
+    if (!fits) {
+      return 'Each mapping has a field, is, a relation type or performedBy, an identity as entity.identifier, a subject or null, its origin, and whether the Domain Model has it.';
+    }
+    mappings.push({
+      field: mapping.field as string,
+      kind: mapping.kind as Mapping['kind'],
+      relationType: (mapping.relationType as string | null) ?? null,
+      identity: mapping.identity as string,
+      subject: (mapping.subject as string | null) ?? null,
+      origin: mapping.origin as Mapping['origin'],
+      inDomainModel: mapping.inDomainModel as boolean,
+    });
+  }
+  return {
+    partition: partition ? { field: partition.field as string, unit: partition.unit as PartitionUnit | null } : null,
+    clusterBy: input.clusterBy as string[],
+    partitionFilter: input.partitionFilter,
+    grain: input.grain as string[],
+    grainSentence: (input.grainSentence as string).trim(),
+    modelType: input.modelType as ModelType | null,
+    origins: origins as Origins,
+    release: (input.release as string | null) ?? null,
+    mappings,
+  };
 }

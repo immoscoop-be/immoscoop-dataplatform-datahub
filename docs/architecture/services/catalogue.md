@@ -29,10 +29,10 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | --- | --- |
 | `POST /internal/resources` | The exposed tables of one dbt project, from registry with its service identity: registers, renames, withdraws and brings back Resources ([TR-SR-01](../../requirements/technical/04-stacks-and-resources.md#tr-sr-01)) |
 | `GET /resources?collection=none` | The Resources without Collection, each with its Level (Data Team) |
-| `POST /collections/{id}/resources` | Add Resources to a Collection, all of them or none (Data Team) |
+| `POST /collections/{id}/resources` | Add Resources to a Collection, all of them or none, each with its grain, model type, storage and mappings ([TR-CO-05](../../requirements/technical/03-collections.md#tr-co-05)) (Data Team) |
 | `PUT /resources/{id}/collection`, `DELETE /resources/{id}/collection` | Add a Resource to a Collection, or remove it (Data Team) |
 | `GET /collections/{id}/resources` | The Resources of a Collection, as far as the User may see them |
-| `GET /resources/{id}` | The Resource Card, as far as the User may see it; built: the Resource with its fields and the columns left out of it ([TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06)) |
+| `GET /resources/{id}` | The Resource Card, as far as the User may see it; built: the Resource with its fields, the columns left out of it ([TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06)) and what was recorded when it was added ([TR-CO-05](../../requirements/technical/03-collections.md#tr-co-05)) |
 | `PUT /resources/{id}/publication`, `POST /resources/{id}/confirmations` | Publish and confirm (Owner) |
 | `GET /resources/{id}/log` | History, filterable by kind of Log Entry |
 | `POST /resources/{id}/reactions` | Question, Remark or Signal |
@@ -47,7 +47,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 
 Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour and Anomalies, Reactions, messages.
 
-Built today: the Collections and their Log; the Resources with their Level, their plain fields and the columns left out of them, their Fingerprints and their Log ([TR-SR-02](../../requirements/technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06) to [TR-SR-08](../../requirements/technical/04-stacks-and-resources.md#tr-sr-08)); and the Messages, each placed on its object, its text built from the [Message Catalogue](../../requirements/functional/message-catalogue.md) when it is read ([TR-SR-09](../../requirements/technical/04-stacks-and-resources.md#tr-sr-09)). The texts of the Log come from the [Log Catalogue](../../requirements/functional/log-catalogue.md) in `@datahub/contracts`, in Dutch and English. The Resources started afresh for the rebuild, in migration `0004-resources-afresh`.
+Built today: the Collections and their Log; the Resources with their Level, their plain fields and the columns left out of them, their Fingerprints and their Log ([TR-SR-02](../../requirements/technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06) to [TR-SR-08](../../requirements/technical/04-stacks-and-resources.md#tr-sr-08)); and the Messages, each placed on its object, its text built from the [Message Catalogue](../../requirements/functional/message-catalogue.md) when it is read ([TR-SR-09](../../requirements/technical/04-stacks-and-resources.md#tr-sr-09)). The texts of the Log come from the [Log Catalogue](../../requirements/functional/log-catalogue.md) in `@datahub/contracts`, in Dutch and English. The Resources started afresh for the rebuild, in migration `0004-resources-afresh`. The grain, model type, storage and mappings recorded when a Resource is added are in migration `0006-grain-and-mappings`.
 
 ## Talks to
 

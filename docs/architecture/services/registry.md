@@ -36,6 +36,8 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /nodes?q=&type=` | Search Nodes by name, also with a typo, and by free text in descriptions and columns ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05)) |
 | `GET /nodes/{id}` | One Node with what Colleciónes built it from, its columns with their meta, and its tests ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
+| `GET /nodes/{id}/proposal` | The grain, model type, storage and mappings Data Hub proposes for the Resource on a Node, when it is added to a Collection ([TR-AR-10](../../requirements/technical/01-artifact-registry.md#tr-ar-10)) |
+| `GET /domain-model` | The Domain Model in use, read from the collector at that moment: its release, the relation types a field can map to, and every identity ([TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
 
 Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is to be readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)); not built yet.*
@@ -48,7 +50,7 @@ Artifact Sets with their status and error, Nodes, columns, Edges, tests and Chan
 
 The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
 
-Once [FR-AR-15](../../requirements/functional/01-artifact-registry.md#fr-ar-15) is built: the collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04)).
+The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)).
 
 ## Permissions
 
