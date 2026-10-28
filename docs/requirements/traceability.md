@@ -16,7 +16,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (2 open, 5 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 specified) | 22 | 17 (2 open, 15 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 13 | 25 (5 open, 20 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 13 | 25 (4 open, 21 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (3 open, 2 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
