@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 233: 46 Implemented, 68 Specified, 85 Proposed, 34 Withdrawn |
+| Functional requirements | 236: 46 Implemented, 68 Specified, 88 Proposed, 34 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 83 |
-| Prototype screens | 31, plus the index |
-| Open points | 129 open, of 238: 122 for v1 and 7 marked Could |
+| Design decisions (DEC-UX) | 84 |
+| Prototype screens | 32, plus the index |
+| Open points | 127 open, of 238: 120 for v1 and 7 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -154,7 +154,7 @@ flowchart TB
   end
   API{{"One set of APIs, called with the Access Token of the User"}}
   subgraph SVC["Services"]
-    ID["identity<br/>Google sign-in, Workspace groups,<br/>Access Tokens, Library Cards"]
+    ID["identity<br/>Google sign-in, Workspace groups,<br/>Access Tokens, Excel keys"]
     CAT["catalogue<br/>Collections, Resources and Log,<br/>Resource Cards, Messages"]
     REG["registry<br/>dbt Artifacts, Nodes and lineage,<br/>files in GCS, Changes"]
     Q["query<br/>Preview, free SQL and Claude,<br/>Excel feeds, dry run first"]
@@ -166,7 +166,7 @@ flowchart TB
   end
   B --> WEB --> API
   C --> MCP --> API
-  X -. Library Card .-> API
+  X -. Excel key .-> API
   API --> ID & CAT & REG & Q & SG
   ID --> PG
   CAT --> PG
@@ -196,7 +196,7 @@ The interfaces hold no business logic: web, mcp and the Excel feed are clients o
 
 | Part | Responsibility | Stores | Built today |
 | --- | --- | --- | --- |
-| identity | Sign in with Google, Workspace groups, Access Tokens, Library Cards | Schema `identity` | Signing in, groups, sessions, Refresh Tokens. Library Cards and the group synchronisation are not built |
+| identity | Sign in with Google, Workspace groups, Access Tokens, Excel keys | Schema `identity` | Signing in, groups, sessions, Refresh Tokens. Excel keys and the group synchronisation are not built |
 | catalogue | The library itself: Collections, Resources, Log, Resource Card, Publication, Messages | Schema `catalogue` | Collections with their Log, Resources from the exposures, adding to and removing from a Collection |
 | registry | Fetching and processing the dbt Artifacts: Nodes, columns, lineage, tests, Changes | Schema `registry`, and the files in a GCS bucket | Everything but comparing versions and handing over Changes |
 | query | The only service that reads the tables of the Resources: Preview, free SQL for Claude, feeds for Excel | Nothing in v1 | An empty skeleton |
@@ -248,6 +248,8 @@ The shared code lives in `packages/`: `auth` validates tokens in every service, 
 
 A photo of the set, as it is, fills the screen. The sign-in sits on a glass card that blurs what lies behind it: the name, one sentence on what Data Hub is, and Sign in with Google. In a corner, also on glass, the story of the photo: a title, a few lines and who took it. The dark theme has its own photos, never darkened copies ([DEC-UX-35](../design/principles.md#dec-ux-35), [DEC-UX-36](../design/principles.md#dec-ux-36)). An account of another domain is refused on the same card, naming the account. Screen: `sign-in`.
 
+**Screen:** [my-page.html](../design/screens/my-page.html), with `?keys=new`, `?keys=made` or `?keys=revoking` in the address. **My page** (from your review, 2026-10-28), behind the initials at the foot of the rail ([DEC-UX-84](../design/principles.md#dec-ux-84)): who you are, the Collections you own through your groups and that you are a Reader of the rest ([DEC-DH-78](../overview/data-hub.md#dec-dh-78)), your queries, and your **Excel keys**, the personal keys with which Excel signs in, formerly the Library Card ([DEC-DH-79](../overview/data-hub.md#dec-dh-79)). A key is made with a name, shown once to copy, lasts a year and is revoked from the list ([FR-PL-01](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-01) to [FR-PL-03](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-03)).
+
 ### Behind it
 
 **Service:** identity. **Schema:** `identity`.
@@ -271,7 +273,7 @@ A photo of the set, as it is, fills the screen. The sign-in sits on a glass card
 
 **Talks to:** Google Sign-In, the Cloud Identity Groups API (one level at a time, since the call for all nested groups at once needs a Workspace edition we do not have), the Admin SDK to check that an account is still active, and Cloud KMS to sign.
 
-**Not built:** Library Cards (`POST /library-cards`, `POST /exchange`) and the group synchronisation (`POST /internal/sync-groups`, from Cloud Scheduler).
+**Not built:** Excel keys (`POST /library-cards`, `POST /exchange`) and the group synchronisation (`POST /internal/sync-groups`, from Cloud Scheduler).
 
 ### Open
 
@@ -902,11 +904,11 @@ Every service decides this itself, on every request, with the Groups in the Acce
 
 A link to anything a User may not see opens the same page as a link to nothing ([FR-CO-32](../requirements/functional/03-collections.md#fr-co-32), [DEC-UX-32](../design/principles.md#dec-ux-32)). It says what to do instead: ask whoever sent the link, or search. It has no Ask for access, since that would tell the object exists. Whether asking for access should be possible, and how, is open ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)). Screen: `not-found`.
 
-### Library Cards, for Excel
+### Excel keys, for Excel
 
-Excel stays possible as a window on Data Hub: the data of a Lens comes in as a feed through Power Query, without direct BigQuery access ([DEC-DH-46](../overview/data-hub.md#dec-dh-46)). In the pilot, Power Query signs in with a personal key per User, the Library Card, which can be revoked and renewed; a Microsoft work account is a possible later step ([DEC-DH-47](../overview/data-hub.md#dec-dh-47)).
+Excel stays possible as a window on Data Hub: the data of a Lens comes in as a feed through Power Query, without direct BigQuery access ([DEC-DH-46](../overview/data-hub.md#dec-dh-46)). In the pilot, Power Query signs in with a personal key per User, the Excel key, which can be revoked and renewed; a Microsoft work account is a possible later step ([DEC-DH-47](../overview/data-hub.md#dec-dh-47)).
 
-**Behind it, planned:** identity issues a Library Card and keeps only its hash; `@datahub/auth` exchanges it at identity for a short Access Token with the User's current Groups, so a feed sees exactly what its User sees today. Nothing of this is built, and no screen is designed for issuing or revoking a card ([OP-DH-25](../overview/open-themes.md#op-dh-25)). Whether Lenses in Excel are enough for the pilot is to test with Hannelore ([OP-DH-36](../overview/open-themes.md#op-dh-36)).
+**Behind it, planned:** identity issues a Excel key and keeps only its hash; `@datahub/auth` exchanges it at identity for a short Access Token with the User's current Groups, so a feed sees exactly what its User sees today. Nothing of this is built, and no screen is designed for issuing or revoking a card ([OP-DH-25](../overview/open-themes.md#op-dh-25)). Whether Lenses in Excel are enough for the pilot is to test with Hannelore ([OP-DH-36](../overview/open-themes.md#op-dh-36)).
 
 ### Confidentiality
 
@@ -925,7 +927,7 @@ The overview also lists an access classification on the Resource Card, such as p
 2. **Lowering.** The workshop says a level can only be lowered, never raised, downstream, and also that a Lens takes the highest level beneath it. Whether an aggregating Lens may carry a lower level than its Resources, and who decides that, needs one rule.
 3. **Columns or tables.** A level per Resource is simple. A level per column (an e-mail address in an otherwise open table) is finer, but asks more of the query check and of BigQuery.
 4. **Claude.** Through the MCP server, query results go to Claude. Whether some levels never go to Claude, or only in aggregate, is part of the matrix.
-5. **Excel and exports.** A feed leaves Data Hub. The matrix can say which levels may go out through a Library Card.
+5. **Excel and exports.** A feed leaves Data Hub. The matrix can say which levels may go out through a Excel key.
 
 **Where it would land in the build,** whatever the answers:
 
@@ -940,7 +942,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 - Confidentiality as a concept ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)), the access axis ([OP-DH-22](../overview/open-themes.md#op-dh-22)), and the roles: what a reader, an Owner and the Data Team may do ([OP-DH-24](../overview/open-themes.md#op-dh-24)).
 - Asking for access to something you may not see ([OP-CO-13](../requirements/functional/03-collections.md#op-co-13)).
-- Library Cards: issuing, revoking, renewing ([OP-DH-25](../overview/open-themes.md#op-dh-25)).
+- Excel keys: issuing, revoking, renewing ([OP-DH-25](../overview/open-themes.md#op-dh-25)).
 
 ## Look and feel
 
@@ -1074,7 +1076,7 @@ Five domains have no requirements yet, and two have only a few proposals. None o
 | [Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md) | Automatic checks after a Change, derived from the EDA, and the monitors of an Owner | To be specified ([OP-MR-02](../requirements/functional/06-maturity-and-release.md#op-mr-02), [OP-DH-19](../overview/open-themes.md#op-dh-19)) | Level 5, Monitored; checks and incidents on the Resource Card ([FR-RC-14](../requirements/functional/05-resource-card.md#fr-rc-14)) |
 | [Reports](../requirements/functional/10-reports.md) | Lenses bundled around a question, with text and shared Parameters | To be specified; the section is in the navigation, without a start screen ([OP-UX-03](../design/principles.md#op-ux-03)) | Lenses first; Parameters named so they combine across Lenses ([DEC-DH-11](../overview/data-hub.md#dec-dh-11)) |
 | [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) | Concepts business defines itself, and how they harden into a Resource | To be specified ([OP-DH-07](../overview/open-themes.md#op-dh-07), [OP-DH-08](../overview/open-themes.md#op-dh-08), [OP-DH-26](../overview/open-themes.md#op-dh-26), [OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)) | Level 0, Beta; whether a Lens can define a new concept |
-| [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) | Roles, access and personal keys | To be specified; confidentiality first as a concept ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)) | Excel; what may reach Claude; the access axis |
+| [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) | Roles, access and personal keys | To be specified; confidentiality first as a concept ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)) | Excel; what may reach Claude; the access axis |
 | [Log and notifications](../requirements/functional/07-log-and-notifications.md) | The Log Catalogue, the Message Centre, who hears what, through which channel | Two Specified (the Query Log), four Proposed | Alerts on a drop, warnings on a change, Requests, notifying Consumers of a changed field |
 | [Channels](../requirements/functional/13-channels.md) | Through which channels each asset is released | Five Proposed; the channels per asset decided on 2026-10-28, Claude in version 2 | Excel feeds, exports, HTML reports |
 
@@ -1094,7 +1096,7 @@ The overview still says EDAs move to Data Hub as their source, and lists EDA res
 - **The Domain Model:** browsing to an Entity, and the Entities derived from the manifest and the lineage ([FR-SR-23](../requirements/functional/04-stacks-and-resources.md#fr-sr-23), [OP-DH-06](../overview/open-themes.md#op-dh-06)), and the relationships between Resources, whose Entity reference is now set at step 2 ([FR-CO-33](../requirements/functional/03-collections.md#fr-co-33)), with the cardinality under discussion ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)), ([FR-RC-08](../requirements/functional/05-resource-card.md#fr-rc-08) to [FR-RC-10](../requirements/functional/05-resource-card.md#fr-rc-10)).
 - **Usage:** which Lenses, Reports and feeds use a Resource, for the Data Team. What uses a Resource is kept in the database of Data Hub ([DEC-DH-68](../overview/data-hub.md#dec-dh-68)); a screen that shows it is not designed yet.
 - **The Lineage and History tabs** of a Resource ([OP-UX-04](../design/principles.md#op-ux-04)).
-- **Issuing a Library Card** and **connecting Claude** ([OP-CH-02](../requirements/functional/13-channels.md#op-ch-02)): no screen yet.
+- **Issuing a Excel key** and **connecting Claude** ([OP-CH-02](../requirements/functional/13-channels.md#op-ch-02)): no screen yet.
 - **Mobile** and narrow windows ([OP-UX-06](../design/principles.md#op-ux-06)).
 - **Slack:** on hold.
 
@@ -1133,7 +1135,7 @@ Of the 141 open points, most can wait. This section sorts the ones that matter f
 | Data Hub and Domain Hub | [OP-DH-31](../overview/open-themes.md#op-dh-31) | Whether they merge |
 | Mobile | [OP-UX-06](../design/principles.md#op-ux-06) | Narrow screens |
 
-Excel and the Library Card ([OP-DH-25](../overview/open-themes.md#op-dh-25), [OP-DH-36](../overview/open-themes.md#op-dh-36)) fit here too, unless the pilot with Hannelore needs them early.
+Excel and the Excel key ([OP-DH-25](../overview/open-themes.md#op-dh-25), [OP-DH-36](../overview/open-themes.md#op-dh-36)) fit here too, unless the pilot with Hannelore needs them early.
 
 ### C. Decide during the build: values and details that do not change the shape
 
@@ -1182,23 +1184,22 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 129 still open, 7 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 127 still open, 7 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-UX-32](../design/principles.md#op-ux-32) the colour of cards on the light background · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits · [OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17) the Request for a query above 1 GB · [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16) and [OP-UX-25](../design/principles.md#op-ux-25) the deprecated mark
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04) Slack · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-DH-25](../overview/open-themes.md#op-dh-25) the personal key for Excel
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04) Slack · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-DH-27](../overview/open-themes.md#op-dh-27) asking to make a concept formal · [OP-DH-28](../overview/open-themes.md#op-dh-28) a Lens onto its new Resource
 
 ### Open themes
 
-Source: [overview/open-themes.md](../overview/open-themes.md) · 17 open
+Source: [overview/open-themes.md](../overview/open-themes.md) · 16 open
 
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model. *Note of 2026-10-28: the generated project already links every model to its Entity, its action and its references in `meta.domain` ([FR-AR-16](../requirements/functional/01-artifact-registry.md#fr-ar-16)); per column it says nothing structured yet. The extension is proposed in [The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest) ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07), [FR-AR-17](../requirements/functional/01-artifact-registry.md#fr-ar-17)).*
-- [ ] **[OP-DH-25](../overview/open-themes.md#op-dh-25)** · Work out the issuing, revoking and renewing of personal keys, the Library Cards. *Note of 2026-10-28: Max asked what a Library Card is and what is left to work out. It is the personal key of a User with which Excel signs in through Power Query ([DEC-DH-47](../overview/data-hub.md#dec-dh-47)). How it works is covered: identity exchanges it for an Access Token and keeps only its hash ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)). What is not: where a User gets one, how long it lasts and who can revoke it. Proposal: a User makes one on their account page, named after where it is used, such as "Excel on my laptop", and sees it once, to copy; the page lists their keys with when each was last used, and revokes one; renewing is revoking and making a new one; a key lasts a year, and stops at once when the User can no longer sign in with Google; the Data Team can revoke any key. Also: whether the name Library Card stays, or becomes something plainer, such as Excel key.*
-- [ ] **[OP-DH-27](../overview/open-themes.md#op-dh-27)** · Decide the form of the request to the Data Team, and how it is linked to the Owner Unit, the Collection and the Domain Model.
-- [ ] **[OP-DH-28](../overview/open-themes.md#op-dh-28)** · Work out how the working version is realigned to the new Resource after promotion. *Note of 2026-10-28: the working version is the Lens or query whose SQL the Data Team hardened ([DEC-DH-70](../overview/open-themes.md#dec-dh-70)).*
+- [ ] **[OP-DH-27](../overview/open-themes.md#op-dh-27)** · Decide the form of the request to the Data Team, and how it is linked to the Owner Unit, the Collection and the Domain Model. *Note of 2026-10-28, context asked by Max: this is the step in which business asks the Data Team to make a Beta Concept formal, a Lens or query that the Data Team then hardens into a dbt model, which an exposure makes a Resource ([DEC-DH-70](../overview/open-themes.md#dec-dh-70), [DEC-DH-72](../overview/open-themes.md#dec-dh-72)). Three things to decide: how the ask is made; who will own the new Resource, the Owner Unit; and where it goes, the Collection; and whether the concept enters the Domain Model, as an Entity, an attribute or an action of Colleciónes, or stays a dbt model in dbt-prod. Proposal: a Request, a Message of its own on the Lens or query, "Make it formal", sent to the Data Team with why it is needed ([DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06)); the new Resource goes to the Collection of the Lens, with its Owner Unit as Owner; whether it enters the Domain Model is for the Data Team to decide, and it says so when it accepts the Request.*
+- [ ] **[OP-DH-28](../overview/open-themes.md#op-dh-28)** · Work out how the working version is realigned to the new Resource after promotion. *Note of 2026-10-28: the working version is the Lens or query whose SQL the Data Team hardened ([DEC-DH-70](../overview/open-themes.md#dec-dh-70)).* *Note of 2026-10-28, context asked by Max: once the Data Team has hardened the SQL of a Lens into a dbt model, and an exposure made it a Resource, the Lens itself still works out the concept from the original Resources, with its own SQL. Realigning is making the Lens read the new Resource instead, so that the logic lives once, in dbt, and the Lens takes the Level of that Resource. Proposal: when the Resource arrives, the Owner Unit of the Lens gets a Message, "Use the new resource"; the Data Team gives the SQL on the new Resource; Data Hub runs the old and the new with the default Parameters and shows whether the results are the same; accepting makes it a new version of the Lens ([DEC-LE-04](../requirements/functional/09-lenses.md#dec-le-04)). A query is not realigned: it stays as it ran.*
 - [ ] **[OP-DH-29](../overview/open-themes.md#op-dh-29)** · Draw up the functional and technical analysis of Data Hub, following the example of the one for the Chart Server. *Migration note: this analysis is now being built up under [requirements](../requirements/README.md).*
 - [ ] **[OP-DH-30](../overview/open-themes.md#op-dh-30)** · Decide the scope of the documentation: which forms, in which order, and what the pilot needs.
 - [ ] **[OP-DH-31](../overview/open-themes.md#op-dh-31)** · Decide whether Data Hub stays a separate application next to Domain Hub or merges with it.
@@ -1211,7 +1212,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 17 open
 - [ ] **[OP-DH-40](../overview/open-themes.md#op-dh-40)** · Decide whether Learning Cards ever come in English too. The first version is Dutch ([NFR-LOC-08](../requirements/non-functional/localisation.md#nfr-loc-08)); decide after the pilot. The structure of a card, its five steps, does not depend on the language, so this closes nothing off. *Raised on 2026-10-25, in the language principle.*
 - [ ] **[OP-DH-41](../overview/open-themes.md#op-dh-41)** · Decide whether metadata written by people is Dutch as a guideline or as a hard rule ([NFR-LOC-09](../requirements/non-functional/localisation.md#nfr-loc-09)). Proposal: a guideline, without validation. *Raised on 2026-10-25, in the language principle.*
 - [ ] **[OP-DH-42](../overview/open-themes.md#op-dh-42)** · Decide where the list of names lives ([NFR-LOC-05](../requirements/non-functional/localisation.md#nfr-loc-05)). Proposal: derived from the Domain Model, plus a fixed list of the kinds of assets, so that the analysis does not keep a list by hand. *Raised on 2026-10-25, in the language principle.*
-- [ ] **[OP-DH-46](../overview/open-themes.md#op-dh-46)** · Decide where a User chooses their language ([NFR-LOC-06](../requirements/non-functional/localisation.md#nfr-loc-06)), now that the rail has no button for settings ([DEC-UX-53](../design/principles.md#dec-ux-53), [OP-UX-13](../design/principles.md#op-ux-13)). *Raised on 2026-10-25, while taking in the language principle.*
+- [ ] **[OP-DH-46](../overview/open-themes.md#op-dh-46)** · Decide where a User chooses their language ([NFR-LOC-06](../requirements/non-functional/localisation.md#nfr-loc-06)), now that the rail has no button for settings ([DEC-UX-53](../design/principles.md#dec-ux-53), [OP-UX-13](../design/principles.md#op-ux-13)). *Raised on 2026-10-25, while taking in the language principle.* *Note of 2026-10-28: My page now exists ([DEC-UX-84](../design/principles.md#dec-ux-84)). Proposal: the language is chosen there.*
 
 ### Data Hub design principles
 
@@ -1243,7 +1244,7 @@ Source: [design/principles.md](../design/principles.md) · 20 open
 Source: [requirements/functional/01-artifact-registry.md](../requirements/functional/01-artifact-registry.md) · 5 open
 
 - [ ] **[OP-AR-03](../requirements/functional/01-artifact-registry.md#op-ar-03)** · Confirm or adjust the edge cases above.
-- [ ] **[OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../requirements/technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) decides ([OP-DH-24](../overview/open-themes.md#op-dh-24)).
+- [ ] **[OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../requirements/technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) decides ([OP-DH-24](../overview/open-themes.md#op-dh-24)).
 - [ ] **[OP-AR-06](../requirements/functional/01-artifact-registry.md#op-ar-06)** · Find out where the overview of the Domain Model is served ([FR-AR-15](../requirements/functional/01-artifact-registry.md#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.*
 - [ ] **[OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).*
 - [ ] **[OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08)** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](../requirements/functional/05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).*
@@ -1330,7 +1331,7 @@ Source: [requirements/functional/11-beta-and-promotion.md](../requirements/funct
 
 - [ ] **[OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15).
 
-### Permissions and library cards
+### Permissions and Excel keys
 
 Source: [requirements/functional/12-permissions-and-library-cards.md](../requirements/functional/12-permissions-and-library-cards.md) · 1 open
 
@@ -1338,9 +1339,8 @@ Source: [requirements/functional/12-permissions-and-library-cards.md](../require
 
 ### Channels
 
-Source: [requirements/functional/13-channels.md](../requirements/functional/13-channels.md) · 2 open
+Source: [requirements/functional/13-channels.md](../requirements/functional/13-channels.md) · 1 open
 
-- [ ] **[OP-CH-01](../requirements/functional/13-channels.md#op-ch-01)** · Decide where the documentation of [FR-CH-04](../requirements/functional/13-channels.md#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.*
 - [ ] **[OP-CH-03](../requirements/functional/13-channels.md#op-ch-03)** · Decide whether the HTML report is a channel of v1, and for which assets. Proposal: not in v1; it comes with Reports and their visualisations ([DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)). *Raised on 2026-10-28, in the review of Max, which named Data Hub, Claude and Excel.*
 
 ### Conversations
@@ -1435,6 +1435,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-DH-20](../overview/open-themes.md#op-dh-20)** · Choose the channel and rhythm of notifications: Slack, email or only in Data Hub, immediately or as a digest. *Decided on 2026-10-28, by Max: immediately; in Data Hub and by e-mail, and in Slack if a connection is possible ([DEC-LN-02](../requirements/functional/07-log-and-notifications.md#dec-ln-02), [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04)).*
 - [x] **[OP-DH-22](../overview/open-themes.md#op-dh-22)** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub. *Note of 2026-10-19: who sees a Collection and its Resources is decided in [DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10) to [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12); the access axis remains open.* *Decided on 2026-10-28, by Max: you see everything public, and everything private in the Collections of your Owner Unit; no further access axis ([DEC-DH-77](../overview/data-hub.md#dec-dh-77)).*
 - [x] **[OP-DH-24](../overview/open-themes.md#op-dh-24)** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).* *Decided on 2026-10-28, by Max: Owner of every asset in the Collections of your Owner Unit, Reader of all the rest; a Data Admin can access everything ([DEC-DH-78](../overview/data-hub.md#dec-dh-78)).*
+- [x] **[OP-DH-25](../overview/open-themes.md#op-dh-25)** · Work out the issuing, revoking and renewing of personal keys, the Library Cards. *Note of 2026-10-28: Max asked what a Library Card is and what is left to work out. It is the personal key of a User with which Excel signs in through Power Query ([DEC-DH-47](../overview/data-hub.md#dec-dh-47)). How it works is covered: identity exchanges it for an Access Token and keeps only its hash ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)). What is not: where a User gets one, how long it lasts and who can revoke it. Proposal: a User makes one on their account page, named after where it is used, such as "Excel on my laptop", and sees it once, to copy; the page lists their keys with when each was last used, and revokes one; renewing is revoking and making a new one; a key lasts a year, and stops at once when the User can no longer sign in with Google; the Data Team can revoke any key. Also: whether the name Library Card stays, or becomes something plainer, such as Excel key.* *Decided on 2026-10-28, by Max: as proposed, and the Library Card is now called the Excel key; its screens are on My page ([DEC-DH-79](../overview/data-hub.md#dec-dh-79)).*
 
 **Data Hub design principles**
 
@@ -1488,6 +1489,10 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Platform: technical requirements**
 
 - [x] **[OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)** · Decide who gives query its read access on the Stacks: Terraform, which then needs rights on the Stacks dataset, or dbt, which creates that dataset. *Decided on 2026-10-26, by Max: Terraform grants the service account of Data Hub read access to every table in the GCP projects of the dbt projects it follows ([DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32)).*
+
+**Channels**
+
+- [x] **[OP-CH-01](../requirements/functional/13-channels.md#op-ch-01)** · Decide where the documentation of [FR-CH-04](../requirements/functional/13-channels.md#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the Learning Cards in Data Hub are the documentation ([DEC-CH-04](../requirements/functional/13-channels.md#dec-ch-04)).*
 
 ### To confirm
 

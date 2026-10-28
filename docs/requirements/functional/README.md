@@ -28,7 +28,7 @@
 | 9 | [Lenses](09-lenses.md) | `LE` | Lens types, Parameters and their Level | To be specified |
 | 10 | [Reports](10-reports.md) | `RP` | Bundling Lenses around a question, with text and shared Parameters | To be specified |
 | 11 | [Beta and promotion](11-beta-and-promotion.md) | `BP` | Concepts that business defines itself, and how they are hardened into a Resource | To be specified |
-| 12 | [Permissions and library cards](12-permissions-and-library-cards.md) | `PL` | Roles, access and personal keys | To be specified |
+| 12 | [Permissions and Excel keys](12-permissions-and-library-cards.md) | `PL` | Roles, access and personal keys | To be specified |
 | 13 | [Channels](13-channels.md) | `CH` | Data Hub itself, Claude as an MCP App, Excel and HTML reports | To be specified |
 | 14 | [Conversations](14-conversations.md) | `CV` | Questions, Remarks and margin notes on an object | To be specified |
 | 15 | [EDA](15-eda.md) | `ED` | How an exploration runs and is linked to a Resource | To be specified ² |

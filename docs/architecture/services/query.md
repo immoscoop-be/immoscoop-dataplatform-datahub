@@ -32,7 +32,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | --- | --- |
 | `GET /resources/{id}/preview` | The first rows of a Resource |
 | `POST /queries` | Run free SQL |
-| `GET /feeds/{id}` | A feed for Power Query, with a Library Card ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
+| `GET /feeds/{id}` | A feed for Power Query, with a Excel key ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
 
 ## Talks to
 

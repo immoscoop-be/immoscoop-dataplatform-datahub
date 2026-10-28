@@ -5,9 +5,9 @@
 | Kind | Backend service on Cloud Run |
 | Code | `services/identity` |
 | Schema | `identity` |
-| Domains | [User management](../../requirements/functional/02-user-management.md), [Permissions and library cards](../../requirements/functional/12-permissions-and-library-cards.md) |
+| Domains | [User management](../../requirements/functional/02-user-management.md), [Permissions and Excel keys](../../requirements/functional/12-permissions-and-library-cards.md) |
 
-**In one sentence:** identity knows who you are: it signs you in with Google, knows your Groups from Workspace, issues the Access Tokens every other service validates, and manages Library Cards.
+**In one sentence:** identity knows who you are: it signs you in with Google, knows your Groups from Workspace, issues the Access Tokens every other service validates, and manages Excel keys.
 
 ## Responsibilities
 
@@ -17,7 +17,7 @@
 - Issuing Access Tokens, signed with its key in Cloud KMS, and publishing the public keys: [TR-PF-02](../../requirements/technical/00-platform.md#tr-pf-02), [TR-PF-24](../../requirements/technical/00-platform.md#tr-pf-24)
 - OAuth authorisation server for the server of the web app and for Claude: [TR-PF-06](../../requirements/technical/00-platform.md#tr-pf-06), [TR-PF-27](../../requirements/technical/00-platform.md#tr-pf-27)
 - Keeping them signed in with Refresh Tokens, and checking Groups and account at every renewal: [TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25), [TR-PF-26](../../requirements/technical/00-platform.md#tr-pf-26)
-- Library Cards for Excel: issuing, revoking, renewing and exchanging them for Access Tokens: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)
+- Excel keys for Excel: issuing, revoking, renewing and exchanging them for Access Tokens: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)
 
 ## API
 
@@ -31,13 +31,13 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `DELETE /users/{googleId}/sessions` | The Data Team ends every session of a User at once ([TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25)) |
 | `GET /me` | The current User, Groups and roles |
 | `GET /me/groups` | The groups of the current User with their address and name, read from Workspace; for choosing an Owner Unit ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
-| `POST /library-cards`, `DELETE /library-cards/{id}` | Issue and revoke a Library Card |
-| `POST /exchange` | Exchange a Library Card for an Access Token; used by `@datahub/auth` |
+| `POST /excel-keys`, `DELETE /excel-keys/{id}` | Make and revoke an Excel key |
+| `POST /exchange` | Exchange a Excel key for an Access Token; used by `@datahub/auth` |
 | `POST /internal/sync-groups` | Synchronise the Groups; called by Cloud Scheduler with the service identity |
 
 ## Data
 
-Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Library Cards (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants.
+Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants.
 
 ## Talks to
 

@@ -65,7 +65,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 
 | Service | Responsibility | Functional domains | Schema |
 | --- | --- | --- | --- |
-| [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Library Cards, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
+| [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Excel keys, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
 | [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
 | [query](services/query.md) | Running queries on the Resources: preview, free SQL for Claude, feeds for Excel | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
@@ -113,7 +113,7 @@ sequenceDiagram
 | `sub` | The fixed Google ID of the User |
 | `email`, `name` | From Google |
 | `groups` | The Groups of the User, by fixed Google ID ([FR-UM-05](../requirements/functional/02-user-management.md#fr-um-05), [FR-UM-08](../requirements/functional/02-user-management.md#fr-um-08)) |
-| `roles` | Derived from the Role Groups, such as the Data Team ([Permissions and library cards](../requirements/functional/12-permissions-and-library-cards.md)) |
+| `roles` | Derived from the Role Groups, such as the Data Team ([Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md)) |
 | `iss`, `aud`, `exp` | identity, the Data Hub services, 15 minutes after issue |
 
 ## One set of APIs, several interfaces
@@ -122,7 +122,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Browser | web | Google, through identity |
 | Claude | mcp | OAuth through identity, which delegates to Google ([TR-PF-06](../requirements/technical/00-platform.md#tr-pf-06)) |
-| Excel | query, as a Power Query feed | The Library Card, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
+| Excel | query, as a Power Query feed | The Excel key, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
 | Later: HTML reports, others | The same APIs | One of the above |
 
 None of the interfaces holds business logic. Lens and Report components are shared between web and the MCP App ([TR-PF-12](../requirements/technical/00-platform.md#tr-pf-12)).
@@ -131,7 +131,7 @@ None of the interfaces holds business logic. Lens and Report components are shar
 
 | Store | What | Owner |
 | --- | --- | --- |
-| Postgres schema `identity` | Users, Groups and memberships, Library Card hashes, OAuth clients | identity |
+| Postgres schema `identity` | Users, Groups and memberships, Excel key hashes, OAuth clients | identity |
 | Postgres schema `catalogue` | Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour, Anomalies, Reactions, messages | catalogue |
 | Postgres schema `registry` | Artifact Sets, Nodes, columns, Edges, tests, Changes | registry |
 | GCS bucket | The Artifact files, unchanged, per project and per run ([FR-AR-06](../requirements/functional/01-artifact-registry.md#fr-ar-06)) | registry |

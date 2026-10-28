@@ -39,7 +39,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 
 | Kind of Group | Form | Example |
 | --- | --- | --- |
-| Role (see the domain [Permissions and library cards](12-permissions-and-library-cards.md)) | `datahub-<role>@<domain>` | `datahub-datateam@` |
+| Role (see the domain [Permissions and Excel keys](12-permissions-and-library-cards.md)) | `datahub-<role>@<domain>` | `datahub-datateam@` |
 
 An Owner Unit needs no convention since 2026-10-19: any Google group of the own Workspace domain will do ([DEC-CO-09](03-collections.md#dec-co-09)). The form `datahub-owner-<name>@<domain>` it had before is no longer needed, and such a group gives no role.
 
@@ -159,7 +159,7 @@ Whoever is already logged in continues with the Groups from the cache; new login
 
 ## Out of scope
 
-What someone may see and do, and issuing Library Cards ([Permissions and library cards](12-permissions-and-library-cards.md)), assigning an Owner Unit to a Collection ([Collections](03-collections.md)), and what happens to the Level of a Resource when its Owner Unit empties ([Maturity and release](06-maturity-and-release.md)).
+What someone may see and do, and issuing Excel keys ([Permissions and Excel keys](12-permissions-and-library-cards.md)), assigning an Owner Unit to a Collection ([Collections](03-collections.md)), and what happens to the Level of a Resource when its Owner Unit empties ([Maturity and release](06-maturity-and-release.md)).
 
 ## Open points
 

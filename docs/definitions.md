@@ -42,6 +42,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="eda"></a>**EDA** | Exploratory data analysis: the exploration of a Resource by its Owner. A linked EDA document makes a Resource Explored. | [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03), [EDA](requirements/functional/15-eda.md) |
 | <a id="edge"></a>**Edge** | A link in the lineage: one Node depends on another. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="entity"></a>**Entity** | An entity of the Domain Model, such as an agency or an office. A Resource is linked to the Entities found in its lineage. | [FR-SR-23](requirements/functional/04-stacks-and-resources.md#fr-sr-23) |
+| <a id="excel-key"></a>**Excel key** | The personal key with which Excel signs in to Data Hub through Power Query, in the name of its User. A User makes one on My page and sees it once; it lasts a year and can be revoked. Formerly called Library Card. | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
 | <a id="fingerprint"></a>**Fingerprint** | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment, plus the checksum of its code. | [FR-SR-08](requirements/functional/04-stacks-and-resources.md#fr-sr-08) |
 | <a id="group"></a>**Group** | A Google group of the own Workspace domain that Data Hub knows. Owner Units and Role Groups are Groups. | [User management](requirements/functional/02-user-management.md#terms) |
 | <a id="key"></a>**Key** | The full name of the view of a Resource in BigQuery, `project.dataset.table`. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
@@ -52,7 +53,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="learning-level"></a>**Learning Level** | One of the four levels of the master learning plan, from easy to advanced: 1 User, 2 Data-aware user, 3 Data analyst, 4 Data owner and expert. Not to be confused with the Level of a Resource. | [DEC-LR-02](requirements/functional/16-learning.md#dec-lr-02) |
 | <a id="lens"></a>**Lens** | A query with Parameters, made by business, without a type from a fixed list ([DEC-LE-06](requirements/functional/09-lenses.md#dec-le-06)). Deliberately not called a view. Its Level is the lowest Level of the Resources beneath it. | [Lenses](overview/data-hub.md#lenses) |
 | <a id="level"></a>**Level** | The maturity level of a Resource, Lens or Report, from Beta (0) to Monitored (5); see [Levels](#levels). | [Maturity and release](requirements/functional/06-maturity-and-release.md) |
-| <a id="library-card"></a>**Library Card** | The personal key of a User, for example for Excel through Power Query. It can be revoked and renewed. | [DEC-DH-47](overview/data-hub.md#dec-dh-47) |
+| <a id="library-card"></a>**Excel key** | No longer used: the former name of the Excel key ([DEC-DH-79](overview/data-hub.md#dec-dh-79)). | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
 | <a id="log"></a>**Log** | Everything that happened to a Resource or a Collection, as Log Entries, including Changes deeper in the lineage. Not the technical logs of a service. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms), [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
 | <a id="log-catalogue"></a>**Log Catalogue** | The fixed list of all Log IDs. | [Log catalogue](requirements/functional/log-catalogue.md) |
 | <a id="log-entry"></a>**Log Entry** | One line in a Log: a Log ID, the Resource, the parameters as JSON, the actor and the time. Never free text. | [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
@@ -167,7 +168,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | leesvlak | reading surface |
 | leeszaal | reading room |
 | lens, lenzen | Lens, Lenses |
-| lezerskaart | Library Card |
+| lezerskaart | Excel key, formerly Excel key |
 | master-leerplan | master learning plan |
 | maturiteitsicoon | maturity icon |
 | melding | notification |

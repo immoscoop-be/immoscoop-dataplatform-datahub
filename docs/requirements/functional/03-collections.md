@@ -406,7 +406,7 @@ It also disappears from its Collection, and that goes into the Log of the Collec
 *Note of 2026-10-28: reworded without the Stacks, which no longer exist ([DEC-DH-71](../../overview/data-hub.md#dec-dh-71)).*
 ## Out of scope
 
-What someone may see and do beyond Collections ([Permissions and library cards](12-permissions-and-library-cards.md)), how the Level of a Resource is determined ([Maturity and release](06-maturity-and-release.md)), and which tables are Resources ([Resources](04-stacks-and-resources.md)).
+What someone may see and do beyond Collections ([Permissions and Excel keys](12-permissions-and-library-cards.md)), how the Level of a Resource is determined ([Maturity and release](06-maturity-and-release.md)), and which tables are Resources ([Resources](04-stacks-and-resources.md)).
 
 ## Open points
 

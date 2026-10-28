@@ -40,7 +40,7 @@ Whoever explains Data Hub can best start from a library. Most terms on this page
 | The catalogue | Searching and browsing in Data Hub, via table, Catalogue or Domain Model |
 | The accession register | The dbt Artifacts: what changed in the collection, at every prod run |
 | The curator of a collection | The Owner, who vouches for a Collection and confirms its Resources |
-| The library card | The personal key, for example for Excel |
+| The library card | The Excel key: the personal key with which Excel signs in |
 | The reading room | Where business makes Lenses and Reports |
 | The magnifying glass | A Lens: a way of looking at one Resource |
 | The dossier | A Report: Lenses bundled around one question |
@@ -96,6 +96,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 - <a id="dec-dh-76"></a>**DEC-DH-76** · The schema of the Resource Card in Postgres, and of the rest of Data Hub, follows from the functional requirements and is made when building. The rebuild starts from a fresh database: no migration from what is built today. From then on, every change to the schema is a migration, as the repository asks. *Decided on 2026-10-28, by Max ([OP-DH-14](open-themes.md#op-dh-14)).*
 - <a id="dec-dh-77"></a>**DEC-DH-77** · What a User sees through Data Hub follows from Collections and Owner Units alone: everything that is public, and everything in the private Collections whose Owner Unit they belong to ([DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10), [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12)). The Data Team sees every Collection ([DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11)). There is no further access axis; confidentiality, should it come, is worked out first as a concept ([OP-PL-01](../requirements/functional/12-permissions-and-library-cards.md#op-pl-01)). *Decided on 2026-10-28, by Max ([OP-DH-22](open-themes.md#op-dh-22)).*
 - <a id="dec-dh-78"></a>**DEC-DH-78** · Data Hub has two roles, Owner and Reader, and the Data Admin above them. A User is the Owner of every asset in the Collections of their Owner Unit: its Resources and its Lenses, also a Lens made by a colleague, as a Lens always goes into a Collection its author owns ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)); and of the queries they made. Of everything else they see ([DEC-DH-77](#dec-dh-77)) they are a Reader. A Data Admin can access everything. *Decided on 2026-10-28, by Max ([OP-DH-24](open-themes.md#op-dh-24)).*
+- <a id="dec-dh-79"></a>**DEC-DH-79** · The personal key with which Excel signs in is called the Excel key, no longer the Library Card. A User makes one on My page, names it after where it is used, and sees it once, to copy. My page lists their keys with when each was last used, and revokes one; renewing is revoking and making a new one. A key lasts a year, and stops at once when its User can no longer sign in with Google. The Data Team can revoke any key ([FR-PL-01](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-01) to [FR-PL-03](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-03)). *Decided on 2026-10-28, by Max ([OP-DH-25](open-themes.md#op-dh-25)).*
 - <a id="dec-dh-75"></a>**DEC-DH-75** · Everything about usage reporting on Data Hub is not part of v1: who uses what, the Usage tab of a Resource, and reporting on the Catalogue. It is a Could, after the first build ([Could: not in v1](../requirements/README.md#could-not-in-v1)). *Decided on 2026-10-28, by Max ([OP-DH-16](open-themes.md#op-dh-16)).*
 
 - <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the Stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one Stack; because Resources are registered with their full name, more can be added later. *Note of 2026-10-28: there is no such dataset ([DEC-DH-71](#dec-dh-71), [DEC-DH-73](#dec-dh-73)).*
@@ -227,7 +228,7 @@ How data comes into Data Hub and becomes a Lens for the company, in seven steps,
 ### Excel
 
 - <a id="dec-dh-46"></a>**DEC-DH-46** · Excel remains possible as a window onto Data Hub: the data of Lenses is fetched as a feed via Power Query, without direct BigQuery access. *Note of 2026-10-28: with the Parameters at their default values, as data only ([DEC-CH-03](../requirements/functional/13-channels.md#dec-ch-03)).*
-- <a id="dec-dh-47"></a>**DEC-DH-47** · In the pilot, Power Query signs in with a personal key per User, the Library Card, which can be revoked and renewed. Signing in with a Microsoft work account (Entra) is a possible later step.
+- <a id="dec-dh-47"></a>**DEC-DH-47** · In the pilot, Power Query signs in with a personal key per User, the Excel key, which can be revoked and renewed. Signing in with a Microsoft work account (Entra) is a possible later step. *Note of 2026-10-28: the Library Card is now called the Excel key, and how a User makes, revokes and renews one is decided ([DEC-DH-79](#dec-dh-79)).*
 
 ### Infrastructure
 

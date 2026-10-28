@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<!--
+  Screen: My page, behind the initials at the foot of the rail (DEC-UX-84)
+  Who the User is in Data Hub: their name and Google account, the Owner Units they belong to and so the Collections they
+  own, and what they read (DEC-DH-78). Below, their Excel keys: the personal keys with which Excel signs in through Power
+  Query (DEC-DH-79). "New Excel key" opens a sheet: a name that says where the key is used, then the key, shown once, to
+  copy, with how to use it. The list shows each key with when it was made, last used and expires; revoking one asks to
+  confirm, and the list keeps it, marked revoked. The switch at the bottom shows the states: ?keys=new, ?keys=made,
+  ?keys=revoking.
+  Requirements: FR-PL-01, FR-PL-02, FR-PL-03 (Proposed); DEC-DH-78, DEC-DH-79.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — My page</title>
+</head>
+<body>
+<div class="app">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+
+  <button class="nav-btn" data-label="Reports" aria-label="Reports"><i class="ph-fill ph-chart-bar"></i></button>
+  <div class="spacer"></div>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning centre" aria-label="Learning centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="avatar active" href="my-page.html" aria-label="My page" aria-current="page">MP</a>
+</nav>
+<main class="main">
+<div class="me-head">
+ <div class="me-avatar" aria-hidden="true">MP</div>
+ <div style="flex:1;min-width:0">
+  <h1 class="page-title">Maxime Passenier</h1>
+  <p class="meta" style="display:block;margin-top:4px"><i class="ph ph-google-logo"></i> maxime.passenier@immoscoop.be · signed in with Google</p>
+ </div>
+</div>
+
+<div class="me-grid">
+ <section class="card me-tile">
+  <div class="label">You own</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Everything in the collections of your groups: their resources, and every lens made in them. Of all else you see, you are a reader.</p>
+  <a class="me-row" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span style="flex:1;min-width:0"><span class="item-title">Credit leads</span><span class="meta" style="display:block">6 resources · 4 lenses · public</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Credit team</span></a>
+  <a class="me-row" href="#"><span class="item-icon"><i class="ph ph-megaphone"></i></span><span style="flex:1;min-width:0"><span class="item-title">Marketing</span><span class="meta" style="display:block">9 resources · 2 lenses · private</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Marketing team</span></a>
+  <p class="meta" style="display:block;margin-top:10px">Your groups come from Google; ask IT to join or leave one.</p>
+ </section>
+ <section class="card me-tile">
+  <div class="label">Your queries</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">The queries you made are yours too, wherever their resources are.</p>
+  <a class="me-row" href="query.html"><span class="item-icon"><i class="ph ph-terminal-window"></i></span><span style="flex:1;min-width:0"><span class="item-title">23 queries</span><span class="meta" style="display:block">The last today, 09:41</span></span><i class="ph ph-arrow-right" style="color:var(--text-muted)"></i></a>
+ </section>
+</div>
+
+<div class="section-head"><h2>Excel keys</h2><button class="btn-primary" data-sheet-open="newkey"><i class="ph-fill ph-key" style="font-size:15px"></i>New Excel key</button></div>
+<p class="meta" style="display:block;line-height:1.5;max-width:720px;margin:-4px 0 12px">An Excel key lets Excel fetch the result of a lens in your name, through Power Query, with its parameters at their defaults. Make one for every place you use, so that you can stop one without the others.</p>
+<div class="table-card card">
+ <table>
+ <thead><tr><th>Name</th><th>Made</th><th>Last used</th><th>Expires</th><th></th></tr></thead>
+ <tbody>
+  <tr data-pane-group="keys" data-pane="made" hidden><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Monthly KBC report</span></span></td><td class="muted nowrap">today</td><td class="muted">not yet</td><td class="muted nowrap">28 Oct 2027</td><td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+  <tr><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Excel on my laptop</span></span></td><td class="muted nowrap">2 Sep 2026</td><td class="nowrap">today, 08:12</td><td class="muted nowrap">2 Sep 2027</td><td style="text-align:right"><button class="btn-quiet outline" data-go="keys:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="keys" data-pane="list new made"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="nowrap"><span class="key-soon">14 Mar 2027</span></td><td style="text-align:right"><button class="btn-quiet outline" data-go="keys:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="keys" data-pane="revoking" hidden class="key-confirm"><td colspan="5"><span class="key-confirm-row"><i class="ph-fill ph-warning"></i><span style="flex:1"><b>Revoke "Sales dashboard, shared drive"?</b> Excel stops getting data with it at once. This cannot be undone: to use Excel there again, make a new key.</span><button class="btn-quiet outline" data-go="keys:list">Cancel</button><button class="btn-primary danger" data-go="keys:revoked">Revoke</button></span></td></tr>
+  <tr data-pane-group="keys" data-pane="revoked" hidden class="key-revoked"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="muted">revoked today</td><td></td></tr>
+  <tr class="key-revoked"><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Old laptop</span></span></td><td class="muted nowrap">20 Jan 2026</td><td class="muted nowrap">31 Aug 2026</td><td class="muted">revoked 2 Sep 2026</td><td></td></tr>
+ </tbody>
+ </table>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">A key lasts a year; a month before, you get a message. It stops at once when you can no longer sign in with Google. The data team can revoke any key, and tells you when it does.</p>
+</div>
+</main>
+</div>
+
+<div class="sheet-wrap" id="newkey" data-pane-group="keys" data-pane="new made" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="newkey-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-key" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">My page</div><h2 id="newkey-title">New Excel key</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" data-pane-group="keys" data-pane="list new">
+  <label class="field" style="margin-top:6px"><span>Name</span><input value="Monthly KBC report" placeholder="Where you use it, such as Excel on my laptop"></label>
+  <p class="meta" style="display:block;line-height:1.5">The name tells your keys apart in the list. Make one for every place you use: one key can then stop without the others.</p>
+  <div class="check-line"><i class="ph ph-calendar-blank"></i><span>It lasts a year, until 28 Oct 2027.</span></div>
+ </div>
+ <div class="sheet-list" data-pane-group="keys" data-pane="made" hidden>
+  <div class="key-once">
+   <div class="label">Your key</div>
+   <div class="key-box"><span class="mono">dhx_7Kq2-mP9v-Xc4R-8tLw-Zn3e-Hb6Y</span><button class="btn-quiet outline"><i class="ph ph-copy"></i>Copy</button></div>
+   <p class="key-warn"><i class="ph-fill ph-eye-slash"></i><span><b>You see it only now.</b> Data Hub keeps only a fingerprint of it, and cannot show it again. Lost it? Revoke it and make a new one.</span></p>
+  </div>
+  <div class="label" style="margin-top:16px">In Excel</div>
+  <ol class="steps-plain">
+   <li>Data › Get data › From web, with the address of a lens: "Open in Excel" on its page.</li>
+   <li>Choose Web API as how to sign in, and paste the key.</li>
+   <li>Refresh whenever you like: Excel gets the result with the parameters at their defaults.</li>
+  </ol>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta" data-pane-group="keys" data-pane="list new">Keys are personal: they act in your name.</p>
+  <p class="meta" data-pane-group="keys" data-pane="made" hidden>The key is in your list now.</p>
+  <button class="btn-quiet outline" data-sheet-close data-pane-group="keys" data-pane="list new">Cancel</button>
+  <button class="btn-primary" data-go="keys:made" data-pane-group="keys" data-pane="list new"><i class="ph-fill ph-key" style="font-size:15px"></i>Make the key</button>
+  <button class="btn-primary" data-sheet-close data-go="keys:list" data-pane-group="keys" data-pane="made" hidden>Done</button>
+ </div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="keys" role="tablist" aria-label="Prototype: Excel keys">Excel keys
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">Making one</button>
+ <button class="seg" data-target="made" role="tab" aria-selected="false">Made, shown once</button>
+ <button class="seg" data-target="revoking" role="tab" aria-selected="false">Revoking</button>
+ <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

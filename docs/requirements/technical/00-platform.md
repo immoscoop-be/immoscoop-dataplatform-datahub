@@ -86,11 +86,11 @@ identity acts as the OAuth 2.1 authorisation server for MCP clients, following t
 *Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../functional/13-channels.md#dec-ch-02)).*
 
 <a id="tr-pf-07"></a>
-### TR-PF-07 · Excel uses the Library Card
+### TR-PF-07 · Excel uses the Excel key
 
 **Status:** Proposed · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
 
-Power Query sends the Library Card with every request. The shared package `@datahub/auth` exchanges it at identity for an Access Token, cached for the lifetime of that token, so that services only ever handle Access Tokens. identity keeps only a hash of each Library Card: it can be revoked or renewed, but never read back.
+Power Query sends the Excel key with every request. The shared package `@datahub/auth` exchanges it at identity for an Access Token, cached for the lifetime of that token, so that services only ever handle Access Tokens. identity keeps only a hash of each Excel key: it can be revoked or renewed, but never read back.
 
 <a id="tr-pf-08"></a>
 ### TR-PF-08 · One schema per service

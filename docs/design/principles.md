@@ -366,6 +366,19 @@ Screens: [messages](screens/messages.html), the Message Centre; and the Messages
 - **A changed field** since the last Confirmation is told to the Owner the same way, by Data Hub, with what changed; the warning on the Resource is where it is marked seen ([FR-MR-12](../requirements/functional/06-maturity-and-release.md#fr-mr-12)).
 - **A Request** asks the Data Team for a decision on its object; the first is accepting a very large Lens, sent with "Send to the data team" when it is made ([DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06), [FR-CV-08](../requirements/functional/14-conversations.md#fr-cv-08)). Opened, it shows what it asks to decide on, such as what one run reads, its range, the partitions and what a default would read. The Data Team has a field for its reason, "Refuse" and "Accept"; its author sees that it waits, and that only they see the Lens until then. The state shows in the list: waiting, accepted, refused.
 
+## My page
+
+Screen: [my-page](screens/my-page.html). Designed on 2026-10-28, at the request of Max ([DEC-UX-84](#dec-ux-84)).
+
+- **The initials** at the foot of the rail open it; on My page they carry a ring, as the active icon does.
+- **Head:** the initials large, the name and the Google account the User signs in with.
+- **You own:** the Collections of the User's groups, each with its group, what it holds and whether it is public, and one line on being a Reader of all else ([DEC-DH-78](../overview/data-hub.md#dec-dh-78)). Groups come from Google and are not changed here.
+- **Your queries:** how many, and when the last ran, with a link to Query.
+- **Excel keys** ([DEC-DH-79](../overview/data-hub.md#dec-dh-79)): a sentence on what a key does, "New Excel key", and a table with each key, when it was made, last used and expires; a key that expires within a month shows its date in the warning colour. A revoked key stays in the list, struck through, with when it was revoked ([FR-PL-02](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-02)).
+- **New Excel key** is a sheet: a name, then "Make the key", after which the sheet shows the key once in a box with Copy, that it cannot be shown again, and the three steps in Excel ([FR-PL-01](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-01)). "Done" closes it; the key is in the list.
+- **Revoke** asks to confirm in a line that takes the place of the row, with Cancel and a red Revoke.
+- The prototype shows the list, making a key, the key shown once, revoking and revoked, with a switch at the bottom.
+
 ## A link to something you may not see
 
 Screen: [not-found](screens/not-found.html). Designed on 2026-10-24, to review ([DEC-UX-32](#dec-ux-32)).
@@ -507,6 +520,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-81"></a>**DEC-UX-81** · A Broken Lens, Report or query carries a red dot on its kind icon wherever it is listed: the panel, tiles, tables, search and the Queries of a Resource, for everyone who sees it, with what is missing on hover. On a tile and in its status row a red chip reads "Broken". Its page puts an urgent callout on top: what no longer exists and since which dbt run, that it works again by itself when that comes back, and for its Owner the way to repair it. Run is off, and the last result is not shown. Red, because nothing works until what is missing comes back or someone acts. *Decided on 2026-10-28, by Max ([OP-DH-03](../overview/open-themes.md#op-dh-03)): "a red dot or something like this".*
 - <a id="dec-ux-82"></a>**DEC-UX-82** · No screen shows a type of a Lens: not its page, not the Lenses of a Collection, not making a Lens, not the Lenses that Query suggests ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)). *Decided on 2026-10-28, by Max ([OP-UX-34](#op-ux-34)).*
 - <a id="dec-ux-83"></a>**DEC-UX-83** · The result on the page of a Lens is the grid of Query ([DEC-UX-72](#dec-ux-72)): one component, with the row number, a column per field with its type, columns made narrower or wider, 100 rows a page and a cell to copy. While its Parameters changed since the run, the grid fades. *Decided on 2026-10-28, by Max ([OP-DH-11](../overview/open-themes.md#op-dh-11), [DEC-LE-08](../requirements/functional/09-lenses.md#dec-le-08)).*
+- <a id="dec-ux-84"></a>**DEC-UX-84** · The initials at the foot of the rail open My page: who the User is in Data Hub, what they own, and their Excel keys, made, listed and revoked there. *Decided on 2026-10-28, by Max ([OP-DH-25](../overview/open-themes.md#op-dh-25), [DEC-DH-79](../overview/data-hub.md#dec-dh-79)).*
 
 ## Open points
 

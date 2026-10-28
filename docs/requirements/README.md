@@ -41,7 +41,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `LE` | Lenses | [09-lenses.md](functional/09-lenses.md) |
 | `RP` | Reports | [10-reports.md](functional/10-reports.md) |
 | `BP` | Beta and promotion | [11-beta-and-promotion.md](functional/11-beta-and-promotion.md) |
-| `PL` | Permissions and library cards | [12-permissions-and-library-cards.md](functional/12-permissions-and-library-cards.md) |
+| `PL` | Permissions and Excel keys | [12-permissions-and-library-cards.md](functional/12-permissions-and-library-cards.md) |
 | `CH` | Channels | [13-channels.md](functional/13-channels.md) |
 | `CV` | Conversations | [14-conversations.md](functional/14-conversations.md) |
 | `ED` | EDA | [15-eda.md](functional/15-eda.md) |
