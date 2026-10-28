@@ -116,7 +116,7 @@ A Group is recognised by its fixed Google ID, not by its email address, so that 
 <a id="fr-um-09"></a>
 ### FR-UM-09 · Owner Units are managed in Workspace
 
-**Status:** Specified · **Confluence:** GB-09 · **Screens:** [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · **Confluence:** GB-09 · **Screens:** [my-page](../../design/screens/my-page.html)
 
 Owner Units are created, filled and dissolved in Workspace. Data Hub shows them, but does not change them.
 

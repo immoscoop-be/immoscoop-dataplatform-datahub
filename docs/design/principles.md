@@ -72,7 +72,7 @@ There are three layers:
 - **Filled icons** for everything of the interface.
 - **Line icons** for what the User chooses, such as the icon of a Collection, in the **light** weight; for now Data Hub uses no other weight ([OP-CO-17](../requirements/functional/03-collections.md#op-co-17), [DEC-CO-19](../requirements/functional/03-collections.md#dec-co-19)). The icon of a Collection is **grey, without a circle** ([DEC-UX-15](#dec-ux-15)), and the only thing that sets it apart: a Collection has no colour ([DEC-UX-105](#dec-ux-105)).
 
-*The web app built today still takes the icon of a Collection from Tabler Icons; the rebuild starts from zero with Phosphor, so no icon is moved ([OP-CO-16](../requirements/functional/03-collections.md#op-co-16)). The prototypes still draw those icons in the regular weight.*
+*The web app rebuilt in Svelte no longer shows the icons of Tabler; it starts from zero with Phosphor, so no icon is moved ([OP-CO-16](../requirements/functional/03-collections.md#op-co-16)). The prototypes still draw those icons in the regular weight.*
 
 - A Resource has **no icon of its own**: icons are for the interface and for Collections ([DEC-UX-06](#dec-ux-06)).
 - In a list, an item has the **icon of its kind**: a table for a Resource, the same for every Resource. That icon is part of the interface ([DEC-UX-11](#dec-ux-11)).

@@ -5,6 +5,7 @@ import {
   LANGUAGES,
   parseTemplate,
   renderMessage,
+  renderText,
   templateParameters,
   type MessageParameter,
   type MessageTexts,
@@ -187,5 +188,24 @@ describe('filling in a text', () => {
     expect(() => parseTemplate('a {b')).toThrow('{b not closed');
     expect(() => parseTemplate('a }')).toThrow('unexpected }');
     expect(() => parseTemplate('{c, select, x {y}')).toThrow('without a key');
+  });
+});
+
+describe('filling in a sentence of the interface (NFR-LOC-02)', () => {
+  it('puts in a name as it is, and writes a number as its language writes it', () => {
+    expect(renderText('Welkom, {name}', 'nl', { name: 'creditLead' })).toBe('Welkom, creditLead');
+    expect(renderText('{count} rijen', 'nl', { count: 1234 })).toBe('1.234 rijen');
+    expect(renderText('{count} rows', 'en', { count: 1234 })).toBe('1,234 rows');
+  });
+
+  it('chooses by a count or a value', () => {
+    const template = '{count, plural, one {# kaart} other {# kaarten}}';
+    expect(renderText(template, 'nl', { count: 1 })).toBe('1 kaart');
+    expect(renderText(template, 'nl', { count: 14 })).toBe('14 kaarten');
+    expect(renderText('{theme, select, dark {nacht} other {dag}}', 'nl', { theme: 'dark' })).toBe('nacht');
+  });
+
+  it('refuses a sentence without the value it needs', () => {
+    expect(() => renderText('Welkom, {name}', 'en')).toThrow(/no value for \{name\}/);
   });
 });

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { isCollectionIcon, TABLER_CATEGORIES, TABLER_ICONS, TABLER_ICONS_VERSION } from './collectionIcons.js';
 
 // The Tabler Icons the web app installs, whose drawings it serves.
-const tabler = new URL('../../../apps/web/node_modules/@tabler/icons/', import.meta.url);
+const tabler = new URL('../node_modules/@tabler/icons/', import.meta.url);
 
 describe('the icons of a Collection (DEC-CO-14)', () => {
   it('are every outline icon of the installed Tabler Icons but the logos of brands; after an upgrade, run `pnpm icons:build`', () => {

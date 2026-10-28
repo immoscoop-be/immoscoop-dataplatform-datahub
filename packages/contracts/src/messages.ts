@@ -208,6 +208,31 @@ export function renderMessage(
   return renderTemplate(type.text[language][layout], { language, layout, values, parameters, options });
 }
 
+/**
+ * Fills in a sentence of the interface, from a translation file (NFR-LOC-02): `{name}` takes its
+ * value, a number written as its language writes it, and `{name, select|plural, …}` chooses, as in
+ * the texts of a Message. A name goes in as a value and is never translated (NFR-LOC-01).
+ */
+export function renderText(template: string, language: Language, values: Readonly<Record<string, string | number>> = {}): string {
+  const walk = (nodes: readonly TemplateNode[], count: number | undefined): string =>
+    nodes
+      .map((node) => {
+        if (typeof node === 'string') {
+          return count === undefined ? node : node.replaceAll('#', new Intl.NumberFormat(LOCALES[language]).format(count));
+        }
+        const value = values[node.name];
+        if (value === undefined) {
+          throw new Error(`no value for {${node.name}} in "${template}"`);
+        }
+        if (node.form) {
+          return walk(chooseBranch(node, value, language), node.form === 'plural' ? Number(value) : count);
+        }
+        return typeof value === 'number' ? new Intl.NumberFormat(LOCALES[language]).format(value) : value;
+      })
+      .join('');
+  return walk(parseTemplate(template), undefined);
+}
+
 interface Scope {
   readonly language: Language;
   readonly layout: keyof MessageText;
