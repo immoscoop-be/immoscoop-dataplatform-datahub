@@ -68,6 +68,8 @@ Part of that knowledge already exists, in Colleciónes and the dbt manifests, bu
 
 ## Three forms of documentation
 
+*Note of 2026-10-28: how these forms are explained is part of the Learning Cards; there is no separate documentation ([OP-DH-30](open-themes.md#op-dh-30), [DEC-CH-04](../requirements/functional/13-channels.md#dec-ch-04)).*
+
 | Form | What it tells | Where it comes from | Who writes it |
 | --- | --- | --- | --- |
 | Structural | Model type (event, state, dimension, mart), grain, lineage, fields | Derivable from Colleciónes and the dbt manifests | Generated, supplemented by the Data Team |
