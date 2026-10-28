@@ -12,7 +12,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub design principles](../design/principles.md) | – | – | 104 | 35 (35 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 5 | 8 (3 open, 5 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 6 | 8 (2 open, 6 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (9 open, 8 done) |
@@ -340,11 +340,11 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01) | An older run arrives after a newer one | Specified | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | – |
-| [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Specified | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | – |
-| [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | The table of a Resource is renamed | Specified | – | – |
-| [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Specified | – | – |
-| [EC-AR-05](functional/01-artifact-registry.md#ec-ar-05) | The collector does not answer | Specified | – | [84b935b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/84b935bd18234a526ee0465d6e31080556957bad) refs, 2026-10-28 |
+| [EC-AR-01](functional/01-artifact-registry.md#ec-ar-01) | An older run arrives after a newer one | Specified | [TR-AR-04](technical/01-artifact-registry.md#tr-ar-04) | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
+| [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Specified | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
+| [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | The table of a Resource is renamed | Specified | – | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
+| [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Specified | – | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28 |
+| [EC-AR-05](functional/01-artifact-registry.md#ec-ar-05) | The collector does not answer | Specified | – | [39b70a1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/39b70a18d41407e759edaaa00fdc0d9133a82eea) refs, 2026-10-28<br>[84b935b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/84b935bd18234a526ee0465d6e31080556957bad) refs, 2026-10-28 |
 
 ### [User management](functional/02-user-management.md)
 
