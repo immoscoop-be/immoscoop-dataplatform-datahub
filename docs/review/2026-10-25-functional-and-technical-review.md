@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 53 open, of 244: 36 for v1 and 17 marked Could |
+| Open points | 52 open, of 244: 35 for v1 and 17 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 53 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 52 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1272,9 +1272,8 @@ Source: [requirements/functional/14-conversations.md](../requirements/functional
 
 ### Learning
 
-Source: [requirements/functional/16-learning.md](../requirements/functional/16-learning.md) · 17 open
+Source: [requirements/functional/16-learning.md](../requirements/functional/16-learning.md) · 16 open
 
-- [ ] **[OP-LR-04](../requirements/functional/16-learning.md#op-lr-04)** · Decide who sees what a User marked understood and how they answered: only the User, or also the Data Team, as numbers per card or per person. *Raised on 2026-10-24.* *Note of 2026-10-24: the design shows team progress as shares without names ([FR-LR-17](../requirements/functional/16-learning.md#fr-lr-17)).* *Note of 2026-10-25: team progress is withdrawn. A Message that carries a card still shows its writer whether the reader understood it ([FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)), which touches the autonomy of the reader ([principles, 2](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)); to decide there.*
 - [ ] **[OP-LR-06](../requirements/functional/16-learning.md#op-lr-06)** · Decide whether Data Hub suggests the Learning Levels a User works on, for example from their role (an Owner the cards of Learning Level 4), or the User chooses them. The master learning plan adds priorities and role profiles to the Compass later. *Raised on 2026-10-24.* *Note of 2026-10-25: suggesting from a role segments by persona, which the principles leave out: "we don't segment by persona; we let people choose" ([principles, 3.9](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). To decide there.*
 - [ ] **[OP-LR-07](../requirements/functional/16-learning.md#op-lr-07)** · Decide whether a Learning Card shows in context, where the reader meets the topic: next to a field on a Resource Card, in the footer of a chart ([FR-LR-10](../requirements/functional/16-learning.md#fr-lr-10)), in Claude through the MCP server, or in the Domain Hub, where the Compass says the explanations of the master learning plan show up. *Raised on 2026-10-24.* *Note of 2026-10-24: a link inline anywhere in Data Hub that opens the card in a floating window is designed ([DEC-LR-05](../requirements/functional/16-learning.md#dec-lr-05), [FR-LR-11](../requirements/functional/16-learning.md#fr-lr-11), [FR-LR-12](../requirements/functional/16-learning.md#fr-lr-12)); Claude and the Domain Hub remain open.* *Note of 2026-10-25: Claude is designed too, with the steps of a card as an MCP App ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)); the Domain Hub remains open.*
 - [ ] **[OP-LR-08](../requirements/functional/16-learning.md#op-lr-08)** · Confirm that learning restricts nothing ([DEC-LR-03](../requirements/functional/16-learning.md#dec-lr-03)), or decide that some cards are needed first, for example before an Owner publishes a Resource. *Raised on 2026-10-24.* *Note of 2026-10-25: this is the open decision of the principles page: if a card is ever a condition for an action, then as an offer with the action, never as a quiz to pass ([principles, 5](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)).*
@@ -1519,6 +1518,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Learning**
 
 - [x] **[OP-LR-01](../requirements/functional/16-learning.md#op-lr-01)** · Decide where the content of a Learning Card lives: the master learning plan on Confluence stays the source and Data Hub shows it, or the cards move into Data Hub, for example as files in this repository. Today the master learning plan describes each topic (learning goal, core, misconception, examples), not the lesson itself: the articles, videos and questions are still to be made ("learning material: —"). *Raised on 2026-10-24, while designing Learning.* *Decided on 2026-10-28, by Max: moved into Data Hub, every Learning Card with its own URL ([DEC-LR-12](../requirements/functional/16-learning.md#dec-lr-12)).*
+- [x] **[OP-LR-04](../requirements/functional/16-learning.md#op-lr-04)** · Decide who sees what a User marked understood and how they answered: only the User, or also the Data Team, as numbers per card or per person. *Raised on 2026-10-24.* *Note of 2026-10-24: the design shows team progress as shares without names ([FR-LR-17](../requirements/functional/16-learning.md#fr-lr-17)).* *Note of 2026-10-25: team progress is withdrawn. A Message that carries a card still shows its writer whether the reader understood it ([FR-LR-07](../requirements/functional/16-learning.md#fr-lr-07)), which touches the autonomy of the reader ([principles, 2](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)); to decide there.* *Decided on 2026-10-28, by Max: the User and the Data Team ([DEC-LR-13](../requirements/functional/16-learning.md#dec-lr-13)).*
 
 ### To confirm
 
