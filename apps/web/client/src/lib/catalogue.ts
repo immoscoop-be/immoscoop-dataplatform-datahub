@@ -19,6 +19,10 @@ export interface Resource {
   level: number;
   registeredAt: string;
   withdrawn: boolean;
+  /** Published: everyone who sees its Collection sees it (FR-SR-31). */
+  published: boolean;
+  /** Its use is discouraged (FR-SR-50). */
+  deprecated: boolean;
 }
 
 export interface Field {
@@ -73,6 +77,14 @@ export interface ResourceDetail extends Resource {
   leftOut: { name: string; dataType: string | null; reason: string }[];
   details: Details;
   card: Card;
+  /** Who published it and when, and who confirmed it last and when (FR-RC-12); null until it is published. */
+  publication: { publishedAt: string; publishedBy: string; confirmedAt: string; confirmedBy: string } | null;
+  /** Who deprecated it, when, why and what to use instead (DEC-UX-101). */
+  deprecation: { at: string; by: string; reason: string; insteadOf: { id: string; displayName: string } | null } | null;
+  /** The fields that changed since its last Confirmation, not marked seen yet: its warning (FR-MR-12). */
+  changes: { field: string; change: 'added' | 'removed' | 'retyped'; old: string | null; new: string | null; at: string }[];
+  /** The descriptions from dbt that changed in the last 30 days, with the text before; no field for the table (FR-RC-17). */
+  descriptionChanges: { field: string | null; before: string; at: string }[];
 }
 
 /** A mapping of a Resource with the other Resources the User sees that carry the same identity (FR-RC-09). */
@@ -125,6 +137,7 @@ export interface CollectionItem {
   displayName: string;
   level: number;
   published: boolean;
+  deprecated: boolean;
   withdrawn: boolean;
 }
 
@@ -185,6 +198,21 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     /** Records the grain, storage and mappings again, from Edit relations: only a Data Admin may (DEC-UX-107). */
     async relate(id: string, details: Record<string, unknown>): Promise<ResourceDetail> {
       return ((await (await call(`${resource(id)}/details`, { method: 'PUT', body: details })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Publishes it, its first Confirmation: only its Owner may (FR-SR-49). */
+    async publish(id: string): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/publication`, { method: 'POST' })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Marks the changes since its last Confirmation seen (FR-MR-12). */
+    async markSeen(id: string): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/changes/seen`, { method: 'POST' })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Marks it deprecated, with why and what to use instead, or takes that away (FR-SR-50). */
+    async deprecate(id: string, reason: string, insteadOf: string | null): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/deprecation`, { method: 'PUT', body: { reason, insteadOf } })).json()) as { resource: ResourceDetail }).resource;
+    },
+    async undeprecate(id: string): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/deprecation`, { method: 'DELETE' })).json()) as { resource: ResourceDetail }).resource;
     },
     async related(id: string): Promise<Related[]> {
       return ((await (await call(`${resource(id)}/related`)).json()) as { related: Related[] }).related;

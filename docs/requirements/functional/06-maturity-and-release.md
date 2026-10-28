@@ -56,7 +56,7 @@ Described requires a description of the view and of every column.
 <a id="fr-mr-02"></a>
 ### FR-MR-02 · Confirmed: the Owner confirms, from Described
 
-**Status:** Specified · **Confluence:** MO-02 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Confluence:** MO-02 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Confirmed requires a Confirmation by the Owner, from Described.
 
@@ -110,7 +110,7 @@ If the last active check is switched off, the Resource drops to Explored. If the
 <a id="fr-mr-08"></a>
 ### FR-MR-08 · A Confirmation does not expire
 
-**Status:** Specified · **Confluence:** MO-08 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Confluence:** MO-08 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 A Confirmation stays valid as long as there is no drop. There is no expiry date or reminder.
 
@@ -119,9 +119,11 @@ A Confirmation stays valid as long as there is no drop. There is no expiry date 
 <a id="fr-mr-09"></a>
 ### FR-MR-09 · Log every rise and drop, and alert the Owner on a drop
 
-**Status:** Specified · **Confluence:** MO-09
+**Status:** Implemented · **Confluence:** MO-09
 
 Every rise and drop goes into the Log, and every drop gives the Owner an alert.
+
+*Note of 2026-10-28, on building it: the Level follows dbt with every new Current Version; the alert is the Message [MSG-RES-05](message-catalogue.md#msg-res-05), which the Message Centre shows with part 7 of the [build order](../../design/build-order.md).*
 
 <a id="fr-mr-10"></a>
 ### FR-MR-10 · The Level restricts nothing and is shown everywhere
@@ -145,9 +147,11 @@ When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-
 <a id="fr-mr-12"></a>
 ### FR-MR-12 · A change since the last Confirmation gives a warning
 
-**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05)) · **Screens:** [messages](../../design/screens/messages.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05)) · **Screens:** [messages](../../design/screens/messages.html), [resource-detail](../../design/screens/resource-detail.html)
 
 When a field of a Resource is added, removed, renamed or gets another type after its last Confirmation, Data Hub shows a warning on the Resource to everyone who sees it, with what changed and when, and tells the Owner in the Message Centre. The Level and the Publication stay as they are. The Owner or the Data Team marks the warning seen; it then goes, and the change stays in the History. Changes that come before it is seen show together in the same warning.
+
+*Note of 2026-10-28, on building it: a rename shows as a field removed and one added. The changes are kept for the History, which comes with its tab; the Message [MSG-RES-03](message-catalogue.md#msg-res-03) shows in the Message Centre with part 7 of the [build order](../../design/build-order.md) ([TR-SR-13](../technical/04-stacks-and-resources.md#tr-sr-13)).*
 
 <a id="fr-mr-13"></a>
 ### FR-MR-13 · Jumping over Described with Business Descriptions
@@ -171,7 +175,7 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 <a id="fr-mr-15"></a>
 ### FR-MR-15 · Described: the table and a field, described in dbt
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-MR-12](#dec-mr-12)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-MR-12](#dec-mr-12)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Data Hub derives Described from the Current Version of the dbt project: the table has a description, and at least one field has one. Only what is in dbt counts; a Business Description does not, nor what the Data Admin sets in Data Hub. When the description of the table, or the last one of a field, goes missing, the Level drops to Available.
 ## Open points

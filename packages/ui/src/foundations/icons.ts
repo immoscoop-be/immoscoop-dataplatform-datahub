@@ -1,6 +1,7 @@
 // The icons of the interface, from Phosphor (Icons): filled for everything of the interface, the
 // regular line where the prototypes draw one. Each is imported by name, so the page holds only the
 // icons it shows. A new icon of the interface is added here.
+import archiveFill from '@phosphor-icons/core/assets/fill/archive-fill.svg?raw';
 import calendarBlankFill from '@phosphor-icons/core/assets/fill/calendar-blank-fill.svg?raw';
 import caretDoubleLeftFill from '@phosphor-icons/core/assets/fill/caret-double-left-fill.svg?raw';
 import chartBarFill from '@phosphor-icons/core/assets/fill/chart-bar-fill.svg?raw';
@@ -58,6 +59,7 @@ import warning from '@phosphor-icons/core/assets/regular/warning.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 
 export const ICONS = {
+  'archive-fill': archiveFill,
   'calendar-blank-fill': calendarBlankFill,
   'caret-double-left-fill': caretDoubleLeftFill,
   'chart-bar-fill': chartBarFill,

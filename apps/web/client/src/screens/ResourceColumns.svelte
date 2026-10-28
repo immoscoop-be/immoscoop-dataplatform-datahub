@@ -1,8 +1,9 @@
 <script lang="ts">
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
-  import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
+  import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Field, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
 
@@ -31,14 +32,23 @@
   const details = $derived(resource.details);
   const mapped = $derived(new Map(details.mappings.map((mapping) => [mapping.field, mapping])));
   const editable = $derived(canEdit && resource.level >= 2);
+  /** The fields added since the last Confirmation and not seen yet, marked New (FR-MR-12). */
+  const added = $derived(new Set(resource.changes.filter((change) => change.change === 'added').map((change) => change.field)));
+  /** The descriptions from dbt that changed in the last 30 days, by field, with the text before (FR-RC-17). */
+  const changedInDbt = $derived(new Map(resource.descriptionChanges.flatMap((change) => (change.field ? [[change.field, change]] : []))));
+  const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
+  const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short' }).format(new Date(value));
+  let show = $state<'all' | 'changed'>('all');
+  const listed = $derived(show === 'changed' ? resource.fields.filter((field) => changedInDbt.has(field.name)) : resource.fields);
 
   /** What a field serves as, in the order of the design: the partition, a cluster column, a Parameter. */
-  function roles(field: Field): { label: string; strong: boolean }[] {
+  function roles(field: Field): { label: string; strong: boolean; warn?: boolean }[] {
     const cluster = details.clusterBy.indexOf(field.name);
     return [
       ...(details.partition?.field === field.name ? [{ label: t('resource.role.partition'), strong: true }] : []),
       ...(cluster >= 0 ? [{ label: t('resource.role.cluster', { number: cluster + 1 }), strong: true }] : []),
       ...(resource.card.parameters.includes(field.name) ? [{ label: t('resource.role.parameter'), strong: false }] : []),
+      ...(added.has(field.name) ? [{ label: t('resource.role.new'), strong: false, warn: true }] : []),
     ];
   }
 
@@ -71,20 +81,32 @@
 </script>
 
 {#snippet pills(field: Field)}
-  {#each roles(field) as role (role.label)}<span class="pill" class:strong={role.strong}>{role.label}</span>{/each}
+  {#each roles(field) as role (role.label)}<span class="pill" class:strong={role.strong} class:warn={role.warn}>{role.label}</span>{/each}
 {/snippet}
 
 {#if editing}
   <form onsubmit={save} novalidate>
     <EditBar text={t('resource.fields.editing')} cancelLabel={t('collection.cancel')} saveLabel={t('collection.save')} {saving} oncancel={() => (editing = false)} />
     {#if failed}<p class="failed" role="alert">{t('resource.saveFailed')}</p>{/if}
+    <div class="filter">
+      <Segmented
+        options={[
+          { value: 'all', label: `${t('resource.fields.all')} · ${resource.fields.length}` },
+          { value: 'changed', label: `${t('resource.fields.changed')} · ${changedInDbt.size}` },
+        ]}
+        bind:value={show}
+        label={t('resource.fields.show')}
+        surface="sub"
+      />
+    </div>
     <div class="rows">
       <div class="row headrow">
         <span class="label">{t('resource.column.field')}</span>
         <span class="label">{t('description.business')} <OriginTag origin="owner" /></span>
         <span class="label">{t('description.dbt')} <OriginTag origin="dbt" /></span>
       </div>
-      {#each resource.fields as field (field.name)}
+      {#each listed as field (field.name)}
+        {@const changed = changedInDbt.get(field.name)}
         <div class="row">
           <div>
             <div class="mono name">{field.name}</div>
@@ -92,7 +114,11 @@
             <div class="roles">{@render pills(field)}</div>
           </div>
           <textarea bind:value={texts[field.name]} rows="3" maxlength="2000" aria-label={`${t('description.business')} · ${field.name}`} placeholder={t('resource.fields.placeholder')}></textarea>
-          <p class="dbt">{field.description || '–'}</p>
+          <div>
+            {#if changed}<span class="pill warn">{t('resource.changedInDbt', { date: day(changed.at) })}</span>{/if}
+            <p class="dbt">{field.description || '–'}</p>
+            {#if changed}<p class="before">{t('resource.before', { text: changed.before || '–' })}</p>{/if}
+          </div>
         </div>
       {/each}
     </div>
@@ -150,6 +176,10 @@
   .roles { display: inline-flex; flex-wrap: wrap; gap: 4px; }
   .pill { font-size: 10px; color: var(--text-secondary); background: var(--tint-hover); padding: 2px 7px; border-radius: var(--radius-pill); white-space: nowrap; }
   .pill.strong { color: var(--text-primary); background: var(--tint-active); }
+  .pill.warn { color: var(--signal-warn); }
+  .filter { margin: 12px 6px 0; }
+  .before { margin: 6px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
+  .row .pill.warn { display: inline-block; margin-bottom: 5px; }
   .rows { margin-top: 8px; }
   .row { display: grid; grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1.6fr) minmax(0, 1.3fr); gap: 18px; padding: 14px 6px; border-top: 1px solid var(--tint-hover); }
   .headrow { border-top: 0; padding-bottom: 6px; }

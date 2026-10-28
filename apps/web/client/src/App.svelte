@@ -264,10 +264,18 @@
           {resource}
           log={opened.log}
           collection={collections?.find((collection) => collection.id === resource.collectionId)}
+          {collections}
           {catalogue}
           {registry}
           {dataTeam}
-          onchange={(updated) => opened?.id === updated.id && (opened = { ...opened, resource: updated })}
+          groups={status.kind === 'signedIn' ? status.me.groups : []}
+          onchange={(updated) => {
+            if (opened?.id === updated.id) {
+              opened = { ...opened, resource: updated };
+            }
+            // Published or deprecated, the panel shows it so.
+            refresh();
+          }}
         />
       {:else if opened?.resource === null}
         <NotFound />

@@ -40,6 +40,8 @@
   /** A Business Description is written from 2 · Described on (DEC-MR-10). */
   const described = $derived(resource.level >= 2);
   const undescribed = $derived(resource.fields.filter((field) => field.description.trim() === '').length);
+  /** The description of the table from dbt, when it changed in the last 30 days (FR-RC-17). */
+  const tableChanged = $derived(resource.descriptionChanges.find((change) => change.field === null));
   const LEVEL_KEYS: Record<number, string> = { 2: 'resource.level.2', 3: 'resource.level.3', 4: 'resource.level.4' };
   const UNIT_KEYS = { hour: 'grain.unit.hour', day: 'grain.unit.day', month: 'grain.unit.month', year: 'grain.unit.year' } as const;
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
@@ -91,6 +93,14 @@
   });
   const clip = (text: string, length: number) => (text.length > length ? `${text.slice(0, length - 1)}…` : text);
 </script>
+
+{#snippet published()}
+  <!-- Who published it and when, and who confirmed it last and when (FR-RC-12). -->
+  <dt>{t('resource.published')}</dt>
+  <dd>{resource.publication ? t('resource.published.by', { date: day(resource.publication.publishedAt), name: resource.publication.publishedBy }) : t('resource.notYet')}</dd>
+  <dt>{t('resource.confirmed')}</dt>
+  <dd>{resource.publication ? t('resource.published.by', { date: day(resource.publication.confirmedAt), name: resource.publication.confirmedBy }) : t('resource.notYet')}</dd>
+{/snippet}
 
 {#snippet edit(onclick: () => void)}
   {#if canEdit && !editing}<button type="button" class="edit" {onclick}><Icon name="pencil-simple-fill" />{t('resource.edit')}</button>{/if}
@@ -185,7 +195,9 @@
               <p class="empty">{t('resource.business.notYet')}</p>
             {/if}
           {/snippet}
-          {#snippet below()}<p class="hint">{t('resource.dbt.notEdited')}</p>{/snippet}
+          {#snippet below()}
+            <p class="hint">{#if tableChanged}{t('resource.dbt.changed', { date: day(tableChanged.at) })} {/if}{t('resource.dbt.notEdited')}</p>
+          {/snippet}
         </DescriptionPair>
         {@render modelAndGrain()}
       </SubTile>
@@ -203,8 +215,7 @@
       </SubTile>
       <SubTile label={t('resource.publication')}>
         <FactsList>
-          <dt>{t('resource.published')}</dt><dd>{t('resource.notYet')}</dd>
-          <dt>{t('resource.confirmed')}</dt><dd>{t('resource.notYet')}</dd>
+          {@render published()}
         </FactsList>
         <div class="reliable">
           <Field label={t('resource.reliableSince')}><input type="date" value={draft.reliableSince ?? ''} oninput={(event) => (draft.reliableSince = (event.currentTarget as HTMLInputElement).value || null)} /></Field>
@@ -243,8 +254,7 @@
     <SubTile label={t('resource.publication')}>
       {#snippet aside()}{@render edit(start)}{/snippet}
       <FactsList>
-        <dt>{t('resource.published')}</dt><dd>{t('resource.notYet')}</dd>
-        <dt>{t('resource.confirmed')}</dt><dd>{t('resource.notYet')}</dd>
+        {@render published()}
         <dt>{t('resource.reliableSince')}</dt><dd>{card.reliableSince ? day(card.reliableSince) : '–'}</dd>
       </FactsList>
     </SubTile>

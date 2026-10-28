@@ -14,7 +14,8 @@
     level,
     current = false,
     published = true,
-  }: { href: string; name: string; level: number; current?: boolean; published?: boolean } = $props();
+    deprecated = false,
+  }: { href: string; name: string; level: number; current?: boolean; published?: boolean; deprecated?: boolean } = $props();
 </script>
 
 <a class="item" class:current class:unpublished={!published} {href} aria-current={current ? 'page' : undefined}>
@@ -22,6 +23,7 @@
   <span class="name" title={published ? name : t('item.notPublished', { name })}
     >{name}{#if !published}<span class="hidden">{t('item.notPublishedLabel')}</span>{/if}</span
   >
+  {#if deprecated}<span class="tag">{t('status.deprecated')}</span>{/if}
   <MaturityIcon {level} small />
 </a>
 
@@ -33,5 +35,6 @@
   .current .kind { color: var(--text-primary); }
   .name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .unpublished:not(.current) .name { color: var(--text-muted); opacity: .75; }
+  .tag { flex: none; font-size: var(--text-meta); color: var(--signal-warn); }
   .hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>

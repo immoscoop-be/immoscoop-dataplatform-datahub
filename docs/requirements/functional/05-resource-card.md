@@ -145,7 +145,7 @@ The Resource Card shows the model type and the grain of the Resource, as dbt has
 <a id="fr-rc-12"></a>
 ### FR-RC-12 · Who published and who confirmed
 
-**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Resource Card shows who published the Resource and when, and who confirmed it last and when.
 
@@ -188,13 +188,15 @@ The Owner and the Data Team can write a Business Description of every field of a
 <a id="fr-rc-17"></a>
 ### FR-RC-17 · A changed description in dbt is told to the Owner
 
-**Status:** Specified · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [messages](../../design/screens/messages.html), [resource-columns-edit](../../design/screens/resource-columns-edit.html)
+**Status:** Implemented · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [messages](../../design/screens/messages.html), [resource-columns-edit](../../design/screens/resource-columns-edit.html)
 
 When the description from dbt of a Resource or of one of its fields changes, Data Hub tells the Owner in the Message Centre ([DEC-RC-03](#dec-rc-03)): one Message per Resource and Artifact Set, with every description that changed, its text before and after, and the Business Description next to it when there is one. The Message asks for nothing. A Change to a description further upstream in the lineage describes another table, and stays an entry in the Log ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).
 
 *Note of 2026-10-26: first proposed as a request to review the text that overrides the description; Max decided on a Message without a review.*
 
 *Note of 2026-10-27: the Message ends with a link to the Learning Card that explains it, K3.4 Where definitions live ([FR-LR-38](16-learning.md#fr-lr-38)).*
+
+*Note of 2026-10-28, on building it: the Message [MSG-RES-02](message-catalogue.md#msg-res-02) is kept now and shows in the Message Centre with part 7 of the [build order](../../design/build-order.md); meanwhile Columns, in edit mode, shows the descriptions changed in dbt in the last 30 days with their text before ([TR-SR-13](../technical/04-stacks-and-resources.md#tr-sr-13)).*
 
 <a id="fr-rc-18"></a>
 ### FR-RC-18 · Both descriptions, wherever a description is used

@@ -251,8 +251,11 @@
       {#each resources as resource (resource.id)}
         <tr class:quiet={!published.has(resource.id)}>
           <td><a class="name" href={resourcePath(resource.id)}><KindIcon kind="resource" /><span>{resource.displayName}</span></a></td>
-          <td><span class="level"><MaturityIcon level={resource.level} tooltip={false} />{levelName(resource.level)}</span></td>
-          <td class="muted">{published.has(resource.id) ? '' : t('status.notPublished')}</td>
+          <td>
+            <span class="level"><MaturityIcon level={resource.level} tooltip={false} />{levelName(resource.level)}</span>
+            {#if resource.deprecated}<span class="deprecated">{t('status.deprecated')}</span>{/if}
+          </td>
+          <td class="muted">{t(resource.published ? 'status.published' : 'status.notPublished')}</td>
           <td class="muted">—</td>
           <td class="muted">
             {#if resource.lastChange}
@@ -281,6 +284,7 @@
 {/if}
 
 <style>
+  .deprecated { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--signal-warn); }
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
   .what { flex: 1; min-width: 0; }
   .prose { margin: 6px 0 0; max-width: 68ch; line-height: 1.65; color: var(--text-secondary); }
