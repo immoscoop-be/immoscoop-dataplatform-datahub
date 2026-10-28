@@ -15,8 +15,11 @@ export interface GoogleIdentity {
 
 /** Sign in with Google through OpenID Connect (FR-UM-01). */
 export interface GoogleSignIn {
-  /** The address at Google where the User signs in; Google sends them back to identity's callback. */
-  authorizationUrl(request: { state: string; nonce: string; codeChallenge: string }): string;
+  /**
+   * The address at Google where the User signs in; Google sends them back to identity's callback.
+   * With `chooseAccount`, Google asks which account, as after a refused one.
+   */
+  authorizationUrl(request: { state: string; nonce: string; codeChallenge: string; chooseAccount?: boolean }): string;
   /** Exchanges the code from Google for the verified identity of the User, or throws. */
   identity(request: { code: string; codeVerifier: string; nonce: string }): Promise<GoogleIdentity>;
 }
@@ -53,7 +56,7 @@ export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
   const request = options.fetch ?? fetch;
 
   return {
-    authorizationUrl({ state, nonce, codeChallenge }) {
+    authorizationUrl({ state, nonce, codeChallenge, chooseAccount = false }) {
       const url = new URL(AUTHORIZATION_ENDPOINT);
       url.search = new URLSearchParams({
         client_id: options.clientId,
@@ -67,6 +70,7 @@ export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
         // Offers the accounts of the company's own domain first, or of any domain when there are
         // two (Google takes one domain or `*`); the check below decides.
         hd: options.domains.length === 1 ? (options.domains[0] as string) : '*',
+        ...(chooseAccount ? { prompt: 'select_account' } : {}),
       }).toString();
       return url.toString();
     },

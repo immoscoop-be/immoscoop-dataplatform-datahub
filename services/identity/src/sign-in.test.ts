@@ -33,9 +33,9 @@ function fakeGoogle() {
   const google = {
     nonce: '',
     refuse: false,
-    authorizationUrl({ state, nonce }: { state: string; nonce: string }) {
+    authorizationUrl({ state, nonce, chooseAccount }: { state: string; nonce: string; chooseAccount?: boolean }) {
       google.nonce = nonce;
-      return `https://google.test/auth?state=${state}`;
+      return `https://google.test/auth?state=${state}${chooseAccount ? '&prompt=select_account' : ''}`;
     },
     async identity({ code, nonce }: { code: string; nonce: string }) {
       if (google.refuse) {
@@ -283,6 +283,24 @@ describe.skipIf(!url)('signing in', () => {
     workspace.active = false;
     const suspended = await authorize(clientId, CLAUDE);
     expect(suspended.back.searchParams.get('error')).toBe('access_denied');
+  });
+
+  it('lets Google ask which account to use when the client asks, as after a refused one', async () => {
+    const start = (prompt?: string) =>
+      app.inject({
+        url: `/authorize?${new URLSearchParams({
+          client_id: WEB.clientId,
+          redirect_uri: WEB.redirectUri,
+          response_type: 'code',
+          code_challenge: challengeOf(randomToken()),
+          code_challenge_method: 'S256',
+          ...(prompt ? { prompt } : {}),
+        })}`,
+      });
+    const choosing = new URL((await start('select_account')).headers.location as string);
+    expect(choosing.searchParams.get('prompt')).toBe('select_account');
+    const plain = new URL((await start()).headers.location as string);
+    expect(plain.searchParams.has('prompt')).toBe(false);
   });
 
   it('never sends a User to a callback it does not know, and requires PKCE', async () => {

@@ -155,7 +155,13 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     });
     const google = await options.google();
     return reply.redirect(
-      google.authorizationUrl({ state: pending.id, nonce: pending.nonce, codeChallenge: challengeOf(googleCodeVerifier) }),
+      google.authorizationUrl({
+        state: pending.id,
+        nonce: pending.nonce,
+        codeChallenge: challengeOf(googleCodeVerifier),
+        // After a refused account, the client asks Google to let the User choose another.
+        chooseAccount: query.prompt === 'select_account',
+      }),
     );
   });
 

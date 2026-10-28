@@ -63,6 +63,9 @@ describe('createGoogleSignIn', () => {
     const { signIn } = await googleWith({}, [DOMAIN, 'immoscoop.be']);
     const url = new URL(signIn.authorizationUrl({ state: 's', nonce: 'n', codeChallenge: 'c' }));
     expect(url.searchParams.get('hd')).toBe('*');
+    expect(url.searchParams.has('prompt')).toBe(false);
+    const choosing = new URL(signIn.authorizationUrl({ state: 's', nonce: 'n', codeChallenge: 'c', chooseAccount: true }));
+    expect(choosing.searchParams.get('prompt')).toBe('select_account');
   });
 
   it('lets in the accounts of both domains, and names a refused account (DEC-UM-09)', async () => {
