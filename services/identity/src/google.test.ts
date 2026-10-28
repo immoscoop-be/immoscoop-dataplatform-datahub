@@ -9,7 +9,7 @@ const DOMAIN = 'thenextimmoscoop.be';
 const CLIENT_ID = 'client.apps.googleusercontent.com';
 
 /** Google as the token endpoint: it returns an ID token signed with a key the test controls. */
-async function googleWith(claims: JWTPayload) {
+async function googleWith(claims: JWTPayload, domains = [DOMAIN]) {
   const { privateKey, publicKey } = await generateKeyPair('RS256');
   const jwk = { ...(await exportJWK(publicKey)), kid: 'google', alg: 'RS256' };
   const idToken = await new SignJWT({
@@ -32,7 +32,7 @@ async function googleWith(claims: JWTPayload) {
     clientId: CLIENT_ID,
     clientSecret: 'secret',
     redirectUri: 'https://identity.test/callback',
-    domain: DOMAIN,
+    domains,
     keys: createLocalJWKSet({ keys: [jwk] }),
     fetch: async (_url, init) => {
       requests.push(init?.body as URLSearchParams);
@@ -57,6 +57,22 @@ describe('createGoogleSignIn', () => {
       code_challenge_method: 'S256',
       hd: DOMAIN,
     });
+  });
+
+  it('offers the accounts of any domain when two domains get in (DEC-UM-09)', async () => {
+    const { signIn } = await googleWith({}, [DOMAIN, 'immoscoop.be']);
+    const url = new URL(signIn.authorizationUrl({ state: 's', nonce: 'n', codeChallenge: 'c' }));
+    expect(url.searchParams.get('hd')).toBe('*');
+  });
+
+  it('lets in the accounts of both domains, and names a refused account (DEC-UM-09)', async () => {
+    const both = [DOMAIN, 'immoscoop.be'];
+    const { signIn } = await googleWith({ hd: 'immoscoop.be', email: 'an@immoscoop.be' }, both);
+    await expect(signIn.identity({ code: 'code', codeVerifier: 'v', nonce: 'nonce-1' })).resolves.toMatchObject({ email: 'an@immoscoop.be' });
+    const { signIn: gmail } = await googleWith({ hd: undefined, email: 'an.claes@gmail.com' }, both);
+    const refused = await gmail.identity({ code: 'code', codeVerifier: 'v', nonce: 'nonce-1' }).catch((error: unknown) => error);
+    expect(refused).toBeInstanceOf(SignInError);
+    expect((refused as SignInError).account).toBe('an.claes@gmail.com');
   });
 
   it('returns who signed in, after exchanging the code with the verifier', async () => {
@@ -170,11 +186,19 @@ describe('the groups of a User', () => {
   ];
 
   it('keeps every group of the own domain, and turns only Role Groups into roles (FR-UM-11)', () => {
-    expect(applyNamingConvention(groups, DOMAIN)).toEqual({ groups: ['1', '2', '3', '5'], roles: ['admins', 'datateam'] });
+    expect(applyNamingConvention(groups, [DOMAIN])).toEqual({ groups: ['1', '2', '3', '5'], roles: ['admins', 'datateam'] });
+  });
+
+  it('keeps the groups of both own domains, and their Role Groups (DEC-UM-09)', () => {
+    const second = { id: '6', email: 'datahub-viewers@immoscoop.be', name: 'Viewers' };
+    expect(applyNamingConvention([...groups, second], [DOMAIN, 'immoscoop.be'])).toEqual({
+      groups: ['1', '2', '3', '5', '6'],
+      roles: ['admins', 'datateam', 'viewers'],
+    });
   });
 
   it('offers the groups of the own domain by name, each once, to choose an Owner Unit from', () => {
-    expect(ownDomainGroups([...groups, groups[2]!], DOMAIN).map((group) => group.id)).toEqual(['5', '1', '2', '3']);
+    expect(ownDomainGroups([...groups, groups[2]!], [DOMAIN]).map((group) => group.id)).toEqual(['5', '1', '2', '3']);
   });
 });
 

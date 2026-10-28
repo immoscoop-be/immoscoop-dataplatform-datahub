@@ -11,12 +11,14 @@
 
 ## Responsibilities
 
-- Sign in with Google through OpenID Connect, only for the own Workspace domain: [FR-UM-01](../../requirements/functional/02-user-management.md#fr-um-01), [FR-UM-02](../../requirements/functional/02-user-management.md#fr-um-02), [FR-UM-03](../../requirements/functional/02-user-management.md#fr-um-03)
-- Groups from the Cloud Identity Groups API, nested groups included: every group of the own Workspace domain, any of which can be an Owner Unit, and roles from the Role Groups only: [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04), [FR-UM-06](../../requirements/functional/02-user-management.md#fr-um-06), [FR-UM-08](../../requirements/functional/02-user-management.md#fr-um-08), [FR-UM-11](../../requirements/functional/02-user-management.md#fr-um-11)
+- Sign in with Google through OpenID Connect, only for the two domains of the own Workspace, `thenextimmoscoop.be` and `immoscoop.be` ([DEC-UM-09](../../requirements/functional/02-user-management.md#dec-um-09)): [FR-UM-01](../../requirements/functional/02-user-management.md#fr-um-01), [FR-UM-02](../../requirements/functional/02-user-management.md#fr-um-02), [FR-UM-03](../../requirements/functional/02-user-management.md#fr-um-03)
+- A refused account is named back to the web app in the fragment of its callback, which no server receives or logs, so that the sign-in can say which account was refused ([DEC-UX-35](../../design/principles.md#dec-ux-35))
+- Groups from the Cloud Identity Groups API, nested groups included: every group of the own Workspace domains, any of which can be an Owner Unit, and roles from the Role Groups only: [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04), [FR-UM-06](../../requirements/functional/02-user-management.md#fr-um-06), [FR-UM-08](../../requirements/functional/02-user-management.md#fr-um-08), [FR-UM-11](../../requirements/functional/02-user-management.md#fr-um-11)
 - Periodic Synchronisation of the members of all Groups: [FR-UM-07](../../requirements/functional/02-user-management.md#fr-um-07), [FR-UM-10](../../requirements/functional/02-user-management.md#fr-um-10)
 - Issuing Access Tokens, signed with its key in Cloud KMS, and publishing the public keys: [TR-PF-02](../../requirements/technical/00-platform.md#tr-pf-02), [TR-PF-24](../../requirements/technical/00-platform.md#tr-pf-24)
 - OAuth authorisation server for the server of the web app and for Claude: [TR-PF-06](../../requirements/technical/00-platform.md#tr-pf-06), [TR-PF-27](../../requirements/technical/00-platform.md#tr-pf-27)
 - Keeping them signed in with Refresh Tokens, and checking Groups and account at every renewal: [TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25), [TR-PF-26](../../requirements/technical/00-platform.md#tr-pf-26)
+- The settings of each User, as keys and values: [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)
 - Excel keys for Excel: issuing, revoking, renewing and exchanging them for Access Tokens: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)
 
 ## API
@@ -31,13 +33,14 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `DELETE /users/{googleId}/sessions` | The Data Team ends every session of a User at once ([TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25)) |
 | `GET /me` | The current User, Groups and roles |
 | `GET /me/groups` | The groups of the current User with their address and name, read from Workspace; for choosing an Owner Unit ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
+| `GET /me/settings`, `PUT /me/settings/{key}`, `DELETE /me/settings/{key}` | The settings of the current User: read them all, set one with `{ "value": … }`, or forget one ([TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)) |
 | `POST /excel-keys`, `DELETE /excel-keys/{id}` | Make and revoke an Excel key |
 | `POST /exchange` | Exchange a Excel key for an Access Token; used by `@datahub/auth` |
 | `POST /internal/sync-groups` | Synchronise the Groups; called by Cloud Scheduler with the service identity |
 
 ## Data
 
-Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants. Later: the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96)).
+Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants, and the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96), [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)).
 
 ## Talks to
 

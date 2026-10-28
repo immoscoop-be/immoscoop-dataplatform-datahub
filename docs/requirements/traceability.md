@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 24 | 28 (3 open, 25 done) |
 | [Localisation](non-functional/localisation.md) | 12 (11 specified, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 28 | 20 (7 open, 13 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 32 (3 proposed, 10 specified, 19 implemented) | – | 28 | 20 (7 open, 13 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
@@ -415,6 +415,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-29](technical/00-platform.md#tr-pf-29) | The look and the page of the web app | Implemented | [DEC-PF-22](technical/00-platform.md#dec-pf-22), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | [8e6ff4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e6ff4eb6383bdbe04664755a5ec81593cbc9cc5) refs, 2026-10-19<br>[c0860ce](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c0860cec0639f16038ecde8c9cb59e5f2e034031) refs, 2026-10-19<br>[528a385](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/528a385e3d5849ef6bc6bf08683a1ba77a95e275) refs, 2026-10-18<br>[fda53b2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fda53b234dedc5c42ef5ff86a680b4c96caaaf6c) implements, 2026-10-18 |
 | [TR-PF-30](technical/00-platform.md#tr-pf-30) | semgraph is open, behind a rate limit | Specified | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | [ee8f184](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ee8f1844ea522b05b4056631dbdf1d22c4b6383e) refs, 2026-10-18<br>[e2d7fee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e2d7fee73ecb4555a9132dda16049619987ffa63) refs, 2026-10-18 |
 | [TR-PF-31](technical/00-platform.md#tr-pf-31) | Pages of every site may call semgraph | Implemented | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | [528a385](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/528a385e3d5849ef6bc6bf08683a1ba77a95e275) implements, 2026-10-18<br>[6457474](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6457474a7fb25cb75334cd6fb81b8f3e55cc25dc) implements, 2026-10-18 |
+| [TR-PF-32](technical/00-platform.md#tr-pf-32) | The settings of a User live in identity | Implemented | [DEC-UX-96](../design/principles.md#dec-ux-96), [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | – |
 
 ### [Artifact registry: technical requirements](technical/01-artifact-registry.md)
 
@@ -459,7 +460,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [NFR-LOC-03](non-functional/localisation.md#nfr-loc-03) | A name always stands in a sentence that says what it is | Specified | – | – | – | – |
 | [NFR-LOC-04](non-functional/localisation.md#nfr-loc-04) | No Dutch synonyms for names | Specified | – | – | – | – |
 | [NFR-LOC-05](non-functional/localisation.md#nfr-loc-05) | The Glossary is the source of names and their explanation | Specified | [FR-LR-27](functional/16-learning.md#fr-lr-27) | – | – | – |
-| [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | The interface follows the language of the User | Specified | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | [my-page](../design/screens/my-page.html) | – | – |
+| [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | The interface follows the language of the User | Specified | [FR-SR-15](functional/04-stacks-and-resources.md#fr-sr-15) | [my-page](../design/screens/my-page.html) | [TR-PF-32](technical/00-platform.md#tr-pf-32) | – |
 | [NFR-LOC-07](non-functional/localisation.md#nfr-loc-07) | The answers of the MCP server follow the same rule | Specified | – | – | – | – |
 | [NFR-LOC-08](non-functional/localisation.md#nfr-loc-08) | Learning Cards: Dutch sentences, English names | Withdrawn | [OP-LR-02](functional/16-learning.md#op-lr-02) | – | – | – |
 | [NFR-LOC-09](non-functional/localisation.md#nfr-loc-09) | Metadata written by people is in the language of the writer | Specified | – | – | – | – |

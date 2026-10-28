@@ -292,6 +292,13 @@ The Cloud Run service accepts traffic only through the load balancer, so its own
 
 semgraph answers every request with `Access-Control-Allow-Origin: *`, and the preflight of the browser for a `POST` with JSON, so a page on any site can call it from the browser: the web app of Data Hub, and a dashboard or document elsewhere. It allows no credentials, as there are none. The page of the web app may load pictures and call only semgraph besides its own server, identity and registry ([TR-PF-29](#tr-pf-29)).
 
+<a id="tr-pf-32"></a>
+### TR-PF-32 · The settings of a User live in identity
+
+**Status:** Implemented · **Realises:** [DEC-UX-96](../../design/principles.md#dec-ux-96), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)
+
+identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the theme, the background by day and by night, whether the panel is open, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User.
+
 ## Open points
 
 - [x] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)). *Decided on 2026-10-18: a Cloud Run job ([DEC-PF-20](#dec-pf-20)).*

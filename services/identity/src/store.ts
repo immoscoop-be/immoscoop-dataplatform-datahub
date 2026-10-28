@@ -194,6 +194,24 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
         await this.endSession(found.sessionId, reason);
       }
     },
+
+    /** The settings of a User, as keys and values (DEC-UX-96). */
+    async settings(googleId: string): Promise<Record<string, unknown>> {
+      const rows = await db.selectFrom('settings').select(['key', 'value']).where('googleId', '=', googleId).orderBy('key').execute();
+      return Object.fromEntries(rows.map((row) => [row.key, row.value]));
+    },
+
+    async saveSetting(googleId: string, key: string, value: unknown): Promise<void> {
+      await db
+        .insertInto('settings')
+        .values({ googleId, key, value: JSON.stringify(value) })
+        .onConflict((conflict) => conflict.columns(['googleId', 'key']).doUpdateSet({ value: JSON.stringify(value), updatedAt: now() }))
+        .execute();
+    },
+
+    async removeSetting(googleId: string, key: string): Promise<void> {
+      await db.deleteFrom('settings').where('googleId', '=', googleId).where('key', '=', key).execute();
+    },
   };
 }
 

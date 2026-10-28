@@ -39,7 +39,7 @@ function fakeGoogle() {
     },
     async identity({ code, nonce }: { code: string; nonce: string }) {
       if (google.refuse) {
-        throw new SignInError(`Only accounts of ${DOMAIN} get in`);
+        throw new SignInError(`Only accounts of ${DOMAIN} get in`, { account: 'an.claes@gmail.com' });
       }
       if (code !== 'google-code' || nonce !== google.nonce) {
         throw new SignInError('Wrong code or nonce');
@@ -118,7 +118,7 @@ describe.skipIf(!url)('signing in', () => {
         workspace,
         tokens,
         issuer: ISSUER,
-        domain: DOMAIN,
+        domains: [DOMAIN],
         webClient: WEB,
         mcpRedirectUris: [CLAUDE],
       },
@@ -276,6 +276,8 @@ describe.skipIf(!url)('signing in', () => {
     const refused = await authorize(clientId, CLAUDE);
     expect(refused.back.searchParams.get('error')).toBe('access_denied');
     expect(refused.back.searchParams.has('code')).toBe(false);
+    // The refused account is named in the fragment, which no server receives (DEC-UX-35).
+    expect(new URLSearchParams(refused.back.hash.slice(1)).get('account')).toBe('an.claes@gmail.com');
 
     google.refuse = false;
     workspace.active = false;

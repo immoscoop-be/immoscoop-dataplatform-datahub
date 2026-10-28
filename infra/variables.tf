@@ -62,9 +62,20 @@ variable "token_signing_key_versions" {
 }
 
 variable "workspace_domain" {
-  description = "The only Google Workspace domain whose accounts may sign in (DEC-UM-06)."
+  description = "The main domain of the Google Workspace, where the Role Groups such as the Data Team live."
   type        = string
   default     = "thenextimmoscoop.be"
+}
+
+variable "workspace_domains" {
+  description = "The Google Workspace domains whose accounts may sign in: both domains of the one Workspace (DEC-UM-09)."
+  type        = list(string)
+  default     = ["thenextimmoscoop.be", "immoscoop.be"]
+
+  validation {
+    condition     = length(var.workspace_domains) > 0 && alltrue([for domain in var.workspace_domains : can(regex("^[a-z0-9.-]+$", domain))])
+    error_message = "At least one domain, in lower case, or nobody can sign in."
+  }
 }
 
 variable "mcp_redirect_uris" {

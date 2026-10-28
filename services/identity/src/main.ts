@@ -24,7 +24,7 @@ const database = await connectCloudSql<IdentityDatabase>(cloudSqlOptionsFromEnv(
 let google: Promise<GoogleSignIn> | undefined;
 function googleSignIn(): Promise<GoogleSignIn> {
   google ??= readGoogleClient(settings.googleClientSecret, accessToken)
-    .then((client) => createGoogleSignIn({ ...client, redirectUri: `${settings.issuer}/callback`, domain: settings.domain }))
+    .then((client) => createGoogleSignIn({ ...client, redirectUri: `${settings.issuer}/callback`, domains: settings.domains }))
     .catch((error: unknown) => {
       google = undefined;
       throw error;
@@ -41,7 +41,7 @@ const app = await buildApp({
     workspace: createWorkspace(accessToken),
     tokens,
     issuer: settings.issuer,
-    domain: settings.domain,
+    domains: settings.domains,
     webClient: settings.webClient,
     mcpRedirectUris: settings.mcpRedirectUris,
   },
