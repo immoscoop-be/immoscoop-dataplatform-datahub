@@ -1202,8 +1202,9 @@ a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .hist-preview button { flex: none; }
 
 /* The Lineage tab (DEC-UX-90): this Resource always in the middle, an arrow to every direct model, what lies between listed */
-.lin { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; padding: 6px 0 10px; }
-.lin-wing { display: flex; align-items: center; overflow-x: auto; padding: 4px 2px 8px; }
+.lin { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; padding: 6px 0 10px; }
+.lin-wing { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 2px 8px; }
+.lin-center { padding-top: 4px; }
 .lin-wing.left > :first-child { margin-left: auto; }
 .lin-side { display: flex; flex-direction: column; gap: 6px; flex: none; }
 .lin-side > .label { margin: 0 0 2px; text-align: center; }
