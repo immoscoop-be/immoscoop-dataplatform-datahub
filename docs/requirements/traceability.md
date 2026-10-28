@@ -11,7 +11,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 84 | 34 (20 open, 14 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 74 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (20 open, 27 done) |
+| [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (20 open, 27 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
@@ -255,9 +255,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | A User makes an Excel key on My page, and sees it once | Proposed | – | – | – |
-| [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | My page lists the Excel keys of its User, and revokes one | Proposed | – | – | – |
-| [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | An Excel key lasts a year, and stops with its User | Proposed | – | – | – |
+| [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | A User makes an Excel key on My page, and sees it once | Proposed | – | – | [59e4aa6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59e4aa61be8fce0c03bb25237f8d14f3203e5bd4) refs, 2026-10-28 |
+| [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | My page lists the Excel keys of its User, and revokes one | Proposed | – | – | [59e4aa6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59e4aa61be8fce0c03bb25237f8d14f3203e5bd4) refs, 2026-10-28 |
+| [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | An Excel key lasts a year, and stops with its User | Proposed | – | – | [59e4aa6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/59e4aa61be8fce0c03bb25237f8d14f3203e5bd4) refs, 2026-10-28 |
 
 ### [Channels](functional/13-channels.md)
 
