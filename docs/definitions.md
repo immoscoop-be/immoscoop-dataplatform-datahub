@@ -119,6 +119,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | Confluence (Dutch) | Repository (English) |
 | --- | --- |
 | aanbevolen, verdieping, verplicht | recommended, in depth, required |
+| aanvraag | Request |
 | aanwinstenregister | accession register |
 | access-as | access axis |
 | begrip, beta-begrip | concept, Beta Concept |
@@ -155,6 +156,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | holle hoek | concave corner (flare) |
 | huidige versie | Current Version |
 | Ik heb het begrepen | "I understand it" |
+| ingetrokken | withdrawn |
 | inschrijving | Registration |
 | interface-chrome | interface |
 | kader | frame |
@@ -183,6 +185,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | open uitleen | general circulation |
 | open vragen | open questions |
 | opheffen | dissolve |
+| owner, owner unit (in the Dutch texts of the app) | Owner, Owner Unit |
 | pre-flight | Pre-flight |
 | promotielus | Promotion Loop |
 | query-ID, SQL-log | Query ID, Query Log |
