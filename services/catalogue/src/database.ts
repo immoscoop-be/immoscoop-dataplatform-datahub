@@ -3,6 +3,18 @@ import type { SubjectKind } from '@datahub/contracts/messages';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
 
+/** The model types of a Resource, a fixed list (DEC-RC-10). */
+export const MODEL_TYPES = ['event', 'state', 'fact', 'dimension', 'aggregate'] as const;
+export type ModelType = (typeof MODEL_TYPES)[number];
+export type PartitionUnit = 'hour' | 'day' | 'month' | 'year';
+/** Who requires a filter on the partition column in every query: nobody, Data Hub, or BigQuery (DEC-SR-35). */
+export type PartitionFilter = 'none' | 'dataHub' | 'bigQuery';
+export type MappingKind = 'is' | 'relation' | 'performedBy';
+export type MappingOrigin = 'domainModel' | 'name' | 'here';
+/** Where a recorded fact came from, as the step that adds a Resource says it. */
+export type Origin = 'dbt' | 'test' | 'domainModel' | 'here';
+export type Origins = Partial<Record<'partition' | 'clusterBy' | 'partitionFilter' | 'grain' | 'grainSentence' | 'modelType', Origin>>;
+
 /** A timestamp: read as a Date, written as a Date or left to the database. */
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
 
@@ -56,6 +68,28 @@ export interface CatalogueDatabase {
     registeredAt: Timestamp;
     updatedAt: Timestamp;
     withdrawnAt: Date | null;
+    /** What the Data Admin recorded when adding it (FR-CO-33, FR-CO-34). */
+    grain: ColumnType<string[], string[] | undefined, string[]>;
+    grainSentence: ColumnType<string, string | undefined, string>;
+    modelType: ModelType | null;
+    partitionField: string | null;
+    partitionUnit: PartitionUnit | null;
+    clusterBy: ColumnType<string[], string[] | undefined, string[]>;
+    partitionFilter: ColumnType<PartitionFilter, PartitionFilter | undefined, PartitionFilter>;
+    origins: ColumnType<Origins, Origins | undefined, Origins>;
+    domainModelRelease: string | null;
+  };
+  /** The mapping of each field that has one (DEC-RC-05, DEC-RC-06, DEC-RC-14). */
+  resourceMappings: {
+    resourceId: string;
+    field: string;
+    kind: MappingKind;
+    relationType: string | null;
+    identity: string;
+    subject: string | null;
+    origin: MappingOrigin;
+    inDomainModel: boolean;
+    release: string | null;
   };
   /** The plain fields of a Resource, as dbt has them (FR-SR-06, DEC-SR-33). */
   resourceFields: {

@@ -34,6 +34,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-006` | Back through exposure {exposure} | Terug via de exposure {exposure} | exposure, run |
 | `RES-007` | Marked deprecated by {actor} | Als deprecated gemarkeerd door {actor} | actor, reason |
 | `RES-008` | Deprecation taken away by {actor} | Deprecated weggenomen door {actor} | actor |
+| `RES-009` | Grain and mappings recorded by {actor}: {mapped} of {fields} fields mapped | Grain en mappings vastgelegd door {actor}: {mapped} van de {fields} velden gemapt | mapped, fields, grain, modelType, release, actor |
 | `COL-001` | Collection created by {actor} | Collection aangemaakt door {actor} | actor, name, ownerUnit, visibility |
 | `COL-002` | {field, select, name {Name} description {Description} icon {Icon} other {{field}}} changed by {actor} | {field, select, name {Naam} description {Beschrijving} icon {Icoon} other {{field}}} gewijzigd door {actor} | field, old, new, actor |
 | `COL-003` | Owner Unit changed from {old} to {new} by {actor} | Owner Unit gewijzigd van {old} naar {new} door {actor} | old, new, actor |

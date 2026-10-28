@@ -4,6 +4,7 @@ import * as resources from './0002-resources.js';
 import * as collectionIcon from './0003-collection-icon.js';
 import * as resourcesAfresh from './0004-resources-afresh.js';
 import * as collectionsAfresh from './0005-collections-afresh.js';
+import * as grainAndMappings from './0006-grain-and-mappings.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -12,4 +13,5 @@ export const migrations: Record<string, Migration> = {
   '0003-collection-icon': collectionIcon,
   '0004-resources-afresh': resourcesAfresh,
   '0005-collections-afresh': collectionsAfresh,
+  '0006-grain-and-mappings': grainAndMappings,
 };
