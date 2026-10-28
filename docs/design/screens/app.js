@@ -5,9 +5,9 @@ const app = document.querySelector('.app');
 const themeBtn = document.getElementById('theme');
 try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; } catch (e) {}
 
-// The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses one on My page, or Random, the default: one
-// picked at random when Data Hub starts, kept for the session, and picked again when the theme switches. A background of
-// one theme only goes back to Random when the User switches to the other. ?bg= in the address still sets one, for the prototype
+// The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
+// night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
+// session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
 const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'flow'], dark: ['', 'village', 'flow'] };
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
 const pickBg = theme => {
@@ -15,21 +15,22 @@ const pickBg = theme => {
   try { sessionStorage.setItem('dh-bg', bg); } catch (e) {}
   return bg;
 };
-const bgChoice = () => { let c = null; try { c = localStorage.getItem('dh-bg-choice'); } catch (e) {} return c === null ? 'random' : c; };
-const saveBgChoice = c => { try { localStorage.setItem('dh-bg-choice', c); } catch (e) {} };
-// The background for a theme: the chosen one where that theme has it, otherwise Random again
+const bgChoice = theme => { let c = null; try { c = localStorage.getItem('dh-bg-' + theme); } catch (e) {} return c === null ? 'random' : c; };
+const saveBgChoice = (theme, c) => { try { localStorage.setItem('dh-bg-' + theme, c); } catch (e) {} };
+// The background for a theme: the one chosen for it, otherwise one at random
 const bgFor = (theme, keepSession) => {
-  const c = bgChoice();
+  const c = bgChoice(theme);
   if (c !== 'random' && BACKGROUNDS[theme].includes(c)) return c;
-  if (c !== 'random') saveBgChoice('random');
   let bg = null; if (keepSession) try { bg = sessionStorage.getItem('dh-bg'); } catch (e) {}
   return bg !== null && BACKGROUNDS[theme].includes(bg) ? bg : pickBg(theme);
 };
 // The flowing gradient starts its canvas when the page loads; chosen later, the page loads again to start it
 const showBg = bg => { if (bg === 'flow' && !document.querySelector('canvas.bg-flow')) location.reload(); else setBg(bg); };
-// The tab Background of My page shows the choices of the current theme, with the chosen one marked
+// The tab Background of My page shows the choices of the current theme, with the one chosen for it marked
 const syncBgOpts = () => {
-  const theme = document.documentElement.dataset.theme || 'light', c = bgChoice();
+  const theme = document.documentElement.dataset.theme || 'light', c = bgChoice(theme);
+  document.querySelectorAll('.bg-theme-name').forEach(el => { el.textContent = theme === 'dark' ? 'night' : 'day'; });
+  document.querySelectorAll('.bg-theme-other').forEach(el => { el.textContent = theme === 'dark' ? 'day' : 'night'; });
   document.querySelectorAll('.bg-opt').forEach(o => {
     o.hidden = !o.dataset.themes.split(' ').includes(theme);
     const on = o.dataset.bgchoice === c; o.classList.toggle('on', on); o.setAttribute('aria-checked', on);
@@ -38,7 +39,7 @@ const syncBgOpts = () => {
 if (!new URLSearchParams(location.search).has('bg')) setBg(bgFor(document.documentElement.dataset.theme || 'light', true));
 syncBgOpts();
 document.querySelectorAll('.bg-opt').forEach(o => o.addEventListener('click', () => {
-  saveBgChoice(o.dataset.bgchoice); syncBgOpts();
+  saveBgChoice(document.documentElement.dataset.theme || 'light', o.dataset.bgchoice); syncBgOpts();
   showBg(bgFor(document.documentElement.dataset.theme || 'light', false));
 }));
 
@@ -292,15 +293,15 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     void main() {
       float a = uPhase;
       vec2 uv = vUv;
-      // A slow, soft warp of the whole field
+      // A soft warp of the whole field, large enough to be seen
       vec2 p = uv;
-      p.x += 0.030 * sin(uv.y * 3.1 + a) + 0.012 * sin(uv.y * 5.3 - 2.0 * a);
-      p.y += 0.022 * sin(uv.x * 2.7 - a) + 0.010 * cos(uv.x * 6.1 + 3.0 * a);
+      p.x += 0.090 * sin(uv.y * 3.1 + a) + 0.036 * sin(uv.y * 5.3 - 2.0 * a);
+      p.y += 0.066 * sin(uv.x * 2.7 - a) + 0.030 * cos(uv.x * 6.1 + 3.0 * a);
       // The pointer: the whole field leans a little towards it
       p -= 0.035 * (uPointer - 0.5) * uPull;
 
       // The centre line of the orange band: low on the left, high on the right, in a soft S
-      float c = 0.30 + 0.56 * smoothstep(0.02, 1.05, p.x) + 0.035 * sin(p.x * 3.0 + a) + 0.02 * sin(2.0 * a);
+      float c = 0.30 + 0.56 * smoothstep(0.02, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + a) + 0.06 * sin(2.0 * a);
       // ... and the band bends towards it where it is near
       c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
       float d = p.y - c;
@@ -314,7 +315,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       vec3 col = mix(base, sky, smoothstep(0.0, 0.36, d));
 
       // The band: softer and lighter on the left, wider and deeper on the right
-      float w = 0.085 + 0.085 * p.x + 0.015 * sin(a + 1.3);
+      float w = 0.085 + 0.085 * p.x + 0.04 * sin(a + 1.3);
       float band = exp(-(d * d) / (w * w));
       vec3 orange = mix(rgb(240.0, 166.0, 112.0), rgb(232.0, 132.0, 60.0), smoothstep(0.15, 0.85, p.x + 0.25 * band));
       col = mix(col, orange, band * (0.72 + 0.24 * p.x));
@@ -338,13 +339,13 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       float a = uPhase;
       vec2 uv = vUv;
       vec2 p = uv;
-      p.x += 0.030 * sin(uv.y * 3.1 + a) + 0.012 * sin(uv.y * 5.3 - 2.0 * a);
-      p.y += 0.022 * sin(uv.x * 2.7 - a) + 0.010 * cos(uv.x * 6.1 + 3.0 * a);
+      p.x += 0.090 * sin(uv.y * 3.1 + a) + 0.036 * sin(uv.y * 5.3 - 2.0 * a);
+      p.y += 0.066 * sin(uv.x * 2.7 - a) + 0.030 * cos(uv.x * 6.1 + 3.0 * a);
       // The pointer: the whole field leans a little towards it
       p -= 0.035 * (uPointer - 0.5) * uPull;
 
       // The same rising line as by day: the glowing band runs along it
-      float c = 0.40 + 0.42 * smoothstep(0.0, 1.05, p.x) + 0.035 * sin(p.x * 3.0 + a) + 0.02 * sin(2.0 * a);
+      float c = 0.40 + 0.42 * smoothstep(0.0, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + a) + 0.06 * sin(2.0 * a);
       // ... and the band bends towards it where it is near
       c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
       float d = p.y - c;
@@ -355,7 +356,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       col = mix(col, rgb(52.0, 16.0, 64.0), smoothstep(0.0, -0.35, d));
 
       // The band, in layers across its width: teal on top, then violet, then magenta; brightest on the right
-      float lift = 0.015 * sin(a + 1.3);
+      float lift = 0.04 * sin(a + 1.3);
       float teal = exp(-pow((d - 0.01 - lift) / (0.10 + 0.05 * p.x), 2.0)) * (0.28 + 0.52 * p.x);
       float violet = exp(-pow((d + 0.15) / 0.13, 2.0)) * (0.55 + 0.35 * (1.0 - abs(p.x - 0.45)));
       float magenta = exp(-pow((d + 0.36) / 0.15, 2.0)) * (0.55 + 0.4 * smoothstep(0.9, 0.3, p.x)) * smoothstep(-0.1, 0.35, p.x);
@@ -364,7 +365,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       col = screen(col, rgb(150.0, 34.0, 118.0), magenta * 0.9);
 
       // A warm coral glow in the bottom left, breathing slowly
-      vec2 q = (p - vec2(-0.06, -0.02)) / vec2(0.34 + 0.02 * sin(a), 0.44);
+      vec2 q = (p - vec2(-0.06, -0.02)) / vec2(0.34 + 0.06 * sin(a), 0.44);
       col = mix(col, rgb(206.0, 124.0, 92.0), exp(-dot(q, q)) * 0.82);
 
       // A trace of noise against banding in the smooth steps
