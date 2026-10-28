@@ -1,6 +1,7 @@
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
+import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 
 /** A table under an exposure tagged `datahub`, as registry tells it (TR-AR-08). */
@@ -12,6 +13,10 @@ export interface ExposedTable {
   description: string;
   exposures: string[];
   label: string | null;
+  /** The checksum of its code, for the Fingerprint (FR-SR-08). */
+  checksum: string | null;
+  /** Its columns, in the order of the table. */
+  columns: Column[];
 }
 
 /** Every exposed table of one dbt project, after a new Current Version. */
@@ -19,6 +24,8 @@ export interface ResourcesUpdate {
   projectId: string;
   projectName: string | null;
   runId: string;
+  /** When dbt made the manifest of the run, as ISO 8601. */
+  generatedAt: string | null;
   tables: ExposedTable[];
 }
 
@@ -34,9 +41,17 @@ export interface Resource {
   description: string;
   exposures: string[];
   collectionId: string | null;
+  /** From 0 · Beta to 5 · Monitored (FR-MR-10). */
+  level: number;
   registeredAt: Date;
   /** No exposure tagged `datahub` depends on it any more; it is held (DEC-SR-26). */
   withdrawn: boolean;
+}
+
+/** A Resource with its fields, and the columns of its table left out of it (FR-SR-06, DEC-SR-33). */
+export interface ResourceDetail extends Resource {
+  fields: Column[];
+  leftOut: LeftOut[];
 }
 
 export interface UpdateOutcome {
@@ -64,6 +79,8 @@ export interface Resources {
   /** The Resources of a Collection, withdrawn ones included. */
   inCollection(collectionId: string): Promise<Resource[]>;
   get(id: string): Promise<Resource | undefined>;
+  /** A Resource with its fields and the columns left out of it. */
+  detail(id: string): Promise<ResourceDetail | undefined>;
   /** Adds a Resource to a Collection, never from another one (FR-CO-08). */
   add(id: string, collection: { id: string; name: string }, viewer: Viewer): Promise<'added' | 'already' | 'in_another_collection' | 'collection_gone'>;
   /** Takes a Resource out of its Collection; false when it was in none. */
@@ -89,6 +106,7 @@ function present(row: Row): Resource {
     description: row.description,
     exposures: row.exposures,
     collectionId: row.collectionId,
+    level: row.level,
     registeredAt: row.registeredAt,
     withdrawn: row.withdrawnAt !== null,
   };
@@ -97,6 +115,35 @@ function present(row: Row): Resource {
 export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   async function write(trx: Database, resourceId: string, logId: ResourceLogId, params: Record<string, string>, actorId: string | null = null) {
     await trx.insertInto('resourceLog').values({ resourceId, logId, params, actorId }).execute();
+  }
+
+  /** The fields of a Resource and the columns left out of it, as its table has them now (FR-SR-06). */
+  async function keepColumns(trx: Database, resourceId: string, columns: { fields: Column[]; leftOut: LeftOut[] }) {
+    await trx.deleteFrom('resourceFields').where('resourceId', '=', resourceId).execute();
+    await trx.deleteFrom('resourceLeftOut').where('resourceId', '=', resourceId).execute();
+    if (columns.fields.length > 0) {
+      await trx
+        .insertInto('resourceFields')
+        .values(columns.fields.map(({ name, position, dataType, description }) => ({ resourceId, name, position, dataType, description })))
+        .execute();
+    }
+    if (columns.leftOut.length > 0) {
+      await trx
+        .insertInto('resourceLeftOut')
+        .values(columns.leftOut.map(({ name, dataType, reason }) => ({ resourceId, name, dataType, reason })))
+        .execute();
+    }
+  }
+
+  /** The state of the Message that a Resource waits for a Collection (MSG-RES-01). */
+  async function registrationMessage(trx: Database, resourceId: string, state: 'waiting' | 'inCollection') {
+    await trx
+      .updateTable('messages')
+      .set({ state, updatedAt: new Date() })
+      .where('type', '=', 'MSG-RES-01')
+      .where('subjectKind', '=', 'resource')
+      .where('subjectId', '=', resourceId)
+      .execute();
   }
 
   /**
@@ -130,6 +177,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return { ...outcome, applied: false };
         }
         const run = update.runId;
+        // The day of the run, as the Message about a new Resource says it (MSG-RES-01).
+        const runDay = (update.generatedAt ?? new Date().toISOString()).slice(0, 10);
         const keys = new Set(update.tables.map((table) => table.key));
 
         // First withdraw what is no longer exposed, so that its Display Name is free for others.
@@ -161,15 +210,37 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             description: table.description,
             exposures: table.exposures,
           };
+          const columns = splitColumns(table.columns);
           const row = known.get(table.key);
           if (!row) {
+            // A Registration (the flow "registering a Resource"): the Resource with its Level, its
+            // fields, its Fingerprint, the first entries of its Log, and the Message to the Data Team.
             const displayName = await freeName(trx, wanted, update, table.key);
+            const { level, reason } = levelAtRegistration(table.description, columns.fields);
             const { id } = await trx
               .insertInto('resources')
-              .values({ key: table.key, ...facts, requestedName: wanted, displayName })
+              .values({ key: table.key, ...facts, requestedName: wanted, displayName, level })
               .returning('id')
               .executeTakeFirstOrThrow();
+            await keepColumns(trx, id, columns);
+            await trx
+              .insertInto('resourceFingerprints')
+              .values({ resourceId: id, runId: run, ...fingerprint(table.description, columns.fields, table.checksum) })
+              .execute();
             await write(trx, id, 'RES-001', { exposure, key: table.key, run });
+            await write(trx, id, 'RES-002', { level: String(level), reason });
+            await trx
+              .insertInto('messages')
+              .values({
+                type: 'MSG-RES-01',
+                subjectKind: 'resource',
+                subjectId: id,
+                writerId: null,
+                params: { exposure, project: update.projectName ?? `project ${update.projectId}`, run: runDay },
+                state: 'waiting',
+              })
+              .onConflict((conflict) => conflict.doNothing())
+              .execute();
             outcome.registered++;
             continue;
           }
@@ -181,6 +252,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             .set({ ...facts, requestedName: wanted, displayName, withdrawnAt: null, updatedAt: new Date() })
             .where('id', '=', row.id)
             .execute();
+          await keepColumns(trx, row.id, columns);
           if (back) {
             await write(trx, row.id, 'RES-006', { exposure, run });
             outcome.back++;
@@ -216,6 +288,25 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       return row && present(row);
     },
 
+    async detail(id) {
+      if (!UUID.test(id)) {
+        return undefined;
+      }
+      const row = await db.selectFrom('resources').selectAll().where('id', '=', id).executeTakeFirst();
+      if (!row) {
+        return undefined;
+      }
+      const fields = await db
+        .selectFrom('resourceFields')
+        .select(['name', 'position', 'dataType', 'description'])
+        .where('resourceId', '=', id)
+        .orderBy(sql`position nulls last`)
+        .orderBy('name')
+        .execute();
+      const leftOut = await db.selectFrom('resourceLeftOut').select(['name', 'dataType', 'reason']).where('resourceId', '=', id).orderBy('name').execute();
+      return { ...present(row), fields, leftOut };
+    },
+
     async add(id, collection, viewer) {
       return db.transaction().execute(async (trx) => {
         // Holds the Collection, so that it is not dissolved meanwhile (FR-CO-10).
@@ -231,6 +322,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           return 'in_another_collection';
         }
         await trx.updateTable('resources').set({ collectionId: collection.id, updatedAt: new Date() }).where('id', '=', id).execute();
+        await registrationMessage(trx, id, 'inCollection');
         await write(trx, id, 'COL-030', { collection: collection.name, actor: viewer.name }, viewer.id);
         await trx
           .insertInto('collectionLog')
@@ -248,6 +340,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         }
         const collection = await trx.selectFrom('collections').select('name').where('id', '=', row.collectionId).executeTakeFirstOrThrow();
         await trx.updateTable('resources').set({ collectionId: null, updatedAt: new Date() }).where('id', '=', id).execute();
+        // Without a Collection, it waits for one again.
+        await registrationMessage(trx, id, 'waiting');
         await write(trx, id, 'COL-031', { collection: collection.name, actor: viewer.name }, viewer.id);
         await trx
           .insertInto('collectionLog')

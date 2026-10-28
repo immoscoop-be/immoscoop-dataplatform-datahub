@@ -180,6 +180,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       projectId: '9367',
       projectName: 'immoscoop_dataplatform_sql',
       runId,
+      generatedAt: '2026-10-26T06:12:00Z',
       tables: names.map((name) => ({
         key: `immoscoop-dataplatform.dbt_marts.${name}`,
         nodeId: `model.immoscoop_dataplatform_sql.${name}`,
@@ -188,6 +189,11 @@ describe.skipIf(!url)('the routes of Collections', () => {
         description: '',
         exposures: [`datahub_${name}`],
         label: null,
+        checksum: `sum-${name}`,
+        columns: [
+          { name: `${name}_id`, position: 1, dataType: 'STRING', description: '' },
+          { name: 'tags', position: 2, dataType: 'ARRAY<STRING>', description: '' },
+        ],
       })),
     });
     const fromRegistry = (payload: object, token = 'registry-id-token') =>
@@ -230,7 +236,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await an('GET', `/collections/${collection.id}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['visits']);
       expect((await bert('GET', `/collections/${collection.id}/resources`)).json().resources).toEqual([]);
       expect((await an('GET', `/resources/${visits.id}/log`)).json().entries.map((entry: { text: string }) => entry.text)).toEqual([
-        'Added to collection Visits by Dirk',
+        'Added to the Collection Visits by Dirk',
+        'Maturity assessed at Level 1',
         'Registered through exposure datahub_visits',
       ]);
       expect((await bert('GET', `/resources/${visits.id}/log`)).statusCode).toBe(404);
@@ -244,11 +251,38 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await an('DELETE', `/collections/${collection.id}`)).statusCode).toBe(204);
     });
 
+    it('shows a Resource with its fields to whoever sees it, and the columns left out of it (FR-SR-06, DEC-SR-33)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      await fromRegistry(update('4', ['searches']));
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string; level: number }[];
+      const searches = waiting.find((resource) => resource.name === 'searches')!;
+      expect(searches.level).toBe(1);
+      const shown = await dirk('GET', `/resources/${searches.id}`);
+      expect(shown.statusCode).toBe(200);
+      expect(shown.json().resource).toMatchObject({
+        name: 'searches',
+        level: 1,
+        collectionId: null,
+        fields: [{ name: 'searches_id', position: 1, dataType: 'STRING', description: '' }],
+        leftOut: [{ name: 'tags', dataType: 'ARRAY<STRING>', reason: 'array' }],
+      });
+      // Without a Collection, only the Data Team sees it (FR-SR-31).
+      expect((await an('GET', `/resources/${searches.id}`)).statusCode).toBe(404);
+      expect((await dirk('GET', '/resources/not-an-id')).statusCode).toBe(404);
+    });
+
     it('checks what registry sends', () => {
       expect(parseUpdate(update('3', ['visits']))).toMatchObject({ projectId: '9367', runId: '3' });
       expect(parseUpdate({ ...update('3', []), tables: 'all' })).toBe('The exposed tables come as a list.');
       expect(parseUpdate({ ...update('3', []), tables: [{ key: 'x' }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), projectName: 5 })).toBe('The name of the dbt project is a text, or null.');
+      expect(parseUpdate({ ...update('3', []), generatedAt: 'yesterday' })).toMatch(/ISO 8601/);
+      const [visits] = update('3', ['visits']).tables;
+      expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: undefined }] })).toMatch(/Every exposed table/);
+      expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: [{ name: 'x', position: 1.5, dataType: null, description: '' }] }] })).toMatch(
+        /Every exposed table/,
+      );
     });
   });
 

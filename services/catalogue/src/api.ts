@@ -4,7 +4,7 @@ import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
-import type { Resources, ResourcesUpdate } from './resources.js';
+import type { Resource, Resources, ResourcesUpdate } from './resources.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -223,11 +223,27 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // The Log of a Resource, for whoever sees it: the Data Team, and the Owner Unit of its Collection.
-  app.get<{ Params: { id: string } }>('/resources/:id/log', async (request, reply) => {
+  /**
+   * Who sees a Resource that is not published: the Data Team and the members of the Owner Unit of its
+   * Collection (FR-SR-31); Publication is not built yet. Anyone else gets 404, as for one that does not exist.
+   */
+  async function seen(request: FastifyRequest, resource: Resource | undefined): Promise<boolean> {
     const who = viewer(request);
-    const resource = await resources.get(request.params.id);
     const collection = resource?.collectionId ? await collections.get(resource.collectionId, who) : undefined;
-    if (!resource || !(who.dataTeam || collection?.canManage)) {
+    return resource !== undefined && (who.dataTeam || collection?.canManage === true);
+  }
+
+  app.get<{ Params: { id: string } }>('/resources/:id', async (request, reply) => {
+    const resource = await resources.detail(request.params.id);
+    if (!(await seen(request, resource))) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    return { resource };
+  });
+
+  app.get<{ Params: { id: string } }>('/resources/:id/log', async (request, reply) => {
+    const resource = await resources.get(request.params.id);
+    if (!resource || !(await seen(request, resource))) {
       return reply.code(404).send(NO_RESOURCE);
     }
     return { entries: await resources.log(resource.id, 200) };
@@ -244,6 +260,9 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
   if (input.projectName !== null && !text(input.projectName, 1000)) {
     return 'The name of the dbt project is a text, or null.';
   }
+  if (input.generatedAt !== null && !(text(input.generatedAt, 40) && !Number.isNaN(Date.parse(input.generatedAt as string)))) {
+    return 'When dbt made the manifest is a moment in ISO 8601, or null.';
+  }
   if (!Array.isArray(input.tables)) {
     return 'The exposed tables come as a list.';
   }
@@ -258,9 +277,20 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
       typeof table.description === 'string' &&
       Array.isArray(table.exposures) &&
       (table.exposures as unknown[]).every((name) => text(name, 1024)) &&
-      (table.label === null || text(table.label, 1000));
+      (table.label === null || text(table.label, 1000)) &&
+      (table.checksum === null || text(table.checksum, 200)) &&
+      Array.isArray(table.columns) &&
+      (table.columns as Record<string, unknown>[]).every(
+        (column) =>
+          column !== null &&
+          typeof column === 'object' &&
+          text(column.name, 1024) &&
+          (column.position === null || Number.isInteger(column.position)) &&
+          (column.dataType === null || text(column.dataType, 4096)) &&
+          typeof column.description === 'string',
+      );
     if (!fits) {
-      return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures and a label or null.';
+      return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures, a label or null, a checksum or null, and its columns.';
     }
   }
   return input as unknown as ResourcesUpdate;

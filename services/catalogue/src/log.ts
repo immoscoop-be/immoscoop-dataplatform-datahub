@@ -1,40 +1,19 @@
-/**
- * The Log IDs of a Collection, from the Log catalogue (docs/requirements/functional/log-catalogue.md),
- * with their templates. A Log Entry keeps the Log ID and its parameters; the text is built only
- * when it is read (DEC-SR-09, FR-SR-12).
- */
-export const COLLECTION_LOG = {
-  'COL-001': 'Collection created by {actor}',
-  'COL-002': '{field} changed by {actor}',
-  'COL-003': 'Owner Unit changed from {old} to {new} by {actor}',
-  'COL-004': 'Made {visibility} by {actor}',
-  'COL-005': 'Collection dissolved by {actor}',
-  'COL-006': '{resource} added by {actor}',
-  'COL-007': '{resource} removed by {actor}',
-} as const;
-
-export type CollectionLogId = keyof typeof COLLECTION_LOG;
-
-/** The Log IDs of a Resource, from the same Log catalogue. */
-export const RESOURCE_LOG = {
-  'RES-001': 'Registered through exposure {exposure}',
-  'RES-003': 'Renamed from {old} to {new}',
-  'RES-004': 'Withdrawn: no exposure with the tag datahub depends on it any more',
-  'RES-006': 'Back through exposure {exposure}',
-  'COL-030': 'Added to collection {collection} by {actor}',
-  'COL-031': 'Removed from collection {collection} by {actor}',
-} as const;
-
-export type ResourceLogId = keyof typeof RESOURCE_LOG;
-
-const TEMPLATES: Record<string, string> = { ...COLLECTION_LOG, ...RESOURCE_LOG };
+import { renderLog } from '@datahub/contracts/log';
+import { LOG_CATALOGUE, type LogId } from '@datahub/contracts/log-catalogue';
 
 /**
- * Fills in the template of a Log ID. A text that starts with a field name gets a capital; one that
- * starts with a name, such as the Display Name of a Resource, keeps it as it is.
+ * The Log IDs, from the Log Catalogue in @datahub/contracts. A Log Entry keeps the Log ID and its
+ * parameters; the text is built only when it is read (DEC-SR-09, FR-SR-12).
  */
+type LogIdAbout<About extends string> = { [Id in LogId]: (typeof LOG_CATALOGUE)[Id]['about'] extends About ? Id : never }[LogId];
+
+/** The Log IDs that may stand in the Log of a Collection. */
+export type CollectionLogId = LogIdAbout<'collection'>;
+
+/** The Log IDs that may stand in the Log of a Resource. */
+export type ResourceLogId = LogIdAbout<'resource'>;
+
+/** The text of a Log Entry in English, for the routes that give it along with its Log ID and parameters. */
 export function logText(logId: string, params: Record<string, string>): string {
-  const template = TEMPLATES[logId] ?? logId;
-  const text = template.replace(/\{(\w+)\}/g, (_match, name: string) => params[name] ?? `{${name}}`);
-  return template.startsWith('{field}') ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+  return renderLog(logId, params, 'en');
 }

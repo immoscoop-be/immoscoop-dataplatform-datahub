@@ -11,8 +11,8 @@
     "typecheck": "tsc -b && tsc -p tsconfig.test.json && pnpm --filter @datahub/ui --filter @datahub/web run check && tsc -p services/semgraph/tsconfig.json && tsc -p scripts/tsconfig.json",
     "test": "vitest run",
     "check": "pnpm typecheck && pnpm test && pnpm docs:check",
-    "docs:check": "node scripts/requirements.ts check && node scripts/messages.ts check",
-    "docs:build": "node scripts/messages.ts build && node scripts/requirements.ts build",
+    "docs:check": "node scripts/requirements.ts check && node scripts/messages.ts check && node scripts/log-catalogue.ts check",
+    "docs:build": "node scripts/messages.ts build && node scripts/log-catalogue.ts build && node scripts/requirements.ts build",
     "icons:build": "node scripts/tabler-icons.ts",
     "clean": "tsc -b --clean"
   },

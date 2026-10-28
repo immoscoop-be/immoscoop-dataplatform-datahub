@@ -125,6 +125,8 @@ describe('the ingest job', () => {
       ['17121', '101', 'immoscoop_dataplatform_sql', []],
     ]);
     expect(logged).toContain('Exposures tagged datahub that depend on no table: datahub_lines');
+    // With the moment dbt made the manifest, the day the new Resources came in.
+    expect(told[0]?.generatedAt).toBe('2026-10-18T07:27:00.000Z');
   });
 
   it('tells catalogue nothing about a set that does not become current, and survives catalogue failing', async () => {
