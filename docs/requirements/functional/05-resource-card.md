@@ -45,7 +45,7 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-rc-01"></a>
 ### FR-RC-01 · A Business Description of the Resource
 
-**Status:** Specified · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 Every Resource can have a Business Description: what it is, in business language, its entry in the data dictionary, visible on its Resource Card next to the description from dbt ([DEC-RC-01](#dec-rc-01)).
 
@@ -77,7 +77,7 @@ Every Resource shows the control figures that were run to confirm it, as metadat
 <a id="fr-rc-04"></a>
 ### FR-RC-04 · Known Gaps
 
-**Status:** Proposed · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 Every Resource records its Known Gaps, as metadata of their own: structural gaps in its data, such as the visitorId that is missing for credit leads that come from MySQL rather than from website events.
 
@@ -102,37 +102,39 @@ Every Resource states its Stability, as metadata of its own: whether its data is
 <a id="fr-rc-07"></a>
 ### FR-RC-07 · The Level on the Resource Card
 
-**Status:** Proposed · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Resource Card shows the Level of the Resource. Its confidentiality is worked out as a concept first ([OP-PL-01](12-permissions-and-library-cards.md#op-pl-01)).
 
 <a id="fr-rc-08"></a>
 ### FR-RC-08 · Relationships through an Entity and an identifier
 
-**Status:** Proposed · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [resource-detail](../../design/screens/resource-detail.html)
 
 With every Resource stands which other Resources it can be joined to, and on which field. A relationship is expressed as an Entity and an identifier, as in the Domain Model, not as a table name. The Data Team gives the relationships when it makes a Resource available.
 
 *Note of 2026-10-25: the Data Admin gives them per field when adding the Resource to a Collection ([FR-CO-33](03-collections.md#fr-co-33)).* *Note of 2026-10-26: a relationship is a relation type of the Domain Model towards the identity of an Entity, with the cardinality the type fixes ([DEC-RC-05](#dec-rc-05)); a field that is the identity of the Entity the row is about maps as `is` ([DEC-RC-06](#dec-rc-06)).*
 
+*Note of 2026-10-28, on building it: the Overview names each mapping of the Resource with the Resources the User sees that carry the same identity; Entities found only in the lineage stay with [FR-SR-23](04-stacks-and-resources.md#fr-sr-23).*
+
 <a id="fr-rc-09"></a>
 ### FR-RC-09 · A new Resource is linked through its Entity
 
-**Status:** Proposed · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A new Resource that states its Entity and identifier is linked automatically to every Resource that carries the same Entity.
 
 <a id="fr-rc-10"></a>
 ### FR-RC-10 · Relationships can be visualised
 
-**Status:** Proposed · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [REQ-DH-RELATIES](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-relaties) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The relationships between Resources can be shown as a picture.
 
 <a id="fr-rc-11"></a>
 ### FR-RC-11 · Model type and grain
 
-**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Resource Card shows the model type and the grain of the Resource, as dbt has them (`model_type` and `grain` in `meta`), next to its description.
 
@@ -150,7 +152,7 @@ The Resource Card shows who published the Resource and when, and who confirmed i
 <a id="fr-rc-13"></a>
 ### FR-RC-13 · Since when the data is reliable
 
-**Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Resource Card shows since when the data of the Resource is reliable. The Owner and the Data Team set it.
 
@@ -166,14 +168,16 @@ The Resource Card shows the active checks on the Resource and its incidents.
 <a id="fr-rc-15"></a>
 ### FR-RC-15 · The Owner and the Data Team edit in place
 
-**Status:** Specified · **Source:** [DEC-UX-09](../../design/principles.md#dec-ux-09) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Source:** [DEC-UX-09](../../design/principles.md#dec-ux-09) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Owner and the Data Team edit what Data Hub keeps about a Resource in place, on its Resource Card: the Business Description of the Resource and of each field, intended use, pitfalls, Known Gaps, Stability, since when the data is reliable, and the key fields and Parameters. What comes from dbt is shown next to it, read-only. Every saved change goes into the Log ([FR-SR-28](04-stacks-and-resources.md#fr-sr-28)).
+
+*Note of 2026-10-28, on building it: Stability is not in v1 ([FR-RC-06](#fr-rc-06)).*
 
 <a id="fr-rc-16"></a>
 ### FR-RC-16 · A Business Description of every field
 
-**Status:** Specified · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can write a Business Description of every field of a Resource, next to its description from dbt, as for the Resource itself ([FR-RC-01](#fr-rc-01)). The description from dbt is never edited in Data Hub ([FR-SR-06](04-stacks-and-resources.md#fr-sr-06)) and never hidden. Every Business Description that is written, changed or removed goes into the Log.
 

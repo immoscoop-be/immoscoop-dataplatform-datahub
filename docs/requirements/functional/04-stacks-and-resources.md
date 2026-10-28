@@ -317,6 +317,8 @@ A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Convers
 
 *Note of 2026-10-28: the tabs are Overview, Columns, Lineage, History and Preview; History lists the queries and Lenses that used the Resource, one row per query, and is not a list of Log Entries ([DEC-UX-90](../../design/principles.md#dec-ux-90), [OP-SR-18](#op-sr-18)).*
 
+*Note of 2026-10-28, on building part 4: the tabs Overview, Columns and Lineage are built; History and Preview are there and come with Query, in part 5 of the [build order](../../design/build-order.md).*
+
 <a id="fr-sr-25"></a>
 ### FR-SR-25 · The preview shows a limited number of rows
 
@@ -349,9 +351,11 @@ Every query gets a limit on scanned bytes and a label with the User. Executed qu
 <a id="fr-sr-28"></a>
 ### FR-SR-28 · The Owner and the Data Team supplement the description
 
-**Status:** Specified · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Owner and the Data Team can supplement intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log.
+
+*Note of 2026-10-28, on building it: Anomalies come with making a Signal an Anomaly, not in v1 ([FR-SR-30](#fr-sr-30)).*
 
 <a id="fr-sr-29"></a>
 ### FR-SR-29 · React with a Question, a Remark or a Signal
@@ -433,6 +437,8 @@ The Preview offers a choice per Parameter of the Resource, such as the weeks or 
 **Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-preview](../../design/screens/resource-preview.html)
 
 The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
+
+*Note of 2026-10-28, on building part 4: the page shows the partition column and its unit, the cluster columns in their order, and how to query it cheaply; its size and number of partitions come from BigQuery with Query, in part 5 of the [build order](../../design/build-order.md).*
 
 <a id="fr-sr-40"></a>
 ### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
@@ -564,7 +570,7 @@ A Broken query cannot run: Run is off, and a callout on top of it names what no 
 <a id="fr-sr-54"></a>
 ### FR-SR-54 · The lineage of a Resource is walked one step at a time
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
 
 The tab Lineage shows the Resource in the middle, always, with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one adds its own next models beside it, a column further out. Data Hub never shows the whole lineage at once.
 ## Log Catalogue

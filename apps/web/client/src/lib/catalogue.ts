@@ -25,13 +25,84 @@ export interface Field {
   name: string;
   position: number | null;
   dataType: string | null;
+  /** From dbt. */
   description: string;
+  /** From the Owner or the Data Team, next to the one from dbt; empty when there is none (FR-RC-16). */
+  businessDescription: string;
+}
+
+/** The mapping of a field, as the Data Admin recorded it (DEC-RC-05, DEC-RC-06, DEC-RC-14). */
+export interface Mapping {
+  field: string;
+  kind: 'is' | 'relation' | 'performedBy';
+  relationType: string | null;
+  identity: string;
+  subject: string | null;
+  origin: 'domainModel' | 'name' | 'here';
+  inDomainModel: boolean;
+}
+
+/** What the Data Admin recorded when adding a Resource (FR-CO-33, FR-CO-34, TR-CO-05). */
+export interface Details {
+  partition: { field: string; unit: 'hour' | 'day' | 'month' | 'year' | null } | null;
+  clusterBy: string[];
+  partitionFilter: 'none' | 'dataHub' | 'bigQuery';
+  grain: string[];
+  grainSentence: string;
+  modelType: 'event' | 'state' | 'fact' | 'dimension' | 'aggregate' | null;
+  origins: Partial<Record<'partition' | 'clusterBy' | 'partitionFilter' | 'grain' | 'grainSentence' | 'modelType', 'dbt' | 'test' | 'domainModel' | 'here'>>;
+  release: string | null;
+  mappings: Mapping[];
+}
+
+/** What the Owner and the Data Team keep about a Resource in Data Hub (FR-RC-15, TR-SR-10). */
+export interface Card {
+  businessDescription: string;
+  intendedUse: string;
+  pitfalls: string;
+  knownGaps: string[];
+  /** A day, `YYYY-MM-DD`, or null. */
+  reliableSince: string | null;
+  keyFields: string[];
+  parameters: string[];
 }
 
 /** A Resource with its fields, and the columns of its table left out of it (DEC-SR-33). */
 export interface ResourceDetail extends Resource {
   fields: Field[];
   leftOut: { name: string; dataType: string | null; reason: string }[];
+  details: Details;
+  card: Card;
+}
+
+/** A mapping of a Resource with the other Resources the User sees that carry the same identity (FR-RC-09). */
+export interface Related extends Pick<Mapping, 'field' | 'kind' | 'relationType' | 'identity' | 'inDomainModel'> {
+  resources: { id: string; displayName: string; level: number; field: string }[];
+}
+
+/** A model in the lineage around a Resource (DEC-AR-06). */
+export interface LineageNode {
+  uniqueId: string;
+  name: string;
+  resourceType: string;
+  layer: string;
+  projectId: string;
+  projectName: string | null;
+  distance: number;
+}
+
+export interface LineageSide {
+  nodes: LineageNode[];
+  edges: { parentId: string; childId: string }[];
+  truncated: boolean;
+}
+
+/** The lineage around a Resource, with the Resources on it the User sees (TR-SR-11). */
+export interface ResourceLineage {
+  nodeId: string;
+  upstream: LineageSide | null;
+  downstream: LineageSide | null;
+  resources: { nodeId: string; id: string; displayName: string; level: number }[];
 }
 
 /** An entry of a Log: its Log ID and parameters; the page builds its text in the language of the reader. */
@@ -102,6 +173,24 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     },
     async log(id: string): Promise<LogEntry[]> {
       return ((await (await call(`${resource(id)}/log`)).json()) as { entries: LogEntry[] }).entries;
+    },
+    /** Changes what is sent of the Resource Card; catalogue logs every change (FR-RC-15). */
+    async editResource(id: string, changes: Partial<Card>): Promise<ResourceDetail> {
+      return ((await (await call(resource(id), { method: 'PATCH', body: changes })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Writes the Business Descriptions of fields; an empty one removes it (FR-RC-16). */
+    async describeFields(id: string, fields: readonly { name: string; businessDescription: string }[]): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/fields`, { method: 'PUT', body: { fields } })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Records the grain, storage and mappings again, from Edit relations: only a Data Admin may (DEC-UX-107). */
+    async relate(id: string, details: Record<string, unknown>): Promise<ResourceDetail> {
+      return ((await (await call(`${resource(id)}/details`, { method: 'PUT', body: details })).json()) as { resource: ResourceDetail }).resource;
+    },
+    async related(id: string): Promise<Related[]> {
+      return ((await (await call(`${resource(id)}/related`)).json()) as { related: Related[] }).related;
+    },
+    async lineage(id: string): Promise<ResourceLineage> {
+      return (await call(`${resource(id)}/lineage`)).json() as Promise<ResourceLineage>;
     },
     /** Every Collection the User sees, by name (FR-CO-17, FR-CO-18). */
     async collections(): Promise<Collection[]> {

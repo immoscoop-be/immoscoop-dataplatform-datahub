@@ -13,6 +13,7 @@
     large = false,
     wide = false,
     label,
+    title,
     onclick,
     children,
   }: {
@@ -24,15 +25,17 @@
     large?: boolean;
     wide?: boolean;
     label?: string;
+    /** Said on hover, such as why it is off. */
+    title?: string;
     onclick?: (event: MouseEvent) => void;
     children: Snippet;
   } = $props();
 </script>
 
 {#if href && !disabled}
-  <a class="button {variant}" class:large class:wide {href} aria-label={label} {onclick}>{@render children()}</a>
+  <a class="button {variant}" class:large class:wide {href} aria-label={label} {title} {onclick}>{@render children()}</a>
 {:else}
-  <button class="button {variant}" class:large class:wide {type} {disabled} aria-label={label} {onclick}>{@render children()}</button>
+  <button class="button {variant}" class:large class:wide {type} {disabled} aria-label={label} {title} {onclick}>{@render children()}</button>
 {/if}
 
 <style>

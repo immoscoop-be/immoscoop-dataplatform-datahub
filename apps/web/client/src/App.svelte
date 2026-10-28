@@ -260,7 +260,15 @@
     {:else if page.kind === 'resource'}
       {#if opened?.resource}
         {@const resource = opened.resource}
-        <ResourcePage {resource} log={opened.log} collection={collections?.find((collection) => collection.id === resource.collectionId)} />
+        <ResourcePage
+          {resource}
+          log={opened.log}
+          collection={collections?.find((collection) => collection.id === resource.collectionId)}
+          {catalogue}
+          {registry}
+          {dataTeam}
+          onchange={(updated) => opened?.id === updated.id && (opened = { ...opened, resource: updated })}
+        />
       {:else if opened?.resource === null}
         <NotFound />
       {/if}

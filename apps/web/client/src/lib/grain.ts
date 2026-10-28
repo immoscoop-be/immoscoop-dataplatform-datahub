@@ -89,6 +89,42 @@ export function draftOf(resource: ResourceDetail, proposal: Proposal | null): Dr
   };
 }
 
+/** The draft of a Resource from what was recorded when it was added, to change it with Edit relations (DEC-UX-107). */
+export function recordedDraftOf(resource: ResourceDetail): Draft {
+  const { details } = resource;
+  const mapped = new Map(details.mappings.map((mapping) => [mapping.field, mapping]));
+  return {
+    id: resource.id,
+    displayName: resource.displayName,
+    level: resource.level,
+    builtOn: null,
+    partition: details.partition,
+    clusterBy: details.clusterBy,
+    partitionFilter: details.partitionFilter,
+    // BigQuery requires the filter, as dbt said: it stays required.
+    filterLocked: details.partitionFilter === 'bigQuery' && details.origins.partitionFilter === 'dbt',
+    grain: details.grain,
+    grainSentence: details.grainSentence,
+    modelType: details.modelType,
+    origins: details.origins,
+    fields: resource.fields.map((field) => {
+      const recorded = mapped.get(field.name);
+      return {
+        name: field.name,
+        dataType: field.dataType,
+        description: field.description,
+        kind: recorded?.kind ?? 'none',
+        relationType: recorded?.relationType ?? null,
+        identity: recorded?.identity ?? '',
+        subject: recorded?.subject ?? null,
+        origin: recorded?.origin ?? 'here',
+      };
+    }),
+    leftOut: resource.leftOut,
+    release: details.release,
+  };
+}
+
 /** The fields mapped as `is`: what a relation can start from. */
 export function subjectsOf(draft: Draft): FieldDraft[] {
   return draft.fields.filter((field) => field.kind === 'is' && IDENTITY.test(field.identity));
