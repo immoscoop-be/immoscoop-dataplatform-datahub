@@ -1,4 +1,4 @@
-import type { CollectionColour, CollectionIcon, CollectionVisibility } from '@datahub/contracts';
+import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import type { SubjectKind } from '@datahub/contracts/messages';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
@@ -13,15 +13,16 @@ export interface CatalogueDatabase {
     id: Generated<string>;
     name: string;
     description: string;
-    colour: CollectionColour;
-    /** The name of a Tabler icon from the chosen list, or none (DEC-CO-13). */
-    icon: ColumnType<CollectionIcon | null, CollectionIcon | null | undefined, CollectionIcon | null>;
+    /** The name of an icon of Phosphor, required; a Collection has no colour (DEC-CO-23, DEC-CO-25). */
+    icon: CollectionIcon;
     /** The Owner Unit by its fixed Google ID, with its address and name when it was chosen (TR-CO-03). */
     ownerUnitId: string;
     ownerUnitEmail: string;
     ownerUnitName: string;
     visibility: CollectionVisibility;
+    /** The fixed Google ID of whoever created it, and their name at that moment. */
     createdBy: string;
+    createdByName: string;
     createdAt: Timestamp;
     dissolvedAt: Date | null;
   };

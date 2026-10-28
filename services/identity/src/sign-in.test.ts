@@ -72,6 +72,18 @@ function fakeWorkspace() {
         { id: 'g-partner', email: 'team@partner.be', name: 'Partner team' },
       ];
     },
+    domainGroups: async (googleId: string) => {
+      if (workspace.down) {
+        throw new Error('Workspace did not list the groups of the domain: 503 Service Unavailable');
+      }
+      workspace.askedBy = googleId;
+      return [
+        { id: 'g-sales', email: `sales@${DOMAIN}`, name: 'Sales' },
+        { id: 'g-credit', email: `credit@${DOMAIN}`, name: 'Credit team' },
+        { id: 'g-partner', email: 'team@partner.be', name: 'Partner team' },
+      ];
+    },
+    askedBy: '',
   };
   return workspace satisfies Workspace;
 }
@@ -392,6 +404,25 @@ describe.skipIf(!url)('signing in', () => {
     const down = await app.inject({ url: '/me/groups', headers: { authorization: `Bearer ${token}` } });
     expect(down.statusCode).toBe(503);
     expect(down.json().error).toBe('temporarily_unavailable');
+  });
+
+  it('lists every group of the own domains to the Data Team, by name, to hand a Collection to (FR-CO-35)', async () => {
+    const dataTeam = await caller.sign({ sub: JAN.sub, email: JAN.email, roles: ['datateam'] });
+    const response = await app.inject({ url: '/groups', headers: { authorization: `Bearer ${dataTeam}` } });
+    expect(response.json()).toEqual({
+      groups: [
+        { id: 'g-credit', email: `credit@${DOMAIN}`, name: 'Credit team' },
+        { id: 'g-sales', email: `sales@${DOMAIN}`, name: 'Sales' },
+      ],
+    });
+    // The Workspace it lists is that of whoever asks.
+    expect(workspace.askedBy).toBe(JAN.sub);
+    const someone = await caller.sign({ sub: JAN.sub, email: JAN.email, roles: [] });
+    expect((await app.inject({ url: '/groups', headers: { authorization: `Bearer ${someone}` } })).statusCode).toBe(403);
+
+    workspace.down = true;
+    const down = await app.inject({ url: '/groups', headers: { authorization: `Bearer ${dataTeam}` } });
+    expect(down.statusCode).toBe(503);
   });
 
   it('keeps the session, and the Refresh Token, when Workspace does not answer a renewal', async () => {

@@ -173,41 +173,56 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect((await byKey()).agency_orders?.displayName).toBe('All orders (compilacion_colleciones_dbt)');
   });
 
-  it('adds a Resource to one Collection, never moves it, and logs both sides (FR-CO-07, FR-CO-08, FR-CO-11)', async () => {
-    const leads = await collections.create({ name: 'Leads', description: 'Leads.', colour: 'rose', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
-    const other = await collections.create({ name: 'Other', description: 'Other.', colour: 'teal', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
-    const orders = (await byKey()).orders!;
+  it('adds Resources to one Collection in one go, never moves them, logs both sides and tells the Owner (FR-CO-07, FR-CO-08, FR-CO-11, FR-CO-31)', async () => {
+    const leads = await collections.create({ name: 'Leads', description: 'Leads.', icon: 'coins', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    const other = await collections.create({ name: 'Other', description: 'Other.', icon: 'globe', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    await resources.apply(prod('103', [orders, table('customers')]));
+    const { orders: ordersResource, customers } = await byKey();
+    const order = ordersResource!;
 
     const message = () =>
-      database.db.selectFrom('messages').select('state').where('type', '=', 'MSG-RES-01').where('subjectId', '=', orders.id).executeTakeFirstOrThrow();
+      database.db.selectFrom('messages').select('state').where('type', '=', 'MSG-RES-01').where('subjectId', '=', order.id).executeTakeFirstOrThrow();
     expect((await message()).state).toBe('waiting');
-    expect(await resources.add(orders.id, leads, dirk)).toBe('added');
-    // The Message to the Data Team has done what it asked (MSG-RES-01).
+    // One that cannot be added stops them all.
+    const missing = '00000000-0000-4000-8000-000000000000';
+    expect(await resources.add([order.id, missing], leads, dirk)).toEqual({ outcome: 'not_found', ids: [missing] });
+    expect(await resources.add([order.id, 'not-a-uuid'], leads, dirk)).toEqual({ outcome: 'not_found', ids: ['not-a-uuid'] });
+    expect(await resources.add([customers!.id], other, dirk)).toEqual({ outcome: 'added', added: 1 });
+    expect(await resources.add([order.id, customers!.id], leads, dirk)).toEqual({ outcome: 'in_another_collection', ids: [customers!.id] });
+    expect((await message()).state).toBe('waiting');
+
+    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'added', added: 1 });
+    // The Message to the Data Team has done what it asked (MSG-RES-01), and the Owner is told (MSG-RES-08, DEC-CV-11).
     expect((await message()).state).toBe('inCollection');
-    expect(await resources.add(orders.id, leads, dirk)).toBe('already');
-    expect(await resources.add(orders.id, other, dirk)).toBe('in_another_collection');
-    expect((await resources.inCollection(leads.id)).map((resource) => resource.displayName)).toEqual(['All orders']);
+    const arrived = await database.db.selectFrom('messages').select(['subjectKind', 'writerId', 'params', 'state']).where('type', '=', 'MSG-RES-08').where('subjectId', '=', order.id).execute();
+    expect(arrived).toEqual([{ subjectKind: 'resource', writerId: null, params: { collection: 'Leads', actor: 'Dirk', level: '2' }, state: null }]);
+    // Already in it: nothing changes, and nobody is told again.
+    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'added', added: 0 });
+    expect(await resources.add([order.id], other, dirk)).toEqual({ outcome: 'in_another_collection', ids: [order.id] });
+    const listed = await resources.inCollection(leads.id);
+    expect(listed.map((resource) => resource.displayName)).toEqual(['Orders']);
+    expect(listed[0]?.lastChange?.text).toBe('Added to the Collection Leads by Dirk');
     expect((await byKey()).orders).toBeUndefined();
 
     // A Collection that holds Resources, withdrawn ones too, cannot be dissolved (FR-CO-10).
     await expect(collections.dissolve(leads.id, dirk)).rejects.toThrow(NotEmpty);
-    await resources.apply(prod('103', [table('customers')]));
-    expect((await resources.inCollection(leads.id))[0]).toMatchObject({ displayName: 'All orders', withdrawn: true });
+    await resources.apply(prod('104', [table('customers')]));
+    expect((await resources.inCollection(leads.id))[0]).toMatchObject({ displayName: 'Orders', withdrawn: true });
     await expect(collections.dissolve(leads.id, dirk)).rejects.toThrow('The Collection still holds 1 Resource; the Data Team removes them first.');
 
-    expect(await resources.remove(orders.id, dirk)).toBe(true);
+    expect(await resources.remove(order.id, dirk)).toBe(true);
     // Without a Collection, it waits for one again.
     expect((await message()).state).toBe('waiting');
-    expect(await resources.remove(orders.id, dirk)).toBe(false);
+    expect(await resources.remove(order.id, dirk)).toBe(false);
     expect(await collections.dissolve(leads.id, dirk)).toBe(true);
-    expect(await resources.add(orders.id, leads, dirk)).toBe('collection_gone');
+    expect(await resources.add([order.id], leads, dirk)).toEqual({ outcome: 'collection_gone' });
 
-    expect((await collections.log(leads.id, 50)).map((entry) => entry.text).slice(0, 3)).toEqual([
+    expect((await collections.log({ id: leads.id, canManage: true }, 50)).map((entry) => entry.text).slice(0, 3)).toEqual([
       'Collection dissolved by Dirk',
-      'All orders removed by Dirk',
-      'All orders added by Dirk',
+      'Orders removed by Dirk',
+      'Orders added by Dirk',
     ]);
-    expect((await texts(orders.id)).slice(0, 3)).toEqual([
+    expect((await texts(order.id)).slice(0, 3)).toEqual([
       'Removed from the Collection Leads by Dirk',
       'Withdrawn: no exposure with the tag datahub depends on it any more',
       'Added to the Collection Leads by Dirk',

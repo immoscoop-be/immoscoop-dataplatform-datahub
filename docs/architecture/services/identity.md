@@ -33,6 +33,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `DELETE /users/{googleId}/sessions` | The Data Team ends every session of a User at once ([TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25)) |
 | `GET /me` | The current User, Groups and roles |
 | `GET /me/groups` | The groups of the current User with their address and name, read from Workspace; for choosing an Owner Unit ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
+| `GET /groups` | Every group of the own domains, for the Data Team to hand a Collection to any of them ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
 | `GET /me/settings`, `PUT /me/settings/{key}`, `DELETE /me/settings/{key}` | The settings of the current User: read them all, set one with `{ "value": … }`, or forget one ([TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)) |
 | `POST /excel-keys`, `DELETE /excel-keys/{id}` | Make and revoke an Excel key |
 | `POST /exchange` | Exchange a Excel key for an Access Token; used by `@datahub/auth` |

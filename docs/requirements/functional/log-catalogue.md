@@ -35,7 +35,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-007` | Marked deprecated by {actor} | Als deprecated gemarkeerd door {actor} | actor, reason |
 | `RES-008` | Deprecation taken away by {actor} | Deprecated weggenomen door {actor} | actor |
 | `COL-001` | Collection created by {actor} | Collection aangemaakt door {actor} | actor, name, ownerUnit, visibility |
-| `COL-002` | {field} changed by {actor} | {field} gewijzigd door {actor} | field, old, new, actor |
+| `COL-002` | {field, select, name {Name} description {Description} icon {Icon} other {{field}}} changed by {actor} | {field, select, name {Naam} description {Beschrijving} icon {Icoon} other {{field}}} gewijzigd door {actor} | field, old, new, actor |
 | `COL-003` | Owner Unit changed from {old} to {new} by {actor} | Owner Unit gewijzigd van {old} naar {new} door {actor} | old, new, actor |
 | `COL-004` | Made {visibility, select, public {public} other {private}} by {actor} | {visibility, select, public {Publiek} other {Privé}} gemaakt door {actor} | visibility, actor |
 | `COL-005` | Collection dissolved by {actor} | Collection opgeheven door {actor} | actor |

@@ -9,25 +9,30 @@ export interface Group {
 export interface Identity {
   /** The groups the User is in right now, from `GET /me/groups`. */
   groups(authorization: string): Promise<Group[]>;
+  /** Every group of the Workspace domain, from `GET /groups`, which only the Data Team may ask (FR-CO-35). */
+  domainGroups(authorization: string): Promise<Group[]>;
 }
 
 /** identity did not tell the groups of the User; catalogue answers 503 rather than guess. */
 export class IdentityUnavailable extends Error {}
 
 export function createIdentity(baseUrl: string, request: typeof fetch = fetch): Identity {
+  async function groups(path: string, authorization: string): Promise<Group[]> {
+    let response: Response;
+    try {
+      response = await request(new URL(path, baseUrl), { headers: { authorization }, signal: AbortSignal.timeout(10_000) });
+    } catch (error) {
+      throw new IdentityUnavailable('identity did not answer', { cause: error });
+    }
+    if (!response.ok) {
+      throw new IdentityUnavailable(`identity answered ${response.status} for ${path}`);
+    }
+    const body = (await response.json()) as { groups?: Group[] };
+    return body.groups ?? [];
+  }
+
   return {
-    async groups(authorization) {
-      let response: Response;
-      try {
-        response = await request(new URL('/me/groups', baseUrl), { headers: { authorization }, signal: AbortSignal.timeout(10_000) });
-      } catch (error) {
-        throw new IdentityUnavailable('identity did not answer', { cause: error });
-      }
-      if (!response.ok) {
-        throw new IdentityUnavailable(`identity answered ${response.status} for the groups of the User`);
-      }
-      const body = (await response.json()) as { groups?: Group[] };
-      return body.groups ?? [];
-    },
+    groups: (authorization) => groups('/me/groups', authorization),
+    domainGroups: (authorization) => groups('/groups', authorization),
   };
 }

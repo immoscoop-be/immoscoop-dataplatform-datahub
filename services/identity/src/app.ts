@@ -43,6 +43,21 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
         return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
       }
     });
+    // Every group of the own domains, for the Data Team to hand a Collection to any of them
+    // (FR-CO-35). catalogue asks it to check the group the Data Team chose.
+    app.get('/groups', async (request, reply) => {
+      if (!request.user?.roles.includes('datateam')) {
+        reply.code(403);
+        return { error: 'forbidden', message: 'Only the Data Team sees every group of the domain.' };
+      }
+      try {
+        return { groups: ownDomainGroups(await workspace.domainGroups(request.user.sub), domains) };
+      } catch (error) {
+        request.log.error({ err: error }, 'Workspace did not list the groups of the domain');
+        reply.code(503).header('retry-after', '30');
+        return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
+      }
+    });
     await app.register(signInRoutes, options.signIn);
     await app.register(settingsRoutes, { store: options.signIn.store });
   }

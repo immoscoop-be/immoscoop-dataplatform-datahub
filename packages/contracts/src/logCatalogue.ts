@@ -73,7 +73,10 @@ export const LOG_CATALOGUE = {
   'COL-002': {
     about: 'collection',
     parameters: ['field', 'old', 'new', 'actor'],
-    text: { en: '{field} changed by {actor}', nl: '{field} gewijzigd door {actor}' },
+    text: {
+      en: '{field, select, name {Name} description {Description} icon {Icon} other {{field}}} changed by {actor}',
+      nl: '{field, select, name {Naam} description {Beschrijving} icon {Icoon} other {{field}}} gewijzigd door {actor}',
+    },
   },
   'COL-003': {
     about: 'collection',

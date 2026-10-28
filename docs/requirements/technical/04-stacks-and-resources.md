@@ -49,9 +49,9 @@ The table `resource_log` holds the Log of the Resources, append-only like the Lo
 <a id="tr-sr-04"></a>
 ### TR-SR-04 · The Data Team adds Resources to Collections and removes them
 
-**Status:** Implemented · **Realises:** [FR-CO-07](../functional/03-collections.md#fr-co-07), [FR-CO-08](../functional/03-collections.md#fr-co-08), [FR-CO-11](../functional/03-collections.md#fr-co-11), [FR-CO-14](../functional/03-collections.md#fr-co-14), [DEC-SR-27](../functional/04-stacks-and-resources.md#dec-sr-27)
+**Status:** Implemented · **Realises:** [FR-CO-07](../functional/03-collections.md#fr-co-07), [FR-CO-08](../functional/03-collections.md#fr-co-08), [FR-CO-11](../functional/03-collections.md#fr-co-11), [FR-CO-14](../functional/03-collections.md#fr-co-14), [FR-CO-31](../functional/03-collections.md#fr-co-31), [DEC-SR-27](../functional/04-stacks-and-resources.md#dec-sr-27), [DEC-CV-11](../functional/14-conversations.md#dec-cv-11)
 
-`PUT /resources/{id}/collection` with a `collectionId` adds a Resource to a Collection; `DELETE /resources/{id}/collection` removes it. Only the Data Team may do either (`403` for anyone else). A Resource that is in another Collection is refused with `409 in_another_collection`: it is removed first and added again, never moved. Adding writes `COL-006` in the Log of the Collection and `COL-030` in the Log of the Resource; removing writes `COL-007` and `COL-031`.
+`POST /collections/{id}/resources` with a list of 1 to 200 `resources` adds those Resources to the Collection, all of them or none, from its page ([FR-CO-31](../functional/03-collections.md#fr-co-31)), and answers with the Resources of the Collection; `PUT /resources/{id}/collection` with a `collectionId` adds one; `DELETE /resources/{id}/collection` removes it. Only the Data Team may do any of them (`403` for anyone else). A Resource that is in another Collection is refused with `409 in_another_collection`, naming it: it is removed first and added again, never moved; one that does not exist is refused with `404`, naming it, and one already in the Collection stays as it is. Adding writes `COL-006` in the Log of the Collection and `COL-030` in the Log of the Resource, sets the Message that it waits for a Collection to `inCollection` (MSG-RES-01), and places `MSG-RES-08` on the Resource for the Owner of the Collection, with the Collection, who added it and its Level ([DEC-CV-11](../functional/14-conversations.md#dec-cv-11)); removing writes `COL-007` and `COL-031`, and the Resource waits again.
 
 <a id="tr-sr-05"></a>
 ### TR-SR-05 · Who reads which Resources
@@ -62,7 +62,7 @@ The table `resource_log` holds the Log of the Resources, append-only like the Lo
 | --- | --- | --- |
 | `GET /resources?collection=none` | The Resources without Collection, withdrawn ones marked, each with its Level | The Data Team |
 | `GET /resources/{id}` | A Resource with its fields, and the columns left out of it ([TR-SR-06](#tr-sr-06)) | Whoever sees the Resource |
-| `GET /collections/{id}/resources` | The Resources of a Collection, withdrawn ones marked | Whoever sees the Collection; see below |
+| `GET /collections/{id}/resources` | The Resources of a Collection, withdrawn ones marked, each with the latest entry of its Log | Whoever sees the Collection; see below |
 | `GET /resources/{id}/log` | The Log of a Resource, newest first | Whoever sees the Resource |
 
 The Data Team and the members of the Owner Unit see every Resource of a Collection. Anyone else who sees the Collection sees only its published Resources ([FR-SR-31](../functional/04-stacks-and-resources.md#fr-sr-31)); Publication is not built yet, so for now that list is empty for them. A Resource someone does not see is answered with `404`.
