@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-03](#msg-len-03) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
 
 ## Overview
 
@@ -53,7 +53,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Proposed |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Proposed |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
-| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and its author | A decision | To write | Proposed |
+| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Proposed |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Proposed |
@@ -1857,13 +1857,13 @@ A filter on `{column}`, the partition column, would make it read less.
 | --- | --- |
 | Kind | Request |
 | About | Lens |
-| From → to | Data Hub → Data Team and its author |
-| When | A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself ([FR-CV-08](14-conversations.md#fr-cv-08)). |
+| From → to | Data Hub → Data Team and Owner |
+| When | A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself ([FR-CV-08](14-conversations.md#fr-cv-08)), and the Lens stops until it is accepted again ([DEC-LE-11](09-lenses.md#dec-le-11)). |
 | Status | Proposed |
-| Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-CV-08](14-conversations.md#fr-cv-08) |
-| Open points | [OP-LE-05](09-lenses.md#op-le-05), [OP-LE-10](09-lenses.md#op-le-10) |
+| Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-CV-08](14-conversations.md#fr-cv-08), [DEC-LE-11](09-lenses.md#dec-le-11) |
+| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
 
-**What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Whether the Lens keeps running for its Users meanwhile is open ([OP-LE-05](09-lenses.md#op-le-05)).
+**What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run ([DEC-LE-11](09-lenses.md#dec-le-11)).
 
 **How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted`, `refused` or `lapsed`.
 
@@ -1879,28 +1879,28 @@ A filter on `{column}`, the partition column, would make it read less.
 
 > **De lens Leads per source name is zeer groot geworden**
 >
-> Eén run leest nu **1,4 GB**, boven 1 GB: meer dan in het bereik waarin hij gemaakt of laatst aanvaard werd. Data Hub vraagt het datateam hem opnieuw te aanvaarden.
+> Eén run leest nu **1,4 GB**, boven 1 GB: meer dan in het bereik waarin hij gemaakt of laatst aanvaard werd. Hij draait niet meer tot het datateam hem opnieuw aanvaardt.
 >
 > - Hij leest 104 van de 104 partities
 
 **Dutch, plain:**
 
 ```text
-De lens Leads per source name is zeer groot geworden: één run leest nu 1,4 GB, boven 1 GB. Data Hub vraagt het datateam hem opnieuw te aanvaarden.
+De lens Leads per source name is zeer groot geworden: één run leest nu 1,4 GB, boven 1 GB. Hij draait niet meer tot het datateam hem opnieuw aanvaardt.
 ```
 
 **English, laid out**, with the example:
 
 > **The lens Leads per source name grew into very large**
 >
-> One run now reads **1.4 GB**, above 1 GB: more than in the range it was made or last accepted in. Data Hub asks the data team to accept it again.
+> One run now reads **1.4 GB**, above 1 GB: more than in the range it was made or last accepted in. It does not run until the data team accepts it again.
 >
 > - It reads 104 of 104 partitions
 
 **English, plain:**
 
 ```text
-The lens Leads per source name grew into very large: one run now reads 1.4 GB, above 1 GB. Data Hub asks the data team to accept it again.
+The lens Leads per source name grew into very large: one run now reads 1.4 GB, above 1 GB. It does not run until the data team accepts it again.
 ```
 
 <details>
@@ -1916,7 +1916,7 @@ The lens Leads per source name grew into very large: one run now reads 1.4 GB, a
 Template, Dutch, plain:
 
 ```text
-De lens {subject} is zeer groot geworden: één run leest nu {reads}, boven {threshold}. Data Hub vraagt het datateam hem opnieuw te aanvaarden.
+De lens {subject} is zeer groot geworden: één run leest nu {reads}, boven {threshold}. Hij draait niet meer tot het datateam hem opnieuw aanvaardt.
 ```
 
 Template, Dutch, laid out:
@@ -1924,7 +1924,7 @@ Template, Dutch, laid out:
 ```markdown
 **De lens {subject} is zeer groot geworden**
 
-Eén run leest nu **{reads}**, boven {threshold}: meer dan in het bereik waarin hij gemaakt of laatst aanvaard werd. Data Hub vraagt het datateam hem opnieuw te aanvaarden.
+Eén run leest nu **{reads}**, boven {threshold}: meer dan in het bereik waarin hij gemaakt of laatst aanvaard werd. Hij draait niet meer tot het datateam hem opnieuw aanvaardt.
 
 - Hij leest {partitions} van de {partitionsTotal} partities
 ```
@@ -1932,7 +1932,7 @@ Eén run leest nu **{reads}**, boven {threshold}: meer dan in het bereik waarin 
 Template, English, plain:
 
 ```text
-The lens {subject} grew into very large: one run now reads {reads}, above {threshold}. Data Hub asks the data team to accept it again.
+The lens {subject} grew into very large: one run now reads {reads}, above {threshold}. It does not run until the data team accepts it again.
 ```
 
 Template, English, laid out:
@@ -1940,7 +1940,7 @@ Template, English, laid out:
 ```markdown
 **The lens {subject} grew into very large**
 
-One run now reads **{reads}**, above {threshold}: more than in the range it was made or last accepted in. Data Hub asks the data team to accept it again.
+One run now reads **{reads}**, above {threshold}: more than in the range it was made or last accepted in. It does not run until the data team accepts it again.
 
 - It reads {partitions} of {partitionsTotal} partitions
 ```
