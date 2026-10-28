@@ -19,13 +19,19 @@ describe('the addresses of the web app', () => {
     expect(route('/resources/a/b')).toEqual({ kind: 'notFound' });
   });
 
+  it('has a page per Collection, and an empty one to make a new Collection (FR-CO-12, FR-CO-25)', () => {
+    expect(route('/collections/c-1')).toMatchObject({ kind: 'collection', id: 'c-1', section: { id: 'collections' } });
+    expect(route('/collections/new')).toMatchObject({ kind: 'newCollection', section: { id: 'collections' } });
+    expect(route('/collections/c-1/log')).toEqual({ kind: 'notFound' });
+  });
+
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });
   });
 
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {
-    for (const path of ['/me/profile', '/me/keys', '/collections/c-1', '/lenses', '/x']) {
+    for (const path of ['/me/profile', '/me/keys', '/collections/c-1/edit', '/lenses', '/x']) {
       expect([path, route(path)]).toEqual([path, { kind: 'notFound' }]);
     }
   });

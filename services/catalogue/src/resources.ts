@@ -70,19 +70,34 @@ export interface LogEntry {
   at: Date;
 }
 
+/** A Resource as the page of its Collection lists it, with the latest entry of its Log (FR-CO-27). */
+export interface CollectionResource extends Resource {
+  lastChange: LogEntry | null;
+}
+
+/** What adding Resources to a Collection came to: all of them added, or none and why (FR-CO-31). */
+export type AddOutcome =
+  | { outcome: 'added'; added: number }
+  | { outcome: 'collection_gone' }
+  | { outcome: 'not_found'; ids: string[] }
+  | { outcome: 'in_another_collection'; ids: string[] };
+
 /** Resources in Postgres (TR-SR-02 to TR-SR-04). Who may do what is decided by the routes. */
 export interface Resources {
   /** Registers, renames, withdraws and brings back the Resources of one dbt project, in one go. */
   apply(update: ResourcesUpdate): Promise<UpdateOutcome>;
   /** The Resources without Collection, withdrawn ones included (FR-SR-35). */
   withoutCollection(): Promise<Resource[]>;
-  /** The Resources of a Collection, withdrawn ones included. */
-  inCollection(collectionId: string): Promise<Resource[]>;
+  /** The Resources of a Collection, withdrawn ones included, each with its last change. */
+  inCollection(collectionId: string): Promise<CollectionResource[]>;
   get(id: string): Promise<Resource | undefined>;
   /** A Resource with its fields and the columns left out of it. */
   detail(id: string): Promise<ResourceDetail | undefined>;
-  /** Adds a Resource to a Collection, never from another one (FR-CO-08). */
-  add(id: string, collection: { id: string; name: string }, viewer: Viewer): Promise<'added' | 'already' | 'in_another_collection' | 'collection_gone'>;
+  /**
+   * Adds Resources to a Collection in one go, never from another one (FR-CO-08, FR-CO-31): all of
+   * them, or none when one cannot be added. One already in the Collection stays as it is.
+   */
+  add(ids: readonly string[], collection: { id: string; name: string }, viewer: Viewer): Promise<AddOutcome>;
   /** Takes a Resource out of its Collection; false when it was in none. */
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
@@ -277,7 +292,19 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         return [];
       }
       const rows = await db.selectFrom('resources').selectAll().where('collectionId', '=', collectionId).orderBy(sql`lower(display_name)`).execute();
-      return rows.map(present);
+      const latest =
+        rows.length === 0
+          ? []
+          : await db
+              .selectFrom('resourceLog')
+              .select(['resourceId', 'logId', 'params', 'at'])
+              .distinctOn('resourceId')
+              .where('resourceId', 'in', rows.map((row) => row.id))
+              .orderBy('resourceId')
+              .orderBy('id', 'desc')
+              .execute();
+      const changes = new Map(latest.map((entry) => [entry.resourceId, { logId: entry.logId, text: logText(entry.logId, entry.params), params: entry.params, at: entry.at }]));
+      return rows.map((row) => ({ ...present(row), lastChange: changes.get(row.id) ?? null }));
     },
 
     async get(id) {
@@ -307,28 +334,50 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       return { ...present(row), fields, leftOut };
     },
 
-    async add(id, collection, viewer) {
-      return db.transaction().execute(async (trx) => {
+    async add(ids, collection, viewer) {
+      const wanted = [...new Set(ids)];
+      const unknown = wanted.filter((id) => !UUID.test(id));
+      if (unknown.length > 0) {
+        return { outcome: 'not_found', ids: unknown };
+      }
+      return db.transaction().execute(async (trx): Promise<AddOutcome> => {
         // Holds the Collection, so that it is not dissolved meanwhile (FR-CO-10).
         const live = await trx.selectFrom('collections').select('id').where('id', '=', collection.id).where('dissolvedAt', 'is', null).forShare().executeTakeFirst();
         if (!live) {
-          return 'collection_gone';
+          return { outcome: 'collection_gone' };
         }
-        const row = await trx.selectFrom('resources').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
-        if (row.collectionId === collection.id) {
-          return 'already';
+        const rows = wanted.length === 0 ? [] : await trx.selectFrom('resources').selectAll().where('id', 'in', wanted).orderBy('id').forUpdate().execute();
+        const missing = wanted.filter((id) => !rows.some((row) => row.id === id));
+        if (missing.length > 0) {
+          return { outcome: 'not_found', ids: missing };
         }
-        if (row.collectionId !== null) {
-          return 'in_another_collection';
+        const elsewhere = rows.filter((row) => row.collectionId !== null && row.collectionId !== collection.id);
+        if (elsewhere.length > 0) {
+          return { outcome: 'in_another_collection', ids: elsewhere.map((row) => row.id) };
         }
-        await trx.updateTable('resources').set({ collectionId: collection.id, updatedAt: new Date() }).where('id', '=', id).execute();
-        await registrationMessage(trx, id, 'inCollection');
-        await write(trx, id, 'COL-030', { collection: collection.name, actor: viewer.name }, viewer.id);
-        await trx
-          .insertInto('collectionLog')
-          .values({ collectionId: collection.id, logId: 'COL-006', params: { resource: row.displayName, actor: viewer.name }, actorId: viewer.id })
-          .execute();
-        return 'added';
+        const adding = rows.filter((row) => row.collectionId === null).sort((a, b) => a.displayName.localeCompare(b.displayName));
+        for (const row of adding) {
+          await trx.updateTable('resources').set({ collectionId: collection.id, updatedAt: new Date() }).where('id', '=', row.id).execute();
+          await registrationMessage(trx, row.id, 'inCollection');
+          await write(trx, row.id, 'COL-030', { collection: collection.name, actor: viewer.name }, viewer.id);
+          await trx
+            .insertInto('collectionLog')
+            .values({ collectionId: collection.id, logId: 'COL-006', params: { resource: row.displayName, actor: viewer.name }, actorId: viewer.id })
+            .execute();
+          // Its Owner is told that it arrived (DEC-CV-11), with its Level as a number, as a Message keeps it.
+          await trx
+            .insertInto('messages')
+            .values({
+              type: 'MSG-RES-08',
+              subjectKind: 'resource',
+              subjectId: row.id,
+              writerId: null,
+              params: { collection: collection.name, actor: viewer.name, level: String(row.level) },
+              state: null,
+            })
+            .execute();
+        }
+        return { outcome: 'added', added: adding.length };
       });
     },
 

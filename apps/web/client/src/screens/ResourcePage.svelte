@@ -12,16 +12,21 @@
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
-  import type { LogEntry, ResourceDetail } from '../lib/catalogue.js';
+  import type { Collection, LogEntry, ResourceDetail } from '../lib/catalogue.js';
+  import { collectionPath } from '../lib/routes.js';
 
   /**
    * The page of a Resource that waits for a Collection, as the Data Team sees it (A Resource without a
    * Collection): it says that it is in no Collection, that only the Data Team sees it, and where it
    * came from. Its Overview shows what exists already: the description from dbt and the maturity,
-   * with its recent history. The other tabs, the rest of the Overview and "Add to a collection" come
-   * with parts 3 and 4.
+   * with its recent history. In a Collection, it sits under it, and its Owner is the Owner Unit of the
+   * Collection. The other tabs and the rest of the Overview come with part 4.
    */
-  let { resource, log }: { resource: ResourceDetail; log: readonly LogEntry[] | undefined } = $props();
+  let {
+    resource,
+    log,
+    collection,
+  }: { resource: ResourceDetail; log: readonly LogEntry[] | undefined; collection: Collection | undefined } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
   const TABS = [
@@ -38,9 +43,14 @@
   const undescribed = $derived(resource.fields.filter((field) => field.description.trim() === '').length);
 </script>
 
-<Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, { label: t('collections.unassigned') }]} />
+<Breadcrumb
+  steps={[
+    { label: 'Collections', href: '/collections' },
+    collection ? { label: collection.name, href: collectionPath(collection.id) } : { label: t('collections.unassigned') },
+  ]}
+/>
 <ObjectHeader name={resource.displayName} key={resource.key} copyLabel={t('resource.copyKey')}>
-  <StatusRow level={resource.level} published={false} owner={null} />
+  <StatusRow level={resource.level} published={false} owner={collection?.ownerUnit.name ?? null} />
 </ObjectHeader>
 
 {#if resource.collectionId === null}

@@ -1,10 +1,10 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import { type CollectionColour, type CollectionIcon, type CollectionVisibility, isCollectionColour } from '@datahub/contracts';
+import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
-import type { FastifyInstance, FastifyRequest } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
-import type { Resource, Resources, ResourcesUpdate } from './resources.js';
+import type { AddOutcome, Resource, Resources, ResourcesUpdate } from './resources.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -21,14 +21,16 @@ const DATA_TEAM = 'datateam';
 interface Fields {
   name?: string;
   description?: string;
-  colour?: CollectionColour;
-  icon?: CollectionIcon | null;
+  icon?: CollectionIcon;
   visibility?: CollectionVisibility;
   ownerUnit?: string;
 }
 
-/** The chosen Owner Unit is not one of the groups of whoever chose it (FR-CO-15). */
+/** The chosen Owner Unit is not one of the groups of whoever chose it (FR-CO-15), nor of the domain (FR-CO-35). */
 class NotYourGroup extends Error {}
+
+/** How many Resources one request adds at most: far more than a Collection takes in at once. */
+const ADD_LIMIT = 200;
 
 const NOT_FOUND = { error: 'not_found', message: 'No such Collection.' };
 const NO_RESOURCE = { error: 'not_found', message: 'No such Resource.' };
@@ -53,7 +55,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(409).send({ error: 'not_empty', message: error.message });
     }
     if (error instanceof NotYourGroup) {
-      return reply.code(400).send({ error: 'not_your_group', message: 'Choose a group you are in yourself as Owner Unit.' });
+      return reply.code(400).send({ error: 'not_your_group', message: 'Choose a group you are in yourself as Owner Unit; the Data Team chooses any group of the domain.' });
     }
     if (error instanceof IdentityUnavailable) {
       request.log.error({ err: error }, 'identity did not tell the groups of the User');
@@ -67,13 +69,35 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return { id: user?.sub ?? '', name: user?.name || user?.email || '', groups: user?.groups ?? [], dataTeam: user?.roles.includes(DATA_TEAM) ?? false };
   }
 
-  /** The Owner Unit chosen by the User, read from identity with their own token (TR-CO-03). */
+  /**
+   * The Owner Unit chosen by the User, read from identity with their own token (TR-CO-03): one of
+   * their own groups, or for the Data Team any group of the domain (FR-CO-35). Reading it again also
+   * brings its name and address up to date.
+   */
   async function ownGroup(request: FastifyRequest, id: string): Promise<Group> {
-    const group = (await identity.groups(request.headers.authorization ?? '')).find((candidate) => candidate.id === id);
+    const authorization = request.headers.authorization ?? '';
+    const groups = viewer(request).dataTeam ? await identity.domainGroups(authorization) : await identity.groups(authorization);
+    const group = groups.find((candidate) => candidate.id === id);
     if (!group) {
       throw new NotYourGroup();
     }
     return group;
+  }
+
+  /** The answer to adding Resources: what was asked when they were all added, else why none was. */
+  async function addOutcome(reply: FastifyReply, outcome: AddOutcome, added: () => Promise<unknown>) {
+    switch (outcome.outcome) {
+      case 'added':
+        return added();
+      case 'collection_gone':
+        return reply.code(404).send(NOT_FOUND);
+      case 'not_found':
+        return reply.code(404).send({ ...NO_RESOURCE, resources: outcome.ids });
+      case 'in_another_collection':
+        return reply
+          .code(409)
+          .send({ error: 'in_another_collection', message: 'A Resource is in another Collection; remove it there first.', resources: outcome.ids });
+    }
   }
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
@@ -83,10 +107,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (typeof fields === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: fields });
     }
-    const { name, description, colour, ownerUnit, visibility = 'private' } = fields as Required<Fields>;
-    const icon = fields.icon ?? null;
+    const { name, description, icon, ownerUnit, visibility = 'private' } = fields as Required<Fields>;
     const group = await ownGroup(request, ownerUnit);
-    const created = await collections.create({ name, description, colour, icon, visibility, ownerUnit: group }, viewer(request));
+    const created = await collections.create({ name, description, icon, visibility, ownerUnit: group }, viewer(request));
     return reply.code(201).send(created);
   });
 
@@ -132,7 +155,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!current) {
       return reply.code(404).send(NOT_FOUND);
     }
-    return { entries: await collections.log(current.id, 200) };
+    return { entries: await collections.log(current, 200) };
   });
 
   // The Resources of a Collection: all of them for its Owner Unit and the Data Team, and for anyone
@@ -184,6 +207,23 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return { resources: await resources.withoutCollection() };
   });
 
+  // The Data Team adds Resources without a Collection to a Collection, all of them or none (FR-CO-31).
+  app.post<{ Params: { id: string }; Body: unknown }>('/collections/:id/resources', async (request, reply) => {
+    const who = viewer(request);
+    if (!who.dataTeam) {
+      return reply.code(403).send(DATA_TEAM_ONLY);
+    }
+    const ids = (request.body as { resources?: unknown } | null)?.resources;
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > ADD_LIMIT || !ids.every((id) => typeof id === 'string')) {
+      return reply.code(400).send({ error: 'invalid_request', message: `Send the Resources to add as a list of 1 to ${ADD_LIMIT} IDs.` });
+    }
+    const collection = await collections.get(request.params.id, who);
+    if (!collection) {
+      return reply.code(404).send(NOT_FOUND);
+    }
+    return addOutcome(reply, await resources.add(ids as string[], collection, who), async () => ({ resources: await resources.inCollection(collection.id) }));
+  });
+
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/collection', async (request, reply) => {
     const who = viewer(request);
     if (!who.dataTeam) {
@@ -198,14 +238,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!collection) {
       return reply.code(404).send(NOT_FOUND);
     }
-    const outcome = await resources.add(resource.id, collection, who);
-    if (outcome === 'in_another_collection') {
-      return reply.code(409).send({ error: 'in_another_collection', message: 'The Resource is in another Collection; remove it there first.' });
-    }
-    if (outcome === 'collection_gone') {
-      return reply.code(404).send(NOT_FOUND);
-    }
-    return resources.get(resource.id);
+    return addOutcome(reply, await resources.add([resource.id], collection, who), () => resources.get(resource.id));
   });
 
   app.delete<{ Params: { id: string } }>('/resources/:id/collection', async (request, reply) => {
@@ -297,16 +330,17 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
 }
 
 /**
- * Checks the fields of a Collection in a request: all of name, description, colour and Owner Unit
- * to create one (visibility is private unless given), and at least one field to change one.
- * Returns the problem as a sentence when there is one.
+ * Checks the fields of a Collection in a request: all of name, description, icon and Owner Unit to
+ * create one (visibility is private unless given), and at least one field to change one. A
+ * Collection has no colour (DEC-CO-23), and its icon cannot be taken away (DEC-CO-25). Returns the
+ * problem as a sentence when there is one.
  */
 export function parse(body: unknown, creating: boolean): Fields | string {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return 'Send the fields of the Collection as a JSON object.';
   }
   const input = body as Record<string, unknown>;
-  const known = new Set(['name', 'description', 'colour', 'icon', 'visibility', 'ownerUnit']);
+  const known = new Set(['name', 'description', 'icon', 'visibility', 'ownerUnit']);
   const unknown = Object.keys(input).find((key) => !known.has(key));
   if (unknown !== undefined) {
     return `A Collection has no field ${unknown}.`;
@@ -328,15 +362,9 @@ export function parse(body: unknown, creating: boolean): Fields | string {
   if (problem) {
     return problem;
   }
-  if (input.colour !== undefined) {
-    if (!isCollectionColour(input.colour)) {
-      return 'The colour is one of the palette: rose, indigo, sand, green, cyan, wine, teal, olive or purple.';
-    }
-    fields.colour = input.colour;
-  }
   if (input.icon !== undefined) {
-    if (input.icon !== null && !isCollectionIcon(input.icon)) {
-      return 'The icon is the name of an outline icon of Tabler Icons that is not the logo of a brand, or null for none.';
+    if (!isCollectionIcon(input.icon)) {
+      return 'The icon is the name of an icon of Phosphor that is not the logo of a brand.';
     }
     fields.icon = input.icon;
   }
@@ -353,9 +381,9 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     fields.ownerUnit = input.ownerUnit;
   }
   if (creating) {
-    const missing = (['name', 'description', 'colour', 'ownerUnit'] as const).find((key) => fields[key] === undefined);
+    const missing = (['name', 'description', 'icon', 'ownerUnit'] as const).find((key) => fields[key] === undefined);
     if (missing) {
-      return `A new Collection needs ${missing === 'ownerUnit' ? 'an Owner Unit' : `a ${missing}`}.`;
+      return `A new Collection needs ${missing === 'ownerUnit' ? 'an Owner Unit' : missing === 'icon' ? 'an icon' : `a ${missing}`}.`;
     }
   } else if (Object.keys(fields).length === 0) {
     return 'Send at least one field to change.';

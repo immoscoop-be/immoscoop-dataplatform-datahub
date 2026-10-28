@@ -22,13 +22,13 @@ const DIGIKOM: Group = { id: 'g-digikom', email: 'digikom@thenextimmoscoop.be', 
 const SALES: Group = { id: 'g-sales', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
 
 describe('the fields of a Collection in a request', () => {
-  const complete = { name: ' Leads ', description: 'Leads of the agencies.', colour: 'rose', ownerUnit: 'g-digikom' };
+  const complete = { name: ' Leads ', description: 'Leads of the agencies.', icon: 'coins', ownerUnit: 'g-digikom' };
 
   it('needs all of them to create one, and is private unless said otherwise', () => {
     expect(parse(complete, true)).toEqual({ ...complete, name: 'Leads' });
     expect(parse({ ...complete, visibility: 'public' }, true)).toMatchObject({ visibility: 'public' });
     expect(parse({ ...complete, ownerUnit: undefined }, true)).toBe('A new Collection needs an Owner Unit.');
-    expect(parse({ ...complete, colour: undefined }, true)).toBe('A new Collection needs a colour.');
+    expect(parse({ ...complete, icon: undefined }, true)).toBe('A new Collection needs an icon.');
   });
 
   it('needs at least one to change one', () => {
@@ -40,16 +40,16 @@ describe('the fields of a Collection in a request', () => {
     expect(parse([], true)).toMatch(/JSON object/);
     expect(parse({ ...complete, name: '  ' }, true)).toBe('The name has 1 to 80 characters.');
     expect(parse({ ...complete, description: 'x'.repeat(501) }, true)).toBe('The description has 1 to 500 characters.');
-    expect(parse({ ...complete, colour: '#CC6677' }, true)).toMatch(/palette/);
+    expect(parse({ ...complete, colour: 'rose' }, true)).toBe('A Collection has no field colour.');
     expect(parse({ ...complete, visibility: 'secret' }, true)).toBe('The visibility is private or public.');
     expect(parse({ ...complete, ownerUnit: 'sales@thenextimmoscoop.be' }, true)).toBe('The Owner Unit is named by the ID of a group.');
     expect(parse({ ...complete, owner: 'me' }, true)).toBe('A Collection has no field owner.');
-    const refused = 'The icon is the name of an outline icon of Tabler Icons that is not the logo of a brand, or null for none.';
+    const refused = 'The icon is the name of an icon of Phosphor that is not the logo of a brand.';
     expect(parse({ ...complete, icon: 'unicorn' }, true)).toBe(refused);
-    expect(parse({ ...complete, icon: 'brand-google' }, true)).toBe(refused);
-    expect(parse({ ...complete, icon: 'building-estate' }, true)).toMatchObject({ icon: 'building-estate' });
-    expect(parse({ ...complete, icon: 'rocket' }, true)).toMatchObject({ icon: 'rocket' });
-    expect(parse({ icon: null }, false)).toEqual({ icon: null });
+    expect(parse({ ...complete, icon: 'google-logo' }, true)).toBe(refused);
+    expect(parse({ ...complete, icon: 'house-line' }, true)).toMatchObject({ icon: 'house-line' });
+    // The icon is required: it cannot be taken away (DEC-CO-25).
+    expect(parse({ icon: null }, false)).toBe(refused);
   });
 });
 
@@ -77,6 +77,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
               throw new IdentityUnavailable('identity answered 503');
             }
             return groupsOf.get(authorization) ?? [];
+          },
+          async domainGroups() {
+            if (identityDown) {
+              throw new IdentityUnavailable('identity answered 503');
+            }
+            return [DIGIKOM, SALES];
           },
         },
         resources: createResources(database.db),
@@ -108,15 +114,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
   it('lets anyone create a Collection with one of their own groups, and only those (FR-CO-12, FR-CO-15)', async () => {
     const an = await user('An', [DIGIKOM]);
-    const created = await an('POST', '/collections', { name: 'Leads', description: 'Leads of the agencies.', colour: 'rose', ownerUnit: DIGIKOM.id });
+    const created = await an('POST', '/collections', { name: 'Leads', description: 'Leads of the agencies.', icon: 'coins', ownerUnit: DIGIKOM.id });
     expect(created.statusCode).toBe(201);
     expect(created.json()).toMatchObject({ name: 'Leads', ownerUnit: DIGIKOM, visibility: 'private', canManage: true });
 
-    const notHers = await an('POST', '/collections', { name: 'Sales', description: 'Sales.', colour: 'wine', ownerUnit: SALES.id });
+    const notHers = await an('POST', '/collections', { name: 'Sales', description: 'Sales.', icon: 'storefront', ownerUnit: SALES.id });
     expect(notHers.statusCode).toBe(400);
     expect(notHers.json().error).toBe('not_your_group');
 
-    const again = await an('POST', '/collections', { name: 'LEADS', description: 'Again.', colour: 'rose', ownerUnit: DIGIKOM.id });
+    const again = await an('POST', '/collections', { name: 'LEADS', description: 'Again.', icon: 'coins', ownerUnit: DIGIKOM.id });
     expect(again.statusCode).toBe(409);
     expect(again.json().error).toBe('name_taken');
 
@@ -128,7 +134,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);
     const dirk = await user('Dirk', [], ['datateam']);
-    const id = (await an('POST', '/collections', { name: 'Agencies', description: 'The agencies.', colour: 'sand', ownerUnit: DIGIKOM.id })).json().id;
+    const id = (await an('POST', '/collections', { name: 'Agencies', description: 'The agencies.', icon: 'handshake', ownerUnit: DIGIKOM.id })).json().id;
 
     expect((await bert('GET', `/collections/${id}`)).statusCode).toBe(404);
     expect((await bert('GET', `/collections/${id}/log`)).statusCode).toBe(404);
@@ -143,7 +149,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     const bert = await user('Bert', [SALES]);
     const dirk = await user('Dirk', [], ['datateam']);
     const id = (
-      await an('POST', '/collections', { name: 'Web visits', description: 'Visits.', colour: 'teal', ownerUnit: DIGIKOM.id, visibility: 'public' })
+      await an('POST', '/collections', { name: 'Web visits', description: 'Visits.', icon: 'globe', ownerUnit: DIGIKOM.id, visibility: 'public' })
     ).json().id;
 
     expect((await bert('GET', `/collections/${id}`)).json()).toMatchObject({ name: 'Web visits', canManage: false });
@@ -151,8 +157,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await bert('DELETE', `/collections/${id}`)).statusCode).toBe(403);
 
     expect((await dirk('PATCH', `/collections/${id}`, { description: 'Every visit to the website.' })).json().description).toBe('Every visit to the website.');
-    // The Data Team too can only hand it to a group of its own (OP-CO-06).
-    expect((await dirk('PATCH', `/collections/${id}`, { ownerUnit: SALES.id })).json().error).toBe('not_your_group');
+    // The Data Team chooses any group of the domain (FR-CO-35), but no group the domain does not have.
+    expect((await dirk('PATCH', `/collections/${id}`, { ownerUnit: 'g-gone' })).json().error).toBe('not_your_group');
 
     // An hands it to Sales once she is in it; then it is Bert's to manage, and no longer hers.
     const anInBoth = await user('An', [DIGIKOM, SALES]);
@@ -173,6 +179,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
     expect((await bert('DELETE', `/collections/${id}`)).statusCode).toBe(204);
     expect((await bert('GET', `/collections/${id}`)).statusCode).toBe(404);
+  });
+
+  it('lets the Data Team hand a Collection to any group of the domain, also one it is not in (FR-CO-35)', async () => {
+    const dirk = await user('Dirk', [], ['datateam']);
+    const created = await dirk('POST', '/collections', { name: 'Sales leads', description: 'Leads of sales.', icon: 'storefront', ownerUnit: SALES.id });
+    expect(created.json()).toMatchObject({ ownerUnit: SALES, createdBy: 'Dirk', canManage: true });
+    const handed = await dirk('PATCH', `/collections/${created.json().id}`, { ownerUnit: DIGIKOM.id });
+    expect(handed.json()).toMatchObject({ ownerUnit: DIGIKOM });
   });
 
   describe('Resources', () => {
@@ -224,13 +238,30 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('GET', '/resources')).statusCode).toBe(400);
 
       const collection = (
-        await an('POST', '/collections', { name: 'Visits', description: 'Visits.', colour: 'cyan', ownerUnit: DIGIKOM.id, visibility: 'public' })
+        await an('POST', '/collections', { name: 'Visits', description: 'Visits.', icon: 'binoculars', ownerUnit: DIGIKOM.id, visibility: 'public' })
       ).json();
       const visits = waiting.find((resource) => resource.name === 'visits')!;
+      const leads = waiting.find((resource) => resource.name === 'leads')!;
       expect((await an('PUT', `/resources/${visits.id}/collection`, { collectionId: collection.id })).statusCode).toBe(403);
       const added = await dirk('PUT', `/resources/${visits.id}/collection`, { collectionId: collection.id });
       expect(added.json()).toMatchObject({ name: 'visits', collectionId: collection.id });
       expect((await dirk('PUT', `/resources/${visits.id}/collection`, { collectionId: '00000000-0000-4000-8000-000000000000' })).statusCode).toBe(404);
+
+      // Several at once from the page of the Collection (FR-CO-31): all or none.
+      expect((await an('POST', `/collections/${collection.id}/resources`, { resources: [leads.id] })).statusCode).toBe(403);
+      expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [] })).statusCode).toBe(400);
+      expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [leads.id, 7] })).statusCode).toBe(400);
+      const other = (await dirk('POST', '/collections', { name: 'Other', description: 'Other.', icon: 'globe', ownerUnit: SALES.id })).json();
+      const elsewhere = await dirk('POST', `/collections/${other.id}/resources`, { resources: [leads.id, visits.id] });
+      expect(elsewhere.statusCode).toBe(409);
+      expect(elsewhere.json()).toMatchObject({ error: 'in_another_collection', resources: [visits.id] });
+      const both = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [leads.id, visits.id] });
+      expect(both.json().resources.map((resource: { name: string; lastChange: { text: string } }) => [resource.name, resource.lastChange.text])).toEqual([
+        ['leads', 'Added to the Collection Visits by Dirk'],
+        ['visits', 'Added to the Collection Visits by Dirk'],
+      ]);
+      expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
+      expect((await an('GET', `/collections/${collection.id}`)).json().resources.map((resource: { displayName: string }) => resource.displayName)).toEqual(['visits']);
 
       // The Owner Unit sees it; someone else who sees the public Collection does not, until it is published.
       expect((await an('GET', `/collections/${collection.id}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['visits']);
@@ -290,7 +321,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     const an = await user('An', [DIGIKOM]);
     identityDown = true;
     try {
-      const response = await an('POST', '/collections', { name: 'Later', description: 'Later.', colour: 'cyan', ownerUnit: DIGIKOM.id });
+      const response = await an('POST', '/collections', { name: 'Later', description: 'Later.', icon: 'binoculars', ownerUnit: DIGIKOM.id });
       expect(response.statusCode).toBe(503);
       expect(response.json().error).toBe('temporarily_unavailable');
     } finally {

@@ -23,4 +23,11 @@ export default {
   'origin.dataTeam': 'Van het Data Team',
   'status.notPublished': 'Niet gepubliceerd',
   'status.noOwner': 'Nog geen Owner',
+  'item.notPublished': '{name} · niet gepubliceerd',
+  'item.notPublishedLabel': ', niet gepubliceerd',
+  'sheet.close': 'Sluiten',
+  'intro.hide': 'Verberg de intro',
+  'icon.label': 'Icoon',
+  'icon.search': 'Zoek een icoon, zoals geld of huis',
+  'icon.none': 'Geen icoon gevonden voor “{query}”.',
 } as const;

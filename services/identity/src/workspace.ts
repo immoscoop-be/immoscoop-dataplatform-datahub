@@ -2,6 +2,9 @@ import { type AccessTokenSource, googleApiError, metadataAccessToken } from '@da
 
 const DIRECTORY_USERS = 'https://admin.googleapis.com/admin/directory/v1/users/';
 const DIRECT_GROUPS = 'https://cloudidentity.googleapis.com/v1/groups/-/memberships:searchDirectGroups';
+const GROUPS = 'https://cloudidentity.googleapis.com/v1/groups';
+const GROUPS_SCOPE = 'https://www.googleapis.com/auth/cloud-identity.groups.readonly';
+const USERS_SCOPE = 'https://www.googleapis.com/auth/admin.directory.user.readonly';
 
 /** A Group of a User, as Workspace knows it. */
 export interface WorkspaceGroup {
@@ -18,6 +21,8 @@ export interface Workspace {
   isActive(googleId: string): Promise<boolean>;
   /** Every group the User is in, nested groups included (FR-UM-04). */
   groups(email: string): Promise<WorkspaceGroup[]>;
+  /** Every group of the Workspace of the User, for the Data Team to hand a Collection to (FR-CO-35). */
+  domainGroups(googleId: string): Promise<WorkspaceGroup[]>;
 }
 
 /**
@@ -43,7 +48,7 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
       if (pageToken) {
         url.searchParams.set('pageToken', pageToken);
       }
-      const response = await get(url, 'https://www.googleapis.com/auth/cloud-identity.groups.readonly');
+      const response = await get(url, GROUPS_SCOPE);
       if (!response.ok) {
         throw await googleApiError('Workspace did not return the groups', response);
       }
@@ -62,11 +67,32 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
     return groups;
   }
 
+  /** The ID of the Workspace a User belongs to, such as `C03az79cb`; both domains share it (DEC-UM-09). */
+  let customer: string | undefined;
+  async function customerOf(googleId: string): Promise<string> {
+    if (!customer) {
+      const url = new URL(encodeURIComponent(googleId), DIRECTORY_USERS);
+      url.search = 'projection=basic&viewType=admin_view&fields=customerId';
+      const response = await get(url, USERS_SCOPE);
+      if (!response.ok) {
+        throw await googleApiError('Workspace did not say which Workspace the User is in', response);
+      }
+      customer = ((await response.json()) as { customerId?: string }).customerId;
+      if (!customer) {
+        throw new Error('Workspace did not say which Workspace the User is in');
+      }
+    }
+    return customer;
+  }
+
+  /** The groups of the domain change rarely: kept for a few minutes, as the Data Team picks one. */
+  let cached: { groups: WorkspaceGroup[]; until: number } | undefined;
+
   return {
     async isActive(googleId) {
       const url = new URL(encodeURIComponent(googleId), DIRECTORY_USERS);
       url.search = 'projection=basic&viewType=admin_view';
-      const response = await get(url, 'https://www.googleapis.com/auth/admin.directory.user.readonly');
+      const response = await get(url, USERS_SCOPE);
       if (response.status === 404) {
         return false;
       }
@@ -96,6 +122,42 @@ export function createWorkspace(token: AccessTokenSource = metadataAccessToken()
         }
       }
       return [...found.values()];
+    },
+
+    /**
+     * Every group of the Workspace, over every page, as Cloud Identity lists them, so that their IDs
+     * are those of the groups of a User. The Workspace is that of the User who asks.
+     */
+    async domainGroups(googleId) {
+      if (cached && cached.until > Date.now()) {
+        return cached.groups;
+      }
+      const parent = `customers/${await customerOf(googleId)}`;
+      const groups: WorkspaceGroup[] = [];
+      let pageToken: string | undefined;
+      do {
+        const url = new URL(GROUPS);
+        url.searchParams.set('parent', parent);
+        url.searchParams.set('view', 'BASIC');
+        url.searchParams.set('pageSize', '500');
+        if (pageToken) {
+          url.searchParams.set('pageToken', pageToken);
+        }
+        const response = await get(url, GROUPS_SCOPE);
+        if (!response.ok) {
+          throw await googleApiError('Workspace did not list the groups of the domain', response);
+        }
+        const page = (await response.json()) as { groups?: { name?: string; groupKey?: { id?: string }; displayName?: string }[]; nextPageToken?: string };
+        for (const group of page.groups ?? []) {
+          if (group.name && group.groupKey?.id) {
+            const email = group.groupKey.id;
+            groups.push({ id: group.name.replace(/^groups\//, ''), email, name: group.displayName?.trim() || email });
+          }
+        }
+        pageToken = page.nextPageToken;
+      } while (pageToken);
+      cached = { groups, until: Date.now() + 5 * 60_000 };
+      return groups;
     },
   };
 }

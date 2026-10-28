@@ -177,6 +177,33 @@ describe('createWorkspace', () => {
     );
     await expect(refused.groups(`jan@${DOMAIN}`)).rejects.toThrow('400 Request contains an invalid argument. · query: Unsupported filter');
   });
+
+  it('lists every group of the Workspace of the User over every page, and keeps the list a few minutes (FR-CO-35)', async () => {
+    const asked: string[] = [];
+    const workspace = createWorkspace(token, async (url) => {
+      const { pathname, searchParams } = new URL(url as string);
+      asked.push(pathname);
+      if (pathname === '/admin/directory/v1/users/108234567890') {
+        return Response.json({ customerId: 'C03az79cb' });
+      }
+      expect(pathname).toBe('/v1/groups');
+      expect(searchParams.get('parent')).toBe('customers/C03az79cb');
+      const second = searchParams.get('pageToken') === '1';
+      return Response.json({
+        groups: second
+          ? [{ name: 'groups/s', groupKey: { id: `sales@${DOMAIN}` } }]
+          : [{ name: 'groups/c', groupKey: { id: `credit@${DOMAIN}` }, displayName: ' Credit team ' }, { name: 'groups/x' }],
+        nextPageToken: second ? undefined : '1',
+      });
+    });
+    const groups = [
+      { id: 'c', email: `credit@${DOMAIN}`, name: 'Credit team' },
+      { id: 's', email: `sales@${DOMAIN}`, name: `sales@${DOMAIN}` },
+    ];
+    await expect(workspace.domainGroups('108234567890')).resolves.toEqual(groups);
+    await expect(workspace.domainGroups('108234567890')).resolves.toEqual(groups);
+    expect(asked).toEqual(['/admin/directory/v1/users/108234567890', '/v1/groups', '/v1/groups']);
+  });
 });
 
 describe('the groups of a User', () => {

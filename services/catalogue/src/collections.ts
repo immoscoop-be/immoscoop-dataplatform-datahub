@@ -1,4 +1,4 @@
-import type { CollectionColour, CollectionIcon, CollectionVisibility } from '@datahub/contracts';
+import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
@@ -16,25 +16,39 @@ export interface Viewer {
   dataTeam: boolean;
 }
 
+/** A Resource as a Collection lists it, in the panel and on its page. */
+export interface CollectionItem {
+  id: string;
+  displayName: string;
+  level: number;
+  /** Publication is not built yet: no Resource is published (DEC-CO-12). */
+  published: boolean;
+  withdrawn: boolean;
+}
+
 export interface Collection {
   id: string;
   name: string;
   description: string;
-  colour: CollectionColour;
+  /** Null only for an icon a later version of Phosphor no longer has. */
   icon: CollectionIcon | null;
   ownerUnit: Group;
   visibility: CollectionVisibility;
   createdAt: Date;
+  /** The name of whoever created it. */
+  createdBy: string;
   /** Whether the viewer may change and dissolve it: its Owner Unit and the Data Team (FR-CO-13). */
   canManage: boolean;
+  /** The Resources in it that the viewer sees, by name (FR-CO-18, FR-SR-31). */
+  resources: CollectionItem[];
+  /** The latest entry of its Log since it was created that the viewer sees, if any. */
+  lastChange: LogEntry | null;
 }
 
 export interface NewCollection {
   name: string;
   description: string;
-  colour: CollectionColour;
-  /** Optional; null takes it away when changing. */
-  icon?: CollectionIcon | null;
+  icon: CollectionIcon;
   ownerUnit: Group;
   visibility: CollectionVisibility;
 }
@@ -73,32 +87,79 @@ export interface Collections {
   change(id: string, changes: CollectionChanges, viewer: Viewer): Promise<Collection | undefined>;
   /** Dissolves an empty Collection (else NotEmpty); false when it was already gone. */
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
-  /** The Log of a Collection, newest first. */
-  log(id: string, limit: number): Promise<LogEntry[]>;
+  /** The Log of a Collection that the viewer sees, newest first. */
+  log(collection: Pick<Collection, 'id' | 'canManage'>, limit: number): Promise<LogEntry[]>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** The fields whose change is logged as COL-002, in the order they are logged. */
-const FIELDS = ['name', 'description', 'colour'] as const;
+const FIELDS = ['name', 'description', 'icon'] as const;
+
+/**
+ * The entries about a Resource in the Log of a Collection. Only who sees the Resource sees them: while
+ * no Resource is published, its Owner Unit and the Data Team (DEC-CO-12).
+ */
+const ABOUT_RESOURCES: readonly CollectionLogId[] = ['COL-006', 'COL-007'];
 
 type Row = Selectable<CatalogueDatabase['collections']>;
 type Database = Kysely<CatalogueDatabase> | Transaction<CatalogueDatabase>;
 
 export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
-  function present(row: Row, viewer: Viewer): Collection {
-    return {
+  const canManage = (row: Row, viewer: Viewer) => viewer.dataTeam || viewer.groups.includes(row.ownerUnitId);
+
+  /** The Collections as the viewer sees them, with their Resources and their last change, in a few queries. */
+  async function present(rows: Row[], viewer: Viewer, from: Database = db): Promise<Collection[]> {
+    const managed = rows.filter((row) => canManage(row, viewer)).map((row) => row.id);
+    const items = new Map<string, CollectionItem[]>();
+    if (managed.length > 0) {
+      const resources = await from
+        .selectFrom('resources')
+        .select(['id', 'collectionId', 'displayName', 'level', 'withdrawnAt'])
+        .where('collectionId', 'in', managed)
+        .orderBy(sql`lower(display_name)`)
+        .execute();
+      for (const resource of resources) {
+        const list = items.get(resource.collectionId!) ?? [];
+        list.push({ id: resource.id, displayName: resource.displayName, level: resource.level, published: false, withdrawn: resource.withdrawnAt !== null });
+        items.set(resource.collectionId!, list);
+      }
+    }
+    const changes = new Map<string, LogEntry>();
+    if (rows.length > 0) {
+      const latest = await from
+        .selectFrom('collectionLog')
+        .select(['collectionId', 'logId', 'params', 'at'])
+        .distinctOn('collectionId')
+        .where('collectionId', 'in', rows.map((row) => row.id))
+        .where('logId', '<>', 'COL-001')
+        .where((eb) => eb.or([eb('logId', 'not in', ABOUT_RESOURCES), ...(managed.length > 0 ? [eb('collectionId', 'in', managed)] : [])]))
+        .orderBy('collectionId')
+        .orderBy('id', 'desc')
+        .execute();
+      for (const entry of latest) {
+        changes.set(entry.collectionId, { logId: entry.logId, text: logText(entry.logId, entry.params), params: entry.params, at: entry.at });
+      }
+    }
+    return rows.map((row) => ({
       id: row.id,
       name: row.name,
       description: row.description,
-      colour: row.colour,
-      // An icon a later version of Tabler no longer has is none, so the web app never asks for a drawing that is gone.
+      // An icon a later version of Phosphor no longer has is none, so the web app never asks for a drawing that is gone.
       icon: isCollectionIcon(row.icon) ? row.icon : null,
       ownerUnit: { id: row.ownerUnitId, email: row.ownerUnitEmail, name: row.ownerUnitName },
       visibility: row.visibility,
       createdAt: row.createdAt,
-      canManage: viewer.dataTeam || viewer.groups.includes(row.ownerUnitId),
-    };
+      createdBy: row.createdByName,
+      canManage: canManage(row, viewer),
+      resources: items.get(row.id) ?? [],
+      lastChange: changes.get(row.id) ?? null,
+    }));
+  }
+
+  async function presentOne(row: Row, viewer: Viewer, from: Database = db): Promise<Collection> {
+    const [collection] = await present([row], viewer, from);
+    return collection!;
   }
 
   /** The Collections that are not dissolved and that the viewer sees (FR-CO-17, DEC-CO-11). */
@@ -136,7 +197,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
   return {
     async list(viewer) {
       const rows = await visible(viewer).orderBy(sql`lower(name)`).orderBy('id').execute();
-      return rows.map((row) => present(row, viewer));
+      return present(rows, viewer);
     },
 
     async get(id, viewer) {
@@ -144,7 +205,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         return undefined;
       }
       const row = await visible(viewer).where('id', '=', id).executeTakeFirst();
-      return row && present(row, viewer);
+      return row && presentOne(row, viewer);
     },
 
     async create(collection, viewer) {
@@ -155,18 +216,18 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
             .values({
               name: collection.name,
               description: collection.description,
-              colour: collection.colour,
-              icon: collection.icon ?? null,
+              icon: collection.icon,
               ownerUnitId: collection.ownerUnit.id,
               ownerUnitEmail: collection.ownerUnit.email,
               ownerUnitName: collection.ownerUnit.name,
               visibility: collection.visibility,
               createdBy: viewer.id,
+              createdByName: viewer.name,
             })
             .returningAll()
             .executeTakeFirstOrThrow();
           await write(trx, row.id, 'COL-001', { name: row.name, ownerUnit: row.ownerUnitName, visibility: row.visibility }, viewer);
-          return present(row, viewer);
+          return presentOne(row, viewer, trx);
         }),
       );
     },
@@ -190,10 +251,6 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
               entries.push(['COL-002', { field, old: before[field], new: value }]);
             }
           }
-          if (changes.icon !== undefined && changes.icon !== before.icon) {
-            update.icon = changes.icon;
-            entries.push(['COL-002', { field: 'icon', old: before.icon ?? 'none', new: changes.icon ?? 'none' }]);
-          }
           const unit = changes.ownerUnit;
           if (unit && unit.id !== before.ownerUnitId) {
             Object.assign(update, { ownerUnitId: unit.id, ownerUnitEmail: unit.email, ownerUnitName: unit.name });
@@ -204,13 +261,13 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
             entries.push(['COL-004', { visibility: changes.visibility }]);
           }
           if (entries.length === 0) {
-            return present(before, viewer);
+            return presentOne(before, viewer, trx);
           }
           const after = await trx.updateTable('collections').set(update).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
           for (const [logId, params] of entries) {
             await write(trx, id, logId, params, viewer);
           }
-          return present(after, viewer);
+          return presentOne(after, viewer, trx);
         }),
       );
     },
@@ -247,14 +304,15 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       });
     },
 
-    async log(id, limit) {
-      if (!UUID.test(id)) {
+    async log(collection, limit) {
+      if (!UUID.test(collection.id)) {
         return [];
       }
       const rows = await db
         .selectFrom('collectionLog')
         .select(['logId', 'params', 'at'])
-        .where('collectionId', '=', id)
+        .where('collectionId', '=', collection.id)
+        .$if(!collection.canManage, (query) => query.where('logId', 'not in', ABOUT_RESOURCES))
         .orderBy('id', 'desc')
         .limit(limit)
         .execute();

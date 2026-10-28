@@ -11,7 +11,7 @@ const CONFIG: Config = {
   semgraphUrl: 'https://semgraph.test',
 };
 
-const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [], roles: [] };
+const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[], roles: [] as string[] };
 
 interface Saved {
   method: string;
@@ -41,8 +41,55 @@ const SAVED_SEARCHES = {
   leftOut: [],
 };
 
+const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
+const SALES = { id: 'g2', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
+
+/** A Collection of the group Data, with one Resource in it that is not published yet. */
+const CREDIT = {
+  id: 'c1',
+  name: 'Credit leads',
+  description: 'The credit leads Immoscoop sends to KBC.',
+  icon: 'coins',
+  ownerUnit: DATA,
+  visibility: 'public',
+  createdAt: '2026-09-03T08:00:00Z',
+  createdBy: 'An Claes',
+  canManage: true,
+  resources: [{ id: 'r2', displayName: 'Weekly lead volume', level: 2, published: false, withdrawn: false }],
+  lastChange: { logId: 'COL-006', params: { resource: 'Weekly lead volume', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
+};
+
+/** A public Collection of another group. */
+const LISTINGS = {
+  ...CREDIT,
+  id: 'c2',
+  name: 'Listings',
+  description: 'Every listing on the site.',
+  icon: 'buildings',
+  ownerUnit: SALES,
+  canManage: false,
+  resources: [],
+  lastChange: null,
+};
+
+const WEEKLY = {
+  ...SAVED_SEARCHES,
+  id: 'r2',
+  key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume',
+  displayName: 'Weekly lead volume',
+  name: 'weekly_lead_volume',
+  collectionId: 'c1',
+  level: 2,
+  lastChange: { logId: 'COL-030', params: { collection: 'Credit leads', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
+};
+
 /** The server of the web app, identity and catalogue, as the page meets them: with or without a session. */
-function serve({ signedIn = true, settings = {} as Record<string, unknown>, roles = [] as string[] } = {}): Saved[] {
+function serve({
+  signedIn = true,
+  settings = {} as Record<string, unknown>,
+  roles = [] as string[],
+  groups = [] as string[],
+} = {}): Saved[] {
   const calls: Saved[] = [];
   vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET';
@@ -53,9 +100,40 @@ function serve({ signedIn = true, settings = {} as Record<string, unknown>, role
     }
     calls.push({ method, path, ...(init.body ? { body: JSON.parse(init.body as string) } : {}) });
     if (path === '/me') {
-      return json({ ...ME, roles });
+      return json({ ...ME, roles, groups });
     }
     const dataTeam = roles.includes('datateam');
+    if (path === '/collections' && method === 'GET') {
+      return json({ collections: [CREDIT, LISTINGS] });
+    }
+    if (path === '/collections' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; ownerUnit: string };
+      return json({ ...CREDIT, ...body, id: 'c-new', ownerUnit: DATA, resources: [], lastChange: null }, 201);
+    }
+    if (path === '/collections/c1') {
+      return method === 'PATCH' ? json({ ...CREDIT, ...JSON.parse(init.body as string) }) : json(CREDIT);
+    }
+    if (path === '/collections/c2') {
+      return json(LISTINGS);
+    }
+    if (path === '/collections/c2/resources') {
+      return json({ resources: [] });
+    }
+    if (path === '/collections/c-new') {
+      return json({ ...CREDIT, id: 'c-new', name: 'Search behaviour', resources: [], lastChange: null });
+    }
+    if (path === '/collections/c1/resources') {
+      return json({ resources: method === 'POST' ? [WEEKLY, { ...SAVED_SEARCHES, collectionId: 'c1', lastChange: null }] : [WEEKLY] });
+    }
+    if (path === '/collections/c-new/resources') {
+      return json({ resources: [] });
+    }
+    if (/^\/collections\/(c1|c2|c-new)\/log$/.test(path)) {
+      return json({ entries: [{ logId: 'COL-001', params: { actor: 'An Claes', name: 'Credit leads' }, at: '2026-09-03T08:00:00Z' }] });
+    }
+    if (path === '/groups') {
+      return dataTeam ? json({ groups: [DATA, SALES] }) : json({ error: 'forbidden' }, 403);
+    }
     if (path === '/resources?collection=none') {
       return dataTeam ? json({ resources: [SAVED_SEARCHES] }) : json({ error: 'forbidden' }, 403);
     }
@@ -76,7 +154,7 @@ function serve({ signedIn = true, settings = {} as Record<string, unknown>, role
     if (path === '/me/groups') {
       return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
     }
-    if (path.startsWith('/me/settings/') && method === 'PUT') {
+    if (path.startsWith('/me/settings/') && (method === 'PUT' || method === 'DELETE')) {
       return new Response(null, { status: 204 });
     }
     return json({ error: 'not_found' }, 404);
@@ -241,5 +319,165 @@ describe('the web app, for the Data Team', () => {
     render(App, { config: CONFIG });
     expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
     expect(screen.queryByText('Zonder Collection')).toBeNull();
+  });
+});
+
+describe('the web app, with Collections', () => {
+  it('lists every Collection the User sees in the panel, All or Yours, each unfolding to its Resources (FR-CO-18, FR-CO-22, DEC-UX-87)', async () => {
+    serve({ groups: ['g1'] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const credit = await panel.findByRole('link', { name: /Credit leads/ });
+    expect(credit.getAttribute('href')).toBe('/collections/c1');
+    expect(credit.textContent).toContain('1 Resource');
+    // Only the Collections of the User say whether they are public or private.
+    expect(credit.textContent).toContain('Publiek');
+    expect(panel.getByRole('link', { name: /Listings/ }).textContent).not.toContain('Publiek');
+    await fireEvent.click(panel.getByRole('button', { name: 'Toon wat Credit leads bevat' }));
+    const weekly = panel.getByRole('link', { name: /Weekly lead volume/ });
+    expect(weekly.getAttribute('href')).toBe('/resources/r2');
+    // Not published: a lighter name, and hover says so.
+    expect(weekly.querySelector('[title]')?.getAttribute('title')).toBe('Weekly lead volume · niet gepubliceerd');
+
+    await fireEvent.click(panel.getByRole('radio', { name: 'Van jou' }));
+    expect(panel.queryByRole('link', { name: /Listings/ })).toBeNull();
+    expect(panel.getByRole('link', { name: /Credit leads/ })).toBeTruthy();
+  });
+
+  it('searches the Collections and their Resources together, unfolding where a Resource matches (FR-CO-24)', async () => {
+    serve();
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    await panel.findByRole('link', { name: /Credit leads/ });
+    await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'weekly' } });
+    expect(panel.getByRole('link', { name: /Weekly lead volume/ })).toBeTruthy();
+    expect(panel.queryByRole('link', { name: /Listings/ })).toBeNull();
+    await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'nothing like it' } });
+    expect(panel.getByText('Niets komt overeen met je zoekopdracht.')).toBeTruthy();
+  });
+
+  it('opens on the intro until the User dismisses it, then shows it again on request (Start screen per section)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 2, name: 'Wat zijn Collections?' })).toBeTruthy();
+    // Yours, and what changed lately, with who did it.
+    expect((await main.findAllByRole('link', { name: /Credit leads/ }))[0]?.textContent).toContain('Van Data');
+    expect(main.getByText('Weekly lead volume toegevoegd door Dirk Vos')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Verberg de intro' }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/intro.collections', body: { value: 1 } });
+    await fireEvent.click(main.getByRole('button', { name: 'Toon de intro' }));
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/me/settings/intro.collections' });
+    expect(main.getByRole('heading', { level: 2, name: 'Wat zijn Collections?' })).toBeTruthy();
+  });
+
+  it('opens the page of a Collection from the panel: what it is, what needs attention, its Resources and its history (FR-CO-25 to FR-CO-27)', async () => {
+    serve({ groups: ['g1'] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    await fireEvent.click(await panel.findByRole('link', { name: /Credit leads/ }));
+    expect(location.pathname).toBe('/collections/c1');
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+    expect(main.getByText('Owner: Data')).toBeTruthy();
+    expect(main.getByText(/^Aangemaakt op 3 sep\.? door An Claes$/)).toBeTruthy();
+    expect(main.getByRole('region', { name: 'Vraagt aandacht' }).textContent).toContain(
+      '1 Resource is nog niet gepubliceerd: Weekly lead volume. Tot de Owner hem publiceert, zien enkel Data en het Data Team hem.',
+    );
+    const row = within(main.getByRole('table', { name: 'Resources' })).getByRole('link', { name: /Weekly lead volume/ }).closest('tr')!;
+    expect(row.textContent).toContain('2 · Described');
+    expect(row.textContent).toContain('Toegevoegd aan de Collection Credit leads door Dirk Vos');
+    expect(main.getByText('Collection aangemaakt door An Claes')).toBeTruthy();
+    expect(document.title).toBe('Data Hub — Credit leads');
+    // It unfolds in the panel, with an outline.
+    expect(panel.getByRole('button', { name: 'Toon wat Credit leads bevat' }).getAttribute('aria-expanded')).toBe('true');
+    expect(panel.getByRole('link', { name: /Credit leads/ }).getAttribute('aria-current')).toBe('page');
+    // Only the Data Team adds Resources.
+    expect(main.queryByRole('button', { name: /Resources toevoegen/ })).toBeNull();
+  });
+
+  it('shows a colleague no actions and no Resource that is not published (DEC-CO-12, DEC-CO-15)', async () => {
+    serve();
+    open('/collections/c2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Listings' })).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Bewerken/ })).toBeNull();
+    expect(main.queryByRole('region', { name: 'Vraagt aandacht' })).toBeNull();
+    expect(main.getByText('Nog geen gepubliceerde Resources in deze Collection.')).toBeTruthy();
+  });
+
+  it('makes a Collection on an empty page, with a required icon and one of the groups of the User (FR-CO-12, DEC-CO-25)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    await fireEvent.click(panel.getByRole('link', { name: 'Nieuwe Collection' }));
+    expect(location.pathname).toBe('/collections/new');
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Search behaviour' } });
+    await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'What visitors search for.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    expect(main.getByText('Kies een icoon: het is het enige wat de Collection onderscheidt.')).toBeTruthy();
+    expect(calls.some((call) => call.method === 'POST')).toBe(false);
+
+    await fireEvent.click(await main.findByRole('radio', { name: 'binoculars' }));
+    expect((main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement).value).toBe('g1');
+    await fireEvent.click(main.getByRole('radio', { name: 'Publiek' }));
+    expect(main.getByText('Elke collega ziet de Collection, en de Resources erin zodra ze gepubliceerd zijn.')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c-new'));
+    expect(calls).toContainEqual({
+      method: 'POST',
+      path: '/collections',
+      body: { name: 'Search behaviour', description: 'What visitors search for.', icon: 'binoculars', ownerUnit: 'g1', visibility: 'public' },
+    });
+  });
+
+  it('edits a Collection in place, and sends only what changed (FR-CO-30)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    expect(main.getByText('Enkel groepen waar je zelf in zit. De Owner Unit staat in voor de Resources van de Collection.')).toBeTruthy();
+    // It still holds a Resource, so it cannot be dissolved (FR-CO-10).
+    expect((main.getByRole('button', { name: 'Opheffen' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { description: 'Every credit lead.' } }));
+  });
+});
+
+describe('the web app, for the Data Team, with Collections', () => {
+  it('hands a Collection to any group of the domain (FR-CO-35)', async () => {
+    serve({ roles: ['datateam'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    const owner = main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement;
+    await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
+    expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
+  });
+
+  it('adds Resources without a Collection from the page of a Collection, in a sheet (FR-CO-31)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
+    const sheet = within(screen.getByRole('dialog', { name: 'Resources toevoegen aan Credit leads' }));
+    expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
+    const add = sheet.getByRole('button', { name: 'Toevoegen' }) as HTMLButtonElement;
+    expect(add.disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('checkbox'));
+    await fireEvent.click(sheet.getByRole('button', { name: '1 Resource toevoegen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(calls).toContainEqual({ method: 'POST', path: '/collections/c1/resources', body: { resources: ['r1'] } });
   });
 });
