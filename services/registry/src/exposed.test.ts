@@ -17,6 +17,8 @@ describe('the tables exposed to Data Hub', () => {
         description: expect.any(String),
         exposures: ['datahub_marts'],
         label: null,
+        checksum: 'sum-countries',
+        columns: [{ name: 'code', position: 1, dataType: 'STRING', description: '' }],
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.dim_customers',
@@ -26,6 +28,8 @@ describe('the tables exposed to Data Hub', () => {
         description: expect.any(String),
         exposures: ['datahub_marts'],
         label: null,
+        checksum: 'sum-customers',
+        columns: [{ name: 'customer_key', position: 1, dataType: 'INT64', description: '' }],
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.orders',
@@ -35,6 +39,13 @@ describe('the tables exposed to Data Hub', () => {
         description: 'One row per order.',
         exposures: ['datahub_marts', 'datahub_orders'],
         label: 'Orders',
+        // Its code for the Fingerprint, and its columns as the table has them (FR-SR-08, FR-SR-06).
+        checksum: 'sum-orders',
+        columns: [
+          { name: 'ORDER_ID', position: 1, dataType: 'INT64', description: 'The order.' },
+          { name: 'CUSTOMER_ID', position: 2, dataType: 'INT64', description: 'Who ordered.' },
+          { name: 'CREATED_AT', position: 3, dataType: 'TIMESTAMP', description: 'From the warehouse.' },
+        ],
       },
     ]);
     // An ephemeral model builds no table, and a metric is no Node of registry (DEC-SR-23).

@@ -27,14 +27,15 @@ describe('the sentences of the web app (NFR-LOC-02, NFR-LOC-06)', () => {
 
   it('are asked for by keys that exist', () => {
     const keys = new Set([...Object.keys(nl), ...Object.keys(uiNl)]);
-    const asked = CODE.flatMap((text) => [...text.matchAll(/\bt\(\s*'([^']+)'/g)].map((m) => m[1] as string));
+    const asked = CODE.flatMap((text) => [...text.matchAll(/\bt\(\s*'([^']+)'|<Sentence\s+key="([^"]+)"/g)].map((m) => (m[1] ?? m[2]) as string));
     expect(asked.length).toBeGreaterThan(20);
     expect(asked.filter((key) => !keys.has(key))).toEqual([]);
   });
 
   it('are each used somewhere, so that no sentence is left behind', () => {
     const all = CODE.join('\n');
-    const unused = [...Object.keys(nl), ...Object.keys(uiNl)].filter((key) => !all.includes(`'${key}'`));
+    // A key stands in the code in quotes: in a call, or as the attribute of a component, such as a Sentence.
+    const unused = [...Object.keys(nl), ...Object.keys(uiNl)].filter((key) => !all.includes(`'${key}'`) && !all.includes(`"${key}"`));
     expect(unused).toEqual([]);
     expect(Object.keys(uiEn).length).toBe(Object.keys(uiNl).length);
   });

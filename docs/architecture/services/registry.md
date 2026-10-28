@@ -34,7 +34,7 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /projects` | Each dbt project with its Current Version ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05)) |
 | `GET /runs` | The latest runs, with their status and error |
 | `GET /nodes?q=&type=` | Search Nodes by name, also with a typo, and by free text in descriptions and columns ([TR-AR-05](../../requirements/technical/01-artifact-registry.md#tr-ar-05)) |
-| `GET /nodes/{id}` | One Node with its columns and tests ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
+| `GET /nodes/{id}` | One Node with what Colleciónes built it from, its columns with their meta, and its tests ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
 
@@ -42,11 +42,11 @@ Every route but the webhook needs an Access Token with the role of the Data Team
 
 ## Data
 
-Artifact Sets with their status and error, Nodes, columns, Edges, tests and Changes, the last four for the Current Version and the one before it ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)). The files themselves, unchanged, in the artifact bucket per project and per run, kept for good.
+Artifact Sets with their status and error, Nodes, columns, Edges, tests and Changes, the last four for the Current Version and the one before it ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)). A Node of Colleciónes keeps its Entity, action, strategy and layer, and every column its meta, where Colleciónes says what it maps to ([FR-AR-16](../../requirements/functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-07](../../requirements/functional/01-artifact-registry.md#dec-ar-07)). The files themselves, unchanged, in the artifact bucket per project and per run, kept for good.
 
 ## Talks to
 
-The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub` ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
+The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
 
 Once [FR-AR-15](../../requirements/functional/01-artifact-registry.md#fr-ar-15) is built: the collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04)).
 

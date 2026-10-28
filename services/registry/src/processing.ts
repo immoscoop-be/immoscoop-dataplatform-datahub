@@ -40,7 +40,13 @@ export function createProcessing({ sets, bucket, dbtCloud, catalogue, log }: Pro
       log.info({ ...about, exposures: empty }, `Exposures tagged datahub that depend on no table: ${empty.join(', ')}`);
     }
     try {
-      await catalogue.resources({ projectId: set.projectId, projectName: normalised.projectName, runId: set.runId, tables });
+      await catalogue.resources({
+        projectId: set.projectId,
+        projectName: normalised.projectName,
+        runId: set.runId,
+        generatedAt: normalised.generatedAt?.toISOString() ?? null,
+        tables,
+      });
       log.info({ ...about, tables: tables.length }, `catalogue told the ${tables.length} exposed tables`);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);

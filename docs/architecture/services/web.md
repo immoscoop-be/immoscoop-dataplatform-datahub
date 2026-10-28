@@ -30,7 +30,7 @@ identity, catalogue, registry and query, with the Access Token of the User, and 
 
 ## What exists today
 
-Part 1 of the [build order](../../design/build-order.md), the frame every screen rests on.
+Parts 1 and 2 of the [build order](../../design/build-order.md): the frame every screen rests on, and the Resources that wait for a Collection.
 
 **Signing in** ([sign-in](../../design/screens/sign-in.html)): a photo of the set of the theme, the glass card with "Sign in with Google", and the story of the photo. Signing in returns to the page it started from. An account of another domain is named on the sign-in, with a button that lets Google ask which account to use ([FR-UM-02](../../requirements/functional/02-user-management.md#fr-um-02)); any other problem is explained in a sentence.
 
@@ -40,13 +40,15 @@ Part 1 of the [build order](../../design/build-order.md), the frame every screen
 
 **My page** ([my-page](../../design/screens/my-page.html)), behind the initials: the name and account of the User; Profile, with the language of Data Hub and the groups of the User from Workspace (`GET /me/groups` of identity); and Background, a choice for day and one for night. The tab Excel keys, and the Collections and queries a User owns, come with parts 9, 3 and 5.
 
+**For the Data Team, the Resources without a Collection** ([resource-unassigned](../../design/screens/resource-unassigned.html)), part 2: in the panel of Collections, "Without a Collection" on top, in the urgent red, with how many wait, unfolded to each of them with its Level ([DEC-UX-16](../../design/principles.md#dec-ux-16)). The page of such a Resource, at `/resources/<id>`, says that it is in no Collection, that only the Data Team sees it, and when and through which exposure it came in; its Overview shows its description from dbt, its maturity with how many columns still lack a description, and its recent history, the Log in the language of the reader ([NFR-LOC-10](../../requirements/non-functional/localisation.md#nfr-loc-10)). Its other tabs, and "Add to a collection", come with parts 3 and 4. Anyone else gets the page for what does not exist.
+
 **The page for what does not exist** ([not-found](../../design/screens/not-found.html)), for every address that is not a page of Data Hub, which does not say whether it exists ([DEC-UX-32](../../design/principles.md#dec-ux-32)). Its search field comes with Collections.
 
-The addresses are those of the pages: `/collections`, `/query`, `/charts`, `/messages`, `/learning`, `/me` and `/me/background`; `/` opens Collections. Back, forward and links work, and a link to a page of Data Hub changes the page without loading it again. Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your account of `thenextimmoscoop.be` or `immoscoop.be`.
+The addresses are those of the pages: `/collections`, `/query`, `/charts`, `/messages`, `/learning`, `/me`, `/me/background` and `/resources/<id>`; `/` opens Collections. Back, forward and links work, and a link to a page of Data Hub changes the page without loading it again. Open the Terraform output `web_url` in a browser, for uat `https://datahub-web-728318088152.europe-west1.run.app`, and sign in with your account of `thenextimmoscoop.be` or `immoscoop.be`.
 
 ### How it is built
 
-The look lives in `packages/ui`, in the layers of [components.md](../../design/components.md): `foundations/` (the stylesheet that imports `docs/design/tokens.css`, the icons, the backgrounds, the sentences), `primitives/`, `containers/` and `components/`, each with its own sentences in `texts/`. The web app adds its templates, screens and sentences in `client/src`; `lib/` holds what talks to the server and identity, the addresses, and the settings. A behaviour lives in its component, never in a screen. The settings of the User are read once from identity when the page starts, and each change is saved there at once.
+The look lives in `packages/ui`, in the layers of [components.md](../../design/components.md): `foundations/` (the stylesheet that imports `docs/design/tokens.css`, the icons, the backgrounds, the sentences), `primitives/`, `marks/`, `containers/` and `components/`, each with its own sentences in `texts/`. The web app adds its templates, screens and sentences in `client/src`; `lib/` holds what talks to the server and identity, the addresses, and the settings. A behaviour lives in its component, never in a screen. The settings of the User are read once from identity when the page starts, and each change is saved there at once.
 
 The page is built with Vite (`pnpm build`) into `dist/client`, which the server reads once at start-up and serves from memory: the scripts, the stylesheet, Poppins and the pictures of the backgrounds, taken from `docs/design/backgrounds`. The server puts the addresses of identity, catalogue, registry and semgraph in the page, so one build runs in every environment.
 

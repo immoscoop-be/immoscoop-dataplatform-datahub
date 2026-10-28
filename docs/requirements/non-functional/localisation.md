@@ -111,7 +111,7 @@ Metadata people write, such as the definition, open questions, Known Gaps and th
 <a id="nfr-loc-10"></a>
 ### NFR-LOC-10 · The texts of the Log are sentences
 
-**Status:** Specified · **Source:** Max, 2026-10-25 ([OP-DH-43](../../overview/open-themes.md#op-dh-43)) · **Applies to:** [Log catalogue](../functional/log-catalogue.md)
+**Status:** Implemented · **Source:** Max, 2026-10-25 ([OP-DH-43](../../overview/open-themes.md#op-dh-43)) · **Applies to:** [Log catalogue](../functional/log-catalogue.md)
 
 The texts of the Log are sentences: each template has a Dutch and an English version, with the same parameters, and shows in the language of the reader. The names in it, such as the name of a Resource or a Level, stay as they are ([NFR-LOC-01](#nfr-loc-01)).
 

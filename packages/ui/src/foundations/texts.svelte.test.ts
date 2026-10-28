@@ -27,3 +27,20 @@ describe('the sentences of the interface (NFR-LOC-06)', () => {
     expect(() => t('rail.nothing')).toThrow('No sentence "rail.nothing"');
   });
 });
+
+describe('a sentence in pieces (NFR-LOC-03)', () => {
+  it('gives each name back as a piece of its own, wherever the language puts it', async () => {
+    const { addTexts, setLanguage, tParts } = await import('./texts.svelte.js');
+    addTexts({ nl: { 'test.came': 'Kwam binnen via {exposure} in {project}.' }, en: { 'test.came': 'Came in through {exposure} in {project}.' } });
+    expect(tParts('test.came', {}, { exposure: 'datahub_x', project: 'immoscoop_dbt' })).toEqual([
+      { text: 'Kwam binnen via ' },
+      { name: 'datahub_x' },
+      { text: ' in ' },
+      { name: 'immoscoop_dbt' },
+      { text: '.' },
+    ]);
+    setLanguage('en');
+    expect(tParts('test.came', {}, { exposure: 'datahub_x', project: 'p' })[0]).toEqual({ text: 'Came in through ' });
+    setLanguage('nl');
+  });
+});

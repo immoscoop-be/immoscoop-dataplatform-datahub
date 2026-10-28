@@ -196,9 +196,12 @@ export function collecionesManifest() {
         original_file_path: 'models/agency_orders.sql',
         checksum: { name: 'sha256', checksum: 'sum-agency-orders' },
         config: { materialized: 'table' },
-        tags: [],
+        // The facts the generator of Colleciónes writes on every model, and per column (DEC-AR-07).
+        tags: ['colleciones:entity:agency', 'colleciones:action:order', 'colleciones:strategy:AtomicEvent', 'colleciones:layer:mrt'],
         description: 'Orders per agency, for the agencies case.',
-        columns: { agency_id: { name: 'agency_id', description: 'The agency.' } },
+        columns: {
+          agency_id: { name: 'agency_id', description: 'The agency.', config: { meta: { domain: { maps: 'is', entity: 'agency', identifier: 'agencyId' } } } },
+        },
         depends_on: { nodes: [`source.${P}.dbt_prod.orders`] },
       },
     },

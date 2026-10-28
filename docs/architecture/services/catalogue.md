@@ -28,10 +28,10 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | Endpoint | Purpose |
 | --- | --- |
 | `POST /internal/resources` | The exposed tables of one dbt project, from registry with its service identity: registers, renames, withdraws and brings back Resources ([TR-SR-01](../../requirements/technical/04-stacks-and-resources.md#tr-sr-01)) |
-| `GET /resources?collection=none` | The Resources without Collection (Data Team) |
+| `GET /resources?collection=none` | The Resources without Collection, each with its Level (Data Team) |
 | `PUT /resources/{id}/collection`, `DELETE /resources/{id}/collection` | Add a Resource to a Collection, or remove it (Data Team) |
 | `GET /collections/{id}/resources` | The Resources of a Collection, as far as the User may see them |
-| `GET /resources/{id}` | The Resource Card, as far as the User may see it |
+| `GET /resources/{id}` | The Resource Card, as far as the User may see it; built: the Resource with its fields and the columns left out of it ([TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06)) |
 | `PUT /resources/{id}/publication`, `POST /resources/{id}/confirmations` | Publish and confirm (Owner) |
 | `GET /resources/{id}/log` | History, filterable by kind of Log Entry |
 | `POST /resources/{id}/reactions` | Question, Remark or Signal |
@@ -45,6 +45,8 @@ First sketch; the exact contracts follow in the technical requirements of the do
 ## Data
 
 Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour and Anomalies, Reactions, messages.
+
+Built today: the Collections and their Log; the Resources with their Level, their plain fields and the columns left out of them, their Fingerprints and their Log ([TR-SR-02](../../requirements/technical/04-stacks-and-resources.md#tr-sr-02), [TR-SR-06](../../requirements/technical/04-stacks-and-resources.md#tr-sr-06) to [TR-SR-08](../../requirements/technical/04-stacks-and-resources.md#tr-sr-08)); and the Messages, each placed on its object, its text built from the [Message Catalogue](../../requirements/functional/message-catalogue.md) when it is read ([TR-SR-09](../../requirements/technical/04-stacks-and-resources.md#tr-sr-09)). The texts of the Log come from the [Log Catalogue](../../requirements/functional/log-catalogue.md) in `@datahub/contracts`, in Dutch and English. The Resources started afresh for the rebuild, in migration `0004-resources-afresh`.
 
 ## Talks to
 

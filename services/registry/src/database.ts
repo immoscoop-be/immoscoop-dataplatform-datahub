@@ -46,6 +46,10 @@ export interface RegistryDatabase {
     filePath: string | null;
     checksum: string | null;
     meta: ColumnType<Record<string, unknown>, Record<string, unknown> | undefined, Record<string, unknown>>;
+    entity: string | null;
+    action: string | null;
+    strategy: string | null;
+    layer: string | null;
   };
   columns: {
     setId: number;
@@ -54,6 +58,7 @@ export interface RegistryDatabase {
     position: number | null;
     dataType: string | null;
     description: string;
+    meta: ColumnType<Record<string, unknown>, Record<string, unknown> | undefined, Record<string, unknown>>;
   };
   edges: {
     setId: number;

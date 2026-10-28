@@ -26,6 +26,7 @@
   --radius-tab: 12px;
   --radius-field: 12px;      /* a search field */
   --radius-surface: 20px;    /* the content under tabs; the story of a photo */
+  --radius-callout: 16px;    /* a callout, such as the notice on a Resource without a Collection */
   --radius-sign-in: 32px;    /* the glass card of the sign-in */
   --flare-tab: 12px;   /* concave corner where an active tab meets its content */
   --flare-nav: 18px;   /* concave corner where the active nav icon meets the panel */
@@ -47,6 +48,7 @@
   --motion-panel: 350ms ease;       /* slide-out panel */
   --motion-fade: 250ms;             /* the panel fades as it slides */
   --motion-ring: 150ms;             /* the ring of the initials */
+  --motion-fold: 200ms;             /* the caret of a fold box turning */
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
@@ -106,6 +108,7 @@
   --text-muted: #8C857E;
   --signal-warn: #B07A28;        /* only for states that need action */
   --signal-urgent: #C4432F;      /* only for what waits for the Data Team ("Without a collection"), a run above the approval threshold, and what is Broken */
+  --text-on-urgent: #fff;        /* the number in an urgent badge, in both themes */
   /* Glass: a card over a photo or the background, such as the sign-in (DEC-UX-35) */
   --glass: rgba(255,255,255,.42);
   --glass-solid: rgba(255,255,255,.88);    /* where a browser cannot blur */

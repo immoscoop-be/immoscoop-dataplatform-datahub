@@ -19,7 +19,7 @@ function fakeReading(asked: unknown[]): Reading {
       asked.push({ search: query, ...options });
       return [{ ...node, matchedColumns: [] }];
     },
-    node: async (id) => (id === 'model.p.orders' ? { ...node, packageName: 'p', databaseName: null, schemaName: null, tableName: null, materialized: 'view', tags: [], filePath: null, meta: {}, columns: [], tests: [] } : undefined),
+    node: async (id) => (id === 'model.p.orders' ? { ...node, packageName: 'p', databaseName: null, schemaName: null, tableName: null, materialized: 'view', tags: [], filePath: null, meta: {}, entity: null, action: null, strategy: null, layer: null, columns: [], tests: [] } : undefined),
     lineage: async (id, direction, depth) => {
       asked.push({ lineage: id, direction, depth });
       return id === 'model.p.orders' ? { direction, nodes: [{ ...node, distance: 0 }], edges: [], truncated: false } : undefined;

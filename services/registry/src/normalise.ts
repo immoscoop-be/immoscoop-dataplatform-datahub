@@ -15,6 +15,11 @@ export interface NodeRow {
   checksum: string | null;
   /** The meta of the Node in the dbt project, as it is written there: any JSON object. */
   meta: Record<string, unknown>;
+  /** What a Node of Colleciónes is built from, as its generator writes it (FR-AR-16); null elsewhere. */
+  entity: string | null;
+  action: string | null;
+  strategy: string | null;
+  layer: string | null;
 }
 
 export interface ColumnRow {
@@ -23,6 +28,8 @@ export interface ColumnRow {
   position: number | null;
   dataType: string | null;
   description: string;
+  /** The meta of the column in the dbt project, such as what Colleciónes says it maps to (DEC-AR-07). */
+  meta: Record<string, unknown>;
 }
 
 export interface EdgeRow {
@@ -123,6 +130,11 @@ export function normalise(manifest: unknown, catalog: unknown): NormalisedSet {
 
 function nodeRow(uniqueId: string, node: Json, table: string | null): NodeRow {
   const config = object(node.config);
+  // dbt-core repeats the tags of the config at the top; read both, so that an engine that keeps
+  // them in the config only, such as for an exposure, is understood too (DEC-SR-22).
+  const tags = [...new Set([...strings(node.tags), ...strings(config.tags)])];
+  // dbt keeps the meta of a Node in two places; its config wins, as it does in dbt itself.
+  const meta = { ...object(node.meta), ...object(config.meta) };
   const materialized = string(config.materialized);
   const databaseName = string(node.database);
   const schemaName = string(node.schema);
@@ -140,13 +152,33 @@ function nodeRow(uniqueId: string, node: Json, table: string | null): NodeRow {
     relation,
     description: string(node.description) ?? '',
     materialized,
-    // dbt-core repeats the tags of the config at the top; read both, so that an engine that keeps
-    // them in the config only, such as for an exposure, is understood too (DEC-SR-22).
-    tags: [...new Set([...strings(node.tags), ...strings(config.tags)])],
+    tags,
     filePath: string(node.original_file_path),
     checksum: string(object(node.checksum).checksum),
-    // dbt keeps the meta of a Node in two places; its config wins, as it does in dbt itself.
-    meta: { ...object(node.meta), ...object(config.meta) },
+    meta,
+    ...domainOf(tags, meta),
+  };
+}
+
+/**
+ * What a Node of Colleciónes is built from (FR-AR-16): the tags its generator writes, such as
+ * `colleciones:entity:listing`, and otherwise `meta.domain` and `meta.model`. Null for a Node that
+ * says nothing about it, such as every Node of dbt-prod.
+ */
+function domainOf(tags: string[], meta: Json): Pick<NodeRow, 'entity' | 'action' | 'strategy' | 'layer'> {
+  const tagged = (kind: string) => {
+    const prefix = `colleciones:${kind}:`;
+    return string(tags.find((tag) => tag.startsWith(prefix))?.slice(prefix.length));
+  };
+  // An Entity or action is named, or written as an object with its name.
+  const named = (value: unknown) => string(value) ?? string(object(value).name);
+  const domain = object(meta.domain);
+  const model = object(meta.model);
+  return {
+    entity: tagged('entity') ?? named(domain.entity),
+    action: tagged('action') ?? named(domain.action),
+    strategy: tagged('strategy') ?? string(model.strategy),
+    layer: tagged('layer') ?? string(model.layer),
   };
 }
 
@@ -160,23 +192,27 @@ function columnRows(nodeId: string, node: Json, catalogEntry: Json | undefined):
     name: string(column.name) ?? key,
     description: string(column.description) ?? '',
     dataType: string(column.data_type),
+    // As for a Node, the meta in the config of a column wins.
+    meta: { ...object(column.meta), ...object(object(column.config).meta) },
   }));
-  const descriptions = new Map(documented.map((column) => [column.name.toLowerCase(), column.description]));
+  const byName = new Map(documented.map((column) => [column.name.toLowerCase(), column]));
 
   if (catalogEntry) {
     return entries(catalogEntry.columns).map(([key, column]) => {
       const name = string(column.name) ?? key;
+      const known = byName.get(name.toLowerCase());
       return {
         nodeId,
         name,
         position: typeof column.index === 'number' ? column.index : null,
         dataType: string(column.type),
-        description: descriptions.get(name.toLowerCase()) ?? string(column.comment) ?? '',
+        description: known?.description ?? string(column.comment) ?? '',
+        meta: known?.meta ?? {},
       };
     });
   }
   // Not in the catalog, such as an ephemeral model or an exposure: the columns of the manifest.
-  return documented.map((column, index) => ({ nodeId, name: column.name, position: index + 1, dataType: column.dataType, description: column.description }));
+  return documented.map((column, index) => ({ nodeId, position: index + 1, ...column }));
 }
 
 function testRow(uniqueId: string, test: Json): TestRow | undefined {

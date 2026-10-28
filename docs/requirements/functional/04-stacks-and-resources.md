@@ -42,7 +42,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-30"></a>**DEC-SR-30** · A preview, and a result in Query, shows its rows a page of 100 at a time. The query runs once; the next pages are read from the result of that run, which BigQuery does not bill again. *Decided on 2026-10-26, by Max ([OP-SR-07](#op-sr-07)).*
 - <a id="dec-sr-31"></a>**DEC-SR-31** · Everyone who may see a Resource sees the queries on it: who, when, how and what it read. The SQL of a query is shown to whoever ran it, to the Owner Unit of the Resource for every query on what it owns, and to the Data Team, which sees all. *Decided on 2026-10-26, by Max ([OP-SR-13](#op-sr-13)).*
 - <a id="dec-sr-32"></a>**DEC-SR-32** · The service account of Data Hub may read every table in the GCP projects of the dbt projects it follows, granted in Terraform. It needs no curated Stack: every table an exposure with the tag `datahub` depends on can be read, wherever dbt puts it. Who sees what stays decided in Data Hub, by the Publication. *Decided on 2026-10-26, by Max ([OP-SR-10](#op-sr-10)).*
-- <a id="dec-sr-33"></a>**DEC-SR-33** · A Resource holds plain fields only, never an array, a struct or JSON. When a model with such columns becomes a Resource, those columns are left out of it, and named as left out when it is added. Where a value inside one is needed, the Data Team adds it to the model in dbt as a field of its own, with the proper selector: the Data Team writes the query that outputs a field, and the Resource uses fields only. *Decided on 2026-10-28, by Max, in the review of [OP-AR-07](01-artifact-registry.md#op-ar-07).*
+- <a id="dec-sr-33"></a>**DEC-SR-33** · A Resource holds plain fields only, never an array, a struct or JSON. When a model with such columns becomes a Resource, those columns are left out of it, and named as left out when it is added. Where a value inside one is needed, the Data Team adds it to the model in dbt as a field of its own, with the proper selector: the Data Team writes the query that outputs a field, and the Resource uses fields only. *Decided on 2026-10-28, by Max, in the review of [OP-AR-07](01-artifact-registry.md#op-ar-07).* *Note of 2026-10-28: bytes are left out too, and so are the fields inside a record; decided by Max while building part 2 of the [build order](../../design/build-order.md).*
 - <a id="dec-sr-34"></a>**DEC-SR-34** · Data Hub takes the partition and cluster columns of a Resource, and whether a partition filter is required, from `partition_by`, `cluster_by` and `require_partition_filter` in the dbt manifest: of its own model, or, for a view, of the model beneath it through the lineage. The size and the number of partitions come from BigQuery. When a view derives the partition column instead of passing it through unchanged, Data Hub says so instead of promising savings. The Data Admin confirms them when adding the Resource and sets what cannot be derived ([FR-CO-34](03-collections.md#fr-co-34)). *Decided on 2026-10-28, by Max ([OP-SR-12](#op-sr-12)).*
 - <a id="dec-sr-35"></a>**DEC-SR-35** · A query without a filter on the partition column of a Resource that requires one, in BigQuery or in Data Hub ([FR-CO-34](03-collections.md#fr-co-34)), cannot run. The Pre-flight says so in place of its numbers, names the partition column, and offers to add the filter. On a Resource that does not require one, the warning of [FR-SR-40](#fr-sr-40) stays. *Decided on 2026-10-28, by Max ([OP-SR-15](#op-sr-15)).*
 - <a id="dec-sr-36"></a>**DEC-SR-36** · Accepting a Request to run a query above 1 GB ([DEC-SR-29](#dec-sr-29)) lets that User run that query above the limit: every run, also after its SQL changes, without an end date. Nobody else, and no other query. The Pre-flight keeps showing what it reads. A Request waits until the Data Team answers, without a timeout ([DEC-LE-15](09-lenses.md#dec-le-15)). *Decided on 2026-10-28, by Max ([OP-SR-17](#op-sr-17)).*
@@ -174,21 +174,21 @@ The description comes from the Artifacts and is not retyped in Data Hub.
 <a id="fr-sr-07"></a>
 ### FR-SR-07 · The Level at Registration is at most Described
 
-**Status:** Specified · **Confluence:** SR-07 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
+**Status:** Implemented · **Confluence:** SR-07 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 At Registration, the Level is derived and is at most 2, Described. The Resource is then not yet published, and only visible to the Data Team and to the Owner of its Collection.
 
 <a id="fr-sr-08"></a>
 ### FR-SR-08 · Store a Fingerprint at Registration
 
-**Status:** Specified · **Confluence:** SR-08
+**Status:** Implemented · **Confluence:** SR-08
 
 At Registration, a Fingerprint is stored: a hash of the structure (the column names), a hash of the types, a hash of the descriptions, and the checksum of the code from the manifest.
 
 <a id="fr-sr-09"></a>
 ### FR-SR-09 · Open the Log at Registration
 
-**Status:** Specified · **Confluence:** SR-09 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
+**Status:** Implemented · **Confluence:** SR-09 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 At Registration, the Log of the Resource starts with the entries for Registration, Collection and Level.
 
@@ -198,6 +198,8 @@ At Registration, the Log of the Resource starts with the entries for Registratio
 **Status:** Specified · **Confluence:** SR-10 · **Screens:** [messages](../../design/screens/messages.html)
 
 Every Registration sends a message to the Message Centre of the Data Admins.
+
+*Note of 2026-10-28: every Registration places the Message "A new Resource waits for a Collection" ([MSG-RES-01](message-catalogue.md#msg-res-01)) on the Resource ([TR-SR-09](../technical/04-stacks-and-resources.md#tr-sr-09)); the Message Centre that shows it to the Data Team comes with part 7 of the [build order](../../design/build-order.md).*
 
 <a id="fr-sr-11"></a>
 ### FR-SR-11 · Structure of a Log Entry

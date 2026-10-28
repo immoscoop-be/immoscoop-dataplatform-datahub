@@ -2,6 +2,7 @@
   import BackgroundPicker from '@datahub/ui/components/BackgroundPicker.svelte';
   import type { Theme } from '@datahub/ui/foundations/backgrounds.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
+  import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { t, type Language } from '@datahub/ui/foundations/texts.svelte.js';
   import Grid from '@datahub/ui/containers/Grid.svelte';
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
@@ -46,9 +47,6 @@
     { value: 'en', label: 'English' },
   ] as const;
 
-  /** A name stays English, in a monospace font, in the sentence that explains it (NFR-LOC-03). */
-  const EXAMPLE = 'creditLead';
-  const languageText = $derived(t('me.language.text', { name: EXAMPLE, kind: 'Resource' }).split(EXAMPLE));
 </script>
 
 <div class="head">
@@ -70,12 +68,13 @@
 >
   {#if tab === 'profile'}
     <Grid min="320px">
-      <SubTile label={t('me.language.label')}>
-        <p class="meta text">{languageText[0]}<span class="mono">{EXAMPLE}</span>{languageText[1]}</p>
+      <SubTile round label={t('me.language.label')}>
+        <!-- A name stays English, in a monospace font, in the sentence that explains it (NFR-LOC-03). -->
+        <p class="meta text"><Sentence key="me.language.text" values={{ kind: 'Resource' }} names={{ name: 'creditLead' }} /></p>
         <Segmented options={LANGUAGES} value={language} label={t('me.language.label')} onchange={onlanguage} />
         <p class="meta follows">{t('me.language.cards')}</p>
       </SubTile>
-      <SubTile label={t('me.own.label')}>
+      <SubTile round label={t('me.own.label')}>
         <p class="meta text own">{t('me.own.text')}</p>
         {#if groups === null}
           <p class="meta">{t('me.own.failed')}</p>

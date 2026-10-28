@@ -1,4 +1,5 @@
 import type { SettingKey, UserSettings } from '@datahub/contracts/settings';
+import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
 
@@ -18,37 +19,11 @@ export interface Group {
   name: string;
 }
 
-/** The session ended: the page signs in again. */
-export class SignedOut extends Error {
-  constructor() {
-    super('The session has ended');
-  }
-}
+export { SignedOut } from './api.js';
 
 /** The calls of the page to identity, with the Access Token of the User. */
-export function createIdentity(config: Config, session: Pick<Session, 'accessToken'>, request: typeof fetch = (input, init) => fetch(input, init)) {
-  async function call(path: string, init: { method?: string; body?: unknown } = {}): Promise<Response> {
-    const token = await session.accessToken();
-    if (!token) {
-      throw new SignedOut();
-    }
-    const headers: Record<string, string> = { authorization: `Bearer ${token}` };
-    if (init.body !== undefined) {
-      headers['content-type'] = 'application/json';
-    }
-    const response = await request(`${config.identityUrl}${path}`, {
-      method: init.method ?? 'GET',
-      headers,
-      body: init.body === undefined ? undefined : JSON.stringify(init.body),
-    });
-    if (response.status === 401) {
-      throw new SignedOut();
-    }
-    if (!response.ok) {
-      throw new Error(`identity answered ${response.status} to ${init.method ?? 'GET'} ${path}`);
-    }
-    return response;
-  }
+export function createIdentity(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
+  const call = createCall('identity', config.identityUrl, session, request);
   const setting = (key: SettingKey) => `/me/settings/${encodeURIComponent(key)}`;
 
   return {

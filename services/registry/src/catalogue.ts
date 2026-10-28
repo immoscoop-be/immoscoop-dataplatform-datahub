@@ -6,6 +6,8 @@ export interface ResourcesUpdate {
   projectId: string;
   projectName: string | null;
   runId: string;
+  /** When dbt made the manifest of the run, as ISO 8601; the day a new Resource came in (MSG-RES-01). */
+  generatedAt: string | null;
   /** Every exposed table of the project: the whole state, so a lost call is repaired by the next. */
   tables: ExposedTable[];
 }

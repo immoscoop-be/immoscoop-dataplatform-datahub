@@ -16,6 +16,14 @@
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
     },
+    "./log": {
+      "types": "./dist/log.d.ts",
+      "default": "./dist/log.js"
+    },
+    "./log-catalogue": {
+      "types": "./dist/logCatalogue.d.ts",
+      "default": "./dist/logCatalogue.js"
+    },
     "./messages": {
       "types": "./dist/messages.d.ts",
       "default": "./dist/messages.js"
