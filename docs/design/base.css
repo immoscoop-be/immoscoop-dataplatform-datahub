@@ -20,6 +20,7 @@ html[data-bg="ski"] .app { background-image: url(backgrounds/painted/light/ski-l
 html[data-bg="alpenglow"] .app { background-image: url(backgrounds/painted/light/alpenglow.jpg); }
 html[data-bg="spring"] .app { background-image: url(backgrounds/painted/light/spring-snow.jpg); }
 html[data-bg="fusilli"] .app { background-image: url(backgrounds/painted/light/fusilli.jpg); background-size: cover; }
+html[data-bg="piste"] .app { background-image: url(backgrounds/painted/light/piste.jpg); background-size: cover; }
 html[data-bg][data-theme="dark"] .app { background-image: url(backgrounds/painted/dark/village-lights.jpg); }
 html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: blur(8px) saturate(1.05); backdrop-filter: blur(8px) saturate(1.05); }
 /* ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app,

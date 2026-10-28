@@ -8,7 +8,7 @@ try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'fusilli', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
+const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'fusilli', 'piste', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
 // The backgrounds drawn live with WebGL: the flowing gradient, and the flowing lights (DEC-UX-109)
 const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
