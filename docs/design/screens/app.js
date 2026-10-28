@@ -267,11 +267,11 @@ new URLSearchParams(location.search).forEach((value, key) => {
 // ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app.
 // By day sky blue, a warm orange band and cream; by night, in the dark theme, a dark sky with a band of teal, violet and
 // magenta and a warm coral glow, along the same rising line. The mouse leans the field and bends the band towards it,
-// eased over seconds. One loop of 40 seconds meets its start exactly; 30 frames a
+// eased over seconds. One loop of 15 seconds meets its start exactly; 30 frames a
 // second at half resolution, paused with the tab; a still frame for reduced motion, drawn again when the theme changes.
 // Without WebGL the usual background of the app stays
 if (document.documentElement.dataset.bg === 'flow') (() => {
-  const LOOP = 40, RESOLUTION = 0.5, FPS = 30;
+  const LOOP = 15, RESOLUTION = 0.5, FPS = 30;
   const canvas = Object.assign(document.createElement('canvas'), { className: 'bg-flow' });
   const gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'low-power' });
   const fallback = () => { delete document.documentElement.dataset.bg; };
