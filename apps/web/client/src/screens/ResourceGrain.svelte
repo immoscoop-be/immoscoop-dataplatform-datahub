@@ -201,7 +201,8 @@
     {@render origin(draft.origins.modelType === 'domainModel' ? 'suggested' : (draft.origins.modelType ?? ''))}
   </div>
 
-  {#if model}
+  <!-- What the proposal was made from; recorded mappings, as Edit relations shows them, were not proposed. -->
+  {#if model && draft.builtOn}
     <p class="check-line">
       <Icon name={draft.builtOn?.colleciones ? 'graph' : 'lightbulb'} />
       <span>{draft.builtOn?.colleciones ? t('grain.fromModel', { count: fromModel }) : t('grain.notModel')}</span>

@@ -119,6 +119,13 @@ registry reads the Domain Model in use from `GET /domain-model` of the collector
 
 Without the Domain Model the proposal still holds what dbt says, without a mapping from the Domain Model, and says the Domain Model is missing ([EC-AR-05](../functional/01-artifact-registry.md#ec-ar-05)); otherwise it names the release it was made with.
 
+<a id="tr-ar-11"></a>
+### TR-AR-11 · registry gives catalogue the lineage around a Resource
+
+**Status:** Implemented · **Realises:** [DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06), [FR-SR-54](../functional/04-stacks-and-resources.md#fr-sr-54)
+
+`GET /internal/nodes/{id}/lineage?direction=upstream|downstream` takes no Access Token but a Google ID token for registry's own address, of the service account of catalogue only (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`, `DATAHUB_REGISTRY_URL`), as catalogue checks who may see the Resource ([TR-SR-11](04-stacks-and-resources.md#tr-sr-11)). It walks the lineage of the Node as `GET /nodes/{id}/lineage` does, up to fifty steps and five hundred models, across both dbt projects, and gives of each model only what everyone who sees the Resource may read: its name, kind, layer, project and distance, and the links between them ([DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)). The layer is the one Colleciónes tags it with, else the folder under `models/` it sits in, else its kind, such as `seed`. Exposures are left out. A Node no Current Version holds answers 404.
+
 ## Open points
 
 None yet.

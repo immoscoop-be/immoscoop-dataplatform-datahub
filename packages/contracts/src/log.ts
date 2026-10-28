@@ -14,5 +14,5 @@ export function renderLog(logId: string, params: Readonly<Record<string, string 
   const type = LOG_CATALOGUE[logId];
   const values = Object.fromEntries(type.parameters.map((name) => [name, params[name] ?? '?']));
   const text = renderText(type.text[language], language, values);
-  return type.text[language].startsWith('{field}') ? text.charAt(0).toUpperCase() + text.slice(1) : text;
+  return type.text[language].startsWith('{field') ? text.charAt(0).toUpperCase() + text.slice(1) : text;
 }

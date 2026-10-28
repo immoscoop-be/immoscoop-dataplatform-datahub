@@ -80,13 +80,58 @@ export interface Details {
   mappings: Mapping[];
 }
 
+/** What the Owner and the Data Team keep about a Resource in Data Hub, next to what comes from dbt (FR-RC-15). */
+export interface Card {
+  /** Next to the description from dbt, never over it (DEC-RC-01); empty when there is none. */
+  businessDescription: string;
+  /** The Known Behaviour (DEC-DH-18): intended use and pitfalls, and the Known Gaps (DEC-RC-12). */
+  intendedUse: string;
+  pitfalls: string;
+  knownGaps: string[];
+  /** Since when its data is reliable (FR-RC-13): a day, `YYYY-MM-DD`, or null. */
+  reliableSince: string | null;
+  /** Fields of the Resource, by name, in the order chosen. */
+  keyFields: string[];
+  parameters: string[];
+}
+
+export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+
+/** A field with its Business Description next to its description from dbt (FR-RC-16). */
+export interface Field extends Column {
+  businessDescription: string;
+}
+
 /** A Resource with its fields, and the columns of its table left out of it (FR-SR-06, DEC-SR-33). */
 export interface ResourceDetail extends Resource {
-  fields: Column[];
+  fields: Field[];
   leftOut: LeftOut[];
   /** Empty until it is added to a Collection with them. */
   details: Details;
+  card: Card;
 }
+
+/** A mapping of a Resource with the other Resources that carry the same identity (FR-RC-08, FR-RC-09). */
+export interface Related extends Pick<Mapping, 'field' | 'kind' | 'relationType' | 'identity' | 'inDomainModel'> {
+  /** The Resources the viewer sees that carry the identity too, with the field that carries it. */
+  resources: { id: string; displayName: string; level: number; field: string }[];
+}
+
+/** A Resource on a Node of the lineage, as the viewer may see it (FR-SR-54). */
+export interface ResourceAtNode {
+  nodeId: string;
+  id: string;
+  displayName: string;
+  level: number;
+}
+
+/** What changing a Resource came to: done, or why not. */
+export type EditOutcome =
+  | { outcome: 'edited'; changed: string[] }
+  | { outcome: 'not_found' }
+  /** A Business Description is written from Described on (DEC-MR-10). */
+  | { outcome: 'not_described' }
+  | { outcome: 'invalid'; message: string };
 
 /** A Resource to add, with what the Data Admin recorded for it, if anything. */
 export interface AddItem {
@@ -143,6 +188,16 @@ export interface Resources {
   /** Takes a Resource out of its Collection; false when it was in none. */
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
+  /** Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28). */
+  edit(id: string, changes: Partial<Card>, viewer: Viewer): Promise<EditOutcome>;
+  /** Writes, changes or removes the Business Descriptions of fields; an empty text removes one (FR-RC-16). */
+  describeFields(id: string, descriptions: readonly { field: string; text: string }[], viewer: Viewer): Promise<EditOutcome>;
+  /** Records the grain, storage and mappings of a Resource again, from Edit relations (DEC-UX-107). */
+  relate(id: string, details: Details, viewer: Viewer): Promise<EditOutcome>;
+  /** Each mapping of a Resource with the other Resources the viewer sees that carry its identity. */
+  related(id: string, viewer: Viewer): Promise<Related[]>;
+  /** The Resources the viewer sees on the given Nodes. */
+  atNodes(nodeIds: readonly string[], viewer: Viewer): Promise<ResourceAtNode[]>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -169,12 +224,49 @@ function present(row: Row): Resource {
   };
 }
 
+/** What Data Hub keeps about a Resource, from its row, with its reliable day read as text. */
+function cardOf(row: Row, reliableSince: string | null): Card {
+  return {
+    businessDescription: row.businessDescription,
+    intendedUse: row.intendedUse,
+    pitfalls: row.pitfalls,
+    knownGaps: row.knownGaps,
+    reliableSince,
+    keyFields: row.keyFields,
+    parameters: row.parameters,
+  };
+}
+
+/** A Business Description is written from 2 · Described on (DEC-MR-10). */
+const DESCRIBED = 2;
+
 export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   async function write(trx: Database, resourceId: string, logId: ResourceLogId, params: Record<string, string>, actorId: string | null = null) {
     await trx.insertInto('resourceLog').values({ resourceId, logId, params, actorId }).execute();
   }
 
   /** The fields of a Resource and the columns left out of it, as its table has them now (FR-SR-06). */
+  /**
+   * The Collections whose Resources the viewer sees, or null for all of them: the Data Team sees every
+   * Resource; while nothing is published, others see those in a Collection of their Owner Unit (FR-SR-31).
+   */
+  async function seenCollections(viewer: Viewer): Promise<string[] | null> {
+    if (viewer.dataTeam) {
+      return null;
+    }
+    if (viewer.groups.length === 0) {
+      return [];
+    }
+    const rows = await db.selectFrom('collections').select('id').where('dissolvedAt', 'is', null).where('ownerUnitId', 'in', viewer.groups).execute();
+    return rows.map((row) => row.id);
+  }
+
+  async function fieldNames(trx: Database, resourceId: string): Promise<string[]> {
+    return (await trx.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).orderBy(sql`position nulls last`).orderBy('name').execute()).map(
+      (field) => field.name,
+    );
+  }
+
   async function keepColumns(trx: Database, resourceId: string, columns: { fields: Column[]; leftOut: LeftOut[] }) {
     await trx.deleteFrom('resourceFields').where('resourceId', '=', resourceId).execute();
     await trx.deleteFrom('resourceLeftOut').where('resourceId', '=', resourceId).execute();
@@ -404,17 +496,27 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       if (!UUID.test(id)) {
         return undefined;
       }
-      const row = await db.selectFrom('resources').selectAll().where('id', '=', id).executeTakeFirst();
+      const row = await db
+        .selectFrom('resources')
+        .selectAll()
+        .select(sql<string | null>`reliable_since::text`.as('reliableDay'))
+        .where('id', '=', id)
+        .executeTakeFirst();
       if (!row) {
         return undefined;
       }
-      const fields = await db
-        .selectFrom('resourceFields')
-        .select(['name', 'position', 'dataType', 'description'])
-        .where('resourceId', '=', id)
-        .orderBy(sql`position nulls last`)
-        .orderBy('name')
-        .execute();
+      const written = new Map(
+        (await db.selectFrom('fieldDescriptions').select(['field', 'text']).where('resourceId', '=', id).execute()).map((entry) => [entry.field, entry.text]),
+      );
+      const fields = (
+        await db
+          .selectFrom('resourceFields')
+          .select(['name', 'position', 'dataType', 'description'])
+          .where('resourceId', '=', id)
+          .orderBy(sql`position nulls last`)
+          .orderBy('name')
+          .execute()
+      ).map((field) => ({ ...field, businessDescription: written.get(field.name) ?? '' }));
       const leftOut = await db.selectFrom('resourceLeftOut').select(['name', 'dataType', 'reason']).where('resourceId', '=', id).orderBy('name').execute();
       const mappings = await db
         .selectFrom('resourceMappings')
@@ -433,7 +535,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         release: row.domainModelRelease,
         mappings: mappings.sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0)),
       };
-      return { ...present(row), fields, leftOut, details };
+      return { ...present(row), fields, leftOut, details, card: cardOf(row, row.reliableDay) };
     },
 
     async add(items, collection, viewer) {
@@ -526,6 +628,151 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
       const rows = await db.selectFrom('resourceLog').select(['logId', 'params', 'at']).where('resourceId', '=', id).orderBy('id', 'desc').limit(limit).execute();
       return rows.map((row) => ({ logId: row.logId, text: logText(row.logId, row.params), params: row.params, at: row.at }));
+    },
+
+    async edit(id, changes, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<EditOutcome> => {
+        const row = await trx
+          .selectFrom('resources')
+          .selectAll()
+          .select(sql<string | null>`reliable_since::text`.as('reliableDay'))
+          .where('id', '=', id)
+          .forUpdate()
+          .executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        const current = cardOf(row, row.reliableDay);
+        const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
+        if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
+          return { outcome: 'not_described' };
+        }
+        const fields = new Set(await fieldNames(trx, id));
+        const stranger = [...(changes.keyFields ?? []), ...(changes.parameters ?? [])].find((name) => !fields.has(name));
+        if (stranger !== undefined) {
+          return { outcome: 'invalid', message: `${row.displayName} has no field ${stranger}.` };
+        }
+        if (changed.length === 0) {
+          return { outcome: 'edited', changed };
+        }
+        await trx
+          .updateTable('resources')
+          .set({ ...Object.fromEntries(changed.map((key) => [key, changes[key]])), updatedAt: new Date() })
+          .where('id', '=', id)
+          .execute();
+        for (const key of changed) {
+          await write(trx, id, 'RES-005', { field: key, actor: viewer.name }, viewer.id);
+        }
+        return { outcome: 'edited', changed };
+      });
+    },
+
+    async describeFields(id, descriptions, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<EditOutcome> => {
+        const row = await trx.selectFrom('resources').select(['displayName', 'level']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        const fields = new Set(await fieldNames(trx, id));
+        const stranger = descriptions.find((entry) => !fields.has(entry.field));
+        if (stranger) {
+          return { outcome: 'invalid', message: `${row.displayName} has no field ${stranger.field}.` };
+        }
+        const written = new Map(
+          (await trx.selectFrom('fieldDescriptions').select(['field', 'text']).where('resourceId', '=', id).execute()).map((entry) => [entry.field, entry.text]),
+        );
+        const changed = descriptions.filter((entry) => entry.text !== (written.get(entry.field) ?? ''));
+        if (changed.some((entry) => entry.text !== '') && row.level < DESCRIBED) {
+          return { outcome: 'not_described' };
+        }
+        for (const { field, text } of changed) {
+          if (text === '') {
+            await trx.deleteFrom('fieldDescriptions').where('resourceId', '=', id).where('field', '=', field).execute();
+          } else {
+            await trx
+              .insertInto('fieldDescriptions')
+              .values({ resourceId: id, field, text, updatedBy: viewer.id })
+              .onConflict((conflict) => conflict.columns(['resourceId', 'field']).doUpdateSet({ text, updatedAt: new Date(), updatedBy: viewer.id }))
+              .execute();
+          }
+          await write(trx, id, 'RES-010', { field, actor: viewer.name }, viewer.id);
+        }
+        return { outcome: 'edited', changed: changed.map((entry) => entry.field) };
+      });
+    },
+
+    async relate(id, details, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<EditOutcome> => {
+        const row = await trx.selectFrom('resources').select(['displayName']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        const fields = await fieldNames(trx, id);
+        const problem = checkDetails(details, fields);
+        if (problem) {
+          return { outcome: 'invalid', message: `${row.displayName}: ${problem}` };
+        }
+        await record(trx, id, details, fields.length, viewer);
+        return { outcome: 'edited', changed: ['details'] };
+      });
+    },
+
+    async related(id, viewer) {
+      if (!UUID.test(id)) {
+        return [];
+      }
+      const order = new Map((await fieldNames(db, id)).map((name, index) => [name, index]));
+      const mappings = (
+        await db
+          .selectFrom('resourceMappings')
+          .select(['field', 'kind', 'relationType', 'identity', 'inDomainModel'])
+          .where('resourceId', '=', id)
+          .execute()
+      ).sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0));
+      const seen = await seenCollections(viewer);
+      const identities = [...new Set(mappings.map((mapping) => mapping.identity))];
+      const carriers =
+        identities.length === 0 || (seen !== null && seen.length === 0)
+          ? []
+          : await db
+              .selectFrom('resourceMappings as m')
+              .innerJoin('resources as r', 'r.id', 'm.resourceId')
+              .select(['m.identity', 'm.field', 'r.id', 'r.displayName', 'r.level'])
+              .where('m.identity', 'in', identities)
+              .where('r.id', '<>', id)
+              .where('r.withdrawnAt', 'is', null)
+              .$if(seen !== null, (query) => query.where('r.collectionId', 'in', seen!))
+              .orderBy(sql`lower(r.display_name)`)
+              .execute();
+      return mappings.map((mapping) => ({
+        ...mapping,
+        resources: carriers
+          .filter((carrier) => carrier.identity === mapping.identity)
+          .map((carrier) => ({ id: carrier.id, displayName: carrier.displayName, level: carrier.level, field: carrier.field })),
+      }));
+    },
+
+    async atNodes(nodeIds, viewer) {
+      const seen = await seenCollections(viewer);
+      if (nodeIds.length === 0 || (seen !== null && seen.length === 0)) {
+        return [];
+      }
+      return db
+        .selectFrom('resources')
+        .select(['nodeId', 'id', 'displayName', 'level'])
+        .where('nodeId', 'in', [...nodeIds])
+        .where('withdrawnAt', 'is', null)
+        .$if(seen !== null, (query) => query.where('collectionId', 'in', seen!))
+        .execute();
     },
   };
 }

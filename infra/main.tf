@@ -81,13 +81,18 @@ locals {
   service_env = {
     identity = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
     # catalogue takes the exposed tables only from registry, by a Google ID token for its own
-    # address (TR-SR-01).
+    # address (TR-SR-01), and asks registry the lineage around a Resource as itself (DEC-AR-06).
     catalogue = merge(local.database_env["catalogue"], {
       DATAHUB_CATALOGUE_URL            = local.urls["catalogue"]
       DATAHUB_REGISTRY_SERVICE_ACCOUNT = google_service_account.service["registry"].email
+      DATAHUB_REGISTRY_URL             = local.urls["registry"]
     })
-    registry = local.registry_env
-    query    = {}
+    # registry answers catalogue only, by a Google ID token for its own address (DEC-AR-06).
+    registry = merge(local.registry_env, {
+      DATAHUB_REGISTRY_URL              = local.urls["registry"]
+      DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
+    })
+    query = {}
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06).

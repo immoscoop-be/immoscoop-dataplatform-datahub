@@ -21,6 +21,8 @@ export default {
   'origin.dbt': 'Uit dbt',
   'origin.owner': 'Van de Owner',
   'origin.dataTeam': 'Van het Data Team',
+  'description.business': 'Business Description',
+  'description.dbt': 'Beschrijving',
   'status.notPublished': 'Niet gepubliceerd',
   'status.noOwner': 'Nog geen Owner',
   'item.notPublished': '{name} · niet gepubliceerd',

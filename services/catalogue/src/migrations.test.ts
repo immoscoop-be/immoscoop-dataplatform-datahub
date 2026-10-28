@@ -61,6 +61,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([
       ['0005-collections-afresh', 'Success'],
       ['0006-grain-and-mappings', 'Success'],
+      ['0007-resource-card', 'Success'],
     ]);
 
     expect(await count('collections')).toBe(0);

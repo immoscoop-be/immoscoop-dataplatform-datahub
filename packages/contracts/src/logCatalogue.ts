@@ -48,7 +48,10 @@ export const LOG_CATALOGUE = {
   'RES-005': {
     about: 'resource',
     parameters: ['field', 'actor'],
-    text: { en: '{field} updated by {actor}', nl: '{field} bijgewerkt door {actor}' },
+    text: {
+      en: '{field, select, businessDescription {Business Description} intendedUse {Intended use} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Reliable since} keyFields {Key fields} parameters {Parameters} other {{field}}} updated by {actor}',
+      nl: '{field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Valkuilen} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor}',
+    },
   },
   'RES-006': {
     about: 'resource',
@@ -71,6 +74,14 @@ export const LOG_CATALOGUE = {
     text: {
       en: 'Grain and mappings recorded by {actor}: {mapped} of {fields} fields mapped',
       nl: 'Grain en mappings vastgelegd door {actor}: {mapped} van de {fields} velden gemapt',
+    },
+  },
+  'RES-010': {
+    about: 'resource',
+    parameters: ['field', 'actor'],
+    text: {
+      en: 'Business Description of the field {field} updated by {actor}',
+      nl: 'Business Description van het veld {field} bijgewerkt door {actor}',
     },
   },
   'COL-001': {

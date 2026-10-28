@@ -23,6 +23,8 @@ export default {
   'origin.dbt': 'From dbt',
   'origin.owner': 'From the Owner',
   'origin.dataTeam': 'From the Data Team',
+  'description.business': 'Business Description',
+  'description.dbt': 'Description',
   'status.notPublished': 'Not published',
   'status.noOwner': 'No Owner yet',
   'item.notPublished': '{name} · not published',

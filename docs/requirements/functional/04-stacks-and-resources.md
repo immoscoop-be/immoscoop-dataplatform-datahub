@@ -315,6 +315,10 @@ A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Convers
 
 *Note of 2026-10-23: a tab Queries is proposed ([FR-SR-44](#fr-sr-44)).*
 
+*Note of 2026-10-28: the tabs are Overview, Columns, Lineage, History and Preview; History lists the queries and Lenses that used the Resource, one row per query, and is not a list of Log Entries ([DEC-UX-90](../../design/principles.md#dec-ux-90), [OP-SR-18](#op-sr-18)).*
+
+*Note of 2026-10-28, on building part 4: the tabs Overview, Columns and Lineage are built; History and Preview are there and come with Query, in part 5 of the [build order](../../design/build-order.md).*
+
 <a id="fr-sr-25"></a>
 ### FR-SR-25 · The preview shows a limited number of rows
 
@@ -347,9 +351,11 @@ Every query gets a limit on scanned bytes and a label with the User. Executed qu
 <a id="fr-sr-28"></a>
 ### FR-SR-28 · The Owner and the Data Team supplement the description
 
-**Status:** Specified · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
+**Status:** Implemented · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Owner and the Data Team can supplement intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log.
+
+*Note of 2026-10-28, on building it: Anomalies come with making a Signal an Anomaly, not in v1 ([FR-SR-30](#fr-sr-30)).*
 
 <a id="fr-sr-29"></a>
 ### FR-SR-29 · React with a Question, a Remark or a Signal
@@ -432,6 +438,8 @@ The Preview offers a choice per Parameter of the Resource, such as the weeks or 
 
 The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
 
+*Note of 2026-10-28, on building part 4: the page shows the partition column and its unit, the cluster columns in their order, and how to query it cheaply; its size and number of partitions come from BigQuery with Query, in part 5 of the [build order](../../design/build-order.md).*
+
 <a id="fr-sr-40"></a>
 ### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
 
@@ -479,6 +487,8 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 *Note of 2026-10-28: in the tab History, one row per query or Lens, with its runs and last run ([DEC-UX-90](../../design/principles.md#dec-ux-90)).*
 
+*Note of 2026-10-28, later: a row has no Query ID; the numbers on top are the queries of the last 30 days, how many of them are Lenses, and how many colleagues ran them, as [resource-history](../../design/screens/resource-history.html) shows ([OP-SR-18](#op-sr-18)).*
+
 <a id="fr-sr-45"></a>
 ### FR-SR-45 · Every query has a name
 
@@ -519,10 +529,12 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 
 *Note of 2026-10-26: when the Resource is not Described, the sheet names what dbt lacks and whether a Business Description covers it; once every gap is covered, publishing is possible, and the Resource is Confirmed with a mark ([FR-MR-13](06-maturity-and-release.md#fr-mr-13)).*
 
+*Note of 2026-10-28: replaced by [DEC-MR-10](06-maturity-and-release.md#dec-mr-10): a Resource without its descriptions from dbt stays at 1 · Available and cannot be published; a Business Description covers no gap ([OP-SR-19](#op-sr-19)).*
+
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated
 
-**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
 
@@ -558,7 +570,7 @@ A Broken query cannot run: Run is off, and a callout on top of it names what no 
 <a id="fr-sr-54"></a>
 ### FR-SR-54 · The lineage of a Resource is walked one step at a time
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
 
 The tab Lineage shows the Resource in the middle, always, with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one adds its own next models beside it, a column further out. Data Hub never shows the whole lineage at once.
 ## Log Catalogue
@@ -634,8 +646,8 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-15"></a>**OP-SR-15** · Decide how the Pre-flight treats a query without a partition filter on a Resource that requires one ([FR-CO-34](03-collections.md#fr-co-34)): BigQuery refuses such a query when the table beneath requires it, and the Data Admin can require it in Data Hub too. Proposal: the Pre-flight blocks it, names the partition column, and offers to add the filter, instead of the warning of [FR-SR-40](#fr-sr-40). *Raised on 2026-10-25, while designing how a Resource is stored.* *Decided on 2026-10-28, by Max: as proposed ([DEC-SR-35](#dec-sr-35)).*
 - [x] <a id="op-sr-16"></a>**OP-SR-16** · Work out what marking a Resource deprecated holds ([FR-SR-50](#fr-sr-50)): whether it asks for a reason and what to use instead, how it shows in search, on a Lens and for Claude, and whether a new Lens can still be built on it. Proposal: a reason is asked, what to use instead is optional; a label next to the Level, wherever the Level shows; a new Lens on it is possible, with a warning. *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-28, by Max, with the design: a reason, what to use instead, the chip wherever the Level shows, and a new Lens with a warning ([DEC-UX-101](../../design/principles.md#dec-ux-101)).*
 - [x] <a id="op-sr-17"></a>**OP-SR-17** · Work out the Request to run a query above 1 GB ([DEC-SR-29](#dec-sr-29)): what accepting it allows, one run or the query as it is, and for how long; whether a change to its SQL needs a new Request; and its timeout, as for a Lens ([OP-LE-10](09-lenses.md#op-le-10)). The Message Catalogue has the Request ([MSG-QRY-01](message-catalogue.md#msg-qry-01)) and its decision ([MSG-CNV-05](message-catalogue.md#msg-cnv-05)). *Raised on 2026-10-28, while making the Message Catalogue.* *Decided on 2026-10-28, by Max: accepting lets that User run that query above the limit ([DEC-SR-36](#dec-sr-36)).*
-- [ ] <a id="op-sr-18"></a>**OP-SR-18** · The tabs of a Resource: [FR-SR-24](#fr-sr-24) still names the tabs EDA and Conversations and a History filterable by kind of Log Entry, and [FR-SR-44](#fr-sr-44) a Query ID on every row, as does the subsection [Queries](../../design/principles.md#queries) of the design, with how many queries filter on the partition column and Claude as a way a query ran. The tabs are Overview, Columns, Lineage, History and Preview, and History is one row per query, without its Query ID ([DEC-UX-90](../../design/principles.md#dec-ux-90), [resource-history](../../design/screens/resource-history.html)). Proposal: FR-SR-24, FR-SR-44 and the subsection Queries follow DEC-UX-90 and the screen. *Raised on 2026-10-28, while mapping the screens to the requirements.*
-- [ ] <a id="op-sr-19"></a>**OP-SR-19** · The second note of [FR-SR-49](#fr-sr-49) says publishing is possible once a Business Description covers every column dbt does not describe, through [FR-MR-13](06-maturity-and-release.md#fr-mr-13), which is withdrawn: a Resource without its descriptions from dbt cannot be published ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)). Proposal: a note that DEC-MR-10 replaces it. *Raised on 2026-10-28, while mapping the screens to the requirements.*
+- [x] <a id="op-sr-18"></a>**OP-SR-18** · The tabs of a Resource: [FR-SR-24](#fr-sr-24) still names the tabs EDA and Conversations and a History filterable by kind of Log Entry, and [FR-SR-44](#fr-sr-44) a Query ID on every row, as does the subsection [Queries](../../design/principles.md#queries) of the design, with how many queries filter on the partition column and Claude as a way a query ran. The tabs are Overview, Columns, Lineage, History and Preview, and History is one row per query, without its Query ID ([DEC-UX-90](../../design/principles.md#dec-ux-90), [resource-history](../../design/screens/resource-history.html)). Proposal: FR-SR-24, FR-SR-44 and the subsection Queries follow DEC-UX-90 and the screen. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
+- [x] <a id="op-sr-19"></a>**OP-SR-19** · The second note of [FR-SR-49](#fr-sr-49) says publishing is possible once a Business Description covers every column dbt does not describe, through [FR-MR-13](06-maturity-and-release.md#fr-mr-13), which is withdrawn: a Resource without its descriptions from dbt cannot be published ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)). Proposal: a note that DEC-MR-10 replaces it. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
 - [ ] <a id="op-sr-20"></a>**OP-SR-20** · [FR-SR-42](#fr-sr-42) has the editor suggest the Resources the User may see, while a query reads only its own Resources and the editor suggests only theirs ([DEC-UX-73](../../design/principles.md#dec-ux-73)). Proposal: FR-SR-42 follows DEC-UX-73. *Raised on 2026-10-28, while mapping the screens to the requirements.*
 - [ ] <a id="op-sr-21"></a>**OP-SR-21** · [FR-SR-47](#fr-sr-47) shows each Lens with its use, [query-new](../../design/screens/query-new.html) shows how often each was used this month, and the tab About of [lens](../../design/screens/lens.html) how many people ran it; usage reporting is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)). Proposal: no count of use or of colleagues in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.*
 

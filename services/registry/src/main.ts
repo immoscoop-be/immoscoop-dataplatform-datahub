@@ -1,4 +1,4 @@
-import { verifierFromEnv } from '@datahub/auth';
+import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken, readSecret } from '@datahub/google';
 import { start } from '@datahub/server';
@@ -43,6 +43,23 @@ const app = await buildApp({
     domainModel,
     proposals: createProposals(reading, domainModel),
   },
+  // catalogue asks the lineage around a Resource as itself, with a Google ID token for registry's own
+  // address, for a User it checked (DEC-AR-06).
+  internal: {
+    reading,
+    serviceCallers: createServiceCallerVerifier({
+      audience: required('DATAHUB_REGISTRY_URL'),
+      serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')],
+    }),
+  },
 });
 app.addHook('onClose', () => database.close());
 await start(app);
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing environment variable ${name}`);
+  }
+  return value;
+}

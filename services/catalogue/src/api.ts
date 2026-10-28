@@ -5,7 +5,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
-import type { AddItem, AddOutcome, Details, Mapping, Resource, Resources, ResourcesUpdate } from './resources.js';
+import { type Registry, RegistryUnavailable } from './registry.js';
+import { type AddItem, type AddOutcome, CARD_KEYS, type Card, type Details, type EditOutcome, type Mapping, type Resource, type Resources, type ResourcesUpdate } from './resources.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -13,6 +14,8 @@ export interface ApiOptions {
   resources: Resources;
   /** Who may hand over the exposed tables: the service account of registry (TR-SR-01). */
   serviceCallers: ServiceCallerVerifier;
+  /** registry, for the lineage around a Resource (DEC-AR-06). */
+  registry: Registry;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -46,7 +49,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers } = options;
+  const { collections, identity, resources, serviceCallers, registry } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -57,6 +60,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     if (error instanceof NotYourGroup) {
       return reply.code(400).send({ error: 'not_your_group', message: 'Choose a group you are in yourself as Owner Unit; the Data Team chooses any group of the domain.' });
+    }
+    if (error instanceof RegistryUnavailable) {
+      request.log.error({ err: error }, 'registry did not give the lineage');
+      return reply.code(503).header('retry-after', '30').send({ error: 'temporarily_unavailable', message: 'The lineage could not be read; try again later.' });
     }
     if (error instanceof IdentityUnavailable) {
       request.log.error({ err: error }, 'identity did not tell the groups of the User');
@@ -284,6 +291,189 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     return { entries: await resources.log(resource.id, 200) };
   });
+
+  /**
+   * Who may change what Data Hub keeps about a Resource (FR-RC-15): its Owner Unit and the Data Team,
+   * once it is in a Collection; before that it has no Owner, and the rest follows once it has one.
+   */
+  async function editable(request: FastifyRequest, reply: FastifyReply): Promise<Resource | undefined> {
+    const resource = await resources.get((request.params as { id: string }).id);
+    if (!resource || !(await seen(request, resource))) {
+      reply.code(404).send(NO_RESOURCE);
+      return undefined;
+    }
+    if (resource.collectionId === null) {
+      reply.code(409).send({ error: 'no_collection', message: 'A Resource gets what Data Hub keeps about it once it is in a Collection.' });
+      return undefined;
+    }
+    return resource;
+  }
+
+  /** The answer to a change to a Resource: the Resource as it is now, else why it was not changed. */
+  async function editOutcome(reply: FastifyReply, id: string, outcome: EditOutcome) {
+    switch (outcome.outcome) {
+      case 'edited':
+        return { resource: await resources.detail(id) };
+      case 'not_found':
+        return reply.code(404).send(NO_RESOURCE);
+      case 'not_described':
+        return reply
+          .code(409)
+          .send({ error: 'not_described', message: 'A Business Description is written once dbt describes the Resource, from 2 · Described on.' });
+      case 'invalid':
+        return reply.code(400).send({ error: 'invalid_request', message: outcome.message });
+    }
+  }
+
+  // The Owner and the Data Team edit what Data Hub keeps about a Resource in place (FR-RC-15, FR-SR-28).
+  app.patch<{ Params: { id: string }; Body: unknown }>('/resources/:id', async (request, reply) => {
+    const changes = parseCard(request.body);
+    if (typeof changes === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: changes });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return editOutcome(reply, resource.id, await resources.edit(resource.id, changes, viewer(request)));
+  });
+
+  // The Business Descriptions of the fields, next to their descriptions from dbt (FR-RC-16).
+  app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/fields', async (request, reply) => {
+    const descriptions = parseFieldDescriptions(request.body);
+    if (typeof descriptions === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: descriptions });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return editOutcome(reply, resource.id, await resources.describeFields(resource.id, descriptions, viewer(request)));
+  });
+
+  // A Data Admin changes the grain and mappings with Edit relations, as at step 2 of adding (DEC-UX-107).
+  app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/details', async (request, reply) => {
+    if (!viewer(request).dataTeam) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only a Data Admin changes the grain and the mappings of a Resource.' });
+    }
+    const input = request.body;
+    const details = input !== null && typeof input === 'object' && !Array.isArray(input) ? parseDetails(input as Record<string, unknown>) : 'Send the details as a JSON object.';
+    if (typeof details === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: details });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return editOutcome(reply, resource.id, await resources.relate(resource.id, details, viewer(request)));
+  });
+
+  // Each mapping with the Resources that carry the same identity, as far as the User sees them (FR-RC-09).
+  app.get<{ Params: { id: string } }>('/resources/:id/related', async (request, reply) => {
+    const resource = await resources.get(request.params.id);
+    if (!resource || !(await seen(request, resource))) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    return { related: await resources.related(resource.id, viewer(request)) };
+  });
+
+  // The lineage around a Resource, for everyone who sees it (DEC-AR-06, FR-SR-54): the models up- and
+  // downstream with their names, layers and projects, and which of them are Resources the User sees.
+  app.get<{ Params: { id: string } }>('/resources/:id/lineage', async (request, reply) => {
+    const resource = await resources.get(request.params.id);
+    if (!resource || !(await seen(request, resource))) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    const [upstream, downstream] = await Promise.all([registry.lineage(resource.nodeId, 'upstream'), registry.lineage(resource.nodeId, 'downstream')]);
+    const nodeIds = [...new Set([...(upstream?.nodes ?? []), ...(downstream?.nodes ?? [])].map((node) => node.uniqueId))];
+    return {
+      nodeId: resource.nodeId,
+      upstream: upstream ?? null,
+      downstream: downstream ?? null,
+      resources: await resources.atNodes(nodeIds, viewer(request)),
+    };
+  });
+}
+
+const TEXT_LIMITS = { businessDescription: 4000, intendedUse: 2000, pitfalls: 2000 } as const;
+const DAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * Checks what changes about a Resource (FR-RC-15): its Business Description, intended use and pitfalls
+ * as texts, its Known Gaps as a list of texts, since when it is reliable as a day or null, and its key
+ * fields and Parameters as lists of fields. Returns the problem as a sentence when there is one.
+ */
+export function parseCard(body: unknown): Partial<Card> | string {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return 'Send what changes as a JSON object.';
+  }
+  const input = body as Record<string, unknown>;
+  const unknown = Object.keys(input).find((key) => !(CARD_KEYS as readonly string[]).includes(key));
+  if (unknown !== undefined) {
+    return `A Resource has no ${unknown} to change.`;
+  }
+  const card: Partial<Card> = {};
+  for (const key of ['businessDescription', 'intendedUse', 'pitfalls'] as const) {
+    const value = input[key];
+    if (value === undefined) {
+      continue;
+    }
+    if (typeof value !== 'string' || value.trim().length > TEXT_LIMITS[key]) {
+      return `The ${key} is a text of at most ${TEXT_LIMITS[key]} characters.`;
+    }
+    card[key] = value.trim();
+  }
+  if (input.knownGaps !== undefined) {
+    const gaps = input.knownGaps;
+    if (!Array.isArray(gaps) || gaps.length > 20 || !gaps.every((gap) => typeof gap === 'string' && gap.trim().length <= 1000)) {
+      return 'The Known Gaps are a list of at most 20 texts of at most 1000 characters.';
+    }
+    card.knownGaps = (gaps as string[]).map((gap) => gap.trim()).filter(Boolean);
+  }
+  if (input.reliableSince !== undefined) {
+    const day = input.reliableSince;
+    if (day !== null && !(typeof day === 'string' && DAY.test(day) && !Number.isNaN(Date.parse(day)) && new Date(day).toISOString().startsWith(day))) {
+      return 'Since when it is reliable is a day, as YYYY-MM-DD, or null.';
+    }
+    card.reliableSince = day as string | null;
+  }
+  for (const key of ['keyFields', 'parameters'] as const) {
+    const value = input[key];
+    if (value === undefined) {
+      continue;
+    }
+    if (!Array.isArray(value) || value.length > 50 || !value.every((name) => NAME(name)) || new Set(value).size !== value.length) {
+      return `The ${key} are a list of at most 50 different fields.`;
+    }
+    card[key] = value as string[];
+  }
+  if (Object.keys(card).length === 0) {
+    return 'Send at least one thing to change.';
+  }
+  return card;
+}
+
+/**
+ * Checks the Business Descriptions of fields to write (FR-RC-16): each field once, with a text of at
+ * most 2000 characters; an empty text removes it. Returns the problem as a sentence when there is one.
+ */
+export function parseFieldDescriptions(body: unknown): { field: string; text: string }[] | string {
+  const list = (body as { fields?: unknown } | null)?.fields;
+  if (!Array.isArray(list) || list.length === 0 || list.length > 1000) {
+    return 'Send the fields as a list of 1 to 1000.';
+  }
+  const entries: { field: string; text: string }[] = [];
+  for (const raw of list as unknown[]) {
+    const entry = (raw ?? {}) as Record<string, unknown>;
+    if (!NAME(entry.name) || typeof entry.businessDescription !== 'string' || entry.businessDescription.trim().length > 2000) {
+      return 'Each field has its name and a Business Description of at most 2000 characters.';
+    }
+    entries.push({ field: entry.name, text: entry.businessDescription.trim() });
+  }
+  if (new Set(entries.map((entry) => entry.field)).size !== entries.length) {
+    return 'Name each field once.';
+  }
+  return entries;
 }
 
 /** Checks what registry sends (TR-AR-08); returns the problem as a sentence when there is one. */

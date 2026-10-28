@@ -471,6 +471,48 @@ run "registry_hands_catalogue_the_exposed_tables_as_itself" {
   }
 }
 
+run "catalogue_reads_the_lineage_around_a_resource_from_registry_as_itself" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["catalogue"]
+    override_during = plan
+    values = {
+      email  = "datahub-catalogue@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-catalogue@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition = (
+      [for env in google_cloud_run_v2_service.service["registry"].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_SERVICE_ACCOUNT"]
+      == ["datahub-catalogue@test-project.iam.gserviceaccount.com"]
+    )
+    error_message = "registry gives the lineage around a Resource to the service account of catalogue, and to no one else (DEC-AR-06)."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["registry"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_URL"],
+      "https://datahub-registry-123456789.europe-west1.run.app"
+    )
+    error_message = "registry only accepts ID tokens issued for its own address."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.value if env.name == "DATAHUB_REGISTRY_URL"],
+      "https://datahub-registry-123456789.europe-west1.run.app"
+    )
+    error_message = "catalogue asks registry at its fixed address."
+  }
+
+  assert {
+    condition     = length([for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.name if env.name == "DATAHUB_CATALOGUE_SERVICE_ACCOUNT"]) == 0
+    error_message = "The ingest job answers no one: it needs no caller to accept."
+  }
+}
+
 run "registry_reads_the_source_jobs_of_its_own_environment" {
   command = plan
 

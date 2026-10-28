@@ -36,10 +36,12 @@ const SAVED_SEARCHES = {
   registeredAt: '2026-10-21T08:00:00Z',
   withdrawn: false,
   fields: [
-    { name: 'search_id', position: 1, dataType: 'STRING', description: '' },
-    { name: 'filters', position: 2, dataType: 'STRING', description: '' },
+    { name: 'search_id', position: 1, dataType: 'STRING', description: '', businessDescription: '' },
+    { name: 'filters', position: 2, dataType: 'STRING', description: '', businessDescription: '' },
   ],
   leftOut: [],
+  details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
+  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
 };
 
 const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
@@ -82,6 +84,41 @@ const WEEKLY = {
   collectionId: 'c1',
   level: 2,
   lastChange: { logId: 'COL-030', params: { collection: 'Credit leads', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
+};
+
+/** Weekly lead volume as its page reads it, with what its Owner keeps about it. */
+const WEEKLY_DETAIL = {
+  ...WEEKLY,
+  description: 'One row per week and lead source.',
+  fields: [
+    { name: 'week_start', position: 1, dataType: 'DATE', description: 'Monday of the week', businessDescription: '' },
+    { name: 'lead_source', position: 2, dataType: 'STRING', description: 'Where the lead came from', businessDescription: 'The website, the app or a partner.' },
+  ],
+  details: { ...SAVED_SEARCHES.details, partition: { field: 'week_start', unit: 'day' }, clusterBy: ['lead_source'], origins: { partition: 'dbt', clusterBy: 'dbt' } },
+};
+
+/** The lineage around Weekly lead volume: two models upstream, one downstream (DEC-AR-06). */
+const node = (name: string, layer: string, distance: number) => ({
+  uniqueId: `model.p.${name}`,
+  name,
+  resourceType: 'model',
+  layer,
+  projectId: '9367',
+  projectName: 'dbt-prod',
+  distance,
+});
+const WEEKLY_LINEAGE = {
+  nodeId: 'model.p.weekly',
+  upstream: {
+    nodes: [node('weekly', 'marts', 0), node('int_leads', 'intermediate', 1), node('stg_leads', 'staging', 2)],
+    edges: [
+      { parentId: 'model.p.int_leads', childId: 'model.p.weekly' },
+      { parentId: 'model.p.stg_leads', childId: 'model.p.int_leads' },
+    ],
+    truncated: false,
+  },
+  downstream: { nodes: [node('weekly', 'marts', 0), node('lead_share', 'marts', 1)], edges: [{ parentId: 'model.p.weekly', childId: 'model.p.lead_share' }], truncated: false },
+  resources: [{ nodeId: 'model.p.weekly', id: 'r2', displayName: 'Weekly lead volume', level: 2 }],
 };
 
 /** The server of the web app, identity and catalogue, as the page meets them: with or without a session. */
@@ -160,6 +197,28 @@ function serve({
     }
     if (path === '/resources/r1' && dataTeam) {
       return json({ resource: SAVED_SEARCHES });
+    }
+    if (path === '/resources/r2') {
+      const changes = method === 'PATCH' ? (JSON.parse(init.body as string) as Record<string, unknown>) : {};
+      return json({ resource: { ...WEEKLY_DETAIL, card: { ...WEEKLY_DETAIL.card, ...changes } } });
+    }
+    if (path === '/resources/r2/details' && method === 'PUT') {
+      return dataTeam ? json({ resource: WEEKLY_DETAIL }) : json({ error: 'forbidden' }, 403);
+    }
+    if (path === '/resources/r2/fields' && method === 'PUT') {
+      return json({ resource: WEEKLY_DETAIL });
+    }
+    if (path === '/resources/r2/log') {
+      return json({ entries: [] });
+    }
+    if (path === '/resources/r2/related') {
+      return json({ related: [] });
+    }
+    if (path === '/resources/r2/lineage') {
+      return json(WEEKLY_LINEAGE);
+    }
+    if (path === '/resources/r1/related' && dataTeam) {
+      return json({ related: [] });
     }
     if (path === '/resources/r1/log' && dataTeam) {
       return json({
@@ -471,6 +530,98 @@ describe('the web app, with Collections', () => {
     await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { description: 'Every credit lead.' } }));
+  });
+});
+
+describe('the page of a Resource', () => {
+  it('shows its Owner what it is, and the actions that come later (FR-SR-24, DEC-UX-90)', async () => {
+    serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    for (const name of ['Query', 'Berichten', 'Stel een vraag']) {
+      expect((main.getByRole('button', { name: new RegExp(name) }) as HTMLButtonElement).disabled).toBe(true);
+    }
+    expect(screen.getByRole('status').textContent).toContain('Enkel Data en het Data Team zien hem. Eens gepubliceerd ziet iedereen die Credit leads ziet hem.');
+    expect(main.getByText('One row per week and lead source.')).toBeTruthy();
+    expect(main.getByText('op week_start, een partitie per dag')).toBeTruthy();
+    expect(main.getByText(/Filter eerst op week_start/)).toBeTruthy();
+    expect(main.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
+    await fireEvent.click(main.getByRole('tab', { name: 'Voorbeeld' }));
+    expect(main.getByText('Dit tabblad wordt nog gebouwd.')).toBeTruthy();
+  });
+
+  it('lets its Owner edit what Data Hub keeps about it in place, and the fields (FR-RC-15, FR-RC-16)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('button', { name: 'Voeg een Business Description toe' }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Business Description' }), { target: { value: 'The credit leads we send to KBC.' } });
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly trends.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PATCH',
+        path: '/resources/r2',
+        body: { businessDescription: 'The credit leads we send to KBC.', intendedUse: 'Weekly trends.', pitfalls: '', knownGaps: [''], reliableSince: null, keyFields: [], parameters: [] },
+      }),
+    );
+    expect(await main.findByText('The credit leads we send to KBC.')).toBeTruthy();
+    expect(main.getByText('Weekly trends.')).toBeTruthy();
+
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    expect(main.getByText('The website, the app or a partner.')).toBeTruthy();
+    expect(main.getByText('Partitie')).toBeTruthy();
+    expect(main.getByText('Cluster 1')).toBeTruthy();
+    // Edit relations is for a Data Admin only (DEC-UX-107).
+    expect(main.queryByRole('button', { name: /Relaties bewerken/ })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Business Description · week_start' }), { target: { value: 'The Monday of the week.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/fields', body: { fields: [{ name: 'week_start', businessDescription: 'The Monday of the week.' }] } }),
+    );
+  });
+
+  it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    await fireEvent.click(main.getByRole('button', { name: /Relaties bewerken/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Weekly lead volume' }));
+    await fireEvent.click(await sheet.findByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({
+        method: 'PUT',
+        path: '/resources/r2/details',
+        body: expect.objectContaining({ partition: { field: 'week_start', unit: 'day' }, clusterBy: ['lead_source'], mappings: [] }),
+      }),
+    );
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('walks its lineage one step at a time, the Resource in the middle (FR-SR-54, DEC-UX-100)', async () => {
+    serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('tab', { name: 'Lineage' }));
+    const upstream = await main.findByRole('button', { name: /int_leads/ });
+    expect(main.getByText('lead_share')).toBeTruthy();
+    // Only its direct models at first; a click adds what is next to it, a column further out.
+    expect(main.queryByText('stg_leads')).toBeNull();
+    await fireEvent.click(upstream);
+    expect(upstream.getAttribute('aria-expanded')).toBe('true');
+    expect(main.getByText('stg_leads')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Terug naar zijn directe modellen/ }));
+    expect(main.queryByText('stg_leads')).toBeNull();
   });
 });
 

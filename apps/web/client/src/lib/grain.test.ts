@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ResourceDetail } from './catalogue.js';
-import { cardinalityOf, draftOf, nounOf, requestOf, strangers, subjectOf, unfinished } from './grain.js';
+import { cardinalityOf, draftOf, nounOf, recordedDraftOf, requestOf, strangers, subjectOf, unfinished } from './grain.js';
 import type { Proposal } from './registry.js';
 
 const resource = (fields: string[]): ResourceDetail => ({
@@ -18,8 +18,10 @@ const resource = (fields: string[]): ResourceDetail => ({
   level: 1,
   registeredAt: '2026-10-22T08:00:00Z',
   withdrawn: false,
-  fields: fields.map((name, index) => ({ name, position: index + 1, dataType: 'STRING', description: '' })),
+  fields: fields.map((name, index) => ({ name, position: index + 1, dataType: 'STRING', description: '', businessDescription: '' })),
   leftOut: [{ name: 'identifiers', dataType: 'ARRAY<STRING>', reason: 'array' }],
+  details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
+  card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
 });
 
 const proposal: Proposal = {
@@ -118,6 +120,25 @@ describe('the grain and relations of a Resource being added (FR-CO-33, FR-CO-34)
       { field: 'listingId', kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: 'eventId', origin: 'domainModel', inDomainModel: true },
       { field: 'visitorId', kind: 'performedBy', relationType: null, identity: 'visitor.visitorId', subject: 'eventId', origin: 'domainModel', inDomainModel: true },
     ]);
+  });
+
+  it('start again from what was recorded, for Edit relations (DEC-UX-107)', () => {
+    const recorded = resource(fields);
+    recorded.details = {
+      partition: { field: 'collectorDatetime', unit: 'day' },
+      clusterBy: ['listingId'],
+      partitionFilter: 'bigQuery',
+      grain: ['eventId'],
+      grainSentence: 'one simulation',
+      modelType: 'event',
+      origins: { partition: 'dbt', partitionFilter: 'dbt', grain: 'domainModel' },
+      release: '0.0.70',
+      mappings: [{ field: 'listingId', kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: 'eventId', origin: 'here', inDomainModel: true }],
+    };
+    const draft = recordedDraftOf(recorded);
+    expect(draft).toMatchObject({ partitionFilter: 'bigQuery', filterLocked: true, grain: ['eventId'], grainSentence: 'one simulation', release: '0.0.70' });
+    expect(draft.fields.find((field) => field.name === 'listingId')).toMatchObject({ kind: 'relation', relationType: 'basedOn', subject: 'eventId', origin: 'here' });
+    expect(draft.fields.find((field) => field.name === 'cityId')).toMatchObject({ kind: 'none', origin: 'here' });
   });
 
   it('say what an identity is about in a word', () => {

@@ -18,6 +18,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-28: every template has a Dutch version ([NFR-LOC-10](../non-functional/localisation.md#nfr-loc-10)), and the catalogue moved into the code, as the [Message Catalogue](message-catalogue.md) did, so that every service and the web app use the same texts; decided by Max while building part 2 of the [build order](../../design/build-order.md). The English templates write Defined Terms with capitals ([DEC-UX-92](../../design/principles.md#dec-ux-92)): Level in `RES-002` and `MAT-021`, Collection in `COL-030` and `COL-031`, Owner in `MAT-021`, Anomaly in `CNV-051`; and `COL-004` and `ART-010` choose their word from the value of their parameter.*
 
+*Changed on 2026-10-28, while building part 4: `RES-005` chooses the word for what was updated from its parameter, and `RES-010` is new, for the Business Description of a field ([FR-RC-15](05-resource-card.md#fr-rc-15), [FR-RC-16](05-resource-card.md#fr-rc-16)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -30,11 +32,12 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-002` | Maturity assessed at Level {level} | Maturiteit beoordeeld op Level {level} | level, reason |
 | `RES-003` | Renamed from {old} to {new} | Hernoemd van {old} naar {new} | old, new, run |
 | `RES-004` | Withdrawn: no exposure with the tag datahub depends on it any more | Teruggetrokken: geen exposure met de tag datahub hangt er nog van af | run |
-| `RES-005` | {field} updated by {actor} | {field} bijgewerkt door {actor} | field, actor |
+| `RES-005` | {field, select, businessDescription {Business Description} intendedUse {Intended use} pitfalls {Pitfalls} knownGaps {Known Gaps} reliableSince {Reliable since} keyFields {Key fields} parameters {Parameters} other {{field}}} updated by {actor} | {field, select, businessDescription {Business Description} intendedUse {Beoogd gebruik} pitfalls {Valkuilen} knownGaps {Known Gaps} reliableSince {Betrouwbaar sinds} keyFields {Sleutelvelden} parameters {Parameters} other {{field}}} bijgewerkt door {actor} | field, actor |
 | `RES-006` | Back through exposure {exposure} | Terug via de exposure {exposure} | exposure, run |
 | `RES-007` | Marked deprecated by {actor} | Als deprecated gemarkeerd door {actor} | actor, reason |
 | `RES-008` | Deprecation taken away by {actor} | Deprecated weggenomen door {actor} | actor |
 | `RES-009` | Grain and mappings recorded by {actor}: {mapped} of {fields} fields mapped | Grain en mappings vastgelegd door {actor}: {mapped} van de {fields} velden gemapt | mapped, fields, grain, modelType, release, actor |
+| `RES-010` | Business Description of the field {field} updated by {actor} | Business Description van het veld {field} bijgewerkt door {actor} | field, actor |
 | `COL-001` | Collection created by {actor} | Collection aangemaakt door {actor} | actor, name, ownerUnit, visibility |
 | `COL-002` | {field, select, name {Name} description {Description} icon {Icon} other {{field}}} changed by {actor} | {field, select, name {Naam} description {Beschrijving} icon {Icoon} other {{field}}} gewijzigd door {actor} | field, old, new, actor |
 | `COL-003` | Owner Unit changed from {old} to {new} by {actor} | Owner Unit gewijzigd van {old} naar {new} door {actor} | old, new, actor |

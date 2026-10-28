@@ -95,6 +95,24 @@ A new Resource gets the Level 2 · Described when dbt describes its table and at
 
 The table `messages` in the schema of catalogue holds every Message: its type, a Message ID of the [Message Catalogue](../functional/message-catalogue.md); the kind and ID of the object it is placed on; who wrote it, or none for Data Hub itself; its parameters as JSON, never its text, which is built in the language of whoever reads it; and, while it asks something, its state. A Registration places [MSG-RES-01](../functional/message-catalogue.md#msg-res-01) on the new Resource, with its exposure, its dbt project and the day of the run, in the state `waiting`; adding the Resource to a Collection makes it `inCollection`, and removing it makes it wait again. A unique index keeps it to one per Resource, so a Resource that comes back after being withdrawn gets no second one. Who is told of a Message, and where it shows, comes with the Message Centre.
 
+<a id="tr-sr-10"></a>
+### TR-SR-10 · The Resource Card is kept in catalogue and edited in place
+
+**Status:** Implemented · **Realises:** [FR-RC-15](../functional/05-resource-card.md#fr-rc-15), [FR-RC-01](../functional/05-resource-card.md#fr-rc-01), [FR-RC-16](../functional/05-resource-card.md#fr-rc-16), [FR-SR-28](../functional/04-stacks-and-resources.md#fr-sr-28), [DEC-MR-10](../functional/06-maturity-and-release.md#dec-mr-10)
+
+The table `resources` keeps what the Owner and the Data Team write about a Resource, next to what comes from dbt: its Business Description, intended use and pitfalls, its Known Gaps as a list, since when its data is reliable as a day, and its key fields and Parameters as lists of its fields. `field_descriptions` keeps the Business Description of each field by its name, apart from `resource_fields`, which every call of registry rewrites, so a field that comes back finds its text again.
+
+`GET /resources/{id}` gives them with the Resource: the card, and each field with its Business Description next to its description from dbt. `PATCH /resources/{id}` changes any of the card, and `PUT /resources/{id}/fields` the Business Descriptions of fields, an empty one removing it. Both are for the Owner Unit of its Collection and the Data Team, once the Resource is in a Collection (`409 no_collection` before); a key field or Parameter must be a field of the Resource. A Business Description is written from 2 · Described on (`409 not_described`, [DEC-MR-10](../functional/06-maturity-and-release.md#dec-mr-10)). Every change goes into the Log of the Resource by whoever made it: `RES-005` per part of the card that changed, `RES-010` per field.
+
+`PUT /resources/{id}/details`, for the Data Team, records the grain, storage and mappings again as adding does ([TR-CO-05](03-collections.md#tr-co-05)), for Edit relations ([DEC-UX-107](../../design/principles.md#dec-ux-107)), with `RES-009`. `GET /resources/{id}/related` gives each mapping of the Resource with the other Resources the User sees that carry the same identity, and the field that carries it ([FR-RC-09](../functional/05-resource-card.md#fr-rc-09)).
+
+<a id="tr-sr-11"></a>
+### TR-SR-11 · The lineage around a Resource, for whoever sees it
+
+**Status:** Implemented · **Realises:** [FR-SR-54](../functional/04-stacks-and-resources.md#fr-sr-54), [DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)
+
+`GET /resources/{id}/lineage` answers whoever may see the Resource. catalogue asks registry for the lineage of its Node up- and downstream, as itself with a Google ID token ([TR-AR-11](01-artifact-registry.md#tr-ar-11)), and adds which models are Resources the User sees, with their Display Name and Level. A Node registry does not know gives no lineage either way; a registry that does not answer gives `503`. The web app shows it one step at a time.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).
