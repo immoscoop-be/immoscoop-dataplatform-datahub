@@ -240,21 +240,21 @@ Proposals to confirm.
 <a id="ec-ar-01"></a>
 ### EC-AR-01 · An older run arrives after a newer one
 
-**Status:** Proposed
+**Status:** Specified
 
 It is stored and processed, but does not become the Current Version: the Current Version never goes back in time.
 
 <a id="ec-ar-02"></a>
 ### EC-AR-02 · The catalog is missing
 
-**Status:** Proposed
+**Status:** Specified
 
 Without `catalog.json`, the actual columns are not known. The set gets the status failed, with that reason, and the previous version stays current.
 
 <a id="ec-ar-03"></a>
 ### EC-AR-03 · The table of a Resource is renamed
 
-**Status:** Proposed
+**Status:** Specified
 
 In the Artifacts, this looks like one Node disappearing and another appearing. The Resource keeps its history only once someone confirms the rename; the [Resources](04-stacks-and-resources.md) domain defines how (see [EC-SR-03](04-stacks-and-resources.md#ec-sr-03)).
 
@@ -263,7 +263,7 @@ In the Artifacts, this looks like one Node disappearing and another appearing. T
 <a id="ec-ar-04"></a>
 ### EC-AR-04 · An upstream model disappears
 
-**Status:** Proposed
+**Status:** Specified
 
 The Resources that depended on it get an entry in their Log, even if the table of the Resource itself is (still) unchanged.
 
@@ -273,7 +273,7 @@ The Resources that depended on it get an entry in their Log, even if the table o
 <a id="ec-ar-05"></a>
 ### EC-AR-05 · The collector does not answer
 
-**Status:** Proposed
+**Status:** Specified
 
 When Data Hub needs the Domain Model and the collector does not answer ([DEC-AR-05](#dec-ar-05)), the step that needs it says so, such as suggesting the mappings when adding a Resource, and offers to try again. Data Hub guesses nothing and falls back on no copy; what does not need the Domain Model goes on as usual.
 ## Out of scope
@@ -284,7 +284,7 @@ Which views are Resources and how their ID stays stable ([Resources](04-stacks-a
 
 - [x] <a id="op-ar-01"></a>**OP-AR-01** · At build time, record which dbt Cloud projects dbt-prod and Colleciónes are, and which job is the Source Job of each project. *Recorded on 2026-10-18 in [DEC-AR-01](#dec-ar-01). The prod Source Job of Colleciónes does not generate the docs yet; until "Generate docs on run" is on, its sets fail without a catalog ([EC-AR-02](#ec-ar-02)).*
 - [x] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Decided on 2026-10-18: a webhook ([DEC-AR-02](#dec-ar-02)).*
-- [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
+- [x] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; EC-AR-01 to EC-AR-05 are Specified.*
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
 - [x] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.* *Note of 2026-10-28: where and in which form are decided ([DEC-AR-04](#dec-ar-04)). What remains is how Data Hub learns of a new version. Proposal: it asks again every hour and after every new Current Version, compares the release, and reads the Domain Model again when the release changed; no push from Colleciónes is needed.* *Decided on 2026-10-28, by Max: in real time, read whenever it is needed ([DEC-AR-05](#dec-ar-05)).*
 - [ ] <a id="op-ar-07"></a>**OP-AR-07** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
