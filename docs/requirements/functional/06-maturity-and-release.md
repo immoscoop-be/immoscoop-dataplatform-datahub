@@ -187,6 +187,10 @@ Raised during the review of the migration; not on the Confluence page:
 
 - [x] <a id="op-mr-05"></a>**OP-MR-05** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../../overview/data-hub.md#dec-dh-26) and [FR-MR-05](#fr-mr-05) say a type Change does not lower the Level; only the structure hash does. *Decided on 2026-10-26, by Max: no part of the Fingerprint makes a Resource drop; a change to the schema gives a warning ([DEC-MR-08](#dec-mr-08)).*
 
+Raised on 2026-10-28, while mapping the screens to the requirements:
+
+- [ ] <a id="op-mr-08"></a>**OP-MR-08** · [FR-MR-07](#fr-mr-07) is a Could as a whole, while its second half, a drop to Confirmed when the EDA document goes, belongs to 4 · Explored, which v1 reaches ([FR-MR-03](#fr-mr-03), [DEC-MR-13](#dec-mr-13)); and no screen links the EDA document of a Resource. Decide whether v1 links an EDA document, and if so, where; then whether that half of FR-MR-07 stays in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.*
+
 ## Builds on
 
 - [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858) (Confluence, Dutch)

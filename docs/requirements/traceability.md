@@ -9,15 +9,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 113 | 36 (36 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 113 | 41 (5 open, 36 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 8 | 8 (8 done) |
-| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (1 open, 6 done) |
+| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 8 (2 open, 6 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 12 implemented, 4 withdrawn) | 2 (2 specified) | 25 | 18 (1 open, 17 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 25 (2 open, 23 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 21 (6 open, 15 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 27 (4 open, 23 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 8 (4 open, 4 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 6 | 6 (6 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 15 | 10 (10 done) |

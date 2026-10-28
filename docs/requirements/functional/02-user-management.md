@@ -183,6 +183,7 @@ What someone may see and do, and issuing Excel keys ([Permissions and Excel keys
 - [x] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation. *Decided on 2026-10-28, by Max: at every sign-in ([DEC-UM-08](#dec-um-08)).*
 - [x] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-UM-04](#ec-um-04) is Specified, the others are withdrawn.*
 - [x] <a id="op-um-07"></a>**OP-UM-07** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.* *Decided on 2026-10-28, by Max: both, as they are on the same Workspace ([DEC-UM-09](#dec-um-09)).*
+- [ ] <a id="op-um-08"></a>**OP-UM-08** · [FR-UM-07](#fr-um-07) still asks to synchronise the members of every Group periodically, and so does step 5 of the [Flow](#flow), while [DEC-UM-08](#dec-um-08) synchronises the Groups of a User only when they sign in, never on a schedule. Proposal: FR-UM-07 is withdrawn, and step 5 goes. *Raised on 2026-10-28, while mapping the screens to the requirements.*
 
 ## Builds on
 
