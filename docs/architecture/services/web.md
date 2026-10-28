@@ -8,6 +8,8 @@
 
 **In one sentence:** web is the Data Hub interface in the browser; it shows what the services return and holds no business logic of its own ([DEC-PF-03](../../requirements/technical/00-platform.md#dec-pf-03)).
 
+*Note of 2026-10-28: built in React with Mantine today; to be rebuilt in Svelte, with the look of the design ([DEC-PF-28](../../requirements/technical/00-platform.md#dec-pf-28)).*
+
 This page describes the web app as it is built. Its new design, the rules, style values and prototype screens it will follow once the designs are final, is in [design](../../design/README.md).
 
 ## Responsibilities

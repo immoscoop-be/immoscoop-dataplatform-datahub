@@ -9,13 +9,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 89 | 34 (16 open, 18 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 91 | 34 (12 open, 22 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 proposed) | 5 | 8 (4 open, 4 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 2 | 4 (3 open, 1 done) |
@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 28 (20 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 12 (11 specified, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 27 | 20 (9 open, 11 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 28 | 20 (9 open, 11 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
@@ -174,6 +174,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | – | [0607009](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0607009473956ebff7d787c6450d09c8d3327407) refs, 2026-10-27<br>[c50d2ee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c50d2ee4a3bab7b176e713209dcae4befbb8eb88) refs, 2026-10-27 |
 | [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52) | Data Hub finds what is Broken, and what works again | Proposed | – | – | [5ca16fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5ca16fbc6bdcc957aa9abf713628717719d4914b) refs, 2026-10-28 |
 | [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53) | A query that reads what no longer exists is Broken | Proposed | – | – | [5ca16fb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5ca16fbc6bdcc957aa9abf713628717719d4914b) refs, 2026-10-28 |
+| [FR-SR-54](functional/04-stacks-and-resources.md#fr-sr-54) | The lineage of a Resource is walked one step at a time | Proposed | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 

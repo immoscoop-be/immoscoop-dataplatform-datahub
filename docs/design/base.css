@@ -1197,3 +1197,28 @@ a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .hist-acts { display: flex; gap: 8px; justify-content: flex-end; }
 .hist-preview { margin: 0 0 10px; align-items: center; }
 .hist-preview button { flex: none; }
+
+/* The Lineage tab (DEC-UX-90): one step at a time, the start pinned, what lies between in a dashed box */
+.lin-trail { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: var(--text-small); color: var(--text-secondary); }
+.lin { display: flex; align-items: center; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
+.lin-col { display: flex; flex-direction: column; gap: 8px; min-width: 170px; max-width: 230px; flex: 1; }
+.lin-col > .label { margin-bottom: 2px; }
+.lin-gap { padding: 10px; border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
+.lin-arrow { color: var(--text-muted); font-size: 18px; flex: none; }
+.lin-node { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); border: 0; font: inherit; color: inherit; }
+button.lin-node { cursor: pointer; }
+button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
+.lin-node > i { font-size: 17px; color: var(--text-secondary); margin-top: 2px; }
+.lin-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.lin-name { font-size: 12px; overflow-wrap: anywhere; }
+.lin-res { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); margin-top: 2px; }
+.lin-note { font-size: var(--text-meta); color: var(--text-secondary); font-style: italic; }
+.lin-node.focus { background: var(--surface-solid); box-shadow: 0 0 0 2px var(--text-primary); }
+.lin-node.on-path { box-shadow: 0 0 0 1.5px var(--text-secondary); }
+.lin-node.home { background: transparent; box-shadow: 0 0 0 1.5px var(--tint-active); }
+
+/* Small screens are not supported (DEC-UX-91): below 900 pixels wide, one message instead of the app */
+@media (max-width: 899px) {
+  .app, .proto-switch, .role-switch, .sheet-wrap, .float-win { display: none !important; }
+  body::before { content: "Data Hub is made for a computer screen. Make this window wider, or open Data Hub on a computer."; display: block; max-width: 340px; margin: 30vh auto 0; padding: 0 24px; text-align: center; font: var(--weight-medium) 15px/1.6 var(--font-family); color: var(--text-primary); }
+}

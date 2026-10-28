@@ -84,7 +84,7 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 
 - <a id="dec-sr-13"></a>**DEC-SR-13** · Finding works in three ways: searching on title, description, Collection and Owner; browsing per Collection; and navigating via the Domain Model. A search result shows title, description, Collection and Owner.
 - <a id="dec-sr-14"></a>**DEC-SR-14** · The link with the Domain Model is derived from the manifest and the lineage, without manual work. Colleciónes gets no special treatment in this: it is part of the manifest like everything else. A Resource from dbt-prod thus finds its Entities via the models further along its lineage. A Resource without an Entity in its lineage stays findable via search and Collection.
-- <a id="dec-sr-15"></a>**DEC-SR-15** · Reading a Resource happens in tabs: Overview, Columns, Lineage, EDA, History, Conversations and Preview. Usage, who uses the Resource in Lenses, Reports and feeds, comes later. *Note of 2026-10-26: there is no tab Conversations any more; the Messages on a Resource open from "Messages" in its header, as on every object ([DEC-UX-67](../../design/principles.md#dec-ux-67)).*
+- <a id="dec-sr-15"></a>**DEC-SR-15** · Reading a Resource happens in tabs: Overview, Columns, Lineage, EDA, History, Conversations and Preview. Usage, who uses the Resource in Lenses, Reports and feeds, comes later. *Note of 2026-10-26: there is no tab Conversations any more; the Messages on a Resource open from "Messages" in its header, as on every object ([DEC-UX-67](../../design/principles.md#dec-ux-67)).* *Note of 2026-10-28: the tabs are Overview, Columns, Lineage, History and Preview; no EDA in v1, and History lists the queries that used the Resource ([DEC-UX-90](../../design/principles.md#dec-ux-90)).*
 - <a id="dec-sr-16"></a>**DEC-SR-16** · Querying comes in two flavours. Via Claude, it is free SQL, also across multiple Resources, with joins. In the interface there is only a preview of the first rows, no query builder: real questions need joins, and those belong with Claude and, later, with Lenses. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - <a id="dec-sr-17"></a>**DEC-SR-17** · When Claude queries on behalf of a User, Data Hub checks that every Resource in the query is visible to that User, and a limit on scanned bytes applies. Every query gets a label with the User. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - <a id="dec-sr-18"></a>**DEC-SR-18** · Executed queries are not stored in Data Hub in v1. BigQuery keeps its own job log for 180 days; query history may be added later. *Note of 2026-10-22: replaced by [DEC-LN-01](07-log-and-notifications.md#dec-ln-01): Data Hub keeps its own Query Log of every query.*
@@ -467,6 +467,8 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 *Note of 2026-10-26: everyone who may see the Resource sees the list; the SQL also shows to the Owner Unit of the Resource ([DEC-SR-31](#dec-sr-31)).*
 
+*Note of 2026-10-28: in the tab History, one row per query or Lens, with its runs and last run ([DEC-UX-90](../../design/principles.md#dec-ux-90)).*
+
 <a id="fr-sr-45"></a>
 ### FR-SR-45 · Every query has a name
 
@@ -542,6 +544,13 @@ For each Resource found, Data Hub takes from its database what reads it ([DEC-DH
 
 A Broken query cannot run: Run is off, and a callout on top of it names what no longer exists. It carries a red dot in the panel of Query and in the Queries of a Resource ([FR-SR-43](#fr-sr-43), [FR-SR-44](#fr-sr-44)). Who made it gets a Message ([MSG-QRY-02](message-catalogue.md#msg-qry-02)). Its SQL can still be opened, copied and changed; a change that runs makes it work again, as does the return of what it reads.
 
+
+<a id="fr-sr-54"></a>
+### FR-SR-54 · The lineage of a Resource is walked one step at a time
+
+**Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource)
+
+The tab Lineage shows one model in focus with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one makes it the focus; the Resource the User started from stays in view, and the models between are gathered in one box. Data Hub never shows the whole lineage at once.
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).

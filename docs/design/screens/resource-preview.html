@@ -5,7 +5,7 @@
   The weeks are the partition column and the lead source the first cluster column, so a preview reads only what it shows.
   A result shows 100 rows a page; a page is read from the same run, never a new query (FR-SR-51, DEC-SR-30).
   Requirements: FR-SR-51, FR-SR-24, FR-SR-25, FR-SR-27, FR-SR-31, FR-SR-36, FR-SR-37, FR-SR-38, FR-SR-39, FR-SR-40, FR-SR-41, FR-LN-05, FR-LN-06, FR-CH-01, FR-CH-02, FR-CH-03, FR-SR-26.
-  Related screens: resource-detail.html (the other tabs), resource-queries.html (the queries on it), query.html (Query).
+  Related screens: resource-detail.html (the other tabs), resource-history.html (the queries on it), query.html (Query).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -121,11 +121,9 @@
  <div class="tabs" role="tablist">
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
-  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
-  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">EDA</a>
-  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">History</a>
+  <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
+  <a class="tab" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">12</span></a>
   <button class="tab on" role="tab" aria-selected="true">Preview</button>
-  <a class="tab" href="resource-queries.html" role="tab" aria-selected="false" style="text-decoration:none">Queries <span class="count">38</span></a>
  </div>
  <div class="tab-content card">
   <div class="param-bar">

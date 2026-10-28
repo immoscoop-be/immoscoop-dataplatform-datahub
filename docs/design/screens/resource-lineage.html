@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<!--
+  Screen: Resource detail, the Lineage tab (DEC-UX-90)
+  The lineage is walked, never shown whole. In the middle, the model in focus; to its left its direct upstream models, to
+  its right its direct downstream models. A click on one steps to it. The resource you started from stays in view, pinned
+  at the end, and a dashed box between holds the models in between: those derived from the model you stepped to, the one
+  on the way back marked. A model that is a Resource shows its name and Level. The switch shows four places: ?lin=up1,
+  ?lin=up2, ?lin=down1.
+  Requirements: FR-SR-54 (Proposed); DEC-UX-90; FR-AR-08 (lineage across the dbt projects).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Weekly lead volume, lineage</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <button class="nav-btn active" data-label="Collections" aria-label="Collections" aria-current="page"><i class="ph-fill ph-stack"></i><span class="flare top"></span><span class="flare bottom"></span></button>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning centre" aria-label="Learning centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Collections">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Collections</h1>
+   <button class="icon-btn" aria-label="New collection"><i class="ph-fill ph-plus-circle"></i></button>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search resources and lenses"></label>
+  <div class="coll-filter" data-group="collfilter" role="tablist" aria-label="Which collections">
+   <button class="seg on" data-target="all" role="tab" aria-selected="true">All</button>
+   <button class="seg" data-target="mine" role="tab" aria-selected="false">Yours</button>
+  </div>
+  <div class="tree-group card coll-edge open" style="--c:var(--col-magenta)">
+   <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res current" aria-current="page" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Rejected leads · not published">Rejected leads<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="KBC follow-up · not published">KBC follow-up<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Visit requests">Visit requests</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Leads per broker">Leads per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Response by broker">Response by broker</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources for listings">Lead sources for listings</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Duplicate requests · not published">Duplicate requests<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead to visit">Lead to visit</span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 15</a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-teal)" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Price changes">Price changes</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings by region">Listings by region</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Time on market">Time on market</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="New listings per week">New listings per week</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing quality">Listing quality</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Withdrawn listings · not published">Withdrawn listings<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-more" href="#">Show all 22</a>
+   </div>
+  </div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-ochre)">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span class="tree-name"><span class="item-title">Brokers</span><span class="meta">11 resources · <i class="ph-fill ph-lock-simple"></i>Private</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Brokers holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+   <div class="tree-children">
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active brokers">Active brokers</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Service packs per broker">Service packs per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker churn">Broker churn</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker portal logins">Broker portal logins</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listings per broker">Listings per broker</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker regions">Broker regions</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Pack upgrades">Pack upgrades</span></span><span class="maturity" data-level="2"></span></a>
+     <a class="tree-res unpublished" data-for="owner datateam" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Broker contacts · not published">Broker contacts<span class="hidden-label">, not published</span></span></span><span class="maturity" data-level="1"></span></a>
+     <a class="tree-more" href="#">Show all 11</a>
+   </div>
+  </div>
+  <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
+ </div>
+</aside>
+<main class="main">
+
+ <div class="breadcrumb">Collections / Credit leads</div>
+ <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
+  <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
+  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">3</span></a>
+  <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
+ </div>
+ <div class="status-row">
+  <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+  <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+  <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+  <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+ </div>
+ <div class="tabs" role="tablist">
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
+  <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
+  <button class="tab on" role="tab" aria-selected="true">Lineage</button>
+  <a class="tab" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">12</span></a>
+  <a class="tab" href="resource-preview.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
+ </div>
+ <div class="tab-content card">
+  <p class="meta" style="display:block;line-height:1.5;margin:0 0 12px">One step at a time: the model in the middle, the models it is built on to its left, those built on it to its right. Click one to step to it; the resource you started from stays in view, and what lies in between is gathered in the dashed box. There is no map of the whole lineage.</p>
+  <div data-pane-group="lin" data-pane="start">
+   <div class="lin-trail"><i class="ph ph-path" aria-hidden="true"></i><span>Weekly lead volume</span><span style="flex:1"></span></div>
+   <div class="lin"><div class="lin-col "><div class="label">Its direct upstream models</div><button class="lin-node " type="button" data-go="lin:up1"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">int_credit__leads</span><span class="meta">intermediate · dbt-prod</span></span></button><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">stg_lead_sources</span><span class="meta">staging · dbt-prod</span></span></div><div class="lin-node "><i class="ph ph-plant" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">lead_channels</span><span class="meta">seed · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-focus"><div class="label">This resource</div><div class="lin-node focus"><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__weekly_lead_volume</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="4"></span>Weekly lead volume</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col "><div class="label">Its direct downstream models</div><button class="lin-node " type="button" data-go="lin:down1"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__lead_source_share</span><span class="meta">mart · dbt-prod</span></span></button><div class="lin-node "><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_marketing__weekly_channels</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="3"></span>Weekly channels</span></span></div></div></div>
+  </div>
+  <div data-pane-group="lin" data-pane="up1" hidden>
+   <div class="lin-trail"><i class="ph ph-path" aria-hidden="true"></i><span>Weekly lead volume › int_credit__leads</span><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-go="lin:start"><i class="ph ph-arrow-counter-clockwise"></i>Back to Weekly lead volume</button></div>
+   <div class="lin"><div class="lin-col "><div class="label">Its direct upstream models</div><button class="lin-node " type="button" data-go="lin:up2"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_immoscoop__creditLead__state</span><span class="meta">mart · Colleciónes</span></span></button><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">stg_mysql__credit_request</span><span class="meta">staging · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-focus"><div class="label">You are looking at</div><div class="lin-node focus"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">int_credit__leads</span><span class="meta">intermediate · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-gap"><div class="label">Also derived from it</div><div class="lin-node "><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__lead_funnel</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="4"></span>Credit lead funnel</span></span></div><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__kbc_handover</span><span class="meta">mart · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col "><div class="label">Where you started</div><button class="lin-node home" type="button" data-go="lin:start"><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__weekly_lead_volume</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="4"></span>Weekly lead volume</span><span class="lin-note">Where you started</span></span></button></div></div>
+  </div>
+  <div data-pane-group="lin" data-pane="up2" hidden>
+   <div class="lin-trail"><i class="ph ph-path" aria-hidden="true"></i><span>Weekly lead volume › int_credit__leads › mrt_immoscoop__creditLead__state</span><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-go="lin:start"><i class="ph ph-arrow-counter-clockwise"></i>Back to Weekly lead volume</button></div>
+   <div class="lin"><div class="lin-col "><div class="label">Its direct upstream models</div><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">intm_immoscoop__creditLead__currentState</span><span class="meta">intermediate · Colleciónes</span></span></div><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">intm_immoscoop__creditLead__stateAttributes</span><span class="meta">intermediate · Colleciónes</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-focus"><div class="label">You are looking at</div><div class="lin-node focus"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_immoscoop__creditLead__state</span><span class="meta">mart · Colleciónes</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-gap"><div class="label">Models in between</div><button class="lin-node on-path" type="button" data-go="lin:up1"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">int_credit__leads</span><span class="meta">intermediate · dbt-prod</span><span class="lin-note">On the way to where you started</span></span></button><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">int_credit__kbc_status</span><span class="meta">intermediate · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col "><div class="label">Where you started</div><button class="lin-node home" type="button" data-go="lin:start"><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__weekly_lead_volume</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="4"></span>Weekly lead volume</span><span class="lin-note">Where you started</span></span></button></div></div>
+  </div>
+  <div data-pane-group="lin" data-pane="down1" hidden>
+   <div class="lin-trail"><i class="ph ph-path" aria-hidden="true"></i><span>Weekly lead volume › mrt_credit__lead_source_share</span><span style="flex:1"></span><button class="btn-quiet outline" type="button" data-go="lin:start"><i class="ph ph-arrow-counter-clockwise"></i>Back to Weekly lead volume</button></div>
+   <div class="lin"><div class="lin-col "><div class="label">Where you started</div><button class="lin-node home" type="button" data-go="lin:start"><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__weekly_lead_volume</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="4"></span>Weekly lead volume</span><span class="lin-note">Where you started</span></span></button></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-gap"><div class="label">Also built on</div><div class="lin-node "><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">stg_lead_sources</span><span class="meta">staging · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col lin-focus"><div class="label">You are looking at</div><div class="lin-node focus"><i class="ph ph-cube" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_credit__lead_source_share</span><span class="meta">mart · dbt-prod</span></span></div></div><i class="ph ph-arrow-right lin-arrow" aria-hidden="true"></i><div class="lin-col "><div class="label">Its direct downstream models</div><div class="lin-node "><i class="ph ph-table" aria-hidden="true"></i><span class="lin-text"><span class="mono lin-name">mrt_marketing__source_report</span><span class="meta">mart · dbt-prod</span><span class="lin-res"><span class="maturity" data-level="3"></span>Source report</span></span></div></div></div>
+  </div>
+ </div>
+</main>
+</div>
+<div class="proto-switch" data-group="lin" role="tablist" aria-label="Prototype: where you are in the lineage">Lineage
+ <button class="seg on" data-target="start" role="tab" aria-selected="true">This resource</button>
+ <button class="seg" data-target="up1" role="tab" aria-selected="false">One step up</button>
+ <button class="seg" data-target="up2" role="tab" aria-selected="false">Two steps up</button>
+ <button class="seg" data-target="down1" role="tab" aria-selected="false">One step down</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
