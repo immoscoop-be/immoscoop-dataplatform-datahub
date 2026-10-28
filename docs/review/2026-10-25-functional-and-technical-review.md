@@ -1,6 +1,6 @@
 # Data Hub — functional and technical review
 
-Snapshot of 2026-10-25 · Maxime Passenier
+Snapshot of 2026-10-25, brought up to date on 2026-10-28 · Maxime Passenier
 
 What Data Hub must do, how each part looks, and what is behind it: the services, what they store and what is built today. Your read-through before the technical analysis and the (re)build.
 
@@ -35,7 +35,7 @@ Every part follows the same order:
 | Prototype screens | 31, plus the index |
 | Open points | 141 open, of 224 |
 
-The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, and the language principle) are in [pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
+The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
 ### Short on time?
 
@@ -502,18 +502,20 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 ## Query
 
-**Designed, not built.** The service `query` exists as an empty skeleton on Cloud Run; no query runs through Data Hub yet. The Preview, the Pre-flight, the section Query and the Query Log are designed.
+**Designed, not built.** The service `query` exists as an empty skeleton on Cloud Run; no query runs through Data Hub yet. The Preview, the Pre-flight, the section Query and the Query Log are designed; the page of a query was redesigned on 2026-10-27, from your review ([DEC-UX-70](../design/principles.md#dec-ux-70) to [DEC-UX-74](../design/principles.md#dec-ux-74)).
 
 ### What it does
 
 - **Every query is checked the same way,** whether it comes from a Preview, the section Query, a Lens or Claude:
   - It only touches Resources the User may see; otherwise it is refused ([FR-SR-26](../requirements/functional/04-stacks-and-resources.md#fr-sr-26), [FR-SR-41](../requirements/functional/04-stacks-and-resources.md#fr-sr-41)).
   - A **Pre-flight** says what it will read, per Resource how many partitions and through which column, and warns when a partitioned Resource has no partition filter ([FR-SR-36](../requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-40](../requirements/functional/04-stacks-and-resources.md#fr-sr-40)).
-  - Above one threshold the User approves explicitly; above a second it is blocked ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).
+  - From 100 MB the User approves it explicitly; above 1 GB it is not blocked but goes to the Data Team, as a Request ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37), [DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29)). Both are start values.
   - It runs with a byte limit and a label naming the User ([FR-SR-27](../requirements/functional/04-stacks-and-resources.md#fr-sr-27)).
   - It gets a **Query ID** in the Query Log, with its SQL, who, when, what it read and the Resources beneath it, and every output carries that ID ([FR-LN-05](../requirements/functional/07-log-and-notifications.md#fr-ln-05), [FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06)). The Query Log is readable by the Data Team and by whoever ran the query only, since SQL can hold values ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)).
 - **The Preview** shows a limited number of rows, chosen with the Parameters of the Resource, with nothing to type ([FR-SR-25](../requirements/functional/04-stacks-and-resources.md#fr-sr-25), [FR-SR-38](../requirements/functional/04-stacks-and-resources.md#fr-sr-38)). A Resource shows how it is partitioned and clustered ([FR-SR-39](../requirements/functional/04-stacks-and-resources.md#fr-sr-39)).
-- **The section Query** (all Proposed, [FR-SR-41](../requirements/functional/04-stacks-and-resources.md#fr-sr-41) to [FR-SR-48](../requirements/functional/04-stacks-and-resources.md#fr-sr-48)): SQL over every Resource the User may see, in an editor that formats and suggests. Every query has a name. A new query first shows the Lenses that already use its Resources, ranked by the words they share with its question, so nobody writes again what exists. The panel lists the queries that ran, and the page of a Resource lists the queries on it.
+- **The section Query** (all Proposed, [FR-SR-41](../requirements/functional/04-stacks-and-resources.md#fr-sr-41) to [FR-SR-48](../requirements/functional/04-stacks-and-resources.md#fr-sr-48)): SQL over every Resource the User may see, in an editor that formats and suggests. Every query has a name. A new query first shows the Lenses that already use its Resources, ranked by the words they share with its question, so nobody writes again what exists. The page of a Resource lists the queries on it.
+- **A query is bounded by its Resources** (from your review, 2026-10-27, [DEC-UX-73](../design/principles.md#dec-ux-73)): a query is its name, its question and its Resources, and it reads only those. A table in the SQL that is not one of them is an error, and the query cannot run. Adding or removing a Resource starts a new query, with the SQL and Parameters taken along, as another set of Resources has other Lenses; the old query keeps its history. Several queries can share the same Resources.
+- **Every run is a variation** of its query, of its values, its SQL or both, and goes into its history ([DEC-UX-74](../design/principles.md#dec-ux-74)). The panel lists one item per query, not per run, with how many runs; the query that is open unfolds to its last runs.
 - **No high-volume or frequent exports** through Data Hub: a structural export goes to the Data Team ([FR-CH-01](../requirements/functional/13-channels.md#fr-ch-01), [FR-CH-02](../requirements/functional/13-channels.md#fr-ch-02)).
 
 ### The screens
@@ -528,9 +530,18 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 **Screen:** [query.html](../design/screens/query.html). The section Query: the editor, the Pre-flight with partitions read, the result with its Query ID, and Make it a lens.
 
-**Query** holds the editor, the Pre-flight with the partitions it reads, and the result with its Query ID. Its panel lists the queries that ran, grouped by day. For the Owner, Make it a lens starts step 7. Screen: `query`.
+**Query** (redesigned, from your review, 2026-10-27). For the Owner, Make it a lens starts step 7. Screen: `query`.
 
-**A query used as a Lens** (from your review, 2026-10-27) stays a query and says so, with a link to the Lens. "Update the lens" takes the place of "Make it a lens" and overwrites the Lens with the query after its size check; the Lens keeps its name, story and Collection, and its earlier version stays in its history. "Lenses on these resources" goes for such a query, and using other Resources is a new query ([DEC-LE-03](../requirements/functional/09-lenses.md#dec-le-03), [DEC-LE-04](../requirements/functional/09-lenses.md#dec-le-04), [FR-LE-16](../requirements/functional/09-lenses.md#fr-le-16)). The box of the SQL folds open and shut, as the Parameters do ([DEC-UX-76](../design/principles.md#dec-ux-76)). Screen: [query.html](../design/screens/query.html), with the switch "Lens".
+- **On top,** the name and question of the query, and "Reads only" with its Resources; "Add a resource" and the × on a Resource start a new query in a sheet; "Lenses on these resources" opens the Lenses that already use them ([DEC-UX-73](../design/principles.md#dec-ux-73)).
+- **The editor** at the full width, in a box of its own; it formats, suggests the columns of its Resources, and folds every CTE to its first line, as a code editor does ([DEC-UX-70](../design/principles.md#dec-ux-70)). A table outside its Resources stands out, with "Start a new query with it". The box itself folds open and shut ([DEC-UX-76](../design/principles.md#dec-ux-76)).
+- **The Parameters** in a second box under it: a standard list of kinds, each with its BigQuery type, from Date and Period to Choice and Yes or no; a value is a value or an SQL function such as `DATE_TRUNC(CURRENT_DATE(), YEAR)`, worked out at every run. A Parameter is made or changed in a floating window. One that is not in the SQL is grey; an `@name` that is not a Parameter stands out, and the query cannot run ([DEC-UX-71](../design/principles.md#dec-ux-71)).
+- **The Pre-flight and Run** in a bar at the foot, which stays in view while the SQL scrolls: the gauge with 100 MB and 1 GB, the partitions it reads, and Run with what it reads in the button ([DEC-UX-70](../design/principles.md#dec-ux-70)).
+- **The result** is a grid like that of BigQuery, in the style of Data Hub: a row number, a column per field with its type under its name, columns made narrower or wider by the edge of their head, alternate rows lightly shaded, 100 rows a page ([DEC-UX-72](../design/principles.md#dec-ux-72)). Sorting from a column sorts the page only, and says so.
+- **The history,** a tab next to the result: every run with what changed, the SQL lines and the values before and after, what it read and its Query ID ([DEC-UX-74](../design/principles.md#dec-ux-74)).
+
+In the prototype, the switch "SQL" shows the query as written, or with a table outside its Resources.
+
+**A query used as a Lens** (from your review, 2026-10-27) stays a query and says so, with a link to the Lens. "Update the lens" takes the place of "Make it a lens" and overwrites the Lens with the query after its size check; the Lens keeps its name, story and Collection, and its earlier version stays in its history. "Lenses on these resources" goes for such a query, and using other Resources is a new query ([DEC-LE-03](../requirements/functional/09-lenses.md#dec-le-03), [DEC-LE-04](../requirements/functional/09-lenses.md#dec-le-04), [FR-LE-16](../requirements/functional/09-lenses.md#fr-le-16), [DEC-UX-77](../design/principles.md#dec-ux-77)). Screen: [query.html](../design/screens/query.html), with the switch "Lens".
 
 **Screen:** [resource-queries.html](../design/screens/resource-queries.html). The tab Queries on a Resource: every query that ran on it, with who, how, what it read, and a few numbers over 30 days.
 
@@ -544,12 +555,13 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 
 1. A dry run in BigQuery returns the tables the query touches and the bytes it would scan.
 2. query asks catalogue which of those tables the User may see (`POST /visibility`, with the User's token). One table not visible, and the query is refused with the same answer as for a table that does not exist.
-3. The Pre-flight goes back to the User with the bytes and the partitions; above the first threshold it waits for their approval, above the second it stops.
+3. The Pre-flight goes back to the User with the bytes and the partitions; above the first threshold it waits for their approval, above the second it goes to the Data Team as a Request.
 4. It runs with `maximumBytesBilled` and a label with the User, and writes the Query Log row with the ID of the BigQuery job.
 
 | Table (new schema `query`) | What it would keep |
 | --- | --- |
-| `query_log` | Query ID, name, question, SQL, who, when, through what (Preview, Query, Lens, Claude, feed), the Resources beneath it, bytes estimated and billed, approved or blocked, the BigQuery job ID |
+| `queries` | Per query: its name, its question, its Resources, who made it and the query it started from, after which run ([DEC-UX-74](../design/principles.md#dec-ux-74)) |
+| `query_log` | Per run: Query ID, the query it is a run of, SQL and the values of its Parameters, who, when, through what (Preview, Query, Lens, Claude, feed), the Resources beneath it, bytes estimated and billed, approved, sent to the Data Team or refused, the BigQuery job ID. The history of a query is its runs, each compared with the one before |
 
 | Endpoint | Purpose |
 | --- | --- |
@@ -565,14 +577,16 @@ Release happens in two steps. The Data Team makes a Resource available to one Ow
 - **Limits** (from your review, 2026-10-26): up to 100 MB a query runs freely, from 100 MB to 1 GB the User approves it, above 1 GB it goes to the Data Team; the same three ranges for a preview and for one run of a Lens, as start values ([DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29)). A result shows 100 rows a page, read from the same run ([DEC-SR-30](../requirements/functional/04-stacks-and-resources.md#dec-sr-30), [FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51)).
 - **The SQL of others** (from your review, 2026-10-26): everyone who may see a Resource sees the queries on it; the SQL shows to its author, the Owner Unit of the Resource and the Data Team ([DEC-SR-31](../requirements/functional/04-stacks-and-resources.md#dec-sr-31)).
 - **Partitions** come from the dbt manifest of the model beneath, through the lineage, and the sizes from BigQuery ([OP-SR-12](../requirements/functional/04-stacks-and-resources.md#op-sr-12), proposal).
+- **The editor:** CodeMirror 6 with its SQL language and a BigQuery dialect on top, suggesting from the columns Data Hub keeps; formatting with sql-formatter, which knows BigQuery; both MIT, and both fit React and Svelte. The Pre-flight is a dry run of BigQuery while typing pauses, which costs nothing ([design](../design/principles.md#query), proposal).
 
 ### Open
 
 - The Request to run a query above 1 GB: what accepting it allows, and for how long ([OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17)).
+- The colour of an error that keeps a query from running ([OP-UX-26](../design/principles.md#op-ux-26)); how long the result of a run is kept for its history ([OP-UX-27](../design/principles.md#op-ux-27)); the way back to an earlier run ([OP-UX-28](../design/principles.md#op-ux-28)); the name of a query started from another ([OP-UX-29](../design/principles.md#op-ux-29)); and whether removing a Resource as a new query is too heavy in use ([OP-UX-30](../design/principles.md#op-ux-30)).
 
 ## Lenses
 
-**Designed, all requirements Proposed.** Nothing is built and no service owns Lenses yet.
+**Designed, all requirements Proposed but one:** a Lens is updated from its query ([FR-LE-16](../requirements/functional/09-lenses.md#fr-le-16)), Specified. Nothing is built and no service owns Lenses yet.
 
 ### What it does
 
@@ -689,7 +703,7 @@ Three of them no requirement asks for yet; the catalogue proposes them: a Resour
 
 **The Message Centre.** Screen: `messages`.
 
-**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds the Learning Card that explains it, K3.4 Where definitions live, which opens inline in the Message, as in every Message that Data Hub writes itself ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38), [DEC-UX-79](../design/principles.md#dec-ux-79), from your review, 2026-10-27)
+**Screen:** [messages.html](../design/screens/messages.html), with `?msg=described` in the address. A Message from Data Hub to the Owner: two descriptions changed in dbt, each with its text before and now, and the Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds the Learning Card that explains it, K3.4 Where definitions live, which opens inline in the Message, as in every Message that Data Hub writes itself ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38), [DEC-LR-11](../requirements/functional/16-learning.md#dec-lr-11), [DEC-UX-79](../design/principles.md#dec-ux-79), from your review, 2026-10-27)
 
 **A changed description in dbt** is told to the Owner, one Message per Resource and run: the text before and now, and their Business Description next to it. It asks for no review; "Edit business descriptions" opens the fields ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)). Screen: `messages?msg=described`.
 
@@ -729,7 +743,7 @@ Three of them no requirement asks for yet; the catalogue proposes them: a Resour
 
 ## The learning centre
 
-**Designed, to review.** Nothing is built, and every requirement is Proposed: 21 open, 16 withdrawn along the way. Since 25 October the Confluence page [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) is the source of truth for its philosophy; the [analysis](../requirements/functional/16-learning.md) applies it in screens and flows, and records every clash as an open point instead of changing it silently ([DEC-LR-09](../requirements/functional/16-learning.md#dec-lr-09)).
+**Designed, to review.** Nothing is built. Of its requirements 21 are Proposed, one is Specified, a Message from Data Hub linking to its card ([FR-LR-38](../requirements/functional/16-learning.md#fr-lr-38)), and 16 were withdrawn along the way. Since 25 October the Confluence page [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) is the source of truth for its philosophy; the [analysis](../requirements/functional/16-learning.md) applies it in screens and flows, and records every clash as an open point instead of changing it silently ([DEC-LR-09](../requirements/functional/16-learning.md#dec-lr-09)).
 
 ### What it does
 
@@ -752,7 +766,7 @@ In the rail the learning centre sits at the bottom, above the account, not among
 
 **Screen:** [learning-start.html](../design/screens/learning-start.html). The start of the learning centre: the panel with the Compass and the four Learning Levels, the silent count of cards seen, and the start screen.
 
-**The start screen and its panel** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03), [DEC-UX-38](../design/principles.md#dec-ux-38), [DEC-UX-51](../design/principles.md#dec-ux-51)). The panel is the index of every card: the Compass, then the four Learning Levels, each unfolding to its sections and cards, with how many the User has seen and a check where they understood one. On top a single count of the cards seen; no ring, no streak. Screen: `learning-start`.
+**The start screen and its panel** ([FR-LR-03](../requirements/functional/16-learning.md#fr-lr-03), [DEC-UX-38](../design/principles.md#dec-ux-38), [DEC-UX-51](../design/principles.md#dec-ux-51)). The panel is the index of every card: the Compass, then the four Learning Levels, each unfolding to its sections and cards, with how many the User has seen and a check where they understood one. On top a single count of the cards seen; no ring, no streak. Each Learning Level has an icon of its own, for its audience; the bars of the maturity icon belong to Levels alone (from your review, 2026-10-26, [DEC-UX-62](../design/principles.md#dec-ux-62)). Screen: `learning-start`.
 
 **Screen:** [learning-card.html](../design/screens/learning-card.html), with `?step=why` in the address. Why now, the first step of a card: a colleague's question, the row of five steps, I understand it, and the bar with Next.
 
@@ -927,7 +941,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 ## Look and feel
 
-**Designed.** The new design is 60 decisions in [principles.md](../design/principles.md), its values in `tokens.css`, and 33 prototype screens in plain HTML and CSS. Today's web app is built in an earlier look; none of the new design is built ([DEC-UX-01](../design/principles.md#dec-ux-01): no Figma, the design lives in code next to the requirements).
+**Designed.** The new design is 80 decisions in [principles.md](../design/principles.md), its values in `tokens.css`, and 31 prototype screens in plain HTML and CSS. Today's web app is built in an earlier look; none of the new design is built ([DEC-UX-01](../design/principles.md#dec-ux-01): no Figma, the design lives in code next to the requirements).
 
 ### Navigation and structure
 
@@ -940,7 +954,7 @@ None of the designed screens shows a level of confidentiality yet.
 
 - **Colour only on content** (charts, Collections, Resources), never on navigation. Hover and active are shades of grey.
 - **Warm greys,** a deliberate step away from the cool greys of the brandbook, because Data Hub is an internal tool. Text is warm dark grey, never black.
-- **Collections** each get a colour from a palette of six: magenta, bordeaux and teal from the brand, ochre, slate blue and olive added. The palette is one configuration file that colours are added to over time; it is tuned after testing on uat ([DEC-UX-60](../design/principles.md#dec-ux-60)). It shows as a thin bar on the left edge of its card and its page.
+- **Collections** each get a colour from the Collection palette: one configuration file that colours are added to over time, starting with the six of this design (magenta, bordeaux and teal from the brand, ochre, slate blue and olive added) and the nine of the muted palette that existing Collections use; it is tuned after testing on uat ([DEC-UX-60](../design/principles.md#dec-ux-60)). It shows as a stripe of 5 pixels on the left edge of the card of a Collection, the same whether it is open or not, and never fills the card (from your review, 2026-10-26, [DEC-UX-68](../design/principles.md#dec-ux-68)); the head of its page keeps a thin line next to its title.
 - **Signal colour** (ochre) only for a state that calls for action, such as a dropped Level; **urgent** (red) only for Resources waiting for a Collection and a run above the approval threshold.
 - **Light and dark,** following the system by default; the User can switch. **Dutch by default,** with English available ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)); see Language.
 - **Icons:** Phosphor as the one family, the light weight favoured; the other weights stay possible ([DEC-CO-19](../requirements/functional/03-collections.md#dec-co-19)). Today's app still uses Tabler ([OP-CO-16](../requirements/functional/03-collections.md#op-co-16)).
@@ -949,20 +963,21 @@ None of the designed screens shows a level of confidentiality yet.
 
 ### Backgrounds and their photo sets
 
-- **The default background** is, in the light theme, soft clouds of colour on white, from a picture of yours turned a quarter, without a pink field ([DEC-UX-78](../design/principles.md#dec-ux-78), 2026-10-27); in the dark theme a gradient of three colours. Both drift slowly ([DEC-UX-05](../design/principles.md#dec-ux-05)).
+- **The default background** is, in the light theme, soft clouds of colour on white, from a picture of yours turned a quarter and mirrored: warm yellow and peach in the upper left, sky blue in the lower right, without a pink field ([DEC-UX-78](../design/principles.md#dec-ux-78), 2026-10-27); in the dark theme a gradient of three colours. Both drift slowly ([DEC-UX-05](../design/principles.md#dec-ux-05)).
 - **A picture can take its place:** the painted counterpart of a photo, a watercolour made from the photo itself, drifting as slowly; the frames then blur it lightly ([DEC-UX-34](../design/principles.md#dec-ux-34), [DEC-UX-37](../design/principles.md#dec-ux-37)).
 - **Sets with a story:** each photo has a title, a few lines and who took it. The light and the dark theme each have their own set; a photo is never darkened for the dark theme ([DEC-UX-36](../design/principles.md#dec-ux-36)). You provide the photos and write the stories; the prototype's stories are stand-ins.
+- **A flowing gradient** can take the place of either, or of a picture (from your review, 2026-10-27, [DEC-UX-80](../design/principles.md#dec-ux-80)): drawn live with WebGL, by day sky blue with a warm orange band rising to the right, by night a dark sky with a band of teal, violet and magenta. It moves in a loop of 60 seconds without a seam and leans slowly towards the mouse; with "Reduce motion" it stands still. It is the one exception to CSS for the background, kept light: half resolution, 30 frames a second, paused while its tab is hidden.
 - **So far:** light set Alpenglow and Spring snow; dark set Lights on, your blue-hour photo made into a night picture. The first ski painting, with the lift, has no photo in the set yet.
 
 **Screen:** [lens.html](../design/screens/lens.html), with `?bg=ski` in the address. The page of a Lens over the painted ski picture, the frames lightly blurring it.
 
 **Screen:** [collections-start.html](../design/screens/collections-start.html), with `?bg=alpenglow` in the address. The start of Collections in the dark theme over the village at night. Switch to dark with the moon in the rail.
 
-Any screen shows a picture with `?bg=alpenglow`, `?bg=spring` or `?bg=ski`; in the dark theme it shows the village at night.
+Any screen shows a picture with `?bg=alpenglow`, `?bg=spring` or `?bg=ski`; in the dark theme it shows the village at night. `?bg=flow` shows the flowing gradient, by day or by night with the theme.
 
 ### Behind it
 
-The design is independent of the stack: its values are CSS variables, its prototypes plain HTML and CSS, and the glass of the sign-in is one CSS property (`backdrop-filter`). The pictures are static files served with the web app. Building the design starts from [handover-prompt.md](../design/handover-prompt.md), once the designs are final.
+The design is independent of the stack: its values are CSS variables, its prototypes plain HTML and CSS, and the glass of the sign-in is one CSS property (`backdrop-filter`). The flowing gradient alone is drawn with WebGL, two small shaders in plain JavaScript, without a library. The pictures are static files served with the web app. Building the design starts from [handover-prompt.md](../design/handover-prompt.md), once the designs are final.
 
 ### Open
 
@@ -1080,7 +1095,7 @@ The overview still says EDAs move to Data Hub as their source, and lists EDA res
 
 ## Decisions before the technical analysis
 
-Of the 145 open points, most can wait. This section sorts the ones that matter for the analysis and the (re)build into three groups. The sorting is a proposal: move a point to another group where you see it differently.
+Of the 141 open points, most can wait. This section sorts the ones that matter for the analysis and the (re)build into three groups. The sorting is a proposal: move a point to another group where you see it differently.
 
 ### A. Decide now: they shape the data model or the split of services
 
@@ -1139,7 +1154,7 @@ These are places where the documents do not say the same thing yet. None blocks 
 
 ## Sources
 
-Everything in this review comes from the repository [immoscoop-dataplatform-datahub](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub), branch `uat`, plus the code and migrations of the services, read on 2026-10-24 and brought up to date on 2026-10-25. Where this review and a source differ, the source wins.
+Everything in this review comes from the repository [immoscoop-dataplatform-datahub](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub), branch `uat`, plus the code and migrations of the services, read on 2026-10-24 and brought up to date on 2026-10-28. Where this review and a source differ, the source wins.
 
 | What | Where |
 | --- | --- |
@@ -1155,7 +1170,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 | How the design is to be built | [design/handover-prompt.md](../design/handover-prompt.md) |
 | The workshop on data agents and governance | [workshops/2026-10-22-data-agents-and-governance.md](../workshops/2026-10-22-data-agents-and-governance.md) |
 | The philosophy of the learning centre, and its topics | [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) and the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139), on Confluence |
-| The newest screens, waiting to be merged | [Pull request 31](https://github.com/maximethenextimmoscoopbe/immoscoop-dataplatform-datahub/pull/31) |
+| The newest screens, waiting to be merged | [Pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31) |
 | The seven steps with their screens | [Walkthrough on Confluence](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1380253717) |
 | What is stored, as built | `services/<name>/src/migrations` in the repository |
 | The infrastructure | `infra/` in the repository (Terraform) |
@@ -1227,7 +1242,7 @@ Source: [design/principles.md](../design/principles.md) · 18 open
 - [x] **[OP-UX-15](../design/principles.md#op-ux-15)** · **Lenses and Reports in the panel:** they are to join the list of a Collection later, each with the icon of its kind ([DEC-UX-11](../design/principles.md#dec-ux-11)). [DEC-DH-64](../overview/data-hub.md#dec-dh-64) has a Collection group Resources only. Decide whether a Collection holds Lenses and Reports too, and if so, whether its list is one mixed list or a small group per kind. Proposal: a group per kind, as a long mixed list is hard to scan. *Note of 2026-10-23: the page of a Collection lists the Lenses built on its Resources ([DEC-UX-14](../design/principles.md#dec-ux-14)); the panel does not yet.* *Decided on 2026-10-26, by Max: the panel lists the Lenses of a Collection too, as a group of their own after the Resources ([DEC-UX-65](../design/principles.md#dec-ux-65)).*
 - [x] **[OP-UX-18](../design/principles.md#op-ux-18)** · **The panel of Lenses:** the section Lenses has no panel yet. Proposal, as [designed](../design/screens/lens.html): the Lenses the User may use, grouped by Collection in the same tree as the panel of Collections, each with the icon of a Lens and its Level. Decide whether this is it, and how it relates to Lenses in the panel of Collections ([OP-UX-15](../design/principles.md#op-ux-15)). *Raised on 2026-10-23.* *Note of 2026-10-24: the start screen of Lenses has the same panel (`lenses-start`, withdrawn on 2026-10-26).* *Decided on 2026-10-26, by Max: there is no section Lenses and no panel of Lenses; Lenses are listed in their Collection ([DEC-UX-66](../design/principles.md#dec-ux-66)).*
 - [x] **[OP-UX-19](../design/principles.md#op-ux-19)** · **The Conversations tab of a Resource:** the slide-in shows the Messages on every object, a Resource among them ([DEC-UX-29](../design/principles.md#dec-ux-29)). Decide whether the tab Conversations of a Resource goes, so that all objects work the same, or stays next to the slide-in. Proposal: it goes. *Raised on 2026-10-23.* *Decided on 2026-10-26, by Max: it goes, as "Messages" in the header holds them ([DEC-UX-67](../design/principles.md#dec-ux-67)).*
-- [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in. *Raised on 2026-10-24.*
+- [ ] **[OP-UX-20](../design/principles.md#op-ux-20)** · **The background of a User:** a picture can take the place of the gradient ([DEC-UX-34](../design/principles.md#dec-ux-34)), from the sets of [DEC-UX-36](../design/principles.md#dec-ux-36), each photo with its painting ([DEC-UX-37](../design/principles.md#dec-ux-37)). Decide who chooses it, each User in their settings ([OP-UX-13](../design/principles.md#op-ux-13)) or one for everyone; whether a User can add a picture of their own; which background is the default; how signing in picks its photo, such as a new one each day; and whether the app then shows the painting of the photo the User saw when signing in. *Raised on 2026-10-24.* *Note of 2026-10-27: the flowing gradient is one more background to choose from ([DEC-UX-80](../design/principles.md#dec-ux-80)).*
 - [ ] **[OP-UX-23](../design/principles.md#op-ux-23)** · **Dutch prototypes:** decide how the prototypes follow the language principle ([DEC-DH-65](../overview/data-hub.md#dec-dh-65)). Proposal: a translation table in the prototypes, a key per sentence with its Dutch and English text, Dutch by default and a switch to English, so that [NFR-LOC-02](../requirements/non-functional/localisation.md#nfr-loc-02) shows at work and a name in the table stands out. The alternative is translating the texts in place, which is faster and keeps no English. Either way names stay untouched, and the markers on names ([DEC-UX-59](../design/principles.md#dec-ux-59)) come in the same pass. *Raised on 2026-10-25.*
 - [x] **[OP-UX-24](../design/principles.md#op-ux-24)** · **Overriding a description from dbt, and reviewing it** ([FR-RC-16](../requirements/functional/05-resource-card.md#fr-rc-16), [FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)): editing in place ([DEC-UX-09](../design/principles.md#dec-ux-09)) covers the Overview only, and no screen yet overrides the description of a field or reviews a text after a Change in dbt. Proposal: on the Columns tab, an action per field, "Override the description from dbt", that opens a field with the description from dbt under it; on the Overview, the definition takes the same action. The review is a sheet over the page, reached from the Message, with the description from dbt before and after the Change, the text of the Owner, and three choices: keep, change, or remove it. *Raised on 2026-10-26, in the review of Max.* *Decided on 2026-10-26: Max chose two descriptions side by side instead of an override, and a Message without a review; designed in resource-detail, resource-edit, resource-columns-edit and messages, to review ([DEC-UX-61](../design/principles.md#dec-ux-61)).*
 - [ ] **[OP-UX-25](../design/principles.md#op-ux-25)** · **A deprecated Resource** ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)): design how the mark shows on the page of the Resource, in the panel, in search and on the Lenses built on it, and where the Owner and the Data Team set it. Proposal: a label "Deprecated" next to the Level, with the reason on hover and on the page; set from the header of the Resource. *Raised on 2026-10-26, in the review of Max.*
