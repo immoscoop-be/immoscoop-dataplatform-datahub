@@ -128,7 +128,8 @@ A name a User gives, such as the Display Name of a Resource or the name of a Col
 
 **Status:** Specified · **Source:** Max, 2026-10-28 ([OP-DH-40](../../overview/open-themes.md#op-dh-40)) · **Applies to:** [DEC-DH-65](../../overview/data-hub.md#dec-dh-65)
 
-A Learning Card follows the language the User chose, as everything in the interface does: Dutch or English. Its names stay English in both, and never get a Dutch synonym. The structure of a card, its five steps, is the same in both languages ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)). How the English version is made is [OP-LR-28](../functional/16-learning.md#op-lr-28).
+A Learning Card follows the language the User chose, as everything in the interface does: Dutch or English. Its names stay English in both, and never get a Dutch synonym. The structure of a card, its five steps, is the same in both languages ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)). The cards are written in English in this repository, with a Dutch translation of each ([DEC-LR-24](../functional/16-learning.md#dec-lr-24)).
+
 ## Acceptance criteria
 
 For the functional analysis, from the proposal:
