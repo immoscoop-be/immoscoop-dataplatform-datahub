@@ -126,7 +126,7 @@ For Collections:
 
 *Lenses had a start screen of their own; it is withdrawn on 2026-10-26, as Lenses have no section any more. Its search, "Yours" and Discover moved to the start screen of Collections ([DEC-UX-66](#dec-ux-66)).*
 
-For Learning ([learning-start](screens/learning-start.html), [DEC-UX-38](#dec-ux-38)): an intro, "What is the learning centre?", with "Start with the compass"; a search; "Continue" with the card the User was reading; "Required for you" ([OP-LR-18](../requirements/functional/16-learning.md#op-lr-18)); the path from easy to advanced; and "New and changed". See [Learning](#learning).
+For Learning ([learning-start](screens/learning-start.html), [DEC-UX-38](#dec-ux-38)): an intro, "What is the learning centre?", with "Start with the compass"; a search; "Continue" with the card the User was reading; "Suggested for you" ([DEC-LR-18](../requirements/functional/16-learning.md#dec-lr-18)); the path from easy to advanced; and "New and changed". See [Learning](#learning).
 
 ## Grid
 
@@ -329,7 +329,7 @@ Designed on 2026-10-24 and 2026-10-25, to review ([DEC-UX-38](#dec-ux-38) to [DE
   - Next to the steps, the depth: "Quick" or "Full". On the quick path See it and Check your understanding are muted in the row, and can still be opened.
   - **Why now:** the sentence of a colleague, large, then the situation, and "In this card: …".
   - **Core idea:** the decision rule, large; the metaphor; the one example.
-  - **See it:** the example as a chart, its relevant part highlighted and the rest faded, with "Look at …" and "You see …" beside it. A quiet link plays the video, if the card has one ([OP-LR-20](../requirements/functional/16-learning.md#op-lr-20)). It is the same page as See it opened from context.
+  - **See it:** the example as a chart, its relevant part highlighted and the rest faded, with "Look at …" and "You see …" beside it. A quiet link plays the video, if the card has one; not in version 1: the prototypes show the link, the build leaves it out ([OP-LR-20](../requirements/functional/16-learning.md#op-lr-20)). It is the same page as See it opened from context.
   - **Check your understanding:** one question per screen ([FR-LR-30](../requirements/functional/16-learning.md#fr-lr-30)). The answers are buttons; a click reveals the answer and why. "Another question" follows, and nothing is counted. A try-it question names what to open, with a link to it, and asks what the User saw.
   - **You can now** ([DEC-UX-49](#dec-ux-49), [FR-LR-31](../requirements/functional/16-learning.md#fr-lr-31)): what the User can now do, large; "What it brings you"; and "Where to next", two or three choices as tiles: deeper, a neighbouring concept, and "Just apply it". At the foot, quiet: "Share in a message", "Messages" with their number, and the source. A small drawing of two overlapping circles stands beside the first field, while it is open ([OP-LR-21](../requirements/functional/16-learning.md#op-lr-21)).
   - **"Next", always in the same place:** a bar at the foot of the page, held to the bottom of the window: "Next: " with the name of the next step and one sentence on what it brings; the button on the right. It never waits for an answer. On the quick path, "Next" on Core idea leads to You can now. You can now has no "Next", only its choices.

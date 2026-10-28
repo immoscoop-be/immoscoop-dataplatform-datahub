@@ -115,7 +115,6 @@ document.querySelectorAll('.lc-quiz').forEach(quiz => {
       q.classList.add('answered'); o.classList.add('chosen'); r.classList.add('right');
       r.querySelector('i').className = (ok ? 'ph-fill' : 'ph') + ' ph-check-circle';
       if (!ok) { o.classList.add('wrong'); o.querySelector('i').className = 'ph-fill ph-x-circle'; }
-      q.querySelector('.verdict').textContent = ok ? 'Right.' : 'Not quite.';
       q.querySelector('.lc-why').hidden = false; q.querySelector('.lc-q-foot').hidden = false;
     }));
     q.querySelector('.lc-q-next').addEventListener('click', () => { at = (at + 1) % qs.length; reset(qs[at]); qs.forEach((x, i) => x.hidden = i !== at); });
