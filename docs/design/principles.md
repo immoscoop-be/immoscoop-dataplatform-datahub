@@ -148,7 +148,7 @@ For Learning ([learning-start](screens/learning-start.html), [DEC-UX-38](#dec-ux
 
 ## Detail page of a Resource
 
-Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-columns-edit](screens/resource-columns-edit.html), [resource-unassigned](screens/resource-unassigned.html) and [resource-publish](screens/resource-publish.html).
+Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screens/resource-edit.html), [resource-columns-edit](screens/resource-columns-edit.html), [resource-unassigned](screens/resource-unassigned.html), [resource-publish](screens/resource-publish.html) and [resource-deprecate](screens/resource-deprecate.html).
 
 - **Header:** the name, the Key with a copy button, the button "Query", which starts a new query on the Resource in [Query](#query) ([DEC-UX-21](#dec-ux-21)), "Messages" with their number, which opens the Messages on the Resource in a slide-in ([DEC-UX-29](#dec-ux-29)), and the button "Ask a question", which opens the same slide-in with Question chosen ([DEC-UX-08](#dec-ux-08)). For its Owner, while it is not published, "Publish" takes the place of "Ask a question" ([DEC-UX-31](#dec-ux-31)). No icon: a Resource has none of its own.
 - **Status row:** maturity, Publication, Owner, open Signals. No freshness ([DEC-UX-07](#dec-ux-07)).
@@ -628,5 +628,5 @@ Raised on 2026-10-28, while mapping the screens to the requirements:
   - On [lens-new-context](screens/lens-new-context.html) the Lens can be edited while its Request waits; it is frozen ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)).
   - The Message on a changed description in [messages](screens/messages.html) has "Open the Resource", while every Message has "Open in context" ([DEC-UX-30](#dec-ux-30), [FR-CV-09](../requirements/functional/14-conversations.md#fr-cv-09)).
   - [resource-publish](screens/resource-publish.html) with `?ready=notready` shows a Business Description, Edit links and the Level 2 · Described for a Resource that stays at 1 · Available ([DEC-MR-10](../requirements/functional/06-maturity-and-release.md#dec-mr-10)).
-  - "Deprecate" on [resource-detail](screens/resource-detail.html) asks no reason and nothing to use instead, which it asks ([DEC-UX-101](#dec-ux-101), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)).
+  - "Deprecate" on [resource-detail](screens/resource-detail.html) asks no reason and nothing to use instead, which it asks ([DEC-UX-101](#dec-ux-101), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)). *Note of 2026-10-28: drawn in [resource-deprecate](screens/resource-deprecate.html), a sheet that asks why and what to use instead; to review.*
   - The Query ID of a [Preview](#preview) has no link to the Query Log.

@@ -528,7 +528,7 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated
 
-**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
 
