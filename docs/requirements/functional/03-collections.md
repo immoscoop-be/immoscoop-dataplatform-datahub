@@ -415,7 +415,7 @@ What someone may see and do beyond Collections ([Permissions and Excel keys](12-
 ## Open points
 
 - [x] <a id="op-co-01"></a>**OP-CO-01** · Ask Daniel's team which set of SVG line icons they use, and adopt it. Candidates if they have no fixed set yet: Lucide, Tabler Icons or Phosphor. *Decided on 2026-10-19: Tabler Icons ([DEC-CO-13](#dec-co-13)).*
-- [ ] <a id="op-co-02"></a>**OP-CO-02** · Let Daniel know that Collections use the Paul Tol palette as a recognition colour in the interface, separate from the chart language.
+- [x] <a id="op-co-02"></a>**OP-CO-02** · Let Daniel know that Collections use the Paul Tol palette as a recognition colour in the interface, separate from the chart language. *Done on 2026-10-28, by Max.*
 - [x] <a id="op-co-03"></a>**OP-CO-03** · Decide the first Collections, starting from the pilot with DigiKom and the agencies case. *Decided on 2026-10-25, by Max: no separate choice is needed; the first Collections are the ones the pilot makes first, with DigiKom and the agencies, and they are the first to be used.*
 - [ ] <a id="op-co-04"></a>**OP-CO-04** · Work out the line of thought of whether promotion happens within a Collection.
 - [ ] <a id="op-co-05"></a>**OP-CO-05** · Confirm or adjust the edge cases above.

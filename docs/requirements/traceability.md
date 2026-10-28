@@ -13,8 +13,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (8 open, 39 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 7 | 8 (1 open, 7 done) |
-| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 8 | 7 (3 open, 4 done) |
-| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
+| [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (2 open, 5 done) |
+| [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (8 open, 9 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 33 | 17 (9 open, 8 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
@@ -350,10 +350,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Realised by | Commits |
 | --- | --- | --- | --- | --- |
-| [EC-UM-01](functional/02-user-management.md#ec-um-01) | An Owner Unit becomes empty | Withdrawn | – | – |
-| [EC-UM-02](functional/02-user-management.md#ec-um-02) | A Group is deleted in Workspace | Withdrawn | – | – |
-| [EC-UM-03](functional/02-user-management.md#ec-um-03) | Google is briefly unreachable | Withdrawn | – | – |
-| [EC-UM-04](functional/02-user-management.md#ec-um-04) | An Owner Unit becomes empty or is deleted, without Data Hub knowing | Specified | – | – |
+| [EC-UM-01](functional/02-user-management.md#ec-um-01) | An Owner Unit becomes empty | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
+| [EC-UM-02](functional/02-user-management.md#ec-um-02) | A Group is deleted in Workspace | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
+| [EC-UM-03](functional/02-user-management.md#ec-um-03) | Google is briefly unreachable | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
+| [EC-UM-04](functional/02-user-management.md#ec-um-04) | An Owner Unit becomes empty or is deleted, without Data Hub knowing | Specified | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
 
 ### [Collections](functional/03-collections.md)
 
