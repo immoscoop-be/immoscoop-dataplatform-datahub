@@ -136,8 +136,6 @@ Every group of the own Workspace domain that the User is in, nested groups inclu
 
 ## Edge cases
 
-Proposals to confirm.
-
 <a id="ec-um-01"></a>
 ### EC-UM-01 · An Owner Unit becomes empty
 
@@ -183,7 +181,7 @@ What someone may see and do, and issuing Excel keys ([Permissions and Excel keys
 - [ ] <a id="op-um-03"></a>**OP-UM-03** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
 - [x] <a id="op-um-04"></a>**OP-UM-04** · Agree who creates and manages Owner Units in Workspace, and who becomes group owner. *Decided on 2026-10-19: any existing Google group can be an Owner Unit, so no groups need to be created for it ([DEC-CO-09](03-collections.md#dec-co-09)).*
 - [x] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation. *Decided on 2026-10-28, by Max: at every sign-in ([DEC-UM-08](#dec-um-08)).*
-- [ ] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above.
+- [x] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-UM-04](#ec-um-04) is Specified, the others are withdrawn.*
 - [x] <a id="op-um-07"></a>**OP-UM-07** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.* *Decided on 2026-10-28, by Max: both, as they are on the same Workspace ([DEC-UM-09](#dec-um-09)).*
 
 ## Builds on

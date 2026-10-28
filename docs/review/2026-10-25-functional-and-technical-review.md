@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 51 open, of 245: 34 for v1 and 17 marked Could |
+| Open points | 49 open, of 245: 32 for v1 and 17 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,14 +1183,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 51 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 49 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06) who owns the Slack app · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-UX-36](../design/principles.md#op-ux-36) changing the relations on the page of a Resource · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06) who owns the Slack app · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
 
 ### Open themes
 
@@ -1200,8 +1200,7 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 1 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 1 open
-- [ ] **[OP-UX-36](../design/principles.md#op-ux-36)** · **Changing the relations of a Resource:** only a Data Admin changes its grain and mappings, on the page of the Resource ([DEC-CO-22](../requirements/functional/03-collections.md#dec-co-22)); no screen shows it yet. Proposal: an "Edit relations" button on the Columns tab, for a Data Admin only, opening step 2 of adding Resources for this one Resource. *Raised on 2026-10-28, in the review of Max.* *Look at: [resource-detail.html](../design/screens/resource-detail.html), with `?tabs=columns`, and [collection-add-relations.html](../design/screens/collection-add-relations.html) for step 2.*
+Source: [design/principles.md](../design/principles.md) · 0 open
 
 
 ### Artifact registry
@@ -1212,10 +1211,9 @@ Source: [requirements/functional/01-artifact-registry.md](../requirements/functi
 
 ### User management
 
-Source: [requirements/functional/02-user-management.md](../requirements/functional/02-user-management.md) · 2 open
+Source: [requirements/functional/02-user-management.md](../requirements/functional/02-user-management.md) · 1 open
 
 - [ ] **[OP-UM-03](../requirements/functional/02-user-management.md#op-um-03)** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
-- [ ] **[OP-UM-06](../requirements/functional/02-user-management.md#op-um-06)** · Confirm or adjust the edge cases above.
 
 ### Collections
 
@@ -1402,6 +1400,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-UX-30](../design/principles.md#op-ux-30)** · **Removing a Resource as a new query:** decided to try ([DEC-UX-73](../design/principles.md#dec-ux-73)), as a query on fewer Resources has a very different list of Lenses. Review after testing whether it is too heavy in use, for instance when the SQL still reads the Resource and the new query starts with an error. *Raised on 2026-10-27, by Max.* *Look at: [query.html](../design/screens/query.html), the × on a Resource in the scope above the SQL, which opens the sheet for a new query; [query-new.html](../design/screens/query-new.html).* *Decided on 2026-10-28, by Max: the screen is right as it is; removing a Resource stays a new query ([DEC-UX-73](../design/principles.md#dec-ux-73)).*
 - [x] **[OP-UX-32](../design/principles.md#op-ux-32)** · **The colour of cards on the light background:** on the clouds of [DEC-UX-78](../design/principles.md#dec-ux-78) the frames read whiter than before. Decide whether the glass and solid surfaces keep their values or take a warmer tint. *Raised on 2026-10-27, in the review of Max; recorded here on 2026-10-28.* *Look at: [collections-start.html](../design/screens/collections-start.html), in the light theme: the panel and the tiles; [resource-detail.html](../design/screens/resource-detail.html).* *Decided on 2026-10-28, by Max: no; the surfaces keep their values ([DEC-UX-103](../design/principles.md#dec-ux-103)).*
 - [x] **[OP-UX-09](../design/principles.md#op-ux-09)** · **Look:** [DEC-PF-22](../requirements/technical/00-platform.md#dec-pf-22) asks for the colours of the brandbook, with teal on larger areas, and one light look without a dark mode. This design has warm greys, colour only on content, and a light and a dark theme. Decide whether this design replaces those parts of DEC-PF-22. *Look at: [collections-start.html](../design/screens/collections-start.html), with the moon at the foot of the rail for the dark theme; [sign-in.html](../design/screens/sign-in.html).* *Decided on 2026-10-28, by Max: the look of this design ([DEC-UX-104](../design/principles.md#dec-ux-104)).*
+- [x] **[OP-UX-36](../design/principles.md#op-ux-36)** · **Changing the relations of a Resource:** only a Data Admin changes its grain and mappings, on the page of the Resource ([DEC-CO-22](../requirements/functional/03-collections.md#dec-co-22)); no screen shows it yet. Proposal: an "Edit relations" button on the Columns tab, for a Data Admin only, opening step 2 of adding Resources for this one Resource. *Raised on 2026-10-28, in the review of Max.* *Look at: [resource-detail.html](../design/screens/resource-detail.html), with `?tabs=columns`, and [collection-add-relations.html](../design/screens/collection-add-relations.html) for step 2.* *Decided on 2026-10-28, by Max: as proposed ([DEC-UX-107](../design/principles.md#dec-ux-107)).*
 
 **Stacks and resources**
 
@@ -1483,6 +1482,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 
 - [x] **[OP-UM-05](../requirements/functional/02-user-management.md#op-um-05)** · Decide the frequency of the Synchronisation. *Decided on 2026-10-28, by Max: at every sign-in ([DEC-UM-08](../requirements/functional/02-user-management.md#dec-um-08)).*
 - [x] **[OP-UM-07](../requirements/functional/02-user-management.md#op-um-07)** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](../requirements/functional/02-user-management.md#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.* *Decided on 2026-10-28, by Max: both, as they are on the same Workspace ([DEC-UM-09](../requirements/functional/02-user-management.md#dec-um-09)).*
+- [x] **[OP-UM-06](../requirements/functional/02-user-management.md#op-um-06)** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-UM-04](../requirements/functional/02-user-management.md#ec-um-04) is Specified, the others are withdrawn.*
 
 **Collections**
 
