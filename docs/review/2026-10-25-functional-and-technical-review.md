@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 83 |
 | Prototype screens | 31, plus the index |
-| Open points | 130 open, of 235: 124 for v1 and 6 marked Could |
+| Open points | 131 open, of 236: 125 for v1 and 6 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1182,14 +1182,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 130 still open, 6 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 131 still open, 6 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-UX-32](../design/principles.md#op-ux-32) the colour of cards on the light background · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits · [OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17) the Request for a query above 1 GB · [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16) and [OP-UX-25](../design/principles.md#op-ux-25) the deprecated mark
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-MR-07](../requirements/functional/06-maturity-and-release.md#op-mr-07) Monitored in v1
 
 ### Open themes
 
@@ -1303,11 +1303,12 @@ Source: [requirements/functional/05-resource-card.md](../requirements/functional
 
 ### Maturity and release
 
-Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 3 open
+Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 4 open
 
 - [ ] **[OP-MR-01](../requirements/functional/06-maturity-and-release.md#op-mr-01)** · Work out a new domain, [EDA](../requirements/functional/15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch).
 - [ ] **[OP-MR-02](../requirements/functional/06-maturity-and-release.md#op-mr-02)** · Work out the domain [Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md): kinds of checks, incidents and alerts.
 - [ ] **[OP-MR-04](../requirements/functional/06-maturity-and-release.md#op-mr-04)** · Complete the drop causes in [Rising and dropping](../requirements/functional/06-maturity-and-release.md#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](../requirements/functional/03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](../requirements/functional/02-user-management.md#ec-um-01), [EC-CO-01](../requirements/functional/03-collections.md#ec-co-01)). *Note of 2026-10-26: a structural Change is no longer a cause of a drop ([DEC-MR-08](../requirements/functional/06-maturity-and-release.md#dec-mr-08)); the causes named here remain to complete.*
+- [ ] **[OP-MR-07](../requirements/functional/06-maturity-and-release.md#op-mr-07)** · Decide whether a Resource can reach 5 · Monitored in v1, now that the automatic checks from the EDA and the monitors are for version 2 ([OP-DH-19](../overview/open-themes.md#op-dh-19)): Monitored asks for at least one active check. Proposal: the ladder in v1 stops at 4 · Explored; Monitored is shown as the next step, out of reach until the checks come. *Raised on 2026-10-28, in the review of Max.*
 
 ### Log and notifications
 
