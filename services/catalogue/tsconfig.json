@@ -10,6 +10,7 @@
     { "path": "../../packages/auth" },
     { "path": "../../packages/contracts" },
     { "path": "../../packages/db" },
+    { "path": "../../packages/google" },
     { "path": "../../packages/server" }
   ]
 }

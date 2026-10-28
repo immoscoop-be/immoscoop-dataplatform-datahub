@@ -37,10 +37,11 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /nodes/{id}` | One Node with what Colleciónes built it from, its columns with their meta, and its tests ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `GET /nodes/{id}/lineage?direction=&depth=` | Lineage upstream or downstream, across both projects ([TR-AR-06](../../requirements/technical/01-artifact-registry.md#tr-ar-06)) |
 | `GET /nodes/{id}/proposal` | The grain, model type, storage and mappings Data Hub proposes for the Resource on a Node, when it is added to a Collection ([TR-AR-10](../../requirements/technical/01-artifact-registry.md#tr-ar-10)) |
+| `GET /internal/nodes/{id}/lineage?direction=` | The lineage around a Resource, for catalogue only, with a Google ID token: names, kinds, layers and projects of the models ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)) |
 | `GET /domain-model` | The Domain Model in use, read from the collector at that moment: its release, the relation types a field can map to, and every identity ([TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
 
-Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is to be readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)); not built yet.*
+Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)), through catalogue, which checks who may see it and asks registry as itself ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)).*
 
 ## Data
 

@@ -78,6 +78,24 @@ export interface CatalogueDatabase {
     partitionFilter: ColumnType<PartitionFilter, PartitionFilter | undefined, PartitionFilter>;
     origins: ColumnType<Origins, Origins | undefined, Origins>;
     domainModelRelease: string | null;
+    /** What the Owner and the Data Team keep about it in Data Hub (FR-RC-15). */
+    businessDescription: ColumnType<string, string | undefined, string>;
+    intendedUse: ColumnType<string, string | undefined, string>;
+    pitfalls: ColumnType<string, string | undefined, string>;
+    knownGaps: ColumnType<string[], string[] | undefined, string[]>;
+    /** A day, as `YYYY-MM-DD`. */
+    reliableSince: ColumnType<Date | null, string | null | undefined, string | null>;
+    keyFields: ColumnType<string[], string[] | undefined, string[]>;
+    parameters: ColumnType<string[], string[] | undefined, string[]>;
+  };
+  /** The Business Description of a field, by its name (FR-RC-16). */
+  fieldDescriptions: {
+    resourceId: string;
+    field: string;
+    text: string;
+    updatedAt: Timestamp;
+    /** The fixed Google ID of whoever wrote it last. */
+    updatedBy: string;
   };
   /** The mapping of each field that has one (DEC-RC-05, DEC-RC-06, DEC-RC-14). */
   resourceMappings: {

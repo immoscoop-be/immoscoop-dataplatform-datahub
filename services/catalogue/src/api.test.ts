@@ -5,12 +5,13 @@ import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parse, parseAdd, parseUpdate } from './api.js';
+import { parse, parseAdd, parseCard, parseFieldDescriptions, parseUpdate } from './api.js';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
+import { RegistryUnavailable } from './registry.js';
 import { createResources } from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
@@ -85,6 +86,38 @@ describe('the Resources to add, in a request (FR-CO-31, FR-CO-33, FR-CO-34)', ()
   });
 });
 
+describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () => {
+  it('takes texts, a list of gaps, a day and lists of fields, trimmed', () => {
+    expect(parseCard({ businessDescription: ' Leads per week. ', knownGaps: [' no partner leads before March ', ' '], reliableSince: '2025-01-01', keyFields: ['week_start'] })).toEqual({
+      businessDescription: 'Leads per week.',
+      knownGaps: ['no partner leads before March'],
+      reliableSince: '2025-01-01',
+      keyFields: ['week_start'],
+    });
+    expect(parseCard({ reliableSince: null, pitfalls: '' })).toEqual({ reliableSince: null, pitfalls: '' });
+  });
+
+  it('refuses what does not fit', () => {
+    expect(parseCard({})).toBe('Send at least one thing to change.');
+    expect(parseCard({ stability: 'D-3' })).toBe('A Resource has no stability to change.');
+    expect(parseCard({ intendedUse: 'x'.repeat(2001) })).toMatch(/at most 2000/);
+    expect(parseCard({ reliableSince: '2025-02-30' })).toMatch(/YYYY-MM-DD/);
+    expect(parseCard({ reliableSince: 'yesterday' })).toMatch(/YYYY-MM-DD/);
+    expect(parseCard({ keyFields: ['a', 'a'] })).toMatch(/different fields/);
+    expect(parseCard({ knownGaps: 'none' })).toMatch(/Known Gaps/);
+  });
+
+  it('takes the Business Descriptions of fields, each once; an empty one removes it', () => {
+    expect(parseFieldDescriptions({ fields: [{ name: 'a', businessDescription: ' The a. ' }, { name: 'b', businessDescription: '' }] })).toEqual([
+      { field: 'a', text: 'The a.' },
+      { field: 'b', text: '' },
+    ]);
+    expect(parseFieldDescriptions({ fields: [] })).toMatch(/list of 1 to 1000/);
+    expect(parseFieldDescriptions({ fields: [{ name: 'a', businessDescription: 'x' }, { name: 'a', businessDescription: 'y' }] })).toBe('Name each field once.');
+    expect(parseFieldDescriptions({ fields: [{ name: 'a' }] })).toMatch(/Each field/);
+  });
+});
+
 describe.skipIf(!url)('the routes of Collections', () => {
   const schema = `catalogue_api_${randomBytes(4).toString('hex')}`;
   let database: Database<CatalogueDatabase>;
@@ -93,6 +126,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   /** The groups identity tells, per token: each test User is in the groups their token names. */
   const groupsOf = new Map<string, Group[]>();
   let identityDown = false;
+  let registryDown = false;
 
   beforeAll(async () => {
     database = createDatabase<CatalogueDatabase>({ connectionString: url }, schema);
@@ -124,6 +158,28 @@ describe.skipIf(!url)('the routes of Collections', () => {
               throw new TokenError('Service token rejected: ERR_JWS_INVALID');
             }
             return 'datahub-registry@project.iam.gserviceaccount.com';
+          },
+        },
+        // The lineage around `cards`: `decks` and a staging model upstream, a mart downstream.
+        registry: {
+          async lineage(nodeId, direction) {
+            if (registryDown) {
+              throw new RegistryUnavailable('registry answered 503');
+            }
+            if (!nodeId.endsWith('.cards')) {
+              return undefined;
+            }
+            const node = (name: string, layer: string, distance: number) => ({
+              uniqueId: `model.immoscoop_dataplatform_sql.${name}`,
+              name,
+              resourceType: 'model',
+              layer,
+              projectId: '9367',
+              projectName: 'dbt-prod',
+              distance,
+            });
+            const near = direction === 'upstream' ? [node('decks', 'marts', 1), node('stg_cards', 'staging', 2)] : [node('card_share', 'marts', 1)];
+            return { direction, nodes: [node('cards', 'marts', 0), ...near], edges: [], truncated: false };
           },
         },
       },
@@ -341,6 +397,121 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // Without a Collection, only the Data Team sees it (FR-SR-31).
       expect((await an('GET', `/resources/${searches.id}`)).statusCode).toBe(404);
       expect((await dirk('GET', '/resources/not-an-id')).statusCode).toBe(404);
+    });
+
+    it('lets the Owner Unit and the Data Team keep the Resource Card, and shows what it relates to (FR-RC-15, FR-RC-09, FR-SR-54)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const bert = await user('Bert', [SALES]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const described = (name: string, description: string) => ({
+        ...update('6', [name]).tables[0]!,
+        description,
+        columns: [
+          { name: `${name}_id`, position: 1, dataType: 'STRING', description: description && 'The ID.' },
+          { name: 'listing_id', position: 2, dataType: 'STRING', description: '' },
+        ],
+      });
+      await fromRegistry({ ...update('6', []), tables: [described('cards', 'Cards per week.'), described('decks', 'Decks.'), described('drafts', '')] });
+      const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
+      const [cards, decks, drafts] = ['cards', 'decks', 'drafts'].map((name) => waiting.find((resource) => resource.name === name)!.id);
+      // Without a Collection it has no Owner yet: the rest follows once it has one.
+      expect((await dirk('PATCH', `/resources/${cards}`, { intendedUse: 'Trends.' })).json().error).toBe('no_collection');
+
+      const collection = (await an('POST', '/collections', { name: 'Cards', description: 'Cards.', icon: 'cards', ownerUnit: DIGIKOM.id })).json();
+      const mapped = (field: string) => ({
+        partition: null,
+        clusterBy: [],
+        partitionFilter: 'none',
+        grain: [],
+        grainSentence: '',
+        modelType: 'fact',
+        origins: {},
+        release: '0.0.70',
+        mappings: [{ field, kind: 'relation', relationType: 'basedOn', identity: 'listing.listingId', subject: null, origin: 'name', inDomainModel: true }],
+      });
+      const added = await dirk('POST', `/collections/${collection.id}/resources`, {
+        resources: [{ id: cards, ...mapped('listing_id') }, { id: decks, ...mapped('listing_id') }, drafts],
+      });
+      expect(added.statusCode).toBe(200);
+
+      // Its Owner Unit edits in place; every change goes into the Log, by name (FR-SR-28).
+      expect((await an('PATCH', `/resources/${cards}`, { keyFields: ['nope'] })).json().message).toBe('cards has no field nope.');
+      const edited = await an('PATCH', `/resources/${cards}`, {
+        businessDescription: 'The cards we send each week.',
+        intendedUse: 'Trends.',
+        knownGaps: ['No cards before March.'],
+        reliableSince: '2025-01-01',
+        keyFields: ['cards_id'],
+        parameters: ['listing_id'],
+      });
+      expect(edited.statusCode).toBe(200);
+      expect(edited.json().resource.card).toEqual({
+        businessDescription: 'The cards we send each week.',
+        intendedUse: 'Trends.',
+        pitfalls: '',
+        knownGaps: ['No cards before March.'],
+        reliableSince: '2025-01-01',
+        keyFields: ['cards_id'],
+        parameters: ['listing_id'],
+      });
+      // Only what changed goes into the Log.
+      expect((await dirk('PATCH', `/resources/${cards}`, { intendedUse: 'Trends.', pitfalls: 'Weeks overlap.' })).statusCode).toBe(200);
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 7).map((entry: { text: string }) => entry.text)).toEqual([
+        'Pitfalls updated by Dirk',
+        'Parameters updated by An',
+        'Key fields updated by An',
+        'Reliable since updated by An',
+        'Known Gaps updated by An',
+        'Intended use updated by An',
+        'Business Description updated by An',
+      ]);
+      expect((await bert('PATCH', `/resources/${cards}`, { intendedUse: 'Mine.' })).statusCode).toBe(404);
+      // A Business Description from 2 · Described on (DEC-MR-10); the rest of the card before that.
+      expect((await an('PATCH', `/resources/${drafts}`, { businessDescription: 'Drafts.' })).json().error).toBe('not_described');
+      expect((await an('PATCH', `/resources/${drafts}`, { intendedUse: 'Not yet.' })).statusCode).toBe(200);
+
+      // The Business Descriptions of the fields, next to those from dbt (FR-RC-16).
+      const fields = await an('PUT', `/resources/${cards}/fields`, { fields: [{ name: 'cards_id', businessDescription: 'One card.' }] });
+      expect(fields.json().resource.fields).toEqual([
+        { name: 'cards_id', position: 1, dataType: 'STRING', description: 'The ID.', businessDescription: 'One card.' },
+        { name: 'listing_id', position: 2, dataType: 'STRING', description: '', businessDescription: '' },
+      ]);
+      expect((await an('PUT', `/resources/${cards}/fields`, { fields: [{ name: 'cards_id', businessDescription: '' }] })).json().resource.fields[0].businessDescription).toBe('');
+      expect((await an('PUT', `/resources/${drafts}/fields`, { fields: [{ name: 'drafts_id', businessDescription: 'A draft.' }] })).json().error).toBe('not_described');
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 2).map((entry: { text: string }) => entry.text)).toEqual([
+        'Business Description of the field cards_id updated by An',
+        'Business Description of the field cards_id updated by An',
+      ]);
+
+      // Edit relations, for a Data Admin only (DEC-UX-107).
+      expect((await an('PUT', `/resources/${cards}/details`, mapped('listing_id'))).statusCode).toBe(403);
+      expect((await dirk('PUT', `/resources/${cards}/details`, { ...mapped('listing_id'), grain: ['nope'] })).json().message).toBe('cards: it has no field nope.');
+      const related = await dirk('PUT', `/resources/${cards}/details`, { ...mapped('listing_id'), grain: ['cards_id'], grainSentence: 'one card' });
+      expect(related.json().resource.details).toMatchObject({ grain: ['cards_id'], grainSentence: 'one card' });
+
+      // What it relates to: the Resources that carry the same identity, as far as the User sees them.
+      expect((await an('GET', `/resources/${cards}/related`)).json().related).toEqual([
+        {
+          field: 'listing_id',
+          kind: 'relation',
+          relationType: 'basedOn',
+          identity: 'listing.listingId',
+          inDomainModel: true,
+          resources: [{ id: decks, displayName: 'decks', level: 2, field: 'listing_id' }],
+        },
+      ]);
+
+      // The lineage around it, with the Resources on it that the User sees (DEC-AR-06).
+      const lineage = (await an('GET', `/resources/${cards}/lineage`)).json();
+      expect(lineage.nodeId).toBe('model.immoscoop_dataplatform_sql.cards');
+      expect(lineage.upstream.nodes.map((node: { name: string; layer: string }) => `${node.name} · ${node.layer}`)).toEqual(['cards · marts', 'decks · marts', 'stg_cards · staging']);
+      expect(lineage.downstream.nodes.map((node: { name: string }) => node.name)).toEqual(['cards', 'card_share']);
+      expect(lineage.resources.map((resource: { displayName: string }) => resource.displayName).sort()).toEqual(['cards', 'decks']);
+      expect((await bert('GET', `/resources/${cards}/lineage`)).statusCode).toBe(404);
+      expect((await an('GET', `/resources/${drafts}/lineage`)).json()).toMatchObject({ upstream: null, downstream: null });
+      registryDown = true;
+      expect((await an('GET', `/resources/${cards}/lineage`)).statusCode).toBe(503);
+      registryDown = false;
     });
 
     it('checks what registry sends', () => {

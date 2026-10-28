@@ -10,6 +10,9 @@ export interface NodeSummary {
   projectName: string | null;
   description: string;
   relation: string | null;
+  /** The layer Colleciónes tags it with, such as `mart`; null for another model. */
+  layer: string | null;
+  filePath: string | null;
 }
 
 export interface SearchHit extends NodeSummary {
@@ -83,7 +86,7 @@ const LINEAGE_LIMIT = 500;
  * Version of each project, never about a set that is still being processed.
  */
 export function createReading(db: Kysely<RegistryDatabase>) {
-  const summary = sql`n.unique_id, n.name, n.resource_type, p.project_id, p.name as project_name, n.description, n.relation`;
+  const summary = sql`n.unique_id, n.name, n.resource_type, p.project_id, p.name as project_name, n.description, n.relation, n.layer, n.file_path`;
 
   /**
    * Every link of the Current Versions: the Edges within each project, and a source linked to the

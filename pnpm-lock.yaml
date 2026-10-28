@@ -176,6 +176,9 @@ importers:
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@datahub/google':
+        specifier: workspace:*
+        version: link:../../packages/google
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server

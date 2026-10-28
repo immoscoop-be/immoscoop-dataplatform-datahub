@@ -1,10 +1,12 @@
 import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
+import { metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { createIdentity } from './identity.js';
+import { createRegistry } from './registry.js';
 import { createResources } from './resources.js';
 
 const database = await connectCloudSql<CatalogueDatabase>(cloudSqlOptionsFromEnv('catalogue'));
@@ -22,6 +24,8 @@ const app = await buildApp({
       audience: required('DATAHUB_CATALOGUE_URL'),
       serviceAccounts: [required('DATAHUB_REGISTRY_SERVICE_ACCOUNT')],
     }),
+    // The lineage around a Resource, asked as catalogue with a Google ID token for registry (DEC-AR-06).
+    registry: createRegistry(required('DATAHUB_REGISTRY_URL'), metadataIdToken()),
   },
 });
 app.addHook('onClose', () => database.close());

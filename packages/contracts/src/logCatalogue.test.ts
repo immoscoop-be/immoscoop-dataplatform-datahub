@@ -40,6 +40,7 @@ describe('the Log Catalogue', () => {
 
   it('gives a field name a capital, and keeps the spelling of a name', () => {
     expect(renderLog('RES-005', { field: 'description', actor: 'Max' }, 'en')).toBe('Description updated by Max');
+    expect(renderLog('RES-005', { field: 'intendedUse', actor: 'Max' }, 'nl')).toBe('Beoogd gebruik bijgewerkt door Max');
     expect(renderLog('COL-006', { resource: 'saved searches', actor: 'Max' }, 'en')).toBe('saved searches added by Max');
   });
 

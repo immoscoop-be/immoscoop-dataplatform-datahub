@@ -11,7 +11,7 @@ import type { Reading } from './reading.js';
 
 /** What the routes are asked; the queries themselves are tested against Postgres in reading.test.ts. */
 function fakeReading(asked: unknown[]): Reading {
-  const node = { uniqueId: 'model.p.orders', name: 'orders', resourceType: 'model', projectId: '9367', projectName: 'p', description: '', relation: null };
+  const node = { uniqueId: 'model.p.orders', name: 'orders', resourceType: 'model', projectId: '9367', projectName: 'p', description: '', relation: null, layer: null, filePath: null };
   return {
     projects: async () => [],
     runs: async (limit) => {
