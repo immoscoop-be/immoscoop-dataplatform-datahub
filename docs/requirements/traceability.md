@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 24 | 28 (3 open, 25 done) |
 | [Localisation](non-functional/localisation.md) | 12 (11 specified, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 28 | 20 (9 open, 11 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 28 | 20 (7 open, 13 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
@@ -465,7 +465,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [NFR-LOC-09](non-functional/localisation.md#nfr-loc-09) | Metadata written by people is in the language of the writer | Specified | – | – | [446d027](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/446d027fb1e3158037f5eb09766e70baffe0f4db) refs, 2026-10-28<br>[7e8feb9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7e8feb9a617ee330a84b34eb7eee73190b4a11d4) refs, 2026-10-25 |
 | [NFR-LOC-10](non-functional/localisation.md#nfr-loc-10) | The texts of the Log are sentences | Specified | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
 | [NFR-LOC-11](non-functional/localisation.md#nfr-loc-11) | Names Users give are names | Specified | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
-| [NFR-LOC-12](non-functional/localisation.md#nfr-loc-12) | Learning Cards in Dutch and English, with English names | Specified | [DEC-DH-65](../overview/data-hub.md#dec-dh-65) | – | [e7ef82c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e7ef82cff5c0efe9d2f4391ee0d5b1d3c45a3df8) refs, 2026-10-28 |
+| [NFR-LOC-12](non-functional/localisation.md#nfr-loc-12) | Learning Cards in Dutch and English, with English names | Specified | [DEC-DH-65](../overview/data-hub.md#dec-dh-65) | – | [af6e9fa](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/af6e9fa05fef0676bb2d0a74eb4a9a9df89e8ec7) refs, 2026-10-28<br>[e7ef82c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e7ef82cff5c0efe9d2f4391ee0d5b1d3c45a3df8) refs, 2026-10-28 |
 
 ### [Security](non-functional/security.md)
 

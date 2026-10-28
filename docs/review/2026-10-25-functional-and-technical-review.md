@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 34 open, of 245: 16 for v1 and 18 marked Could |
+| Open points | 32 open, of 245: 14 for v1 and 18 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 34 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 32 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1273,10 +1273,8 @@ Source: [requirements/functional/16-learning.md](../requirements/functional/16-l
 
 ### Platform: technical requirements
 
-Source: [requirements/technical/00-platform.md](../requirements/technical/00-platform.md) · 9 open
+Source: [requirements/technical/00-platform.md](../requirements/technical/00-platform.md) · 7 open
 
-- [ ] **[OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)** · Decide where the Message Centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../requirements/functional/07-log-and-notifications.md) is specified.
-- [ ] **[OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
 - [ ] **[OP-PF-10](../requirements/technical/00-platform.md#op-pf-10)** · Run the one-time bootstrap in both projects and set up the GitHub environments and variables, as described in [GCP setup](../architecture/gcp-setup.md).
 - [ ] **[OP-PF-12](../requirements/technical/00-platform.md#op-pf-12)** · Set up the branch rules in GitHub: rulesets for `main` and `uat`, the required checks, and `uat` as the default branch ([Build and deploy](../architecture/build-and-deploy.md#rules-in-github)).
 - [ ] **[OP-PF-13](../requirements/technical/00-platform.md#op-pf-13)** · Decide whether pull requests show a Terraform plan before merging. That needs a separate, read-only identity that pull requests may use, because the Terraform identities only trust `uat` and `main`.
@@ -1451,6 +1449,8 @@ The points above that were decided since 2026-10-25, each with its decision. The
 
 - [x] **[OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)** · Decide who gives query its read access on the Stacks: Terraform, which then needs rights on the Stacks dataset, or dbt, which creates that dataset. *Decided on 2026-10-26, by Max: Terraform grants the service account of Data Hub read access to every table in the GCP projects of the dbt projects it follows ([DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32)).*
 - [x] **[OP-PF-20](../requirements/technical/00-platform.md#op-pf-20)** · Decide how the services of Data Hub are monitored: today each logs to Cloud Logging and has a health check, but nothing watches them. Proposal: an uptime check in Cloud Monitoring on the health check of every service and the web app, and an alert to the Data Team by e-mail when one fails or answers with errors for five minutes; all in Terraform. *Raised on 2026-10-28, from [OP-DH-35](../overview/open-themes.md#op-dh-35).* *Decided on 2026-10-28, by Max: as proposed ([DEC-PF-27](../requirements/technical/00-platform.md#dec-pf-27)).*
+- [x] **[OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)** · Decide where the Message Centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../requirements/functional/07-log-and-notifications.md) is specified. *Decided on 2026-10-28, by Max: the Message Centre is part of the navigation of the web app ([DEC-UX-29](../design/principles.md#dec-ux-29)); its Messages stay in the schema of catalogue, as the [architecture](../architecture/README.md) has them, and no separate notifications service is needed for v1.*
+- [x] **[OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)** · Choose the public domain names under which Data Hub and its services are reachable, per environment. *Decided on 2026-10-28, by Max: the domain names are chosen as part of the build.*
 
 **Channels**
 
