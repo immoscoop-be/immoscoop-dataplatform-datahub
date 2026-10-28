@@ -550,7 +550,7 @@ A Broken query cannot run: Run is off, and a callout on top of it names what no 
 
 **Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource)
 
-The tab Lineage shows one model in focus with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one makes it the focus; the Resource the User started from stays in view, and the models between are gathered in one box. Data Hub never shows the whole lineage at once.
+The tab Lineage shows the Resource in the middle, always, with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one makes it the active model on its side, with the models between listed, and the models next to it to step on. Data Hub never shows the whole lineage at once.
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).

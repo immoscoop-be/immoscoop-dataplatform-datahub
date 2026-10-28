@@ -37,7 +37,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 
 ## Data
 
-Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants.
+Users (by fixed Google ID), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants. Later: the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96)).
 
 ## Talks to
 

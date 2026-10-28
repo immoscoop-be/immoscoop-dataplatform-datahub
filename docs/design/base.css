@@ -1013,6 +1013,9 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 
 /* Learning: the marker and its pop-out, on system text (DEC-UX-54, DEC-UX-56, DEC-UX-57) */
 .lc-ref { border-radius: 4px; cursor: help; transition: background-color .15s; }
+/* A chip with a marker keeps the shape of its chip, so the chips of a row stay alike */
+.status.lc-ref { border-radius: var(--radius-pill); }
+.code-chip.lc-ref { border-radius: var(--radius-chip); }
 .lc-ref:hover, .lc-ref:focus-visible, .lc-ref.open { background: var(--tint-active); outline: none; }
 .lc-mark { font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif; font-size: .78em; font-weight: 400; font-style: normal; margin-left: 2px; vertical-align: .2em; line-height: 0; color: currentColor; cursor: help; }
 /* a text bubble: its arrow points at the marker it belongs to */
@@ -1198,27 +1201,44 @@ a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .hist-preview { margin: 0 0 10px; align-items: center; }
 .hist-preview button { flex: none; }
 
-/* The Lineage tab (DEC-UX-90): one step at a time, the start pinned, what lies between in a dashed box */
-.lin-trail { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: var(--text-small); color: var(--text-secondary); }
-.lin { display: flex; align-items: center; gap: 10px; overflow-x: auto; padding: 4px 2px 8px; }
-.lin-col { display: flex; flex-direction: column; gap: 8px; min-width: 170px; max-width: 230px; flex: 1; }
-.lin-col > .label { margin-bottom: 2px; }
-.lin-gap { padding: 10px; border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
-.lin-arrow { color: var(--text-muted); font-size: 18px; flex: none; }
-.lin-node { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); border: 0; font: inherit; color: inherit; }
+/* The Lineage tab (DEC-UX-90): this Resource always in the middle, an arrow to every direct model, what lies between listed */
+.lin { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; padding: 6px 0 10px; }
+.lin-wing { display: flex; align-items: center; overflow-x: auto; padding: 4px 2px 8px; }
+.lin-wing.left > :first-child { margin-left: auto; }
+.lin-side { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lin-side > .label { margin: 0 0 2px; text-align: center; }
+.lin-center { padding: 0 6px; }
+.lin-fan { position: relative; display: flex; flex-direction: column; gap: 8px; }
+.lin-fan > .lin-node { position: relative; }
+.lin-fan.down { padding-left: 28px; margin-left: 0; }
+.lin-fan.up { padding-right: 28px; }
+.lin-fan.down::before, .lin-fan.up::before { content: ''; position: absolute; top: 22px; bottom: 22px; border-left: 1.5px solid var(--text-muted); }
+.lin-fan.down::before { left: 12px; }
+.lin-fan.up::before { right: 12px; }
+.lin-fan.down::after, .lin-fan.up::after { content: ''; position: absolute; top: 50%; width: 12px; border-top: 1.5px solid var(--text-muted); }
+.lin-fan.down::after { left: 0; }
+.lin-fan.up::after { right: 0; }
+.lin-fan.down > .lin-node::before, .lin-fan.up > .lin-node::before { content: ''; position: absolute; top: 50%; width: 14px; border-top: 1.5px solid var(--text-muted); }
+.lin-fan.down > .lin-node::before { left: -16px; }
+.lin-fan.up > .lin-node::before { right: -16px; }
+.lin-fan.down > .lin-node::after, .lin-fan.up > .lin-node::after { content: ''; position: absolute; top: calc(50% - 4px); border: 4px solid transparent; }
+.lin-fan.down > .lin-node::after { left: -6px; border-left-color: var(--text-muted); }
+.lin-fan.up > .lin-node::after { right: -10px; border-left-color: var(--text-muted); }
+.lin-link { width: 16px; border-top: 1.5px solid var(--text-muted); flex: none; align-self: center; }
+.lin-between { list-style: none; margin: 0; padding: 10px 12px; width: 128px; border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.lin-between li { overflow-wrap: anywhere; }
+.lin-between .lin-none { font-family: var(--font-family); color: var(--text-muted); font-size: var(--text-meta); }
+.lin-node { display: flex; gap: 10px; align-items: flex-start; text-align: left; width: 190px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); border: 0; font: inherit; color: inherit; }
 button.lin-node { cursor: pointer; }
 button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .lin-node > i { font-size: 17px; color: var(--text-secondary); margin-top: 2px; }
 .lin-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lin-name { font-size: 12px; overflow-wrap: anywhere; }
 .lin-res { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); margin-top: 2px; }
-.lin-note { font-size: var(--text-meta); color: var(--text-secondary); font-style: italic; }
 .lin-node.focus { background: var(--surface-solid); box-shadow: 0 0 0 2px var(--text-primary); }
-.lin-node.on-path { box-shadow: 0 0 0 1.5px var(--text-secondary); }
-.lin-node.home { background: transparent; box-shadow: 0 0 0 1.5px var(--tint-active); }
-
-/* Small screens are not supported (DEC-UX-91): below 900 pixels wide, one message instead of the app */
-@media (max-width: 899px) {
-  .app, .proto-switch, .role-switch, .sheet-wrap, .float-win { display: none !important; }
-  body::before { content: "Data Hub is made for a computer screen. Make this window wider, or open Data Hub on a computer."; display: block; max-width: 340px; margin: 30vh auto 0; padding: 0 24px; text-align: center; font: var(--weight-medium) 15px/1.6 var(--font-family); color: var(--text-primary); }
-}
+.lin-node.act { box-shadow: 0 0 0 1.5px var(--text-secondary); }
+.lin-nexts { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin-top: 8px; }
+.lin-nexts > .label { margin: 0; }
+.lin-next { border: 0; background: var(--surface-solid); border-radius: var(--radius-pill); padding: 3px 9px; font-size: 11.5px; cursor: pointer; text-align: left; max-width: 100%; overflow-wrap: anywhere; color: inherit; }
+.lin-next:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
+.lin-reset { display: flex; justify-content: flex-end; margin: -6px 0 6px; }
