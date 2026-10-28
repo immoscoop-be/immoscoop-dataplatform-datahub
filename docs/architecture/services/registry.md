@@ -48,6 +48,8 @@ Artifact Sets with their status and error, Nodes, columns, Edges, tests and Chan
 
 The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub` ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
 
+Once [FR-AR-15](../../requirements/functional/01-artifact-registry.md#fr-ar-15) is built: the collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04)).
+
 ## Permissions
 
 See [TR-PF-11](../../requirements/technical/00-platform.md#tr-pf-11): Cloud SQL client, write access to the artifact bucket, the dbt Cloud token and the webhook secret from Secret Manager, and starting its ingest job, which runs under the same service account.
