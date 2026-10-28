@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 83 |
 | Prototype screens | 31, plus the index |
-| Open points | 130 open, of 238: 123 for v1 and 7 marked Could |
+| Open points | 129 open, of 238: 122 for v1 and 7 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1182,7 +1182,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 130 still open, 7 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 129 still open, 7 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1193,10 +1193,9 @@ Where to start: the points that shape the build are in group A of **Decisions be
 
 ### Open themes
 
-Source: [overview/open-themes.md](../overview/open-themes.md) · 18 open
+Source: [overview/open-themes.md](../overview/open-themes.md) · 17 open
 
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model. *Note of 2026-10-28: the generated project already links every model to its Entity, its action and its references in `meta.domain` ([FR-AR-16](../requirements/functional/01-artifact-registry.md#fr-ar-16)); per column it says nothing structured yet. The extension is proposed in [The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest) ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07), [FR-AR-17](../requirements/functional/01-artifact-registry.md#fr-ar-17)).*
-- [ ] **[OP-DH-24](../overview/open-themes.md#op-dh-24)** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).*
 - [ ] **[OP-DH-25](../overview/open-themes.md#op-dh-25)** · Work out the issuing, revoking and renewing of personal keys, the Library Cards.
 - [ ] **[OP-DH-27](../overview/open-themes.md#op-dh-27)** · Decide the form of the request to the Data Team, and how it is linked to the Owner Unit, the Collection and the Domain Model.
 - [ ] **[OP-DH-28](../overview/open-themes.md#op-dh-28)** · Work out how the working version is realigned to the new Resource after promotion. *Note of 2026-10-28: the working version is the Lens or query whose SQL the Data Team hardened ([DEC-DH-70](../overview/open-themes.md#dec-dh-70)).*
@@ -1435,6 +1434,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-DH-14](../overview/open-themes.md#op-dh-14)** · Work out the schema of the Resource Card in Postgres, with migrations in the Data Hub repository. *Note of 2026-10-28: the schema is worked out fresh: what is built today may be thrown away ([DEC-DH-74](../overview/data-hub.md#dec-dh-74)).* *Decided on 2026-10-28, by Max: the schema follows from the functional requirements; the rebuild starts fresh, without migrating today's build ([DEC-DH-76](../overview/data-hub.md#dec-dh-76)).*
 - [x] **[OP-DH-20](../overview/open-themes.md#op-dh-20)** · Choose the channel and rhythm of notifications: Slack, email or only in Data Hub, immediately or as a digest. *Decided on 2026-10-28, by Max: immediately; in Data Hub and by e-mail, and in Slack if a connection is possible ([DEC-LN-02](../requirements/functional/07-log-and-notifications.md#dec-ln-02), [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04)).*
 - [x] **[OP-DH-22](../overview/open-themes.md#op-dh-22)** · Work out access: how Owner Units and the access axis affect what someone sees through Data Hub. *Note of 2026-10-19: who sees a Collection and its Resources is decided in [DEC-CO-10](../requirements/functional/03-collections.md#dec-co-10) to [DEC-CO-12](../requirements/functional/03-collections.md#dec-co-12); the access axis remains open.* *Decided on 2026-10-28, by Max: you see everything public, and everything private in the Collections of your Owner Unit; no further access axis ([DEC-DH-77](../overview/data-hub.md#dec-dh-77)).*
+- [x] **[OP-DH-24](../overview/open-themes.md#op-dh-24)** · Define the roles in Data Hub: what a reader, an Owner and the Data Team may do. *Note of 2026-10-19: for Collections, see [DEC-CO-08](../requirements/functional/03-collections.md#dec-co-08) and [DEC-CO-11](../requirements/functional/03-collections.md#dec-co-11).* *Decided on 2026-10-28, by Max: Owner of every asset in the Collections of your Owner Unit, Reader of all the rest; a Data Admin can access everything ([DEC-DH-78](../overview/data-hub.md#dec-dh-78)).*
 
 **Data Hub design principles**
 
