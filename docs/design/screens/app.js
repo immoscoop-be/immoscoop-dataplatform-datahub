@@ -831,7 +831,7 @@ if (scopeBox) {
   const nameFor = set => { const n = set.map((r, i) => i ? NAMES[r].toLowerCase() : NAMES[r]); return (n.length > 1 ? n.slice(0, -1).join(', ') + ' and ' + n.at(-1) : n[0]) + ', 27 Oct'; };
   const update = () => {
     const set = newSet(), cur = scopeNow(), n = set.length, these = n === 1 ? 'this resource' : `these ${n} resources`;
-    $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' gone'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
+    $('newq-set').innerHTML = [...new Set([...cur, ...set])].map(r => `<span class="use-chip on${set.includes(r) ? '' : ' removed'}"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i>${cur.includes(r) ? '' : '+ '}${NAMES[r]}</span>`).join('');
     $('newq-name').value = nameFor(set);
     const l = LENSES(set), list = l.names.length ? `<ul>${l.names.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
     $('newq-lenses').innerHTML = '<i class="ph ph-aperture"></i><div>' + (l.exact
