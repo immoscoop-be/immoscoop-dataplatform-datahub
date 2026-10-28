@@ -27,7 +27,7 @@ None yet. Start from the [functional domain template](../_templates/functional-d
 
 ## Open points
 
-- [ ] <a id="op-bp-01"></a>**OP-BP-01** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15).
+- [x] <a id="op-bp-01"></a>**OP-BP-01** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15). *Done on 2026-10-28, by Max: handled as a concept. A derived concept is at Level 0, Beta, which is abstract, and becomes formal only when the Data Team hardens it into a Resource ([DEC-DH-72](../../overview/open-themes.md#dec-dh-72)).*
 
 ## Builds on
 

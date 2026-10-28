@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 63 open, of 244: 48 for v1 and 15 marked Could |
+| Open points | 61 open, of 244: 46 for v1 and 15 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 63 still open, 15 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 61 still open, 15 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1246,16 +1246,14 @@ Source: [requirements/functional/07-log-and-notifications.md](../requirements/fu
 
 ### Lenses
 
-Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 2 open
+Source: [requirements/functional/09-lenses.md](../requirements/functional/09-lenses.md) · 1 open
 
-- [ ] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../design/principles.md#dec-ux-71)).*
 - [ ] **[OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)** · Decide the timeout of a Request for a very large Lens ([DEC-LE-05](../requirements/functional/09-lenses.md#dec-le-05)), and what happens when it runs out. Proposal: five working days; then the Request lapses, its author is told in the Message Centre, and the Lens stays unpublished, to be changed and sent again. *Raised on 2026-10-27, in the review of Max.*
 
 ### Beta and promotion
 
-Source: [requirements/functional/11-beta-and-promotion.md](../requirements/functional/11-beta-and-promotion.md) · 1 open
+Source: [requirements/functional/11-beta-and-promotion.md](../requirements/functional/11-beta-and-promotion.md) · 0 open
 
-- [ ] **[OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15).
 
 ### Permissions and Excel keys
 
@@ -1472,6 +1470,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)** · Decide whether a published Lens that grows into very large keeps running for its Users while it waits for the Data Team ([FR-LE-10](../requirements/functional/09-lenses.md#fr-le-10)), or stops until it is accepted again. A proposal: it keeps running, so that nobody who uses it loses it, as a published Resource stays published when its Level drops ([DEC-DH-40](../overview/data-hub.md#dec-dh-40)). *Raised on 2026-10-23.* *Note of 2026-10-27: Max asked what this means. It is about a Lens that is already published and used, and that later reads more than 1 GB in a run, for example as its data grows: does it keep running for its Users until the Data Team accepts it again, or does it stop?* *Decided on 2026-10-28, by Max: it stops, and its Owner and the Data Team are told ([DEC-LE-11](../requirements/functional/09-lenses.md#dec-le-11)).*
 - [x] **[OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)** · Decide whether a Lens runs when it is opened ([FR-LE-12](../requirements/functional/09-lenses.md#fr-le-12)). A proposal, as designed: it does not, as every run is a query with its Pre-flight; the User runs it. Whether it then shows the result of their last run is open too. *Raised on 2026-10-23.* *Decided on 2026-10-28, by Max: no, only when it is run ([DEC-LE-12](../requirements/functional/09-lenses.md#dec-le-12)).*
 - [x] **[OP-LE-07](../requirements/functional/09-lenses.md#op-le-07)** · Decide the flavours of a Lens, such as filtered or aggregated, next to the basic one of [FR-LE-11](../requirements/functional/09-lenses.md#fr-le-11), a query with Parameters, and how they relate to the type of a Lens, such as Trend, Comparison or Funnel ([DEC-DH-13](../overview/data-hub.md#dec-dh-13)). *Raised on 2026-10-23.* *Note of 2026-10-28: a Lens has no type from a fixed list ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)); the flavours remain to decide.* *Decided on 2026-10-28, by Max: v1 has only the one kind, a query with its Parameters ([DEC-LE-13](../requirements/functional/09-lenses.md#dec-le-13)).*
+- [x] **[OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)** · Decide which functions a default may use ([FR-LE-13](../requirements/functional/09-lenses.md#fr-le-13)). A first list: today, today minus a number of days, the start of this week, month or year, and the last complete week or month. *Raised on 2026-10-23.* *Note of 2026-10-27: in Query, the value of a Parameter is a value or any SQL function, worked out at every run; the field suggests today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month ([DEC-UX-71](../design/principles.md#dec-ux-71)).* *Decided on 2026-10-28, by Max: as suggested ([DEC-LE-14](../requirements/functional/09-lenses.md#dec-le-14)).*
 
 **Platform: technical requirements**
 
@@ -1510,6 +1509,10 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-LN-02](../requirements/functional/07-log-and-notifications.md#op-ln-02)** · Work out what making a Lens public means, on which [FR-LN-04](../requirements/functional/07-log-and-notifications.md#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](../requirements/functional/03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the same as for a Resource, available to the entire company ([DEC-LE-09](../requirements/functional/09-lenses.md#dec-le-09)).*
 - [x] **[OP-LN-03](../requirements/functional/07-log-and-notifications.md#op-ln-03)** · Decide which logic Changes notify the Owner of a Resource ([DEC-DH-27](../overview/data-hub.md#dec-dh-27)): only a Change in the Node of the Resource itself, or also one further upstream, which the artifact registry follows into the Log of every Resource downstream ([FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)). Proposal: as for descriptions ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)), only the Node of the Resource itself; a Change further upstream stays an entry in the Log. The catalogue names the Node and how far upstream it is ([MSG-RES-04](../requirements/functional/message-catalogue.md#msg-res-04)). *Raised on 2026-10-28, while making the Message Catalogue.* *Decided on 2026-10-28, by Max: also a Change further upstream ([DEC-LN-04](../requirements/functional/07-log-and-notifications.md#dec-ln-04)).*
 - [x] **[OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04)** · Find out whether Data Hub can send notifications in Slack, and what it requires ([DEC-LN-02](../requirements/functional/07-log-and-notifications.md#dec-ln-02)). What is known: a Slack app of Immoscoop, installed in the workspace by a Slack admin, with a bot token of the scopes `chat:write`, `im:write` and `users:read.email`. Data Hub finds a User in Slack by the e-mail address of their Google account, and sends a direct message from the app; the token lives in Secret Manager, as other secrets do. Proposal: one app, direct messages only, no channels; a User who is not in Slack gets e-mail alone. Decide whether Slack is in v1, and who installs and owns the app. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: as proposed, in v1 ([DEC-LN-05](../requirements/functional/07-log-and-notifications.md#dec-ln-05)); who installs and owns the app is [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06).*
+
+**Beta and promotion**
+
+- [x] **[OP-BP-01](../requirements/functional/11-beta-and-promotion.md#op-bp-01)** · Later, on the roadmap: semantics on semantics. Set the conditions under which business may derive a new concept from Resources, with no derivation without EDA and monitoring on the source, and work out how a derived concept can inherit the EDA and monitoring of its source as a proxy. From the [workshop of 2026-10-22](../workshops/2026-10-22-data-agents-and-governance.md#5-later-roadmap-not-for-now) (post-it 15). *Done on 2026-10-28, by Max: handled as a concept. A derived concept is at Level 0, Beta, which is abstract, and becomes formal only when the Data Team hardens it into a Resource ([DEC-DH-72](../overview/open-themes.md#dec-dh-72)).*
 
 ### To confirm
 
