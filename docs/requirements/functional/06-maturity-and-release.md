@@ -15,7 +15,7 @@
 
 - <a id="dec-mr-01"></a>**DEC-MR-01** · Fully described means measurable: the view has a description and every column has one. The Owner judges length and quality when confirming. *Note of 2026-10-28: replaced by [DEC-MR-11](#dec-mr-11): the table and at least one field, with `model_type` and `grain`.*
 - <a id="dec-mr-02"></a>**DEC-MR-02** · Explored: an EDA document is linked to the Resource.
-- <a id="dec-mr-03"></a>**DEC-MR-03** · Monitored: at least one active check runs on the Resource.
+- <a id="dec-mr-03"></a>**DEC-MR-03** · Monitored: at least one active check runs on the Resource. *Note of 2026-10-28: in version 2 ([DEC-MR-13](#dec-mr-13)).*
 - <a id="dec-mr-04"></a>**DEC-MR-04** · A failing check does not lower the Level: that is the monitoring doing its job. It becomes an incident in the Log.
 - <a id="dec-mr-05"></a>**DEC-MR-05** · A Confirmation does not expire. There is no expiry date and no reminder.
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
@@ -25,6 +25,7 @@
 - <a id="dec-mr-10"></a>**DEC-MR-10** · Only the Data Team describes a Resource into Described, in dbt. A Resource without its descriptions from dbt stays at 1 · Available: its Owner cannot write Business Descriptions on it and cannot publish it. A yaml next to the model is not required for a table to be a Resource ([FR-SR-32](04-stacks-and-resources.md#fr-sr-32)), but without its descriptions it cannot leave Available. Business Descriptions are written from Described on. This replaces the jump over Described of [DEC-MR-09](#dec-mr-09). *Decided on 2026-10-28, by Max ([OP-DH-05](../../overview/open-themes.md#op-dh-05)).*
 - <a id="dec-mr-11"></a>**DEC-MR-11** · A Resource is Described as soon as dbt has a description of its table and of at least one of its fields, and the `meta` of its model holds `model_type` and `grain`. Business Descriptions start from there, at the level of the whole Resource: then its Owner and the Data Team can write one for the table and for every field, also a field dbt does not describe ([DEC-MR-10](#dec-mr-10)). The Owner judges whether it is described well enough when confirming. This replaces "every column" of [DEC-MR-01](#dec-mr-01) and [DEC-DH-34](../../overview/data-hub.md#dec-dh-34). *Decided on 2026-10-28, by Max ([OP-MR-03](#op-mr-03)).* *Note of 2026-10-28: `model_type` and `grain` are no longer asked of dbt ([DEC-MR-12](#dec-mr-12)).*
 - <a id="dec-mr-12"></a>**DEC-MR-12** · Described asks of dbt only the descriptions: of the table and of at least one field. `model_type` and `grain` are not standard fields of dbt, so they are not read from its `meta`: Data Hub defines them, by the Data Admin ([DEC-RC-09](05-resource-card.md#dec-rc-09)), and they do not count towards Described. This replaces that part of [DEC-MR-11](#dec-mr-11). *Decided on 2026-10-28, by Max ([OP-MR-06](#op-mr-06)).*
+- <a id="dec-mr-13"></a>**DEC-MR-13** · In v1 a Resource cannot reach 5 · Monitored: the ladder stops at 4 · Explored. Monitored comes in version 2, with the automatic checks from the EDA and the monitors ([OP-DH-19](../../overview/open-themes.md#op-dh-19)). *Decided on 2026-10-28, by Max ([OP-MR-07](#op-mr-07)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -74,6 +75,8 @@ Explored requires a linked EDA document, on top of Confirmed.
 
 Monitored requires at least one active check, on top of Explored.
 
+*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+
 <a id="fr-mr-05"></a>
 ### FR-MR-05 · A structural Change resets the Level to Described
 
@@ -90,12 +93,16 @@ A structural Change (hash of the structure) puts the Resource back to Described,
 
 A failing check does not lower the Level and is logged as an incident.
 
+*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+
 <a id="fr-mr-07"></a>
 ### FR-MR-07 · Drop when the last check or the EDA document goes
 
 **Status:** Specified · **Confluence:** MO-07
 
 If the last active check is switched off, the Resource drops to Explored. If the EDA document disappears, it drops to Confirmed.
+
+*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
 
 <a id="fr-mr-08"></a>
 ### FR-MR-08 · A Confirmation does not expire
@@ -167,14 +174,14 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch).
-- [ ] <a id="op-mr-02"></a>**OP-MR-02** · Work out the domain [Checks and monitoring](08-checks-and-monitoring.md): kinds of checks, incidents and alerts.
+- [ ] <a id="op-mr-02"></a>**OP-MR-02** · Work out the domain [Checks and monitoring](08-checks-and-monitoring.md): kinds of checks, incidents and alerts. *Could, not in v1: set on 2026-10-28, by Max; checks and monitoring come in version 2 ([DEC-MR-13](#dec-mr-13)).*
 
 Raised during the migration to this repository; not on the Confluence page:
 
 - [x] <a id="op-mr-03"></a>**OP-MR-03** · Align the definition of Described. [DEC-DH-34](../../overview/data-hub.md#dec-dh-34) requires, at a minimum, a description on the table and on every column plus `model_type` and `grain` in `meta`. [DEC-MR-01](#dec-mr-01) and [FR-MR-01](#fr-mr-01) only require the descriptions. *Decided on 2026-10-28, by Max: the table, at least one field, and `model_type` and `grain` in `meta` ([DEC-MR-11](#dec-mr-11), [FR-MR-14](#fr-mr-14)).* *Note of 2026-10-28: `model_type` and `grain` dropped again: only the descriptions ([DEC-MR-12](#dec-mr-12)).*
 - [ ] <a id="op-mr-04"></a>**OP-MR-04** · Complete the drop causes in [Rising and dropping](#rising-and-dropping). Two drops defined elsewhere are not in the table: removal from a Collection drops a Resource to Described ([FR-CO-08](03-collections.md#fr-co-08)), and an Owner Unit that empties should make its Resources drop, with this domain to define how ([EC-UM-01](02-user-management.md#ec-um-01), [EC-CO-01](03-collections.md#ec-co-01)). *Note of 2026-10-26: a structural Change is no longer a cause of a drop ([DEC-MR-08](#dec-mr-08)); the causes named here remain to complete.*
 - [x] <a id="op-mr-06"></a>**OP-MR-06** · Decide the values of `model_type` and the form of `grain` in the `meta` of a model ([DEC-MR-11](#dec-mr-11)). dbt has no property of its own for either; `meta` is free and holds both. Proposal: `grain` is the list of the columns that together identify a row, as [DEC-RC-07](05-resource-card.md#dec-rc-07) says, such as `[week_start, lead_source]`; `model_type` is one of a short list, such as `event`, `state`, `fact`, `dimension` and `aggregate`. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: neither comes from dbt, as they are not standard fields there; Data Hub defines them ([DEC-MR-12](#dec-mr-12), [DEC-RC-09](05-resource-card.md#dec-rc-09)).*
-- [ ] <a id="op-mr-07"></a>**OP-MR-07** · Decide whether a Resource can reach 5 · Monitored in v1, now that the automatic checks from the EDA and the monitors are for version 2 ([OP-DH-19](../../overview/open-themes.md#op-dh-19)): Monitored asks for at least one active check. Proposal: the ladder in v1 stops at 4 · Explored; Monitored is shown as the next step, out of reach until the checks come. *Raised on 2026-10-28, in the review of Max.*
+- [x] <a id="op-mr-07"></a>**OP-MR-07** · Decide whether a Resource can reach 5 · Monitored in v1, now that the automatic checks from the EDA and the monitors are for version 2 ([OP-DH-19](../../overview/open-themes.md#op-dh-19)): Monitored asks for at least one active check. Proposal: the ladder in v1 stops at 4 · Explored; Monitored is shown as the next step, out of reach until the checks come. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: no, it is part of version 2 ([DEC-MR-13](#dec-mr-13)).*
 
 Raised during the review of the migration; not on the Confluence page:
 

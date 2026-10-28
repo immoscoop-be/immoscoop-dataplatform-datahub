@@ -10,15 +10,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 83 | 34 (20 open, 14 done) |
-| [Data Hub](../overview/data-hub.md) | – | – | 71 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (24 open, 23 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 72 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (22 open, 25 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
-| [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 12 | 7 (4 open, 3 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
+| [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 2 | 4 (3 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 8 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (8 open, 10 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 19 (9 open, 10 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
