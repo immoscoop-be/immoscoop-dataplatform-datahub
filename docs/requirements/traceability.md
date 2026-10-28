@@ -18,9 +18,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 25 (2 open, 23 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (3 open, 2 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (2 open, 3 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 8 | 10 (6 open, 4 done) |
+| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 9 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 proposed) | – | – | 1 (1 open) |

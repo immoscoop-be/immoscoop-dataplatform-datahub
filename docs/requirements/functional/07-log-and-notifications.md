@@ -61,6 +61,8 @@ Data Hub knows the Consumers of a Resource, the Users of the Lenses and Reports 
 
 When a Lens that builds on a Resource is made public, the Owner of that Resource gets a notification. Before the Lens is public, there is no notification.
 
+*Note of 2026-10-28: public means published in a public Collection, available to the entire company, as for a Resource ([DEC-LE-09](09-lenses.md#dec-le-09)).*
+
 <a id="fr-ln-05"></a>
 ### FR-LN-05 · Every query gets a Query ID in the Query Log
 
@@ -81,7 +83,7 @@ Every output, a chart, a Report, a PDF or an export, visibly carries the Query I
 - [ ] <a id="op-ln-03"></a>**OP-LN-03** · Decide which logic Changes notify the Owner of a Resource ([DEC-DH-27](../../overview/data-hub.md#dec-dh-27)): only a Change in the Node of the Resource itself, or also one further upstream, which the artifact registry follows into the Log of every Resource downstream ([FR-AR-12](01-artifact-registry.md#fr-ar-12)). Proposal: as for descriptions ([FR-RC-17](05-resource-card.md#fr-rc-17)), only the Node of the Resource itself; a Change further upstream stays an entry in the Log. The catalogue names the Node and how far upstream it is ([MSG-RES-04](message-catalogue.md#msg-res-04)). *Raised on 2026-10-28, while making the Message Catalogue.*
 - [ ] <a id="op-ln-04"></a>**OP-LN-04** · Find out whether Data Hub can send notifications in Slack, and what it requires ([DEC-LN-02](#dec-ln-02)). What is known: a Slack app of Immoscoop, installed in the workspace by a Slack admin, with a bot token of the scopes `chat:write`, `im:write` and `users:read.email`. Data Hub finds a User in Slack by the e-mail address of their Google account, and sends a direct message from the app; the token lives in Secret Manager, as other secrets do. Proposal: one app, direct messages only, no channels; a User who is not in Slack gets e-mail alone. Decide whether Slack is in v1, and who installs and owns the app. *Raised on 2026-10-28, in the review of Max.*
 - [x] <a id="op-ln-05"></a>**OP-LN-05** · Decide how a notification to an Owner Unit reaches members who never signed in, now that Data Hub knows the members of a Group only from their sign-in ([DEC-UM-08](02-user-management.md#dec-um-08), [FR-LN-01](#fr-ln-01)). Proposal: the e-mail goes to the address of the Google group itself. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: the e-mail goes to the address of the Google group ([DEC-LN-03](#dec-ln-03)).*
-- [ ] <a id="op-ln-02"></a>**OP-LN-02** · Work out what making a Lens public means, on which [FR-LN-04](#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.*
+- [x] <a id="op-ln-02"></a>**OP-LN-02** · Work out what making a Lens public means, on which [FR-LN-04](#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the same as for a Resource, available to the entire company ([DEC-LE-09](09-lenses.md#dec-le-09)).*
 
 ## Builds on
 
