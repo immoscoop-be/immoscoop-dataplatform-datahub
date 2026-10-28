@@ -189,7 +189,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 
 ## 7 · Channels: where a component shows
 
-| Component | Web app | MCP App in Claude | HTML report, Excel |
+| Component | Web app | MCP App in Claude, version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)) | HTML report, Excel |
 | --- | --- | --- | --- |
 | App shell, rail, panel | Yes | No: an MCP App stands on its own ([DEC-LR-08](../requirements/functional/16-learning.md#dec-lr-08)) | No |
 | Learning steps, Check your understanding | Yes | Yes, compact ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)) | No |

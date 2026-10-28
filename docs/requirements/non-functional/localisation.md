@@ -82,6 +82,8 @@ The interface follows the language preference of the User: Dutch by default, Eng
 
 Claude gets names in English and explanations in the language of the User, so that people and agent use the same words.
 
+*Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../functional/13-channels.md#dec-ch-02)).*
+
 <a id="nfr-loc-08"></a>
 ### NFR-LOC-08 · Learning Cards: Dutch sentences, English names
 

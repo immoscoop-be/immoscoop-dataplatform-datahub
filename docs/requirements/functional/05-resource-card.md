@@ -81,6 +81,8 @@ Every Resource records its Known Gaps, as metadata of their own: structural gaps
 
 The errors, import problems and changes in the data of a Resource are kept in chronological order, readable by people in Data Hub and by Claude through the MCP. This builds on the Log ([DEC-DH-28](../../overview/data-hub.md#dec-dh-28)) and the Anomalies of the Known Behaviour ([DEC-DH-18](../../overview/data-hub.md#dec-dh-18)).
 
+*Note of 2026-10-28: the part for Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
 <a id="fr-rc-06"></a>
 ### FR-RC-06 · Stability
 

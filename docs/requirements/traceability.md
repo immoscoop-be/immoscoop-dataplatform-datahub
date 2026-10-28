@@ -10,8 +10,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 83 | 34 (20 open, 14 done) |
-| [Data Hub](../overview/data-hub.md) | – | – | 70 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (26 open, 21 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 71 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (24 open, 23 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
@@ -24,7 +24,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
-| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
+| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 3 | 3 (3 open) |
 | [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 7 | 9 (6 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |

@@ -163,6 +163,8 @@ For every type of Message that Data Hub writes itself, the catalogue names the L
 
 The web app shows a Message from the catalogue: the first line of its plain text in a list and in a notification, its laid-out text when it is opened. Later, Slack and the MCP server show the same Message from the same texts: Slack its laid-out text in its own mark-up, with the plain text as the fallback; the MCP server its laid-out text with its parameters, so that Claude reads what a person reads. Which channel carries a notification, and how often, is [OP-DH-20](../../overview/open-themes.md#op-dh-20).
 
+
+*Note of 2026-10-28: the part for Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 ## Edge cases
 
 <a id="ec-cv-01"></a>

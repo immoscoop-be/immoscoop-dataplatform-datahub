@@ -85,8 +85,8 @@ Whoever may see a Resource can find it, read it, query it, help describe it and 
 - <a id="dec-sr-13"></a>**DEC-SR-13** · Finding works in three ways: searching on title, description, Collection and Owner; browsing per Collection; and navigating via the Domain Model. A search result shows title, description, Collection and Owner.
 - <a id="dec-sr-14"></a>**DEC-SR-14** · The link with the Domain Model is derived from the manifest and the lineage, without manual work. Colleciónes gets no special treatment in this: it is part of the manifest like everything else. A Resource from dbt-prod thus finds its Entities via the models further along its lineage. A Resource without an Entity in its lineage stays findable via search and Collection.
 - <a id="dec-sr-15"></a>**DEC-SR-15** · Reading a Resource happens in tabs: Overview, Columns, Lineage, EDA, History, Conversations and Preview. Usage, who uses the Resource in Lenses, Reports and feeds, comes later. *Note of 2026-10-26: there is no tab Conversations any more; the Messages on a Resource open from "Messages" in its header, as on every object ([DEC-UX-67](../../design/principles.md#dec-ux-67)).*
-- <a id="dec-sr-16"></a>**DEC-SR-16** · Querying comes in two flavours. Via Claude, it is free SQL, also across multiple Resources, with joins. In the interface there is only a preview of the first rows, no query builder: real questions need joins, and those belong with Claude and, later, with Lenses.
-- <a id="dec-sr-17"></a>**DEC-SR-17** · When Claude queries on behalf of a User, Data Hub checks that every Resource in the query is visible to that User, and a limit on scanned bytes applies. Every query gets a label with the User.
+- <a id="dec-sr-16"></a>**DEC-SR-16** · Querying comes in two flavours. Via Claude, it is free SQL, also across multiple Resources, with joins. In the interface there is only a preview of the first rows, no query builder: real questions need joins, and those belong with Claude and, later, with Lenses. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- <a id="dec-sr-17"></a>**DEC-SR-17** · When Claude queries on behalf of a User, Data Hub checks that every Resource in the query is visible to that User, and a limit on scanned bytes applies. Every query gets a label with the User. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - <a id="dec-sr-18"></a>**DEC-SR-18** · Executed queries are not stored in Data Hub in v1. BigQuery keeps its own job log for 180 days; query history may be added later. *Note of 2026-10-22: replaced by [DEC-LN-01](07-log-and-notifications.md#dec-ln-01): Data Hub keeps its own Query Log of every query.*
 - <a id="dec-sr-19"></a>**DEC-SR-19** · The Owner and the Data Team can supplement the description on top of the Artifacts: intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log, with who made it.
 - <a id="dec-sr-20"></a>**DEC-SR-20** · Everyone who may see a Resource can react to it. A Reaction has a type: a Question, a Remark or a Signal.
@@ -326,6 +326,8 @@ The Preview shows a limited number of first rows. There is no query builder in t
 Via Claude, a User can have free SQL executed over the Resources they may see. A query that touches a Resource they cannot see is refused.
 
 *Note of 2026-10-23: Query is the other way, in the interface ([FR-SR-41](#fr-sr-41)).*
+
+*Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-sr-27"></a>
 ### FR-SR-27 · A byte limit and a User label on every query

@@ -93,6 +93,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 - <a id="dec-dh-71"></a>**DEC-DH-71** · The word Stacks is no longer used. It named a curated dataset of mart views, `dbt_prod_stacks`; since a table becomes a Resource through an exposure with the tag `datahub` on any model ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)), there is no such dataset. Where the decisions below and other older decisions say the Stacks, read: the tables that are Resources. *Decided on 2026-10-28, by Max ([OP-DH-47](open-themes.md#op-dh-47)).*
 - <a id="dec-dh-73"></a>**DEC-DH-73** · A Resource can be any dbt model, in any layer, staging, intermediate or mart, and in any dbt project Data Hub follows, dbt-prod or Colleciónes: an exposure with the tag `datahub` on it is all it takes ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)). There is no dataset to name: where its table sits is abstract to Data Hub. *Decided on 2026-10-28, by Max ([OP-DH-13](open-themes.md#op-dh-13)).*
 - <a id="dec-dh-74"></a>**DEC-DH-74** · What is built today may be thrown away. The design and the rebuild need not stay compatible with it: not with its code, its schema in Postgres or its data. *Decided on 2026-10-28, by Max ([OP-DH-14](open-themes.md#op-dh-14)).*
+- <a id="dec-dh-76"></a>**DEC-DH-76** · The schema of the Resource Card in Postgres, and of the rest of Data Hub, follows from the functional requirements and is made when building. The rebuild starts from a fresh database: no migration from what is built today. From then on, every change to the schema is a migration, as the repository asks. *Decided on 2026-10-28, by Max ([OP-DH-14](open-themes.md#op-dh-14)).*
 - <a id="dec-dh-75"></a>**DEC-DH-75** · Everything about usage reporting on Data Hub is not part of v1: who uses what, the Usage tab of a Resource, and reporting on the Catalogue. It is a Could, after the first build ([Could: not in v1](../requirements/README.md#could-not-in-v1)). *Decided on 2026-10-28, by Max ([OP-DH-16](open-themes.md#op-dh-16)).*
 
 - <a id="dec-dh-06"></a>**DEC-DH-06** · In `immoscoop-dataplatform-398214` there will be a dataset with the working name `dbt_prod_stacks`: the Stacks. It consists only of mart views that release data to Data Hub, managed in dbt-prod. Today there is one Stack; because Resources are registered with their full name, more can be added later. *Note of 2026-10-28: there is no such dataset ([DEC-DH-71](#dec-dh-71), [DEC-DH-73](#dec-dh-73)).*
@@ -113,7 +114,7 @@ Data Hub offers three kinds of assets, which build on each other: the Resource f
 
 ### Visible in Data Hub and in Claude
 
-- <a id="dec-dh-15"></a>**DEC-DH-15** · Lenses and Reports look exactly the same in Claude as in Data Hub. In Claude they appear as an MCP App, an interactive window in the conversation. For that, both use the same component, so that only one version exists.
+- <a id="dec-dh-15"></a>**DEC-DH-15** · Lenses and Reports look exactly the same in Claude as in Data Hub. In Claude they appear as an MCP App, an interactive window in the conversation. For that, both use the same component, so that only one version exists. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).*
 
 ## The Resource Card
 
@@ -223,7 +224,7 @@ How data comes into Data Hub and becomes a Lens for the company, in seven steps,
 
 ### Excel
 
-- <a id="dec-dh-46"></a>**DEC-DH-46** · Excel remains possible as a window onto Data Hub: the data of Lenses is fetched as a feed via Power Query, without direct BigQuery access.
+- <a id="dec-dh-46"></a>**DEC-DH-46** · Excel remains possible as a window onto Data Hub: the data of Lenses is fetched as a feed via Power Query, without direct BigQuery access. *Note of 2026-10-28: with the Parameters at their default values, as data only ([DEC-CH-03](../requirements/functional/13-channels.md#dec-ch-03)).*
 - <a id="dec-dh-47"></a>**DEC-DH-47** · In the pilot, Power Query signs in with a personal key per User, the Library Card, which can be revoked and renewed. Signing in with a Microsoft work account (Entra) is a possible later step.
 
 ### Infrastructure

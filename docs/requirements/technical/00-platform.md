@@ -14,7 +14,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 
 - <a id="dec-pf-01"></a>**DEC-PF-01** · Data Hub is split into services, each with one responsibility and deployed separately. In v1 there are four backend services, identity, catalogue, registry and query, and two client applications, web and mcp. Lenses, Reports and notifications become services of their own once their domains are specified.
 - <a id="dec-pf-02"></a>**DEC-PF-02** · Every service validates the User itself, on every request. A central identity service issues short-lived signed Access Tokens; every service verifies them locally against the public keys of identity, and decides on its own what the User may do.
-- <a id="dec-pf-03"></a>**DEC-PF-03** · Every interface is a client of the same service APIs and holds no business logic. In v1: the web app, Claude through mcp, and Excel through Power Query. Other interfaces, such as HTML reports, plug in the same way.
+- <a id="dec-pf-03"></a>**DEC-PF-03** · Every interface is a client of the same service APIs and holds no business logic. In v1: the web app, Claude through mcp, and Excel through Power Query. Other interfaces, such as HTML reports, plug in the same way. *Note of 2026-10-28: Claude comes in version 2 ([DEC-CH-02](../functional/13-channels.md#dec-ch-02)).*
 - <a id="dec-pf-04"></a>**DEC-PF-04** · All code lives in one monorepo, this repository, with pnpm workspaces: `services/*`, `apps/*` and `packages/*`.
 - <a id="dec-pf-05"></a>**DEC-PF-05** · There is one Cloud SQL Postgres instance, with one schema per service. A service only reads and writes its own schema; the data of another service is reached through that service's API.
 - <a id="dec-pf-06"></a>**DEC-PF-06** · The web app is built in React. The components that render Lenses and Reports are shared between the web app and the MCP App, so that only one version exists ([DEC-DH-15](../../overview/data-hub.md#dec-dh-15)). *Note of 2026-10-22: whether React builds the new design is open ([OP-UX-10](../../design/principles.md#op-ux-10)).*
@@ -82,6 +82,8 @@ A service that calls another service on behalf of a User forwards the Access Tok
 **Status:** Implemented · **Realises:** [DEC-UM-02](../functional/02-user-management.md#dec-um-02), [DEC-PF-03](#dec-pf-03)
 
 identity acts as the OAuth 2.1 authorisation server for MCP clients, following the MCP authorisation specification, and delegates the login itself to Google. It keeps them signed in with Refresh Tokens ([TR-PF-25](#tr-pf-25)). MCP clients register themselves (RFC 7591), but only with a callback on a fixed list, Claude's, so no other site can have a User's sign-in sent to it. mcp tells clients where to sign in through its protected resource metadata (RFC 9728), and validates the resulting Access Tokens like every other service.
+
+*Could, not in v1: set on 2026-10-28, by Max; Claude comes in version 2 ([DEC-CH-02](../functional/13-channels.md#dec-ch-02)).*
 
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Library Card
