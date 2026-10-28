@@ -1183,7 +1183,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 29 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 42 still open, 18 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1191,6 +1191,7 @@ Where to start: the points that shape the build are in group A of **Decisions be
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
 - 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail
+- 2026-10-28, while mapping the screens to the requirements: [OP-UX-37](../design/principles.md#op-ux-37) to [OP-UX-41](../design/principles.md#op-ux-41) · [OP-UM-08](../requirements/functional/02-user-management.md#op-um-08) · [OP-SR-18](../requirements/functional/04-stacks-and-resources.md#op-sr-18) to [OP-SR-21](../requirements/functional/04-stacks-and-resources.md#op-sr-21) · [OP-RC-26](../requirements/functional/05-resource-card.md#op-rc-26), [OP-RC-27](../requirements/functional/05-resource-card.md#op-rc-27) · [OP-MR-08](../requirements/functional/06-maturity-and-release.md#op-mr-08)
 
 ### Open themes
 
@@ -1200,8 +1201,13 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 1 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 0 open
+Source: [design/principles.md](../design/principles.md) · 5 open
 
+- [ ] **[OP-UX-37](../design/principles.md#op-ux-37)** · The learning centre in the rail: on top as the fifth main item ([DEC-UX-89](../design/principles.md#dec-ux-89) and every prototype), or at the bottom, above the account ([DEC-UX-52](../design/principles.md#dec-ux-52))? Proposal: on top.
+- [ ] **[OP-UX-38](../design/principles.md#op-ux-38)** · A switch of the User for "Reduce motion": no screen holds it. Proposal: version 1 follows the system only.
+- [ ] **[OP-UX-39](../design/principles.md#op-ux-39)** · The message on a narrow window has no prototype. Proposal: the mark and the sentence on a glass card, without a prototype.
+- [ ] **[OP-UX-40](../design/principles.md#op-ux-40)** · Editing a Collection still lists colour. Proposal: colour leaves that line.
+- [ ] **[OP-UX-41](../design/principles.md#op-ux-41)** · Twelve prototypes still show what a later decision changed. Proposal: each is brought in line before its part is built.
 
 ### Artifact registry
 
@@ -1210,9 +1216,11 @@ Source: [requirements/functional/01-artifact-registry.md](../requirements/functi
 
 ### User management
 
-Source: [requirements/functional/02-user-management.md](../requirements/functional/02-user-management.md) · 1 open
+Source: [requirements/functional/02-user-management.md](../requirements/functional/02-user-management.md) · 2 open
 
 - [ ] **[OP-UM-03](../requirements/functional/02-user-management.md#op-um-03)** · Give the service account of Data Hub the Groups Reader admin role in Workspace, per environment (uat and prod). *Done for uat on 2026-10-18, together with the Data Hub user reader role ([TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)); prod follows once its service account exists.*
+
+- [ ] **[OP-UM-08](../requirements/functional/02-user-management.md#op-um-08)** · [FR-UM-07](../requirements/functional/02-user-management.md#fr-um-07) still synchronises the Groups periodically, against [DEC-UM-08](../requirements/functional/02-user-management.md#dec-um-08). Proposal: withdraw it.
 
 ### Collections
 
@@ -1221,19 +1229,27 @@ Source: [requirements/functional/03-collections.md](../requirements/functional/0
 
 ### Stacks and resources
 
-Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 1 open
+Source: [requirements/functional/04-stacks-and-resources.md](../requirements/functional/04-stacks-and-resources.md) · 5 open
 
 - [ ] **[OP-SR-02](../requirements/functional/04-stacks-and-resources.md#op-sr-02)** · Complete the [Log catalogue](../requirements/functional/log-catalogue.md), with the Log IDs from the other domains.
 
+- [ ] **[OP-SR-18](../requirements/functional/04-stacks-and-resources.md#op-sr-18)** · [FR-SR-24](../requirements/functional/04-stacks-and-resources.md#fr-sr-24), [FR-SR-44](../requirements/functional/04-stacks-and-resources.md#fr-sr-44) and the subsection Queries still describe the tabs and the queries of a Resource as before [DEC-UX-90](../design/principles.md#dec-ux-90). Proposal: they follow it.
+- [ ] **[OP-SR-19](../requirements/functional/04-stacks-and-resources.md#op-sr-19)** · A note of [FR-SR-49](../requirements/functional/04-stacks-and-resources.md#fr-sr-49) still lets a Business Description cover what dbt lacks, against [DEC-MR-10](../requirements/functional/06-maturity-and-release.md#dec-mr-10). Proposal: a note that [DEC-MR-10](../requirements/functional/06-maturity-and-release.md#dec-mr-10) replaces it.
+- [ ] **[OP-SR-20](../requirements/functional/04-stacks-and-resources.md#op-sr-20)** · [FR-SR-42](../requirements/functional/04-stacks-and-resources.md#fr-sr-42) suggests every Resource the User may see, against [DEC-UX-73](../design/principles.md#dec-ux-73). Proposal: only the Resources of the query.
+- [ ] **[OP-SR-21](../requirements/functional/04-stacks-and-resources.md#op-sr-21)** · [FR-SR-47](../requirements/functional/04-stacks-and-resources.md#fr-sr-47) and two screens count the use of a Lens, while usage reporting is not in v1. Proposal: no counts in v1.
+
 ### Resource card
 
-Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 0 open
+Source: [requirements/functional/05-resource-card.md](../requirements/functional/05-resource-card.md) · 2 open
 
+- [ ] **[OP-RC-26](../requirements/functional/05-resource-card.md#op-rc-26)** · [FR-RC-11](../requirements/functional/05-resource-card.md#fr-rc-11) reads model type and grain from the `meta` of dbt, against [DEC-RC-09](../requirements/functional/05-resource-card.md#dec-rc-09). Proposal: it follows [DEC-RC-09](../requirements/functional/05-resource-card.md#dec-rc-09).
+- [ ] **[OP-RC-27](../requirements/functional/05-resource-card.md#op-rc-27)** · [FR-RC-14](../requirements/functional/05-resource-card.md#fr-rc-14), checks and incidents, is not marked Could while checks come in version 2. Proposal: mark it Could.
 
 ### Maturity and release
 
-Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 0 open
+Source: [requirements/functional/06-maturity-and-release.md](../requirements/functional/06-maturity-and-release.md) · 1 open
 
+- [ ] **[OP-MR-08](../requirements/functional/06-maturity-and-release.md#op-mr-08)** · Does v1 link an EDA document to a Resource, and where? Then whether half of [FR-MR-07](../requirements/functional/06-maturity-and-release.md#fr-mr-07) stays in v1.
 
 ### Log and notifications
 

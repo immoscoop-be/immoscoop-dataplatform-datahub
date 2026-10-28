@@ -2,12 +2,14 @@
 <!--
   Screen: Query, make it a lens (DEC-UX-25)
   "Make it a lens" on a query in Query. Left: the lens, from the query: name, the question it answers, what it shows,
-  tags, its steps in plain language (generated), its Parameters, the Collection it goes into, its Resources and Level.
-  Right: the size check, what one run reads, measured now, in three ranges (thresholds 10 and 30 GB are placeholders, OP-SR-07):
+  tags, its Parameters, the Collection it goes into, its Resources and Level.
+  Right: the size check, what one run reads, measured now, in three ranges (100 MB and 1 GB to start with, DEC-SR-29):
   within range, publish; large, a warning and still publish; very large, the Data Team accepts it first.
-  The switch at the bottom shows the three outcomes as scenarios. Seen by an author in the Owner Unit; a colleague outside it is open (OP-LE-04).
-  How the rest of the story of a Lens is asked is open (OP-LE-01).
-  Requirements: FR-LE-07, FR-LE-08, FR-LE-09, FR-LE-10, FR-LE-03, FR-LE-04, FR-LE-05, FR-LE-06 (Proposed); DEC-DH-10, DEC-DH-11, DEC-DH-13, DEC-CO-15, DEC-CO-16, DEC-LE-01, DEC-LE-02, DEC-UX-75. The Parameters come from the query; no "+ Parameter", no lock, no step-by-step text.
+  The switch at the bottom shows the three outcomes as scenarios. A Lens goes into a Collection its author owns (DEC-CO-20); an author who owns none makes one in the same step (?owns=none, DEC-UX-111).
+  How the story of a Lens is asked: DEC-LE-10.
+  Requirements: FR-CO-12, FR-CO-15, FR-SR-40, FR-LE-04, FR-LE-05, FR-LE-06, FR-LE-07, FR-LE-08, FR-LE-09, FR-LE-10, FR-LE-13, FR-CV-08
+  Decisions: DEC-UX-25, DEC-UX-75, DEC-UX-111, DEC-LE-01, DEC-LE-02, DEC-CO-20, DEC-CO-24, DEC-SR-29, DEC-DH-10, DEC-DH-11. The Parameters come from the query; no "+ Parameter", no lock, no step-by-step text.
+  Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Related screens: query.html (the button "Make it a lens").
   Rules: ../principles.md  ·  Placeholder content only.
 -->

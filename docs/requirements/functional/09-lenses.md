@@ -64,7 +64,7 @@ The weight of a Lens, light or heavy, is visible to every User, so that whoever 
 <a id="fr-le-03"></a>
 ### FR-LE-03 · A Lens is described in plain language
 
-**Status:** Proposed · **Source:** [REQ-DH-LENSTEXT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lenstext)
+**Status:** Proposed · **Source:** [REQ-DH-LENSTEXT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lenstext) · **Screens:** [lens](../../design/screens/lens.html)
 
 When a Lens is created, Data Hub generates, through a skill, a description in business language of its steps, queries and CTEs, so that business sees what happens in the Lens without reading SQL.
 
@@ -73,7 +73,7 @@ When a Lens is created, Data Hub generates, through a skill, a description in bu
 <a id="fr-le-04"></a>
 ### FR-LE-04 · Business adjusts Parameters without touching the SQL
 
-**Status:** Proposed · **Source:** [REQ-DH-LENSPARAMS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lensparams)
+**Status:** Proposed · **Source:** [REQ-DH-LENSPARAMS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-lensparams) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html)
 
 Business can adjust certain Parameters of a Lens without touching its SQL, for example the bounds of a `WHERE ... BETWEEN`. Parameters are typed and named functionally ([DEC-DH-11](../../overview/data-hub.md#dec-dh-11)).
 
@@ -82,7 +82,7 @@ Business can adjust certain Parameters of a Lens without touching its SQL, for e
 <a id="fr-le-05"></a>
 ### FR-LE-05 · First the story, then the data
 
-**Status:** Proposed · **Source:** [REQ-DH-STORY](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-story)
+**Status:** Proposed · **Source:** [REQ-DH-STORY](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-story) · **Screens:** [lens-new](../../design/screens/lens-new.html)
 
 Whoever starts a Lens is first asked to record the question and the story, what they want to know and what they will do with it, before the query is built. The story becomes metadata of the Lens.
 
@@ -92,14 +92,14 @@ Whoever starts a Lens is first asked to record the question and the story, what 
 <a id="fr-le-06"></a>
 ### FR-LE-06 · A Lens has a short description and tags
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query-new](../../design/screens/query-new.html)
 
 Every Lens has a description of a sentence or two on what it shows, in business language, and tags: a few words its maker chooses. Next to the description of its steps ([FR-LE-03](#fr-le-03)), they make a Lens findable: a new query matches its words against them ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)).
 
 <a id="fr-le-07"></a>
 ### FR-LE-07 · A query becomes a Lens
 
-**Status:** Proposed · **Source:** Max, 2026-10-23
+**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html), [query](../../design/screens/query.html)
 
 Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) can make a Lens of it, with the button "Make it a lens" on the query ([DEC-UX-25](../../design/principles.md#dec-ux-25)): the logical next step once a query answers a question that will come back. Its name, its question and its Resources come along; its question is where the story of the Lens starts ([FR-LE-05](#fr-le-05)). Starting a Lens from the page of a Collection ([FR-CO-29](03-collections.md#fr-co-29)) stays possible. Where a Lens made from a query belongs is open ([OP-LE-04](#op-le-04)).
 
@@ -108,7 +108,7 @@ Whoever ran a query in Query ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)) c
 <a id="fr-le-08"></a>
 ### FR-LE-08 · Making a Lens checks what one run reads, in three ranges
 
-**Status:** Proposed · **Source:** Max, 2026-10-23, in place of [FR-LE-01](#fr-le-01)
+**Status:** Proposed · **Source:** Max, 2026-10-23, in place of [FR-LE-01](#fr-le-01) · **Screens:** [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query](../../design/screens/query.html)
 
 When a Lens is made, Data Hub measures what one run of it reads, with a dry run as in the Pre-flight ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36)). Two configurable thresholds make three ranges:
 
@@ -123,7 +123,7 @@ The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-L
 <a id="fr-le-09"></a>
 ### FR-LE-09 · A very large Lens waits for the Data Team
 
-**Status:** Proposed · **Source:** Max, 2026-10-23
+**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [collections-start](../../design/screens/collections-start.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
 
 A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author can open it, nobody else sees it yet. The Data Team is notified and accepts or refuses it; a refusal comes with a reason. The author is notified of either, and both are recorded in the Log.
 
@@ -132,14 +132,14 @@ A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author
 <a id="fr-le-10"></a>
 ### FR-LE-10 · A Lens that outgrows its range is checked again
 
-**Status:** Proposed · **Source:** Max, 2026-10-23
+**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html)
 
 The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After that, Data Hub follows what each run of the Lens reads. When a run reads more than the range the Lens was made in, or last accepted in, the Lens is checked again as when it was made: grown into large, its author is warned; grown into very large, the Data Team accepts it again ([FR-LE-09](#fr-le-09)). In the meantime it stops, and its Owner and the Data Team are told ([DEC-LE-11](#dec-le-11)).
 
 <a id="fr-le-11"></a>
 ### FR-LE-11 · A Lens runs on a page of its own
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens) · **Screens:** [lens](../../design/screens/lens.html)
 
 Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03-collections.md#dec-co-16)): a request with its Parameters, and the result. Its Parameters are filled in with their defaults ([FR-LE-13](#fr-le-13)); the User changes their values without touching the SQL ([FR-LE-04](#fr-le-04)) and puts a changed one back to its default. Adding Parameters is editing the Lens, for its Owner Unit. A second part of the page tells what the Lens answers, what it does step by step ([FR-LE-03](#fr-le-03)), what it is built on and its history. The result shows the rows, what was read and its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)), and can be downloaded within the row limit ([FR-CH-01](13-channels.md#fr-ch-01)). This is the basic flavour of a Lens: a query with Parameters, its result a table ([OP-LE-07](#op-le-07)).
 
@@ -148,21 +148,21 @@ Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03
 <a id="fr-le-12"></a>
 ### FR-LE-12 · Every run of a Lens is a query
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens) · **Screens:** [lens](../../design/screens/lens.html)
 
 Every run of a Lens passes the Pre-flight, with its thresholds ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37)), and is a query in the Query Log, with the name of the Lens ([DEC-UX-20](../../design/principles.md#dec-ux-20)). When a Parameter changes after a run, the result is marked as being for the old values until the Lens runs again. A Lens runs only when a User runs it, not when it is opened ([DEC-LE-12](#dec-le-12)).
 
 <a id="fr-le-13"></a>
 ### FR-LE-13 · A Parameter takes a value or a function
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#page-of-a-lens) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html)
 
 A Parameter takes a value, such as a date or "all channels", or a function that is worked out at every run, such as "today − 3 days" or "the start of this year". Both are chosen in the same dropdown, with the date a function gives today. This holds for its default, which its Owner Unit sets when making or editing the Lens, and for the value a User chooses when running it. It may be any SQL function; the field suggests the common ones ([DEC-LE-14](#dec-le-14)).
 
 <a id="fr-le-14"></a>
 ### FR-LE-14 · Only its Owner Unit sees the SQL of a Lens
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#dec-ux-27)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#dec-ux-27) · **Screens:** [lens](../../design/screens/lens.html)
 
 A colleague never sees the SQL of a Lens: not on its page, and not through "Open in Query", which is for its Owner Unit only. The Owner Unit sees the SQL when editing the Lens. What the Lens does is told in plain language instead ([FR-LE-03](#fr-le-03)). The Data Team keeps seeing the SQL of every query in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
 
@@ -179,7 +179,7 @@ The section Lenses opens on a start screen. It finds Lenses by the words of a qu
 <a id="fr-le-16"></a>
 ### FR-LE-16 · A Lens is updated from its query
 
-**Status:** Specified · **Source:** Max, 2026-10-27
+**Status:** Specified · **Source:** Max, 2026-10-27 · **Screens:** [query](../../design/screens/query.html)
 
 A query used as a Lens says so, with a link to the Lens ([DEC-LE-03](#dec-le-03)). Whoever may change the Lens, its Owner Unit and the Data Team ([DEC-CO-15](03-collections.md#dec-co-15), [DEC-CO-18](03-collections.md#dec-co-18)), can update the Lens from the query: the SQL and the Parameters of the query replace those of the Lens, a new size check decides how it is published again ([FR-LE-08](#fr-le-08)), and the Lens keeps its name, question, story, tags and Collection. The earlier version stays in the history of the Lens. The query does not suggest the Lenses on its Resources ([DEC-LE-04](#dec-le-04)).
 
@@ -187,7 +187,7 @@ A query used as a Lens says so, with a link to the Lens ([DEC-LE-03](#dec-le-03)
 <a id="fr-le-17"></a>
 ### FR-LE-17 · A Lens that reads what no longer exists is Broken
 
-**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67)
+**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [collections-start](../../design/screens/collections-start.html), [lens](../../design/screens/lens.html)
 
 A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its page names what no longer exists and since which dbt run. Its last result is not shown, so that nobody takes it for a current one. It carries a red dot wherever it is listed: in the panel, on tiles, in search and in the Lenses of a Collection, for everyone who sees it ([DEC-UX-81](../../design/principles.md#dec-ux-81)). Its Owner Unit gets a Message ([MSG-LEN-05](message-catalogue.md#msg-len-05)) and can repair it from its query ([DEC-LE-04](#dec-le-04)). When everything it reads exists again, it works again by itself, and the Message says so. The Reports with this Lens are Broken with it.
 

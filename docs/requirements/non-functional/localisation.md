@@ -34,14 +34,14 @@ In this file, *name* and *sentence* are ordinary words with the meaning below. T
 <a id="nfr-loc-01"></a>
 ### NFR-LOC-01 · Names are English and never translated
 
-**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [DEC-DH-02](../../overview/data-hub.md#dec-dh-02), [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
+**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [DEC-DH-02](../../overview/data-hub.md#dec-dh-02), [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 A name, as defined above, is English in every language version of Data Hub and in every text: the interface, notifications, the Learning Centre, the answers of the MCP server and the metadata people write. Switching the language changes only sentences: names, data, Query IDs and Lenses stay identical.
 
 <a id="nfr-loc-02"></a>
 ### NFR-LOC-02 · Translation files hold sentences only
 
-**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
+**Status:** Implemented · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa)
 
 Translation files contain sentences only, never a name of the Domain Model or a kind of asset. A name goes into a sentence as a parameter and is not translated with it. For example, the key `lens.publish.confirm` reads "Wil je deze lens publiek maken?" in Dutch and "Do you want to make this lens public?" in English: `lens` stays `lens` in both.
 
@@ -75,11 +75,11 @@ The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063
 <a id="nfr-loc-06"></a>
 ### NFR-LOC-06 · The interface follows the language of the User
 
-**Status:** Specified · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15)
+**Status:** Implemented · **Source:** [Max, 2026-10-25](https://claude.ai/artifact/NAbA5F5ctEoNsmkZK4U5qa) · **Applies to:** [FR-SR-15](../functional/04-stacks-and-resources.md#fr-sr-15) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 The interface follows the language preference of the User: Dutch by default, English available. The choice changes nothing about names, data or Query IDs. Notifications, Pre-flights and the texts of the Log have a Dutch and an English version, with the same parameters ([NFR-LOC-10](#nfr-loc-10)). Where a User chooses the language is [OP-DH-46](../../overview/open-themes.md#op-dh-46).
 
-*Note of 2026-10-28: the User chooses it in the tab Profile of My page ([DEC-UX-85](../../design/principles.md#dec-ux-85)).*
+*Note of 2026-10-28: the User chooses it in the tab Profile of My page ([DEC-UX-85](../../design/principles.md#dec-ux-85)).* *Note of 2026-10-28: the interface of the web app follows it, kept in identity ([TR-PF-32](../technical/00-platform.md#tr-pf-32)), as do the Messages of the [Message Catalogue](../functional/message-catalogue.md); the Pre-flights and the texts of the Log follow it from their own parts of the [build order](../../design/build-order.md).*
 
 <a id="nfr-loc-07"></a>
 ### NFR-LOC-07 · The answers of the MCP server follow the same rule
@@ -126,7 +126,7 @@ A name a User gives, such as the Display Name of a Resource or the name of a Col
 <a id="nfr-loc-12"></a>
 ### NFR-LOC-12 · Learning Cards in Dutch and English, with English names
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([OP-DH-40](../../overview/open-themes.md#op-dh-40)) · **Applies to:** [DEC-DH-65](../../overview/data-hub.md#dec-dh-65)
+**Status:** Specified · **Source:** Max, 2026-10-28 ([OP-DH-40](../../overview/open-themes.md#op-dh-40)) · **Applies to:** [DEC-DH-65](../../overview/data-hub.md#dec-dh-65) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 A Learning Card follows the language the User chose, as everything in the interface does: Dutch or English. Its names stay English in both, and never get a Dutch synonym. The structure of a card, its five steps, is the same in both languages ([DEC-LR-10](../functional/16-learning.md#dec-lr-10)). The cards are written in English in this repository, with a Dutch translation of each ([DEC-LR-24](../functional/16-learning.md#dec-lr-24)).
 

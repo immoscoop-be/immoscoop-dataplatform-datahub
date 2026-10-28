@@ -15,8 +15,11 @@ export interface GoogleIdentity {
 
 /** Sign in with Google through OpenID Connect (FR-UM-01). */
 export interface GoogleSignIn {
-  /** The address at Google where the User signs in; Google sends them back to identity's callback. */
-  authorizationUrl(request: { state: string; nonce: string; codeChallenge: string }): string;
+  /**
+   * The address at Google where the User signs in; Google sends them back to identity's callback.
+   * With `chooseAccount`, Google asks which account, as after a refused one.
+   */
+  authorizationUrl(request: { state: string; nonce: string; codeChallenge: string; chooseAccount?: boolean }): string;
   /** Exchanges the code from Google for the verified identity of the User, or throws. */
   identity(request: { code: string; codeVerifier: string; nonce: string }): Promise<GoogleIdentity>;
 }
@@ -27,16 +30,25 @@ export interface GoogleSignInOptions {
   clientSecret: string;
   /** identity's callback, as registered at Google. */
   redirectUri: string;
-  /** The only Workspace domain that gets in (DEC-UM-06). */
-  domain: string;
+  /** The Workspace domains that get in: both domains of the one Workspace (DEC-UM-09). */
+  domains: string[];
   /** Google's public keys; tests pass their own. */
   keys?: JWTVerifyGetKey;
   fetch?: typeof fetch;
 }
 
-/** Raised for every sign-in that must not get in; the message is safe to log. */
+/**
+ * Raised for every sign-in that must not get in; the message is safe to log. `account` is the
+ * account Google signed in, when it is refused for its domain: the sign-in names it to the User.
+ */
 export class SignInError extends Error {
   override name = 'SignInError';
+  readonly account?: string;
+
+  constructor(message: string, options?: ErrorOptions & { account?: string }) {
+    super(message, options);
+    this.account = options?.account;
+  }
 }
 
 export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
@@ -44,7 +56,7 @@ export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
   const request = options.fetch ?? fetch;
 
   return {
-    authorizationUrl({ state, nonce, codeChallenge }) {
+    authorizationUrl({ state, nonce, codeChallenge, chooseAccount = false }) {
       const url = new URL(AUTHORIZATION_ENDPOINT);
       url.search = new URLSearchParams({
         client_id: options.clientId,
@@ -55,8 +67,10 @@ export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
         nonce,
         code_challenge: codeChallenge,
         code_challenge_method: 'S256',
-        // Offers the accounts of the company's own domain first; the check below decides.
-        hd: options.domain,
+        // Offers the accounts of the company's own domain first, or of any domain when there are
+        // two (Google takes one domain or `*`); the check below decides.
+        hd: options.domains.length === 1 ? (options.domains[0] as string) : '*',
+        ...(chooseAccount ? { prompt: 'select_account' } : {}),
       }).toString();
       return url.toString();
     },
@@ -92,8 +106,11 @@ export function createGoogleSignIn(options: GoogleSignInOptions): GoogleSignIn {
       if (payload.nonce !== nonce) {
         throw new SignInError('The ID token does not belong to this sign-in');
       }
-      if (payload.hd !== options.domain || payload.email_verified !== true) {
-        throw new SignInError(`Only accounts of ${options.domain} get in`);
+      const domain = typeof payload.hd === 'string' ? payload.hd.toLowerCase() : '';
+      if (!options.domains.includes(domain) || payload.email_verified !== true) {
+        throw new SignInError(`Only accounts of ${options.domains.join(' and ')} get in`, {
+          account: typeof payload.email === 'string' ? payload.email : undefined,
+        });
       }
       if (typeof payload.sub !== 'string' || typeof payload.email !== 'string') {
         throw new SignInError('The ID token has no subject or email');

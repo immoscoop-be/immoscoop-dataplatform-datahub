@@ -54,6 +54,11 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     });
   }
 
+  /** A page of this web app to return to after signing in; anything else, such as another site, is the start. */
+  function ownPage(path: string | undefined): string {
+    return path && /^\/(?![/\\])/.test(path) && !path.startsWith('/auth/') && !/[\s\\]/.test(path) ? path : '/';
+  }
+
   function keepSession(reply: FastifyReply, refreshToken: string) {
     reply.header('set-cookie', serializeCookie(SESSION_COOKIE, refreshToken, { maxAge: SESSION_SECONDS, sameSite: 'Strict' }));
   }
@@ -64,20 +69,22 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return origin === undefined || origin === new URL(options.webUrl).origin;
   }
 
-  // The page loads scripts, styles and fonts only from its own address, and charts from semgraph; it
-  // talks only to its own server, identity, catalogue, registry and semgraph. Mantine adds <style> elements,
-  // which need this request's nonce.
-  app.get('/', open, async (_incoming, reply) => {
-    const nonce = randomBytes(16).toString('base64');
-    return reply
-      .type('text/html; charset=utf-8')
-      .header(
-        'content-security-policy',
-        `default-src 'self'; style-src 'self' 'nonce-${nonce}'; img-src 'self' ${options.semgraphUrl}; connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.semgraphUrl}; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'`,
-      )
-      .header('cache-control', 'no-store')
-      .send(client.page(nonce));
-  });
+  // The page loads scripts, styles, fonts and pictures only from its own address, and charts from
+  // semgraph; the grain over a flowing background is a small picture in its stylesheet. It talks only
+  // to its own server, identity, catalogue, registry and semgraph.
+  const policy = [
+    "default-src 'self'",
+    "style-src 'self'",
+    `img-src 'self' data: ${options.semgraphUrl}`,
+    `connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.semgraphUrl}`,
+    "object-src 'none'",
+    "base-uri 'none'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+  ].join('; ');
+  const sendPage = (reply: FastifyReply) =>
+    reply.type('text/html; charset=utf-8').header('content-security-policy', policy).header('cache-control', 'no-store').send(client.page);
+  app.get('/', open, async (_incoming, reply) => sendPage(reply));
   for (const [path, file] of client.files) {
     app.get(path, open, async (_incoming, reply) =>
       reply
@@ -88,19 +95,22 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     );
   }
 
-  // The icons of Collections, one route for some 4,800 drawings, kept an hour like the favicon.
-  app.get<{ Params: { file: string } }>('/icons/:file', open, async (incoming, reply) => {
-    const body = await client.icon(incoming.params.file);
-    if (!body) {
+  // Every address of a page of Data Hub is the same page, which shows what the address asks, or the
+  // page for what does not exist (DEC-UX-32). An address of a file that was not built is not found.
+  app.get<{ Params: { '*': string } }>('/*', open, async (incoming, reply) => {
+    const path = `/${incoming.params['*']}`;
+    if (/\.[A-Za-z0-9]+$/.test(path) || path.startsWith('/auth/') || path.startsWith('/assets/')) {
       return reply.code(404).send({ error: 'not_found' });
     }
-    return reply.type('image/svg+xml').header('x-content-type-options', 'nosniff').header('cache-control', 'public, max-age=3600').send(body);
+    return sendPage(reply);
   });
 
-  // The start of signing in: off to identity, with PKCE, remembering what to check on return.
-  app.get('/auth/login', open, async (_incoming, reply) => {
+  // The start of signing in: off to identity, with PKCE, remembering what to check on return and the
+  // page to return to. After a refused account, Google is asked to let the User choose another.
+  app.get<{ Querystring: { next?: string; choose?: string } }>('/auth/login', open, async (incoming, reply) => {
     const state = randomBytes(32).toString('base64url');
     const verifier = randomBytes(32).toString('base64url');
+    const next = Buffer.from(ownPage(incoming.query.next)).toString('base64url');
     const authorize = new URL(`${options.identityUrl}/authorize`);
     authorize.search = new URLSearchParams({
       client_id: CLIENT_ID,
@@ -109,15 +119,16 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       code_challenge: createHash('sha256').update(verifier).digest('base64url'),
       code_challenge_method: 'S256',
       state,
+      ...(incoming.query.choose === 'account' ? { prompt: 'select_account' } : {}),
     }).toString();
     return reply
-      .header('set-cookie', serializeCookie(SIGN_IN_COOKIE, `${state}.${verifier}`, { maxAge: 600, sameSite: 'Lax' }))
+      .header('set-cookie', serializeCookie(SIGN_IN_COOKIE, `${state}.${verifier}.${next}`, { maxAge: 600, sameSite: 'Lax' }))
       .redirect(authorize.toString());
   });
 
   // Back from identity: the code becomes an Access Token and a Refresh Token.
   app.get<{ Querystring: Record<string, string | undefined> }>('/auth/callback', open, async (incoming, reply) => {
-    const [state, verifier] = (readCookie(incoming.headers.cookie, SIGN_IN_COOKIE) ?? '').split('.');
+    const [state, verifier, next] = (readCookie(incoming.headers.cookie, SIGN_IN_COOKIE) ?? '').split('.');
     reply.header('set-cookie', serializeCookie(SIGN_IN_COOKIE, '', { maxAge: 0, sameSite: 'Lax' }));
     const failed = (reason: string) => {
       incoming.log.warn({ reason }, 'sign-in did not complete');
@@ -140,7 +151,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     }
     const { refresh_token: refreshToken } = (await response.json()) as { refresh_token: string };
     keepSession(reply, refreshToken);
-    return reply.redirect('/');
+    return reply.redirect(ownPage(next ? Buffer.from(next, 'base64url').toString('utf8') : undefined));
   });
 
   // The page asks for an Access Token; the Refresh Token in the cookie pays for it.

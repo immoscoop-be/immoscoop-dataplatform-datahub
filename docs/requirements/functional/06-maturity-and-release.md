@@ -55,7 +55,7 @@ Described requires a description of the view and of every column.
 <a id="fr-mr-02"></a>
 ### FR-MR-02 · Confirmed: the Owner confirms, from Described
 
-**Status:** Specified · **Confluence:** MO-02
+**Status:** Specified · **Confluence:** MO-02 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Confirmed requires a Confirmation by the Owner, from Described.
 
@@ -64,7 +64,7 @@ Confirmed requires a Confirmation by the Owner, from Described.
 <a id="fr-mr-03"></a>
 ### FR-MR-03 · Explored: a linked EDA document
 
-**Status:** Specified · **Confluence:** MO-03
+**Status:** Specified · **Confluence:** MO-03 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 Explored requires a linked EDA document, on top of Confirmed.
 
@@ -107,7 +107,7 @@ If the last active check is switched off, the Resource drops to Explored. If the
 <a id="fr-mr-08"></a>
 ### FR-MR-08 · A Confirmation does not expire
 
-**Status:** Specified · **Confluence:** MO-08
+**Status:** Specified · **Confluence:** MO-08 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 A Confirmation stays valid as long as there is no drop. There is no expiry date or reminder.
 
@@ -123,7 +123,7 @@ Every rise and drop goes into the Log, and every drop gives the Owner an alert.
 <a id="fr-mr-10"></a>
 ### FR-MR-10 · The Level restricts nothing and is shown everywhere
 
-**Status:** Specified · **Confluence:** MO-10
+**Status:** Specified · **Confluence:** MO-10 · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [collection-overview](../../design/screens/collection-overview.html), [resource-detail](../../design/screens/resource-detail.html), [resource-lineage](../../design/screens/resource-lineage.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 The Level restricts no access or channel. It is shown everywhere, also by Claude.
 
@@ -142,7 +142,7 @@ When the Owner confirms a Resource again after a drop ([FR-SR-20](04-stacks-and-
 <a id="fr-mr-12"></a>
 ### FR-MR-12 · A change since the last Confirmation gives a warning
 
-**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05))
+**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-MR-05](#op-mr-05)) · **Screens:** [messages](../../design/screens/messages.html), [resource-detail](../../design/screens/resource-detail.html)
 
 When a field of a Resource is added, removed, renamed or gets another type after its last Confirmation, Data Hub shows a warning on the Resource to everyone who sees it, with what changed and when, and tells the Owner in the Message Centre. The Level and the Publication stay as they are. The Owner or the Data Team marks the warning seen; it then goes, and the change stays in the History. Changes that come before it is seen show together in the same warning.
 
@@ -168,7 +168,7 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 <a id="fr-mr-15"></a>
 ### FR-MR-15 · Described: the table and a field, described in dbt
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-MR-12](#dec-mr-12))
+**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-MR-12](#dec-mr-12)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Data Hub derives Described from the Current Version of the dbt project: the table has a description, and at least one field has one. Only what is in dbt counts; a Business Description does not, nor what the Data Admin sets in Data Hub. When the description of the table, or the last one of a field, goes missing, the Level drops to Available.
 ## Open points
@@ -186,6 +186,10 @@ Raised during the migration to this repository; not on the Confluence page:
 Raised during the review of the migration; not on the Confluence page:
 
 - [x] <a id="op-mr-05"></a>**OP-MR-05** · Clarify which part of the Fingerprint makes a Resource drop to Described. [DEC-DH-35](../../overview/data-hub.md#dec-dh-35) says any deviation of the schema from the Fingerprint taken at Confirmation drops it, and [FR-SR-08](04-stacks-and-resources.md#fr-sr-08) includes a hash of the types in the Fingerprint. [DEC-DH-26](../../overview/data-hub.md#dec-dh-26) and [FR-MR-05](#fr-mr-05) say a type Change does not lower the Level; only the structure hash does. *Decided on 2026-10-26, by Max: no part of the Fingerprint makes a Resource drop; a change to the schema gives a warning ([DEC-MR-08](#dec-mr-08)).*
+
+Raised on 2026-10-28, while mapping the screens to the requirements:
+
+- [ ] <a id="op-mr-08"></a>**OP-MR-08** · [FR-MR-07](#fr-mr-07) is a Could as a whole, while its second half, a drop to Confirmed when the EDA document goes, belongs to 4 · Explored, which v1 reaches ([FR-MR-03](#fr-mr-03), [DEC-MR-13](#dec-mr-13)); and no screen links the EDA document of a Resource. Decide whether v1 links an EDA document, and if so, where; then whether that half of FR-MR-07 stays in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.*
 
 ## Builds on
 

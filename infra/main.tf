@@ -57,7 +57,7 @@ locals {
 
   # Signing in through Google, for the web app and MCP clients (TR-PF-06, TR-PF-25).
   sign_in_env = {
-    DATAHUB_WORKSPACE_DOMAIN    = var.workspace_domain
+    DATAHUB_WORKSPACE_DOMAIN    = join(",", var.workspace_domains)
     DATAHUB_GOOGLE_OAUTH_CLIENT = "${google_secret_manager_secret.secret["datahub-google-oauth-client"].id}/versions/latest"
     DATAHUB_MCP_REDIRECT_URIS   = join(",", var.mcp_redirect_uris)
     # The server of the web app, a client of identity known in advance (TR-PF-27).

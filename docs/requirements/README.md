@@ -90,6 +90,7 @@ A run is ingested at most once. A duplicate signal for the same run creates no d
 - The title after `·` is short and descriptive. The Confluence rules had no titles; the titles of migrated rules were derived from their text.
 - A requirement that came from elsewhere than Confluence, such as a [workshop](../workshops/2026-10-22-data-agents-and-governance.md), names it on its status line with `· **Source:**` and a link to the request it came from.
 - A technical requirement extends its status line with `· **Realises:**` and links to what it realises: functional requirements, edge cases, decisions or non-functional requirements. A non-functional requirement adds `· **Applies to:**` when it is about specific requirements. See the [templates](_templates/).
+- A requirement that a screen of the [design](../design/README.md) fulfils ends its status line with `· **Screens:**` and a link to each of those screens, such as `[collection-overview](../../design/screens/collection-overview.html)`. The comment at the top of each screen names the same requirements on its line `Requirements:`; decisions and open points go on other lines of that comment. `check` fails when the two sides differ.
 
 ### Decisions and open points
 
@@ -102,7 +103,7 @@ Decisions and open points are list items with an inline anchor:
 
 ### Links
 
-Always link an ID when you mention it outside its own definition: `[FR-AR-05](functional/01-artifact-registry.md#fr-ar-05)`. Back-references are not written by hand: the traceability matrix computes them.
+Always link an ID when you mention it outside its own definition: `[FR-AR-05](functional/01-artifact-registry.md#fr-ar-05)`. Back-references are not written by hand: the traceability matrix computes them. The one exception is `**Screens:**`, which `check` keeps in step with the screens themselves.
 
 ## Status lifecycle
 
@@ -146,7 +147,7 @@ pnpm docs:check   # validate IDs, statuses and links (node scripts/requirements.
 pnpm docs:build   # regenerate docs/requirements/traceability.md (node scripts/requirements.ts build)
 ```
 
-`check` fails on a duplicate ID, an anchor that does not match its ID, an unknown status, a broken link or anchor, and a mention of an ID that does not exist. It runs in CI on every pull request. Run `build` after changing requirements or after commits with trailers. Never edit `traceability.md` by hand.
+`check` fails on a duplicate ID, an anchor that does not match its ID, an unknown status, a broken link or anchor, a mention of an ID that does not exist (in the comment at the top of a screen too), and a screen and a requirement that do not name each other. It runs in CI on every pull request. Run `build` after changing requirements or after commits with trailers. Never edit `traceability.md` by hand.
 
 ## Adding a requirement
 

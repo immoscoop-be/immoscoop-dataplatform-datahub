@@ -26,7 +26,7 @@ In library terms: the library keeps no member register of its own. It uses the r
 - <a id="dec-um-06"></a>**DEC-UM-06** · The only Workspace domain that gets in is `thenextimmoscoop.be`. *Note of 2026-10-25: whether `immoscoop.be` gets in too is open ([OP-UM-07](#op-um-07)).* *Note of 2026-10-28: both domains get in ([DEC-UM-09](#dec-um-09)).*
 - <a id="dec-um-07"></a>**DEC-UM-07** · Data Hub pulls in every group a User is in, nested groups included, as long as the group belongs to the own Workspace domain: any of them can be chosen as an Owner Unit ([DEC-CO-09](03-collections.md#dec-co-09)). Roles still come only from the Role Groups of the Naming Convention. The Synchronisation covers only the Groups Data Hub uses: the Role Groups and the Owner Units of Collections, not every group of the company. This replaces [DEC-UM-05](#dec-um-05).
 - <a id="dec-um-08"></a>**DEC-UM-08** · The Synchronisation happens when a User signs in: then Data Hub pulls in the Groups that User is in. It does not pull in all Groups on a schedule; who has never signed in, Data Hub does not know. *Decided on 2026-10-28, by Max ([OP-UM-05](#op-um-05)).*
-- <a id="dec-um-09"></a>**DEC-UM-09** · Accounts of both `thenextimmoscoop.be` and `immoscoop.be` get in: both domains are on the same Google Workspace, so Data Hub reads their accounts and Groups alike. This replaces the one domain of [DEC-UM-06](#dec-um-06). identity checks one domain today (`DATAHUB_WORKSPACE_DOMAIN`); the rebuild takes both. *Decided on 2026-10-28, by Max ([OP-UM-07](#op-um-07)).*
+- <a id="dec-um-09"></a>**DEC-UM-09** · Accounts of both `thenextimmoscoop.be` and `immoscoop.be` get in: both domains are on the same Google Workspace, so Data Hub reads their accounts and Groups alike. This replaces the one domain of [DEC-UM-06](#dec-um-06). identity checks one domain today (`DATAHUB_WORKSPACE_DOMAIN`); the rebuild takes both. *Decided on 2026-10-28, by Max ([OP-UM-07](#op-um-07)).* *Note of 2026-10-28: identity takes both now; Terraform passes them in `workspace_domains`, and a refused account is named on the sign-in.*
 
 ## Terms
 
@@ -58,21 +58,21 @@ An Owner Unit needs no convention since 2026-10-19: any Google group of the own 
 <a id="fr-um-01"></a>
 ### FR-UM-01 · Sign in with Google only
 
-**Status:** Implemented · **Confluence:** GB-01 · [design](../../design/principles.md#sign-in)
+**Status:** Implemented · **Confluence:** GB-01 · [design](../../design/principles.md#sign-in) · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 Logging in is only possible with Google, via OpenID Connect. Data Hub verifies the signature of the ID token, the audience and the Workspace domain.
 
 <a id="fr-um-02"></a>
 ### FR-UM-02 · Accounts of the own Workspace domain only
 
-**Status:** Implemented · **Confluence:** GB-02 · [design](../../design/principles.md#sign-in)
+**Status:** Implemented · **Confluence:** GB-02 · [design](../../design/principles.md#sign-in) · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 Only accounts of the company's own Workspace domain get in. Personal Gmail accounts and accounts of other domains are refused.
 
 <a id="fr-um-03"></a>
 ### FR-UM-03 · Create the User at first login, never store a password
 
-**Status:** Implemented · **Confluence:** GB-03
+**Status:** Implemented · **Confluence:** GB-03 · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 At the first login, Data Hub creates the User, with the fixed Google ID as key, and email and name as data. A password is never stored.
 
@@ -116,7 +116,7 @@ A Group is recognised by its fixed Google ID, not by its email address, so that 
 <a id="fr-um-09"></a>
 ### FR-UM-09 · Owner Units are managed in Workspace
 
-**Status:** Specified · **Confluence:** GB-09
+**Status:** Implemented · **Confluence:** GB-09 · **Screens:** [my-page](../../design/screens/my-page.html)
 
 Owner Units are created, filled and dissolved in Workspace. Data Hub shows them, but does not change them.
 
@@ -130,7 +130,7 @@ Whoever disappears from Workspace or is suspended can no longer log in, and disa
 <a id="fr-um-11"></a>
 ### FR-UM-11 · Every group of the own domain is pulled in; roles come from Role Groups
 
-**Status:** Implemented
+**Status:** Implemented · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
 
 Every group of the own Workspace domain that the User is in, nested groups included, is pulled in, with its fixed Google ID, its address and its name. The User can choose any of them as Owner Unit. Only the Role Groups of the [Naming Convention](#naming-convention) give a role.
 
@@ -183,6 +183,7 @@ What someone may see and do, and issuing Excel keys ([Permissions and Excel keys
 - [x] <a id="op-um-05"></a>**OP-UM-05** · Decide the frequency of the Synchronisation. *Decided on 2026-10-28, by Max: at every sign-in ([DEC-UM-08](#dec-um-08)).*
 - [x] <a id="op-um-06"></a>**OP-UM-06** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-UM-04](#ec-um-04) is Specified, the others are withdrawn.*
 - [x] <a id="op-um-07"></a>**OP-UM-07** · Decide whether accounts of `immoscoop.be` get in too, next to `thenextimmoscoop.be` ([DEC-UM-06](#dec-um-06)): Max answered "thenextimmoscoop.be, immoscoop.be" in a comment on the review of 2026-10-25. Identity checks one domain today, reads the groups of one Workspace and checks its accounts. So first: is `immoscoop.be` a second domain of the same Google Workspace? If it is a Workspace of its own, its groups and accounts cannot be read. *Raised on 2026-10-25, from a comment of Max.* *Decided on 2026-10-28, by Max: both, as they are on the same Workspace ([DEC-UM-09](#dec-um-09)).*
+- [ ] <a id="op-um-08"></a>**OP-UM-08** · [FR-UM-07](#fr-um-07) still asks to synchronise the members of every Group periodically, and so does step 5 of the [Flow](#flow), while [DEC-UM-08](#dec-um-08) synchronises the Groups of a User only when they sign in, never on a schedule. Proposal: FR-UM-07 is withdrawn, and step 5 goes. *Raised on 2026-10-28, while mapping the screens to the requirements.*
 
 ## Builds on
 

@@ -4,4 +4,7 @@
 .git
 .github
 docs
+# The web app takes its design values and its background pictures from the design (one place each).
+!docs/design/tokens.css
+!docs/design/backgrounds
 *.md

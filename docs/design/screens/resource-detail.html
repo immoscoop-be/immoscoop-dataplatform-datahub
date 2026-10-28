@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <!--
   Screen: Resource detail
-  Panel = the Collections, with the Collection of this Resource unfolded (FR-CO-18 to FR-CO-24); main = the resource.
+  Panel = the Collections, with the Collection of this Resource unfolded and the Resource marked; main = the Resource.
   Shown with a change since the last Confirmation: a field was added. The Level stays (DEC-MR-08); the warning says so,
   and "Mark as seen" for the Owner and the Data Team takes it away.
-  Requirements: FR-SR-04, FR-SR-05, FR-SR-06, FR-SR-11, FR-SR-22, FR-SR-23, FR-SR-24, FR-SR-28, FR-SR-29, FR-SR-31,
-    FR-MR-09, FR-MR-10, FR-MR-12, DEC-MR-08, FR-RC-01, FR-RC-04, FR-RC-06, FR-RC-07, FR-RC-08, FR-RC-10, FR-RC-11, FR-RC-12, FR-RC-13, FR-RC-14,
-    FR-RC-15, FR-RC-16, FR-RC-18, FR-SR-39; DEC-UX-06 to DEC-UX-09, DEC-UX-61. Tabs Lineage, EDA, History and Preview: not designed yet (OP-UX-04).
+  Requirements: FR-AR-13, FR-CO-19, FR-SR-06, FR-SR-11, FR-SR-12, FR-SR-23, FR-SR-24, FR-SR-28, FR-SR-29, FR-SR-39, FR-SR-46, FR-SR-50, FR-RC-01, FR-RC-04, FR-RC-05, FR-RC-07, FR-RC-08, FR-RC-09, FR-RC-10, FR-RC-11, FR-RC-12, FR-RC-13, FR-RC-14, FR-RC-15, FR-RC-16, FR-RC-18, FR-MR-03, FR-MR-10, FR-MR-12, FR-CV-07, FR-LR-12, FR-LR-35, FR-LR-36
+  Decisions: DEC-UX-07, DEC-UX-09, DEC-UX-61, DEC-UX-64, DEC-UX-67, DEC-UX-90, DEC-UX-101, DEC-UX-107, DEC-MR-08, DEC-RC-09, DEC-RC-12.
+  Not in v1: the tile Stability (FR-RC-06), and the link to a video in the floating Learning Card (OP-LR-20); leave them out.
   The Description tile and the Columns tab show the Business Description and the description from dbt side by side;
   a field without a Business Description shows the one from dbt alone. ?tabs=columns opens the Columns tab.
+  The tabs are Overview, Columns, Lineage, History and Preview (DEC-UX-90): resource-lineage.html, resource-history.html and
+  resource-preview.html show the other three. ?dep=on shows a deprecated Resource (DEC-UX-101). The markers ⓘ on system text
+  and their pop-outs are as in learning-hover.html. The header and the status row stand on every tab; their requirements are listed here.
   Related screens: resource-edit.html (editing), resource-columns-edit.html (editing the fields), resource-messages.html (Messages and Ask a question, in a slide-in; there is no tab Conversations, DEC-UX-67).
   Rules: ../principles.md  ·  Placeholder content only.
 -->

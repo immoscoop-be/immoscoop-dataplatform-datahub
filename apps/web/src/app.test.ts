@@ -6,7 +6,6 @@ import { createTestIssuer } from '@datahub/auth/testing';
 import type { FastifyInstance } from 'fastify';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp, CLIENT_ID } from './app.js';
-import { loadClient } from './page.js';
 
 const WEB = 'https://web.test';
 const IDENTITY = 'https://identity.test';
@@ -57,18 +56,17 @@ function cookies(headers: Record<string, unknown>): Record<string, string> {
   return Object.fromEntries(list.map((cookie: string) => [cookie.split('=')[0], cookie]));
 }
 
-/** A page as Vite builds it from client/index.html, with one script, the favicon and the drawing of one icon. */
+/** A page as Vite builds it from client/index.html, with one script, a picture and the favicon. */
 async function builtClient(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'datahub-web-'));
   await mkdir(join(dir, 'assets'));
   await writeFile(
     join(dir, 'index.html'),
-    '<!doctype html>\n<html lang="en">\n  <head>\n    <script type="module" crossorigin src="/assets/index-a1b2.js"></script>\n  </head>\n  <body><div id="root"></div></body>\n</html>\n',
+    '<!doctype html>\n<html lang="nl">\n  <head>\n    <script type="module" crossorigin src="/assets/index-a1b2.js"></script>\n  </head>\n  <body><div id="app"></div></body>\n</html>\n',
   );
   await writeFile(join(dir, 'assets', 'index-a1b2.js'), 'console.log("Data Hub");');
+  await writeFile(join(dir, 'assets', 'alpenglow-c3d4.jpg'), 'jpg');
   await writeFile(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
-  await mkdir(join(dir, 'icons'));
-  await writeFile(join(dir, 'icons', 'home.svg'), '<svg xmlns="http://www.w3.org/2000/svg"><path d="M5 12l-2 0l9 -9l9 9l-2 0"/></svg>');
   return dir;
 }
 
@@ -91,8 +89,8 @@ describe('the server of the web app', () => {
   afterEach(() => app.close());
 
   /** Signs in up to identity and back, as the browser would; returns the session cookie. */
-  async function signIn(): Promise<string> {
-    const login = await app.inject({ url: '/auth/login' });
+  async function signIn(next = '/'): Promise<string> {
+    const login = await app.inject({ url: `/auth/login?next=${encodeURIComponent(next)}` });
     const authorize = new URL(login.headers.location as string);
     identity.rememberChallenge(authorize.searchParams.get('code_challenge') ?? '');
     const signInCookie = cookies(login.headers)['datahub_sign_in']?.split(';')[0] ?? '';
@@ -101,36 +99,33 @@ describe('the server of the web app', () => {
       url: `/auth/callback?code=code-1&state=${authorize.searchParams.get('state')}`,
       headers: { cookie: signInCookie },
     });
-    expect(callback.headers.location).toBe('/');
+    expect(callback.headers.location).toBe(next);
     expect(cookies(callback.headers)['datahub_sign_in']).toMatch(/Max-Age=0/);
     return cookies(callback.headers)['datahub_session'] ?? '';
   }
 
-  it('serves the page, which may only talk to itself, identity, registry and semgraph', async () => {
+  it('serves the page, which may only talk to itself, identity, catalogue, registry and semgraph', async () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
     expect(page.headers['cache-control']).toBe('no-store');
-    expect(page.body).toContain(`<html lang="en" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-semgraph="${SEMGRAPH}">`);
+    expect(page.body).toContain(`<html lang="nl" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-semgraph="${SEMGRAPH}">`);
     const policy = page.headers['content-security-policy'] as string;
     expect(policy).toContain("default-src 'self';");
+    expect(policy).toContain("style-src 'self';");
     expect(policy).toContain(`connect-src 'self' ${IDENTITY} ${CATALOGUE} ${REGISTRY} ${SEMGRAPH};`);
-    // Charts are pictures from semgraph; nothing else is loaded from another address.
-    expect(policy).toContain(`img-src 'self' ${SEMGRAPH};`);
+    // Charts are pictures from semgraph, and the grain of a background is a small picture of its own.
+    expect(policy).toContain(`img-src 'self' data: ${SEMGRAPH};`);
     expect(policy).not.toContain('unsafe');
+    expect(policy).not.toContain('script-src');
   });
 
-  it('gives every page its own nonce, which only lets styles in', async () => {
-    const nonces = await Promise.all(
-      [1, 2].map(async () => {
-        const page = await app.inject({ url: '/' });
-        const nonce = /<meta property="csp-nonce" nonce="([^"]+)" \/>/.exec(page.body)?.[1];
-        expect(page.headers['content-security-policy']).toContain(`style-src 'self' 'nonce-${nonce}';`);
-        expect(page.headers['content-security-policy']).not.toContain('script-src');
-        return nonce;
-      }),
-    );
-    expect(nonces[0]).toMatch(/^[A-Za-z0-9+/]{22}==$/);
-    expect(nonces[0]).not.toBe(nonces[1]);
+  it('serves the same page at every address of a page, which shows what it asks or that nothing is there (DEC-UX-32)', async () => {
+    for (const url of ['/collections', '/me/background', '/collections/c-1/resources/r-1', '/anything']) {
+      const page = await app.inject({ url });
+      expect([url, page.statusCode]).toEqual([url, 200]);
+      expect(page.body).toContain('<html lang="nl" data-identity=');
+      expect(page.headers['content-security-policy']).toContain("default-src 'self';");
+    }
   });
 
   it('serves the built files, the ones named after their content for good', async () => {
@@ -139,27 +134,14 @@ describe('the server of the web app', () => {
     expect(script.headers['cache-control']).toContain('immutable');
     expect(script.headers['x-content-type-options']).toBe('nosniff');
     expect(script.body).toBe('console.log("Data Hub");');
+    const picture = await app.inject({ url: '/assets/alpenglow-c3d4.jpg' });
+    expect(picture.headers['content-type']).toBe('image/jpeg');
     const icon = await app.inject({ url: '/favicon.svg' });
     expect(icon.headers['content-type']).toBe('image/svg+xml');
     expect(icon.headers['cache-control']).not.toContain('immutable');
-    // Only the built files are routes; anything else meets the token check of every service.
-    for (const url of ['/index.html', '/assets/../index.html', '/assets/missing.js']) {
-      expect((await app.inject({ url })).statusCode).toBe(401);
-    }
-  });
-
-  it('serves the drawing of an icon through one route, reading it only when it is asked for (DEC-CO-14)', async () => {
-    const client = await loadClient(clientDir, { identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, semgraphUrl: SEMGRAPH });
-    expect([...client.files.keys()].filter((path) => path.startsWith('/icons/'))).toEqual([]);
-
-    const home = await app.inject({ url: '/icons/home.svg' });
-    expect(home.statusCode).toBe(200);
-    expect(home.headers['content-type']).toBe('image/svg+xml');
-    expect(home.headers['cache-control']).toBe('public, max-age=3600');
-    expect(home.headers['x-content-type-options']).toBe('nosniff');
-    expect(home.body).toContain('M5 12l-2 0l9 -9l9 9l-2 0');
-    for (const url of ['/icons/rocket.svg', '/icons/Home.svg', '/icons/home.js', '/icons/..%2Findex.html', '/icons/..%2F..%2Fpackage.json']) {
-      expect((await app.inject({ url })).statusCode).toBe(404);
+    // Only the built files are files; the address of any other file is not found.
+    for (const url of ['/index.html', '/assets/../index.html', '/assets/missing.js', '/icons/home.svg', '/auth/missing']) {
+      expect([url, (await app.inject({ url })).statusCode]).toEqual([url, 404]);
     }
   });
 
@@ -181,6 +163,27 @@ describe('the server of the web app', () => {
       code_challenge_method: 'S256',
     });
     expect(cookies(login.headers)['datahub_sign_in']).toMatch(/HttpOnly; Secure; SameSite=Lax/);
+  });
+
+  it('asks Google for another account after a refused one', async () => {
+    const plain = new URL((await app.inject({ url: '/auth/login' })).headers.location as string);
+    expect(plain.searchParams.has('prompt')).toBe(false);
+    const choose = new URL((await app.inject({ url: '/auth/login?choose=account' })).headers.location as string);
+    expect(choose.searchParams.get('prompt')).toBe('select_account');
+  });
+
+  it('returns to the page the User signed in from, and never to another site', async () => {
+    await signIn('/me/background');
+    for (const next of ['https://evil.test/', '//evil.test/', '/\\evil.test', '/auth/logout']) {
+      const login = await app.inject({ url: `/auth/login?next=${encodeURIComponent(next)}` });
+      const authorize = new URL(login.headers.location as string);
+      identity.rememberChallenge(authorize.searchParams.get('code_challenge') ?? '');
+      const callback = await app.inject({
+        url: `/auth/callback?code=code-1&state=${authorize.searchParams.get('state')}`,
+        headers: { cookie: cookies(login.headers)['datahub_sign_in']?.split(';')[0] ?? '' },
+      });
+      expect([next, callback.headers.location]).toEqual([next, '/']);
+    }
   });
 
   it('keeps the Refresh Token in a cookie no script can read and no other site can send', async () => {

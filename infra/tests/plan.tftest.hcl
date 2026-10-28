@@ -278,15 +278,15 @@ run "every_new_image_runs_the_migrations_once" {
   }
 }
 
-run "identity_signs_in_only_the_own_domain_and_known_mcp_clients" {
+run "identity_signs_in_only_the_own_domains_and_known_mcp_clients" {
   command = plan
 
   assert {
     condition = contains(
       [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_WORKSPACE_DOMAIN"],
-      "thenextimmoscoop.be"
+      "thenextimmoscoop.be,immoscoop.be"
     )
-    error_message = "Only accounts of thenextimmoscoop.be may sign in (DEC-UM-06)."
+    error_message = "Only accounts of the two domains of the Workspace may sign in (DEC-UM-09)."
   }
 
   assert {

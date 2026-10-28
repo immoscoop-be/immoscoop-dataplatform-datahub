@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
-  Screen: Lenses, the page of a Lens: run it (DEC-UX-26)
-  The basic flavour of a Lens: a query with Parameters, its result a table. Other flavours (filtered, aggregation, ...) come later.
+  Screen: the page of a Lens: run it (DEC-UX-26)
+  A Lens is a query with Parameters, its result the grid of Query (DEC-UX-83); version 1 has this one kind (DEC-LE-13).
   Two tabs. Run: the request on top, its Parameters in a panel that folds open and shut (folded, a line with their
   values), "Default" on a changed one, and in its lower right corner "Run" with the Pre-flight in it, red as "Approve and
   run" above the approval threshold, with a pop-out on how to read less when the table has partitions;
@@ -9,10 +9,11 @@
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
-  The switches at the bottom show the result up to date, after a change, before the first run and while choosing a value, as the Owner Unit or a colleague.
+  The switches at the bottom show the result up to date, after a change, before the first run, while choosing a value and Broken (?state=broken, DEC-UX-81), as the Owner Unit or a colleague.
   The page sits under Collections (DEC-UX-66): the panel is that of Collections, with Credit leads unfolded and this Lens
   marked as open; there is no section Lenses.
-  Requirements: FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-03, FR-LE-04, FR-LE-06 (Proposed); FR-SR-36, FR-SR-37, FR-LN-06, FR-CH-01; DEC-DH-10, DEC-DH-11, DEC-CO-16.
+  Requirements: FR-CO-19, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-51, FR-LN-06, FR-LE-03, FR-LE-04, FR-LE-06, FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-17, FR-CH-01, FR-CV-07
+  Decisions: DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-LE-08, DEC-LE-12, DEC-DH-10, DEC-CO-16.
   Related screens: lens-new.html (Make it a lens), query-new.html (Use this lens), collection-overview.html (its Lenses).
   Rules: ../principles.md  ·  Placeholder content only.
 -->

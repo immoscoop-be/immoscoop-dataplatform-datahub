@@ -24,6 +24,9 @@
   --radius-pill: 999px;
   --radius-nav-icon: 16px;
   --radius-tab: 12px;
+  --radius-field: 12px;      /* a search field */
+  --radius-surface: 20px;    /* the content under tabs; the story of a photo */
+  --radius-sign-in: 32px;    /* the glass card of the sign-in */
   --flare-tab: 12px;   /* concave corner where an active tab meets its content */
   --flare-nav: 18px;   /* concave corner where the active nav icon meets the panel */
 
@@ -37,14 +40,20 @@
   --panel-width: 300px;
   --tile-min: 240px;          /* grid is always 100% wide; tiles grow until a column fits */
   --tile-min-compact: 190px;
+  --app-min-width: 900px;     /* narrower, Data Hub shows one message instead (DEC-UX-91) */
 
   /* Motion: slow, swept, never on-off */
   --motion-focus: 700ms ease;       /* window becoming opaque on hover */
   --motion-panel: 350ms ease;       /* slide-out panel */
+  --motion-fade: 250ms;             /* the panel fades as it slides */
+  --motion-ring: 150ms;             /* the ring of the initials */
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
   --background-cycle: 36s;
+  --photo-cycle: 60s;               /* the photo of the sign-in, very slowly closer */
+  --blur-frame: blur(8px) saturate(1.05);   /* the frames over a picture (DEC-UX-34) */
+  --blur-glass: blur(22px) saturate(1.3);   /* a glass card over a photo (DEC-UX-35) */
 
   /* Content colours: colour lives on content only; Collections have none (DEC-UX-105) */
   --col-magenta: #DD2C88;
@@ -97,6 +106,12 @@
   --text-muted: #8C857E;
   --signal-warn: #B07A28;        /* only for states that need action */
   --signal-urgent: #C4432F;      /* only for what waits for the Data Team ("Without a collection"), a run above the approval threshold, and what is Broken */
+  /* Glass: a card over a photo or the background, such as the sign-in (DEC-UX-35) */
+  --glass: rgba(255,255,255,.42);
+  --glass-solid: rgba(255,255,255,.88);    /* where a browser cannot blur */
+  --glass-edge: rgba(255,255,255,.6);
+  --glass-shadow: 0 30px 80px rgba(20,30,50,.14);
+  --glass-story: rgba(255,255,255,.58);
 }
 
 [data-theme="dark"] {
@@ -118,4 +133,9 @@
   --text-muted: #8F877F;
   --signal-warn: #D9A453;
   --signal-urgent: #E2725E;
+  --glass: rgba(40,36,32,.5);
+  --glass-solid: rgba(40,36,32,.92);
+  --glass-edge: rgba(255,255,255,.12);
+  --glass-shadow: 0 30px 80px rgba(0,0,0,.3);
+  --glass-story: rgba(40,36,32,.6);
 }

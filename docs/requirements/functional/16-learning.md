@@ -84,7 +84,7 @@
 <a id="fr-lr-01"></a>
 ### FR-LR-01 · Every topic of the master learning plan is a Learning Card with a page
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html)
 
 Every topic of the master learning plan, the Compass included, is a Learning Card with a page of its own in Data Hub. The page shows its number and title, its Learning Level and section, its priority (required, recommended or in depth), its thinking level (recognise, apply or judge), and the cards it builds on.
 
@@ -93,7 +93,7 @@ Every topic of the master learning plan, the Compass included, is a Learning Car
 <a id="fr-lr-02"></a>
 ### FR-LR-02 · A Learning Card holds an article, a video and test questions
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html)
 
 A Learning Card holds an article with text and graphics. It can also hold a video and test questions; a card without them shows only what it has. The article follows the topic in the master learning plan: what the reader will be able to do, the core, the common mistake, and examples from Immoscoop. Its charts are drawn by the Chart Server ([DEC-PF-23](../technical/00-platform.md#dec-pf-23)).
 
@@ -102,7 +102,7 @@ A Learning Card holds an article with text and graphics. It can also hold a vide
 <a id="fr-lr-03"></a>
 ### FR-LR-03 · The panel of Learning lists every card by Learning Level and section
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
 
 The panel of the section Learning lists every Learning Card: first the Compass, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. Each card shows the icon of its kind, its name on one line and whether the User marked it understood. Each Learning Level and section shows how many of its cards the User understood. Search in the panel covers the names of the cards.
 
@@ -111,7 +111,7 @@ The panel of the section Learning lists every Learning Card: first the Compass, 
 <a id="fr-lr-04"></a>
 ### FR-LR-04 · Test questions say right or wrong, and why
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html)
 
 A test question has one right answer among a few. When the User answers, the card says whether it was right and explains why, for the wrong answers too.
 
@@ -124,7 +124,7 @@ The User can answer again.
 <a id="fr-lr-05"></a>
 ### FR-LR-05 · A User marks a Learning Card understood
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-message](../../design/screens/learning-message.html), [messages](../../design/screens/messages.html)
 
 A User marks a Learning Card understood, and can undo it. The mark is kept per User and shows in the panel, on the card and wherever the card appears in a Message. Whether marking needs the test questions answered first is open ([OP-LR-05](#op-lr-05)).
 
@@ -140,7 +140,7 @@ A Learning Card is an object of Messages, as a Collection, a Resource or a Lens 
 <a id="fr-lr-07"></a>
 ### FR-LR-07 · A Message can carry a Learning Card
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-message](../../design/screens/learning-message.html)
 
 Whoever writes a Message can add a Learning Card to it, for example when answering a Question on a Resource. The card shows in the Message as a small card with its number, title and Learning Level, and whether the reader marked it understood; a click opens it. The Message stays on its own object ([FR-CV-03](14-conversations.md#fr-cv-03)).
 
@@ -149,7 +149,7 @@ Whoever writes a Message can add a Learning Card to it, for example when answeri
 <a id="fr-lr-08"></a>
 ### FR-LR-08 · The start screen of Learning shows where to go next
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
 
 The section Learning opens on a start screen: an intro, a search, the card the User was reading, the required cards of the Learning Levels the User works on that they have not marked understood yet, and new or changed cards.
 
@@ -158,7 +158,7 @@ The section Learning opens on a start screen: an intro, a search, the card the U
 <a id="fr-lr-09"></a>
 ### FR-LR-09 · A card links to what comes before and after
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html)
 
 The page of a Learning Card links to the cards it builds on, with whether the User understood them; to the next card in its section; to related cards; and to where the reader meets the topic in Data Hub, such as a field on a Resource Card or a Lens.
 
@@ -185,7 +185,7 @@ Wherever Data Hub shows text, a link to a Learning Card can stand inline: in wha
 <a id="fr-lr-12"></a>
 ### FR-LR-12 · The link opens the card in a floating window
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A click on the link opens the Learning Card in a floating window over the page, as a Message opens in context ([FR-CV-09](14-conversations.md#fr-cv-09)): its head moves it and folds it, and the page stays usable behind it. The window shows the card in short: its Learning Level, what the reader will be able to do, the article, the video, the questions and "Mark as understood". "Open in the learning centre" opens the full page of the card in the Learning Centre.
 
@@ -356,7 +356,7 @@ Through the MCP server, Claude can show every step of a Learning Card in the con
 <a id="fr-lr-27"></a>
 ### FR-LR-27 · A Learning Card follows five steps, on a quick or a full path
 
-**Status:** Proposed · **Source:** [principles, 3.9 and 4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 3.9 and 4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
 
 A Learning Card has five steps, always in this order ([DEC-LR-10](#dec-lr-10)):
 
@@ -371,14 +371,14 @@ The User chooses the depth: the quick path (Why now, Core idea, You can now) or 
 <a id="fr-lr-28"></a>
 ### FR-LR-28 · "I understand it" is always there, and closes the card
 
-**Status:** Proposed · **Source:** [principles, 3.2 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 3.2 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html), [learning-see](../../design/screens/learning-see.html)
 
 The header of every step holds "I understand it", so it stands on every question screen. It is the only button that is always there. It marks the card understood ([FR-LR-05](#fr-lr-05)), opens You can now, and is enough to close the card at any step. No question is mandatory, and no step waits for an answer.
 
 <a id="fr-lr-29"></a>
 ### FR-LR-29 · See it is a page of its own
 
-**Status:** Proposed · **Source:** [principles, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-see](../../design/screens/learning-see.html)
 
 See it has a page of its own, with its own address. The User reaches it from the card, as its third step, and from the context in Data Hub without going through the card, for example from a pitfall in the Known Behaviour of a Resource. Opened from context, it shows the example with "Look at …" and "You see …", the way back to where the User came from, and the whole card. Its example is static content of the card: the chart is drawn from figures in the card, never from a query on live data.
 
@@ -387,14 +387,14 @@ See it has a page of its own, with its own address. The User reaches it from the
 <a id="fr-lr-30"></a>
 ### FR-LR-30 · Check your understanding: predict, then reveal
 
-**Status:** Proposed · **Source:** [principles, 3.5, 3.6 and 5](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 3.5, 3.6 and 5](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
 
 Check your understanding asks one question per screen, from a large set per card. The User first predicts, by choosing an answer, then sees the answer and why ([FR-LR-04](#fr-lr-04)). Every question puts the decision rule to a new situation, never the example of the card, and its wrong answers are real misconceptions heard from colleagues. After each answer the User can take another question, or stop. Nothing is counted: no score, and no number of right answers. A question can be a try-it question, such as "open this Lens and see what the weight does", offered only when it is safe and feasible in the context of the User.
 
 <a id="fr-lr-31"></a>
 ### FR-LR-31 · You can now: what you can do, what it brings, and where to go
 
-**Status:** Proposed · **Source:** [principles, 3.8, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 3.8, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
 
 The last step has three fields, in this order:
 
@@ -409,7 +409,7 @@ These choices are how a closed card offers the next relevant card ([principles, 
 <a id="fr-lr-32"></a>
 ### FR-LR-32 · A silent count of the cards seen
 
-**Status:** Proposed · **Source:** [principles, 3.7 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** [principles, 3.7 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
 
 The Learning Centre counts the cards a User has seen, and shows it quietly: in the panel, such as "You have seen 14 of 113 cards", and per Learning Level and section. It calculates no score, and shows no badge, no red indicator, no ranking, no number still to do and no deadline.
 
@@ -442,7 +442,7 @@ A click on a reference opens the card in the floating window ([FR-LR-12](#fr-lr-
 <a id="fr-lr-35"></a>
 ### FR-LR-35 · Only system text carries a marker
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A button, a label, a heading, or a text that Data Hub writes itself, such as a status, the name of a field, the Pre-flight or the footer of a chart, can carry a marker when a Learning Card explains it. The marker is a small Unicode character right after the text, in its colour, a little smaller and raised, such as ⓘ ([OP-UX-22](../../design/principles.md#op-ux-22)). It is the only sign: no underline and no colour. Text that Users provide never carries one: a description, a definition, Known Behaviour, a Message or a name.
 
@@ -453,7 +453,7 @@ A button, a label, a heading, or a text that Data Hub writes itself, such as a s
 <a id="fr-lr-36"></a>
 ### FR-LR-36 · The pop-out: a text bubble with the cards that explain it
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning)
+**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 Holding the pointer on a marked text or button for a second opens its pop-out; focusing it with the keyboard opens it at once. Passing the pointer over the page opens nothing. The pop-out is a text bubble: its arrow points at the marker it belongs to. It says how many cards explain the text, and shows each card as an item of its own, with:
 
@@ -474,7 +474,7 @@ A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-0
 <a id="fr-lr-38"></a>
 ### FR-LR-38 · A Message from Data Hub links to the card that explains it
 
-**Status:** Specified · **Source:** Max, 2026-10-27
+**Status:** Specified · **Source:** Max, 2026-10-27 · **Screens:** [messages](../../design/screens/messages.html)
 
 A Message that Data Hub writes itself, such as a changed description in dbt ([FR-RC-17](05-resource-card.md#fr-rc-17)), a change since the last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) or a Registration ([FR-SR-10](04-stacks-and-resources.md#fr-sr-10)), carries a clear link under the heading "Understand what is happening here", right under its own text: the Learning Card that explains it, with its number, its title and whether the User has seen it. The card opens inline, in the Message: its core idea and what the User can do with it, with a way to the whole card in the Learning Centre and "I understand it". It is not a marker inside the text of the Message ([DEC-LR-11](#dec-lr-11)). Each kind of Message names its card; a kind without a card yet needs one before it is built ([FR-LR-37](#fr-lr-37)).
 

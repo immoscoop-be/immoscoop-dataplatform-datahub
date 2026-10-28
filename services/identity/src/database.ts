@@ -53,4 +53,10 @@ export interface IdentityDatabase {
     createdAt: Timestamp;
     usedAt: Date | null;
   };
+  settings: {
+    googleId: string;
+    key: string;
+    value: ColumnType<unknown, string, string>;
+    updatedAt: Timestamp;
+  };
 }

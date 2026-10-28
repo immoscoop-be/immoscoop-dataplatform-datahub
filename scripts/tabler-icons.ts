@@ -4,7 +4,7 @@
  * Usage:
  *   node scripts/tabler-icons.ts   # rewrite packages/contracts/src/tablerIcons.ts
  *
- * Also available as `pnpm icons:build`. Run it after upgrading `@tabler/icons` in apps/web, and
+ * Also available as `pnpm icons:build`. Run it after upgrading `@tabler/icons` in packages/contracts, and
  * commit the result: catalogue checks icons against this list, and the web app copies their
  * drawings and searches it. A test fails while the list and the installed version differ. It uses
  * only Node built-ins and runs directly on Node 24, which strips the TypeScript types itself.
@@ -14,7 +14,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const TABLER = path.join(ROOT, 'apps/web/node_modules/@tabler/icons');
+const TABLER = path.join(ROOT, 'packages/contracts/node_modules/@tabler/icons');
 const OUT = path.join(ROOT, 'packages/contracts/src/tablerIcons.ts');
 
 interface TablerIcon {

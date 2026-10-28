@@ -1,0 +1,27 @@
+/* The foundations every page of Data Hub stands on: the tokens, the font, the type and the surfaces.
+   Every value comes from docs/design/tokens.css, the one place for them (DEC-PF-28): this file
+   reads it as it is, and so do the prototypes. */
+@import '../../../../docs/design/tokens.css';
+@import '@fontsource/poppins/400.css';
+@import '@fontsource/poppins/500.css';
+@import '@fontsource/poppins/600.css';
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { font-family: var(--font-family); color: var(--text-primary); font-size: var(--text-body); }
+:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+[hidden] { display: none !important; }
+
+/* Type: one large page title, the rest small and calm; names in a monospace font */
+.page-title { font-size: var(--text-page-title); font-weight: var(--weight-medium); letter-spacing: -.4px; line-height: 1.2; margin: 0; }
+.item-title { font-size: var(--text-body); font-weight: var(--weight-medium); }
+.meta { font-size: var(--text-meta); color: var(--text-muted); }
+.label { font-size: var(--text-meta); color: var(--text-muted); margin-bottom: 8px; }
+.mono { font-family: var(--font-mono); }
+
+/* Surfaces: a reading surface takes the colour of the frame it is in, which focus follows (Layers and focus) */
+.card { background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

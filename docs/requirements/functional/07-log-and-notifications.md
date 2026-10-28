@@ -39,7 +39,7 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-ln-01"></a>
 ### FR-LN-01 · A notification to an Owner reaches its whole Owner Unit
 
-**Status:** Proposed · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners)
+**Status:** Proposed · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [resource-messages](../../design/screens/resource-messages.html)
 
 A notification to the Owner of a Collection or a Resource reaches every member of its Owner Unit, so that a Collection always potentially has several owners.
 
@@ -69,14 +69,14 @@ When a Lens that builds on a Resource is made public, the Owner of that Resource
 <a id="fr-ln-05"></a>
 ### FR-LN-05 · Every query gets a Query ID in the Query Log
 
-**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog)
+**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Every query that Data Hub executes, ad hoc, for a Lens, a Report or an export, or through the MCP, is kept in the Query Log with a unique Query ID, the SQL, who ran it, when, the bytes processed and the Resources beneath it.
 
 <a id="fr-ln-06"></a>
 ### FR-LN-06 · Every output carries its Query ID
 
-**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog)
+**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Every output, a chart, a Report, a PDF or an export, visibly carries the Query ID of its query, so that a screenshot can always be traced back to the SQL. The Chart Server already does this; Data Hub extends it to all assets.
 

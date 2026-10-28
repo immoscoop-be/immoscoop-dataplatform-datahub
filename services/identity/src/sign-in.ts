@@ -20,8 +20,8 @@ export interface SignInOptions {
   tokens: TokenIssuer;
   /** identity's own address: the issuer of the Access Tokens and the base of its endpoints. */
   issuer: string;
-  /** The only Workspace domain that gets in (DEC-UM-06). */
-  domain: string;
+  /** The Workspace domains that get in (DEC-UM-09). */
+  domains: string[];
   /** The server of the web app, an OAuth client known in advance (TR-PF-27); absent until it exists. */
   webClient?: { clientId: string; redirectUri: string };
   /** The only addresses an MCP client may register as its callback, such as Claude's. */
@@ -61,7 +61,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
 
   /** Reads the Groups and roles of a User again, as at every login and renewal (FR-UM-04, TR-PF-26). */
   async function subject(user: { googleId: string; email: string; name: string }): Promise<TokenSubject> {
-    const { groups, roles } = applyNamingConvention(await workspace.groups(user.email), options.domain);
+    const { groups, roles } = applyNamingConvention(await workspace.groups(user.email), options.domains);
     return { sub: user.googleId, email: user.email, name: user.name, groups, roles };
   }
 
@@ -155,7 +155,13 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     });
     const google = await options.google();
     return reply.redirect(
-      google.authorizationUrl({ state: pending.id, nonce: pending.nonce, codeChallenge: challengeOf(googleCodeVerifier) }),
+      google.authorizationUrl({
+        state: pending.id,
+        nonce: pending.nonce,
+        codeChallenge: challengeOf(googleCodeVerifier),
+        // After a refused account, the client asks Google to let the User choose another.
+        chooseAccount: query.prompt === 'select_account',
+      }),
     );
   });
 
@@ -171,9 +177,14 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       back.searchParams.set('state', pending.clientState);
     }
     back.searchParams.set('iss', issuer);
-    const deny = (reason: string) => {
+    const deny = (reason: string, account?: string) => {
       request.log.warn({ reason }, 'sign-in refused');
       back.searchParams.set('error', 'access_denied');
+      // The refused account goes back in the fragment, which no server receives or logs: the
+      // browser keeps it through the redirects, and the sign-in names it to the User.
+      if (account) {
+        back.hash = new URLSearchParams({ account }).toString();
+      }
       return reply.redirect(back.toString());
     };
 
@@ -191,7 +202,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       claims = await subject({ googleId: identity.sub, email: identity.email, name: identity.name });
     } catch (error) {
       if (error instanceof SignInError) {
-        return deny(error.message);
+        return deny(error.message, error.account);
       }
       // Google or Workspace did not answer as expected: not the User's fault, and nothing to show them.
       request.log.error({ err: error }, 'sign-in failed on the side of Google or Workspace');

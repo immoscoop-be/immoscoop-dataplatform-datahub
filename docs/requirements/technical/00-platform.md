@@ -268,13 +268,13 @@ To look: Google Cloud console → SQL → the instance `datahub-<environment>` �
 <a id="tr-pf-29"></a>
 ### TR-PF-29 · The look and the page of the web app
 
-**Status:** Implemented · **Realises:** [DEC-PF-22](#dec-pf-22), [DEC-PF-06](#dec-pf-06)
+**Status:** Withdrawn · **Realises:** [DEC-PF-22](#dec-pf-22), [DEC-PF-06](#dec-pf-06)
 
 The Mantine theme lives in `packages/ui`, so the MCP App can use it too. Each colour of the brandbook is a scale of ten shades: magenta runs from light pink through the brand magenta into bordeaux, so hover and pressed states stay within the brand, and the greys run from light grey to the text grey. Titles are in bordeaux, text in the text grey, and both in Poppins. Links take a darker magenta: the brand magenta has a contrast of 4.4:1 on white, just under the 4.5:1 that running text needs. Buttons keep the brand magenta.
 
 Vite builds the page into `apps/web/dist/client`, with Poppins included: the page loads nothing from another address, not even Google Fonts. The server of the web app ([TR-PF-27](#tr-pf-27)) serves it under a Content-Security-Policy that allows scripts, styles and fonts only from its own address. Mantine adds `<style>` elements; they need a nonce that is new for every page.
 
-*Note of 2026-10-28: built with Mantine today; rebuilt in Svelte with the look of the design ([DEC-PF-28](#dec-pf-28)).*
+*Note of 2026-10-28: built with Mantine today; rebuilt in Svelte with the look of the design ([DEC-PF-28](#dec-pf-28)).* *Note of 2026-10-28: withdrawn; the web app is rebuilt in Svelte, with the look of the design ([TR-PF-33](#tr-pf-33)).*
 
 <a id="tr-pf-30"></a>
 ### TR-PF-30 · semgraph is open, behind a rate limit
@@ -290,7 +290,25 @@ The Cloud Run service accepts traffic only through the load balancer, so its own
 
 **Status:** Implemented · **Realises:** [DEC-PF-24](#dec-pf-24), [DEC-PF-23](#dec-pf-23)
 
-semgraph answers every request with `Access-Control-Allow-Origin: *`, and the preflight of the browser for a `POST` with JSON, so a page on any site can call it from the browser: the web app of Data Hub, and a dashboard or document elsewhere. It allows no credentials, as there are none. The page of the web app may load pictures and call only semgraph besides its own server, identity and registry ([TR-PF-29](#tr-pf-29)).
+semgraph answers every request with `Access-Control-Allow-Origin: *`, and the preflight of the browser for a `POST` with JSON, so a page on any site can call it from the browser: the web app of Data Hub, and a dashboard or document elsewhere. It allows no credentials, as there are none. The page of the web app may load pictures and call only semgraph besides its own server, identity and registry ([TR-PF-33](#tr-pf-33)).
+
+<a id="tr-pf-32"></a>
+### TR-PF-32 · The settings of a User live in identity
+
+**Status:** Implemented · **Realises:** [DEC-UX-96](../../design/principles.md#dec-ux-96), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)
+
+identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the theme, the background by day and by night, whether the panel is open, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User.
+
+<a id="tr-pf-33"></a>
+### TR-PF-33 · The web app in Svelte, with the look of the design
+
+**Status:** Implemented · **Realises:** [DEC-PF-28](#dec-pf-28), [DEC-PF-19](#dec-pf-19), [DEC-UX-104](../../design/principles.md#dec-ux-104)
+
+The page of the web app is Svelte 5, built by Vite into `apps/web/dist/client`; the server of the web app ([TR-PF-27](#tr-pf-27)) serves it for every address that is a page of Data Hub, and the page shows what the address asks for. The look lives in `packages/ui`, in the layers of [components.md](../../design/components.md), so the MCP App can use it later: the foundations, the primitives, the containers and the components. A behaviour lives in its component, never in a screen.
+
+Every value of the look has one place: `docs/design/tokens.css`. The stylesheet of `packages/ui` imports that file as it is, as the prototypes do, and the components only refer to its tokens; where code needs a value, such as the narrowest window, it reads the token from the page. A test fails on any colour, font, radius or duration written in a component instead of a token, and on a token that `tokens.css` does not have. The pictures of the backgrounds and of the sign-in are those of `docs/design/backgrounds`, taken along by the build.
+
+The page loads nothing from another address: Poppins and the Phosphor icons are part of the build, and the grain over a flowing background is a small picture in its stylesheet. The Content-Security-Policy allows scripts, styles and fonts only from its own address; Svelte puts every style in the stylesheet, so no style needs a nonce. Sentences come from translation files, one per language ([NFR-LOC-02](../non-functional/localisation.md#nfr-loc-02)), and the settings of the User from identity ([TR-PF-32](#tr-pf-32)).
 
 ## Open points
 

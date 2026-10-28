@@ -20,8 +20,8 @@ export function tokenIssuerFromEnv(keys: KeyService, env: NodeJS.ProcessEnv = pr
 export interface SignInSettings {
   /** identity's own address, the issuer of the Access Tokens (DATAHUB_TOKEN_ISSUER). */
   issuer: string;
-  /** The only Workspace domain that gets in (DATAHUB_WORKSPACE_DOMAIN, DEC-UM-06). */
-  domain: string;
+  /** The Workspace domains that get in (DATAHUB_WORKSPACE_DOMAIN, comma-separated, DEC-UM-09). */
+  domains: string[];
   /** The secret version that holds identity's OAuth client at Google (DATAHUB_GOOGLE_OAUTH_CLIENT). */
   googleClientSecret: string;
   /** The callbacks MCP clients may register (DATAHUB_MCP_REDIRECT_URIS, comma-separated). */
@@ -33,7 +33,10 @@ export interface SignInSettings {
 export function signInSettingsFromEnv(env: NodeJS.ProcessEnv = process.env): SignInSettings {
   return {
     issuer: required(env, 'DATAHUB_TOKEN_ISSUER'),
-    domain: required(env, 'DATAHUB_WORKSPACE_DOMAIN'),
+    domains: required(env, 'DATAHUB_WORKSPACE_DOMAIN')
+      .split(',')
+      .map((domain) => domain.trim().toLowerCase())
+      .filter((domain) => domain.length > 0),
     googleClientSecret: required(env, 'DATAHUB_GOOGLE_OAUTH_CLIENT'),
     mcpRedirectUris: (env.DATAHUB_MCP_REDIRECT_URIS ?? '').split(',').filter((uri) => uri.length > 0),
     webClient: env.DATAHUB_WEB_REDIRECT_URI ? { clientId: 'datahub-web', redirectUri: env.DATAHUB_WEB_REDIRECT_URI } : undefined,

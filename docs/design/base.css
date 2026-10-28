@@ -23,7 +23,7 @@ html[data-bg="fusilli"] .app { background-image: url(backgrounds/painted/light/f
 html[data-bg="piste"] .app { background-image: url(backgrounds/painted/light/piste.jpg); background-size: cover; }
 html[data-bg="concrete"] .app { background-image: url(backgrounds/painted/light/concrete.jpg); background-size: cover; }
 html[data-bg][data-theme="dark"] .app { background-image: url(backgrounds/painted/dark/village-lights.jpg); }
-html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: blur(8px) saturate(1.05); backdrop-filter: blur(8px) saturate(1.05); }
+html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
 /* ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app,
    with a still grain over it; the glass surfaces blur it as they blur a picture. The dark theme has a night of its own,
    as it has its own picture (DEC-UX-36) */
@@ -64,7 +64,7 @@ html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"
 
 /* Slide-out panel */
 .panel { width: var(--panel-width); flex-shrink: 0; background: var(--surface-glass); border-radius: var(--radius-xl); padding: 20px 16px;
-  overflow: hidden auto; transition: width var(--motion-panel), opacity 250ms, padding var(--motion-panel); }
+  overflow: hidden auto; transition: width var(--motion-panel), opacity var(--motion-fade), padding var(--motion-panel); }
 .app:not(.panel-open) .panel { width: 0; padding-left: 0; padding-right: 0; opacity: 0; }
 .panel-inner { width: calc(var(--panel-width) - 32px); }
 .icon-btn { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 0; background: none; display: flex; align-items: center;
@@ -80,7 +80,7 @@ html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"
 .app:has(.panel:hover) .main { --card: var(--surface-soft); }
 .card { background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
 
-.search { display: flex; align-items: center; gap: 8px; border-radius: 12px; padding: 9px 12px; color: var(--text-muted); }
+.search { display: flex; align-items: center; gap: 8px; border-radius: var(--radius-field); padding: 9px 12px; color: var(--text-muted); }
 .search input { all: unset; flex: 1; font: var(--text-small) var(--font-family); color: var(--text-primary); }
 .search input::placeholder { color: var(--text-muted); }
 
@@ -136,7 +136,7 @@ html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"
 .tab.on::before { left: calc(-1 * var(--flare-tab)); background: radial-gradient(circle at 0 0, transparent var(--flare-tab), var(--card) calc(var(--flare-tab) + .5px)); }
 .tab.on::after { right: calc(-1 * var(--flare-tab)); background: radial-gradient(circle at 100% 0, transparent var(--flare-tab), var(--card) calc(var(--flare-tab) + .5px)); }
 .count { font-size: 10px; background: var(--tint-hover); padding: 0 6px; border-radius: var(--radius-pill); }
-.tab-content { border-radius: 20px; padding: 16px; position: relative; z-index: 1; }
+.tab-content { border-radius: var(--radius-surface); padding: 16px; position: relative; z-index: 1; }
 .tab-content .grid { grid-template-columns: repeat(auto-fit, minmax(var(--tile-min), 1fr)); gap: 10px; }
 .sub-tile { border-radius: var(--radius-md); padding: 16px 18px; background: var(--surface-sub); }
 .label { font-size: var(--text-meta); color: var(--text-muted); margin-bottom: 8px; }
@@ -809,14 +809,13 @@ a.tile { display: block; color: inherit; text-decoration: none; }
    the story of the photo in a corner. Each theme has photos of its own (DEC-UX-36); without one, the gradient shows */
 .signin { margin: 0; min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); align-items: center;
   padding: 40px 8vw; box-sizing: border-box; overflow: hidden; background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%); }
-.signin-photo { position: fixed; inset: 0; background-size: cover; background-repeat: no-repeat; animation: photo-drift 60s ease-in-out infinite alternate; }
+.signin-photo { position: fixed; inset: 0; background-size: cover; background-repeat: no-repeat; animation: photo-drift var(--photo-cycle) ease-in-out infinite alternate; }
 @keyframes photo-drift { from { transform: scale(1); } to { transform: scale(1.04); } }
 html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-set="light"] { display: none; }
-.glass { position: relative; -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3);
-  background: rgba(255,255,255,.42); border: 1px solid rgba(255,255,255,.6); box-shadow: 0 30px 80px rgba(20,30,50,.14); }
-[data-theme="dark"] .glass { background: rgba(40,36,32,.5); border-color: rgba(255,255,255,.12); box-shadow: 0 30px 80px rgba(0,0,0,.3); }
-@supports not (backdrop-filter: blur(1px)) { .glass { background: rgba(255,255,255,.88); } [data-theme="dark"] .glass { background: rgba(40,36,32,.92); } }
-.signin-card { grid-column: 2; border-radius: 32px; padding: 30px 34px 30px; }
+.glass { position: relative; -webkit-backdrop-filter: var(--blur-glass); backdrop-filter: var(--blur-glass);
+  background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); }
+@supports not (backdrop-filter: blur(1px)) { .glass { background: var(--glass-solid); } }
+.signin-card { grid-column: 2; border-radius: var(--radius-sign-in); padding: 30px 34px 30px; }
 .signin-brand { display: flex; align-items: center; gap: 10px; font-size: var(--text-body); color: var(--text-secondary); }
 .signin-card h1 { margin: 44px 0 0; font-size: 40px; font-weight: var(--weight-medium); letter-spacing: -.8px; }
 .signin-card > p { margin: 8px 0 0; font-size: var(--text-body); line-height: 1.6; color: var(--text-secondary); text-wrap: balance; }
@@ -826,8 +825,7 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
   background: color-mix(in srgb, var(--signal-warn) 16%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
 .signin-refused > i { font-size: 20px; color: var(--signal-warn); }
 .signin-refused b { font-weight: var(--weight-medium); }
-.photo-story { position: fixed; left: 28px; bottom: 26px; max-width: 360px; margin: 0; padding: 14px 18px; border-radius: 20px; background: rgba(255,255,255,.58); }
-[data-theme="dark"] .photo-story { background: rgba(40,36,32,.6); }
+.photo-story { position: fixed; left: 28px; bottom: 26px; max-width: 360px; margin: 0; padding: 14px 18px; border-radius: var(--radius-surface); background: var(--glass-story); }
 .photo-story b { display: block; font-size: var(--text-small); font-weight: var(--weight-medium); }
 .photo-story p { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
 .photo-story .meta { display: block; margin-top: 8px; color: var(--text-secondary); }
@@ -1163,7 +1161,7 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .result-empty.broken > i { color: var(--signal-urgent); }
 
 /* My page (DEC-UX-84): the initials at the foot of the rail open it */
-a.avatar { color: var(--text-primary); text-decoration: none; cursor: pointer; transition: box-shadow .15s; }
+a.avatar { color: var(--text-primary); text-decoration: none; cursor: pointer; transition: box-shadow var(--motion-ring); }
 a.avatar:hover { box-shadow: 0 0 0 2px var(--tint-hover); }
 a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .me-head { display: flex; align-items: center; gap: 16px; margin-top: 6px; }
