@@ -1189,3 +1189,6 @@ a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .key-box .mono { flex: 1; font-size: 13px; word-break: break-all; }
 .key-warn { display: flex; gap: 8px; margin: 10px 0 0; font-size: var(--text-small); line-height: 1.5; }
 .key-warn > i { color: var(--signal-warn); font-size: 17px; margin-top: 1px; }
+
+/* The panel of Collections: every Collection the User sees, filtered to all or theirs (DEC-UX-87) */
+.coll-filter { display: inline-flex; gap: 2px; padding: 3px; margin: 10px 0 8px; border-radius: var(--radius-pill); background: var(--surface-sub); }

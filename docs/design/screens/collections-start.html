@@ -41,7 +41,10 @@
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
   <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search resources and lenses"></label>
-  <div class="panel-label">Your collections</div>
+  <div class="coll-filter" data-group="collfilter" role="tablist" aria-label="Which collections">
+   <button class="seg on" data-target="all" role="tab" aria-selected="true">All</button>
+   <button class="seg" data-target="mine" role="tab" aria-selected="false">Yours</button>
+  </div>
   <div class="tree-group card coll-edge" style="--c:var(--col-magenta)">
    <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
@@ -57,8 +60,8 @@
      <a class="tree-res" href="lens.html" title="Broken: the column first_reply_at of Lead response time no longer exists"><i class="ph ph-aperture kind-icon broken-mark" role="img" aria-label="Lens, broken"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion · Broken: the column first_reply_at of Lead response time no longer exists">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
    </div>
   </div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-house-line"></i></span><span class="tree-name"><span class="item-title">Listing leads</span><span class="meta">15 resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listing leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Contact requests per listing and per broker">Contact requests per listing and per broker</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead quality score">Lead quality score</span></span><span class="maturity" data-level="3"></span></a>
@@ -71,8 +74,8 @@
      <a class="tree-more" href="#">Show all 15</a>
    </div>
   </div>
-  <div class="tree-group card coll-edge" style="--c:var(--col-teal)">
-   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
+  <div class="tree-group card coll-edge" style="--c:var(--col-teal)" data-pane-group="collfilter" data-pane="all">
+   <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-buildings"></i></span><span class="tree-name"><span class="item-title">Listings</span><span class="meta">22 resources</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Listings holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Active listings per day">Active listings per day</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Listing views per day">Listing views per day</span></span><span class="maturity" data-level="4"></span></a>
@@ -99,9 +102,6 @@
      <a class="tree-more" href="#">Show all 11</a>
    </div>
   </div>
-  <div class="panel-label">Shared resources</div>
-  <a class="list-item card" data-name="broker service packs"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Broker service packs</span><span class="meta"><i class="ph-fill ph-users-three"></i>Sales</span></span></a>
-  <a class="list-item card" data-name="search sessions"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><span class="item-title">Search sessions</span><span class="meta"><i class="ph-fill ph-users-three"></i>Data team</span></span></a>
   <p id="no-results" class="meta" style="padding:8px 4px" hidden>Nothing matches your search.</p>
  </div>
 </aside>

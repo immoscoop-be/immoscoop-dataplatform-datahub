@@ -31,9 +31,9 @@ Every part follows the same order:
 | Functional requirements | 236: 46 Implemented, 68 Specified, 88 Proposed, 34 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
-| Design decisions (DEC-UX) | 86 |
+| Design decisions (DEC-UX) | 87 |
 | Prototype screens | 32, plus the index |
-| Open points | 115 open, of 240: 106 for v1 and 9 marked Could |
+| Open points | 114 open, of 240: 105 for v1 and 9 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1184,7 +1184,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 115 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 114 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
@@ -1203,9 +1203,8 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 3 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 19 open
+Source: [design/principles.md](../design/principles.md) · 18 open
 
-- [ ] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection). *Look at: [collections-start.html](../design/screens/collections-start.html), "Shared resources" at the foot of the panel.*
 - [ ] **[OP-UX-03](../design/principles.md#op-ux-03)** · **Start screens** for Lenses and Reports. *Note of 2026-10-24: Lenses is designed (`lenses-start`, withdrawn on 2026-10-26, [DEC-UX-33](../design/principles.md#dec-ux-33)); Reports remains.* *Note of 2026-10-26: the start screen of Lenses is withdrawn with its section ([DEC-UX-66](../design/principles.md#dec-ux-66)); Reports remains.* *Look at: [collections-start.html](../design/screens/collections-start.html), the start screen of Collections, as the pattern; the Reports icon in the rail leads nowhere yet.*
 - [ ] **[OP-UX-04](../design/principles.md#op-ux-04)** · **Tabs** Lineage, EDA, History, Conversations and Preview. *Note of 2026-10-22: Conversations is designed (`resource-conversations`, withdrawn on 2026-10-26); Lineage, EDA, History and Preview remain.* *Note of 2026-10-23: Preview and Queries are designed ([resource-preview](../design/screens/resource-preview.html), [resource-queries](../design/screens/resource-queries.html)), to review; SQL went to its own section ([DEC-UX-17](../design/principles.md#dec-ux-17)).* *Note of 2026-10-26: the tab Conversations is withdrawn ([DEC-UX-67](../design/principles.md#dec-ux-67)).* *Look at: [resource-detail.html](../design/screens/resource-detail.html), its tabs; Lineage, EDA and History are not designed; [resource-preview.html](../design/screens/resource-preview.html); [resource-queries.html](../design/screens/resource-queries.html).*
 - [ ] **[OP-UX-06](../design/principles.md#op-ux-06)** · **Screens on mobile** or in narrow windows. *Look at: [collections-start.html](../design/screens/collections-start.html), in a narrow browser window; [resource-detail.html](../design/screens/resource-detail.html), the same.*
@@ -1445,6 +1444,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-UX-33](../design/principles.md#op-ux-33)** · **The same Parameters in Query and on a Lens:** the query of the prototype uses `@dateFrom`, `@dateTo` and `@minLeads`, its Lens From, To and Lead channel, while a Lens takes its Parameters from its query ([DEC-LE-01](../requirements/functional/09-lenses.md#dec-le-01)). Align the example: the names of the query, with their names for Users on the Lens. *Raised on 2026-10-27, in the review of Max; recorded here on 2026-10-28.* *Decided on 2026-10-28, by Max: yes. The query of the prototype has the Parameters of its Lens, `@dateFrom`, `@dateTo` and `@leadChannel`; `@minLeads` is gone.*
 - [x] **[OP-UX-34](../design/principles.md#op-ux-34)** · **The type of a Lens on its screens:** a Lens has no type from a fixed list ([DEC-LE-06](../requirements/functional/09-lenses.md#dec-le-06)), but the page of a Lens shows one in its status row, such as Comparison, and the Lenses of a Collection have a column Type. Proposal: drop both. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: drop both, and the type wherever it shows ([DEC-UX-82](../design/principles.md#dec-ux-82)).*
 - [x] **[OP-UX-01](../design/principles.md#op-ux-01)** · **Popular:** which measure? Views, the number of colleagues, or use in Lenses. *Look at: [collections-start.html](../design/screens/collections-start.html), the sections "Popular collections" and "Lenses to discover", Popular.* *Decided on 2026-10-28, by Max: removed for now ([DEC-UX-86](../design/principles.md#dec-ux-86)).*
+- [x] **[OP-UX-02](../design/principles.md#op-ux-02)** · **Shared resources** in the panel: align with the model of Publication (visibility hangs on Publication, ownership runs through the Collection). *Look at: [collections-start.html](../design/screens/collections-start.html), "Shared resources" at the foot of the panel.* *Decided on 2026-10-28, by Max: a conceptual mistake; the panel lists every Collection the User sees, filtered to All or Yours, and "Shared resources" goes ([DEC-UX-87](../design/principles.md#dec-ux-87)).*
 
 **Stacks and resources**
 
