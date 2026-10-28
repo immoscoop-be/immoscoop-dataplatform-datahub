@@ -1140,7 +1140,6 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .rel-grain-text { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 4px 8px; width: 220px; }
 .rel-ok { display: inline-flex; align-items: center; gap: 6px; color: var(--text-secondary); }
 .rel-ok code { font: var(--text-meta) var(--font-mono); }
-.rel-dup { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-meta); padding: 3px 10px; }
 .rel-kw { font: var(--weight-medium) var(--text-small) var(--font-mono); color: var(--text-primary); }
 .rel-dm { margin: 8px 0 0; color: var(--text-secondary); }
 .rel-dm .text-link { margin-left: 4px; }
