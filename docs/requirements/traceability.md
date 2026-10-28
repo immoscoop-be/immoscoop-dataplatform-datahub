@@ -15,7 +15,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 specified) | 7 | 8 (1 open, 7 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 7 (2 open, 5 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 specified) | 22 | 17 (2 open, 15 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 33 | 17 (6 open, 11 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 33 | 17 (5 open, 12 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 3 | 5 (3 open, 2 done) |
@@ -130,7 +130,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-07](functional/04-stacks-and-resources.md#fr-sr-07) | The Level at Registration is at most Described | Specified | SR-07 | – | – |
 | [FR-SR-08](functional/04-stacks-and-resources.md#fr-sr-08) | Store a Fingerprint at Registration | Specified | SR-08 | – | – |
 | [FR-SR-09](functional/04-stacks-and-resources.md#fr-sr-09) | Open the Log at Registration | Specified | SR-09 | – | – |
-| [FR-SR-10](functional/04-stacks-and-resources.md#fr-sr-10) | Notify the Data Admins of every Registration | Specified | SR-10 | – | – |
+| [FR-SR-10](functional/04-stacks-and-resources.md#fr-sr-10) | Notify the Data Admins of every Registration | Specified | SR-10 | – | [fb52197](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fb52197cc4da8e99a9fe48d5ecb445276d9a0597) refs, 2026-10-28 |
 | [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | Structure of a Log Entry | Implemented | SR-11 | [TR-PF-05](technical/00-platform.md#tr-pf-05), [TR-CO-04](technical/03-collections.md#tr-co-04) | [47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-12](functional/04-stacks-and-resources.md#fr-sr-12) | Log IDs come from a fixed catalogue | Implemented | SR-12 | [TR-CO-04](technical/03-collections.md#tr-co-04) | [8e6ff4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e6ff4eb6383bdbe04664755a5ec81593cbc9cc5) refs, 2026-10-19<br>[47a985b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/47a985b42124ad1f2466fd670a070525bcf829f4) implements, 2026-10-19 |
 | [FR-SR-13](functional/04-stacks-and-resources.md#fr-sr-13) | Names, descriptions and Log texts are searchable | Specified | SR-13 | – | – |
@@ -368,7 +368,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [EC-SR-01](functional/04-stacks-and-resources.md#ec-sr-01) | The view is not (yet) in the Artifacts | Withdrawn | – | – |
 | [EC-SR-02](functional/04-stacks-and-resources.md#ec-sr-02) | A registered view disappears from the Artifacts | Withdrawn | – | – |
-| [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Proposed | – | – |
+| [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Specified | – | – |
 | [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second Stack is added | Withdrawn | [TR-PF-13](technical/00-platform.md#tr-pf-13) | – |
 
 ### [Conversations](functional/14-conversations.md)

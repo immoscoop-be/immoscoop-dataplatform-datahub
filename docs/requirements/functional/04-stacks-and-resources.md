@@ -566,8 +566,6 @@ The first draft of the Log Catalogue started on this page. Because it spans all 
 
 ## Edge cases
 
-Proposals to confirm.
-
 <a id="ec-sr-01"></a>
 ### EC-SR-01 · The view is not (yet) in the Artifacts
 
@@ -589,7 +587,7 @@ The Resource gets a Log Entry and is flagged as missing. It is not deregistered 
 <a id="ec-sr-03"></a>
 ### EC-SR-03 · A view is renamed in BigQuery
 
-**Status:** Proposed
+**Status:** Specified · **Source:** Max, 2026-10-28 ([OP-SR-09](#op-sr-09))
 
 The Data Admin links the new full name to the existing Resource, so that it keeps its ID, Log and Confirmations.
 
@@ -618,7 +616,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.
 - [x] <a id="op-sr-07"></a>**OP-SR-07** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](09-lenses.md#fr-le-08)).* *Decided on 2026-10-26, by Max: 100 MB, 1 GB and pages of 100 rows ([DEC-SR-29](#dec-sr-29), [DEC-SR-30](#dec-sr-30)).*
 - [x] <a id="op-sr-08"></a>**OP-SR-08** · Later: query history in Data Hub, and the Usage tab. *Note of 2026-10-22: the Query Log keeps every query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)); the Usage tab remains open.* *Note of 2026-10-23: a history per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)) are proposed.* *Note of 2026-10-28: the Usage tab is usage reporting, which is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)); the history of queries stays.* *Done on 2026-10-28, by Max: the history of queries is specified per User ([FR-SR-43](#fr-sr-43)) and per Resource ([FR-SR-44](#fr-sr-44)); the Usage tab is not in v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)).*
-- [ ] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above.
+- [x] <a id="op-sr-09"></a>**OP-SR-09** · Confirm or adjust the edge cases above. *Decided on 2026-10-28, by Max: confirmed; [EC-SR-03](#ec-sr-03) is Specified, the others were already withdrawn.*
 - [x] <a id="op-sr-10"></a>**OP-SR-10** · Decide how Data Hub reads the data of Resources outside the Stacks, for the Preview and for queries: read access for its service account on those datasets, or the tables of Resources always in a Stack after all ([DEC-SR-23](#dec-sr-23)). *Raised on 2026-10-19.* *Decided on 2026-10-26, by Max: Data Hub reads every table in the projects it follows ([DEC-SR-32](#dec-sr-32)).*
 - [x] <a id="op-sr-11"></a>**OP-SR-11** · Decide whether the page of a Resource gets a Query tab with SQL. Max asked on 2026-10-23 for a preview and a query on the page of a Resource. [FR-SR-25](#fr-sr-25) keeps a query builder out of the interface, and [FR-SR-26](#fr-sr-26) sends free SQL through Claude. The [Preview](../../design/principles.md#preview) stays within that: Parameters, no SQL. A Query tab was designed first, as a proposal: SQL on this Resource, with the Pre-flight and its thresholds. Decide which of the two, and if the Query tab: for whom, and whether it replaces or joins free SQL through Claude. *Raised on 2026-10-23.* *Decided on 2026-10-23: SQL comes into the interface, in a section Query of its own rather than a tab of a Resource ([DEC-UX-17](../../design/principles.md#dec-ux-17), [FR-SR-41](#fr-sr-41)); Claude stays the other way.*
 - [ ] <a id="op-sr-12"></a>**OP-SR-12** · Decide how Data Hub finds the partition and cluster columns of a Resource. A Resource is a view in the Stacks: it has no partitions of its own, and a filter on it reads fewer partitions of the table beneath only when the view passes the partition column through unchanged. Proposal: take `partition_by`, `cluster_by` and `require_partition_filter` from the dbt manifest of the model beneath the view, through the lineage, and the size and the number of partitions from BigQuery; when the view derives the column, say so instead of promising savings. *Raised on 2026-10-23.* *Note of 2026-10-25: the Data Admin confirms them when adding the Resource, and sets what cannot be derived ([FR-CO-34](03-collections.md#fr-co-34)).*
