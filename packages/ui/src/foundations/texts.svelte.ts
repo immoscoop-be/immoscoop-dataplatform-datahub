@@ -61,3 +61,22 @@ export function setLanguage(language: Language): void {
     document.documentElement.lang = language;
   }
 }
+
+/** A piece of a sentence: words, or a name that the interface shows as a name. */
+export type Part = { readonly text: string } | { readonly name: string };
+
+/**
+ * The sentence of a key in pieces, so that the names in it can be shown as names, such as in a
+ * monospace font (NFR-LOC-03): each value of `names` comes back as a piece of its own, never translated.
+ */
+export function tParts(key: string, values: Readonly<Record<string, string | number>> = {}, names: Readonly<Record<string, string>> = {}): Part[] {
+  const entries = Object.entries(names);
+  const marked = Object.fromEntries(entries.map(([name], index) => [name, `\u0001${index}\u0002`]));
+  const pieces = t(key, { ...values, ...marked }).split(/\u0001(\d+)\u0002/);
+  return pieces.flatMap((piece, index): Part[] => {
+    if (index % 2 === 1) {
+      return [{ name: entries[Number(piece)]?.[1] ?? '' }];
+    }
+    return piece === '' ? [] : [{ text: piece }];
+  });
+}

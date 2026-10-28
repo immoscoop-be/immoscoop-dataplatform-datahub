@@ -13,6 +13,12 @@ describe('the addresses of the web app', () => {
     }
   });
 
+  it('has a page per Resource, in the section Collections', () => {
+    expect(route('/resources/0d4b1f0e-2a8e')).toMatchObject({ kind: 'resource', id: '0d4b1f0e-2a8e', section: { id: 'collections' } });
+    expect(route('/resources/%E0%A4%A')).toEqual({ kind: 'notFound' });
+    expect(route('/resources/a/b')).toEqual({ kind: 'notFound' });
+  });
+
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });

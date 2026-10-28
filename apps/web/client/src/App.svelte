@@ -2,7 +2,9 @@
   import { onMount } from 'svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
+  import { NotFound as Missing } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
+  import { createCatalogue, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { route } from './lib/routes.js';
@@ -11,9 +13,11 @@
   import { createSession, SignInProblem } from './lib/session.js';
   import { Settings } from './lib/settings.svelte.js';
   import { SystemTheme, themeOf } from './lib/theme.svelte.js';
+  import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import PanelSoon from './screens/PanelSoon.svelte';
+  import ResourcePage from './screens/ResourcePage.svelte';
   import SectionStart from './screens/SectionStart.svelte';
   import AppShell from './templates/AppShell.svelte';
   import SignIn from './templates/SignIn.svelte';
@@ -24,6 +28,7 @@
   addTexts(TEXTS);
   const session = createSession();
   const identity = $derived(createIdentity(config, session));
+  const catalogue = $derived(createCatalogue(config, session));
   const router = new Router();
   const system = new SystemTheme();
 
@@ -34,6 +39,10 @@
   let status = $state<Status>({ kind: 'starting' });
   /** The groups of the User for My page, read when it opens: undefined while they come, null when they did not. */
   let groups: readonly Group[] | null | undefined = $state();
+  /** For the Data Team, the Resources that wait for a Collection, read when Data Hub starts (FR-SR-35). */
+  let waiting: readonly Resource[] | undefined = $state();
+  /** The Resource whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
+  let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
 
   /** A sign-in that went wrong comes back with its code in the address, and a refused account in the fragment. */
   function takeProblem(): { problem?: string; account?: string } {
@@ -96,15 +105,51 @@
       );
     }
   });
+  /** The Data Team, from its Role Group: it sees the Resources without a Collection (Naming Convention). */
+  const dataTeam = $derived(status.kind === 'signedIn' && status.me.roles.includes('datateam'));
   $effect(() => {
-    const title = page.kind === 'start' ? sectionLabel(page.section) : page.kind === 'me' && status.kind === 'signedIn' ? status.me.name : undefined;
+    if (dataTeam && waiting === undefined) {
+      catalogue.waiting().then(
+        (found) => (waiting = found),
+        (error: unknown) => console.error('The Resources without a Collection could not be read', error),
+      );
+    }
+  });
+  $effect(() => {
+    if (status.kind !== 'signedIn' || page.kind !== 'resource' || opened?.id === page.id) {
+      return;
+    }
+    const id = page.id;
+    opened = { id };
+    const missing = (error: unknown) => {
+      if (opened?.id !== id) {
+        return;
+      }
+      if (error instanceof Missing) {
+        opened = { id, resource: null };
+      } else {
+        console.error(`The Resource ${id} could not be read`, error);
+      }
+    };
+    catalogue.resource(id).then((resource) => opened?.id === id && (opened = { ...opened, resource }), missing);
+    catalogue.log(id).then((log) => opened?.id === id && (opened = { ...opened, log }), missing);
+  });
+  $effect(() => {
+    const title =
+      page.kind === 'start'
+        ? sectionLabel(page.section)
+        : page.kind === 'me' && status.kind === 'signedIn'
+          ? status.me.name
+          : page.kind === 'resource'
+            ? opened?.resource?.displayName
+            : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
   const items: readonly RailItem[] = $derived(
     SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path })),
   );
-  const section = $derived(page.kind === 'start' ? page.section : undefined);
+  const section = $derived(page.kind === 'start' || page.kind === 'resource' ? page.section : undefined);
   /** The panel is open unless the User shut it; that is remembered (navigation rule 5). */
   const panelOpen = $derived(settings?.values['panel.open'] ?? true);
 
@@ -165,6 +210,12 @@
         onlanguage={(language: Language) => signedIn.settings.set('language', language)}
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
       />
+    {:else if page.kind === 'resource'}
+      {#if opened?.resource}
+        <ResourcePage resource={opened.resource} log={opened.log} />
+      {:else if opened?.resource === null}
+        <NotFound />
+      {/if}
     {:else if page.kind === 'notFound'}
       <NotFound />
     {/if}
@@ -172,5 +223,9 @@
 {/if}
 
 {#snippet panel()}
-  <PanelSoon />
+  {#if section?.id === 'collections'}
+    <CollectionsPanel {waiting} current={page.kind === 'resource' ? page.id : undefined} />
+  {:else}
+    <PanelSoon />
+  {/if}
 {/snippet}

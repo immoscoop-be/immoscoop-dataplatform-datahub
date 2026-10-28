@@ -7,11 +7,14 @@ export type MyPageTab = (typeof MY_PAGE_TABS)[number];
 export type Route =
   | { readonly kind: 'start'; readonly section: Section }
   | { readonly kind: 'me'; readonly tab: MyPageTab }
+  /** The page of a Resource, in the section Collections. */
+  | { readonly kind: 'resource'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
 export const HOME = '/collections';
 export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me' : `/me/${tab}`);
+export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
@@ -32,6 +35,15 @@ export function route(path: string): Route {
   const tab = MY_PAGE_TABS.find((candidate) => clean === `/me/${candidate}` && candidate !== 'profile');
   if (tab) {
     return { kind: 'me', tab };
+  }
+  const resource = /^\/resources\/([^/]+)$/.exec(clean)?.[1];
+  const collections = SECTIONS.find((candidate) => candidate.id === 'collections');
+  if (resource && collections) {
+    try {
+      return { kind: 'resource', id: decodeURIComponent(resource), section: collections };
+    } catch {
+      return { kind: 'notFound' };
+    }
   }
   return { kind: 'notFound' };
 }
