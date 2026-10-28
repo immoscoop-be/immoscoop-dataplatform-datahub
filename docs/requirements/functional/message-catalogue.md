@@ -756,8 +756,8 @@ Until the data team decides, only {writer} sees the lens, and nobody changes it.
 | From → to | User → Data Team |
 | When | The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)). |
 | Status | Proposed |
-| Comes from | [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37), [FR-CV-08](14-conversations.md#fr-cv-08) |
-| Open points | [OP-SR-17](04-stacks-and-resources.md#op-sr-17) |
+| Comes from | [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37), [FR-CV-08](14-conversations.md#fr-cv-08) |
+| Open points | [OP-LE-10](09-lenses.md#op-le-10) |
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. What accepting allows, one run or the query as it is, is open ([OP-SR-17](04-stacks-and-resources.md#op-sr-17)).
 

@@ -482,6 +482,8 @@ if (sqlEditor) {
 // foot says so in place of the Pre-flight, with Run off. A table outside the Resources also shows next to them, with a
 // new query to start with it
 let removedRes = null;
+// A Resource that requires a partition filter blocks a query without one, and offers to add it (?pf=nofilter)
+let noFilter = new URLSearchParams(location.search).get('pf') === 'nofilter';
 const syncRun = () => {
   const btn = document.getElementById('run-btn'), editor = document.querySelector('.sql-editor');
   if (!btn || !editor) return;
@@ -498,11 +500,13 @@ const syncRun = () => {
   const notes = [];
   if (tables.length) notes.push(`${tables.map(t => `<span class="mono">${t}</span>`).join(', ')} ${tables.length > 1 ? 'are' : 'is'} not a resource of this query.`);
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
+  if (noFilter) notes.push('Weekly lead volume requires a filter on its partition column, <span class="mono">week_start</span>.');
   btn.disabled = notes.length > 0;
   document.getElementById('run-pf').hidden = notes.length > 0;
   document.getElementById('run-note').hidden = !notes.length;
   document.getElementById('run-note-text').innerHTML = notes.join(' ');
   document.querySelector('[data-define-first]').hidden = !params.length;
+  document.querySelector('[data-add-filter]').hidden = !noFilter;
 };
 
 // The Parameters of a query (Proposal). Each has a name, a kind from the standard list and a value: a value such as
@@ -664,6 +668,7 @@ if (pbox) {
     if (edit) open(edit.dataset.edit);
     else if (define) open(null, define.dataset.define || define.dataset.param);
     else if (e.target.closest('[data-define-first]')) open(null, missing(inSql())[0]);
+    else if (e.target.closest('[data-add-filter]')) { noFilter = false; syncRun(); }
   });
   render();
 }

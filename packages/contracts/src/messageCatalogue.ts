@@ -1176,8 +1176,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['dataTeam'],
     when: 'The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team (DEC-SR-29).',
     status: 'Proposed',
-    sources: ['DEC-SR-29', 'FR-SR-37', 'FR-CV-08'],
-    openPoints: ['OP-SR-17'],
+    sources: ['DEC-SR-29', 'DEC-SR-36', 'FR-SR-37', 'FR-CV-08'],
+    openPoints: ['OP-LE-10'],
     parameters: [...SIZE],
     text: {
       nl: {
