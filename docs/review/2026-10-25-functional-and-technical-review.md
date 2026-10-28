@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
 | Design decisions (DEC-UX) | 84 |
 | Prototype screens | 32, plus the index |
-| Open points | 124 open, of 239: 116 for v1 and 8 marked Could |
+| Open points | 122 open, of 239: 114 for v1 and 8 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1184,14 +1184,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 124 still open, 8 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 122 still open, 8 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-UX-32](../design/principles.md#op-ux-32) the colour of cards on the light background · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits · [OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17) the Request for a query above 1 GB · [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16) and [OP-UX-25](../design/principles.md#op-ux-25) the deprecated mark
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04) Slack · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-DH-27](../overview/open-themes.md#op-dh-27) asking to make a concept formal · [OP-AR-06](../requirements/functional/01-artifact-registry.md#op-ar-06) a new version of the Domain Model · [OP-PF-20](../requirements/technical/00-platform.md#op-pf-20) monitoring the services
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04) Slack · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-DH-27](../overview/open-themes.md#op-dh-27) asking to make a concept formal
 
 ### Open themes
 
@@ -1236,11 +1236,10 @@ Source: [design/principles.md](../design/principles.md) · 20 open
 
 ### Artifact registry
 
-Source: [requirements/functional/01-artifact-registry.md](../requirements/functional/01-artifact-registry.md) · 5 open
+Source: [requirements/functional/01-artifact-registry.md](../requirements/functional/01-artifact-registry.md) · 4 open
 
 - [ ] **[OP-AR-03](../requirements/functional/01-artifact-registry.md#op-ar-03)** · Confirm or adjust the edge cases above.
 - [ ] **[OP-AR-05](../requirements/functional/01-artifact-registry.md#op-ar-05)** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../requirements/technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) decides ([OP-DH-24](../overview/open-themes.md#op-dh-24)).
-- [ ] **[OP-AR-06](../requirements/functional/01-artifact-registry.md#op-ar-06)** · Find out where the overview of the Domain Model is served ([FR-AR-15](../requirements/functional/01-artifact-registry.md#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.* *Note of 2026-10-28: where and in which form are decided ([DEC-AR-04](../requirements/functional/01-artifact-registry.md#dec-ar-04)). What remains is how Data Hub learns of a new version. Proposal: it asks again every hour and after every new Current Version, compares the release, and reads the Domain Model again when the release changed; no push from Colleciónes is needed.*
 - [ ] **[OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](../requirements/functional/01-artifact-registry.md#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).*
 - [ ] **[OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08)** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](../requirements/functional/05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../overview/open-themes.md#op-dh-06).*
 
@@ -1374,7 +1373,7 @@ Source: [requirements/functional/16-learning.md](../requirements/functional/16-l
 
 ### Platform: technical requirements
 
-Source: [requirements/technical/00-platform.md](../requirements/technical/00-platform.md) · 10 open
+Source: [requirements/technical/00-platform.md](../requirements/technical/00-platform.md) · 9 open
 
 - [ ] **[OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)** · Decide where the Message Centre lives: in catalogue for v1, or in a separate notifications service once [Log and notifications](../requirements/functional/07-log-and-notifications.md) is specified.
 - [ ] **[OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)** · Choose the public domain names under which Data Hub and its services are reachable, per environment.
@@ -1385,7 +1384,6 @@ Source: [requirements/technical/00-platform.md](../requirements/technical/00-pla
 - [ ] **[OP-PF-17](../requirements/technical/00-platform.md#op-pf-17)** · Decide how semgraph knows who calls it within Data Hub: Access Tokens of identity, instead of the login of the internal-tools platform for its API and the Cognito tokens of its MCP server. Decide too whether its MCP tools and its MCP App stay on its own `/mcp`, or move into mcp ([DEC-PF-03](../requirements/technical/00-platform.md#dec-pf-03)). *Partly decided on 2026-10-18: no login at all, everyone may call it ([DEC-PF-24](../requirements/technical/00-platform.md#dec-pf-24)); where its MCP tools and MCP App live is still open.*
 - [ ] **[OP-PF-18](../requirements/technical/00-platform.md#op-pf-18)** · Plan the switch from AWS: the current users of the Chart Server (dashboards, documents, Claude) move to its address in Data Hub, its dev environment becomes uat and its prod becomes prod, and after that the deploy through the internal-tools platform and the old repository stop. Users find the address on [Chart server - Environments and documentation](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361412109) (Confluence, Dutch), which then changes. *Note of 2026-10-18: the code has moved in ([DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) and runs on Cloud Run as `datahub-semgraph`; changes to semgraph are made here from now on. Until the switch, the former repository keeps deploying the version on the internal-tools platform.*
 - [ ] **[OP-PF-19](../requirements/technical/00-platform.md#op-pf-19)** · Choose how Data Hub sends e-mail ([DEC-LN-02](../requirements/functional/07-log-and-notifications.md#dec-ln-02)): GCP sends none itself. The options: the SMTP relay of Google Workspace, from an address of Immoscoop; the Gmail API with a service account; or a sending service, such as the one Immoscoop already uses elsewhere. Proposal: the SMTP relay of Workspace, as Data Hub signs Users in with Google already, from an address such as datahub@ with replies going nowhere. *Raised on 2026-10-28, in the review of Max.*
-- [ ] **[OP-PF-20](../requirements/technical/00-platform.md#op-pf-20)** · Decide how the services of Data Hub are monitored: today each logs to Cloud Logging and has a health check, but nothing watches them. Proposal: an uptime check in Cloud Monitoring on the health check of every service and the web app, and an alert to the Data Team by e-mail when one fails or answers with errors for five minutes; all in Terraform. *Raised on 2026-10-28, from [OP-DH-35](../overview/open-themes.md#op-dh-35).*
 
 ### Collections: technical requirements
 
@@ -1490,10 +1488,15 @@ The points above that were decided since 2026-10-25, each with its decision. The
 **Platform: technical requirements**
 
 - [x] **[OP-PF-14](../requirements/technical/00-platform.md#op-pf-14)** · Decide who gives query its read access on the Stacks: Terraform, which then needs rights on the Stacks dataset, or dbt, which creates that dataset. *Decided on 2026-10-26, by Max: Terraform grants the service account of Data Hub read access to every table in the GCP projects of the dbt projects it follows ([DEC-SR-32](../requirements/functional/04-stacks-and-resources.md#dec-sr-32)).*
+- [x] **[OP-PF-20](../requirements/technical/00-platform.md#op-pf-20)** · Decide how the services of Data Hub are monitored: today each logs to Cloud Logging and has a health check, but nothing watches them. Proposal: an uptime check in Cloud Monitoring on the health check of every service and the web app, and an alert to the Data Team by e-mail when one fails or answers with errors for five minutes; all in Terraform. *Raised on 2026-10-28, from [OP-DH-35](../overview/open-themes.md#op-dh-35).* *Decided on 2026-10-28, by Max: as proposed ([DEC-PF-27](../requirements/technical/00-platform.md#dec-pf-27)).*
 
 **Channels**
 
 - [x] **[OP-CH-01](../requirements/functional/13-channels.md#op-ch-01)** · Decide where the documentation of [FR-CH-04](../requirements/functional/13-channels.md#fr-ch-04) lives and how it is served: as part of `docs/`, which describes what Data Hub must do, or as a guide of its own; and how the web app and the MCP server link to the right passage. *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the Learning Cards in Data Hub are the documentation ([DEC-CH-04](../requirements/functional/13-channels.md#dec-ch-04)).*
+
+**Artifact registry**
+
+- [x] **[OP-AR-06](../requirements/functional/01-artifact-registry.md#op-ar-06)** · Find out where the overview of the Domain Model is served ([FR-AR-15](../requirements/functional/01-artifact-registry.md#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.* *Note of 2026-10-28: where and in which form are decided ([DEC-AR-04](../requirements/functional/01-artifact-registry.md#dec-ar-04)). What remains is how Data Hub learns of a new version. Proposal: it asks again every hour and after every new Current Version, compares the release, and reads the Domain Model again when the release changed; no push from Colleciónes is needed.* *Decided on 2026-10-28, by Max: in real time, read whenever it is needed ([DEC-AR-05](../requirements/functional/01-artifact-registry.md#dec-ar-05)).*
 
 ### To confirm
 

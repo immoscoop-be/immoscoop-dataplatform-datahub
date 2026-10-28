@@ -38,6 +38,7 @@ Decisions taken while building this domain:
 - <a id="dec-ar-02"></a>**DEC-AR-02** · dbt Cloud announces a finished run with a webhook (`job.run.completed`), signed with a secret that only dbt Cloud and Data Hub know. Data Hub does not poll. A delivery that is lost even after dbt Cloud's retries is recovered by fetching the run again by hand ([FR-AR-14](#fr-ar-14)).
 - <a id="dec-ar-03"></a>**DEC-AR-03** · A source in one dbt project is linked to the Node in the other project that builds the same table: the same database, schema and table name. The link is made when the lineage is read, between the Current Versions of both projects, so it always follows both.
 - <a id="dec-ar-04"></a>**DEC-AR-04** · Data Hub reads the Domain Model in use from the public API of the collector of Colleciónes: `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`. It answers with the contract that actually validates the events: its name and version, such as `immoscoop` 0.1.0, its release with tag and commit, such as 0.0.70, the package it comes from, `@compilacion/colleciones-domain-model@0.0.70`, and its domains, Entities, events, contexts and actors. Data Hub does not join the Cloud Run setup of Colleciónes, and connects to it through this API only. *Decided on 2026-10-28, by Max, with the dev tool that loads the Domain Model this way ([OP-DH-35](../../overview/open-themes.md#op-dh-35), [OP-AR-06](#op-ar-06)).*
+- <a id="dec-ar-05"></a>**DEC-AR-05** · Data Hub reads the Domain Model in real time: whenever it needs it, it asks the collector at that moment, and keeps no copy that could fall behind. There is no polling for a new version. With each mapping it records the release the answer came with ([FR-AR-15](#fr-ar-15)). *Decided on 2026-10-28, by Max ([OP-AR-06](#op-ar-06)).*
 
 ## Terms
 
@@ -204,6 +205,8 @@ Data Hub reads the Domain Model as it runs on prod, from the overview the server
 
 *Note of 2026-10-28: the overview is `GET /domain-model` of the collector ([DEC-AR-04](#dec-ar-04)).*
 
+*Note of 2026-10-28: "reads it again when a new version is deployed" becomes: reads it every time it is needed ([DEC-AR-05](#dec-ar-05)).*
+
 <a id="fr-ar-16"></a>
 ### FR-AR-16 · A Node built from the Domain Model knows its Entity
 
@@ -266,6 +269,13 @@ The Resources that depended on it get an entry in their Log, even if the table o
 
 
 *Note of 2026-10-28: reworded without the Stacks, which no longer exist ([DEC-DH-71](../../overview/data-hub.md#dec-dh-71)).*
+
+<a id="ec-ar-05"></a>
+### EC-AR-05 · The collector does not answer
+
+**Status:** Proposed
+
+When Data Hub needs the Domain Model and the collector does not answer ([DEC-AR-05](#dec-ar-05)), the step that needs it says so, such as suggesting the mappings when adding a Resource, and offers to try again. Data Hub guesses nothing and falls back on no copy; what does not need the Domain Model goes on as usual.
 ## Out of scope
 
 Which views are Resources and how their ID stays stable ([Resources](04-stacks-and-resources.md)), lowering the Level ([Maturity and release](06-maturity-and-release.md)), notifications and their channel ([Log and notifications](07-log-and-notifications.md)), and automatic checks ([Checks and monitoring](08-checks-and-monitoring.md)).
@@ -276,7 +286,7 @@ Which views are Resources and how their ID stays stable ([Resources](04-stacks-a
 - [x] <a id="op-ar-02"></a>**OP-AR-02** · Find out whether dbt Cloud can send a webhook after a successful run, or whether Data Hub polls after the scheduled time. *Decided on 2026-10-18: a webhook ([DEC-AR-02](#dec-ar-02)).*
 - [ ] <a id="op-ar-03"></a>**OP-AR-03** · Confirm or adjust the edge cases above.
 - [x] <a id="op-ar-04"></a>**OP-AR-04** · Decide how Nodes from dbt-prod and Colleciónes are linked to each other. *Decided on 2026-10-18, while building: by the table they build or read ([DEC-AR-03](#dec-ar-03)).*
-- [ ] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.* *Note of 2026-10-28: where and in which form are decided ([DEC-AR-04](#dec-ar-04)). What remains is how Data Hub learns of a new version. Proposal: it asks again every hour and after every new Current Version, compares the release, and reads the Domain Model again when the release changed; no push from Colleciónes is needed.*
+- [x] <a id="op-ar-06"></a>**OP-AR-06** · Find out where the overview of the Domain Model is served ([FR-AR-15](#fr-ar-15)), in which form Data Hub can read it, and how Data Hub learns of a new version: the release of the package `@compilacion/colleciones-domain-model` that the server pins per environment, or by checking. *Raised on 2026-10-26.* *Note of 2026-10-28: where and in which form are decided ([DEC-AR-04](#dec-ar-04)). What remains is how Data Hub learns of a new version. Proposal: it asks again every hour and after every new Current Version, compares the release, and reads the Domain Model again when the release changed; no push from Colleciónes is needed.* *Decided on 2026-10-28, by Max: in real time, read whenever it is needed ([DEC-AR-05](#dec-ar-05)).*
 - [ ] <a id="op-ar-07"></a>**OP-AR-07** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
 - [ ] <a id="op-ar-08"></a>**OP-AR-08** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).*
 - [ ] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)).

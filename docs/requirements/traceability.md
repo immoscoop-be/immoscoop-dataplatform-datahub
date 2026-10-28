@@ -12,7 +12,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub design principles](../design/principles.md) | – | – | 84 | 34 (20 open, 14 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 75 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (16 open, 31 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 4 | 8 (5 open, 3 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 5 (5 proposed) | 5 | 8 (4 open, 4 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
@@ -30,7 +30,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 20 (10 open, 10 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 27 | 20 (9 open, 11 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 8 (8 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 4 (4 implemented) | – | – | 2 (1 open, 1 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 5 (5 implemented) | – | – | – |
@@ -55,7 +55,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12) | Propagate every Change downstream | Specified | AR-12 | – | – |
 | [FR-AR-13](functional/01-artifact-registry.md#fr-ar-13) | Anyone with access can read the Log | Specified | AR-13 | – | – |
 | [FR-AR-14](functional/01-artifact-registry.md#fr-ar-14) | Fetch and process a run again manually | Implemented | AR-14 | [TR-AR-07](technical/01-artifact-registry.md#tr-ar-07) | [76af912](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/76af912881b43860d613038705c0b077393c313f) implements, 2026-10-18 |
-| [FR-AR-15](functional/01-artifact-registry.md#fr-ar-15) | Read the Domain Model in use | Proposed | – | – | [443f40a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/443f40ac3ffebd152e33ac4dd4e43c6576257b57) refs, 2026-10-26 |
+| [FR-AR-15](functional/01-artifact-registry.md#fr-ar-15) | Read the Domain Model in use | Proposed | – | – | [2f56320](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2f56320d76a7c94618dbbca399281c56a0b53d97) refs, 2026-10-28<br>[443f40a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/443f40ac3ffebd152e33ac4dd4e43c6576257b57) refs, 2026-10-26 |
 | [FR-AR-16](functional/01-artifact-registry.md#fr-ar-16) | A Node built from the Domain Model knows its Entity | Proposed | – | – | [2008b48](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2008b48dbba767acf58c564c43eb409f393f94bf) refs, 2026-10-28 |
 | [FR-AR-17](functional/01-artifact-registry.md#fr-ar-17) | The meta of a column fills in its mapping | Proposed | – | – | [2008b48](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2008b48dbba767acf58c564c43eb409f393f94bf) refs, 2026-10-28 |
 
@@ -343,6 +343,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-AR-02](functional/01-artifact-registry.md#ec-ar-02) | The catalog is missing | Proposed | [TR-AR-02](technical/01-artifact-registry.md#tr-ar-02) | – |
 | [EC-AR-03](functional/01-artifact-registry.md#ec-ar-03) | The table of a Resource is renamed | Proposed | – | – |
 | [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | An upstream model disappears | Proposed | – | – |
+| [EC-AR-05](functional/01-artifact-registry.md#ec-ar-05) | The collector does not answer | Proposed | – | – |
 
 ### [User management](functional/02-user-management.md)
 
