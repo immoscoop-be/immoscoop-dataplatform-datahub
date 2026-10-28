@@ -9,18 +9,18 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 80 | 30 (18 open, 12 done) |
-| [Data Hub](../overview/data-hub.md) | – | – | 63 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (38 open, 8 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 81 | 30 (18 open, 12 done) |
+| [Data Hub](../overview/data-hub.md) | – | – | 65 | – |
+| [Open themes](../overview/open-themes.md) | – | – | 3 | 46 (36 open, 10 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 15 (1 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 6 (3 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
-| [Stacks and resources](functional/04-stacks-and-resources.md) | 51 (15 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (11 open, 6 done) |
+| [Stacks and resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 8 | 23 (8 open, 15 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 13 (11 specified, 2 withdrawn) | – | 9 | 5 (4 open, 1 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 16 (12 proposed, 1 specified, 3 withdrawn) | – | 5 | 10 (6 open, 4 done) |
+| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 5 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
@@ -170,6 +170,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Proposed | – | – | [cdbe477](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/cdbe4777a0070e042cb7f08b231c52e9e3b71694) refs, 2026-10-26<br>[7d1f167](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7d1f167cc223a35a1206a895ea698251af1736b4) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-SR-50](functional/04-stacks-and-resources.md#fr-sr-50) | A Resource can be marked deprecated | Proposed | – | – | [d144467](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d14446729716ea31118169feff3daeed5ddb2186) refs, 2026-10-26 |
 | [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | – | [0607009](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0607009473956ebff7d787c6450d09c8d3327407) refs, 2026-10-27<br>[c50d2ee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c50d2ee4a3bab7b176e713209dcae4befbb8eb88) refs, 2026-10-27 |
+| [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52) | Data Hub finds what is Broken, and what works again | Proposed | – | – | – |
+| [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53) | A query that reads what no longer exists is Broken | Proposed | – | – | – |
 
 ### [Resource card](functional/05-resource-card.md)
 
@@ -243,6 +245,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LE-14](functional/09-lenses.md#fr-le-14) | Only its Owner Unit sees the SQL of a Lens | Proposed | – | – | [3df6b3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3df6b3aa5d4d89b6d7091ca843f4cadd5a892ba4) refs, 2026-10-23 |
 | [FR-LE-15](functional/09-lenses.md#fr-le-15) | The section Lenses starts with the Lenses a User may use | Withdrawn | – | – | [8ffc8bd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8ffc8bd1e4f6dd6cb4800fe29651f264d7069ddf) refs, 2026-10-26<br>[33b4306](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/33b43060a49d18dcf3443795ec111c177d950ef4) refs, 2026-10-24 |
 | [FR-LE-16](functional/09-lenses.md#fr-le-16) | A Lens is updated from its query | Specified | – | – | [5c25fd1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5c25fd1657a8546fd3931360bcfcab239046723b) refs, 2026-10-28<br>[1e0e14a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1e0e14a7fc9056d3f0dde3f5dae55688290f2eb8) refs, 2026-10-27 |
+| [FR-LE-17](functional/09-lenses.md#fr-le-17) | A Lens that reads what no longer exists is Broken | Proposed | – | – | – |
 
 ### [Channels](functional/13-channels.md)
 

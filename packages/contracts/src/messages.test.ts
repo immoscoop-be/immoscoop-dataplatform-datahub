@@ -13,7 +13,7 @@ import {
 } from './messages.js';
 
 const REQUIREMENT_ID = /^(?:FR|TR|NFR|DEC|EC|OP)-[A-Z]{2,3}-\d{2,3}$/;
-const PREFIXES = { CNV: undefined, COL: 'collection', RES: 'resource', LEN: 'lens', QRY: 'query' } as const;
+const PREFIXES = { CNV: undefined, COL: 'collection', RES: 'resource', LEN: 'lens', QRY: 'query', RPT: 'report' } as const;
 
 const parametersOf = (type: MessageType): Map<string, MessageParameter> =>
   new Map([...implicitParameters(type), ...type.parameters].map((p) => [p.name, p]));

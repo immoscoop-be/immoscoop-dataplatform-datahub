@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-03](#msg-len-03) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-04](#msg-len-04) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-03](#msg-len-03) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
 
 ## Overview
 
@@ -55,7 +55,10 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and its author | A decision | To write | Proposed |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
+| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Proposed |
+| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
 
 ## Messages a person writes
 
@@ -2028,6 +2031,397 @@ Template, English, laid out:
 **The lens {subject} is now public**
 
 It builds on {resource}, which your team owns: everyone who may see the lens now reads that data through it. Nothing is asked of you; a question or a remark about the lens goes in its messages.
+```
+
+</details>
+
+<a id="msg-len-05"></a>
+
+### MSG-LEN-05 · A Lens is Broken
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Lens |
+| From → to | Data Hub → Owner |
+| When | A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
+| How many | One per Lens, however much of what it reads is missing; what goes missing later joins it. |
+| Status | Proposed |
+| Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-LE-17](09-lenses.md#fr-le-17), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
+
+**What it asks:** Something to do, of the Owner. The Owner Unit repairs the Lens from its query ([DEC-LE-04](09-lenses.md#dec-le-04)), or asks the Data Team whether what is missing comes back. Nothing is needed when it does.
+
+**How it ends:** When the Lens runs again, because what was missing exists again or its query changed it, Data Hub closes the Message itself: it shows since when the Lens works, and that notifies its Owner Unit. It starts `broken` and ends `works again`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the lens · *Lens openen* | The page of the Lens, with what is missing on top | every recipient |
+| Open its query · *Query openen* | Query, with the query the Lens is made from | Owner |
+
+**Learning Card:** To write: *When what you read disappears: Broken, the red dot, and how it works again*. The Message is about a Resource or a column that no longer exists, and what that does to everything built on it ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67)). The nearest card today is K5.1 What a resource is.
+
+**Dutch, laid out**, with the example:
+
+> **De lens Leads per source name werkt niet meer**
+>
+> Sinds 28 oktober 2026 bestaat dit niet meer:
+>
+> - de kolom `lead_channel` van Weekly lead volume
+>
+> Niemand kan de lens nog laten draaien, en overal waar hij staat, draagt hij een rode stip. Rapporten met deze lens werken ook niet meer. Komt wat ontbreekt terug, dan werkt hij weer vanzelf en hoor je het hier. Komt het niet terug, pas dan de query van de lens aan.
+
+**Dutch, plain:**
+
+```text
+De lens Leads per source name werkt niet meer. Bestaat niet meer: de kolom lead_channel van Weekly lead volume. Hij werkt weer vanzelf zodra dat terug is.
+```
+
+**English, laid out**, with the example:
+
+> **The lens Leads per source name is broken**
+>
+> Since 28 October 2026, this no longer exists:
+>
+> - the column `lead_channel` of Weekly lead volume
+>
+> Nobody can run the lens now, and wherever it is listed, it carries a red dot. Reports with this lens are broken too. If what is missing comes back, it works again by itself and you hear it here. If it does not, change the query of the lens.
+
+**English, plain:**
+
+```text
+The lens Leads per source name is broken. No longer there: the column lead_channel of Weekly lead volume. It works again by itself when that comes back.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `since` | date | The day of the dbt run, the daily check or the failed run that found it |
+| `count` | count | How many Resources and columns it reads are missing |
+| `missing` | list | Every Resource and column it reads that no longer exists; what goes missing later joins it |
+| `missing[].kind` | choice: `resource`, `column` | What no longer exists |
+| `missing[].resource` | object | The Resource, or the Resource of the column |
+| `missing[].column` | name, optional | The column, when a column is missing |
+
+Template, Dutch, plain:
+
+```text
+De lens {subject} werkt niet meer. Bestaat niet meer: {missing}. Hij werkt weer vanzelf zodra dat terug is.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**De lens {subject} werkt niet meer**
+
+Sinds {since} {count, plural, one {bestaat dit} other {bestaan deze}} niet meer:
+
+{missing}
+
+Niemand kan de lens nog laten draaien, en overal waar hij staat, draagt hij een rode stip. Rapporten met deze lens werken ook niet meer. Komt wat ontbreekt terug, dan werkt hij weer vanzelf en hoor je het hier. Komt het niet terug, pas dan de query van de lens aan.
+```
+
+Template, English, plain:
+
+```text
+The lens {subject} is broken. No longer there: {missing}. It works again by itself when that comes back.
+```
+
+Template, English, laid out:
+
+```markdown
+**The lens {subject} is broken**
+
+Since {since}, {count, plural, one {this no longer exists} other {these no longer exist}}:
+
+{missing}
+
+Nobody can run the lens now, and wherever it is listed, it carries a red dot. Reports with this lens are broken too. If what is missing comes back, it works again by itself and you hear it here. If it does not, change the query of the lens.
+```
+
+One item of `missing`, Dutch, plain:
+
+```text
+{kind, select, resource {de resource {resource}} other {de kolom {column} van {resource}}}
+```
+
+One item of `missing`, Dutch, laid out:
+
+```markdown
+- {kind, select, resource {de resource {resource}} other {de kolom `{column}` van {resource}}}
+```
+
+One item of `missing`, English, plain:
+
+```text
+{kind, select, resource {the resource {resource}} other {the column {column} of {resource}}}
+```
+
+One item of `missing`, English, laid out:
+
+```markdown
+- {kind, select, resource {the resource {resource}} other {the column `{column}` of {resource}}}
+```
+
+</details>
+
+<a id="msg-qry-02"></a>
+
+### MSG-QRY-02 · A query is Broken
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | query |
+| From → to | Data Hub → Owner |
+| When | A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
+| How many | One per query, however much of what it reads is missing; what goes missing later joins it. |
+| Status | Proposed |
+| Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-53](04-stacks-and-resources.md#fr-sr-53), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
+
+**What it asks:** Something to do, of the Owner. Who made the query changes its SQL, or waits for what is missing to come back. Using other Resources is a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).
+
+**How it ends:** When the query runs again, because what was missing exists again or its SQL changed, Data Hub closes the Message itself: it shows since when the query works, and that notifies who made it. It starts `broken` and ends `works again`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the query · *Query openen* | Query, with the query and what is missing on top | every recipient |
+
+**Learning Card:** To write: *When what you read disappears: Broken, the red dot, and how it works again*. The Message is about a Resource or a column that no longer exists, and what that does to everything built on it ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67)). The nearest card today is K5.1 What a resource is.
+
+**Dutch, laid out**, with the example:
+
+> **Je query Partner leads in September werkt niet meer**
+>
+> Sinds 28 oktober 2026 bestaan deze niet meer:
+>
+> - de kolom `lead_channel` van Weekly lead volume
+> - de resource Partner contracts
+>
+> Hij kan niet meer draaien en draagt een rode stip. Je SQL blijft staan: pas hem aan, of wacht tot wat ontbreekt terug is; dan werkt hij weer vanzelf en hoor je het hier.
+
+**Dutch, plain:**
+
+```text
+Je query Partner leads in September werkt niet meer. Bestaat niet meer: de kolom lead_channel van Weekly lead volume; de resource Partner contracts. Hij werkt weer vanzelf zodra dat terug is.
+```
+
+**English, laid out**, with the example:
+
+> **Your query Partner leads in September is broken**
+>
+> Since 28 October 2026, these no longer exist:
+>
+> - the column `lead_channel` of Weekly lead volume
+> - the resource Partner contracts
+>
+> It cannot run now, and it carries a red dot. Your SQL stays: change it, or wait until what is missing comes back; then it works again by itself and you hear it here.
+
+**English, plain:**
+
+```text
+Your query Partner leads in September is broken. No longer there: the column lead_channel of Weekly lead volume; the resource Partner contracts. It works again by itself when that comes back.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `since` | date | The day of the dbt run, the daily check or the failed run that found it |
+| `count` | count | How many Resources and columns it reads are missing |
+| `missing` | list | Every Resource and column it reads that no longer exists; what goes missing later joins it |
+| `missing[].kind` | choice: `resource`, `column` | What no longer exists |
+| `missing[].resource` | object | The Resource, or the Resource of the column |
+| `missing[].column` | name, optional | The column, when a column is missing |
+
+Template, Dutch, plain:
+
+```text
+Je query {subject} werkt niet meer. Bestaat niet meer: {missing}. Hij werkt weer vanzelf zodra dat terug is.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**Je query {subject} werkt niet meer**
+
+Sinds {since} {count, plural, one {bestaat dit} other {bestaan deze}} niet meer:
+
+{missing}
+
+Hij kan niet meer draaien en draagt een rode stip. Je SQL blijft staan: pas hem aan, of wacht tot wat ontbreekt terug is; dan werkt hij weer vanzelf en hoor je het hier.
+```
+
+Template, English, plain:
+
+```text
+Your query {subject} is broken. No longer there: {missing}. It works again by itself when that comes back.
+```
+
+Template, English, laid out:
+
+```markdown
+**Your query {subject} is broken**
+
+Since {since}, {count, plural, one {this no longer exists} other {these no longer exist}}:
+
+{missing}
+
+It cannot run now, and it carries a red dot. Your SQL stays: change it, or wait until what is missing comes back; then it works again by itself and you hear it here.
+```
+
+One item of `missing`, Dutch, plain:
+
+```text
+{kind, select, resource {de resource {resource}} other {de kolom {column} van {resource}}}
+```
+
+One item of `missing`, Dutch, laid out:
+
+```markdown
+- {kind, select, resource {de resource {resource}} other {de kolom `{column}` van {resource}}}
+```
+
+One item of `missing`, English, plain:
+
+```text
+{kind, select, resource {the resource {resource}} other {the column {column} of {resource}}}
+```
+
+One item of `missing`, English, laid out:
+
+```markdown
+- {kind, select, resource {the resource {resource}} other {the column `{column}` of {resource}}}
+```
+
+</details>
+
+<a id="msg-rpt-01"></a>
+
+### MSG-RPT-01 · A Report is Broken
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Report |
+| From → to | Data Hub → Owner |
+| When | A Lens of a Report becomes Broken ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67)). |
+| How many | One per Report, however many of its Lenses are Broken; a Lens that breaks later joins it. |
+| Status | Proposed |
+| Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
+
+**What it asks:** Something to do, of the Owner. The Owner Unit of the Report waits for its Lenses to work again, or takes a Broken Lens out of the Report. Each Lens has its own Message to its own Owner Unit ([MSG-LEN-05](#msg-len-05)).
+
+**How it ends:** When all its Lenses work again, Data Hub closes the Message itself: it shows since when the Report works, and that notifies its Owner Unit. It starts `broken` and ends `works again`.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the report · *Rapport openen* | The page of the Report, with its Broken Lenses marked | every recipient |
+
+**Learning Card:** To write: *When what you read disappears: Broken, the red dot, and how it works again*. The Message is about a Resource or a column that no longer exists, and what that does to everything built on it ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67)). The nearest card today is K5.1 What a resource is.
+
+**Dutch, laid out**, with the example:
+
+> **Het rapport Credit leads, monthly werkt niet meer**
+>
+> Sinds 28 oktober 2026 werkt deze lens erin niet meer, omdat wat hij leest niet meer bestaat:
+>
+> - Leads per source name
+>
+> Overal waar het rapport staat, draagt het een rode stip. Het werkt weer vanzelf zodra al zijn lenzen weer werken, en dan hoor je het hier.
+
+**Dutch, plain:**
+
+```text
+Het rapport Credit leads, monthly werkt niet meer. Lenzen die niet meer werken: Leads per source name. Het werkt weer vanzelf zodra al zijn lenzen weer werken.
+```
+
+**English, laid out**, with the example:
+
+> **The report Credit leads, monthly is broken**
+>
+> Since 28 October 2026, this lens in it is broken, because what it reads no longer exists:
+>
+> - Leads per source name
+>
+> Wherever the report is listed, it carries a red dot. It works again by itself when all its lenses work again, and you hear it here.
+
+**English, plain:**
+
+```text
+The report Credit leads, monthly is broken. Broken lenses in it: Leads per source name. It works again by itself when all its lenses work again.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `since` | date | The day its first Lens broke |
+| `count` | count | How many of its Lenses are Broken |
+| `lenses` | list | Its Broken Lenses |
+| `lenses[].lens` | object | A Broken Lens of the Report |
+
+Template, Dutch, plain:
+
+```text
+Het rapport {subject} werkt niet meer. Lenzen die niet meer werken: {lenses}. Het werkt weer vanzelf zodra al zijn lenzen weer werken.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**Het rapport {subject} werkt niet meer**
+
+Sinds {since} {count, plural, one {werkt deze lens} other {werken deze lenzen}} erin niet meer, omdat wat {count, plural, one {hij leest} other {ze lezen}} niet meer bestaat:
+
+{lenses}
+
+Overal waar het rapport staat, draagt het een rode stip. Het werkt weer vanzelf zodra al zijn lenzen weer werken, en dan hoor je het hier.
+```
+
+Template, English, plain:
+
+```text
+The report {subject} is broken. Broken lenses in it: {lenses}. It works again by itself when all its lenses work again.
+```
+
+Template, English, laid out:
+
+```markdown
+**The report {subject} is broken**
+
+Since {since}, {count, plural, one {this lens} other {these lenses}} in it {count, plural, one {is} other {are}} broken, because what {count, plural, one {it reads} other {they read}} no longer exists:
+
+{lenses}
+
+Wherever the report is listed, it carries a red dot. It works again by itself when all its lenses work again, and you hear it here.
+```
+
+One item of `lenses`, Dutch, plain:
+
+```text
+{lens}
+```
+
+One item of `lenses`, Dutch, laid out:
+
+```markdown
+- {lens}
+```
+
+One item of `lenses`, English, plain:
+
+```text
+{lens}
+```
+
+One item of `lenses`, English, laid out:
+
+```markdown
+- {lens}
 ```
 
 </details>

@@ -61,6 +61,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | **Page through** | Pager | 100 rows a page, read from the same run, never a new query | Preview, Query | [FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51) |
 | **Copy** | Copy button | Copies a Key, a Query ID, a cell | Object header, result | [FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | **Show only what the User may** | Every component, from data | A component hides an action the User may not take, from a flag the service sends (`canEdit`, `canPublish`); it never decides by role itself | `data-for` and the role switch, prototype only | [DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15), [DEC-SR-31](../requirements/functional/04-stacks-and-resources.md#dec-sr-31) |
+| **Show Broken** | Broken mark, callout, Run button | From a state the service sends (`broken`, with what is missing): the dot in every list, the chip, the urgent callout on the page, Run off. No screen decides it | The Lens page (`?state=broken`), the Lens "Response time and conversion" in the lists | [DEC-UX-81](principles.md#dec-ux-81), [DEC-DH-67](../overview/data-hub.md#dec-dh-67) |
 
 ## 1 · Foundations
 
@@ -95,6 +96,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Origin tag | Where a value comes from: From dbt, From the owner, From the data team | – | chip | Resource screens | [DEC-UX-61](principles.md#dec-ux-61) |
 | Marker ⓘ | The Learning Centre explains this system text | Explain on rest | pop-out | Resource page, learning | [DEC-UX-54](principles.md#dec-ux-54) |
 | Not published | A Resource only its Owner Unit and the Data Team see: a lighter name, no icon | – | – | panel | [DEC-UX-12](principles.md#dec-ux-12) |
+| Broken mark | A Lens, Report or query reads what no longer exists: a red dot on its kind icon; a red chip "Broken" on a tile and in a status row | What is missing on hover | kind icon, chip | every list, tiles, object pages | [DEC-UX-81](principles.md#dec-ux-81) |
 
 ## 4 · Containers and layers
 

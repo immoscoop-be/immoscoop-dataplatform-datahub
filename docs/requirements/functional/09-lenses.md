@@ -171,6 +171,14 @@ The section Lenses opens on a start screen. It finds Lenses by the words of a qu
 
 A query used as a Lens says so, with a link to the Lens ([DEC-LE-03](#dec-le-03)). Whoever may change the Lens, its Owner Unit and the Data Team ([DEC-CO-15](03-collections.md#dec-co-15), [DEC-CO-18](03-collections.md#dec-co-18)), can update the Lens from the query: the SQL and the Parameters of the query replace those of the Lens, a new size check decides how it is published again ([FR-LE-08](#fr-le-08)), and the Lens keeps its name, question, story, tags and Collection. The earlier version stays in the history of the Lens. The query does not suggest the Lenses on its Resources ([DEC-LE-04](#dec-le-04)).
 
+
+<a id="fr-le-17"></a>
+### FR-LE-17 · A Lens that reads what no longer exists is Broken
+
+**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67)
+
+A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its page names what no longer exists and since which dbt run. Its last result is not shown, so that nobody takes it for a current one. It carries a red dot wherever it is listed: in the panel, on tiles, in search and in the Lenses of a Collection, for everyone who sees it ([DEC-UX-81](../../design/principles.md#dec-ux-81)). Its Owner Unit gets a Message ([MSG-LEN-05](message-catalogue.md#msg-len-05)) and can repair it from its query ([DEC-LE-04](#dec-le-04)). When everything it reads exists again, it works again by itself, and the Message says so. The Reports with this Lens are Broken with it.
+
 ## Open points
 
 - [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.

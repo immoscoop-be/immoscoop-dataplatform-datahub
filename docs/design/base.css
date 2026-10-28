@@ -1154,3 +1154,14 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .rel-error[hidden], .rel-card[hidden] { display: none; }
 .rel-note code, .rel-error code { font: var(--text-meta) var(--font-mono); }
 .rel-row[data-mismatch] input { border-color: var(--signal-warn); }
+
+/* Broken (DEC-UX-81): a Lens, Report or query that reads what no longer exists. A red dot on its kind icon wherever it is
+   listed, a chip in its status row, an urgent callout on its page, and Run off */
+.broken-mark { position: relative; }
+.broken-mark::after { content: ''; position: absolute; top: -2px; right: -4px; width: 7px; height: 7px; border-radius: 50%; background: var(--signal-urgent); box-shadow: 0 0 0 1.5px var(--surface-solid); }
+.status.broken { color: var(--signal-urgent); }
+.status.broken::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--signal-urgent); }
+.alert.urgent { background: color-mix(in srgb, var(--signal-urgent) 11%, var(--surface-solid)); }
+.alert.urgent > i { color: var(--signal-urgent); }
+.run-btn:disabled { opacity: .45; cursor: not-allowed; }
+.result-empty.broken > i { color: var(--signal-urgent); }

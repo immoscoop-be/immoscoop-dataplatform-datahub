@@ -7,7 +7,7 @@ import type { LearningCardFit, MessageButton, MessageItem, MessageParameter, Mes
  *
  * A Message ID is fixed: never renumbered or reused. `MSG-CNV` is a Message on any object, the other
  * prefixes name the kind of its object: `COL` a Collection, `RES` a Resource, `LEN` a Lens, `QRY` a
- * query. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
+ * query, `RPT` a Report. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
  * `{name, plural, …}`; a choice stays on one line.
  */
 
@@ -75,6 +75,41 @@ const FIELD_CHANGES: MessageItem = {
     },
   },
 };
+
+/** What a Broken Lens or query reads that no longer exists: a Resource, or a column of one (DEC-DH-67). */
+const MISSING: MessageItem = {
+  fields: [
+    { name: 'kind', type: 'choice', about: 'What no longer exists', values: ['resource', 'column'] },
+    { name: 'resource', type: 'object', about: 'The Resource, or the Resource of the column' },
+    { name: 'column', type: 'name', about: 'The column, when a column is missing', optional: true },
+  ],
+  text: {
+    nl: {
+      plain: '{kind, select, resource {de resource {resource}} other {de kolom {column} van {resource}}}',
+      rich: '- {kind, select, resource {de resource {resource}} other {de kolom `{column}` van {resource}}}',
+    },
+    en: {
+      plain: '{kind, select, resource {the resource {resource}} other {the column {column} of {resource}}}',
+      rich: '- {kind, select, resource {the resource {resource}} other {the column `{column}` of {resource}}}',
+    },
+  },
+};
+
+const BROKEN: readonly MessageParameter[] = [
+  { name: 'since', type: 'date', about: 'The day of the dbt run, the daily check or the failed run that found it' },
+  { name: 'count', type: 'count', about: 'How many Resources and columns it reads are missing' },
+  { name: 'missing', type: 'list', about: 'Every Resource and column it reads that no longer exists; what goes missing later joins it', item: MISSING },
+];
+
+/** No card explains yet what happens downstream when a Resource or a column disappears. */
+const BROKEN_CARD: LearningCardFit = {
+  fit: 'toWrite',
+  topic: 'When what you read disappears: Broken, the red dot, and how it works again',
+  nearest: { number: 'K5.1', title: 'What a resource is' },
+  why: 'The Message is about a Resource or a column that no longer exists, and what that does to everything built on it (DEC-DH-67).',
+};
+
+const BROKEN_STATES = ['broken', 'works again'];
 
 export const MESSAGE_CATALOGUE: readonly MessageType[] = [
   // Messages a person writes, on any object: the text is theirs; the catalogue holds the frame of
@@ -1078,6 +1113,59 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     example: { subject: 'Credit funnel by region', resource: 'Weekly lead volume' },
   },
 
+  {
+    id: 'MSG-LEN-05',
+    title: 'A Lens is Broken',
+    kind: 'dataHub',
+    subjects: ['lens'],
+    from: 'dataHub',
+    to: ['owner'],
+    when: 'A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
+    per: 'One per Lens, however much of what it reads is missing; what goes missing later joins it.',
+    status: 'Proposed',
+    sources: ['DEC-DH-67', 'FR-LE-17', 'FR-SR-52'],
+    parameters: [...BROKEN],
+    text: {
+      nl: {
+        plain: 'De lens {subject} werkt niet meer. Bestaat niet meer: {missing}. Hij werkt weer vanzelf zodra dat terug is.',
+        rich: lines(
+          '**De lens {subject} werkt niet meer**',
+          '',
+          'Sinds {since} {count, plural, one {bestaat dit} other {bestaan deze}} niet meer:',
+          '',
+          '{missing}',
+          '',
+          'Niemand kan de lens nog laten draaien, en overal waar hij staat, draagt hij een rode stip. Rapporten met deze lens werken ook niet meer. Komt wat ontbreekt terug, dan werkt hij weer vanzelf en hoor je het hier. Komt het niet terug, pas dan de query van de lens aan.',
+        ),
+      },
+      en: {
+        plain: 'The lens {subject} is broken. No longer there: {missing}. It works again by itself when that comes back.',
+        rich: lines(
+          '**The lens {subject} is broken**',
+          '',
+          'Since {since}, {count, plural, one {this no longer exists} other {these no longer exist}}:',
+          '',
+          '{missing}',
+          '',
+          'Nobody can run the lens now, and wherever it is listed, it carries a red dot. Reports with this lens are broken too. If what is missing comes back, it works again by itself and you hear it here. If it does not, change the query of the lens.',
+        ),
+      },
+    },
+    learningCard: BROKEN_CARD,
+    action: {
+      asks: 'act',
+      of: ['owner'],
+      what: 'The Owner Unit repairs the Lens from its query (DEC-LE-04), or asks the Data Team whether what is missing comes back. Nothing is needed when it does.',
+      buttons: [
+        { label: { nl: 'Lens openen', en: 'Open the lens' }, opens: 'The page of the Lens, with what is missing on top' },
+        { label: { nl: 'Query openen', en: 'Open its query' }, opens: 'Query, with the query the Lens is made from', for: ['owner'] },
+      ],
+      states: BROKEN_STATES,
+      done: 'When the Lens runs again, because what was missing exists again or its query changed it, Data Hub closes the Message itself: it shows since when the Lens works, and that notifies its Owner Unit.',
+    },
+    example: { subject: 'Leads per source name', since: '2026-10-28', count: 1, missing: [{ kind: 'column', resource: 'Weekly lead volume', column: 'lead_channel' }] },
+  },
+
   // Queries
   {
     id: 'MSG-QRY-01',
@@ -1134,5 +1222,125 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       reads: 4_800_000_000,
       threshold: 1_000_000_000,
     },
+  },
+  {
+    id: 'MSG-QRY-02',
+    title: 'A query is Broken',
+    kind: 'dataHub',
+    subjects: ['query'],
+    from: 'dataHub',
+    to: ['owner'],
+    when: 'A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
+    per: 'One per query, however much of what it reads is missing; what goes missing later joins it.',
+    status: 'Proposed',
+    sources: ['DEC-DH-67', 'FR-SR-53', 'FR-SR-52'],
+    parameters: [...BROKEN],
+    text: {
+      nl: {
+        plain: 'Je query {subject} werkt niet meer. Bestaat niet meer: {missing}. Hij werkt weer vanzelf zodra dat terug is.',
+        rich: lines(
+          '**Je query {subject} werkt niet meer**',
+          '',
+          'Sinds {since} {count, plural, one {bestaat dit} other {bestaan deze}} niet meer:',
+          '',
+          '{missing}',
+          '',
+          'Hij kan niet meer draaien en draagt een rode stip. Je SQL blijft staan: pas hem aan, of wacht tot wat ontbreekt terug is; dan werkt hij weer vanzelf en hoor je het hier.',
+        ),
+      },
+      en: {
+        plain: 'Your query {subject} is broken. No longer there: {missing}. It works again by itself when that comes back.',
+        rich: lines(
+          '**Your query {subject} is broken**',
+          '',
+          'Since {since}, {count, plural, one {this no longer exists} other {these no longer exist}}:',
+          '',
+          '{missing}',
+          '',
+          'It cannot run now, and it carries a red dot. Your SQL stays: change it, or wait until what is missing comes back; then it works again by itself and you hear it here.',
+        ),
+      },
+    },
+    learningCard: BROKEN_CARD,
+    action: {
+      asks: 'act',
+      of: ['owner'],
+      what: 'Who made the query changes its SQL, or waits for what is missing to come back. Using other Resources is a new query (DEC-UX-73).',
+      buttons: [{ label: { nl: 'Query openen', en: 'Open the query' }, opens: 'Query, with the query and what is missing on top' }],
+      states: BROKEN_STATES,
+      done: 'When the query runs again, because what was missing exists again or its SQL changed, Data Hub closes the Message itself: it shows since when the query works, and that notifies who made it.',
+    },
+    example: {
+      subject: 'Partner leads in September',
+      since: '2026-10-28',
+      count: 2,
+      missing: [
+        { kind: 'column', resource: 'Weekly lead volume', column: 'lead_channel' },
+        { kind: 'resource', resource: 'Partner contracts' },
+      ],
+    },
+  },
+
+  // Reports
+  {
+    id: 'MSG-RPT-01',
+    title: 'A Report is Broken',
+    kind: 'dataHub',
+    subjects: ['report'],
+    from: 'dataHub',
+    to: ['owner'],
+    when: 'A Lens of a Report becomes Broken (DEC-DH-67).',
+    per: 'One per Report, however many of its Lenses are Broken; a Lens that breaks later joins it.',
+    status: 'Proposed',
+    sources: ['DEC-DH-67', 'FR-SR-52'],
+    parameters: [
+      { name: 'since', type: 'date', about: 'The day its first Lens broke' },
+      { name: 'count', type: 'count', about: 'How many of its Lenses are Broken' },
+      {
+        name: 'lenses',
+        type: 'list',
+        about: 'Its Broken Lenses',
+        item: {
+          fields: [{ name: 'lens', type: 'object', about: 'A Broken Lens of the Report' }],
+          text: { nl: { plain: '{lens}', rich: '- {lens}' }, en: { plain: '{lens}', rich: '- {lens}' } },
+        },
+      },
+    ],
+    text: {
+      nl: {
+        plain: 'Het rapport {subject} werkt niet meer. Lenzen die niet meer werken: {lenses}. Het werkt weer vanzelf zodra al zijn lenzen weer werken.',
+        rich: lines(
+          '**Het rapport {subject} werkt niet meer**',
+          '',
+          'Sinds {since} {count, plural, one {werkt deze lens} other {werken deze lenzen}} erin niet meer, omdat wat {count, plural, one {hij leest} other {ze lezen}} niet meer bestaat:',
+          '',
+          '{lenses}',
+          '',
+          'Overal waar het rapport staat, draagt het een rode stip. Het werkt weer vanzelf zodra al zijn lenzen weer werken, en dan hoor je het hier.',
+        ),
+      },
+      en: {
+        plain: 'The report {subject} is broken. Broken lenses in it: {lenses}. It works again by itself when all its lenses work again.',
+        rich: lines(
+          '**The report {subject} is broken**',
+          '',
+          'Since {since}, {count, plural, one {this lens} other {these lenses}} in it {count, plural, one {is} other {are}} broken, because what {count, plural, one {it reads} other {they read}} no longer exists:',
+          '',
+          '{lenses}',
+          '',
+          'Wherever the report is listed, it carries a red dot. It works again by itself when all its lenses work again, and you hear it here.',
+        ),
+      },
+    },
+    learningCard: BROKEN_CARD,
+    action: {
+      asks: 'act',
+      of: ['owner'],
+      what: 'The Owner Unit of the Report waits for its Lenses to work again, or takes a Broken Lens out of the Report. Each Lens has its own Message to its own Owner Unit (MSG-LEN-05).',
+      buttons: [{ label: { nl: 'Rapport openen', en: 'Open the report' }, opens: 'The page of the Report, with its Broken Lenses marked' }],
+      states: BROKEN_STATES,
+      done: 'When all its Lenses work again, Data Hub closes the Message itself: it shows since when the Report works, and that notifies its Owner Unit.',
+    },
+    example: { subject: 'Credit leads, monthly', since: '2026-10-28', count: 1, lenses: [{ lens: 'Leads per source name' }] },
   },
 ];

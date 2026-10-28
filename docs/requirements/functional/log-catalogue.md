@@ -13,6 +13,8 @@ The prefix of a Log ID says which domain the entry comes from. The templates are
 
 *Changed on 2026-10-19: `RES-001`, `RES-003`, `RES-004`, `COL-030` and `COL-031` follow the Registration through exposures ([DEC-SR-22](04-stacks-and-resources.md#dec-sr-22)), and `RES-006`, `COL-006` and `COL-007` are new.*
 
+*Changed on 2026-10-28: `BRK-001` and `BRK-002` are new. They are about a Lens, Report, feed or query that becomes Broken or works again, and appear in its Log ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -46,3 +48,5 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `PUB-040` | Published by {owner} | owner, level |
 | `CNV-050` | Signal raised by {actor} | actor, conversation |
 | `CNV-051` | Signal turned into anomaly by {actor} | actor, conversation, anomaly |
+| `BRK-001` | Broken: {missing} no longer exists | missing, run |
+| `BRK-002` | Works again: {restored} exists again | restored, run |

@@ -28,12 +28,12 @@ Every part follows the same order:
 
 | What | Count |
 | --- | --- |
-| Functional requirements | 225: 46 Implemented, 69 Specified, 79 Proposed, 31 Withdrawn |
+| Functional requirements | 228: 46 Implemented, 69 Specified, 82 Proposed, 31 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 15: 14 Specified, 1 Proposed, for localisation and security |
-| Design decisions (DEC-UX) | 80 |
+| Design decisions (DEC-UX) | 81 |
 | Prototype screens | 31, plus the index |
-| Open points | 141 open, of 224 |
+| Open points | 138 open, of 224 |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -637,7 +637,7 @@ The architecture leaves Lenses for later, "once their domain is specified". A st
 - Whether a Lens runs when it is opened ([OP-LE-06](../requirements/functional/09-lenses.md#op-le-06)), which functions a default may use ([OP-LE-08](../requirements/functional/09-lenses.md#op-le-08)). Where a Lens made from a query belongs is decided: in a Collection its author owns ([DEC-CO-20](../requirements/functional/03-collections.md#dec-co-20)); open is the author who owns none yet ([OP-CO-19](../requirements/functional/03-collections.md#op-co-19)).
 - A very large Lens: does it keep running while it waits ([OP-LE-05](../requirements/functional/09-lenses.md#op-le-05)), and can it change while its Request waits ([OP-LE-09](../requirements/functional/09-lenses.md#op-le-09))?
 - How the story is asked: a skill, a form or the interface ([OP-LE-01](../requirements/functional/09-lenses.md#op-le-01)).
-- **A column that disappears** (from your review, 2026-10-27) simply no longer exists: a Lens or query that needs it stops working, without special handling; deregistering does not happen yet ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)). What follows when a Resource is withdrawn remains open ([OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)).
+- **When what a Lens reads disappears** (from your review, 2026-10-27 and 2026-10-28): a Lens, Report, feed or query that reads a Resource or a column that no longer exists is Broken ([DEC-DH-67](../overview/data-hub.md#dec-dh-67)). It cannot run, it carries a red dot wherever it is listed, for everyone ([DEC-UX-81](../design/principles.md#dec-ux-81)), and its Owner gets a Message for each ([MSG-LEN-05](../requirements/functional/message-catalogue.md#msg-len-05), [MSG-QRY-02](../requirements/functional/message-catalogue.md#msg-qry-02), [MSG-RPT-01](../requirements/functional/message-catalogue.md#msg-rpt-01)). It works again by itself when what is missing comes back. Data Hub notices it after every dbt run, in a daily check of the tables in BigQuery, and when a run fails, with a free dry run of everything that reads the Resource ([FR-SR-52](../requirements/functional/04-stacks-and-resources.md#fr-sr-52), [FR-LE-17](../requirements/functional/09-lenses.md#fr-le-17), [FR-SR-53](../requirements/functional/04-stacks-and-resources.md#fr-sr-53)). What reads a Resource is kept in the database of Data Hub ([DEC-DH-68](../overview/data-hub.md#dec-dh-68)). **Screen:** [lens.html](../design/screens/lens.html), with `?state=broken` in the address; the Lens "Response time and conversion" shows the red dot in [collections-start.html](../design/screens/collections-start.html).
 
 ## Messages
 
@@ -670,7 +670,7 @@ Messages are the margin notes of the library: colleagues talk about data, and th
 - for what Data Hub writes itself, the Learning Card that explains it: named, proposed from the master learning plan, or still to write ([FR-CV-14](../requirements/functional/14-conversations.md#fr-cv-14));
 - what it asks of whoever receives it, of whom, the buttons that link that action to the Message, and what ends it ([FR-CV-13](../requirements/functional/14-conversations.md#fr-cv-13)).
 
-The 20 types today; the page of the catalogue shows each one laid out, in both languages, with an example:
+The 23 types today; the page of the catalogue shows each one laid out, in both languages, with an example:
 
 | Message | About | From → to | Asks | Learning Card |
 | --- | --- | --- | --- | --- |
@@ -693,7 +693,10 @@ The 20 types today; the page of the catalogue shows each one laid out, in both l
 | [MSG-LEN-02](../requirements/functional/message-catalogue.md#msg-len-02) · A Lens grew into large | Lens | Data Hub → its author | Nothing | To write |
 | [MSG-LEN-03](../requirements/functional/message-catalogue.md#msg-len-03) · A Lens grew into very large | Lens | Data Hub → Data Team and its author | A decision | To write |
 | [MSG-LEN-04](../requirements/functional/message-catalogue.md#msg-len-04) · A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | 4.5.1 Who consumes outside your domain, proposed |
+| [MSG-LEN-05](../requirements/functional/message-catalogue.md#msg-len-05) · A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write |
 | [MSG-QRY-01](../requirements/functional/message-catalogue.md#msg-qry-01) · Request to run a very large query | query | User → Data Team | A decision | Added by the writer |
+| [MSG-QRY-02](../requirements/functional/message-catalogue.md#msg-qry-02) · A query is Broken | query | Data Hub → who made it | Something to do | To write |
+| [MSG-RPT-01](../requirements/functional/message-catalogue.md#msg-rpt-01) · A Report is Broken | Report | Data Hub → Owner | Something to do | To write |
 
 Three of them no requirement asks for yet; the catalogue proposes them: a Resource that arrives in a Collection ([OP-CV-07](../requirements/functional/14-conversations.md#op-cv-07)), a Resource that is withdrawn ([OP-CV-08](../requirements/functional/14-conversations.md#op-cv-08)) and a Request that lapses ([OP-LE-10](../requirements/functional/09-lenses.md#op-le-10)). The Dutch texts are a first version, to read with Flemish eyes ([OP-CV-09](../requirements/functional/14-conversations.md#op-cv-09)).
 
@@ -1087,7 +1090,7 @@ The overview still says EDAs move to Data Hub as their source, and lists EDA res
 ### Other things the design does not cover yet
 
 - **The Domain Model:** browsing to an Entity, and the Entities derived from the manifest and the lineage ([FR-SR-23](../requirements/functional/04-stacks-and-resources.md#fr-sr-23), [OP-DH-06](../overview/open-themes.md#op-dh-06)), and the relationships between Resources, whose Entity reference is now set at step 2 ([FR-CO-33](../requirements/functional/03-collections.md#fr-co-33)), with the cardinality under discussion ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)), ([FR-RC-08](../requirements/functional/05-resource-card.md#fr-rc-08) to [FR-RC-10](../requirements/functional/05-resource-card.md#fr-rc-10)).
-- **Usage:** which Lenses, Reports and feeds use a Resource, for the Data Team ([OP-DH-04](../overview/open-themes.md#op-dh-04)); the Query Log is the natural source.
+- **Usage:** which Lenses, Reports and feeds use a Resource, for the Data Team. What uses a Resource is kept in the database of Data Hub ([DEC-DH-68](../overview/data-hub.md#dec-dh-68)); a screen that shows it is not designed yet.
 - **The Lineage and History tabs** of a Resource ([OP-UX-04](../design/principles.md#op-ux-04)).
 - **Issuing a Library Card** and **connecting Claude** ([OP-CH-02](../requirements/functional/13-channels.md#op-ch-02)): no screen yet.
 - **Mobile** and narrow windows ([OP-UX-06](../design/principles.md#op-ux-06)).
@@ -1177,7 +1180,7 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 141 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
+Every point that was open in the documentation, 138 still open, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and this list follows.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are the cardinality questions of step 2 ([OP-RC-07](../requirements/functional/05-resource-card.md#op-rc-07) to [OP-RC-17](../requirements/functional/05-resource-card.md#op-rc-17)) and the language points.
 
@@ -1185,9 +1188,9 @@ Where to start: the points that shape the build are in group A of **Decisions be
 
 Source: [overview/open-themes.md](../overview/open-themes.md) · 38 open
 
-- [ ] **[OP-DH-03](../overview/open-themes.md#op-dh-03)** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed. *Note of 2026-10-27: deregistering does not happen yet; a column that disappears stops what needs it ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)).*
-- [ ] **[OP-DH-04](../overview/open-themes.md#op-dh-04)** · Work out how Data Hub keeps track, per Resource, of which Lenses, Reports, feeds and EDAs use it, for example via the tables touched in the BigQuery job log of its own account.
-- [ ] **[OP-DH-05](../overview/open-themes.md#op-dh-05)** · Find out whether model contracts on the mart views in the Stacks make sense, so that structural Changes become a deliberate step.
+- [x] **[OP-DH-03](../overview/open-themes.md#op-dh-03)** · Work out what happens to Users, Lenses, Reports and feeds when a Resource disappears from the Stacks or is renamed. *Note of 2026-10-27: deregistering does not happen yet; a column that disappears stops what needs it ([DEC-DH-66](../overview/data-hub.md#dec-dh-66)).* *Decided on 2026-10-28, by Max: what reads a missing Resource or column is Broken: it cannot run, carries a red dot, its Owner gets a Message, and it heals by itself ([DEC-DH-67](../overview/data-hub.md#dec-dh-67)).*
+- [x] **[OP-DH-04](../overview/open-themes.md#op-dh-04)** · Work out how Data Hub keeps track, per Resource, of which Lenses, Reports, feeds and EDAs use it, for example via the tables touched in the BigQuery job log of its own account. *Decided on 2026-10-28, by Max: in its own database, where each points to the Resources it reads ([DEC-DH-68](../overview/data-hub.md#dec-dh-68)).*
+- [ ] **[OP-DH-05](../overview/open-themes.md#op-dh-05)** · Find out whether model contracts on the mart views in the Stacks make sense, so that structural Changes become a deliberate step. *Note of 2026-10-28: written before a table became a Resource through an exposure ([DEC-SR-22](../requirements/functional/04-stacks-and-resources.md#dec-sr-22)) on any model, in or out of the Stacks ([DEC-SR-23](../requirements/functional/04-stacks-and-resources.md#dec-sr-23)). What remains, asked of Max: should a model that is a Resource carry an enforced dbt model contract, so that removing, renaming or retyping one of its columns fails the dbt build until the contract is changed too? That makes such a Change a deliberate step in a reviewed pull request, and one fewer way to break Lenses and queries ([DEC-DH-67](../overview/data-hub.md#dec-dh-67)).*
 - [ ] **[OP-DH-06](../overview/open-themes.md#op-dh-06)** · Work out how Entities from the Domain Model are mapped onto the manifest of the dbt project of the Domain Model.
 - [ ] **[OP-DH-07](../overview/open-themes.md#op-dh-07)** · Work out whether and how a Beta Concept or a beta report can be shared outside its own context before it is hardened.
 - [ ] **[OP-DH-08](../overview/open-themes.md#op-dh-08)** · Agree how a Beta Concept relates to a Lens: when does a Lens define a new concept, and is it therefore at Beta?
@@ -1288,7 +1291,7 @@ Source: [requirements/functional/04-stacks-and-resources.md](../requirements/fun
 
 - [ ] **[OP-SR-01](../requirements/functional/04-stacks-and-resources.md#op-sr-01)** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](../requirements/functional/04-stacks-and-resources.md#dec-sr-24)), so the convention applies to those labels.*
 - [ ] **[OP-SR-02](../requirements/functional/04-stacks-and-resources.md#op-sr-02)** · Complete the [Log catalogue](../requirements/functional/log-catalogue.md), with the Log IDs from the other domains.
-- [ ] **[OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)** · Work out what happens to Lenses and Reports when their Resource is deregistered.
+- [x] **[OP-SR-03](../requirements/functional/04-stacks-and-resources.md#op-sr-03)** · Work out what happens to Lenses and Reports when their Resource is deregistered. *Decided on 2026-10-28, by Max: they become Broken until it comes back ([DEC-DH-67](../overview/data-hub.md#dec-dh-67), [FR-SR-52](../requirements/functional/04-stacks-and-resources.md#fr-sr-52)).*
 - [ ] **[OP-SR-04](../requirements/functional/04-stacks-and-resources.md#op-sr-04)** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](../requirements/functional/07-log-and-notifications.md).
 - [x] **[OP-SR-05](../requirements/functional/04-stacks-and-resources.md#op-sr-05)** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](../requirements/functional/04-stacks-and-resources.md#dec-sr-28), [FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50)).*
 - [x] **[OP-SR-07](../requirements/functional/04-stacks-and-resources.md#op-sr-07)** · Decide the limit on scanned bytes and the number of rows in the Preview. *Note of 2026-10-22: decide together with the thresholds X and Y of the Pre-flight ([FR-SR-37](../requirements/functional/04-stacks-and-resources.md#fr-sr-37)).* *Note of 2026-10-23: and the two thresholds that check the making of a Lens ([FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08)).* *Decided on 2026-10-26, by Max: 100 MB, 1 GB and pages of 100 rows ([DEC-SR-29](../requirements/functional/04-stacks-and-resources.md#dec-sr-29), [DEC-SR-30](../requirements/functional/04-stacks-and-resources.md#dec-sr-30)).*

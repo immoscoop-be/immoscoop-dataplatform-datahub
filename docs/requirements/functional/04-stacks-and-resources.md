@@ -520,6 +520,27 @@ The Owner and the Data Team can mark a published Resource deprecated: its use is
 
 A preview, and the result of a query in Query, shows its rows 100 at a time, with how many rows there are in all and a way to the next and the previous page. Turning a page reads the next rows of the same run; it runs no query again ([DEC-SR-30](#dec-sr-30)).
 
+
+<a id="fr-sr-52"></a>
+### FR-SR-52 · Data Hub finds what is Broken, and what works again
+
+**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-DH-68](../../overview/data-hub.md#dec-dh-68)
+
+Data Hub looks for Broken assets at three moments:
+
+1. **After every new Current Version** of a dbt project, for each Resource it withdraws or brings back ([FR-SR-34](#fr-sr-34)) and each Resource with a field removed, renamed or back ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).
+2. **Once a day**, for each Resource whose table is not found in BigQuery, or is found again. This also catches a table dropped outside dbt.
+3. **When a run, a Pre-flight or a Preview fails** because a table or a column is not found.
+
+For each Resource found, Data Hub takes from its database what reads it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)) and does a dry run of each Lens, feed and query: one that fails on a missing table or column becomes Broken, with what is missing; one that was Broken and now succeeds works again. A Report follows its Lenses. A dry run reads nothing and costs nothing. Every change of state goes into the Log of the asset (`BRK-001`, `BRK-002` in the [Log catalogue](log-catalogue.md)) and into its Message ([MSG-LEN-05](message-catalogue.md#msg-len-05), [MSG-QRY-02](message-catalogue.md#msg-qry-02), [MSG-RPT-01](message-catalogue.md#msg-rpt-01)).
+
+<a id="fr-sr-53"></a>
+### FR-SR-53 · A query that reads what no longer exists is Broken
+
+**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67)
+
+A Broken query cannot run: Run is off, and a callout on top of it names what no longer exists. It carries a red dot in the panel of Query and in the Queries of a Resource ([FR-SR-43](#fr-sr-43), [FR-SR-44](#fr-sr-44)). Who made it gets a Message ([MSG-QRY-02](message-catalogue.md#msg-qry-02)). Its SQL can still be opened, copied and changed; a change that runs makes it work again, as does the return of what it reads.
+
 ## Log Catalogue
 
 The first draft of the Log Catalogue started on this page. Because it spans all domains, it now lives in its own file: [Log catalogue](log-catalogue.md).
@@ -580,7 +601,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 
 - [ ] <a id="op-sr-01"></a>**OP-SR-01** · Agree a convention for the Display Names of Resources. *Note of 2026-10-19: the Display Name is the `label` of the exposure ([DEC-SR-24](#dec-sr-24)), so the convention applies to those labels.*
 - [ ] <a id="op-sr-02"></a>**OP-SR-02** · Complete the [Log catalogue](log-catalogue.md), with the Log IDs from the other domains.
-- [ ] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered.
+- [x] <a id="op-sr-03"></a>**OP-SR-03** · Work out what happens to Lenses and Reports when their Resource is deregistered. *Decided on 2026-10-28, by Max: they become Broken until it comes back ([DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-52](#fr-sr-52)).*
 - [ ] <a id="op-sr-04"></a>**OP-SR-04** · Work out the Message Centre of the Data Admins in the domain [Log and notifications](07-log-and-notifications.md).
 - [x] <a id="op-sr-05"></a>**OP-SR-05** · Later: work out whether an Owner can unpublish a Resource, and what then happens to the Lenses and Reports of colleagues that depend on it. *Decided on 2026-10-26, by Max: an Owner cannot unpublish; a Resource can be marked deprecated instead ([DEC-SR-28](#dec-sr-28), [FR-SR-50](#fr-sr-50)).*
 - [x] <a id="op-sr-06"></a>**OP-SR-06** · Work out how Resources are read, found, described and commented on.

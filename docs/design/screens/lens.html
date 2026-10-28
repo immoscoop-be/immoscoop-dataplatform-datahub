@@ -62,7 +62,7 @@
      <a class="tree-res current" aria-current="page" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source name">Leads per source name</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Leads per source, week by week">Leads per source, week by week</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="From request to KBC">From request to KBC</span></span><span class="maturity" data-level="4"></span></a>
-     <a class="tree-res" href="lens.html"><i class="ph ph-aperture kind-icon" role="img" aria-label="Lens"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
+     <a class="tree-res" href="lens.html" title="Broken: the column first_reply_at of Lead response time no longer exists"><i class="ph ph-aperture kind-icon broken-mark" role="img" aria-label="Lens, broken"></i><span class="tree-res-name"><span class="clip" title="Response time and conversion · Broken: the column first_reply_at of Lead response time no longer exists">Response time and conversion</span></span><span class="maturity" data-level="3"></span></a>
    </div>
   </div>
   <div class="tree-group card coll-edge" style="--c:var(--col-bordeaux)">
@@ -129,15 +129,17 @@
  <span class="status">Comparison</span>
  <span class="status coll-chip" style="--c:var(--col-magenta)">Credit leads</span>
  <span class="status">Made by Mia Peeters · 23 Oct 2026</span>
+ <span class="status broken" data-pane-group="state" data-pane="broken" hidden>Broken</span>
  <span class="tags" style="margin:0 0 0 4px"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span></span>
 </div>
+<div class="alert urgent" data-pane-group="state" data-pane="broken" hidden><i class="ph-fill ph-link-break"></i><p><b>This lens can't run.</b> The column <span class="mono">lead_channel</span> of Weekly lead volume no longer exists, since the dbt run of 28 Oct 2026. It works again by itself when the column comes back. <span data-for="colleague">Its owners have been told.</span><span data-for="owner">If it does not come back, change the query of the lens.</span></p><a class="alert-btn" href="query.html" data-for="owner">Open its query</a></div>
 <div class="tabs" data-group="lenstab" role="tablist">
  <button class="tab on" data-target="run" role="tab" aria-selected="true">Run</button>
  <button class="tab" data-target="about" role="tab" aria-selected="false">About</button>
 </div>
 <div class="tab-content card">
  <div class="lens-run" data-pane-group="lenstab" data-pane="run">
-  <section class="lens-request" data-pane-group="state" data-pane="fresh" aria-label="Parameters">
+  <section class="lens-request" data-pane-group="state" data-pane="fresh broken" aria-label="Parameters">
    <details class="param-panel">
     <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this month</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>All channels</span></span><i class="ph ph-caret-down param-caret"></i></summary>
     <div class="param-grid">
@@ -170,6 +172,7 @@
     </div>
    </details>
    <div class="run-cell">
+    <span data-pane-group="state" data-pane="broken" hidden><button class="btn-primary run-btn" disabled title="It reads a column that no longer exists"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button></span>
     <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 80 MB, 4 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">80 MB</span></button></span>
     <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 100 MB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
      <span class="run-pop" role="tooltip"><b>840 MB, above 100 MB:</b> you approve this run yourself.<br>It reads 42 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this month, 80 MB.</span></span>
@@ -230,6 +233,9 @@
    <span class="query-id">Query ID <span class="mono">q-20261023-b7e2a1</span><button class="icon-btn" aria-label="Copy the query ID" title="Copy the query ID"><i class="ph ph-copy"></i></button></span>
   </div>
    </div>
+   <div data-pane-group="state" data-pane="broken" hidden>
+    <div class="result-empty broken"><i class="ph ph-link-break"></i><p><b>Can't run.</b> The lens reads <span class="mono">lead_channel</span> of Weekly lead volume, which no longer exists. Its last result is not shown, so that nobody takes it for today's.</p></div>
+   </div>
    <div data-pane-group="state" data-pane="notrun" hidden>
     <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the parameters above and run the lens. A lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
    </div>
@@ -282,6 +288,7 @@
  <button class="seg" data-target="changed" role="tab" aria-selected="false">Parameters changed</button>
  <button class="seg" data-target="notrun" role="tab" aria-selected="false">Not run yet</button>
  <button class="seg" data-target="editing" role="tab" aria-selected="false">Choosing a value</button>
+ <button class="seg" data-target="broken" role="tab" aria-selected="false">Broken</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="bottom:72px">Seen as
  <button class="seg" data-target="owner" role="tab" aria-selected="false">Owner</button>
