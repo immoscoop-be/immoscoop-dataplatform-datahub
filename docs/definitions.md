@@ -53,7 +53,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="learning-level"></a>**Learning Level** | One of the four levels of the master learning plan, from easy to advanced: 1 User, 2 Data-aware user, 3 Data analyst, 4 Data owner and expert. Not to be confused with the Level of a Resource. | [DEC-LR-02](requirements/functional/16-learning.md#dec-lr-02) |
 | <a id="lens"></a>**Lens** | A query with Parameters, made by business, without a type from a fixed list ([DEC-LE-06](requirements/functional/09-lenses.md#dec-le-06)). Deliberately not called a view. Its Level is the lowest Level of the Resources beneath it. | [Lenses](overview/data-hub.md#lenses) |
 | <a id="level"></a>**Level** | The maturity level of a Resource, Lens or Report, from Beta (0) to Monitored (5); see [Levels](#levels). | [Maturity and release](requirements/functional/06-maturity-and-release.md) |
-| <a id="library-card"></a>**Excel key** | No longer used: the former name of the Excel key ([DEC-DH-79](overview/data-hub.md#dec-dh-79)). | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
+| <a id="library-card"></a>**Library Card** | No longer used: the former name of the Excel key ([DEC-DH-79](overview/data-hub.md#dec-dh-79)). | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
 | <a id="log"></a>**Log** | Everything that happened to a Resource or a Collection, as Log Entries, including Changes deeper in the lineage. Not the technical logs of a service. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms), [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
 | <a id="log-catalogue"></a>**Log Catalogue** | The fixed list of all Log IDs. | [Log catalogue](requirements/functional/log-catalogue.md) |
 | <a id="log-entry"></a>**Log Entry** | One line in a Log: a Log ID, the Resource, the parameters as JSON, the actor and the time. Never free text. | [FR-SR-11](requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
@@ -168,7 +168,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | leesvlak | reading surface |
 | leeszaal | reading room |
 | lens, lenzen | Lens, Lenses |
-| lezerskaart | Excel key, formerly Excel key |
+| lezerskaart | Excel key, formerly Library Card |
 | master-leerplan | master learning plan |
 | maturiteitsicoon | maturity icon |
 | melding | notification |

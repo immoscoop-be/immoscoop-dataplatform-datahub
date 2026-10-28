@@ -4,10 +4,29 @@ const app = document.querySelector('.app');
 // Theme toggle (light / dark), remembered per viewer
 const themeBtn = document.getElementById('theme');
 try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; } catch (e) {}
+
+// The background (DEC-UX-94): a set per theme, one picked at random when Data Hub starts, kept for the session, and
+// picked again when the theme switches. Nobody chooses it; ?bg= in the address still sets one, for the prototype
+const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'flow'], dark: ['', 'village', 'flow'] };
+const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
+const pickBg = theme => {
+  const set = BACKGROUNDS[theme] || BACKGROUNDS.light, bg = set[Math.floor(Math.random() * set.length)];
+  try { sessionStorage.setItem('dh-bg', bg); } catch (e) {}
+  return bg;
+};
+if (!new URLSearchParams(location.search).has('bg')) {
+  const theme = document.documentElement.dataset.theme || 'light';
+  let bg = null; try { bg = sessionStorage.getItem('dh-bg'); } catch (e) {}
+  setBg(bg !== null && BACKGROUNDS[theme].includes(bg) ? bg : pickBg(theme));
+}
+
 themeBtn?.addEventListener('click', () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
   document.documentElement.dataset.theme = next;
   try { localStorage.setItem('dh-theme', next); } catch (e) {}
+  const bg = pickBg(next);
+  // The flowing gradient starts its canvas when the page loads; picked later, the page loads again to start it
+  if (bg === 'flow' && !document.querySelector('canvas.bg-flow')) location.reload(); else setBg(bg);
 });
 
 // Panel: clicking the active section toggles it, the collapse button closes it, state remembered per viewer

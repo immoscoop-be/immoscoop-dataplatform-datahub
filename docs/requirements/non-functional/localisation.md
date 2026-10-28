@@ -45,6 +45,8 @@ A name, as defined above, is English in every language version of Data Hub and i
 
 Translation files contain sentences only, never a name of the Domain Model or a kind of asset. A name goes into a sentence as a parameter and is not translated with it. For example, the key `lens.publish.confirm` reads "Wil je deze lens publiek maken?" in Dutch and "Do you want to make this lens public?" in English: `lens` stays `lens` in both.
 
+*Note of 2026-10-28: the interface writes Defined Terms with capitals, also inside a sentence ([DEC-UX-92](../../design/principles.md#dec-ux-92)).*
+
 <a id="nfr-loc-03"></a>
 ### NFR-LOC-03 · A name always stands in a sentence that says what it is
 
