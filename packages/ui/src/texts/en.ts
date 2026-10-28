@@ -25,4 +25,11 @@ export default {
   'origin.dataTeam': 'From the Data Team',
   'status.notPublished': 'Not published',
   'status.noOwner': 'No Owner yet',
+  'item.notPublished': '{name} · not published',
+  'item.notPublishedLabel': ', not published',
+  'sheet.close': 'Close',
+  'intro.hide': 'Hide intro',
+  'icon.label': 'Icon',
+  'icon.search': 'Search icons, such as money or house',
+  'icon.none': 'No icon found for “{query}”.',
 } as const satisfies Record<keyof typeof nl, string>;

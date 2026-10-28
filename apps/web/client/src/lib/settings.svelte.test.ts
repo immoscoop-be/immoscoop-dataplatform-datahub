@@ -26,4 +26,14 @@ describe('the settings of the User (DEC-UX-96)', () => {
     expect(settings.values['panel.open']).toBe(false);
     error.mockRestore();
   });
+
+  it('forget one, such as a dismissed intro shown again', () => {
+    const remove = vi.fn(async () => {});
+    const settings = new Settings({ 'intro.collections': 1, theme: 'dark' }, async () => {}, remove);
+    settings.forget('intro.collections');
+    expect(settings.values).toEqual({ theme: 'dark' });
+    expect(remove).toHaveBeenCalledWith('intro.collections');
+    settings.forget('intro.collections');
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
 });

@@ -9,12 +9,18 @@ export type Route =
   | { readonly kind: 'me'; readonly tab: MyPageTab }
   /** The page of a Resource, in the section Collections. */
   | { readonly kind: 'resource'; readonly id: string; readonly section: Section }
+  /** The page of a Collection (FR-CO-25). */
+  | { readonly kind: 'collection'; readonly id: string; readonly section: Section }
+  /** An empty Collection page, being made (FR-CO-12). */
+  | { readonly kind: 'newCollection'; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
 export const HOME = '/collections';
 export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me' : `/me/${tab}`);
 export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
+export const collectionPath = (id: string): string => `/collections/${encodeURIComponent(id)}`;
+export const NEW_COLLECTION = '/collections/new';
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
@@ -36,11 +42,17 @@ export function route(path: string): Route {
   if (tab) {
     return { kind: 'me', tab };
   }
-  const resource = /^\/resources\/([^/]+)$/.exec(clean)?.[1];
   const collections = SECTIONS.find((candidate) => candidate.id === 'collections');
-  if (resource && collections) {
+  if (!collections) {
+    return { kind: 'notFound' };
+  }
+  if (clean === NEW_COLLECTION) {
+    return { kind: 'newCollection', section: collections };
+  }
+  const [, kind, id] = /^\/(resources|collections)\/([^/]+)$/.exec(clean) ?? [];
+  if (kind && id) {
     try {
-      return { kind: 'resource', id: decodeURIComponent(resource), section: collections };
+      return { kind: kind === 'resources' ? 'resource' : 'collection', id: decodeURIComponent(id), section: collections };
     } catch {
       return { kind: 'notFound' };
     }

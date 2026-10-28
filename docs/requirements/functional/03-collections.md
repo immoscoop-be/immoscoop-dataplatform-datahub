@@ -6,7 +6,7 @@
 | Type | Working document |
 | Tags | context, decision, governance |
 | Area | Tooling, Technical |
-| Status | Specified; Collections and their Resources implemented; the icon and the edge cases remain |
+| Status | Specified; Collections, their Resources, the panel, the start screen and the page of a Collection implemented; adding with grain and relations, the Lenses and the edge cases remain |
 | Source of truth | This file |
 | Migrated from | [ptditt - Tooling - Data Hub - Collecties](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1371504655) (Confluence, Dutch), last modified 2026-10-15, migrated 2026-10-17 |
 | Last decisions | 2026-10-19: anyone creates a Collection, any Google group can be its Owner Unit, and a Collection is private or public ([DEC-CO-08](#dec-co-08) to [DEC-CO-12](#dec-co-12)); its icon is any outline icon of Tabler Icons but the logos of brands ([DEC-CO-13](#dec-co-13), [DEC-CO-14](#dec-co-14)). 2026-10-22: one panel in which a Collection unfolds to its Resources ([FR-CO-18](#fr-co-18) to [FR-CO-24](#fr-co-24)). 2026-10-23: a page per Collection ([FR-CO-25](#fr-co-25) to [FR-CO-31](#fr-co-31)), and only its Owner Unit adds Lenses and edits it ([DEC-CO-15](#dec-co-15)). 2026-10-25: adding Resources records the relation of every field and how a Resource is stored ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)); everyone builds Lenses on what they can see, and the Data Team may do everything in every Collection ([DEC-CO-17](#dec-co-17), [DEC-CO-18](#dec-co-18), [FR-CO-35](#fr-co-35)); icons come from Phosphor ([DEC-CO-19](#dec-co-19)). 2026-10-26: that step records the grain of each Resource and maps every field as `is` or a relation type of the Domain Model ([FR-CO-33](#fr-co-33), [DEC-RC-05](05-resource-card.md#dec-rc-05) to [DEC-RC-08](05-resource-card.md#dec-rc-08)) |
@@ -222,7 +222,7 @@ How a User finds the Collections and their Resources in the web app: one panel, 
 <a id="fr-co-18"></a>
 ### FR-CO-18 · One list of Collections, each unfolding to what it holds
 
-**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+**Status:** Implemented · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 The panel of Collections lists every Collection the User sees ([FR-CO-17](#fr-co-17)). A Collection unfolds in place to show the Resources in it that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)); the arrow next to it folds and unfolds it. Several Collections can be unfolded at once. There is no separate list per Collection. For the Data Team, the Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) are on top, and unfold the same way.
 
@@ -233,35 +233,37 @@ The panel of Collections lists every Collection the User sees ([FR-CO-17](#fr-co
 <a id="fr-co-19"></a>
 ### FR-CO-19 · Opening a Resource unfolds its Collection
 
-**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [lens](../../design/screens/lens.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [lens](../../design/screens/lens.html), [resource-detail](../../design/screens/resource-detail.html)
 
 When a User opens a Resource, its Collection is unfolded in the panel, and the Resource is marked as the one that is open.
 
 <a id="fr-co-20"></a>
 ### FR-CO-20 · An item shows the icon of its kind, its name and its Level
 
-**Status:** Specified · **Source:** [DEC-UX-11](../../design/principles.md#dec-ux-11) · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** [DEC-UX-11](../../design/principles.md#dec-ux-11) · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 Each item in an unfolded Collection shows the icon of its kind, the same for every item of that kind (a table for a Resource), its Display Name, and its Level ([FR-MR-10](06-maturity-and-release.md#fr-mr-10)).
 
 <a id="fr-co-21"></a>
 ### FR-CO-21 · Every name takes one line
 
-**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 In the panel, the name of a Collection or of an item takes one line. A name that is too long ends in an ellipsis and is shown in full on hover.
 
 <a id="fr-co-22"></a>
 ### FR-CO-22 · A Resource that is not published is shown as such
 
-**Status:** Specified · **Source:** [DEC-UX-12](../../design/principles.md#dec-ux-12) · **Screens:** [collections-start](../../design/screens/collections-start.html), [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Source:** [DEC-UX-12](../../design/principles.md#dec-ux-12) · **Screens:** [collections-start](../../design/screens/collections-start.html), [resource-publish](../../design/screens/resource-publish.html)
 
 A Resource that is not published, which only its Owner Unit and the Data Team see ([DEC-CO-12](#dec-co-12)), is shown in a lighter grey in the panel, without an icon. Hovering over it says that it is not published, and so does a screen reader.
+
+*Note of 2026-10-28: built; until Publication is built with part 4, every Resource in a Collection is not published, so each shows as such.*
 
 <a id="fr-co-23"></a>
 ### FR-CO-23 · A long Collection shows its first eight items
 
-**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 An unfolded Collection shows its first eight items, then "Show all" with the number of items, which shows the rest.
 
@@ -270,7 +272,7 @@ An unfolded Collection shows its first eight items, then "Show all" with the num
 <a id="fr-co-24"></a>
 ### FR-CO-24 · Search in the panel covers Collections and their Resources
 
-**Status:** Specified · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** [DEC-UX-10](../../design/principles.md#dec-ux-10) · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 Search in the panel filters the Collections and their Resources together. A Collection whose name matches stays listed as it was; a Collection that holds a matching Resource unfolds and shows only the matching Resources. When nothing matches, the panel says so.
 
@@ -299,23 +301,27 @@ What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/
 <a id="fr-co-25"></a>
 ### FR-CO-25 · Clicking a Collection opens its page
 
-**Status:** Specified · **Source:** [DEC-UX-13](../../design/principles.md#dec-ux-13) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-13](../../design/principles.md#dec-ux-13) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
 
 Clicking a Collection in the panel opens its page and unfolds it in the panel ([FR-CO-18](#fr-co-18)).
 
 <a id="fr-co-26"></a>
 ### FR-CO-26 · The page says what the Collection is and what needs attention
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
 
 The page shows the icon, name and description of the Collection, its Owner Unit, whether it is private or public, the number of Resources and Lenses, and when and by whom it was created. To the Owner Unit and the Data Team it also shows what needs attention: a Level that dropped and waits for a Confirmation, open Signals, and Resources not published yet, each with a link to where it is solved.
+
+*Note of 2026-10-28: built with what exists: the Resources not published yet need attention; a Level that dropped and open Signals join with parts 4 and 7, and the number of Lenses with part 6.*
 
 <a id="fr-co-27"></a>
 ### FR-CO-27 · The page lists the Resources of the Collection
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
 
 The page lists every Resource of the Collection that the User sees ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), with its Display Name, Level, Publication, open Signals and last change.
+
+*Note of 2026-10-28: built; Publication and open Signals show as not published and none until parts 4 and 7 build them, and the last change is the latest entry of the Log of the Resource.*
 
 <a id="fr-co-28"></a>
 ### FR-CO-28 · The page lists the Lenses built on the Collection
@@ -340,7 +346,7 @@ From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-1
 <a id="fr-co-30"></a>
 ### FR-CO-30 · The details are edited on the page
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
 
 The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec-co-15)); whether the Data Team does too, as [FR-CO-13](#fr-co-13) has it, is open ([OP-CO-12](#op-co-12)). The details are the name, description, icon, Owner Unit and whether it is private or public. Dissolving is offered there too, and only possible for an empty Collection ([FR-CO-10](#fr-co-10)).
 
@@ -349,12 +355,13 @@ The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec
 <a id="fr-co-31"></a>
 ### FR-CO-31 · A Data Admin adds Resources from the page
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [collection-add-resources](../../design/screens/collection-add-resources.html), [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html), [collection-add-resources](../../design/screens/collection-add-resources.html), [collection-overview](../../design/screens/collection-overview.html)
 
 From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
 
 *Note of 2026-10-25: adding takes two steps; the second records how each Resource picked is stored and the relation of every field ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)).*
 
+*Note of 2026-10-28: built in one step for now: the Resources picked are added from the sheet; the second step, their grain and relations, follows in part 3 of the [build order](../../design/build-order.md) ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)).*
 
 <a id="fr-co-32"></a>
 ### FR-CO-32 · A link to something a User may not see looks like a link to nothing
@@ -395,7 +402,7 @@ In the same step as the relations ([FR-CO-33](#fr-co-33)), the Data Admin sees p
 <a id="fr-co-35"></a>
 ### FR-CO-35 · The Data Team hands a Collection to any group
 
-**Status:** Specified · **Source:** Max, 2026-10-25 ([OP-CO-06](#op-co-06))
+**Status:** Implemented · **Source:** Max, 2026-10-25 ([OP-CO-06](#op-co-06))
 
 In the form to edit a Collection, a member of the Data Team can choose any Google group of the own Workspace domain as its Owner Unit, not only a group they are in themselves ([FR-CO-15](#fr-co-15)). This is how the Data Team hands a Collection to another Owner Unit, for example when its group is dissolved in Workspace ([EC-CO-01](#ec-co-01)). Choosing the group again also brings its name and address up to date ([OP-CO-08](../technical/03-collections.md#op-co-08)). The choice needs the groups of the whole domain, not only those of the User.
 

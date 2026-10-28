@@ -14,6 +14,17 @@ export class NotFound extends Error {
   }
 }
 
+/** The service refused or failed what was asked: its status, and the code of its error when it gave one. */
+export class Refused extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code: string | undefined,
+  ) {
+    super(message);
+  }
+}
+
 export type Call = (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
 
 /** Calls a service of Data Hub, named for its errors, with the Access Token of the User. */
@@ -44,7 +55,8 @@ export function createCall(
       throw new NotFound(path);
     }
     if (!response.ok) {
-      throw new Error(`${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`);
+      const body = (await response.json().catch(() => ({}))) as { error?: unknown };
+      throw new Refused(`${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`, response.status, typeof body.error === 'string' ? body.error : undefined);
     }
     return response;
   };

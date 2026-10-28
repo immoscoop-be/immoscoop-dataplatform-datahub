@@ -33,6 +33,10 @@ export function createIdentity(config: Config, session: Pick<Session, 'accessTok
     async groups(): Promise<Group[]> {
       return ((await (await call('/me/groups')).json()) as { groups: Group[] }).groups;
     },
+    /** Every group of the domain: only the Data Team may ask, to hand a Collection to any of them (FR-CO-35). */
+    async domainGroups(): Promise<Group[]> {
+      return ((await (await call('/groups')).json()) as { groups: Group[] }).groups;
+    },
     async settings(): Promise<UserSettings> {
       return ((await (await call('/me/settings')).json()) as { settings: UserSettings }).settings;
     },

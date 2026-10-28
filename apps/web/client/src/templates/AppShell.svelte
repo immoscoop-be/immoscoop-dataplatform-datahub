@@ -28,6 +28,7 @@
     ontheme,
     oncollapse,
     panel,
+    panelActions,
     children,
   }: {
     background: Background;
@@ -43,6 +44,8 @@
     ontheme: () => void;
     oncollapse: () => void;
     panel?: Snippet;
+    /** What the head of the panel offers, next to its title, such as a new Collection. */
+    panelActions?: Snippet;
     children: Snippet;
   } = $props();
 
@@ -85,7 +88,7 @@
   <div class="app" data-focus={tapped}>
     <Rail {items} active={section} panelOpen={Boolean(section && panel && panelOpen)} {blur} {initials} myPageHref="/me" {myPageActive} {onselect} {ontheme} />
     {#if section && panel}
-      <Panel open={panelOpen} title={panelTitle} focused={tapped === 'panel'} {blur} {oncollapse}>{@render panel()}</Panel>
+      <Panel open={panelOpen} title={panelTitle} focused={tapped === 'panel'} {blur} {oncollapse} actions={panelActions}>{@render panel()}</Panel>
     {/if}
     <main class="main" class:blur>
       {@render children()}
