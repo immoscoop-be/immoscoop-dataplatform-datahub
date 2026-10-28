@@ -165,7 +165,7 @@ The Display Name is required and unique. It can be changed later; every change g
 <a id="fr-sr-06"></a>
 ### FR-SR-06 · The description comes from the Artifacts
 
-**Status:** Implemented · **Confluence:** SR-06
+**Status:** Implemented · **Confluence:** SR-06 · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 The description comes from the Artifacts and is not retyped in Data Hub.
 
@@ -174,7 +174,7 @@ The description comes from the Artifacts and is not retyped in Data Hub.
 <a id="fr-sr-07"></a>
 ### FR-SR-07 · The Level at Registration is at most Described
 
-**Status:** Specified · **Confluence:** SR-07
+**Status:** Specified · **Confluence:** SR-07 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 At Registration, the Level is derived and is at most 2, Described. The Resource is then not yet published, and only visible to the Data Team and to the Owner of its Collection.
 
@@ -188,28 +188,28 @@ At Registration, a Fingerprint is stored: a hash of the structure (the column na
 <a id="fr-sr-09"></a>
 ### FR-SR-09 · Open the Log at Registration
 
-**Status:** Specified · **Confluence:** SR-09
+**Status:** Specified · **Confluence:** SR-09 · **Screens:** [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 At Registration, the Log of the Resource starts with the entries for Registration, Collection and Level.
 
 <a id="fr-sr-10"></a>
 ### FR-SR-10 · Notify the Data Admins of every Registration
 
-**Status:** Specified · **Confluence:** SR-10
+**Status:** Specified · **Confluence:** SR-10 · **Screens:** [messages](../../design/screens/messages.html)
 
 Every Registration sends a message to the Message Centre of the Data Admins.
 
 <a id="fr-sr-11"></a>
 ### FR-SR-11 · Structure of a Log Entry
 
-**Status:** Implemented · **Confluence:** SR-11
+**Status:** Implemented · **Confluence:** SR-11 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 A Log Entry consists of a Log ID, the Resource, the parameters as JSON, the actor (a person or Data Hub itself) and the timestamp. Free text is never stored.
 
 <a id="fr-sr-12"></a>
 ### FR-SR-12 · Log IDs come from a fixed catalogue
 
-**Status:** Implemented · **Confluence:** SR-12
+**Status:** Implemented · **Confluence:** SR-12 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Log IDs are in a fixed catalogue (see the [Log catalogue](log-catalogue.md)). A new kind of Log Entry means a new Log ID, not free text.
 
@@ -241,14 +241,14 @@ All texts in the app are in English: the interface, the names and the templates 
 <a id="fr-sr-16"></a>
 ### FR-SR-16 · Only the Owner publishes
 
-**Status:** Specified · **Confluence:** SR-16
+**Status:** Specified · **Confluence:** SR-16 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Only the Owner of the Collection can publish a Resource.
 
 <a id="fr-sr-17"></a>
 ### FR-SR-17 · The first Publication, from Described, is the first Confirmation
 
-**Status:** Specified · **Confluence:** SR-17
+**Status:** Specified · **Confluence:** SR-17 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 The first Publication is only possible when the Resource is at Described. It is at once the first Confirmation: the Resource rises to Confirmed.
 
@@ -289,7 +289,7 @@ Search covers title, description, Collection and Owner. A result shows those fou
 <a id="fr-sr-22"></a>
 ### FR-SR-22 · Browse per Collection
 
-**Status:** Specified · **Confluence:** SR-22
+**Status:** Specified · **Confluence:** SR-22 · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 Browsing per Collection shows the Resources of a Collection, with the colour and the icon of that Collection.
 
@@ -298,14 +298,14 @@ Browsing per Collection shows the Resources of a Collection, with the colour and
 <a id="fr-sr-23"></a>
 ### FR-SR-23 · Derive the Entities from the manifest and the lineage
 
-**Status:** Specified · **Confluence:** SR-23
+**Status:** Specified · **Confluence:** SR-23 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Entities of a Resource are derived from the manifest and the lineage, in the same way for every Resource. Via an Entity of the Domain Model, you find the Resources that are about it.
 
 <a id="fr-sr-24"></a>
 ### FR-SR-24 · Read a Resource in tabs
 
-**Status:** Specified · **Confluence:** SR-24
+**Status:** Specified · **Confluence:** SR-24 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Conversations and Preview. History is filterable by kind of Log Entry.
 
@@ -316,7 +316,7 @@ A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Convers
 <a id="fr-sr-25"></a>
 ### FR-SR-25 · The preview shows a limited number of rows
 
-**Status:** Specified · **Confluence:** SR-25
+**Status:** Specified · **Confluence:** SR-25 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
 
 The Preview shows a limited number of first rows. There is no query builder in the interface.
 
@@ -345,14 +345,14 @@ Every query gets a limit on scanned bytes and a label with the User. Executed qu
 <a id="fr-sr-28"></a>
 ### FR-SR-28 · The Owner and the Data Team supplement the description
 
-**Status:** Specified · **Confluence:** SR-28
+**Status:** Specified · **Confluence:** SR-28 · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 The Owner and the Data Team can supplement intended use, pitfalls, Anomalies, key fields and Parameter fields. Every addition goes into the Log.
 
 <a id="fr-sr-29"></a>
 ### FR-SR-29 · React with a Question, a Remark or a Signal
 
-**Status:** Specified · **Confluence:** SR-29
+**Status:** Specified · **Confluence:** SR-29 · **Screens:** [learning-message](../../design/screens/learning-message.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Everyone who may see a Resource can react with a Question, a Remark or a Signal.
 
@@ -368,14 +368,14 @@ A Signal goes to the Owner and the Data Team, and they can turn it into an Anoma
 <a id="fr-sr-31"></a>
 ### FR-SR-31 · Visibility follows the Publication and the Collection
 
-**Status:** Specified
+**Status:** Specified · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-publish](../../design/screens/resource-publish.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 Who sees a Resource depends on its Publication and on its Collection. Not published: the Data Team and the members of the Owner Unit of its Collection. Published: everyone who sees its Collection ([FR-CO-17](03-collections.md#fr-co-17)), which for a public Collection is the whole company. A Resource without a Collection is visible only to the Data Team.
 
 <a id="fr-sr-32"></a>
 ### FR-SR-32 · A table is registered through an exposure with the tag datahub
 
-**Status:** Implemented
+**Status:** Implemented · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 Every table, view or seed that an exposure with the tag `datahub` depends on, in the Current Version of a dbt project Data Hub follows, is a Resource, once: several exposures on one table make one Resource. A Node that builds nothing in BigQuery, such as an ephemeral model, is not. Data Hub registers a new one when the run that brings its exposure becomes the Current Version, and writes the Registration in its Log.
 
@@ -396,21 +396,21 @@ When the Current Version of its dbt project has no exposure with the tag `datahu
 <a id="fr-sr-35"></a>
 ### FR-SR-35 · A new Resource waits for a Collection
 
-**Status:** Implemented
+**Status:** Implemented · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 A new Resource has no Collection. Until the Data Team adds it to one, only the Data Team sees it, in a list of Resources without a Collection.
 
 <a id="fr-sr-36"></a>
 ### FR-SR-36 · A Pre-flight before every query
 
-**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight)
+**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Before every query, Data Hub shows a Pre-flight with the volume it will process, in MB or GB.
 
 <a id="fr-sr-37"></a>
 ### FR-SR-37 · Approval above one threshold, a block above another
 
-**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight)
+**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html)
 
 Above X GB, the User has to approve a query explicitly; above Y GB, the query is blocked. X and Y are configurable.
 
@@ -419,21 +419,21 @@ Above X GB, the User has to approve a query explicitly; above Y GB, the query is
 <a id="fr-sr-38"></a>
 ### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
 
-**Status:** Proposed · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23
+**Status:** Proposed · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
 
 The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. The partition column of a partitioned Resource is always one of them, with a recent range chosen by default, so that a preview reads only the partitions it shows: in BigQuery, a `LIMIT` alone lowers nothing that is read. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
 
 <a id="fr-sr-39"></a>
 ### FR-SR-39 · A Resource shows how it is partitioned and clustered
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-preview](../../design/screens/resource-preview.html)
 
 The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
 
 <a id="fr-sr-40"></a>
 ### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its partitions a query reads and through which column, and calls its volume "at most" where clustering can make the real read lower. A query on a partitioned Resource without a filter on its partition column gets a warning, with what it would read with one.
 
@@ -444,7 +444,7 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 <a id="fr-sr-41"></a>
 ### FR-SR-41 · Query, a section for SQL over everything the User may see
 
-**Status:** Proposed · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17)
+**Status:** Proposed · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17) · **Screens:** [query](../../design/screens/query.html), [resource-history](../../design/screens/resource-history.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
 
@@ -453,14 +453,14 @@ Data Hub has a section Query, next to Collections, in which a User writes SQL ov
 <a id="fr-sr-42"></a>
 ### FR-SR-42 · The editor formats and suggests
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query)
+**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [query](../../design/screens/query.html)
 
 The SQL editor in Query formats the SQL on request, and suggests while typing: the Resources the User may see, their columns and the Parameters, the partition and cluster columns first and marked as such.
 
 <a id="fr-sr-43"></a>
 ### FR-SR-43 · The panel of Query lists the queries that ran
 
-**Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20)
+**Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
 
@@ -469,7 +469,7 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
 
-**Status:** Proposed · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19)
+**Status:** Proposed · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19) · **Screens:** [resource-history](../../design/screens/resource-history.html)
 
 The page of a Resource has a tab Queries with every query that ran on it: when, who, through what, what it read and its Query ID, and a few numbers over the last 30 days. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Who sees the list is open ([OP-SR-13](#op-sr-13)).
 
@@ -480,28 +480,28 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 <a id="fr-sr-45"></a>
 ### FR-SR-45 · Every query has a name
 
-**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
+**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
 
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
 
-**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21)
+**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query-new](../../design/screens/query-new.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The page of a Resource has a button "Query". It opens Query with a new query: the Resource as its source, its name suggested ([FR-SR-45](#fr-sr-45)), and its SQL starting with a filter on the partition column ([FR-SR-39](#fr-sr-39)).
 
 <a id="fr-sr-47"></a>
 ### FR-SR-47 · A new query first shows the Lenses on its Resources
 
-**Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22)
+**Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
 <a id="fr-sr-48"></a>
 ### FR-SR-48 · The question of a new query finds Lenses by their words
 
-**Status:** Proposed · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23)
+**Status:** Proposed · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
 
@@ -509,7 +509,7 @@ A new query has a question: what the User wants to know, in a sentence. Its word
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming)
+**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step, with the declaration that the Resource is correct: what it is and what it stands for ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). They tick the declaration right next to the button that publishes; until it is ticked, the button stays off.
 
@@ -520,14 +520,14 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated
 
-**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05))
+**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
 
 <a id="fr-sr-51"></a>
 ### FR-SR-51 · A result shows 100 rows a page
 
-**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-SR-07](#op-sr-07))
+**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-SR-07](#op-sr-07)) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 A preview, and the result of a query in Query, shows its rows 100 at a time, with how many rows there are in all and a way to the next and the previous page. Turning a page reads the next rows of the same run; it runs no query again ([DEC-SR-30](#dec-sr-30)).
 
@@ -556,7 +556,7 @@ A Broken query cannot run: Run is off, and a callout on top of it names what no 
 <a id="fr-sr-54"></a>
 ### FR-SR-54 · The lineage of a Resource is walked one step at a time
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource)
+**Status:** Proposed · **Source:** Max, 2026-10-28 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
 
 The tab Lineage shows the Resource in the middle, always, with its direct upstream and downstream models, across the dbt projects Data Hub follows ([FR-AR-08](01-artifact-registry.md#fr-ar-08)). A click on one adds its own next models beside it, a column further out. Data Hub never shows the whole lineage at once.
 ## Log Catalogue

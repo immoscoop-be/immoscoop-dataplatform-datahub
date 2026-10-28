@@ -58,21 +58,21 @@ An Owner Unit needs no convention since 2026-10-19: any Google group of the own 
 <a id="fr-um-01"></a>
 ### FR-UM-01 · Sign in with Google only
 
-**Status:** Implemented · **Confluence:** GB-01 · [design](../../design/principles.md#sign-in)
+**Status:** Implemented · **Confluence:** GB-01 · [design](../../design/principles.md#sign-in) · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 Logging in is only possible with Google, via OpenID Connect. Data Hub verifies the signature of the ID token, the audience and the Workspace domain.
 
 <a id="fr-um-02"></a>
 ### FR-UM-02 · Accounts of the own Workspace domain only
 
-**Status:** Implemented · **Confluence:** GB-02 · [design](../../design/principles.md#sign-in)
+**Status:** Implemented · **Confluence:** GB-02 · [design](../../design/principles.md#sign-in) · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 Only accounts of the company's own Workspace domain get in. Personal Gmail accounts and accounts of other domains are refused.
 
 <a id="fr-um-03"></a>
 ### FR-UM-03 · Create the User at first login, never store a password
 
-**Status:** Implemented · **Confluence:** GB-03
+**Status:** Implemented · **Confluence:** GB-03 · **Screens:** [sign-in](../../design/screens/sign-in.html)
 
 At the first login, Data Hub creates the User, with the fixed Google ID as key, and email and name as data. A password is never stored.
 
@@ -116,7 +116,7 @@ A Group is recognised by its fixed Google ID, not by its email address, so that 
 <a id="fr-um-09"></a>
 ### FR-UM-09 · Owner Units are managed in Workspace
 
-**Status:** Specified · **Confluence:** GB-09
+**Status:** Specified · **Confluence:** GB-09 · **Screens:** [my-page](../../design/screens/my-page.html)
 
 Owner Units are created, filled and dissolved in Workspace. Data Hub shows them, but does not change them.
 
@@ -130,7 +130,7 @@ Whoever disappears from Workspace or is suspended can no longer log in, and disa
 <a id="fr-um-11"></a>
 ### FR-UM-11 · Every group of the own domain is pulled in; roles come from Role Groups
 
-**Status:** Implemented
+**Status:** Implemented · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
 
 Every group of the own Workspace domain that the User is in, nested groups included, is pulled in, with its fixed Google ID, its address and its name. The User can choose any of them as Owner Unit. Only the Role Groups of the [Naming Convention](#naming-convention) give a role.
 

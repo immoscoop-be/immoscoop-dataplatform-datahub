@@ -152,7 +152,7 @@ Processing normalises a set into Nodes, columns, Edges and tests. Columns combin
 <a id="fr-ar-08"></a>
 ### FR-AR-08 · Lineage across the dbt projects
 
-**Status:** Implemented · **Confluence:** AR-08
+**Status:** Implemented · **Confluence:** AR-08 · **Screens:** [resource-lineage](../../design/screens/resource-lineage.html)
 
 Lineage crosses the boundary between the dbt projects: Nodes from dbt-prod and Colleciónes are linked to each other.
 
@@ -187,7 +187,7 @@ Every Change is followed downstream to all Resources that depend on it, however 
 <a id="fr-ar-13"></a>
 ### FR-AR-13 · Anyone with access can read the Log
 
-**Status:** Specified · **Confluence:** AR-13
+**Status:** Specified · **Confluence:** AR-13 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 Anyone with access to a Resource can read its Log.
 
@@ -201,7 +201,7 @@ A run can be fetched and processed again manually, for recovery and tests.
 <a id="fr-ar-15"></a>
 ### FR-AR-15 · Read the Domain Model in use
 
-**Status:** Proposed · **Source:** Max, 2026-10-26
+**Status:** Proposed · **Source:** Max, 2026-10-26 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 Data Hub reads the Domain Model as it runs on prod, from the overview the server of Colleciónes deploys: its Entities with their identities, its relation types with their cardinality and inverse, and the references of every Entity and action. It uses them for every Resource, also one not built on a Colleciónes model, to suggest and check the mappings of its fields ([FR-CO-33](03-collections.md#fr-co-33), [DEC-RC-05](05-resource-card.md#dec-rc-05)). It reads it again when a new version is deployed, and records with each mapping the version it was made with.
 
@@ -213,14 +213,14 @@ Data Hub reads the Domain Model as it runs on prod, from the overview the server
 <a id="fr-ar-16"></a>
 ### FR-AR-16 · A Node built from the Domain Model knows its Entity
 
-**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06), the manifest of `immoscoop_generated` read on 2026-10-28
+**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06), the manifest of `immoscoop_generated` read on 2026-10-28 · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every Node and keeps per Node its Entity, its action, its strategy and its layer. The Entities of a Node outside Colleciónes are those of the Colleciónes Nodes in its lineage ([FR-SR-23](04-stacks-and-resources.md#fr-sr-23), [FR-AR-08](#fr-ar-08)).
 
 <a id="fr-ar-17"></a>
 ### FR-AR-17 · The meta of a column fills in its mapping
 
-**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07)
+**Status:** Proposed · **Source:** [OP-DH-06](../../overview/open-themes.md#op-dh-06) · depends on [OP-AR-07](#op-ar-07) · **Screens:** [collection-add-relations](../../design/screens/collection-add-relations.html)
 
 When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain is suggested from what the model declares, for the Data Admin to confirm ([DEC-RC-09](05-resource-card.md#dec-rc-09)); the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 

@@ -25,21 +25,21 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-pl-01"></a>
 ### FR-PL-01 · A User makes an Excel key on My page, and sees it once
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page)
+**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 On My page, a User makes an Excel key and gives it a name that says where it is used, such as "Excel on my laptop". Data Hub shows the key once, to copy, with how to use it in Power Query. identity keeps only its hash ([TR-PF-07](../technical/00-platform.md#tr-pf-07)): nobody can show it again.
 
 <a id="fr-pl-02"></a>
 ### FR-PL-02 · My page lists the Excel keys of its User, and revokes one
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page)
+**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 My page lists every Excel key of its User: its name, when it was made, when it was last used and when it expires. Revoking one stops it at once, after a confirmation; the list keeps it, marked revoked. Renewing a key is revoking it and making a new one.
 
 <a id="fr-pl-03"></a>
 ### FR-PL-03 · An Excel key lasts a year, and stops with its User
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79))
+**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 An Excel key expires a year after it was made; a month before, its User gets a notification. It stops at once when its User can no longer sign in with Google, for example after leaving. The Data Team can revoke any key, and its User gets a notification of that.
 

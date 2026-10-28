@@ -8,6 +8,10 @@
  * Also available as `pnpm docs:check` and `pnpm docs:build`. The conventions this script
  * enforces are described in docs/requirements/README.md. It uses only Node built-ins and
  * runs directly on Node 24, which strips the TypeScript types itself.
+ *
+ * It also reads the prototypes in docs/design/screens: the comment at the top of each names the
+ * requirements the screen fulfils, and each of those requirements names the screen back in its
+ * **Screens:** field. `check` fails when the two sides differ.
  */
 
 import { execFileSync } from 'node:child_process';
@@ -18,6 +22,9 @@ const ROOT = path.resolve(import.meta.dirname, '..');
 const DOCS = path.join(ROOT, 'docs');
 const REQUIREMENTS = path.join(DOCS, 'requirements');
 const MATRIX = path.join(REQUIREMENTS, 'traceability.md');
+const SCREENS_DIR = path.join(DOCS, 'design', 'screens');
+/** The overview of the screens is no screen of its own. */
+const NOT_A_SCREEN = new Set(['index']);
 const REPO_URL = 'https://github.com/immoscoop-be/immoscoop-dataplatform-datahub';
 
 const ID = String.raw`(?:FR|TR|NFR|DEC|EC|OP)-[A-Z]{2,3}-\d{2,3}`;
@@ -32,9 +39,15 @@ const ANCHOR = /<a id="([^"]+)"><\/a>/g;
 const HEADING = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
 const STATUS = /\*\*Status:\*\*\s+([A-Za-z]+)/;
 const ALIAS = /\*\*Confluence:\*\*\s+([A-Z]+-\d+)/;
-const REALISES = /\*\*Realises:\*\*(.*)/;
-const APPLIES = /\*\*Applies to:\*\*(.*)/;
+/** A field of the status line runs until the next field (` · **…:**`) or the end of the line. */
+const field = (name: string): RegExp => new RegExp(String.raw`\*\*${name}:\*\*(.*?)(?=\s+·\s+\*\*|$)`, 'm');
+const REALISES = field('Realises');
+const APPLIES = field('Applies to');
+const SCREENS = field('Screens');
 const LINK = /(?<!!)\[([^\]]*)\]\(([^)\s]+)\)/g;
+/** The comment at the top of a screen, and its line with the requirements the screen fulfils. */
+const SCREEN_COMMENT = /<!--([\s\S]*?)-->/;
+const SCREEN_REQUIREMENTS = /^\s*Requirements:(.*)$/;
 const MENTION = new RegExp(String.raw`(?<![\w-])(${ID})(?![\w-])`, 'g');
 const TRAILER = /^\W*(Implements|Refs):\s*(.+)$/gm;
 const FENCE = /^(```|~~~)/;
@@ -49,6 +62,16 @@ interface Item {
   alias: string;
   realises: string[];
   appliesTo: string[];
+  /** The screens it names in its **Screens:** field, by file name without `.html`. */
+  screens: string[];
+}
+
+interface Screen {
+  name: string;
+  file: string;
+  /** The line of its `Requirements:` line, for messages. */
+  line: number;
+  requirements: string[];
 }
 
 interface Doc {
@@ -203,6 +226,14 @@ function parseItems(docs: Map<string, Doc>, errors: string[]): Map<string, Item>
         item.alias = ALIAS.exec(text)?.[1] ?? '';
         item.realises = mentions(REALISES.exec(text)?.[1] ?? '');
         item.appliesTo = mentions(APPLIES.exec(text)?.[1] ?? '');
+        for (const [, , target = ''] of (SCREENS.exec(text)?.[1] ?? '').matchAll(LINK)) {
+          const dest = path.resolve(path.dirname(file), target);
+          if (path.dirname(dest) !== SCREENS_DIR || !dest.endsWith('.html')) {
+            errors.push(`${where}: ${id} names '${target}' in **Screens:**, which is not a screen in ${rel(SCREENS_DIR)}`);
+            continue;
+          }
+          item.screens.push(path.basename(dest, '.html'));
+        }
         if (item.kind === 'TR' && item.realises.length === 0) {
           errors.push(`${where}: ${id} must link at least one requirement in a **Realises:** line`);
         }
@@ -240,7 +271,80 @@ function parseItems(docs: Map<string, Doc>, errors: string[]): Map<string, Item>
 }
 
 function newItem(id: string, title: string, file: string, line: number): Item {
-  return { id, kind: id.split('-')[0] as string, title, file, line, status: '', alias: '', realises: [], appliesTo: [] };
+  return { id, kind: id.split('-')[0] as string, title, file, line, status: '', alias: '', realises: [], appliesTo: [], screens: [] };
+}
+
+/**
+ * Reads the comment at the top of every screen: every ID in it must exist, and its line
+ * `Requirements:` names the requirements the screen fulfils, never a decision, an open point or a
+ * withdrawn requirement. Each of those must name the screen back in its **Screens:** field.
+ */
+function checkScreens(items: Map<string, Item>, errors: string[]): Map<string, Screen> {
+  const screens = new Map<string, Screen>();
+  if (!existsSync(SCREENS_DIR)) {
+    return screens;
+  }
+  for (const entry of readdirSync(SCREENS_DIR).filter((name) => name.endsWith('.html')).sort()) {
+    const name = path.basename(entry, '.html');
+    if (NOT_A_SCREEN.has(name)) {
+      continue;
+    }
+    const file = path.join(SCREENS_DIR, entry);
+    const text = readFileSync(file, 'utf8');
+    const comment = SCREEN_COMMENT.exec(text);
+    if (!comment) {
+      errors.push(`${rel(file)}: has no comment at the top with the requirements it fulfils`);
+      continue;
+    }
+    const firstLine = text.slice(0, comment.index).split('\n').length;
+    const lines = (comment[1] as string).split('\n');
+    lines.forEach((line, i) => {
+      for (const id of mentions(line)) {
+        if (!items.has(id)) {
+          errors.push(`${rel(file)}:${firstLine + i}: ${id} is mentioned but not defined anywhere`);
+        }
+      }
+    });
+    const found = lines.flatMap((line, i) => {
+      const match = SCREEN_REQUIREMENTS.exec(line);
+      return match ? [{ line: firstLine + i, ids: mentions(match[1] as string) }] : [];
+    });
+    if (found.length !== 1) {
+      errors.push(`${rel(file)}: its comment needs exactly one line 'Requirements:', found ${found.length}`);
+      continue;
+    }
+    const [{ line, ids }] = found as [{ line: number; ids: string[] }];
+    for (const id of ids) {
+      const item = items.get(id);
+      if (!item) {
+        continue; // reported above
+      }
+      if (!HEADING_KINDS.has(item.kind)) {
+        errors.push(`${rel(file)}:${line}: ${id} is no requirement; name it on another line of the comment`);
+      } else if (item.status === 'Withdrawn') {
+        errors.push(`${rel(file)}:${line}: ${id} is withdrawn`);
+      }
+    }
+    screens.set(name, { name, file, line, requirements: ids });
+  }
+
+  for (const screen of screens.values()) {
+    for (const id of screen.requirements) {
+      const item = items.get(id);
+      if (item && HEADING_KINDS.has(item.kind) && !item.screens.includes(screen.name)) {
+        errors.push(`${rel(screen.file)}:${screen.line}: lists ${id}, but ${id} does not name ${screen.name} in its **Screens:** (${rel(item.file)}:${item.line})`);
+      }
+    }
+  }
+  for (const item of items.values()) {
+    for (const name of item.screens) {
+      const screen = screens.get(name);
+      if (screen && !screen.requirements.includes(item.id)) {
+        errors.push(`${rel(item.file)}:${item.line}: ${item.id} names ${name} in its **Screens:**, but ${rel(screen.file)} does not list it`);
+      }
+    }
+  }
+  return screens;
 }
 
 function checkLinks(docs: Map<string, Doc>, items: Map<string, Item>, errors: string[]): void {
@@ -287,7 +391,7 @@ function checkLinks(docs: Map<string, Doc>, items: Map<string, Item>, errors: st
   }
 }
 
-function validate(): { docs: Map<string, Doc>; items: Map<string, Item>; errors: string[] } {
+function validate(): { docs: Map<string, Doc>; items: Map<string, Item>; screens: Map<string, Screen>; errors: string[] } {
   const errors: string[] = [];
   const docs = loadDocs();
   const items = parseItems(docs, errors);
@@ -299,7 +403,8 @@ function validate(): { docs: Map<string, Doc>; items: Map<string, Item>; errors:
       }
     }
   }
-  return { docs, items, errors };
+  const screens = checkScreens(items, errors);
+  return { docs, items, screens, errors };
 }
 
 /** Maps each ID to the commits whose Implements:/Refs: trailers name it. */
@@ -363,6 +468,8 @@ function build(docs: Map<string, Doc>, items: Map<string, Item>, warnings: strin
   }
 
   const cellIds = (ids: string[]): string => ids.map((id) => linkTo(items.get(id) as Item, MATRIX)).join(', ') || '–';
+  const cellScreens = (item: Item): string =>
+    item.screens.map((name) => `[${name}](${relativeLink(path.join(SCREENS_DIR, `${name}.html`), MATRIX)})`).join(', ') || '–';
   const cellCommits = (id: string): string =>
     (commits.get(id) ?? [])
       .map((c) => `[${c.short}](${REPO_URL}/commit/${c.full}) ${c.kind.toLowerCase()}, ${c.date}`)
@@ -412,12 +519,12 @@ function build(docs: Map<string, Doc>, items: Map<string, Item>, warnings: strin
   }
 
   const sections: [string, string, string[], (item: Item) => string[]][] = [
-    ['Functional requirements', 'FR', ['ID', 'Title', 'Status', 'Confluence', 'Realised by', 'Commits'],
-      (i) => [i.alias || '–', cellIds(realisedBy.get(i.id) ?? [])]],
-    ['Edge cases', 'EC', ['ID', 'Title', 'Status', 'Realised by', 'Commits'], (i) => [cellIds(realisedBy.get(i.id) ?? [])]],
+    ['Functional requirements', 'FR', ['ID', 'Title', 'Status', 'Confluence', 'Screens', 'Realised by', 'Commits'],
+      (i) => [i.alias || '–', cellScreens(i), cellIds(realisedBy.get(i.id) ?? [])]],
+    ['Edge cases', 'EC', ['ID', 'Title', 'Status', 'Screens', 'Realised by', 'Commits'], (i) => [cellScreens(i), cellIds(realisedBy.get(i.id) ?? [])]],
     ['Technical requirements', 'TR', ['ID', 'Title', 'Status', 'Realises', 'Commits'], (i) => [cellIds(i.realises)]],
-    ['Non-functional requirements', 'NFR', ['ID', 'Title', 'Status', 'Applies to', 'Realised by', 'Commits'],
-      (i) => [cellIds(i.appliesTo), cellIds(realisedBy.get(i.id) ?? [])]],
+    ['Non-functional requirements', 'NFR', ['ID', 'Title', 'Status', 'Applies to', 'Screens', 'Realised by', 'Commits'],
+      (i) => [cellIds(i.appliesTo), cellScreens(i), cellIds(realisedBy.get(i.id) ?? [])]],
   ];
   for (const [heading, kind, columns, extra] of sections) {
     out.push('', `## ${heading}`, '');
@@ -448,7 +555,7 @@ function main(command: string | undefined): number {
     console.log('Usage: node scripts/requirements.ts check|build');
     return 2;
   }
-  const { docs, items, errors } = validate();
+  const { docs, items, screens, errors } = validate();
   for (const error of errors) {
     console.log(`error: ${error}`);
   }
@@ -460,6 +567,7 @@ function main(command: string | undefined): number {
     .map((kind) => [kind, [...items.values()].filter((i) => i.kind === kind).length] as const)
     .filter(([, count]) => count > 0)
     .map(([kind, count]) => `${count} ${kind}`)
+    .concat(screens.size > 0 ? [`${screens.size} screens`] : [])
     .join(', ');
   if (command === 'check') {
     if (!existsSync(MATRIX)) {

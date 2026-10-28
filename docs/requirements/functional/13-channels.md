@@ -49,14 +49,14 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-ch-01"></a>
 ### FR-CH-01 · No high-volume or frequent exports through Data Hub
 
-**Status:** Proposed · **Source:** [REQ-DH-EXPORT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-export)
+**Status:** Proposed · **Source:** [REQ-DH-EXPORT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-export) · **Screens:** [lens](../../design/screens/lens.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Large or frequent, structural exports do not run through Data Hub: not through the interface, not through the Excel or ODBC connection and not through Claude. Every export has a row limit.
 
 <a id="fr-ch-02"></a>
 ### FR-CH-02 · A structural export goes to the Data Team
 
-**Status:** Proposed · **Source:** [REQ-DH-EXPORT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-export)
+**Status:** Proposed · **Source:** [REQ-DH-EXPORT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-export) · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
 
 Structural exports are for data from Level 2, Described. When business wants to export a Lens, a new concept, structurally, that goes back to the Data Team, which sets up the export from dbt or the Domain Model ([DEC-DH-44](../../overview/data-hub.md#dec-dh-44)). Above the row limit, Data Hub shows a clear message that points to that route.
 

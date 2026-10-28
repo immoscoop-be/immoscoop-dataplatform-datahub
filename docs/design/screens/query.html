@@ -3,19 +3,19 @@
   Screen: Query, a main section of its own (DEC-UX-17)
   SQL over every Resource the User may see, later Lenses too. Panel = the queries that ran: yours; for the Data Team also
   everyone's under "All" (DEC-UX-20); a click opens one. Resources come in through the suggestions, or from "Query" on a Resource.
-  A query is bounded by its Resources (DEC-UX-73, DEC-UX-74; open: OP-UX-26 to OP-UX-30): on top of its frame "Reads only" and its Resources; the
+  A query is bounded by its Resources (DEC-UX-73, DEC-UX-74): on top of its frame "Reads only" and its Resources; the
   editor suggests only their columns, and a table in the SQL outside them is an error, with a new query to start with
   it. Adding or removing a Resource starts a new query in a sheet: the new set, the name suggested from it and the date,
   the question, the lenses on the new set; the SQL and the Parameters come along, the old query stays, and the new one
   says where it started from. "Lenses on these resources" opens the overview of a new query while writing. Several
   queries may share a set: a query is its name, its question and its Resources. The panel has one item per query, with
   how many runs, unfolding to its last runs; the result card has a tab History: every run is a variation, a row with when it ran, Preview and Apply (DEC-UX-88), of its
-  values, its SQL or both, opened to what changed. The switch "SQL" shows a table outside the Resources.
+  values, its SQL or both. The switch "SQL" shows a table outside the Resources.
   One white frame holds two dark boxes: the editor, at the full width, and under it the Parameters, which fold open and
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
   number, Text, Choice, Several choices, Yes or no, each with its BigQuery type) and a value: a value such as 2026-10-25,
   or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run, with the date it gives today
-  (FR-LE-13, OP-LE-08); the value of a Choice comes from a column or a typed list. A Parameter is made or changed in a
+  (FR-LE-13, DEC-LE-14); the value of a Choice comes from a column or a typed list. A Parameter is made or changed in a
   floating window that moves by its head (DEC-UX-30), one at a time: "Add parameter", or a click on a Parameter. A Parameter that is not
   in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under it, and
   keeps the query from running; a click on it defines it, suggested from the column it is compared with.
@@ -26,9 +26,11 @@
   them here). The result is a grid like that of BigQuery: the row number, then a column per field with its
   type under its name, a row on one line, alternate rows lightly shaded; the edge of a column head makes it narrower or wider, a double click fits it;
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
-  Ctrl+C copies it; null in grey. Every result carries its Query ID. The result is a proposal, to test.
+  Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
-  Requirements: FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-40, FR-SR-36, FR-SR-37, FR-SR-27, FR-SR-31, FR-LN-05, FR-LN-06; DEC-LN-01.
+  Requirements: FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16
+  Decisions: DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
   FR-LE-16, DEC-UX-77); the switch "Lens" shows both. The box of the SQL folds as the Parameters do (DEC-UX-76).
