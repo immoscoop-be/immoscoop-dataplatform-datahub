@@ -98,6 +98,8 @@ A Learning Card has Dutch sentences and English names, and never a Dutch synonym
 
 Metadata people write, such as the definition, open questions, Known Gaps and the log of changes, is in the language of the writer. The guideline is Dutch, with English names. Whether it stays a guideline is [OP-DH-41](../../overview/open-themes.md#op-dh-41).
 
+*Note of 2026-10-28: it stays a guideline, without validation: colleagues and Claude understand both Dutch and English ([OP-DH-41](../../overview/open-themes.md#op-dh-41)).*
+
 <a id="nfr-loc-10"></a>
 ### NFR-LOC-10 · The texts of the Log are sentences
 
