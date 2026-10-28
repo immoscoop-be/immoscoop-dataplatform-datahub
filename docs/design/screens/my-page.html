@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
   Screen: My page, behind the initials at the foot of the rail (DEC-UX-84)
-  Who the User is in Data Hub: their name and Google account, the Owner Units they belong to and so the Collections they
-  own, and what they read (DEC-DH-78). Below, their Excel keys: the personal keys with which Excel signs in through Power
+  Two tabs (DEC-UX-85). Profile: who the User is in Data Hub, their name and Google account, the language of Data Hub
+  (OP-DH-46), the Owner Units they belong to and so the Collections they own, and what they read (DEC-DH-78). Excel keys: the personal keys with which Excel signs in through Power
   Query (DEC-DH-79). "New Excel key" opens a sheet: a name that says where the key is used, then the key, shown once, to
   copy, with how to use it. The list shows each key with when it was made, last used and expires; revoking one asks to
-  confirm, and the list keeps it, marked revoked. The switch at the bottom shows the states: ?keys=new, ?keys=made,
-  ?keys=revoking.
+  confirm, and the list keeps it, marked revoked. The switch at the bottom shows the states: ?metab=keys&keys=new,
+  ?metab=keys&keys=made, ?metab=keys&keys=revoking.
   Requirements: FR-PL-01, FR-PL-02, FR-PL-03 (Proposed); DEC-DH-78, DEC-DH-79.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -44,24 +44,40 @@
  </div>
 </div>
 
-<div class="me-grid">
- <section class="card me-tile">
+<div class="tabs" data-group="metab" role="tablist" style="margin-top:22px">
+ <button class="tab on" data-target="profile" role="tab" aria-selected="true">Profile</button>
+ <button class="tab" data-target="keys" role="tab" aria-selected="false">Excel keys</button>
+</div>
+<div class="tab-content card">
+<div data-pane-group="metab" data-pane="profile">
+<div class="me-grid" style="margin-top:0">
+ <section class="sub-tile me-tile">
+  <div class="label">Language</div>
+  <p class="meta" style="display:block;line-height:1.5;margin:4px 0 12px">The language of the sentences of Data Hub: its screens, messages and e-mails. Names stay English, such as <span class="mono">creditLead</span> or resource.</p>
+  <div data-group="lang" role="radiogroup" aria-label="Language" style="display:inline-flex;gap:2px;padding:3px;border-radius:var(--radius-pill);background:var(--surface-solid)">
+   <button class="seg on" data-target="nl" role="radio" aria-checked="true">Nederlands</button>
+   <button class="seg" data-target="en" role="radio" aria-checked="false">English</button>
+  </div>
+  <p class="meta" style="display:block;margin-top:12px">Learning cards are in Dutch for now.</p>
+ </section>
+ <section class="sub-tile me-tile">
   <div class="label">You own</div>
   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Everything in the collections of your groups: their resources, and every lens made in them. Of all else you see, you are a reader.</p>
   <a class="me-row" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span style="flex:1;min-width:0"><span class="item-title">Credit leads</span><span class="meta" style="display:block">6 resources · 4 lenses · public</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Credit team</span></a>
   <a class="me-row" href="#"><span class="item-icon"><i class="ph ph-megaphone"></i></span><span style="flex:1;min-width:0"><span class="item-title">Marketing</span><span class="meta" style="display:block">9 resources · 2 lenses · private</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Marketing team</span></a>
   <p class="meta" style="display:block;margin-top:10px">Your groups come from Google; ask IT to join or leave one.</p>
  </section>
- <section class="card me-tile">
+ <section class="sub-tile me-tile">
   <div class="label">Your queries</div>
   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">The queries you made are yours too, wherever their resources are.</p>
   <a class="me-row" href="query.html"><span class="item-icon"><i class="ph ph-terminal-window"></i></span><span style="flex:1;min-width:0"><span class="item-title">23 queries</span><span class="meta" style="display:block">The last today, 09:41</span></span><i class="ph ph-arrow-right" style="color:var(--text-muted)"></i></a>
  </section>
 </div>
-
-<div class="section-head"><h2>Excel keys</h2><button class="btn-primary" data-sheet-open="newkey"><i class="ph-fill ph-key" style="font-size:15px"></i>New Excel key</button></div>
+</div>
+<div data-pane-group="metab" data-pane="keys" hidden>
+<div class="section-head" style="margin-top:4px"><h2>Excel keys</h2><button class="btn-primary" data-sheet-open="newkey"><i class="ph-fill ph-key" style="font-size:15px"></i>New Excel key</button></div>
 <p class="meta" style="display:block;line-height:1.5;max-width:720px;margin:-4px 0 12px">An Excel key lets Excel fetch the result of a lens in your name, through Power Query, with its parameters at their defaults. Make one for every place you use, so that you can stop one without the others.</p>
-<div class="table-card card">
+<div class="table-card">
  <table>
  <thead><tr><th>Name</th><th>Made</th><th>Last used</th><th>Expires</th><th></th></tr></thead>
  <tbody>
@@ -74,6 +90,8 @@
  </tbody>
  </table>
  <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">A key lasts a year; a month before, you get a message. It stops at once when you can no longer sign in with Google. The data team can revoke any key, and tells you when it does.</p>
+</div>
+</div>
 </div>
 </main>
 </div>

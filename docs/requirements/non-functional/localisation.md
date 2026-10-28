@@ -75,6 +75,8 @@ The [Glossary](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352106063
 
 The interface follows the language preference of the User: Dutch by default, English available. The choice changes nothing about names, data or Query IDs. Notifications, Pre-flights and the texts of the Log have a Dutch and an English version, with the same parameters ([NFR-LOC-10](#nfr-loc-10)). Where a User chooses the language is [OP-DH-46](../../overview/open-themes.md#op-dh-46).
 
+*Note of 2026-10-28: the User chooses it in the tab Profile of My page ([DEC-UX-85](../../design/principles.md#dec-ux-85)).*
+
 <a id="nfr-loc-07"></a>
 ### NFR-LOC-07 · The answers of the MCP server follow the same rule
 
