@@ -74,6 +74,7 @@
     radial-gradient(36% 58% at 80% 72%, var(--bg-sky) 0%, transparent 72%),
     var(--bg-base);
   --app-bg-size: 130% 130%;
+  --bg-prev-flow: linear-gradient(160deg, #BFD9F2 0%, #F2C49A 48%, #F7EEDF 100%);  /* a still picture of the flowing gradient, for My page */
   --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
   --surface-float-hover: rgba(255,255,255,.28);
   --surface-solid: #FFFFFF;      /* reading surface in focus */
@@ -94,6 +95,7 @@
   --bg-3: #232A28;
   --app-bg: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%);
   --app-bg-size: 260% 260%;
+  --bg-prev-flow: radial-gradient(60% 60% at 10% 100%, #8A4A3C 0%, transparent 70%), linear-gradient(160deg, #141A2B 0%, #1F5B5E 45%, #4A2F6B 62%, #6B2A55 78%, #1A1422 100%);
   --surface-glass: rgba(70,64,58,.38);
   --surface-float-hover: rgba(255,255,255,.06);
   --surface-solid: #322E2A;
