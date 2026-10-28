@@ -31,9 +31,9 @@ Every part follows the same order:
 | Functional requirements | 237: 46 Implemented, 68 Specified, 89 Proposed, 34 Withdrawn |
 | Technical requirements of the platform | 31: 18 Implemented, 10 Specified, 3 Proposed |
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
-| Design decisions (DEC-UX) | 101 |
+| Design decisions (DEC-UX) | 103 |
 | Prototype screens | 33, plus the index |
-| Open points | 96 open, of 241: 87 for v1 and 9 marked Could |
+| Open points | 95 open, of 241: 86 for v1 and 9 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1184,13 +1184,13 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 96 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 95 still open, 9 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
-- 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-UX-32](../design/principles.md#op-ux-32) the colour of cards on the light background · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits · [OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17) the Request for a query above 1 GB
+- 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits · [OP-SR-17](../requirements/functional/04-stacks-and-resources.md#op-sr-17) the Request for a query above 1 GB
 - 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-CH-03](../requirements/functional/13-channels.md#op-ch-03) the HTML report in v1 · [OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04) Slack · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards
 
 ### Open themes
@@ -1202,10 +1202,9 @@ Source: [overview/open-themes.md](../overview/open-themes.md) · 2 open
 
 ### Data Hub design principles
 
-Source: [design/principles.md](../design/principles.md) · 2 open
+Source: [design/principles.md](../design/principles.md) · 1 open
 
 - [ ] **[OP-UX-09](../design/principles.md#op-ux-09)** · **Look:** [DEC-PF-22](../requirements/technical/00-platform.md#dec-pf-22) asks for the colours of the brandbook, with teal on larger areas, and one light look without a dark mode. This design has warm greys, colour only on content, and a light and a dark theme. Decide whether this design replaces those parts of DEC-PF-22. *Look at: [collections-start.html](../design/screens/collections-start.html), with the moon at the foot of the rail for the dark theme; [sign-in.html](../design/screens/sign-in.html).*
-- [ ] **[OP-UX-32](../design/principles.md#op-ux-32)** · **The colour of cards on the light background:** on the clouds of [DEC-UX-78](../design/principles.md#dec-ux-78) the frames read whiter than before. Decide whether the glass and solid surfaces keep their values or take a warmer tint. *Raised on 2026-10-27, in the review of Max; recorded here on 2026-10-28.* *Look at: [collections-start.html](../design/screens/collections-start.html), in the light theme: the panel and the tiles; [resource-detail.html](../design/screens/resource-detail.html).*
 
 ### Artifact registry
 
@@ -1445,6 +1444,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-UX-25](../design/principles.md#op-ux-25)** · **A deprecated Resource** ([FR-SR-50](../requirements/functional/04-stacks-and-resources.md#fr-sr-50), [OP-SR-16](../requirements/functional/04-stacks-and-resources.md#op-sr-16)): design how the mark shows on the page of the Resource, in the panel, in search and on the Lenses built on it, and where the Owner and the Data Team set it. Proposal: a label "Deprecated" next to the Level, with the reason on hover and on the page; set from the header of the Resource. *Raised on 2026-10-26, in the review of Max.* *Look at: [resource-detail.html](../design/screens/resource-detail.html), the status row, where the mark would show; [collections-start.html](../design/screens/collections-start.html), the panel.* *Note of 2026-10-28: designed as proposed, for Max to judge: the chip "Deprecated" in the status row with its reason on hover, a line under it with who, why and what to use instead, "Deprecate" and "Take it away" in the header for the Owner and the Data Team, and a tag in the panel. Look at: [resource-detail.html](../design/screens/resource-detail.html) with `?dep=on`.* *Decided on 2026-10-28, by Max: as designed ([DEC-UX-101](../design/principles.md#dec-ux-101)).*
 - [x] **[OP-UX-29](../design/principles.md#op-ux-29)** · **The name of a query started from another:** the name is suggested from its Resources and the date only ([DEC-UX-23](../design/principles.md#dec-ux-23)), which gives long names, such as "Weekly lead volume, lead sources and partner contracts, 27 Oct". Decide whether it may be suggested from the query it started from and the Resource added, such as "Leads per source name + partner contracts". *Raised on 2026-10-27.* *Look at: [query-new.html](../design/screens/query-new.html), the suggested Name at the top.* *Decided on 2026-10-28, by Max: kept as it is for now, the name from its Resources and the date ([DEC-UX-23](../design/principles.md#dec-ux-23)); to iterate later.*
 - [x] **[OP-UX-30](../design/principles.md#op-ux-30)** · **Removing a Resource as a new query:** decided to try ([DEC-UX-73](../design/principles.md#dec-ux-73)), as a query on fewer Resources has a very different list of Lenses. Review after testing whether it is too heavy in use, for instance when the SQL still reads the Resource and the new query starts with an error. *Raised on 2026-10-27, by Max.* *Look at: [query.html](../design/screens/query.html), the × on a Resource in the scope above the SQL, which opens the sheet for a new query; [query-new.html](../design/screens/query-new.html).* *Decided on 2026-10-28, by Max: the screen is right as it is; removing a Resource stays a new query ([DEC-UX-73](../design/principles.md#dec-ux-73)).*
+- [x] **[OP-UX-32](../design/principles.md#op-ux-32)** · **The colour of cards on the light background:** on the clouds of [DEC-UX-78](../design/principles.md#dec-ux-78) the frames read whiter than before. Decide whether the glass and solid surfaces keep their values or take a warmer tint. *Raised on 2026-10-27, in the review of Max; recorded here on 2026-10-28.* *Look at: [collections-start.html](../design/screens/collections-start.html), in the light theme: the panel and the tiles; [resource-detail.html](../design/screens/resource-detail.html).* *Decided on 2026-10-28, by Max: no; the surfaces keep their values ([DEC-UX-103](../design/principles.md#dec-ux-103)).*
 
 **Stacks and resources**
 
