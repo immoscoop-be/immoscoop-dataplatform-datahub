@@ -368,6 +368,8 @@ Data Hub shows the cardinality of each mapping and never asks for it ([DEC-RC-08
 
 *Rewritten on 2026-10-26, after the discussion of relations and grain with Max: "identifies each row" became `is` and the grain, and "refers to" became the relation types of the Domain Model ([DEC-RC-05](05-resource-card.md#dec-rc-05) to [DEC-RC-08](05-resource-card.md#dec-rc-08)).*
 
+*Note of 2026-10-28: next to the grain, the Data Admin chooses the model type: `event`, `state`, `fact`, `dimension` or `aggregate` ([DEC-RC-10](05-resource-card.md#dec-rc-10)).*
+
 <a id="fr-co-34"></a>
 ### FR-CO-34 · Adding a Resource records how it is stored
 

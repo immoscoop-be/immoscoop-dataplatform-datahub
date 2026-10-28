@@ -461,6 +461,13 @@ A Message that Data Hub writes itself, such as a changed description in dbt ([FR
 
 *Note of 2026-10-28: the [Message catalogue](message-catalogue.md) names the card of every type of Message from Data Hub, or the card still to write ([FR-CV-14](14-conversations.md#fr-cv-14)).*
 
+
+<a id="fr-lr-39"></a>
+### FR-LR-39 · One card explains the model types, and the card on the grain points to it
+
+**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-RC-10](05-resource-card.md#dec-rc-10))
+
+One Learning Card explains the five model types together, so that a User can tell them apart and knows what each means for counting: an `event` is one row per thing that happened, at a moment, and never changes after; a `state` is one row per thing as it is, or was at a moment, and changes over time; a `fact` is one row per business occurrence with the measures to add up; a `dimension` is one row per thing that describes others, such as an agency or a lead source; an `aggregate` is one row per group with its counts or sums already made, which are not added up again. Its place in the master learning plan is next to [2.3.5 The grain question: what is one row?](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1356070916), which points to it. Wherever a model type shows, its marker lists this card ([FR-LR-37](#fr-lr-37)).
 ## Out of scope
 
 - **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).

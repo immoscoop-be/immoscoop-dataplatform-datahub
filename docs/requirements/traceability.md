@@ -11,23 +11,23 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [Data Hub design principles](../design/principles.md) | – | – | 82 | 34 (20 open, 14 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 70 | – |
-| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (28 open, 19 done) |
+| [Open themes](../overview/open-themes.md) | – | – | 5 | 47 (27 open, 20 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 proposed, 3 specified, 11 implemented) | 4 (4 proposed) | 3 | 8 (5 open, 3 done) |
 | [User management](functional/02-user-management.md) | 11 (4 specified, 6 implemented, 1 withdrawn) | 3 (3 proposed) | 7 | 7 (4 open, 3 done) |
 | [Collections](functional/03-collections.md) | 37 (3 proposed, 18 specified, 14 implemented, 2 withdrawn) | 2 (2 proposed) | 20 | 17 (9 open, 8 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 53 (17 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 proposed, 3 withdrawn) | 32 | 17 (10 open, 7 done) |
-| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 9 | 25 (9 open, 16 done) |
+| [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 10 | 25 (8 open, 17 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 12 | 6 (3 open, 3 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 1 | 3 (2 open, 1 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
-| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 6 | 10 (6 open, 4 done) |
+| [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 7 | 10 (6 open, 4 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 open) |
 | [Permissions and library cards](functional/12-permissions-and-library-cards.md) | – | – | – | 1 (1 open) |
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | – | 2 (2 open) |
 | [Conversations](functional/14-conversations.md) | 15 (10 proposed, 5 implemented) | 2 (2 proposed) | 7 | 9 (6 open, 3 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 38 (21 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
+| [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 11 | 27 (19 open, 8 done) |
 | [Localisation](non-functional/localisation.md) | 11 (11 specified) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 31 (3 proposed, 10 specified, 18 implemented) | – | 26 | 18 (8 open, 10 done) |
@@ -323,6 +323,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | – | [7f7d44e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7f7d44e9903ba27330769deed790a82d698ed2fb) refs, 2026-10-25 |
 | [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | [9e2d64c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e2d64c628b132b16db79030e7d35c56500ab19d) refs, 2026-10-25 |
 | [FR-LR-38](functional/16-learning.md#fr-lr-38) | A Message from Data Hub links to the card that explains it | Specified | – | – | [5c25fd1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5c25fd1657a8546fd3931360bcfcab239046723b) refs, 2026-10-28<br>[402201b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/402201b1b5d266b2dc2b0d8472c2bc0b71ffb547) refs, 2026-10-28<br>[b783fe2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b783fe21991672df0f10dcd8b28e90883ca55ba3) refs, 2026-10-27<br>[d485d23](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d485d23e6058c2d79d79f47432195c8d10ad377f) refs, 2026-10-27 |
+| [FR-LR-39](functional/16-learning.md#fr-lr-39) | One card explains the model types, and the card on the grain points to it | Proposed | – | – | – |
 
 ## Edge cases
 

@@ -183,6 +183,7 @@
     <span class="rel-store-rule" aria-hidden="true"></span>
     <span class="meta">Grain</span><span class="rel-store-val"><span class="code-chip">eventId</span></span><span class="rel-src" title="The Colleciónes model declares grain event: one row per collected event"><i class="ph ph-graph"></i>From the domain model</span>
     <span class="meta">One row per</span><span class="rel-store-val"><input class="rel-grain-text" value="generated simulation" aria-label="What one row is, in words"></span><span class="rel-src"><i class="ph ph-graph"></i>From the domain model</span>
+    <span class="meta">Model type</span><span class="rel-store-val"><select aria-label="Model type"><option selected>event</option><option>state</option><option>fact</option><option>dimension</option><option>aggregate</option></select></span><span class="rel-src" title="Suggested from the strategy of the Colleciónes model, an event"><i class="ph ph-graph"></i>Suggested by the domain model</span>
     <span class="meta">Duplicates</span><span class="rel-store-val"><span class="rel-ok"><i class="ph ph-check-circle"></i>Not needed: the model merges on <code>eventId</code></span></span><span></span>
    </div>
    <p class="check-line"><i class="ph ph-graph"></i><span><b>6 mappings come from the domain model.</b> The event is a subject of its own, <code>homeLoanSimulation.generate</code>; its relations hang off it. Check them, and change one that is wrong.</span></p>
@@ -246,6 +247,7 @@
     <span class="rel-store-rule" aria-hidden="true"></span>
     <span class="meta">Grain</span><span class="rel-store-val"><span class="code-chip">reviewId<button aria-label="Remove reviewId">×</button></span><button class="text-link rel-add"><i class="ph ph-plus"></i>Field</button></span><span class="rel-src" title="The model has a unique test on reviewId"><i class="ph ph-file-text"></i>From a dbt test</span>
     <span class="meta">One row per</span><span class="rel-store-val"><input class="rel-grain-text" value="review" aria-label="What one row is, in words"></span><span class="rel-src"><i class="ph ph-user"></i>Written here</span>
+    <span class="meta">Model type</span><span class="rel-store-val"><select aria-label="Model type"><option>event</option><option>state</option><option selected>fact</option><option>dimension</option><option>aggregate</option></select></span><span class="rel-src"><i class="ph ph-user"></i>Chosen here</span>
     <span class="meta">Duplicates</span><span class="rel-store-val"><button class="btn-quiet outline rel-dup"><i class="ph ph-magnifying-glass"></i>Check the data</button><span class="meta">Dry run first: 0.02 GB</span></span><span></span>
    </div>
    <p class="check-line"><i class="ph ph-lightbulb"></i><span><b>Not built on the domain model.</b> Where the name of a field matches an identity in the domain model, Data Hub suggests it; confirm or change it. With two <b class="rel-kw">is</b> fields, a relation says which of them it starts from.</span></p>
