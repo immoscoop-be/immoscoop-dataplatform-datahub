@@ -1,6 +1,6 @@
 # Handover prompt for Claude Code
 
-The opening message for the Claude Code session that builds this design into the web app. Use it only once the designs are final ([how we work](README.md#how-we-work)), and paste everything below the line as the first message. Brought up to date on 2026-10-28, after the review of the open points.
+The opening message for the Claude Code session that builds this design into the web app. Use it only once the designs are final ([how we work](README.md#how-we-work)), and paste everything below the line as the first message. Brought up to date on 2026-10-28, after the review of the open points. It starts part 1 of the [build order](build-order.md); the later parts each have a short prompt there.
 
 ---
 
@@ -35,6 +35,6 @@ What I ask of you:
 2. For each screen in `docs/design/screens/`, find the requirements it fulfils. Put their IDs at the top, in the comment of the screen, and add a reference to the screen to those requirements. Report which requirements have no screen yet, and which parts of the screens have no requirement.
 3. Propose how `tokens.css` ends up in the styling of the Svelte app, so that there is only one place for each value.
 4. Build the components from `components.md`, layer by layer: a behaviour lives in its component, never in a screen. Propose any change to that list before you build it.
-5. Wait for my approval before you build the components and screens. Then start with the navigation and the panel, because every screen rests on them.
+5. Wait for my approval before you build the components and screens. Then build part 1 of `docs/design/build-order.md`, the frame: the navigation and the panel first, because every screen rests on them. We build part by part, in that order; each part ends on uat, tried, before the next starts.
 
 The design has no open points left. The open points that remain elsewhere are listed in `docs/review/2026-10-25-functional-and-technical-review.md`, under "Every open point". When you run into one, ask me; never decide an open point by building it.

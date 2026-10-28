@@ -10,7 +10,9 @@ docs/design/
 ├── principles.md          the rules and decisions (source of truth; DEC-UX, OP-UX)
 ├── tokens.css             all style values
 ├── base.css               the components of the prototype
+├── components.md          every component, its layer, behaviour and dependencies
 ├── handover-prompt.md     the opening message for Claude Code, once the designs are final
+├── build-order.md         the parts in which Data Hub is built, with a prompt per part
 └── screens/
     ├── index.html         overview of the screens
     ├── collections-start.html
