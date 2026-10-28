@@ -51,7 +51,7 @@
   <div class="tree-group card coll-edge open" style="--c:var(--col-magenta)">
    <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="true" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">
-     <a class="tree-res current" aria-current="page" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="maturity" data-level="4"></span></a>
+     <a class="tree-res current" aria-current="page" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Weekly lead volume">Weekly lead volume</span></span><span class="dep-tag" data-pane-group="dep" data-pane="on" hidden title="Deprecated: replaced by Weekly lead volume v2">Deprecated</span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Credit lead funnel">Credit lead funnel</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead sources">Lead sources</span></span><span class="maturity" data-level="4"></span></a>
      <a class="tree-res" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span class="tree-res-name"><span class="clip" title="Lead response time">Lead response time</span></span><span class="maturity" data-level="3"></span></a>
@@ -112,6 +112,8 @@
  <div class="breadcrumb">Collections / Credit leads</div>
  <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
   <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
+  <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="off" data-go="dep:on" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-archive"></i>Deprecate</button>
+  <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="on" data-go="dep:off" type="button" hidden style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-counter-clockwise"></i>Take it away</button>
   <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
   <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">3</span></a>
   <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
@@ -121,7 +123,9 @@
   <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
   <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
   <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
+  <span class="status dep-chip" data-pane-group="dep" data-pane="on" hidden title="Deprecated by the credit team on 20 Oct 2026: replaced by Weekly lead volume v2"><i class="ph-fill ph-archive"></i>Deprecated</span>
  </div>
+ <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. It stays usable, and so do the Lenses on it; a new Lens on it gets a warning.</p><a class="alert-btn" href="#">Use Weekly lead volume v2</a></div>
  <div class="alert" role="status"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">Changed since it was confirmed:</b> the field <span class="mono">lead_channel</span> was added yesterday. Its Level stays 4 · Explored; the Owner has been told.</p><button class="alert-btn" data-seen data-for="owner datateam" data-pop="pop-rec" aria-haspopup="dialog" aria-expanded="false">Mark as seen<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></button></div>
  <div class="tabs" data-group="tabs" role="tablist">
   <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
@@ -301,6 +305,10 @@
  </div>
  <div class="float-foot lc-compact"><div class="lc-next" role="navigation" aria-label="Next"><div data-pane-group="step" data-pane="why"><div class="lc-next-in"><div class="lc-next-text"><b>Next: Core idea</b>The rule behind the two reports, in one sentence.</div><a class="btn-primary lc-next-btn" data-go="step:core">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="core" hidden><div class="lc-next-in" data-pane-group="path" data-pane="full"><div class="lc-next-text"><b>Next: See it</b>The same rule in one picture, with the part that matters marked.</div><a class="btn-primary lc-next-btn" data-go="step:see">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-next-in" data-pane-group="path" data-pane="quick" hidden><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="see" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: Check your understanding</b>Predict first, then see why. As many questions as you like.</div><a class="btn-primary lc-next-btn" data-go="step:check">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="check" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><a class="text-link lc-open" href="learning-card.html"><span>Open in the Learning Centre</span><i class="ph ph-arrow-right"></i></a></div></div>
 </section>
+<div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: deprecated or not" style="bottom:72px">Deprecated
+ <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>
+ <button class="seg" data-target="on" role="tab" aria-selected="false">Yes</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
