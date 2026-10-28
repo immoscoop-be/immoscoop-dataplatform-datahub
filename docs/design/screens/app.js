@@ -8,7 +8,9 @@ try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'flow'], dark: ['', 'village', 'flow'] };
+const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
+// The backgrounds drawn live with WebGL: the flowing gradient, and the flowing lights (DEC-UX-109)
+const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
 const pickBg = theme => {
   const set = BACKGROUNDS[theme] || BACKGROUNDS.light, bg = set[Math.floor(Math.random() * set.length)];
@@ -25,7 +27,7 @@ const bgFor = (theme, keepSession) => {
   return bg !== null && BACKGROUNDS[theme].includes(bg) ? bg : pickBg(theme);
 };
 // The flowing gradient starts its canvas when the page loads; chosen later, the page loads again to start it
-const showBg = bg => { if (bg === 'flow' && !document.querySelector('canvas.bg-flow')) location.reload(); else setBg(bg); };
+const showBg = bg => { if (FLOWS.includes(bg) && !document.querySelector('canvas.bg-flow')) location.reload(); else setBg(bg); };
 // The tab Background of My page shows the choices of the current theme, with the one chosen for it marked
 const syncBgOpts = () => {
   const theme = document.documentElement.dataset.theme || 'light', c = bgChoice(theme);
@@ -271,8 +273,8 @@ new URLSearchParams(location.search).forEach((value, key) => {
 // eased over seconds. One loop of 15 seconds meets its start exactly; 30 frames a
 // second at half resolution, paused with the tab; a still frame for reduced motion, drawn again when the theme changes.
 // Without WebGL the usual background of the app stays
-if (document.documentElement.dataset.bg === 'flow') (() => {
-  const LOOP = 15, RESOLUTION = 0.5, FPS = 30;
+if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
+  const PERIOD = 15, RESOLUTION = 0.5, FPS = 30;
   const canvas = Object.assign(document.createElement('canvas'), { className: 'bg-flow' });
   const gl = canvas.getContext('webgl', { antialias: false, depth: false, stencil: false, alpha: false, powerPreference: 'low-power' });
   const fallback = () => { delete document.documentElement.dataset.bg; };
@@ -325,7 +327,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     }`;
   const NIGHT = `
     precision highp float;
-    uniform float uPhase;
+    uniform vec4 uA;         // four angles, each turning at a random speed from a random start, so it never repeats
     uniform vec2 uRes;
     uniform vec2 uPointer;   // the eased pointer, 0 to 1 from the bottom left
     uniform float uPull;     // how present the pointer is, 0 to 1
@@ -335,16 +337,15 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     // Light added as on a screen: it brightens, but never past white, and black stays black where nothing glows
     vec3 screen(vec3 base, vec3 light, float amount) { return 1.0 - (1.0 - base) * (1.0 - light * amount); }
     void main() {
-      float a = uPhase;
       vec2 uv = vUv;
       vec2 p = uv;
-      p.x += 0.090 * sin(uv.y * 3.1 + a) + 0.036 * sin(uv.y * 5.3 - 2.0 * a);
-      p.y += 0.066 * sin(uv.x * 2.7 - a) + 0.030 * cos(uv.x * 6.1 + 3.0 * a);
+      p.x += 0.090 * sin(uv.y * 3.1 + uA.x) + 0.036 * sin(uv.y * 5.3 - uA.y);
+      p.y += 0.066 * sin(uv.x * 2.7 - uA.z) + 0.030 * cos(uv.x * 6.1 + uA.w);
       // The pointer: the whole field leans a little towards it
       p -= 0.035 * (uPointer - 0.5) * uPull;
 
       // The same rising line as by day: the glowing band runs along it
-      float c = 0.40 + 0.42 * smoothstep(0.0, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + a) + 0.06 * sin(2.0 * a);
+      float c = 0.40 + 0.42 * smoothstep(0.0, 1.05, p.x) + 0.10 * sin(p.x * 3.0 + uA.x) + 0.06 * sin(uA.y);
       // ... and the band bends towards it where it is near
       c += 0.14 * (uPointer.y - c) * exp(-pow((p.x - uPointer.x) / 0.30, 2.0)) * uPull;
       float d = p.y - c;
@@ -355,7 +356,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       col = mix(col, rgb(52.0, 16.0, 64.0), smoothstep(0.0, -0.35, d));
 
       // The band, in layers across its width: teal on top, then violet, then magenta; brightest on the right
-      float lift = 0.04 * sin(a + 1.3);
+      float lift = 0.04 * sin(uA.w + 1.3);
       float teal = exp(-pow((d - 0.01 - lift) / (0.10 + 0.05 * p.x), 2.0)) * (0.28 + 0.52 * p.x);
       float violet = exp(-pow((d + 0.15) / 0.13, 2.0)) * (0.55 + 0.35 * (1.0 - abs(p.x - 0.45)));
       float magenta = exp(-pow((d + 0.36) / 0.15, 2.0)) * (0.55 + 0.4 * smoothstep(0.9, 0.3, p.x)) * smoothstep(-0.1, 0.35, p.x);
@@ -364,13 +365,72 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
       col = screen(col, rgb(150.0, 34.0, 118.0), magenta * 0.9);
 
       // A warm coral glow in the bottom left, breathing slowly
-      vec2 q = (p - vec2(-0.06, -0.02)) / vec2(0.34 + 0.06 * sin(a), 0.44);
+      vec2 q = (p - vec2(-0.06, -0.02)) / vec2(0.34 + 0.06 * sin(uA.z), 0.44);
       col = mix(col, rgb(206.0, 124.0, 92.0), exp(-dot(q, q)) * 0.82);
 
       // A trace of noise against banding in the smooth steps
       col += (hash(gl_FragCoord.xy) - 0.5) / 255.0;
       gl_FragColor = vec4(col, 1.0);
     }`;
+  // The flowing lights (DEC-UX-109): soft spots and arcs of colour, each drifting, breathing and turning at a random
+  // speed of its own. By night their light adds up on black, as light does, with a soft curve that keeps it from
+  // clipping; by day each is painted over a pale ground, as watercolour is
+  const LIGHTS = `
+    precision highp float;
+    uniform vec2 uRes;
+    uniform vec3 uBase;
+    uniform float uPaint;    // 0: light on black, by night; 1: paint on a pale ground, by day
+    uniform vec4 uL[7];      // per light: x and y (0 to 1, from the bottom left), its softness, and the radius of its arc (0: a spot)
+    uniform vec4 uC[7];      // per light: its colour, and its strength
+    varying vec2 vUv;
+    float hash(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+    void main() {
+      float asp = uRes.x / uRes.y;
+      vec2 p = vec2(vUv.x * asp, vUv.y);
+      vec3 light = uBase, paint = uBase;
+      for (int i = 0; i < 7; i++) {
+        float dist = length(p - vec2(uL[i].x * asp, uL[i].y));
+        float d = uL[i].w > 0.0 ? dist - uL[i].w : dist;
+        float w = exp(-(d * d) / (uL[i].z * uL[i].z)) * uC[i].w;
+        light += uC[i].rgb * w;
+        paint = mix(paint, uC[i].rgb, clamp(w, 0.0, 1.0));
+      }
+      vec3 col = mix(1.0 - exp(-light), paint, uPaint);
+      col += (hash(gl_FragCoord.xy) - 0.5) / 128.0;
+      gl_FragColor = vec4(col, 1.0);
+    }`;
+  // The scenes, after pictures Max chose on 2026-10-28; per light [x, y, softness, arc, r, g, b, strength]
+  const SCENES = {
+    // By night: light on black
+    aurora: { paint: 0, base: [0.0, 0.0, 0.01], lights: [
+      [1.15, 1.05, 0.07, 0.90, 0.04, 0.08, 1.00, 2.6], [0.95, 0.40, 0.32, 0, 1.00, 0.41, 0.86, 2.2], [1.05, 0.30, 0.18, 0, 1.00, 0.88, 1.00, 1.6],
+      [0.95, 0.80, 0.22, 0, 1.00, 0.15, 0.21, 2.4], [0.90, 1.05, 0.18, 0, 1.00, 0.17, 0.00, 0.9], [0.62, 0.55, 0.28, 0, 0.50, 0.25, 1.00, 1.0], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    ember: { paint: 0, base: [0.0, 0.0, 0.0], lights: [
+      [0.15, 1.02, 0.16, 0, 0.00, 0.82, 1.00, 1.1], [0.42, 1.00, 0.14, 0, 1.00, 0.11, 0.50, 1.4], [0.62, 1.02, 0.17, 0, 1.00, 0.08, 0.03, 1.8],
+      [0.20, -0.02, 0.24, 0, 1.00, 0.38, 0.00, 2.4], [0.50, 0.00, 0.20, 0, 1.00, 0.05, 0.18, 1.9], [0.82, 0.05, 0.22, 0, 0.00, 0.44, 1.00, 1.6], [0.70, 0.30, 0.15, 0, 0.20, 0.28, 1.00, 0.25]] },
+    dusk: { paint: 0, base: [0.0, 0.0, 0.0], lights: [
+      [0.08, 0.38, 0.24, 0, 1.00, 0.65, 0.00, 2.6], [0.28, 0.33, 0.20, 0, 1.00, 0.32, 0.02, 2.2], [0.50, 0.45, 0.18, 0, 1.00, 0.39, 0.56, 1.8],
+      [0.66, 0.55, 0.20, 0, 0.93, 0.18, 1.00, 1.4], [0.60, 0.75, 0.20, 0, 0.32, 0.07, 1.00, 1.1], [0.85, 0.32, 0.20, 0, 1.00, 0.06, 0.16, 1.6], [0.00, 0.60, 0.15, 0, 1.00, 0.17, 0.00, 0.6]] },
+    horizon: { paint: 0, base: [0.0, 0.13, 0.22], lights: [
+      [0.85, 1.00, 0.38, 0, 1.00, 1.00, 1.00, 3.0], [0.30, 1.00, 0.30, 0, 0.21, 0.86, 1.00, 1.4], [0.90, 1.15, 0.10, 0.62, 1.00, 0.50, 0.20, 2.0],
+      [0.12, 0.12, 0.32, 0, 1.00, 0.21, 0.02, 2.8], [0.48, 0.05, 0.24, 0, 1.00, 0.50, 0.09, 2.2], [0.95, 0.00, 0.20, 0, 1.00, 0.50, 0.30, 0.5], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    // By day: paint on a pale ground
+    periwinkle: { paint: 1, base: [0.69, 0.79, 1.00], lights: [
+      [0.38, 0.82, 0.16, 0, 1.00, 1.00, 1.00, 0.95], [0.50, 0.70, 0.12, 0, 0.36, 0.55, 0.98, 0.80], [0.36, 0.40, 0.18, 0, 1.00, 1.00, 1.00, 0.90],
+      [0.56, 0.32, 0.20, 0, 0.30, 0.50, 0.97, 0.85], [0.30, 0.68, 0.14, 0, 0.55, 0.70, 0.99, 0.5], [0.70, 0.55, 0.18, 0, 0.82, 0.88, 1.00, 0.5], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    sunrise: { paint: 1, base: [1.00, 0.98, 0.90], lights: [
+      [0.00, 0.40, 0.22, 0, 1.00, 0.42, 0.22, 1.0], [0.20, 0.45, 0.24, 0, 1.00, 0.62, 0.20, 0.9], [0.42, 0.52, 0.26, 0, 1.00, 0.82, 0.38, 0.9],
+      [0.95, 0.05, 0.28, 0, 0.82, 0.97, 1.00, 0.9], [0.05, 0.15, 0.16, 0, 1.00, 0.70, 0.62, 0.6], [0.75, 0.80, 0.30, 0, 1.00, 0.95, 0.78, 0.6], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    apricot: { paint: 1, base: [1.00, 0.80, 0.45], lights: [
+      [0.85, 0.95, 0.30, 0, 1.00, 0.55, 0.15, 0.9], [0.00, 0.55, 0.20, 0, 1.00, 0.55, 0.30, 0.8], [0.55, 0.40, 0.08, 0.30, 1.00, 0.98, 0.78, 0.95],
+      [0.60, 0.35, 0.22, 0, 0.98, 0.98, 0.72, 0.8], [0.95, 0.10, 0.24, 0, 1.00, 0.88, 0.25, 0.8], [0.20, 0.90, 0.20, 0, 1.00, 0.85, 0.55, 0.6], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    blush: { paint: 1, base: [1.00, 0.86, 0.86], lights: [
+      [0.92, 0.95, 0.12, 0, 1.00, 0.47, 0.36, 0.95], [0.85, 0.35, 0.24, 0, 1.00, 0.40, 0.55, 0.95], [0.50, 0.60, 0.22, 0, 1.00, 0.52, 0.56, 0.75],
+      [0.15, 0.25, 0.22, 0, 1.00, 0.70, 0.55, 0.85], [0.05, 0.80, 0.20, 0, 1.00, 0.88, 0.88, 0.7], [0.60, 0.05, 0.20, 0, 1.00, 0.70, 0.78, 0.6], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+    sky: { paint: 1, base: [0.86, 0.93, 0.99], lights: [
+      [0.25, 0.80, 0.12, 0.55, 1.00, 1.00, 1.00, 0.9], [0.95, 0.20, 0.20, 0, 0.18, 0.47, 0.93, 0.95], [0.80, 0.35, 0.22, 0, 0.55, 0.75, 0.98, 0.8],
+      [0.50, 0.05, 0.20, 0, 0.94, 0.97, 1.00, 0.8], [0.10, 0.40, 0.25, 0, 0.92, 0.96, 1.00, 0.7], [0.70, 0.90, 0.25, 0, 0.75, 0.86, 0.98, 0.6], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
+  };
   const shader = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); return sh; };
   const build = fragment => {
     const program = gl.createProgram();
@@ -380,10 +440,10 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.warn('?bg=flow: WebGL could not build the gradient.', gl.getProgramInfoLog(program)); return null; }
     const u = name => gl.getUniformLocation(program, name);
-    return { program, uPhase: u('uPhase'), uA: u('uA'), uRes: u('uRes'), uPointer: u('uPointer'), uPull: u('uPull') };
+    return { program, uA: u('uA'), uRes: u('uRes'), uPointer: u('uPointer'), uPull: u('uPull'), uBase: u('uBase'), uPaint: u('uPaint'), uL: u('uL'), uC: u('uC') };
   };
-  const day = build(DAY), night = build(NIGHT);
-  if (!day || !night) return fallback();
+  const day = build(DAY), night = build(NIGHT), lights = build(LIGHTS);
+  if (!day || !night || !lights) return fallback();
   gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
   gl.enableVertexAttribArray(0);
@@ -406,17 +466,37 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
     pointer.x += (pointer.tx - pointer.x) * k; pointer.y += (pointer.ty - pointer.y) * k; pointer.pull += (pointer.tpull - pointer.pull) * kPull;
   };
   let seconds = 0;
-  // By day, a test of Max of 2026-10-28: no loop. Four movements, each at its own speed, between three quarters and one and
-  // a third of its usual one, from a random start; their speeds share no common beat, so the field never repeats, and it
-  // is different every time Data Hub starts. By night, the loop of LOOP seconds stays
-  const TURN = Math.PI * 2, base = [1, 2, 1, 3].map(k => k * TURN / LOOP);
-  const speed = base.map(w => w * (0.75 + Math.random() * 0.58)), start = base.map(() => Math.random() * TURN);
+  // No loop (DEC-UX-109): each movement turns at a speed of its own, between three quarters and one and a third of its
+  // usual one, from a random start; their speeds share no common beat, so the field never repeats, and it differs every
+  // time Data Hub starts
+  const TURN = Math.PI * 2, rnd = (lo, hi) => lo + Math.random() * (hi - lo);
+  const base = [1, 2, 1, 3].map(k => k * TURN / PERIOD);
+  const speed = base.map(w => w * rnd(0.75, 1.33)), start = base.map(() => rnd(0, TURN));
+  // Each light of a scene drifts on two axes, breathes, and its arc swells, each with a period of 8 to 18 seconds
+  const wobble = () => ({ w: Array.from({ length: 4 }, () => TURN / rnd(8, 18)), o: Array.from({ length: 4 }, () => rnd(0, TURN)) });
+  const motion = Object.fromEntries(Object.keys(SCENES).map(k => [k, SCENES[k].lights.map(wobble)]));
+  const L = new Float32Array(28), C = new Float32Array(28);
   const draw = s => {
+    const bg = document.documentElement.dataset.bg, scene = SCENES[bg];
+    if (scene) {
+      gl.useProgram(lights.program);
+      gl.uniform2f(lights.uRes, canvas.width, canvas.height);
+      gl.uniform3f(lights.uBase, ...scene.base);
+      gl.uniform1f(lights.uPaint, scene.paint);
+      scene.lights.forEach(([x, y, r, arc, cr, cg, cb, k], i) => {
+        const m = motion[bg][i], f = j => Math.sin(m.o[j] + m.w[j] * s);
+        // The pointer draws every light a little towards it
+        const lx = x + 0.10 * f(0) + 0.05 * (pointer.x - x) * pointer.pull, ly = y + 0.08 * f(1) + 0.05 * (pointer.y - y) * pointer.pull;
+        L.set([lx, ly, r * (1 + 0.18 * f(2)), arc ? arc * (1 + 0.08 * f(3)) : 0], i * 4); C.set([cr, cg, cb, k], i * 4);
+      });
+      gl.uniform4fv(lights.uL, L); gl.uniform4fv(lights.uC, C);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      return;
+    }
     const g = document.documentElement.dataset.theme === 'dark' ? night : day;
     gl.useProgram(g.program);
     gl.uniform2f(g.uRes, canvas.width, canvas.height);
-    if (g === day) { const a = speed.map((w, i) => (start[i] + w * s) % TURN); gl.uniform4f(g.uA, a[0], a[1], a[2], a[3]); }
-    else gl.uniform1f(g.uPhase, ((s % LOOP) / LOOP) * Math.PI * 2);
+    const a = speed.map((w, i) => (start[i] + w * s) % TURN); gl.uniform4f(g.uA, a[0], a[1], a[2], a[3]);
     gl.uniform2f(g.uPointer, pointer.x, pointer.y);
     gl.uniform1f(g.uPull, pointer.pull);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
@@ -430,7 +510,7 @@ if (document.documentElement.dataset.bg === 'flow') (() => {
   };
   addEventListener('resize', resize);
   resize();
-  new MutationObserver(() => draw(seconds)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  new MutationObserver(() => draw(seconds)).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-bg'] });
   const still = matchMedia('(prefers-reduced-motion: reduce)');
   let last = -Infinity;
   const frame = t => {

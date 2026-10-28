@@ -75,6 +75,16 @@
     var(--bg-base);
   --app-bg-size: 130% 130%;
   --bg-prev-flow: linear-gradient(160deg, #BFD9F2 0%, #F2C49A 48%, #F7EEDF 100%);  /* a still picture of the flowing gradient, for My page */
+  /* Still pictures of the flowing lights, for My page (DEC-UX-109) */
+  --bg-prev-aurora: radial-gradient(70% 90% at 100% 40%, #FF9AD8 0%, #E0306A 30%, transparent 62%), radial-gradient(120% 120% at 120% 100%, transparent 52%, #1B2BFF 60%, transparent 70%), #000;
+  --bg-prev-ember: radial-gradient(40% 40% at 20% 100%, #FF7A00, transparent 70%), radial-gradient(35% 35% at 55% 100%, #E01848, transparent 70%), radial-gradient(35% 40% at 85% 95%, #0070E0, transparent 70%), radial-gradient(30% 30% at 20% 0%, #00B8D0, transparent 70%), radial-gradient(30% 30% at 60% 0%, #E01810, transparent 70%), #000;
+  --bg-prev-dusk: radial-gradient(40% 40% at 10% 62%, #FFC000, transparent 70%), radial-gradient(35% 35% at 50% 55%, #F06090, transparent 70%), radial-gradient(35% 35% at 65% 30%, #6010C0, transparent 70%), radial-gradient(35% 35% at 85% 68%, #D01030, transparent 70%), #000;
+  --bg-prev-horizon: radial-gradient(60% 60% at 85% 0%, #FFFFFF, transparent 70%), radial-gradient(40% 40% at 25% 0%, #60C8D8, transparent 70%), radial-gradient(50% 50% at 10% 90%, #F04010, transparent 70%), radial-gradient(40% 40% at 50% 100%, #F09030, transparent 70%), #0A2A3A;
+  --bg-prev-periwinkle: radial-gradient(25% 30% at 38% 20%, #FFFFFF, transparent 70%), radial-gradient(25% 30% at 52% 32%, #5A8CF8, transparent 70%), radial-gradient(28% 34% at 36% 60%, #FFFFFF, transparent 70%), radial-gradient(30% 36% at 56% 70%, #4C80F5, transparent 70%), #B0C9FF;
+  --bg-prev-sunrise: radial-gradient(40% 50% at 0% 60%, #FF6B38, transparent 70%), radial-gradient(45% 50% at 35% 50%, #FFC850, transparent 70%), radial-gradient(40% 40% at 100% 100%, #D2F7FF, transparent 70%), #FFFAE6;
+  --bg-prev-apricot: radial-gradient(50% 50% at 90% 5%, #FF8C26, transparent 70%), radial-gradient(35% 45% at 0% 45%, #FF8C4D, transparent 70%), radial-gradient(40% 40% at 60% 65%, #FBFBB8, transparent 70%), radial-gradient(40% 40% at 95% 95%, #FFE040, transparent 70%), #FFCC73;
+  --bg-prev-blush: radial-gradient(25% 25% at 92% 5%, #FF785C, transparent 70%), radial-gradient(45% 45% at 85% 65%, #FF668C, transparent 70%), radial-gradient(40% 45% at 15% 75%, #FFB38C, transparent 70%), #FFDCDC;
+  --bg-prev-sky: radial-gradient(40% 40% at 95% 80%, #2E78ED, transparent 70%), radial-gradient(40% 40% at 75% 65%, #8CBFFA, transparent 70%), #DCEDFC;
   --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
   --surface-float-hover: rgba(255,255,255,.28);
   --surface-solid: #FFFFFF;      /* reading surface in focus */
