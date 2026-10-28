@@ -33,7 +33,7 @@ Every part follows the same order:
 | Non-functional requirements | 16: 14 Specified, 1 Proposed, 1 Withdrawn, for localisation and security |
 | Design decisions (DEC-UX) | 104 |
 | Prototype screens | 33, plus the index |
-| Open points | 49 open, of 245: 32 for v1 and 17 marked Could |
+| Open points | 48 open, of 245: 31 for v1 and 17 marked Could |
 
 The newest screens and rules (publishing and confirming, the page for a link to nothing, signing in, the backgrounds, the learning centre, adding Resources in two steps, the language principle, the redesigned Query and the Message Catalogue) are in [pull request 31](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/pull/31), waiting to be merged into uat. The links in this file are relative, so they open the files next to it, on whichever branch you read it.
 
@@ -1183,14 +1183,14 @@ Everything in this review comes from the repository [immoscoop-dataplatform-data
 
 ## Every open point
 
-Every point that was open in the documentation, 49 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
+Every point that was open in the documentation, 48 still open, 17 of them marked Could, generated on 2026-10-25 from the files under `docs/` and brought up to date since, plus three things to confirm at the end. Each has its ID; the ID links to the point in its source file, where the context is. To answer, write your answer under the point (or just tick it when the proposal is right); I then record the decision in the source file, where the point gets `[x]` and *Decided on …*, and here it moves to [Decided during the review](#decided-during-the-review), so that this list holds only what is still open.
 
 Where to start: the points that shape the build are in group A of **Decisions before the technical analysis**; the newest are what the Domain Model says per column ([OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07)) and the language points.
 
 **Asked in our conversations,** still open. Every question I ask you in the chat is recorded as an open point in its source file, and listed here until it is decided:
 
 - 2026-10-27: [OP-UX-31](../design/principles.md#op-ux-31) the flowing gradient as default · [OP-LE-05](../requirements/functional/09-lenses.md#op-le-05) a very large Lens while it waits
-- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06) who owns the Slack app · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
+- 2026-10-28: [OP-AR-07](../requirements/functional/01-artifact-registry.md#op-ar-07) the Domain Model per column · [OP-AR-08](../requirements/functional/01-artifact-registry.md#op-ar-08) the identity on a state mart · [OP-PF-19](../requirements/technical/00-platform.md#op-pf-19) sending e-mail · [OP-LR-28](../requirements/functional/16-learning.md#op-lr-28) making the English cards · [OP-CO-20](../requirements/functional/03-collections.md#op-co-20) the icon of a Collection required
 
 ### Open themes
 
@@ -1238,8 +1238,7 @@ Source: [requirements/functional/06-maturity-and-release.md](../requirements/fun
 
 ### Log and notifications
 
-Source: [requirements/functional/07-log-and-notifications.md](../requirements/functional/07-log-and-notifications.md) · 1 open
-- [ ] **[OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06)** · Decide who installs and owns the Slack app of Data Hub ([DEC-LN-05](../requirements/functional/07-log-and-notifications.md#dec-ln-05)). Proposal: the Data Team owns it; a Slack admin installs it once. *Raised on 2026-10-28, in the review of Max.*
+Source: [requirements/functional/07-log-and-notifications.md](../requirements/functional/07-log-and-notifications.md) · 0 open
 
 
 ### Lenses
@@ -1500,6 +1499,7 @@ The points above that were decided since 2026-10-25, each with its decision. The
 - [x] **[OP-LN-02](../requirements/functional/07-log-and-notifications.md#op-ln-02)** · Work out what making a Lens public means, on which [FR-LN-04](../requirements/functional/07-log-and-notifications.md#fr-ln-04) depends: Lenses have no visibility of their own yet ([OP-CO-07](../requirements/functional/03-collections.md#op-co-07)). *Raised while taking in the workshop of 2026-10-22.* *Decided on 2026-10-28, by Max: the same as for a Resource, available to the entire company ([DEC-LE-09](../requirements/functional/09-lenses.md#dec-le-09)).*
 - [x] **[OP-LN-03](../requirements/functional/07-log-and-notifications.md#op-ln-03)** · Decide which logic Changes notify the Owner of a Resource ([DEC-DH-27](../overview/data-hub.md#dec-dh-27)): only a Change in the Node of the Resource itself, or also one further upstream, which the artifact registry follows into the Log of every Resource downstream ([FR-AR-12](../requirements/functional/01-artifact-registry.md#fr-ar-12)). Proposal: as for descriptions ([FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17)), only the Node of the Resource itself; a Change further upstream stays an entry in the Log. The catalogue names the Node and how far upstream it is ([MSG-RES-04](../requirements/functional/message-catalogue.md#msg-res-04)). *Raised on 2026-10-28, while making the Message Catalogue.* *Decided on 2026-10-28, by Max: also a Change further upstream ([DEC-LN-04](../requirements/functional/07-log-and-notifications.md#dec-ln-04)).*
 - [x] **[OP-LN-04](../requirements/functional/07-log-and-notifications.md#op-ln-04)** · Find out whether Data Hub can send notifications in Slack, and what it requires ([DEC-LN-02](../requirements/functional/07-log-and-notifications.md#dec-ln-02)). What is known: a Slack app of Immoscoop, installed in the workspace by a Slack admin, with a bot token of the scopes `chat:write`, `im:write` and `users:read.email`. Data Hub finds a User in Slack by the e-mail address of their Google account, and sends a direct message from the app; the token lives in Secret Manager, as other secrets do. Proposal: one app, direct messages only, no channels; a User who is not in Slack gets e-mail alone. Decide whether Slack is in v1, and who installs and owns the app. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: as proposed, in v1 ([DEC-LN-05](../requirements/functional/07-log-and-notifications.md#dec-ln-05)); who installs and owns the app is [OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06).*
+- [x] **[OP-LN-06](../requirements/functional/07-log-and-notifications.md#op-ln-06)** · Decide who installs and owns the Slack app of Data Hub ([DEC-LN-05](../requirements/functional/07-log-and-notifications.md#dec-ln-05)). Proposal: the Data Team owns it; a Slack admin installs it once. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: as proposed ([DEC-LN-06](../requirements/functional/07-log-and-notifications.md#dec-ln-06)).*
 
 **Beta and promotion**
 

@@ -18,7 +18,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources](functional/04-stacks-and-resources.md) | 54 (18 proposed, 20 specified, 10 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 36 | 17 (2 open, 15 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (8 proposed, 9 specified, 1 withdrawn) | – | 15 | 25 (2 open, 23 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (10 specified, 5 withdrawn) | – | 13 | 7 (3 open, 4 done) |
-| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 5 | 6 (1 open, 5 done) |
+| [Log and notifications](functional/07-log-and-notifications.md) | 6 (4 proposed, 2 specified) | – | 6 | 6 (6 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
 | [Lenses](functional/09-lenses.md) | 17 (13 proposed, 1 specified, 3 withdrawn) | – | 14 | 10 (1 open, 9 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
@@ -353,7 +353,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-UM-01](functional/02-user-management.md#ec-um-01) | An Owner Unit becomes empty | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
 | [EC-UM-02](functional/02-user-management.md#ec-um-02) | A Group is deleted in Workspace | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
 | [EC-UM-03](functional/02-user-management.md#ec-um-03) | Google is briefly unreachable | Withdrawn | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
-| [EC-UM-04](functional/02-user-management.md#ec-um-04) | An Owner Unit becomes empty or is deleted, without Data Hub knowing | Specified | – | [fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
+| [EC-UM-04](functional/02-user-management.md#ec-um-04) | An Owner Unit becomes empty or is deleted, without Data Hub knowing | Specified | – | [5e36586](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5e365860aa38e0d34291ad4746f71d0f80ae42e7) refs, 2026-10-28<br>[fa50b37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa50b375ede9de63a9649c3eadc9f827d15dddb5) refs, 2026-10-28 |
 
 ### [Collections](functional/03-collections.md)
 
