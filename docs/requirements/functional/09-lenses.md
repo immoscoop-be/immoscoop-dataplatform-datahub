@@ -30,6 +30,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-07"></a>**DEC-LE-07** · The kinds of a Parameter are basic types, enough for Data Hub: Date, Period, Whole number, Decimal number, Text, Choice, Several choices and Yes or no ([DEC-UX-71](../../design/principles.md#dec-ux-71)). They are aligned with the primitives that the datatypes of the Domain Model cascade down to, `date`, `integer`, `number`, `string`, `list` and `boolean`, with the same BigQuery types, but not derived from them: an Entity such as an agency is not a kind of its own, but a Text or a Choice. A Parameter is named as the Domain Model names things, in camelCase, such as `@dateFrom` or `@agencyId`, by whoever writes the query; its name is not derived either. *Decided on 2026-10-28, by Max ([OP-DH-10](../../overview/open-themes.md#op-dh-10)).*
 - <a id="dec-le-08"></a>**DEC-LE-08** · In v1, the result of a Lens is a simple table: the same grid as the result of a query in Query ([DEC-UX-72](../../design/principles.md#dec-ux-72)), in Data Hub and in Claude. A Lens has no chart in v1. Visualisations come with Reports, and with them how they render, in the browser or as SVG, and in which mode in Claude. *Decided on 2026-10-28, by Max ([OP-DH-11](../../overview/open-themes.md#op-dh-11)).*
 - <a id="dec-le-09"></a>**DEC-LE-09** · A Lens is made public the same way as a Resource ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)): published in a public Collection, it is available to the entire company. Not published, only its Owner Unit and the Data Team see it. Who sees it stays bounded by the Resources beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). *Decided on 2026-10-28, by Max ([OP-LN-02](07-log-and-notifications.md#op-ln-02)).*
+- <a id="dec-le-10"></a>**DEC-LE-10** · In version 1 the story of a Lens is a field of the Lens, which its author fills in, as the question of a query, "What do you want to know?", is today. No skill and no separate form. *Decided on 2026-10-28, by Max ([OP-LE-01](#op-le-01)).*
 
 ## Requirements
 
@@ -79,6 +80,8 @@ Business can adjust certain Parameters of a Lens without touching its SQL, for e
 **Status:** Proposed · **Source:** [REQ-DH-STORY](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-story)
 
 Whoever starts a Lens is first asked to record the question and the story, what they want to know and what they will do with it, before the query is built. The story becomes metadata of the Lens.
+
+*Note of 2026-10-28: in version 1 it is a field of the Lens ([DEC-LE-10](#dec-le-10)).*
 
 
 <a id="fr-le-06"></a>
@@ -185,7 +188,7 @@ A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its pa
 
 ## Open points
 
-- [ ] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built.
+- [x] <a id="op-le-01"></a>**OP-LE-01** · Decide the form in which the story of a Lens is asked ([FR-LE-05](#fr-le-05)): a skill, a form or the interface. The meeting notes ask Hannelore to help shape how a question becomes actionable before a Lens is built. *Decided on 2026-10-28, by Max: in v1, a field of the Lens ([DEC-LE-10](#dec-le-10)).*
 - [x] <a id="op-le-02"></a>**OP-LE-02** · Decide where a Lens turns from light to heavy ([FR-LE-02](#fr-le-02)), in GB per run, together with the limit of [FR-LE-01](#fr-le-01). *Raised on 2026-10-23.* *Decided on 2026-10-23: a Lens has no light or heavy; [FR-LE-02](#fr-le-02) is withdrawn. Making a Lens is checked in three ranges instead ([FR-LE-08](#fr-le-08)), whose two thresholds are decided with the other limits in [OP-SR-07](04-stacks-and-resources.md#op-sr-07).*
 - [x] <a id="op-le-03"></a>**OP-LE-03** · Decide at what one run of a Lens is measured ([FR-LE-08](#fr-le-08)): its default Parameters, or the widest a User can choose ([FR-LE-04](#fr-le-04)). And decide what happens when a Lens later outgrows its range, as its Resources grow: whether it is measured again, and whether a Lens that becomes very large then waits for the Data Team. *Raised on 2026-10-23.* *Decided on 2026-10-23: the size is measured when the Lens is made, as its author sets it up. Growth is followed while the Lens runs: a run that reads more than its range sets off the check again ([FR-LE-10](#fr-le-10)).*
 - [x] <a id="op-le-04"></a>**OP-LE-04** · Decide where a Lens made from a query belongs ([FR-LE-07](#fr-le-07)). Only the Owner Unit adds Lenses to a Collection ([DEC-CO-15](03-collections.md#dec-co-15)), so a Lens made by someone outside it needs a place: for example with its author until an Owner Unit takes it in. *Raised on 2026-10-23.* *Note of 2026-10-23: the [design](../../design/principles.md#making-a-lens) shows an author in the Owner Unit, whose Lens goes into the Collection of that unit.* *Decided on 2026-10-26, by Max: a Lens always goes into a Collection its author owns, even with Resources of other Collections ([DEC-CO-20](03-collections.md#dec-co-20)).*
