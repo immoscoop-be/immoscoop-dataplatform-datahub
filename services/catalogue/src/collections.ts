@@ -21,8 +21,10 @@ export interface CollectionItem {
   id: string;
   displayName: string;
   level: number;
-  /** Publication is not built yet: no Resource is published (DEC-CO-12). */
+  /** Not published, only its Owner Unit and the Data Team see it (FR-SR-31). */
   published: boolean;
+  /** Its use is discouraged (FR-SR-50). */
+  deprecated: boolean;
   withdrawn: boolean;
 }
 
@@ -112,16 +114,27 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
   async function present(rows: Row[], viewer: Viewer, from: Database = db): Promise<Collection[]> {
     const managed = rows.filter((row) => canManage(row, viewer)).map((row) => row.id);
     const items = new Map<string, CollectionItem[]>();
-    if (managed.length > 0) {
+    if (rows.length > 0) {
+      // Its Owner Unit and the Data Team see every Resource in it; others only the published ones (FR-SR-31).
       const resources = await from
         .selectFrom('resources')
-        .select(['id', 'collectionId', 'displayName', 'level', 'withdrawnAt'])
-        .where('collectionId', 'in', managed)
+        .select(['id', 'collectionId', 'displayName', 'level', 'withdrawnAt', 'publishedAt', 'deprecatedAt'])
+        .where('collectionId', 'in', rows.map((row) => row.id))
         .orderBy(sql`lower(display_name)`)
         .execute();
       for (const resource of resources) {
+        if (!managed.includes(resource.collectionId!) && (resource.publishedAt === null || resource.withdrawnAt !== null)) {
+          continue;
+        }
         const list = items.get(resource.collectionId!) ?? [];
-        list.push({ id: resource.id, displayName: resource.displayName, level: resource.level, published: false, withdrawn: resource.withdrawnAt !== null });
+        list.push({
+          id: resource.id,
+          displayName: resource.displayName,
+          level: resource.level,
+          published: resource.publishedAt !== null,
+          deprecated: resource.deprecatedAt !== null,
+          withdrawn: resource.withdrawnAt !== null,
+        });
         items.set(resource.collectionId!, list);
       }
     }

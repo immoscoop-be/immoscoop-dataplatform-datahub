@@ -106,7 +106,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
         { name: 'pages', dataType: 'ARRAY<STRING>', reason: 'array' },
       ],
     });
-    // The Level stays as it was assessed at Registration; rising and dropping come later.
+    // dbt describes no field of it: it stays at 1 · Available (FR-MR-15).
     expect((await resources.detail(visits.id))?.level).toBe(1);
   });
 
@@ -147,8 +147,11 @@ describe.skipIf(!url)('Resources in Postgres', () => {
       'Maturity assessed at Level 2',
       'Registered through exposure datahub_customers',
     ]);
+    // Its description changed, and changed back: each goes into its Log (FR-RC-17).
     expect(await texts(known.orders!.id)).toEqual([
+      'Description changed in orders',
       'Renamed from Orders to All orders',
+      'Description changed in orders',
       'Maturity assessed at Level 2',
       'Registered through exposure datahub_marts',
     ]);

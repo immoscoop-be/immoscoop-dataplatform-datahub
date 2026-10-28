@@ -19,6 +19,15 @@ export type Origins = Partial<Record<'partition' | 'clusterBy' | 'partitionFilte
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
 
 /** The tables of catalogue, in camelCase (the columns are snake_case in Postgres). */
+/** A field as it was at a Confirmation. */
+export interface ConfirmedField {
+  name: string;
+  dataType: string | null;
+}
+
+/** What happened to a field after the last Confirmation; a rename shows as removed and added. */
+export type SchemaChange = 'added' | 'removed' | 'retyped';
+
 export interface CatalogueDatabase {
   /** One row per Collection, also once dissolved (TR-CO-01). */
   collections: {
@@ -87,6 +96,51 @@ export interface CatalogueDatabase {
     reliableSince: ColumnType<Date | null, string | null | undefined, string | null>;
     keyFields: ColumnType<string[], string[] | undefined, string[]>;
     parameters: ColumnType<string[], string[] | undefined, string[]>;
+    /** Published, by name; the first Publication is the first Confirmation (DEC-SR-07). */
+    publishedAt: Date | null;
+    publishedBy: string | null;
+    /** Deprecated, by name, why, and what to use instead (DEC-UX-101). */
+    deprecatedAt: Date | null;
+    deprecatedBy: string | null;
+    deprecationReason: string | null;
+    insteadOf: string | null;
+  };
+  /** Each Confirmation, with the Fingerprint and the fields of that moment (FR-MR-08). */
+  resourceConfirmations: {
+    id: Generated<string>;
+    resourceId: string;
+    ownerId: string;
+    ownerName: string;
+    structure: string;
+    types: string;
+    descriptions: string;
+    code: string | null;
+    fields: ColumnType<ConfirmedField[], string, string>;
+    confirmedAt: Timestamp;
+  };
+  /** A field that changed after the last Confirmation: the warning, until it is seen (FR-MR-12). */
+  resourceChanges: {
+    id: Generated<string>;
+    resourceId: string;
+    field: string;
+    change: SchemaChange;
+    old: string | null;
+    new: string | null;
+    /** A bigint in Postgres, which pg reads as a string. */
+    runId: ColumnType<string, string, string>;
+    at: Timestamp;
+    seenAt: Date | null;
+    seenBy: string | null;
+  };
+  /** A description from dbt that changed: of the table when there is no field (FR-RC-17). */
+  descriptionChanges: {
+    id: Generated<string>;
+    resourceId: string;
+    field: string | null;
+    before: string;
+    after: string;
+    runId: ColumnType<string, string, string>;
+    at: Timestamp;
   };
   /** The Business Description of a field, by its name (FR-RC-16). */
   fieldDescriptions: {

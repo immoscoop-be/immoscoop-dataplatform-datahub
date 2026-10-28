@@ -1,6 +1,6 @@
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
-import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit } from './database.js';
+import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
 import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
 
@@ -46,6 +46,10 @@ export interface Resource {
   registeredAt: Date;
   /** No exposure tagged `datahub` depends on it any more; it is held (DEC-SR-26). */
   withdrawn: boolean;
+  /** Published: everyone who sees its Collection sees it (FR-SR-31). */
+  published: boolean;
+  /** Its use is discouraged (FR-SR-50). */
+  deprecated: boolean;
 }
 
 /** The mapping of a field (DEC-RC-05, DEC-RC-06, DEC-RC-14). */
@@ -109,7 +113,21 @@ export interface ResourceDetail extends Resource {
   /** Empty until it is added to a Collection with them. */
   details: Details;
   card: Card;
+  /** Who published it and when, and who confirmed it last and when (FR-RC-12); null until it is published. */
+  publication: { publishedAt: Date; publishedBy: string; confirmedAt: Date; confirmedBy: string } | null;
+  /** Who deprecated it, when, why and what to use instead (DEC-UX-101); null when it is not. */
+  deprecation: { at: Date; by: string; reason: string; insteadOf: { id: string; displayName: string } | null } | null;
+  /** The fields that changed since its last Confirmation and were not marked seen yet: its warning (FR-MR-12). */
+  changes: { field: string; change: SchemaChange; old: string | null; new: string | null; at: Date }[];
+  /** The descriptions from dbt that changed in the last 30 days, with the text before: no field for the table (FR-RC-17). */
+  descriptionChanges: { field: string | null; before: string; at: Date }[];
 }
+
+/** What publishing a Resource came to (FR-SR-49). */
+export type PublishOutcome = 'published' | 'not_found' | 'no_collection' | 'not_described' | 'already_published';
+
+/** What deprecating a Resource, or taking it away, came to (FR-SR-50). */
+export type DeprecateOutcome = 'done' | 'not_found' | 'not_published' | 'not_deprecated' | 'invalid';
 
 /** A mapping of a Resource with the other Resources that carry the same identity (FR-RC-08, FR-RC-09). */
 export interface Related extends Pick<Mapping, 'field' | 'kind' | 'relationType' | 'identity' | 'inDomainModel'> {
@@ -198,6 +216,14 @@ export interface Resources {
   related(id: string, viewer: Viewer): Promise<Related[]>;
   /** The Resources the viewer sees on the given Nodes. */
   atNodes(nodeIds: readonly string[], viewer: Viewer): Promise<ResourceAtNode[]>;
+  /** Publishes a Resource, from Described, and keeps that first Confirmation with its Fingerprint (FR-SR-17, FR-MR-08). */
+  publish(id: string, viewer: Viewer): Promise<PublishOutcome>;
+  /** Marks the changes since the last Confirmation seen; how many there were (FR-MR-12). */
+  markSeen(id: string, viewer: Viewer): Promise<number>;
+  /** Marks a published Resource deprecated, with why and what to use instead (FR-SR-50). */
+  deprecate(id: string, reason: string, insteadOf: string | null, viewer: Viewer): Promise<DeprecateOutcome>;
+  /** Takes the mark away again. */
+  undeprecate(id: string, viewer: Viewer): Promise<DeprecateOutcome>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -221,6 +247,8 @@ function present(row: Row): Resource {
     level: row.level,
     registeredAt: row.registeredAt,
     withdrawn: row.withdrawnAt !== null,
+    published: row.publishedAt !== null,
+    deprecated: row.deprecatedAt !== null,
   };
 }
 
@@ -239,6 +267,8 @@ function cardOf(row: Row, reliableSince: string | null): Card {
 
 /** A Business Description is written from 2 · Described on (DEC-MR-10). */
 const DESCRIBED = 2;
+/** Publishing confirms it: 3 · Confirmed (FR-SR-17). */
+const CONFIRMED = 3;
 
 export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   async function write(trx: Database, resourceId: string, logId: ResourceLogId, params: Record<string, string>, actorId: string | null = null) {
@@ -247,18 +277,112 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
 
   /** The fields of a Resource and the columns left out of it, as its table has them now (FR-SR-06). */
   /**
-   * The Collections whose Resources the viewer sees, or null for all of them: the Data Team sees every
-   * Resource; while nothing is published, others see those in a Collection of their Owner Unit (FR-SR-31).
+   * Which Resources the viewer sees (FR-SR-31), or null for every one: the Data Team sees all; others
+   * see every Resource in a Collection of their Owner Unit, and the published ones in every Collection
+   * they see, a public one or one of their Owner Unit.
    */
-  async function seenCollections(viewer: Viewer): Promise<string[] | null> {
+  async function seenScope(viewer: Viewer): Promise<{ managed: string[]; visible: string[] } | null> {
     if (viewer.dataTeam) {
       return null;
     }
-    if (viewer.groups.length === 0) {
-      return [];
+    const rows = await db.selectFrom('collections').select(['id', 'ownerUnitId', 'visibility']).where('dissolvedAt', 'is', null).execute();
+    const managed = rows.filter((row) => viewer.groups.includes(row.ownerUnitId));
+    return { managed: managed.map((row) => row.id), visible: rows.filter((row) => row.visibility === 'public' || managed.includes(row)).map((row) => row.id) };
+  }
+
+  /** A condition on `resources` (as `r`) that keeps those in a scope. */
+  function inScope(scope: { managed: string[]; visible: string[] }) {
+    // An empty list is a list of one ID no Collection has, as `in ()` is no SQL.
+    const ids = (list: string[]) => (list.length > 0 ? list : ['00000000-0000-0000-0000-000000000000']);
+    return sql<boolean>`(r.collection_id in (${sql.join(ids(scope.managed))}) or (r.collection_id in (${sql.join(ids(scope.visible))}) and r.published_at is not null))`;
+  }
+
+  /**
+   * What a new Current Version means for a Resource Data Hub knows already (FR-MR-15, FR-MR-12, FR-RC-17):
+   * every field added, removed or retyped goes into its Log and, after a Confirmation, into its warning;
+   * every description that changed goes into its Log with the text before; its Level follows the
+   * descriptions in dbt; and once it has an Owner, the Owner is told.
+   */
+  async function follow(trx: Database, row: Row, before: readonly Column[], table: ExposedTable, fields: readonly Column[], run: string, runDay: string) {
+    const sourceNode = table.name;
+    const was = new Map(before.map((field) => [field.name, field]));
+    const now = new Map(fields.map((field) => [field.name, field]));
+    const changes: { field: string; change: SchemaChange; old: string | null; new: string | null }[] = [
+      ...fields.filter((field) => !was.has(field.name)).map((field) => ({ field: field.name, change: 'added' as const, old: null, new: field.dataType })),
+      ...before.filter((field) => !now.has(field.name)).map((field) => ({ field: field.name, change: 'removed' as const, old: field.dataType, new: null })),
+      ...fields
+        .filter((field) => was.has(field.name) && (was.get(field.name)!.dataType ?? '') !== (field.dataType ?? ''))
+        .map((field) => ({ field: field.name, change: 'retyped' as const, old: was.get(field.name)!.dataType, new: field.dataType })),
+    ];
+    for (const change of changes) {
+      if (change.change === 'retyped') {
+        await write(trx, row.id, 'ART-012', { field: change.field, old: change.old ?? '', new: change.new ?? '', sourceNode, distance: '0' });
+      } else {
+        await write(trx, row.id, 'ART-010', { field: change.field, direction: change.change, sourceNode, distance: '0' });
+      }
     }
-    const rows = await db.selectFrom('collections').select('id').where('dissolvedAt', 'is', null).where('ownerUnitId', 'in', viewer.groups).execute();
-    return rows.map((row) => row.id);
+
+    // Its Level follows dbt: Described with the table and a field described, Confirmed again once it was (DEC-MR-08).
+    const confirmation = await trx.selectFrom('resourceConfirmations').select('confirmedAt').where('resourceId', '=', row.id).orderBy('id', 'desc').limit(1).executeTakeFirst();
+    const { level: described, reason } = levelAtRegistration(table.description, [...fields]);
+    const level = described === 2 && confirmation ? 3 : described;
+
+    if (confirmation && changes.length > 0) {
+      await trx.insertInto('resourceChanges').values(changes.map((change) => ({ resourceId: row.id, ...change, runId: run }))).execute();
+      if (row.collectionId) {
+        await tell(trx, row.id, 'MSG-RES-03', {
+          confirmed: confirmation.confirmedAt.toISOString().slice(0, 10),
+          level: String(level),
+          count: String(changes.length),
+          changes: JSON.stringify(changes.map(({ field, change, old, new: after }) => ({ field, change, ...(old ? { old } : {}), ...(after ? { new: after } : {}) }))),
+        });
+      }
+    }
+
+    const descriptions = [
+      ...(row.description !== table.description ? [{ field: null, before: row.description, after: table.description }] : []),
+      ...fields.flatMap((field) => {
+        const earlier = was.get(field.name);
+        return earlier && earlier.description !== field.description ? [{ field: field.name, before: earlier.description, after: field.description }] : [];
+      }),
+    ];
+    if (descriptions.length > 0) {
+      await trx.insertInto('descriptionChanges').values(descriptions.map((change) => ({ resourceId: row.id, ...change, runId: run }))).execute();
+      await write(trx, row.id, 'ART-013', { sourceNode, distance: '0' });
+      if (row.collectionId) {
+        const business = new Map(
+          (await trx.selectFrom('fieldDescriptions').select(['field', 'text']).where('resourceId', '=', row.id).execute()).map((entry) => [entry.field, entry.text]),
+        );
+        await tell(trx, row.id, 'MSG-RES-02', {
+          run: runDay,
+          count: String(descriptions.length),
+          changes: JSON.stringify(
+            descriptions.map(({ field, before: earlier, after }) => {
+              const text = field === null ? row.businessDescription : (business.get(field) ?? '');
+              return { on: field === null ? 'table' : 'field', ...(field ? { field } : {}), before: earlier, after, hasBusiness: text ? 'yes' : 'no', ...(text ? { business: text } : {}) };
+            }),
+          ),
+        });
+      }
+    }
+
+    if (level !== row.level) {
+      await trx.updateTable('resources').set({ level }).where('id', '=', row.id).execute();
+      if (level > row.level) {
+        await write(trx, row.id, 'RES-002', { level: String(level), reason });
+      } else {
+        // A drop gives the Owner an alert (FR-MR-09); it stays published (FR-SR-19).
+        await write(trx, row.id, 'MAT-021', { level: String(level), reason });
+        if (row.collectionId) {
+          await tell(trx, row.id, 'MSG-RES-05', { from: String(row.level), to: String(level), cause: 'description', published: row.publishedAt ? 'yes' : 'no' });
+        }
+      }
+    }
+  }
+
+  /** A Message from Data Hub on a Resource, for its Owner; lists are kept as JSON in its parameters. */
+  async function tell(trx: Database, resourceId: string, type: string, params: Record<string, string>) {
+    await trx.insertInto('messages').values({ type, subjectKind: 'resource', subjectId: resourceId, writerId: null, params, state: null }).execute();
   }
 
   async function fieldNames(trx: Database, resourceId: string): Promise<string[]> {
@@ -437,6 +561,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             continue;
           }
           const back = row.withdrawnAt !== null;
+          const before = await trx.selectFrom('resourceFields').select(['name', 'position', 'dataType', 'description']).where('resourceId', '=', row.id).execute();
           // A Resource that comes back, or asks for another name, gets its Display Name again.
           const displayName = back || wanted !== row.requestedName ? await freeName(trx, wanted, update, table.key, row.id) : row.displayName;
           await trx
@@ -445,6 +570,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             .where('id', '=', row.id)
             .execute();
           await keepColumns(trx, row.id, columns);
+          await follow(trx, row, before, table, columns.fields, run, runDay);
           if (back) {
             await write(trx, row.id, 'RES-006', { exposure, run });
             outcome.back++;
@@ -535,7 +661,47 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         release: row.domainModelRelease,
         mappings: mappings.sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0)),
       };
-      return { ...present(row), fields, leftOut, details, card: cardOf(row, row.reliableDay) };
+      const confirmation = await db
+        .selectFrom('resourceConfirmations')
+        .select(['ownerName', 'confirmedAt'])
+        .where('resourceId', '=', id)
+        .orderBy('id', 'desc')
+        .limit(1)
+        .executeTakeFirst();
+      const instead = row.insteadOf ? await db.selectFrom('resources').select(['id', 'displayName']).where('id', '=', row.insteadOf).executeTakeFirst() : undefined;
+      const changes = await db
+        .selectFrom('resourceChanges')
+        .select(['field', 'change', 'old', 'new', 'at'])
+        .where('resourceId', '=', id)
+        .where('seenAt', 'is', null)
+        .orderBy('id')
+        .execute();
+      // The latest change of each description in the last 30 days, with the text before it.
+      const descriptionChanges = await db
+        .selectFrom('descriptionChanges')
+        .select(['field', 'before', 'at'])
+        .distinctOn(sql`coalesce(field, '')`)
+        .where('resourceId', '=', id)
+        .where('at', '>', sql<Date>`now() - interval '30 days'`)
+        .orderBy(sql`coalesce(field, '')`)
+        .orderBy('id', 'desc')
+        .execute();
+      return {
+        ...present(row),
+        fields,
+        leftOut,
+        details,
+        card: cardOf(row, row.reliableDay),
+        publication:
+          row.publishedAt && confirmation
+            ? { publishedAt: row.publishedAt, publishedBy: row.publishedBy ?? '', confirmedAt: confirmation.confirmedAt, confirmedBy: confirmation.ownerName }
+            : null,
+        deprecation: row.deprecatedAt
+          ? { at: row.deprecatedAt, by: row.deprecatedBy ?? '', reason: row.deprecationReason ?? '', insteadOf: instead ? { id: instead.id, displayName: instead.displayName } : null }
+          : null,
+        changes,
+        descriptionChanges,
+      };
     },
 
     async add(items, collection, viewer) {
@@ -738,10 +904,10 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           .where('resourceId', '=', id)
           .execute()
       ).sort((a, b) => (order.get(a.field) ?? 0) - (order.get(b.field) ?? 0));
-      const seen = await seenCollections(viewer);
+      const scope = await seenScope(viewer);
       const identities = [...new Set(mappings.map((mapping) => mapping.identity))];
       const carriers =
-        identities.length === 0 || (seen !== null && seen.length === 0)
+        identities.length === 0
           ? []
           : await db
               .selectFrom('resourceMappings as m')
@@ -750,7 +916,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
               .where('m.identity', 'in', identities)
               .where('r.id', '<>', id)
               .where('r.withdrawnAt', 'is', null)
-              .$if(seen !== null, (query) => query.where('r.collectionId', 'in', seen!))
+              .$if(scope !== null, (query) => query.where(inScope(scope!)))
               .orderBy(sql`lower(r.display_name)`)
               .execute();
       return mappings.map((mapping) => ({
@@ -762,17 +928,111 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     },
 
     async atNodes(nodeIds, viewer) {
-      const seen = await seenCollections(viewer);
-      if (nodeIds.length === 0 || (seen !== null && seen.length === 0)) {
+      if (nodeIds.length === 0) {
         return [];
       }
+      const scope = await seenScope(viewer);
       return db
-        .selectFrom('resources')
-        .select(['nodeId', 'id', 'displayName', 'level'])
-        .where('nodeId', 'in', [...nodeIds])
-        .where('withdrawnAt', 'is', null)
-        .$if(seen !== null, (query) => query.where('collectionId', 'in', seen!))
+        .selectFrom('resources as r')
+        .select(['r.nodeId', 'r.id', 'r.displayName', 'r.level'])
+        .where('r.nodeId', 'in', [...nodeIds])
+        .where('r.withdrawnAt', 'is', null)
+        .$if(scope !== null, (query) => query.where(inScope(scope!)))
         .execute();
+    },
+
+    async publish(id, viewer) {
+      if (!UUID.test(id)) {
+        return 'not_found';
+      }
+      return db.transaction().execute(async (trx): Promise<PublishOutcome> => {
+        const row = await trx.selectFrom('resources').selectAll().where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return 'not_found';
+        }
+        if (row.collectionId === null) {
+          return 'no_collection';
+        }
+        if (row.publishedAt !== null) {
+          return 'already_published';
+        }
+        if (row.level < DESCRIBED) {
+          return 'not_described';
+        }
+        // The first Publication is the first Confirmation, kept with the Fingerprint of this moment (FR-MR-08).
+        const fields = await trx.selectFrom('resourceFields').select(['name', 'position', 'dataType', 'description']).where('resourceId', '=', id).orderBy(sql`position nulls last`).execute();
+        const code = (await trx.selectFrom('resourceFingerprints').select('code').where('resourceId', '=', id).orderBy('id', 'desc').limit(1).executeTakeFirst())?.code ?? null;
+        const print = fingerprint(row.description, fields, code);
+        await trx
+          .insertInto('resourceConfirmations')
+          .values({ resourceId: id, ownerId: viewer.id, ownerName: viewer.name, ...print, fields: JSON.stringify(fields.map(({ name, dataType }) => ({ name, dataType }))) })
+          .execute();
+        await trx.updateTable('resources').set({ publishedAt: new Date(), publishedBy: viewer.name, level: CONFIRMED, updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'PUB-040', { owner: viewer.name, level: String(CONFIRMED) }, viewer.id);
+        await write(trx, id, 'MAT-020', { owner: viewer.name, fingerprint: print.structure.slice(0, 12) }, viewer.id);
+        return 'published';
+      });
+    },
+
+    async markSeen(id, viewer) {
+      if (!UUID.test(id)) {
+        return 0;
+      }
+      return db.transaction().execute(async (trx) => {
+        const seen = await trx
+          .updateTable('resourceChanges')
+          .set({ seenAt: new Date(), seenBy: viewer.name })
+          .where('resourceId', '=', id)
+          .where('seenAt', 'is', null)
+          .returning('id')
+          .execute();
+        if (seen.length > 0) {
+          await write(trx, id, 'MAT-022', { actor: viewer.name, changes: String(seen.length) }, viewer.id);
+        }
+        return seen.length;
+      });
+    },
+
+    async deprecate(id, reason, insteadOf, viewer) {
+      if (!UUID.test(id) || (insteadOf !== null && !UUID.test(insteadOf))) {
+        return UUID.test(id) ? 'invalid' : 'not_found';
+      }
+      return db.transaction().execute(async (trx): Promise<DeprecateOutcome> => {
+        const row = await trx.selectFrom('resources').select(['publishedAt']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return 'not_found';
+        }
+        if (row.publishedAt === null) {
+          return 'not_published';
+        }
+        if (insteadOf !== null) {
+          const other = await trx.selectFrom('resources').select('id').where('id', '=', insteadOf).where('withdrawnAt', 'is', null).executeTakeFirst();
+          if (!other || insteadOf === id) {
+            return 'invalid';
+          }
+        }
+        await trx.updateTable('resources').set({ deprecatedAt: new Date(), deprecatedBy: viewer.name, deprecationReason: reason, insteadOf, updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-007', { actor: viewer.name, reason }, viewer.id);
+        return 'done';
+      });
+    },
+
+    async undeprecate(id, viewer) {
+      if (!UUID.test(id)) {
+        return 'not_found';
+      }
+      return db.transaction().execute(async (trx): Promise<DeprecateOutcome> => {
+        const row = await trx.selectFrom('resources').select(['deprecatedAt']).where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return 'not_found';
+        }
+        if (row.deprecatedAt === null) {
+          return 'not_deprecated';
+        }
+        await trx.updateTable('resources').set({ deprecatedAt: null, deprecatedBy: null, deprecationReason: null, insteadOf: null, updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-008', { actor: viewer.name }, viewer.id);
+        return 'done';
+      });
     },
   };
 }

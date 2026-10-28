@@ -6,7 +6,19 @@ import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Vie
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
-import { type AddItem, type AddOutcome, CARD_KEYS, type Card, type Details, type EditOutcome, type Mapping, type Resource, type Resources, type ResourcesUpdate } from './resources.js';
+import {
+  type AddItem,
+  type AddOutcome,
+  CARD_KEYS,
+  type Card,
+  type DeprecateOutcome,
+  type Details,
+  type EditOutcome,
+  type Mapping,
+  type Resource,
+  type Resources,
+  type ResourcesUpdate,
+} from './resources.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -175,7 +187,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!current) {
       return reply.code(404).send(NOT_FOUND);
     }
-    return { resources: current.canManage ? await resources.inCollection(current.id) : [] };
+    // Its Owner Unit and the Data Team see every Resource in it; others the published ones (FR-SR-31).
+    const all = await resources.inCollection(current.id);
+    return { resources: current.canManage ? all : all.filter((resource) => resource.published && !resource.withdrawn) };
   });
 
   // registry hands over every exposed table of one dbt project (TR-SR-01, TR-SR-03). No User starts
@@ -267,13 +281,14 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   // The Log of a Resource, for whoever sees it: the Data Team, and the Owner Unit of its Collection.
   /**
-   * Who sees a Resource that is not published: the Data Team and the members of the Owner Unit of its
-   * Collection (FR-SR-31); Publication is not built yet. Anyone else gets 404, as for one that does not exist.
+   * Who sees a Resource (FR-SR-31): the Data Team and the members of the Owner Unit of its Collection,
+   * and, once it is published, everyone who sees its Collection. Anyone else gets 404, as for one that
+   * does not exist.
    */
   async function seen(request: FastifyRequest, resource: Resource | undefined): Promise<boolean> {
     const who = viewer(request);
     const collection = resource?.collectionId ? await collections.get(resource.collectionId, who) : undefined;
-    return resource !== undefined && (who.dataTeam || collection?.canManage === true);
+    return resource !== undefined && (who.dataTeam || collection?.canManage === true || (collection !== undefined && resource.published && !resource.withdrawn));
   }
 
   app.get<{ Params: { id: string } }>('/resources/:id', async (request, reply) => {
@@ -304,6 +319,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     if (resource.collectionId === null) {
       reply.code(409).send({ error: 'no_collection', message: 'A Resource gets what Data Hub keeps about it once it is in a Collection.' });
+      return undefined;
+    }
+    // Seeing a published Resource is not changing it.
+    const collection = await collections.get(resource.collectionId, viewer(request));
+    if (!collection?.canManage) {
+      reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit of its Collection and the Data Team change a Resource.' });
       return undefined;
     }
     return resource;
@@ -393,6 +414,79 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       resources: await resources.atNodes(nodeIds, viewer(request)),
     };
   });
+
+  // Only the Owner publishes (FR-SR-16): a member of the Owner Unit of its Collection, from Described on
+  // (FR-SR-17). Publishing is the first Confirmation (FR-SR-49).
+  app.post<{ Params: { id: string } }>('/resources/:id/publication', async (request, reply) => {
+    const resource = await resources.get(request.params.id);
+    if (!resource || !(await seen(request, resource))) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    const who = viewer(request);
+    const collection = resource.collectionId ? await collections.get(resource.collectionId, who) : undefined;
+    if (!collection || !who.groups.includes(collection.ownerUnit.id)) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner of a Resource publishes it: a member of the Owner Unit of its Collection.' });
+    }
+    switch (await resources.publish(resource.id, who)) {
+      case 'published':
+        return { resource: await resources.detail(resource.id) };
+      case 'not_found':
+        return reply.code(404).send(NO_RESOURCE);
+      case 'no_collection':
+        return reply.code(409).send({ error: 'no_collection', message: 'A Resource is published from its Collection.' });
+      case 'already_published':
+        return reply.code(409).send({ error: 'already_published', message: 'It is published already; a Publication cannot be undone.' });
+      case 'not_described':
+        return reply.code(409).send({ error: 'not_described', message: 'A Resource is published from 2 · Described: dbt describes its table and at least one of its fields.' });
+    }
+  });
+
+  // The Owner Unit and the Data Team mark the changes since the last Confirmation seen (FR-MR-12).
+  app.post<{ Params: { id: string } }>('/resources/:id/changes/seen', async (request, reply) => {
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    await resources.markSeen(resource.id, viewer(request));
+    return { resource: await resources.detail(resource.id) };
+  });
+
+  // The Owner Unit and the Data Team deprecate a published Resource, and take it away again (FR-SR-50).
+  app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/deprecation', async (request, reply) => {
+    const body = (request.body ?? {}) as { reason?: unknown; insteadOf?: unknown };
+    const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+    if (reason.length < 1 || reason.length > 500 || (body.insteadOf !== undefined && body.insteadOf !== null && typeof body.insteadOf !== 'string')) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Say why it is deprecated, in at most 500 characters, and what to use instead, or nothing.' });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return deprecationOutcome(reply, resource.id, await resources.deprecate(resource.id, reason, (body.insteadOf as string | null | undefined) ?? null, viewer(request)));
+  });
+
+  app.delete<{ Params: { id: string } }>('/resources/:id/deprecation', async (request, reply) => {
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return deprecationOutcome(reply, resource.id, await resources.undeprecate(resource.id, viewer(request)));
+  });
+
+  async function deprecationOutcome(reply: FastifyReply, id: string, outcome: DeprecateOutcome) {
+    switch (outcome) {
+      case 'done':
+        return { resource: await resources.detail(id) };
+      case 'not_found':
+        return reply.code(404).send(NO_RESOURCE);
+      case 'not_published':
+        return reply.code(409).send({ error: 'not_published', message: 'Only a published Resource is deprecated.' });
+      case 'not_deprecated':
+        return reply.code(409).send({ error: 'not_deprecated', message: 'It is not deprecated.' });
+      case 'invalid':
+        return reply.code(400).send({ error: 'invalid_request', message: 'What to use instead is another Resource that is not withdrawn.' });
+    }
+  }
 }
 
 const TEXT_LIMITS = { businessDescription: 4000, intendedUse: 2000, pitfalls: 2000 } as const;
