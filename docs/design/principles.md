@@ -196,7 +196,7 @@ Screen: [resource-preview](screens/resource-preview.html). Designed on 2026-10-2
 
 ### Queries
 
-Screen: [resource-history](screens/resource-history.html). Designed on 2026-10-23, to review ([DEC-UX-19](#dec-ux-19)).
+Screen: [resource-history](screens/resource-history.html). Designed on 2026-10-23, to review ([DEC-UX-19](#dec-ux-19)). *Note of 2026-10-28: this is the tab History, one row per query or Lens, without a Query ID; the screen leads where the lines below differ ([DEC-UX-90](#dec-ux-90), [OP-SR-18](../requirements/functional/04-stacks-and-resources.md#op-sr-18)).*
 
 - Every query that ran on the Resource, newest first: when, who, through what (Query, a preview, Claude, a Lens), what it was, what it read, and its Query ID. A blocked query shows its estimate.
 - **The SQL** for whoever ran it, for the Owner Unit of the Resource, and for the Data Team ([DEC-SR-31](../requirements/functional/04-stacks-and-resources.md#dec-sr-31)); for others the line says so. Everyone who may see the Resource sees the list.

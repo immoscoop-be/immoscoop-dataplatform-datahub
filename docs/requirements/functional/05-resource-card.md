@@ -138,6 +138,8 @@ The Resource Card shows the model type and the grain of the Resource, as dbt has
 
 *Note of 2026-10-26: the grain is now the set of fields that identify each row, with a sentence, derived or given when the Resource is added ([DEC-RC-07](#dec-rc-07)). The `grain` in `meta` of dbt is one of its sources.*
 
+*Note of 2026-10-28: the model type and the grain are those Data Hub keeps, set by the Data Admin when adding the Resource, never read from `meta` ([DEC-RC-09](#dec-rc-09), [OP-RC-26](#op-rc-26)).*
+
 <a id="fr-rc-12"></a>
 ### FR-RC-12 · Who published and who confirmed
 
@@ -158,6 +160,8 @@ The Resource Card shows since when the data of the Resource is reliable. The Own
 **Status:** Specified · **Source:** [The Resource Card](../../overview/data-hub.md#the-resource-card) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 The Resource Card shows the active checks on the Resource and its incidents.
+
+*Could, not in v1: set on 2026-10-28, by Max; checks come in version 2 ([DEC-MR-13](06-maturity-and-release.md#dec-mr-13)), and the build leaves the tile Monitoring out ([OP-RC-27](#op-rc-27)).*
 
 <a id="fr-rc-15"></a>
 ### FR-RC-15 · The Owner and the Data Team edit in place
@@ -222,8 +226,8 @@ Wherever Data Hub shows or hands over the description of a Resource or of a fiel
 - [x] <a id="op-rc-23"></a>**OP-RC-23** · Decide whether Data Hub checks a grain against the data when a Resource is added: a query that counts the rows sharing the chosen fields, with a dry run first. Proposal: yes for a grain from a test or chosen by the Data Admin; not for a Colleciónes model, which merges on its key. *Raised on 2026-10-26, while designing the step that adds a Resource.* *Decided on 2026-10-28, by Max: no, left out ([DEC-RC-15](#dec-rc-15)).*
 - [x] <a id="op-rc-24"></a>**OP-RC-24** · Decide whether the Data Admin still ticks the grain when adding a Resource ([FR-CO-33](03-collections.md#fr-co-33), [DEC-RC-07](#dec-rc-07)), now that Described takes it from the `meta` of dbt ([DEC-MR-11](06-maturity-and-release.md#dec-mr-11)). Proposal: Data Hub shows the grain from `meta`; where there is none, the Data Admin ticks it for the mapping of the fields, and the Resource stays Available until dbt has it. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: yes; the grain is defined only in Data Hub, by the Data Admin ([DEC-RC-09](#dec-rc-09)).*
 - [x] <a id="op-rc-25"></a>**OP-RC-25** · Decide the values of the model type that the Data Admin sets in Data Hub ([DEC-RC-09](#dec-rc-09)), and where it is set: step 2 of adding Resources shows the grain, not a model type ([FR-CO-33](03-collections.md#fr-co-33)). Proposal: one of `event`, `state`, `fact`, `dimension` and `aggregate`, chosen next to the grain. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: the five, next to the grain, in a hard-coded list; one Learning Card for the model types, to which the card on the grain points ([DEC-RC-10](#dec-rc-10)).*
-- [ ] <a id="op-rc-26"></a>**OP-RC-26** · [FR-RC-11](#fr-rc-11) shows the model type and the grain as dbt has them in `meta`, while Data Hub defines both, by the Data Admin, and never reads them from `meta` ([DEC-RC-09](#dec-rc-09), [DEC-MR-12](06-maturity-and-release.md#dec-mr-12)). Proposal: FR-RC-11 follows DEC-RC-09. *Raised on 2026-10-28, while mapping the screens to the requirements.*
-- [ ] <a id="op-rc-27"></a>**OP-RC-27** · [FR-RC-14](#fr-rc-14), the active checks and incidents on the Resource Card, is not marked Could, while checks come in version 2 ([DEC-MR-13](06-maturity-and-release.md#dec-mr-13)); [resource-detail](../../design/screens/resource-detail.html) shows a tile Monitoring and [collection-overview](../../design/screens/collection-overview.html) "Check passed". Proposal: FR-RC-14 is a Could, not in v1, and the build leaves the tile out. *Raised on 2026-10-28, while mapping the screens to the requirements.*
+- [x] <a id="op-rc-26"></a>**OP-RC-26** · [FR-RC-11](#fr-rc-11) shows the model type and the grain as dbt has them in `meta`, while Data Hub defines both, by the Data Admin, and never reads them from `meta` ([DEC-RC-09](#dec-rc-09), [DEC-MR-12](06-maturity-and-release.md#dec-mr-12)). Proposal: FR-RC-11 follows DEC-RC-09. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
+- [x] <a id="op-rc-27"></a>**OP-RC-27** · [FR-RC-14](#fr-rc-14), the active checks and incidents on the Resource Card, is not marked Could, while checks come in version 2 ([DEC-MR-13](06-maturity-and-release.md#dec-mr-13)); [resource-detail](../../design/screens/resource-detail.html) shows a tile Monitoring and [collection-overview](../../design/screens/collection-overview.html) "Check passed". Proposal: FR-RC-14 is a Could, not in v1, and the build leaves the tile out. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: as proposed.*
 
 ## Builds on
 

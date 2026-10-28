@@ -26,6 +26,7 @@
 - <a id="dec-mr-11"></a>**DEC-MR-11** · A Resource is Described as soon as dbt has a description of its table and of at least one of its fields, and the `meta` of its model holds `model_type` and `grain`. Business Descriptions start from there, at the level of the whole Resource: then its Owner and the Data Team can write one for the table and for every field, also a field dbt does not describe ([DEC-MR-10](#dec-mr-10)). The Owner judges whether it is described well enough when confirming. This replaces "every column" of [DEC-MR-01](#dec-mr-01) and [DEC-DH-34](../../overview/data-hub.md#dec-dh-34). *Decided on 2026-10-28, by Max ([OP-MR-03](#op-mr-03)).* *Note of 2026-10-28: `model_type` and `grain` are no longer asked of dbt ([DEC-MR-12](#dec-mr-12)).*
 - <a id="dec-mr-12"></a>**DEC-MR-12** · Described asks of dbt only the descriptions: of the table and of at least one field. `model_type` and `grain` are not standard fields of dbt, so they are not read from its `meta`: Data Hub defines them, by the Data Admin ([DEC-RC-09](05-resource-card.md#dec-rc-09)), and they do not count towards Described. This replaces that part of [DEC-MR-11](#dec-mr-11). *Decided on 2026-10-28, by Max ([OP-MR-06](#op-mr-06)).*
 - <a id="dec-mr-13"></a>**DEC-MR-13** · In v1 a Resource cannot reach 5 · Monitored: the ladder stops at 4 · Explored. Monitored comes in version 2, with the automatic checks from the EDA and the monitors ([OP-DH-19](../../overview/open-themes.md#op-dh-19)). *Decided on 2026-10-28, by Max ([OP-MR-07](#op-mr-07)).*
+- <a id="dec-mr-14"></a>**DEC-MR-14** · In v1 Data Hub links no EDA document to a Resource yet: no screen is designed for it. A Resource therefore reaches at most 3 · Confirmed; its ladder shows 4 · Explored as the next step, out of reach, until the link is designed. *Decided on 2026-10-28, by Max ([OP-MR-08](#op-mr-08)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
 
@@ -67,6 +68,8 @@ Confirmed requires a Confirmation by the Owner, from Described.
 **Status:** Specified · **Confluence:** MO-03 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 Explored requires a linked EDA document, on top of Confirmed.
+
+*Could, not in v1: set on 2026-10-28, by Max; no screen links an EDA document yet ([DEC-MR-14](#dec-mr-14)).*
 
 <a id="fr-mr-04"></a>
 ### FR-MR-04 · Monitored: at least one active check
@@ -189,7 +192,7 @@ Raised during the review of the migration; not on the Confluence page:
 
 Raised on 2026-10-28, while mapping the screens to the requirements:
 
-- [ ] <a id="op-mr-08"></a>**OP-MR-08** · [FR-MR-07](#fr-mr-07) is a Could as a whole, while its second half, a drop to Confirmed when the EDA document goes, belongs to 4 · Explored, which v1 reaches ([FR-MR-03](#fr-mr-03), [DEC-MR-13](#dec-mr-13)); and no screen links the EDA document of a Resource. Decide whether v1 links an EDA document, and if so, where; then whether that half of FR-MR-07 stays in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.*
+- [x] <a id="op-mr-08"></a>**OP-MR-08** · [FR-MR-07](#fr-mr-07) is a Could as a whole, while its second half, a drop to Confirmed when the EDA document goes, belongs to 4 · Explored, which v1 reaches ([FR-MR-03](#fr-mr-03), [DEC-MR-13](#dec-mr-13)); and no screen links the EDA document of a Resource. Decide whether v1 links an EDA document, and if so, where; then whether that half of FR-MR-07 stays in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-28, by Max: v1 links no EDA document until a screen for it is designed, so FR-MR-07 stays a Could as a whole ([DEC-MR-14](#dec-mr-14)).*
 
 ## Builds on
 
