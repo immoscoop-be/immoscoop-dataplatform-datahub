@@ -13,14 +13,16 @@ export type Route =
   | { readonly kind: 'collection'; readonly id: string; readonly section: Section }
   /** An empty Collection page, being made (FR-CO-12). */
   | { readonly kind: 'newCollection'; readonly section: Section }
-  /** A new query, on a Resource when it starts from its page (FR-SR-46). */
-  | { readonly kind: 'newQuery'; readonly resource: string | null; readonly section: Section }
+  /** A new query, on a Resource when it starts from its page (FR-SR-46), or for a Collection from its "New Lens" (DEC-UX-123). */
+  | { readonly kind: 'newQuery'; readonly resource: string | null; readonly forCollection?: string; readonly section: Section }
   /** A query, in the section Query (FR-SR-41); with `run`, its history, at one run or at all (DEC-UX-74). */
   | { readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section }
   /** Make it a lens, from a query, in the section Query (DEC-UX-25). */
   | { readonly kind: 'newLens'; readonly query: string; readonly section: Section }
   /** The page of a Lens, in the section Collections (DEC-UX-66). */
   | { readonly kind: 'lens'; readonly id: string; readonly section: Section }
+  /** Edit a Lens, for its Owner Unit (FR-LE-06). */
+  | { readonly kind: 'editLens'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -38,6 +40,9 @@ export const newQueryPath = (resource: string): string => `${NEW_QUERY}/${encode
 /** Make it a lens, from a query (DEC-UX-25). */
 export const newLensPath = (query: string): string => `${queryPath(query)}/lens`;
 export const lensPath = (id: string): string => `/lenses/${encodeURIComponent(id)}`;
+export const editLensPath = (id: string): string => `${lensPath(id)}/edit`;
+/** "New Lens" on a Collection: a new query, whose "Make it a lens" offers that Collection first (DEC-UX-123). */
+export const newLensForPath = (collection: string): string => `${NEW_QUERY}/for/${encodeURIComponent(collection)}`;
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
@@ -62,10 +67,14 @@ export function route(path: string): Route {
   const query = SECTIONS.find((candidate) => candidate.id === 'query');
   const [, queryId, runs, runNumber] = /^\/query\/([^/]+)(\/runs(?:\/([1-9]\d{0,8}))?)?$/.exec(clean) ?? [];
   const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
+  const [, newFor] = /^\/query\/new\/for\/([^/]+)$/.exec(clean) ?? [];
   const [, lensFrom] = /^\/query\/([^/]+)\/lens$/.exec(clean) ?? [];
   try {
     if (query && clean === NEW_QUERY) {
       return { kind: 'newQuery', resource: null, section: query };
+    }
+    if (query && newFor) {
+      return { kind: 'newQuery', resource: null, forCollection: decodeURIComponent(newFor), section: query };
     }
     if (query && newOn) {
       return { kind: 'newQuery', resource: decodeURIComponent(newOn), section: query };
@@ -85,6 +94,14 @@ export function route(path: string): Route {
   }
   if (clean === NEW_COLLECTION) {
     return { kind: 'newCollection', section: collections };
+  }
+  const [, editing] = /^\/lenses\/([^/]+)\/edit$/.exec(clean) ?? [];
+  if (editing) {
+    try {
+      return { kind: 'editLens', id: decodeURIComponent(editing), section: collections };
+    } catch {
+      return { kind: 'notFound' };
+    }
   }
   const [, kind, id] = /^\/(resources|collections|lenses)\/([^/]+)$/.exec(clean) ?? [];
   if (kind && id) {

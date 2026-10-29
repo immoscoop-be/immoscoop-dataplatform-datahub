@@ -212,6 +212,11 @@ const LENS = {
   reads: 80_000_000,
   fromQuery: { id: 'q1', name: 'Leads per source name' },
   request: null as unknown,
+  broken: null as unknown,
+  stoppedAt: null as string | null,
+  stoppedReads: null as number | null,
+  versions: [{ version: 1, madeByName: 'Max Verstraete', madeAt: '2026-10-29T08:00:00Z', fromQuery: 'Leads per source name' }],
+  log: [] as unknown[],
 };
 
 /**
@@ -401,8 +406,26 @@ function serve({
       return json({ lens: made }, 201);
     }
     const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
+    if (lens && path === `/lenses/${lens.id as string}` && method === 'PATCH') {
+      const { labels: _labels, ...changes } = JSON.parse(init.body as string) as Record<string, unknown>;
+      Object.assign(lens, changes);
+      return json({ lens });
+    }
     if (lens && path === `/lenses/${lens.id as string}`) {
       return json({ lens });
+    }
+    // "Open in Query": its query for its author (DEC-LE-18).
+    if (lens && path.endsWith('/query')) {
+      return json({ queryId: 'q1' });
+    }
+    if (lens && path.endsWith('/version')) {
+      Object.assign(lens, { version: (lens.version as number) + 1 });
+      return json({ lens, preflight: preflightOf('where') });
+    }
+    // A run with its defaults that now reads more than 1 GB stops the Lens (DEC-LE-11).
+    if (lens && path.endsWith('/preflight') && lens.grows) {
+      Object.assign(lens, { state: 'stopped', range: 'request', stoppedAt: '2026-10-29T09:00:00Z', stoppedReads: 1_400_000_000 });
+      return json({ error: 'stopped', stoppedReads: 1_400_000_000 }, 409);
     }
     if (lens && path.endsWith('/preflight')) {
       const { values } = JSON.parse(init.body as string) as { values: Record<string, unknown> };
@@ -1325,6 +1348,95 @@ describe('Lenses', () => {
     expect(table.getByText('Max Verstraete')).toBeTruthy();
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('shows a Broken Lens with what it misses, Run off and no result, and a red dot where it is listed (FR-LE-17, DEC-UX-81)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS, broken: { kind: 'column', name: 'lead_channel', since: '2026-10-28T05:17:00Z' } }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Deze Lens kan niet draaien.')).toBeTruthy();
+    expect(main.getByText('Broken')).toBeTruthy();
+    expect(main.getByText(/Hij leest de kolom lead_channel, die sinds 28 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
+    // Its last result is not shown; Run is off and nothing is checked (DEC-UX-81).
+    expect(main.getByText('Kan niet draaien.')).toBeTruthy();
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    expect(main.getByRole('button', { name: 'Open zijn query' })).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(calls.some((call) => call.path === '/lenses/l1/preflight')).toBe(false);
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('img', { name: 'Lens · Broken: de kolom lead_channel bestaat niet meer' })).toBeTruthy();
+  });
+
+  it('stops a Lens when a run with its defaults grows past 1 GB, in amber, Run off (DEC-LE-11, DEC-LE-19, DEC-UX-125)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS, grows: true }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // The Pre-flight with its defaults finds it grew: the page reads the Lens again.
+    expect(await main.findByText('Deze Lens is gestopt.', {}, { timeout: 3000 })).toBeTruthy();
+    expect(main.getByText(/Eén run met zijn standaardwaarden leest 1,4 GB, sinds 29 okt\.? 2026/)).toBeTruthy();
+    expect(main.getByText('Gestopt.')).toBeTruthy();
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.click(main.getByRole('tab', { name: 'Over' }));
+    expect(main.getByText('Gestopt: één run met zijn standaardwaarden las 1,4 GB')).toBeTruthy();
+  });
+
+  it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('link', { name: 'Bewerken' }));
+    const edit = within(await screen.findByRole('main'));
+    expect(await edit.findByRole('heading', { level: 1, name: 'De Lens bewerken' })).toBeTruthy();
+    const shows = (await edit.findByRole('textbox', { name: 'Wat hij toont' })) as HTMLTextAreaElement;
+    await vi.waitFor(() => expect(shows.value).toBe(LENS.shows));
+    expect(edit.getByRole('combobox', { name: 'Collection' }).matches(':disabled')).toBe(true);
+    await fireEvent.input(shows, { target: { value: 'Leads per source, a row a week.' } });
+    await fireEvent.click(edit.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l1'));
+    expect(calls.find((call) => call.method === 'PATCH' && call.path === '/lenses/l1')?.body).toMatchObject({ shows: 'Leads per source, a row a week.', labels: { dateFrom: 'From', leadChannel: 'Lead channel' } });
+
+    await fireEvent.click(await within(await screen.findByRole('main')).findByRole('button', { name: 'Openen in Query' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q1'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/lenses/l1/query' });
+  });
+
+  it('updates a Lens from the query used as it, after its size check (FR-LE-16, DEC-UX-77)', async () => {
+    const used = { id: 'l1', name: LENS.name, collectionId: 'c1', state: 'published', createdAt: LENS.createdAt, version: 1, range: 'free', reads: 80_000_000 };
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY, sql: `${QUERY.sql} where 1 = 1`, lens: used }], lenses: [{ ...LENS }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const update = await main.findByRole('button', { name: 'De Lens bijwerken' });
+    expect(main.queryByRole('link', { name: 'Maak er een Lens van' })).toBeNull();
+    expect(main.queryByRole('button', { name: /Lenses op deze Resources/ })).toBeNull();
+    expect(main.getByText(/overschrijft hem met deze query/)).toBeTruthy();
+    await fireEvent.click(update);
+    const sheet = within(await screen.findByRole('dialog'));
+    expect(sheet.getByText('Wat hij vervangt')).toBeTruthy();
+    expect(await sheet.findByText('80 MB per run, binnen het bereik:', {}, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: 'De Lens bijwerken' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l1'));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/lenses/l1/version', body: { queryId: 'q1', approve: false, text: '' } });
+  });
+
+  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const links = await main.findAllByRole('link', { name: 'Nieuwe Lens' });
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1', '/query/new/for/c1']);
+
+    await fireEvent.click(links[0] as HTMLElement);
+    const start = within(await screen.findByRole('main'));
+    await fireEvent.click(await start.findByRole('button', { name: 'Een Resource toevoegen' }));
+    await fireEvent.click(await start.findByRole('button', { name: /Weekly lead volume/ }));
+    await fireEvent.click(start.getByRole('button', { name: 'Begin je eigen' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body).toMatchObject({ resources: ['r2'], forCollection: 'c1' });
   });
 
   it('opens a Lens that waits for the Data Team as its author made it, frozen (FR-LE-09, DEC-LE-05)', async () => {

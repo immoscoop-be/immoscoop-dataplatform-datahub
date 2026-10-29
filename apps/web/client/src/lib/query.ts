@@ -112,12 +112,24 @@ export interface Query {
   request: QueryRequest | null;
   /** The query it was started from with another set of Resources, and after which of its runs (DEC-UX-73). */
   startedFrom: { id: string; name: string; afterRun: number | null } | null;
-  /** The Lens it is used as (DEC-LE-03). */
-  lens: { id: string; name: string; collectionId: string; state: LensState; createdAt: string } | null;
+  /** The Lens it is used as: made from it, or opened as it in Query (DEC-LE-03, DEC-LE-18). */
+  lens: { id: string; name: string; collectionId: string; state: LensState; createdAt: string; version: number; range: 'free' | 'approve' | 'request'; reads: number } | null;
+  /** The Collection whose "New Lens" started it, offered first when it becomes a Lens (DEC-UX-123). */
+  forCollection: string | null;
 }
 
-/** A Lens is published, or waits for the Data Team while one run reads more than 1 GB (FR-LE-09). */
-export type LensState = 'published' | 'waiting';
+/**
+ * A Lens is published; or waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or
+ * stopped, after a run with its defaults grew past 1 GB, until the Data Team accepts it again (DEC-LE-11).
+ */
+export type LensState = 'published' | 'waiting' | 'stopped';
+
+/** What a Broken Lens misses: a table or a column, and since when (FR-LE-17). */
+export interface Missing {
+  kind: 'table' | 'column';
+  name: string;
+  since: string;
+}
 
 /** A Parameter of a Lens: one of its query, with the name Users see and its default (DEC-LE-01). */
 export type LensParameter = Parameter & { label: string };
@@ -138,6 +150,15 @@ export interface LensItem {
   mine: boolean;
   createdAt: string;
   publishedAt: string | null;
+  /** What it misses while it is Broken, for the red dot wherever it is listed (DEC-UX-81). */
+  broken: Missing | null;
+}
+
+/** A line of the Log of a Lens: it became Broken, or worked again (FR-SR-52). */
+export interface LensLogEntry {
+  logId: 'BRK-001' | 'BRK-002';
+  params: Record<string, string>;
+  at: string;
 }
 
 /** A Lens as its page shows it: everything but its SQL (FR-LE-14). */
@@ -153,7 +174,16 @@ export interface Lens extends Omit<LensItem, 'resources'> {
   fromQuery: { id: string; name: string } | null;
   /** Its Request to the Data Team, while it waits (FR-LE-09). */
   request: QueryRequest | null;
+  /** Since when it stopped, and what one run with its defaults read then (DEC-LE-11). */
+  stoppedAt: string | null;
+  stoppedReads: number | null;
+  /** Every version, newest first, with who made it from which query (FR-LE-16, DEC-LE-18). */
+  versions: { version: number; madeByName: string; madeAt: string; fromQuery: string }[];
+  log: LensLogEntry[];
 }
+
+/** What its Owner Unit changes about a Lens: what it tells, never its SQL (FR-LE-06, DEC-UX-27). */
+export type LensEdit = Partial<Pick<NewLens, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>>;
 
 /** What its author tells about a new Lens (FR-LE-06, DEC-LE-16). */
 export interface NewLens {
@@ -268,6 +298,14 @@ export interface NewQuery {
   sql?: string;
   parameters?: readonly Parameter[];
   startedFrom?: string;
+  /** Started from "New Lens" on this Collection (DEC-UX-123). */
+  forCollection?: string;
+}
+
+/** A run of a Lens that did not run because the Lens stopped or is Broken: its page reads it again. */
+export interface LensHalted {
+  kind: 'halted';
+  reason: 'stopped' | 'broken';
 }
 
 /** query's routes (TR-SR-15 to TR-SR-17), with the Access Token of the User. */
@@ -290,6 +328,12 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       }
       throw error;
     }
+  }
+
+  /** A Lens that stopped or broke when it was checked: its page reads it again (DEC-UX-81, DEC-UX-125). */
+  function haltedBy(error: unknown): LensHalted {
+    if (error instanceof Refused && error.status === 409 && (error.code === 'stopped' || error.code === 'broken')) return { kind: 'halted', reason: error.code };
+    throw error;
   }
 
   return {
@@ -370,12 +414,40 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
         throw error;
       }
     },
-    /** The Pre-flight of a run of a Lens with the values the User chose (DEC-UX-28). */
-    async lensPreflight(id: string, values: Record<string, LensValue>): Promise<Preflight> {
-      return ((await (await call(`/lenses/${encodeURIComponent(id)}/preflight`, { method: 'POST', body: { values } })).json()) as { preflight: Preflight }).preflight;
+    /** The Pre-flight of a run of a Lens with the values the User chose (DEC-UX-28); or that it stopped or broke just now. */
+    async lensPreflight(id: string, values: Record<string, LensValue>): Promise<Preflight | LensHalted> {
+      try {
+        return ((await (await call(`/lenses/${encodeURIComponent(id)}/preflight`, { method: 'POST', body: { values } })).json()) as { preflight: Preflight }).preflight;
+      } catch (error) {
+        return haltedBy(error);
+      }
     },
-    async lensRun(id: string, values: Record<string, LensValue>, approve: boolean): Promise<RunOutcome> {
-      return outcomeOf(call(`/lenses/${encodeURIComponent(id)}/runs`, { method: 'POST', body: { values, approve } }));
+    async lensRun(id: string, values: Record<string, LensValue>, approve: boolean): Promise<RunOutcome | LensHalted> {
+      try {
+        return await outcomeOf(call(`/lenses/${encodeURIComponent(id)}/runs`, { method: 'POST', body: { values, approve } }));
+      } catch (error) {
+        return haltedBy(error);
+      }
+    },
+    /** Changes what a Lens tells, for its Owner Unit (FR-LE-06). */
+    async editLens(id: string, changes: LensEdit): Promise<Lens> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}`, { method: 'PATCH', body: changes })).json()) as { lens: Lens }).lens;
+    },
+    /** "Open in Query": its query for its author, a query of their own, used as it, for anyone else of its Owner Unit (DEC-LE-18). */
+    async openLens(id: string): Promise<string> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}/query`, { method: 'POST' })).json()) as { queryId: string }).queryId;
+    },
+    /**
+     * "Update the Lens" from a query used as it (FR-LE-16): its next version, published or waiting for the
+     * Data Team; or the size check, when one run reads more than 100 MB and the User did not say to go on.
+     */
+    async updateLens(id: string, queryId: string, approve: boolean, text: string): Promise<{ kind: 'updated'; lens: Lens } | { kind: 'refused'; preflight: Preflight }> {
+      try {
+        return { kind: 'updated', lens: ((await (await call(`/lenses/${encodeURIComponent(id)}/version`, { method: 'PUT', body: { queryId, approve, text } })).json()) as { lens: Lens }).lens };
+      } catch (error) {
+        if (error instanceof Refused && error.status === 409 && error.body?.preflight) return { kind: 'refused', preflight: error.body.preflight as Preflight };
+        throw error;
+      }
     },
     /** Sends a waiting Lens to the Data Team again, when it could not be sent (FR-LE-09). */
     async lensRequest(id: string, text: string): Promise<QueryRequest> {

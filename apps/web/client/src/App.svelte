@@ -211,11 +211,14 @@
     catalogue.log(id).then((log) => opened?.id === id && (opened = { ...opened, log }), missing);
   });
   $effect(() => {
-    if (status.kind !== 'signedIn' || page.kind !== 'lens' || openedLens?.id === page.id) {
+    if (status.kind !== 'signedIn' || (page.kind !== 'lens' && page.kind !== 'editLens') || openedLens?.id === page.id) {
       return;
     }
-    const id = page.id;
-    openedLens = { id };
+    readLens(page.id);
+  });
+  /** Reads the Lens whose page is open: again too, after it stopped or broke while it was checked. */
+  function readLens(id: string): void {
+    if (openedLens?.id !== id) openedLens = { id };
     queries.lens(id).then(
       (lens) => openedLens?.id === id && (openedLens = { id, lens }),
       (error: unknown) => {
@@ -224,8 +227,8 @@
         else console.error(`The Lens ${id} could not be read`, error);
       },
     );
-  });
-  /** After a Lens is made: the panels show it, and its page opens. */
+  }
+  /** After a Lens is made, edited or updated from its query: the panels show it, and its page opens. */
   async function made(lens: Lens): Promise<void> {
     openedLens = { id: lens.id, lens };
     refresh();
@@ -252,7 +255,9 @@
                       ? t('lens.make.title')
                       : page.kind === 'lens'
                         ? openedLens?.lens?.name
-                        : undefined;
+                        : page.kind === 'editLens'
+                          ? t('lens.edit.title')
+                          : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
@@ -267,7 +272,8 @@
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
       page.kind === 'newLens' ||
-      page.kind === 'lens'
+      page.kind === 'lens' ||
+      page.kind === 'editLens'
       ? page.section
       : undefined,
   );
@@ -277,7 +283,7 @@
       ? page.id
       : page.kind === 'resource'
         ? (opened?.resource?.collectionId ?? undefined)
-        : page.kind === 'lens'
+        : page.kind === 'lens' || page.kind === 'editLens'
           ? (openedLens?.lens?.collectionId ?? undefined)
           : undefined,
   );
@@ -344,7 +350,8 @@
           ondraft={(name) => (draft = name)}
           onstart={async (fields) => {
             try {
-              const made = await queries.create(fields);
+              // From "New Lens" on a Collection, the query remembers it, for "Make it a lens" (DEC-UX-123).
+              const made = await queries.create(page.forCollection ? { ...fields, forCollection: page.forCollection } : fields);
               await refreshQueries();
               router.go(queryPath(made.id));
               return true;
@@ -369,6 +376,7 @@
             refreshQueries();
             router.go(queryPath(made.id));
           }}
+          onlens={made}
         />
       {/await}
     {:else if page.kind === 'newLens'}
@@ -399,8 +407,38 @@
         />
       {:else if openedLens?.lens}
         {@const lens = openedLens.lens}
-        <LensPage {lens} client={queries} collection={collections?.find((collection) => collection.id === lens.collectionId)} />
+        <LensPage
+          {lens}
+          client={queries}
+          collection={collections?.find((collection) => collection.id === lens.collectionId)}
+          onchanged={() => {
+            readLens(lens.id);
+            refresh();
+          }}
+          onopened={(id) => {
+            refreshQueries();
+            router.go(queryPath(id));
+          }}
+        />
       {:else if openedLens?.lens === null}
+        <NotFound />
+      {/if}
+    {:else if page.kind === 'editLens'}
+      <!-- Its Owner Unit edits what a Lens tells; a Lens that waits for the Data Team is not changed (DEC-LE-05). -->
+      {#if openedLens?.lens && openedLens.lens.canManage && openedLens.lens.state !== 'waiting'}
+        {#key openedLens.lens.id}
+          <LensNew
+            editing={openedLens.lens}
+            client={queries}
+            {catalogue}
+            {collections}
+            me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
+            {dataTeam}
+            loadGroups={() => identity.groups()}
+            onmade={made}
+          />
+        {/key}
+      {:else if openedLens?.lens !== undefined}
         <NotFound />
       {/if}
     {:else if page.kind === 'collection' || page.kind === 'newCollection'}

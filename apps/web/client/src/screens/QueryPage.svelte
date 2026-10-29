@@ -18,13 +18,14 @@
   import type { Collection } from '../lib/catalogue.js';
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
-  import type { NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
+  import type { Lens, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import ParameterWindow from './ParameterWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
+  import UpdateLensSheet from './UpdateLensSheet.svelte';
 
   /**
    * A query (query, DEC-UX-70 to DEC-UX-74): its name and question, and where it started from; on top of
@@ -34,7 +35,8 @@
    * it the result, a grid of 100 rows a page with its Query ID (FR-SR-51, FR-LN-06), and its history, every
    * run a variation, to preview and apply. The Pre-flight follows the SQL and the Parameters while typing
    * pauses (FR-SR-36). Only who made a query writes and runs it, and changes its name and question in place
-   * (DEC-UX-119); the Data Team reads everyone's (DEC-LN-01).
+   * (DEC-UX-119); the Data Team reads everyone's (DEC-LN-01). A query used as a Lens says so, and "Update
+   * the Lens" takes the place of "Make it a lens", in a sheet (DEC-UX-77, FR-LE-16).
    */
   let {
     id,
@@ -44,6 +46,7 @@
     nonce,
     onran,
     onmade,
+    onlens,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -56,6 +59,8 @@
     onran: () => void;
     /** A new query was started from this one, with another set of Resources. */
     onmade: (made: Query) => void;
+    /** The Lens it is used as was updated from it. */
+    onlens: (lens: Lens) => void;
   } = $props();
 
   /** How long typing pauses before the Pre-flight is asked again. */
@@ -93,6 +98,7 @@
   let renaming = $state<{ name: string; question: string } | null>(null);
   let renameSaving = $state(false);
   let renameFailed = $state(false);
+  let updating = $state(false);
   let loadedId: string | undefined;
 
   $effect(() => {
@@ -111,6 +117,7 @@
     requestOpen = false;
     requestText = '';
     renaming = null;
+    updating = false;
     tab = 'result';
     client.get(id).then(
       async (found) => {
@@ -487,7 +494,7 @@
           <Icon name="aperture" /><span
             >{#each tParts(lens.state === 'waiting' ? 'query.usedAs.waiting' : 'query.usedAs', { date: formatDay(lens.createdAt.slice(0, 10), currentLanguage()) }, { name: lens.name }) as part, index (index)}{#if 'name' in part}<a
                   href={lensPath(lens.id)}>{part.name}</a
-                >{:else}{part.text}{/if}{/each}</span
+                >{:else}{part.text}{/if}{/each}{#if query.mine && lens.state !== 'waiting'}{' '}{t('query.usedAs.update')}{/if}</span
           >
         </p>
       {/if}
@@ -495,7 +502,12 @@
     </div>
     <div class="actions">
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      {#if query.mine && query.kind === 'query' && !query.lens}
+      {#if query.mine && query.kind === 'query' && query.lens}
+        <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
+        <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
+          ><Icon name="arrows-clockwise" />{t('lens.update.button')}</Button
+        >
+      {:else if query.mine && query.kind === 'query'}
         <!-- The logical next step once a query answers a question that comes back (DEC-UX-25). -->
         <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
       {/if}
@@ -534,7 +546,8 @@
           </span>
         {/each}
       </span>
-      <Button variant="quiet" disabled title={t('query.later')}>{t('query.lensesOn', { count: 0 })}</Button>
+      <!-- A query used as a Lens already is one (DEC-UX-77). -->
+      {#if !query.lens}<Button variant="quiet" disabled title={t('query.later')}>{t('query.lensesOn', { count: 0 })}</Button>{/if}
     </div>
 
     <div class="box">
@@ -744,6 +757,21 @@
 
   {#if newSet}
     <NewSetSheet {query} {sql} {parameters} {collections} mode={newSet.mode} resource={newSet.resource} onclose={() => (newSet = null)} onstart={startNew} />
+  {/if}
+
+  {#if updating && query.lens}
+    <UpdateLensSheet
+      {query}
+      lens={query.lens}
+      collection={collectionName(query.lens.collectionId)}
+      preflight={current}
+      {client}
+      onclose={() => (updating = false)}
+      onupdated={(lens) => {
+        updating = false;
+        onlens(lens);
+      }}
+    />
   {/if}
 {/if}
 

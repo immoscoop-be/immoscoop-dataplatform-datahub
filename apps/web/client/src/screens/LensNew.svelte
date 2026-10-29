@@ -25,10 +25,14 @@
    * Right, the size check: what one run reads, measured now, in three ranges (FR-LE-08): within range it
    * is published, large its author publishes it anyway, very large it goes to the Data Team (FR-LE-09).
    * A Lens that waits for the Data Team opens here as its author made it, frozen (lens-new-context, DEC-LE-05).
+   * "Edit" opens a Lens here for its Owner Unit: what it tells and the names Users see, never its SQL, its
+   * Parameters or its Collection, which change in its query (FR-LE-06, DEC-UX-27). A query that "New Lens"
+   * started on a Collection offers that Collection first (DEC-UX-123).
    */
   let {
     queryId,
     lens,
+    editing,
     client,
     catalogue,
     collections,
@@ -41,6 +45,8 @@
     queryId?: string;
     /** A Lens that waits for the Data Team, shown as it was made. */
     lens?: Lens;
+    /** A Lens its Owner Unit edits. */
+    editing?: Lens;
     client: QueryClient;
     catalogue: Pick<Catalogue, 'createCollection'>;
     collections: readonly Collection[] | undefined;
@@ -75,6 +81,8 @@
   const language = $derived(currentLanguage());
   const bytes = (value: number) => formatBytes(value, language);
   const frozen = $derived(lens !== undefined);
+  /** The Lens as it is: frozen, or edited. */
+  const existing = $derived(lens ?? editing);
   const owned = $derived(
     (collections ?? [])
       .filter((collection) => collection.canManage && (dataTeam || me.groups.includes(collection.ownerUnit.id)))
@@ -107,11 +115,22 @@
       () => (query = null),
     );
   });
+  // What the Lens tells now, to edit (FR-LE-06).
+  let editedId: string | undefined;
   $effect(() => {
-    if (!collectionId && owned[0]) collectionId = owned[0].id;
+    if (!editing || editedId === editing.id) return;
+    editedId = editing.id;
+    [name, question, shows, steps, tags, collectionId] = [editing.name, editing.question, editing.shows, editing.steps.join('\n'), [...editing.tags], editing.collectionId];
+    labels = Object.fromEntries(editing.parameters.map((parameter) => [parameter.name, parameter.label]));
+  });
+  // The Collection whose "New Lens" started the query comes first, when its author owns it (DEC-UX-123).
+  $effect(() => {
+    if (collectionId || existing || !query) return;
+    const first = owned.find((collection) => collection.id === query?.forCollection) ?? owned[0];
+    if (first) collectionId = first.id;
   });
   $effect(() => {
-    if (!frozen && collections && owned.length === 0) making = true;
+    if (!existing && collections && owned.length === 0) making = true;
   });
   // The groups to own a new Collection, read when it is made here (DEC-CO-24).
   $effect(() => {
@@ -131,12 +150,16 @@
 
   /** Its Parameters: the frozen Lens's, or those of the query its SQL uses (DEC-LE-01). */
   const parameters: LensParameter[] = $derived(
-    lens ? lens.parameters : (query?.parameters ?? []).filter((parameter) => !preflight?.unused.includes(parameter.name)).map((parameter) => ({ ...parameter, label: labels[parameter.name] ?? parameter.name })),
+    lens
+      ? lens.parameters
+      : editing
+        ? editing.parameters.map((parameter) => ({ ...parameter, label: labels[parameter.name] ?? parameter.label }))
+        : (query?.parameters ?? []).filter((parameter) => !preflight?.unused.includes(parameter.name)).map((parameter) => ({ ...parameter, label: labels[parameter.name] ?? parameter.name })),
   );
   /** What its Resources are, with their Collection and Level. */
   const resources = $derived(
-    lens
-      ? lens.resources.map((resource) => ({ id: resource.id, displayName: resource.displayName, level: resource.level, collection: collections?.find((one) => one.id === resource.collectionId)?.name ?? '' }))
+    existing
+      ? existing.resources.map((resource) => ({ id: resource.id, displayName: resource.displayName, level: resource.level, collection: collections?.find((one) => one.id === resource.collectionId)?.name ?? '' }))
       : (query?.resources ?? []).map((resource) =>
           resource.visible
             ? { id: resource.id, displayName: resource.displayName, level: resource.level, collection: collections?.find((one) => one.id === resource.collectionId)?.name ?? '' }
@@ -144,8 +167,8 @@
         ),
   );
   const level = $derived(resources.length ? Math.min(...resources.map((resource) => resource.level)) : 0);
-  const reads = $derived(lens ? lens.reads : (preflight?.bytes ?? null));
-  const range = $derived(lens ? lens.range : (preflight?.range ?? null));
+  const reads = $derived(existing ? existing.reads : (preflight?.bytes ?? null));
+  const range = $derived(existing ? existing.range : (preflight?.range ?? null));
   const thresholds = $derived(preflight?.thresholds ?? { approve: 100_000_000, request: 1_000_000_000 });
   const partitioned = $derived((query?.resources ?? []).filter((resource) => resource.visible && resource.partition));
   const warning = $derived(preflight?.warnings.find((one) => one.bytesWithFilter !== null) ?? null);
@@ -207,6 +230,30 @@
     }
   }
 
+  /** Saves what the Lens tells; a name Users see left empty is the name of its Parameter. */
+  async function save(): Promise<void> {
+    if (!editing) return;
+    busy = true;
+    failed = null;
+    try {
+      onmade(
+        await client.editLens(editing.id, {
+          name: name.trim(),
+          question: question.trim(),
+          shows: shows.trim(),
+          steps: steps.split('\n').map((step) => step.trim()).filter(Boolean),
+          tags,
+          labels: Object.fromEntries(Object.entries(labels).map(([parameter, label]) => [parameter, label.trim() || parameter])),
+        }),
+      );
+    } catch (error) {
+      console.error('The Lens could not be saved', error);
+      failed = t('lens.edit.failed');
+    } finally {
+      busy = false;
+    }
+  }
+
   async function sendAgain(): Promise<void> {
     if (!lens) return;
     busy = true;
@@ -220,15 +267,20 @@
 
 {#if query === null}
   <p class="meta">{t('lens.make.failed')}</p>
-{:else if lens || query}
+{:else if existing || query}
   {@const fromName = lens?.fromQuery?.name ?? query?.name ?? ''}
   {@const fromId = lens?.fromQuery?.id ?? query?.id}
-  <div class="crumb meta">{#if fromId}<a href={queryPath(fromId)}>Query</a>{:else}Query{/if} · {fromName}</div>
+  {#if editing}
+    <div class="crumb meta">Collections · <a href={lensPath(editing.id)}>{editing.name}</a></div>
+  {:else}
+    <div class="crumb meta">{#if fromId}<a href={queryPath(fromId)}>Query</a>{:else}Query{/if} · {fromName}</div>
+  {/if}
   <header class="head">
-    <h1 class="page-title">{lens ? lens.name : t('lens.make.title')}</h1>
-    {#if !frozen && fromId}<Button variant="quiet" href={queryPath(fromId)}>{t('collection.cancel')}</Button>{/if}
+    <h1 class="page-title">{lens ? lens.name : editing ? t('lens.edit.title') : t('lens.make.title')}</h1>
+    {#if editing}<Button variant="quiet" href={lensPath(editing.id)}>{t('collection.cancel')}</Button>
+    {:else if !frozen && fromId}<Button variant="quiet" href={queryPath(fromId)}>{t('collection.cancel')}</Button>{/if}
   </header>
-  {#if !frozen}
+  {#if !existing}
     <p class="from">{#each tParts('lens.make.from', {}, { name: fromName }) as part, index (index)}{#if 'name' in part}<b>{part.name}</b>{:else}{part.text}{/if}{/each}</p>
   {/if}
   {#if query?.lens}
@@ -269,7 +321,7 @@
             {/if}
           </div>
         </Field>
-        <Field label={t('lens.field.parameters')} group hint={parameters.length ? t('lens.field.parameters.hint') : t('lens.field.parameters.none')}>
+        <Field label={t(editing ? 'lens.edit.parameters' : 'lens.field.parameters')} group hint={parameters.length ? t(editing ? 'lens.edit.parameters.hint' : 'lens.field.parameters.hint') : t('lens.field.parameters.none')}>
           {#each parameters as parameter (parameter.name)}
             {@const shown = defaultOf(parameter)}
             <div class="parameter">
@@ -298,14 +350,14 @@
             {#if owned.length}<button type="button" class="text-link" onclick={() => (making = false)}>{t('lens.newCollection.cancel')}</button>{/if}
           </div>
         {:else}
-          <Field label={t('lens.field.collection')} hint={t('lens.field.collection.hint')}>
-            <select value={lens?.collectionId ?? collectionId} onchange={(event) => (collectionId = event.currentTarget.value)}>
-              {#each lens ? (collections ?? []).filter((one) => one.id === lens.collectionId) : owned as collection (collection.id)}
+          <Field label={t(editing ? 'lens.edit.collection' : 'lens.field.collection')} hint={editing ? undefined : t('lens.field.collection.hint')}>
+            <select value={existing?.collectionId ?? collectionId} disabled={editing !== undefined} onchange={(event) => (collectionId = event.currentTarget.value)}>
+              {#each existing ? (collections ?? []).filter((one) => one.id === existing.collectionId) : owned as collection (collection.id)}
                 <option value={collection.id}>{collection.name} · {collection.ownerUnit.name}</option>
               {/each}
             </select>
           </Field>
-          {#if !frozen}<button type="button" class="text-link" onclick={() => (making = true)}>{t('lens.field.collection.new')}</button>{/if}
+          {#if !existing}<button type="button" class="text-link" onclick={() => (making = true)}>{t('lens.field.collection.new')}</button>{/if}
         {/if}
       </fieldset>
       <div class="label uses-label">{t('lens.uses')}</div>
@@ -317,6 +369,17 @@
       {#if resources.length}<p class="meta level">{t('lens.uses.level', { level: levelName(level) })}</p>{/if}
     </section>
 
+    {#if editing}
+      <aside class="card size" aria-labelledby="size-check">
+        <h2 id="size-check">{t('lens.size.title')}</h2>
+        <p class="meta">{t('lens.edit.size', { version: editing.version })}</p>
+        <div class="reads">{bytes(editing.reads)} <span class="meta">{t('lens.size.aRun')}</span></div>
+        <Gauge bytes={editing.reads} approve={thresholds.approve} request={thresholds.request} />
+        <Callout icon="info-fill">{t('lens.edit.sql')}</Callout>
+        <Button wide disabled={busy || name.trim() === ''} onclick={save}>{t('lens.edit.save')}</Button>
+        {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
+      </aside>
+    {:else}
     <aside class="card size" aria-labelledby="size-check">
       <h2 id="size-check">{t('lens.size.title')}</h2>
       <p class="meta">{t('lens.size.intro')}</p>
@@ -383,6 +446,7 @@
       {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       <p class="meta later">{t('lens.size.later')}</p>
     </aside>
+    {/if}
   </div>
 {/if}
 
