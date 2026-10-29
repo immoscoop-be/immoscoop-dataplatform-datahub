@@ -114,6 +114,8 @@ export interface Queries {
    * The query of this User used as a Lens, made from its SQL and Parameters the first time they open it in
    * Query (DEC-LE-18); `created` says whether it is new.
    */
+  /** When the User last ran each Lens, by the queries of the kind lens that hold their runs (FR-CO-37). */
+  lensRuns(ownerId: string): Promise<Map<string, Date>>;
   forLens(owner: Viewer, lens: { id: string; name: string; question: string; resources: NamedResource[]; sql: string; parameters: Parameter[] }): Promise<{ query: Query; created: boolean }>;
   /** The runs of a Lens by this User, a query made the first time they run it (FR-LE-12). */
   lensFor(owner: Viewer, lens: { id: string; name: string; resources: NamedResource[]; sql: string }): Promise<Query>;
@@ -233,6 +235,17 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     },
 
     previewOf,
+
+    async lensRuns(ownerId) {
+      const rows = await db
+        .selectFrom('queries')
+        .select(['lensOf', 'lastRunAt'])
+        .where('ownerId', '=', ownerId)
+        .where('kind', '=', 'lens')
+        .where('lastRunAt', 'is not', null)
+        .execute();
+      return new Map(rows.flatMap((row) => (row.lensOf && row.lastRunAt ? [[row.lensOf, row.lastRunAt] as const] : [])));
+    },
 
     async forLens(owner, lens) {
       const find = () => db.selectFrom('queries').selectAll().where('ownerId', '=', owner.id).where('forLens', '=', lens.id).executeTakeFirst();
