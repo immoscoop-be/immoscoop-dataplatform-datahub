@@ -444,7 +444,7 @@ Above X GB, the User has to approve a query explicitly; above Y GB, the query is
 <a id="fr-sr-38"></a>
 ### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
 
-**Status:** Proposed · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** [the design of the Preview](../../design/principles.md#preview), 2026-10-23 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
 
 The Preview offers a choice per Parameter of the Resource, such as the weeks or the lead source, to choose which first rows it shows. Choosing is picking values, not typing SQL. The partition column of a partitioned Resource is always one of them, with a recent range chosen by default, so that a preview reads only the partitions it shows: in BigQuery, a `LIMIT` alone lowers nothing that is read. Every preview is a query: it passes the Pre-flight ([FR-SR-36](#fr-sr-36)) and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)).
 
@@ -452,19 +452,23 @@ The Preview offers a choice per Parameter of the Resource, such as the weeks or 
 
 *Note of 2026-10-29, later: the partition column offers its newest 1, 4 or 12 partitions that hold rows ([DEC-SR-39](#dec-sr-39)); the query that reads the values of the choices is in the Query Log, not in the history of the previews ([DEC-SR-40](#dec-sr-40)).*
 
+*Note of 2026-10-29, on building the third piece of part 5: the Preview offers its partition column, its first cluster column and the Parameters of its Card that are text, a number, a date or yes or no, up to six; a preview runs as a query of its own per User and Resource, by itself up to 100 MB, and goes to the Data Team above 1 GB ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)). It has no export ([DEC-UX-120](../../design/principles.md#dec-ux-120)).*
+
 <a id="fr-sr-39"></a>
 ### FR-SR-39 · A Resource shows how it is partitioned and clustered
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#detail-page-of-a-resource) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-preview](../../design/screens/resource-preview.html)
 
 The page of a Resource shows its partition column and the unit of its partitions, the number of partitions, its cluster columns in their order, and its size, with a sentence on how to query it cheaply. Its columns are marked as the partition or a cluster column. Claude gets the same through the MCP, so that it filters on them too. For a Resource that is a view, these are of the table beneath it ([OP-SR-12](#op-sr-12)).
 
 *Note of 2026-10-28, on building part 4: the page shows the partition column and its unit, the cluster columns in their order, and how to query it cheaply; its size and number of partitions come from BigQuery with Query, in part 5 of the [build order](../../design/build-order.md).*
 
+*Note of 2026-10-29, on building the third piece of part 5: the size and number of partitions come from BigQuery, for a view from the table beneath it partitioned on the same column ([TR-SR-20](../technical/04-stacks-and-resources.md#tr-sr-20)). Claude gets them through the MCP with version 2.*
+
 <a id="fr-sr-40"></a>
 ### FR-SR-40 · The Pre-flight counts the partitions and warns without a partition filter
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its partitions a query reads and through which column, and calls its volume "at most" where clustering can make the real read lower. A query on a partitioned Resource without a filter on its partition column gets a warning, with what it would read with one.
 
@@ -475,6 +479,8 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 *Note of 2026-10-29, on building part 5: built are the warning without a filter, with what the query reads with one on the recent partitions, the block where the Resource requires one, and "at most" in the volume ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); how many partitions each Resource reads is [OP-SR-23](#op-sr-23).*
 
 *Note of 2026-10-29: the partitions are those of the whole query, not per Resource ([DEC-SR-38](#dec-sr-38)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: the Pre-flight shows the partitions of the whole query, and the Preview how many of all of them it reads ([DEC-SR-38](#dec-sr-38)).*
 
 <a id="fr-sr-41"></a>
 ### FR-SR-41 · Query, a section for SQL over everything the User may see
@@ -509,10 +515,12 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 
 *Note of 2026-10-29, on building the second piece of part 5: the query that is open unfolds to its last runs, and a query that went to the Data Team is labelled so, or "Accepted" once it is ([DEC-UX-74](../../design/principles.md#dec-ux-74), [DEC-UX-116](../../design/principles.md#dec-ux-116)). The previews of a Resource come with the third piece, and the queries of Claude with Claude.*
 
+*Note of 2026-10-29, on building the third piece of part 5: the previews of a Resource by a User are one query in the panel, marked "Preview" ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)).*
+
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
 
-**Status:** Proposed · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19) · **Screens:** [resource-history](../../design/screens/resource-history.html)
+**Status:** Implemented · **Source:** [DEC-UX-19](../../design/principles.md#dec-ux-19) · **Screens:** [resource-history](../../design/screens/resource-history.html)
 
 The page of a Resource has a tab Queries with every query that ran on it: when, who, through what, what it read and its Query ID, and a few numbers over the last 30 days. The SQL of a query is shown only to whoever ran it and to the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Who sees the list is open ([OP-SR-13](#op-sr-13)).
 
@@ -524,16 +532,20 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 *Note of 2026-10-29: only the Owner Unit of the Resource and the Data Team see the tab History, and they see the SQL of its queries ([DEC-SR-41](#dec-sr-41)).*
 
+*Note of 2026-10-29, on building the third piece of part 5: the tab History lists every query with a run on the Resource, newest run first, with the numbers of the last 30 days; Lenses count from part 6 of the [build order](../../design/build-order.md) ([TR-SR-21](../technical/04-stacks-and-resources.md#tr-sr-21)).*
+
 <a id="fr-sr-45"></a>
 ### FR-SR-45 · Every query has a name
 
-**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
 
 *Note of 2026-10-29, on building part 5: a query has its name from the start, suggested from its Resources and the date; changing it later has no screen yet ([OP-UX-42](../../design/principles.md#op-ux-42)).*
 
 *Note of 2026-10-29, later: a click on the name or the question above the editor edits it in place ([DEC-UX-119](../../design/principles.md#dec-ux-119)).*
+
+*Note of 2026-10-29, on building the third piece of part 5: who made a query changes its name and question in place; a name stays required ([TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)).*
 
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
