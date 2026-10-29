@@ -454,6 +454,16 @@ run "registry_hands_catalogue_the_exposed_tables_as_itself" {
     }
   }
 
+  # query tells catalogue about its Lenses as itself too (TR-CV-02).
+  override_resource {
+    target          = google_service_account.service["query"]
+    override_during = plan
+    values = {
+      email  = "datahub-query@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-query@test-project.iam.gserviceaccount.com"
+    }
+  }
+
   assert {
     condition = contains(
       [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_URL"],
@@ -468,6 +478,14 @@ run "registry_hands_catalogue_the_exposed_tables_as_itself" {
       == ["datahub-registry@test-project.iam.gserviceaccount.com"]
     )
     error_message = "catalogue takes the exposed tables from the service account of registry, and from no one else (TR-SR-01)."
+  }
+
+  assert {
+    condition = (
+      [for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.value if env.name == "DATAHUB_QUERY_SERVICE_ACCOUNT"]
+      == ["datahub-query@test-project.iam.gserviceaccount.com"]
+    )
+    error_message = "catalogue hears about the Lenses and the decisions on them from the service account of query, and from no one else (TR-CV-02)."
   }
 
   assert {

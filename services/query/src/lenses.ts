@@ -119,6 +119,12 @@ export interface Lenses {
   /** It misses a table or a column (`BRK-001`), or works again (`BRK-002`); each change once (FR-LE-17). */
   breaks(id: string, missing: Omit<Missing, 'since'>): Promise<Lens>;
   works(id: string): Promise<Lens>;
+  /**
+   * The decision of the Data Team on its Request (FR-LE-09), in its Log. Accepted, a waiting Lens is published
+   * and a stopped one runs again at the size it was accepted at (DEC-LE-11); refused, a waiting Lens stays
+   * unpublished and is no longer frozen (DEC-UX-128), a stopped one stays stopped.
+   */
+  decide(id: string, decision: { outcome: 'accepted' | 'refused'; by: Viewer; conversation: string; reason: string }): Promise<Lens>;
   log(id: string): Promise<LensLogEntry[]>;
   /**
    * The words each of these Lenses shares with a question, in the full-text search of Postgres in English
@@ -302,6 +308,26 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
         if (!row.broken) return lensOf(row);
         const updated = await trx.updateTable('lenses').set({ broken: null, updatedAt: new Date() }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
         await trx.insertInto('lensLog').values({ lensId: id, logId: 'BRK-002', params: JSON.stringify({ restored: row.broken.name, run: '' }) }).execute();
+        return lensOf(updated);
+      });
+    },
+
+    async decide(id, { outcome, by, conversation, reason }) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('lenses').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
+        const now = new Date();
+        const accepted = outcome === 'accepted';
+        const changes =
+          row.state === 'stopped'
+            ? accepted
+              ? { state: 'published' as const, stoppedAt: null, stoppedReads: null }
+              : {}
+            : accepted
+              ? { state: 'published' as const, publishedAt: row.publishedAt ?? now }
+              : { state: 'refused' as const };
+        const updated = await trx.updateTable('lenses').set({ ...changes, updatedAt: now }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+        const params = accepted ? { actor: by.name, conversation } : { actor: by.name, conversation, reason };
+        await trx.insertInto('lensLog').values({ lensId: id, logId: accepted ? 'LEN-001' : 'LEN-002', params: JSON.stringify(params) }).execute();
         return lensOf(updated);
       });
     },

@@ -12,6 +12,7 @@ import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
 import { RegistryUnavailable } from './registry.js';
+import { createMessages } from './messages.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
 
@@ -205,6 +206,16 @@ describe.skipIf(!url)('the routes of Collections', () => {
           },
         },
         requests: createRequests(database.db),
+        messages: createMessages(database.db),
+        // query tells about its Lenses with its own Google ID token (DEC-PF-30).
+        lensCallers: {
+          async verify(token) {
+            if (token !== 'query-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-query@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -727,6 +738,157 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await mia('GET', '/requests?subjectKind=query')).json().requests).toEqual([]);
     expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests).toHaveLength(1);
     expect((await mia('POST', '/requests', { ...body, partitions: 'all' })).statusCode).toBe(400);
+  });
+
+  describe('Messages', () => {
+    // A group of its own, so that what earlier tests told DigiKom does not count here.
+    const CREDIT: Group = { id: 'g-credit', email: 'credit@thenextimmoscoop.be', name: 'Credit' };
+    const BROKERS: Group = { id: 'g-brokers', email: 'brokers@thenextimmoscoop.be', name: 'Brokers' };
+    const AGENTS: Group = { id: 'g-agents', email: 'agents@thenextimmoscoop.be', name: 'Agents' };
+    const fromQuery = (method: 'PUT' | 'POST', url: string, payload: object, token = 'query-token') =>
+      app.inject({ method, url, headers: { authorization: `Bearer ${token}` }, payload });
+
+    it('places a Question on its object, for everyone who sees it, and tells its Owner Unit (FR-CV-03, FR-CV-05, FR-CV-06)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const els = await user('Eva', [AGENTS]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const talk = (await an('POST', '/collections', { name: 'Talk', description: 'To talk about.', icon: 'chat-circle', ownerUnit: CREDIT.id, visibility: 'public' })).json();
+      const secret = (await els('POST', '/collections', { name: 'Secret', description: 'Not for all.', icon: 'lock', ownerUnit: AGENTS.id })).json();
+
+      const asked = await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'question', text: ' Will it be published this month? ' });
+      expect(asked.statusCode).toBe(201);
+      const question = asked.json().message;
+      expect(question).toMatchObject({
+        type: 'MSG-CNV-01',
+        kind: 'question',
+        state: 'open',
+        subject: { kind: 'collection', id: talk.id, name: 'Talk', exists: true },
+        writer: { id: 'u-Bert', name: 'Bert', as: null },
+        params: { text: 'Will it be published this month?' },
+        unread: false,
+        mine: true,
+        replies: [],
+      });
+      // A Collection takes no Signal; a Message has words; nobody writes on what they do not see.
+      expect((await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'signal', text: 'Odd.' })).statusCode).toBe(400);
+      expect((await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'remark', text: ' ' })).statusCode).toBe(400);
+      expect((await an('POST', '/messages', { subjectKind: 'collection', subjectId: secret.id, kind: 'remark', text: 'Hi.' })).statusCode).toBe(404);
+
+      // For its Owner Unit, unread until opened; not for someone else who only sees it.
+      expect((await an('GET', '/messages/unread')).json()).toEqual({ unread: 1 });
+      expect((await bert('GET', '/messages/unread')).json()).toEqual({ unread: 0 });
+      const centre = (await an('GET', '/messages')).json();
+      expect(centre.messages.map((message: { id: string; unread: boolean }) => [message.id, message.unread])).toEqual([[question.id, true]]);
+      expect(centre.counts).toMatchObject({ forYou: 1, unread: 1, written: 0, kinds: { question: 1, remark: 0 }, on: { collection: 1, lens: 0 } });
+      expect((await els('GET', '/messages')).json().messages).toEqual([]);
+      expect((await els('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).toContain(question.id);
+      expect((await an('GET', '/messages?view=secret')).statusCode).toBe(400);
+
+      // Opened and read, then answered by the Owner: answered, and unread again for whoever asked.
+      expect((await an('GET', `/messages/${question.id}`)).json().message).toMatchObject({ id: question.id, unread: true });
+      expect((await an('POST', `/messages/${question.id}/read`)).statusCode).toBe(204);
+      expect((await an('GET', '/messages/unread')).json()).toEqual({ unread: 0 });
+      const answered = await an('POST', `/messages/${question.id}/replies`, { text: 'Yes, next week.' });
+      expect(answered.statusCode).toBe(201);
+      expect(answered.json().message).toMatchObject({ state: 'answered', replyCount: 1, replies: [{ type: 'MSG-CNV-04', kind: 'reply', writer: { name: 'Ann', as: 'owner' }, params: { text: 'Yes, next week.' } }] });
+      expect((await bert('GET', '/messages?view=unread')).json().messages.map((message: { id: string }) => message.id)).toEqual([question.id]);
+      expect((await bert('GET', '/messages?view=written')).json().counts).toMatchObject({ written: 1 });
+      expect((await bert('GET', `/messages/on/collection/${talk.id}`)).json().messages).toHaveLength(1);
+      expect((await an('GET', `/messages/on/collection/${secret.id}`)).statusCode).toBe(404);
+      expect((await an('GET', `/messages/${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}`)).statusCode).toBe(404);
+
+      // Searched by its words, the words of a reply or the name of its object.
+      expect((await bert('GET', '/messages?view=everything&search=next%20week')).json().messages.map((message: { id: string }) => message.id)).toEqual([question.id]);
+      expect((await bert('GET', '/messages?view=everything&search=Talk')).json().messages.map((message: { id: string }) => message.id)).toContain(question.id);
+      expect((await bert('GET', '/messages?view=everything&search=nothing%20like%20it')).json().messages).toEqual([]);
+
+      // A Remark on a private Collection: for its Owner Unit and the Data Team only.
+      const remark = (await els('POST', '/messages', { subjectKind: 'collection', subjectId: secret.id, kind: 'remark', text: 'Only for sales.' })).json().message;
+      expect(remark.state).toBeNull();
+      expect((await an('GET', `/messages/${remark.id}`)).statusCode).toBe(404);
+      expect((await an('POST', `/messages/${remark.id}/replies`, { text: 'Me too.' })).statusCode).toBe(404);
+      expect((await dirk('GET', `/messages/${remark.id}`)).statusCode).toBe(200);
+    });
+
+    it('knows the Lenses from query, and shows the Messages on one only to who sees it (FR-CV-05, DEC-CO-16)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const lens = '3d1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const facts = { name: 'Leads per source', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Mia', authorName: 'Mia' };
+      expect((await fromQuery('PUT', `/internal/lenses/${lens}`, facts, 'someone-else')).statusCode).toBe(401);
+      expect((await an('PUT', `/internal/lenses/${lens}`, facts)).statusCode).toBe(401);
+      expect((await fromQuery('PUT', `/internal/lenses/${lens}`, { ...facts, state: 'gone' })).statusCode).toBe(400);
+      expect((await fromQuery('PUT', `/internal/lenses/${lens}`, facts)).statusCode).toBe(204);
+
+      const signal = await bert('POST', '/messages', { subjectKind: 'lens', subjectId: lens, kind: 'signal', text: 'Mailing dropped to zero.' });
+      expect(signal.statusCode).toBe(201);
+      expect(signal.json().message).toMatchObject({ kind: 'signal', state: 'open', subject: { kind: 'lens', name: 'Leads per source', collection: { id: talk.id, name: 'Talk' } } });
+      // A Signal tells the Owner Unit and the Data Team (MSG-CNV-03).
+      const forAn = (await an('GET', '/messages?kind=signal')).json();
+      expect(forAn.messages.map((message: { id: string }) => message.id)).toEqual([signal.json().message.id]);
+      expect(forAn.counts.on).toMatchObject({ lens: 1 });
+      expect((await dirk('GET', '/messages?kind=signal&on=lens')).json().messages).toHaveLength(1);
+
+      // Renamed in query, it shows by its new name; waiting for the Data Team, only its author and the Data Team see it.
+      await fromQuery('PUT', `/internal/lenses/${lens}`, { ...facts, name: 'Leads per source name', state: 'waiting' });
+      expect((await bert('GET', `/messages/${signal.json().message.id}`)).statusCode).toBe(404);
+      expect((await bert('POST', '/messages', { subjectKind: 'lens', subjectId: lens, kind: 'remark', text: 'Hm.' })).statusCode).toBe(404);
+      expect((await dirk('GET', `/messages/on/lens/${lens}`)).json().messages[0].subject.name).toBe('Leads per source name');
+    });
+
+    it('lets the Data Team decide on a Request: on a query here, on a Lens through query (FR-CV-08, MSG-CNV-05)', async () => {
+      const karel = await user('Karel', [DIGIKOM]);
+      const mia = await user('Mia', [DIGIKOM]);
+      const an = await user('An', [DIGIKOM]);
+      const team = await user('Toon', [], ['datateam']);
+      const query = '4b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const sent = (await karel('POST', '/requests', { type: 'MSG-QRY-01', subjectId: query, subject: 'Partner leads', reads: 4_800_000_000, threshold: 1_000_000_000, text: '' })).json().request;
+      // Sent, it is read by its writer, and waits in the Message Centre of the Data Team.
+      expect((await karel('GET', `/messages/${sent.id}`)).json().message).toMatchObject({ kind: 'request', state: 'waiting', unread: false, subject: { kind: 'query', name: 'Partner leads' } });
+      expect((await an('GET', `/messages/${sent.id}`)).statusCode).toBe(404);
+      expect((await team('GET', '/messages?kind=request')).json().messages.map((message: { id: string }) => message.id)).toContain(sent.id);
+
+      expect((await karel('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted' })).statusCode).toBe(403);
+      expect((await team('POST', `/messages/${sent.id}/decision`, { outcome: 'refused' })).json().message).toBe('A refusal needs a reason.');
+      expect((await team('POST', `/messages/${sent.id}/replies`, { text: 'Hm.' })).statusCode).toBe(409);
+      const decided = await team('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted', text: 'Once, for the review.' });
+      expect(decided.statusCode).toBe(200);
+      expect(decided.json().message).toMatchObject({ state: 'accepted', replies: [{ type: 'MSG-CNV-05', kind: 'decision', writer: { name: 'Toon', as: 'dataTeam' }, params: { outcome: 'accepted', text: 'Once, for the review.' } }] });
+      expect((await team('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted' })).json().error).toBe('not_waiting');
+      expect((await karel('GET', '/messages/unread')).json().unread).toBeGreaterThanOrEqual(1);
+      expect((await karel('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests[0]).toMatchObject({ state: 'accepted', decision: { outcome: 'accepted', writerName: 'Toon' } });
+
+      // A Request on a Lens is decided on the Lens: query records the decision with its own token.
+      const lens = '5e1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const onLens = (await mia('POST', '/requests', { type: 'MSG-LEN-01', subjectId: lens, subject: 'All weeks', reads: 6_200_000_000, threshold: 1_000_000_000, text: 'Yearly.' })).json().request;
+      expect((await team('POST', `/messages/${onLens.id}/decision`, { outcome: 'accepted' })).json().error).toBe('decided_on_the_lens');
+      expect((await fromQuery('POST', `/internal/messages/${onLens.id}/decision`, { outcome: 'refused', text: 'Too big.' })).statusCode).toBe(400);
+      const refused = await fromQuery('POST', `/internal/messages/${onLens.id}/decision`, { outcome: 'refused', text: 'Too big.', decider: { id: 'u-Toon', name: 'Toon' } });
+      expect(refused.json().message).toMatchObject({ state: 'refused', replies: [{ writer: { id: 'u-Toon', name: 'Toon' }, params: { outcome: 'refused', text: 'Too big.' } }] });
+      expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests[0].decision).toMatchObject({ outcome: 'refused', text: 'Too big.' });
+
+      // Data Hub sends its own Request when a Lens grew into very large, one at a time (MSG-LEN-03).
+      const grew = await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1_400_000_000, threshold: 1_000_000_000, partitions: 104 });
+      expect(grew.statusCode).toBe(201);
+      const again = await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1_500_000_000, threshold: 1_000_000_000 });
+      expect(again.statusCode).toBe(200);
+      expect(again.json().request.id).toBe(grew.json().request.id);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1 }, 'nope')).statusCode).toBe(401);
+      expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests[0]).toMatchObject({ type: 'MSG-LEN-03', writerId: '', state: 'waiting' });
+    });
+
+    it('enters a Signal on a Resource in its Log (CNV-050)', async () => {
+      const dirk = await user('Dirk', [], ['datateam']);
+      const cards = (await dirk('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Cards');
+      const resource = cards.resources[0].id;
+      const signal = (await dirk('POST', '/messages', { subjectKind: 'resource', subjectId: resource, kind: 'signal', text: 'Zero last week.' })).json().message;
+      expect(signal.writer.as).toBe('dataTeam');
+      const log = (await dirk('GET', `/resources/${resource}/log`)).json().entries;
+      expect(log[0]).toMatchObject({ logId: 'CNV-050', text: 'Signal raised by Dirk', params: { conversation: signal.id } });
+    });
   });
 
   it('answers 503 rather than guess when identity cannot tell the groups', async () => {

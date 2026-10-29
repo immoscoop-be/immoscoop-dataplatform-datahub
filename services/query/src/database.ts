@@ -31,7 +31,7 @@ export type QueryKind = 'query' | 'preview' | 'lens';
  * A Lens is published; waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or stopped,
  * after a run with its defaults grew past 1 GB, until the Data Team accepts it again (DEC-LE-11).
  */
-export type LensState = 'published' | 'waiting' | 'stopped';
+export type LensState = 'published' | 'waiting' | 'stopped' | 'refused';
 
 /** What a Broken Lens misses, a table or a column, as BigQuery names it, and since when (FR-LE-17). */
 export interface Missing {
@@ -41,7 +41,8 @@ export interface Missing {
 }
 
 /** The Log IDs of a Lens so far: Broken, and works again (FR-SR-52). */
-export type LensLogId = 'BRK-001' | 'BRK-002';
+/** Broken and works again (FR-SR-52); a Request on it accepted or refused by the Data Team (FR-LE-09). */
+export type LensLogId = 'BRK-001' | 'BRK-002' | 'LEN-001' | 'LEN-002';
 
 /** The range one run of a Lens was measured in (FR-LE-08, DEC-SR-29). */
 export type LensRange = 'free' | 'approve' | 'request';

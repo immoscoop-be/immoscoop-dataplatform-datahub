@@ -6,6 +6,7 @@ import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { createIdentity } from './identity.js';
+import { createMessages } from './messages.js';
 import { createRegistry } from './registry.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
@@ -28,6 +29,12 @@ const app = await buildApp({
     // The lineage around a Resource, asked as catalogue with a Google ID token for registry (DEC-AR-06).
     registry: createRegistry(required('DATAHUB_REGISTRY_URL'), metadataIdToken()),
     requests: createRequests(database.db),
+    messages: createMessages(database.db),
+    // query tells about its Lenses with a Google ID token for catalogue's own address (DEC-PF-30).
+    lensCallers: createServiceCallerVerifier({
+      audience: required('DATAHUB_CATALOGUE_URL'),
+      serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')],
+    }),
   },
 });
 app.addHook('onClose', () => database.close());

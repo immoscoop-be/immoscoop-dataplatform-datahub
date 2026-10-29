@@ -9,6 +9,7 @@ import * as resourceCard from './0007-resource-card.js';
 import * as publication from './0008-publication.js';
 import * as requests from './0009-requests.js';
 import * as searchWords from './0010-search-words.js';
+import * as conversations from './0011-conversations.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -22,4 +23,5 @@ export const migrations: Record<string, Migration> = {
   '0008-publication': publication,
   '0009-requests': requests,
   '0010-search-words': searchWords,
+  '0011-conversations': conversations,
 };

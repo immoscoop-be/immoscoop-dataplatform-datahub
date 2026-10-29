@@ -83,10 +83,12 @@ locals {
     identity = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env)
     # catalogue takes the exposed tables only from registry, by a Google ID token for its own
     # address (TR-SR-01), and asks registry the lineage around a Resource as itself (DEC-AR-06).
+    # query tells it about the Lenses and the decisions on them the same way (TR-CV-02).
     catalogue = merge(local.database_env["catalogue"], {
       DATAHUB_CATALOGUE_URL            = local.urls["catalogue"]
       DATAHUB_REGISTRY_SERVICE_ACCOUNT = google_service_account.service["registry"].email
       DATAHUB_REGISTRY_URL             = local.urls["registry"]
+      DATAHUB_QUERY_SERVICE_ACCOUNT    = google_service_account.service["query"].email
     })
     # registry answers catalogue only, by a Google ID token for its own address (DEC-AR-06).
     registry = merge(local.registry_env, {

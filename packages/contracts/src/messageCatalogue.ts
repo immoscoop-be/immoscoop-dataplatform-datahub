@@ -51,9 +51,10 @@ const SIZE: readonly MessageParameter[] = [
   { name: 'threshold', type: 'size', about: 'The threshold it is above, in bytes: 100 MB for large and 1 GB for very large, to start with (DEC-SR-29)' },
 ];
 
+/** BigQuery tells the partitions a run reads only for some tables, so a line that holds them may be left out. */
 const PARTITIONS: readonly MessageParameter[] = [
-  { name: 'partitions', type: 'count', about: 'How many partitions one run reads' },
-  { name: 'partitionsTotal', type: 'count', about: 'How many partitions there are' },
+  { name: 'partitions', type: 'count', about: 'How many partitions one run reads, when BigQuery tells', optional: true },
+  { name: 'partitionsTotal', type: 'count', about: 'How many partitions there are, when BigQuery tells', optional: true },
 ];
 
 /** A field added, removed, renamed or retyped since the last Confirmation (FR-MR-12). */

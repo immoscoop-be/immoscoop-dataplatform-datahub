@@ -694,8 +694,8 @@ Mia Peeters asks the data team to accept the lens Leads per source, all weeks: o
 | --- | --- | --- |
 | `reads` | size | What one run reads, in bytes |
 | `threshold` | size | The threshold it is above, in bytes: 100 MB for large and 1 GB for very large, to start with ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) |
-| `partitions` | count | How many partitions one run reads |
-| `partitionsTotal` | count | How many partitions there are |
+| `partitions` | count, optional | How many partitions one run reads, when BigQuery tells |
+| `partitionsTotal` | count, optional | How many partitions there are, when BigQuery tells |
 | `smaller` | size, optional | What one run reads at most with a default for From, when Data Hub can tell |
 
 Template, Dutch, plain:
@@ -1902,8 +1902,8 @@ The lens Leads per source name grew into very large: one run now reads 1.4 GB, a
 | --- | --- | --- |
 | `reads` | size | What one run reads, in bytes |
 | `threshold` | size | The threshold it is above, in bytes: 100 MB for large and 1 GB for very large, to start with ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) |
-| `partitions` | count | How many partitions one run reads |
-| `partitionsTotal` | count | How many partitions there are |
+| `partitions` | count, optional | How many partitions one run reads, when BigQuery tells |
+| `partitionsTotal` | count, optional | How many partitions there are, when BigQuery tells |
 
 Template, Dutch, plain:
 

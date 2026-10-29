@@ -6,6 +6,9 @@
   for the reason, "Refuse" and "Accept"; here it is moved beside the size check, so that both stay in view. Opened by
   its author (?role=owner), it says that the Request waits.
   While the Request waits, the Lens is frozen (DEC-LE-05); the prototype still shows its fields as editable.
+  Refused (?state=refused, drawn on 2026-10-29 at the request of Max): the decision is the reply on the Request (MSG-CNV-05),
+  with its reason. The Lens stays unpublished, seen only by its author and the Data Team, and does not run; it is no longer
+  frozen: "Update the lens" on its query checks its size again, published within range, waiting again above 1 GB.
   Requirements: FR-SR-40, FR-LE-04, FR-LE-06, FR-LE-08, FR-LE-09, FR-LE-13, FR-CV-02, FR-CV-03, FR-CV-08, FR-CV-09
   Decisions: DEC-UX-30, DEC-UX-75, DEC-UX-121, DEC-CV-06, DEC-LE-05, DEC-LE-15, DEC-SR-29.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
@@ -135,7 +138,9 @@ Adds up the leads per source and puts the largest first.</textarea></label>
    <div class="pf-src"><span>Lead sources</span><span class="meta">not partitioned · 2 MB</span></div>
    <div class="size-state caution"><i class="ph-fill ph-hourglass-medium"></i><p><b>Very large.</b> One run reads more than 1 GB. Someone of the Data Team accepts it before it is published; until then only you see it.</p></div>
    <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">With a default for From, such as 1 Jan 2026, it reads at most 840 MB.</p>
-   <div class="size-state fine" style="margin-top:12px"><i class="ph-fill ph-hourglass-medium"></i><p><b>Sent to the Data Team</b> by Mia Peeters, today at 15:02. Until they accept it, only she sees the Lens.</p></div>
+   <div class="size-state fine" style="margin-top:12px" data-pane-group="state" data-pane="waiting"><i class="ph-fill ph-hourglass-medium"></i><p><b>Sent to the Data Team</b> by Mia Peeters, today at 15:02. Until they accept it, only she sees the Lens.</p></div>
+   <div class="size-state urgent" style="margin-top:12px" data-pane-group="state" data-pane="refused" hidden><i class="ph-fill ph-x-circle"></i><p><b>Refused by the Data Team</b>, by Dirk Vos, today at 16:20. Only Mia sees the Lens, and it does not run. Change it from its query: “Update the lens” checks its size again.</p></div>
+   <a class="btn-quiet outline" href="query.html" data-pane-group="state" data-pane="refused" hidden style="width:100%;justify-content:center;margin-top:8px;text-decoration:none;display:flex;align-items:center;gap:6px;box-sizing:border-box"><i class="ph ph-terminal-window"></i>Open its query</a>
   </div>
   <p class="meta" style="display:block;line-height:1.5;margin:14px 0 0;padding-top:12px;border-top:1px solid var(--tint-hover)">If a run later reads more than this range, the Lens is checked again.</p>
  </aside>
@@ -153,22 +158,27 @@ Adds up the leads per source and puts the largest first.</textarea></label>
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
     <div class="thread-body">
-     <div class="thread-head"><span class="kind request">Request</span><span class="mc-status"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="item-title">Mia Peeters</span><span class="meta">today 15:02</span></div>
+     <div class="thread-head"><span class="kind request">Request</span><span class="mc-status" data-pane-group="state" data-pane="waiting"><i class="ph ph-hourglass-medium"></i>Waiting</span><span class="mc-status" data-pane-group="state" data-pane="refused" hidden><i class="ph ph-x-circle"></i>Refused</span><span class="item-title">Mia Peeters</span><span class="meta">today 15:02</span></div>
      <p>Please accept this Lens. For the yearly review with KBC; it runs once a month.</p>
-     
+     <div class="reply" data-pane-group="state" data-pane="refused" hidden><span class="mini-avatar">DV</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">Dirk Vos</span><span class="meta">Data Team · today 16:20</span></div><p>It reads 6.2 GB every run; give From a default of the last two years and send it again.</p></div></div>
      <div class="thread-actions"></div>
     </div>
    </div>
-  <div class="composer" data-for="datateam">
+  <div class="composer" data-for="datateam" data-pane-group="state" data-pane="waiting">
    <textarea placeholder="A reason, which Mia and everyone who may see the Lens can read. Needed when you refuse."></textarea>
    <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Mia gets a notification. Accepted, the Lens is published.</p></div>
    <div class="composer-foot" style="justify-content:flex-end;margin-top:10px"><button class="btn-quiet outline"><i class="ph ph-x"></i>Refuse</button>
     <button class="btn-primary"><i class="ph-fill ph-check" style="font-size:15px"></i>Accept</button></div>
   </div>
-  <div class="size-state fine" data-for="owner" style="margin:4px 0 0"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the Data Team.</b> Their answer comes here and as a notification.</p></div>
+  <div class="size-state fine" data-for="owner" style="margin:4px 0 0" data-pane-group="state" data-pane="waiting"><i class="ph-fill ph-hourglass-medium"></i><p><b>Waiting for the Data Team.</b> Their answer comes here and as a notification.</p></div>
+  <div class="size-state urgent" style="margin:4px 0 0" data-pane-group="state" data-pane="refused" hidden><i class="ph-fill ph-x-circle"></i><p><b>Refused.</b> The Lens stays unpublished: change it from its query and send it again.</p></div>
  </div>
  <div class="float-foot"><span class="meta">The size check of the Lens is on the page.</span><a class="text-link" href="messages.html" style="margin-left:auto"><span>Message Centre</span><i class="ph ph-arrow-right"></i></a></div>
 </section>
+<div class="role-switch" data-group="state" role="tablist" aria-label="Prototype: the Request">The Request
+ <button class="seg on" data-target="waiting" role="tab" aria-selected="true">Waiting</button>
+ <button class="seg" data-target="refused" role="tab" aria-selected="false">Refused</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>

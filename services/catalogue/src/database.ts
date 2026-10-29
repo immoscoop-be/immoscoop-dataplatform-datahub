@@ -218,5 +218,27 @@ export interface CatalogueDatabase {
     state: string | null;
     createdAt: Timestamp;
     updatedAt: Timestamp;
+    /** The Message it answers: a reply, or the decision on a Request; null for the first of a conversation. */
+    parentId: string | null;
+    /** When its conversation last moved, and by whom: null for Data Hub itself. */
+    lastAt: Timestamp;
+    lastWriterId: string | null;
+  };
+  /** Until when a User read a conversation, by its first Message. */
+  messageReads: {
+    messageId: string;
+    userId: string;
+    readAt: Timestamp;
+  };
+  /** What query tells about its Lenses, to decide who sees the Messages on one (FR-CV-05, DEC-CO-16). */
+  lenses: {
+    id: string;
+    name: string;
+    collectionId: string;
+    resourceIds: string[];
+    state: 'published' | 'waiting' | 'stopped' | 'refused';
+    authorId: string;
+    authorName: string;
+    updatedAt: Timestamp;
   };
 }

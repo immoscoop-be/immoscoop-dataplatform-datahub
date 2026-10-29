@@ -59,5 +59,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `CNV-051` | Signal turned into an Anomaly by {actor} | Signal omgezet in een Anomaly door {actor} | actor, conversation, anomaly |
 | `BRK-001` | Broken: {missing} no longer exists | Broken: {missing} bestaat niet meer | missing, run |
 | `BRK-002` | Works again: {restored} exists again | Werkt weer: {restored} bestaat weer | restored, run |
+| `LEN-001` | Request accepted by {actor} | Aanvraag aanvaard door {actor} | actor, conversation |
+| `LEN-002` | Request refused by {actor} | Aanvraag geweigerd door {actor} | actor, conversation, reason |
 
 <!-- End of the generated table. -->

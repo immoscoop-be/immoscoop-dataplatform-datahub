@@ -150,8 +150,9 @@ interface Sight {
   resources: Map<string, { level: number; collectionId: string; displayName: string }>;
 }
 
-/** A Request as a waiting Lens shows it (FR-LE-09). */
-const requestView = (request: QueryRequest | undefined) => (request ? { state: request.state, sentAt: request.createdAt, reads: request.reads, text: request.text } : null);
+/** A Request as a waiting or refused Lens shows it, with the decision of the Data Team (FR-LE-09, DEC-UX-128). */
+const requestView = (request: QueryRequest | undefined) =>
+  request ? { id: request.id, state: request.state, sentAt: request.createdAt, reads: request.reads, text: request.text, decision: request.decision } : null;
 
 /**
  * The routes of Lenses (TR-LE-01): making one from a query, with its size check (FR-LE-07, FR-LE-08);
@@ -170,11 +171,12 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
 
   /**
    * Whether the User sees the Lens: in a Collection they see, on Resources they may all use (DEC-CO-16);
-   * while it waits for the Data Team, only its author and the Data Team (FR-LE-09).
+   * while it waits for the Data Team or once they refused it, only its author and the Data Team (FR-LE-09,
+   * DEC-UX-128). catalogue decides the same for the Messages on it.
    */
   function sees(sight: Sight, lens: Lens): boolean {
     if (!sight.collections.has(lens.collectionId)) return false;
-    if (lens.state === 'waiting' && lens.authorId !== sight.who.id && !sight.who.dataTeam) return false;
+    if ((lens.state === 'waiting' || lens.state === 'refused') && lens.authorId !== sight.who.id && !sight.who.dataTeam) return false;
     // The Data Team may use every Resource, those without a Collection too.
     return sight.who.dataTeam || lens.resources.every((resource) => sight.resources.has(resource.id));
   }
@@ -205,6 +207,29 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   /** Whether the User may change the Lens: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
   const managesLens = (sight: Sight, lens: Lens) => sight.who.dataTeam || sight.collections.get(lens.collectionId)?.canManage === true;
 
+  /** Tells catalogue what decides who sees the Messages on a Lens (DEC-PF-30); the daily check tells it again. */
+  async function told(lens: Lens, log: FastifyRequest['log']): Promise<Lens> {
+    try {
+      await catalogue.keepLens(lens);
+    } catch (error) {
+      log.warn({ err: error, lens: lens.id }, 'catalogue did not hear of a Lens; the daily check tells it again');
+    }
+    return lens;
+  }
+
+  /** A run with its defaults grew; past 1 GB the Lens stops and Data Hub asks the Data Team to accept it again (MSG-LEN-03). */
+  async function grown(id: string, range: LensRange, reads: number, log: FastifyRequest['log']): Promise<Lens> {
+    const lens = await lenses.grow(id, range, reads);
+    if (lens.state === 'stopped') {
+      try {
+        await catalogue.lensGrew({ lensId: lens.id, reads, threshold: thresholds.request });
+      } catch (error) {
+        log.error({ err: error, lens: lens.id }, 'The Request on a Lens that stopped could not be sent; the Data Team sends it on deciding');
+      }
+    }
+    return told(lens, log);
+  }
+
   /** A Lens as its page shows it: everything but its SQL, which no page shows (FR-LE-14, DEC-UX-27). */
   async function viewOf(request: FastifyRequest, sight: Sight, lens: Lens) {
     const [from, versions, log] = await Promise.all([queries.get(lens.queryId), lenses.versions(lens.id), lenses.log(lens.id)]);
@@ -214,8 +239,9 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       if (!names.has(version.fromQueryId)) names.set(version.fromQueryId, (await queries.get(version.fromQueryId))?.name ?? '');
     }
     let request_: QueryRequest | undefined;
-    if (lens.state === 'waiting') {
+    if (lens.state === 'waiting' || lens.state === 'refused') {
       try {
+        // The newest of its author: the one that waits, or the one the Data Team refused.
         request_ = (await catalogue.requests(lens.id, authorization(request), 'lens')).find((sent) => sent.writerId === lens.authorId);
       } catch (error) {
         request.log.warn({ err: error }, 'catalogue did not tell the Request on a Lens; it is shown without it');
@@ -292,19 +318,22 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const parameters: LensParameter[] = query.parameters
       .filter((parameter) => !checked.unused.includes(parameter.name))
       .map((parameter) => ({ ...parameter, label: fields.labels[parameter.name] ?? parameter.name }));
-    const lens = await lenses.create({
-      author: who,
-      query,
-      collectionId: fields.collectionId,
-      name: fields.name,
-      question: fields.question,
-      shows: fields.shows,
-      steps: fields.steps,
-      tags: fields.tags,
-      parameters,
-      range: checked.range,
-      reads: checked.bytes ?? 0,
-    });
+    const lens = await told(
+      await lenses.create({
+        author: who,
+        query,
+        collectionId: fields.collectionId,
+        name: fields.name,
+        question: fields.question,
+        shows: fields.shows,
+        steps: fields.steps,
+        tags: fields.tags,
+        parameters,
+        range: checked.range,
+        reads: checked.bytes ?? 0,
+      }),
+      request.log,
+    );
     if (lens.state === 'waiting') {
       try {
         await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: lens.reads, threshold: thresholds.request, text: fields.text, partitions: checked.partitions }, authorization(request));
@@ -403,6 +432,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     if (!seen) return undefined;
     // While it waits for the Data Team, a Lens is frozen and does not run (DEC-LE-05); stopped, it runs for nobody (DEC-LE-11).
     if (seen.lens.state === 'waiting') return void reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team.' });
+    if (seen.lens.state === 'refused') return void reply.code(409).send({ error: 'refused', message: 'The Data Team refused this Lens: it does not run until it is updated from its query.' });
     if (seen.lens.state === 'stopped') return void reply.code(409).send({ error: 'stopped', message: 'This Lens stopped: it waits for the Data Team to accept it again.' });
     const parameters = valuesFor(seen.lens, body.values);
     if (typeof parameters === 'string') return void reply.code(400).send({ error: 'invalid_request', message: parameters });
@@ -415,7 +445,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
    * (FR-LE-17); and with its defaults, whether it grew past its range (DEC-LE-11, DEC-LE-19). It answers
    * when the Lens can no longer run.
    */
-  async function upkeep(reply: FastifyReply, lens: Lens, checked: Preflight, defaults: boolean): Promise<Lens | undefined> {
+  async function upkeep(request: FastifyRequest, reply: FastifyReply, lens: Lens, checked: Preflight, defaults: boolean): Promise<Lens | undefined> {
     const missing = missingIn(checked);
     if (missing) {
       const broken = await lenses.breaks(lens.id, missing);
@@ -425,7 +455,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     let kept = lens;
     if (lens.broken && checked.runnable) kept = await lenses.works(lens.id);
     if (defaults && checked.runnable && checked.range && ORDER[checked.range] > ORDER[kept.range]) {
-      kept = await lenses.grow(lens.id, checked.range, checked.bytes ?? 0);
+      kept = await grown(lens.id, checked.range, checked.bytes ?? 0, request.log);
       if (kept.state === 'stopped') {
         void reply.code(409).send({ error: 'stopped', message: 'One run with its defaults now reads more than 1 GB: the Lens stopped until the Data Team accepts it again.', stoppedReads: kept.stoppedReads });
         return undefined;
@@ -440,7 +470,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     if (!run) return reply;
     try {
       const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
-      if (!(await upkeep(reply, run.lens, checked, run.defaults))) return reply;
+      if (!(await upkeep(request, reply, run.lens, checked, run.defaults))) return reply;
       return { preflight: checked };
     } catch (error) {
       return unavailable(error, reply, request);
@@ -453,7 +483,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     if (!run) return reply;
     try {
       const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
-      if (!(await upkeep(reply, run.lens, checked, run.defaults))) return reply;
+      if (!(await upkeep(request, reply, run.lens, checked, run.defaults))) return reply;
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -476,7 +506,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const seen = await managed(request, reply);
     if (!seen) return reply;
     if (seen.lens.state === 'waiting') return reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team: nobody changes it until they decide.' });
-    const lens = await lenses.edit(seen.lens.id, changes);
+    const lens = await told(await lenses.edit(seen.lens.id, changes), request.log);
     return { lens: await viewOf(request, seen.sight, lens) };
   });
 
@@ -522,7 +552,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const parameters: LensParameter[] = query.parameters
       .filter((parameter) => !checked.unused.includes(parameter.name))
       .map((parameter) => ({ ...parameter, label: lens.parameters.find((known) => known.name === parameter.name)?.label ?? parameter.name }));
-    const updated = await lenses.version(lens.id, { by: who, query, parameters, range: checked.range, reads: checked.bytes ?? 0 });
+    // Refused, a Lens is no longer frozen: a new version is measured again, and published or sent again (DEC-UX-128).
+    const updated = await told(await lenses.version(lens.id, { by: who, query, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
     if (updated.state === 'waiting') {
       try {
         await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: updated.reads, threshold: thresholds.request, text: text.trim(), partitions: checked.partitions }, authorization(request));
@@ -552,8 +583,12 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     },
     async (request) => {
       const outcome = { checked: 0, broken: 0, works: 0, grown: 0, stopped: 0 };
-      for (const lens of await lenses.list()) {
-        if (lens.state === 'waiting') continue;
+      const all = await lenses.list();
+      // catalogue hears of every Lens once a day too, in case a change did not reach it (DEC-PF-30).
+      await Promise.all(all.map((lens) => told(lens, request.log)));
+      for (const lens of all) {
+        // A Lens that waits for the Data Team, or that it refused, does not run.
+        if (lens.state === 'waiting' || lens.state === 'refused') continue;
         outcome.checked += 1;
         const bound = bind(lens.sql, valuesFor(lens, undefined) as Parameter[]);
         try {
@@ -564,8 +599,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
           }
           const range = rangeOf(dry.bytes, thresholds);
           if (lens.state === 'published' && ORDER[range] > ORDER[lens.range]) {
-            const grown = await lenses.grow(lens.id, range, dry.bytes);
-            outcome[grown.state === 'stopped' ? 'stopped' : 'grown'] += 1;
+            const after = await grown(lens.id, range, dry.bytes, request.log);
+            outcome[after.state === 'stopped' ? 'stopped' : 'grown'] += 1;
           }
         } catch (error) {
           const missing = error instanceof BigQueryRefused ? missingOf(error.message) : null;
@@ -599,5 +634,42 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     } catch (error) {
       return unavailable(error, reply, request);
     }
+  });
+
+  // A member of the Data Team accepts or refuses the Request on a Lens, in the Message Centre or in context
+  // (FR-LE-09, FR-CV-08): catalogue records the decision as its reply, and the Lens changes with it.
+  app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/decision', async (request, reply) => {
+    const who = viewer(request);
+    if (!who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team decides on a Request.' });
+    const { outcome, text = '' } = (request.body ?? {}) as { outcome?: unknown; text?: unknown };
+    if (outcome !== 'accepted' && outcome !== 'refused') return reply.code(400).send({ error: 'invalid_request', message: 'The decision is accepted or refused.' });
+    if (typeof text !== 'string' || text.trim().length > 1000) return reply.code(400).send({ error: 'invalid_request', message: 'The reason is a text of at most 1000 characters.' });
+    if (outcome === 'refused' && !text.trim()) return reply.code(400).send({ error: 'invalid_request', message: 'A refusal needs a reason.' });
+    const seen = await seenLens(request, reply);
+    if (!seen) return reply;
+    const { lens } = seen;
+    if (lens.state !== 'waiting' && lens.state !== 'stopped') return reply.code(409).send({ error: 'not_waiting', message: 'This Lens waits for no decision.' });
+    let requestId: string;
+    try {
+      // A waiting Lens has the Request of its author; a stopped one that of Data Hub, sent now if it is missing.
+      const type = lens.state === 'waiting' ? 'MSG-LEN-01' : 'MSG-LEN-03';
+      const waiting = (await catalogue.requests(lens.id, authorization(request), 'lens')).find((sent) => sent.state === 'waiting' && sent.type === type);
+      const found = waiting?.id ?? (lens.state === 'stopped' ? (await catalogue.lensGrew({ lensId: lens.id, reads: lens.stoppedReads ?? lens.reads, threshold: thresholds.request })).id : undefined);
+      if (!found) return reply.code(409).send({ error: 'no_request', message: 'No Request waits on this Lens; its author sends it again.' });
+      requestId = found;
+      await catalogue.decideLensRequest(requestId, { outcome, text: text.trim(), decider: { id: who.id, name: who.name } });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const decided = await told(await lenses.decide(lens.id, { outcome, by: who, conversation: requestId, reason: text.trim() }), request.log);
+    return { lens: await viewOf(request, seen.sight, decided) };
+  });
+
+  // catalogue hears of every Lens when query starts, as it does once a day (DEC-PF-30).
+  app.addHook('onReady', async () => {
+    void lenses
+      .list()
+      .then((all) => Promise.all(all.map((lens) => told(lens, app.log))))
+      .catch((error: unknown) => app.log.warn({ err: error }, 'The Lenses could not be told to catalogue at the start'));
   });
 }

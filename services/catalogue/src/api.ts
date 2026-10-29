@@ -4,6 +4,8 @@ import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
+import { messageRoutes } from './message-api.js';
+import type { Messages } from './messages.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
 import { REQUEST_TYPES, type RequestFields, type Requests, type RequestType } from './requests.js';
@@ -31,6 +33,10 @@ export interface ApiOptions {
   registry: Registry;
   /** The Requests that wait for the Data Team, such as one to run a very large query (MSG-QRY-01). */
   requests: Requests;
+  /** Conversations: the Message Centre and the Messages on every object (FR-CV-01 to FR-CV-09). */
+  messages: Messages;
+  /** Who may tell about the Lenses and decide on a Request on one: the service account of query (DEC-PF-30). */
+  lensCallers: ServiceCallerVerifier;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -64,7 +70,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry, requests } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -124,6 +130,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         return reply.code(400).send({ error: 'invalid_request', message: outcome.message, resources: [outcome.id] });
     }
   }
+
+  await messageRoutes(app, { collections, messages, lensCallers, viewer });
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
 
