@@ -405,6 +405,22 @@ function serve({
       lenses.push(made);
       return json({ lens: made }, 201);
     }
+    // The Lenses on the Resources of a query, those on exactly these first; a shared word is one of its name (FR-SR-47).
+    if (path.startsWith('/lenses/suggestions?')) {
+      const search = new URLSearchParams(path.split('?')[1]);
+      const on = (search.get('resources') ?? '').split(',');
+      const words = (search.get('question') ?? '').toLowerCase().split(/\W+/).filter((word) => word.length > 3);
+      const offered = lenses
+        .filter((item) => item.state === 'published' && !item.broken && on.every((id) => (item.resources as { id: string }[]).some((resource) => resource.id === id)))
+        .map(({ steps: _steps, parameters: _parameters, ...item }) => {
+          const name = item.name as string;
+          const hits = words.filter((word) => name.toLowerCase().includes(word));
+          const at = hits[0] ? name.toLowerCase().indexOf(hits[0]) : -1;
+          const marked = at < 0 ? null : { name: [{ text: name.slice(0, at), shared: false }, { text: name.slice(at, at + (hits[0] as string).length), shared: true }, { text: name.slice(at + (hits[0] as string).length), shared: false }].filter((piece) => piece.text), question: [], shows: [] };
+          return { ...item, shared: hits.length, marked, sharedTags: [] as string[], exact: (item.resources as unknown[]).length === on.length };
+        });
+      return json({ exact: offered.filter((item) => item.exact), more: offered.filter((item) => !item.exact) });
+    }
     const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
     if (lens && path === `/lenses/${lens.id as string}` && method === 'PATCH') {
       const { labels: _labels, ...changes } = JSON.parse(init.body as string) as Record<string, unknown>;
@@ -1087,7 +1103,7 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     const name = (await main.findByRole('textbox', { name: /Naam/ })) as HTMLInputElement;
     await vi.waitFor(() => expect(name.value).toMatch(/^Weekly lead volume, \d+ /));
-    expect(main.getByText('Nog geen Lens gebruikt deze Resources.')).toBeTruthy();
+    expect(await main.findByText('Nog geen Lens gebruikt deze Resources.', {}, { timeout: 3000 })).toBeTruthy();
     expect(within(screen.getByRole('complementary', { name: 'Query' })).getByText('Nieuw · nog niet uitgevoerd')).toBeTruthy();
     await fireEvent.input(main.getByRole('textbox', { name: /Wat wil je weten/ }), { target: { value: 'Which sources bring our leads?' } });
     await fireEvent.click(main.getByRole('button', { name: 'Begin je eigen' }));
@@ -1261,7 +1277,7 @@ describe('Query', () => {
     const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
     const name = sheet.getByRole('textbox', { name: /Naam/ }) as HTMLInputElement;
     expect(name.value).toMatch(/^Weekly lead volume, \d+ /);
-    expect(sheet.getByText('Nog geen Lens gebruikt deze Resources.')).toBeTruthy();
+    expect(await sheet.findByText('Nog geen Lens gebruikt deze Resources.', {}, { timeout: 3000 })).toBeTruthy();
     await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
     expect(calls).toContainEqual({
@@ -1437,6 +1453,64 @@ describe('Lenses', () => {
     await fireEvent.click(start.getByRole('button', { name: 'Begin je eigen' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
     expect(calls.find((call) => call.method === 'POST' && call.path === '/queries')?.body).toMatchObject({ resources: ['r2'], forCollection: 'c1' });
+  });
+
+  it('offers a new query the Lenses on its Resources, to use before writing one (FR-SR-47, FR-SR-48, DEC-UX-22)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }, { ...LENS, id: 'l-waiting', name: 'Every lead since 2019', state: 'waiting' }] });
+    open('/query/new/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.input(await main.findByRole('textbox', { name: /Wat wil je weten/ }), { target: { value: 'How many come in each week?' } });
+    const offered = within(await main.findByRole('article', { name: 'Leads per source, week by week' }, { timeout: 3000 }));
+    // The word it shares is marked; the best match says so (DEC-UX-23).
+    await vi.waitFor(() => expect(offered.getByText('week', { selector: 'mark' })).toBeTruthy());
+    expect(offered.getByText('Beste overeenkomst')).toBeTruthy();
+    expect(offered.getByText('1 woord gemeen')).toBeTruthy();
+    expect(offered.getByText('Credit leads · door Max Verstraete')).toBeTruthy();
+    expect(offered.getByRole('link', { name: 'Gebruik deze Lens' }).getAttribute('href')).toBe('/lenses/l1');
+    expect(main.getByText('Op precies deze Resource')).toBeTruthy();
+    // A Lens that waits for the Data Team is not offered (DEC-SR-43).
+    expect(main.queryByRole('article', { name: 'Every lead since 2019' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('/lenses/suggestions?resources=r2&question=How+many'))).toBe(true);
+  });
+
+  it('shows the Lenses on the Resources of a query in a sheet, while writing it (DEC-UX-73)', async () => {
+    serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const button = await main.findByRole('button', { name: /Lenses op deze Resources · 1/ });
+    await vi.waitFor(() => expect((button as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(button);
+    const sheet = within(await screen.findByRole('dialog'));
+    expect(sheet.getByText('Terwijl je je query schrijft')).toBeTruthy();
+    expect(sheet.getByRole('link', { name: 'Gebruik deze Lens' }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('shows the Lenses of the User under Yours, and new Lenses of others, on the start screen (FR-CO-37, DEC-UX-126)', async () => {
+    const recent = new Date(Date.now() - 3 * 86_400_000).toISOString();
+    serve({
+      groups: ['g1'],
+      settings: { 'intro.collections': 1 },
+      lenses: [
+        { ...LENS, lastRunAt: new Date(Date.now() - 120_000).toISOString() },
+        { ...LENS, id: 'l-broken', name: 'Response time and conversion', broken: { kind: 'column', name: 'first_reply_at', since: recent } },
+        { ...LENS, id: 'l-new', name: 'Listings per region', collectionId: 'c2', mine: false, authorName: 'Ruth Aerts', publishedAt: recent },
+        { ...LENS, id: 'l-old', name: 'Listings per year', collectionId: 'c2', mine: false, authorName: 'Ruth Aerts', publishedAt: '2026-01-01T08:00:00Z' },
+      ],
+    });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const ran = await main.findByRole('link', { name: /Leads per source, week by week/ });
+    expect(within(ran).getByText(/Door jou uitgevoerd/)).toBeTruthy();
+    const broken = main.getByRole('link', { name: /Response time and conversion/ });
+    expect(within(broken).getByText('first_reply_at bestaat niet meer')).toBeTruthy();
+    expect(main.getByText('1 Resource · 2 Lenses')).toBeTruthy();
+    // New: published in the last 30 days in a public Collection of another group.
+    expect(main.getByRole('heading', { level: 2, name: 'Nieuwe Lenses' })).toBeTruthy();
+    expect(within(main.getByRole('link', { name: /Listings per region/ })).getByText(/gepubliceerd door Ruth Aerts/)).toBeTruthy();
+    expect(main.queryByRole('link', { name: /Listings per year/ })).toBeNull();
   });
 
   it('opens a Lens that waits for the Data Team as its author made it, frozen (FR-LE-09, DEC-LE-05)', async () => {

@@ -1,4 +1,4 @@
-import type { Kysely, Selectable } from 'kysely';
+import { type Kysely, type Selectable, sql } from 'kysely';
 import type { LensLogId, LensParameterRow, LensRange, LensState, Missing, NamedResource, QueryDatabase } from './database.js';
 import type { Query, Viewer } from './queries.js';
 
@@ -87,6 +87,21 @@ export interface NewLens {
   reads: number;
 }
 
+/** A piece of a text, and whether it is a word the question shares (DEC-UX-23). */
+export interface Marked {
+  text: string;
+  shared: boolean;
+}
+
+/** What a Lens shares with the words of a question: how many, and where they are (FR-SR-48, DEC-SR-42). */
+export interface SharedWords {
+  shared: number;
+  name: Marked[];
+  question: Marked[];
+  shows: Marked[];
+  tags: string[];
+}
+
 export interface Lenses {
   /** Makes a Lens with its first version: published, or waiting for the Data Team above 1 GB (FR-LE-08). */
   create(fields: NewLens): Promise<Lens>;
@@ -108,6 +123,11 @@ export interface Lenses {
   breaks(id: string, missing: Omit<Missing, 'since'>): Promise<Lens>;
   works(id: string): Promise<Lens>;
   log(id: string): Promise<LensLogEntry[]>;
+  /**
+   * The words each of these Lenses shares with a question, in the full-text search of Postgres in English
+   * without accents (`lens_words`): common words left out, each word by its stem (FR-SR-48, DEC-SR-42).
+   */
+  words(question: string, ids: readonly string[]): Promise<Map<string, SharedWords>>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -117,6 +137,21 @@ const lensOf = (row: Selectable<QueryDatabase['lenses']>): Lens => ({
   reads: Number(row.reads),
   stoppedReads: row.stoppedReads === null ? null : Number(row.stoppedReads),
 });
+
+/** The marks of `ts_headline` around a shared word: characters no text of a Lens holds. */
+const START = '\u0001';
+const STOP = '\u0002';
+
+/** A text with its shared words marked, in pieces. */
+function marked(text: string): Marked[] {
+  const pieces: Marked[] = [];
+  for (const [index, part] of text.split(START).entries()) {
+    const [word, rest] = index === 0 ? [null, part] : [part.split(STOP)[0] ?? '', part.split(STOP).slice(1).join('')];
+    if (word) pieces.push({ text: word, shared: true });
+    if (rest) pieces.push({ text: rest, shared: false });
+  }
+  return pieces;
+}
 
 /** How BigQuery names what is missing, as the Log says it: a column, or a table. */
 const missingText = (missing: Omit<Missing, 'since'>) => missing.name;
@@ -291,6 +326,32 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
 
     async log(id) {
       return db.selectFrom('lensLog').select(['logId', 'params', 'at']).where('lensId', '=', id).orderBy('id', 'desc').limit(50).execute();
+    },
+
+    async words(question, ids) {
+      if (ids.length === 0) return new Map();
+      const options = `StartSel=${START}, StopSel=${STOP}, HighlightAll=true`;
+      // The words of the question as lexemes, joined by "or" without being stemmed again.
+      const { rows } = await sql<{ id: string; shared: string; name: string; question: string; shows: string; tags: string[] }>`
+        with asked as (
+          select tsvector_to_array(to_tsvector('lens_words', ${question})) as words
+        ), query as (
+          select words, case when cardinality(words) = 0 then null
+            else array_to_string(array(select quote_literal(word) from unnest(words) as word), ' | ')::tsquery end as q
+          from asked
+        ), lens as (
+          select l.*, array(select jsonb_array_elements_text(l.tags)) as tag_list from lenses l where l.id = any(${ids as string[]}::uuid[])
+        )
+        select lens.id,
+          (select count(*) from unnest(query.words) as word
+            where word = any(tsvector_to_array(to_tsvector('lens_words', concat_ws(' ', lens.name, lens.question, lens.shows, array_to_string(lens.tag_list, ' ')))))) as shared,
+          case when query.q is null then lens.name else ts_headline('lens_words', lens.name, query.q, ${options}) end as name,
+          case when query.q is null then lens.question else ts_headline('lens_words', lens.question, query.q, ${options}) end as question,
+          case when query.q is null then lens.shows else ts_headline('lens_words', lens.shows, query.q, ${options}) end as shows,
+          array(select tag from unnest(lens.tag_list) as tag where query.q is not null and to_tsvector('lens_words', tag) @@ query.q) as tags
+        from lens, query
+      `.execute(db);
+      return new Map(rows.map((row) => [row.id, { shared: Number(row.shared), name: marked(row.name), question: marked(row.question), shows: marked(row.shows), tags: row.tags }]));
     },
   };
 }

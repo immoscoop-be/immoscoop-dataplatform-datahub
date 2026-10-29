@@ -4,6 +4,7 @@ import * as parameters from './0002-parameters.js';
 import * as previews from './0003-previews.js';
 import * as lenses from './0004-lenses.js';
 import * as lensUpkeep from './0005-lens-upkeep.js';
+import * as lensWords from './0006-lens-words.js';
 
 /** The migrations of query, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -12,4 +13,5 @@ export const migrations: Record<string, Migration> = {
   '0003-previews': previews,
   '0004-lenses': lenses,
   '0005-lens-upkeep': lensUpkeep,
+  '0006-lens-words': lensWords,
 };

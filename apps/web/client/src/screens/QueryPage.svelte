@@ -14,17 +14,19 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import { NotFound as Missing } from '../lib/api.js';
   import type { Collection } from '../lib/catalogue.js';
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
-  import type { Lens, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
+  import type { Lens, LensSuggestions as Found, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import ParameterWindow from './ParameterWindow.svelte';
   import QueryHistory from './QueryHistory.svelte';
   import QueryParameters, { type Missing as MissingParameter } from './QueryParameters.svelte';
+  import LensSuggestions from './LensSuggestions.svelte';
   import UpdateLensSheet from './UpdateLensSheet.svelte';
 
   /**
@@ -99,6 +101,9 @@
   let renameSaving = $state(false);
   let renameFailed = $state(false);
   let updating = $state(false);
+  /** The Lenses on its Resources, to reuse while writing (DEC-UX-73); not for a query used as a Lens (DEC-UX-77). */
+  let lensesOn = $state<Found | undefined>();
+  let lensesOpen = $state(false);
   let loadedId: string | undefined;
 
   $effect(() => {
@@ -118,6 +123,8 @@
     requestText = '';
     renaming = null;
     updating = false;
+    lensesOn = undefined;
+    lensesOpen = false;
     tab = 'result';
     client.get(id).then(
       async (found) => {
@@ -137,6 +144,22 @@
         if (error instanceof Missing) query = null;
         else console.error(`The query ${id} could not be read`, error);
       },
+    );
+  });
+
+  // The Lenses on its Resources, by the words of its question, for "Lenses on these Resources" (FR-SR-47).
+  const lensKey = $derived(query && query.kind === 'query' && !query.lens ? `${query.id}\u0000${visibleIds().join(',')}\u0000${query.question}` : null);
+  function visibleIds(): string[] {
+    return query?.resources.flatMap((resource) => (resource.visible ? [resource.id] : [])) ?? [];
+  }
+  $effect(() => {
+    const key = lensKey;
+    const on = visibleIds();
+    if (key === null || on.length === 0 || !query) return;
+    const words = query.question;
+    client.suggestions(on, words).then(
+      (found) => lensKey === key && (lensesOn = found),
+      (error: unknown) => console.error('The Lenses on these Resources could not be read', error),
     );
   });
 
@@ -547,7 +570,11 @@
         {/each}
       </span>
       <!-- A query used as a Lens already is one (DEC-UX-77). -->
-      {#if !query.lens}<Button variant="quiet" disabled title={t('query.later')}>{t('query.lensesOn', { count: 0 })}</Button>{/if}
+      {#if !query.lens && query.kind === 'query'}
+        <Button variant="quiet" disabled={!lensesOn} title={t('lenses.sheet.hint')} onclick={() => (lensesOpen = true)}
+          ><Icon name="aperture" />{t('query.lensesOn', { count: lensesOn ? lensesOn.exact.length + lensesOn.more.length : 0 })}</Button
+        >
+      {/if}
     </div>
 
     <div class="box">
@@ -756,7 +783,26 @@
   {/if}
 
   {#if newSet}
-    <NewSetSheet {query} {sql} {parameters} {collections} mode={newSet.mode} resource={newSet.resource} onclose={() => (newSet = null)} onstart={startNew} />
+    <NewSetSheet
+      {query}
+      {sql}
+      {parameters}
+      {collections}
+      mode={newSet.mode}
+      resource={newSet.resource}
+      onclose={() => (newSet = null)}
+      onstart={startNew}
+      lensesOn={(on, words) => client.suggestions(on, words)}
+    />
+  {/if}
+
+  {#if lensesOpen && lensesOn}
+    <Sheet title={t('lenses.sheet.title')} onclose={() => (lensesOpen = false)}>
+      {#snippet top()}<p class="meta sheet-over">{t('lenses.sheet.over')}</p>{/snippet}
+      <p class="meta sheet-intro">{t('lenses.sheet.intro')}</p>
+      <div class="sheet-lenses"><LensSuggestions found={lensesOn} resources={visibleIds()} {collections} /></div>
+      {#snippet foot()}<Button variant="quiet" onclick={() => (lensesOpen = false)}>{t('lenses.sheet.back')}</Button>{/snippet}
+    </Sheet>
   {/if}
 
   {#if updating && query.lens}
@@ -801,6 +847,9 @@
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
   .frame { margin-top: 14px; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+  .sheet-over { display: block; margin: 0 0 2px; }
+  .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
+  .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
   .scope { display: flex; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
   .scope > .label { flex: none; line-height: 26px; margin: 0; }
   .chips { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

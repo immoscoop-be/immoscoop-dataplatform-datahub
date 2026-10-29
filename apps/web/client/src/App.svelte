@@ -334,6 +334,7 @@
     {#if page.kind === 'start' && page.section.id === 'collections'}
       <CollectionsStart
         {collections}
+        {lenses}
         groups={signedIn.me.groups}
         intro={signedIn.settings.values['intro.collections'] !== INTRO_VERSION}
         ondismiss={() => signedIn.settings.set('intro.collections', INTRO_VERSION)}
@@ -347,6 +348,7 @@
           initial={page.resource}
           {collections}
           {catalogue}
+          lensesOn={(on, words) => queries.suggestions(on, words)}
           ondraft={(name) => (draft = name)}
           onstart={async (fields) => {
             try {

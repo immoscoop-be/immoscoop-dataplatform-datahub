@@ -5,8 +5,13 @@
   The start screen finds Lenses too, as Lenses have no section of their own (DEC-UX-66): a search by question over Collections,
   Resources and Lenses; Yours, the Collections of the User's Owner Units and the Lenses of the User and their Owner Unit,
   one waiting for the Data Team; Recently; and new Lenses. Nothing popular for now (DEC-UX-86).
+  The search, drawn for approval (OP-UX-45): a question, sent with Enter, replaces the sections with what shares its words, as a
+  new query finds Lenses (FR-SR-48): Lenses first, as each answers a question, then Resources, then Collections; in each group
+  those that share most words first, the shared words marked; only what the User may see. Nothing found says so, with
+  "New query". The switch "Search" shows both (?search=results, ?search=none); "Clear" goes back to the start screen.
   Requirements: FR-CO-12, FR-CO-18, FR-CO-20, FR-CO-21, FR-CO-22, FR-CO-23, FR-CO-24, FR-CO-36, FR-CO-37, FR-SR-22, FR-LE-09, FR-LE-17
-  Decisions: DEC-UX-10, DEC-UX-11, DEC-UX-12, DEC-UX-13, DEC-UX-16, DEC-UX-65, DEC-UX-66, DEC-UX-86, DEC-UX-87, DEC-UX-89.
+  Decisions: DEC-UX-10, DEC-UX-11, DEC-UX-12, DEC-UX-13, DEC-UX-16, DEC-UX-65, DEC-UX-66, DEC-UX-86, DEC-UX-87, DEC-UX-89, DEC-UX-126.
+  Open: OP-UX-45.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -118,6 +123,7 @@
   <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px"><button class="btn-primary"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New Collection</button><a class="btn-quiet outline" href="query.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Make a Lens from a query</a><a class="text-link"><span>How Collections work</span><i class="ph-fill ph-arrow-right"></i></a></div>
  </section>
  <label class="lens-find"><i class="ph ph-magnifying-glass" style="font-size:18px;color:var(--text-secondary)"></i><input placeholder="What do you want to know? Search Collections, Resources and Lenses, for example: which sources bring the most leads"></label>
+<div data-pane-group="search" data-pane="start">
  <div class="section-head"><h2>Yours</h2><span class="meta">Your Collections, and Lenses made by you or the credit team</span></div>
  <div class="grid">
   <a class="tile card" style="text-decoration:none;color:inherit" href="collection-overview.html"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit leads</span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">6 Resources · 4 Lenses</p><span class="meta">Owned by the credit team</span></a>
@@ -140,7 +146,51 @@
   <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Credit funnel by region</span></div><p>Where do credit requests drop out, per region?</p><div class="lens-tile-foot"><span class="maturity" data-level="3"></span><span class="meta">New since 3 days, by Mia Peeters</span></div></a>
   <a class="tile card lens-tile" href="lens.html"><div style="display:flex;gap:10px;align-items:center"><i class="ph ph-aperture lens-icon" style="font-size:18px" aria-hidden="true"></i><span class="item-title" style="font-size:14px">Credit requests per session source</span></div><p>Which first visits lead to a credit request?</p><div class="lens-tile-foot"><span class="maturity" data-level="2"></span><span class="meta">New since last week, by Karel Leys</span></div></a>
  </div>
+</div>
+<div data-pane-group="search" data-pane="results" hidden class="search-results">
+ <p class="meta" style="display:block;margin:4px 2px 0">Results for <b style="font-weight:500;color:var(--text-primary)">Which sources bring the most leads?</b> · only what you may see · <a class="text-link" href="collections-start.html" style="display:inline">Clear</a></p>
+ <div class="section-head"><h2>Lenses <span class="count">2</span></h2><span class="meta">Each answers a question with data that is ready to use</span></div>
+ <article class="lens-card best">
+  <div>
+   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title"><mark>Leads</mark> per <mark>source</mark>, week by week</span><span class="maturity" data-level="4"></span><span class="pill pill-best">Best match</span></div>
+   <p>Which <mark>sources</mark> <mark>bring</mark> our <mark>leads</mark>? How many <mark>leads</mark> each <mark>source</mark> <mark>brings</mark>, week by week.</p>
+   <div class="tags"><span class="tag hit">#leads</span><span class="tag hit">#source</span><span class="tag">#weekly</span><span class="meta" style="margin-left:4px">3 words in common</span></div>
+   <div class="lens-foot"><span class="meta">Credit leads · by Mia Peeters</span></div>
+  </div>
+  <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this Lens</a>
+ </article>
+ <article class="lens-card">
+  <div>
+   <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span class="item-title">Partner share per month</span><span class="maturity" data-level="4"></span></div>
+   <p>The share of the partner network in the <mark>leads</mark>, month by month.</p>
+   <div class="tags"><span class="tag">#partners</span><span class="tag hit">#leads</span><span class="meta" style="margin-left:4px">1 word in common</span></div>
+   <div class="lens-foot"><span class="meta">Credit leads · by Karel Leys</span></div>
+  </div>
+  <a class="btn-primary" href="lens.html" style="text-decoration:none;padding:7px 14px;white-space:nowrap">Use this Lens</a>
+ </article>
+ <div class="section-head"><h2>Resources <span class="count">2</span></h2><span class="meta">The data itself, to query or to make a Lens from</span></div>
+ <div class="table-card card"><table>
+  <thead><tr><th>Name</th><th>Collection</th><th>Level</th><th>In common</th></tr></thead>
+  <tbody>
+   <tr><td><a class="name-cell" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly <mark>lead</mark> volume</span></a><div class="meta" style="margin:4px 0 0 24px">How many <mark>leads</mark> came in per week, per <mark>source</mark> and channel.</div></td><td class="muted">Credit leads</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">2 words</td></tr>
+   <tr><td><a class="name-cell" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span><mark>Lead</mark> <mark>sources</mark></span></a><div class="meta" style="margin:4px 0 0 24px">Every <mark>source</mark> a <mark>lead</mark> can come from, with its label.</div></td><td class="muted">Credit leads</td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">2 words</td></tr>
+  </tbody>
+ </table></div>
+ <div class="section-head"><h2>Collections <span class="count">1</span></h2><span class="meta">Resources and Lenses on one topic</span></div>
+ <div class="grid">
+  <a class="tile card" style="text-decoration:none;color:inherit" href="collection-overview.html"><div style="display:flex;gap:10px;align-items:center"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="item-title" style="font-size:14px">Credit <mark>leads</mark></span></div><p style="font-size:12px;color:var(--text-secondary);margin:12px 0 10px">The credit <mark>leads</mark> Immoscoop sends to KBC: how many come in, where they come from.</p><span class="meta">6 Resources · 4 Lenses · 1 word in common</span></a>
+ </div>
+</div>
+<div data-pane-group="search" data-pane="none" hidden class="search-results">
+ <p class="meta" style="display:block;margin:4px 2px 0">Results for <b style="font-weight:500;color:var(--text-primary)">How do agencies rate their brokers?</b> · <a class="text-link" href="collections-start.html" style="display:inline">Clear</a></p>
+ <div class="result-empty" style="margin-top:16px"><i class="ph ph-magnifying-glass"></i><p><b>Nothing shares a word with your question.</b> Try other words, or start a query on Resources you know: a query you make can become a Lens for the next colleague with the same question.</p><a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;align-self:center"><i class="ph-fill ph-terminal-window"></i>New query</a></div>
+</div>
 </main>
+</div>
+<div class="proto-switch" data-group="search" role="tablist" aria-label="Prototype: the search">Search
+ <button class="seg on" data-target="start" role="tab" aria-selected="true">Not searched</button>
+ <button class="seg" data-target="results" role="tab" aria-selected="false">Results</button>
+ <button class="seg" data-target="none" role="tab" aria-selected="false">Nothing found</button>
 </div>
 <script src="app.js"></script>
 </body>

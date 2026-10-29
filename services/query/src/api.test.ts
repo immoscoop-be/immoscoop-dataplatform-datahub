@@ -759,6 +759,46 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     fake.resize(null);
   });
 
+  it('offers a new query the Lenses on its Resources, exactly these first, by the words of its question (FR-SR-47, FR-SR-48, DEC-SR-42)', async () => {
+    const offered = async (who: string, question: string, resources = [WEEKLY.id]) =>
+      (await call(who, 'GET', `/lenses/suggestions?resources=${resources.join(',')}&question=${encodeURIComponent(question)}`)).json();
+    const found = await offered(an, 'Which sources bring the most leads?');
+    // Mia's Lens reads Weekly lead volume alone; An's reads it and Lead sources. The waiting one is not offered.
+    expect(found.exact.map((lens: { name: string }) => lens.name)).toEqual(['All weeks per source']);
+    expect(found.more.map((lens: { name: string }) => lens.name)).toEqual(['Leads per source, week by week']);
+    expect(found.exact[0]).toMatchObject({ shared: 1, marked: { name: [{ text: 'All weeks per ', shared: false }, { text: 'source', shared: true }] }, sharedTags: [] });
+    // Its name, its question and its tags share "sources", "bring" and "leads", by their stem; "the" does not count.
+    expect(found.more[0]).toMatchObject({ shared: 3, sharedTags: ['leads', 'source'] });
+    expect(found.more[0].marked.question).toEqual([
+      { text: 'Which ', shared: false },
+      { text: 'sources', shared: true },
+      { text: ' ', shared: false },
+      { text: 'bring', shared: true },
+      { text: ' our ', shared: false },
+      { text: 'leads', shared: true },
+      { text: '?', shared: false },
+    ]);
+    // Accents do not count, and a question without words shares none.
+    expect((await offered(an, 'sóurces')).exact[0]).toMatchObject({ shared: 1 });
+    expect((await offered(an, '')).exact[0]).toMatchObject({ shared: 0, marked: { name: [{ text: 'All weeks per source', shared: false }] } });
+    // On both Resources, An's Lens is on exactly these.
+    expect((await offered(an, '', [WEEKLY.id, SOURCES.id])).exact.map((lens: { name: string }) => lens.name)).toEqual(['Leads per source, week by week']);
+    // Karel does not see An's private Collection.
+    expect((await offered(karel, 'leads')).more).toEqual([]);
+    // A Lens that does not run now is not offered (DEC-SR-43).
+    const store = createLenses(database.db);
+    await store.breaks(largeLens, { kind: 'column', name: 'lead_source' });
+    expect((await offered(an, 'leads')).exact).toEqual([]);
+    await store.works(largeLens);
+    expect((await call(an, 'GET', '/lenses/suggestions?resources=nope')).statusCode).toBe(400);
+  });
+
+  it('tells when the User last ran each Lens, for the start screen of Collections (FR-CO-37)', async () => {
+    const listed = (await call(an, 'GET', '/lenses')).json().lenses;
+    expect(listed.find((lens: { id: string }) => lens.id === lensId).lastRunAt).toEqual(expect.any(String));
+    expect(listed.find((lens: { id: string }) => lens.id === largeLens).lastRunAt).toBeNull();
+  });
+
   it('answers 503 when catalogue does not, rather than guess what the User may see', async () => {
     const down = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes' })}`;
     visible.set(down, null);

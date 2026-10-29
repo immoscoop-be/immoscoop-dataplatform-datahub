@@ -321,14 +321,46 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     }
   });
 
-  // The Lenses the User sees, for the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36).
+  // The Lenses the User sees, for the panel of Collections, the page of a Collection and its start screen,
+  // with when the User last ran each (FR-CO-28, FR-CO-36, FR-CO-37).
   app.get('/lenses', async (request, reply) => {
     try {
       const sight = await sightOf(request);
-      return { lenses: (await lenses.list()).filter((lens) => sees(sight, lens)).map((lens) => itemOf(sight, lens)) };
+      const ran = await queries.lensRuns(sight.who.id);
+      return { lenses: (await lenses.list()).filter((lens) => sees(sight, lens)).map((lens) => ({ ...itemOf(sight, lens), lastRunAt: ran.get(lens.id) ?? null })) };
     } catch (error) {
       return unavailable(error, reply, request);
     }
+  });
+
+  // The Lenses a new query may reuse (FR-SR-47, DEC-UX-22): those on exactly its Resources, then those on
+  // them and more; only Lenses the User may use and that run now (DEC-SR-43); in each group, those that
+  // share most words with its question first, the shared words marked (FR-SR-48, DEC-SR-42).
+  app.get<{ Querystring: { resources?: string; question?: string } }>('/lenses/suggestions', async (request, reply) => {
+    const ids = [...new Set((request.query.resources ?? '').split(',').map((id) => id.trim().toLowerCase()).filter(Boolean))];
+    const question = (request.query.question ?? '').trim();
+    if (ids.length < 1 || ids.length > 10 || !ids.every((id) => UUID.test(id))) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name 1 to 10 Resources by their ID.' });
+    }
+    if (question.length > LIMITS.question) return reply.code(400).send({ error: 'invalid_request', message: `The question has at most ${LIMITS.question} characters.` });
+    let sight: Sight;
+    try {
+      sight = await sightOf(request);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const usable = (await lenses.list()).filter(
+      (lens) => lens.state === 'published' && lens.broken === null && sees(sight, lens) && ids.every((id) => lens.resources.some((resource) => resource.id === id)),
+    );
+    const words = await lenses.words(question, usable.map((lens) => lens.id));
+    const ranked = usable
+      .map((lens) => {
+        const shared = words.get(lens.id);
+        return { ...itemOf(sight, lens), exact: lens.resources.length === ids.length, shared: shared?.shared ?? 0, marked: shared ? { name: shared.name, question: shared.question, shows: shared.shows } : null, sharedTags: shared?.tags ?? [] };
+      })
+      .sort((a, b) => b.shared - a.shared || (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0) || a.name.localeCompare(b.name));
+    const strip = ({ exact: _exact, ...item }: (typeof ranked)[number]) => item;
+    return { exact: ranked.filter((item) => item.exact).map(strip), more: ranked.filter((item) => !item.exact).map(strip) };
   });
 
   app.get<{ Params: { id: string } }>('/lenses/:id', async (request, reply) => {

@@ -51,6 +51,8 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-39"></a>**DEC-SR-39** · In a Preview the partition column offers the newest 1, 4 or 12 partitions that hold rows, counted from the newest one, not back from today: for a weekly table partitioned by day, 1, 4 or 12 weeks. It refines [DEC-SR-37](#dec-sr-37). *Decided on 2026-10-29, by Max.*
 - <a id="dec-sr-40"></a>**DEC-SR-40** · The query that reads the values of the choices of a Preview is kept in the Query Log with its own Query ID, but is not listed in the history of the previews of the Resource: that history lists only the previews the User asked for ([DEC-SR-37](#dec-sr-37)). *Decided on 2026-10-29, by Max.*
 - <a id="dec-sr-41"></a>**DEC-SR-41** · Only the Owner Unit of a Resource and the Data Team see the queries on it, in its tab History, and they see their SQL; for everyone else the tab is not there. It replaces the first sentence of [DEC-SR-31](#dec-sr-31); who sees the SQL stays as DEC-SR-31 says, as the author of a query sees it in Query. *Decided on 2026-10-29, by Max ("hide the history for non-owners"; the Data Team sees every query already, [DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).*
+- <a id="dec-sr-42"></a>**DEC-SR-42** · The words of the question of a new query are matched against the name of a Lens, the question it answers, what it shows and its tags, and the shared words are marked in all four. It extends [FR-SR-48](#fr-sr-48), which names the name, the description and the tags. *Decided on 2026-10-29, by Max.*
+- <a id="dec-sr-43"></a>**DEC-SR-43** · A new query offers only Lenses that run now: published, not stopped and not Broken. A Lens that waits for the Data Team, has stopped or is Broken is not offered to reuse ([FR-SR-47](#fr-sr-47)). *Decided on 2026-10-29, by Max.*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -559,7 +561,7 @@ The page of a Resource has a button "Query". It opens Query with a new query: th
 <a id="fr-sr-47"></a>
 ### FR-SR-47 · A new query first shows the Lenses on its Resources
 
-**Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
@@ -567,13 +569,20 @@ While a User names a new query and chooses its Resources, Data Hub shows the Len
 
 *Note of 2026-10-29, on building part 5: until Lenses are built, in part 6 of the [build order](../../design/build-order.md), a new query says that no Lens uses its Resources ([DEC-UX-114](../../design/principles.md#dec-ux-114)).*
 
+*Note of 2026-10-29: only Lenses that run now are offered ([DEC-SR-43](#dec-sr-43)).*
+
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07); the query page shows the same Lenses in a sheet, and the sheet of a new set says how many use it.*
+
 <a id="fr-sr-48"></a>
 ### FR-SR-48 · The question of a new query finds Lenses by their words
 
-**Status:** Proposed · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
 
+*Note of 2026-10-29: the question of a Lens counts too ([DEC-SR-42](#dec-sr-42)).*
+
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07). The typos and half-remembered names of [Search](#search) are not needed for a question, and are left for the search of the start screen of Collections, in part 6d.*
 
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation

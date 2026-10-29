@@ -152,6 +152,27 @@ export interface LensItem {
   publishedAt: string | null;
   /** What it misses while it is Broken, for the red dot wherever it is listed (DEC-UX-81). */
   broken: Missing | null;
+  /** When the User last ran it, for the start screen of Collections (FR-CO-37). */
+  lastRunAt?: string | null;
+}
+
+/** A piece of a text, and whether it is a word the question shares (DEC-UX-23). */
+export interface Marked {
+  text: string;
+  shared: boolean;
+}
+
+/** A Lens a new query may reuse, with the words it shares with its question (FR-SR-47, FR-SR-48, DEC-SR-42). */
+export interface LensSuggestion extends LensItem {
+  shared: number;
+  marked: { name: Marked[]; question: Marked[]; shows: Marked[] } | null;
+  sharedTags: string[];
+}
+
+/** The Lenses on exactly the Resources of a query, and those on them and more (DEC-UX-22). */
+export interface LensSuggestions {
+  exact: LensSuggestion[];
+  more: LensSuggestion[];
 }
 
 /** A line of the Log of a Lens: it became Broken, or worked again (FR-SR-52). */
@@ -398,6 +419,11 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     /** The Lenses the User sees (DEC-LE-09, DEC-CO-16). */
     async lenses(): Promise<LensItem[]> {
       return ((await (await call('/lenses')).json()) as { lenses: LensItem[] }).lenses;
+    },
+    /** The Lenses a new query may reuse, by its Resources and the words of its question (FR-SR-47, FR-SR-48). */
+    async suggestions(resources: readonly string[], question: string): Promise<LensSuggestions> {
+      const search = new URLSearchParams({ resources: resources.join(','), question });
+      return (await (await call(`/lenses/suggestions?${search}`)).json()) as LensSuggestions;
     },
     async lens(id: string): Promise<Lens> {
       return ((await (await call(`/lenses/${encodeURIComponent(id)}`)).json()) as { lens: Lens }).lens;
