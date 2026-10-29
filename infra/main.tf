@@ -94,11 +94,14 @@ locals {
       DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
     })
     # query asks catalogue which Resources the User may see, with their token, and runs the jobs in
-    # the project and location of Data Hub, where the tables of its dbt projects are (DEC-SR-32).
+    # the project and location of Data Hub, where the tables of its dbt projects are (DEC-SR-32). The
+    # scheduler starts its daily check of every Lens, by a Google ID token for its address (DEC-LE-20).
     query = merge(local.database_env["query"], {
-      DATAHUB_CATALOGUE_URL     = local.urls["catalogue"]
-      DATAHUB_BIGQUERY_PROJECT  = var.project_id
-      DATAHUB_BIGQUERY_LOCATION = var.region
+      DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
+      DATAHUB_BIGQUERY_PROJECT          = var.project_id
+      DATAHUB_BIGQUERY_LOCATION         = var.region
+      DATAHUB_QUERY_URL                 = local.urls["query"]
+      DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
     })
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }

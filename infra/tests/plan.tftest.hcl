@@ -661,3 +661,42 @@ run "an_unknown_environment_is_refused" {
 
   expect_failures = [var.environment]
 }
+
+run "the_scheduler_checks_every_lens_once_a_day_with_its_own_token" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.scheduler
+    override_during = plan
+    values = {
+      email  = "datahub-scheduler@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-scheduler@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_cloud_scheduler_job.lens_check.http_target[0].http_method == "POST" && google_cloud_scheduler_job.lens_check.http_target[0].uri == "https://datahub-query-123456789.europe-west1.run.app/internal/lenses/check"
+    error_message = "The scheduler starts the daily check of every Lens at query (DEC-LE-20)."
+  }
+
+  assert {
+    condition = (
+      google_cloud_scheduler_job.lens_check.http_target[0].oidc_token[0].service_account_email == "datahub-scheduler@test-project.iam.gserviceaccount.com" &&
+      google_cloud_scheduler_job.lens_check.http_target[0].oidc_token[0].audience == "https://datahub-query-123456789.europe-west1.run.app"
+    )
+    error_message = "The scheduler calls with a Google ID token of its own, for query's own address, which query checks itself (TR-PF-14)."
+  }
+
+  assert {
+    condition = alltrue([
+      contains([for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_SCHEDULER_SERVICE_ACCOUNT=datahub-scheduler@test-project.iam.gserviceaccount.com"),
+      contains([for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_QUERY_URL=https://datahub-query-123456789.europe-west1.run.app"),
+    ])
+    error_message = "query must know the scheduler and its own address, to check who starts the daily check."
+  }
+
+  assert {
+    condition     = google_cloud_scheduler_job.lens_check.schedule == "17 5 * * *" && google_cloud_scheduler_job.lens_check.time_zone == "Europe/Brussels"
+    error_message = "Every Lens is checked once a day, early in the morning in Belgium, so a Broken one is found within a day (DEC-LE-20)."
+  }
+}
