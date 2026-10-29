@@ -170,6 +170,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Pager | Rows from to, previous and next | **Page through** | button | results | [FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51) |
 | Size check | What one run of a new Lens reads, in three ranges, and the outcome | – | gauge, callout | Make it a lens | [FR-LE-08](../requirements/functional/09-lenses.md#fr-le-08) |
 | Lens tile | A Lens with its question, Level and how it ran | – | tile, maturity | start of Collections | [FR-CO-37](../requirements/functional/03-collections.md#fr-co-37) |
+| Lens card | A Lens offered to reuse: its name, question and what it shows with the words it shares with a question marked, its Resources, those beyond the query with "+", its tags, its Collection and maker, and "Use this Lens" | Opens the Lens | kind icon, maturity, chip, button | new query, Lenses on these Resources | [DEC-UX-22](principles.md#dec-ux-22), [DEC-UX-23](principles.md#dec-ux-23) |
 | Lens link | "Used as the lens", and "Update the lens" with its sheet | **Lay over** | callout, sheet | Query | [DEC-UX-77](principles.md#dec-ux-77) |
 
 ### Messages

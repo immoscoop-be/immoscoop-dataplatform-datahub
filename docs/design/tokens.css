@@ -17,6 +17,7 @@
 
   /* Shape: rounding only, never shadows */
   --radius-chip: 7px;
+  --radius-mark: 3px;        /* a word marked in a text, such as one a question shares */
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
