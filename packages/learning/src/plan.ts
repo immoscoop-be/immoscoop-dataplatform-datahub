@@ -111,6 +111,8 @@ export const TOPICS: readonly Topic[] = [
   { number: 'K4.3', level: 'compass', section: 'K4', title: { en: 'Sharing a figure or a dataset', nl: 'Een cijfer of dataset delen' }, priority: null, thinking: null, buildsOn: [] },
   { number: 'K4.4', level: 'compass', section: 'K4', title: { en: 'Reporting an error or a doubt', nl: 'Een fout of twijfel melden' }, priority: null, thinking: null, buildsOn: [] },
   { number: 'K5.1', level: 'compass', section: 'K5', title: { en: 'What a resource is', nl: 'Wat een resource is' }, priority: null, thinking: null, buildsOn: [] },
+  // Added to the master learning plan by Data Hub, which explains its Levels nowhere else (DEC-LR-30).
+  { number: 'K5.2', level: 'compass', section: 'K5', title: { en: 'The Level of a Resource', nl: 'Het Level van een Resource' }, priority: null, thinking: null, buildsOn: ['K5.1'] },
   { number: '1.1.1', level: '1', section: '1.1', title: { en: 'The three questions', nl: 'De drie vragen' }, priority: 'required', thinking: 'apply', buildsOn: [] },
   { number: '1.2.1', level: '1', section: '1.2', title: { en: 'What a figure counts exactly', nl: 'Wat een cijfer precies telt' }, priority: 'required', thinking: 'recognise', buildsOn: ['1.1.1'] },
   { number: '1.2.2', level: '1', section: '1.2', title: { en: 'Unique counts don\'t add up', nl: 'Unieke tellingen tel je niet op' }, priority: 'required', thinking: 'apply', buildsOn: ['1.2.1'] },

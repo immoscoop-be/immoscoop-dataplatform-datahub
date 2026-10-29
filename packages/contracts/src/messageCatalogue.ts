@@ -744,8 +744,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     },
     learningCard: {
       fit: 'named',
-      card: { number: '4.4.1', title: 'The maturity ladder' },
-      why: 'What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 (DEC-LR-29).',
+      card: { number: 'K5.2', title: 'The Level of a Resource' },
+      why: 'What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 (DEC-LR-29, DEC-LR-30).',
     },
     action: {
       asks: 'act',
