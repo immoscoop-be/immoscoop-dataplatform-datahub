@@ -875,6 +875,26 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
 .lc-attach-title { display: block; font-size: 13px; font-weight: var(--weight-medium); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lc-attach-state { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); color: var(--text-secondary); white-space: nowrap; }
 .composer-attach { display: flex; gap: 8px; margin: 2px 0 8px; }
+.composer-attach .lc-attach { flex: 1; margin-top: 0; }
+.lc-attach-remove { margin: -4px -6px -4px 0; }
+/* Finding a Learning Card to add to a Message, by its number or words (OP-UX-48, to approve) */
+.lc-finder { margin: 2px 0 8px; padding: 8px; border-radius: var(--radius-md); background: var(--surface-solid); outline: 1px solid var(--tint-active); }
+.lc-finder .search { margin: 0 0 4px; background: var(--surface-sub); }
+.lc-finder-head { margin: 8px 6px 4px; }
+.lc-finder-list { display: grid; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.lc-finder-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: var(--radius-sm); background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.lc-finder-item:hover, .lc-finder-item:focus-visible { background: var(--tint-hover); outline: none; }
+.lc-finder-item > .ph { font-size: 18px; color: var(--text-secondary); flex: none; }
+.lc-finder-body { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.lc-finder-body .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc-finder-item > .meta { white-space: nowrap; }
+.lc-finder mark, .share-sheet mark { color: var(--text-primary); background: color-mix(in srgb, var(--col-teal) 22%, transparent); border-radius: var(--radius-mark); padding: 0 2px; }
+.lc-finder-foot { display: flex; justify-content: flex-end; padding: 6px 4px 0; }
+/* "Share in a Message": the object it is about first, then the Message with the card (OP-UX-48, to approve) */
+.share-sheet .search { margin-top: 16px; background: var(--surface-sub); }
+.share-on { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-sub); }
+.share-on > .ph { font-size: 18px; color: var(--text-secondary); }
+.share-on > span { flex: 1; min-width: 0; }
 
 /* Learning: a card inline and in a floating window (DEC-UX-42) */
 .lc-float { width: 440px; max-height: calc(100vh - 48px); }
