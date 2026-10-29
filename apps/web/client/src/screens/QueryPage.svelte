@@ -11,6 +11,7 @@
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { NotFound as Missing } from '../lib/api.js';
@@ -32,7 +33,8 @@
    * staying in view, the Pre-flight and Run, or above 1 GB a Request to the Data Team (DEC-UX-116); under
    * it the result, a grid of 100 rows a page with its Query ID (FR-SR-51, FR-LN-06), and its history, every
    * run a variation, to preview and apply. The Pre-flight follows the SQL and the Parameters while typing
-   * pauses (FR-SR-36). Only who made a query writes and runs it; the Data Team reads everyone's (DEC-LN-01).
+   * pauses (FR-SR-36). Only who made a query writes and runs it, and changes its name and question in place
+   * (DEC-UX-119); the Data Team reads everyone's (DEC-LN-01).
    */
   let {
     id,
@@ -87,6 +89,10 @@
   let requestText = $state('');
   let sending = $state(false);
   let requestFailed = $state(false);
+  /** Its name and question while they are changed in place (DEC-UX-119). */
+  let renaming = $state<{ name: string; question: string } | null>(null);
+  let renameSaving = $state(false);
+  let renameFailed = $state(false);
   let loadedId: string | undefined;
 
   $effect(() => {
@@ -104,6 +110,7 @@
     newSet = null;
     requestOpen = false;
     requestText = '';
+    renaming = null;
     tab = 'result';
     client.get(id).then(
       async (found) => {
@@ -290,6 +297,27 @@
     parameters = before === null ? [...parameters, next] : parameters.map((parameter) => (parameter.name === before ? next : parameter));
   }
 
+  /** Saves its name and question, changed in place; a name stays required (DEC-UX-119, FR-SR-45). */
+  async function rename(event: SubmitEvent): Promise<void> {
+    event.preventDefault();
+    if (!query || !renaming || renaming.name.trim() === '') return;
+    const fields = { name: renaming.name.trim(), question: renaming.question.trim() };
+    const of = query.id;
+    renameSaving = true;
+    renameFailed = false;
+    try {
+      await client.rename(of, fields);
+      if (query?.id === of) query = { ...query, ...fields };
+      renaming = null;
+      onran();
+    } catch (error) {
+      console.error('The name of the query could not be saved', error);
+      renameFailed = true;
+    } finally {
+      renameSaving = false;
+    }
+  }
+
   function removeParameter(name: string): void {
     parameters = parameters.filter((parameter) => parameter.name !== name);
     parameterWindow = null;
@@ -425,8 +453,24 @@
   <header class="head">
     <div class="titles">
       <div class="meta">Query</div>
-      <h1 class="page-title">{query.name}</h1>
-      {#if query.question}<p class="question">{query.question}</p>{/if}
+      {#if renaming}
+        <form class="rename" onsubmit={rename}>
+          <Field label={t('query.name')}><input type="text" bind:value={renaming.name} maxlength="120" required /></Field>
+          <Field label={t('query.question')}><textarea bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
+          <span class="rename-actions">
+            <Button type="submit" disabled={renameSaving || renaming.name.trim() === ''}>{t('query.save')}</Button>
+            <Button variant="quiet" onclick={() => (renaming = null)}>{t('query.cancel')}</Button>
+            {#if renameFailed}<span class="rename-failed" role="alert">{t('query.renameFailed')}</span>{/if}
+          </span>
+        </form>
+      {:else if query.mine}
+        {@const start = () => query && ((renaming = { name: query.name, question: query.question }), (renameFailed = false))}
+        <h1 class="page-title"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.name}</button></h1>
+        {#if query.question}<p class="question"><button type="button" class="in-place" title={t('query.rename')} onclick={start}>{query.question}</button></p>{/if}
+      {:else}
+        <h1 class="page-title">{query.name}</h1>
+        {#if query.question}<p class="question">{query.question}</p>{/if}
+      {/if}
       {#if from}
         <p class="meta origin">
           <Icon name="git-branch" /><span
@@ -705,6 +749,12 @@
   .head { display: flex; align-items: flex-start; gap: 16px; margin-top: 8px; }
   .titles { flex: 1; min-width: 0; }
   .question { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
+  .in-place { all: unset; cursor: text; border-radius: var(--radius-sm); }
+  .in-place:hover { background: var(--tint-hover); }
+  .in-place:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
+  .rename { max-width: 640px; margin-top: 6px; }
+  .rename-actions { display: flex; align-items: center; gap: 8px; }
+  .rename-failed { font-size: var(--text-small); color: var(--signal-urgent); }
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }

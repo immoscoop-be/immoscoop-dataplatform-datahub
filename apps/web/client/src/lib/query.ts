@@ -46,11 +46,15 @@ export interface QueryRequest {
   text: string;
 }
 
+/** A query written in Query, or the previews of a Resource by one User (FR-SR-38). */
+export type QueryKind = 'query' | 'preview';
+
 /** A query in the panel of Query: one item per query (DEC-UX-74). */
 export interface QueryItem {
   id: string;
   name: string;
   ownerName: string;
+  kind: QueryKind;
   resources: { id: string; displayName: string }[];
   runs: number;
   createdAt: string;
@@ -88,6 +92,7 @@ export interface Run {
 
 export interface Query {
   id: string;
+  kind: QueryKind;
   name: string;
   question: string;
   sql: string;
@@ -157,6 +162,43 @@ export type RunOutcome =
   /** BigQuery refused it, in its own words; the run is kept as failed. */
   | { kind: 'failed'; message: string; run: Run | null };
 
+/** The size and partitions of a Resource, from BigQuery; for a view, of the table beneath it (FR-SR-39). */
+export interface Storage {
+  key: string;
+  bytes: number | null;
+  rows: number | null;
+  partitions: number | null;
+  modifiedAt: string | null;
+  /** Whether they are of the table beneath a view. */
+  beneath: boolean;
+}
+
+/** The window of a Preview: its newest 1, 4 or 12 partitions that hold rows (DEC-SR-39). */
+export type PreviewWindow = 1 | 4 | 12;
+
+/** What a Preview offers to choose by (FR-SR-38, DEC-SR-37). */
+export interface PreviewChoices {
+  window: { field: string; unit: string | null; from: string | null; window: PreviewWindow } | null;
+  choices: { field: string; dataType: string; role: 'cluster' | 'parameter'; kind: ParameterKind; values: string[] | null }[];
+}
+
+/** The values chosen in a Preview, by column; null for all. */
+export type PreviewValues = Record<string, string | null>;
+
+/** A query on a Resource, as its tab History lists it (FR-SR-44). */
+export interface QueryOnResource {
+  id: string;
+  name: string;
+  kind: QueryKind;
+  ownerName: string;
+  mine: boolean;
+  runs: number;
+  lastRunAt: string | null;
+  lastRead: number | null;
+  lastEstimate: number;
+  lastState: 'running' | 'done' | 'failed';
+}
+
 /** What a new query is made of: its own Resources, or the SQL and Parameters of the query it is started from. */
 export interface NewQuery {
   name: string;
@@ -171,6 +213,23 @@ export interface NewQuery {
 export function createQuery(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call = createCall('query', config.queryUrl, session, request);
   const query = (id: string) => `/queries/${encodeURIComponent(id)}`;
+  const resource = (id: string) => `/resources/${encodeURIComponent(id)}`;
+
+  /** What a run came to: its result, the Pre-flight when that changed, or the refusal of BigQuery. */
+  async function outcomeOf(sent: Promise<Response>): Promise<RunOutcome> {
+    try {
+      const body = (await (await sent).json()) as { run: Run; page: Page };
+      return { kind: 'ran', ...body };
+    } catch (error) {
+      if (error instanceof Refused && error.status === 409 && error.body?.preflight) {
+        return { kind: 'refused', preflight: error.body.preflight as Preflight };
+      }
+      if (error instanceof Refused && error.status === 422) {
+        return { kind: 'failed', message: error.detail ?? '', run: (error.body?.run as Run | undefined) ?? null };
+      }
+      throw error;
+    }
+  }
 
   return {
     /** The queries of the User, or everyone's for the Data Team. */
@@ -182,6 +241,32 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     async get(id: string): Promise<Query> {
       return ((await (await call(query(id))).json()) as { query: Query }).query;
+    },
+    /** Changes its name or question, for who made it (DEC-UX-119). */
+    async rename(id: string, fields: { name: string; question: string }): Promise<void> {
+      await call(query(id), { method: 'PATCH', body: fields });
+    },
+    /** The size and partitions of a Resource; null where BigQuery does not tell them. */
+    async storage(resourceId: string): Promise<Storage | null> {
+      return ((await (await call(`${resource(resourceId)}/storage`)).json()) as { storage: Storage | null }).storage;
+    },
+    /** The choices of a Preview for its window, their values read once (DEC-SR-37). */
+    async previewChoices(resourceId: string, window: PreviewWindow): Promise<PreviewChoices> {
+      return (await (await call(`${resource(resourceId)}/preview/choices`, { method: 'POST', body: { window } })).json()) as PreviewChoices;
+    },
+    /** The Pre-flight of a Preview, and the Request of the User on their previews. */
+    async previewPreflight(resourceId: string, window: PreviewWindow, values: PreviewValues): Promise<{ preflight: Preflight; request: QueryRequest | null }> {
+      return (await (await call(`${resource(resourceId)}/preview/preflight`, { method: 'POST', body: { window, values } })).json()) as { preflight: Preflight; request: QueryRequest | null };
+    },
+    async previewRun(resourceId: string, window: PreviewWindow, values: PreviewValues, approve: boolean): Promise<RunOutcome> {
+      return outcomeOf(call(`${resource(resourceId)}/preview/runs`, { method: 'POST', body: { window, values, approve } }));
+    },
+    async previewRequest(resourceId: string, window: PreviewWindow, values: PreviewValues, text: string): Promise<QueryRequest> {
+      return ((await (await call(`${resource(resourceId)}/preview/requests`, { method: 'POST', body: { window, values, text } })).json()) as { request: QueryRequest }).request;
+    },
+    /** The queries on a Resource, for its Owner Unit and the Data Team (FR-SR-44, DEC-SR-41). */
+    async onResource(resourceId: string): Promise<{ summary: { queries: number; lenses: number; colleagues: number }; queries: QueryOnResource[] }> {
+      return (await (await call(`${resource(resourceId)}/queries`)).json()) as { summary: { queries: number; lenses: number; colleagues: number }; queries: QueryOnResource[] };
     },
     /** The Pre-flight of what is written; query keeps the SQL and Parameters with it. */
     async preflight(id: string, sql: string, parameters: readonly Parameter[]): Promise<Preflight> {
@@ -203,18 +288,7 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       }
     },
     async run(id: string, sql: string, parameters: readonly Parameter[], approve: boolean): Promise<RunOutcome> {
-      try {
-        const body = (await (await call(`${query(id)}/runs`, { method: 'POST', body: { sql, parameters, approve } })).json()) as { run: Run; page: Page };
-        return { kind: 'ran', ...body };
-      } catch (error) {
-        if (error instanceof Refused && error.status === 409 && error.body?.preflight) {
-          return { kind: 'refused', preflight: error.body.preflight as Preflight };
-        }
-        if (error instanceof Refused && error.status === 422) {
-          return { kind: 'failed', message: error.detail ?? '', run: (error.body?.run as Run | undefined) ?? null };
-        }
-        throw error;
-      }
+      return outcomeOf(call(`${query(id)}/runs`, { method: 'POST', body: { sql, parameters, approve } }));
     },
     /** A page of a run, from the same job; null once BigQuery no longer keeps it (DEC-UX-99). */
     async rows(ref: string, page: number): Promise<Page | null> {

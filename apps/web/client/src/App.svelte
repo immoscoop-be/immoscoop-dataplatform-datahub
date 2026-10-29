@@ -354,6 +354,7 @@
           {collections}
           {catalogue}
           {registry}
+          {queries}
           {dataTeam}
           groups={status.kind === 'signedIn' ? status.me.groups : []}
           onchange={(updated) => {
@@ -363,6 +364,7 @@
             // Published or deprecated, the panel shows it so.
             refresh();
           }}
+          onrun={() => ownQueries !== undefined && refreshQueries()}
         />
       {:else if opened?.resource === null}
         <NotFound />

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App.svelte';
@@ -332,10 +332,37 @@ function serve({
         ],
       });
     }
+    // query, as it tells the size of a Resource, previews it and lists the queries on it (FR-SR-38, FR-SR-39, FR-SR-44).
+    if (path === '/resources/r2/storage') {
+      return json({ storage: { key: WEEKLY_DETAIL.key, bytes: 6_200_000_000, rows: 41_000, partitions: 312, modifiedAt: '2026-10-28T06:00:00Z', beneath: false } });
+    }
+    if (path === '/resources/r2/preview/choices') {
+      const { window } = JSON.parse(init.body as string) as { window: number };
+      return json({
+        window: { field: 'week_start', unit: 'day', from: window === 1 ? '2026-10-19' : '2026-09-28', window },
+        choices: [{ field: 'lead_source', dataType: 'STRING', role: 'cluster', kind: 'choice', values: ['app', 'website'] }],
+      });
+    }
+    if (path === '/resources/r2/preview/preflight') {
+      return json({ preflight: { ...preflightOf('select * from weekly where week_start >= @week'), bytes: 12_000_000 }, queryId: 'q-preview', request: null });
+    }
+    if (path === '/resources/r2/preview/runs') {
+      return json({ run: { ...RUN, ref: 'q-20261029-preview' }, page: PAGE }, 201);
+    }
+    if (path === '/resources/r2/queries') {
+      if (!dataTeam && !groups.includes('g1')) return json({ error: 'not_found' }, 404);
+      return json({
+        summary: { queries: 2, lenses: 0, colleagues: 2 },
+        queries: [
+          { id: 'q1', name: 'Leads per source name', kind: 'query', ownerName: 'Max Verstraete', mine: true, runs: 3, lastRunAt: '2026-10-29T08:00:00Z', lastRead: 79_000_000, lastEstimate: 80_000_000, lastState: 'done' },
+          { id: 'q-preview-k', name: 'Preview · Weekly lead volume', kind: 'preview', ownerName: 'Karel Peeters', mine: false, runs: 1, lastRunAt: '2026-10-28T08:00:00Z', lastRead: null, lastEstimate: 12_000_000, lastState: 'failed' },
+        ],
+      });
+    }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     if (path === '/queries' && method === 'GET') {
       return json({
-        queries: queries.map(({ id, name, ownerName, resources: on, lastRunAt, createdAt, request }) => ({ id, name, ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0, request: request ?? null })),
+        queries: queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({ id, name, kind: kind ?? 'query', ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0, request: request ?? null })),
       });
     }
     if (path === '/queries' && method === 'POST') {
@@ -345,6 +372,10 @@ function serve({
       return json({ query: made }, 201);
     }
     const query = queries.find((candidate) => path.startsWith(`/queries/${candidate.id as string}`));
+    if (query && path === `/queries/${query.id as string}` && method === 'PATCH') {
+      Object.assign(query, JSON.parse(init.body as string));
+      return json({ query });
+    }
     if (query && path === `/queries/${query.id as string}`) {
       return json({ query });
     }
@@ -699,11 +730,57 @@ describe('the page of a Resource', () => {
     expect((main.getByRole('button', { name: /Publiceren/ }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByRole('status').textContent).toContain('Enkel Data en het Data Team zien hem. Eens gepubliceerd ziet iedereen die Credit leads ziet hem.');
     expect(main.getByText('One row per week and lead source.')).toBeTruthy();
-    expect(main.getByText('op week_start, een partitie per dag')).toBeTruthy();
+    expect(main.getByText(/op week_start, een partitie per dag/)).toBeTruthy();
     expect(main.getByText(/Filter eerst op week_start/)).toBeTruthy();
+    // Its size and partitions, from BigQuery (FR-SR-39).
+    expect(await main.findByText(/312 partities/)).toBeTruthy();
+    expect(main.getByText('6,2 GB in totaal, ongeveer 20 MB per dag')).toBeTruthy();
     expect(main.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
-    await fireEvent.click(main.getByRole('tab', { name: 'Voorbeeld' }));
-    expect(main.getByText('Dit tabblad wordt nog gebouwd.')).toBeTruthy();
+  });
+
+  it('previews its newest partitions, chosen by its cluster column, as a query that runs by itself up to 100 MB (FR-SR-38, DEC-SR-39)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: 'Voorbeeld' }));
+    // The rows come by themselves: 12 MB is under 100 MB, nothing to approve.
+    expect(await main.findByText('2026-10-19')).toBeTruthy();
+    expect(main.getByText(/Leest ongeveer 12 MB · 4 partities van 312/)).toBeTruthy();
+    expect(main.getByText('q-20261029-preview')).toBeTruthy();
+    expect(main.getByText(/^sinds 28 sep\.? 2026$/)).toBeTruthy();
+    // No export: under it, the way to Query (DEC-UX-120).
+    expect(main.getAllByRole('link', { name: 'Deze Resource bevragen' })[0]?.getAttribute('href')).toBe('/query/new/r2');
+    await fireEvent.change(main.getByRole('combobox', { name: /lead_source/ }), { target: { value: 'app' } });
+    await vi.waitFor(() =>
+      expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/preview/runs', body: { window: 4, values: { lead_source: 'app' }, approve: false } }),
+    );
+    await fireEvent.change(main.getByRole('combobox', { name: /week_start/ }), { target: { value: '1' } });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/preview/choices', body: { window: 1 } }));
+  });
+
+  it('shows its Owner Unit the queries that used it, and no one else (FR-SR-44, DEC-SR-41)', async () => {
+    serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: 'Geschiedenis' }));
+    expect(await main.findByText('2 queries gebruikten hem, de laatste 30 dagen')).toBeTruthy();
+    const rows = main.getAllByRole('row').slice(1);
+    expect(rows.map((row) => within(row).getAllByRole('cell').map((cell) => cell.textContent?.trim()).slice(0, 4))).toEqual([
+      ['Leads per source name', 'Query', 'Jij', '3'],
+      ['Preview · Weekly lead volume', 'Voorbeeld', 'Karel Peeters', '1'],
+    ]);
+    expect(within(rows[0]!).getByRole('link').getAttribute('href')).toBe('/query/q1');
+    cleanup();
+
+    // A colleague outside its Owner Unit sees its Preview, not its History.
+    serve({ groups: [], weekly: { collectionId: 'c2' } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const other = within(await screen.findByRole('main'));
+    await other.findByRole('tab', { name: 'Voorbeeld' });
+    expect(other.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Voorbeeld']);
   });
 
   it('lets its Owner edit what Data Hub keeps about it in place, and the fields (FR-RC-15, FR-RC-16)', async () => {
@@ -1003,6 +1080,27 @@ describe('Query', () => {
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     await fireEvent.click(panel.getByRole('radio', { name: 'Alle' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'GET', path: '/queries?all=true' }));
+  });
+
+  it('lets who made a query change its name and question in place; a name stays required (DEC-UX-119, FR-SR-45)', async () => {
+    const preview = { ...QUERY, id: 'q-preview', kind: 'preview', name: 'Preview · Weekly lead volume', question: '' };
+    const calls = serve({ queries: [{ ...QUERY }, preview] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // A preview of a Resource is a query of the User, marked so in the panel.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(within(await panel.findByRole('link', { name: /Preview · Weekly lead volume/ })).getByText('Voorbeeld')).toBeTruthy();
+    await fireEvent.click(await main.findByRole('button', { name: 'Leads per source name' }, { timeout: 3000 }));
+    const name = main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement;
+    await fireEvent.input(name, { target: { value: '  ' } });
+    expect((main.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(name, { target: { value: 'Leads per source' } });
+    await fireEvent.input(main.getByRole('textbox', { name: /Wat wil je weten/ }), { target: { value: 'Where do our leads come from?' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source' })).toBeTruthy();
+    expect(main.getByText('Where do our leads come from?')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'PATCH', path: '/queries/q1', body: { name: 'Leads per source', question: 'Where do our leads come from?' } });
   });
 
   it('adds the partition filter it offers, and checks the SQL again (DEC-SR-35)', async () => {

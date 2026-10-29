@@ -52,8 +52,24 @@ export interface RunOptions {
   parameters?: QueryParameter[];
 }
 
+/** What BigQuery keeps about a table, without reading it (FR-SR-39). */
+export interface TableFacts {
+  /** `TABLE`, `VIEW`, `MATERIALIZED_VIEW` and so on. */
+  type: string;
+  bytes: number | null;
+  rows: number | null;
+  partitions: number | null;
+  /** The column it is partitioned on by time, if it is. */
+  partitionField: string | null;
+  modifiedAt: string | null;
+}
+
 export interface BigQuery {
   dryRun(sql: string, parameters?: QueryParameter[]): Promise<DryRun>;
+  /** What BigQuery keeps about a table, `project.dataset.table`. */
+  table(key: string): Promise<TableFacts>;
+  /** The IDs of its newest partitions that hold rows, newest first, such as `20261019` (DEC-SR-39). */
+  partitions(key: string, limit: number): Promise<string[]>;
   run(sql: string, options: RunOptions): Promise<Finished>;
   /** A page of the result of a job; throws ResultExpired once BigQuery no longer keeps it (DEC-UX-99). */
   page(job: { jobId: string; location: string }, startIndex: number, maxResults: number): Promise<Page>;
@@ -135,11 +151,11 @@ export function createBigQuery(options: { project: string; location: string; tok
   const request = options.request ?? fetch;
   const { project, location } = options;
 
-  async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown, timeout = 60_000): Promise<T> {
+  async function call<T>(method: 'GET' | 'POST', path: string, body?: unknown, timeout = 60_000, of = project): Promise<T> {
     let response: Response;
     try {
       const token = await options.token([CLOUD_PLATFORM]);
-      response = await request(`${API}/projects/${encodeURIComponent(project)}${path}`, {
+      response = await request(`${API}/projects/${encodeURIComponent(of)}${path}`, {
         method,
         headers: { authorization: `Bearer ${token}`, ...(body ? { 'content-type': 'application/json' } : {}) },
         ...(body ? { body: JSON.stringify(body) } : {}),
@@ -226,5 +242,59 @@ export function createBigQuery(options: { project: string; location: string; tok
     async page(job, startIndex, maxResults) {
       return rowsOf(await results(job.jobId, job.location, { startIndex: String(startIndex), maxResults: String(maxResults), timeoutMs: '10000' }));
     },
+
+    async table(key) {
+      const [tableProject, dataset, table] = parts(key);
+      const found = await call<{
+        type?: string;
+        numBytes?: string;
+        numRows?: string;
+        numPartitions?: string;
+        lastModifiedTime?: string;
+        timePartitioning?: { field?: string };
+      }>('GET', `/datasets/${encodeURIComponent(dataset)}/tables/${encodeURIComponent(table)}`, undefined, 20_000, tableProject);
+      const number = (value: string | undefined) => (value === undefined ? null : Number(value));
+      return {
+        type: found.type ?? 'TABLE',
+        bytes: number(found.numBytes),
+        rows: number(found.numRows),
+        partitions: number(found.numPartitions),
+        // Partitioned by the time of loading, a table has no column of its own for it.
+        partitionField: found.timePartitioning ? (found.timePartitioning.field ?? '_PARTITIONTIME') : null,
+        modifiedAt: found.lastModifiedTime ? new Date(Number(found.lastModifiedTime)).toISOString() : null,
+      };
+    },
+
+    async partitions(key, limit) {
+      const [tableProject, dataset, table] = parts(key);
+      // Metadata of Data Hub, not a query of a User: a small read of INFORMATION_SCHEMA, at most 100 MB billed.
+      const answer = await call<QueryResults>(
+        'POST',
+        '/queries',
+        {
+          query: `select partition_id from \`${tableProject}.${dataset}.INFORMATION_SCHEMA.PARTITIONS\` where table_name = @table and total_rows > 0 and partition_id not in ('__NULL__', '__UNPARTITIONED__') order by partition_id desc limit @limit`,
+          useLegacySql: false,
+          location,
+          parameterMode: 'NAMED',
+          queryParameters: [
+            { name: 'table', parameterType: { type: 'STRING' }, parameterValue: { value: table } },
+            { name: 'limit', parameterType: { type: 'INT64' }, parameterValue: { value: String(limit) } },
+          ],
+          maximumBytesBilled: '100000000',
+          labels: { 'datahub-purpose': 'partitions' },
+          timeoutMs: 20_000,
+        },
+        30_000,
+      );
+      if (!answer.jobComplete) throw new BigQueryUnavailable('BigQuery did not list the partitions in time');
+      return rowsOf(answer).rows.map((row) => String(row[0]));
+    },
   };
+}
+
+/** The project, dataset and table of a Key; a name with backticks or fewer parts is refused. */
+function parts(key: string): [string, string, string] {
+  const split = key.split('.');
+  if (split.length !== 3 || split.some((part) => !/^[A-Za-z0-9_-]+$/.test(part))) throw new BigQueryRefused(`Not a table of BigQuery: ${key}`);
+  return split as [string, string, string];
 }

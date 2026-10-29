@@ -5,6 +5,7 @@ import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryReso
 import type { NamedResource } from './database.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from './preflight.js';
+import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import type { Queries, Query, Run, Viewer } from './queries.js';
 import { template } from './sql.js';
 
@@ -17,6 +18,8 @@ export interface ApiOptions {
   /** The project the jobs run in: a Key in it may be written without its project. */
   project: string;
   thresholds: Thresholds;
+  /** The size and partitions of a Resource, and its newest partitions (FR-SR-39, DEC-SR-39). */
+  storage: StorageReader;
 }
 
 /** The role of the Data Team in the Access Token (TR-PF-03). */
@@ -28,6 +31,9 @@ const HISTORY_LIMIT = 50;
 /** Above an accepted Request, BigQuery bills at most this much more than the Pre-flight said (DEC-SR-36). */
 const ACCEPTED_MARGIN = 1.1;
 const NO_QUERY = { error: 'not_found', message: 'There is no such query, or it is not yours.' };
+const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, or you may not see it.' };
+/** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
+const MONTH = 30 * 86_400_000;
 const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query writes and runs it.' };
 
 /**
@@ -132,7 +138,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * them and the Data Team (DEC-LN-01).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, catalogue, bigquery, beneath, project, thresholds } = options;
+  const { queries, catalogue, bigquery, beneath, project, thresholds, storage } = options;
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
@@ -141,11 +147,33 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   const authorization = (request: FastifyRequest) => request.headers.authorization ?? '';
 
-  /** The query, if the User may see it: theirs, or anyone's for the Data Team. */
+  /** Whether the User manages a Resource: the Owner Unit of its Collection, or the Data Team. */
+  async function manages(request: FastifyRequest, resource: QueryResource): Promise<boolean> {
+    if (viewer(request).dataTeam) return true;
+    return resource.collectionId !== null && (await catalogue.manages(resource.collectionId, authorization(request))) === true;
+  }
+
+  /**
+   * The query, if the User may read it: theirs, anyone's for the Data Team, and for the Owner Unit of one of
+   * its Resources, every query on what it owns (DEC-SR-31, DEC-SR-41).
+   */
   async function seen(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
     const query = await queries.get(request.params.id);
     const who = viewer(request);
-    if (!query || (query.ownerId !== who.id && !who.dataTeam)) {
+    let readable = !!query && (query.ownerId === who.id || who.dataTeam);
+    if (query && !readable) {
+      try {
+        for (const named of query.resources) {
+          const resource = await catalogue.resource(named.id, authorization(request));
+          if (resource && (await manages(request, resource))) readable = true;
+          if (readable) break;
+        }
+      } catch (error) {
+        unavailable(error, reply, request);
+        return undefined;
+      }
+    }
+    if (!query || !readable) {
       void reply.code(404).send(NO_QUERY);
       return undefined;
     }
@@ -305,6 +333,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (typeof body === 'string') return reply.code(400).send({ error: 'invalid_request', message: body });
     const query = await own(request, reply);
     if (!query) return reply;
+    return execute(request, reply, query, body);
+  });
+
+  /** Runs a query of the User: checked again, then a job of BigQuery, the run kept in the Query Log. */
+  async function execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }) {
     let checked: Preflight;
     let accepted = false;
     try {
@@ -350,7 +383,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (error instanceof BigQueryRefused) return reply.code(422).send({ error: 'failed', message: error.message, run: runView(failed) });
       return unavailable(error, reply, request);
     }
-  });
+  }
 
   // A Request to the Data Team to run it above 1 GB (MSG-QRY-01, DEC-UX-116): sent for its author, with the
   // Pre-flight of Data Hub rather than any number of the web app, and kept by catalogue until answered.
@@ -359,16 +392,185 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (typeof body === 'string') return reply.code(400).send({ error: 'invalid_request', message: body });
     const query = await own(request, reply);
     if (!query) return reply;
+    return sendRequest(request, reply, query, body);
+  });
+
+  /** Sends a query of the User to the Data Team, above 1 GB only. */
+  async function sendRequest(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; text: string }) {
     try {
       const checked = await check(body.sql, body.parameters, await resourcesOf(request, query));
       if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
       if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
       if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
       const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: thresholds.request, text: body.text }, authorization(request));
-      return reply.code(201).send({ request: requestView(sent), preflight: checked });
+      return reply.code(201).send({ request: requestView(sent), preflight: checked, queryId: query.id });
     } catch (error) {
       return unavailable(error, reply, request);
     }
+  }
+
+  /** The Resource, if the User may see it, as catalogue answers with their token. */
+  async function resourceOf(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<QueryResource | undefined> {
+    try {
+      const resource = UUID.test(request.params.id) ? await catalogue.resource(request.params.id, authorization(request)) : null;
+      if (!resource) void reply.code(404).send(NO_RESOURCE);
+      return resource ?? undefined;
+    } catch (error) {
+      unavailable(error, reply, request);
+      return undefined;
+    }
+  }
+
+  // Its size and partitions, from BigQuery without reading it (FR-SR-39); for a view, of the table beneath.
+  app.get<{ Params: { id: string } }>('/resources/:id/storage', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    try {
+      const found = await storage.of(resource);
+      return {
+        storage: found && { key: found.key, bytes: found.bytes, rows: found.rows, partitions: found.partitions, modifiedAt: found.modifiedAt, beneath: found.key !== resource.key },
+      };
+    } catch (error) {
+      if (error instanceof BigQueryRefused) return { storage: null };
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /** What a Preview of this Resource is, for its window and choices: its filter, its choices and its SQL (FR-SR-38). */
+  async function previewOf(resource: QueryResource, window: Window) {
+    const partition = resource.partition;
+    const from = partition ? await storage.newest(resource, window) : null;
+    const dataType = partition ? (resource.fields.find((field) => field.name === partition.field)?.dataType ?? null) : null;
+    const filter = partition ? windowFilter(partition.field, dataType, partition.unit, from, window) : null;
+    return { from, filter, choices: choicesOf(resource) };
+  }
+
+  const windowOf = (value: unknown): Window | null => (WINDOWS.includes(value as Window) ? (value as Window) : null);
+  const named = (resource: QueryResource): NamedResource => ({ id: resource.id, key: resource.key, displayName: resource.displayName });
+  const previewName = (resource: QueryResource) => `Preview · ${resource.displayName}`;
+
+  // The choices of a Preview, for its window: at most 100 values each, read in one small query that passes
+  // the Pre-flight and is kept in the Query Log, not in the history of the previews (DEC-SR-37, DEC-SR-40).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/choices', async (request, reply) => {
+    const window = windowOf((request.body as { window?: unknown } | undefined)?.window ?? 4);
+    if (!window) return reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    try {
+      const { from, filter, choices } = await previewOf(resource, window);
+      const values = choices.length > 0 ? await valuesOf(request, resource, filter, choices) : new Map<string, string[]>();
+      return {
+        window: resource.partition ? { field: resource.partition.field, unit: resource.partition.unit, from, window } : null,
+        choices: choices.map(({ field, dataType, role, kind }) => ({ field, dataType, role, kind, values: values.get(field) ?? null })),
+      };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  /** The values of the choices, when reading them passes the Pre-flight and costs nothing to approve. */
+  async function valuesOf(request: FastifyRequest, resource: QueryResource, filter: string | null, choices: Choice[]): Promise<Map<string, string[]>> {
+    const sql = valuesSql(resource, filter, choices);
+    const checked = await check(sql, [], [{ named: named(resource), resource }]);
+    if (!checked.runnable || checked.range !== 'free') return new Map();
+    const who = viewer(request);
+    const query = await queries.previewFor(who, named(resource), previewName(resource));
+    const run = await queries.startRun({ query, user: who, sql, parameters: [], estimatedBytes: checked.bytes ?? 0, approved: false, purpose: 'values' });
+    try {
+      const finished = await bigquery.run(sql, { maximumBytesBilled: thresholds.approve, labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef }, requestId: randomUUID(), pageSize: 1 });
+      await queries.finishRun(run.id, {
+        jobId: finished.jobId,
+        jobLocation: finished.location,
+        processedBytes: finished.processedBytes,
+        billedBytes: finished.billedBytes,
+        partitions: finished.partitions,
+        rowCount: finished.totalRows,
+        columns: finished.columns,
+      });
+      const row = finished.rows[0] ?? [];
+      return new Map(finished.columns.map((column, index) => [column.name, row[index] ? (JSON.parse(row[index] as string) as unknown[]).map(String) : []]));
+    } catch (error) {
+      await queries.failRun(run.id, error instanceof Error ? error.message : String(error));
+      if (error instanceof BigQueryRefused) return new Map();
+      throw error;
+    }
+  }
+
+  /** The SQL and Parameters of a Preview, from what the User chose; a string says what does not fit. */
+  async function previewRun(request: FastifyRequest<{ Params: { id: string }; Body: unknown }>, reply: FastifyReply) {
+    const body = (request.body ?? {}) as { window?: unknown; values?: unknown; approve?: unknown; text?: unknown };
+    const window = windowOf(body.window ?? 4);
+    if (!window) return void reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
+    if (body.approve !== undefined && typeof body.approve !== 'boolean') return void reply.code(400).send({ error: 'invalid_request', message: 'approve is true or false.' });
+    if (body.text !== undefined && (typeof body.text !== 'string' || body.text.trim().length > 500)) {
+      return void reply.code(400).send({ error: 'invalid_request', message: 'A word for the Data Team has at most 500 characters.' });
+    }
+    const resource = await resourceOf(request, reply);
+    if (!resource) return undefined;
+    const { filter, choices } = await previewOf(resource, window);
+    const parameters = chosenParameters(choices, body.values);
+    if (typeof parameters === 'string') return void reply.code(400).send({ error: 'invalid_request', message: parameters });
+    const sql = previewSql(resource, filter, parameters.map((parameter) => parameter.name));
+    return { resource, sql, parameters, approve: body.approve === true, text: typeof body.text === 'string' ? body.text.trim() : '' };
+  }
+
+  // The Pre-flight of a Preview: what it scans and how many partitions, before it runs (FR-SR-36).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/preflight', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const known = await queries.previewOf(viewer(request), preview.resource.id);
+      const [checked, requests] = await Promise.all([
+        check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }]),
+        known ? requestsOf(request, known) : Promise.resolve([]),
+      ]);
+      // Above 1 GB its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
+      return { preflight: checked, queryId: known?.id ?? null, request: requestView(requests[0]) };
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // A Preview runs as a run of the previews of the Resource by the User, one item in the panel of Query (FR-SR-38).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/runs', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const query = await queries.previewFor(viewer(request), named(preview.resource), previewName(preview.resource));
+      return execute(request, reply, query, preview);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // Above 1 GB a Preview goes to the Data Team too (DEC-SR-29, MSG-QRY-01).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/requests', async (request, reply) => {
+    try {
+      const preview = await previewRun(request, reply);
+      if (!preview) return reply;
+      const query = await queries.previewFor(viewer(request), named(preview.resource), previewName(preview.resource));
+      return sendRequest(request, reply, query, preview);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+  });
+
+  // The queries on a Resource, for its tab History: only its Owner Unit and the Data Team (DEC-SR-41, FR-SR-44).
+  app.get<{ Params: { id: string } }>('/resources/:id/queries', async (request, reply) => {
+    const resource = await resourceOf(request, reply);
+    if (!resource) return reply;
+    try {
+      if (!(await manages(request, resource))) return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner of a Resource and the Data Team see the queries on it.' });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const who = viewer(request);
+    const found = await queries.on(resource.id);
+    const recent = found.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH);
+    return {
+      summary: { queries: recent.length, lenses: 0, colleagues: new Set(recent.map((query) => query.ownerId)).size },
+      queries: found.map(({ ownerId, ...query }) => ({ ...query, mine: ownerId === who.id })),
+    };
   });
 
   // A page of a result, read from the same run (FR-SR-51, DEC-SR-30); only who ran it reads it.

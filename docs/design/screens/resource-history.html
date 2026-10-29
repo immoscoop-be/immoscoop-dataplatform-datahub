@@ -2,10 +2,11 @@
 <!--
   Screen: Resource detail, the History tab (DEC-UX-90)
   Every query that used this Resource, one row per query: a Lens, a query in Query or the previews of the Resource; who made
-  it, how many runs, its last run and what that read. A row opens the Lens or the query. Opening one shows its SQL to its
-  author, the Owner Unit of the Resource and the Data Team only (DEC-SR-31). "Query this resource" opens Query with it.
+  it, how many runs, its last run and what that read. A row opens the Lens or the query, with its SQL. Only the Owner Unit
+  of the Resource and the Data Team see this tab (DEC-SR-41); a colleague does not (?role=colleague). "Query this resource"
+  opens Query with it.
   Requirements: FR-SR-41, FR-SR-44
-  Decisions: DEC-UX-74, DEC-UX-90, DEC-SR-31, DEC-SR-36, DEC-LN-01.
+  Decisions: DEC-UX-74, DEC-UX-90, DEC-SR-31, DEC-SR-36, DEC-SR-41, DEC-LN-01.
   Related screens: query.html, resource-preview.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -124,7 +125,7 @@
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
   <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
-  <button class="tab on" role="tab" aria-selected="true">History <span class="count">12</span></button>
+  <button class="tab on" data-for="owner datateam" role="tab" aria-selected="true">History <span class="count">12</span></button>
   <a class="tab" href="resource-preview.html" role="tab" aria-selected="false" style="text-decoration:none">Preview</a>
  </div>
  <div class="tab-content card">
@@ -144,7 +145,7 @@
   <tr><td><a class="name-cell" href="query.html"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span>Weekly volume since 2024</span></a></td><td><span class="pill">Query</span></td><td class="nowrap">An Claes</td><td class="nowrap" style="text-align:right">1</td><td class="muted nowrap">yesterday, 11:31</td><td class="nowrap">2.9 GB <span class="pill">accepted by the Data Team</span></td></tr>
   <tr><td><a class="name-cell" href="query.html"><i class="ph ph-terminal-window kind-icon" role="img" aria-label="Query"></i><span>All weeks, newest first</span></a></td><td><span class="pill">Query</span></td><td class="nowrap">Dirk Vos</td><td class="nowrap" style="text-align:right">1</td><td class="muted nowrap">2 days ago</td><td class="nowrap">6.2 GB <span class="pill">accepted by the Data Team</span></td></tr>
   </tbody></table></div>
-  <p class="meta" style="margin:10px 2px 0;display:block;line-height:1.5">Every query that used this Resource, newest first: a Lens, a query, or its previews. Everyone who may see the Resource sees this list; opening a query shows its SQL to whoever made it, the Owner of the Resource and the Data Team.</p>
+  <p class="meta" style="margin:10px 2px 0;display:block;line-height:1.5">Every query that used this Resource, newest first: a Lens, a query, or its previews. Only the Owner of the Resource and the Data Team see this list and open its queries, with their SQL.</p>
  </div>
 
 </main>

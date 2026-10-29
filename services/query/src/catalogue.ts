@@ -19,6 +19,8 @@ export interface QueryResource {
   /** Who requires a filter on its partition column in every query: nobody, Data Hub or BigQuery (DEC-SR-35). */
   partitionFilter: 'none' | 'dataHub' | 'bigQuery';
   fields: ResourceField[];
+  /** The fields its Owner marked as its Parameters, which its Preview offers to choose by (FR-SR-38). */
+  parameters: string[];
 }
 
 /** A Request to the Data Team to run a query above 1 GB (MSG-QRY-01), as catalogue keeps it. */
@@ -36,6 +38,8 @@ export interface QueryRequest {
 export interface Catalogue {
   /** The Resource, if the User may see it; null when they may not, which catalogue answers as not found. */
   resource(id: string, authorization: string): Promise<QueryResource | null>;
+  /** Whether the User manages the Collection, as its Owner Unit or the Data Team; null when they may not see it. */
+  manages(collectionId: string, authorization: string): Promise<boolean | null>;
   /** The Requests of the User on queries, newest first: on one, or on all; the Data Team sees everyone's on one. */
   requests(queryId: string | null, authorization: string): Promise<QueryRequest[]>;
   /** Sends a Request for the User; one that still waits is given back instead. */
@@ -46,8 +50,9 @@ export interface Catalogue {
 export class CatalogueUnavailable extends Error {}
 
 interface ResourceBody {
-  resource: Omit<QueryResource, 'partition' | 'clusterBy' | 'partitionFilter'> & {
+  resource: Omit<QueryResource, 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
     details?: { partition?: QueryResource['partition']; clusterBy?: string[]; partitionFilter?: QueryResource['partitionFilter'] };
+    card?: { parameters?: string[] };
   };
 }
 
@@ -107,7 +112,20 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch):
         clusterBy: resource.details?.clusterBy ?? [],
         partitionFilter: resource.details?.partition ? (resource.details.partitionFilter ?? 'none') : 'none',
         fields: resource.fields.map(({ name, dataType, description, businessDescription }) => ({ name, dataType, description, businessDescription })),
+        parameters: resource.card?.parameters ?? [],
       };
+    },
+
+    async manages(collectionId, authorization) {
+      let response: Response;
+      try {
+        response = await request(new URL(`/collections/${encodeURIComponent(collectionId)}`, baseUrl), { headers: { authorization }, signal: AbortSignal.timeout(10_000) });
+      } catch (error) {
+        throw new CatalogueUnavailable('catalogue did not answer', { cause: error });
+      }
+      if (response.status === 404 || response.status === 400) return null;
+      if (!response.ok) throw new CatalogueUnavailable(`catalogue answered ${response.status} for a Collection`);
+      return ((await response.json()) as { canManage?: boolean }).canManage === true;
     },
   };
 }
