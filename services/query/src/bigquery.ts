@@ -32,6 +32,13 @@ export interface Finished extends Page {
   partitions: number | null;
 }
 
+/** A value BigQuery fills in for an @name, sent apart from the SQL (DEC-UX-71). */
+export interface QueryParameter {
+  name: string;
+  parameterType: { type: string; arrayType?: { type: string } };
+  parameterValue: { value?: string; arrayValues?: { value: string }[] };
+}
+
 export interface RunOptions {
   /** BigQuery refuses to bill more than this (FR-SR-27). */
   maximumBytesBilled: number;
@@ -41,10 +48,12 @@ export interface RunOptions {
   requestId: string;
   /** The rows of the first page. */
   pageSize: number;
+  /** The values of its Parameters. */
+  parameters?: QueryParameter[];
 }
 
 export interface BigQuery {
-  dryRun(sql: string): Promise<DryRun>;
+  dryRun(sql: string, parameters?: QueryParameter[]): Promise<DryRun>;
   run(sql: string, options: RunOptions): Promise<Finished>;
   /** A page of the result of a job; throws ResultExpired once BigQuery no longer keeps it (DEC-UX-99). */
   page(job: { jobId: string; location: string }, startIndex: number, maxResults: number): Promise<Page>;
@@ -151,14 +160,17 @@ export function createBigQuery(options: { project: string; location: string; tok
     throw new BigQueryUnavailable(`BigQuery answered ${response.status}: ${message}`);
   }
 
+  // Only a query with values for its @names says they are named; without, BigQuery refuses any @name.
+  const named = (parameters: QueryParameter[] = []) => (parameters.length > 0 ? { parameterMode: 'NAMED', queryParameters: parameters } : {});
+
   const results = (jobId: string, jobLocation: string, params: Record<string, string>) =>
     call<QueryResults>('GET', `/queries/${encodeURIComponent(jobId)}?${new URLSearchParams({ location: jobLocation, 'formatOptions.useInt64Timestamp': 'true', ...params })}`);
 
   return {
-    async dryRun(sql) {
+    async dryRun(sql, parameters) {
       const job = await call<{
         statistics?: { query?: { statementType?: string; totalBytesProcessed?: string; totalPartitionsProcessed?: string; referencedTables?: { projectId: string; datasetId: string; tableId: string }[] } };
-      }>('POST', '/jobs', { configuration: { dryRun: true, query: { query: sql, useLegacySql: false } }, jobReference: { projectId: project, location } }, 20_000);
+      }>('POST', '/jobs', { configuration: { dryRun: true, query: { query: sql, useLegacySql: false, ...named(parameters) } }, jobReference: { projectId: project, location } }, 20_000);
       const stats = job.statistics?.query ?? {};
       return {
         statementType: stats.statementType ?? '',
@@ -175,6 +187,7 @@ export function createBigQuery(options: { project: string; location: string; tok
         {
           query: sql,
           useLegacySql: false,
+          ...named(run.parameters),
           location,
           maxResults: run.pageSize,
           timeoutMs: 30_000,

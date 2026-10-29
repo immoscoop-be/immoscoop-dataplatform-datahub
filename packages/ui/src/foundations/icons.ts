@@ -11,10 +11,12 @@ import checkCircleFill from '@phosphor-icons/core/assets/fill/check-circle-fill.
 import checkFill from '@phosphor-icons/core/assets/fill/check-fill.svg?raw';
 import circleDashedFill from '@phosphor-icons/core/assets/fill/circle-dashed-fill.svg?raw';
 import copyFill from '@phosphor-icons/core/assets/fill/copy-fill.svg?raw';
+import eyeFill from '@phosphor-icons/core/assets/fill/eye-fill.svg?raw';
 import eyeSlashFill from '@phosphor-icons/core/assets/fill/eye-slash-fill.svg?raw';
 import globeSimpleFill from '@phosphor-icons/core/assets/fill/globe-simple-fill.svg?raw';
 import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-fill.svg?raw';
 import graphFill from '@phosphor-icons/core/assets/fill/graph-fill.svg?raw';
+import hourglassMediumFill from '@phosphor-icons/core/assets/fill/hourglass-medium-fill.svg?raw';
 import infoFill from '@phosphor-icons/core/assets/fill/info-fill.svg?raw';
 import lockSimpleFill from '@phosphor-icons/core/assets/fill/lock-simple-fill.svg?raw';
 import magnifyingGlassFill from '@phosphor-icons/core/assets/fill/magnifying-glass-fill.svg?raw';
@@ -34,7 +36,10 @@ import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-cou
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
 import arrowsOutLineHorizontal from '@phosphor-icons/core/assets/regular/arrows-out-line-horizontal.svg?raw';
+import arrowsOutSimple from '@phosphor-icons/core/assets/regular/arrows-out-simple.svg?raw';
 import bracketsSquare from '@phosphor-icons/core/assets/regular/brackets-square.svg?raw';
+import calendarBlank from '@phosphor-icons/core/assets/regular/calendar-blank.svg?raw';
+import calendarDots from '@phosphor-icons/core/assets/regular/calendar-dots.svg?raw';
 import caretDoubleLeft from '@phosphor-icons/core/assets/regular/caret-double-left.svg?raw';
 import caretDoubleRight from '@phosphor-icons/core/assets/regular/caret-double-right.svg?raw';
 import caretDown from '@phosphor-icons/core/assets/regular/caret-down.svg?raw';
@@ -44,24 +49,38 @@ import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
 import database from '@phosphor-icons/core/assets/regular/database.svg?raw';
+import dotsSixVertical from '@phosphor-icons/core/assets/regular/dots-six-vertical.svg?raw';
 import dotsThree from '@phosphor-icons/core/assets/regular/dots-three.svg?raw';
+import eye from '@phosphor-icons/core/assets/regular/eye.svg?raw';
 import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
+import flag from '@phosphor-icons/core/assets/regular/flag.svg?raw';
+import functionIcon from '@phosphor-icons/core/assets/regular/function.svg?raw';
+import gitBranch from '@phosphor-icons/core/assets/regular/git-branch.svg?raw';
 import googleLogo from '@phosphor-icons/core/assets/regular/google-logo.svg?raw';
 import graph from '@phosphor-icons/core/assets/regular/graph.svg?raw';
+import hash from '@phosphor-icons/core/assets/regular/hash.svg?raw';
 import info from '@phosphor-icons/core/assets/regular/info.svg?raw';
 import key from '@phosphor-icons/core/assets/regular/key.svg?raw';
 import lightbulb from '@phosphor-icons/core/assets/regular/lightbulb.svg?raw';
+import listBullets from '@phosphor-icons/core/assets/regular/list-bullets.svg?raw';
+import listChecks from '@phosphor-icons/core/assets/regular/list-checks.svg?raw';
 import lockSimple from '@phosphor-icons/core/assets/regular/lock-simple.svg?raw';
 import magnifyingGlass from '@phosphor-icons/core/assets/regular/magnifying-glass.svg?raw';
+import minus from '@phosphor-icons/core/assets/regular/minus.svg?raw';
 import minusCircle from '@phosphor-icons/core/assets/regular/minus-circle.svg?raw';
 import monitor from '@phosphor-icons/core/assets/regular/monitor.svg?raw';
 import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt.svg?raw';
+import percent from '@phosphor-icons/core/assets/regular/percent.svg?raw';
 import plant from '@phosphor-icons/core/assets/regular/plant.svg?raw';
 import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
 import shuffle from '@phosphor-icons/core/assets/regular/shuffle.svg?raw';
+import slidersHorizontal from '@phosphor-icons/core/assets/regular/sliders-horizontal.svg?raw';
 import sortAscending from '@phosphor-icons/core/assets/regular/sort-ascending.svg?raw';
 import sortDescending from '@phosphor-icons/core/assets/regular/sort-descending.svg?raw';
 import table from '@phosphor-icons/core/assets/regular/table.svg?raw';
+import textAa from '@phosphor-icons/core/assets/regular/text-aa.svg?raw';
+import toggleLeft from '@phosphor-icons/core/assets/regular/toggle-left.svg?raw';
+import trash from '@phosphor-icons/core/assets/regular/trash.svg?raw';
 import tray from '@phosphor-icons/core/assets/regular/tray.svg?raw';
 import user from '@phosphor-icons/core/assets/regular/user.svg?raw';
 import usersThree from '@phosphor-icons/core/assets/regular/users-three.svg?raw';
@@ -79,10 +98,12 @@ export const ICONS = {
   'check-fill': checkFill,
   'circle-dashed-fill': circleDashedFill,
   'copy-fill': copyFill,
+  'eye-fill': eyeFill,
   'eye-slash-fill': eyeSlashFill,
   'globe-simple-fill': globeSimpleFill,
   'graduation-cap-fill': graduationCapFill,
   'graph-fill': graphFill,
+  'hourglass-medium-fill': hourglassMediumFill,
   'info-fill': infoFill,
   'lock-simple-fill': lockSimpleFill,
   'magnifying-glass-fill': magnifyingGlassFill,
@@ -102,7 +123,10 @@ export const ICONS = {
   'arrow-left': arrowLeft,
   'arrow-right': arrowRight,
   'arrows-out-line-horizontal': arrowsOutLineHorizontal,
+  'arrows-out-simple': arrowsOutSimple,
   'brackets-square': bracketsSquare,
+  'calendar-blank': calendarBlank,
+  'calendar-dots': calendarDots,
   'caret-double-left': caretDoubleLeft,
   'caret-double-right': caretDoubleRight,
   'caret-down': caretDown,
@@ -112,24 +136,38 @@ export const ICONS = {
   columns,
   cube,
   database,
+  'dots-six-vertical': dotsSixVertical,
   'dots-three': dotsThree,
+  eye,
   'file-text': fileText,
+  flag,
+  function: functionIcon,
+  'git-branch': gitBranch,
   'google-logo': googleLogo,
   graph,
+  hash,
   info,
   key,
   lightbulb,
+  'list-bullets': listBullets,
+  'list-checks': listChecks,
   'lock-simple': lockSimple,
   'magnifying-glass': magnifyingGlass,
+  minus,
   'minus-circle': minusCircle,
   monitor,
   'paper-plane-tilt': paperPlaneTilt,
+  percent,
   plant,
   plus,
   shuffle,
+  'sliders-horizontal': slidersHorizontal,
   'sort-ascending': sortAscending,
   'sort-descending': sortDescending,
   table,
+  'text-aa': textAa,
+  'toggle-left': toggleLeft,
+  trash,
   tray,
   user,
   'users-three': usersThree,

@@ -327,3 +327,37 @@ export function withFilter(sql: string, matches: (name: string) => boolean, filt
   }
   return null;
 }
+
+/** Comparisons an @name stands in, each a symbol of its own: `<=` is `<` and `=`. */
+const COMPARING = new Set(['=', '<', '>', '!']);
+
+/**
+ * The column an @name is compared with, as in `lead_channel = @leadChannel` or `week_start between @from and
+ * @to`, and whether it stands for a list, as in `lead_channel in unnest(@channels)`. The kind of a new
+ * Parameter is suggested from it (DEC-UX-71).
+ */
+export function comparedWith(sql: string, start: number): { column: string | null; list: boolean } {
+  const tokens = tokenize(sql);
+  const at = tokens.findIndex((token) => token.kind === 'param' && token.start === start);
+  if (at < 0) return { column: null, list: false };
+  const nameAt = (i: number) => (isName(tokens[i]) ? (tokens[i] as Token).text : null);
+  if (symbol(tokens[at - 1], '(') && is(tokens[at - 2], 'unnest') && is(tokens[at - 3], 'in')) {
+    return { column: nameAt(is(tokens[at - 4], 'not') ? at - 5 : at - 4), list: true };
+  }
+  let i = at - 1;
+  if (tokens[i]?.kind === 'symbol' && COMPARING.has((tokens[i] as Token).text)) {
+    while (tokens[i]?.kind === 'symbol' && COMPARING.has((tokens[i] as Token).text)) i -= 1;
+    return { column: nameAt(i), list: false };
+  }
+  if (is(tokens[i], 'between')) return { column: nameAt(i - 1), list: false };
+  if (is(tokens[i], 'and') && tokens[i - 1]?.kind === 'param' && is(tokens[i - 2], 'between')) return { column: nameAt(i - 3), list: false };
+  // Written the other way round: `@leadChannel = lead_channel`.
+  let j = at + 1;
+  if (tokens[j]?.kind === 'symbol' && COMPARING.has((tokens[j] as Token).text)) {
+    while (tokens[j]?.kind === 'symbol' && COMPARING.has((tokens[j] as Token).text)) j += 1;
+    // The last part of a path, as in `v.lead_channel`.
+    while (isName(tokens[j]) && symbol(tokens[j + 1], '.') && isName(tokens[j + 2])) j += 2;
+    return { column: nameAt(j), list: false };
+  }
+  return { column: null, list: false };
+}

@@ -12,7 +12,8 @@
 ## Responsibilities
 
 - Query, a section for SQL over the Resources the User may see: [FR-SR-41](../../requirements/functional/04-stacks-and-resources.md#fr-sr-41), built as [TR-SR-15](../../requirements/technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)
-- The Pre-flight before every query, with its two thresholds and the partition filter: [FR-SR-36](../../requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](../../requirements/functional/04-stacks-and-resources.md#fr-sr-37), [FR-SR-40](../../requirements/functional/04-stacks-and-resources.md#fr-sr-40)
+- The Pre-flight before every query, with its two thresholds and the partition filter: [FR-SR-36](../../requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](../../requirements/functional/04-stacks-and-resources.md#fr-sr-37), [FR-SR-40](../../requirements/functional/04-stacks-and-resources.md#fr-sr-40); above 1 GB, the Request to the Data Team: [TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)
+- The Parameters of a query, a value sent apart or a function in the SQL, and its history of runs: [DEC-UX-71](../../design/principles.md#dec-ux-71), [DEC-UX-74](../../design/principles.md#dec-ux-74), [DEC-UX-118](../../design/principles.md#dec-ux-118)
 - A limit on scanned bytes and a label with the User on every query: [FR-SR-27](../../requirements/functional/04-stacks-and-resources.md#fr-sr-27)
 - The Query Log, with a Query ID on every result: [FR-LN-05](../../requirements/functional/07-log-and-notifications.md#fr-ln-05), [DEC-LN-01](../../requirements/functional/07-log-and-notifications.md#dec-ln-01)
 - Later: the preview of the first rows ([FR-SR-38](../../requirements/functional/04-stacks-and-resources.md#fr-sr-38)), free SQL through Claude ([FR-SR-26](../../requirements/functional/04-stacks-and-resources.md#fr-sr-26)) and feeds for Excel through Power Query ([DEC-DH-46](../../overview/data-hub.md#dec-dh-46))
@@ -22,30 +23,32 @@
 Its service account may read every table of the project ([DEC-SR-32](../../requirements/functional/04-stacks-and-resources.md#dec-sr-32)), so query decides what a query reads, in its Pre-flight and again before every run ([TR-SR-15](../../requirements/technical/04-stacks-and-resources.md#tr-sr-15)):
 
 1. query asks catalogue, with the token of the User, for each Resource of the query: whether the User may see it, its Key, its fields and how it is stored.
-2. It reads the tables named in the SQL: each must be one of those Resources.
+2. It puts the functions of the Parameters into the SQL in place of their `@names`, and reads the tables named in it: each must be one of those Resources. Every `@name` must be a Parameter.
 3. A dry run in BigQuery says what the query reads at most, that it only reads (`SELECT`), and which tables it reads: those Resources, or the tables beneath them.
 4. The bytes give the range: up to 100 MB it runs, up to 1 GB its author approves it, above it goes to the Data Team. Without a filter on the partition column of a Resource that requires one, it does not run ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)).
-5. It runs as a job with a maximum on the bytes billed and labels with the User and its Query ID; the pages of its result are read from that job.
+5. It runs as a job with a maximum on the bytes billed, the values of the Parameters as named query parameters, and labels with the User and its Query ID; the pages of its result are read from that job. Above 1 GB it runs only once the Data Team accepted a Request of its author ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)).
 
 ## API
 
 | Endpoint | Purpose |
 | --- | --- |
 | `GET /queries`, `GET /queries?all=true` | The queries of the User, newest run first; everyone's for the Data Team ([TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)) |
-| `POST /queries` | A new query: its name, question and Resources, with SQL that filters on their partition columns |
-| `GET /queries/{id}`, `PATCH /queries/{id}` | A query with its Resources and its last run, for who made it and the Data Team; its name, question and SQL changed by who made it |
-| `POST /queries/{id}/preflight` | The Pre-flight of the SQL being written, which it keeps ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)) |
+| `POST /queries` | A new query: its name, question and Resources, with SQL that filters on their partition columns; or started from another, with its SQL and Parameters |
+| `GET /queries/{id}`, `PATCH /queries/{id}` | A query with its Resources, its last run, its Request and where it started, for who made it and the Data Team; its name, question, SQL and Parameters changed by who made it |
+| `POST /queries/{id}/preflight` | The Pre-flight of the SQL and Parameters being written, which it keeps ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)) |
 | `POST /queries/{id}/runs` | A run, with its first page, after the same checks |
+| `GET /queries/{id}/runs?before=n&limit=m` | Its history, newest first, with the SQL and values of each run ([TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)) |
+| `POST /queries/{id}/requests` | Sends it to the Data Team above 1 GB, through catalogue ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)) |
 | `GET /runs/{queryId}/rows?page=n` | A page of 100 rows of a run, from the same job, for who ran it |
 | `GET /resources/{id}/preview`, `GET /feeds/{id}` | Later: the preview of a Resource, a feed for Power Query with an Excel key ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
 
 ## Data
 
-The schema `query` ([DEC-PF-29](../../requirements/technical/00-platform.md#dec-pf-29)): `queries`, one row per query with its Resources as they were named when it was made and the SQL being written, and `runs`, the Query Log, one row per run ([TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)). The Data Team reads it in Cloud SQL Studio ([TR-PF-28](../../requirements/technical/00-platform.md#tr-pf-28)). Its migrations are in `services/query/src/migrations`.
+The schema `query` ([DEC-PF-29](../../requirements/technical/00-platform.md#dec-pf-29)): `queries`, one row per query with its Resources as they were named when it was made, the SQL and Parameters being written and where it started, and `runs`, the Query Log, one row per run with the SQL and values it ran with ([TR-SR-17](../../requirements/technical/04-stacks-and-resources.md#tr-sr-17)); the Parameters and where a query started came in migration `0002-parameters`. The Requests to the Data Team are Messages of catalogue. The Data Team reads it in Cloud SQL Studio ([TR-PF-28](../../requirements/technical/00-platform.md#tr-pf-28)). Its migrations are in `services/query/src/migrations`.
 
 ## Talks to
 
-BigQuery, in the project and location of Data Hub (`DATAHUB_BIGQUERY_PROJECT`, `DATAHUB_BIGQUERY_LOCATION`), and catalogue (`DATAHUB_CATALOGUE_URL`), with the token of the User.
+BigQuery, in the project and location of Data Hub (`DATAHUB_BIGQUERY_PROJECT`, `DATAHUB_BIGQUERY_LOCATION`), and catalogue (`DATAHUB_CATALOGUE_URL`), with the token of the User: for the Resources of a query, and to send and read its Requests.
 
 ## Permissions
 

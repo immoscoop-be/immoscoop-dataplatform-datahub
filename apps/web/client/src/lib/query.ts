@@ -27,6 +27,25 @@ export type QueryResource =
     }
   | { visible: false; id: string; displayName: string };
 
+/** The standard list of kinds of a Parameter (DEC-UX-71). */
+export type ParameterKind = 'date' | 'period' | 'number' | 'decimal' | 'text' | 'choice' | 'several' | 'yesno';
+
+/** A Parameter of a query: a name, a kind and a value; a Period is `@name_from` and `@name_to` (DEC-UX-71). */
+export type Parameter =
+  | { name: string; kind: 'date' | 'number' | 'decimal' | 'text'; value: string }
+  | { name: string; kind: 'period'; value: string; to: string }
+  | { name: string; kind: 'choice'; value: string; list: string[] }
+  | { name: string; kind: 'several'; value: string[]; list: string[] }
+  | { name: string; kind: 'yesno'; value: boolean };
+
+/** A Request to the Data Team to run a query above 1 GB (MSG-QRY-01, DEC-UX-116). */
+export interface QueryRequest {
+  state: 'waiting' | 'accepted' | 'refused';
+  sentAt: string;
+  reads: number;
+  text: string;
+}
+
 /** A query in the panel of Query: one item per query (DEC-UX-74). */
 export interface QueryItem {
   id: string;
@@ -36,6 +55,8 @@ export interface QueryItem {
   runs: number;
   createdAt: string;
   lastRunAt: string | null;
+  /** Its Request to the Data Team, if it sent one. */
+  request: QueryRequest | null;
 }
 
 export interface ResultColumn {
@@ -48,6 +69,9 @@ export interface Run {
   /** Its Query ID, such as q-20261029-4c2e1a (FR-LN-06). */
   ref: string;
   number: number;
+  /** The SQL and values it ran with: a variation of its query (DEC-UX-74). */
+  sql: string;
+  parameters: Parameter[];
   state: 'running' | 'done' | 'failed';
   error: string | null;
   userName: string;
@@ -67,6 +91,7 @@ export interface Query {
   name: string;
   question: string;
   sql: string;
+  parameters: Parameter[];
   ownerName: string;
   /** Whether the User made it: only they write and run it. */
   mine: boolean;
@@ -74,6 +99,12 @@ export interface Query {
   lastRunAt: string | null;
   resources: QueryResource[];
   lastRun: Run | null;
+  /** How many runs it has. */
+  runs: number;
+  /** Its Request to the Data Team, if its author sent one. */
+  request: QueryRequest | null;
+  /** The query it was started from with another set of Resources, and after which of its runs (DEC-UX-73). */
+  startedFrom: { id: string; name: string; afterRun: number | null } | null;
 }
 
 /** A page of a result: 100 rows of the same run (FR-SR-51). */
@@ -89,6 +120,8 @@ export type Problem =
   | { kind: 'empty' }
   | { kind: 'notVisible'; resource: { id: string; displayName: string } }
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** An @name that is not a Parameter, with the kind suggested from the column it is compared with. */
+  | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
   | { kind: 'notSelect'; statementType: string }
   /** With the SQL that adds the filter, where Data Hub can tell where it goes (DEC-SR-35). */
   | { kind: 'filterRequired'; resource: { id: string; displayName: string }; column: string; fix: string | null }
@@ -112,6 +145,8 @@ export interface Preflight {
   problems: Problem[];
   warnings: Warning[];
   thresholds: { approve: number; request: number };
+  /** The Parameters that are not in the SQL: they are not sent. */
+  unused: string[];
 }
 
 /** What a run came to: its result, or why it did not run. */
@@ -121,6 +156,16 @@ export type RunOutcome =
   | { kind: 'refused'; preflight: Preflight }
   /** BigQuery refused it, in its own words; the run is kept as failed. */
   | { kind: 'failed'; message: string; run: Run | null };
+
+/** What a new query is made of: its own Resources, or the SQL and Parameters of the query it is started from. */
+export interface NewQuery {
+  name: string;
+  question: string;
+  resources: readonly string[];
+  sql?: string;
+  parameters?: readonly Parameter[];
+  startedFrom?: string;
+}
 
 /** query's routes (TR-SR-15 to TR-SR-17), with the Access Token of the User. */
 export function createQuery(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
@@ -132,19 +177,34 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     async list(all = false): Promise<QueryItem[]> {
       return ((await (await call(all ? '/queries?all=true' : '/queries')).json()) as { queries: QueryItem[] }).queries;
     },
-    async create(fields: { name: string; question: string; resources: readonly string[] }): Promise<Query> {
+    async create(fields: NewQuery): Promise<Query> {
       return ((await (await call('/queries', { method: 'POST', body: fields })).json()) as { query: Query }).query;
     },
     async get(id: string): Promise<Query> {
       return ((await (await call(query(id))).json()) as { query: Query }).query;
     },
-    /** The Pre-flight of what is written; query keeps the SQL with it. */
-    async preflight(id: string, sql: string): Promise<Preflight> {
-      return ((await (await call(`${query(id)}/preflight`, { method: 'POST', body: { sql } })).json()) as { preflight: Preflight }).preflight;
+    /** The Pre-flight of what is written; query keeps the SQL and Parameters with it. */
+    async preflight(id: string, sql: string, parameters: readonly Parameter[]): Promise<Preflight> {
+      return ((await (await call(`${query(id)}/preflight`, { method: 'POST', body: { sql, parameters } })).json()) as { preflight: Preflight }).preflight;
     },
-    async run(id: string, sql: string, approve: boolean): Promise<RunOutcome> {
+    /** Its history, newest first: the runs before a number, or the last ones (DEC-UX-74). */
+    async runs(id: string, options: { before?: number; limit?: number } = {}): Promise<Run[]> {
+      const search = new URLSearchParams({ limit: String(options.limit ?? 20), ...(options.before ? { before: String(options.before) } : {}) });
+      return ((await (await call(`${query(id)}/runs?${search}`)).json()) as { runs: Run[] }).runs;
+    },
+    /** Sends it to the Data Team, above 1 GB (DEC-UX-116); or the Pre-flight, when that changed. */
+    async request(id: string, sql: string, parameters: readonly Parameter[], text: string): Promise<{ kind: 'sent'; request: QueryRequest } | { kind: 'refused'; preflight: Preflight }> {
       try {
-        const body = (await (await call(`${query(id)}/runs`, { method: 'POST', body: { sql, approve } })).json()) as { run: Run; page: Page };
+        const body = (await (await call(`${query(id)}/requests`, { method: 'POST', body: { sql, parameters, text } })).json()) as { request: QueryRequest };
+        return { kind: 'sent', request: body.request };
+      } catch (error) {
+        if (error instanceof Refused && error.status === 409 && error.body?.preflight) return { kind: 'refused', preflight: error.body.preflight as Preflight };
+        throw error;
+      }
+    },
+    async run(id: string, sql: string, parameters: readonly Parameter[], approve: boolean): Promise<RunOutcome> {
+      try {
+        const body = (await (await call(`${query(id)}/runs`, { method: 'POST', body: { sql, parameters, approve } })).json()) as { run: Run; page: Page };
         return { kind: 'ran', ...body };
       } catch (error) {
         if (error instanceof Refused && error.status === 409 && error.body?.preflight) {

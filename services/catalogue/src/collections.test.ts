@@ -126,7 +126,7 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     );
 
     expect((await collections.get(credit.id, an))?.resources).toEqual([
-      { id: '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', displayName: 'Weekly leads', level: 2, published: false, deprecated: false, withdrawn: false },
+      { id: '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', key: 'p.d.leads', displayName: 'Weekly leads', level: 2, published: false, deprecated: false, withdrawn: false },
     ]);
     expect((await collections.get(credit.id, an))?.lastChange?.text).toBe('Weekly leads added by Dirk');
     const colleague = await collections.get(credit.id, bert);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { type BigQuery, BigQueryRefused, type DryRun } from './bigquery.js';
+import { type BigQuery, BigQueryRefused, type DryRun, type QueryParameter } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
+import type { Parameter } from './parameters.js';
 import { createBeneath, preflight, rangeOf, type ResourceOfQuery } from './preflight.js';
 
 const PROJECT = 'immoscoop-dataplatform';
@@ -25,12 +26,15 @@ const sources = resource('lead_sources');
 const of = (...resources: QueryResource[]): ResourceOfQuery[] => resources.map((entry) => ({ named: { id: entry.id, key: entry.key, displayName: entry.displayName }, resource: entry }));
 
 /** A BigQuery that answers dry runs from a table of answers, by the SQL, and remembers what it was asked. */
-function fakeBigQuery(answer: (sql: string) => DryRun | Error): BigQuery & { asked: string[] } {
+function fakeBigQuery(answer: (sql: string) => DryRun | Error): BigQuery & { asked: string[]; values: QueryParameter[][] } {
   const asked: string[] = [];
+  const values: QueryParameter[][] = [];
   return {
     asked,
-    async dryRun(sql) {
+    values,
+    async dryRun(sql, parameters = []) {
       asked.push(sql);
+      values.push(parameters);
       const result = answer(sql);
       if (result instanceof Error) throw result;
       return result;
@@ -42,8 +46,8 @@ function fakeBigQuery(answer: (sql: string) => DryRun | Error): BigQuery & { ask
 
 const dry = (bytes: number, referencedTables: string[], statementType = 'SELECT'): DryRun => ({ bytes, referencedTables, statementType, partitions: null });
 
-async function check(sql: string, resources: ResourceOfQuery[], bigquery: BigQuery) {
-  return preflight(sql, resources, { bigquery, beneath: createBeneath(bigquery), project: PROJECT, thresholds });
+async function check(sql: string, resources: ResourceOfQuery[], bigquery: BigQuery, parameters: Parameter[] = []) {
+  return preflight(sql, resources, { bigquery, beneath: createBeneath(bigquery), project: PROJECT, thresholds }, parameters);
 }
 
 describe('the range of a query (DEC-SR-29)', () => {
@@ -134,6 +138,53 @@ describe('the Pre-flight of a query', () => {
     const result = await check(`select * from \`${sources.key}\``, hidden, bigquery);
     expect(result.problems).toEqual([{ kind: 'notVisible', resource: { id: weekly.id, displayName: 'Weekly' } }]);
     expect((await check('  ', of(sources), bigquery)).problems).toEqual([{ kind: 'empty' }]);
+  });
+});
+
+describe('the Pre-flight of a query with Parameters (DEC-UX-71, DEC-UX-118)', () => {
+  const typed = resource('weekly_lead_volume', {
+    partition: { field: 'week_start', unit: 'day' },
+    fields: [
+      { name: 'week_start', dataType: 'DATE', description: '', businessDescription: '' },
+      { name: 'lead_channel', dataType: 'STRING', description: '', businessDescription: '' },
+    ],
+  });
+  const dateFrom: Parameter = { name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' };
+  const channel: Parameter = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
+
+  it('checks the SQL with its functions in it, and sends its values apart', async () => {
+    const bigquery = fakeBigQuery(() => dry(84_000_000, [typed.key]));
+    const result = await check(`select * from \`${typed.key}\` where week_start >= @dateFrom and lead_channel = @leadChannel`, of(typed), bigquery, [dateFrom, channel, { name: 'spare', kind: 'number', value: '3' }]);
+    expect(result).toMatchObject({ runnable: true, range: 'free', problems: [], unused: ['spare'] });
+    const asked = bigquery.asked.indexOf(`select * from \`${typed.key}\` where week_start >= (DATE_TRUNC(CURRENT_DATE(), YEAR)) and lead_channel = @leadChannel`);
+    expect(asked).toBeGreaterThanOrEqual(0);
+    expect(bigquery.values[asked]).toEqual([{ name: 'leadChannel', parameterType: { type: 'STRING' }, parameterValue: { value: 'Form' } }]);
+  });
+
+  it('cannot run with an @name that is not a Parameter, and suggests its kind from the column it is compared with', async () => {
+    const bigquery = fakeBigQuery(() => dry(1, [typed.key]));
+    const sql = `select * from \`${typed.key}\` where week_start >= @dateFrom and lead_channel = @leadChannel and x = @other`;
+    const result = await check(sql, of(typed), bigquery, [dateFrom]);
+    expect(result.runnable).toBe(false);
+    expect(result.problems).toEqual([
+      { kind: 'undefinedParameter', name: 'leadChannel', start: sql.indexOf('@leadChannel'), end: sql.indexOf('@leadChannel') + 12, suggestedKind: 'choice' },
+      { kind: 'undefinedParameter', name: 'other', start: sql.indexOf('@other'), end: sql.length, suggestedKind: null },
+    ]);
+    expect(bigquery.asked).toEqual([]);
+  });
+
+  it('refuses a table in a function of a Parameter, where its @name stands', async () => {
+    const bigquery = fakeBigQuery(() => dry(1, []));
+    const sneaky: Parameter = { name: 'dateFrom', kind: 'date', value: `(select max(day) from \`${PROJECT}.secret.salaries\`)` };
+    const sql = `select * from \`${typed.key}\` where week_start >= @dateFrom`;
+    const result = await check(sql, of(typed), bigquery, [sneaky]);
+    expect(result.problems).toEqual([{ kind: 'outside', name: `${PROJECT}.secret.salaries`, start: sql.indexOf('@dateFrom'), end: sql.length }]);
+  });
+
+  it('keeps the @names in the SQL that adds a partition filter', async () => {
+    const bigquery = fakeBigQuery(() => dry(500_000_000, [typed.key]));
+    const result = await check(`select * from \`${typed.key}\` where lead_channel = @leadChannel`, of(typed), bigquery, [channel]);
+    expect(result.warnings[0]?.fix).toBe(`select * from \`${typed.key}\` where week_start >= date_sub(current_date(), interval 28 day) and lead_channel = @leadChannel`);
   });
 });
 

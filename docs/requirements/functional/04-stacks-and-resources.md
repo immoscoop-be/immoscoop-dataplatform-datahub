@@ -427,13 +427,15 @@ Before every query, Data Hub shows a Pre-flight with the volume it will process,
 <a id="fr-sr-37"></a>
 ### FR-SR-37 · Approval above one threshold, a block above another
 
-**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html)
 
 Above X GB, the User has to approve a query explicitly; above Y GB, the query is blocked. X and Y are configurable.
 
 *Note of 2026-10-26: X is 100 MB and Y 1 GB, as start values; above Y a query is not blocked but goes to the Data Team, as a Request ([DEC-SR-29](#dec-sr-29)).*
 
 *Note of 2026-10-29, on building part 5: approving between the two thresholds is built ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the Request above 1 GB comes in the second piece of part 5, and the Data Team decides it with the Message Centre, in part 7 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building the second piece of part 5: above 1 GB the query is sent to the Data Team from the bar of the Pre-flight and does not run until a Request of its author is accepted; then it runs above the limit, also after its SQL changes ([DEC-UX-116](../../design/principles.md#dec-ux-116), [DEC-SR-36](#dec-sr-36), [TR-SR-18](../technical/04-stacks-and-resources.md#tr-sr-18)). Until the Message Centre, in part 7, nobody can accept one, so nobody runs a query above 1 GB.*
 
 <a id="fr-sr-38"></a>
 ### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
@@ -496,6 +498,8 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 *Note of 2026-10-27: one item per query, not per run; every run is a variation in the history of its query ([DEC-UX-74](../../design/principles.md#dec-ux-74)).*
 
 *Note of 2026-10-29, on building part 5: the panel lists the queries of the User, and everyone's for the Data Team, one item per query by the day of its last run, with what it ran on, how many runs and when; its last runs, and whether it was approved or went to the Data Team, come in the second piece of part 5 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building the second piece of part 5: the query that is open unfolds to its last runs, and a query that went to the Data Team is labelled so, or "Accepted" once it is ([DEC-UX-74](../../design/principles.md#dec-ux-74), [DEC-UX-116](../../design/principles.md#dec-ux-116)). The previews of a Resource come with the third piece, and the queries of Claude with Claude.*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it

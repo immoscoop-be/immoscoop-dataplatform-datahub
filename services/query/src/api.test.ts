@@ -7,7 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { label, parseQuery, parseRun } from './api.js';
 import { buildApp } from './app.js';
 import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
-import { type Catalogue, CatalogueUnavailable, type QueryResource } from './catalogue.js';
+import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
@@ -43,7 +43,15 @@ describe('the fields of a query, in a request', () => {
     expect(parseQuery({ resources: [WEEKLY.id] }, true)).toBe('The name has 1 to 120 characters.');
     expect(parseQuery({ name: 'x', resources: [] }, true)).toMatch(/1 to 10 Resources/);
     expect(parseQuery({ name: 'x', resources: [WEEKLY.id, WEEKLY.id] }, true)).toMatch(/each named once/);
-    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], sql: 'select 1' }, true)).toBe('A query has no field sql here.');
+    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], owner: '101' }, true)).toBe('A query has no field owner here.');
+  });
+
+  it('started from another, take its SQL and Parameters along (DEC-UX-73)', () => {
+    const from = '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+    const parameters = [{ name: 'dateFrom', kind: 'date', value: '2026-01-01' }];
+    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], sql: 'select 1', parameters, startedFrom: from }, true)).toEqual({ name: 'x', resources: [WEEKLY.id], sql: 'select 1', parameters, startedFrom: from });
+    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], startedFrom: 'leads' }, true)).toBe('A query is started from another by its ID.');
+    expect(parseQuery({ parameters: [{ name: 'x', kind: 'date' }] }, false)).toMatch(/@x has a value/);
   });
 
   it('change at least one of its name, question and SQL, never its Resources (DEC-UX-73)', () => {
@@ -54,9 +62,11 @@ describe('the fields of a query, in a request', () => {
   });
 
   it('to run, are its SQL and whether its author approves it', () => {
-    expect(parseRun({ sql: 'select 1' })).toEqual({ sql: 'select 1', approve: false });
+    expect(parseRun({ sql: 'select 1' })).toEqual({ sql: 'select 1', parameters: [], approve: false, text: '' });
     expect(parseRun({ sql: 'select 1', approve: 'yes' })).toBe('approve is true or false.');
     expect(parseRun({})).toMatch(/SQL/);
+    expect(parseRun({ sql: 'select 1', parameters: 'dateFrom' })).toMatch(/a list/);
+    expect(parseRun({ sql: 'select 1', text: 'x'.repeat(501) })).toMatch(/at most 500/);
   });
 
   it('give BigQuery a label it accepts, and a Query ID of the day', () => {
@@ -123,11 +133,26 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   const fake = fakeBigQuery();
   /** Which Resources each token may see, as catalogue would answer; null: catalogue does not answer. */
   const visible = new Map<string, string[] | null>();
+  /** The Google ID of each token, and the Requests catalogue keeps, newest first. */
+  const writers = new Map<string, string>();
+  const requests: QueryRequest[] = [];
   const catalogue: Catalogue = {
     async resource(id, authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
       return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET].find((resource) => resource.id === id) ?? null) : null;
+    },
+    async requests(queryId, authorization) {
+      if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
+      return requests.filter((sent) => sent.writerId === writers.get(authorization) && (queryId === null || sent.subjectId === queryId));
+    },
+    async sendRequest({ queryId, reads, text }, authorization) {
+      const writerId = writers.get(authorization) ?? '';
+      const waiting = requests.find((sent) => sent.subjectId === queryId && sent.writerId === writerId && sent.state === 'waiting');
+      if (waiting) return waiting;
+      const sent: QueryRequest = { id: `m-${requests.length + 1}`, subjectId: queryId, writerId, reads, text, state: 'waiting', createdAt: new Date().toISOString() };
+      requests.unshift(sent);
+      return sent;
     },
   };
   let an: string;
@@ -142,6 +167,9 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     an = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes' })}`;
     karel = `Bearer ${await issuer.sign({ sub: '102', name: 'Karel Leys' })}`;
     dataTeam = `Bearer ${await issuer.sign({ sub: '103', name: 'Dirk Vos', roles: ['datateam'] })}`;
+    writers.set(an, '101');
+    writers.set(karel, '102');
+    writers.set(dataTeam, '103');
     visible.set(an, [WEEKLY.id, SOURCES.id]);
     visible.set(karel, [WEEKLY.id]);
     visible.set(dataTeam, [WEEKLY.id, SOURCES.id, SECRET.id]);
@@ -283,10 +311,77 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(runs[0]).toMatchObject({ sql: weekly, jobId: 'job_1', jobLocation: 'europe-west1', processedBytes: '79000000', resources: [{ id: WEEKLY.id }, { id: SOURCES.id }] });
   });
 
+  const channel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
+  const dateFrom = { name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' };
+  const withParameters = `select week_start, count(*) as leads from \`${WEEKLY.key}\` where week_start >= @dateFrom and lead_source = @leadChannel group by week_start`;
+
+  it('keeps the Parameters with the SQL, and names an @name that is not one (DEC-UX-71)', async () => {
+    const missing = await call(an, 'POST', `/queries/${id}/preflight`, { sql: withParameters, parameters: [dateFrom] });
+    expect(missing.json().preflight).toMatchObject({
+      runnable: false,
+      problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: withParameters.indexOf('@leadChannel'), suggestedKind: 'choice' }],
+    });
+    const spare = { name: 'spare', kind: 'number', value: '3' };
+    const checked = await call(an, 'POST', `/queries/${id}/preflight`, { sql: withParameters, parameters: [dateFrom, channel, spare] });
+    expect(checked.json().preflight).toMatchObject({ runnable: true, problems: [], unused: ['spare'] });
+    expect((await call(an, 'GET', `/queries/${id}`)).json().query.parameters).toEqual([dateFrom, channel, spare]);
+    expect((await call(an, 'POST', `/queries/${id}/preflight`, { sql: weekly, parameters: [{ name: 'x', kind: 'week' }] })).statusCode).toBe(400);
+  });
+
+  it('runs with its values apart and its functions in the SQL, and keeps them with the run (DEC-UX-118)', async () => {
+    const ran = await call(an, 'POST', `/queries/${id}/runs`, { sql: withParameters, parameters: [dateFrom, channel] });
+    expect(ran.statusCode).toBe(201);
+    expect(ran.json().run).toMatchObject({ number: 5, sql: withParameters, parameters: [dateFrom, channel] });
+    expect(fake.runs.at(-1)?.sql).toContain('where week_start >= (DATE_TRUNC(CURRENT_DATE(), YEAR)) and lead_source = @leadChannel');
+    expect(fake.runs.at(-1)?.options.parameters).toEqual([{ name: 'leadChannel', parameterType: { type: 'STRING' }, parameterValue: { value: 'Form' } }]);
+  });
+
+  it('gives its history, newest first, a page at a time, with the SQL and values of each run (DEC-UX-74)', async () => {
+    const history = (await call(an, 'GET', `/queries/${id}/runs?limit=2`)).json().runs;
+    expect(history.map((run: { number: number }) => run.number)).toEqual([5, 4]);
+    expect(history[0]).toMatchObject({ sql: withParameters, parameters: [dateFrom, channel] });
+    expect((await call(an, 'GET', `/queries/${id}/runs?before=4`)).json().runs.map((run: { number: number }) => run.number)).toEqual([3, 2, 1]);
+    expect((await call(dataTeam, 'GET', `/queries/${id}/runs?limit=1`)).json().runs).toHaveLength(1);
+    expect((await call(karel, 'GET', `/queries/${id}/runs`)).statusCode).toBe(404);
+    expect((await call(an, 'GET', `/queries/${id}/runs?limit=500`)).statusCode).toBe(400);
+    expect((await call(an, 'GET', `/queries/${id}`)).json().query.runs).toBe(5);
+  });
+
+  it('sends a query above 1 GB to the Data Team, and runs it once they accept (MSG-QRY-01, DEC-SR-36)', async () => {
+    const huge = `${weekly} -- reads 4800000000`;
+    const small = await call(an, 'POST', `/queries/${id}/requests`, { sql: weekly, text: 'Please' });
+    expect(small.json()).toMatchObject({ error: 'not_needed' });
+    expect((await call(dataTeam, 'POST', `/queries/${id}/requests`, { sql: huge })).statusCode).toBe(403);
+
+    const sent = await call(an, 'POST', `/queries/${id}/requests`, { sql: huge, text: ' For the five-year review. ' });
+    expect(sent.statusCode).toBe(201);
+    expect(sent.json().request).toMatchObject({ state: 'waiting', reads: 4_800_000_000, text: 'For the five-year review.', sentAt: expect.any(String) });
+    expect((await call(an, 'GET', `/queries/${id}`)).json().query).toMatchObject({ sql: huge, request: { state: 'waiting' } });
+    expect((await call(an, 'GET', '/queries')).json().queries[0]).toMatchObject({ id, request: { state: 'waiting' } });
+    // The Data Team sees whose Request it is on the query, not on its own list.
+    expect((await call(dataTeam, 'GET', `/queries/${id}`)).json().query.request).toBeNull();
+
+    expect((await call(an, 'POST', `/queries/${id}/runs`, { sql: huge, approve: true })).json()).toMatchObject({ error: 'request_needed' });
+    (requests[0] as QueryRequest).state = 'accepted';
+    expect((await call(an, 'POST', `/queries/${id}/runs`, { sql: huge })).json()).toMatchObject({ error: 'approval_needed' });
+    const ran = await call(an, 'POST', `/queries/${id}/runs`, { sql: huge, approve: true });
+    expect(ran.statusCode).toBe(201);
+    expect(fake.runs.at(-1)?.options.maximumBytesBilled).toBe(5_280_000_000);
+  });
+
+  it('starts a new query from another, with its SQL and Parameters, after its last run (DEC-UX-73)', async () => {
+    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, weekly only', resources: [WEEKLY.id], sql: withParameters, parameters: [dateFrom, channel], startedFrom: id });
+    expect(made.statusCode).toBe(201);
+    expect(made.json().query).toMatchObject({ sql: withParameters, parameters: [dateFrom, channel], startedFrom: { id, name: 'Leads per source', afterRun: 6 }, runs: 0, lastRun: null });
+    expect((await call(karel, 'POST', '/queries', { name: 'Taken', resources: [WEEKLY.id], startedFrom: id })).statusCode).toBe(400);
+  });
+
   it('answers 503 when catalogue does not, rather than guess what the User may see', async () => {
     const down = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes' })}`;
     visible.set(down, null);
     expect((await call(down, 'POST', `/queries/${id}/preflight`, { sql: weekly })).statusCode).toBe(503);
     expect((await call(down, 'POST', `/queries/${id}/runs`, { sql: weekly })).statusCode).toBe(503);
+    // The list still shows, without the labels of Requests.
+    expect((await call(down, 'GET', '/queries')).json().queries[0]).toMatchObject({ request: null });
   });
 });

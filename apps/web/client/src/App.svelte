@@ -10,7 +10,7 @@
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { initialsOf } from './lib/initials.js';
-  import { createQuery, type QueryItem } from './lib/query.js';
+  import { createQuery, type QueryItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { NEW_COLLECTION, NEW_QUERY, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
@@ -138,8 +138,24 @@
     ];
     await Promise.all(read).catch((error: unknown) => console.error('The Collections could not be read', error));
   }
-  /** Reads again the queries in the panel of Query, after a new one or a run. */
+  /** The last runs of the query that is open, which unfolds to them in the panel (DEC-UX-74). */
+  let currentRuns: readonly Run[] | undefined = $state();
+  const openQuery = $derived(page.kind === 'query' ? page.id : undefined);
+  function readRuns(id: string): void {
+    queries.runs(id, { limit: 3 }).then(
+      (found) => {
+        if (openQuery === id) currentRuns = found;
+      },
+      (error: unknown) => console.error('The runs could not be read', error),
+    );
+  }
+  $effect(() => {
+    currentRuns = undefined;
+    if (openQuery && status.kind === 'signedIn') readRuns(openQuery);
+  });
+  /** Reads again the queries in the panel of Query, after a new one, a run or a Request. */
   async function refreshQueries(): Promise<void> {
+    if (openQuery) readRuns(openQuery);
     await Promise.all([
       queries.list().then((found) => (ownQueries = found)),
       ...(everyone ? [queries.list(true).then((found) => (everyone = found))] : []),
@@ -291,7 +307,18 @@
     {:else if page.kind === 'query'}
       <!-- The editor of Query comes when a query opens, so that the other pages load without it. -->
       {#await import('./screens/QueryPage.svelte') then { default: QueryPage }}
-        <QueryPage id={page.id} client={queries} {collections} nonce={config.styleNonce} onran={refreshQueries} />
+        <QueryPage
+          id={page.id}
+          opened={page.run}
+          client={queries}
+          {collections}
+          nonce={config.styleNonce}
+          onran={refreshQueries}
+          onmade={(made) => {
+            refreshQueries();
+            router.go(queryPath(made.id));
+          }}
+        />
       {/await}
     {:else if page.kind === 'collection' || page.kind === 'newCollection'}
       <CollectionPage
@@ -360,7 +387,8 @@
       queries={ownQueries}
       {everyone}
       {dataTeam}
-      current={page.kind === 'query' ? page.id : undefined}
+      current={openQuery}
+      runs={currentRuns}
       draft={page.kind === 'newQuery' ? draft : null}
       onall={() => queries.list(true).then((found) => (everyone = found), (error: unknown) => console.error('The queries could not be read', error))}
     />

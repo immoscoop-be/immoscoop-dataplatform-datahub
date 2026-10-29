@@ -1,4 +1,5 @@
 import type { ColumnType, Generated } from 'kysely';
+import type { Parameter } from './parameters.js';
 
 /** A timestamp: read as a Date, written as a Date or left to the database. */
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
@@ -32,6 +33,11 @@ export interface QueryDatabase {
     question: Generated<string>;
     resources: ColumnType<NamedResource[], string, string>;
     sql: Generated<string>;
+    /** Its Parameters, with the values the next run takes (DEC-UX-71). */
+    parameters: ColumnType<Parameter[], string | undefined, string>;
+    /** The query it was started from with another set of Resources, and after which of its runs (DEC-UX-73). */
+    startedFrom: string | null;
+    startedAfterRun: number | null;
     createdAt: Timestamp;
     updatedAt: Timestamp;
     lastRunAt: Date | null;
@@ -47,6 +53,8 @@ export interface QueryDatabase {
     userId: string;
     userName: string;
     sql: string;
+    /** The Parameters and the values it ran with. */
+    parameters: ColumnType<Parameter[], string | undefined, string>;
     resources: ColumnType<NamedResource[], string, string>;
     /** What the Pre-flight said the run reads, at most; bigints, which pg reads as strings. */
     estimatedBytes: ColumnType<string, number, number>;

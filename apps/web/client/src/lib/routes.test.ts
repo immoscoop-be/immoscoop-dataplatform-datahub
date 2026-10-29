@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { route } from './routes.js';
+import { queryRunsPath, route } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -30,7 +30,13 @@ describe('the addresses of the web app', () => {
     expect(route('/query/new')).toMatchObject({ kind: 'newQuery', resource: null, section: { id: 'query' } });
     expect(route('/query/new/r-1')).toMatchObject({ kind: 'newQuery', resource: 'r-1', section: { id: 'query' } });
     expect(route('/query/%E0%A4%A')).toEqual({ kind: 'notFound' });
-    expect(route('/query/9f1c/runs')).toEqual({ kind: 'notFound' });
+    // Its history, at all its runs or at one, as the panel opens it (DEC-UX-74).
+    expect(route('/query/9f1c')).toMatchObject({ run: null });
+    expect(route('/query/9f1c/runs')).toMatchObject({ kind: 'query', id: '9f1c', run: 'all' });
+    expect(route('/query/9f1c/runs/14')).toMatchObject({ kind: 'query', id: '9f1c', run: 14 });
+    expect(queryRunsPath('9f1c', 14)).toBe('/query/9f1c/runs/14');
+    expect(route('/query/9f1c/runs/0')).toEqual({ kind: 'notFound' });
+    expect(route('/query/9f1c/rows')).toEqual({ kind: 'notFound' });
   });
 
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {

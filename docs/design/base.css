@@ -452,6 +452,10 @@ button.ln-fold i { transition: transform 200ms ease; }
 .run-pop.up { display: none; top: auto; bottom: calc(100% + 10px); z-index: 5; }
 .run-pop.up::before { top: auto; bottom: -6px; box-shadow: 1px 1px 0 var(--tint-active); }
 .run-anchor:hover .run-pop.up, .run-anchor:focus-within .run-pop.up { display: block; }
+/* Above 1 GB Run sends the query to the Data Team (DEC-UX-116): its pop-out stays open until sent, the other one stays shut */
+.run-pop.up.request-pop { display: block; width: 320px; }
+.run-anchor.requesting .run-pop.up:not(.request-pop) { display: none; }
+.run-wait { display: inline-flex; align-items: center; gap: 6px; }
 .result-card { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px; }
 /* A query is bounded by its Resources (Proposal): it reads only those, shown on top of its frame; another Resource
    starts another query, which remembers where it came from. Every run is a variation, kept in its history */
