@@ -614,6 +614,23 @@ const syncRun = () => {
   document.querySelector('[data-add-filter]').hidden = !noFilter;
 };
 
+// Above 1 GB Run sends the query to the Data Team (?pf=request, DEC-UX-116): a pop-out over the bar says why, with an
+// optional word for them, and Send. Once sent, the bar says since when it waits, and the query in the panel says so too
+if (new URLSearchParams(location.search).get('pf') === 'request' && document.getElementById('run-btn')) {
+  const btn = document.getElementById('run-btn'), pop = document.getElementById('request-pop'), anchor = btn.closest('.run-anchor');
+  // Here @leadChannel is a Parameter already, so nothing else keeps the query from running
+  const data = document.getElementById('param-data');
+  data.textContent = JSON.stringify([...JSON.parse(data.textContent), { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone', 'Email', 'Chat'] }]);
+  document.querySelector('#run-pf .gauge-fill').style.width = '100%';
+  document.querySelector('#run-pf > .meta:last-child').innerHTML = 'All 312 partitions of Weekly lead volume, through <span class="mono">week_start</span>';
+  btn.innerHTML = '<i class="ph ph-paper-plane-tilt" style="font-size:14px"></i>Send to the Data Team<span class="run-gb">4.8 GB</span>';
+  btn.addEventListener('click', () => { pop.hidden = !pop.hidden; anchor.classList.toggle('requesting', !pop.hidden); });
+  document.getElementById('request-send').addEventListener('click', () => {
+    pop.hidden = true; anchor.hidden = true; document.getElementById('run-wait').hidden = false;
+    document.querySelector('.q-item.current')?.insertAdjacentHTML('beforeend', '<span class="pill" style="color:var(--signal-urgent)">To the Data Team</span>');
+  });
+}
+
 // The Parameters of a query (Proposal). Each has a name, a kind from the standard list and a value: a value such as
 // 2026-10-25, or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run. Under the query
 // they fold open and shut; they are made and changed in a floating window that moves by its head. A Parameter that is
@@ -637,7 +654,6 @@ if (pbox) {
     number: 'A number, such as 10, or an SQL function.', decimal: 'A number, such as 350000.50, or an SQL function.',
     text: 'A text, such as 8000, or an SQL function.',
   };
-  const COLUMNS = { 'source_name · Lead sources': ['Website', 'App', 'Partner network', 'Mailing'], 'lead_channel · Weekly lead volume': ['Form', 'Phone', 'Email', 'Chat'] };
   // What a function gives today; in the app BigQuery works it out, which reads nothing
   const GIVES = new Map([...document.querySelectorAll('#pm-date-fns option')].map(o => [o.value.replace(/\s+/g, '').toUpperCase(), o.dataset.gives]));
   const params = JSON.parse(document.getElementById('param-data').textContent);
@@ -692,8 +708,8 @@ if (pbox) {
   // The window holds one Parameter: the one chosen, or a new one
   let current = null;
   kindsBox.innerHTML = Object.entries(KINDS).map(([k, [n, icon, type]]) => `<button class="kind-opt" type="button" role="radio" aria-checked="false" data-kind="${k}" title="${type}"><i class="ph ${icon}"></i>${n}</button>`).join('');
-  const values = () => document.querySelector('input[name="pm-src"]:checked').value === 'typed'
-    ? $('pm-typed').value.split('\n').map(v => v.trim()).filter(Boolean) : COLUMNS[$('pm-col').value];
+  // The list of a Choice is typed, one value a line; a list from a column comes later (DEC-UX-117)
+  const values = () => $('pm-typed').value.split('\n').map(v => v.trim()).filter(Boolean);
   const fillList = (value, kind) => {
     const vals = values();
     $('pm-pick').innerHTML = vals.map(v => `<option${v === value ? ' selected' : ''}>${esc(v)}</option>`).join('');
@@ -722,8 +738,8 @@ if (pbox) {
     const p = params.find(x => x.name === name);
     current = p ? p.name : null;
     const at = inSql();
-    // A new Parameter defined from the SQL starts as a choice from the column it is compared with
-    const q = p || (defines === 'leadChannel' ? { name: defines, kind: 'choice', value: 'Form', column: 'lead_channel · Weekly lead volume' } : { name: defines || '', kind: 'date', value: '' });
+    // A new Parameter defined from the SQL starts as a choice when it is compared with a column
+    const q = p || (defines === 'leadChannel' ? { name: defines, kind: 'choice', value: 'Form', list: ['Form', 'Phone', 'Email', 'Chat'] } : { name: defines || '', kind: 'date', value: '' });
     $('pm-title').textContent = p ? '@' + p.name : defines ? 'Define @' + defines : 'New parameter';
     $('pm-save').textContent = p ? 'Save' : 'Add';
     $('pm-remove').hidden = !p; $('pm-saved').hidden = true;
@@ -731,8 +747,7 @@ if (pbox) {
     $('pm-value').value = ['date', 'number', 'decimal', 'text'].includes(q.kind) ? q.value : '';
     $('pm-from').value = q.kind === 'period' ? q.value : ''; $('pm-to').value = q.kind === 'period' ? q.to : '';
     $('pm-bool').value = q.kind === 'yesno' ? q.value : 'No';
-    pm.querySelector(`input[name="pm-src"][value="${q.typed ? 'typed' : 'column'}"]`).checked = true;
-    if (q.column) $('pm-col').value = q.column;
+    $('pm-typed').value = (q.list || ['Website', 'App']).join('\n');
     fillList(q.value, q.kind);
     showKind(q.kind);
     const line = p ? lineOf(p, at) : at.get(defines);
@@ -747,7 +762,7 @@ if (pbox) {
   ['pm-value', 'pm-from', 'pm-to'].forEach(id => $(id).addEventListener('input', () => { gave(); state(...said); }));
   // A name is an SQL name: letters, digits and underscores
   nameIn.addEventListener('input', () => { nameIn.value = nameIn.value.replace(/[^A-Za-z0-9_]/g, ''); gave(); state(...said); });
-  pm.querySelectorAll('input[name="pm-src"], #pm-col, #pm-typed').forEach(el => el.addEventListener('change', () => fillList($('pm-pick').value, kindNow())));
+  $('pm-typed').addEventListener('input', () => fillList($('pm-pick').value, kindNow()));
   $('pm-chips').addEventListener('click', e => e.target.closest('.use-chip')?.classList.toggle('on'));
   $('pm-save').addEventListener('click', () => {
     const name = nameIn.value, kind = kindNow();
@@ -760,7 +775,7 @@ if (pbox) {
     else if (kind === 'yesno') p.value = $('pm-bool').value;
     else p.value = $('pm-value').value.trim();
     if (p.value === '' || (kind === 'period' && !p.to)) return state('Give it a value.', true);
-    if (kind === 'choice' || kind === 'several') Object.assign(p, { column: $('pm-col').value, typed: document.querySelector('input[name="pm-src"]:checked').value === 'typed' });
+    if (kind === 'choice' || kind === 'several') p.list = values();
     const i = params.findIndex(x => x.name === current);
     if (i >= 0) params[i] = p; else params.push(p);
     render(); open(p.name); $('pm-saved').hidden = false;

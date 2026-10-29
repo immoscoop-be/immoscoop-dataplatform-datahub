@@ -159,6 +159,8 @@ Every run of a Lens passes the Pre-flight, with its thresholds ([FR-SR-36](04-st
 
 A Parameter takes a value, such as a date or "all channels", or a function that is worked out at every run, such as "today − 3 days" or "the start of this year". Both are chosen in the same dropdown, with the date a function gives today. This holds for its default, which its Owner Unit sets when making or editing the Lens, and for the value a User chooses when running it. It may be any SQL function; the field suggests the common ones ([DEC-LE-14](#dec-le-14)).
 
+*Note of 2026-10-29: the date a function gives today is shown for the functions the field suggests, which Data Hub works out itself; next to any other function the field says "worked out at every run", and every function goes into the SQL of the run as it is written ([DEC-UX-118](../../design/principles.md#dec-ux-118)). In Query, part 5 of the [build order](../../design/build-order.md), a Parameter works this way; on a Lens it comes with part 6.*
+
 <a id="fr-le-14"></a>
 ### FR-LE-14 · Only its Owner Unit sees the SQL of a Lens
 
