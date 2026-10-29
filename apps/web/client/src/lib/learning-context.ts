@@ -21,6 +21,8 @@ export interface LearningContext {
   /** Something shows a card: read the progress and the translations, once. */
   want(): void;
   open(card: string, from: OpenedFrom): void;
+  /** The User read a card where it stands, as inline in a Message: it is seen, if it was not yet (FR-LR-32). */
+  seen(card: string): void;
   understand(card: string, understood: boolean): void;
 }
 

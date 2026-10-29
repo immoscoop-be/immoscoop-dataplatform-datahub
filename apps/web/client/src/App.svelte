@@ -120,6 +120,9 @@
     },
     want: () => (learningWanted = true),
     open: (card, from) => (windowCard = { card, from }),
+    seen: (card) => {
+      if (progress && !progress.some((one) => one.card === card)) openStep(card, 'core');
+    },
     understand: (card, understood) => understandCard(card, understood),
   });
 

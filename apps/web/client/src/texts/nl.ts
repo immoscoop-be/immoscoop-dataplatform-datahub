@@ -905,4 +905,5 @@ export default {
   'learning.pop.understood': 'Begrepen op {day}',
   'learning.pop.centre': 'Open het Learning Centre',
   'learning.window.open': 'Open in het Learning Centre',
+  'learning.inline.head': 'Begrijp wat hier gebeurt',
 } as const;

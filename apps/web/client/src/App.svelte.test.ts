@@ -1728,6 +1728,24 @@ describe('Messages', () => {
     expect(main.queryByRole('textbox', { name: 'Je antwoord' })).toBeNull();
   });
 
+  it('carries the Learning Card that explains it, which opens inline (FR-LR-38, DEC-UX-79)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages/m2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Begrijp wat hier gebeurt')).toBeTruthy();
+    const card = main.getByRole('button', { name: /K3\.4\s*Waar definities leven/ });
+    expect(card.getAttribute('aria-expanded')).toBe('false');
+    expect(card.textContent).toContain('Nog niet gezien');
+    await fireEvent.click(card);
+    expect((await main.findByText('woordenlijst', { selector: 'b' })).parentElement?.textContent).toMatch(/^De woordenlijst legt een begrip uit/);
+    expect(main.getByRole('link', { name: /Open de hele kaart/ }).getAttribute('href')).toBe('/learning/K3.4');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'core' } }));
+    await fireEvent.click(main.getByRole('button', { name: /Ik heb het begrepen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4/understood' }));
+    expect(main.getByRole('button', { name: /K3\.4/ }).textContent).toContain('Begrepen');
+  });
+
   it('lets the Data Team decide on a Request, a refusal with a reason (FR-CV-08)', async () => {
     const calls = serve({ roles: ['datateam'], conversations: [REQUEST] });
     open('/messages/m3');

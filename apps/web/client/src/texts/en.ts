@@ -906,4 +906,5 @@ export default {
   'learning.pop.understood': 'Understood on {day}',
   'learning.pop.centre': 'Open the Learning Centre',
   'learning.window.open': 'Open in the Learning Centre',
+  'learning.inline.head': 'Understand what is happening here',
 } as const satisfies Record<keyof typeof nl, string>;

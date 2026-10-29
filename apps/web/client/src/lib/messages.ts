@@ -159,6 +159,12 @@ export function buttonsOf(type: string): MessageType['action']['buttons'] {
   return TYPES.get(type)?.action.buttons ?? [];
 }
 
+/** The Learning Card that explains what Data Hub writes, as the Message Catalogue names it (FR-LR-38, DEC-LR-29). */
+export function cardOfType(type: string): string | null {
+  const fit = TYPES.get(type)?.learningCard;
+  return fit?.fit === 'named' ? fit.card.number : null;
+}
+
 /** "Open in context", which every Message has, as the Message Catalogue names it (FR-CV-09). */
 export const CONTEXT_BUTTON = MESSAGE_CATALOGUE.flatMap((type) => type.action.buttons).find((button) => button.label.en === 'Open in context');
 
