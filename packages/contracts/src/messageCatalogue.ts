@@ -1194,7 +1194,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     action: {
       asks: 'decide',
       of: ['dataTeam'],
-      what: 'A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. What accepting allows, one run or the query as it is, is open (OP-SR-17).',
+      what: 'A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. Accepting lets its writer run that query above the limit, also after its SQL changes (DEC-SR-36). The User sends it from the bar of the Pre-flight, with an optional word (DEC-UX-116).',
       buttons: [
         { label: OPEN_IN_CONTEXT.label, opens: 'Query, with the query and its Pre-flight, and the Request in a floating window over it (FR-CV-09)' },
         ACCEPT,

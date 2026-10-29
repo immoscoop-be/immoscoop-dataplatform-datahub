@@ -755,7 +755,7 @@ Until the data team decides, only {writer} sees the lens, and nobody changes it.
 | Status | Proposed |
 | Comes from | [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37), [FR-CV-08](14-conversations.md#fr-cv-08) |
 
-**What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. What accepting allows, one run or the query as it is, is open ([OP-SR-17](04-stacks-and-resources.md#op-sr-17)).
+**What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. Accepting lets its writer run that query above the limit, also after its SQL changes ([DEC-SR-36](04-stacks-and-resources.md#dec-sr-36)). The User sends it from the bar of the Pre-flight, with an optional word ([DEC-UX-116](../../design/principles.md#dec-ux-116)).
 
 **How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It starts `waiting` and ends `accepted` or `refused`.
 
