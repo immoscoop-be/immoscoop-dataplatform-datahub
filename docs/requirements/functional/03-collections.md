@@ -296,6 +296,9 @@ Lenses have no section of their own; everything is reached through its Collectio
 
 
 *Note of 2026-10-28: without popular Collections or Lenses for now; only new Lenses ([DEC-UX-86](../../design/principles.md#dec-ux-86)).*
+
+*Note of 2026-10-29: "New Lenses" are those published in the last 30 days in a public Collection, outside the User's own Owner Units ([DEC-UX-126](../../design/principles.md#dec-ux-126)); the results of the search are drawn first and built in part 6d ([OP-UX-45](../../design/principles.md#op-ux-45)).*
+
 ## The page of a Collection
 
 What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.

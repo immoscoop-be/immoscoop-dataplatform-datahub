@@ -96,6 +96,8 @@ and About, run only when a User runs it (DEC-LE-12); a Lens that grows past 1 GB
 lens-context.
 ```
 
+*Note of 2026-10-29: built in four parts: 6a makes a Lens and runs it; 6b keeps it right (updating, editing, growth and Broken); 6c finds Lenses, in a new query and on the start screen of Collections; 6d the search of that start screen, once its results are drawn ([OP-UX-45](principles.md#op-ux-45)). The Data Team accepting a Lens, and lens-new-context and lens-context, come with Messages in part 7.*
+
 ### Part 7 · Messages and notifications
 
 ```text
