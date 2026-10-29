@@ -94,6 +94,29 @@ describe.skipIf(!url)('migrate', () => {
     expect(results).toEqual([]);
   });
 
+  it('looks at its own schema only, while another schema is dropped', async () => {
+    // Other test files drop their schemas while this one migrates. Like a query that started
+    // before such a drop, a transaction whose snapshot is older still sees the tables of the
+    // dropped schema, but looking them up by name fails: the race, every time.
+    const other = sql.id(`${SCHEMA}_dropped`);
+    await sql`create schema ${other}`.execute(admin.db);
+    await sql`create table ${other}.items (id serial primary key)`.execute(admin.db);
+    await admin.db
+      .transaction()
+      .setIsolationLevel('repeatable read')
+      .execute(async (trx) => {
+        await sql`select 1`.execute(trx);
+        await sql`drop schema ${other} cascade`.execute(admin.db);
+        const results = await migrate({
+          db: trx,
+          schema: SCHEMA,
+          migrations: { '0001_users': users, '0002_groups': groups },
+          serviceUser: SERVICE,
+        });
+        expect(results).toEqual([]);
+      });
+  });
+
   it('lets the service read and write its rows, in camelCase', async () => {
     const db = connectAs<TestTables>(SERVICE);
     await db.insertInto('users').values({ displayName: 'Jan' }).execute();
@@ -120,24 +143,6 @@ describe.skipIf(!url)('migrate', () => {
   it('does not let any other login in', async () => {
     const db = connectAs<unknown>(OTHER);
     await expect(sql`select * from ${sql.id(SCHEMA)}.users`.execute(db)).rejects.toThrow(/permission denied for schema/);
-  });
-
-  it('looks again when a schema vanishes while Kysely looks for its tables, as when tests drop theirs', async () => {
-    let vanished = false;
-    const migrations = new Proxy<Record<string, Migration>>(
-      { '0001_users': users, '0002_groups': groups },
-      {
-        ownKeys(target) {
-          if (!vanished) {
-            vanished = true;
-            throw Object.assign(new Error('schema "other_test" does not exist'), { code: '3F000' });
-          }
-          return Reflect.ownKeys(target);
-        },
-      },
-    );
-    await expect(migrate({ db: admin.db, schema: SCHEMA, migrations, serviceUser: SERVICE })).resolves.toEqual([]);
-    expect(vanished).toBe(true);
   });
 
   it('stops at a failing migration and says which one', async () => {

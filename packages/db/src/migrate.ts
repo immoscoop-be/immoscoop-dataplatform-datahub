@@ -1,4 +1,4 @@
-import { type Kysely, sql } from 'kysely';
+import { type DatabaseIntrospector, type Kysely, sql } from 'kysely';
 import { type Migration, type MigrationResult, Migrator } from 'kysely/migration';
 import { quoteIdentifier, schemaName } from './connect.js';
 
@@ -33,13 +33,17 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
   await sql`create schema if not exists ${schema}`.execute(options.db);
 
   const migrator = new Migrator({
-    db: options.db,
+    db: introspectingOnly(options.db, options.schema),
     provider: { getMigrations: async () => options.migrations },
     migrationTableSchema: options.schema,
     migrationTableName: MIGRATION_TABLE,
     migrationLockTableName: MIGRATION_LOCK_TABLE,
   });
-  const results = await latest(migrator, options.schema);
+  const { error, results = [] } = await migrator.migrateToLatest();
+  if (error) {
+    const failed = results.find((result) => result.status === 'Error')?.migrationName ?? 'unknown';
+    throw new Error(`Migration ${failed} of ${options.schema} failed`, { cause: error });
+  }
 
   await sql`grant usage on schema ${schema} to ${service}`.execute(options.db);
   await sql`grant select, insert, update, delete on all tables in schema ${schema} to ${service}`.execute(options.db);
@@ -56,24 +60,36 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
   return results;
 }
 
-/** Postgres's code for a schema that does not exist. */
-const NO_SUCH_SCHEMA = '3F000';
-
 /**
- * Runs the migrations that did not run yet. Kysely finds its own tables among the tables of every schema
- * of the database; a schema that is dropped at that moment, which only tests do, fails that look before
- * any migration ran, and a second look no longer sees it.
+ * `db`, with an introspection that sees `schema` only: the Migrator asks it whether the schema
+ * and its own tables exist. Kysely's own lists every column of every table in the database and
+ * looks each up by name (`has_schema_privilege`, `pg_get_serial_sequence`), so it fails when
+ * another schema is dropped while it runs, as the tests of the other services do alongside.
+ * Kysely 0.30 limits the check to the schema itself.
  */
-async function latest(migrator: Migrator, schema: string): Promise<MigrationResult[]> {
-  for (let attempt = 1; ; attempt += 1) {
-    const { error, results = [] } = await migrator.migrateToLatest();
-    if (!error) {
-      return results;
-    }
-    if ((error as { code?: string }).code === NO_SUCH_SCHEMA && results.length === 0 && attempt < 3) {
-      continue;
-    }
-    const failed = results.find((result) => result.status === 'Error')?.migrationName ?? 'unknown';
-    throw new Error(`Migration ${failed} of ${schema} failed`, { cause: error });
-  }
+function introspectingOnly(db: Kysely<unknown>, schema: string): Kysely<unknown> {
+  const introspection: DatabaseIntrospector = {
+    async getSchemas() {
+      const { rows } = await sql<{ name: string }>`
+        select nspname as name from pg_catalog.pg_namespace where nspname = ${schema}`.execute(db);
+      return rows;
+    },
+    async getTables() {
+      const { rows } = await sql<{ name: string }>`
+        select c.relname as name
+        from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = ${schema} and c.relkind in ('r', 'p')`.execute(db);
+      return rows.map(({ name }) => ({ name, schema, isView: false, isForeign: false, columns: [] }));
+    },
+  };
+  return new Proxy(db, {
+    get(target, property) {
+      if (property === 'introspection') {
+        return introspection;
+      }
+      // Kysely keeps its state in private fields, which only the instance itself can read.
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
 }
