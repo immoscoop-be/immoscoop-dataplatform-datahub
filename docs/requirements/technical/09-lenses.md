@@ -37,4 +37,4 @@ The runs of a Lens by one User are one query of the kind `lens`, made with their
 
 ## Open points
 
-None yet; what "New Lens" on the page of a Collection opens is [OP-UX-43](../../design/principles.md#op-ux-43).
+None yet.

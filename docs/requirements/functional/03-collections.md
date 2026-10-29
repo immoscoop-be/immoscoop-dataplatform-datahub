@@ -347,6 +347,8 @@ From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-1
 
 *Note of 2026-10-26: such a Lens may use Resources of other Collections, and a Lens made from a query goes into a Collection its author owns ([DEC-CO-20](#dec-co-20)).*
 
+*Note of 2026-10-29: "New Lens" opens a new query, and "Make it a lens" on it offers this Collection first ([DEC-UX-123](../../design/principles.md#dec-ux-123)).*
+
 <a id="fr-co-30"></a>
 ### FR-CO-30 · The details are edited on the page
 
