@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Lenses](../functional/09-lenses.md) |
-| Status | Making a Lens from a query, who sees it, its page and its runs, updating and editing it, its growth and Broken, and finding it from a new query and on the start screen of Collections implemented; the search of that start screen follows in part 6d, accepting a Lens again and its Messages with Messages |
+| Status | Making a Lens from a query, who sees it, its page and its runs, updating and editing it, its growth and Broken, and finding it from a new query and on the start screen of Collections, also by its search, implemented; accepting a Lens again and its Messages follow with Messages |
 | Source of truth | This file |
 
 How a query becomes a Lens and how a Lens runs, in the service [query](../../architecture/services/query.md), which keeps the Lenses next to the queries ([DEC-PF-30](00-platform.md#dec-pf-30)).

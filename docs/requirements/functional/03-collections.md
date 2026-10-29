@@ -290,7 +290,7 @@ An unfolded Collection lists, after its Resources and without a label of their o
 <a id="fr-co-37"></a>
 ### FR-CO-37 · The start screen of Collections finds Lenses too
 
-**Status:** Specified · **Source:** Max, 2026-10-26 · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 Lenses have no section of their own; everything is reached through its Collection ([DEC-UX-66](../../design/principles.md#dec-ux-66)). The start screen of Collections therefore finds Lenses as well: a search by the words of a question over Collections, Resources and Lenses ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)); under "Yours", the Collections of the User's Owner Units and the Lenses of the User and their Owner Unit, those waiting for the Data Team among them ([FR-LE-09](09-lenses.md#fr-le-09)); and Lenses to discover, popular and new, next to the popular Collections.
 
@@ -302,6 +302,8 @@ Lenses have no section of their own; everything is reached through its Collectio
 *Note of 2026-10-29, on building part 6c: "Yours" shows the Lenses of the User and their Owner Units, with when they last ran them, and a waiting, stopped or Broken one says so; "New Lenses" is built ([TR-LE-07](../technical/09-lenses.md#tr-le-07)). The search follows in part 6d, once its results are approved ([OP-UX-45](../../design/principles.md#op-ux-45)).*
 
 *Note of 2026-10-29: the results of its search are decided ([DEC-UX-127](../../design/principles.md#dec-ux-127)).*
+
+*Note of 2026-10-29, on building part 6d: its search is built as [TR-CO-06](../technical/03-collections.md#tr-co-06).*
 
 ## The page of a Collection
 
