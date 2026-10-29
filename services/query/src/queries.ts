@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
 import type { NamedResource, QueryDatabase, ResultColumn, RunState } from './database.js';
+import type { Parameter } from './parameters.js';
 
 /** Who asks: the fixed Google ID and name from the Access Token, and whether they are in the Data Team. */
 export interface Viewer {
@@ -17,6 +18,10 @@ export interface Query {
   question: string;
   resources: NamedResource[];
   sql: string;
+  parameters: Parameter[];
+  /** The query it was started from, and after which of its runs (DEC-UX-73). */
+  startedFrom: string | null;
+  startedAfterRun: number | null;
   createdAt: Date;
   updatedAt: Date;
   lastRunAt: Date | null;
@@ -37,6 +42,7 @@ export interface Run {
   userId: string;
   userName: string;
   sql: string;
+  parameters: Parameter[];
   resources: NamedResource[];
   estimatedBytes: number;
   approved: boolean;
@@ -63,19 +69,34 @@ export interface Finish {
   columns: ResultColumn[];
 }
 
+/** What a query starts with: its own SQL and Parameters, or those of the query it is started from. */
+export interface NewQuery {
+  owner: Viewer;
+  name: string;
+  question: string;
+  resources: NamedResource[];
+  sql: string;
+  parameters?: Parameter[];
+  startedFrom?: { id: string; afterRun: number | null };
+}
+
 export interface Queries {
-  create(fields: { owner: Viewer; name: string; question: string; resources: NamedResource[]; sql: string }): Promise<Query>;
+  create(fields: NewQuery): Promise<Query>;
   /** The queries of the User, or with all, everyone's (DEC-LN-01): the last run or made first. */
   list(viewer: Viewer, all: boolean): Promise<QueryItem[]>;
   get(id: string): Promise<Query | undefined>;
-  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql'>>): Promise<Query | undefined>;
+  update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters'>>): Promise<Query | undefined>;
   /** Starts a run: its number in its query and its Query ID (FR-LN-05). */
-  startRun(fields: { query: Query; user: Viewer; sql: string; estimatedBytes: number; approved: boolean }): Promise<Run>;
+  startRun(fields: { query: Query; user: Viewer; sql: string; parameters: Parameter[]; estimatedBytes: number; approved: boolean }): Promise<Run>;
   finishRun(id: string, finish: Finish): Promise<Run>;
   failRun(id: string, error: string): Promise<Run>;
   /** A run by its Query ID. */
   run(queryRef: string): Promise<Run | undefined>;
   lastRun(queryId: string): Promise<Run | undefined>;
+  /** Its runs, newest first: the history of a query (DEC-UX-74), from before a run number on. */
+  runs(queryId: string, options: { before?: number; limit: number }): Promise<Run[]>;
+  /** How many runs a query has. */
+  runCount(queryId: string): Promise<number>;
 }
 
 /** The Query ID of a run: the day and six random hex digits, such as q-20261029-4c2e1a (FR-LN-05). */
@@ -107,10 +128,20 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
   }
 
   return {
-    async create({ owner, name, question, resources, sql: text }) {
+    async create({ owner, name, question, resources, sql: text, parameters = [], startedFrom }) {
       return db
         .insertInto('queries')
-        .values({ ownerId: owner.id, ownerName: owner.name, name, question, resources: JSON.stringify(resources), sql: text })
+        .values({
+          ownerId: owner.id,
+          ownerName: owner.name,
+          name,
+          question,
+          resources: JSON.stringify(resources),
+          sql: text,
+          parameters: JSON.stringify(parameters),
+          startedFrom: startedFrom?.id ?? null,
+          startedAfterRun: startedFrom?.afterRun ?? null,
+        })
         .returningAll()
         .executeTakeFirstOrThrow();
     },
@@ -137,17 +168,17 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
 
     get: queryById,
 
-    async update(id, fields) {
+    async update(id, { parameters, ...fields }) {
       if (!(await queryById(id))) return undefined;
       return db
         .updateTable('queries')
-        .set({ ...fields, updatedAt: new Date() })
+        .set({ ...fields, ...(parameters ? { parameters: JSON.stringify(parameters) } : {}), updatedAt: new Date() })
         .where('id', '=', id)
         .returningAll()
         .executeTakeFirstOrThrow();
     },
 
-    async startRun({ query, user, sql: text, estimatedBytes, approved }) {
+    async startRun({ query, user, sql: text, parameters, estimatedBytes, approved }) {
       for (let attempt = 0; ; attempt += 1) {
         try {
           return await db.transaction().execute(async (trx) => {
@@ -163,13 +194,18 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
                 userId: user.id,
                 userName: user.name,
                 sql: text,
+                parameters: JSON.stringify(parameters),
                 resources: JSON.stringify(query.resources),
                 estimatedBytes,
                 approved,
               })
               .returningAll()
               .executeTakeFirstOrThrow();
-            await trx.updateTable('queries').set({ sql: text, lastRunAt: new Date(), updatedAt: new Date() }).where('id', '=', query.id).execute();
+            await trx
+              .updateTable('queries')
+              .set({ sql: text, parameters: JSON.stringify(parameters), lastRunAt: new Date(), updatedAt: new Date() })
+              .where('id', '=', query.id)
+              .execute();
             return runOf(row as RunRow);
           });
         } catch (error) {
@@ -202,6 +238,23 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     async lastRun(queryId) {
       const row = await db.selectFrom('runs').selectAll().where('queryId', '=', queryId).orderBy('number', 'desc').limit(1).executeTakeFirst();
       return row ? runOf(row as RunRow) : undefined;
+    },
+
+    async runs(queryId, { before, limit }) {
+      const rows = await db
+        .selectFrom('runs')
+        .selectAll()
+        .where('queryId', '=', queryId)
+        .$if(before !== undefined, (query) => query.where('number', '<', before as number))
+        .orderBy('number', 'desc')
+        .limit(limit)
+        .execute();
+      return rows.map((row) => runOf(row as RunRow));
+    },
+
+    async runCount(queryId) {
+      const row = await db.selectFrom('runs').select(sql<string>`count(*)`.as('count')).where('queryId', '=', queryId).executeTakeFirstOrThrow();
+      return Number(row.count);
     },
   };
 }

@@ -58,6 +58,21 @@ describe('a dry run', () => {
     ]);
   });
 
+  it('sends the values of the Parameters, named, only when there are some (DEC-UX-71)', async () => {
+    const answer = { body: { statistics: { query: { statementType: 'SELECT', totalBytesProcessed: '1' } } } };
+    const { bigquery, calls } = fakeApi([answer, answer]);
+    const day = { name: 'dateFrom', parameterType: { type: 'DATE' }, parameterValue: { value: '2026-01-01' } };
+    await bigquery.dryRun('select @dateFrom', [day]);
+    await bigquery.dryRun('select 1', []);
+    expect((calls[0]?.body as { configuration: { query: unknown } }).configuration.query).toEqual({
+      query: 'select @dateFrom',
+      useLegacySql: false,
+      parameterMode: 'NAMED',
+      queryParameters: [day],
+    });
+    expect((calls[1]?.body as { configuration: { query: unknown } }).configuration.query).toEqual({ query: 'select 1', useLegacySql: false });
+  });
+
   it('tells the partitions where BigQuery does', async () => {
     const { bigquery } = fakeApi([{ body: { statistics: { query: { statementType: 'SELECT', totalBytesProcessed: '1', totalPartitionsProcessed: '42' } } } }]);
     expect((await bigquery.dryRun('select 1')).partitions).toBe(42);
@@ -113,6 +128,16 @@ describe('a run', () => {
     });
     expect(calls[1]?.url).toBe(`${API}/queries/job_1?location=europe-west1&formatOptions.useInt64Timestamp=true&maxResults=100&timeoutMs=30000`);
     expect(calls[2]?.url).toBe(`${API}/jobs/job_1?location=europe-west1`);
+  });
+
+  it('runs with the values of its Parameters', async () => {
+    const { bigquery, calls } = fakeApi([
+      { body: { jobReference: { jobId: 'job_2', location: 'europe-west1' }, jobComplete: true, schema, totalRows: '0', totalBytesProcessed: '0' } },
+      { body: {} },
+    ]);
+    const channels = { name: 'channels', parameterType: { type: 'ARRAY', arrayType: { type: 'STRING' } }, parameterValue: { arrayValues: [{ value: 'Form' }] } };
+    await bigquery.run('select 1 from unnest(@channels)', { maximumBytesBilled: 1, labels: {}, requestId: 'r-2', pageSize: 100, parameters: [channels] });
+    expect(calls[0]?.body).toMatchObject({ parameterMode: 'NAMED', queryParameters: [channels] });
   });
 
   it('is refused when BigQuery refuses it, such as above its byte limit', async () => {

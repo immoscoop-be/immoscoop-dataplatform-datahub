@@ -15,7 +15,7 @@
   shut (folded, a chip each). A Parameter has a name, a kind from a standard list (Date, Period, Whole number, Decimal
   number, Text, Choice, Several choices, Yes or no, each with its BigQuery type) and a value: a value such as 2026-10-25,
   or an SQL function such as DATE_TRUNC(CURRENT_DATE(), YEAR), worked out at every run, with the date it gives today
-  (FR-LE-13, DEC-LE-14); the value of a Choice comes from a column or a typed list. A Parameter is made or changed in a
+  (FR-LE-13, DEC-LE-14); the list of a Choice is typed (DEC-UX-117). A Parameter is made or changed in a
   floating window that moves by its head (DEC-UX-30), one at a time: "Add parameter", or a click on a Parameter. A Parameter that is not
   in the SQL is grey: it is not sent. An @name in the SQL that is not a Parameter stands out, in the SQL and under it, and
   keeps the query from running; a click on it defines it, suggested from the column it is compared with.

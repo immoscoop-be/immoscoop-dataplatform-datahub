@@ -1,7 +1,8 @@
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
-import { filtersOn, recent, tablesOf, withFilter } from './sql.js';
+import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
+import { comparedWith, filtersOn, recent, tablesOf, withFilter } from './sql.js';
 
 /** The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides (DEC-SR-29). */
 export interface Thresholds {
@@ -19,6 +20,8 @@ export type Problem =
   | { kind: 'notVisible'; resource: Pick<NamedResource, 'id' | 'displayName'> }
   /** A table that is not one of its Resources, where it stands in the SQL if it is named there (DEC-UX-73). */
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
+  /** An @name that is not a Parameter, where it stands, with the kind suggested from the column it is compared with (DEC-UX-71). */
+  | { kind: 'undefinedParameter'; name: string; start: number; end: number; suggestedKind: ParameterKind | null }
   /** A change or a script: a query only reads. */
   | { kind: 'notSelect'; statementType: string }
   /** No filter on the partition column of a Resource that requires one (DEC-SR-35), with the SQL that adds one where Data Hub can tell where. */
@@ -47,6 +50,8 @@ export interface Preflight {
   problems: Problem[];
   warnings: Warning[];
   thresholds: Thresholds;
+  /** The Parameters that are not in the SQL: they are not sent (DEC-UX-71). */
+  unused: string[];
 }
 
 /** A Resource of a query: as catalogue gives it to this User, or null when they may not see it. */
@@ -103,17 +108,30 @@ function names(written: string, key: string, project: string): boolean {
  * The Pre-flight of a query (FR-SR-36, FR-SR-37, FR-SR-40, DEC-SR-35, DEC-UX-73): whether it reads only its
  * own Resources and only reads, by the names in its SQL and again by what BigQuery says it reads; what it
  * reads at most, and in which range; and whether it filters on the partition column of each Resource it
- * reads. It runs again, the same, before every run.
+ * reads. It checks the SQL as BigQuery gets it, with the functions of its Parameters in it (DEC-UX-118).
+ * It runs again, the same, before every run.
  */
 export async function preflight(
   sql: string,
   resources: ResourceOfQuery[],
   context: { bigquery: BigQuery; beneath: (resource: QueryResource) => Promise<string[]>; project: string; thresholds: Thresholds },
+  parameters: readonly Parameter[] = [],
 ): Promise<Preflight> {
   const { bigquery, beneath, project, thresholds } = context;
+  const bound = bind(sql, parameters);
   const done = (fields: Partial<Preflight>): Preflight => {
     const problems = fields.problems ?? [];
-    return { bytes: null, range: null, partitions: null, warnings: [], ...fields, problems, thresholds, runnable: problems.length === 0 && fields.range !== undefined && fields.range !== null };
+    return {
+      bytes: null,
+      range: null,
+      partitions: null,
+      warnings: [],
+      ...fields,
+      problems,
+      thresholds,
+      unused: bound.unused,
+      runnable: problems.length === 0 && fields.range !== undefined && fields.range !== null,
+    };
   };
   if (sql.trim() === '') return done({ problems: [{ kind: 'empty' }] });
 
@@ -122,19 +140,27 @@ export async function preflight(
     .map((entry) => ({ kind: 'notVisible', resource: { id: entry.named.id, displayName: entry.named.displayName } }));
   const visible = resources.flatMap((entry) => (entry.resource ? [entry.resource] : []));
 
-  // Every table named in the SQL is one of its Resources; a table function never is.
-  const { tables, functions } = tablesOf(sql);
+  // Every @name is a Parameter, as BigQuery refuses one without a value.
+  for (const missing of bound.missing) {
+    const { column, list } = comparedWith(sql, missing.start);
+    const field = column ? visible.flatMap((resource) => resource.fields).find((candidate) => candidate.name.toLowerCase() === column.toLowerCase()) : undefined;
+    problems.push({ kind: 'undefinedParameter', ...missing, suggestedKind: field ? kindFor(field.dataType, list) : list ? 'several' : null });
+  }
+
+  // Every table named in the SQL is one of its Resources; a table function never is. A table in a function
+  // of a Parameter stands where its @name is.
+  const { tables, functions } = tablesOf(bound.sql);
   const read = new Set<QueryResource>();
   for (const table of [...tables, ...functions]) {
     const resource = functions.includes(table) ? undefined : visible.find((candidate) => names(table.name, candidate.key, project));
     if (resource) read.add(resource);
-    else problems.push({ kind: 'outside', name: table.name, start: table.start, end: table.end });
+    else problems.push({ kind: 'outside', name: table.name, start: bound.original(table.start, 'start'), end: bound.original(table.end, 'end') });
   }
   if (problems.length > 0) return done({ problems });
 
   let dry: Awaited<ReturnType<BigQuery['dryRun']>>;
   try {
-    dry = await bigquery.dryRun(sql);
+    dry = await bigquery.dryRun(bound.sql, bound.parameters);
   } catch (error) {
     if (!(error instanceof BigQueryRefused)) throw error;
     const required = REQUIRES_FILTER.exec(error.message);
@@ -163,7 +189,8 @@ export async function preflight(
     const fix = fixFor(sql, resource, project);
     if (resource.partitionFilter === 'none') {
       // What it would read with the filter: one more dry run, which costs nothing.
-      const bytesWithFilter = fix ? await bigquery.dryRun(fix).then((filtered) => filtered.bytes, () => null) : null;
+      const filtered = fix ? bind(fix, parameters) : null;
+      const bytesWithFilter = filtered ? await bigquery.dryRun(filtered.sql, filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
       warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field, fix, bytesWithFilter });
     }
     else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });
