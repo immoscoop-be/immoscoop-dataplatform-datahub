@@ -30,8 +30,8 @@ describe('the Learning Centre in the web app', () => {
   it('suggests the written cards of those Levels that are required, or of the Compass, until the User understands them', () => {
     const shown = writtenCards('uat');
     const levels = suggestedLevels({ dataTeam: false, owner: false });
-    expect(suggestedCards(levels, shown, []).map((topic) => topic.number)).toEqual(['K3.4', 'K5.1', '1.2.2']);
-    expect(suggestedCards(levels, shown, [seen('K3.4', '2026-10-29T08:00:00Z', '2026-10-29T08:05:00Z')]).map((topic) => topic.number)).toEqual(['K5.1', '1.2.2']);
+    expect(suggestedCards(levels, shown, []).map((topic) => topic.number)).toEqual(['K3.4', 'K5.1', 'K5.2', '1.2.1', '1.2.2']);
+    expect(suggestedCards(levels, shown, [seen('K3.4', '2026-10-29T08:00:00Z', '2026-10-29T08:05:00Z')]).map((topic) => topic.number)).toEqual(['K5.1', 'K5.2', '1.2.1', '1.2.2']);
   });
 
   it('counts the cards seen, silently, and continues the one read last and not understood yet (FR-LR-32)', () => {
