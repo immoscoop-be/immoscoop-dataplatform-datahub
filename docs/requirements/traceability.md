@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 129 | 47 (6 open, 41 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 129 | 49 (8 open, 41 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 specified, 14 implemented) | 5 (5 specified) | 8 | 8 (8 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 5 | 3 (1 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 15 (15 implemented) | 2 (2 implemented) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 39 (14 proposed, 1 specified, 8 implemented, 16 withdrawn) | – | 27 | 32 (4 open, 28 done) |
+| [Learning](functional/16-learning.md) | 39 (14 proposed, 1 specified, 8 implemented, 16 withdrawn) | – | 29 | 34 (4 open, 30 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 33 (3 proposed, 10 specified, 19 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
