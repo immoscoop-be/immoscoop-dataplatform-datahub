@@ -186,11 +186,11 @@
 {/if}
 
 <style>
-  .explained { position: relative; display: inline-flex; align-items: center; cursor: help; border-radius: var(--radius-mark); }
+  .explained { display: inline-flex; align-items: center; cursor: help; border-radius: var(--radius-mark); transition: background-color var(--motion-ring); }
   .explained.chip { border-radius: var(--radius-chip); }
   .explained.pill { border-radius: var(--radius-pill); }
-  .explained::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; transition: background-color var(--motion-ring); }
-  .explained:hover::after, .explained.open::after, .explained:focus-visible::after { background: var(--tint-active); }
+  /* The tint takes the place of the background of what it explains, so its text stays on top. */
+  .explained:is(:hover, .open, :focus-visible), .explained:is(:hover, .open, :focus-visible) > :global(*) { background: var(--tint-active); }
   .explained:focus-visible { outline: 2px solid var(--text-secondary); }
   .bubble { position: fixed; z-index: 30; width: 400px; max-width: calc(100vw - 24px); box-sizing: border-box; padding: 8px; border-radius: var(--radius-lg); background: var(--surface-solid);
     border: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); font-size: var(--text-small); }

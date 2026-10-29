@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 16 of Data Hub · code `LR` |
-| Status | Part 8a implemented: the Learning Centre in the web app, with its cards, the progress of every User and the Messages on a card ([technical](../technical/16-learning.md)); the markers and the floating window follow in part 8b |
+| Status | Parts 8a and 8b implemented: the Learning Centre in the web app, with its cards, the progress of every User and the Messages on a card; the markers on the page of a Resource, their pop-out and the floating window; and the card under what Data Hub writes ([technical](../technical/16-learning.md)). A card in a Message waits for its drawing to be approved |
 | Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics are in the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch) |
 
 **In one sentence:** the Learning Centre offers knowledge when you need it, in small Learning Cards you go through freely, so that you notice yourself that you can do something you could not do before.
@@ -156,6 +156,8 @@ Whoever writes a Message can add a Learning Card to it, for example when answeri
 
 *Note of 2026-10-25: whether the writer of a Message may see that the reader understood the card is part of [OP-LR-04](#op-lr-04).*
 
+*Note of 2026-10-29: how a card is found and added, and "Share in a Message", are drawn for approval before they are built ([OP-UX-48](../../design/principles.md#op-ux-48)).*
+
 <a id="fr-lr-08"></a>
 ### FR-LR-08 · The start screen of Learning shows where to go next
 
@@ -197,7 +199,7 @@ Wherever Data Hub shows text, a link to a Learning Card can stand inline: in wha
 <a id="fr-lr-12"></a>
 ### FR-LR-12 · The link opens the card in a floating window
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A click on the link opens the Learning Card in a floating window over the page, as a Message opens in context ([FR-CV-09](14-conversations.md#fr-cv-09)): its head moves it and folds it, and the page stays usable behind it. The window shows the card in short: its Learning Level, what the reader will be able to do, the article, the video, the questions and "Mark as understood". "Open in the learning centre" opens the full page of the card in the Learning Centre.
 
@@ -380,7 +382,7 @@ A Learning Card has five steps, always in this order ([DEC-LR-10](#dec-lr-10)):
 
 The User chooses the depth: the quick path (Why now, Core idea, You can now) or the full path (all five). On the quick path See it and Check your understanding stay in the row of steps, muted, and can still be opened. Every step fits on one screen. Every step but the last ends with "Next" in the same place, saying what comes next; it never waits for an answer. The topic of the master learning plan feeds the steps: its core the Core idea, its misconception the wrong answers, its examples Why now and See it, its learning goal You can now.
 
-*Note of 2026-10-29: built in part 8a. The term of the glossary is linked with the markers of part 8b ([FR-LR-36](#fr-lr-36)); See it shows the charts of the Chart Server as they are, without highlighting ([DEC-LR-26](#dec-lr-26)).*
+*Note of 2026-10-29: built in part 8a. The term of the glossary is linked once names carry their marker ([OP-UX-49](../../design/principles.md#op-ux-49)); See it shows the charts of the Chart Server as they are, without highlighting ([DEC-LR-26](#dec-lr-26)).*
 
 <a id="fr-lr-28"></a>
 ### FR-LR-28 · "I understand it" is always there, and closes the card
@@ -460,7 +462,7 @@ A click on a reference opens the card in the floating window ([FR-LR-12](#fr-lr-
 <a id="fr-lr-35"></a>
 ### FR-LR-35 · Only system text carries a marker
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A button, a label, a heading, or a text that Data Hub writes itself, such as a status, the name of a field, the Pre-flight or the footer of a chart, can carry a marker when a Learning Card explains it. The marker is a small Unicode character right after the text, in its colour, a little smaller and raised, such as ⓘ ([OP-UX-22](../../design/principles.md#op-ux-22)). It is the only sign: no underline and no colour. Text that Users provide never carries one: a description, a definition, Known Behaviour, a Message or a name.
 
@@ -471,7 +473,7 @@ A button, a label, a heading, or a text that Data Hub writes itself, such as a s
 <a id="fr-lr-36"></a>
 ### FR-LR-36 · The pop-out: a text bubble with the cards that explain it
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 Holding the pointer on a marked text or button for a second opens its pop-out; focusing it with the keyboard opens it at once. Passing the pointer over the page opens nothing. The pop-out is a text bubble: its arrow points at the marker it belongs to. It says how many cards explain the text, and shows each card as an item of its own, with:
 
@@ -489,10 +491,12 @@ A click on an item opens the card in the floating window over the page; the User
 
 A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-03](../non-functional/localisation.md#nfr-loc-03)), carries the marker like other system text ([FR-LR-35](#fr-lr-35)), and its pop-out lists at least one Learning Card that explains it. A name used on a screen is used as a definition, so it gets a card even before there is a full one: a minimal card, whose Core idea is the explanation of the name in the Glossary ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)). What a minimal card holds is [OP-LR-27](#op-lr-27).
 
+*Note of 2026-10-29: not in part 8b; names with their marker are drawn first ([OP-UX-49](../../design/principles.md#op-ux-49)).*
+
 <a id="fr-lr-38"></a>
 ### FR-LR-38 · A Message from Data Hub links to the card that explains it
 
-**Status:** Specified · **Source:** Max, 2026-10-27 · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-27 · **Screens:** [messages](../../design/screens/messages.html)
 
 A Message that Data Hub writes itself, such as a changed description in dbt ([FR-RC-17](05-resource-card.md#fr-rc-17)), a change since the last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) or a Registration ([FR-SR-10](04-stacks-and-resources.md#fr-sr-10)), carries a clear link under the heading "Understand what is happening here", right under its own text: the Learning Card that explains it, with its number, its title and whether the User has seen it. The card opens inline, in the Message: its core idea and what the User can do with it, with a way to the whole card in the Learning Centre and "I understand it". It is not a marker inside the text of the Message ([DEC-LR-11](#dec-lr-11)). Each kind of Message names its card; a kind without a card yet needs one before it is built ([FR-LR-37](#fr-lr-37)).
 
@@ -502,11 +506,11 @@ A Message that Data Hub writes itself, such as a changed description in dbt ([FR
 <a id="fr-lr-39"></a>
 ### FR-LR-39 · One card explains the model types, and the card on the grain points to it
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-RC-10](05-resource-card.md#dec-rc-10))
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-RC-10](05-resource-card.md#dec-rc-10))
 
 One Learning Card explains the five model types together, so that a User can tell them apart and knows what each means for counting: an `event` is one row per thing that happened, at a moment, and never changes after; a `state` is one row per thing as it is, or was at a moment, and changes over time; a `fact` is one row per business occurrence with the measures to add up; a `dimension` is one row per thing that describes others, such as an agency or a lead source; an `aggregate` is one row per group with its counts or sums already made, which are not added up again. Its place in the master learning plan is next to [2.3.5 The grain question: what is one row?](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1356070916), which points to it. Wherever a model type shows, its marker lists this card ([FR-LR-37](#fr-lr-37)).
 
-*Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); its markers come with part 8b ([FR-LR-37](#fr-lr-37)).*
+*Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); since part 8b the model type of a Resource carries its marker ([TR-LR-06](../technical/16-learning.md#tr-lr-06)).*
 
 ## Out of scope
 

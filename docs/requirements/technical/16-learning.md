@@ -7,7 +7,7 @@ IDs: TR-LR-NN. Every TR links what it realises.
 | | |
 | --- | --- |
 | Realises | [Learning](../functional/16-learning.md) |
-| Status | The Learning Centre in the web app implemented: the cards as files, the progress of every User, the panel, the start screen, a card in five steps, See it on its own and the Messages on a card. The markers, the pop-out and the floating window follow in part 8b |
+| Status | The Learning Centre in the web app implemented: the cards as files, the progress of every User, the panel, the start screen, a card in five steps, See it on its own and the Messages on a card (part 8a); the markers on the page of a Resource with their pop-out, the floating window, and the card under what Data Hub writes (part 8b). A card in a Message and "Share in a Message" wait for their drawing to be approved ([OP-UX-48](../../design/principles.md#op-ux-48)); names with their marker come later ([OP-UX-49](../../design/principles.md#op-ux-49)) |
 | Source of truth | This file |
 
 How the Learning Centre is built: the Learning Cards as files in the package `packages/learning` ([DEC-LR-24](../functional/16-learning.md#dec-lr-24)), what every User did with them in the service [catalogue](../../architecture/services/catalogue.md), and their pages in the [web app](../../architecture/services/web.md), with the examples drawn by [semgraph](../../architecture/services/semgraph.md).
@@ -75,6 +75,29 @@ The web app takes the cards from `packages/learning` when it is built: the Engli
 **Status:** Implemented · **Realises:** [FR-LR-29](../functional/16-learning.md#fr-lr-29), [DEC-LR-21](../functional/16-learning.md#dec-lr-21), [DEC-LR-26](../functional/16-learning.md#dec-lr-26)
 
 The page sends the request of the card to `POST /render` of semgraph, with the theme of the page and the default size, and shows the SVG it answers as a picture, which cannot run anything in the page. Whether it is drawn or not, "Look at" and "You see" stand beside it. Nothing of it comes from live data.
+
+<a id="tr-lr-06"></a>
+### TR-LR-06 · Which system text carries a marker, and its pop-out
+
+**Status:** Implemented · **Realises:** [FR-LR-35](../functional/16-learning.md#fr-lr-35), [FR-LR-36](../functional/16-learning.md#fr-lr-36), [FR-LR-39](../functional/16-learning.md#fr-lr-39), [DEC-LR-22](../functional/16-learning.md#dec-lr-22), [DEC-LR-28](../functional/16-learning.md#dec-lr-28), [DEC-LR-30](../functional/16-learning.md#dec-lr-30)
+
+`src/markers.ts` of `packages/learning` names every place a marker stands and the cards its pop-out lists, most fitting first: the Level of a Resource (K5.2, 3.3.3), its grain (2.3.5, 1.2.2, 1.2.1), its model type (2.3.6) and "Mark as seen" on a change since its last Confirmation (4.3.2, 4.3.1). Placing a marker is adding a place there and wrapping the text in the web app, as part of the release check of a functionality. Its tests check that every card is a topic of the plan and that every place has a written card.
+
+The page wraps a marked text in `LearningRef`, which lists only the written cards of its place, and shows the marker once there is one. The marker ⓘ is `Marker` in `packages/ui`, in the symbol font of `--font-symbol`; the pop-out is `Explained`: it opens after the pointer rests for a second, at once on keyboard focus or Enter, and on a tap on the marker, which keeps a button from acting; it closes when the pointer leaves, on Escape and on scrolling; it hangs on the page itself, under the text or above it, its arrow on the marker; and what it explains stays tinted while a card it opened is open. An item gives the number, title and gain of the card in the language of the User, whether and when they saw it, from catalogue ([TR-LR-02](#tr-lr-02)), read once a pop-out first opens, and "See it".
+
+<a id="tr-lr-07"></a>
+### TR-LR-07 · A card opens in a floating window, in the same steps as its page
+
+**Status:** Implemented · **Realises:** [FR-LR-12](../functional/16-learning.md#fr-lr-12), [FR-LR-27](../functional/16-learning.md#fr-lr-27), [DEC-LR-08](../functional/16-learning.md#dec-lr-08)
+
+The five steps are one block, `LearningSteps`, which the page of a card and the floating window share; in the window it is compact, with only the name of the current step in the row and "I understand it" beside it. The window opens over the page the User is on, from an item of a pop-out; each step it opens is kept as on the page, and "Open in the Learning Centre" opens the page of the card. One card is open in it at a time.
+
+<a id="tr-lr-08"></a>
+### TR-LR-08 · What Data Hub writes carries the card of its type
+
+**Status:** Implemented · **Realises:** [FR-LR-38](../functional/16-learning.md#fr-lr-38), [DEC-LR-29](../functional/16-learning.md#dec-lr-29)
+
+Under the text of a Message Data Hub writes, the web app shows the card its type names in the Message Catalogue (`learningCard` with `fit: 'named'`), once that card is written: its number, title, Learning Level and minutes, and whether the User saw it. A click unfolds it in the Message: its rule, what the User can now do, "Open the whole card" and "I understand it". Unfolded, the card counts as seen, unless it already was.
 
 ## Open points
 
