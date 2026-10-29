@@ -127,6 +127,14 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
 
+  // The search of the start screen of Collections (FR-CO-37, DEC-UX-127): the Collections and Resources the
+  // User sees that share words with a question; query finds the Lenses.
+  app.get<{ Querystring: { question?: string } }>('/search', async (request, reply) => {
+    const question = (request.query.question ?? '').trim();
+    if (question.length > 500) return reply.code(400).send({ error: 'invalid_request', message: 'The question has at most 500 characters.' });
+    return collections.search(question, viewer(request));
+  });
+
   app.post<{ Body: unknown }>('/collections', async (request, reply) => {
     const fields = parse(request.body, true);
     if (typeof fields === 'string') {

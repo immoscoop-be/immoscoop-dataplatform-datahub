@@ -1,5 +1,6 @@
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
+import { askedWords, HEADLINE, type Marked, marked } from '@datahub/db';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 import type { Group } from './identity.js';
@@ -81,6 +82,28 @@ export class NotEmpty extends Error {
 }
 
 /** Collections in Postgres (TR-CO-01, TR-CO-04). Who may do what is decided by the routes. */
+/** A Collection that shares words with a question, its name and description with them marked (DEC-UX-127). */
+export interface FoundCollection {
+  id: string;
+  name: Marked[];
+  description: Marked[];
+  icon: CollectionIcon | null;
+  /** How many of its Resources the viewer sees. */
+  resources: number;
+  shared: number;
+}
+
+/** A Resource that shares words with a question: its name and its description, the Business Description first. */
+export interface FoundResource {
+  id: string;
+  displayName: Marked[];
+  description: Marked[];
+  collectionId: string;
+  collectionName: string;
+  level: number;
+  shared: number;
+}
+
 export interface Collections {
   /** The Collections the viewer sees, by name (FR-CO-17). */
   list(viewer: Viewer): Promise<Collection[]>;
@@ -93,6 +116,11 @@ export interface Collections {
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
   /** The Log of a Collection that the viewer sees, newest first. */
   log(collection: Pick<Collection, 'id' | 'canManage'>, limit: number): Promise<LogEntry[]>;
+  /**
+   * The Collections and Resources the viewer sees that share words with a question, those that share
+   * most first, in the full-text search of Postgres in English without accents (FR-CO-37, DEC-UX-127).
+   */
+  search(question: string, viewer: Viewer): Promise<{ collections: FoundCollection[]; resources: FoundResource[] }>;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -210,7 +238,70 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
     }
   }
 
+  /** At most this many of each kind. */
+  const FOUND = 20;
+
   return {
+    async search(question, viewer) {
+      const seen = await present(await visible(viewer).execute(), viewer);
+      const collectionIds = seen.map((collection) => collection.id);
+      const items = seen.flatMap((collection) => collection.resources.filter((item) => !item.withdrawn).map((item) => ({ ...item, collection })));
+      if (collectionIds.length === 0) return { collections: [], resources: [] };
+      const { rows: collections } = await sql<{ id: string; shared: string; name: string; description: string }>`
+        with query as ${askedWords('search_words', question)}
+        select c.id,
+          (select count(*) from unnest(query.words) as word
+            where word = any(tsvector_to_array(to_tsvector('search_words', concat_ws(' ', c.name, c.description))))) as shared,
+          ts_headline('search_words', c.name, query.q, ${HEADLINE}) as name,
+          ts_headline('search_words', c.description, query.q, ${HEADLINE}) as description
+        from collections c, query
+        where query.q is not null and c.id = any(${collectionIds}::uuid[])
+          and to_tsvector('search_words', concat_ws(' ', c.name, c.description)) @@ query.q
+      `.execute(db);
+      const resourceIds = items.map((item) => item.id);
+      const { rows: resources } = resourceIds.length
+        ? await sql<{ id: string; shared: string; name: string; description: string }>`
+            with query as ${askedWords('search_words', question)}
+            select r.id,
+              (select count(*) from unnest(query.words) as word
+                where word = any(tsvector_to_array(to_tsvector('search_words', concat_ws(' ', r.display_name, r.description, r.business_description))))) as shared,
+              ts_headline('search_words', r.display_name, query.q, ${HEADLINE}) as name,
+              ts_headline('search_words', coalesce(nullif(r.business_description, ''), r.description), query.q, ${HEADLINE}) as description
+            from resources r, query
+            where query.q is not null and r.id = any(${resourceIds}::uuid[])
+              and to_tsvector('search_words', concat_ws(' ', r.display_name, r.description, r.business_description)) @@ query.q
+          `.execute(db)
+        : { rows: [] };
+      const byName = (a: { shared: number; plain: string }, b: { shared: number; plain: string }) => b.shared - a.shared || a.plain.localeCompare(b.plain);
+      return {
+        collections: collections
+          .map((row) => {
+            const collection = seen.find((one) => one.id === row.id)!;
+            return { id: row.id, name: marked(row.name), description: marked(row.description), icon: collection.icon, resources: collection.resources.filter((item) => !item.withdrawn).length, shared: Number(row.shared), plain: collection.name };
+          })
+          .sort(byName)
+          .slice(0, FOUND)
+          .map(({ plain: _plain, ...found }) => found),
+        resources: resources
+          .map((row) => {
+            const item = items.find((one) => one.id === row.id)!;
+            return {
+              id: row.id,
+              displayName: marked(row.name),
+              description: marked(row.description),
+              collectionId: item.collection.id,
+              collectionName: item.collection.name,
+              level: item.level,
+              shared: Number(row.shared),
+              plain: item.displayName,
+            };
+          })
+          .sort(byName)
+          .slice(0, FOUND)
+          .map(({ plain: _plain, ...found }) => found),
+      };
+    },
+
     async list(viewer) {
       const rows = await visible(viewer).orderBy(sql`lower(name)`).orderBy('id').execute();
       return present(rows, viewer);
