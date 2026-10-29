@@ -29,13 +29,15 @@ export const FILTER_KINDS: readonly FilterKind[] = ['question', 'remark', 'signa
 export type FilterOn = 'collection' | 'resource' | 'lens' | 'query';
 export const FILTER_ON: readonly FilterOn[] = ['collection', 'resource', 'lens', 'query'];
 
-/** What a User writes on an object from its page; a Collection takes no Signal, which is about data (FR-CV-07). */
+/** What a User writes on an object from its page; a Collection and a Learning Card take no Signal, which is about data (FR-CV-07). */
 export type WrittenKind = 'question' | 'remark' | 'signal';
-export type WrittenOn = 'collection' | 'resource' | 'lens';
+export type WrittenOn = 'collection' | 'resource' | 'lens' | 'learningCard';
 export const WRITTEN_ON: Readonly<Record<WrittenOn, readonly WrittenKind[]>> = {
   collection: ['question', 'remark'],
   resource: ['question', 'remark', 'signal'],
   lens: ['question', 'remark', 'signal'],
+  // A Learning Card takes a Question or a Remark, for the Data Team, which writes the cards (FR-LR-06).
+  learningCard: ['question', 'remark'],
 };
 
 /** How a writer stands to the object: in its Owner Unit, the Data Team, or neither. */

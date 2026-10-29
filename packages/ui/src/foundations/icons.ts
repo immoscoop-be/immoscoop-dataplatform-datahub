@@ -28,6 +28,7 @@ import moonFill from '@phosphor-icons/core/assets/fill/moon-fill.svg?raw';
 import paperPlaneTiltFill from '@phosphor-icons/core/assets/fill/paper-plane-tilt-fill.svg?raw';
 import pencilSimpleFill from '@phosphor-icons/core/assets/fill/pencil-simple-fill.svg?raw';
 import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
+import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
@@ -38,11 +39,19 @@ import warningCircleFill from '@phosphor-icons/core/assets/fill/warning-circle-f
 import warningFill from '@phosphor-icons/core/assets/fill/warning-fill.svg?raw';
 import xCircleFill from '@phosphor-icons/core/assets/fill/x-circle-fill.svg?raw';
 import aperture from '@phosphor-icons/core/assets/regular/aperture.svg?raw';
+import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg?raw';
+import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
+import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
+import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
+import userFocus from '@phosphor-icons/core/assets/regular/user-focus.svg?raw';
+import userGear from '@phosphor-icons/core/assets/regular/user-gear.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
+import arrowDownRight from '@phosphor-icons/core/assets/regular/arrow-down-right.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
 import arrowSquareOut from '@phosphor-icons/core/assets/regular/arrow-square-out.svg?raw';
 import arrowsClockwise from '@phosphor-icons/core/assets/regular/arrows-clockwise.svg?raw';
+import arrowsLeftRight from '@phosphor-icons/core/assets/regular/arrows-left-right.svg?raw';
 import arrowsOutLineHorizontal from '@phosphor-icons/core/assets/regular/arrows-out-line-horizontal.svg?raw';
 import arrowsOutSimple from '@phosphor-icons/core/assets/regular/arrows-out-simple.svg?raw';
 import bellSimple from '@phosphor-icons/core/assets/regular/bell-simple.svg?raw';
@@ -54,7 +63,9 @@ import caretDoubleRight from '@phosphor-icons/core/assets/regular/caret-double-r
 import caretDown from '@phosphor-icons/core/assets/regular/caret-down.svg?raw';
 import caretLeft from '@phosphor-icons/core/assets/regular/caret-left.svg?raw';
 import caretRight from '@phosphor-icons/core/assets/regular/caret-right.svg?raw';
+import calculator from '@phosphor-icons/core/assets/regular/calculator.svg?raw';
 import chatCircle from '@phosphor-icons/core/assets/regular/chat-circle.svg?raw';
+import chatCircleText from '@phosphor-icons/core/assets/regular/chat-circle-text.svg?raw';
 import chatText from '@phosphor-icons/core/assets/regular/chat-text.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import checkCircle from '@phosphor-icons/core/assets/regular/check-circle.svg?raw';
@@ -71,6 +82,7 @@ import functionIcon from '@phosphor-icons/core/assets/regular/function.svg?raw';
 import gitBranch from '@phosphor-icons/core/assets/regular/git-branch.svg?raw';
 import globeSimple from '@phosphor-icons/core/assets/regular/globe-simple.svg?raw';
 import googleLogo from '@phosphor-icons/core/assets/regular/google-logo.svg?raw';
+import handPointing from '@phosphor-icons/core/assets/regular/hand-pointing.svg?raw';
 import graph from '@phosphor-icons/core/assets/regular/graph.svg?raw';
 import hash from '@phosphor-icons/core/assets/regular/hash.svg?raw';
 import hourglassMedium from '@phosphor-icons/core/assets/regular/hourglass-medium.svg?raw';
@@ -88,6 +100,7 @@ import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt
 import pencilSimpleLine from '@phosphor-icons/core/assets/regular/pencil-simple-line.svg?raw';
 import percent from '@phosphor-icons/core/assets/regular/percent.svg?raw';
 import plant from '@phosphor-icons/core/assets/regular/plant.svg?raw';
+import play from '@phosphor-icons/core/assets/regular/play.svg?raw';
 import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
 import question from '@phosphor-icons/core/assets/regular/question.svg?raw';
 import sealQuestion from '@phosphor-icons/core/assets/regular/seal-question.svg?raw';
@@ -99,6 +112,7 @@ import stack from '@phosphor-icons/core/assets/regular/stack.svg?raw';
 import table from '@phosphor-icons/core/assets/regular/table.svg?raw';
 import terminalWindow from '@phosphor-icons/core/assets/regular/terminal-window.svg?raw';
 import textAa from '@phosphor-icons/core/assets/regular/text-aa.svg?raw';
+import ticket from '@phosphor-icons/core/assets/regular/ticket.svg?raw';
 import toggleLeft from '@phosphor-icons/core/assets/regular/toggle-left.svg?raw';
 import trash from '@phosphor-icons/core/assets/regular/trash.svg?raw';
 import tray from '@phosphor-icons/core/assets/regular/tray.svg?raw';
@@ -137,6 +151,7 @@ export const ICONS = {
   'paper-plane-tilt-fill': paperPlaneTiltFill,
   'pencil-simple-fill': pencilSimpleFill,
   'play-fill': playFill,
+  'quotes-fill': quotesFill,
   'plus-circle-fill': plusCircleFill,
   'stack-fill': stackFill,
   'terminal-window-fill': terminalWindowFill,
@@ -147,11 +162,19 @@ export const ICONS = {
   'warning-fill': warningFill,
   'x-circle-fill': xCircleFill,
   aperture,
+  'book-open-text': bookOpenText,
+  'chart-line': chartLine,
+  'chart-scatter': chartScatter,
+  compass,
+  'user-focus': userFocus,
+  'user-gear': userGear,
   'arrow-counter-clockwise': arrowCounterClockwise,
+  'arrow-down-right': arrowDownRight,
   'arrow-left': arrowLeft,
   'arrow-right': arrowRight,
   'arrow-square-out': arrowSquareOut,
   'arrows-clockwise': arrowsClockwise,
+  'arrows-left-right': arrowsLeftRight,
   'arrows-out-line-horizontal': arrowsOutLineHorizontal,
   'arrows-out-simple': arrowsOutSimple,
   'bell-simple': bellSimple,
@@ -163,7 +186,9 @@ export const ICONS = {
   'caret-down': caretDown,
   'caret-left': caretLeft,
   'caret-right': caretRight,
+  calculator,
   'chat-circle': chatCircle,
+  'chat-circle-text': chatCircleText,
   'chat-text': chatText,
   check,
   'check-circle': checkCircle,
@@ -180,6 +205,7 @@ export const ICONS = {
   'git-branch': gitBranch,
   'globe-simple': globeSimple,
   'google-logo': googleLogo,
+  'hand-pointing': handPointing,
   graph,
   hash,
   'hourglass-medium': hourglassMedium,
@@ -197,6 +223,7 @@ export const ICONS = {
   'pencil-simple-line': pencilSimpleLine,
   percent,
   plant,
+  play,
   plus,
   question,
   'seal-question': sealQuestion,
@@ -208,6 +235,7 @@ export const ICONS = {
   table,
   'terminal-window': terminalWindow,
   'text-aa': textAa,
+  ticket,
   'toggle-left': toggleLeft,
   trash,
   tray,

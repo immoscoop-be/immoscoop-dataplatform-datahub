@@ -33,10 +33,14 @@ const TYPES: Record<string, string> = {
 
 /**
  * Reads the built page once, at start-up. The page gets the addresses of identity, catalogue,
- * registry, query and semgraph in data attributes, and a place for the nonce of its styles, which the
- * server fills for every request: the page itself holds no script and no style of its own.
+ * registry, query and semgraph in data attributes, the environment it runs in, and a place for the
+ * nonce of its styles, which the server fills for every request: the page itself holds no script and
+ * no style of its own.
  */
-export async function loadClient(dir: string, services: { identityUrl: string; catalogueUrl: string; registryUrl: string; queryUrl: string; semgraphUrl: string }): Promise<Client> {
+export async function loadClient(
+  dir: string,
+  services: { identityUrl: string; catalogueUrl: string; registryUrl: string; queryUrl: string; semgraphUrl: string; environment?: string },
+): Promise<Client> {
   const template = await readFile(join(dir, 'index.html'), 'utf8');
   const opening = '<html lang="nl">';
   if (!template.includes(opening)) {
@@ -44,7 +48,7 @@ export async function loadClient(dir: string, services: { identityUrl: string; c
   }
   const page = template.replace(
     opening,
-    `<html lang="nl" data-identity="${escapeAttribute(services.identityUrl)}" data-catalogue="${escapeAttribute(services.catalogueUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-query="${escapeAttribute(services.queryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}" data-nonce="${NONCE}">`,
+    `<html lang="nl" data-identity="${escapeAttribute(services.identityUrl)}" data-catalogue="${escapeAttribute(services.catalogueUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-query="${escapeAttribute(services.queryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}"${services.environment ? ` data-environment="${escapeAttribute(services.environment)}"` : ''} data-nonce="${NONCE}">`,
   );
 
   const files = new Map<string, ClientFile>();

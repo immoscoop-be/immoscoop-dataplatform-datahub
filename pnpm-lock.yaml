@@ -60,6 +60,9 @@ importers:
       '@datahub/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@datahub/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
       '@datahub/ui':
         specifier: workspace:*
         version: link:../../packages/ui

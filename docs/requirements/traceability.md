@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 129 | 45 (5 open, 40 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 129 | 47 (6 open, 41 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 17 (3 specified, 14 implemented) | 5 (5 specified) | 8 | 8 (8 done) |
@@ -27,7 +27,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 5 | 3 (1 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 15 (15 implemented) | 2 (2 implemented) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
-| [Learning](functional/16-learning.md) | 39 (22 proposed, 1 specified, 16 withdrawn) | – | 24 | 28 (3 open, 25 done) |
+| [Learning](functional/16-learning.md) | 39 (14 proposed, 1 specified, 8 implemented, 16 withdrawn) | – | 27 | 32 (4 open, 28 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 33 (3 proposed, 10 specified, 19 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
@@ -37,6 +37,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 4 (4 implemented) | – | – | – |
 | [Lenses: technical requirements](technical/09-lenses.md) | 7 (7 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
+| [Learning: technical requirements](technical/16-learning.md) | 5 (5 implemented) | – | – | – |
 
 ## Functional requirements
 
@@ -297,14 +298,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- | --- |
-| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | [learning-card](../design/screens/learning-card.html) | – | – |
+| [FR-LR-01](functional/16-learning.md#fr-lr-01) | Every topic of the master learning plan is a Learning Card with a page | Proposed | – | [learning-card](../design/screens/learning-card.html) | [TR-LR-01](technical/16-learning.md#tr-lr-01) | [74b350f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74b350f9343f96eddf67bf7be1df72b9ad5d19af) refs, 2026-10-29 |
 | [FR-LR-02](functional/16-learning.md#fr-lr-02) | A Learning Card holds an article, a video and test questions | Proposed | – | [learning-card](../design/screens/learning-card.html) | – | – |
-| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Proposed | – | [learning-start](../design/screens/learning-start.html) | – | – |
+| [FR-LR-03](functional/16-learning.md#fr-lr-03) | The panel of Learning lists every card by Learning Level and section | Implemented | – | [learning-start](../design/screens/learning-start.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04) | – |
 | [FR-LR-04](functional/16-learning.md#fr-lr-04) | Test questions say right or wrong, and why | Proposed | – | [learning-card](../design/screens/learning-card.html) | – | [e9951e3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e9951e30400a300223a9798d91e55e851ab736a0) refs, 2026-10-28 |
-| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-message](../design/screens/learning-message.html), [messages](../design/screens/messages.html) | – | – |
-| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Proposed | – | – | – | – |
+| [FR-LR-05](functional/16-learning.md#fr-lr-05) | A User marks a Learning Card understood | Implemented | – | [learning-card](../design/screens/learning-card.html), [learning-message](../design/screens/learning-message.html), [messages](../design/screens/messages.html) | [TR-LR-02](technical/16-learning.md#tr-lr-02) | [8897a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8897a4bb8d254e8e6f8da1977325172b6cc53201) implements, 2026-10-29 |
+| [FR-LR-06](functional/16-learning.md#fr-lr-06) | A Learning Card has Messages of its own | Implemented | – | – | [TR-LR-03](technical/16-learning.md#tr-lr-03) | [8897a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8897a4bb8d254e8e6f8da1977325172b6cc53201) implements, 2026-10-29 |
 | [FR-LR-07](functional/16-learning.md#fr-lr-07) | A Message can carry a Learning Card | Proposed | – | [learning-message](../design/screens/learning-message.html) | – | – |
-| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | [learning-start](../design/screens/learning-start.html) | – | [e9951e3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e9951e30400a300223a9798d91e55e851ab736a0) refs, 2026-10-28 |
+| [FR-LR-08](functional/16-learning.md#fr-lr-08) | The start screen of Learning shows where to go next | Proposed | – | [learning-start](../design/screens/learning-start.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04) | [e9951e3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e9951e30400a300223a9798d91e55e851ab736a0) refs, 2026-10-28 |
 | [FR-LR-09](functional/16-learning.md#fr-lr-09) | A card links to what comes before and after | Proposed | – | [learning-card](../design/screens/learning-card.html) | – | – |
 | [FR-LR-10](functional/16-learning.md#fr-lr-10) | Every standard chart links to its Reading Card | Proposed | – | – | – | – |
 | [FR-LR-11](functional/16-learning.md#fr-lr-11) | A link to a Learning Card can stand anywhere | Withdrawn | – | – | – | – |
@@ -323,19 +324,19 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-LR-24](functional/16-learning.md#fr-lr-24) | Congrats shows what the User now knows | Withdrawn | – | – | – | – |
 | [FR-LR-25](functional/16-learning.md#fr-lr-25) | The Knowledge Matrix | Withdrawn | – | – | – | – |
 | [FR-LR-26](functional/16-learning.md#fr-lr-26) | The steps of a card in Claude | Proposed | – | – | – | – |
-| [FR-LR-27](functional/16-learning.md#fr-lr-27) | A Learning Card follows five steps, on a quick or a full path | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | – | – |
-| [FR-LR-28](functional/16-learning.md#fr-lr-28) | "I understand it" is always there, and closes the card | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html), [learning-see](../design/screens/learning-see.html) | – | – |
-| [FR-LR-29](functional/16-learning.md#fr-lr-29) | See it is a page of its own | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-see](../design/screens/learning-see.html) | – | [f5099bd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f5099bd394f787842483ff1eeae6d6158b5cfe67) refs, 2026-10-28 |
-| [FR-LR-30](functional/16-learning.md#fr-lr-30) | Check your understanding: predict, then reveal | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | – | – |
-| [FR-LR-31](functional/16-learning.md#fr-lr-31) | You can now: what you can do, what it brings, and where to go | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | – | – |
-| [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Proposed | – | [learning-start](../design/screens/learning-start.html) | – | – |
+| [FR-LR-27](functional/16-learning.md#fr-lr-27) | A Learning Card follows five steps, on a quick or a full path | Implemented | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04) | [74b350f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74b350f9343f96eddf67bf7be1df72b9ad5d19af) refs, 2026-10-29 |
+| [FR-LR-28](functional/16-learning.md#fr-lr-28) | "I understand it" is always there, and closes the card | Implemented | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html), [learning-see](../design/screens/learning-see.html) | [TR-LR-02](technical/16-learning.md#tr-lr-02), [TR-LR-04](technical/16-learning.md#tr-lr-04) | – |
+| [FR-LR-29](functional/16-learning.md#fr-lr-29) | See it is a page of its own | Implemented | – | [learning-card](../design/screens/learning-card.html), [learning-see](../design/screens/learning-see.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04), [TR-LR-05](technical/16-learning.md#tr-lr-05) | [f5099bd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f5099bd394f787842483ff1eeae6d6158b5cfe67) refs, 2026-10-28 |
+| [FR-LR-30](functional/16-learning.md#fr-lr-30) | Check your understanding: predict, then reveal | Implemented | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04) | – |
+| [FR-LR-31](functional/16-learning.md#fr-lr-31) | You can now: what you can do, what it brings, and where to go | Proposed | – | [learning-card](../design/screens/learning-card.html), [learning-float](../design/screens/learning-float.html) | [TR-LR-04](technical/16-learning.md#tr-lr-04) | – |
+| [FR-LR-32](functional/16-learning.md#fr-lr-32) | A silent count of the cards seen | Implemented | – | [learning-start](../design/screens/learning-start.html) | [TR-LR-02](technical/16-learning.md#tr-lr-02), [TR-LR-04](technical/16-learning.md#tr-lr-04) | [8897a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8897a4bb8d254e8e6f8da1977325172b6cc53201) implements, 2026-10-29 |
 | [FR-LR-33](functional/16-learning.md#fr-lr-33) | A small marker shows what the Learning Centre explains | Withdrawn | – | – | – | – |
 | [FR-LR-34](functional/16-learning.md#fr-lr-34) | A pop-out says why the cards help here | Withdrawn | – | – | – | – |
 | [FR-LR-35](functional/16-learning.md#fr-lr-35) | Only system text carries a marker | Proposed | – | [learning-float](../design/screens/learning-float.html), [learning-hover](../design/screens/learning-hover.html), [resource-detail](../design/screens/resource-detail.html) | – | [92b02bb](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/92b02bb56fee4137d787aa290567c46c3693e672) refs, 2026-10-28 |
 | [FR-LR-36](functional/16-learning.md#fr-lr-36) | The pop-out: a text bubble with the cards that explain it | Proposed | – | [learning-float](../design/screens/learning-float.html), [learning-hover](../design/screens/learning-hover.html), [resource-detail](../design/screens/resource-detail.html) | – | – |
 | [FR-LR-37](functional/16-learning.md#fr-lr-37) | Every name on a screen has a Learning Card | Proposed | – | – | – | [0c10a92](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/0c10a926e0fe2b8474c699e5bb5b23ea5d3109f3) refs, 2026-10-28 |
 | [FR-LR-38](functional/16-learning.md#fr-lr-38) | A Message from Data Hub links to the card that explains it | Specified | – | [messages](../design/screens/messages.html) | – | – |
-| [FR-LR-39](functional/16-learning.md#fr-lr-39) | One card explains the model types, and the card on the grain points to it | Proposed | – | – | – | – |
+| [FR-LR-39](functional/16-learning.md#fr-lr-39) | One card explains the model types, and the card on the grain points to it | Proposed | – | – | [TR-LR-01](technical/16-learning.md#tr-lr-01) | [74b350f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74b350f9343f96eddf67bf7be1df72b9ad5d19af) refs, 2026-10-29 |
 
 ## Edge cases
 
@@ -502,6 +503,16 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-CV-01](technical/14-conversations.md#tr-cv-01) | catalogue keeps every conversation, by its Subject | Implemented | [FR-CV-01](functional/14-conversations.md#fr-cv-01), [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-04](functional/14-conversations.md#fr-cv-04), [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [EC-CV-01](functional/14-conversations.md#ec-cv-01), [EC-CV-02](functional/14-conversations.md#ec-cv-02), [DEC-CV-04](functional/14-conversations.md#dec-cv-04), [DEC-CV-09](functional/14-conversations.md#dec-cv-09) | [c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
 | [TR-CV-02](technical/14-conversations.md#tr-cv-02) | query tells catalogue about its Lenses, and the decisions on them | Implemented | [FR-CV-05](functional/14-conversations.md#fr-cv-05), [FR-CV-08](functional/14-conversations.md#fr-cv-08), [FR-LE-09](functional/09-lenses.md#fr-le-09), [FR-LE-10](functional/09-lenses.md#fr-le-10), [DEC-CV-06](functional/14-conversations.md#dec-cv-06), [DEC-PF-30](technical/00-platform.md#dec-pf-30), [DEC-UX-128](../design/principles.md#dec-ux-128) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) refs, 2026-10-29<br>[c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
 | [TR-CV-03](technical/14-conversations.md#tr-cv-03) | The web app shows the Message Centre, the Messages on an object and a Message in context | Implemented | [FR-CV-02](functional/14-conversations.md#fr-cv-02), [FR-CV-06](functional/14-conversations.md#fr-cv-06), [FR-CV-07](functional/14-conversations.md#fr-cv-07), [FR-CV-09](functional/14-conversations.md#fr-cv-09), [DEC-UX-29](../design/principles.md#dec-ux-29), [DEC-UX-30](../design/principles.md#dec-ux-30) | [c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) implements, 2026-10-29 |
+
+### [Learning: technical requirements](technical/16-learning.md)
+
+| ID | Title | Status | Realises | Commits |
+| --- | --- | --- | --- | --- |
+| [TR-LR-01](technical/16-learning.md#tr-lr-01) | The Learning Cards are files in , checked by their tests | Implemented | [DEC-LR-12](functional/16-learning.md#dec-lr-12), [DEC-LR-16](functional/16-learning.md#dec-lr-16), [DEC-LR-23](functional/16-learning.md#dec-lr-23), [DEC-LR-24](functional/16-learning.md#dec-lr-24), [DEC-LR-25](functional/16-learning.md#dec-lr-25), [FR-LR-01](functional/16-learning.md#fr-lr-01), [FR-LR-39](functional/16-learning.md#fr-lr-39) | – |
+| [TR-LR-02](technical/16-learning.md#tr-lr-02) | catalogue keeps what every User did with a card | Implemented | [FR-LR-05](functional/16-learning.md#fr-lr-05), [FR-LR-28](functional/16-learning.md#fr-lr-28), [FR-LR-32](functional/16-learning.md#fr-lr-32), [DEC-LR-13](functional/16-learning.md#dec-lr-13), [DEC-LR-15](functional/16-learning.md#dec-lr-15) | – |
+| [TR-LR-03](technical/16-learning.md#tr-lr-03) | A Learning Card is an object of Messages | Implemented | [FR-LR-06](functional/16-learning.md#fr-lr-06) | – |
+| [TR-LR-04](technical/16-learning.md#tr-lr-04) | The web app shows the Learning Centre | Implemented | [FR-LR-03](functional/16-learning.md#fr-lr-03), [FR-LR-08](functional/16-learning.md#fr-lr-08), [FR-LR-27](functional/16-learning.md#fr-lr-27), [FR-LR-28](functional/16-learning.md#fr-lr-28), [FR-LR-29](functional/16-learning.md#fr-lr-29), [FR-LR-30](functional/16-learning.md#fr-lr-30), [FR-LR-31](functional/16-learning.md#fr-lr-31), [FR-LR-32](functional/16-learning.md#fr-lr-32), [DEC-LR-18](functional/16-learning.md#dec-lr-18), [DEC-LR-19](functional/16-learning.md#dec-lr-19), [DEC-LR-25](functional/16-learning.md#dec-lr-25), [DEC-LR-27](functional/16-learning.md#dec-lr-27) | – |
+| [TR-LR-05](technical/16-learning.md#tr-lr-05) | The example of See it is drawn by the Chart Server, in the browser | Implemented | [FR-LR-29](functional/16-learning.md#fr-lr-29), [DEC-LR-21](functional/16-learning.md#dec-lr-21), [DEC-LR-26](functional/16-learning.md#dec-lr-26) | – |
 
 ## Non-functional requirements
 

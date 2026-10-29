@@ -11,6 +11,7 @@ const app = await buildApp({
   registryUrl: required('DATAHUB_REGISTRY_URL'),
   queryUrl: required('DATAHUB_QUERY_URL'),
   semgraphUrl: required('DATAHUB_SEMGRAPH_URL'),
+  environment: required('DATAHUB_ENVIRONMENT'),
   clientDir: fileURLToPath(new URL('./client/', import.meta.url)),
 });
 await start(app);

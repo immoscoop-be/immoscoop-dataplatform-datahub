@@ -964,7 +964,7 @@ button.lc-opt { width: 100%; border: 0; background: none; font: inherit; font-si
 .btn-primary.sm, .btn-quiet.sm { padding: 6px 12px; font-size: 12px; }
 .lc-count { margin: 0 0 8px; padding: 0 4px; }
 @media (prefers-reduced-motion: no-preference) {
-  .lc-pane:not([hidden]) .lc-cheer .pop { transform-box: fill-box; transform-origin: center; animation: lc-pop .5s cubic-bezier(.3,1.6,.6,1) .2s both; }
+  .lc-pane:not([hidden]) .lc-cheer .pop { transform-box: fill-box; transform-origin: center; animation: lc-pop var(--motion-cheer) var(--delay-cheer) both; }
   @keyframes lc-pop { from { transform: scale(.2); opacity: 0; } }
 }
 @media (max-width: 1100px) { .lc-see { grid-template-columns: minmax(0, 1fr); } }

@@ -84,7 +84,7 @@ describe('the server of the web app', () => {
 
   beforeEach(async () => {
     identity = fakeIdentity();
-    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, semgraphUrl: SEMGRAPH, clientDir, fetch: identity.fetch, logger: false });
+    app = await buildApp({ verifier: (await createTestIssuer()).verifier, webUrl: WEB, identityUrl: IDENTITY, catalogueUrl: CATALOGUE, registryUrl: REGISTRY, queryUrl: QUERY, semgraphUrl: SEMGRAPH, environment: 'uat', clientDir, fetch: identity.fetch, logger: false });
   });
 
   afterEach(() => app.close());
@@ -105,11 +105,11 @@ describe('the server of the web app', () => {
     return cookies(callback.headers)['datahub_session'] ?? '';
   }
 
-  it('serves the page, which may only talk to itself, identity, catalogue, registry, query and semgraph', async () => {
+  it('serves the page, which knows its environment and may only talk to itself, identity, catalogue, registry, query and semgraph', async () => {
     const page = await app.inject({ url: '/' });
     expect(page.statusCode).toBe(200);
     expect(page.headers['cache-control']).toBe('no-store');
-    expect(page.body).toContain(`<html lang="nl" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-query="${QUERY}" data-semgraph="${SEMGRAPH}" data-nonce="`);
+    expect(page.body).toContain(`<html lang="nl" data-identity="${IDENTITY}" data-catalogue="${CATALOGUE}" data-registry="${REGISTRY}" data-query="${QUERY}" data-semgraph="${SEMGRAPH}" data-environment="uat" data-nonce="`);
     const policy = page.headers['content-security-policy'] as string;
     expect(policy).toContain("default-src 'self';");
     // The editor of Query adds styles of its own, allowed by a nonce that is new for every page.
@@ -125,7 +125,8 @@ describe('the server of the web app', () => {
   });
 
   it('serves the same page at every address of a page, which shows what it asks or that nothing is there (DEC-UX-32)', async () => {
-    for (const url of ['/collections', '/me/background', '/collections/c-1/resources/r-1', '/anything']) {
+    // A Learning Card is named by its number, dots and all: that is no file (DEC-LR-12).
+    for (const url of ['/collections', '/me/background', '/collections/c-1/resources/r-1', '/anything', '/learning/1.2.2', '/learning/K3.4/see']) {
       const page = await app.inject({ url });
       expect([url, page.statusCode]).toEqual([url, 200]);
       expect(page.body).toContain('<html lang="nl" data-identity=');
