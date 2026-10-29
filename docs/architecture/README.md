@@ -68,7 +68,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Excel keys, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
 | [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
-| [query](services/query.md) | Running queries on the Resources: preview, free SQL for Claude, feeds for Excel | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | none in v1 |
+| [query](services/query.md) | Running queries on the Resources: Query, previews, later free SQL for Claude and feeds for Excel, and the Query Log | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | `query` |
 | [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
 
 | Application | For | Uses |
@@ -134,6 +134,7 @@ None of the interfaces holds business logic. Lens and Report components are shar
 | Postgres schema `identity` | Users, Groups and memberships, Excel key hashes, OAuth clients | identity |
 | Postgres schema `catalogue` | Resources, Collections, Fingerprints, Confirmations, Publications, Log Entries, Known Behaviour, Anomalies, Reactions, messages | catalogue |
 | Postgres schema `registry` | Artifact Sets, Nodes, columns, Edges, tests, Changes | registry |
+| Postgres schema `query` | Queries and their runs: the Query Log ([DEC-LN-01](../requirements/functional/07-log-and-notifications.md#dec-ln-01)) | query |
 | GCS bucket | The Artifact files, unchanged, per project and per run ([FR-AR-06](../requirements/functional/01-artifact-registry.md#fr-ar-06)) | registry |
 | BigQuery, the tables of the Resources | The data itself; only read | query |
 
@@ -166,7 +167,7 @@ Dockerfile        one image per service (build argument SERVICE)
 
 Each service keeps its migrations in `services/<name>/src/migrations`. They run as a separate job, as `datahub-migrator`, before the service gets its new revision ([TR-PF-09](../requirements/technical/00-platform.md#tr-pf-09), [TR-PF-22](../requirements/technical/00-platform.md#tr-pf-22)).
 
-The Data Team can look into the tables of registry and catalogue, read-only, in Cloud SQL Studio: Google Cloud console → SQL → `datahub-<environment>` → Cloud SQL Studio, database `datahub`, with IAM database authentication, as a member of `datahub-datateam@` ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)).
+The Data Team can look into the tables of registry, catalogue and query, read-only, in Cloud SQL Studio: Google Cloud console → SQL → `datahub-<environment>` → Cloud SQL Studio, database `datahub`, with IAM database authentication, as a member of `datahub-datateam@` ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)).
 
 ## Reachability
 

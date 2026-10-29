@@ -140,6 +140,36 @@ The Owner is told only once the Resource is in a Collection. A Message keeps a l
 
 Once published, a Resource is seen by everyone who sees its Collection: its page, its Log, the lineage around it and what it relates to, and the Collection lists it. A Resource that is not published stays with the Owner Unit and the Data Team; seeing a Resource never lets anyone change it. `PUT /resources/{id}/deprecation` marks a published Resource deprecated, with why and, optionally, another Resource to use instead; `DELETE` takes it away. Both are for the Owner Unit and the Data Team, and write `RES-007` and `RES-008`. A Collection gives each of its Resources with whether it is published and whether it is deprecated.
 
+<a id="tr-sr-15"></a>
+### TR-SR-15 · A query reads only its own Resources, and only reads
+
+**Status:** Implemented · **Realises:** [FR-SR-41](../functional/04-stacks-and-resources.md#fr-sr-41), [DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32), [DEC-UX-73](../../design/principles.md#dec-ux-73)
+
+The service account of query may read every table of the project of Data Hub ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), so Data Hub alone decides what a query reads, twice, in its Pre-flight and again before every run:
+
+1. **By its SQL.** query reads the SQL as words, comments and strings skipped, and takes every table named after `from` and `join` and in a list of `from`, leaving out its CTEs, a subquery, `unnest(…)`, an array of a row named through its alias, and the `from` of `extract(…)` and `is distinct from`. Each must be the Key of one of its Resources that the User may see now, as catalogue answers with the token of the User; written without its project, a Key counts when its project is that of Data Hub. Anything else is a table outside, named with where it stands in the SQL, and the query does not go to BigQuery. A table function, such as `ML.PREDICT` or `EXTERNAL_QUERY`, is never allowed; a wildcard table and `INFORMATION_SCHEMA` are no Resource.
+2. **By BigQuery.** A dry run must say `SELECT`: a change, a script or a statement of another kind is refused. The tables the dry run says it reads must be its Resources named in the SQL, or the tables BigQuery reads beneath them, which query learns from a dry run of `select *` of each, kept ten minutes.
+
+A Resource the User may no longer see keeps the query from running.
+
+<a id="tr-sr-16"></a>
+### TR-SR-16 · The Pre-flight and a run
+
+**Status:** Implemented · **Realises:** [FR-SR-27](../functional/04-stacks-and-resources.md#fr-sr-27), [FR-SR-36](../functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](../functional/04-stacks-and-resources.md#fr-sr-37), [FR-SR-40](../functional/04-stacks-and-resources.md#fr-sr-40), [FR-SR-51](../functional/04-stacks-and-resources.md#fr-sr-51), [DEC-SR-29](../functional/04-stacks-and-resources.md#dec-sr-29), [DEC-SR-30](../functional/04-stacks-and-resources.md#dec-sr-30), [DEC-SR-35](../functional/04-stacks-and-resources.md#dec-sr-35)
+
+`POST /queries/{id}/preflight` with the SQL, while it is written, gives the Pre-flight and keeps the SQL: what the query reads at most, from a dry run of BigQuery, which costs nothing; its range, up to 100 MB, up to 1 GB, or above, from `DATAHUB_QUERY_APPROVE_BYTES` and `DATAHUB_QUERY_REQUEST_BYTES`, in bytes of 1000; the partitions it reads where the dry run says so; what keeps it from running ([TR-SR-15](#tr-sr-15)); and per Resource it reads with a partition column, whether it filters on it. A filter counts when the column is named in a `where`. Without one, a Resource that requires it, in Data Hub or in BigQuery, keeps the query from running, naming the column; BigQuery's own refusal for a missing filter says the same. On another Resource it is a warning.
+
+`POST /queries/{id}/runs` checks it all again. Between the two thresholds it runs only with `approve`; above the second it does not run (`409 request_needed`), until the Request to the Data Team comes. A run is a job of BigQuery with `maximumBytesBilled` at the second threshold and the labels `datahub-user`, the Google ID of the User, and `datahub-query`, its Query ID. It waits for the job up to four minutes and answers with the run and its first page. `GET /runs/{queryId}/rows?page=n` reads a page of 100 rows from the result of the same job, never a new query, for whoever ran it; once BigQuery no longer keeps the result, about a day, it answers `410 expired`. Values come as BigQuery gives them, as text, a timestamp as BigQuery writes it, a list and a record as JSON, `null` as null; the types of the columns are those of GoogleSQL.
+
+<a id="tr-sr-17"></a>
+### TR-SR-17 · Queries and the Query Log
+
+**Status:** Implemented · **Realises:** [FR-SR-43](../functional/04-stacks-and-resources.md#fr-sr-43), [FR-SR-45](../functional/04-stacks-and-resources.md#fr-sr-45), [FR-SR-46](../functional/04-stacks-and-resources.md#fr-sr-46), [FR-LN-05](../functional/07-log-and-notifications.md#fr-ln-05), [DEC-LN-01](../functional/07-log-and-notifications.md#dec-ln-01)
+
+query keeps its data in the schema `query` ([DEC-PF-29](00-platform.md#dec-pf-29)). A row of `queries` is a query: who made it, its name and question, its Resources as they were named when it was made, and the SQL being written. `POST /queries` makes one on Resources the User sees, with SQL that selects their fields and filters each on its partition column, its recent partitions: four weeks of days, three months, a year; with more than one Resource, a CTE each. `GET /queries` lists the queries of the User, newest run first; with `all=true`, everyone's, for the Data Team only. A query is read by who made it and by the Data Team, and written and run only by who made it.
+
+A row of `runs` is a run and a line of the Query Log: its number in its query, its Query ID (`q-` with the day and six random hex digits, such as `q-20261029-4c2e1a`), the SQL, who ran it and when, what the Pre-flight said it reads and whether it was approved, its Resources, the job in BigQuery and its location, what it processed and billed, its partitions, its columns and how many rows, and whether it ran or failed and why. It is kept for as long as Data Hub exists.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

@@ -15,9 +15,9 @@ locals {
   # (docs/architecture/README.md#services).
   services = toset(["identity", "catalogue", "registry", "query", "semgraph", "mcp", "web"])
 
-  # The services that keep data in Postgres, each in its own schema (TR-PF-08).
-  # query stores nothing in v1 (DEC-SR-18).
-  database_services = toset(["identity", "catalogue", "registry"])
+  # The services that keep data in Postgres, each in its own schema (TR-PF-08): query keeps its
+  # queries and the Query Log (DEC-LN-01, DEC-PF-29).
+  database_services = toset(["identity", "catalogue", "registry", "query"])
 
   # Cloud Run gives every service a fixed address, so addresses are known before the services
   # exist: every service needs identity's to validate Access Tokens.
@@ -45,9 +45,10 @@ locals {
   }
 
   # People read the data as the Role Group of the Data Team, read-only, in Cloud SQL Studio, and only
-  # the schemas of registry and catalogue: identity keeps sessions and personal data (TR-PF-28).
+  # the schemas of registry, catalogue and query: identity keeps sessions and personal data (TR-PF-28,
+  # DEC-PF-29).
   database_readers  = ["datahub-datateam@${var.workspace_domain}"]
-  readable_services = toset(["registry", "catalogue"])
+  readable_services = toset(["registry", "catalogue", "query"])
 
   # Each service logs in to Postgres as itself (TR-PF-22).
   database_env = {
@@ -92,17 +93,24 @@ locals {
       DATAHUB_REGISTRY_URL              = local.urls["registry"]
       DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
     })
-    query = {}
+    # query asks catalogue which Resources the User may see, with their token, and runs the jobs in
+    # the project and location of Data Hub, where the tables of its dbt projects are (DEC-SR-32).
+    query = merge(local.database_env["query"], {
+      DATAHUB_CATALOGUE_URL     = local.urls["catalogue"]
+      DATAHUB_BIGQUERY_PROJECT  = var.project_id
+      DATAHUB_BIGQUERY_LOCATION = var.region
+    })
     # The Chart Server is open to everyone, its MCP server too (DEC-PF-24).
     semgraph = { MCP_AUTH = "none" }
     # The MCP endpoint Claude connects to (TR-PF-06).
     mcp = { DATAHUB_MCP_RESOURCE = "${local.urls["mcp"]}/mcp" }
     # The web app signs Users in at its own address (DEC-PF-19); its page shows the Collections of
-    # catalogue, searches registry and shows the charts of semgraph.
+    # catalogue, searches registry, runs queries through query and shows the charts of semgraph.
     web = {
       DATAHUB_WEB_URL       = local.urls["web"]
       DATAHUB_CATALOGUE_URL = local.urls["catalogue"]
       DATAHUB_REGISTRY_URL  = local.urls["registry"]
+      DATAHUB_QUERY_URL     = local.urls["query"]
       DATAHUB_SEMGRAPH_URL  = local.urls["semgraph"]
     }
   }

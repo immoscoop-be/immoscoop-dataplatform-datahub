@@ -224,12 +224,21 @@ importers:
       '@datahub/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@datahub/db':
+        specifier: workspace:*
+        version: link:../../packages/db
+      '@datahub/google':
+        specifier: workspace:*
+        version: link:../../packages/google
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server
       fastify:
         specifier: ^5.12.7
         version: 5.12.7
+      kysely:
+        specifier: ^0.29.6
+        version: 0.29.6
 
   services/registry:
     dependencies:

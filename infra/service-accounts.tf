@@ -41,10 +41,17 @@ resource "google_project_iam_member" "migrator" {
   member  = google_service_account.migrator.member
 }
 
-# query runs the queries on the Stacks (TR-PF-11). Read access to the Stacks themselves
-# is still open (OP-PF-14).
+# query runs the queries on the Resources (TR-PF-11), as BigQuery jobs in the project of Data Hub.
 resource "google_project_iam_member" "query_jobs" {
   project = var.project_id
   role    = "roles/bigquery.jobUser"
+  member  = google_service_account.service["query"].member
+}
+
+# ...and reads every table of the project, where the tables of its dbt projects are (DEC-SR-32).
+# Who reads what is decided in Data Hub: a query reads only its own Resources (TR-SR-15).
+resource "google_project_iam_member" "query_reads" {
+  project = var.project_id
+  role    = "roles/bigquery.dataViewer"
   member  = google_service_account.service["query"].member
 }

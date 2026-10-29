@@ -2,7 +2,7 @@
   "name": "@datahub/query",
   "version": "0.0.0",
   "private": true,
-  "description": "Running queries on the stacks: previews, free SQL for Claude, feeds for Excel. See docs/architecture/services/query.md.",
+  "description": "Running queries on the Resources: Query, previews, later Claude and feeds for Excel, and the Query Log. See docs/architecture/services/query.md.",
   "type": "module",
   "main": "./dist/main.js",
   "files": ["dist"],
@@ -11,7 +11,10 @@
   },
   "dependencies": {
     "@datahub/auth": "workspace:*",
+    "@datahub/db": "workspace:*",
+    "@datahub/google": "workspace:*",
     "@datahub/server": "workspace:*",
-    "fastify": "^5.12.7"
+    "fastify": "^5.12.7",
+    "kysely": "^0.29.6"
   }
 }
