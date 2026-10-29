@@ -131,6 +131,8 @@ const WEEKLY_LINEAGE = {
 /** The server of the web app, identity and catalogue, as the page meets them: with or without a session. */
 const QUERY = {
   id: 'q1',
+  kind: 'query',
+  lens: null as unknown,
   name: 'Leads per source name',
   question: 'Which sources bring our leads, week by week?',
   sql: 'select week_start, lead_source\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= date_sub(current_date(), interval 28 day)\n',
@@ -184,6 +186,34 @@ const RUN = {
 
 const PAGE = { number: 1, size: 100, totalRows: 210, columns: RUN.columns, rows: [['2026-10-19', '413'], ['2026-10-12', null]] };
 
+/** A Lens of Max in Credit leads, made from the query Leads per source name (DEC-LE-03). */
+const LENS = {
+  id: 'l1',
+  name: 'Leads per source, week by week',
+  question: 'Which sources bring our leads?',
+  shows: 'How many leads each source brings, week by week.',
+  tags: ['leads', 'source'],
+  collectionId: 'c1',
+  level: 2,
+  state: 'published',
+  resources: [{ id: 'r2', displayName: 'Weekly lead volume', collectionId: 'c1', level: 2 }],
+  authorName: 'Max Verstraete',
+  mine: true,
+  createdAt: '2026-10-29T08:00:00Z',
+  publishedAt: '2026-10-29T08:00:00Z',
+  steps: ['Takes the weekly lead volume from From.', 'Keeps one lead channel.'],
+  parameters: [
+    { name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', label: 'From' },
+    { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'], label: 'Lead channel' },
+  ],
+  canManage: true,
+  version: 1,
+  range: 'free',
+  reads: 80_000_000,
+  fromQuery: { id: 'q1', name: 'Leads per source name' },
+  request: null as unknown,
+};
+
 /**
  * The Pre-flight query gives: an @name that is not a Parameter, 4.8 GB or 840 MB for SQL that says so, a
  * table outside, or 80 MB.
@@ -212,6 +242,7 @@ function serve({
   groups = [] as string[],
   weekly = {} as Record<string, unknown>,
   queries = [] as Record<string, unknown>[],
+  lenses = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
@@ -358,6 +389,28 @@ function serve({
           { id: 'q-preview-k', name: 'Preview · Weekly lead volume', kind: 'preview', ownerName: 'Karel Peeters', mine: false, runs: 1, lastRunAt: '2026-10-28T08:00:00Z', lastRead: null, lastEstimate: 12_000_000, lastState: 'failed' },
         ],
       });
+    }
+    // query, as it keeps the Lenses: made from a query, seen and run as the User may (TR-LE-01).
+    if (path === '/lenses' && method === 'GET') {
+      return json({ lenses: lenses.map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
+    }
+    if (path === '/lenses' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; collectionId: string; steps: string[] };
+      const made = { ...LENS, id: 'l-made', name: body.name, collectionId: body.collectionId, steps: body.steps };
+      lenses.push(made);
+      return json({ lens: made }, 201);
+    }
+    const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
+    if (lens && path === `/lenses/${lens.id as string}`) {
+      return json({ lens });
+    }
+    if (lens && path.endsWith('/preflight')) {
+      const { values } = JSON.parse(init.body as string) as { values: Record<string, unknown> };
+      // Every week since 2019 reads more than 100 MB.
+      return json({ preflight: values.dateFrom === '2019-01-01' ? { ...preflightOf('where'), bytes: 840_000_000, range: 'approve' } : preflightOf('where') });
+    }
+    if (lens && path.endsWith('/runs')) {
+      return json({ run: { ...RUN, ref: 'q-20261029-1e2a3b', parameters: LENS.parameters }, page: PAGE }, 201);
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     if (path === '/queries' && method === 'GET') {
@@ -997,10 +1050,11 @@ describe('Query', () => {
     expect(panel.getByText('Vandaag')).toBeTruthy();
     expect(panel.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
     expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
-    // It reads only its Resources; another set, the Lenses and making it a Lens come later (DEC-UX-73, DEC-UX-114).
+    // It reads only its Resources; another set is a new query, and the Lenses on them come later (DEC-UX-73, DEC-UX-114).
     expect(main.getByText('Leest enkel')).toBeTruthy();
     expect(main.getByRole('link', { name: /Weekly lead volume/ }).getAttribute('href')).toBe('/resources/r2');
-    expect((main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement).disabled).toBe(true);
+    // Its author makes it a Lens (DEC-UX-25).
+    expect(main.getByRole('link', { name: 'Maak er een Lens van' }).getAttribute('href')).toBe('/query/q1/lens');
   });
 
   it('starts a new query on a Resource, named from it and the date, as not run yet (FR-SR-45, FR-SR-46, DEC-UX-114)', async () => {
@@ -1192,5 +1246,95 @@ describe('Query', () => {
       path: '/queries',
       body: { name: name.value, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
     });
+  });
+});
+
+describe('Lenses', () => {
+  it('makes a Lens of a query, with what it does step by step, into a Collection its author owns (FR-LE-07, FR-LE-08, DEC-UX-121)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY, sql: `${QUERY.sql} where 1 = 1`, parameters: [{ name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' }] }] });
+    open('/query/q1/lens');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Maak er een Lens van' })).toBeTruthy();
+    expect((await main.findByRole('textbox', { name: 'Naam' }) as HTMLInputElement).value).toBe('Leads per source name');
+    // The Parameters come from the query, each with the name Users see; its default stands as its function (DEC-UX-75).
+    expect(((await main.findByRole('textbox', { name: 'Naam die Users zien van @dateFrom' })) as HTMLInputElement).value).toBe('Date from');
+    expect(main.getByText('Begin van dit jaar')).toBeTruthy();
+    // Within range: its author publishes it (FR-LE-08).
+    expect(await main.findByText('Binnen de grenzen.')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: /Wat hij doet, stap voor stap/ }), { target: { value: 'Takes the weekly lead volume.\n\nAdds the sources.' } });
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam die Users zien van @dateFrom' }), { target: { value: 'From' } });
+    const tag = main.getByRole('textbox', { name: 'Een tag toevoegen' });
+    await fireEvent.input(tag, { target: { value: '#Leads' } });
+    await fireEvent.keyDown(tag, { key: 'Enter' });
+    await fireEvent.click(main.getByRole('button', { name: 'Lens publiceren' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/lenses/l-made'));
+    expect(calls).toContainEqual({
+      method: 'POST',
+      path: '/lenses',
+      body: {
+        queryId: 'q1',
+        collectionId: 'c1',
+        name: 'Leads per source name',
+        question: QUERY.question,
+        shows: '',
+        steps: ['Takes the weekly lead volume.', 'Adds the sources.'],
+        tags: ['leads'],
+        labels: { dateFrom: 'From' },
+        approve: false,
+        text: '',
+      },
+    });
+  });
+
+  it('runs a Lens only when its User runs it, with the values they chose, and marks a result for old values (FR-LE-12, DEC-LE-12)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: /Leads per source, week by week/ })).toBeTruthy();
+    // Under Collections, its Collection unfolded and the Lens marked as open (DEC-UX-66).
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect((await panel.findByRole('link', { name: /Leads per source, week by week/ })).getAttribute('aria-current')).toBe('page');
+    // It does not run when it opens.
+    expect(main.getByText('Nog niet uitgevoerd.')).toBeTruthy();
+    expect(calls.some((call) => call.path === '/lenses/l1/runs')).toBe(false);
+    await fireEvent.change(main.getByRole('combobox', { name: 'De waarde van Lead channel' }), { target: { value: 'Phone' } });
+    expect(main.getByText('Standaard: Form')).toBeTruthy();
+    const run = await main.findByRole('button', { name: /Uitvoeren/ });
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(run);
+    expect(await main.findByText('q-20261029-1e2a3b')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/lenses/l1/runs', body: { values: { dateFrom: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', leadChannel: 'Phone' }, approve: false } });
+    await fireEvent.click(main.getByRole('button', { name: 'Standaard' }));
+    expect(await main.findByText('De Parameters veranderden.')).toBeTruthy();
+    // About tells what it does as its author wrote it, never its SQL (FR-LE-14, DEC-UX-121).
+    await fireEvent.click(main.getByRole('tab', { name: 'Over' }));
+    expect(main.getByText('Keeps one lead channel.')).toBeTruthy();
+    expect(main.getByText('Geschreven door wie hem maakte, in gewone taal.')).toBeTruthy();
+    expect(main.queryByText(/select/)).toBeNull();
+  });
+
+  it('lists the Lenses of a Collection on its page and in the panel (FR-CO-28, FR-CO-36)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const table = within(await main.findByRole('table', { name: 'Lenses' }));
+    expect(table.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+    expect(table.getByText('Max Verstraete')).toBeTruthy();
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('opens a Lens that waits for the Data Team as its author made it, frozen (FR-LE-09, DEC-LE-05)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS, state: 'waiting', range: 'request', reads: 6_200_000_000, request: { state: 'waiting', sentAt: new Date().toISOString(), reads: 6_200_000_000, text: '' } }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText(/Naar het Data Team gestuurd door Max Verstraete/)).toBeTruthy();
+    expect(main.getByText('Tot ze hem aanvaarden, zie alleen jij de Lens, en wijzigt niemand hem.')).toBeTruthy();
+    expect(main.getByRole('textbox', { name: 'Naam' }).matches(':disabled')).toBe(true);
+    expect(main.queryByRole('button', { name: /Uitvoeren/ })).toBeNull();
   });
 });

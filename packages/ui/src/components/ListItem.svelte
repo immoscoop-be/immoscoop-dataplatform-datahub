@@ -4,22 +4,23 @@
   import MaturityIcon from '../marks/MaturityIcon.svelte';
 
   /**
-   * An item in a list: the icon of its kind, its name on one line, and its Level, small and grey
-   * (DEC-UX-11). A name too long ends in an ellipsis and shows in full on hover. A Resource that is
+   * An item in a list: the icon of its kind, a Resource or a Lens, its name on one line, and its Level,
+   * small and grey (DEC-UX-11). A name too long ends in an ellipsis and shows in full on hover. A Resource that is
    * not published has its name in a lighter grey; hover and a screen reader say so (DEC-UX-12).
    */
   let {
     href,
+    kind = 'resource',
     name,
     level,
     current = false,
     published = true,
     deprecated = false,
-  }: { href: string; name: string; level: number; current?: boolean; published?: boolean; deprecated?: boolean } = $props();
+  }: { href: string; kind?: 'resource' | 'lens'; name: string; level: number; current?: boolean; published?: boolean; deprecated?: boolean } = $props();
 </script>
 
 <a class="item" class:current class:unpublished={!published} {href} aria-current={current ? 'page' : undefined}>
-  <span class="kind"><KindIcon kind="resource" /></span>
+  <span class="kind"><KindIcon {kind} /></span>
   <span class="name" title={published ? name : t('item.notPublished', { name })}
     >{name}{#if !published}<span class="hidden">{t('item.notPublishedLabel')}</span>{/if}</span
   >

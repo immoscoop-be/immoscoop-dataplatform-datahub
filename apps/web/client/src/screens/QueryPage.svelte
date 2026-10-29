@@ -19,7 +19,7 @@
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
   import type { NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
-  import { NEW_QUERY, queryPath, resourcePath } from '../lib/routes.js';
+  import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
   import ParameterWindow from './ParameterWindow.svelte';
@@ -480,11 +480,25 @@
           >
         </p>
       {/if}
+      {#if query.lens}
+        {@const lens = query.lens}
+        <!-- A query used as a Lens says so, with a link to it (DEC-LE-03). -->
+        <p class="meta origin">
+          <Icon name="aperture" /><span
+            >{#each tParts(lens.state === 'waiting' ? 'query.usedAs.waiting' : 'query.usedAs', { date: formatDay(lens.createdAt.slice(0, 10), currentLanguage()) }, { name: lens.name }) as part, index (index)}{#if 'name' in part}<a
+                  href={lensPath(lens.id)}>{part.name}</a
+                >{:else}{part.text}{/if}{/each}</span
+          >
+        </p>
+      {/if}
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
-      <Button disabled title={t('query.later')}>{t('query.makeLens')}</Button>
+      {#if query.mine && query.kind === 'query' && !query.lens}
+        <!-- The logical next step once a query answers a question that comes back (DEC-UX-25). -->
+        <Button href={newLensPath(query.id)}>{t('query.makeLens')}</Button>
+      {/if}
     </div>
   </header>
 

@@ -39,6 +39,12 @@ describe('the addresses of the web app', () => {
     expect(route('/query/9f1c/rows')).toEqual({ kind: 'notFound' });
   });
 
+  it('makes a Lens from a query in Query, and has a page per Lens under Collections (DEC-UX-25, DEC-UX-66)', () => {
+    expect(route('/query/9f1c/lens')).toMatchObject({ kind: 'newLens', query: '9f1c', section: { id: 'query' } });
+    expect(route('/lenses/7c1f')).toMatchObject({ kind: 'lens', id: '7c1f', section: { id: 'collections' } });
+    expect(route('/lenses/7c1f/about')).toEqual({ kind: 'notFound' });
+  });
+
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });

@@ -534,6 +534,8 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 *Note of 2026-10-29, on building the third piece of part 5: the tab History lists every query with a run on the Resource, newest run first, with the numbers of the last 30 days; Lenses count from part 6 of the [build order](../../design/build-order.md) ([TR-SR-21](../technical/04-stacks-and-resources.md#tr-sr-21)).*
 
+*Note of 2026-10-29, on building part 6a: a Lens is one row, made by its author, with the runs of every User, and the numbers on top count the Lenses ([TR-LE-03](../technical/09-lenses.md#tr-le-03)).*
+
 <a id="fr-sr-45"></a>
 ### FR-SR-45 · Every query has a name
 

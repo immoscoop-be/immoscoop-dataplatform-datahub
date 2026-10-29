@@ -17,6 +17,10 @@ export type Route =
   | { readonly kind: 'newQuery'; readonly resource: string | null; readonly section: Section }
   /** A query, in the section Query (FR-SR-41); with `run`, its history, at one run or at all (DEC-UX-74). */
   | { readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section }
+  /** Make it a lens, from a query, in the section Query (DEC-UX-25). */
+  | { readonly kind: 'newLens'; readonly query: string; readonly section: Section }
+  /** The page of a Lens, in the section Collections (DEC-UX-66). */
+  | { readonly kind: 'lens'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -31,6 +35,9 @@ export const queryPath = (id: string): string => `/query/${encodeURIComponent(id
 export const queryRunsPath = (id: string, run?: number): string => `${queryPath(id)}/runs${run === undefined ? '' : `/${run}`}`;
 /** A new query on a Resource, as "Query" on its page starts it (FR-SR-46). */
 export const newQueryPath = (resource: string): string => `${NEW_QUERY}/${encodeURIComponent(resource)}`;
+/** Make it a lens, from a query (DEC-UX-25). */
+export const newLensPath = (query: string): string => `${queryPath(query)}/lens`;
+export const lensPath = (id: string): string => `/lenses/${encodeURIComponent(id)}`;
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
@@ -55,12 +62,16 @@ export function route(path: string): Route {
   const query = SECTIONS.find((candidate) => candidate.id === 'query');
   const [, queryId, runs, runNumber] = /^\/query\/([^/]+)(\/runs(?:\/([1-9]\d{0,8}))?)?$/.exec(clean) ?? [];
   const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
+  const [, lensFrom] = /^\/query\/([^/]+)\/lens$/.exec(clean) ?? [];
   try {
     if (query && clean === NEW_QUERY) {
       return { kind: 'newQuery', resource: null, section: query };
     }
     if (query && newOn) {
       return { kind: 'newQuery', resource: decodeURIComponent(newOn), section: query };
+    }
+    if (query && lensFrom && lensFrom !== 'new') {
+      return { kind: 'newLens', query: decodeURIComponent(lensFrom), section: query };
     }
     if (query && queryId && queryId !== 'new') {
       return { kind: 'query', id: decodeURIComponent(queryId), run: runNumber ? Number(runNumber) : runs ? 'all' : null, section: query };
@@ -75,10 +86,10 @@ export function route(path: string): Route {
   if (clean === NEW_COLLECTION) {
     return { kind: 'newCollection', section: collections };
   }
-  const [, kind, id] = /^\/(resources|collections)\/([^/]+)$/.exec(clean) ?? [];
+  const [, kind, id] = /^\/(resources|collections|lenses)\/([^/]+)$/.exec(clean) ?? [];
   if (kind && id) {
     try {
-      return { kind: kind === 'resources' ? 'resource' : 'collection', id: decodeURIComponent(id), section: collections };
+      return { kind: kind === 'resources' ? 'resource' : kind === 'lenses' ? 'lens' : 'collection', id: decodeURIComponent(id), section: collections };
     } catch {
       return { kind: 'notFound' };
     }

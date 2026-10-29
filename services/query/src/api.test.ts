@@ -5,9 +5,11 @@ import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { label, parseQuery, parseRun } from './api.js';
+import { parseLens, valuesFor } from './lens-api.js';
+import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
 import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
-import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
+import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
@@ -20,11 +22,14 @@ if (!url && process.env.CI) {
 }
 
 const PROJECT = 'immoscoop-dataplatform';
+/** Credit leads, a public Collection of Mia's unit, and a private one of An. */
+const CREDIT = '5d0c1b2a-3e4f-4a5b-8c6d-7e8f9a0b1c2d';
+const AN_WORK = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
   key: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume`,
   displayName: 'Weekly lead volume',
-  collectionId: 'c-credit',
+  collectionId: CREDIT,
   level: 3,
   deprecated: false,
   partition: { field: 'week_start', unit: 'day' },
@@ -38,6 +43,48 @@ const WEEKLY: QueryResource = {
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
+
+describe('the fields of a Lens, in a request', () => {
+  const fields = { queryId: '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', collectionId: CREDIT, name: ' Leads per source ' };
+
+  it('need its query, a Collection and a name; the rest its author tells (FR-LE-06, DEC-LE-16)', () => {
+    expect(parseLens({ ...fields, steps: [' Takes the weeks. ', '', 'Adds the sources.'], tags: ['#Leads', 'source', 'leads'], labels: { dateFrom: ' From ' } })).toEqual({
+      ...fields,
+      name: 'Leads per source',
+      question: '',
+      shows: '',
+      steps: ['Takes the weeks.', 'Adds the sources.'],
+      tags: ['leads', 'source'],
+      labels: { dateFrom: 'From' },
+      approve: false,
+      text: '',
+    });
+    expect(parseLens({ ...fields, name: '' })).toBe('The name has 1 to 120 characters.');
+    expect(parseLens({ ...fields, collectionId: 'c-credit' })).toBe('A Lens goes into a Collection, named by its ID.');
+    expect(parseLens({ ...fields, tags: ['two words'] })).toMatch(/each a word/);
+    expect(parseLens({ ...fields, labels: { dateFrom: '' } })).toMatch(/name Users see/);
+    expect(parseLens({ ...fields, sql: 'select 1' })).toBe('A Lens has no field sql.');
+  });
+
+  it('to run, change only the values of its Parameters, never their kind or list (DEC-LE-01)', () => {
+    const lens = {
+      parameters: [
+        { name: 'dateFrom', kind: 'date' as const, value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)', label: 'From' },
+        { name: 'leadChannel', kind: 'choice' as const, value: 'Form', list: ['Form', 'Phone'], label: 'Lead channel' },
+      ],
+    };
+    expect(valuesFor(lens, undefined)).toEqual([
+      { name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' },
+      { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] },
+    ]);
+    expect(valuesFor(lens, { leadChannel: 'Phone', dateFrom: '2026-01-01' })).toEqual([
+      { name: 'dateFrom', kind: 'date', value: '2026-01-01' },
+      { name: 'leadChannel', kind: 'choice', value: 'Phone', list: ['Form', 'Phone'] },
+    ]);
+    expect(valuesFor(lens, { leadChannel: 'Mail' })).toBe('The value of @leadChannel is one of its list.');
+    expect(valuesFor(lens, { region: 'Gent' })).toBe('This Lens has no Parameter region.');
+  });
+});
 
 describe('the fields of a query, in a request', () => {
   it('need a name and its Resources to make one (FR-SR-45)', () => {
@@ -162,8 +209,23 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       return requests.filter((sent) => sent.writerId === writers.get(authorization) && (queryId === null || sent.subjectId === queryId));
     },
     async manages(collectionId, authorization) {
-      // Mia is in the Owner Unit of Credit leads; the Data Team manages every Collection.
-      return collectionId === 'c-credit' && (writers.get(authorization) === '104' || writers.get(authorization) === '103');
+      // Mia is in the Owner Unit of Credit leads, An owns a private Collection; the Data Team manages every Collection.
+      const who = writers.get(authorization);
+      return (collectionId === CREDIT && (who === '104' || who === '103')) || (collectionId === AN_WORK && (who === '101' || who === '103'));
+    },
+    async collections(authorization) {
+      const ids = visible.get(authorization);
+      if (ids === null) throw new CatalogueUnavailable('down');
+      const who = writers.get(authorization);
+      const resources = [WEEKLY, SOURCES].filter((resource) => ids?.includes(resource.id)).map(({ id, displayName, level }) => ({ id, displayName, level }));
+      const seen: SeenCollection[] = [{ id: CREDIT, name: 'Credit leads', canManage: who === '104' || who === '103', visibility: 'public', resources }];
+      if (who === '101' || who === '103') seen.push({ id: AN_WORK, name: 'An’s lenses', canManage: true, visibility: 'private', resources: [] });
+      return seen;
+    },
+    async sendLensRequest({ lensId, reads, text }, authorization) {
+      const sent: QueryRequest = { id: `m-${requests.length + 1}`, subjectId: lensId, writerId: writers.get(authorization) ?? '', reads, text, state: 'waiting', createdAt: new Date().toISOString() };
+      requests.unshift(sent);
+      return sent;
     },
     async sendRequest({ queryId, reads, text }, authorization) {
       const writerId = writers.get(authorization) ?? '';
@@ -201,6 +263,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       logger: false,
       api: {
         queries: createQueries(database.db),
+        lenses: createLenses(database.db),
         catalogue,
         bigquery: fake.bigquery,
         beneath: createBeneath(fake.bigquery),
@@ -451,6 +514,107 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(mia, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: false, sql: expect.stringContaining('select') });
     expect((await call(mia, 'GET', `/queries/${id}/runs?limit=1`)).statusCode).toBe(200);
     expect((await call(mia, 'POST', `/queries/${id}/runs`, { sql: weekly })).statusCode).toBe(403);
+  });
+
+  let lensId: string;
+  let lensQuery: string;
+
+  it('makes a Lens of a query of its author, into a Collection they own, measured now (FR-LE-07, FR-LE-08, DEC-CO-20)', async () => {
+    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel] });
+    lensQuery = made.json().query.id;
+    const fields = {
+      queryId: lensQuery,
+      collectionId: AN_WORK,
+      name: 'Leads per source, week by week',
+      question: 'Which sources bring our leads?',
+      shows: 'How many leads each source brings, week by week.',
+      steps: ['Takes the weekly lead volume from From.', 'Keeps one lead channel.'],
+      tags: ['#leads', 'source'],
+      labels: { dateFrom: 'From', leadChannel: 'Lead channel' },
+    };
+    expect((await call(an, 'POST', '/lenses', { ...fields, collectionId: CREDIT })).json()).toMatchObject({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
+    expect((await call(karel, 'POST', '/lenses', fields)).statusCode).toBe(404);
+    expect((await call(dataTeam, 'POST', '/lenses', fields)).statusCode).toBe(403);
+
+    const lens = await call(an, 'POST', '/lenses', fields);
+    expect(lens.statusCode).toBe(201);
+    const body = lens.json().lens;
+    lensId = body.id;
+    expect(body).toMatchObject({
+      name: 'Leads per source, week by week',
+      state: 'published',
+      range: 'free',
+      reads: 80_000_000,
+      level: 3,
+      tags: ['leads', 'source'],
+      steps: fields.steps,
+      canManage: true,
+      mine: true,
+      fromQuery: { id: lensQuery, name: 'Leads per source, week by week' },
+      parameters: [
+        { ...dateFrom, label: 'From' },
+        { ...channel, label: 'Lead channel' },
+      ],
+    });
+    // No page shows the SQL of a Lens (FR-LE-14).
+    expect(body.sql).toBeUndefined();
+    expect((await call(an, 'POST', '/lenses', fields)).json()).toMatchObject({ error: 'already_a_lens', lens: { id: lensId } });
+    // The query stays a query, and says it is used as the Lens (DEC-LE-03).
+    expect((await call(an, 'GET', `/queries/${lensQuery}`)).json().query.lens).toMatchObject({ id: lensId, name: 'Leads per source, week by week', state: 'published' });
+  });
+
+  it('shows a Lens to who sees its Collection and may use every Resource beneath it (DEC-LE-09, DEC-CO-16)', async () => {
+    const names = async (who: string) => (await call(who, 'GET', '/lenses')).json().lenses.map((lens: { name: string }) => lens.name);
+    expect(await names(an)).toEqual(['Leads per source, week by week']);
+    expect(await names(dataTeam)).toEqual(['Leads per source, week by week']);
+    // Its Collection is private to An's unit.
+    expect(await names(mia)).toEqual([]);
+    expect((await call(mia, 'GET', `/lenses/${lensId}`)).statusCode).toBe(404);
+    expect((await call(an, 'GET', '/lenses/nope')).statusCode).toBe(404);
+  });
+
+  it('runs a Lens only when a User runs it, with the values they chose, as a query in the Query Log (FR-LE-12, DEC-LE-12)', async () => {
+    const checked = await call(an, 'POST', `/lenses/${lensId}/preflight`, { values: { leadChannel: 'Phone' } });
+    expect(checked.json().preflight).toMatchObject({ runnable: true, range: 'free' });
+    const ran = await call(an, 'POST', `/lenses/${lensId}/runs`, { values: { leadChannel: 'Phone' } });
+    expect(ran.statusCode).toBe(201);
+    expect(ran.json().run).toMatchObject({ number: 1 });
+    expect(fake.runs.at(-1)?.options.parameters).toEqual([{ name: 'leadChannel', parameterType: { type: 'STRING' }, parameterValue: { value: 'Phone' } }]);
+    expect((await call(an, 'POST', `/lenses/${lensId}/runs`, { values: { leadChannel: 'Mail' } })).statusCode).toBe(400);
+    // Its runs are a query of the User, of the kind lens, whose SQL only the Data Team reads (FR-LE-14).
+    const item = (await call(an, 'GET', '/queries')).json().queries.find((query: { kind: string }) => query.kind === 'lens');
+    expect(item).toMatchObject({ name: 'Leads per source, week by week', lensOf: lensId, runs: 1 });
+    expect((await call(an, 'GET', `/queries/${item.id}`)).statusCode).toBe(404);
+    expect((await call(dataTeam, 'GET', `/queries/${item.id}`)).statusCode).toBe(200);
+    expect((await call(dataTeam, 'POST', `/queries/${item.id}/runs`, { sql: weekly })).statusCode).toBe(403);
+  });
+
+  it('publishes a large Lens only when its author says so, and holds a very large one for the Data Team (FR-LE-08, FR-LE-09)', async () => {
+    const make = async (sql: string, name: string) => (await call(mia, 'POST', '/queries', { name, resources: [WEEKLY.id], sql })).json().query.id as string;
+    const large = await make(`${weekly} -- reads 840000000`, 'All weeks per source');
+    const fields = { queryId: large, collectionId: CREDIT, name: 'All weeks per source' };
+    expect((await call(mia, 'POST', '/lenses', fields)).json()).toMatchObject({ error: 'approval_needed', preflight: { range: 'approve' } });
+    const published = (await call(mia, 'POST', '/lenses', { ...fields, approve: true })).json().lens;
+    expect(published).toMatchObject({ state: 'published', range: 'approve', reads: 840_000_000 });
+    // Built on Weekly lead volume alone, in a public Collection: Karel sees it, not An's private one.
+    expect((await call(karel, 'GET', '/lenses')).json().lenses.map((lens: { name: string }) => lens.name)).toEqual(['All weeks per source']);
+
+    const huge = await make(`${weekly} -- reads 6200000000`, 'Every lead since 2019');
+    const waiting = await call(mia, 'POST', '/lenses', { queryId: huge, collectionId: CREDIT, name: 'Every lead since 2019', text: 'For the yearly review.' });
+    expect(waiting.json().lens).toMatchObject({ state: 'waiting', range: 'request', request: { state: 'waiting', text: 'For the yearly review.' } });
+    const id = waiting.json().lens.id;
+    // Until the Data Team decides, only its author and the Data Team see it, and it does not run (DEC-LE-05).
+    expect((await call(karel, 'GET', `/lenses/${id}`)).statusCode).toBe(404);
+    expect((await call(dataTeam, 'GET', `/lenses/${id}`)).statusCode).toBe(200);
+    expect((await call(mia, 'POST', `/lenses/${id}/runs`, {})).json()).toMatchObject({ error: 'waiting' });
+    expect((await call(mia, 'POST', `/lenses/${id}/requests`, { text: 'Again.' })).statusCode).toBe(201);
+    expect((await call(an, 'POST', `/lenses/${lensId}/requests`, {})).json()).toMatchObject({ error: 'not_needed' });
+  });
+
+  it('lists a Lens on a Resource as one row, made by its author, for its tab History (FR-SR-44)', async () => {
+    const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
+    expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 1 });
+    expect(history.summary.lenses).toBe(1);
   });
 
   it('answers 503 when catalogue does not, rather than guess what the User may see', async () => {

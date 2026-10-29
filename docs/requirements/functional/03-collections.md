@@ -281,9 +281,11 @@ Search in the panel filters the Collections and their Resources together. A Coll
 <a id="fr-co-36"></a>
 ### FR-CO-36 · An unfolded Collection lists its Lenses too
 
-**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-UX-15](../../design/principles.md#op-ux-15)) · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-UX-15](../../design/principles.md#op-ux-15)) · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 An unfolded Collection lists, after its Resources and without a label of their own, the Lenses its Owner Unit added to it ([FR-CO-28](#fr-co-28)) that the User sees ([DEC-CO-16](#dec-co-16)), each with the icon of its kind, its name and its Level. Each group shows its first eight, then "Show all". Search in the panel covers the Lenses as well. Reports join later as a group of their own.
+
+*Note of 2026-10-29, on building part 6a: the Lenses come from query, as the User may see them ([TR-LE-02](../technical/09-lenses.md#tr-le-02)).*
 
 <a id="fr-co-37"></a>
 ### FR-CO-37 · The start screen of Collections finds Lenses too
@@ -326,11 +328,13 @@ The page lists every Resource of the Collection that the User sees ([FR-SR-31](0
 <a id="fr-co-28"></a>
 ### FR-CO-28 · The page lists the Lenses built on the Collection
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
 
 The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO-15](#dec-co-15)), with their name, type, what they are built on, their weight ([FR-LE-02](09-lenses.md#fr-le-02)) and their Level ([DEC-DH-10](../../overview/data-hub.md#dec-dh-10)).
 
 *Note of 2026-10-23: without their weight, since [FR-LE-02](09-lenses.md#fr-le-02) is withdrawn ([DEC-UX-24](../../design/principles.md#dec-ux-24)).*
+
+*Note of 2026-10-29, on building part 6a: the Lenses come from query, as the User may see them ([TR-LE-02](../technical/09-lenses.md#tr-le-02)).*
 
 <a id="fr-co-29"></a>
 ### FR-CO-29 · A Lens is started from the page of a Collection
