@@ -19,6 +19,7 @@ import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-f
 import graphFill from '@phosphor-icons/core/assets/fill/graph-fill.svg?raw';
 import hourglassMediumFill from '@phosphor-icons/core/assets/fill/hourglass-medium-fill.svg?raw';
 import infoFill from '@phosphor-icons/core/assets/fill/info-fill.svg?raw';
+import linkBreakFill from '@phosphor-icons/core/assets/fill/link-break-fill.svg?raw';
 import lockSimpleFill from '@phosphor-icons/core/assets/fill/lock-simple-fill.svg?raw';
 import magnifyingGlassFill from '@phosphor-icons/core/assets/fill/magnifying-glass-fill.svg?raw';
 import moonFill from '@phosphor-icons/core/assets/fill/moon-fill.svg?raw';
@@ -37,6 +38,7 @@ import aperture from '@phosphor-icons/core/assets/regular/aperture.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
+import arrowsClockwise from '@phosphor-icons/core/assets/regular/arrows-clockwise.svg?raw';
 import arrowsOutLineHorizontal from '@phosphor-icons/core/assets/regular/arrows-out-line-horizontal.svg?raw';
 import arrowsOutSimple from '@phosphor-icons/core/assets/regular/arrows-out-simple.svg?raw';
 import bracketsSquare from '@phosphor-icons/core/assets/regular/brackets-square.svg?raw';
@@ -108,6 +110,7 @@ export const ICONS = {
   'graph-fill': graphFill,
   'hourglass-medium-fill': hourglassMediumFill,
   'info-fill': infoFill,
+  'link-break-fill': linkBreakFill,
   'lock-simple-fill': lockSimpleFill,
   'magnifying-glass-fill': magnifyingGlassFill,
   'moon-fill': moonFill,
@@ -126,6 +129,7 @@ export const ICONS = {
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-left': arrowLeft,
   'arrow-right': arrowRight,
+  'arrows-clockwise': arrowsClockwise,
   'arrows-out-line-horizontal': arrowsOutLineHorizontal,
   'arrows-out-simple': arrowsOutSimple,
   'brackets-square': bracketsSquare,

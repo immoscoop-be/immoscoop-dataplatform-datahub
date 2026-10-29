@@ -9,6 +9,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Collection, Resource } from '../lib/catalogue.js';
   import type { LensItem } from '../lib/query.js';
+  import { brokenText } from '../lib/broken.js';
   import { collectionPath, lensPath, resourcePath } from '../lib/routes.js';
 
   /**
@@ -132,7 +133,7 @@
       <button type="button" class="more" onclick={() => (all[collection.id] = true)}>{t('collections.showAll', { count: items.length })}</button>
     {/if}
     {#each firstLenses as lens (lens.id)}
-      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state === 'published'} />
+      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state !== 'waiting'} broken={brokenText(lens.broken)} />
     {/each}
     {#if firstLenses.length < lensItems.length}
       <button type="button" class="more" onclick={() => (allLenses[collection.id] = true)}>{t('collections.showAll', { count: lensItems.length })}</button>

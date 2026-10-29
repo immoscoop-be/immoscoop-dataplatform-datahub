@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Lenses](../functional/09-lenses.md) |
-| Status | Making a Lens from a query, who sees it, its page and its runs implemented; updating it from its query, growth and Broken follow |
+| Status | Making a Lens from a query, who sees it, its page and its runs, updating and editing it, its growth and Broken implemented; accepting a Lens again and its Messages follow with Messages |
 | Source of truth | This file |
 
 How a query becomes a Lens and how a Lens runs, in the service [query](../../architecture/services/query.md), which keeps the Lenses next to the queries ([DEC-PF-30](00-platform.md#dec-pf-30)).
@@ -35,6 +35,33 @@ query keeps a Lens in `lenses` of its schema: its Collection in catalogue, the q
 
 The runs of a Lens by one User are one query of the kind `lens`, made with their first run, named as the Lens and kept to its current version, one per User and Lens by a unique index. Each run is in the Query Log with its Query ID, and its pages are read as those of any run, by who ran it. Only the Data Team reads such a query and its runs as a query, with their SQL; nobody runs it but through the Lens. The panel of Query lists it as a run on a Lens and opens the Lens, and the tab History of a Resource lists a Lens as one row, made by its author, with the runs of every User ([TR-SR-21](04-stacks-and-resources.md#tr-sr-21)).
 
+<a id="tr-le-04"></a>
+### TR-LE-04 · A Lens is updated from a query used as it, and edited without its SQL
+
+**Status:** Implemented · **Realises:** [FR-LE-06](../functional/09-lenses.md#fr-le-06), [FR-LE-16](../functional/09-lenses.md#fr-le-16), [FR-CO-29](../functional/03-collections.md#fr-co-29), [DEC-LE-04](../functional/09-lenses.md#dec-le-04), [DEC-LE-18](../functional/09-lenses.md#dec-le-18), [DEC-UX-27](../../design/principles.md#dec-ux-27), [DEC-UX-77](../../design/principles.md#dec-ux-77), [DEC-UX-123](../../design/principles.md#dec-ux-123)
+
+`PUT /lenses/{id}/version` makes the next version of a Lens from a query of the User that is used as it: the query it was made from, or one "Open in Query" made. Its SQL and Parameters replace those of the Lens; a Parameter keeps the name Users see, and a new one is named as in the query. The Pre-flight of the query measures it again, as when it was made ([TR-LE-01](#tr-le-01)): within range or approved it is published at once; above 1 GB it waits for the Data Team with its new version, and query sends the Request for it ([MSG-LEN-01](../functional/message-catalogue.md#msg-len-01)). `lens_versions` keeps every version with who made it from which query, and the page of the Lens shows them. Its Owner Unit and the Data Team update it, as catalogue says who manages its Collection; nobody does while it waits.
+
+`POST /lenses/{id}/query` is "Open in Query": for its author, the query it was made from; for anyone else of its Owner Unit or the Data Team, a query of their own with the SQL, Parameters and Resources of the Lens, made once and used as the Lens from then on (`queries.for_lens`, one per User and Lens). Such a query makes no other Lens. `PATCH /lenses/{id}` changes what a Lens tells: its name, question, what it shows, its steps, its tags and the names Users see of its Parameters; never its SQL, its Parameters or its Collection.
+
+A query started with "New Lens" on the page of a Collection keeps that Collection (`queries.for_collection`), and "Make it a lens" offers it first when its author owns it.
+
+<a id="tr-le-05"></a>
+### TR-LE-05 · Only a run with its defaults measures a Lens, and past 1 GB it stops
+
+**Status:** Implemented · **Realises:** [FR-LE-10](../functional/09-lenses.md#fr-le-10), [DEC-LE-11](../functional/09-lenses.md#dec-le-11), [DEC-LE-19](../functional/09-lenses.md#dec-le-19), [DEC-UX-125](../../design/principles.md#dec-ux-125)
+
+When the Pre-flight or a run of a Lens with its default values, and the daily check ([TR-LE-06](#tr-le-06)), reads more than its range, query moves the Lens on: grown into large, its range follows and it keeps running; grown past 1 GB, its state becomes `stopped`, with since when and what one run read, and the Pre-flight and the run answer `409 stopped`. A stopped Lens stays where it is listed, for everyone who sees it, and runs for nobody. A run with values a User chose is that run alone. A new version that reads less publishes it again ([TR-LE-04](#tr-le-04)).
+
+<a id="tr-le-06"></a>
+### TR-LE-06 · A Broken Lens is found on a failed Pre-flight and by a daily check
+
+**Status:** Implemented · **Realises:** [FR-LE-17](../functional/09-lenses.md#fr-le-17), [FR-SR-52](../functional/04-stacks-and-resources.md#fr-sr-52), [DEC-LE-20](../functional/09-lenses.md#dec-le-20), [DEC-UX-81](../../design/principles.md#dec-ux-81)
+
+When BigQuery refuses the dry run of a Lens because a table, view or dataset is not found, or a column is not recognised, query keeps what it misses and since when (`lenses.broken`), writes `BRK-001` in its Log (`lens_log`), and answers the Pre-flight and the run with `409 broken`. Any other refusal is no reason to call it Broken. When a dry run succeeds again, or a new version replaces it, the Lens works again and its Log gets `BRK-002`. Every change of state is written once. Wherever a Lens is listed, it comes with what it misses, for the red dot.
+
+Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/check` with a Google ID token of its own service account `datahub-scheduler`, for the address of query, which query checks itself (`DATAHUB_SCHEDULER_SERVICE_ACCOUNT`, `DATAHUB_QUERY_URL`), as Cloud Run does not check callers. query dry-runs every Lens that does not wait for the Data Team with its defaults: what it misses, what works again, and what grew ([TR-LE-05](#tr-le-05)). A dry run reads nothing and costs nothing. The check right after a new Current Version of a dbt project comes later.
+
 ## Open points
 
-None yet; what "New Lens" on the page of a Collection opens is [OP-UX-43](../../design/principles.md#op-ux-43).
+None yet.

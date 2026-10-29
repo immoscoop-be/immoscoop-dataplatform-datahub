@@ -19,7 +19,8 @@
   import type { Identity } from '../lib/identity.js';
   import type { Registry } from '../lib/registry.js';
   import type { LensItem } from '../lib/query.js';
-  import { collectionPath, lensPath, resourcePath } from '../lib/routes.js';
+  import { brokenText } from '../lib/broken.js';
+  import { collectionPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
   import NotFound from './NotFound.svelte';
@@ -210,6 +211,8 @@
       <div class="actions">
         {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.edit')}</Button>{/if}
         {#if dataTeam}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
+        <!-- A Lens is made from a query: "New Lens" opens one, and its "Make it a lens" offers this Collection first (DEC-UX-123). -->
+        {#if shown.canManage}<Button href={newLensForPath(shown.id)}><Icon name="aperture" />{t('collection.newLens')}</Button>{/if}
       </div>
     </div>
     <div class="status-row">
@@ -278,7 +281,10 @@
   {/if}
 
   {#if lenses}
-    <div class="section-head"><h2>{t('collection.lenses')}</h2></div>
+    <div class="section-head">
+      <h2>{t('collection.lenses')}</h2>
+      {#if shown.canManage && !editing}<a class="text-link" href={newLensForPath(shown.id)}><Icon name="plus-circle-fill" /><span>{t('collection.newLens')}</span></a>{/if}
+    </div>
     {#if lenses.length === 0}
       <p class="meta empty">{t('collection.lenses.none')}</p>
     {:else}
@@ -292,10 +298,10 @@
           </tr>
         {/snippet}
         {#each lenses.toSorted((a, b) => a.name.localeCompare(b.name)) as lens (lens.id)}
-          <tr class:quiet={lens.state !== 'published'}>
+          <tr class:quiet={lens.state === 'waiting'}>
             <td>
-              <a class="name" href={lensPath(lens.id)}><KindIcon kind="lens" /><span>{lens.name}</span></a>
-              {#if lens.state === 'waiting'}<span class="deprecated">{t('collection.lenses.waiting')}</span>{/if}
+              <a class="name" href={lensPath(lens.id)}><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span>{lens.name}</span></a>
+              {#if lens.state === 'waiting'}<span class="deprecated">{t('collection.lenses.waiting')}</span>{:else if lens.state === 'stopped'}<span class="deprecated">{t('status.stopped')}</span>{/if}
             </td>
             <td class="muted">{lens.resources.map((resource) => resource.displayName).join(', ')}</td>
             <td><span class="level"><MaturityIcon level={lens.level} tooltip={false} />{levelName(lens.level)}</span></td>

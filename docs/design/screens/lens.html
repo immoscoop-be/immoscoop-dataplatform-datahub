@@ -9,7 +9,7 @@
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
-  The switches at the bottom show the result up to date, after a change, before the first run, while choosing a value and Broken (?state=broken, DEC-UX-81), as the Owner Unit or a colleague.
+  The switches at the bottom show the result up to date, after a change, before the first run, while choosing a value, Broken (?state=broken, DEC-UX-81) and stopped, after a run with its defaults grew past 1 GB (?state=stopped, DEC-UX-125, DEC-LE-11), as the Owner Unit or a colleague.
   The page sits under Collections (DEC-UX-66): the panel is that of Collections, with Credit leads unfolded and this Lens
   marked as open; there is no section Lenses.
   Requirements: FR-CO-19, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-51, FR-LN-06, FR-LE-03, FR-LE-04, FR-LE-06, FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-17, FR-CH-01, FR-CV-07
@@ -117,7 +117,7 @@
 <div class="breadcrumb">Collections / Credit leads</div>
 <div style="display:flex;align-items:flex-start;gap:12px;margin-top:8px">
  <div style="flex:1;min-width:0">
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-aperture" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i>Leads per source name</h1><span style="display:flex;gap:8px;align-items:center"><span class="maturity" data-level="4" role="img" aria-label="Level 4 · Explored" title="4 · Explored"></span><span class="status broken" data-pane-group="state" data-pane="broken" hidden>Broken</span></span></div>
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-aperture" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i>Leads per source name</h1><span style="display:flex;gap:8px;align-items:center"><span class="maturity" data-level="4" role="img" aria-label="Level 4 · Explored" title="4 · Explored"></span><span class="status broken" data-pane-group="state" data-pane="broken" hidden>Broken</span><span class="status" data-pane-group="state" data-pane="stopped" hidden>Stopped</span></span></div>
   <p style="margin:6px 0 0;color:var(--text-secondary);font-size:var(--text-small);line-height:1.5;max-width:640px">How many leads each lead source brings in, from a week you choose.</p>
  </div>
  <a class="btn-quiet outline" href="lens-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
@@ -125,15 +125,16 @@
  <a class="btn-quiet outline" href="lens-new.html" data-for="owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
 </div>
 <div class="alert urgent" data-pane-group="state" data-pane="broken" hidden><i class="ph-fill ph-link-break"></i><p><b>This Lens can't run.</b> The column <span class="mono">lead_channel</span> of Weekly lead volume no longer exists, since the dbt run of 28 Oct 2026. It works again by itself when the column comes back. <span data-for="colleague">Its Owners have been told.</span><span data-for="owner">If it does not come back, change the query of the Lens.</span></p><a class="alert-btn" href="query.html" data-for="owner">Open its query</a></div>
+<div class="alert" data-pane-group="state" data-pane="stopped" hidden><i class="ph-fill ph-hourglass-medium"></i><p><b>This Lens stopped.</b> One run with its defaults now reads 1.4 GB, above 1 GB, since 28 Oct 2026: it waits for the Data Team to accept it again, and until then it runs for nobody. <span data-for="colleague">Its Owners have been told.</span><span data-for="owner">To make it read less, change its query and update the Lens.</span></p><a class="alert-btn" href="query.html" data-for="owner">Open its query</a></div>
 <div class="tabs" data-group="lenstab" role="tablist">
  <button class="tab on" data-target="run" role="tab" aria-selected="true">Run</button>
  <button class="tab" data-target="about" role="tab" aria-selected="false">About</button>
 </div>
 <div class="tab-content card">
  <div class="lens-run" data-pane-group="lenstab" data-pane="run">
-  <section class="lens-request" data-pane-group="state" data-pane="fresh broken" aria-label="Parameters">
+  <section class="lens-request" data-pane-group="state" data-pane="fresh broken stopped" aria-label="Parameters">
    <details class="param-panel">
-    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this month</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>All channels</span></span><i class="ph ph-caret-down param-caret"></i></summary>
+    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this month</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>Form</span></span><i class="ph ph-caret-down param-caret"></i></summary>
     <div class="param-grid">
      <div class="field">
       <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
@@ -159,12 +160,12 @@
      </div>
      <div class="field">
       <span class="param-head">Lead channel</span>
-      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">All channels</span><i class="ph ph-caret-down"></i></button>
+      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">Form</span><i class="ph ph-caret-down"></i></button>
      </div>
     </div>
    </details>
    <div class="run-cell">
-    <span data-pane-group="state" data-pane="broken" hidden><button class="btn-primary run-btn" disabled title="It reads a column that no longer exists"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button></span>
+    <span data-pane-group="state" data-pane="broken stopped" hidden><button class="btn-primary run-btn" disabled title="It does not run now"><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button></span>
     <span data-pane-group="state" data-pane="fresh notrun editing"><button class="btn-primary run-btn" title="Pre-flight: at most 80 MB, 4 of 312 partitions"><i class="ph-fill ph-play" style="font-size:14px"></i>Run<span class="run-gb">80 MB</span></button></span>
     <span data-pane-group="state" data-pane="changed" hidden><button class="btn-primary run-btn high" title="Above 100 MB you approve the run yourself"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
      <span class="run-pop" role="tooltip"><b>840 MB, above 100 MB:</b> you approve this run yourself.<br>It reads 42 of the 312 partitions of Weekly lead volume, one per week, through <span class="mono">week_start</span>. A later From reads less: from the start of this month, 80 MB.</span></span>
@@ -172,7 +173,7 @@
   </section>
   <section class="lens-request" data-pane-group="state" data-pane="changed notrun editing" hidden aria-label="Parameters">
    <details class="param-panel" open>
-    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this month</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>All channels</span></span><i class="ph ph-caret-down param-caret"></i></summary>
+    <summary><span class="nq-title">Parameters</span><span class="param-summary"><span class="param-chip"><span class="meta">From</span><i class="ph ph-function" aria-label="Function"></i>Start of this month</span><span class="param-chip"><span class="meta">To</span><i class="ph ph-function" aria-label="Function"></i>Today − 3 days</span><span class="param-chip"><span class="meta">Lead channel</span>Form</span></span><i class="ph ph-caret-down param-caret"></i></summary>
     <div class="param-grid">
      <div class="field">
       <span class="param-head">From<button class="param-reset" data-pane-group="state" data-pane="changed" hidden><i class="ph ph-arrow-counter-clockwise"></i>Default</button></span>
@@ -198,7 +199,7 @@
      </div>
      <div class="field">
       <span class="param-head">Lead channel</span>
-      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">All channels</span><i class="ph ph-caret-down"></i></button>
+      <button class="param-control" type="button" aria-haspopup="listbox"><span class="param-main">Form</span><i class="ph ph-caret-down"></i></button>
      </div>
     </div>
    </details>
@@ -210,7 +211,7 @@
   </section>
   <section class="lens-result" aria-label="Result">
    <div data-pane-group="state" data-pane="fresh editing">
-    <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Oct 2026 to 20 Oct 2026, all channels</span></div>
+    <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Oct 2026 to 20 Oct 2026, lead channel Form</span></div>
    </div>
    <div data-pane-group="state" data-pane="changed" hidden>
     <div class="size-state caution" style="margin:0 0 10px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The Parameters changed.</b> This result is still for From 1 Oct 2026; run again to see it for 1 Jan 2026.</p></div>
@@ -237,6 +238,9 @@
    </div>
    <div data-pane-group="state" data-pane="broken" hidden>
     <div class="result-empty broken"><i class="ph ph-link-break"></i><p><b>Can't run.</b> The Lens reads <span class="mono">lead_channel</span> of Weekly lead volume, which no longer exists. Its last result is not shown, so that nobody takes it for today's.</p></div>
+   </div>
+   <div data-pane-group="state" data-pane="stopped" hidden>
+    <div class="result-empty"><i class="ph ph-hourglass-medium"></i><p><b>Stopped.</b> The Lens waits for the Data Team. Its last result is not shown, so that nobody takes it for today's.</p></div>
    </div>
    <div data-pane-group="state" data-pane="notrun" hidden>
     <div class="result-empty"><i class="ph ph-play-circle"></i><p><b>Not run yet.</b> Set the Parameters above and run the Lens. A Lens does not run by itself when you open it: every run is a query, with its Pre-flight.</p></div>
@@ -274,7 +278,7 @@
    <table class="data-table about-params"><thead><tr><th>Name</th><th>Type</th><th>Default</th></tr></thead><tbody>
     <tr><td>From</td><td class="muted">Date</td><td><span class="param-default" title="The default of this Parameter">Default: <i class="ph ph-function" aria-label="Function"></i>start of this month</span></td></tr>
     <tr><td>To</td><td class="muted">Date</td><td><span class="param-default" title="The default of this Parameter">Default: <i class="ph ph-function" aria-label="Function"></i>today − 3 days</span></td></tr>
-    <tr><td>Lead channel</td><td class="muted">List</td><td><span class="param-default" title="The default of this Parameter">Default: all channels</span></td></tr>
+    <tr><td>Lead channel</td><td class="muted">List</td><td><span class="param-default" title="The default of this Parameter">Default: Form</span></td></tr>
    </tbody></table>
    <p class="meta" style="display:block;line-height:1.5;margin-top:8px">A default with <i class="ph ph-function"></i> is worked out at every run. To stops three days back, as the leads of a week are final after three days.</p>
   </section>
@@ -300,6 +304,7 @@
  <button class="seg" data-target="notrun" role="tab" aria-selected="false">Not run yet</button>
  <button class="seg" data-target="editing" role="tab" aria-selected="false">Choosing a value</button>
  <button class="seg" data-target="broken" role="tab" aria-selected="false">Broken</button>
+ <button class="seg" data-target="stopped" role="tab" aria-selected="false">Stopped</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as" style="bottom:72px">Seen as
  <button class="seg" data-target="owner" role="tab" aria-selected="false">Owner</button>

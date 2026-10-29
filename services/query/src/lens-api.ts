@@ -1,9 +1,12 @@
+import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { type BigQuery, BigQueryRefused } from './bigquery.js';
+import { missingIn, missingOf } from './broken.js';
 import type { Catalogue, QueryRequest, SeenCollection } from './catalogue.js';
-import type { NamedResource } from './database.js';
+import type { LensRange, NamedResource } from './database.js';
 import type { Lens, LensParameter, Lenses } from './lenses.js';
-import { type Parameter, parseParameters } from './parameters.js';
-import type { Preflight, ResourceOfQuery, Thresholds } from './preflight.js';
+import { bind, type Parameter, parseParameters } from './parameters.js';
+import { type Preflight, rangeOf, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import type { Queries, Query, Viewer } from './queries.js';
 
 /** What the routes of Lenses share with those of queries: who asks, the checks and a run. */
@@ -12,6 +15,9 @@ export interface LensContext {
   queries: Queries;
   catalogue: Catalogue;
   thresholds: Thresholds;
+  bigquery: BigQuery;
+  /** Who may start the daily check of every Lens: the scheduler, by a Google ID token (DEC-LE-20). */
+  checkers: ServiceCallerVerifier;
   viewer(request: FastifyRequest): Viewer;
   authorization(request: FastifyRequest): string;
   resourcesOf(request: FastifyRequest, of: { resources: NamedResource[] }): Promise<ResourceOfQuery[]>;
@@ -24,6 +30,8 @@ const NO_LENS = { error: 'not_found', message: 'There is no such Lens, or you ma
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TAG = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,29}$/u;
 const LIMITS = { name: 120, question: 500, shows: 500, steps: 20, step: 300, tags: 10, label: 60, text: 500 };
+/** The ranges of one run, from small to large (DEC-SR-29). */
+const ORDER: Record<LensRange, number> = { free: 0, approve: 1, request: 2 };
 
 /** What its author tells about a Lens when making it from a query (FR-LE-06, FR-LE-07, DEC-LE-16). */
 export interface LensFields {
@@ -89,6 +97,27 @@ export function parseLens(body: unknown): LensFields | string {
   };
 }
 
+/** What its Owner Unit changes about a Lens: its texts, tags and the names Users see, never its SQL. */
+export function parseEdit(body: unknown): Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>> | string {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
+  const fields = body as Record<string, unknown>;
+  const editable = ['name', 'question', 'shows', 'steps', 'tags', 'labels'];
+  const unknown = Object.keys(fields).find((key) => !editable.includes(key));
+  if (unknown) return `A Lens has no field ${unknown} to change here.`;
+  if (Object.keys(fields).length === 0) return 'Send at least one field to change.';
+  // The same rules as when it was made, on a query and a Collection that do not change.
+  const parsed = parseLens({ queryId: '00000000-0000-4000-8000-000000000000', collectionId: '00000000-0000-4000-8000-000000000000', name: 'x', ...fields });
+  if (typeof parsed === 'string') return parsed;
+  const changes: Partial<Pick<LensFields, 'name' | 'question' | 'shows' | 'steps' | 'tags' | 'labels'>> = {};
+  if (fields.name !== undefined) changes.name = parsed.name;
+  if (fields.question !== undefined) changes.question = parsed.question;
+  if (fields.shows !== undefined) changes.shows = parsed.shows;
+  if (fields.steps !== undefined) changes.steps = parsed.steps;
+  if (fields.tags !== undefined) changes.tags = parsed.tags;
+  if (fields.labels !== undefined) changes.labels = parsed.labels;
+  return changes;
+}
+
 /** A Parameter as BigQuery and the checks need it: without the name Users see. */
 const plain = ({ label: _label, ...parameter }: LensParameter): Parameter => parameter as Parameter;
 
@@ -130,7 +159,7 @@ const requestView = (request: QueryRequest | undefined) => (request ? { state: r
  * one with its Parameters, every run a query in the Query Log (FR-LE-12).
  */
 export async function lensRoutes(app: FastifyInstance, context: LensContext): Promise<void> {
-  const { lenses, queries, catalogue, thresholds, viewer, authorization, resourcesOf, check, unavailable, execute } = context;
+  const { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, unavailable, execute } = context;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const collections = await catalogue.collections(authorization(request));
@@ -168,12 +197,22 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       mine: lens.authorId === sight.who.id,
       createdAt: lens.createdAt,
       publishedAt: lens.publishedAt,
+      // What it misses, for the red dot wherever it is listed (DEC-UX-81).
+      broken: lens.broken,
     };
   }
 
+  /** Whether the User may change the Lens: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
+  const managesLens = (sight: Sight, lens: Lens) => sight.who.dataTeam || sight.collections.get(lens.collectionId)?.canManage === true;
+
   /** A Lens as its page shows it: everything but its SQL, which no page shows (FR-LE-14, DEC-UX-27). */
   async function viewOf(request: FastifyRequest, sight: Sight, lens: Lens) {
-    const from = await queries.get(lens.queryId);
+    const [from, versions, log] = await Promise.all([queries.get(lens.queryId), lenses.versions(lens.id), lenses.log(lens.id)]);
+    // The name of the query each version came from, for its history (DEC-LE-18).
+    const names = new Map<string, string>();
+    for (const version of versions) {
+      if (!names.has(version.fromQueryId)) names.set(version.fromQueryId, (await queries.get(version.fromQueryId))?.name ?? '');
+    }
     let request_: QueryRequest | undefined;
     if (lens.state === 'waiting') {
       try {
@@ -190,12 +229,16 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         const seen = sight.resources.get(id);
         return { id, displayName: seen?.displayName ?? displayName, collectionId: seen?.collectionId ?? null, level: seen?.level ?? 0 };
       }),
-      canManage: sight.who.dataTeam || sight.collections.get(lens.collectionId)?.canManage === true,
+      canManage: managesLens(sight, lens),
       version: lens.version,
       range: lens.range,
       reads: lens.reads,
+      stoppedAt: lens.stoppedAt,
+      stoppedReads: lens.stoppedReads,
       fromQuery: from ? { id: from.id, name: from.name } : null,
       request: requestView(request_),
+      versions: versions.map(({ version, madeByName, madeAt, fromQueryId }) => ({ version, madeByName, madeAt, fromQuery: names.get(fromQueryId) ?? '' })),
+      log,
     };
   }
 
@@ -229,7 +272,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const query = await queries.get(fields.queryId);
     if (!query || query.kind !== 'query' || (query.ownerId !== who.id && !who.dataTeam)) return reply.code(404).send({ error: 'not_found', message: 'There is no such query, or it is not yours.' });
     if (query.ownerId !== who.id) return reply.code(403).send({ error: 'forbidden', message: 'Only who made a query makes it a Lens.' });
-    const already = await lenses.ofQuery(query.id);
+    const already = (await lenses.ofQuery(query.id)) ?? (query.forLens ? await lenses.get(query.forLens) : undefined);
     if (already) return reply.code(409).send({ error: 'already_a_lens', message: 'This query is used as a Lens already.', lens: { id: already.id, name: already.name } });
     let checked: Preflight;
     try {
@@ -301,11 +344,37 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     if (body.approve !== undefined && typeof body.approve !== 'boolean') return void reply.code(400).send({ error: 'invalid_request', message: 'approve is true or false.' });
     const seen = await seenLens(request, reply);
     if (!seen) return undefined;
-    // While it waits for the Data Team, a Lens is frozen and does not run (DEC-LE-05).
+    // While it waits for the Data Team, a Lens is frozen and does not run (DEC-LE-05); stopped, it runs for nobody (DEC-LE-11).
     if (seen.lens.state === 'waiting') return void reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team.' });
+    if (seen.lens.state === 'stopped') return void reply.code(409).send({ error: 'stopped', message: 'This Lens stopped: it waits for the Data Team to accept it again.' });
     const parameters = valuesFor(seen.lens, body.values);
     if (typeof parameters === 'string') return void reply.code(400).send({ error: 'invalid_request', message: parameters });
-    return { lens: seen.lens, parameters, approve: body.approve === true };
+    const defaults = JSON.stringify(parameters) === JSON.stringify(valuesFor(seen.lens, undefined));
+    return { lens: seen.lens, parameters, defaults, approve: body.approve === true };
+  }
+
+  /**
+   * What a Pre-flight of a Lens tells about the Lens itself: it misses a table or a column, or works again
+   * (FR-LE-17); and with its defaults, whether it grew past its range (DEC-LE-11, DEC-LE-19). It answers
+   * when the Lens can no longer run.
+   */
+  async function upkeep(reply: FastifyReply, lens: Lens, checked: Preflight, defaults: boolean): Promise<Lens | undefined> {
+    const missing = missingIn(checked);
+    if (missing) {
+      const broken = await lenses.breaks(lens.id, missing);
+      void reply.code(409).send({ error: 'broken', message: `This Lens reads ${missing.name}, which no longer exists.`, broken: broken.broken });
+      return undefined;
+    }
+    let kept = lens;
+    if (lens.broken && checked.runnable) kept = await lenses.works(lens.id);
+    if (defaults && checked.runnable && checked.range && ORDER[checked.range] > ORDER[kept.range]) {
+      kept = await lenses.grow(lens.id, checked.range, checked.bytes ?? 0);
+      if (kept.state === 'stopped') {
+        void reply.code(409).send({ error: 'stopped', message: 'One run with its defaults now reads more than 1 GB: the Lens stopped until the Data Team accepts it again.', stoppedReads: kept.stoppedReads });
+        return undefined;
+      }
+    }
+    return kept;
   }
 
   // The Pre-flight of a run, in the button that runs it (DEC-UX-28).
@@ -313,7 +382,9 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const run = await runnable(request, reply);
     if (!run) return reply;
     try {
-      return { preflight: await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens)) };
+      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
+      if (!(await upkeep(reply, run.lens, checked, run.defaults))) return reply;
+      return { preflight: checked };
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -323,9 +394,136 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/runs', async (request, reply) => {
     const run = await runnable(request, reply);
     if (!run) return reply;
+    try {
+      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
+      if (!(await upkeep(reply, run.lens, checked, run.defaults))) return reply;
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
     const query = await queries.lensFor(viewer(request), run.lens);
     return execute(request, reply, query, { sql: run.lens.sql, parameters: run.parameters, approve: run.approve });
   });
+
+  /** The Lens, if the User sees it and may change it; while it waits for the Data Team, nobody changes it (DEC-LE-05). */
+  async function managed(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    const seen = await seenLens(request, reply);
+    if (!seen) return undefined;
+    if (!managesLens(seen.sight, seen.lens)) return void reply.code(403).send({ error: 'forbidden', message: 'Only its Owner Unit and the Data Team change a Lens.' });
+    return seen;
+  }
+
+  // Its Owner Unit changes what a Lens tells, never its SQL: that is its query (FR-LE-06, DEC-UX-27).
+  app.patch<{ Params: { id: string }; Body: unknown }>('/lenses/:id', async (request, reply) => {
+    const changes = parseEdit(request.body);
+    if (typeof changes === 'string') return reply.code(400).send({ error: 'invalid_request', message: changes });
+    const seen = await managed(request, reply);
+    if (!seen) return reply;
+    if (seen.lens.state === 'waiting') return reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team: nobody changes it until they decide.' });
+    const lens = await lenses.edit(seen.lens.id, changes);
+    return { lens: await viewOf(request, seen.sight, lens) };
+  });
+
+  // "Open in Query" (DEC-LE-18): its query for its author; a query of their own, used as the Lens, for anyone else.
+  app.post<{ Params: { id: string } }>('/lenses/:id/query', async (request, reply) => {
+    const seen = await managed(request, reply);
+    if (!seen) return reply;
+    const who = viewer(request);
+    const source = await queries.get(seen.lens.queryId);
+    if (source && source.ownerId === who.id) return { queryId: source.id };
+    const own = await queries.forLens(who, seen.lens);
+    return reply.code(own.created ? 201 : 200).send({ queryId: own.query.id });
+  });
+
+  // "Update the lens" (FR-LE-16): the SQL and Parameters of a query used as it, measured again, as its next version.
+  app.put<{ Params: { id: string }; Body: unknown }>('/lenses/:id/version', async (request, reply) => {
+    const body = (request.body ?? {}) as { queryId?: unknown; approve?: unknown; text?: unknown };
+    if (typeof body.queryId !== 'string' || !UUID.test(body.queryId)) return reply.code(400).send({ error: 'invalid_request', message: 'A Lens is updated from a query, named by its ID.' });
+    if (body.approve !== undefined && typeof body.approve !== 'boolean') return reply.code(400).send({ error: 'invalid_request', message: 'approve is true or false.' });
+    const text = body.text ?? '';
+    if (typeof text !== 'string' || text.trim().length > LIMITS.text) return reply.code(400).send({ error: 'invalid_request', message: `A word for the Data Team has at most ${LIMITS.text} characters.` });
+    const seen = await managed(request, reply);
+    if (!seen) return reply;
+    const { lens } = seen;
+    if (lens.state === 'waiting') return reply.code(409).send({ error: 'waiting', message: 'This Lens waits for the Data Team: nobody changes it until they decide.' });
+    const who = viewer(request);
+    const query = await queries.get(body.queryId);
+    // Only a query of the User that is used as this Lens updates it (DEC-LE-04, DEC-LE-18).
+    if (!query || query.ownerId !== who.id || (query.id !== lens.queryId && query.forLens !== lens.id)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Lens is updated from a query of yours that is used as it.' });
+    }
+    let checked: Preflight;
+    try {
+      checked = await check(query.sql, query.parameters, await resourcesOf(request, query));
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    if (!checked.runnable || checked.range === null) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
+    if (checked.range === 'approve' && body.approve !== true) {
+      return reply.code(409).send({ error: 'approval_needed', message: 'One run reads more than 100 MB: update it anyway, or make it read less.', preflight: checked });
+    }
+    // A Parameter keeps the name Users see; a new one is named as in the query, until its Owner Unit names it.
+    const parameters: LensParameter[] = query.parameters
+      .filter((parameter) => !checked.unused.includes(parameter.name))
+      .map((parameter) => ({ ...parameter, label: lens.parameters.find((known) => known.name === parameter.name)?.label ?? parameter.name }));
+    const updated = await lenses.version(lens.id, { by: who, query, parameters, range: checked.range, reads: checked.bytes ?? 0 });
+    if (updated.state === 'waiting') {
+      try {
+        await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: updated.reads, threshold: thresholds.request, text: text.trim(), partitions: checked.partitions }, authorization(request));
+      } catch (error) {
+        request.log.error({ err: error }, 'The Request on a new version of a Lens could not be sent');
+      }
+    }
+    return { lens: await viewOf(request, seen.sight, updated), preflight: checked };
+  });
+
+  // Once a day the scheduler has every Lens dry-run with its defaults (DEC-LE-20): what it misses, what works
+  // again, and what grew (DEC-LE-19). A dry run reads nothing and costs nothing. No User starts it, so it
+  // takes the Google ID token of the scheduler instead of an Access Token.
+  app.post(
+    '/internal/lenses/check',
+    {
+      config: { public: true },
+      onRequest: async (request, reply) => {
+        const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+        try {
+          await checkers.verify(token);
+        } catch (error) {
+          request.log.warn({ err: error }, 'a call for /internal/lenses/check was refused');
+          return reply.code(401).send({ error: 'unauthorized', message: 'Only the scheduler checks every Lens.' });
+        }
+      },
+    },
+    async (request) => {
+      const outcome = { checked: 0, broken: 0, works: 0, grown: 0, stopped: 0 };
+      for (const lens of await lenses.list()) {
+        if (lens.state === 'waiting') continue;
+        outcome.checked += 1;
+        const bound = bind(lens.sql, valuesFor(lens, undefined) as Parameter[]);
+        try {
+          const dry = await bigquery.dryRun(bound.sql, bound.parameters);
+          if (lens.broken) {
+            await lenses.works(lens.id);
+            outcome.works += 1;
+          }
+          const range = rangeOf(dry.bytes, thresholds);
+          if (lens.state === 'published' && ORDER[range] > ORDER[lens.range]) {
+            const grown = await lenses.grow(lens.id, range, dry.bytes);
+            outcome[grown.state === 'stopped' ? 'stopped' : 'grown'] += 1;
+          }
+        } catch (error) {
+          const missing = error instanceof BigQueryRefused ? missingOf(error.message) : null;
+          if (missing) {
+            if (!lens.broken) outcome.broken += 1;
+            await lenses.breaks(lens.id, missing);
+          } else {
+            request.log.warn({ err: error, lens: lens.id }, 'A Lens could not be checked');
+          }
+        }
+      }
+      request.log.info(outcome, 'Every Lens checked');
+      return outcome;
+    },
+  );
 
   // Its author sends the Request on a waiting Lens again, when it could not be sent; one that waits is given back.
   app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/requests', async (request, reply) => {

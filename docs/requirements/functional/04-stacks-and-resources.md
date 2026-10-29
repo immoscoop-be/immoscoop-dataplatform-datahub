@@ -619,6 +619,8 @@ Data Hub looks for Broken assets at three moments:
 
 For each Resource found, Data Hub takes from its database what reads it ([DEC-DH-68](../../overview/data-hub.md#dec-dh-68)) and does a dry run of each Lens, feed and query: one that fails on a missing table or column becomes Broken, with what is missing; one that was Broken and now succeeds works again. A Report follows its Lenses. A dry run reads nothing and costs nothing. Every change of state goes into the Log of the asset (`BRK-001`, `BRK-002` in the [Log catalogue](log-catalogue.md)) and into its Message ([MSG-LEN-05](message-catalogue.md#msg-len-05), [MSG-QRY-02](message-catalogue.md#msg-qry-02), [MSG-RPT-01](message-catalogue.md#msg-rpt-01)).
 
+*Note of 2026-10-29: for Lenses, the first and third moment are built first, the second, right after a new Current Version, later ([DEC-LE-20](09-lenses.md#dec-le-20)).*
+
 <a id="fr-sr-53"></a>
 ### FR-SR-53 · A query that reads what no longer exists is Broken
 

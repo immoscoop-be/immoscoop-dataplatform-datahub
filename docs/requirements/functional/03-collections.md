@@ -339,13 +339,17 @@ The page lists the Lenses in the Collection, which its Owner Unit added ([DEC-CO
 <a id="fr-co-29"></a>
 ### FR-CO-29 · A Lens is started from the page of a Collection
 
-**Status:** Specified · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** [DEC-UX-14](../../design/principles.md#dec-ux-14) · **Screens:** [collection-overview](../../design/screens/collection-overview.html)
 
 From the page of a Collection, its Owner Unit starts a new Lens in it ([DEC-CO-15](#dec-co-15)); nobody else can. Whether such a Lens may also use Resources of other Collections is open ([OP-CO-07](#op-co-07)), and so is how the story is asked first ([FR-LE-05](09-lenses.md#fr-le-05), [OP-LE-01](09-lenses.md#op-le-01)).
 
 *Note of 2026-10-25: the Data Team can start one too ([DEC-CO-18](#dec-co-18)), and everyone may build Lenses on every Resource they can see ([DEC-CO-17](#dec-co-17)), so such a Lens can use Resources of other Collections.*
 
 *Note of 2026-10-26: such a Lens may use Resources of other Collections, and a Lens made from a query goes into a Collection its author owns ([DEC-CO-20](#dec-co-20)).*
+
+*Note of 2026-10-29: "New Lens" opens a new query, and "Make it a lens" on it offers this Collection first ([DEC-UX-123](../../design/principles.md#dec-ux-123)).*
+
+*Note of 2026-10-29, on building part 6b: "New Lens" opens a new query that keeps the Collection, and "Make it a lens" offers it first ([TR-LE-04](../technical/09-lenses.md#tr-le-04)).*
 
 <a id="fr-co-30"></a>
 ### FR-CO-30 · The details are edited on the page

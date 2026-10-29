@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { renderLog } from '@datahub/contracts/log';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
@@ -14,12 +15,14 @@
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Chip from '@datahub/ui/primitives/Chip.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import type { Collection } from '../lib/catalogue.js';
+  import { missingText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import { describe, formatDay, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, LensValue as Value, Page, Parameter, Preflight, QueryClient, Run } from '../lib/query.js';
-  import { collectionPath, queryPath, resourcePath } from '../lib/routes.js';
+  import { collectionPath, editLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import LensValue from './LensValue.svelte';
 
   /**
@@ -30,8 +33,25 @@
    * of Query with what it read and its Query ID (DEC-LE-08), marked as for the old values once one changes
    * (FR-LE-12). About: its question, what it shows, who made it, its tags, its steps as its author wrote
    * them (DEC-UX-121), what it is built on and its Level, its Parameters and its history. No SQL (FR-LE-14).
+   * For its Owner Unit, "Open in Query" and "Edit" (DEC-UX-27, DEC-LE-18). A Broken Lens (DEC-UX-81) and one
+   * that stopped (DEC-UX-125) say so in a chip and a callout on top, with "Open its query" for its Owner
+   * Unit; Run is off and no result shows.
    */
-  let { lens, client, collection }: { lens: Lens; client: QueryClient; collection: Collection | undefined } = $props();
+  let {
+    lens,
+    client,
+    collection,
+    onchanged,
+    onopened,
+  }: {
+    lens: Lens;
+    client: QueryClient;
+    collection: Collection | undefined;
+    /** The Lens stopped or broke when it was checked: it is read again. */
+    onchanged: () => void;
+    /** "Open in Query" gave the query to open (DEC-LE-18). */
+    onopened: (queryId: string) => void;
+  } = $props();
 
   /** How long changing a value pauses before the Pre-flight is asked. */
   const PAUSE = 400;
@@ -51,6 +71,11 @@
   /** The values the result on screen ran with. */
   let ranWith = $state('');
   let paging = $state(false);
+  let opening = $state(false);
+  let openFailed = $state(false);
+
+  /** It does not run now: it misses what it reads, or it waits for the Data Team after it grew (DEC-UX-81, DEC-UX-125). */
+  const halted = $derived(lens.broken !== null || lens.state === 'stopped');
 
   // Another Lens: its defaults, and nothing run yet (DEC-LE-12).
   let shownFor: string | undefined;
@@ -72,13 +97,18 @@
     const chosen = $state.snapshot(values) as Record<string, Value>;
     const id = lens.id;
     const asked = ++sequence;
+    if (halted) {
+      checking = false;
+      return;
+    }
     checking = true;
     const timer = setTimeout(() => {
       client.lensPreflight(id, chosen).then(
         (found) => {
           if (asked !== sequence) return;
-          preflight = found;
           checking = false;
+          if ('kind' in found) onchanged();
+          else preflight = found;
         },
         (error: unknown) => {
           if (asked === sequence) checking = false;
@@ -122,6 +152,10 @@
       failure = t('lens.run.failed');
       return;
     }
+    if (outcome.kind === 'halted') {
+      onchanged();
+      return;
+    }
     if (outcome.kind === 'refused') {
       preflight = outcome.preflight;
       return;
@@ -129,6 +163,20 @@
     ranWith = ran;
     if (outcome.kind === 'ran') [run, page] = [outcome.run, outcome.page];
     else [run, page, failure] = [outcome.run, null, outcome.message];
+  }
+
+  /** "Open in Query": its query for its author, a query of their own for anyone else of its Owner Unit (DEC-LE-18). */
+  async function openQuery(): Promise<void> {
+    opening = true;
+    openFailed = false;
+    try {
+      onopened(await client.openLens(lens.id));
+    } catch (error) {
+      console.error('The query of the Lens could not be opened', error);
+      openFailed = true;
+    } finally {
+      opening = false;
+    }
   }
 
   async function turn(number: number): Promise<void> {
@@ -153,11 +201,32 @@
   const stale = $derived(run !== null && ranWith !== key);
   const level = $derived(levelName(lens.level));
   const day = (at: string) => formatDay(at.slice(0, 10), language);
+  /** What a Broken Lens misses, as people read it: a table or a column (FR-LE-17). */
+  const missing = $derived(missingText(lens.broken) ?? '');
+  /** Its history, newest first: every version, from which query (DEC-LE-18), when it stopped, and its Log (FR-SR-52). */
+  const history = $derived(
+    [
+      ...lens.versions.map((version) => ({
+        at: version.madeAt,
+        text:
+          version.version === 1
+            ? t('lens.about.made', { name: version.madeByName, query: version.fromQuery })
+            : t('lens.about.version', { version: version.version, name: version.madeByName, query: version.fromQuery }),
+        link: version.version === 1 && lens.mine && lens.fromQuery ? queryPath(lens.fromQuery.id) : null,
+      })),
+      ...(lens.stoppedAt && lens.stoppedReads !== null ? [{ at: lens.stoppedAt, text: t('lens.about.stopped', { bytes: bytes(lens.stoppedReads) }), link: null }] : []),
+      ...lens.log.map((entry) => ({ at: entry.at, text: renderLog(entry.logId, entry.params, language), link: null })),
+    ].toSorted((a, b) => b.at.localeCompare(a.at)),
+  );
   const TABS = [
     { id: 'run', label: 'lens.tab.run' },
     { id: 'about', label: 'lens.tab.about' },
   ] as const;
 </script>
+
+{#snippet openAction()}
+  <Button variant="outline" disabled={opening} onclick={openQuery}>{t('lens.openQuery')}</Button>
+{/snippet}
 
 {#snippet approveExplain()}
   <!-- Above 100 MB its User approves the run, and learns how many partitions it reads (DEC-UX-28, FR-SR-40). -->
@@ -171,17 +240,34 @@
 <Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, collection ? { label: collection.name, href: collectionPath(collection.id) } : { label: '' }]} />
 <div class="head">
   <div class="titles">
-    <h1 class="page-title"><KindIcon kind="lens" />{lens.name}<MaturityIcon level={lens.level} /></h1>
+    <div class="title-row">
+      <h1 class="page-title"><KindIcon kind="lens" />{lens.name}<MaturityIcon level={lens.level} /></h1>
+      {#if lens.broken}<Chip variant="broken">{t('status.broken')}</Chip>{:else if lens.state === 'stopped'}<Chip variant="warn"><Icon name="hourglass-medium-fill" />{t('status.stopped')}</Chip>{/if}
+    </div>
     {#if lens.shows}<p class="shows">{lens.shows}</p>{/if}
   </div>
   <div class="actions">
     <Button variant="outline" disabled title={t('resource.later')}><Icon name="chat-circle-text-fill" />{t('resource.messages')}</Button>
     {#if lens.canManage}
-      <Button variant="outline" disabled title={t('resource.later')}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
-      <Button variant="outline" disabled title={t('resource.later')}><Icon name="pencil-simple-fill" />{t('lens.edit')}</Button>
+      <Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
+      <Button variant="outline" href={editLensPath(lens.id)}><Icon name="pencil-simple-fill" />{t('lens.edit')}</Button>
     {/if}
   </div>
 </div>
+{#if openFailed}<p class="failed" role="alert">{t('lens.openInQuery.failed')}</p>{/if}
+{#if lens.broken}
+  <Callout icon="link-break-fill" tone="urgent" action={lens.canManage ? openAction : undefined}>
+    <b>{t('lens.broken.title')}</b>
+    {t('lens.broken.text', { missing, date: day(lens.broken.since) })}
+    {lens.canManage ? t('lens.broken.owner') : ''}
+  </Callout>
+{:else if lens.state === 'stopped'}
+  <Callout icon="hourglass-medium-fill" tone="warning" action={lens.canManage ? openAction : undefined}>
+    <b>{t('lens.stopped.title')}</b>
+    {t('lens.stopped.text', { bytes: bytes(lens.stoppedReads ?? lens.reads), date: day(lens.stoppedAt ?? lens.createdAt) })}
+    {lens.canManage ? t('lens.stopped.owner') : ''}
+  </Callout>
+{/if}
 
 <Tabs label={lens.name} current={tab} tabs={TABS.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'run'}
@@ -236,8 +322,8 @@
           bytes={preflight?.bytes ?? null}
           approve={preflight?.range === 'approve'}
           busy={running}
-          disabled={checking || !preflight?.runnable || preflight.range === 'request'}
-          title={checking ? t('query.checking') : undefined}
+          disabled={halted || checking || !preflight?.runnable || preflight.range === 'request'}
+          title={halted ? t('lens.run.halted') : checking ? t('query.checking') : undefined}
           onclick={start}
           explain={preflight?.range === 'approve' ? approveExplain : undefined}
         />
@@ -245,7 +331,12 @@
     </section>
 
     <section class="result" aria-label={t('query.result')}>
-      {#if failure}
+      {#if lens.broken}
+        <!-- Its last result is not shown, so that nobody takes it for today's (DEC-UX-81). -->
+        <Callout icon="link-break-fill" tone="urgent"><b>{t('lens.result.broken')}</b> {t('lens.result.broken.text', { missing })}</Callout>
+      {:else if lens.state === 'stopped'}
+        <Callout icon="hourglass-medium-fill"><b>{t('lens.result.stopped')}</b> {t('lens.result.stopped.text')}</Callout>
+      {:else if failure}
         <Callout icon="warning-fill" tone="urgent"><b>{t('query.failed')}</b> {failure}</Callout>
       {:else if !run || !page}
         <Callout icon="play-fill"><b>{t('lens.result.notRun')}</b> {t('lens.result.notRun.text')}</Callout>
@@ -309,15 +400,14 @@
         {/if}
       </SubTile>
       <SubTile label={t('lens.about.history')}>
-        <div class="line">
-          <span class="grow">
-            {#if lens.fromQuery}
-              {#if lens.mine}<a href={queryPath(lens.fromQuery.id)}>{t('lens.about.made', { name: lens.authorName, query: lens.fromQuery.name })}</a>
-              {:else}{t('lens.about.made', { name: lens.authorName, query: lens.fromQuery.name })}{/if}
-            {:else}{t('lens.about.madeNoQuery', { name: lens.authorName })}{/if}
-          </span>
-          <span class="meta">{day(lens.createdAt)}</span>
-        </div>
+        {#each history as line, index (index)}
+          <div class="line">
+            <span class="grow">{#if line.link}<a href={line.link}>{line.text}</a>{:else}{line.text}{/if}</span>
+            <span class="meta">{day(line.at)}</span>
+          </div>
+        {:else}
+          <div class="line"><span class="grow">{t('lens.about.madeNoQuery', { name: lens.authorName })}</span><span class="meta">{day(lens.createdAt)}</span></div>
+        {/each}
       </SubTile>
     </div>
   {/if}
@@ -327,7 +417,9 @@
   b { font-weight: var(--weight-medium); }
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 8px; }
   .titles { flex: 1; min-width: 0; }
+  .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .page-title { display: flex; align-items: center; gap: 10px; }
+  .failed { margin: 8px 0 0; color: var(--signal-urgent); font-size: var(--text-small); }
   .shows { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex: none; margin-top: 6px; }
   .request { border-radius: var(--radius-xl); padding: 6px 14px 12px; display: grid; gap: 8px; }
@@ -363,6 +455,6 @@
   .params { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
   .params th { text-align: left; font-weight: var(--weight-regular); color: var(--text-muted); font-size: var(--text-meta); padding: 0 8px 6px 0; }
   .params td { padding: 6px 8px 6px 0; border-top: 1px solid var(--tint-active); }
-  .line { display: flex; gap: 10px; font-size: var(--text-small); }
+  .line { display: flex; gap: 10px; font-size: var(--text-small); padding: 4px 0; }
   .line a { color: inherit; }
 </style>

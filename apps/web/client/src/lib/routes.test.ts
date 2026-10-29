@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { queryRunsPath, route } from './routes.js';
+import { editLensPath, newLensForPath, queryRunsPath, route } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -43,6 +43,9 @@ describe('the addresses of the web app', () => {
     expect(route('/query/9f1c/lens')).toMatchObject({ kind: 'newLens', query: '9f1c', section: { id: 'query' } });
     expect(route('/lenses/7c1f')).toMatchObject({ kind: 'lens', id: '7c1f', section: { id: 'collections' } });
     expect(route('/lenses/7c1f/about')).toEqual({ kind: 'notFound' });
+    // Its Owner Unit edits it (FR-LE-06); "New Lens" on a Collection starts a new query for it (DEC-UX-123).
+    expect(route(editLensPath('7c1f'))).toMatchObject({ kind: 'editLens', id: '7c1f', section: { id: 'collections' } });
+    expect(route(newLensForPath('c-1'))).toMatchObject({ kind: 'newQuery', resource: null, forCollection: 'c-1', section: { id: 'query' } });
   });
 
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
