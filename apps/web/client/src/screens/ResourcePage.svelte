@@ -9,6 +9,7 @@
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import MessagesButton from './MessagesButton.svelte';
   import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
@@ -45,6 +46,7 @@
     groups,
     onchange,
     onrun,
+    messages,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -61,6 +63,8 @@
     onchange: (resource: ResourceDetail) => void;
     /** After a run of its Preview, for the panel of Query. */
     onrun?: () => void;
+    /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
+    messages?: { count: number | null; href: string };
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -203,12 +207,13 @@
       {/if}
     {/if}
     <Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
-    <Button variant="outline" disabled title={t('resource.later')}><Icon name="chat-circle-text-fill" />{t('resource.messages')}</Button>
+    {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if !resource.published && isOwner}
       <!-- For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31). -->
       <Button onclick={() => (sheet = 'publish')}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button>
     {:else}
-      <Button disabled title={t('resource.later')}><Icon name="chat-circle-dots-fill" />{t('resource.ask')}</Button>
+      <!-- "Ask a question" opens the slide-in with Question chosen (DEC-UX-29). -->
+      {#if messages}<Button href={messages.href}><Icon name="chat-circle-dots-fill" />{t('resource.ask')}</Button>{/if}
     {/if}
   </div>
 </div>

@@ -81,6 +81,8 @@ After validating the token, each service decides with its own data whether the U
 
 A service that calls another service on behalf of a User forwards the Access Token of that User, and the receiving service validates it again. Work that no User started, such as processing Artifacts or synchronising Groups, uses the Google service-account identity of the calling service. Endpoints for such calls accept only the service accounts of Data Hub, and the Log records the actor as Data Hub itself.
 
+*Note of 2026-10-29, on building part 7a: query also tells catalogue about its Lenses as itself when a change of a User starts it, and records the decision of a member of the Data Team on a Request on a Lens, naming them: what it tells is query's own, which catalogue must not take from anyone else ([TR-CV-02](14-conversations.md#tr-cv-02)).*
+
 <a id="tr-pf-06"></a>
 ### TR-PF-06 · Claude signs in through identity
 

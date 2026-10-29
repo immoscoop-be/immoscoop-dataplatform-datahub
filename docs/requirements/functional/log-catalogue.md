@@ -20,6 +20,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-28, while building part 4: `RES-005` chooses the word for what was updated from its parameter, and `RES-010` is new, for the Business Description of a field ([FR-RC-15](05-resource-card.md#fr-rc-15), [FR-RC-16](05-resource-card.md#fr-rc-16)).*
 
+*Changed on 2026-10-29, while building part 7a: `LEN-001` and `LEN-002` are new: the decision of the Data Team on a Request on a Lens, in its Log ([FR-LE-09](09-lenses.md#fr-le-09)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).

@@ -15,6 +15,7 @@
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import MessagesButton from './MessagesButton.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import type { Collection } from '../lib/catalogue.js';
@@ -43,6 +44,7 @@
     collection,
     onchanged,
     onopened,
+    messages,
   }: {
     lens: Lens;
     client: QueryClient;
@@ -51,6 +53,8 @@
     onchanged: () => void;
     /** "Open in Query" gave the query to open (DEC-LE-18). */
     onopened: (queryId: string) => void;
+    /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
+    messages?: { count: number | null; href: string };
   } = $props();
 
   /** How long changing a value pauses before the Pre-flight is asked. */
@@ -247,7 +251,7 @@
     {#if lens.shows}<p class="shows">{lens.shows}</p>{/if}
   </div>
   <div class="actions">
-    <Button variant="outline" disabled title={t('resource.later')}><Icon name="chat-circle-text-fill" />{t('resource.messages')}</Button>
+    {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if lens.canManage}
       <Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
       <Button variant="outline" href={editLensPath(lens.id)}><Icon name="pencil-simple-fill" />{t('lens.edit')}</Button>

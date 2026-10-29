@@ -14,6 +14,50 @@ const CONFIG: Config = {
 
 const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[], roles: [] as string[] };
 
+/** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
+const QUESTION = {
+  id: 'm1',
+  type: 'MSG-CNV-01',
+  kind: 'question',
+  subject: { kind: 'collection', id: 'c1', name: 'Credit leads', collection: null, exists: true },
+  writer: { id: '7', name: 'Ruth Aerts', as: null },
+  params: { text: 'Will KBC follow-up be published this month?', writer: 'Ruth Aerts' },
+  state: 'open',
+  createdAt: '2026-10-28T10:00:00Z',
+  lastAt: '2026-10-28T10:00:00Z',
+  unread: true,
+};
+
+/** What Data Hub told the Owner of Weekly lead volume: a description changed in dbt (MSG-RES-02). */
+const DESCRIBED = {
+  id: 'm2',
+  type: 'MSG-RES-02',
+  kind: 'dataHub',
+  subject: { kind: 'resource', id: 'r2', name: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, exists: true },
+  writer: null,
+  params: {
+    run: '2026-10-25',
+    count: '1',
+    changes: JSON.stringify([{ on: 'field', field: 'lead_count', before: 'Number of leads', after: 'Number of leads, without tests', hasBusiness: 'no' }]),
+  },
+  state: null,
+  createdAt: '2026-10-27T06:40:00Z',
+  lastAt: '2026-10-27T06:40:00Z',
+};
+
+/** A Request to run a query above 1 GB, waiting for the Data Team (MSG-QRY-01). */
+const REQUEST = {
+  id: 'm3',
+  type: 'MSG-QRY-01',
+  kind: 'request',
+  subject: { kind: 'query', id: 'q9', name: 'Partner leads since 2019', collection: null, exists: true },
+  writer: { id: '8', name: 'Karel Leys', as: null },
+  params: { subject: 'Partner leads since 2019', writer: 'Karel Leys', reads: '4800000000', threshold: '1000000000', text: 'For the five-year review.' },
+  state: 'waiting',
+  createdAt: '2026-10-28T12:00:00Z',
+  lastAt: '2026-10-28T12:00:00Z',
+};
+
 interface Saved {
   method: string;
   path: string;
@@ -248,8 +292,11 @@ function serve({
   weekly = {} as Record<string, unknown>,
   queries = [] as Record<string, unknown>[],
   lenses = [] as Record<string, unknown>[],
+  conversations = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  // The Messages as catalogue keeps them, changed by what the page asks.
+  const talk = conversations.map((message) => ({ replies: [], replyCount: 0, unread: false, mine: false, ...message })) as Record<string, unknown>[];
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
   let resource: Record<string, unknown> = { ...WEEKLY_DETAIL, ...weekly };
   const PUBLICATION = { publishedAt: '2026-10-28T09:00:00Z', publishedBy: 'Max Verstraete', confirmedAt: '2026-10-28T09:00:00Z', confirmedBy: 'Max Verstraete' };
@@ -534,6 +581,49 @@ function serve({
     }
     if (path.startsWith('/me/settings/') && (method === 'PUT' || method === 'DELETE')) {
       return new Response(null, { status: 204 });
+    }
+    if (path === '/messages/unread') {
+      return json({ unread: talk.filter((message) => message.unread).length });
+    }
+    if (path.startsWith('/messages?')) {
+      const kinds = { question: 0, remark: 0, signal: 0, request: 0, dataHub: 0 } as Record<string, number>;
+      const on = { collection: 0, resource: 0, lens: 0, query: 0 } as Record<string, number>;
+      for (const message of talk) {
+        kinds[message.kind as string] = (kinds[message.kind as string] ?? 0) + 1;
+        const subject = message.subject as { kind: string };
+        on[subject.kind] = (on[subject.kind] ?? 0) + 1;
+      }
+      return json({ messages: talk, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
+    }
+    const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
+    if (onObject) {
+      return json({ messages: talk.filter((message) => (message.subject as { kind: string; id: string }).kind === onObject[1] && (message.subject as { id: string }).id === onObject[2]) });
+    }
+    if (path === '/messages' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { subjectKind: string; subjectId: string; kind: string; text: string };
+      const made = { id: `m-${talk.length + 1}`, type: 'MSG-CNV-01', kind: body.kind, subject: { kind: body.subjectKind, id: body.subjectId, name: 'Weekly lead volume', collection: null, exists: true }, writer: { id: '1', name: 'Max Verstraete', as: null }, params: { text: body.text, writer: 'Max Verstraete' }, state: 'open', createdAt: '2026-10-29T10:00:00Z', lastAt: '2026-10-29T10:00:00Z', replies: [], replyCount: 0, unread: false, mine: true };
+      talk.unshift(made);
+      return json({ message: made }, 201);
+    }
+    const message = talk.find((candidate) => path.startsWith(`/messages/${candidate.id as string}`));
+    if (message && path === `/messages/${message.id as string}`) {
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/read`) {
+      message.unread = false;
+      return new Response(null, { status: 204 });
+    }
+    if (message && path === `/messages/${message.id as string}/replies` && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { text: string };
+      (message.replies as unknown[]).push({ id: 'r-1', type: 'MSG-CNV-04', kind: 'reply', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { text: body.text }, createdAt: '2026-10-29T10:00:00Z', mine: true });
+      message.state = message.state === 'open' ? 'answered' : message.state;
+      return json({ message }, 201);
+    }
+    if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { outcome: string; text: string };
+      message.state = body.outcome;
+      (message.replies as unknown[]).push({ id: 'd-1', type: 'MSG-CNV-05', kind: 'decision', writer: { id: '1', name: 'Max Verstraete', as: 'dataTeam' }, params: { outcome: body.outcome, text: body.text }, createdAt: '2026-10-29T10:00:00Z', mine: true });
+      return json({ message });
     }
     return json({ error: 'not_found' }, 404);
   });
@@ -838,11 +928,9 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
-    // Query starts a new query on it (FR-SR-46); the Messages come with part 7.
+    // Query starts a new query on it (FR-SR-46); "Messages" opens the slide-in (FR-CV-07).
     expect(main.getByRole('link', { name: /Query/ }).getAttribute('href')).toBe('/query/new/r2');
-    for (const name of ['Berichten']) {
-      expect((main.getByRole('button', { name: new RegExp(name) }) as HTMLButtonElement).disabled).toBe(true);
-    }
+    expect(main.getByRole('link', { name: /Berichten/ }).getAttribute('href')).toBe('/resources/r2/messages');
     // For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31).
     expect(main.queryByRole('button', { name: /Stel een vraag/ })).toBeNull();
     expect((main.getByRole('button', { name: /Publiceren/ }) as HTMLButtonElement).disabled).toBe(false);
@@ -1577,5 +1665,88 @@ describe('Lenses', () => {
     expect(main.getByText('Tot ze hem aanvaarden, zie alleen jij de Lens, en wijzigt niemand hem.')).toBeTruthy();
     expect(main.getByRole('textbox', { name: 'Naam' }).matches(':disabled')).toBe(true);
     expect(main.queryByRole('button', { name: /Uitvoeren/ })).toBeNull();
+  });
+});
+
+describe('Messages', () => {
+  it('counts what moved for the User in the rail, and lists it in the Message Centre (FR-CV-06)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [QUESTION, DESCRIBED] });
+    open('/messages');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('link', { name: 'Berichten, 1 ongelezen' })).toBeTruthy();
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    // A person's words, and the first line of what Data Hub tells, from the Message Catalogue (FR-CV-15).
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.getByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt. Je businessbeschrijvingen blijven zoals ze zijn, en er wordt niets van je gevraagd.')).toBeTruthy();
+    expect(main.getByRole('img', { name: 'Ongelezen' })).toBeTruthy();
+    // The panel filters on the views, the kinds and the kinds of object.
+    const panel = within(screen.getByRole('navigation', { name: 'Berichten' }));
+    expect(panel.getByRole('button', { name: /Voor jou/ }).getAttribute('aria-current')).toBe('true');
+    await fireEvent.click(panel.getByRole('button', { name: /Questions/ }));
+    await vi.waitFor(() => expect(calls.some((call) => call.path === '/messages?view=forYou&kind=question')).toBe(true));
+
+    // Opened, it is read, and it takes a reply that tells its writer (FR-CV-09).
+    await fireEvent.click(main.getByRole('link', { name: /Will KBC follow-up/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/read' }));
+    expect(await main.findByRole('link', { name: /Openen in context/ })).toBeTruthy();
+    expect(main.getByRole('link', { name: /Openen in context/ }).getAttribute('href')).toBe('/collections/c1/messages/m1');
+    await fireEvent.input(main.getByRole('textbox', { name: 'Je antwoord' }), { target: { value: 'Yes, next week.' } });
+    await fireEvent.click(main.getByRole('button', { name: /Antwoorden/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/replies', body: { text: 'Yes, next week.' } }));
+    expect(await main.findByText('Yes, next week.')).toBeTruthy();
+  });
+
+  it('shows what Data Hub tells laid out, with the way to its object (FR-CV-15)', async () => {
+    serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages/m2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt', { selector: 'b' })).toBeTruthy();
+    expect(main.getByText('lead_count', { selector: 'code' })).toBeTruthy();
+    expect(main.getByText('Number of leads', { selector: 'del' })).toBeTruthy();
+    // It asks nothing, so it takes no reply.
+    expect(main.queryByRole('textbox', { name: 'Je antwoord' })).toBeNull();
+  });
+
+  it('lets the Data Team decide on a Request, a refusal with a reason (FR-CV-08)', async () => {
+    const calls = serve({ roles: ['datateam'], conversations: [REQUEST] });
+    open('/messages/m3');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('For the five-year review.')).toBeTruthy();
+    expect(main.getByText('4,8 GB')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Weigeren/ }));
+    expect(await main.findByText('Een weigering heeft een reden nodig.')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Je beslissing' }), { target: { value: 'Once, for the review.' } });
+    await fireEvent.click(main.getByRole('button', { name: /Aanvaarden/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m3/decision', body: { outcome: 'accepted', text: 'Once, for the review.' } }));
+    expect(await main.findByText('Aanvaard', { selector: '.reply .state' })).toBeTruthy();
+  });
+
+  it('opens the Messages on a Resource in a slide-in, to write a Question, Remark or Signal (FR-CV-07)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2/messages');
+    render(App, { config: CONFIG });
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(sheet.getByText('Berichten op deze Resource')).toBeTruthy();
+    expect(sheet.getAllByRole('radio').map((radio) => radio.textContent?.trim())).toEqual(['Question', 'Remark', 'Signal', 'Alle 0', 'Questions 0', 'Remarks 0', 'Signals 0']);
+    await fireEvent.click(sheet.getByRole('radio', { name: 'Signal' }));
+    expect(sheet.getByText('Data en het Data Team krijgen een melding.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Nieuw bericht' }), { target: { value: 'Zero partner leads last week.' } });
+    await fireEvent.click(sheet.getByRole('button', { name: /Plaatsen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages', body: { subjectKind: 'resource', subjectId: 'r2', kind: 'signal', text: 'Zero partner leads last week.' } }));
+  });
+
+  it('opens a Message in context: its object as it is, with the Message in a floating window (FR-CV-09)', async () => {
+    serve({ groups: ['g1'], conversations: [QUESTION] });
+    open('/collections/c1/messages/m1');
+    render(App, { config: CONFIG });
+    const window = within(await screen.findByRole('dialog', { name: 'Credit leads' }));
+    expect(await window.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(window.getByText('Question op deze Collection')).toBeTruthy();
+    expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
+    // The page stays behind it, usable.
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
   });
 });

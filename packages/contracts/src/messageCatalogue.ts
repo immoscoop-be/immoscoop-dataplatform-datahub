@@ -123,7 +123,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['owner', 'participants'],
     when: 'A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06'],
     parameters: [],
     text: {
@@ -160,7 +160,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['owner', 'participants'],
     when: 'A User leaves a remark or a tip on an object, from "Messages" on its page.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06', 'DEC-CV-09'],
     parameters: [],
     text: {
@@ -198,7 +198,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['owner', 'dataTeam'],
     when: 'A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-30', 'FR-CV-03', 'FR-CV-07'],
     openPoints: ['OP-SR-14'],
     parameters: [],
@@ -246,7 +246,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['writer', 'participants'],
     when: 'Someone who may see the object replies to a Message on it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-CV-01', 'FR-CV-03', 'FR-CV-04'],
     parameters: [],
     text: {
@@ -281,7 +281,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataTeam',
     to: ['writer', 'author'],
     when: 'A member of the Data Team accepts or refuses a Request (MSG-LEN-01, MSG-LEN-03, MSG-QRY-01). The decision is its reply.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-CV-08', 'FR-LE-09', 'DEC-SR-29', 'DEC-SR-36'],
     parameters: [
       { name: 'outcome', type: 'choice', about: 'The decision', values: ['accepted', 'refused'] },
@@ -920,7 +920,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['dataTeam'],
     when: 'The author of a Lens that reads more than 1 GB in one run sends it to the Data Team with "Send to the data team" (FR-LE-09).',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-LE-08', 'FR-LE-09', 'FR-CV-08', 'DEC-LE-05'],
     parameters: [...SIZE, ...PARTITIONS, { name: 'smaller', type: 'size', about: 'What one run reads at most with a default for From, when Data Hub can tell', optional: true }],
     text: {
@@ -1024,7 +1024,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['dataTeam', 'owner'],
     when: 'A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself (FR-CV-08), and the Lens stops until it is accepted again (DEC-LE-11).',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-LE-10', 'FR-CV-08', 'DEC-LE-11'],
     parameters: [...SIZE, ...PARTITIONS],
     text: {
@@ -1166,7 +1166,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'user',
     to: ['dataTeam'],
     when: 'The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team (DEC-SR-29).',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-SR-29', 'DEC-SR-36', 'FR-SR-37', 'FR-CV-08'],
     parameters: [...SIZE],
     text: {

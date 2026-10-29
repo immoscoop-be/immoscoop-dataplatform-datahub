@@ -145,6 +145,8 @@ The ranges only concern making a Lens: whoever uses a Lens sees no weight ([FR-L
 
 A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author can open it, nobody else sees it yet. The Data Team is notified and accepts or refuses it; a refusal comes with a reason. The author is notified of either, and both are recorded in the Log.
 
+*Note of 2026-10-29, on building part 7a: the Data Team accepts or refuses it in the Message Centre or in context, and the decision is the reply on its Request ([MSG-CNV-05](message-catalogue.md#msg-cnv-05)); either is in the Log of the Lens (`LEN-001`, `LEN-002`). Refused, it stays unpublished and is no longer frozen: its author updates it from its query ([DEC-UX-128](../../design/principles.md#dec-ux-128), [TR-CV-02](../technical/14-conversations.md#tr-cv-02)).*
+
 *Note of 2026-10-23: the request and the decision are Messages on the Lens: a Request to the Data Team with the word of its author, and the decision as its reply ([FR-CV-08](14-conversations.md#fr-cv-08)).*
 
 *Note of 2026-10-29, on building part 6a: a very large Lens is kept, frozen, and its Request goes to the Data Team ([MSG-LEN-01](message-catalogue.md#msg-len-01), [TR-LE-01](../technical/09-lenses.md#tr-le-01)); the Data Team accepts or refuses it in the Message Centre, in part 7 of the [build order](../../design/build-order.md).*
@@ -155,6 +157,8 @@ A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author
 **Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html)
 
 The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After that, Data Hub follows what each run of the Lens reads. When a run reads more than the range the Lens was made in, or last accepted in, the Lens is checked again as when it was made: grown into large, its author is warned; grown into very large, the Data Team accepts it again ([FR-LE-09](#fr-le-09)). In the meantime it stops, and its Owner and the Data Team are told ([DEC-LE-11](#dec-le-11)).
+
+*Note of 2026-10-29, on building part 7a: when it stops, Data Hub sends the Request itself ([MSG-LEN-03](message-catalogue.md#msg-len-03)), in the Message Centre of the Data Team and of its Owner; accepted, it runs again at that size ([TR-CV-02](../technical/14-conversations.md#tr-cv-02)).*
 
 *Note of 2026-10-29: only a run with its default values measures a Lens ([DEC-LE-19](#dec-le-19)); a stopped Lens shows so on its page ([DEC-UX-125](../../design/principles.md#dec-ux-125)).*
 

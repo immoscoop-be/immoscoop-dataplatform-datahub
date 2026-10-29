@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { editLensPath, newLensForPath, queryRunsPath, route } from './routes.js';
+import { contextPath, editLensPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -7,10 +7,12 @@ describe('the addresses of the web app', () => {
   });
 
   it('has a start screen per section, with or without a slash at the end', () => {
-    for (const id of ['collections', 'query', 'charts', 'messages', 'learning']) {
+    for (const id of ['collections', 'query', 'charts', 'learning']) {
       expect(route(`/${id}`)).toMatchObject({ kind: 'start', section: { id } });
       expect(route(`/${id}/`)).toMatchObject({ kind: 'start', section: { id } });
     }
+    // Messages starts on the Message Centre (FR-CV-06).
+    expect(route('/messages/')).toMatchObject({ kind: 'messages', id: null, section: { id: 'messages' } });
   });
 
   it('has a page per Resource, in the section Collections', () => {
@@ -46,6 +48,19 @@ describe('the addresses of the web app', () => {
     // Its Owner Unit edits it (FR-LE-06); "New Lens" on a Collection starts a new query for it (DEC-UX-123).
     expect(route(editLensPath('7c1f'))).toMatchObject({ kind: 'editLens', id: '7c1f', section: { id: 'collections' } });
     expect(route(newLensForPath('c-1'))).toMatchObject({ kind: 'newQuery', resource: null, forCollection: 'c-1', section: { id: 'query' } });
+  });
+
+  it('has the Message Centre, the Messages on an object and one Message in context (FR-CV-06, FR-CV-07, FR-CV-09)', () => {
+    expect(route('/messages')).toMatchObject({ kind: 'messages', id: null, section: { id: 'messages' } });
+    expect(route(messagePath('m-1'))).toMatchObject({ kind: 'messages', id: 'm-1', section: { id: 'messages' } });
+    expect(route(messagesOnPath({ kind: 'resource', id: 'r-1' }))).toMatchObject({ kind: 'resource', id: 'r-1', messages: true });
+    expect(route(contextPath({ kind: 'lens', id: '7c1f' }, 'm-2'))).toMatchObject({ kind: 'lens', id: '7c1f', message: 'm-2', section: { id: 'collections' } });
+    expect(route(contextPath({ kind: 'collection', id: 'c-1' }, 'm-3'))).toMatchObject({ kind: 'collection', id: 'c-1', message: 'm-3' });
+    // A query has no slide-in of its own; its Request opens on it in context.
+    expect(route(contextPath({ kind: 'query', id: '9f1c' }, 'm-4'))).toMatchObject({ kind: 'query', id: '9f1c', run: null, message: 'm-4' });
+    expect(route('/query/9f1c/messages')).toEqual({ kind: 'notFound' });
+    expect(route('/messages/m-1/replies')).toEqual({ kind: 'notFound' });
+    expect(route('/lenses/7c1f/edit/messages')).toEqual({ kind: 'notFound' });
   });
 
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
