@@ -8,6 +8,7 @@ const CONFIG: Config = {
   identityUrl: 'https://identity.test',
   catalogueUrl: 'https://catalogue.test',
   registryUrl: 'https://registry.test',
+  queryUrl: 'https://query.test',
   semgraphUrl: 'https://semgraph.test',
 };
 
@@ -128,12 +129,75 @@ const WEEKLY_LINEAGE = {
 };
 
 /** The server of the web app, identity and catalogue, as the page meets them: with or without a session. */
+const QUERY = {
+  id: 'q1',
+  name: 'Leads per source name',
+  question: 'Which sources bring our leads, week by week?',
+  sql: 'select week_start, lead_source\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= date_sub(current_date(), interval 28 day)\n',
+  ownerName: 'Max Verstraete',
+  mine: true,
+  createdAt: '2026-10-29T08:00:00Z',
+  lastRunAt: null as string | null,
+  resources: [
+    {
+      visible: true,
+      id: 'r2',
+      key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume',
+      displayName: 'Weekly lead volume',
+      collectionId: 'c1',
+      level: 2,
+      deprecated: false,
+      partition: { field: 'week_start', unit: 'day' },
+      clusterBy: ['lead_source'],
+      partitionFilter: 'none',
+      fields: [{ name: 'week_start', dataType: 'DATE', description: 'Monday of the week', businessDescription: '' }],
+    },
+  ],
+  lastRun: null,
+};
+
+const RUN = {
+  ref: 'q-20261029-4c2e1a',
+  number: 1,
+  state: 'done',
+  error: null,
+  userName: 'Max Verstraete',
+  estimatedBytes: 80_000_000,
+  approved: false,
+  processedBytes: 79_000_000,
+  billedBytes: 80_000_000,
+  partitions: 4,
+  rowCount: 210,
+  columns: [
+    { name: 'week_start', type: 'DATE' },
+    { name: 'leads', type: 'INT64' },
+  ],
+  startedAt: '2026-10-29T08:12:00Z',
+  finishedAt: '2026-10-29T08:12:03Z',
+};
+
+const PAGE = { number: 1, size: 100, totalRows: 210, columns: RUN.columns, rows: [['2026-10-19', '413'], ['2026-10-12', null]] };
+
+/** The Pre-flight query gives: 840 MB for SQL that says so, a table outside, or 80 MB. */
+function preflightOf(sql: string) {
+  const base = { partitions: 4, problems: [] as unknown[], warnings: [] as unknown[], thresholds: { approve: 100_000_000, request: 1_000_000_000 } };
+  if (sql.includes('partner_contracts')) {
+    const start = sql.indexOf('`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`');
+    return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'outside', name: 'immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts', start, end: start + 66 }] };
+  }
+  if (!sql.includes('where')) {
+    return { ...base, runnable: true, bytes: 900_000_000, range: 'approve', warnings: [{ kind: 'noPartitionFilter', resource: { id: 'r2', displayName: 'Weekly lead volume' }, column: 'week_start', fix: `${sql} where week_start >= '2026-10-01'`, bytesWithFilter: 82_000_000 }] };
+  }
+  return sql.includes('-- all weeks') ? { ...base, runnable: true, bytes: 840_000_000, range: 'approve' } : { ...base, runnable: true, bytes: 80_000_000, range: 'free' };
+}
+
 function serve({
   signedIn = true,
   settings = {} as Record<string, unknown>,
   roles = [] as string[],
   groups = [] as string[],
   weekly = {} as Record<string, unknown>,
+  queries = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
@@ -141,7 +205,7 @@ function serve({
   const PUBLICATION = { publishedAt: '2026-10-28T09:00:00Z', publishedBy: 'Max Verstraete', confirmedAt: '2026-10-28T09:00:00Z', confirmedBy: 'Max Verstraete' };
   vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET';
-    const path = input.replace(CONFIG.identityUrl, '').replace(CONFIG.catalogueUrl, '').replace(CONFIG.registryUrl, '');
+    const path = input.replace(CONFIG.identityUrl, '').replace(CONFIG.catalogueUrl, '').replace(CONFIG.registryUrl, '').replace(CONFIG.queryUrl, '');
     const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
     if (path === '/auth/token') {
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
@@ -253,6 +317,34 @@ function serve({
           { logId: 'RES-001', params: { exposure: 'datahub_savedSearches', key: SAVED_SEARCHES.key, run: '7' }, at: '2026-10-21T08:00:00Z' },
         ],
       });
+    }
+    // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
+    if (path === '/queries' && method === 'GET') {
+      return json({ queries: queries.map(({ id, name, ownerName, resources: on, lastRunAt, createdAt }) => ({ id, name, ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0 })) });
+    }
+    if (path === '/queries' && method === 'POST') {
+      const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
+      const made = { ...QUERY, name, question, id: 'q-made', lastRun: null, lastRunAt: null };
+      queries.unshift(made);
+      return json({ query: made }, 201);
+    }
+    const query = queries.find((candidate) => path.startsWith(`/queries/${candidate.id as string}`));
+    if (query && path === `/queries/${query.id as string}`) {
+      return json({ query });
+    }
+    if (query && path.endsWith('/preflight')) {
+      return json({ preflight: preflightOf((JSON.parse(init.body as string) as { sql: string }).sql) });
+    }
+    if (query && path.endsWith('/runs')) {
+      const body = JSON.parse(init.body as string) as { sql: string; approve: boolean };
+      const checked = preflightOf(body.sql);
+      if (checked.range === 'approve' && !body.approve) {
+        return json({ error: 'approval_needed', message: 'Approve it.', preflight: checked }, 409);
+      }
+      return json({ run: { ...RUN, approved: body.approve }, page: PAGE }, 201);
+    }
+    if (path === `/runs/${RUN.ref}/rows?page=2`) {
+      return json({ page: { ...PAGE, number: 2, rows: [['2026-08-03', '7']] } });
     }
     if (path === '/me/settings') {
       return json({ settings });
@@ -566,7 +658,9 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
-    for (const name of ['Query', 'Berichten']) {
+    // Query starts a new query on it (FR-SR-46); the Messages come with part 7.
+    expect(main.getByRole('link', { name: /Query/ }).getAttribute('href')).toBe('/query/new/r2');
+    for (const name of ['Berichten']) {
       expect((main.getByRole('button', { name: new RegExp(name) }) as HTMLButtonElement).disabled).toBe(true);
     }
     // For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31).
@@ -779,5 +873,113 @@ describe('the web app, for the Data Team, with Collections', () => {
         ],
       },
     });
+  });
+});
+
+describe('Query', () => {
+  it('opens the last query of the User, listed in the panel by the day of its last run (FR-SR-43, DEC-UX-74)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }] });
+    open('/query');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
+    expect(location.pathname).toBe('/query/q1');
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(panel.getByText('Vandaag')).toBeTruthy();
+    expect(panel.getByRole('link', { name: /Leads per source name/ }).getAttribute('aria-current')).toBe('page');
+    expect(panel.getByText(/Weekly lead volume · 1 keer/)).toBeTruthy();
+    // It reads only its Resources; another set, the Lenses and making it a Lens come later (DEC-UX-73, DEC-UX-114).
+    expect(main.getByText('Leest enkel')).toBeTruthy();
+    expect(main.getByRole('link', { name: /Weekly lead volume/ }).getAttribute('href')).toBe('/resources/r2');
+    expect((main.getByRole('button', { name: 'Maak er een Lens van' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('starts a new query on a Resource, named from it and the date, as not run yet (FR-SR-45, FR-SR-46, DEC-UX-114)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/query/new/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const name = (await main.findByRole('textbox', { name: /Naam/ })) as HTMLInputElement;
+    await vi.waitFor(() => expect(name.value).toMatch(/^Weekly lead volume, \d+ /));
+    expect(main.getByText('Nog geen Lens gebruikt deze Resources.')).toBeTruthy();
+    expect(within(screen.getByRole('complementary', { name: 'Query' })).getByText('Nieuw · nog niet uitgevoerd')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: /Wat wil je weten/ }), { target: { value: 'Which sources bring our leads?' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Begin je eigen' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries', body: { name: name.value, question: 'Which sources bring our leads?', resources: ['r2'] } });
+  });
+
+  it('says what the SQL reads before it runs, and shows its result with its Query ID, 100 rows a page (FR-SR-36, FR-SR-51, FR-LN-06)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const run = await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    expect(main.getByText(/4 partities/)).toBeTruthy();
+    await fireEvent.click(run);
+    expect(await main.findByRole('grid', { name: 'Resultaat van uitvoering 1' })).toBeTruthy();
+    expect(main.getByText('q-20261029-4c2e1a')).toBeTruthy();
+    expect(main.getByText('210 rijen')).toBeTruthy();
+    expect(main.getByText('null')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: QUERY.sql, approve: false } });
+    await fireEvent.click(main.getByRole('button', { name: 'Volgende pagina' }));
+    await vi.waitFor(() => expect(main.getByText('2026-08-03')).toBeTruthy());
+  });
+
+  it('asks to approve a query above 100 MB, in red, by running it (DEC-SR-29, DEC-UX-28)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, sql: `${QUERY.sql}-- all weeks\n` }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const run = await main.findByRole('button', { name: /Goedkeuren en uitvoeren\s*840 MB/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(run);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, approve: true } }));
+  });
+
+  it('names a table outside its Resources, and warns without a partition filter, with the filter to add (DEC-UX-73, FR-SR-40)', async () => {
+    const outside = 'select * from `immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts` where x = 1';
+    serve({ queries: [{ ...QUERY, sql: outside }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText(/is geen van de Resources van deze query/, {}, { timeout: 3000 })).toBeTruthy();
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('opens a new query for a User who has none yet', async () => {
+    serve();
+    open('/query');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Nieuwe query' })).toBeTruthy();
+    expect(location.pathname).toBe('/query/new');
+  });
+
+  it('shows the Data Team the query of a colleague to read, not to run, with everyone’s queries under All (DEC-LN-01)', async () => {
+    const calls = serve({ roles: ['datateam'], queries: [{ ...QUERY, mine: false, ownerName: 'An Claes', lastRun: RUN, lastRunAt: RUN.startedAt }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Een query van An Claes: je leest hem, enkel An Claes schrijft en voert hem uit.')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Uitvoeren/ })).toBeNull();
+    expect(main.queryByRole('button', { name: 'Opmaken' })).toBeNull();
+    expect(main.getByText(/Uitgevoerd door Max Verstraete als q-20261029-4c2e1a/)).toBeTruthy();
+    expect(calls.some((call) => call.path.endsWith('/preflight'))).toBe(false);
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    await fireEvent.click(panel.getByRole('radio', { name: 'Alle' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'GET', path: '/queries?all=true' }));
+  });
+
+  it('adds the partition filter it offers, and checks the SQL again (DEC-SR-35)', async () => {
+    const plain = 'select week_start from `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`';
+    const calls = serve({ queries: [{ ...QUERY, sql: plain }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Zonder filter op week_start leest hij heel Weekly lead volume; met een filter op de recente partities hoogstens 82 MB.', {}, { timeout: 3000 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Voeg de filter toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: `${plain} where week_start >= '2026-10-01'` } }), { timeout: 3000 });
   });
 });

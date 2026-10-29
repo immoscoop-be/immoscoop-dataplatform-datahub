@@ -11,7 +11,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath, resourcePath } from '../lib/routes.js';
+  import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
   import DeprecateSheet from './DeprecateSheet.svelte';
   import PublishSheet from './PublishSheet.svelte';
   import RelationsSheet from './RelationsSheet.svelte';
@@ -181,7 +181,7 @@
         <Button variant="outline" onclick={() => (sheet = 'deprecate')}><Icon name="archive-fill" />{t('resource.deprecate')}</Button>
       {/if}
     {/if}
-    <Button variant="outline" disabled title={t('resource.later')}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
+    <Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
     <Button variant="outline" disabled title={t('resource.later')}><Icon name="chat-circle-text-fill" />{t('resource.messages')}</Button>
     {#if !resource.published && isOwner}
       <!-- For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31). -->

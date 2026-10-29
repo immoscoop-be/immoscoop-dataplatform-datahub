@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { NotFound, SignedOut } from './api.js';
 import { createCatalogue } from './catalogue.js';
 
-const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', semgraphUrl: 'https://semgraph.test' };
+const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
 
 function answering(answer: (url: string) => Response) {
   const asked: { url: string; authorization: string | null }[] = [];

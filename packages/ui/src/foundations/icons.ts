@@ -20,6 +20,7 @@ import lockSimpleFill from '@phosphor-icons/core/assets/fill/lock-simple-fill.sv
 import magnifyingGlassFill from '@phosphor-icons/core/assets/fill/magnifying-glass-fill.svg?raw';
 import moonFill from '@phosphor-icons/core/assets/fill/moon-fill.svg?raw';
 import pencilSimpleFill from '@phosphor-icons/core/assets/fill/pencil-simple-fill.svg?raw';
+import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
@@ -32,11 +33,18 @@ import xCircleFill from '@phosphor-icons/core/assets/fill/x-circle-fill.svg?raw'
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
+import arrowsOutLineHorizontal from '@phosphor-icons/core/assets/regular/arrows-out-line-horizontal.svg?raw';
 import bracketsSquare from '@phosphor-icons/core/assets/regular/brackets-square.svg?raw';
+import caretDoubleLeft from '@phosphor-icons/core/assets/regular/caret-double-left.svg?raw';
+import caretDoubleRight from '@phosphor-icons/core/assets/regular/caret-double-right.svg?raw';
 import caretDown from '@phosphor-icons/core/assets/regular/caret-down.svg?raw';
+import caretLeft from '@phosphor-icons/core/assets/regular/caret-left.svg?raw';
+import caretRight from '@phosphor-icons/core/assets/regular/caret-right.svg?raw';
 import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
+import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
 import database from '@phosphor-icons/core/assets/regular/database.svg?raw';
+import dotsThree from '@phosphor-icons/core/assets/regular/dots-three.svg?raw';
 import fileText from '@phosphor-icons/core/assets/regular/file-text.svg?raw';
 import googleLogo from '@phosphor-icons/core/assets/regular/google-logo.svg?raw';
 import graph from '@phosphor-icons/core/assets/regular/graph.svg?raw';
@@ -51,6 +59,8 @@ import paperPlaneTilt from '@phosphor-icons/core/assets/regular/paper-plane-tilt
 import plant from '@phosphor-icons/core/assets/regular/plant.svg?raw';
 import plus from '@phosphor-icons/core/assets/regular/plus.svg?raw';
 import shuffle from '@phosphor-icons/core/assets/regular/shuffle.svg?raw';
+import sortAscending from '@phosphor-icons/core/assets/regular/sort-ascending.svg?raw';
+import sortDescending from '@phosphor-icons/core/assets/regular/sort-descending.svg?raw';
 import table from '@phosphor-icons/core/assets/regular/table.svg?raw';
 import tray from '@phosphor-icons/core/assets/regular/tray.svg?raw';
 import user from '@phosphor-icons/core/assets/regular/user.svg?raw';
@@ -78,6 +88,7 @@ export const ICONS = {
   'magnifying-glass-fill': magnifyingGlassFill,
   'moon-fill': moonFill,
   'pencil-simple-fill': pencilSimpleFill,
+  'play-fill': playFill,
   'plus-circle-fill': plusCircleFill,
   'stack-fill': stackFill,
   'terminal-window-fill': terminalWindowFill,
@@ -90,11 +101,18 @@ export const ICONS = {
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-left': arrowLeft,
   'arrow-right': arrowRight,
+  'arrows-out-line-horizontal': arrowsOutLineHorizontal,
   'brackets-square': bracketsSquare,
+  'caret-double-left': caretDoubleLeft,
+  'caret-double-right': caretDoubleRight,
   'caret-down': caretDown,
+  'caret-left': caretLeft,
+  'caret-right': caretRight,
   check,
+  columns,
   cube,
   database,
+  'dots-three': dotsThree,
   'file-text': fileText,
   'google-logo': googleLogo,
   graph,
@@ -109,6 +127,8 @@ export const ICONS = {
   plant,
   plus,
   shuffle,
+  'sort-ascending': sortAscending,
+  'sort-descending': sortDescending,
   table,
   tray,
   user,

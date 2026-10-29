@@ -347,11 +347,13 @@ Via Claude, a User can have free SQL executed over the Resources they may see. A
 <a id="fr-sr-27"></a>
 ### FR-SR-27 · A byte limit and a User label on every query
 
-**Status:** Specified · **Confluence:** SR-27
+**Status:** Implemented · **Confluence:** SR-27
 
 Every query gets a limit on scanned bytes and a label with the User. Executed queries are not stored in Data Hub in v1.
 
 *Note of 2026-10-22: queries are stored after all, in the Query Log ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).*
+
+*Note of 2026-10-29, on building it: the limit is the second threshold, 1 GB, as `maximumBytesBilled`; the labels are `datahub-user`, the Google ID of the User, and `datahub-query`, the Query ID ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)).*
 
 <a id="fr-sr-28"></a>
 ### FR-SR-28 · The Owner and the Data Team supplement the description
@@ -416,9 +418,11 @@ A new Resource has no Collection. Until the Data Team adds it to one, only the D
 <a id="fr-sr-36"></a>
 ### FR-SR-36 · A Pre-flight before every query
 
-**Status:** Proposed · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** [REQ-DH-PREFLIGHT](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-preflight) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Before every query, Data Hub shows a Pre-flight with the volume it will process, in MB or GB.
+
+*Note of 2026-10-29, on building it: every query of Query passes it, from a dry run of BigQuery while typing pauses ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); a preview and a Lens show theirs when they are built, in part 5 and part 6 of the [build order](../../design/build-order.md).*
 
 <a id="fr-sr-37"></a>
 ### FR-SR-37 · Approval above one threshold, a block above another
@@ -428,6 +432,8 @@ Before every query, Data Hub shows a Pre-flight with the volume it will process,
 Above X GB, the User has to approve a query explicitly; above Y GB, the query is blocked. X and Y are configurable.
 
 *Note of 2026-10-26: X is 100 MB and Y 1 GB, as start values; above Y a query is not blocked but goes to the Data Team, as a Request ([DEC-SR-29](#dec-sr-29)).*
+
+*Note of 2026-10-29, on building part 5: approving between the two thresholds is built ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the Request above 1 GB comes in the second piece of part 5, and the Data Team decides it with the Message Centre, in part 7 of the [build order](../../design/build-order.md).*
 
 <a id="fr-sr-38"></a>
 ### FR-SR-38 · The Parameters of a Resource choose the rows of its Preview
@@ -458,19 +464,23 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 
 *Note of 2026-10-25: a Resource can require a partition filter, because BigQuery requires one or because the Data Admin set it ([FR-CO-34](03-collections.md#fr-co-34)). A query without one then does not run at all; how the Pre-flight treats it is [OP-SR-15](#op-sr-15).*
 
+*Note of 2026-10-29, on building part 5: built are the warning without a filter, with what the query reads with one on the recent partitions, the block where the Resource requires one, and "at most" in the volume ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); how many partitions each Resource reads is [OP-SR-23](#op-sr-23).*
+
 <a id="fr-sr-41"></a>
 ### FR-SR-41 · Query, a section for SQL over everything the User may see
 
-**Status:** Proposed · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17) · **Screens:** [query](../../design/screens/query.html), [resource-history](../../design/screens/resource-history.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** [DEC-UX-17](../../design/principles.md#dec-ux-17) · **Screens:** [query](../../design/screens/query.html), [resource-history](../../design/screens/resource-history.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Data Hub has a section Query, next to Collections, in which a User writes SQL over every Resource they may see, and later Lenses. A query that touches a Resource they cannot see is refused, as through Claude ([FR-SR-26](#fr-sr-26)). Every query passes the Pre-flight, with its thresholds ([FR-SR-36](#fr-sr-36), [FR-SR-37](#fr-sr-37)), gets a byte limit and a label ([FR-SR-27](#fr-sr-27)), and its result carries its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)). From the page of a Resource, "Query this resource" opens Query with it.
 
 *Note of 2026-10-27: a query reads only its own Resources; a table outside them is an error, and another set of Resources is another query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).*
 
+*Note of 2026-10-29, on building it: Query, its panel, a new query and the page of a query, reading only its own Resources ([TR-SR-15](../technical/04-stacks-and-resources.md#tr-sr-15) to [TR-SR-17](../technical/04-stacks-and-resources.md#tr-sr-17)); Lenses come with part 6 of the [build order](../../design/build-order.md), Claude in version 2.*
+
 <a id="fr-sr-42"></a>
 ### FR-SR-42 · The editor formats and suggests
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [query](../../design/screens/query.html)
 
 The SQL editor in Query formats the SQL on request, and suggests while typing: the Resources the User may see, their columns and the Parameters, the partition and cluster columns first and marked as such.
 
@@ -484,6 +494,8 @@ The SQL editor in Query formats the SQL on request, and suggests while typing: t
 The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
 
 *Note of 2026-10-27: one item per query, not per run; every run is a variation in the history of its query ([DEC-UX-74](../../design/principles.md#dec-ux-74)).*
+
+*Note of 2026-10-29, on building part 5: the panel lists the queries of the User, and everyone's for the Data Team, one item per query by the day of its last run, with what it ran on, how many runs and when; its last runs, and whether it was approved or went to the Data Team, come in the second piece of part 5 of the [build order](../../design/build-order.md).*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
@@ -505,10 +517,12 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 
 A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
 
+*Note of 2026-10-29, on building part 5: a query has its name from the start, suggested from its Resources and the date; changing it later has no screen yet ([OP-UX-42](../../design/principles.md#op-ux-42)).*
+
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
 
-**Status:** Proposed · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query-new](../../design/screens/query-new.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** [DEC-UX-21](../../design/principles.md#dec-ux-21) · **Screens:** [query-new](../../design/screens/query-new.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The page of a Resource has a button "Query". It opens Query with a new query: the Resource as its source, its name suggested ([FR-SR-45](#fr-sr-45)), and its SQL starting with a filter on the partition column ([FR-SR-39](#fr-sr-39)).
 
@@ -520,6 +534,8 @@ The page of a Resource has a button "Query". It opens Query with a new query: th
 While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
 *Note of 2026-10-29: a Lens shows no count of its use in v1 ([OP-SR-21](#op-sr-21)); when no Lens uses the Resources, the new query says so ([DEC-UX-114](../../design/principles.md#dec-ux-114)).*
+
+*Note of 2026-10-29, on building part 5: until Lenses are built, in part 6 of the [build order](../../design/build-order.md), a new query says that no Lens uses its Resources ([DEC-UX-114](../../design/principles.md#dec-ux-114)).*
 
 <a id="fr-sr-48"></a>
 ### FR-SR-48 · The question of a new query finds Lenses by their words
@@ -558,6 +574,7 @@ The Owner and the Data Team can mark a published Resource deprecated: its use is
 
 A preview, and the result of a query in Query, shows its rows 100 at a time, with how many rows there are in all and a way to the next and the previous page. Turning a page reads the next rows of the same run; it runs no query again ([DEC-SR-30](#dec-sr-30)).
 
+*Note of 2026-10-29, on building part 5: built for a result in Query, from the job of its run ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the preview follows with its tab.*
 
 <a id="fr-sr-52"></a>
 ### FR-SR-52 · Data Hub finds what is Broken, and what works again
@@ -664,6 +681,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-20"></a>**OP-SR-20** · [FR-SR-42](#fr-sr-42) has the editor suggest the Resources the User may see, while a query reads only its own Resources and the editor suggests only theirs ([DEC-UX-73](../../design/principles.md#dec-ux-73)). Proposal: FR-SR-42 follows DEC-UX-73. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: as proposed; the suggestion that is selected also shows the type of its field and its descriptions ([DEC-UX-115](../../design/principles.md#dec-ux-115)).*
 - [x] <a id="op-sr-21"></a>**OP-SR-21** · [FR-SR-47](#fr-sr-47) shows each Lens with its use, [query-new](../../design/screens/query-new.html) shows how often each was used this month, and the tab About of [lens](../../design/screens/lens.html) how many people ran it; usage reporting is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)). Proposal: no count of use or of colleagues in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: no count of use on the Lenses of a new query nor on the tab About of a Lens; the numbers on top of the tab History of a Resource stay, as they count its own list ([OP-SR-18](#op-sr-18)).*
 - [x] <a id="op-sr-22"></a>**OP-SR-22** · Where the values of a choice in a Preview come from ([FR-SR-38](#fr-sr-38)): reading them is a query of its own. Proposal: a choice lists at most 100 values of its column, read from the partitions the preview reads in one small query that passes the Pre-flight and goes into the Query Log; the partition column offers the last 1, 4 or 12 of its unit. *Raised on 2026-10-28, while proposing part 5 of the [build order](../../design/build-order.md).* *Decided on 2026-10-29, by Max: as proposed ([DEC-SR-37](#dec-sr-37)).*
+- [ ] <a id="op-sr-23"></a>**OP-SR-23** · [FR-SR-40](#fr-sr-40) has the Pre-flight say per Resource how many of its partitions a query reads. A dry run of BigQuery says what the whole query reads, and at most how many partitions in all; it does not say it per table, and the filters of a query cannot be taken apart to ask it per Resource. Proposal: the Pre-flight shows the partitions of the whole query where BigQuery gives them, and through which column when one Resource is partitioned, as built; the number per Resource and of how many is left out. *Raised on 2026-10-29, while building part 5 of the [build order](../../design/build-order.md).*
 
 ## Builds on
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createIdentity, SignedOut } from './identity.js';
 
-const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', semgraphUrl: 'https://semgraph.test' };
+const config = { identityUrl: 'https://identity.test', catalogueUrl: 'https://catalogue.test', registryUrl: 'https://registry.test', queryUrl: 'https://query.test', semgraphUrl: 'https://semgraph.test' };
 
 describe('the calls of the page to identity', () => {
   it('reads who the User is, their groups and their settings, and writes a setting, with the Access Token', async () => {

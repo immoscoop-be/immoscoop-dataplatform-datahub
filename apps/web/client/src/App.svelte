@@ -10,8 +10,9 @@
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { initialsOf } from './lib/initials.js';
+  import { createQuery, type QueryItem } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { NEW_COLLECTION, route } from './lib/routes.js';
+  import { NEW_COLLECTION, NEW_QUERY, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { SECTIONS, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
@@ -23,6 +24,8 @@
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import PanelSoon from './screens/PanelSoon.svelte';
+  import QueryNew from './screens/QueryNew.svelte';
+  import QueryPanel from './screens/QueryPanel.svelte';
   import ResourcePage from './screens/ResourcePage.svelte';
   import SectionStart from './screens/SectionStart.svelte';
   import AppShell from './templates/AppShell.svelte';
@@ -36,6 +39,7 @@
   const identity = $derived(createIdentity(config, session));
   const catalogue = $derived(createCatalogue(config, session));
   const registry = $derived(createRegistry(config, session));
+  const queries = $derived(createQuery(config, session));
   const router = new Router();
   const system = new SystemTheme();
 
@@ -50,6 +54,11 @@
   let waiting: readonly Resource[] | undefined = $state();
   /** Every Collection the User sees, read when Data Hub starts and after a change (FR-CO-18). */
   let collections: readonly Collection[] | undefined = $state();
+  /** The queries of the User, for the panel of Query (FR-SR-43); everyone's for the Data Team, once asked. */
+  let ownQueries: readonly QueryItem[] | undefined = $state();
+  let everyone: readonly QueryItem[] | undefined = $state();
+  /** The name of a new query being made: it stands in the panel as not run yet. */
+  let draft = $state('');
   /** The Resource whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
   let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
 
@@ -129,6 +138,24 @@
     ];
     await Promise.all(read).catch((error: unknown) => console.error('The Collections could not be read', error));
   }
+  /** Reads again the queries in the panel of Query, after a new one or a run. */
+  async function refreshQueries(): Promise<void> {
+    await Promise.all([
+      queries.list().then((found) => (ownQueries = found)),
+      ...(everyone ? [queries.list(true).then((found) => (everyone = found))] : []),
+    ]).catch((error: unknown) => console.error('The queries could not be read', error));
+  }
+  $effect(() => {
+    if (status.kind === 'signedIn' && section?.id === 'query' && ownQueries === undefined) {
+      refreshQueries();
+    }
+  });
+  // Query opens on the last query of the User, or on a new one when they have none.
+  $effect(() => {
+    if (page.kind === 'start' && page.section.id === 'query' && ownQueries) {
+      router.go(ownQueries[0] ? queryPath(ownQueries[0].id) : NEW_QUERY, { replace: true });
+    }
+  });
   let started = false;
   $effect(() => {
     if (status.kind === 'signedIn' && !started) {
@@ -167,14 +194,22 @@
               ? collections?.find((collection) => collection.id === page.id)?.name
               : page.kind === 'newCollection'
                 ? t('collections.new')
-                : undefined;
+                : page.kind === 'newQuery'
+                  ? t('query.new')
+                  : page.kind === 'query'
+                    ? (ownQueries?.find((item) => item.id === page.id)?.name ?? 'Query')
+                    : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
   const items: readonly RailItem[] = $derived(
     SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path })),
   );
-  const section = $derived(page.kind === 'start' || page.kind === 'resource' || page.kind === 'collection' || page.kind === 'newCollection' ? page.section : undefined);
+  const section = $derived(
+    page.kind === 'start' || page.kind === 'resource' || page.kind === 'collection' || page.kind === 'newCollection' || page.kind === 'newQuery' || page.kind === 'query'
+      ? page.section
+      : undefined,
+  );
   /** The Collection whose page is open, or that holds the Resource whose page is open (FR-CO-19). */
   const currentCollection = $derived(
     page.kind === 'collection' ? page.id : page.kind === 'resource' ? (opened?.resource?.collectionId ?? undefined) : undefined,
@@ -221,7 +256,7 @@
     ontheme={() => signedIn.settings.set('theme', theme === 'dark' ? 'light' : 'dark')}
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
-    panelActions={section?.id === 'collections' ? newCollection : undefined}
+    panelActions={section?.id === 'collections' ? newCollection : section?.id === 'query' ? newQuery : undefined}
   >
     {#if page.kind === 'start' && page.section.id === 'collections'}
       <CollectionsStart
@@ -231,8 +266,33 @@
         ondismiss={() => signedIn.settings.set('intro.collections', INTRO_VERSION)}
         onshow={() => signedIn.settings.forget('intro.collections')}
       />
-    {:else if page.kind === 'start'}
+    {:else if page.kind === 'start' && page.section.id !== 'query'}
       <SectionStart title={sectionLabel(page.section)} />
+    {:else if page.kind === 'newQuery'}
+      {#key page.resource}
+        <QueryNew
+          initial={page.resource}
+          {collections}
+          {catalogue}
+          ondraft={(name) => (draft = name)}
+          onstart={async (fields) => {
+            try {
+              const made = await queries.create(fields);
+              await refreshQueries();
+              router.go(queryPath(made.id));
+              return true;
+            } catch (error) {
+              console.error('The query could not be made', error);
+              return false;
+            }
+          }}
+        />
+      {/key}
+    {:else if page.kind === 'query'}
+      <!-- The editor of Query comes when a query opens, so that the other pages load without it. -->
+      {#await import('./screens/QueryPage.svelte') then { default: QueryPage }}
+        <QueryPage id={page.id} client={queries} {collections} nonce={config.styleNonce} onran={refreshQueries} />
+      {/await}
     {:else if page.kind === 'collection' || page.kind === 'newCollection'}
       <CollectionPage
         id={page.kind === 'collection' ? page.id : undefined}
@@ -295,9 +355,22 @@
       currentResource={page.kind === 'resource' ? page.id : undefined}
       groups={status.me.groups}
     />
+  {:else if section?.id === 'query' && status.kind === 'signedIn'}
+    <QueryPanel
+      queries={ownQueries}
+      {everyone}
+      {dataTeam}
+      current={page.kind === 'query' ? page.id : undefined}
+      draft={page.kind === 'newQuery' ? draft : null}
+      onall={() => queries.list(true).then((found) => (everyone = found), (error: unknown) => console.error('The queries could not be read', error))}
+    />
   {:else}
     <PanelSoon />
   {/if}
+{/snippet}
+
+{#snippet newQuery()}
+  <IconButton icon="plus-circle-fill" label={t('query.new')} href={NEW_QUERY} />
 {/snippet}
 
 {#snippet newCollection()}

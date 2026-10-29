@@ -3,7 +3,7 @@ import type { TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { readCookie, serializeCookie } from './cookies.js';
-import { loadClient } from './page.js';
+import { loadClient, NONCE } from './page.js';
 
 /** The web app is an OAuth client of identity, known there by this ID (TR-PF-27). */
 export const CLIENT_ID = 'datahub-web';
@@ -24,6 +24,8 @@ export interface AppOptions {
   registryUrl: string;
   /** catalogue's address (DATAHUB_CATALOGUE_URL), which the page calls for the Collections. */
   catalogueUrl: string;
+  /** query's address (DATAHUB_QUERY_URL), which the page calls to write and run queries. */
+  queryUrl: string;
   /** semgraph's address (DATAHUB_SEMGRAPH_URL): the page shows its charts. */
   semgraphUrl: string;
   /** The page as Vite built it: `dist/client` next to the server. */
@@ -70,20 +72,27 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   }
 
   // The page loads scripts, styles, fonts and pictures only from its own address, and charts from
-  // semgraph; the grain over a flowing background is a small picture in its stylesheet. It talks only
-  // to its own server, identity, catalogue, registry and semgraph.
-  const policy = [
+  // semgraph; the grain over a flowing background is a small picture in its stylesheet. The editor of
+  // Query adds its own styles, allowed by a nonce new for every page. It talks only to its own server,
+  // identity, catalogue, registry, query and semgraph.
+  const policy = (nonce: string) => [
     "default-src 'self'",
-    "style-src 'self'",
+    `style-src 'self' 'nonce-${nonce}'`,
     `img-src 'self' data: ${options.semgraphUrl}`,
-    `connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.semgraphUrl}`,
+    `connect-src 'self' ${options.identityUrl} ${options.catalogueUrl} ${options.registryUrl} ${options.queryUrl} ${options.semgraphUrl}`,
     "object-src 'none'",
     "base-uri 'none'",
     "form-action 'self'",
     "frame-ancestors 'none'",
   ].join('; ');
-  const sendPage = (reply: FastifyReply) =>
-    reply.type('text/html; charset=utf-8').header('content-security-policy', policy).header('cache-control', 'no-store').send(client.page);
+  const sendPage = (reply: FastifyReply) => {
+    const nonce = randomBytes(18).toString('base64');
+    return reply
+      .type('text/html; charset=utf-8')
+      .header('content-security-policy', policy(nonce))
+      .header('cache-control', 'no-store')
+      .send(client.page.replace(NONCE, nonce));
+  };
   app.get('/', open, async (_incoming, reply) => sendPage(reply));
   for (const [path, file] of client.files) {
     app.get(path, open, async (_incoming, reply) =>

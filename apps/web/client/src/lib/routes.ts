@@ -13,6 +13,10 @@ export type Route =
   | { readonly kind: 'collection'; readonly id: string; readonly section: Section }
   /** An empty Collection page, being made (FR-CO-12). */
   | { readonly kind: 'newCollection'; readonly section: Section }
+  /** A new query, on a Resource when it starts from its page (FR-SR-46). */
+  | { readonly kind: 'newQuery'; readonly resource: string | null; readonly section: Section }
+  /** A query, in the section Query (FR-SR-41). */
+  | { readonly kind: 'query'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -21,6 +25,10 @@ export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me'
 export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
 export const collectionPath = (id: string): string => `/collections/${encodeURIComponent(id)}`;
 export const NEW_COLLECTION = '/collections/new';
+export const NEW_QUERY = '/query/new';
+export const queryPath = (id: string): string => `/query/${encodeURIComponent(id)}`;
+/** A new query on a Resource, as "Query" on its page starts it (FR-SR-46). */
+export const newQueryPath = (resource: string): string => `${NEW_QUERY}/${encodeURIComponent(resource)}`;
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
@@ -41,6 +49,22 @@ export function route(path: string): Route {
   const tab = MY_PAGE_TABS.find((candidate) => clean === `/me/${candidate}` && candidate !== 'profile');
   if (tab) {
     return { kind: 'me', tab };
+  }
+  const query = SECTIONS.find((candidate) => candidate.id === 'query');
+  const [, queryId] = /^\/query\/([^/]+)$/.exec(clean) ?? [];
+  const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
+  try {
+    if (query && clean === NEW_QUERY) {
+      return { kind: 'newQuery', resource: null, section: query };
+    }
+    if (query && newOn) {
+      return { kind: 'newQuery', resource: decodeURIComponent(newOn), section: query };
+    }
+    if (query && queryId) {
+      return { kind: 'query', id: decodeURIComponent(queryId), section: query };
+    }
+  } catch {
+    return { kind: 'notFound' };
   }
   const collections = SECTIONS.find((candidate) => candidate.id === 'collections');
   if (!collections) {
