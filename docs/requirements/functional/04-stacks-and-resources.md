@@ -47,6 +47,7 @@ In library terms: a book is only in the library once the librarian registers it.
 - <a id="dec-sr-35"></a>**DEC-SR-35** · A query without a filter on the partition column of a Resource that requires one, in BigQuery or in Data Hub ([FR-CO-34](03-collections.md#fr-co-34)), cannot run. The Pre-flight says so in place of its numbers, names the partition column, and offers to add the filter. On a Resource that does not require one, the warning of [FR-SR-40](#fr-sr-40) stays. *Decided on 2026-10-28, by Max ([OP-SR-15](#op-sr-15)).*
 - <a id="dec-sr-36"></a>**DEC-SR-36** · Accepting a Request to run a query above 1 GB ([DEC-SR-29](#dec-sr-29)) lets that User run that query above the limit: every run, also after its SQL changes, without an end date. Nobody else, and no other query. The Pre-flight keeps showing what it reads. A Request waits until the Data Team answers, without a timeout ([DEC-LE-15](09-lenses.md#dec-le-15)). *Decided on 2026-10-28, by Max ([OP-SR-17](#op-sr-17)).*
 - <a id="dec-sr-37"></a>**DEC-SR-37** · A choice of a Parameter in a Preview lists at most 100 values of its column, read from the partitions the preview reads, in one small query that passes the Pre-flight and goes into the Query Log, as every query does. The partition column offers the last 1, 4 or 12 of its unit: days, weeks or months. *Decided on 2026-10-29, by Max ([OP-SR-22](#op-sr-22)).*
+- <a id="dec-sr-38"></a>**DEC-SR-38** · The Pre-flight shows the partitions the whole query reads, where BigQuery gives them, and through which column when one of its Resources is partitioned; not per Resource, nor out of how many. A dry run says what the whole query reads and does not say it per table. *Decided on 2026-10-29, by Max ([OP-SR-23](#op-sr-23)).*
 
 Further decisions on using a Resource are under [Using a Resource](#using-a-resource).
 
@@ -468,6 +469,8 @@ The Pre-flight ([FR-SR-36](#fr-sr-36)) says, per Resource, how many of its parti
 
 *Note of 2026-10-29, on building part 5: built are the warning without a filter, with what the query reads with one on the recent partitions, the block where the Resource requires one, and "at most" in the volume ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); how many partitions each Resource reads is [OP-SR-23](#op-sr-23).*
 
+*Note of 2026-10-29: the partitions are those of the whole query, not per Resource ([DEC-SR-38](#dec-sr-38)).*
+
 <a id="fr-sr-41"></a>
 ### FR-SR-41 · Query, a section for SQL over everything the User may see
 
@@ -522,6 +525,8 @@ The page of a Resource has a tab Queries with every query that ran on it: when, 
 A new query starts with its name, before its SQL. Data Hub suggests one from where the query starts: its Resources and the date, or for a Lens the name of the Lens. It suggests no other names. The name can be changed later; a query without a name cannot be run.
 
 *Note of 2026-10-29, on building part 5: a query has its name from the start, suggested from its Resources and the date; changing it later has no screen yet ([OP-UX-42](../../design/principles.md#op-ux-42)).*
+
+*Note of 2026-10-29, later: a click on the name or the question above the editor edits it in place ([DEC-UX-119](../../design/principles.md#dec-ux-119)).*
 
 <a id="fr-sr-46"></a>
 ### FR-SR-46 · "Query" on the page of a Resource starts a new query on it
@@ -685,7 +690,7 @@ How the Level evolves after Registration ([Maturity and release](06-maturity-and
 - [x] <a id="op-sr-20"></a>**OP-SR-20** · [FR-SR-42](#fr-sr-42) has the editor suggest the Resources the User may see, while a query reads only its own Resources and the editor suggests only theirs ([DEC-UX-73](../../design/principles.md#dec-ux-73)). Proposal: FR-SR-42 follows DEC-UX-73. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: as proposed; the suggestion that is selected also shows the type of its field and its descriptions ([DEC-UX-115](../../design/principles.md#dec-ux-115)).*
 - [x] <a id="op-sr-21"></a>**OP-SR-21** · [FR-SR-47](#fr-sr-47) shows each Lens with its use, [query-new](../../design/screens/query-new.html) shows how often each was used this month, and the tab About of [lens](../../design/screens/lens.html) how many people ran it; usage reporting is not part of v1 ([DEC-DH-75](../../overview/data-hub.md#dec-dh-75)). Proposal: no count of use or of colleagues in v1. *Raised on 2026-10-28, while mapping the screens to the requirements.* *Decided on 2026-10-29, by Max: no count of use on the Lenses of a new query nor on the tab About of a Lens; the numbers on top of the tab History of a Resource stay, as they count its own list ([OP-SR-18](#op-sr-18)).*
 - [x] <a id="op-sr-22"></a>**OP-SR-22** · Where the values of a choice in a Preview come from ([FR-SR-38](#fr-sr-38)): reading them is a query of its own. Proposal: a choice lists at most 100 values of its column, read from the partitions the preview reads in one small query that passes the Pre-flight and goes into the Query Log; the partition column offers the last 1, 4 or 12 of its unit. *Raised on 2026-10-28, while proposing part 5 of the [build order](../../design/build-order.md).* *Decided on 2026-10-29, by Max: as proposed ([DEC-SR-37](#dec-sr-37)).*
-- [ ] <a id="op-sr-23"></a>**OP-SR-23** · [FR-SR-40](#fr-sr-40) has the Pre-flight say per Resource how many of its partitions a query reads. A dry run of BigQuery says what the whole query reads, and at most how many partitions in all; it does not say it per table, and the filters of a query cannot be taken apart to ask it per Resource. Proposal: the Pre-flight shows the partitions of the whole query where BigQuery gives them, and through which column when one Resource is partitioned, as built; the number per Resource and of how many is left out. *Raised on 2026-10-29, while building part 5 of the [build order](../../design/build-order.md).*
+- [x] <a id="op-sr-23"></a>**OP-SR-23** · [FR-SR-40](#fr-sr-40) has the Pre-flight say per Resource how many of its partitions a query reads. A dry run of BigQuery says what the whole query reads, and at most how many partitions in all; it does not say it per table, and the filters of a query cannot be taken apart to ask it per Resource. Proposal: the Pre-flight shows the partitions of the whole query where BigQuery gives them, and through which column when one Resource is partitioned, as built; the number per Resource and of how many is left out. *Raised on 2026-10-29, while building part 5 of the [build order](../../design/build-order.md).* *Decided on 2026-10-29, by Max: as proposed, the total only ([DEC-SR-38](#dec-sr-38)).*
 
 ## Builds on
 
