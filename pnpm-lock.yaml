@@ -205,6 +205,9 @@ importers:
       '@datahub/google':
         specifier: workspace:*
         version: link:../../packages/google
+      '@datahub/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server

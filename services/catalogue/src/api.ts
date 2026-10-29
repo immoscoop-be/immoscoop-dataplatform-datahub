@@ -4,6 +4,8 @@ import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
+import { learningRoutes } from './learning-api.js';
+import type { Learning } from './learning.js';
 import { messageRoutes } from './message-api.js';
 import type { Messages } from './messages.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
@@ -37,6 +39,8 @@ export interface ApiOptions {
   messages: Messages;
   /** Who may tell about the Lenses and decide on a Request on one: the service account of query (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
+  /** The progress of every User in the Learning Centre (FR-LR-32). */
+  learning: Learning;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -70,7 +74,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, learning } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -132,6 +136,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   }
 
   await messageRoutes(app, { collections, messages, lensCallers, viewer });
+  await learningRoutes(app, { learning, viewer });
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
 

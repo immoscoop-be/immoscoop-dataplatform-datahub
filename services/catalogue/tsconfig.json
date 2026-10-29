@@ -4,13 +4,30 @@
     "rootDir": "src",
     "outDir": "dist"
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"],
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "src/**/*.test.ts"
+  ],
   "references": [
-    { "path": "../../packages/auth" },
-    { "path": "../../packages/contracts" },
-    { "path": "../../packages/db" },
-    { "path": "../../packages/google" },
-    { "path": "../../packages/server" }
+    {
+      "path": "../../packages/auth"
+    },
+    {
+      "path": "../../packages/contracts"
+    },
+    {
+      "path": "../../packages/db"
+    },
+    {
+      "path": "../../packages/google"
+    },
+    {
+      "path": "../../packages/learning"
+    },
+    {
+      "path": "../../packages/server"
+    }
   ]
 }

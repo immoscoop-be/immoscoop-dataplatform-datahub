@@ -12,6 +12,7 @@ import {
   textBlocks,
 } from '@datahub/contracts/messages';
 import { MESSAGE_CENTRE, NOTIFICATION_TEXTS, type NotificationReason } from '@datahub/contracts/notifications';
+import { topicOf } from '@datahub/learning';
 import { type Kysely, type Selectable, sql } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 
@@ -244,6 +245,10 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         if (!lens) return named;
         const found = await collection(lens.collectionId);
         return { ...named, name: lens.name, collection: found?.name ?? null, exists: true, owner: ownerOf(found), authorId: lens.authorId };
+      }
+      case 'learningCard': {
+        const topic = topicOf(row.subjectId);
+        return topic ? { ...named, name: `${topic.number} ${topic.title.en}`, exists: true } : named;
       }
       default:
         return { ...named, exists: true };
