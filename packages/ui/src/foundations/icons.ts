@@ -33,6 +33,7 @@ import usersThreeFill from '@phosphor-icons/core/assets/fill/users-three-fill.sv
 import warningCircleFill from '@phosphor-icons/core/assets/fill/warning-circle-fill.svg?raw';
 import warningFill from '@phosphor-icons/core/assets/fill/warning-fill.svg?raw';
 import xCircleFill from '@phosphor-icons/core/assets/fill/x-circle-fill.svg?raw';
+import aperture from '@phosphor-icons/core/assets/regular/aperture.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
 import arrowLeft from '@phosphor-icons/core/assets/regular/arrow-left.svg?raw';
 import arrowRight from '@phosphor-icons/core/assets/regular/arrow-right.svg?raw';
@@ -121,6 +122,7 @@ export const ICONS = {
   'warning-circle-fill': warningCircleFill,
   'warning-fill': warningFill,
   'x-circle-fill': xCircleFill,
+  aperture,
   'arrow-counter-clockwise': arrowCounterClockwise,
   'arrow-left': arrowLeft,
   'arrow-right': arrowRight,

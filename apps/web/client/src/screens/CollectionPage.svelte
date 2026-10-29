@@ -18,19 +18,21 @@
   import type { requestOf } from '../lib/grain.js';
   import type { Identity } from '../lib/identity.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath, resourcePath } from '../lib/routes.js';
+  import type { LensItem } from '../lib/query.js';
+  import { collectionPath, lensPath, resourcePath } from '../lib/routes.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
   import NotFound from './NotFound.svelte';
 
   /**
    * The page of a Collection (Page of a Collection, FR-CO-25 to FR-CO-31): what it is, what needs
-   * attention, its Resources and its recent history. Its Owner Unit and the Data Team edit it in
-   * place; the Data Team adds Resources in a sheet and removes them. Without an ID, it is an empty
-   * Collection being made (FR-CO-12). Lenses come with their part.
+   * attention, its Resources, the Lenses its Owner Unit added to it (FR-CO-28) and its recent history.
+   * Its Owner Unit and the Data Team edit it in place; the Data Team adds Resources in a sheet and
+   * removes them. Without an ID, it is an empty Collection being made (FR-CO-12).
    */
   let {
     id,
+    lenses,
     catalogue,
     identity,
     registry,
@@ -41,6 +43,8 @@
     onchanged,
   }: {
     id: string | undefined;
+    /** Its Lenses the User sees; undefined while query has not told them. */
+    lenses?: readonly LensItem[] | undefined;
     catalogue: Catalogue;
     identity: Identity;
     registry: Registry;
@@ -273,6 +277,36 @@
     </Table>
   {/if}
 
+  {#if lenses}
+    <div class="section-head"><h2>{t('collection.lenses')}</h2></div>
+    {#if lenses.length === 0}
+      <p class="meta empty">{t('collection.lenses.none')}</p>
+    {:else}
+      <Table label={t('collection.lenses')}>
+        {#snippet head()}
+          <tr>
+            <th>{t('collection.lenses.name')}</th>
+            <th>{t('collection.lenses.builtOn')}</th>
+            <th>{t('collection.lenses.level')}</th>
+            <th>{t('collection.lenses.madeBy')}</th>
+          </tr>
+        {/snippet}
+        {#each lenses.toSorted((a, b) => a.name.localeCompare(b.name)) as lens (lens.id)}
+          <tr class:quiet={lens.state !== 'published'}>
+            <td>
+              <a class="name" href={lensPath(lens.id)}><KindIcon kind="lens" /><span>{lens.name}</span></a>
+              {#if lens.state === 'waiting'}<span class="deprecated">{t('collection.lenses.waiting')}</span>{/if}
+            </td>
+            <td class="muted">{lens.resources.map((resource) => resource.displayName).join(', ')}</td>
+            <td><span class="level"><MaturityIcon level={lens.level} tooltip={false} />{levelName(lens.level)}</span></td>
+            <td class="muted">{lens.authorName}</td>
+          </tr>
+        {/each}
+      </Table>
+      <p class="meta note">{t('collection.lenses.note', { owner: shown.ownerUnit.name })}</p>
+    {/if}
+  {/if}
+
   <div class="section-head"><h2>{t('collection.history')}</h2></div>
   {#if log}
     <div class="history card"><LogList entries={log.slice(0, 8)} /></div>
@@ -313,4 +347,5 @@
   .history { border-radius: var(--radius-lg); padding: 10px 18px; }
   .history :global(.log) { margin-top: 0; }
   .empty { margin: 0; }
+  .note { display: block; margin: 10px 4px 0; line-height: 1.5; }
 </style>

@@ -8,26 +8,32 @@
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Collection, Resource } from '../lib/catalogue.js';
-  import { collectionPath, resourcePath } from '../lib/routes.js';
+  import type { LensItem } from '../lib/query.js';
+  import { collectionPath, lensPath, resourcePath } from '../lib/routes.js';
 
   /**
    * The panel of Collections, the index of the section (What is in the panel): every Collection the
-   * User sees, All or Yours (DEC-UX-87), each unfolding to its Resources (FR-CO-18). For the Data
-   * Team, "Without a Collection" is on top (DEC-UX-16). Search filters the Collections and their
-   * Resources together (FR-CO-24).
+   * User sees, All or Yours (DEC-UX-87), each unfolding to its Resources (FR-CO-18), then its Lenses,
+   * without a label of their own (FR-CO-36). For the Data Team, "Without a Collection" is on top
+   * (DEC-UX-16). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
    */
   let {
     collections,
+    lenses = [],
     waiting,
     currentCollection,
     currentResource,
+    currentLens,
     groups,
   }: {
     collections: readonly Collection[] | undefined;
+    /** The Lenses the User sees, each in its Collection. */
+    lenses?: readonly LensItem[] | undefined;
     waiting: readonly Resource[] | undefined;
     /** The Collection whose page is open, or that holds the Resource whose page is open. */
     currentCollection: string | undefined;
     currentResource: string | undefined;
+    currentLens?: string | undefined;
     /** The fixed IDs of the groups of the User: their Collections are theirs. */
     groups: readonly string[];
   } = $props();
@@ -41,6 +47,7 @@
   let unfolded: Record<string, boolean> = $state({});
   let waitingOpen = $state(true);
   let all: Record<string, boolean> = $state({});
+  let allLenses: Record<string, boolean> = $state({});
 
   // Opening a Collection, or a Resource in it, unfolds it in the panel (FR-CO-19, FR-CO-25).
   $effect(() => {
@@ -57,18 +64,21 @@
     collection: Collection;
     /** Its items as the search leaves them: all of them, or only those that match. */
     items: Collection['resources'];
+    lensItems: LensItem[];
     /** Unfolded by the search, to show what matches. */
     found: boolean;
   }
+  const lensesOf = (collection: Collection) => (lenses ?? []).filter((lens) => lens.collectionId === collection.id).toSorted((a, b) => a.name.localeCompare(b.name));
   const shown: Shown[] = $derived(
     (collections ?? [])
       .filter((collection) => filter === 'all' || mine(collection))
       .flatMap((collection): Shown[] => {
         if (!words || fits(collection.name)) {
-          return [{ collection, items: collection.resources, found: false }];
+          return [{ collection, items: collection.resources, lensItems: lensesOf(collection), found: false }];
         }
         const items = collection.resources.filter((item) => fits(item.displayName));
-        return items.length > 0 ? [{ collection, items, found: true }] : [];
+        const lensItems = lensesOf(collection).filter((lens) => fits(lens.name));
+        return items.length + lensItems.length > 0 ? [{ collection, items, lensItems, found: true }] : [];
       }),
   );
   const waitingShown = $derived((waiting ?? []).filter((resource) => !words || fits(resource.displayName)));
@@ -97,8 +107,9 @@
   />
 </div>
 
-{#each shown as { collection, items, found } (collection.id)}
+{#each shown as { collection, items, lensItems, found } (collection.id)}
   {@const first = all[collection.id] || found ? items : items.slice(0, FIRST)}
+  {@const firstLenses = allLenses[collection.id] || found ? lensItems : lensItems.slice(0, FIRST)}
   <TreeGroup
     href={collectionPath(collection.id)}
     name={collection.name}
@@ -119,6 +130,12 @@
     {/each}
     {#if first.length < items.length}
       <button type="button" class="more" onclick={() => (all[collection.id] = true)}>{t('collections.showAll', { count: items.length })}</button>
+    {/if}
+    {#each firstLenses as lens (lens.id)}
+      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state === 'published'} />
+    {/each}
+    {#if firstLenses.length < lensItems.length}
+      <button type="button" class="more" onclick={() => (allLenses[collection.id] = true)}>{t('collections.showAll', { count: lensItems.length })}</button>
     {/if}
   </TreeGroup>
 {/each}

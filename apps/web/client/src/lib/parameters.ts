@@ -81,6 +81,9 @@ export const SUGGESTED: readonly { key: string; label: string; sql: string; on: 
 
 const plain = (sql: string) => sql.replace(/\s+/g, '').toUpperCase();
 
+/** The suggested function a value is, if it is one of them (DEC-LE-14). */
+export const suggestedOf = (value: string) => SUGGESTED.find((candidate) => plain(candidate.sql) === plain(value)) ?? null;
+
 /** The day a date value gives today: itself, or what a suggested function gives; null for any other function. */
 export function dayOf(value: string, today: Date = new Date()): string | null {
   if (isDay(value)) return value;

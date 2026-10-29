@@ -10,9 +10,9 @@
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { initialsOf } from './lib/initials.js';
-  import { createQuery, type QueryItem, type Run } from './lib/query.js';
+  import { createQuery, type Lens, type LensItem, type QueryItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { NEW_COLLECTION, NEW_QUERY, queryPath, route } from './lib/routes.js';
+  import { lensPath, NEW_COLLECTION, NEW_QUERY, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { SECTIONS, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
@@ -21,6 +21,8 @@
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
+  import LensNew from './screens/LensNew.svelte';
+  import LensPage from './screens/LensPage.svelte';
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import PanelSoon from './screens/PanelSoon.svelte';
@@ -59,6 +61,10 @@
   let everyone: readonly QueryItem[] | undefined = $state();
   /** The name of a new query being made: it stands in the panel as not run yet. */
   let draft = $state('');
+  /** The Lenses the User sees, for the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36). */
+  let lenses: readonly LensItem[] | undefined = $state();
+  /** The Lens whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
+  let openedLens: { id: string; lens?: Lens | null } | undefined = $state();
   /** The Resource whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
   let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
 
@@ -136,6 +142,11 @@
       catalogue.collections().then((found) => (collections = found)),
       ...(dataTeam ? [catalogue.waiting().then((found) => (waiting = found))] : []),
     ];
+    // The panel shows the Collections even when query does not tell the Lenses.
+    queries.lenses().then(
+      (found) => (lenses = found),
+      (error: unknown) => console.error('The Lenses could not be read', error),
+    );
     await Promise.all(read).catch((error: unknown) => console.error('The Collections could not be read', error));
   }
   /** The last runs of the query that is open, which unfolds to them in the panel (DEC-UX-74). */
@@ -199,6 +210,28 @@
     catalogue.log(id).then((log) => opened?.id === id && (opened = { ...opened, log }), missing);
   });
   $effect(() => {
+    if (status.kind !== 'signedIn' || page.kind !== 'lens' || openedLens?.id === page.id) {
+      return;
+    }
+    const id = page.id;
+    openedLens = { id };
+    queries.lens(id).then(
+      (lens) => openedLens?.id === id && (openedLens = { id, lens }),
+      (error: unknown) => {
+        if (openedLens?.id !== id) return;
+        if (error instanceof Missing) openedLens = { id, lens: null };
+        else console.error(`The Lens ${id} could not be read`, error);
+      },
+    );
+  });
+  /** After a Lens is made: the panels show it, and its page opens. */
+  async function made(lens: Lens): Promise<void> {
+    openedLens = { id: lens.id, lens };
+    refresh();
+    refreshQueries();
+    router.go(lensPath(lens.id));
+  }
+  $effect(() => {
     const title =
       page.kind === 'start'
         ? sectionLabel(page.section)
@@ -214,7 +247,11 @@
                   ? t('query.new')
                   : page.kind === 'query'
                     ? (ownQueries?.find((item) => item.id === page.id)?.name ?? 'Query')
-                    : undefined;
+                    : page.kind === 'newLens'
+                      ? t('lens.make.title')
+                      : page.kind === 'lens'
+                        ? openedLens?.lens?.name
+                        : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
@@ -222,13 +259,26 @@
     SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path })),
   );
   const section = $derived(
-    page.kind === 'start' || page.kind === 'resource' || page.kind === 'collection' || page.kind === 'newCollection' || page.kind === 'newQuery' || page.kind === 'query'
+    page.kind === 'start' ||
+      page.kind === 'resource' ||
+      page.kind === 'collection' ||
+      page.kind === 'newCollection' ||
+      page.kind === 'newQuery' ||
+      page.kind === 'query' ||
+      page.kind === 'newLens' ||
+      page.kind === 'lens'
       ? page.section
       : undefined,
   );
-  /** The Collection whose page is open, or that holds the Resource whose page is open (FR-CO-19). */
+  /** The Collection whose page is open, or that holds the Resource or Lens whose page is open (FR-CO-19). */
   const currentCollection = $derived(
-    page.kind === 'collection' ? page.id : page.kind === 'resource' ? (opened?.resource?.collectionId ?? undefined) : undefined,
+    page.kind === 'collection'
+      ? page.id
+      : page.kind === 'resource'
+        ? (opened?.resource?.collectionId ?? undefined)
+        : page.kind === 'lens'
+          ? (openedLens?.lens?.collectionId ?? undefined)
+          : undefined,
   );
   /** The version of the intro of Collections: after a big change it is raised, and the intro shows again. */
   const INTRO_VERSION = 1;
@@ -320,9 +370,42 @@
           }}
         />
       {/await}
+    {:else if page.kind === 'newLens'}
+      {#key page.query}
+        <LensNew
+          queryId={page.query}
+          client={queries}
+          {catalogue}
+          {collections}
+          me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
+          {dataTeam}
+          loadGroups={() => identity.groups()}
+          onmade={made}
+        />
+      {/key}
+    {:else if page.kind === 'lens'}
+      {#if openedLens?.lens?.state === 'waiting'}
+        <!-- A Lens that waits for the Data Team opens as its author made it, frozen (lens-new-context, DEC-LE-05). -->
+        <LensNew
+          lens={openedLens.lens}
+          client={queries}
+          {catalogue}
+          {collections}
+          me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
+          {dataTeam}
+          loadGroups={() => identity.groups()}
+          onmade={made}
+        />
+      {:else if openedLens?.lens}
+        {@const lens = openedLens.lens}
+        <LensPage {lens} client={queries} collection={collections?.find((collection) => collection.id === lens.collectionId)} />
+      {:else if openedLens?.lens === null}
+        <NotFound />
+      {/if}
     {:else if page.kind === 'collection' || page.kind === 'newCollection'}
       <CollectionPage
         id={page.kind === 'collection' ? page.id : undefined}
+        lenses={lenses?.filter((lens) => page.kind === 'collection' && lens.collectionId === page.id)}
         {catalogue}
         {identity}
         {registry}
@@ -379,9 +462,11 @@
   {#if section?.id === 'collections' && status.kind === 'signedIn'}
     <CollectionsPanel
       {collections}
+      {lenses}
       {waiting}
       {currentCollection}
       currentResource={page.kind === 'resource' ? page.id : undefined}
+      currentLens={page.kind === 'lens' ? page.id : undefined}
       groups={status.me.groups}
     />
   {:else if section?.id === 'query' && status.kind === 'signedIn'}

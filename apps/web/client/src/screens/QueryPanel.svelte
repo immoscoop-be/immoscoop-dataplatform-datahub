@@ -6,7 +6,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { when } from '../lib/moment.js';
   import type { QueryItem, Run } from '../lib/query.js';
-  import { queryPath, queryRunsPath } from '../lib/routes.js';
+  import { lensPath, queryPath, queryRunsPath } from '../lib/routes.js';
 
   /**
    * The panel of Query (DEC-UX-20): the queries that ran, one item per query (DEC-UX-74), grouped by the
@@ -74,7 +74,8 @@
 
   function meta(item: QueryItem): string {
     const [first, ...more] = item.resources;
-    const on = `${first?.displayName ?? ''}${more.length ? ` +${more.length}` : ''}`;
+    // The runs of a Lens are on the Lens, which hides what it reads beneath (FR-LE-14).
+    const on = item.kind === 'lens' ? t('query.label.lens') : `${first?.displayName ?? ''}${more.length ? ` +${more.length}` : ''}`;
     const when = item.lastRunAt
       ? `${t('query.runs', { count: item.runs })} · ${new Intl.DateTimeFormat(LOCALES[currentLanguage()], { hour: '2-digit', minute: '2-digit' }).format(new Date(item.lastRunAt))}`
       : t('query.notRunYet');
@@ -110,10 +111,16 @@
 {#each groups as group (group.day)}
   <p class="day">{group.day}</p>
   {#each group.items as item (item.id)}
-    {@const open = item.id === current && item.runs > 0 && !!runs?.length}
+    {@const open = item.id === current && item.runs > 0 && !!runs?.length && item.kind !== 'lens'}
     <div class="entry">
-      <a class="item card" class:current={item.id === current} class:unfolds={open} href={queryPath(item.id)} aria-current={item.id === current ? 'page' : undefined}>
-        <span class="kind"><KindIcon kind="resource" /></span>
+      <a
+        class="item card"
+        class:current={item.id === current}
+        class:unfolds={open}
+        href={item.kind === 'lens' && item.lensOf ? lensPath(item.lensOf) : queryPath(item.id)}
+        aria-current={item.id === current ? 'page' : undefined}
+      >
+        <span class="kind"><KindIcon kind={item.kind === 'lens' ? 'lens' : 'resource'} /></span>
         <span class="text"><span class="name" title={item.name}>{item.name}</span><span class="meta" title={meta(item)}>{meta(item)}</span></span>
         {#if item.request?.state === 'waiting'}
           <span class="pill urgent">{t('query.toDataTeam')}</span>

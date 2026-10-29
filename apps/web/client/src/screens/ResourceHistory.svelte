@@ -8,7 +8,7 @@
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { when } from '../lib/moment.js';
   import type { QueryClient, QueryOnResource } from '../lib/query.js';
-  import { newQueryPath, queryPath } from '../lib/routes.js';
+  import { lensPath, newQueryPath, queryPath } from '../lib/routes.js';
 
   /**
    * The tab History of a Resource (resource-history, DEC-UX-90): every query that used it, one row per
@@ -35,7 +35,7 @@
   });
 
   const language = $derived(currentLanguage());
-  const KINDS = { query: 'resource.history.kind.query', preview: 'resource.history.kind.preview' } as const;
+  const KINDS = { query: 'resource.history.kind.query', preview: 'resource.history.kind.preview', lens: 'resource.history.kind.lens' } as const;
 </script>
 
 {#if failed}
@@ -64,7 +64,9 @@
       {/snippet}
       {#each found.queries as query (query.id)}
         <tr>
-          <td><a class="name" href={queryPath(query.id)}><KindIcon kind="resource" />{query.name}</a></td>
+          <td>
+            <a class="name" href={query.kind === 'lens' ? lensPath(query.id) : queryPath(query.id)}><KindIcon kind={query.kind === 'lens' ? 'lens' : 'resource'} />{query.name}</a>
+          </td>
           <td>{t(KINDS[query.kind])}</td>
           <td>{query.mine ? t('resource.history.you') : query.ownerName}</td>
           <td class="number-cell">{query.runs}</td>

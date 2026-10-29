@@ -46,8 +46,8 @@ export interface QueryRequest {
   text: string;
 }
 
-/** A query written in Query, or the previews of a Resource by one User (FR-SR-38). */
-export type QueryKind = 'query' | 'preview';
+/** A query written in Query, the previews of a Resource by one User (FR-SR-38), or the runs of a Lens by one User (FR-LE-12). */
+export type QueryKind = 'query' | 'preview' | 'lens';
 
 /** A query in the panel of Query: one item per query (DEC-UX-74). */
 export interface QueryItem {
@@ -55,6 +55,8 @@ export interface QueryItem {
   name: string;
   ownerName: string;
   kind: QueryKind;
+  /** For the runs of a Lens, the Lens: it opens on its page, never with its SQL (FR-LE-14). */
+  lensOf: string | null;
   resources: { id: string; displayName: string }[];
   runs: number;
   createdAt: string;
@@ -110,7 +112,65 @@ export interface Query {
   request: QueryRequest | null;
   /** The query it was started from with another set of Resources, and after which of its runs (DEC-UX-73). */
   startedFrom: { id: string; name: string; afterRun: number | null } | null;
+  /** The Lens it is used as (DEC-LE-03). */
+  lens: { id: string; name: string; collectionId: string; state: LensState; createdAt: string } | null;
 }
+
+/** A Lens is published, or waits for the Data Team while one run reads more than 1 GB (FR-LE-09). */
+export type LensState = 'published' | 'waiting';
+
+/** A Parameter of a Lens: one of its query, with the name Users see and its default (DEC-LE-01). */
+export type LensParameter = Parameter & { label: string };
+
+/** A Lens as a list shows it: the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36). */
+export interface LensItem {
+  id: string;
+  name: string;
+  question: string;
+  shows: string;
+  tags: string[];
+  collectionId: string;
+  /** The lowest Level of what it is built on (DEC-DH-10). */
+  level: number;
+  state: LensState;
+  resources: { id: string; displayName: string }[];
+  authorName: string;
+  mine: boolean;
+  createdAt: string;
+  publishedAt: string | null;
+}
+
+/** A Lens as its page shows it: everything but its SQL (FR-LE-14). */
+export interface Lens extends Omit<LensItem, 'resources'> {
+  steps: string[];
+  parameters: LensParameter[];
+  resources: { id: string; displayName: string; collectionId: string | null; level: number }[];
+  /** Whether the User may change it: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
+  canManage: boolean;
+  version: number;
+  range: 'free' | 'approve' | 'request';
+  reads: number;
+  fromQuery: { id: string; name: string } | null;
+  /** Its Request to the Data Team, while it waits (FR-LE-09). */
+  request: QueryRequest | null;
+}
+
+/** What its author tells about a new Lens (FR-LE-06, DEC-LE-16). */
+export interface NewLens {
+  queryId: string;
+  collectionId: string;
+  name: string;
+  question: string;
+  shows: string;
+  steps: string[];
+  tags: string[];
+  labels: Record<string, string>;
+  approve?: boolean;
+  text?: string;
+}
+
+/** The value a User chose for a Parameter of a Lens; a Period has its end too. */
+export type LensValue = string | string[] | boolean | { value: string; to: string };
 
 /** A page of a result: 100 rows of the same run (FR-SR-51). */
 export interface Page {
@@ -187,6 +247,7 @@ export type PreviewValues = Record<string, string | null>;
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44). */
 export interface QueryOnResource {
+  /** The query; for a Lens, the Lens. */
   id: string;
   name: string;
   kind: QueryKind;
@@ -289,6 +350,36 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     async run(id: string, sql: string, parameters: readonly Parameter[], approve: boolean): Promise<RunOutcome> {
       return outcomeOf(call(`${query(id)}/runs`, { method: 'POST', body: { sql, parameters, approve } }));
+    },
+    /** The Lenses the User sees (DEC-LE-09, DEC-CO-16). */
+    async lenses(): Promise<LensItem[]> {
+      return ((await (await call('/lenses')).json()) as { lenses: LensItem[] }).lenses;
+    },
+    async lens(id: string): Promise<Lens> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}`)).json()) as { lens: Lens }).lens;
+    },
+    /**
+     * Makes a Lens of a query (FR-LE-07): made, published or waiting for the Data Team; or the size check,
+     * when one run reads more than 100 MB and its author did not say to publish it anyway (FR-LE-08).
+     */
+    async makeLens(fields: NewLens): Promise<{ kind: 'made'; lens: Lens } | { kind: 'refused'; preflight: Preflight }> {
+      try {
+        return { kind: 'made', lens: ((await (await call('/lenses', { method: 'POST', body: fields })).json()) as { lens: Lens }).lens };
+      } catch (error) {
+        if (error instanceof Refused && error.status === 409 && error.body?.preflight) return { kind: 'refused', preflight: error.body.preflight as Preflight };
+        throw error;
+      }
+    },
+    /** The Pre-flight of a run of a Lens with the values the User chose (DEC-UX-28). */
+    async lensPreflight(id: string, values: Record<string, LensValue>): Promise<Preflight> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}/preflight`, { method: 'POST', body: { values } })).json()) as { preflight: Preflight }).preflight;
+    },
+    async lensRun(id: string, values: Record<string, LensValue>, approve: boolean): Promise<RunOutcome> {
+      return outcomeOf(call(`/lenses/${encodeURIComponent(id)}/runs`, { method: 'POST', body: { values, approve } }));
+    },
+    /** Sends a waiting Lens to the Data Team again, when it could not be sent (FR-LE-09). */
+    async lensRequest(id: string, text: string): Promise<QueryRequest> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}/requests`, { method: 'POST', body: { text } })).json()) as { request: QueryRequest }).request;
     },
     /** A page of a run, from the same job; null once BigQuery no longer keeps it (DEC-UX-99). */
     async rows(ref: string, page: number): Promise<Page | null> {
