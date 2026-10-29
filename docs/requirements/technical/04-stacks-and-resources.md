@@ -113,6 +113,33 @@ The table `resources` keeps what the Owner and the Data Team write about a Resou
 
 `GET /resources/{id}/lineage` answers whoever may see the Resource. catalogue asks registry for the lineage of its Node up- and downstream, as itself with a Google ID token ([TR-AR-11](01-artifact-registry.md#tr-ar-11)), and adds which models are Resources the User sees, with their Display Name and Level. A Node registry does not know gives no lineage either way; a registry that does not answer gives `503`. The web app shows it one step at a time.
 
+<a id="tr-sr-12"></a>
+### TR-SR-12 · Publishing keeps the first Confirmation
+
+**Status:** Implemented · **Realises:** [FR-SR-16](../functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-17](../functional/04-stacks-and-resources.md#fr-sr-17), [FR-SR-49](../functional/04-stacks-and-resources.md#fr-sr-49), [FR-MR-02](../functional/06-maturity-and-release.md#fr-mr-02), [FR-MR-08](../functional/06-maturity-and-release.md#fr-mr-08), [FR-RC-12](../functional/05-resource-card.md#fr-rc-12)
+
+`POST /resources/{id}/publication` is for the Owner only: a member of the Owner Unit of its Collection, not the Data Team as such. It publishes a Resource from 2 · Described (`409 not_described` before, `409 already_published` after: a Publication is not undone, [DEC-SR-28](../functional/04-stacks-and-resources.md#dec-sr-28)). In one transaction, catalogue keeps the Confirmation in `resource_confirmations`, by whom and when, with the Fingerprint of that moment and its fields with their types; sets `published_at` and `published_by`; raises the Level to 3 · Confirmed; and writes `PUB-040` and `MAT-020` into its Log. A Confirmation has no end ([DEC-MR-05](../functional/06-maturity-and-release.md#dec-mr-05)). `GET /resources/{id}` gives who published it and when, and who confirmed it last and when.
+
+<a id="tr-sr-13"></a>
+### TR-SR-13 · What a new Current Version means for a Resource
+
+**Status:** Implemented · **Realises:** [FR-MR-15](../functional/06-maturity-and-release.md#fr-mr-15), [FR-MR-09](../functional/06-maturity-and-release.md#fr-mr-09), [FR-MR-12](../functional/06-maturity-and-release.md#fr-mr-12), [FR-RC-17](../functional/05-resource-card.md#fr-rc-17), [FR-SR-19](../functional/04-stacks-and-resources.md#fr-sr-19), [DEC-MR-08](../functional/06-maturity-and-release.md#dec-mr-08)
+
+Every call of registry about a Resource catalogue knows compares its fields and descriptions with those before:
+
+- **A field added, removed or retyped** writes `ART-010` or `ART-012` into its Log, from its own Node. After a Confirmation, the change also goes into `resource_changes`, which is its warning until the Owner Unit or the Data Team marks it seen with `POST /resources/{id}/changes/seen` (`MAT-022`). A rename shows as a field removed and one added. The Owner gets one Message per call, [MSG-RES-03](../functional/message-catalogue.md#msg-res-03).
+- **A description from dbt that changed**, of the table or of a field, goes into `description_changes` with the text before, and `ART-013` into its Log. The Owner gets one Message per call with every description that changed, [MSG-RES-02](../functional/message-catalogue.md#msg-res-02). `GET /resources/{id}` gives the latest change of each description in the last 30 days.
+- **Its Level follows dbt:** 2 · Described with the table and a field described, else 1 · Available; a Resource confirmed before is 3 · Confirmed again once it is described ([DEC-MR-08](../functional/06-maturity-and-release.md#dec-mr-08)). A rise writes `RES-002`; a drop writes `MAT-021` and gives the Owner [MSG-RES-05](../functional/message-catalogue.md#msg-res-05). The Publication stays.
+
+The Owner is told only once the Resource is in a Collection. A Message keeps a list, such as its changes, as JSON in its parameters, until the Message Centre reads it.
+
+<a id="tr-sr-14"></a>
+### TR-SR-14 · A published Resource for everyone who sees its Collection, and deprecated
+
+**Status:** Implemented · **Realises:** [FR-SR-31](../functional/04-stacks-and-resources.md#fr-sr-31), [FR-SR-50](../functional/04-stacks-and-resources.md#fr-sr-50), [DEC-SR-28](../functional/04-stacks-and-resources.md#dec-sr-28)
+
+Once published, a Resource is seen by everyone who sees its Collection: its page, its Log, the lineage around it and what it relates to, and the Collection lists it. A Resource that is not published stays with the Owner Unit and the Data Team; seeing a Resource never lets anyone change it. `PUT /resources/{id}/deprecation` marks a published Resource deprecated, with why and, optionally, another Resource to use instead; `DELETE` takes it away. Both are for the Owner Unit and the Data Team, and write `RES-007` and `RES-008`. A Collection gives each of its Resources with whether it is published and whether it is deprecated.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

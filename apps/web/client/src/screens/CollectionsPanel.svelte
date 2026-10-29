@@ -115,7 +115,7 @@
       {/if}
     {/snippet}
     {#each first as item (item.id)}
-      <ListItem href={resourcePath(item.id)} name={item.displayName} level={item.level} current={item.id === currentResource} published={item.published} />
+      <ListItem href={resourcePath(item.id)} name={item.displayName} level={item.level} current={item.id === currentResource} published={item.published} deprecated={item.deprecated} />
     {/each}
     {#if first.length < items.length}
       <button type="button" class="more" onclick={() => (all[collection.id] = true)}>{t('collections.showAll', { count: items.length })}</button>

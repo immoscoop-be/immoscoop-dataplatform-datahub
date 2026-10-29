@@ -23,6 +23,8 @@ export default {
   'origin.dataTeam': 'Van het Data Team',
   'description.business': 'Business Description',
   'description.dbt': 'Beschrijving',
+  'status.published': 'Gepubliceerd',
+  'status.deprecated': 'Deprecated',
   'status.notPublished': 'Niet gepubliceerd',
   'status.noOwner': 'Nog geen Owner',
   'item.notPublished': '{name} · niet gepubliceerd',

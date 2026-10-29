@@ -22,6 +22,12 @@ const resource = (fields: string[]): ResourceDetail => ({
   leftOut: [{ name: 'identifiers', dataType: 'ARRAY<STRING>', reason: 'array' }],
   details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
   card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
+  published: false,
+  deprecated: false,
+  publication: null,
+  deprecation: null,
+  changes: [],
+  descriptionChanges: [],
 });
 
 const proposal: Proposal = {

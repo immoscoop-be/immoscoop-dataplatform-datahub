@@ -62,6 +62,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
       ['0005-collections-afresh', 'Success'],
       ['0006-grain-and-mappings', 'Success'],
       ['0007-resource-card', 'Success'],
+      ['0008-publication', 'Success'],
     ]);
 
     expect(await count('collections')).toBe(0);

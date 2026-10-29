@@ -514,6 +514,111 @@ describe.skipIf(!url)('the routes of Collections', () => {
       registryDown = false;
     });
 
+    it('publishes a Resource as its first Confirmation, warns of what changes after, and deprecates it (FR-SR-49, FR-MR-12, FR-SR-50)', async () => {
+      const an = await user('An', [DIGIKOM]);
+      const bert = await user('Bert', [SALES]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      // The Collection of the previous test, public, with cards, decks and drafts in it.
+      const run = (runId: string, cards: { description?: string; columns?: { name: string; dataType: string; description: string }[] } = {}) =>
+        fromRegistry({
+          ...update(runId, []),
+          tables: ['cards', 'decks', 'drafts'].map((name) => ({
+            ...update(runId, [name]).tables[0]!,
+            description: name === 'cards' ? (cards.description ?? 'Cards per week.') : name === 'decks' ? 'Decks.' : '',
+            columns:
+              name === 'cards' && cards.columns
+                ? cards.columns.map((column, index) => ({ ...column, position: index + 1 }))
+                : [
+                    { name: `${name}_id`, position: 1, dataType: 'STRING', description: name === 'drafts' ? '' : 'The ID.' },
+                    { name: 'listing_id', position: 2, dataType: 'STRING', description: '' },
+                  ],
+          })),
+        });
+      expect((await run('7')).statusCode).toBe(200);
+      const collection = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Cards');
+      await an('PATCH', `/collections/${collection.id}`, { visibility: 'public' });
+      const ids = Object.fromEntries(collection.resources.map((resource: { id: string; displayName: string }) => [resource.displayName, resource.id]));
+      const [cards, decks, drafts] = [ids.cards, ids.decks, ids.drafts];
+
+      // Not published, someone else who sees the Collection does not see it (FR-SR-31).
+      expect((await bert('GET', `/resources/${cards}`)).statusCode).toBe(404);
+      // Only the Owner publishes, from Described (FR-SR-16, FR-SR-17).
+      expect((await dirk('POST', `/resources/${cards}/publication`)).statusCode).toBe(403);
+      expect((await an('POST', `/resources/${drafts}/publication`)).json().error).toBe('not_described');
+      const published = await an('POST', `/resources/${cards}/publication`);
+      expect(published.statusCode).toBe(200);
+      expect(published.json().resource).toMatchObject({ level: 3, published: true, publication: { publishedBy: 'An', confirmedBy: 'An' } });
+      expect((await an('POST', `/resources/${cards}/publication`)).json().error).toBe('already_published');
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 2).map((entry: { text: string }) => entry.text)).toEqual([
+        'Confirmed by An',
+        'Published by An',
+      ]);
+
+      // Published, everyone who sees its Collection sees it, and does not change it.
+      expect((await bert('GET', `/resources/${cards}`)).statusCode).toBe(200);
+      expect((await bert('GET', `/collections/${collection.id}`)).json().resources.map((resource: { displayName: string; published: boolean }) => [resource.displayName, resource.published])).toEqual([
+        ['cards', true],
+      ]);
+      expect((await bert('GET', `/collections/${collection.id}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['cards']);
+      expect((await bert('PATCH', `/resources/${cards}`, { intendedUse: 'Mine.' })).statusCode).toBe(403);
+
+      // A field added, removed and retyped, and a description changed, after the Confirmation (FR-MR-12, FR-RC-17).
+      await run('8', {
+        description: 'Cards sent per week.',
+        columns: [
+          { name: 'cards_id', dataType: 'INT64', description: 'The number of the card.' },
+          { name: 'week', dataType: 'DATE', description: '' },
+        ],
+      });
+      const changed = (await bert('GET', `/resources/${cards}`)).json().resource;
+      expect(changed.level).toBe(3);
+      expect(changed.changes.map((change: { field: string; change: string }) => `${change.field} ${change.change}`)).toEqual(['week added', 'listing_id removed', 'cards_id retyped']);
+      expect(changed.descriptionChanges.map((change: { field: string | null; before: string }) => [change.field, change.before])).toEqual([
+        [null, 'Cards per week.'],
+        ['cards_id', 'The ID.'],
+      ]);
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 4).map((entry: { text: string }) => entry.text)).toEqual([
+        'Description changed in cards',
+        'Type of cards_id changed from STRING to INT64',
+        'Structural change: field listing_id removed',
+        'Structural change: field week added',
+      ]);
+      const told = await database.db.selectFrom('messages').select(['type', 'params']).where('subjectId', '=', cards).where('type', 'in', ['MSG-RES-02', 'MSG-RES-03']).orderBy('type').execute();
+      expect(told.map((message) => [message.type, message.params.count])).toEqual([
+        ['MSG-RES-02', '2'],
+        ['MSG-RES-03', '3'],
+      ]);
+      expect(JSON.parse(told[1]!.params.changes!)).toContainEqual({ field: 'cards_id', change: 'retyped', old: 'STRING', new: 'INT64' });
+
+      // Seen by the Owner Unit or the Data Team, the warning goes; the changes stay in the Log.
+      expect((await bert('POST', `/resources/${cards}/changes/seen`)).statusCode).toBe(403);
+      expect((await an('POST', `/resources/${cards}/changes/seen`)).json().resource.changes).toEqual([]);
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries[0].text).toBe('Changes since the last Confirmation marked seen by An');
+
+      // Without a description in dbt it drops to Available and its Owner is told; it stays published,
+      // and the Confirmation holds when the description is back (DEC-MR-08, FR-SR-19).
+      await run('9', { description: '', columns: [{ name: 'cards_id', dataType: 'INT64', description: 'The number of the card.' }] });
+      expect((await an('GET', `/resources/${cards}`)).json().resource).toMatchObject({ level: 1, published: true });
+      const dropped = await database.db.selectFrom('messages').select('params').where('subjectId', '=', cards).where('type', '=', 'MSG-RES-05').executeTakeFirstOrThrow();
+      expect(dropped.params).toEqual({ from: '3', to: '1', cause: 'description', published: 'yes' });
+      await run('10', { columns: [{ name: 'cards_id', dataType: 'INT64', description: 'The number of the card.' }] });
+      expect((await an('GET', `/resources/${cards}`)).json().resource.level).toBe(3);
+
+      // Deprecated, with why and what to use instead, and taken away again (FR-SR-50).
+      expect((await an('PUT', `/resources/${drafts}/deprecation`, { reason: 'Old.' })).json().error).toBe('not_published');
+      expect((await an('PUT', `/resources/${cards}/deprecation`, { reason: ' ' })).statusCode).toBe(400);
+      expect((await bert('PUT', `/resources/${cards}/deprecation`, { reason: 'Mine.' })).statusCode).toBe(403);
+      const deprecated = await dirk('PUT', `/resources/${cards}/deprecation`, { reason: 'Use the decks.', insteadOf: decks });
+      expect(deprecated.json().resource).toMatchObject({ deprecated: true, deprecation: { by: 'Dirk', reason: 'Use the decks.', insteadOf: { id: decks, displayName: 'decks' } } });
+      expect((await bert('GET', `/collections/${collection.id}`)).json().resources[0].deprecated).toBe(true);
+      expect((await an('DELETE', `/resources/${cards}/deprecation`)).json().resource.deprecation).toBeNull();
+      expect((await an('DELETE', `/resources/${cards}/deprecation`)).json().error).toBe('not_deprecated');
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 2).map((entry: { text: string }) => entry.text)).toEqual([
+        'Deprecation taken away by An',
+        'Marked deprecated by Dirk',
+      ]);
+    });
+
     it('checks what registry sends', () => {
       expect(parseUpdate(update('3', ['visits']))).toMatchObject({ projectId: '9367', runId: '3' });
       expect(parseUpdate({ ...update('3', []), tables: 'all' })).toBe('The exposed tables come as a list.');

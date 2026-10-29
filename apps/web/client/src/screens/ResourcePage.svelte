@@ -5,12 +5,15 @@
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Tabs from '@datahub/ui/containers/Tabs.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
+  import { levelName } from '@datahub/ui/foundations/levels.js';
   import Sentence from '@datahub/ui/foundations/Sentence.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import type { Registry } from '../lib/registry.js';
-  import { collectionPath } from '../lib/routes.js';
+  import { collectionPath, resourcePath } from '../lib/routes.js';
+  import DeprecateSheet from './DeprecateSheet.svelte';
+  import PublishSheet from './PublishSheet.svelte';
   import RelationsSheet from './RelationsSheet.svelte';
   import ResourceColumns from './ResourceColumns.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
@@ -20,7 +23,9 @@
    * The page of a Resource (Detail page of a Resource): its name and Key, its state in a status row, and
    * its tabs Overview, Columns, Lineage, History and Preview (DEC-UX-90). Its Owner Unit and the Data Team
    * edit what Data Hub keeps about it in place (FR-RC-15); a Data Admin changes its grain and relations
-   * (DEC-UX-107). A Resource without a Collection says so, and only the Data Team sees it. "Query",
+   * (DEC-UX-107). A Resource without a Collection says so, and only the Data Team sees it. Its Owner
+   * publishes it, the first Confirmation (FR-SR-49); once published, its Owner Unit and the Data Team
+   * deprecate it (FR-SR-50), and mark seen what changed since its last Confirmation (FR-MR-12). "Query",
    * "Messages", "Ask a question", History and Preview are there and still empty: they come with Query
    * and the Messages.
    */
@@ -28,17 +33,23 @@
     resource,
     log,
     collection,
+    collections,
     catalogue,
     registry,
     dataTeam,
+    groups,
     onchange,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
     collection: Collection | undefined;
+    /** Every Collection the User sees, for a Resource to use instead of a deprecated one. */
+    collections: readonly Collection[] | undefined;
     catalogue: Catalogue;
     registry: Registry;
     dataTeam: boolean;
+    /** The groups of the User: its Owner publishes it (FR-SR-16). */
+    groups: readonly string[];
     /** The Resource as it is after a change, for the rest of the app. */
     onchange: (resource: ResourceDetail) => void;
   } = $props();
@@ -56,6 +67,8 @@
   let entries = $derived(log);
   let related: Related[] | undefined = $state();
   let relating = $state(false);
+  let sheet: 'publish' | 'deprecate' | undefined = $state();
+  let failed = $state(false);
 
   // Read again for another Resource: what it relates to, and the first tab.
   let readFor: string | undefined;
@@ -68,6 +81,8 @@
     tab = 'overview';
     related = undefined;
     relating = false;
+    sheet = undefined;
+    failed = false;
     catalogue.related(id).then(
       (found) => resource.id === id && (related = found),
       (error: unknown) => console.error(`What ${resource.displayName} relates to could not be read`, error),
@@ -76,9 +91,24 @@
 
   /** Its Owner Unit and the Data Team edit it, once it is in a Collection and has an Owner (FR-RC-15). */
   const canEdit = $derived(resource.collectionId !== null && collection?.canManage === true);
+  /** Only its Owner publishes it: a member of the Owner Unit of its Collection (FR-SR-16). */
+  const isOwner = $derived(collection !== undefined && groups.includes(collection.ownerUnit.id));
+  /** The published Resources the User sees, to use instead of this one. */
+  const others = $derived(
+    (collections ?? []).flatMap((one) => one.resources.filter((item) => item.published && item.id !== resource.id).map((item) => ({ ...item, collection: one.name }))),
+  );
 
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const came = $derived(new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short' }).format(new Date(resource.registeredAt)));
+  const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(value));
+  const CHANGE_KEYS = { added: 'resource.change.added', removed: 'resource.change.removed', retyped: 'resource.change.retyped' } as const;
+  /** What changed since its last Confirmation, in one sentence, as the warning says it (DEC-UX-64). */
+  const changedText = $derived(
+    resource.changes
+      .map((change) => t(CHANGE_KEYS[change.change], { field: change.field, old: change.old ?? '', new: change.new ?? '', date: day(change.at) }))
+      .join('; '),
+  );
+  const reason = $derived(resource.deprecation ? resource.deprecation.reason.replace(/([^.!?])$/, '$1.') : '');
 
   /** Shows the Resource as catalogue gives it back, with its Log, after a change. */
   async function changed(updated: ResourceDetail) {
@@ -107,6 +137,20 @@
     }
   }
 
+  /** Publishes it, marks its changes seen, deprecates it or takes that away: each a step that is logged. */
+  async function act(step: () => Promise<ResourceDetail>): Promise<boolean> {
+    failed = false;
+    try {
+      await changed(await step());
+      sheet = undefined;
+      return true;
+    } catch (error) {
+      console.error(`${resource.displayName} could not be changed`, error);
+      failed = true;
+      return false;
+    }
+  }
+
   async function saveRelations(details: Record<string, unknown>): Promise<boolean> {
     try {
       await changed(await catalogue.relate(resource.id, details));
@@ -130,12 +174,25 @@
     <ObjectHeader name={resource.displayName} key={resource.key} copyLabel={t('resource.copyKey')} />
   </div>
   <div class="actions">
+    {#if resource.published && canEdit}
+      {#if resource.deprecation}
+        <Button variant="outline" onclick={() => act(() => catalogue.undeprecate(resource.id))}><Icon name="arrow-counter-clockwise" />{t('resource.takeAway')}</Button>
+      {:else}
+        <Button variant="outline" onclick={() => (sheet = 'deprecate')}><Icon name="archive-fill" />{t('resource.deprecate')}</Button>
+      {/if}
+    {/if}
     <Button variant="outline" disabled title={t('resource.later')}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
     <Button variant="outline" disabled title={t('resource.later')}><Icon name="chat-circle-text-fill" />{t('resource.messages')}</Button>
-    <Button disabled title={t('resource.later')}><Icon name="chat-circle-dots-fill" />{t('resource.ask')}</Button>
+    {#if !resource.published && isOwner}
+      <!-- For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31). -->
+      <Button onclick={() => (sheet = 'publish')}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button>
+    {:else}
+      <Button disabled title={t('resource.later')}><Icon name="chat-circle-dots-fill" />{t('resource.ask')}</Button>
+    {/if}
   </div>
 </div>
-<StatusRow level={resource.level} published={false} owner={collection?.ownerUnit.name ?? null} />
+<StatusRow level={resource.level} published={resource.published} owner={collection?.ownerUnit.name ?? null} deprecated={resource.deprecation?.reason ?? null} />
+{#if failed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
 
 {#if resource.collectionId === null}
   <Callout icon="tray-fill">
@@ -146,10 +203,33 @@
       names={{ exposure: resource.exposures[0] ?? '', project: resource.projectName ?? resource.projectId }}
     />
   </Callout>
-{:else if collection}
+{:else if collection && !resource.published}
   <Callout icon="eye-slash-fill">
     <b>{t('resource.unpublished.title')}</b>
     {t('resource.unpublished.text', { owner: collection.ownerUnit.name, collection: collection.name })}
+  </Callout>
+{/if}
+{#if resource.deprecation}
+  <!-- Who deprecated it, when, why and what to use instead; it stays usable (DEC-UX-101). -->
+  <Callout icon="archive-fill">
+    <b>{t('resource.deprecated.title')}</b>
+    {t('resource.deprecated.text', { by: resource.deprecation.by, date: day(resource.deprecation.at), reason })}
+    {t('resource.deprecated.still')}
+    {#snippet action()}
+      {#if resource.deprecation?.insteadOf}
+        <Button variant="outline" href={resourcePath(resource.deprecation.insteadOf.id)}>{t('resource.deprecated.use', { name: resource.deprecation.insteadOf.displayName })}</Button>
+      {/if}
+    {/snippet}
+  </Callout>
+{/if}
+{#if resource.changes.length > 0}
+  <!-- A change since the last Confirmation, for everyone who sees it; the Level stays (DEC-UX-64). -->
+  <Callout icon="warning-circle-fill" tone="warning">
+    <b>{t('resource.changed.title')}</b>
+    {t('resource.changed.text', { changes: changedText, level: levelName(resource.level) })}
+    {#snippet action()}
+      {#if canEdit}<Button variant="outline" onclick={() => act(() => catalogue.markSeen(resource.id))}>{t('resource.changed.seen')}</Button>{/if}
+    {/snippet}
   </Callout>
 {/if}
 
@@ -168,6 +248,26 @@
 {#if relating}
   <RelationsSheet {resource} {registry} onsave={saveRelations} onclose={() => (relating = false)} />
 {/if}
+{#if sheet === 'publish' && collection}
+  <PublishSheet
+    {resource}
+    {collection}
+    onpublish={() => act(() => catalogue.publish(resource.id))}
+    onfields={() => {
+      sheet = undefined;
+      tab = 'columns';
+    }}
+    onclose={() => (sheet = undefined)}
+  />
+{:else if sheet === 'deprecate' && collection}
+  <DeprecateSheet
+    {resource}
+    {collection}
+    {others}
+    ondeprecate={(why, instead) => act(() => catalogue.deprecate(resource.id, why, instead))}
+    onclose={() => (sheet = undefined)}
+  />
+{/if}
 
 <style>
   b { font-weight: var(--weight-medium); }
@@ -175,4 +275,5 @@
   .name { flex: 1; min-width: 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; margin-top: 10px; }
   .soon { display: flex; justify-content: center; padding: 40px; font-size: var(--text-body); margin: 0; }
+  .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
 </style>

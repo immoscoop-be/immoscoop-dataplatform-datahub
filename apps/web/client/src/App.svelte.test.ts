@@ -42,6 +42,12 @@ const SAVED_SEARCHES = {
   leftOut: [],
   details: { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: {}, release: null, mappings: [] },
   card: { businessDescription: '', intendedUse: '', pitfalls: '', knownGaps: [], reliableSince: null, keyFields: [], parameters: [] },
+  published: false,
+  deprecated: false,
+  publication: null,
+  deprecation: null,
+  changes: [],
+  descriptionChanges: [],
 };
 
 const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
@@ -58,7 +64,7 @@ const CREDIT = {
   createdAt: '2026-09-03T08:00:00Z',
   createdBy: 'An Claes',
   canManage: true,
-  resources: [{ id: 'r2', displayName: 'Weekly lead volume', level: 2, published: false, withdrawn: false }],
+  resources: [{ id: 'r2', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false }],
   lastChange: { logId: 'COL-006', params: { resource: 'Weekly lead volume', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
 };
 
@@ -127,8 +133,12 @@ function serve({
   settings = {} as Record<string, unknown>,
   roles = [] as string[],
   groups = [] as string[],
+  weekly = {} as Record<string, unknown>,
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  // Weekly lead volume as catalogue keeps it, changed by what the page asks.
+  let resource: Record<string, unknown> = { ...WEEKLY_DETAIL, ...weekly };
+  const PUBLICATION = { publishedAt: '2026-10-28T09:00:00Z', publishedBy: 'Max Verstraete', confirmedAt: '2026-10-28T09:00:00Z', confirmedBy: 'Max Verstraete' };
   vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
     const method = init.method ?? 'GET';
     const path = input.replace(CONFIG.identityUrl, '').replace(CONFIG.catalogueUrl, '').replace(CONFIG.registryUrl, '');
@@ -200,7 +210,23 @@ function serve({
     }
     if (path === '/resources/r2') {
       const changes = method === 'PATCH' ? (JSON.parse(init.body as string) as Record<string, unknown>) : {};
-      return json({ resource: { ...WEEKLY_DETAIL, card: { ...WEEKLY_DETAIL.card, ...changes } } });
+      resource = { ...resource, card: { ...(resource.card as object), ...changes } };
+      return json({ resource });
+    }
+    if (path === '/resources/r2/publication' && method === 'POST') {
+      resource = { ...resource, published: true, level: 3, publication: PUBLICATION };
+      return json({ resource });
+    }
+    if (path === '/resources/r2/changes/seen' && method === 'POST') {
+      resource = { ...resource, changes: [] };
+      return json({ resource });
+    }
+    if (path === '/resources/r2/deprecation') {
+      const body = method === 'PUT' ? (JSON.parse(init.body as string) as { reason: string }) : undefined;
+      resource = body
+        ? { ...resource, deprecated: true, deprecation: { at: '2026-10-28T09:00:00Z', by: 'Max Verstraete', reason: body.reason, insteadOf: null } }
+        : { ...resource, deprecated: false, deprecation: null };
+      return json({ resource });
     }
     if (path === '/resources/r2/details' && method === 'PUT') {
       return dataTeam ? json({ resource: WEEKLY_DETAIL }) : json({ error: 'forbidden' }, 403);
@@ -540,9 +566,12 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
-    for (const name of ['Query', 'Berichten', 'Stel een vraag']) {
+    for (const name of ['Query', 'Berichten']) {
       expect((main.getByRole('button', { name: new RegExp(name) }) as HTMLButtonElement).disabled).toBe(true);
     }
+    // For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31).
+    expect(main.queryByRole('button', { name: /Stel een vraag/ })).toBeNull();
+    expect((main.getByRole('button', { name: /Publiceren/ }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByRole('status').textContent).toContain('Enkel Data en het Data Team zien hem. Eens gepubliceerd ziet iedereen die Credit leads ziet hem.');
     expect(main.getByText('One row per week and lead source.')).toBeTruthy();
     expect(main.getByText('op week_start, een partitie per dag')).toBeTruthy();
@@ -584,6 +613,65 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() =>
       expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/fields', body: { fields: [{ name: 'week_start', businessDescription: 'The Monday of the week.' }] } }),
     );
+  });
+
+  it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('button', { name: /Publiceren/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    expect(sheet.getByText(/het hele bedrijf, want de Collection is publiek/)).toBeTruthy();
+    expect(sheet.getByText(/jij mag hem publiceren/)).toBeTruthy();
+    const button = sheet.getByRole('button', { name: /Publiceren en bevestigen/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('checkbox', { name: /Voor Data bevestig ik dat deze Resource klopt/ }));
+    expect(button.disabled).toBe(false);
+    await fireEvent.click(button);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/publication' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(main.getByText('Gepubliceerd', { selector: '.chip' })).toBeTruthy();
+    expect(main.queryByText('Nog niet gepubliceerd.')).toBeNull();
+    expect(main.getAllByText('28 okt 2026 door Max Verstraete')).toHaveLength(2);
+  });
+
+  it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
+    const calls = serve({
+      groups: ['g1'],
+      weekly: { published: true, level: 3, changes: [{ field: 'week_start', change: 'added', old: null, new: 'DATE', at: '2026-10-27T08:00:00Z' }] },
+    });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const warning = await main.findByText(/het veld week_start werd toegevoegd op 27 okt 2026/);
+    expect(warning.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    expect(main.getByText('Nieuw')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Markeer als gezien' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/changes/seen' }));
+    await vi.waitFor(() => expect(main.queryByText(/het veld week_start werd toegevoegd/)).toBeNull());
+  });
+
+  it('lets its Owner Unit deprecate it once published, with why, and take that away (FR-SR-50, DEC-UX-101)', async () => {
+    const calls = serve({ groups: ['g1'], weekly: { published: true, level: 3 } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    await fireEvent.click(main.getByRole('button', { name: /Als deprecated markeren/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    const button = sheet.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
+    await fireEvent.click(button);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/deprecation', body: { reason: 'Replaced by the figures with partner leads', insteadOf: null } }));
+    expect(await main.findByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toBeTruthy();
+    expect(main.getByText('Deprecated', { selector: '.chip' })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Wegnemen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/deprecation' }));
+    await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
   });
 
   it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {

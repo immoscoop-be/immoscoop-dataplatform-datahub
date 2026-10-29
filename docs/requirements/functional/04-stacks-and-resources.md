@@ -243,14 +243,16 @@ All texts in the app are in English: the interface, the names and the templates 
 <a id="fr-sr-16"></a>
 ### FR-SR-16 · Only the Owner publishes
 
-**Status:** Specified · **Confluence:** SR-16 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Confluence:** SR-16 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Only the Owner of the Collection can publish a Resource.
+
+*Note of 2026-10-28, on building it: the Owner is a member of the Owner Unit of the Collection; the Data Team does not publish as such ([TR-SR-12](../technical/04-stacks-and-resources.md#tr-sr-12)).*
 
 <a id="fr-sr-17"></a>
 ### FR-SR-17 · The first Publication, from Described, is the first Confirmation
 
-**Status:** Specified · **Confluence:** SR-17 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Confluence:** SR-17 · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 The first Publication is only possible when the Resource is at Described. It is at once the first Confirmation: the Resource rises to Confirmed.
 
@@ -268,9 +270,11 @@ Who sees the Resource depends only on the Publication: not published means visib
 <a id="fr-sr-19"></a>
 ### FR-SR-19 · A published Resource stays published when its Level drops
 
-**Status:** Specified · **Confluence:** SR-19
+**Status:** Implemented · **Confluence:** SR-19
 
 A published Resource stays published when its Level drops. The Owner gets an alert, and the current Level is visible on the Resource Card and on every Lens and Report that depends on it.
+
+*Note of 2026-10-28, on building it: the alert is the Message [MSG-RES-05](message-catalogue.md#msg-res-05), which the Message Centre shows with part 7 of the [build order](../../design/build-order.md); the Level shows on the Lenses and Reports when they are built ([TR-SR-13](../technical/04-stacks-and-resources.md#tr-sr-13)).*
 
 <a id="fr-sr-20"></a>
 ### FR-SR-20 · Reconfirm after a drop
@@ -376,7 +380,7 @@ A Signal goes to the Owner and the Data Team, and they can turn it into an Anoma
 <a id="fr-sr-31"></a>
 ### FR-SR-31 · Visibility follows the Publication and the Collection
 
-**Status:** Specified · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-publish](../../design/screens/resource-publish.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+**Status:** Implemented · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [resource-publish](../../design/screens/resource-publish.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 Who sees a Resource depends on its Publication and on its Collection. Not published: the Data Team and the members of the Owner Unit of its Collection. Published: everyone who sees its Collection ([FR-CO-17](03-collections.md#fr-co-17)), which for a public Collection is the whole company. A Resource without a Collection is visible only to the Data Team.
 
@@ -521,7 +525,7 @@ A new query has a question: what the User wants to know, in a sentence. Its word
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#publishing-and-confirming) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 The Owner publishes a Resource from its page. Before they do, Data Hub shows who will see it once published ([FR-SR-31](#fr-sr-31)), and what it checked: that they may publish it ([FR-SR-16](#fr-sr-16)) and that the Resource is Described ([FR-SR-17](#fr-sr-17)). When it is not Described, publishing is not possible, and Data Hub names the columns without a description. As the first Publication is the first Confirmation, the Owner confirms in the same step, with the declaration that the Resource is correct: what it is and what it stands for ([DEC-MR-07](06-maturity-and-release.md#dec-mr-07)). They tick the declaration right next to the button that publishes; until it is ticked, the button stays off.
 
@@ -534,9 +538,11 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated
 
-**Status:** Proposed · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
+
+*Note of 2026-10-28, on building it: the mark shows on the page of the Resource, in the panel and on the page of its Collection; the Lenses, Reports and Claude show it when they are built ([TR-SR-14](../technical/04-stacks-and-resources.md#tr-sr-14)).*
 
 <a id="fr-sr-51"></a>
 ### FR-SR-51 · A result shows 100 rows a page
