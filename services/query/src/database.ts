@@ -27,8 +27,21 @@ export type RunState = 'running' | 'done' | 'failed';
 /** A query written in Query, the previews of a Resource by one User (FR-SR-38), or the runs of a Lens by one User (FR-LE-12). */
 export type QueryKind = 'query' | 'preview' | 'lens';
 
-/** A Lens is published, or waits for the Data Team while one run reads more than 1 GB (FR-LE-09). */
-export type LensState = 'published' | 'waiting';
+/**
+ * A Lens is published; waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or stopped,
+ * after a run with its defaults grew past 1 GB, until the Data Team accepts it again (DEC-LE-11).
+ */
+export type LensState = 'published' | 'waiting' | 'stopped';
+
+/** What a Broken Lens misses, a table or a column, as BigQuery names it, and since when (FR-LE-17). */
+export interface Missing {
+  kind: 'table' | 'column';
+  name: string;
+  since: string;
+}
+
+/** The Log IDs of a Lens so far: Broken, and works again (FR-SR-52). */
+export type LensLogId = 'BRK-001' | 'BRK-002';
 
 /** The range one run of a Lens was measured in (FR-LE-08, DEC-SR-29). */
 export type LensRange = 'free' | 'approve' | 'request';
@@ -58,6 +71,10 @@ export interface QueryDatabase {
     previewOf: string | null;
     /** For the runs of a Lens by one User, the Lens. */
     lensOf: string | null;
+    /** The Lens this query is used as, when "Open in Query" made it for someone of its Owner Unit (DEC-LE-18). */
+    forLens: string | null;
+    /** The Collection whose "New Lens" started it, offered first when it becomes a Lens (DEC-UX-123). */
+    forCollection: string | null;
     createdAt: Timestamp;
     updatedAt: Timestamp;
     lastRunAt: Date | null;
@@ -89,6 +106,17 @@ export interface QueryDatabase {
     createdAt: Timestamp;
     updatedAt: Timestamp;
     publishedAt: Date | null;
+    stoppedAt: Date | null;
+    stoppedReads: ColumnType<string | null, number | null, number | null>;
+    broken: ColumnType<Missing | null, string | null, string | null>;
+  };
+  /** The Log of a Lens (FR-SR-52). */
+  lensLog: {
+    id: Generated<string>;
+    lensId: string;
+    logId: LensLogId;
+    params: ColumnType<Record<string, string>, string, string>;
+    at: Timestamp;
   };
   /** Every version of a Lens (FR-LE-16). */
   lensVersions: {

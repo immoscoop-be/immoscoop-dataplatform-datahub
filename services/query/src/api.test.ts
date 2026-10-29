@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { TokenError } from '@datahub/auth';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
@@ -103,6 +104,12 @@ describe('the fields of a query, in a request', () => {
     expect(parseQuery({ parameters: [{ name: 'x', kind: 'date' }] }, false)).toMatch(/@x has a value/);
   });
 
+  it('started from "New Lens" on a Collection, remember it (DEC-UX-123)', () => {
+    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], forCollection: CREDIT.toUpperCase() }, true)).toEqual({ name: 'x', resources: [WEEKLY.id], forCollection: CREDIT });
+    expect(parseQuery({ name: 'x', resources: [WEEKLY.id], forCollection: 'credit' }, true)).toBe('A query is started for a Collection by its ID.');
+    expect(parseQuery({ forCollection: CREDIT }, false)).toBe('A query has no field forCollection here.');
+  });
+
   it('change at least one of its name, question and SQL, never its Resources (DEC-UX-73)', () => {
     expect(parseQuery({ sql: 'select 1' }, false)).toEqual({ sql: 'select 1' });
     expect(parseQuery({}, false)).toBe('Send at least one field to change.');
@@ -130,9 +137,13 @@ function fakeBigQuery() {
   const pages: { jobId: string; startIndex: number }[] = [];
   let refuseNext: string | null = null;
   let expired = false;
+  /** What every dry run reads instead, as data grows; and what BigQuery no longer finds, in its words. */
+  let size: number | null = null;
+  let gone: { text: string; message: string } | null = null;
   const bigquery: BigQuery = {
     async dryRun(text): Promise<DryRun> {
-      const bytes = Number(/-- reads (\d+)/.exec(text)?.[1] ?? 80_000_000);
+      if (gone && text.includes(gone.text)) throw new BigQueryRefused(gone.message);
+      const bytes = size ?? Number(/-- reads (\d+)/.exec(text)?.[1] ?? 80_000_000);
       const referencedTables = [WEEKLY, SOURCES, SECRET].filter((resource) => text.includes(resource.key)).map((resource) => resource.key);
       return { statementType: 'SELECT', bytes, referencedTables, partitions: 42 };
     },
@@ -182,6 +193,12 @@ function fakeBigQuery() {
     },
     expire: () => {
       expired = true;
+    },
+    resize: (bytes: number | null) => {
+      size = bytes;
+    },
+    lose: (missing: { text: string; message: string } | null) => {
+      gone = missing;
     },
   };
 }
@@ -270,6 +287,13 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         project: PROJECT,
         thresholds: { approve: 100_000_000, request: 1_000_000_000 },
         storage: createStorage(fake.bigquery, createBeneath(fake.bigquery)),
+        // The scheduler, by its Google ID token for query's own address (DEC-LE-20).
+        checkers: {
+          async verify(token) {
+            if (token !== 'scheduler-id-token') throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            return 'datahub-scheduler@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -281,7 +305,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     await admin?.close();
   });
 
-  const call = (authorization: string, method: 'GET' | 'POST' | 'PATCH', path: string, payload?: unknown) =>
+  const call = (authorization: string, method: 'GET' | 'POST' | 'PATCH' | 'PUT', path: string, payload?: unknown) =>
     app.inject({ method, url: path, headers: { authorization }, ...(payload === undefined ? {} : { payload: payload as object }) });
 
   let id: string;
@@ -291,6 +315,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(made.statusCode).toBe(201);
     const { query } = made.json();
     id = query.id;
+    expect(query.forCollection).toBeNull();
     expect(query).toMatchObject({ name: 'Leads per source name', question: 'Which sources bring our leads?', mine: true, ownerName: 'An Claes', lastRun: null });
     expect(query.resources.map((resource: { displayName: string; visible: boolean }) => [resource.displayName, resource.visible])).toEqual([
       ['Weekly lead volume', true],
@@ -518,10 +543,13 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
 
   let lensId: string;
   let lensQuery: string;
+  let largeLens: string;
 
   it('makes a Lens of a query of its author, into a Collection they own, measured now (FR-LE-07, FR-LE-08, DEC-CO-20)', async () => {
-    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel] });
+    const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel], forCollection: AN_WORK });
     lensQuery = made.json().query.id;
+    // Started from "New Lens" on An's Collection, which making it a Lens offers first (DEC-UX-123).
+    expect(made.json().query.forCollection).toBe(AN_WORK);
     const fields = {
       queryId: lensQuery,
       collectionId: AN_WORK,
@@ -596,6 +624,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(mia, 'POST', '/lenses', fields)).json()).toMatchObject({ error: 'approval_needed', preflight: { range: 'approve' } });
     const published = (await call(mia, 'POST', '/lenses', { ...fields, approve: true })).json().lens;
     expect(published).toMatchObject({ state: 'published', range: 'approve', reads: 840_000_000 });
+    largeLens = published.id;
     // Built on Weekly lead volume alone, in a public Collection: Karel sees it, not An's private one.
     expect((await call(karel, 'GET', '/lenses')).json().lenses.map((lens: { name: string }) => lens.name)).toEqual(['All weeks per source']);
 
@@ -615,6 +644,119 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
     expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 1 });
     expect(history.summary.lenses).toBe(1);
+  });
+
+  it('lets its Owner Unit change what a Lens tells, never its SQL (FR-LE-06, DEC-LE-16)', async () => {
+    const changed = await call(an, 'PATCH', `/lenses/${lensId}`, { shows: 'Leads per source, a row a week.', labels: { leadChannel: 'Channel' } });
+    expect(changed.statusCode).toBe(200);
+    expect(changed.json().lens).toMatchObject({ shows: 'Leads per source, a row a week.', parameters: [{ label: 'From' }, { label: 'Channel' }] });
+    expect((await call(an, 'PATCH', `/lenses/${lensId}`, { sql: weekly })).statusCode).toBe(400);
+    expect((await call(an, 'PATCH', `/lenses/${lensId}`, {})).statusCode).toBe(400);
+    // Karel sees Mia's Lens in Credit leads, but is not of its Owner Unit.
+    expect((await call(karel, 'PATCH', `/lenses/${largeLens}`, { name: 'Mine now' })).statusCode).toBe(403);
+    expect((await call(karel, 'PATCH', `/lenses/${lensId}`, { name: 'Mine now' })).statusCode).toBe(404);
+  });
+
+  it('updates a Lens from a query used as it, measured again, as its next version (FR-LE-16)', async () => {
+    expect((await call(an, 'PATCH', `/queries/${lensQuery}`, { sql: `${withParameters} -- reads 90000000` })).statusCode).toBe(200);
+    // Another query of An is not used as the Lens.
+    expect((await call(an, 'PUT', `/lenses/${lensId}/version`, { queryId: id })).json()).toMatchObject({ error: 'invalid_request' });
+    const updated = await call(an, 'PUT', `/lenses/${lensId}/version`, { queryId: lensQuery });
+    expect(updated.statusCode).toBe(200);
+    expect(updated.json().lens).toMatchObject({
+      version: 2,
+      state: 'published',
+      range: 'free',
+      reads: 90_000_000,
+      // A Parameter keeps the name Users see.
+      parameters: [{ name: 'dateFrom', label: 'From' }, { name: 'leadChannel', label: 'Channel' }],
+      versions: [
+        { version: 2, madeByName: 'An Claes', fromQuery: 'Leads per source, week by week' },
+        { version: 1, madeByName: 'An Claes', fromQuery: 'Leads per source, week by week' },
+      ],
+    });
+    expect((await call(an, 'GET', `/queries/${lensQuery}`)).json().query.lens).toMatchObject({ id: lensId, version: 2, range: 'free', reads: 90_000_000 });
+  });
+
+  it('opens a Lens in Query: its own query for its author, a query of their own for anyone else of its Owner Unit (DEC-LE-18)', async () => {
+    expect((await call(an, 'POST', `/lenses/${lensId}/query`)).json()).toEqual({ queryId: lensQuery });
+    const opened = await call(dataTeam, 'POST', `/lenses/${lensId}/query`);
+    expect(opened.statusCode).toBe(201);
+    const own = opened.json().queryId as string;
+    expect(own).not.toBe(lensQuery);
+    // Opened again, it is the same query.
+    const again = await call(dataTeam, 'POST', `/lenses/${lensId}/query`);
+    expect(again.statusCode).toBe(200);
+    expect(again.json()).toEqual({ queryId: own });
+    const query = (await call(dataTeam, 'GET', `/queries/${own}`)).json().query;
+    expect(query).toMatchObject({ name: 'Leads per source, week by week', mine: true, lens: { id: lensId }, sql: `${withParameters} -- reads 90000000` });
+    // It is used as the Lens: it updates it, and makes no other Lens.
+    expect((await call(dataTeam, 'POST', '/lenses', { queryId: own, collectionId: AN_WORK, name: 'Another' })).json()).toMatchObject({ error: 'already_a_lens', lens: { id: lensId } });
+    expect((await call(dataTeam, 'PATCH', `/queries/${own}`, { sql: withParameters })).statusCode).toBe(200);
+    const updated = (await call(dataTeam, 'PUT', `/lenses/${lensId}/version`, { queryId: own })).json().lens;
+    expect(updated).toMatchObject({ version: 3, reads: 80_000_000, versions: [{ version: 3, madeByName: 'Dirk Vos', fromQuery: 'Leads per source, week by week' }, { version: 2 }, { version: 1 }] });
+    // An updates it from their own query only, not from that of the Data Team.
+    expect((await call(an, 'PUT', `/lenses/${lensId}/version`, { queryId: own })).statusCode).toBe(400);
+    expect((await call(karel, 'POST', `/lenses/${largeLens}/query`)).statusCode).toBe(403);
+  });
+
+  it('measures a Lens for growth only by a run with its defaults, and stops it past 1 GB (DEC-LE-11, DEC-LE-19)', async () => {
+    fake.resize(400_000_000);
+    // Other values are that run alone.
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, { values: { leadChannel: 'Phone' } })).json().preflight).toMatchObject({ range: 'approve' });
+    expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'free', state: 'published' });
+    // With its defaults, it grows into large and keeps running.
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json().preflight).toMatchObject({ range: 'approve' });
+    expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'approve', state: 'published' });
+
+    fake.resize(1_500_000_000);
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, { values: { leadChannel: 'Phone' } })).json().preflight).toMatchObject({ range: 'request' });
+    const stopped = await call(an, 'POST', `/lenses/${lensId}/preflight`, {});
+    expect(stopped.statusCode).toBe(409);
+    expect(stopped.json()).toMatchObject({ error: 'stopped', stoppedReads: 1_500_000_000 });
+    expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ state: 'stopped', range: 'request', stoppedReads: 1_500_000_000 });
+    expect((await call(an, 'POST', `/lenses/${lensId}/runs`, {})).json()).toMatchObject({ error: 'stopped' });
+    // Who sees it still sees it, stopped.
+    expect((await call(an, 'GET', '/lenses')).json().lenses.find((lens: { id: string }) => lens.id === lensId)).toMatchObject({ state: 'stopped' });
+
+    // A new version that reads less brings it back.
+    fake.resize(null);
+    const back = (await call(an, 'PUT', `/lenses/${lensId}/version`, { queryId: lensQuery })).json().lens;
+    expect(back).toMatchObject({ version: 4, state: 'published', range: 'free', stoppedAt: null, stoppedReads: null });
+  });
+
+  it('calls a Lens Broken when what it reads is not found, once, in its Log (FR-LE-17, FR-SR-52)', async () => {
+    fake.lose({ text: 'lead_source', message: 'Unrecognized name: lead_source at [1:93]' });
+    const broken = await call(an, 'POST', `/lenses/${lensId}/preflight`, {});
+    expect(broken.statusCode).toBe(409);
+    expect(broken.json()).toMatchObject({ error: 'broken', broken: { kind: 'column', name: 'lead_source' } });
+    expect((await call(an, 'POST', `/lenses/${lensId}/runs`, { values: { leadChannel: 'Phone' } })).json()).toMatchObject({ error: 'broken' });
+    expect((await call(an, 'GET', '/lenses')).json().lenses.find((lens: { id: string }) => lens.id === lensId).broken).toMatchObject({ kind: 'column', name: 'lead_source' });
+    expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens.log).toMatchObject([{ logId: 'BRK-001', params: { missing: 'lead_source', run: '' } }]);
+
+    fake.lose(null);
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).statusCode).toBe(200);
+    const lens = (await call(an, 'GET', `/lenses/${lensId}`)).json().lens;
+    expect(lens.broken).toBeNull();
+    expect(lens.log).toMatchObject([{ logId: 'BRK-002', params: { restored: 'lead_source' } }, { logId: 'BRK-001' }]);
+  });
+
+  it('checks every Lens once a day with its defaults, for the scheduler only (DEC-LE-20)', async () => {
+    const check = (authorization?: string) => app.inject({ method: 'POST', url: '/internal/lenses/check', headers: authorization ? { authorization } : {} });
+    expect((await check()).statusCode).toBe(401);
+    expect((await check(an)).statusCode).toBe(401);
+
+    fake.lose({ text: 'weekly_lead_volume', message: `Not found: Table ${PROJECT}:dbt_prod_stacks.weekly_lead_volume was not found in location europe-west1` });
+    // The waiting Lens of Mia is not checked: it does not run until the Data Team decides.
+    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 2, works: 0, grown: 0, stopped: 0 });
+    expect((await call(mia, 'GET', `/lenses/${largeLens}`)).json().lens.broken).toMatchObject({ kind: 'table', name: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume` });
+
+    fake.lose(null);
+    fake.resize(400_000_000);
+    // An's Lens grows into large; Mia's was large already.
+    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 0, works: 2, grown: 1, stopped: 0 });
+    expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'approve', broken: null });
+    fake.resize(null);
   });
 
   it('answers 503 when catalogue does not, rather than guess what the User may see', async () => {

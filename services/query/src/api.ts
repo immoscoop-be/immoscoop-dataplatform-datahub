@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Page, ResultExpired } from './bigquery.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
@@ -13,6 +14,8 @@ import { template } from './sql.js';
 
 export interface ApiOptions {
   queries: Queries;
+  /** Who may start the daily check of every Lens: the scheduler (DEC-LE-20). */
+  checkers: ServiceCallerVerifier;
   /** The Lenses, made from queries and run on their pages (DEC-PF-30). */
   lenses: Lenses;
   catalogue: Catalogue;
@@ -76,6 +79,8 @@ export interface QueryFields {
   parameters?: Parameter[];
   /** The query a new one is started from, with another set of Resources (DEC-UX-73). */
   startedFrom?: string;
+  /** The Collection whose page started it with "New Lens", offered first when it becomes a Lens (DEC-UX-123). */
+  forCollection?: string;
 }
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -84,7 +89,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export function parseQuery(body: unknown, creating: boolean): QueryFields | string {
   if (typeof body !== 'object' || body === null || Array.isArray(body)) return 'Send a JSON object.';
   const fields = body as Record<string, unknown>;
-  const known = new Set(creating ? ['name', 'question', 'resources', 'sql', 'parameters', 'startedFrom'] : ['name', 'question', 'sql', 'parameters']);
+  const known = new Set(creating ? ['name', 'question', 'resources', 'sql', 'parameters', 'startedFrom', 'forCollection'] : ['name', 'question', 'sql', 'parameters']);
   const unknown = Object.keys(fields).find((key) => !known.has(key));
   if (unknown) return `A query has no field ${unknown} here.`;
   const result: QueryFields = {};
@@ -117,6 +122,10 @@ export function parseQuery(body: unknown, creating: boolean): QueryFields | stri
     if (typeof fields.startedFrom !== 'string' || !UUID.test(fields.startedFrom)) return 'A query is started from another by its ID.';
     result.startedFrom = fields.startedFrom.toLowerCase();
   }
+  if (fields.forCollection !== undefined) {
+    if (typeof fields.forCollection !== 'string' || !UUID.test(fields.forCollection)) return 'A query is started for a Collection by its ID.';
+    result.forCollection = fields.forCollection.toLowerCase();
+  }
   if (!creating && Object.keys(result).length === 0) return 'Send at least one field to change.';
   return result;
 }
@@ -142,7 +151,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * them and the Data Team (DEC-LN-01).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage } = options;
+  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers } = options;
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
@@ -233,7 +242,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       queries.runCount(query.id),
       requestsOf(request, query),
       startedFromOf(query),
-      lenses.ofQuery(query.id),
+      // The Lens it is used as: made from it, or opened as it in Query (DEC-LE-03, DEC-LE-18).
+      lenses.ofQuery(query.id).then((made) => made ?? (query.forLens ? lenses.get(query.forLens) : undefined)),
     ]);
     return {
       ...query,
@@ -244,7 +254,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       request: requestView(requests[0]),
       startedFrom,
       // The Lens it is used as, with a link to it (DEC-LE-03).
-      lens: lens ? { id: lens.id, name: lens.name, collectionId: lens.collectionId, state: lens.state, createdAt: lens.createdAt } : null,
+      lens: lens
+        ? { id: lens.id, name: lens.name, collectionId: lens.collectionId, state: lens.state, createdAt: lens.createdAt, version: lens.version, range: lens.range, reads: lens.reads }
+        : null,
     };
   }
 
@@ -297,6 +309,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         sql: fields.sql ?? template(resources),
         parameters: fields.parameters ?? [],
         startedFrom,
+        forCollection: fields.forCollection,
       });
       return reply.code(201).send({ query: await queryView(request, query) });
     } catch (error) {
@@ -635,7 +648,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
-  await lensRoutes(app, { lenses, queries, catalogue, thresholds, viewer, authorization, resourcesOf, check, unavailable, execute });
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, unavailable, execute });
 }
 
 function pageView(page: Page, number: number) {

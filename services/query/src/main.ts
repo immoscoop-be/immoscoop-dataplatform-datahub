@@ -1,4 +1,4 @@
-import { verifierFromEnv } from '@datahub/auth';
+import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken } from '@datahub/google';
 import { start } from '@datahub/server';
@@ -34,6 +34,11 @@ const app = await buildApp({
       approve: Number(process.env.DATAHUB_QUERY_APPROVE_BYTES ?? 100_000_000),
       request: Number(process.env.DATAHUB_QUERY_REQUEST_BYTES ?? 1_000_000_000),
     },
+    // Cloud Scheduler checks every Lens once a day, with a Google ID token for query's own address (FR-LE-17).
+    checkers: createServiceCallerVerifier({
+      audience: required('DATAHUB_QUERY_URL'),
+      serviceAccounts: [required('DATAHUB_SCHEDULER_SERVICE_ACCOUNT')],
+    }),
   },
 });
 app.addHook('onClose', () => database.close());

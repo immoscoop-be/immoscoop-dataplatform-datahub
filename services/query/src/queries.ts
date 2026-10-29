@@ -27,6 +27,10 @@ export interface Query {
   previewOf: string | null;
   /** For the runs of a Lens by one User, the Lens (FR-LE-12). */
   lensOf: string | null;
+  /** The Lens this query is used as, when "Open in Query" made it (DEC-LE-18). */
+  forLens: string | null;
+  /** The Collection whose "New Lens" started it (DEC-UX-123). */
+  forCollection: string | null;
   createdAt: Date;
   updatedAt: Date;
   lastRunAt: Date | null;
@@ -93,6 +97,7 @@ export interface NewQuery {
   sql: string;
   parameters?: Parameter[];
   startedFrom?: { id: string; afterRun: number | null };
+  forCollection?: string;
 }
 
 export interface Queries {
@@ -105,6 +110,11 @@ export interface Queries {
   previewFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /** The previews of a Resource by this User, if there are. */
   previewOf(owner: Viewer, resourceId: string): Promise<Query | undefined>;
+  /**
+   * The query of this User used as a Lens, made from its SQL and Parameters the first time they open it in
+   * Query (DEC-LE-18); `created` says whether it is new.
+   */
+  forLens(owner: Viewer, lens: { id: string; name: string; question: string; resources: NamedResource[]; sql: string; parameters: Parameter[] }): Promise<{ query: Query; created: boolean }>;
   /** The runs of a Lens by this User, a query made the first time they run it (FR-LE-12). */
   lensFor(owner: Viewer, lens: { id: string; name: string; resources: NamedResource[]; sql: string }): Promise<Query>;
   /** Every query with a run on this Resource, its last run first (FR-SR-44). */
@@ -157,7 +167,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     db.selectFrom('queries').selectAll().where('kind', '=', 'preview').where('ownerId', '=', owner.id).where('previewOf', '=', resourceId).executeTakeFirst();
 
   return {
-    async create({ owner, name, question, resources, sql: text, parameters = [], startedFrom }) {
+    async create({ owner, name, question, resources, sql: text, parameters = [], startedFrom, forCollection }) {
       return db
         .insertInto('queries')
         .values({
@@ -170,6 +180,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
           parameters: JSON.stringify(parameters),
           startedFrom: startedFrom?.id ?? null,
           startedAfterRun: startedFrom?.afterRun ?? null,
+          forCollection: forCollection ?? null,
         })
         .returningAll()
         .executeTakeFirstOrThrow();
@@ -222,6 +233,29 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     },
 
     previewOf,
+
+    async forLens(owner, lens) {
+      const find = () => db.selectFrom('queries').selectAll().where('ownerId', '=', owner.id).where('forLens', '=', lens.id).executeTakeFirst();
+      const found = await find();
+      if (found) return { query: found, created: false };
+      // Two at once: one of them makes it, the other finds it.
+      const made = await db
+        .insertInto('queries')
+        .values({
+          ownerId: owner.id,
+          ownerName: owner.name,
+          name: lens.name,
+          question: lens.question,
+          resources: JSON.stringify(lens.resources),
+          sql: lens.sql,
+          parameters: JSON.stringify(lens.parameters),
+          forLens: lens.id,
+        })
+        .onConflict((conflict) => conflict.columns(['ownerId', 'forLens']).where('forLens', 'is not', null).doNothing())
+        .returningAll()
+        .executeTakeFirst();
+      return made ? { query: made, created: true } : { query: (await find()) as Query, created: false };
+    },
 
     async lensFor(owner, lens) {
       const find = () => db.selectFrom('queries').selectAll().where('kind', '=', 'lens').where('ownerId', '=', owner.id).where('lensOf', '=', lens.id).executeTakeFirst();
