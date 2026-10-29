@@ -22,7 +22,7 @@ Pointers to material this domain will build on, collected during the migration. 
 ## Decisions
 
 - <a id="dec-le-01"></a>**DEC-LE-01** · A Lens takes its Parameters from the query it is made from: making a Lens adds none, and a Parameter is added in the query. Its Users can always change the value of every Parameter, without touching the SQL; there is no choice to lock one. *Decided on 2026-10-27, by Max.*
-- <a id="dec-le-02"></a>**DEC-LE-02** · Making a Lens does not show what it does step by step. Data Hub writes that description in plain language when the Lens is saved ([FR-LE-03](#fr-le-03)), and the page of the Lens shows it. *Decided on 2026-10-27, by Max.*
+- <a id="dec-le-02"></a>**DEC-LE-02** · Making a Lens does not show what it does step by step. Data Hub writes that description in plain language when the Lens is saved ([FR-LE-03](#fr-le-03)), and the page of the Lens shows it. *Decided on 2026-10-27, by Max.* *Note of 2026-10-29: its author writes it, or Claude through the MCP ([DEC-LE-16](#dec-le-16)).*
 - <a id="dec-le-03"></a>**DEC-LE-03** · A query that becomes a Lens stays a query, and says that it is used as that Lens, with a link to it; the Lens links back to its query. *Decided on 2026-10-27, by Max.*
 - <a id="dec-le-04"></a>**DEC-LE-04** · Opening a query that is used as a Lens offers to overwrite the Lens with the query: its SQL and Parameters replace those of the Lens, after a new size check, as a new version of the Lens. Such a query no longer suggests the Lenses on its Resources. Using other Resources is a new query, as always ([DEC-UX-73](../../design/principles.md#dec-ux-73)); that one is not used as the Lens, and can become a Lens of its own. *Decided on 2026-10-27, by Max.*
 - <a id="dec-le-05"></a>**DEC-LE-05** · While its Request waits for the Data Team, a very large Lens is frozen: nobody changes it, neither its author nor the Data Team, and it waits for the answer. A Request has a reasonable timeout ([OP-LE-10](#op-le-10)). *Decided on 2026-10-27, by Max ([OP-LE-09](#op-le-09)).*
@@ -36,6 +36,8 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-13"></a>**DEC-LE-13** · Version 1 has one kind of Lens, a query with its Parameters ([FR-LE-11](#fr-le-11)); no flavours such as filtered or aggregated. *Decided on 2026-10-28, by Max ([OP-LE-07](#op-le-07)).*
 - <a id="dec-le-14"></a>**DEC-LE-14** · A default, and any value of a Parameter, is a value or any SQL function, worked out at every run. The field suggests the common ones: today, today minus 3 days, the start of this week, month, quarter or year, and the end of the last complete week or month, as in Query ([DEC-UX-71](../../design/principles.md#dec-ux-71)). *Decided on 2026-10-28, by Max ([OP-LE-08](#op-le-08)).*
 - <a id="dec-le-15"></a>**DEC-LE-15** · A Request has no timeout: it waits until the Data Team accepts or refuses it, however long that takes. This holds for a very large Lens and for a query above 1 GB ([DEC-SR-36](04-stacks-and-resources.md#dec-sr-36)). *Decided on 2026-10-28, by Max ([OP-LE-10](#op-le-10)).*
+- <a id="dec-le-16"></a>**DEC-LE-16** · What a Lens does, step by step, is written by its author, in plain language, when making or editing it; when Claude makes a Lens through the MCP, in version 2, Claude writes it. Data Hub does not write it itself. This replaces the second sentence of [DEC-LE-02](#dec-le-02). *Decided on 2026-10-29, by Max.*
+- <a id="dec-le-17"></a>**DEC-LE-17** · The result of a Lens cannot be downloaded in v1: the grid on its page is its result ([FR-CH-01](13-channels.md#fr-ch-01)). *Decided on 2026-10-29, by Max.*
 
 ## Requirements
 
@@ -69,6 +71,8 @@ The weight of a Lens, light or heavy, is visible to every User, so that whoever 
 When a Lens is created, Data Hub generates, through a skill, a description in business language of its steps, queries and CTEs, so that business sees what happens in the Lens without reading SQL.
 
 *Note of 2026-10-27: not shown while the Lens is made; the page of the Lens shows it ([DEC-LE-02](#dec-le-02)).*
+
+*Note of 2026-10-29: not generated: its author writes the steps when making the Lens, and Claude when it makes one through the MCP ([DEC-LE-16](#dec-le-16)).*
 
 <a id="fr-le-04"></a>
 ### FR-LE-04 · Business adjusts Parameters without touching the SQL
@@ -144,6 +148,8 @@ The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After th
 Every Lens has a page where it runs, for everyone who may use it ([DEC-CO-16](03-collections.md#dec-co-16)): a request with its Parameters, and the result. Its Parameters are filled in with their defaults ([FR-LE-13](#fr-le-13)); the User changes their values without touching the SQL ([FR-LE-04](#fr-le-04)) and puts a changed one back to its default. Adding Parameters is editing the Lens, for its Owner Unit. A second part of the page tells what the Lens answers, what it does step by step ([FR-LE-03](#fr-le-03)), what it is built on and its history. The result shows the rows, what was read and its Query ID ([FR-LN-06](07-log-and-notifications.md#fr-ln-06)), and can be downloaded within the row limit ([FR-CH-01](13-channels.md#fr-ch-01)). This is the basic flavour of a Lens: a query with Parameters, its result a table ([OP-LE-07](#op-le-07)).
 
 *Note of 2026-10-26: the page of a Lens sits under Collections, with its Collection unfolded in the panel; there is no section Lenses ([DEC-UX-66](../../design/principles.md#dec-ux-66)).*
+
+*Note of 2026-10-29: its result cannot be downloaded in v1 ([DEC-LE-17](#dec-le-17)).*
 
 <a id="fr-le-12"></a>
 ### FR-LE-12 · Every run of a Lens is a query

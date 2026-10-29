@@ -5,7 +5,7 @@
   Two tabs. Run: the request on top, its Parameters in a panel that folds open and shut (folded, a line with their
   values), "Default" on a changed one, and in its lower right corner "Run" with the Pre-flight in it, red as "Approve and
   run" above the approval threshold, with a pop-out on how to read less when the table has partitions;
-  the result below, a table, with what was read, the Query ID and "Download CSV". The dropdown of a date Parameter offers
+  the result below, a table, with what was read and the Query ID; no download in v1 (DEC-UX-122). The dropdown of a date Parameter offers
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
@@ -13,7 +13,7 @@
   The page sits under Collections (DEC-UX-66): the panel is that of Collections, with Credit leads unfolded and this Lens
   marked as open; there is no section Lenses.
   Requirements: FR-CO-19, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-51, FR-LN-06, FR-LE-03, FR-LE-04, FR-LE-06, FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-17, FR-CH-01, FR-CV-07
-  Decisions: DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-LE-08, DEC-LE-12, DEC-DH-10, DEC-CO-16.
+  Decisions: DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-UX-121, DEC-UX-122, DEC-LE-08, DEC-LE-12, DEC-LE-16, DEC-LE-17, DEC-DH-10, DEC-CO-16.
   Related screens: lens-new.html (Make it a lens), query-new.html (Use this lens), collection-overview.html (its Lenses).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -210,7 +210,7 @@
   </section>
   <section class="lens-result" aria-label="Result">
    <div data-pane-group="state" data-pane="fresh editing">
-    <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Oct 2026 to 20 Oct 2026, all channels</span><button class="btn-quiet outline" title="Up to 10,000 rows"><i class="ph ph-download-simple"></i> Download CSV</button></div>
+    <div class="result-bar"><span class="meta">Ran 2 minutes ago, from 1 Oct 2026 to 20 Oct 2026, all channels</span></div>
    </div>
    <div data-pane-group="state" data-pane="changed" hidden>
     <div class="size-state caution" style="margin:0 0 10px"><i class="ph-fill ph-arrows-clockwise"></i><p><b>The Parameters changed.</b> This result is still for From 1 Oct 2026; run again to see it for 1 Jan 2026.</p></div>
@@ -261,7 +261,7 @@
     <li>Adds the name of each lead source.</li>
     <li>Adds up the leads per source and puts the largest first.</li>
    </ol>
-   <p class="meta" style="display:block;margin-top:8px">Written by Data Hub from the Lens, in plain language.</p>
+   <p class="meta" style="display:block;margin-top:8px">Written by its author, in plain language.</p>
   </section>
   <section class="about-tile">
    <div class="label">Built on</div>
@@ -281,7 +281,6 @@
   <section class="about-tile" style="grid-column:1 / -1">
    <div class="label">History</div>
    <div class="log-line"><span style="flex:1">Made by Mia Peeters from the query "Leads per source name"</span><span class="meta">23 Oct 2026</span></div>
-   <div class="log-line"><span style="flex:1">14 runs this month, by 6 people</span><span class="meta">last 2 minutes ago</span></div>
   </section>
  </div>
  </div>

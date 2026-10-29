@@ -55,6 +55,8 @@ Large or frequent, structural exports do not run through Data Hub: not through t
 
 *Note of 2026-10-29: the Preview of a Resource has no tile for an export ([DEC-UX-120](../../design/principles.md#dec-ux-120)).*
 
+*Note of 2026-10-29, later: the result of a Lens has no download in v1 either ([DEC-LE-17](09-lenses.md#dec-le-17)).*
+
 <a id="fr-ch-02"></a>
 ### FR-CH-02 · A structural export goes to the Data Team
 

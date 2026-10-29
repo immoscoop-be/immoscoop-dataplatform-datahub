@@ -7,7 +7,7 @@
   its author (?role=owner), it says that the Request waits.
   While the Request waits, the Lens is frozen (DEC-LE-05); the prototype still shows its fields as editable.
   Requirements: FR-SR-40, FR-LE-04, FR-LE-06, FR-LE-08, FR-LE-09, FR-LE-13, FR-CV-02, FR-CV-03, FR-CV-08, FR-CV-09
-  Decisions: DEC-UX-30, DEC-UX-75, DEC-CV-06, DEC-LE-05, DEC-LE-15, DEC-SR-29.
+  Decisions: DEC-UX-30, DEC-UX-75, DEC-UX-121, DEC-CV-06, DEC-LE-05, DEC-LE-15, DEC-SR-29.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -87,6 +87,10 @@
   <label class="field"><span>The question it answers</span><input value="Which sources bring the most leads?"></label>
   <p class="meta" style="display:block;line-height:1.5;margin:-6px 0 12px">From your query. Its words help colleagues find this Lens when they start a query.</p>
   <label class="field"><span>What it shows</span><textarea rows="2">How many leads each lead source brings in, from a week you choose.</textarea></label>
+  <label class="field" style="margin-bottom:4px"><span>What it does, step by step</span><textarea rows="3">Takes the weekly lead volume between From and To.
+Adds the name of each lead source.
+Adds up the leads per source and puts the largest first.</textarea></label>
+  <p class="meta" style="display:block;line-height:1.5;margin:0 0 12px">A step a line, in plain language: colleagues never see the SQL of a Lens, so this is how they know what it does.</p>
   <div class="field"><span>Tags</span>
    <div class="tags" style="margin-top:0"><span class="tag">#leads</span><span class="tag">#source</span><span class="tag">#weekly</span><button class="add-chip" type="button">+ Tag</button></div>
   </div>
