@@ -152,11 +152,13 @@ A very large Lens ([FR-LE-08](#fr-le-08)) is saved but not published: its author
 <a id="fr-le-10"></a>
 ### FR-LE-10 · A Lens that outgrows its range is checked again
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html)
 
 The size of a Lens is measured when it is made ([FR-LE-08](#fr-le-08)). After that, Data Hub follows what each run of the Lens reads. When a run reads more than the range the Lens was made in, or last accepted in, the Lens is checked again as when it was made: grown into large, its author is warned; grown into very large, the Data Team accepts it again ([FR-LE-09](#fr-le-09)). In the meantime it stops, and its Owner and the Data Team are told ([DEC-LE-11](#dec-le-11)).
 
 *Note of 2026-10-29: only a run with its default values measures a Lens ([DEC-LE-19](#dec-le-19)); a stopped Lens shows so on its page ([DEC-UX-125](../../design/principles.md#dec-ux-125)).*
+
+*Note of 2026-10-29, on building part 6b: a Lens that grows is moved on by its Pre-flight, its runs and the daily check, and stops past 1 GB ([TR-LE-05](../technical/09-lenses.md#tr-le-05)); telling its Owner and the Data Team, and the Data Team accepting it again, come with Messages, in part 7 of the [build order](../../design/build-order.md).*
 
 <a id="fr-le-11"></a>
 ### FR-LE-11 · A Lens runs on a page of its own
@@ -212,20 +214,24 @@ The section Lenses opens on a start screen. It finds Lenses by the words of a qu
 <a id="fr-le-16"></a>
 ### FR-LE-16 · A Lens is updated from its query
 
-**Status:** Specified · **Source:** Max, 2026-10-27 · **Screens:** [query](../../design/screens/query.html)
+**Status:** Implemented · **Source:** Max, 2026-10-27 · **Screens:** [query](../../design/screens/query.html)
 
 A query used as a Lens says so, with a link to the Lens ([DEC-LE-03](#dec-le-03)). Whoever may change the Lens, its Owner Unit and the Data Team ([DEC-CO-15](03-collections.md#dec-co-15), [DEC-CO-18](03-collections.md#dec-co-18)), can update the Lens from the query: the SQL and the Parameters of the query replace those of the Lens, a new size check decides how it is published again ([FR-LE-08](#fr-le-08)), and the Lens keeps its name, question, story, tags and Collection. The earlier version stays in the history of the Lens. The query does not suggest the Lenses on its Resources ([DEC-LE-04](#dec-le-04)).
 
 *Note of 2026-10-29: a query that "Open in Query" made for someone of its Owner Unit is used as the Lens too ([DEC-LE-18](#dec-le-18)).*
 
+*Note of 2026-10-29, on building part 6b: built as [TR-LE-04](../technical/09-lenses.md#tr-le-04).*
+
 <a id="fr-le-17"></a>
 ### FR-LE-17 · A Lens that reads what no longer exists is Broken
 
-**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [collections-start](../../design/screens/collections-start.html), [lens](../../design/screens/lens.html)
+**Status:** Implemented · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [collections-start](../../design/screens/collections-start.html), [lens](../../design/screens/lens.html)
 
 A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its page names what no longer exists and since which dbt run. Its last result is not shown, so that nobody takes it for a current one. It carries a red dot wherever it is listed: in the panel, on tiles, in search and in the Lenses of a Collection, for everyone who sees it ([DEC-UX-81](../../design/principles.md#dec-ux-81)). Its Owner Unit gets a Message ([MSG-LEN-05](message-catalogue.md#msg-len-05)) and can repair it from its query ([DEC-LE-04](#dec-le-04)). When everything it reads exists again, it works again by itself, and the Message says so. The Reports with this Lens are Broken with it.
 
 *Note of 2026-10-29: to start with, found when its Pre-flight or a run fails, and once a day ([DEC-LE-20](#dec-le-20)).*
+
+*Note of 2026-10-29, on building part 6b: found and shown as [TR-LE-06](../technical/09-lenses.md#tr-le-06), with since when it misses what it reads rather than the dbt run, until the check after a new Current Version comes; the red dot is in the panel and the Lenses of a Collection. The Message to its Owner Unit ([MSG-LEN-05](message-catalogue.md#msg-len-05)) comes with Messages, in part 7 of the [build order](../../design/build-order.md), and the Reports with Reports.*
 
 ## Open points
 
