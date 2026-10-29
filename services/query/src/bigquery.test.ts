@@ -190,3 +190,37 @@ describe('the values of a row', () => {
     expect(page.rows).toEqual([['2025-10-29 08:12:00 UTC', '2025-10-29 08:12:00.12345 UTC', null, '["a","b"]', '{"name":"Website","share":"74.8"}', 'true']]);
   });
 });
+
+describe('what BigQuery keeps about a table (FR-SR-39)', () => {
+  it('reads its size, rows and partitions in the project of the table', async () => {
+    const { bigquery, calls } = fakeApi([
+      { body: { type: 'TABLE', numBytes: '4200000000', numRows: '1560', numPartitions: '312', lastModifiedTime: '1793260800000', timePartitioning: { type: 'DAY', field: 'week_start' } } },
+    ]);
+    expect(await bigquery.table('immoscoop-dataplatform-398214.dbt_prod.weekly_lead_volume')).toEqual({
+      type: 'TABLE',
+      bytes: 4_200_000_000,
+      rows: 1560,
+      partitions: 312,
+      partitionField: 'week_start',
+      modifiedAt: new Date(1793260800000).toISOString(),
+    });
+    expect(calls[0]?.url).toBe('https://bigquery.googleapis.com/bigquery/v2/projects/immoscoop-dataplatform-398214/datasets/dbt_prod/tables/weekly_lead_volume');
+    await expect(bigquery.table('dbt_prod.weekly_lead_volume')).rejects.toBeInstanceOf(BigQueryRefused);
+  });
+
+  it('lists its newest partitions that hold rows, from INFORMATION_SCHEMA, as Data Hub (DEC-SR-39)', async () => {
+    const { bigquery, calls } = fakeApi([
+      { body: { jobComplete: true, schema: { fields: [{ name: 'partition_id', type: 'STRING' }] }, totalRows: '2', rows: [{ f: [{ v: '20261019' }] }, { f: [{ v: '20261012' }] }] } },
+    ]);
+    expect(await bigquery.partitions('immoscoop-dataplatform-398214.dbt_prod.weekly_lead_volume', 12)).toEqual(['20261019', '20261012']);
+    expect(calls[0]?.body).toMatchObject({
+      query: expect.stringContaining('`immoscoop-dataplatform-398214.dbt_prod.INFORMATION_SCHEMA.PARTITIONS`'),
+      queryParameters: [
+        { name: 'table', parameterType: { type: 'STRING' }, parameterValue: { value: 'weekly_lead_volume' } },
+        { name: 'limit', parameterType: { type: 'INT64' }, parameterValue: { value: '12' } },
+      ],
+      maximumBytesBilled: '100000000',
+      labels: { 'datahub-purpose': 'partitions' },
+    });
+  });
+});

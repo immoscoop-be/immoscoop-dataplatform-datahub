@@ -11,6 +11,7 @@ import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryReso
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
+import { createStorage } from './preview.js';
 import { createQueries, queryRefOf } from './queries.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
@@ -33,6 +34,7 @@ const WEEKLY: QueryResource = {
     { name: 'week_start', dataType: 'DATE', description: 'The Monday of the week.', businessDescription: '' },
     { name: 'lead_source', dataType: 'STRING', description: 'Source system code.', businessDescription: 'Where the lead came in.' },
   ],
+  parameters: ['lead_source'],
 };
 const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
 const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
@@ -89,6 +91,10 @@ function fakeBigQuery() {
     },
     async run(text, options) {
       runs.push({ sql: text, options });
+      // The values of the choices of a Preview: one row, a list per column.
+      if (text.includes('array_agg')) {
+        return { jobId: `job_${runs.length}`, location: 'europe-west1', columns: [{ name: 'lead_source', type: 'ARRAY<STRING>' }], totalRows: 1, rows: [['["app","website"]']], processedBytes: 1_000_000, billedBytes: 10_000_000, partitions: 4 };
+      }
       if (refuseNext) {
         const message = refuseNext;
         refuseNext = null;
@@ -109,6 +115,15 @@ function fakeBigQuery() {
       pages.push({ jobId: job.jobId, startIndex });
       if (expired) throw new ResultExpired('gone');
       return { columns: [{ name: 'week_start', type: 'DATE' }], totalRows: 210, rows: [['2026-10-12']] };
+    },
+    // Weekly lead volume is partitioned on week_start, a partition each Monday; Lead sources is not partitioned.
+    async table(key) {
+      return key === WEEKLY.key
+        ? { type: 'TABLE', bytes: 4_200_000_000, rows: 1_560, partitions: 312, partitionField: 'week_start', modifiedAt: '2026-10-28T06:00:00.000Z' }
+        : { type: 'TABLE', bytes: 2_000_000, rows: 5, partitions: null, partitionField: null, modifiedAt: null };
+    },
+    async partitions(_key, limit) {
+      return ['20261019', '20261012', '20261005', '20260928', '20260921'].slice(0, limit);
     },
   };
   return {
@@ -146,6 +161,10 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
       return requests.filter((sent) => sent.writerId === writers.get(authorization) && (queryId === null || sent.subjectId === queryId));
     },
+    async manages(collectionId, authorization) {
+      // Mia is in the Owner Unit of Credit leads; the Data Team manages every Collection.
+      return collectionId === 'c-credit' && (writers.get(authorization) === '104' || writers.get(authorization) === '103');
+    },
     async sendRequest({ queryId, reads, text }, authorization) {
       const writerId = writers.get(authorization) ?? '';
       const waiting = requests.find((sent) => sent.subjectId === queryId && sent.writerId === writerId && sent.state === 'waiting');
@@ -158,6 +177,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   let an: string;
   let karel: string;
   let dataTeam: string;
+  let mia: string;
 
   beforeAll(async () => {
     admin = createDatabase<unknown>({ connectionString: url }, schema);
@@ -167,9 +187,12 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     an = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes' })}`;
     karel = `Bearer ${await issuer.sign({ sub: '102', name: 'Karel Leys' })}`;
     dataTeam = `Bearer ${await issuer.sign({ sub: '103', name: 'Dirk Vos', roles: ['datateam'] })}`;
+    mia = `Bearer ${await issuer.sign({ sub: '104', name: 'Mia Peeters' })}`;
     writers.set(an, '101');
     writers.set(karel, '102');
     writers.set(dataTeam, '103');
+    writers.set(mia, '104');
+    visible.set(mia, [WEEKLY.id, SOURCES.id]);
     visible.set(an, [WEEKLY.id, SOURCES.id]);
     visible.set(karel, [WEEKLY.id]);
     visible.set(dataTeam, [WEEKLY.id, SOURCES.id, SECRET.id]);
@@ -183,6 +206,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         beneath: createBeneath(fake.bigquery),
         project: PROJECT,
         thresholds: { approve: 100_000_000, request: 1_000_000_000 },
+        storage: createStorage(fake.bigquery, createBeneath(fake.bigquery)),
       },
     });
   });
@@ -374,6 +398,59 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(made.statusCode).toBe(201);
     expect(made.json().query).toMatchObject({ sql: withParameters, parameters: [dateFrom, channel], startedFrom: { id, name: 'Leads per source', afterRun: 6 }, runs: 0, lastRun: null });
     expect((await call(karel, 'POST', '/queries', { name: 'Taken', resources: [WEEKLY.id], startedFrom: id })).statusCode).toBe(400);
+  });
+
+  it('tells the size and partitions of a Resource from BigQuery, without reading it (FR-SR-39)', async () => {
+    const storage = (await call(an, 'GET', `/resources/${WEEKLY.id}/storage`)).json().storage;
+    expect(storage).toEqual({ key: WEEKLY.key, bytes: 4_200_000_000, rows: 1_560, partitions: 312, modifiedAt: '2026-10-28T06:00:00.000Z', beneath: false });
+    expect((await call(an, 'GET', `/resources/${SECRET.id}/storage`)).statusCode).toBe(404);
+  });
+
+  it('offers the choices of a Preview, their values read once and kept out of its history (DEC-SR-37, DEC-SR-39, DEC-SR-40)', async () => {
+    const answer = (await call(an, 'POST', `/resources/${WEEKLY.id}/preview/choices`, { window: 4 })).json();
+    expect(answer.window).toEqual({ field: 'week_start', unit: 'day', from: '2026-09-28', window: 4 });
+    expect(answer.choices).toEqual([{ field: 'lead_source', dataType: 'STRING', role: 'cluster', kind: 'choice', values: ['app', 'website'] }]);
+    expect(fake.runs.at(-1)?.sql).toContain("where `week_start` >= DATE '2026-09-28'");
+    const previews = await database.db.selectFrom('queries').selectAll().where('kind', '=', 'preview').execute();
+    expect(previews).toMatchObject([{ name: 'Preview · Weekly lead volume', ownerName: 'An Claes', previewOf: WEEKLY.id }]);
+    const values = await database.db.selectFrom('runs').selectAll().where('queryId', '=', (previews[0] as { id: string }).id).execute();
+    expect(values.map((run) => [run.purpose, run.number])).toEqual([['values', 1]]);
+    expect((await call(an, 'POST', `/resources/${WEEKLY.id}/preview/choices`, { window: 5 })).statusCode).toBe(400);
+  });
+
+  it('runs a Preview as a run of the previews of the Resource, one item in the panel (FR-SR-38)', async () => {
+    const checked = await call(an, 'POST', `/resources/${WEEKLY.id}/preview/preflight`, { window: 1, values: { lead_source: 'app' } });
+    expect(checked.json()).toMatchObject({ preflight: { runnable: true, range: 'free' }, queryId: expect.any(String) });
+    const ran = await call(an, 'POST', `/resources/${WEEKLY.id}/preview/runs`, { window: 1, values: { lead_source: 'app' } });
+    expect(ran.statusCode).toBe(201);
+    expect(ran.json().run).toMatchObject({ number: 1, parameters: [{ name: 'lead_source', kind: 'choice', value: 'app' }] });
+    expect(fake.runs.at(-1)?.sql).toBe(
+      `select \`week_start\`, \`lead_source\`\nfrom \`${WEEKLY.key}\`\nwhere \`week_start\` >= DATE '2026-10-19'\n  and \`lead_source\` = @lead_source\norder by \`week_start\` desc\nlimit 1000`,
+    );
+    expect(fake.runs.at(-1)?.options.parameters).toEqual([{ name: 'lead_source', parameterType: { type: 'STRING' }, parameterValue: { value: 'app' } }]);
+    expect((await call(an, 'POST', `/resources/${WEEKLY.id}/preview/runs`, { window: 4 })).json().run.number).toBe(2);
+    const listed = (await call(an, 'GET', '/queries')).json().queries.find((item: { kind: string }) => item.kind === 'preview');
+    expect(listed).toMatchObject({ name: 'Preview · Weekly lead volume', runs: 2 });
+    // A value is a value of its column, never SQL.
+    expect((await call(an, 'POST', `/resources/${WEEKLY.id}/preview/runs`, { window: 4, values: { week_start: '2026-10-19' } })).statusCode).toBe(400);
+    expect((await call(karel, 'POST', `/resources/${SOURCES.id}/preview/runs`, { window: 4 })).statusCode).toBe(404);
+  });
+
+  it('lists the queries on a Resource to its Owner Unit and the Data Team only, who read them (DEC-SR-41, FR-SR-44)', async () => {
+    const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
+    // Only queries that ran: a query started from another and not run yet did not use it.
+    expect(history.summary).toEqual({ queries: 2, lenses: 0, colleagues: 1 });
+    expect(history.queries.map((query: { name: string; kind: string; mine: boolean }) => [query.name, query.kind, query.mine])).toEqual([
+      ['Preview · Weekly lead volume', 'preview', false],
+      ['Leads per source', 'query', false],
+    ]);
+    expect(history.queries[1]).toMatchObject({ runs: 6, lastRead: 79_000_000 });
+    expect((await call(dataTeam, 'GET', `/resources/${WEEKLY.id}/queries`)).statusCode).toBe(200);
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/queries`)).statusCode).toBe(403);
+    // The Owner Unit reads a query on what it owns, with its SQL, and does not run it (DEC-SR-31).
+    expect((await call(mia, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: false, sql: expect.stringContaining('select') });
+    expect((await call(mia, 'GET', `/queries/${id}/runs?limit=1`)).statusCode).toBe(200);
+    expect((await call(mia, 'POST', `/queries/${id}/runs`, { sql: weekly })).statusCode).toBe(403);
   });
 
   it('answers 503 when catalogue does not, rather than guess what the User may see', async () => {

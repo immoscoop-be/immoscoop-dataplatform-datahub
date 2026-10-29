@@ -21,6 +21,12 @@ export interface ResultColumn {
 
 export type RunState = 'running' | 'done' | 'failed';
 
+/** A query written in Query, or the previews of a Resource by one User (FR-SR-38). */
+export type QueryKind = 'query' | 'preview';
+
+/** A run the User asked for, or the read of the values of the choices of a Preview (DEC-SR-40). */
+export type RunPurpose = 'run' | 'values';
+
 /** The tables of query, in camelCase (the columns are snake_case in Postgres). */
 export interface QueryDatabase {
   /** One row per query: its name, its question and its Resources, and the SQL being written (DEC-UX-73). */
@@ -38,6 +44,9 @@ export interface QueryDatabase {
     /** The query it was started from with another set of Resources, and after which of its runs (DEC-UX-73). */
     startedFrom: string | null;
     startedAfterRun: number | null;
+    kind: Generated<QueryKind>;
+    /** For the previews of a Resource, its ID in catalogue. */
+    previewOf: string | null;
     createdAt: Timestamp;
     updatedAt: Timestamp;
     lastRunAt: Date | null;
@@ -55,6 +64,7 @@ export interface QueryDatabase {
     sql: string;
     /** The Parameters and the values it ran with. */
     parameters: ColumnType<Parameter[], string | undefined, string>;
+    purpose: Generated<RunPurpose>;
     resources: ColumnType<NamedResource[], string, string>;
     /** What the Pre-flight said the run reads, at most; bigints, which pg reads as strings. */
     estimatedBytes: ColumnType<string, number, number>;
