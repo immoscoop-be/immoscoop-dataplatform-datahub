@@ -10,14 +10,17 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
   import DeprecateSheet from './DeprecateSheet.svelte';
   import PublishSheet from './PublishSheet.svelte';
   import RelationsSheet from './RelationsSheet.svelte';
   import ResourceColumns from './ResourceColumns.svelte';
+  import ResourceHistory from './ResourceHistory.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
   import ResourceOverview from './ResourceOverview.svelte';
+  import ResourcePreview from './ResourcePreview.svelte';
 
   /**
    * The page of a Resource (Detail page of a Resource): its name and Key, its state in a status row, and
@@ -25,9 +28,10 @@
    * edit what Data Hub keeps about it in place (FR-RC-15); a Data Admin changes its grain and relations
    * (DEC-UX-107). A Resource without a Collection says so, and only the Data Team sees it. Its Owner
    * publishes it, the first Confirmation (FR-SR-49); once published, its Owner Unit and the Data Team
-   * deprecate it (FR-SR-50), and mark seen what changed since its last Confirmation (FR-MR-12). "Query",
-   * "Messages", "Ask a question", History and Preview are there and still empty: they come with Query
-   * and the Messages.
+   * deprecate it (FR-SR-50), and mark seen what changed since its last Confirmation (FR-MR-12). Its
+   * Preview shows its first rows (FR-SR-38); its History, the queries that used it, only for its Owner
+   * Unit and the Data Team (DEC-SR-41). "Messages" and "Ask a question" are there and still empty: they
+   * come with the Messages.
    */
   let {
     resource,
@@ -36,9 +40,11 @@
     collections,
     catalogue,
     registry,
+    queries,
     dataTeam,
     groups,
     onchange,
+    onrun,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -47,11 +53,14 @@
     collections: readonly Collection[] | undefined;
     catalogue: Catalogue;
     registry: Registry;
+    queries: QueryClient;
     dataTeam: boolean;
     /** The groups of the User: its Owner publishes it (FR-SR-16). */
     groups: readonly string[];
     /** The Resource as it is after a change, for the rest of the app. */
     onchange: (resource: ResourceDetail) => void;
+    /** After a run of its Preview, for the panel of Query. */
+    onrun?: () => void;
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -66,6 +75,8 @@
 
   let entries = $derived(log);
   let related: Related[] | undefined = $state();
+  /** Its size and partitions from BigQuery (FR-SR-39); null where BigQuery does not tell them. */
+  let storage: Storage | null | undefined = $state();
   let relating = $state(false);
   let sheet: 'publish' | 'deprecate' | undefined = $state();
   let failed = $state(false);
@@ -80,6 +91,7 @@
     readFor = id;
     tab = 'overview';
     related = undefined;
+    storage = undefined;
     relating = false;
     sheet = undefined;
     failed = false;
@@ -87,10 +99,19 @@
       (found) => resource.id === id && (related = found),
       (error: unknown) => console.error(`What ${resource.displayName} relates to could not be read`, error),
     );
+    queries.storage(id).then(
+      (found) => resource.id === id && (storage = found),
+      (error: unknown) => {
+        if (resource.id === id) storage = null;
+        console.error(`The size of ${resource.displayName} could not be read`, error);
+      },
+    );
   });
 
   /** Its Owner Unit and the Data Team edit it, once it is in a Collection and has an Owner (FR-RC-15). */
   const canEdit = $derived(resource.collectionId !== null && collection?.canManage === true);
+  /** Only its Owner Unit and the Data Team see the queries on it (DEC-SR-41). */
+  const tabs = $derived(TABS.filter(({ id }) => id !== 'history' || dataTeam || canEdit));
   /** Only its Owner publishes it: a member of the Owner Unit of its Collection (FR-SR-16). */
   const isOwner = $derived(collection !== undefined && groups.includes(collection.ownerUnit.id));
   /** The published Resources the User sees, to use instead of this one. */
@@ -233,15 +254,17 @@
   </Callout>
 {/if}
 
-<Tabs label={resource.displayName} current={tab} tabs={TABS.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
+<Tabs label={resource.displayName} current={tab} tabs={tabs.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'overview'}
-    <ResourceOverview {resource} log={entries} {related} {canEdit} onsave={saveCard} />
+    <ResourceOverview {resource} log={entries} {related} {storage} {canEdit} onsave={saveCard} />
   {:else if tab === 'columns'}
     <ResourceColumns {resource} {canEdit} relate={dataTeam && resource.collectionId !== null} onsave={saveFields} onrelate={() => (relating = true)} />
   {:else if tab === 'lineage'}
     <ResourceLineage {resource} {catalogue} />
-  {:else}
-    <p class="meta soon">{t('resource.soon')}</p>
+  {:else if tab === 'history' && (dataTeam || canEdit)}
+    <ResourceHistory {resource} client={queries} />
+  {:else if tab === 'preview'}
+    <ResourcePreview {resource} client={queries} {storage} {onrun} />
   {/if}
 </Tabs>
 
@@ -274,6 +297,5 @@
   .head { display: flex; align-items: flex-start; gap: 14px; }
   .name { flex: 1; min-width: 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; margin-top: 10px; }
-  .soon { display: flex; justify-content: center; padding: 40px; font-size: var(--text-body); margin: 0; }
   .failed { margin: 8px 0 0; font-size: var(--text-small); color: var(--signal-urgent); }
 </style>

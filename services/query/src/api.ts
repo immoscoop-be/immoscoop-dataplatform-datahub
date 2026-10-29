@@ -520,7 +520,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       const preview = await previewRun(request, reply);
       if (!preview) return reply;
       const known = await queries.previewOf(viewer(request), preview.resource.id);
-      return { preflight: await check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }]), queryId: known?.id ?? null };
+      const [checked, requests] = await Promise.all([
+        check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }]),
+        known ? requestsOf(request, known) : Promise.resolve([]),
+      ]);
+      // Above 1 GB its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
+      return { preflight: checked, queryId: known?.id ?? null, request: requestView(requests[0]) };
     } catch (error) {
       return unavailable(error, reply, request);
     }

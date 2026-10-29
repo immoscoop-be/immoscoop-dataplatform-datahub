@@ -420,7 +420,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
 
   it('runs a Preview as a run of the previews of the Resource, one item in the panel (FR-SR-38)', async () => {
     const checked = await call(an, 'POST', `/resources/${WEEKLY.id}/preview/preflight`, { window: 1, values: { lead_source: 'app' } });
-    expect(checked.json()).toMatchObject({ preflight: { runnable: true, range: 'free' }, queryId: expect.any(String) });
+    expect(checked.json()).toMatchObject({ preflight: { runnable: true, range: 'free' }, queryId: expect.any(String), request: null });
     const ran = await call(an, 'POST', `/resources/${WEEKLY.id}/preview/runs`, { window: 1, values: { lead_source: 'app' } });
     expect(ran.statusCode).toBe(201);
     expect(ran.json().run).toMatchObject({ number: 1, parameters: [{ name: 'lead_source', kind: 'choice', value: 'app' }] });

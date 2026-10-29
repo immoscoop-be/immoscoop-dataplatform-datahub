@@ -11,13 +11,16 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
+  import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import type { Card, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
+  import type { Storage } from '../lib/query.js';
 
   /**
    * The Overview of a Resource, in tiles (Detail page of a Resource): its two descriptions with its model
    * type and grain, its maturity, its publication, its Known Behaviour and Known Gaps, its key fields and
-   * Parameters, how it is stored, the Entities it relates to, and its recent history. Its Owner Unit and
+   * Parameters, how it is stored with its size and partitions from BigQuery (FR-SR-39), the Entities it
+   * relates to, and its recent history. Its Owner Unit and
    * the Data Team edit what Data Hub keeps about it in place (FR-RC-15); what comes from dbt and what
    * the Data Team gave when adding it stands next to it, read-only. Stability and Monitoring are not in v1.
    */
@@ -25,12 +28,15 @@
     resource,
     log,
     related,
+    storage,
     canEdit,
     onsave,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
     related: readonly Related[] | undefined;
+    /** Its size and partitions from BigQuery; null where BigQuery does not tell them, undefined while read. */
+    storage: Storage | null | undefined;
     canEdit: boolean;
     onsave: (changes: Partial<Card>) => Promise<boolean>;
   } = $props();
@@ -47,6 +53,14 @@
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const list = (names: readonly string[]) => new Intl.ListFormat(LOCALES[currentLanguage()], { type: 'conjunction' }).format(names);
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
+  /** Its size in all, and about how much a partition holds where it has them (FR-SR-39). */
+  const size = $derived.by(() => {
+    if (!storage || storage.bytes === null) return null;
+    const language = currentLanguage();
+    const bytes = formatBytes(storage.bytes, language);
+    const unit = details.partition?.unit;
+    return storage.partitions && unit ? t('resource.sizePer', { bytes, per: formatBytes(storage.bytes / storage.partitions, language), unit: t(UNIT_KEYS[unit]) }) : t('resource.sizeOf', { bytes });
+  });
 
   // Editing in place: a copy of the card, saved in one go.
   let editing = $state(false);
@@ -289,19 +303,28 @@
         <FactsList>
           {#if details.partition}
             <dt>{t('resource.partitioned')}</dt>
-            <dd>{t('resource.partitionedBy', { field: details.partition.field, unit: details.partition.unit ? t(UNIT_KEYS[details.partition.unit]) : t('grain.unit.range') })}</dd>
+            <dd>
+              {t('resource.partitionedBy', { field: details.partition.field, unit: details.partition.unit ? t(UNIT_KEYS[details.partition.unit]) : t('grain.unit.range') })}{#if storage?.partitions}
+                · {t('resource.partitions', { count: storage.partitions })}{/if}
+            </dd>
           {/if}
           {#if details.clusterBy.length > 0}
             <dt>{t('resource.clustered')}</dt><dd>{t('resource.clusteredBy', { fields: list(details.clusterBy) })}</dd>
           {/if}
+          {#if size}<dt>{t('resource.size')}</dt><dd>{size}</dd>{/if}
         </FactsList>
+        {#if size && storage?.beneath}<p class="cheap">{t('resource.beneath', { key: storage.key })}</p>{/if}
         <p class="cheap">
           {#if details.partition && details.partitionFilter !== 'none'}{t('resource.filterRequired', { field: details.partition.field })}
           {:else if details.partition}{t('resource.filterFirst', { field: details.partition.field })}{/if}
           {#if details.clusterBy[0]}{t('resource.clusterThen', { field: details.clusterBy[0] })}{/if}
         </p>
       {:else}
-        <p class="empty">{t('resource.notStored')}</p>
+        {#if size}
+          <FactsList><dt>{t('resource.size')}</dt><dd>{size}</dd></FactsList>
+          {#if storage?.beneath}<p class="cheap">{t('resource.beneath', { key: storage.key })}</p>{/if}
+        {/if}
+        <p class="empty" class:cheap={size !== null}>{t('resource.notStored')}</p>
       {/if}
     </SubTile>
 

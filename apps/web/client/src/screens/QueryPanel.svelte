@@ -119,6 +119,8 @@
           <span class="pill urgent">{t('query.toDataTeam')}</span>
         {:else if item.request?.state === 'accepted'}
           <span class="pill">{t('query.label.accepted')}</span>
+        {:else if item.kind === 'preview'}
+          <span class="pill">{t('query.label.preview')}</span>
         {/if}
       </a>
       {#if open}
