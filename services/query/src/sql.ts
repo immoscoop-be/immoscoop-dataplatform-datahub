@@ -262,7 +262,7 @@ export interface TemplateResource {
 const WINDOW: Record<string, [number, string]> = { hour: [24, 'hour'], day: [28, 'day'], month: [3, 'month'], year: [1, 'year'] };
 
 /** A filter on the partition column that reads its recent partitions, for its type in BigQuery. */
-function recent(field: string, dataType: string | null, unit: string | null): string | null {
+export function recent(field: string, dataType: string | null, unit: string | null): string | null {
   const [count, part] = WINDOW[unit ?? 'day'] ?? [28, 'day'];
   const type = (dataType ?? 'DATE').toUpperCase();
   if (type === 'DATE') return `${field} >= date_sub(current_date(), interval ${part === 'hour' ? 1 : count} ${part === 'hour' ? 'day' : part})`;
@@ -299,4 +299,31 @@ export function template(resources: TemplateResource[]): string {
   if (resources.length === 1) return `${select(resources[0] as TemplateResource, '')}\n`;
   const ctes = resources.map((resource) => `${cteName(resource.key)} as (\n${select(resource, '  ')}\n)`);
   return `with ${ctes.join(',\n')}\n\nselect *\nfrom ${cteName((resources[0] as TemplateResource).key)}\n`;
+}
+
+/** Words that may follow a table where a `where` can still go in between. */
+const BEFORE_WHERE = new Set(['group', 'having', 'qualify', 'window', 'order', 'limit', 'union', 'intersect', 'except']);
+
+/**
+ * The SQL with a filter added where it reads this table (DEC-SR-35, "Add the filter"): into the `where`
+ * that follows the table and its alias, or as a new `where` when none does. Null where Data Hub cannot
+ * tell where it goes, such as before a join.
+ */
+export function withFilter(sql: string, matches: (name: string) => boolean, filter: string): string | null {
+  const table = tablesOf(sql).tables.find((named) => matches(named.name));
+  if (!table) return null;
+  const tokens = tokenize(sql).filter((token) => token.start >= table.end);
+  let i = 0;
+  if (is(tokens[0], 'as') && isName(tokens[1])) i = 2;
+  else if (isName(tokens[0]) && !NOT_AN_ALIAS.has((tokens[0] as Token).text.toLowerCase())) i = 1;
+  const after = i > 0 ? (tokens[i - 1] as Token).end : table.end;
+  const next = tokens[i];
+  if (is(next, 'where')) {
+    const at = (next as Token).end;
+    return `${sql.slice(0, at)} ${filter} and${sql.slice(at)}`;
+  }
+  if (!next || symbol(next, ')') || symbol(next, ';') || (next.kind === 'word' && BEFORE_WHERE.has(next.text.toLowerCase()))) {
+    return `${sql.slice(0, after)}\nwhere ${filter}${sql.slice(after)}`;
+  }
+  return null;
 }

@@ -1,7 +1,7 @@
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
-import { filtersOn, tablesOf } from './sql.js';
+import { filtersOn, recent, tablesOf, withFilter } from './sql.js';
 
 /** The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides (DEC-SR-29). */
 export interface Thresholds {
@@ -21,8 +21,8 @@ export type Problem =
   | { kind: 'outside'; name: string; start: number | null; end: number | null }
   /** A change or a script: a query only reads. */
   | { kind: 'notSelect'; statementType: string }
-  /** No filter on the partition column of a Resource that requires one (DEC-SR-35). */
-  | { kind: 'filterRequired'; resource: Pick<NamedResource, 'id' | 'displayName'>; column: string }
+  /** No filter on the partition column of a Resource that requires one (DEC-SR-35), with the SQL that adds one where Data Hub can tell where. */
+  | { kind: 'filterRequired'; resource: Pick<NamedResource, 'id' | 'displayName'>; column: string; fix: string | null }
   /** BigQuery refused it, in its own words. */
   | { kind: 'invalid'; message: string };
 
@@ -31,6 +31,10 @@ export interface Warning {
   kind: 'noPartitionFilter';
   resource: Pick<NamedResource, 'id' | 'displayName'>;
   column: string;
+  /** The SQL with a filter on its recent partitions, where Data Hub can tell where it goes. */
+  fix: string | null;
+  /** What that SQL reads at most, from a dry run of its own (FR-SR-40). */
+  bytesWithFilter: number | null;
 }
 
 export interface Preflight {
@@ -78,6 +82,14 @@ export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => 
     cache.set(resource.key, { tables, until: now() + ttl });
     return tables;
   };
+}
+
+/** The SQL with a filter on the recent partitions of this Resource, where Data Hub can tell where it goes. */
+function fixFor(sql: string, resource: QueryResource, project: string): string | null {
+  if (!resource.partition) return null;
+  const { field, unit } = resource.partition;
+  const filter = recent(field, resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null, unit);
+  return filter ? withFilter(sql, (name) => names(name, resource.key, project), filter) : null;
 }
 
 /** Whether a name in the SQL is this Key: in full, or without its project when that is the project the query runs in. */
@@ -129,7 +141,11 @@ export async function preflight(
     const column = required?.[1]?.split(',')[0]?.trim();
     const resource = column ? [...read].find((candidate) => candidate.partition?.field === column) : undefined;
     return done({
-      problems: [resource && column ? { kind: 'filterRequired', resource: { id: resource.id, displayName: resource.displayName }, column } : { kind: 'invalid', message: error.message }],
+      problems: [
+        resource && column
+          ? { kind: 'filterRequired', resource: { id: resource.id, displayName: resource.displayName }, column, fix: fixFor(sql, resource, project) }
+          : { kind: 'invalid', message: error.message },
+      ],
     });
   }
   if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
@@ -144,8 +160,13 @@ export async function preflight(
   for (const resource of read) {
     if (!resource.partition || filtersOn(sql, resource.partition.field)) continue;
     const named = { id: resource.id, displayName: resource.displayName };
-    if (resource.partitionFilter === 'none') warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field });
-    else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field });
+    const fix = fixFor(sql, resource, project);
+    if (resource.partitionFilter === 'none') {
+      // What it would read with the filter: one more dry run, which costs nothing.
+      const bytesWithFilter = fix ? await bigquery.dryRun(fix).then((filtered) => filtered.bytes, () => null) : null;
+      warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field, fix, bytesWithFilter });
+    }
+    else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });
   }
   return done({ bytes: dry.bytes, range: rangeOf(dry.bytes, thresholds), partitions: dry.partitions, problems, warnings });
 }

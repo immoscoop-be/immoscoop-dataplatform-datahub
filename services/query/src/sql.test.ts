@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filtersOn, parametersOf, tablesOf, template, tokenize } from './sql.js';
+import { filtersOn, parametersOf, tablesOf, template, tokenize, withFilter } from './sql.js';
 
 const names = (sql: string) => tablesOf(sql).tables.map((table) => table.name);
 
@@ -145,5 +145,26 @@ describe('the SQL a new query starts with (FR-SR-46)', () => {
     expect(sql).toMatch(/select \*\nfrom weekly_lead_volume\n$/);
     // What it writes, it reads as its own tables.
     expect(names(sql)).toEqual(['p.dbt_prod_stacks.weekly_lead_volume', 'p.dbt_prod_stacks.lead_sources']);
+  });
+});
+
+describe('adding the filter on the partition column (DEC-SR-35)', () => {
+  const key = (name: string) => name === 'p.d.weekly';
+  const filter = "week_start >= date_sub(current_date(), interval 28 day)";
+
+  it('goes into the where that follows the table and its alias', () => {
+    expect(withFilter('select * from `p.d.weekly` v where lead_source = "app"', key, filter)).toBe(`select * from \`p.d.weekly\` v where ${filter} and lead_source = "app"`);
+    expect(withFilter('select * from p.d.weekly as v WHERE x = 1', key, filter)).toBe(`select * from p.d.weekly as v WHERE ${filter} and x = 1`);
+  });
+
+  it('is a new where after the table, its alias, or before what may follow a where', () => {
+    expect(withFilter('select * from `p.d.weekly`', key, filter)).toBe(`select * from \`p.d.weekly\`\nwhere ${filter}`);
+    expect(withFilter('select a, count(*) from `p.d.weekly` w group by a', key, filter)).toBe(`select a, count(*) from \`p.d.weekly\` w\nwhere ${filter} group by a`);
+    expect(withFilter('with a as (select * from `p.d.weekly`) select * from a', key, filter)).toBe(`with a as (select * from \`p.d.weekly\`\nwhere ${filter}) select * from a`);
+  });
+
+  it('is not guessed before a join, nor for a table the SQL does not name', () => {
+    expect(withFilter('select * from `p.d.weekly` w join `p.d.sources` s using (id)', key, filter)).toBeNull();
+    expect(withFilter('select * from `p.d.other`', key, filter)).toBeNull();
   });
 });

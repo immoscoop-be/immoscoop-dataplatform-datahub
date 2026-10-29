@@ -109,6 +109,9 @@ describe('the Pre-flight of a query', () => {
     const bigquery = fakeBigQuery(() => dry(500_000_000, [weekly.key]));
     const warned = await check(`select * from \`${weekly.key}\``, of(weekly), bigquery);
     expect(warned).toMatchObject({ runnable: true, range: 'approve', warnings: [{ kind: 'noPartitionFilter', column: 'week_start', resource: { displayName: 'weekly_lead_volume' } }] });
+    // With the SQL that adds it, on its recent partitions, and what that reads.
+    expect(warned.warnings[0]?.fix).toBe(`select * from \`${weekly.key}\`\nwhere week_start >= date_sub(current_date(), interval 28 day)`);
+    expect(warned.warnings[0]?.bytesWithFilter).toBe(500_000_000);
 
     const required = { ...weekly, partitionFilter: 'dataHub' as const };
     const refused = await check(`select * from \`${weekly.key}\``, of(required), bigquery);
