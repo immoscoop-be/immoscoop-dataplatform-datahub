@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Lenses](../functional/09-lenses.md) |
-| Status | Making a Lens from a query, who sees it, its page and its runs, updating and editing it, its growth and Broken implemented; accepting a Lens again and its Messages follow with Messages |
+| Status | Making a Lens from a query, who sees it, its page and its runs, updating and editing it, its growth and Broken, and finding it from a new query and on the start screen of Collections implemented; the search of that start screen follows in part 6d, accepting a Lens again and its Messages with Messages |
 | Source of truth | This file |
 
 How a query becomes a Lens and how a Lens runs, in the service [query](../../architecture/services/query.md), which keeps the Lenses next to the queries ([DEC-PF-30](00-platform.md#dec-pf-30)).
@@ -61,6 +61,15 @@ When the Pre-flight or a run of a Lens with its default values, and the daily ch
 When BigQuery refuses the dry run of a Lens because a table, view or dataset is not found, or a column is not recognised, query keeps what it misses and since when (`lenses.broken`), writes `BRK-001` in its Log (`lens_log`), and answers the Pre-flight and the run with `409 broken`. Any other refusal is no reason to call it Broken. When a dry run succeeds again, or a new version replaces it, the Lens works again and its Log gets `BRK-002`. Every change of state is written once. Wherever a Lens is listed, it comes with what it misses, for the red dot.
 
 Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/check` with a Google ID token of its own service account `datahub-scheduler`, for the address of query, which query checks itself (`DATAHUB_SCHEDULER_SERVICE_ACCOUNT`, `DATAHUB_QUERY_URL`), as Cloud Run does not check callers. query dry-runs every Lens that does not wait for the Data Team with its defaults: what it misses, what works again, and what grew ([TR-LE-05](#tr-le-05)). A dry run reads nothing and costs nothing. The check right after a new Current Version of a dbt project comes later.
+
+<a id="tr-le-07"></a>
+### TR-LE-07 · A new query finds the Lenses on its Resources by the words of its question
+
+**Status:** Implemented · **Realises:** [FR-SR-47](../functional/04-stacks-and-resources.md#fr-sr-47), [FR-SR-48](../functional/04-stacks-and-resources.md#fr-sr-48), [DEC-SR-42](../functional/04-stacks-and-resources.md#dec-sr-42), [DEC-SR-43](../functional/04-stacks-and-resources.md#dec-sr-43), [DEC-UX-22](../../design/principles.md#dec-ux-22), [DEC-UX-23](../../design/principles.md#dec-ux-23), [FR-CO-37](../functional/03-collections.md#fr-co-37), [DEC-UX-126](../../design/principles.md#dec-ux-126)
+
+`GET /lenses/suggestions?resources=…&question=…` gives the Lenses a new query may reuse, for 1 to 10 Resources and a question: those on exactly these Resources, then those on these and more. Only Lenses the User sees and that run now are given: published, not stopped and not Broken. In each group, the Lenses that share most words with the question come first, then the newest. The words are those of the full-text search of Postgres in the configuration `lens_words`: English, with `unaccent` before the stemmer, so that common words are left out, every word counts by its stem and accents do not count. They are matched against the name of a Lens, its question, what it shows and its tags; each Lens comes with how many words it shares, those texts in pieces with the shared words marked, from `ts_headline`, and its tags that share one. The same call gives the count of "Lenses on these Resources" on a query and the Lenses on the new set of a new query.
+
+`GET /lenses` gives with each Lens when the User last ran it, from their query of the kind `lens`, for "Yours" on the start screen of Collections. Which Lenses are new there, published in the last 30 days in a public Collection outside the User's own Owner Units, the web app works out from the Lenses and Collections it has.
 
 ## Open points
 

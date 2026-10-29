@@ -561,7 +561,7 @@ The page of a Resource has a button "Query". It opens Query with a new query: th
 <a id="fr-sr-47"></a>
 ### FR-SR-47 · A new query first shows the Lenses on its Resources
 
-**Status:** Proposed · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-22](../../design/principles.md#dec-ux-22) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 While a User names a new query and chooses its Resources, Data Hub shows the Lenses they may see that already use those Resources: a Lens only when the User may use every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)). First the Lenses on exactly these Resources, then those on these Resources and more; within each, ranked by the words they share with the question of the query ([FR-SR-48](#fr-sr-48)). Each Lens shows what it shows, its Resources, its maker, its use and its Level, and can be used straight away. Starting an own query stays possible, as the alternative.
 
@@ -571,14 +571,18 @@ While a User names a new query and chooses its Resources, Data Hub shows the Len
 
 *Note of 2026-10-29: only Lenses that run now are offered ([DEC-SR-43](#dec-sr-43)).*
 
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07); the query page shows the same Lenses in a sheet, and the sheet of a new set says how many use it.*
+
 <a id="fr-sr-48"></a>
 ### FR-SR-48 · The question of a new query finds Lenses by their words
 
-**Status:** Proposed · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-23](../../design/principles.md#dec-ux-23) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 A new query has a question: what the User wants to know, in a sentence. Its words are matched against the name, the description and the tags of the Lenses ([FR-LE-06](09-lenses.md#fr-le-06)), deterministically, with the full-text search of Postgres in the English configuration ([Search](#search)): common words such as "the" and "a" are left out, and words count by their stem, so that "sessions" matches "session". The Lenses that share most words come first, and the shared words are marked in their name, description and tags.
 
 *Note of 2026-10-29: the question of a Lens counts too ([DEC-SR-42](#dec-sr-42)).*
+
+*Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07). The typos and half-remembered names of [Search](#search) are not needed for a question, and are left for the search of the start screen of Collections, in part 6d.*
 
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
