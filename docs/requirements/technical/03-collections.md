@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Collections](../functional/03-collections.md) |
-| Status | Implemented: Collections, their Log, their Resources ([Resources](04-stacks-and-resources.md)), and the groups of the domain for the Data Team |
+| Status | Implemented: Collections, their Log, their Resources ([Resources](04-stacks-and-resources.md)), the groups of the domain for the Data Team, and the search of the start screen |
 | Source of truth | This file |
 
 How Collections are kept and guarded, in the service [catalogue](../../architecture/services/catalogue.md), with the Groups of the User from [identity](../../architecture/services/identity.md).
@@ -81,6 +81,13 @@ The Log IDs are `COL-001` to `COL-005` of the [Log catalogue](../functional/log-
 - **the release of the Domain Model** the mappings were made with ([FR-AR-17](../functional/01-artifact-registry.md#fr-ar-17)).
 
 catalogue keeps them on the Resource and in `resource_mappings`, one row per mapped field, in the same transaction as the addition, and writes `RES-009` in the Log of the Resource with how many fields are mapped, the grain, the model type and the release. A field the Resource does not have, a field mapped twice, or a relation that starts from a field not mapped as `is` refuses all of them with `400`. The relation types are not checked against the Domain Model: catalogue does not read it, and the step that records them offers only those it has. `GET /resources/{id}` returns them with the Resource; they are kept only in Data Hub ([DEC-RC-09](../functional/05-resource-card.md#dec-rc-09), [DEC-RC-13](../functional/05-resource-card.md#dec-rc-13)).
+
+<a id="tr-co-06"></a>
+### TR-CO-06 · The start screen searches Collections, Resources and Lenses by the words of a question
+
+**Status:** Implemented · **Realises:** [FR-CO-37](../functional/03-collections.md#fr-co-37), [DEC-UX-127](../../design/principles.md#dec-ux-127), [FR-SR-48](../functional/04-stacks-and-resources.md#fr-sr-48)
+
+`GET /search?question=…` of catalogue gives the Collections and the Resources the User sees that share words with a question: the Collections as `GET /collections` gives them, and in them the Resources the User sees, without the withdrawn ones. The words are those of the full-text search of Postgres in the configuration `search_words`, English with `unaccent` before the stemmer, made in migration `0010-search-words`, as query finds Lenses ([TR-LE-07](09-lenses.md#tr-le-07)): common words left out, every word by its stem, accents not counted. They are matched against the name and description of a Collection, and the name, description and Business Description of a Resource. Each comes with how many words it shares and its texts in pieces with the shared words marked; a Resource with its Business Description, or else its description from dbt, its Collection and its Level. Those that share most words come first, at most 20 of each. `GET /lenses/search?question=…` of query gives the Lenses the User sees in the same way, at most 20. The web app asks both at once and shows Lenses, then Resources, then Collections. The configuration and its helpers are shared in `@datahub/db`.
 
 ## Open points
 

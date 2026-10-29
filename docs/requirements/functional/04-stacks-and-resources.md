@@ -584,6 +584,8 @@ A new query has a question: what the User wants to know, in a sentence. Its word
 
 *Note of 2026-10-29, on building part 6c: built as [TR-LE-07](../technical/09-lenses.md#tr-le-07). The typos and half-remembered names of [Search](#search) are not needed for a question, and are left for the search of the start screen of Collections, in part 6d.*
 
+*Note of 2026-10-29, on building part 6d: the search of the start screen of Collections matches words the same way ([TR-CO-06](../technical/03-collections.md#tr-co-06)). Typos and half-remembered names, by trigrams ([Search](#search)), are not built yet, for a new query nor for the start screen.*
+
 <a id="fr-sr-49"></a>
 ### FR-SR-49 · Publishing says who will see the Resource and asks for the Confirmation
 

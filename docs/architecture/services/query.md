@@ -50,6 +50,7 @@ Its service account may read every table of the project ([DEC-SR-32](../../requi
 | `GET /resources/{id}/queries` | The queries on it, for its Owner Unit and the Data Team ([TR-SR-21](../../requirements/technical/04-stacks-and-resources.md#tr-sr-21)) |
 | `POST /lenses` | Makes a Lens of a query of its author, into a Collection they own, after its size check: published, or waiting for the Data Team above 1 GB ([TR-LE-01](../../requirements/technical/09-lenses.md#tr-le-01)) |
 | `GET /lenses`, `GET /lenses/{id}` | The Lenses the User sees, with their Level and when the User last ran them, never with their SQL ([TR-LE-02](../../requirements/technical/09-lenses.md#tr-le-02)) |
+| `GET /lenses/search?question=…` | The Lenses the User sees that share words with a question, for the search of the start screen of Collections ([TR-CO-06](../../requirements/technical/03-collections.md#tr-co-06)) |
 | `GET /lenses/suggestions?resources=…&question=…` | The Lenses a new query may reuse: on exactly its Resources, then on them and more, by the words of its question, the shared words marked ([TR-LE-07](../../requirements/technical/09-lenses.md#tr-le-07)) |
 | `POST /lenses/{id}/preflight`, `…/runs` | The Pre-flight and a run of a Lens with the values the User chose ([TR-LE-03](../../requirements/technical/09-lenses.md#tr-le-03)) |
 | `POST /lenses/{id}/requests` | Sends the Request on a waiting Lens again, for its author |

@@ -793,6 +793,16 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(an, 'GET', '/lenses/suggestions?resources=nope')).statusCode).toBe(400);
   });
 
+  it('finds the Lenses the User sees by the words of a question, for the start screen of Collections (DEC-UX-127)', async () => {
+    const searched = async (who: string, question: string) => (await call(who, 'GET', `/lenses/search?question=${encodeURIComponent(question)}`)).json().lenses;
+    const forAn = await searched(an, 'Which sources bring the leads?');
+    expect(forAn.map((lens: { name: string }) => lens.name)).toEqual(['Leads per source, week by week', 'All weeks per source']);
+    expect(forAn[0]).toMatchObject({ shared: 3, sharedTags: ['leads', 'source'] });
+    // Mia sees her own waiting Lens, not An's private Collection.
+    expect((await searched(mia, 'leads')).map((lens: { name: string }) => lens.name)).toEqual(['Every lead since 2019']);
+    expect(await searched(an, 'the brokers of agencies')).toEqual([]);
+  });
+
   it('tells when the User last ran each Lens, for the start screen of Collections (FR-CO-37)', async () => {
     const listed = (await call(an, 'GET', '/lenses')).json().lenses;
     expect(listed.find((lens: { id: string }) => lens.id === lensId).lastRunAt).toEqual(expect.any(String));

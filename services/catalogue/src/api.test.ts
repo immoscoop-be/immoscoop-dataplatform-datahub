@@ -642,6 +642,32 @@ describe.skipIf(!url)('the routes of Collections', () => {
       ]);
     });
 
+    it('finds the Collections and Resources the User sees by the words of a question (FR-CO-37, DEC-UX-127)', async () => {
+      const ruth = await user('Ruth', [SALES]);
+      const an = await user('An', [DIGIKOM]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const tables = update('20', ['broker_reviews']);
+      tables.tables[0]!.description = 'How agencies rate their brokers, per review.';
+      await fromRegistry(tables);
+      const review = ((await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]).find((resource) => resource.name === 'broker_reviews')!;
+      const collection = (await ruth('POST', '/collections', { name: 'Broker ratings', description: 'What agencies say about their brokers.', icon: 'handshake', ownerUnit: SALES.id })).json();
+      expect((await dirk('POST', `/collections/${collection.id}/resources`, { resources: [review.id] })).statusCode).toBe(200);
+
+      const found = (await ruth('GET', `/search?question=${encodeURIComponent('How do agencies rate their brokers?')}`)).json();
+      expect(found.collections).toMatchObject([{ id: collection.id, resources: 1, shared: 3 }]);
+      expect(found.collections[0].description).toEqual([
+        { text: 'What ', shared: false },
+        { text: 'agencies', shared: true },
+        { text: ' say about their ', shared: false },
+        { text: 'brokers', shared: true },
+        { text: '.', shared: false },
+      ]);
+      expect(found.resources).toMatchObject([{ id: review.id, collectionId: collection.id, collectionName: 'Broker ratings', shared: 3 }]);
+      // An does not see Ruth's private Collection; a question of common words finds nothing.
+      expect((await an('GET', '/search?question=brokers')).json()).toEqual({ collections: [], resources: [] });
+      expect((await ruth('GET', '/search?question=the')).json()).toEqual({ collections: [], resources: [] });
+    });
+
     it('checks what registry sends', () => {
       expect(parseUpdate(update('3', ['visits']))).toMatchObject({ projectId: '9367', runId: '3' });
       expect(parseUpdate({ ...update('3', []), tables: 'all' })).toBe('The exposed tables come as a list.');
