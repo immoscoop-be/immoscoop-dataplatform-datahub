@@ -46,7 +46,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `GET /collections/{id}`, `PATCH /collections/{id}`, `DELETE /collections/{id}` | Read one; change or dissolve it (its Owner Unit and the Data Team) |
 | `GET /collections/{id}/log` | The Log of a Collection |
 | `POST /visibility` | Which of these Keys the User may see; used by query |
-| `POST /requests`, `GET /requests?subjectKind=query` | A Request to the Data Team on a query, sent by query for its User, and the User's own Requests; the Data Team's on one query ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)) |
+| `POST /requests`, `GET /requests?subjectKind=query`, `…?subjectKind=lens` | A Request to the Data Team on a query or a very large Lens, sent by query for its User, and the User's own Requests; the Data Team's on one query or Lens ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18), [TR-LE-01](../../requirements/technical/09-lenses.md#tr-le-01)) |
 | `POST /internal/changes` | Changes of a new Artifact Set, from registry, with the service identity ([DEC-PF-26](../../requirements/technical/00-platform.md#dec-pf-26)) |
 
 ## Data
