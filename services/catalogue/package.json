@@ -5,7 +5,9 @@
   "description": "Resources, collections, maturity, the resource card, the log, search and conversations. See docs/architecture/services/catalogue.md.",
   "type": "module",
   "main": "./dist/main.js",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "start": "node dist/main.js"
   },
@@ -16,6 +18,10 @@
     "@datahub/google": "workspace:*",
     "@datahub/server": "workspace:*",
     "fastify": "^5.12.7",
-    "kysely": "^0.29.6"
+    "kysely": "^0.29.6",
+    "nodemailer": "10.1.1"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "8.0.2"
   }
 }

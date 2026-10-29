@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from 'node:crypto';
-import type { Kysely } from 'kysely';
+import { type Kysely, sql, type SqlBool } from 'kysely';
 import type { IdentityDatabase } from './database.js';
 import type { GoogleIdentity } from './google-sign-in.js';
 import type { TokenSubject } from './tokens.js';
@@ -29,6 +29,17 @@ export interface Session {
   googleId: string;
   clientId: string;
   expiresAt: Date;
+}
+
+/** A User as catalogue asks for them, to notify them (DEC-LN-07). */
+export interface Person {
+  id: string;
+  email: string;
+  name: string;
+  language: 'nl' | 'en';
+  /** Which of the Groups and roles asked for they hold. */
+  groups: string[];
+  roles: string[];
 }
 
 /** Why a Refresh Token gives no new Access Token. */
@@ -77,6 +88,44 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
           conflict.column('googleId').doUpdateSet({ email: identity.email, name: identity.name, lastLoginAt: now() }),
         )
         .execute();
+    },
+
+    /**
+     * Keeps the Groups and roles of a User as identity just read them from Workspace, at a sign-in or a
+     * renewal (DEC-LN-07); none once the account is no longer active, so that nobody notifies them.
+     */
+    async saveGroups(googleId: string, groups: string[], roles: string[]): Promise<void> {
+      await db.updateTable('users').set({ groups, roles }).where('googleId', '=', googleId).execute();
+    },
+
+    /**
+     * The Users Data Hub knows among those asked: by their fixed Google ID, as members of a Group, or with
+     * a role; each with their address, their name, the language they read Data Hub in, Dutch unless they
+     * chose another (DEC-UX-96), and which of the Groups and roles asked they hold.
+     */
+    async people(asked: { users: string[]; groups: string[]; roles: string[] }): Promise<Person[]> {
+      if (asked.users.length + asked.groups.length + asked.roles.length === 0) return [];
+      const rows = await db
+        .selectFrom('users')
+        .leftJoin('settings', (join) => join.onRef('settings.googleId', '=', 'users.googleId').on('settings.key', '=', 'language'))
+        .select(['users.googleId', 'users.email', 'users.name', 'users.groups', 'users.roles', 'settings.value as language'])
+        .where((where) =>
+          where.or([
+            ...(asked.users.length ? [where('users.googleId', 'in', asked.users)] : []),
+            ...(asked.groups.length ? [sql<SqlBool>`users.groups && ${asked.groups}::text[]`] : []),
+            ...(asked.roles.length ? [sql<SqlBool>`users.roles && ${asked.roles}::text[]`] : []),
+          ]),
+        )
+        .orderBy('users.googleId')
+        .execute();
+      return rows.map((row) => ({
+        id: row.googleId,
+        email: row.email,
+        name: row.name,
+        language: row.language === 'en' ? 'en' : 'nl',
+        groups: row.groups.filter((group) => asked.groups.includes(group)),
+        roles: row.roles.filter((role) => asked.roles.includes(role)),
+      }));
     },
 
     async user(googleId: string): Promise<{ googleId: string; email: string; name: string } | undefined> {

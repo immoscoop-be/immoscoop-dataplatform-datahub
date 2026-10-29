@@ -230,6 +230,23 @@ export interface CatalogueDatabase {
     userId: string;
     readAt: Timestamp;
   };
+  /** The outbox of notifications: every Message, from the moment it is written, until it went out (DEC-LN-02). */
+  notifications: {
+    messageId: string;
+    createdAt: Timestamp;
+    attempts: Generated<number>;
+    nextAt: Timestamp;
+    doneAt: Date | null;
+    failure: string | null;
+  };
+  /** What went out of a notification, so that trying again never sends twice. */
+  notificationDeliveries: {
+    messageId: string;
+    channel: 'email' | 'slack';
+    /** An e-mail address, or the fixed Google ID of a User for a direct message in Slack. */
+    address: string;
+    sentAt: Timestamp;
+  };
   /** What query tells about its Lenses, to decide who sees the Messages on one (FR-CV-05, DEC-CO-16). */
   lenses: {
     id: string;

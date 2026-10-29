@@ -48,11 +48,11 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
 | [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
 | [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Proposed: 4.4.1 | Specified |
-| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Specified |
+| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Specified |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
+| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
@@ -1579,7 +1579,7 @@ Template, English, laid out:
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-SR-26](04-stacks-and-resources.md#dec-sr-26), [DEC-CV-12](14-conversations.md#dec-cv-12) |
 
 **What it asks:** Nothing. If it was not intended, the Owner asks the Data Team, which restores the exposure in the dbt project.
@@ -1758,7 +1758,7 @@ Template, English, laid out:
 | About | Lens |
 | From → to | Data Hub → its author |
 | When | A run of a Lens reads more than 100 MB, while it was made in the range below. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-LE-08](09-lenses.md#fr-le-08), [FR-SR-40](04-stacks-and-resources.md#fr-sr-40) |
 
 **What it asks:** Nothing. Its author can make it read less, but need not.

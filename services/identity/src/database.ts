@@ -12,6 +12,9 @@ export interface IdentityDatabase {
     name: string;
     createdAt: Timestamp;
     lastLoginAt: Timestamp;
+    /** The fixed IDs of their Groups of the own domains, and their roles, as last read (DEC-LN-07). */
+    groups: ColumnType<string[], string[] | undefined, string[]>;
+    roles: ColumnType<string[], string[] | undefined, string[]>;
   };
   clients: {
     clientId: string;

@@ -765,7 +765,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-SR-26', 'DEC-CV-12'],
     parameters: [{ name: 'run', type: 'date', about: 'The day of the run of the Source Job' }],
     text: {
@@ -982,7 +982,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['author'],
     when: 'A run of a Lens reads more than 100 MB, while it was made in the range below.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-LE-10', 'FR-LE-08', 'FR-SR-40'],
     parameters: [...SIZE, { name: 'column', type: 'name', about: 'The partition column, when a filter on it would make the Lens read less (FR-SR-40)', optional: true }],
     text: {

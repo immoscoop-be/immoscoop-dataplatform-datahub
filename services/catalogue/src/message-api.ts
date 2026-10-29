@@ -206,6 +206,17 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return reply.code(sent.sent ? 201 : 200).send({ request: { id: sent.id } });
   });
 
+  // What Data Hub tells the author of a Lens that grew into large and keeps running (MSG-LEN-02, FR-LE-10).
+  app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/growth', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const input = (request.body ?? {}) as Record<string, unknown>;
+    const size = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+    if (!UUID.test(request.params.id) || !size(input.reads) || !size(input.threshold)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Lens by its ID, with what one run reads and the threshold, in bytes.' });
+    }
+    const told = await messages.grewLarge(request.params.id.toLowerCase(), { reads: input.reads as number, threshold: input.threshold as number });
+    return reply.code(201).send({ message: told });
+  });
+
   // The decision on a Request on a Lens, recorded for query, which changes the Lens with it (FR-LE-09).
   app.post<{ Params: { id: string }; Body: unknown }>('/internal/messages/:id/decision', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
     const decision = parseDecision(request.body);

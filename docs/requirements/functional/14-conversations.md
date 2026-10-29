@@ -80,11 +80,13 @@ Wherever a Message shows, in the Message Centre, in a notification, through Clau
 <a id="fr-cv-03"></a>
 ### FR-CV-03 · A Message is placed on its object, not sent to a person
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-context](../../design/screens/lens-context.html), [lens-messages](../../design/screens/lens-messages.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-context](../../design/screens/lens-context.html), [lens-messages](../../design/screens/lens-messages.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html), [notifications](../../design/screens/notifications.html), [resource-messages](../../design/screens/resource-messages.html)
 
 A Message has no recipient of its own: it is placed on its object, for everyone who may see it ([DEC-CV-04](#dec-cv-04)). Who gets a notification of it follows its kind: a Question or a Remark notifies the Owner of the object, which is its whole Owner Unit ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)), and everyone already in the conversation ([DEC-CV-09](#dec-cv-09)); a Signal notifies the Owner and the Data Team ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)); a Request notifies the Data Team, and its decision notifies who sent it ([FR-CV-08](#fr-cv-08)).
 
 *Note of 2026-10-29, on building part 7a: in Data Hub the notification is the Message for the User, unread in the Message Centre with its number in the rail ([TR-CV-01](../technical/14-conversations.md#tr-cv-01)); by e-mail and in Slack it follows with part 7b of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-29, on building part 7b: catalogue notifies by the recipients of each type in the Message Catalogue, never the writer of the Message, in Data Hub, by e-mail and in Slack ([TR-LN-01](../technical/07-log-and-notifications.md#tr-ln-01), [TR-LN-02](../technical/07-log-and-notifications.md#tr-ln-02)).*
 
 <a id="fr-cv-04"></a>
 ### FR-CV-04 · All Messages about an object can be retrieved
@@ -166,7 +168,7 @@ For every type of Message that Data Hub writes itself, the catalogue names the L
 <a id="fr-cv-15"></a>
 ### FR-CV-15 · A Message reaches every channel from the same texts
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 · **Screens:** [messages](../../design/screens/messages.html), [notifications](../../design/screens/notifications.html)
 
 The web app shows a Message from the catalogue: the first line of its plain text in a list and in a notification, its laid-out text when it is opened. Later, Slack and the MCP server show the same Message from the same texts: Slack its laid-out text in its own mark-up, with the plain text as the fallback; the MCP server its laid-out text with its parameters, so that Claude reads what a person reads. Which channel carries a notification, and how often, is [OP-DH-20](../../overview/open-themes.md#op-dh-20).
 
@@ -174,17 +176,24 @@ The web app shows a Message from the catalogue: the first line of its plain text
 *Note of 2026-10-28: the part for Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 *Note of 2026-10-29, on building part 7a: the web app shows what Data Hub writes from the catalogue, its first line in a list and its laid-out text when opened; a Message a person wrote shows their words, with its kind, its writer and its object beside them, as the [design](../../design/screens/messages.html) does, so that the frame of the catalogue is for notifications ([TR-CV-03](../technical/14-conversations.md#tr-cv-03)).*
+
+*Note of 2026-10-29, on building part 7b: Slack shows the laid-out text in its own mark-up with the plain text as its fallback, and e-mail the first line of the plain text as its subject and the laid-out text as its body, as drawn in [notifications](../../design/screens/notifications.html) ([TR-LN-03](../technical/07-log-and-notifications.md#tr-ln-03), [TR-LN-04](../technical/07-log-and-notifications.md#tr-ln-04)); the MCP server follows in version 2.*
+
 ## Edge cases
 
 <a id="ec-cv-01"></a>
 ### EC-CV-01 · The object no longer exists
 
-**Status:** Implemented the object of a Message is removed, or its Collection dissolved, the Message stays, still found by its Subject. Its link then says that the object no longer exists, with the name it had.
+**Status:** Implemented
+
+When the object of a Message is removed, or its Collection dissolved, the Message stays, still found by its Subject. Its link then says that the object no longer exists, with the name it had.
 
 <a id="ec-cv-02"></a>
 ### EC-CV-02 · A Resource moves to another Collection
 
-**Status:** Implemented Messages about a Resource follow it to its new Collection, as their Subject is the Resource and not its Collection. Who sees them changes with who may see the Resource ([FR-CV-05](#fr-cv-05)).
+**Status:** Implemented
+
+The Messages about a Resource follow it to its new Collection, as their Subject is the Resource and not its Collection. Who sees them changes with who may see the Resource ([FR-CV-05](#fr-cv-05)).
 
 ## Out of scope
 

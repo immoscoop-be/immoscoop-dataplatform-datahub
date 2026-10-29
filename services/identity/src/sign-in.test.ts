@@ -226,6 +226,8 @@ describe.skipIf(!url)('signing in', () => {
 
     const user = await database.db.selectFrom('users').selectAll().where('googleId', '=', JAN.sub).executeTakeFirst();
     expect(user?.email).toBe(JAN.email);
+    // identity keeps them, so that catalogue knows whom of an Owner Unit to notify (DEC-LN-07).
+    expect(user).toMatchObject({ groups: ['g-datateam', 'g-digikom', 'g-sales'], roles: ['datateam'] });
   });
 
   it('renews with a Refresh Token that works once, and ends the session when one is used again', async () => {
@@ -280,6 +282,8 @@ describe.skipIf(!url)('signing in', () => {
     workspace.active = true;
     const ended = await database.db.selectFrom('sessions').select('endReason').where('googleId', '=', JAN.sub).where('endReason', '=', 'account-inactive').execute();
     expect(ended.length).toBeGreaterThan(0);
+    // Nobody notifies them through their Groups any more.
+    expect(await database.db.selectFrom('users').select(['groups', 'roles']).where('googleId', '=', JAN.sub).executeTakeFirst()).toEqual({ groups: [], roles: [] });
   });
 
   it('sends the User back without a code when Google or Workspace refuses them', async () => {
