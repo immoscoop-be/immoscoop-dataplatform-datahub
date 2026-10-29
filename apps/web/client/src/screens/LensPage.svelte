@@ -159,6 +159,15 @@
   ] as const;
 </script>
 
+{#snippet approveExplain()}
+  <!-- Above 100 MB its User approves the run, and learns how many partitions it reads (DEC-UX-28, FR-SR-40). -->
+  {#if preflight?.bytes !== null && preflight?.bytes !== undefined}
+    <b>{t('lens.run.approve', { bytes: bytes(preflight.bytes), approve: bytes(preflight.thresholds.approve) })}</b>
+    {#if preflight.partitions !== null}{t('query.partitions', { count: preflight.partitions })}.{/if}
+    {t('query.explain.atMost')}
+  {/if}
+{/snippet}
+
 <Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, collection ? { label: collection.name, href: collectionPath(collection.id) } : { label: '' }]} />
 <div class="head">
   <div class="titles">
@@ -230,15 +239,8 @@
           disabled={checking || !preflight?.runnable || preflight.range === 'request'}
           title={checking ? t('query.checking') : undefined}
           onclick={start}
-        >
-          {#snippet explain()}
-            {#if preflight?.bytes !== null && preflight?.bytes !== undefined && preflight.range === 'approve'}
-              <b>{t('lens.run.approve', { bytes: bytes(preflight.bytes), approve: bytes(preflight.thresholds.approve) })}</b>
-              {#if preflight.partitions !== null}{t('query.partitions', { count: preflight.partitions })}.{/if}
-              {t('query.explain.atMost')}
-            {/if}
-          {/snippet}
-        </RunButton>
+          explain={preflight?.range === 'approve' ? approveExplain : undefined}
+        />
       </div>
     </section>
 

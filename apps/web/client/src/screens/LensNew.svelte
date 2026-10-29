@@ -4,8 +4,7 @@
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
-  import Sentence from '@datahub/ui/foundations/Sentence.svelte';
-  import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
@@ -229,7 +228,9 @@
     <h1 class="page-title">{lens ? lens.name : t('lens.make.title')}</h1>
     {#if !frozen && fromId}<Button variant="quiet" href={queryPath(fromId)}>{t('collection.cancel')}</Button>{/if}
   </header>
-  {#if !frozen}<p class="from"><Sentence key="lens.make.from" names={{ name: fromName }} /></p>{/if}
+  {#if !frozen}
+    <p class="from">{#each tParts('lens.make.from', {}, { name: fromName }) as part, index (index)}{#if 'name' in part}<b>{part.name}</b>{:else}{part.text}{/if}{/each}</p>
+  {/if}
   {#if query?.lens}
     <Callout icon="info-fill">{t('lens.make.already')} <a href={lensPath(query.lens.id)}>{query.lens.name}</a></Callout>
   {/if}
@@ -400,10 +401,10 @@
   .tag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); padding: 3px 9px; border-radius: var(--radius-pill); background: var(--surface-sub); color: var(--text-secondary); }
   .tag button { all: unset; display: inline-flex; cursor: pointer; font-size: 10px; color: var(--text-muted); }
   .tag button:hover { color: var(--text-primary); }
-  .lens .new-tag { width: 110px; padding: 3px 9px; border-radius: var(--radius-pill); font-size: var(--text-meta); }
+  .lens .tags input.new-tag { width: 110px; padding: 3px 9px; border-radius: var(--radius-pill); font-size: var(--text-meta); }
   .parameter { display: grid; grid-template-columns: minmax(100px, auto) minmax(120px, 1fr) auto minmax(100px, auto); gap: 10px; align-items: center; padding: 7px 10px; border-radius: var(--radius-md);
     background: var(--surface-sub); margin-bottom: 6px; font-size: var(--text-small); }
-  .lens .parameter input { padding: 4px 8px; }
+  .lens .parameter input[type='text'] { padding: 4px 8px; }
   .kind, .default { display: inline-flex; align-items: center; gap: 5px; color: var(--text-secondary); font-size: var(--text-meta); }
   .new-collection { padding: 14px 16px 6px; border-radius: var(--radius-md); background: var(--surface-sub); margin-bottom: 14px; }
   .new-collection > p { margin: 4px 0 12px; line-height: 1.5; }

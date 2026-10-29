@@ -177,10 +177,11 @@
       refreshQueries();
     }
   });
-  // Query opens on the last query of the User, or on a new one when they have none.
+  // Query opens on the last query of the User, or on a new one when they have none; the runs of a Lens are on its page.
   $effect(() => {
     if (page.kind === 'start' && page.section.id === 'query' && ownQueries) {
-      router.go(ownQueries[0] ? queryPath(ownQueries[0].id) : NEW_QUERY, { replace: true });
+      const last = ownQueries.find((item) => item.kind !== 'lens');
+      router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true });
     }
   });
   let started = false;
