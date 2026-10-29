@@ -1,4 +1,4 @@
-import { type Card, type ChartRequest, LEVELS, type LevelId, parseCard, SECTIONS, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
+import { type Card, type ChartRequest, LEVELS, type LevelId, MARKERS, type MarkerPlace, parseCard, SECTIONS, type Thinking, type Topic, TOPICS, topicOf } from '@datahub/learning';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -13,6 +13,21 @@ export type Step = 'why' | 'core' | 'see' | 'check' | 'can';
 export const STEPS: readonly Step[] = ['why', 'core', 'see', 'check', 'can'];
 /** The quick path: Why now, Core idea and You can now (DEC-LR-10). */
 export const QUICK: readonly Step[] = ['why', 'core', 'can'];
+export type Depth = 'quick' | 'full';
+
+/** The steps a card has: a minimal card has no See it and no questions yet (DEC-LR-23). */
+export function stepsOf(card: Card): Step[] {
+  return STEPS.filter((step) => (step === 'see' ? card.see !== null : step === 'check' ? card.questions.length > 0 : true));
+}
+
+/** A step the quick path passes by: See it and Check your understanding stay in the row, muted. */
+export const offPath = (step: Step, depth: Depth): boolean => depth === 'quick' && !QUICK.includes(step);
+
+/** The step after this one on the chosen path; a step opened off the quick path goes on along it. */
+export function nextStep(steps: readonly Step[], step: Step, depth: Depth): Step | undefined {
+  const path = steps.filter((one) => !offPath(one, depth) || one === step);
+  return path[path.indexOf(step) + 1];
+}
 
 /** The names of the steps and the thinking levels, as texts of the interface. */
 export const STEP_TEXTS: Readonly<Record<Step, string>> = {
@@ -81,7 +96,18 @@ export async function cardsIn(language: Language, shown: ReadonlyMap<string, Car
 /** A sentence that follows a label, such as "You can now", as a sentence of its own: with a capital. */
 export const asSentence = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
-export { LEVELS, SECTIONS, TOPICS, topicOf, type Card, type ChartRequest, type LevelId, type Topic };
+export { LEVELS, MARKERS, SECTIONS, TOPICS, topicOf, type Card, type ChartRequest, type LevelId, type MarkerPlace, type Topic };
+
+/** The written cards a marker lists, most fitting first: a pop-out promises none it cannot open (DEC-LR-28). */
+export function cardsOf(place: MarkerPlace, shown: ReadonlyMap<string, Card>): Topic[] {
+  return MARKERS[place].filter((number) => shown.has(number)).flatMap((number) => topicOf(number) ?? []);
+}
+
+/** Whether and when the User saw a card, as a pop-out says it (FR-LR-36). */
+export function seenState(card: string, progress: readonly Progress[] | null | undefined): { kind: 'new' } | { kind: 'seen'; at: string } | { kind: 'understood'; at: string } {
+  const entry = progress?.find((one) => one.card === card);
+  return !entry ? { kind: 'new' } : entry.understoodAt ? { kind: 'understood', at: entry.understoodAt } : { kind: 'seen', at: entry.lastAt };
+}
 
 /** What the User did with a card, as catalogue keeps it (FR-LR-32). */
 export interface Progress {

@@ -899,4 +899,10 @@ export default {
   'learning.see.one': 'Dit is één stap van de kaart {number}',
   'learning.see.more': 'De hele kaart voegt toe waarom het ertoe doet, vragen om je begrip te checken, en waar je daarna heen kan.',
   'learning.see.ways': 'Verder',
+  'learning.pop.head': '{count, plural, one {Uitgelegd in # Learning Card} other {Uitgelegd in # Learning Cards}}',
+  'learning.pop.new': 'Nog niet gezien',
+  'learning.pop.seen': 'Gezien {when}',
+  'learning.pop.understood': 'Begrepen op {day}',
+  'learning.pop.centre': 'Open het Learning Centre',
+  'learning.window.open': 'Open in het Learning Centre',
 } as const;

@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { parseCard, versionOf } from './card.js';
+import { MARKERS } from './markers.js';
 import { LEVELS, SECTIONS, TOPICS, topicOf } from './plan.js';
 
 const CARDS = join(import.meta.dirname, '..', 'cards');
@@ -54,5 +55,15 @@ describe.each(written)('the Learning Card %s (DEC-LR-24)', (number) => {
     const card = parseCard(read(number, 'en'));
     for (const choice of card.can.choices) if (choice.kind !== 'apply') expect(written, `${number} offers ${choice.card}`).toContain(choice.card);
     if (card.see) expect(card.see.chart.semgraph).toMatch(/^[a-zA-Z]+$/);
+  });
+});
+
+describe('the markers on system text (FR-LR-35, DEC-LR-22)', () => {
+  it('list cards of the plan, each once, and every marker of the Resource page has a written card (DEC-LR-28)', () => {
+    for (const [place, cards] of Object.entries(MARKERS)) {
+      expect(new Set(cards).size, place).toBe(cards.length);
+      for (const card of cards) expect(topicOf(card), `${place} lists ${card}`).toBeDefined();
+      expect(cards.some((card) => written.includes(card)), `${place} has a written card`).toBe(true);
+    }
   });
 });

@@ -1018,7 +1018,7 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .status.lc-ref { border-radius: var(--radius-pill); }
 .code-chip.lc-ref { border-radius: var(--radius-chip); }
 .lc-ref:hover, .lc-ref:focus-visible, .lc-ref.open { background: var(--tint-active); outline: none; }
-.lc-mark { font-family: "Segoe UI Symbol", "Apple Symbols", "Noto Sans Symbols 2", "DejaVu Sans", sans-serif; font-size: .78em; font-weight: 400; font-style: normal; margin-left: 2px; vertical-align: .2em; line-height: 0; color: currentColor; cursor: help; }
+.lc-mark { font-family: var(--font-symbol); font-size: .78em; font-weight: 400; font-style: normal; margin-left: 2px; vertical-align: .2em; line-height: 0; color: currentColor; cursor: help; }
 /* a text bubble: its arrow points at the marker it belongs to */
 .lc-pop { position: fixed; z-index: 30; width: 400px; max-width: calc(100vw - 24px); padding: 8px; border-radius: var(--radius-lg); background: var(--surface-solid); border: 1px solid var(--tint-active); box-shadow: 0 12px 36px rgba(0,0,0,.14); font-size: 13px; }
 .lc-pop::before { content: ""; position: absolute; left: var(--arrow-x, 28px); width: 12px; height: 12px; background: var(--surface-solid); transform: translateX(-50%) rotate(45deg); }

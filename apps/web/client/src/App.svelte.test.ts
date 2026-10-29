@@ -1076,7 +1076,7 @@ describe('the page of a Resource', () => {
     expect(warning.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('Nieuw')).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: 'Markeer als gezien' }));
+    await fireEvent.click(main.getByRole('button', { name: /^Markeer als gezien/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/changes/seen' }));
     await vi.waitFor(() => expect(main.queryByText(/het veld week_start werd toegevoegd/)).toBeNull());
   });
@@ -1859,5 +1859,44 @@ describe('the Learning Centre', () => {
     const sheet = within(await screen.findByRole('dialog'));
     expect(sheet.getByText('Learning Card · Compass')).toBeTruthy();
     expect(sheet.queryByRole('radio', { name: /Signaal|Signal/ })).toBeNull();
+  });
+});
+
+describe('the markers of the Learning Centre', () => {
+  const details = { ...WEEKLY_DETAIL.details, grain: ['week_start', 'lead_source'], modelType: 'aggregate' };
+
+  it('explain the grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
+    const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const grain = await screen.findByRole('button', { name: /^grain: week_start × lead_source/ });
+    expect(grain.textContent).toContain('ⓘ');
+    expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
+    await fireEvent.keyDown(grain, { key: 'Enter' });
+    const pop = within(screen.getByRole('dialog', { name: 'Uitgelegd in 3 Learning Cards' }));
+    expect(pop.getAllByRole('button').map((item) => item.textContent?.slice(0, 5))).toEqual(['2.3.5', '1.2.2', '1.2.1']);
+    expect(await pop.findByText(/^Gezien/)).toBeTruthy();
+    expect(pop.getAllByText('Nog niet gezien')).toHaveLength(2);
+    expect(pop.getAllByRole('link', { name: /Zie het/ })[0]?.getAttribute('href')).toBe('/learning/2.3.5/see');
+    await fireEvent.click(pop.getByRole('button', { name: /^2\.3\.5/ }));
+    const window = within(await screen.findByRole('dialog', { name: /^2\.3\.5 De grain-vraag/ }));
+    expect(window.getByRole('tab', { name: 'Waarom nu' }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/2.3.5', body: { step: 'why' } }));
+    await fireEvent.click(window.getByRole('button', { name: /^Volgende/ }));
+    expect(window.getByRole('tab', { name: 'Kernidee' }).getAttribute('aria-selected')).toBe('true');
+    expect(window.getByRole('link', { name: /Open in het Learning Centre/ }).getAttribute('href')).toBe('/learning/2.3.5');
+    expect(location.pathname).toBe('/resources/r2');
+  });
+
+  it('explain the Level with K5.2 and the model type with 2.3.6 (DEC-LR-30, FR-LR-39)', async () => {
+    serve({ weekly: { details } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.keyDown(await screen.findByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Enter' });
+    const items = within(screen.getByRole('dialog', { name: 'Uitgelegd in 2 Learning Cards' })).getAllByRole('button');
+    expect(items.map((item) => item.textContent)).toEqual([expect.stringMatching(/^K5\.2Het Level van een Resource/), expect.stringMatching(/^3\.3\.3/)]);
+    await fireEvent.keyDown(screen.getByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Escape' });
+    await fireEvent.keyDown(screen.getByRole('button', { name: /^modeltype: aggregate/ }), { key: 'Enter' });
+    expect(within(screen.getByRole('dialog', { name: 'Uitgelegd in 1 Learning Card' })).getByRole('button', { name: /^2\.3\.6/ })).toBeTruthy();
   });
 });

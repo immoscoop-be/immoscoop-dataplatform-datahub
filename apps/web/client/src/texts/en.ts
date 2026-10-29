@@ -900,4 +900,10 @@ export default {
   'learning.see.one': 'This is one step of the card {number}',
   'learning.see.more': 'The whole card adds why it matters, questions to check your understanding, and where to go next.',
   'learning.see.ways': 'Ways on',
+  'learning.pop.head': '{count, plural, one {Explained in # Learning Card} other {Explained in # Learning Cards}}',
+  'learning.pop.new': 'Not seen yet',
+  'learning.pop.seen': 'Seen {when}',
+  'learning.pop.understood': 'Understood on {day}',
+  'learning.pop.centre': 'Open the Learning Centre',
+  'learning.window.open': 'Open in the Learning Centre',
 } as const satisfies Record<keyof typeof nl, string>;

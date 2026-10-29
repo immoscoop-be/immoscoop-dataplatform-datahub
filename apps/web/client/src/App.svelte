@@ -11,6 +11,7 @@
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
+  import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
   import { createQuery, type Lens, type LensItem, type QueryItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
@@ -27,6 +28,7 @@
   import LearningPanel from './screens/LearningPanel.svelte';
   import LearningSee from './screens/LearningSee.svelte';
   import LearningStart from './screens/LearningStart.svelte';
+  import LearningWindow from './screens/LearningWindow.svelte';
   import LensNew from './screens/LensNew.svelte';
   import LensPage from './screens/LensPage.svelte';
   import MessageCentre from './screens/MessageCentre.svelte';
@@ -99,6 +101,27 @@
   let unfoldLevel: { id: LevelId } | undefined = $state();
   /** The step the page of a card opens on, asked for by See it on its own; taken when that page opens. */
   let openOn: { card: string; step: Step } | undefined;
+  /** A page explains its system text: the progress and the translations are read, once (FR-LR-36). */
+  let learningWanted = $state(false);
+  /** The card open in the floating window, over the page, and where it was opened from (FR-LR-12). */
+  let windowCard: { card: string; from: OpenedFrom } | undefined = $state();
+  provideLearning({
+    get shown() {
+      return shownCards;
+    },
+    get cards() {
+      return localCards;
+    },
+    get progress() {
+      return progress;
+    },
+    get window() {
+      return windowCard;
+    },
+    want: () => (learningWanted = true),
+    open: (card, from) => (windowCard = { card, from }),
+    understand: (card, understood) => understandCard(card, understood),
+  });
 
   /** A sign-in that went wrong comes back with its code in the address, and a refused account in the fragment. */
   function takeProblem(): { problem?: string; account?: string } {
@@ -218,11 +241,11 @@
   });
   $effect(() => {
     const language = currentLanguage();
-    if (section?.id !== 'learning' || translated?.language === language) return;
+    if ((section?.id !== 'learning' && !learningWanted) || translated?.language === language) return;
     cardsIn(language, shownCards).then((cards) => (translated = { language, cards }));
   });
   $effect(() => {
-    if (status.kind === 'signedIn' && section?.id === 'learning' && progress === undefined) {
+    if (status.kind === 'signedIn' && (section?.id === 'learning' || learningWanted) && progress === undefined) {
       learning.progress().then(
         (found) => (progress = found),
         (error: unknown) => {
@@ -795,6 +818,27 @@
           }}
           onclose={() => router.go(objectPath(about))}
         />
+      {/if}
+    {/if}
+    {#if windowCard}
+      {@const opened = windowCard}
+      {@const topic = topicOf(opened.card)}
+      {@const card = localCards.get(opened.card)}
+      {#if topic && card}
+        {#key opened.card}
+          <LearningWindow
+            {topic}
+            {card}
+            cards={localCards}
+            understood={Boolean(progress?.find((one) => one.card === opened.card)?.understoodAt)}
+            start={startOf(opened.card)}
+            {theme}
+            draw={drawCard}
+            onstep={(step) => openStep(opened.card, step)}
+            onunderstand={(yes) => understandCard(opened.card, yes)}
+            onclose={() => (windowCard = undefined)}
+          />
+        {/key}
       {/if}
     {/if}
     {#if talkedId && page.kind !== 'messages'}

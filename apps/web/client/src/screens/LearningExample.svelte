@@ -13,11 +13,14 @@
     see,
     theme,
     draw,
+    compact = false,
   }: {
     see: NonNullable<Card['see']>;
     theme: 'light' | 'dark';
     /** Draws the example as a picture; null when it was not drawn. */
     draw: (chart: ChartRequest, theme: 'light' | 'dark') => Promise<string | null>;
+    /** One column, in the floating window. */
+    compact?: boolean;
   } = $props();
 
   /** The picture: undefined while it is drawn, null when it was not. */
@@ -33,7 +36,7 @@
   });
 </script>
 
-<div class="see">
+<div class="see" class:compact>
   <figure class="figure card">
     {#if picture}
       <img src={picture} alt={see.youSee} />
@@ -67,6 +70,10 @@
   .part { border-radius: var(--radius-lg); padding: 14px 18px; }
   .label { display: flex; align-items: center; gap: 6px; }
   .part p { margin: 4px 0 0; font-size: 14px; line-height: 1.6; }
+  .compact { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .compact .figure { padding: 12px 14px 8px; }
+  .compact .part { padding: 10px 14px; }
+  .compact .part p { font-size: 13px; }
   @media (max-width: 1100px) {
     .see { grid-template-columns: minmax(0, 1fr); }
   }
