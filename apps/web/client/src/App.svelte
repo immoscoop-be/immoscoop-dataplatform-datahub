@@ -335,6 +335,10 @@
       <CollectionsStart
         {collections}
         {lenses}
+        onsearch={async (question) => {
+          const [found, lensesFound] = await Promise.all([catalogue.search(question), queries.searchLenses(question)]);
+          return { lenses: lensesFound, ...found };
+        }}
         groups={signedIn.me.groups}
         intro={signedIn.settings.values['intro.collections'] !== INTRO_VERSION}
         ondismiss={() => signedIn.settings.set('intro.collections', INTRO_VERSION)}

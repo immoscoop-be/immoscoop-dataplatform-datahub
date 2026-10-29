@@ -425,6 +425,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       const search = new URLSearchParams({ resources: resources.join(','), question });
       return (await (await call(`/lenses/suggestions?${search}`)).json()) as LensSuggestions;
     },
+    /** The Lenses the User sees that share words with a question, for the search of the start screen (DEC-UX-127). */
+    async searchLenses(question: string): Promise<LensSuggestion[]> {
+      return ((await (await call(`/lenses/search?${new URLSearchParams({ question })}`)).json()) as { lenses: LensSuggestion[] }).lenses;
+    },
     async lens(id: string): Promise<Lens> {
       return ((await (await call(`/lenses/${encodeURIComponent(id)}`)).json()) as { lens: Lens }).lens;
     },

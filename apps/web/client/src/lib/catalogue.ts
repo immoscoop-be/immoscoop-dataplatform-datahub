@@ -1,6 +1,7 @@
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
+import type { Marked } from './query.js';
 
 /** A Resource as catalogue gives it (TR-SR-05). */
 export interface Resource {
@@ -173,6 +174,28 @@ export interface CollectionFields {
 }
 
 /** The calls of the page to catalogue, with the Access Token of the User. */
+/** A Collection that shares words with a question, its name and description with them marked (DEC-UX-127). */
+export interface FoundCollection {
+  id: string;
+  name: Marked[];
+  description: Marked[];
+  icon: string | null;
+  /** How many of its Resources the User sees. */
+  resources: number;
+  shared: number;
+}
+
+/** A Resource that shares words with a question: its name and its description, the Business Description first. */
+export interface FoundResource {
+  id: string;
+  displayName: Marked[];
+  description: Marked[];
+  collectionId: string;
+  collectionName: string;
+  level: number;
+  shared: number;
+}
+
 export function createCatalogue(config: Config, session: Pick<Session, 'accessToken'>, request?: typeof fetch) {
   const call = createCall('catalogue', config.catalogueUrl, session, request);
   const resource = (id: string) => `/resources/${encodeURIComponent(id)}`;
@@ -221,6 +244,10 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     },
     async lineage(id: string): Promise<ResourceLineage> {
       return (await call(`${resource(id)}/lineage`)).json() as Promise<ResourceLineage>;
+    },
+    /** The Collections and Resources the User sees that share words with a question (FR-CO-37, DEC-UX-127). */
+    async search(question: string): Promise<{ collections: FoundCollection[]; resources: FoundResource[] }> {
+      return (await (await call(`/search?${new URLSearchParams({ question })}`)).json()) as { collections: FoundCollection[]; resources: FoundResource[] };
     },
     /** Every Collection the User sees, by name (FR-CO-17, FR-CO-18). */
     async collections(): Promise<Collection[]> {

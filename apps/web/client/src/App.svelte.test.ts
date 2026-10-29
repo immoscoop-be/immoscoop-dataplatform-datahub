@@ -405,6 +405,32 @@ function serve({
       lenses.push(made);
       return json({ lens: made }, 201);
     }
+    // The search of the start screen of Collections (DEC-UX-127): nothing for a question about brokers.
+    if (path.startsWith('/search?') || path.startsWith('/lenses/search?')) {
+      const asked = new URLSearchParams(path.split('?')[1]).get('question') ?? '';
+      const none = asked.includes('brokers');
+      if (path.startsWith('/lenses/search?')) {
+        return json({ lenses: none ? [] : lenses.map(({ steps: _steps, parameters: _parameters, ...item }) => ({ ...item, shared: 2, marked: null, sharedTags: ['leads'] })) });
+      }
+      return json(
+        none
+          ? { collections: [], resources: [] }
+          : {
+              collections: [{ id: 'c1', name: [{ text: 'Credit ', shared: false }, { text: 'leads', shared: true }], description: [{ text: 'What happens to the leads.', shared: false }], icon: 'coins', resources: 1, shared: 1 }],
+              resources: [
+                {
+                  id: 'r2',
+                  displayName: [{ text: 'Weekly ', shared: false }, { text: 'lead', shared: true }, { text: ' volume', shared: false }],
+                  description: [{ text: 'The leads of every week.', shared: false }],
+                  collectionId: 'c1',
+                  collectionName: 'Credit leads',
+                  level: 2,
+                  shared: 1,
+                },
+              ],
+            },
+      );
+    }
     // The Lenses on the Resources of a query, those on exactly these first; a shared word is one of its name (FR-SR-47).
     if (path.startsWith('/lenses/suggestions?')) {
       const search = new URLSearchParams(path.split('?')[1]);
@@ -1511,6 +1537,35 @@ describe('Lenses', () => {
     expect(main.getByRole('heading', { level: 2, name: 'Nieuwe Lenses' })).toBeTruthy();
     expect(within(main.getByRole('link', { name: /Listings per region/ })).getByText(/gepubliceerd door Ruth Aerts/)).toBeTruthy();
     expect(main.queryByRole('link', { name: /Listings per year/ })).toBeNull();
+  });
+
+  it('searches Lenses, Resources and Collections by the words of a question on the start screen (FR-CO-37, DEC-UX-127)', async () => {
+    const calls = serve({ groups: ['g1'], settings: { 'intro.collections': 1 }, lenses: [{ ...LENS }] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 2, name: 'Van jou' })).toBeTruthy();
+    const field = main.getByRole('searchbox', { name: 'Zoek in Collections, Resources en Lenses' });
+    await fireEvent.input(field, { target: { value: 'Which sources bring the most leads?' } });
+    await fireEvent.submit(main.getByRole('search'));
+    // In place of the sections: Lenses, then Resources, then Collections, the shared words marked.
+    const lens = within(await main.findByRole('article', { name: 'Leads per source, week by week' }));
+    expect(lens.getByText('Beste overeenkomst')).toBeTruthy();
+    expect(lens.getByRole('link', { name: 'Gebruik deze Lens' }).getAttribute('href')).toBe('/lenses/l1');
+    const resources = within(main.getByRole('table', { name: 'Resources' }));
+    expect(resources.getByRole('link', { name: /Weekly lead volume/ }).getAttribute('href')).toBe('/resources/r2');
+    expect(resources.getByText('lead', { selector: 'mark' })).toBeTruthy();
+    expect(main.getByRole('link', { name: /Credit leads/ }).getAttribute('href')).toBe('/collections/c1');
+    expect(main.queryByRole('heading', { level: 2, name: 'Van jou' })).toBeNull();
+    expect(calls).toContainEqual({ method: 'GET', path: '/search?question=Which+sources+bring+the+most+leads%3F' });
+    // Clear goes back to the start screen.
+    await fireEvent.click(main.getByRole('button', { name: 'Wissen' }));
+    expect(main.getByRole('heading', { level: 2, name: 'Van jou' })).toBeTruthy();
+    // Nothing found says so, with "New query".
+    await fireEvent.input(field, { target: { value: 'How do agencies rate their brokers?' } });
+    await fireEvent.submit(main.getByRole('search'));
+    expect(await main.findByText('Niets deelt een woord met je vraag.')).toBeTruthy();
+    expect(main.getByRole('link', { name: 'Nieuwe query' }).getAttribute('href')).toBe('/query/new');
   });
 
   it('opens a Lens that waits for the Data Team as its author made it, frozen (FR-LE-09, DEC-LE-05)', async () => {
