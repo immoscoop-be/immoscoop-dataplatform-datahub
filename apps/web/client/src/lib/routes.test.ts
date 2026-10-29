@@ -25,6 +25,14 @@ describe('the addresses of the web app', () => {
     expect(route('/collections/c-1/log')).toEqual({ kind: 'notFound' });
   });
 
+  it('has a page per query, and a new query, also on a Resource, in the section Query (FR-SR-41, FR-SR-46)', () => {
+    expect(route('/query/9f1c')).toMatchObject({ kind: 'query', id: '9f1c', section: { id: 'query' } });
+    expect(route('/query/new')).toMatchObject({ kind: 'newQuery', resource: null, section: { id: 'query' } });
+    expect(route('/query/new/r-1')).toMatchObject({ kind: 'newQuery', resource: 'r-1', section: { id: 'query' } });
+    expect(route('/query/%E0%A4%A')).toEqual({ kind: 'notFound' });
+    expect(route('/query/9f1c/runs')).toEqual({ kind: 'notFound' });
+  });
+
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });

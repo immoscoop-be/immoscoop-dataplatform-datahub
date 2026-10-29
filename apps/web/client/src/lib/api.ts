@@ -22,6 +22,8 @@ export class Refused extends Error {
     readonly code: string | undefined,
     /** What the service said about it, in its own words. */
     readonly detail?: string,
+    /** All the service answered, such as the Pre-flight of a query that cannot run. */
+    readonly body?: Record<string, unknown>,
   ) {
     super(message);
   }
@@ -57,12 +59,13 @@ export function createCall(
       throw new NotFound(path);
     }
     if (!response.ok) {
-      const body = (await response.json().catch(() => ({}))) as { error?: unknown; message?: unknown };
+      const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
       throw new Refused(
         `${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`,
         response.status,
         typeof body.error === 'string' ? body.error : undefined,
         typeof body.message === 'string' ? body.message : undefined,
+        body,
       );
     }
     return response;

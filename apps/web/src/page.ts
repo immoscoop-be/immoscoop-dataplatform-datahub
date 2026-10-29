@@ -10,6 +10,9 @@ export interface ClientFile {
 }
 
 /** The page of the web app as Vite built it (`client/`, into `dist/client`). */
+/** Where the page holds the nonce of its styles, filled for every request. */
+export const NONCE = '{{style-nonce}}';
+
 export interface Client {
   /** The page, with the addresses of the services in it. */
   page: string;
@@ -30,9 +33,10 @@ const TYPES: Record<string, string> = {
 
 /**
  * Reads the built page once, at start-up. The page gets the addresses of identity, catalogue,
- * registry and semgraph in data attributes: the page itself holds no script and no style of its own.
+ * registry, query and semgraph in data attributes, and a place for the nonce of its styles, which the
+ * server fills for every request: the page itself holds no script and no style of its own.
  */
-export async function loadClient(dir: string, services: { identityUrl: string; catalogueUrl: string; registryUrl: string; semgraphUrl: string }): Promise<Client> {
+export async function loadClient(dir: string, services: { identityUrl: string; catalogueUrl: string; registryUrl: string; queryUrl: string; semgraphUrl: string }): Promise<Client> {
   const template = await readFile(join(dir, 'index.html'), 'utf8');
   const opening = '<html lang="nl">';
   if (!template.includes(opening)) {
@@ -40,7 +44,7 @@ export async function loadClient(dir: string, services: { identityUrl: string; c
   }
   const page = template.replace(
     opening,
-    `<html lang="nl" data-identity="${escapeAttribute(services.identityUrl)}" data-catalogue="${escapeAttribute(services.catalogueUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}">`,
+    `<html lang="nl" data-identity="${escapeAttribute(services.identityUrl)}" data-catalogue="${escapeAttribute(services.catalogueUrl)}" data-registry="${escapeAttribute(services.registryUrl)}" data-query="${escapeAttribute(services.queryUrl)}" data-semgraph="${escapeAttribute(services.semgraphUrl)}" data-nonce="${NONCE}">`,
   );
 
   const files = new Map<string, ClientFile>();

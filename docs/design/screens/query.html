@@ -23,13 +23,13 @@
   one, "⋯ n lines" unfolds it, "Fold all" folds them together. At the foot of the frame, and staying in view, the Pre-flight
   and the Run button with what the query reads; red with "Approve and run" above the approval threshold, a pop-out on how to
   read less. The editor formats the SQL and suggests columns, partition and cluster columns first (a click in the SQL shows
-  them here). The result is a grid like that of BigQuery: the row number, then a column per field with its
+  them here); beside the list, the selected one shows the type of its field and its descriptions (DEC-UX-115). The result is a grid like that of BigQuery: the row number, then a column per field with its
   type under its name, a row on one line, alternate rows lightly shaded; the edge of a column head makes it narrower or wider, a double click fits it;
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
   Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
-  Requirements: FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16
-  Decisions: DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Requirements: FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  Decisions: DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -170,6 +170,7 @@
       <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">week_start</span><span class="muted">DATE</span><span class="pill pill-strong">Partition</span></div>
       <div class="suggest-item" role="option"><i class="ph ph-columns"></i><span class="mono">lead_count</span><span class="muted">INT64</span></div>
       <div class="suggest-foot">Columns of the resources of this query only, cluster and partition columns first. Another resource starts a new query.</div>
+      <div class="suggest-info" aria-label="lead_source"><div class="si-head"><span class="mono">lead_source</span><span class="muted">STRING · Weekly lead volume</span></div><p><span class="origin">From the Owner</span>Where the lead came in: the website, the app, a partner or a mailing.</p><p class="si-dbt"><span class="origin">From dbt</span>Source system code of the lead.</p></div>
      </div></div>
     <div class="ln off" data-fold-in="weekly_lead_volume" data-variant="outside"><span class="ln-no">9</span><span class="ln-fold"></span><span class="ln-code">    and lead_source in (select lead_source from <span class="sql-key" data-table="partner_contracts">`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`</span>)</span></div>
     <div class="ln" data-fold-in="weekly_lead_volume"><span class="ln-no">10</span><span class="ln-fold"></span><span class="ln-code">),</span></div>

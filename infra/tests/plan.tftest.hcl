@@ -99,8 +99,8 @@ run "only_services_with_data_get_a_database_login" {
   command = plan
 
   assert {
-    condition     = toset(keys(google_sql_user.service)) == toset(["identity", "catalogue", "registry"])
-    error_message = "query stores nothing in v1 and gets no database login."
+    condition     = toset(keys(google_sql_user.service)) == toset(["identity", "catalogue", "registry", "query"])
+    error_message = "identity, catalogue, registry and query keep data, and only they get a database login."
   }
 
   assert {
@@ -229,7 +229,7 @@ run "migrations_run_as_their_own_identity_with_the_image_of_the_service" {
   }
 
   assert {
-    condition     = toset(keys(google_cloud_run_v2_job.migrate)) == toset(["identity", "catalogue", "registry"])
+    condition     = toset(keys(google_cloud_run_v2_job.migrate)) == toset(["identity", "catalogue", "registry", "query"])
     error_message = "Every service that keeps data, and only those, has a migration job."
   }
 
@@ -255,8 +255,8 @@ run "migrations_run_as_their_own_identity_with_the_image_of_the_service" {
   }
 
   assert {
-    condition     = length(google_cloud_run_v2_service.service["query"].template[0].containers[0].env) == length(local.common_env)
-    error_message = "query keeps no data, so it gets no database settings."
+    condition     = length(google_cloud_run_v2_service.service["semgraph"].template[0].containers[0].env) == length(local.common_env) + 1
+    error_message = "semgraph keeps no data, so it gets no database settings."
   }
 }
 
@@ -366,6 +366,14 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
       "https://datahub-registry-123456789.europe-west1.run.app"
     )
     error_message = "The page of the web app searches registry, at its fixed address."
+  }
+
+  assert {
+    condition = contains(
+      [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_QUERY_URL"],
+      "https://datahub-query-123456789.europe-west1.run.app"
+    )
+    error_message = "The page of the web app runs queries through query, at its fixed address."
   }
 
   assert {
@@ -542,7 +550,7 @@ run "source_jobs_are_named_by_their_ids" {
   expect_failures = [var.dbt_source_jobs]
 }
 
-run "the_data_team_reads_registry_and_catalogue_in_cloud_sql_studio" {
+run "the_data_team_reads_registry_catalogue_and_query_in_cloud_sql_studio" {
   command = plan
 
   assert {
@@ -562,15 +570,45 @@ run "the_data_team_reads_registry_and_catalogue_in_cloud_sql_studio" {
 
   assert {
     condition = alltrue([
-      for name in ["registry", "catalogue"] :
+      for name in ["registry", "catalogue", "query"] :
       contains([for env in google_cloud_run_v2_job.migrate[name].template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_DB_READERS"], "datahub-datateam@thenextimmoscoop.be")
     ])
-    error_message = "The migrations of registry and catalogue give the Data Team read access."
+    error_message = "The migrations of registry, catalogue and query give the Data Team read access (DEC-PF-29)."
   }
 
   assert {
     condition     = length([for env in google_cloud_run_v2_job.migrate["identity"].template[0].template[0].containers[0].env : env if env.name == "DATAHUB_DB_READERS"]) == 0
     error_message = "Nobody reads identity's sessions and personal data."
+  }
+}
+
+run "query_runs_jobs_reads_the_tables_and_asks_catalogue" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["query"]
+    override_during = plan
+    values = {
+      member = "serviceAccount:datahub-query@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_project_iam_member.query_jobs.role == "roles/bigquery.jobUser" && google_project_iam_member.query_jobs.member == "serviceAccount:datahub-query@test-project.iam.gserviceaccount.com"
+    error_message = "query runs its queries as BigQuery jobs, as itself."
+  }
+
+  assert {
+    condition     = google_project_iam_member.query_reads.role == "roles/bigquery.dataViewer" && google_project_iam_member.query_reads.project == "test-project" && google_project_iam_member.query_reads.member == "serviceAccount:datahub-query@test-project.iam.gserviceaccount.com"
+    error_message = "query reads the tables of the project of Data Hub, and nothing more than reading (DEC-SR-32)."
+  }
+
+  assert {
+    condition = alltrue([
+      for pair in [["DATAHUB_CATALOGUE_URL", "https://datahub-catalogue-123456789.europe-west1.run.app"], ["DATAHUB_BIGQUERY_PROJECT", "test-project"], ["DATAHUB_BIGQUERY_LOCATION", "europe-west1"]] :
+      contains([for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : env.value if env.name == pair[0]], pair[1])
+    ])
+    error_message = "query asks catalogue what the User may see, and runs its jobs in the project and location of Data Hub."
   }
 }
 

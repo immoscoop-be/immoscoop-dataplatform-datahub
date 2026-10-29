@@ -9,6 +9,7 @@ const app = await buildApp({
   identityUrl: required('DATAHUB_TOKEN_ISSUER'),
   catalogueUrl: required('DATAHUB_CATALOGUE_URL'),
   registryUrl: required('DATAHUB_REGISTRY_URL'),
+  queryUrl: required('DATAHUB_QUERY_URL'),
   semgraphUrl: required('DATAHUB_SEMGRAPH_URL'),
   clientDir: fileURLToPath(new URL('./client/', import.meta.url)),
 });
