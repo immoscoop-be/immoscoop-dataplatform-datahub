@@ -39,11 +39,7 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
     migrationTableName: MIGRATION_TABLE,
     migrationLockTableName: MIGRATION_LOCK_TABLE,
   });
-  const { error, results = [] } = await migrator.migrateToLatest();
-  if (error) {
-    const failed = results.find((result) => result.status === 'Error')?.migrationName ?? 'unknown';
-    throw new Error(`Migration ${failed} of ${options.schema} failed`, { cause: error });
-  }
+  const results = await latest(migrator, options.schema);
 
   await sql`grant usage on schema ${schema} to ${service}`.execute(options.db);
   await sql`grant select, insert, update, delete on all tables in schema ${schema} to ${service}`.execute(options.db);
@@ -58,4 +54,26 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
     await sql`grant select on all tables in schema ${schema} to ${role}`.execute(options.db);
   }
   return results;
+}
+
+/** Postgres's code for a schema that does not exist. */
+const NO_SUCH_SCHEMA = '3F000';
+
+/**
+ * Runs the migrations that did not run yet. Kysely finds its own tables among the tables of every schema
+ * of the database; a schema that is dropped at that moment, which only tests do, fails that look before
+ * any migration ran, and a second look no longer sees it.
+ */
+async function latest(migrator: Migrator, schema: string): Promise<MigrationResult[]> {
+  for (let attempt = 1; ; attempt += 1) {
+    const { error, results = [] } = await migrator.migrateToLatest();
+    if (!error) {
+      return results;
+    }
+    if ((error as { code?: string }).code === NO_SUCH_SCHEMA && results.length === 0 && attempt < 3) {
+      continue;
+    }
+    const failed = results.find((result) => result.status === 'Error')?.migrationName ?? 'unknown';
+    throw new Error(`Migration ${failed} of ${schema} failed`, { cause: error });
+  }
 }

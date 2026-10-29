@@ -122,6 +122,24 @@ describe.skipIf(!url)('migrate', () => {
     await expect(sql`select * from ${sql.id(SCHEMA)}.users`.execute(db)).rejects.toThrow(/permission denied for schema/);
   });
 
+  it('looks again when a schema vanishes while Kysely looks for its tables, as when tests drop theirs', async () => {
+    let vanished = false;
+    const migrations = new Proxy<Record<string, Migration>>(
+      { '0001_users': users, '0002_groups': groups },
+      {
+        ownKeys(target) {
+          if (!vanished) {
+            vanished = true;
+            throw Object.assign(new Error('schema "other_test" does not exist'), { code: '3F000' });
+          }
+          return Reflect.ownKeys(target);
+        },
+      },
+    );
+    await expect(migrate({ db: admin.db, schema: SCHEMA, migrations, serviceUser: SERVICE })).resolves.toEqual([]);
+    expect(vanished).toBe(true);
+  });
+
   it('stops at a failing migration and says which one', async () => {
     const broken: Migration = {
       async up(db: Kysely<unknown>) {
