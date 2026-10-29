@@ -1,4 +1,4 @@
-import { type Kysely, sql } from 'kysely';
+import { type DatabaseIntrospector, type Kysely, sql } from 'kysely';
 import { type Migration, type MigrationResult, Migrator } from 'kysely/migration';
 import { quoteIdentifier, schemaName } from './connect.js';
 
@@ -33,7 +33,7 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
   await sql`create schema if not exists ${schema}`.execute(options.db);
 
   const migrator = new Migrator({
-    db: options.db,
+    db: introspectingOnly(options.db, options.schema),
     provider: { getMigrations: async () => options.migrations },
     migrationTableSchema: options.schema,
     migrationTableName: MIGRATION_TABLE,
@@ -58,4 +58,38 @@ export async function migrate(options: MigrateOptions): Promise<MigrationResult[
     await sql`grant select on all tables in schema ${schema} to ${role}`.execute(options.db);
   }
   return results;
+}
+
+/**
+ * `db`, with an introspection that sees `schema` only: the Migrator asks it whether the schema
+ * and its own tables exist. Kysely's own lists every column of every table in the database and
+ * looks each up by name (`has_schema_privilege`, `pg_get_serial_sequence`), so it fails when
+ * another schema is dropped while it runs, as the tests of the other services do alongside.
+ * Kysely 0.30 limits the check to the schema itself.
+ */
+function introspectingOnly(db: Kysely<unknown>, schema: string): Kysely<unknown> {
+  const introspection: DatabaseIntrospector = {
+    async getSchemas() {
+      const { rows } = await sql<{ name: string }>`
+        select nspname as name from pg_catalog.pg_namespace where nspname = ${schema}`.execute(db);
+      return rows;
+    },
+    async getTables() {
+      const { rows } = await sql<{ name: string }>`
+        select c.relname as name
+        from pg_catalog.pg_class c join pg_catalog.pg_namespace n on n.oid = c.relnamespace
+        where n.nspname = ${schema} and c.relkind in ('r', 'p')`.execute(db);
+      return rows.map(({ name }) => ({ name, schema, isView: false, isForeign: false, columns: [] }));
+    },
+  };
+  return new Proxy(db, {
+    get(target, property) {
+      if (property === 'introspection') {
+        return introspection;
+      }
+      // Kysely keeps its state in private fields, which only the instance itself can read.
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === 'function' ? value.bind(target) : value;
+    },
+  });
 }
