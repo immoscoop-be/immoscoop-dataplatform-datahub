@@ -201,7 +201,7 @@ When the description from dbt of a Resource or of one of its fields changes, Dat
 <a id="fr-rc-18"></a>
 ### FR-RC-18 · Both descriptions, wherever a description is used
 
-**Status:** Specified · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html), [resource-publish](../../design/screens/resource-publish.html)
+**Status:** Specified · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html), [resource-publish](../../design/screens/resource-publish.html), [query](../../design/screens/query.html)
 
 Wherever Data Hub shows or hands over the description of a Resource or of a field, it uses the Business Description and the description from dbt together, each marked with where it comes from; without a Business Description, the description from dbt alone ([DEC-RC-02](#dec-rc-02)). That holds on the Resource Card and its Columns, in search, which covers both ([FR-SR-21](04-stacks-and-resources.md#fr-sr-21)), and for Claude.
 

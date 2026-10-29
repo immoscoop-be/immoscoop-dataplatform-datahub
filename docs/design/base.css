@@ -336,6 +336,11 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .suggest-item.on { background: var(--tint-hover); }
 .suggest-item i { color: var(--text-muted); }
 .suggest-foot { padding: 6px 8px 3px; margin-top: 3px; border-top: 1px solid var(--tint-hover); font-size: var(--text-meta); color: var(--text-muted); }
+.suggest-info { position: absolute; left: calc(100% + 6px); top: 0; width: 270px; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--surface-solid); box-shadow: 0 10px 30px rgba(0,0,0,.14); outline: 1px solid var(--tint-active); font-size: var(--text-meta); line-height: 1.5; }
+.suggest-info .si-head { display: flex; align-items: baseline; gap: 8px; }
+.suggest-info p { margin: 8px 0 0; }
+.suggest-info .origin { display: table; margin: 0 0 3px; }
+.suggest-info .si-dbt { color: var(--text-secondary); }
 /* A query: one white frame with two dark boxes, the editor at the full width and the Parameters, and the bar with the
    Pre-flight and Run at its foot (Proposal) */
 .query-card { margin-top: 14px; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
