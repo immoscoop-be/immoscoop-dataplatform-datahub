@@ -164,7 +164,8 @@
     const counted = partitions === null ? '' : total !== null ? t('preview.partitionsOf', { count: partitions, total }) : t('query.partitions', { count: partitions });
     return [t('preview.scans', { bytes: bytes(preflight.bytes) }), counted].filter(Boolean).join(' · ');
   });
-  const notes = $derived((preflight?.problems ?? []).map((problem) => (problem.kind === 'invalid' ? t('query.problem.invalid', { message: problem.message }) : t('query.cannotRun'))));
+  /** What keeps it from running, each once: the SQL of a Preview is not the User's to change. */
+  const notes = $derived([...new Set((preflight?.problems ?? []).map((problem) => (problem.kind === 'invalid' ? t('query.problem.invalid', { message: problem.message }) : t('query.cannotRun'))))]);
   const shown = $derived(shownKey === key && run !== null);
 </script>
 

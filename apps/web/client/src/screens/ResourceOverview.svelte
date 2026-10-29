@@ -304,8 +304,7 @@
           {#if details.partition}
             <dt>{t('resource.partitioned')}</dt>
             <dd>
-              {t('resource.partitionedBy', { field: details.partition.field, unit: details.partition.unit ? t(UNIT_KEYS[details.partition.unit]) : t('grain.unit.range') })}{#if storage?.partitions}
-                · {t('resource.partitions', { count: storage.partitions })}{/if}
+              {t('resource.partitionedBy', { field: details.partition.field, unit: details.partition.unit ? t(UNIT_KEYS[details.partition.unit]) : t('grain.unit.range') })}{#if storage?.partitions}{' · '}{t('resource.partitions', { count: storage.partitions })}{/if}
             </dd>
           {/if}
           {#if details.clusterBy.length > 0}

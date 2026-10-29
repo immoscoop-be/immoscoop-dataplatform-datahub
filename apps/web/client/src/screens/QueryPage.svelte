@@ -11,6 +11,7 @@
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { NotFound as Missing } from '../lib/api.js';
@@ -454,8 +455,8 @@
       <div class="meta">Query</div>
       {#if renaming}
         <form class="rename" onsubmit={rename}>
-          <input class="page-title" type="text" bind:value={renaming.name} maxlength="120" required aria-label={t('query.name')} />
-          <textarea bind:value={renaming.question} rows="2" maxlength="500" aria-label={t('query.question')} placeholder={t('query.question')}></textarea>
+          <Field label={t('query.name')}><input type="text" bind:value={renaming.name} maxlength="120" required /></Field>
+          <Field label={t('query.question')}><textarea bind:value={renaming.question} rows="2" maxlength="500"></textarea></Field>
           <span class="rename-actions">
             <Button type="submit" disabled={renameSaving || renaming.name.trim() === ''}>{t('query.save')}</Button>
             <Button variant="quiet" onclick={() => (renaming = null)}>{t('query.cancel')}</Button>
@@ -751,9 +752,7 @@
   .in-place { all: unset; cursor: text; border-radius: var(--radius-sm); }
   .in-place:hover { background: var(--tint-hover); }
   .in-place:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
-  .rename { display: flex; flex-direction: column; gap: 8px; max-width: 640px; }
-  .rename input, .rename textarea { box-sizing: border-box; width: 100%; font-family: var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 6px 10px; }
-  .rename textarea { font-size: var(--text-small); line-height: 1.5; resize: vertical; }
+  .rename { max-width: 640px; margin-top: 6px; }
   .rename-actions { display: flex; align-items: center; gap: 8px; }
   .rename-failed { font-size: var(--text-small); color: var(--signal-urgent); }
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
