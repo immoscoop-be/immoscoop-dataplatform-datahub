@@ -8,13 +8,13 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import type { Collection } from '../lib/catalogue.js';
-  import type { NewQuery, Parameter, Query } from '../lib/query.js';
+  import type { LensSuggestions, NewQuery, Parameter, Query } from '../lib/query.js';
 
   /**
    * Another set of Resources is a new query, made in a sheet (DEC-UX-73): to add, a search over the
    * Resources the User may see; to remove, a warning when the SQL still reads it. Then the new set, its
    * name suggested from its Resources and the date (DEC-UX-21), the question carried along, and the Lenses
-   * on the new set; until there are Lenses, none does (DEC-UX-114). "Start the new query" takes the SQL and
+   * on the new set, which can be a very different list (DEC-UX-114). "Start the new query" takes the SQL and
    * its Parameters along; the old query stays as it was, with its history.
    */
   let {
@@ -26,6 +26,7 @@
     resource,
     onclose,
     onstart,
+    lensesOn,
   }: {
     query: Query;
     /** The SQL and Parameters as they are now, which the new query takes along. */
@@ -37,6 +38,8 @@
     resource: string | null;
     onclose: () => void;
     onstart: (fields: NewQuery) => Promise<boolean>;
+    /** The Lenses on a set of Resources, by the words of the question (FR-SR-47). */
+    lensesOn: (resources: readonly string[], question: string) => Promise<LensSuggestions>;
   } = $props();
 
   const current = $derived(query.resources.map((entry) => entry.id));
@@ -77,6 +80,30 @@
   });
   $effect(() => {
     if (!named) name = suggested;
+  });
+
+  // The Lenses on the new set, once typing the question pauses.
+  let lenses = $state<LensSuggestions | undefined>();
+  let asking = 0;
+  $effect(() => {
+    const on = [...set];
+    const words = question.trim();
+    const asked = ++asking;
+    if (on.length === 0) return;
+    const timer = setTimeout(() => {
+      lensesOn(on, words).then(
+        (found) => asked === asking && (lenses = found),
+        (error: unknown) => console.error('The Lenses on the new set could not be read', error),
+      );
+    }, 400);
+    return () => clearTimeout(timer);
+  });
+  const lensLine = $derived.by(() => {
+    if (!lenses) return null;
+    const [exact, more] = [lenses.exact.length, lenses.more.length];
+    if (exact + more === 0) return t('query.lenses.none');
+    const first = exact ? t('newSet.lenses.exact', { count: exact }) : t('newSet.lenses.noneExact');
+    return more ? `${first}${t('newSet.lenses.more', { count: more })}` : `${first}.`;
   });
 
   async function start(): Promise<void> {
@@ -123,7 +150,17 @@
         <textarea bind:value={question} rows="2" maxlength="500"></textarea>
       </Field>
     </div>
-    <p class="lenses"><Icon name="info" /><span>{t('query.lenses.none')}</span></p>
+    {#if lensLine}
+      <div class="lenses">
+        <Icon name="aperture" />
+        <div>
+          <span>{lensLine}</span>
+          {#if lenses && lenses.exact.length + lenses.more.length}
+            <ul>{#each [...lenses.exact, ...lenses.more].slice(0, 5) as lens (lens.id)}<li>{lens.name}</li>{/each}</ul>
+          {/if}
+        </div>
+      </div>
+    {/if}
   </div>
 
   {#snippet foot()}
@@ -161,6 +198,7 @@
   .fields textarea { resize: vertical; }
   .lenses { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 4px; padding: 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
   .lenses :global(.icon) { font-size: 16px; color: var(--text-secondary); margin-top: 2px; }
+  .lenses ul { margin: 6px 0 0; padding-left: 18px; color: var(--text-secondary); }
   .stays { flex: 1; }
   .failed { flex: 1 1 100%; margin: 0; font-size: var(--text-small); color: var(--signal-urgent); }
 </style>

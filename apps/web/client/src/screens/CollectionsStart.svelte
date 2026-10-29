@@ -7,26 +7,36 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
+  import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
+  import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Chip from '@datahub/ui/primitives/Chip.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import { brokenText } from '../lib/broken.js';
   import type { Collection } from '../lib/catalogue.js';
   import { initialsOf } from '../lib/initials.js';
-  import { collectionPath, NEW_COLLECTION } from '../lib/routes.js';
+  import type { LensItem } from '../lib/query.js';
+  import { collectionPath, lensPath, NEW_COLLECTION } from '../lib/routes.js';
 
   /**
    * The start screen of Collections (Start screen per section): the intro, until the User dismisses
-   * it; the Collections of their groups; and what changed recently, or was added. It shows what the
-   * panel cannot. The search by question and the Lenses come with their parts (FR-CO-37).
+   * it; under Yours the Collections of their groups, then the Lenses of the User and their Owner Units,
+   * with when they last ran them, a waiting, stopped or Broken one saying so; what changed recently, or
+   * was added; and the Lenses published lately in a public Collection (FR-CO-37, DEC-UX-126). It shows
+   * what the panel cannot. The search by question comes in part 6d (OP-UX-45).
    */
   let {
     collections,
+    lenses,
     groups,
     intro,
     ondismiss,
     onshow,
   }: {
     collections: readonly Collection[] | undefined;
+    /** The Lenses the User sees; undefined while query has not told them. */
+    lenses: readonly LensItem[] | undefined;
     groups: readonly string[];
     /** Whether the intro shows: the User has not dismissed this version of it. */
     intro: boolean;
@@ -46,6 +56,27 @@
       .slice(0, RECENT),
   );
   const added = $derived([...(collections ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, RECENT));
+
+  /** How long a Lens is new, and how many new ones show (DEC-UX-126). */
+  const NEW_DAYS = 30;
+  const collectionOf = (lens: LensItem) => collections?.find((collection) => collection.id === lens.collectionId);
+  const ofYours = (lens: LensItem) => {
+    const unit = collectionOf(lens)?.ownerUnit.id;
+    return unit !== undefined && groups.includes(unit);
+  };
+  const lensCount = (collection: Collection) => (lenses ?? []).filter((lens) => lens.collectionId === collection.id).length;
+  /** The Lenses of the User and their Owner Units, the one they ran last first. */
+  const yourLenses = $derived(
+    (lenses ?? []).filter((lens) => lens.mine || ofYours(lens)).toSorted((a, b) => (b.lastRunAt ?? b.createdAt).localeCompare(a.lastRunAt ?? a.createdAt)),
+  );
+  /** Published in the last 30 days in a public Collection, outside the User's own Owner Units, newest first (DEC-UX-126). */
+  const newLenses = $derived.by(() => {
+    const since = new Date(Date.now() - NEW_DAYS * 86_400_000).toISOString();
+    return (lenses ?? [])
+      .filter((lens) => lens.state === 'published' && lens.publishedAt !== null && lens.publishedAt >= since && collectionOf(lens)?.visibility === 'public' && !ofYours(lens) && !lens.mine)
+      .toSorted((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''))
+      .slice(0, RECENT);
+  });
 </script>
 
 {#if intro}
@@ -61,6 +92,7 @@
     {t('collections.intro.text')}
     {#snippet actions()}
       <Button href={NEW_COLLECTION}><Icon name="plus-circle-fill" />{t('collections.new')}</Button>
+      <Button variant="outline" href="/query"><Icon name="terminal-window-fill" />{t('collections.intro.lens')}</Button>
     {/snippet}
   </Intro>
 {:else}
@@ -75,16 +107,42 @@
   <h2>{t('collections.yours')}</h2>
   <span class="meta">{t('collections.yours.meta')}</span>
 </div>
-{#if collections && yours.length === 0}
+{#snippet lensTile(lens: LensItem, foot: 'yours' | 'new')}
+  <Tile href={lensPath(lens.id)}>
+    <div class="tile-head"><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span class="item-title">{lens.name}</span></div>
+    <p class="question">{lens.question || lens.shows}</p>
+    <div class="lens-foot">
+      <MaturityIcon level={lens.level} small />
+      {#if foot === 'new'}
+        <span class="meta">{t('collections.newLenses.by', { time: ago(lens.publishedAt ?? lens.createdAt, currentLanguage()), name: lens.authorName })}</span>
+      {:else if lens.state === 'waiting'}
+        <Chip><Icon name="hourglass-medium-fill" />{t('collections.lens.waiting')}</Chip>
+        {#if lens.mine}<span class="meta">{t('collections.lens.onlyYou')}</span>{/if}
+      {:else if lens.broken}
+        <Chip variant="broken">{t('status.broken')}</Chip><span class="meta">{t('collections.lens.missing', { name: lens.broken.name })}</span>
+      {:else if lens.state === 'stopped'}
+        <Chip variant="warn"><Icon name="hourglass-medium-fill" />{t('status.stopped')}</Chip>
+      {:else if lens.lastRunAt}
+        <span class="meta">{t('collections.lens.ran', { time: ago(lens.lastRunAt, currentLanguage()) })}</span>
+      {/if}
+    </div>
+  </Tile>
+{/snippet}
+
+{#if collections && yours.length === 0 && yourLenses.length === 0}
   <p class="meta empty">{t('collections.yours.none')}</p>
 {:else}
   <Grid fill>
     {#each yours as collection (collection.id)}
+      {@const count = lensCount(collection)}
       <Tile href={collectionPath(collection.id)}>
         <div class="tile-head"><CollectionIcon name={collection.icon} /><span class="item-title">{collection.name}</span></div>
-        <p class="what">{t('collections.count', { count: collection.resources.length })}</p>
+        <p class="what">{count ? t('collections.countWithLenses', { resources: collection.resources.length, lenses: count }) : t('collections.count', { count: collection.resources.length })}</p>
         <span class="meta">{t('collections.ownedBy', { owner: collection.ownerUnit.name })}</span>
       </Tile>
+    {/each}
+    {#each yourLenses as lens (lens.id)}
+      {@render lensTile(lens, 'yours')}
     {/each}
   </Grid>
 {/if}
@@ -125,6 +183,22 @@
   </Grid>
 {/if}
 
+{#if lenses}
+  <div class="section-head">
+    <h2>{t('collections.newLenses')}</h2>
+    <span class="meta">{t('collections.newLenses.meta')}</span>
+  </div>
+  {#if newLenses.length === 0}
+    <p class="meta empty">{t('collections.newLenses.none')}</p>
+  {:else}
+    <Grid fill>
+      {#each newLenses as lens (lens.id)}
+        {@render lensTile(lens, 'new')}
+      {/each}
+    </Grid>
+  {/if}
+{/if}
+
 <style>
   .graphic .one { fill: var(--col-magenta); fill-opacity: .14; }
   .graphic .two { fill: var(--col-teal); fill-opacity: .16; }
@@ -144,4 +218,7 @@
   .what { font-size: var(--text-meta); color: var(--text-secondary); margin: 12px 0 10px; line-height: 1.5; }
   .who { display: flex; align-items: center; gap: 6px; }
   .empty { margin: 0; }
+  .question { margin: 8px 0 12px; font-size: var(--text-meta); line-height: 1.5; color: var(--text-secondary); }
+  .lens-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tile-head :global(.kind) { font-size: 18px; color: var(--text-muted); }
 </style>

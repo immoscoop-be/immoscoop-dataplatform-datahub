@@ -6,13 +6,16 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import type { Catalogue, Collection, ResourceDetail } from '../lib/catalogue.js';
+  import type { LensSuggestions as Found } from '../lib/query.js';
+  import LensSuggestions from './LensSuggestions.svelte';
 
   /**
    * A new query (query-new, DEC-UX-22), in two halves. Left, the query: its name, required and suggested
    * from its Resources and the date until it is changed (FR-SR-45, DEC-UX-21); its question; and its
    * Resources, each with its Collection, its partition column and its Level, to remove or add. Right, the
-   * Lenses that already use these Resources (FR-SR-47); until there are Lenses, it says none does
-   * (DEC-UX-114). "Start your own" makes the query, with SQL that filters on the partition column.
+   * Lenses that already use these Resources, ranked by the words of its question (FR-SR-47, FR-SR-48),
+   * or that none does (DEC-UX-114). "Start your own" makes the query, with SQL that filters on the
+   * partition column.
    */
   let {
     initial,
@@ -20,6 +23,7 @@
     catalogue,
     ondraft,
     onstart,
+    lensesOn,
   }: {
     /** The Resource it starts on, from "Query" on its page (FR-SR-46). */
     initial: string | null;
@@ -28,7 +32,12 @@
     /** The name as it is now, for the panel, where the new query stands as not run yet. */
     ondraft: (name: string) => void;
     onstart: (fields: { name: string; question: string; resources: string[] }) => Promise<boolean>;
+    /** The Lenses on these Resources, by the words of the question (FR-SR-47, FR-SR-48). */
+    lensesOn: (resources: readonly string[], question: string) => Promise<Found>;
   } = $props();
+
+  /** How long typing the question pauses before the Lenses are looked up again. */
+  const PAUSE = 400;
 
   let chosen = $state<string[]>([]);
   let details = $state<Record<string, ResourceDetail>>({});
@@ -39,6 +48,24 @@
   let search = $state('');
   let busy = $state(false);
   let failed = $state(false);
+  let lenses = $state<Found | undefined>();
+
+  // The Lenses follow the Resources and the question, once typing pauses.
+  let asking = 0;
+  $effect(() => {
+    const on = [...chosen];
+    const words = question.trim();
+    const asked = ++asking;
+    lenses = undefined;
+    if (on.length === 0) return;
+    const timer = setTimeout(() => {
+      lensesOn(on, words).then(
+        (found) => asked === asking && (lenses = found),
+        (error: unknown) => console.error('The Lenses on these Resources could not be read', error),
+      );
+    }, PAUSE);
+    return () => clearTimeout(timer);
+  });
 
   $effect(() => {
     if (initial && chosen.length === 0) add(initial);
@@ -140,7 +167,7 @@
   <section class="card lenses" aria-label={t('query.lenses.title')}>
     <h2>{t('query.lenses.title')}</h2>
     <p class="meta intro">{t('query.lenses.intro')}</p>
-    <p class="none">{t('query.lenses.none')}</p>
+    {#if chosen.length}<LensSuggestions found={lenses} resources={chosen} {collections} />{/if}
   </section>
 </div>
 
