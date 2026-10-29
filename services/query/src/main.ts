@@ -8,6 +8,7 @@ import { createCatalogue } from './catalogue.js';
 import type { QueryDatabase } from './database.js';
 import { createBeneath } from './preflight.js';
 import { createStorage } from './preview.js';
+import { createLenses } from './lenses.js';
 import { createQueries } from './queries.js';
 
 const database = await connectCloudSql<QueryDatabase>(cloudSqlOptionsFromEnv('query'));
@@ -20,6 +21,7 @@ const app = await buildApp({
   verifier: verifierFromEnv(),
   api: {
     queries: createQueries(database.db),
+    lenses: createLenses(database.db),
     // What the User may see, asked with their own token (FR-SR-41).
     catalogue: createCatalogue(required('DATAHUB_CATALOGUE_URL')),
     bigquery,

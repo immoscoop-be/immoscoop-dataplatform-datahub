@@ -3,14 +3,18 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Page, ResultExpired } from './bigquery.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
+import { lensRoutes } from './lens-api.js';
+import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
-import type { Queries, Query, Run, Viewer } from './queries.js';
+import type { Queries, Query, QueryOnResource, Run, Viewer } from './queries.js';
 import { template } from './sql.js';
 
 export interface ApiOptions {
   queries: Queries;
+  /** The Lenses, made from queries and run on their pages (DEC-PF-30). */
+  lenses: Lenses;
   catalogue: Catalogue;
   bigquery: BigQuery;
   /** The tables beneath a Resource, as BigQuery reads them (see createBeneath). */
@@ -138,7 +142,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * them and the Data Team (DEC-LN-01).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, catalogue, bigquery, beneath, project, thresholds, storage } = options;
+  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage } = options;
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
@@ -160,6 +164,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   async function seen(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
     const query = await queries.get(request.params.id);
     const who = viewer(request);
+    // The runs of a Lens carry its SQL, which only the Data Team reads here; a User runs it on its page (FR-LE-14).
+    if (query?.kind === 'lens' && !who.dataTeam) {
+      void reply.code(404).send(NO_QUERY);
+      return undefined;
+    }
     let readable = !!query && (query.ownerId === who.id || who.dataTeam);
     if (query && !readable) {
       try {
@@ -187,11 +196,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       void reply.code(403).send(NOT_YOURS);
       return undefined;
     }
+    if (query?.kind === 'lens') {
+      void reply.code(403).send({ error: 'forbidden', message: 'A Lens runs on its own page.' });
+      return undefined;
+    }
     return query;
   }
 
   /** Its Resources as catalogue gives them to this User now. */
-  async function resourcesOf(request: FastifyRequest, query: Query): Promise<ResourceOfQuery[]> {
+  async function resourcesOf(request: FastifyRequest, query: { resources: NamedResource[] }): Promise<ResourceOfQuery[]> {
     return Promise.all(query.resources.map(async (named) => ({ named, resource: await catalogue.resource(named.id, authorization(request)) })));
   }
 
@@ -215,7 +228,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const resources = (await resourcesOf(request, query)).map(({ named, resource }) =>
       resource ? { visible: true, ...resource } : { visible: false, id: named.id, displayName: named.displayName },
     );
-    const [last, runs, requests, startedFrom] = await Promise.all([queries.lastRun(query.id), queries.runCount(query.id), requestsOf(request, query), startedFromOf(query)]);
+    const [last, runs, requests, startedFrom, lens] = await Promise.all([
+      queries.lastRun(query.id),
+      queries.runCount(query.id),
+      requestsOf(request, query),
+      startedFromOf(query),
+      lenses.ofQuery(query.id),
+    ]);
     return {
       ...query,
       mine: query.ownerId === viewer(request).id,
@@ -224,6 +243,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       runs,
       request: requestView(requests[0]),
       startedFrom,
+      // The Lens it is used as, with a link to it (DEC-LE-03).
+      lens: lens ? { id: lens.id, name: lens.name, collectionId: lens.collectionId, state: lens.state, createdAt: lens.createdAt } : null,
     };
   }
 
@@ -566,10 +587,34 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     const who = viewer(request);
     const found = await queries.on(resource.id);
-    const recent = found.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH);
+    // The runs of a Lens by every User are one row, the Lens, made by its author (DEC-UX-90).
+    const rows: (Omit<QueryOnResource, 'lensOf'> & { lensOf: string | null })[] = [];
+    const byLens = new Map<string, (typeof rows)[number]>();
+    for (const query of found) {
+      if (query.kind !== 'lens' || !query.lensOf) {
+        rows.push(query);
+        continue;
+      }
+      const row = byLens.get(query.lensOf);
+      if (row) {
+        // The newest run comes first, so it stays the last run of the Lens.
+        row.runs += query.runs;
+        continue;
+      }
+      const lens = await lenses.get(query.lensOf);
+      if (!lens) continue;
+      const first = { ...query, id: lens.id, name: lens.name, ownerId: lens.authorId, ownerName: lens.authorName };
+      byLens.set(query.lensOf, first);
+      rows.push(first);
+    }
+    const recent = rows.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH);
     return {
-      summary: { queries: recent.length, lenses: 0, colleagues: new Set(recent.map((query) => query.ownerId)).size },
-      queries: found.map(({ ownerId, ...query }) => ({ ...query, mine: ownerId === who.id })),
+      summary: {
+        queries: recent.length,
+        lenses: recent.filter((query) => query.kind === 'lens').length,
+        colleagues: new Set(found.filter((query) => query.lastRunAt !== null && query.lastRunAt.getTime() > Date.now() - MONTH).map((query) => query.ownerId)).size,
+      },
+      queries: rows.map(({ ownerId, ...query }) => ({ ...query, mine: ownerId === who.id })),
     };
   });
 
@@ -588,6 +633,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return unavailable(error, reply, request);
     }
   });
+
+  // Lenses: made from a query, run on their own page (DEC-PF-30).
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, viewer, authorization, resourcesOf, check, unavailable, execute });
 }
 
 function pageView(page: Page, number: number) {

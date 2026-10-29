@@ -25,19 +25,21 @@ export interface Query {
   /** A query written in Query, or the previews of a Resource (FR-SR-38). */
   kind: QueryKind;
   previewOf: string | null;
+  /** For the runs of a Lens by one User, the Lens (FR-LE-12). */
+  lensOf: string | null;
   createdAt: Date;
   updatedAt: Date;
   lastRunAt: Date | null;
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
-export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'createdAt' | 'lastRunAt'> {
+export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt'> {
   resources: Pick<NamedResource, 'id' | 'displayName'>[];
   runs: number;
 }
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44): its last run and what that read. */
-export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lastRunAt'> {
+export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt'> {
   runs: number;
   lastRead: number | null;
   lastEstimate: number;
@@ -103,6 +105,8 @@ export interface Queries {
   previewFor(owner: Viewer, resource: NamedResource, name: string): Promise<Query>;
   /** The previews of a Resource by this User, if there are. */
   previewOf(owner: Viewer, resourceId: string): Promise<Query | undefined>;
+  /** The runs of a Lens by this User, a query made the first time they run it (FR-LE-12). */
+  lensFor(owner: Viewer, lens: { id: string; name: string; resources: NamedResource[]; sql: string }): Promise<Query>;
   /** Every query with a run on this Resource, its last run first (FR-SR-44). */
   on(resourceId: string): Promise<QueryOnResource[]>;
   /**
@@ -174,7 +178,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     async list(viewer, all) {
       const rows = await db
         .selectFrom('queries as q')
-        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.resources', 'q.createdAt', 'q.lastRunAt'])
+        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
         .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
         .orderBy(sql`coalesce(q.last_run_at, q.created_at)`, 'desc')
@@ -185,6 +189,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         name: row.name,
         ownerName: row.ownerName,
         kind: row.kind,
+        lensOf: row.lensOf,
         createdAt: row.createdAt,
         lastRunAt: row.lastRunAt,
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
@@ -218,6 +223,28 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
 
     previewOf,
 
+    async lensFor(owner, lens) {
+      const find = () => db.selectFrom('queries').selectAll().where('kind', '=', 'lens').where('ownerId', '=', owner.id).where('lensOf', '=', lens.id).executeTakeFirst();
+      const found = await find();
+      // A new version of the Lens, or a new name, is what its next run is of (FR-LE-16).
+      if (found && found.name === lens.name && found.sql === lens.sql && JSON.stringify(found.resources) === JSON.stringify(lens.resources)) return found;
+      if (found) {
+        return db
+          .updateTable('queries')
+          .set({ name: lens.name, sql: lens.sql, resources: JSON.stringify(lens.resources), updatedAt: new Date() })
+          .where('id', '=', found.id)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+      }
+      // Two first runs at once: one of them makes it, the other finds it.
+      await db
+        .insertInto('queries')
+        .values({ ownerId: owner.id, ownerName: owner.name, name: lens.name, question: '', resources: JSON.stringify(lens.resources), sql: lens.sql, kind: 'lens', lensOf: lens.id })
+        .onConflict((conflict) => conflict.columns(['ownerId', 'lensOf']).where('kind', '=', 'lens').doNothing())
+        .execute();
+      return (await find()) as Query;
+    },
+
     async on(resourceId) {
       const rows = await db
         .selectFrom('queries as q')
@@ -232,7 +259,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
           (join) => join.onRef('counted.queryId', '=', 'q.id'),
         )
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
-        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lastRunAt', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
+        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
@@ -243,6 +270,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         ownerId: row.ownerId,
         ownerName: row.ownerName,
         kind: row.kind,
+        lensOf: row.lensOf,
         lastRunAt: row.lastRunAt,
         runs: Number(row.runs),
         lastRead: row.processedBytes === null ? null : Number(row.processedBytes),

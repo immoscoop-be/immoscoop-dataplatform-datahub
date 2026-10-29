@@ -492,8 +492,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   }
 
   // A Request to the Data Team (FR-CV-08), sent by query for its User with their own token: a query that
-  // reads more than 1 GB (MSG-QRY-01, DEC-SR-29). It waits until the Data Team answers, in the Message
-  // Centre; one of the same writer on the same query that still waits is given back instead.
+  // reads more than 1 GB (MSG-QRY-01, DEC-SR-29), or a very large Lens (MSG-LEN-01, FR-LE-09). It waits
+  // until the Data Team answers, in the Message Centre; one of the same writer on the same object that still
+  // waits is given back instead.
   app.post<{ Body: unknown }>('/requests', async (request, reply) => {
     const fields = parseRequest(request.body);
     if (typeof fields === 'string') {
@@ -503,18 +504,18 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return reply.code(isNew ? 201 : 200).send({ request: sent });
   });
 
-  // The Requests of the User on queries, on one or on all; the Data Team sees everyone's on one query.
+  // The Requests of the User on queries or Lenses, on one or on all; the Data Team sees everyone's on one.
   app.get<{ Querystring: { subjectKind?: string; subjectId?: string } }>('/requests', async (request, reply) => {
     const { subjectKind, subjectId } = request.query;
-    if (subjectKind !== 'query') {
-      return reply.code(400).send({ error: 'invalid_request', message: 'Name the kind of object: subjectKind=query.' });
+    if (subjectKind !== 'query' && subjectKind !== 'lens') {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the kind of object: subjectKind=query or lens.' });
     }
     if (subjectId !== undefined && !UUID.test(subjectId)) {
-      return reply.code(400).send({ error: 'invalid_request', message: 'A query is named by its ID.' });
+      return reply.code(400).send({ error: 'invalid_request', message: 'A query or a Lens is named by its ID.' });
     }
     const who = viewer(request);
     const everyone = who.dataTeam && subjectId !== undefined;
-    return { requests: await requests.list({ subjectId, writerId: everyone ? undefined : who.id }) };
+    return { requests: await requests.list({ subjectKind, subjectId, writerId: everyone ? undefined : who.id }) };
   });
 }
 
@@ -526,7 +527,7 @@ export function parseRequest(body: unknown): RequestFields | string {
     return 'Send a JSON object.';
   }
   const fields = body as Record<string, unknown>;
-  const unknown = Object.keys(fields).find((key) => !['type', 'subjectId', 'subject', 'reads', 'threshold', 'text'].includes(key));
+  const unknown = Object.keys(fields).find((key) => !['type', 'subjectId', 'subject', 'reads', 'threshold', 'text', 'partitions'].includes(key));
   if (unknown) {
     return `A Request has no field ${unknown}.`;
   }
@@ -534,17 +535,20 @@ export function parseRequest(body: unknown): RequestFields | string {
     return `The type of a Request is one of ${REQUEST_TYPES.join(', ')}.`;
   }
   if (typeof fields.subjectId !== 'string' || !UUID.test(fields.subjectId)) {
-    return 'A query is named by its ID.';
+    return 'A query or a Lens is named by its ID.';
   }
   if (typeof fields.subject !== 'string' || fields.subject.trim().length < 1 || fields.subject.trim().length > 120) {
-    return 'The name of the query has 1 to 120 characters.';
+    return 'The name of the query or the Lens has 1 to 120 characters.';
   }
   const size = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
   if (!size(fields.reads) || !size(fields.threshold)) {
     return 'What a run reads and the threshold are numbers of bytes.';
   }
   if ((fields.reads as number) <= (fields.threshold as number)) {
-    return 'A query that reads no more than the threshold needs no Request.';
+    return 'A query or a Lens that reads no more than the threshold needs no Request.';
+  }
+  if (fields.partitions !== undefined && (typeof fields.partitions !== 'number' || !Number.isSafeInteger(fields.partitions) || fields.partitions < 0)) {
+    return 'The partitions one run reads are a count.';
   }
   const text = fields.text ?? '';
   if (typeof text !== 'string' || text.trim().length > 500) {
@@ -557,6 +561,7 @@ export function parseRequest(body: unknown): RequestFields | string {
     reads: fields.reads as number,
     threshold: fields.threshold as number,
     text: text.trim(),
+    ...(fields.partitions === undefined ? {} : { partitions: fields.partitions as number }),
   };
 }
 

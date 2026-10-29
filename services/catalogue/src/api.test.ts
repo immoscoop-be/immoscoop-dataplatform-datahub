@@ -129,11 +129,12 @@ describe('a Request to the Data Team, in a request (FR-CV-08, MSG-QRY-01)', () =
 
   it('refuses what does not fit', () => {
     expect(parseRequest([])).toMatch(/JSON object/);
-    expect(parseRequest({ ...fields, type: 'MSG-LEN-01' })).toBe('The type of a Request is one of MSG-QRY-01.');
-    expect(parseRequest({ ...fields, subjectId: 'q-20261029-4c2e1a' })).toBe('A query is named by its ID.');
+    expect(parseRequest({ ...fields, type: 'MSG-LEN-03' })).toBe('The type of a Request is one of MSG-QRY-01, MSG-LEN-01.');
+    expect(parseRequest({ ...fields, type: 'MSG-LEN-01', partitions: 312 })).toMatchObject({ type: 'MSG-LEN-01', partitions: 312 });
+    expect(parseRequest({ ...fields, subjectId: 'q-20261029-4c2e1a' })).toBe('A query or a Lens is named by its ID.');
     expect(parseRequest({ ...fields, subject: ' ' })).toMatch(/1 to 120/);
     expect(parseRequest({ ...fields, reads: '4.8 GB' })).toMatch(/numbers of bytes/);
-    expect(parseRequest({ ...fields, reads: 900_000_000 })).toBe('A query that reads no more than the threshold needs no Request.');
+    expect(parseRequest({ ...fields, reads: 900_000_000 })).toBe('A query or a Lens that reads no more than the threshold needs no Request.');
     expect(parseRequest({ ...fields, text: 'x'.repeat(501) })).toMatch(/at most 500/);
     expect(parseRequest({ ...fields, state: 'accepted' })).toBe('A Request has no field state.');
   });
@@ -685,6 +686,21 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect(after.statusCode).toBe(201);
     expect(after.json().request.id).not.toBe(sent.json().request.id);
     expect((await karel('POST', '/requests', { ...body, reads: 10 })).statusCode).toBe(400);
+  });
+
+  it('keeps a Request to accept a very large Lens apart from those on queries (MSG-LEN-01, FR-LE-09)', async () => {
+    const mia = await user('Mia', [DIGIKOM]);
+    const team = await user('Toon', [], ['datateam']);
+    const lens = '7c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+    const body = { type: 'MSG-LEN-01', subjectId: lens, subject: 'Leads per source, all weeks', reads: 6_200_000_000, threshold: 1_000_000_000, text: 'For the yearly review.', partitions: 312 };
+
+    const sent = await mia('POST', '/requests', body);
+    expect(sent.statusCode).toBe(201);
+    expect(sent.json().request).toMatchObject({ type: 'MSG-LEN-01', subjectKind: 'lens', subjectId: lens, writerName: 'Mia', partitions: 312, state: 'waiting' });
+    expect((await mia('GET', '/requests?subjectKind=lens')).json().requests).toHaveLength(1);
+    expect((await mia('GET', '/requests?subjectKind=query')).json().requests).toEqual([]);
+    expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests).toHaveLength(1);
+    expect((await mia('POST', '/requests', { ...body, partitions: 'all' })).statusCode).toBe(400);
   });
 
   it('answers 503 rather than guess when identity cannot tell the groups', async () => {

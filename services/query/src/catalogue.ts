@@ -35,15 +35,29 @@ export interface QueryRequest {
   createdAt: string;
 }
 
+/** A Collection the User sees, with the Resources in it they may use (FR-SR-31): who sees a Lens follows from them (DEC-CO-16). */
+export interface SeenCollection {
+  id: string;
+  name: string;
+  /** Whether the User manages it, as its Owner Unit or the Data Team (DEC-CO-15, DEC-CO-18). */
+  canManage: boolean;
+  visibility: 'private' | 'public';
+  resources: { id: string; displayName: string; level: number }[];
+}
+
 export interface Catalogue {
   /** The Resource, if the User may see it; null when they may not, which catalogue answers as not found. */
   resource(id: string, authorization: string): Promise<QueryResource | null>;
   /** Whether the User manages the Collection, as its Owner Unit or the Data Team; null when they may not see it. */
   manages(collectionId: string, authorization: string): Promise<boolean | null>;
-  /** The Requests of the User on queries, newest first: on one, or on all; the Data Team sees everyone's on one. */
-  requests(queryId: string | null, authorization: string): Promise<QueryRequest[]>;
+  /** The Requests of the User on queries or Lenses, newest first: on one, or on all; the Data Team sees everyone's on one. */
+  requests(subjectId: string | null, authorization: string, subjectKind?: 'query' | 'lens'): Promise<QueryRequest[]>;
   /** Sends a Request for the User; one that still waits is given back instead. */
   sendRequest(fields: { queryId: string; name: string; reads: number; threshold: number; text: string }, authorization: string): Promise<QueryRequest>;
+  /** Sends the Request to accept a very large Lens for its author (MSG-LEN-01, FR-LE-09). */
+  sendLensRequest(fields: { lensId: string; name: string; reads: number; threshold: number; text: string; partitions: number | null }, authorization: string): Promise<QueryRequest>;
+  /** The Collections the User sees, with the Resources in them they may use. */
+  collections(authorization: string): Promise<SeenCollection[]>;
 }
 
 /** catalogue did not tell what the User may see; query answers 503 rather than guess. */
@@ -80,8 +94,8 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch):
   const requestOf = ({ id, subjectId, writerId, reads, text, state, createdAt }: QueryRequest): QueryRequest => ({ id, subjectId, writerId, reads, text, state, createdAt });
 
   return {
-    async requests(queryId, authorization) {
-      const query = new URLSearchParams({ subjectKind: 'query', ...(queryId ? { subjectId: queryId } : {}) });
+    async requests(subjectId, authorization, subjectKind = 'query') {
+      const query = new URLSearchParams({ subjectKind, ...(subjectId ? { subjectId } : {}) });
       const { requests } = (await (await call(`/requests?${query}`, authorization)).json()) as { requests: QueryRequest[] };
       return requests.map(requestOf);
     },
@@ -89,6 +103,24 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch):
     async sendRequest({ queryId, name, reads, threshold, text }, authorization) {
       const body = { type: 'MSG-QRY-01', subjectId: queryId, subject: name, reads, threshold, text };
       return requestOf(((await (await call('/requests', authorization, body)).json()) as RequestBody).request);
+    },
+
+    async sendLensRequest({ lensId, name, reads, threshold, text, partitions }, authorization) {
+      const body = { type: 'MSG-LEN-01', subjectId: lensId, subject: name, reads, threshold, text, ...(partitions === null ? {} : { partitions }) };
+      return requestOf(((await (await call('/requests', authorization, body)).json()) as RequestBody).request);
+    },
+
+    async collections(authorization) {
+      const { collections } = (await (await call('/collections', authorization)).json()) as {
+        collections: (Omit<SeenCollection, 'resources'> & { resources: (SeenCollection['resources'][number] & { withdrawn?: boolean })[] })[];
+      };
+      return collections.map(({ id, name, canManage, visibility, resources }) => ({
+        id,
+        name,
+        canManage: canManage === true,
+        visibility,
+        resources: resources.filter((resource) => resource.withdrawn !== true).map(({ id: resourceId, displayName, level }) => ({ id: resourceId, displayName, level })),
+      }));
     },
 
     async resource(id, authorization) {
