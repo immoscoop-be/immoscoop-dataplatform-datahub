@@ -36,11 +36,11 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 
 | Message ID | Message | About | From → to | Asks | Learning Card | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| [MSG-CNV-01](#msg-cnv-01) | Question | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | An answer | By the writer | Proposed |
-| [MSG-CNV-02](#msg-cnv-02) | Remark | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | Nothing | By the writer | Proposed |
-| [MSG-CNV-03](#msg-cnv-03) | Signal | Resource or Lens | User → Owner and Data Team | Something to do | By the writer | Specified |
-| [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Proposed |
-| [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Proposed |
+| [MSG-CNV-01](#msg-cnv-01) | Question | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | An answer | By the writer | Implemented |
+| [MSG-CNV-02](#msg-cnv-02) | Remark | Collection, Resource, Lens, query or Learning Card | User → Owner and who wrote in the conversation | Nothing | By the writer | Implemented |
+| [MSG-CNV-03](#msg-cnv-03) | Signal | Resource or Lens | User → Owner and Data Team | Something to do | By the writer | Implemented |
+| [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Implemented |
+| [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
@@ -51,12 +51,12 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Specified |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
 | [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Specified |
-| [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Proposed |
+| [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
-| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Proposed |
+| [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
-| [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Proposed |
+| [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
 
@@ -74,7 +74,7 @@ The words are theirs. The catalogue holds the frame of them wherever the Message
 | About | Collection, Resource, Lens, query or Learning Card |
 | From → to | User → Owner and who wrote in the conversation |
 | When | A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06) |
 
 **What it asks:** An answer, of the Owner. Who answers for the object answers it in context, with the object in view. Any colleague who may see the object can answer too ([FR-CV-05](14-conversations.md#fr-cv-05)).
@@ -156,7 +156,7 @@ Template, English, laid out:
 | About | Collection, Resource, Lens, query or Learning Card |
 | From → to | User → Owner and who wrote in the conversation |
 | When | A User leaves a remark or a tip on an object, from "Messages" on its page. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06), [DEC-CV-09](14-conversations.md#dec-cv-09) |
 
 **What it asks:** Nothing. A Remark informs and asks for nothing; whoever wants to can reply.
@@ -238,7 +238,7 @@ Template, English, laid out:
 | About | Resource or Lens |
 | From → to | User → Owner and Data Team |
 | When | A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-30](04-stacks-and-resources.md#fr-sr-30), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07) |
 | Open points | [OP-SR-14](04-stacks-and-resources.md#op-sr-14) |
 
@@ -322,7 +322,7 @@ Template, English, laid out:
 | About | Collection, Resource, Lens, query or Learning Card |
 | From → to | User → its writer and who wrote in the conversation |
 | When | Someone who may see the object replies to a Message on it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-CV-01](14-conversations.md#fr-cv-01), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-04](14-conversations.md#fr-cv-04) |
 
 **What it asks:** Nothing. A reply answers a Question and asks nothing itself; it can be replied to in turn.
@@ -404,7 +404,7 @@ Template, English, laid out:
 | About | Lens or query |
 | From → to | Data Team → its writer and its author |
 | When | A member of the Data Team accepts or refuses a Request ([MSG-LEN-01](#msg-len-01), [MSG-LEN-03](#msg-len-03), [MSG-QRY-01](#msg-qry-01)). The decision is its reply. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-CV-08](14-conversations.md#fr-cv-08), [FR-LE-09](09-lenses.md#fr-le-09), [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36) |
 
 **What it asks:** Nothing. It tells the writer of the Request the decision; a refused Lens or query is theirs to change.
@@ -634,7 +634,7 @@ One item of `changes`, English, laid out:
 | About | Lens |
 | From → to | User → Data Team |
 | When | The author of a Lens that reads more than 1 GB in one run sends it to the Data Team with "Send to the data team" ([FR-LE-09](09-lenses.md#fr-le-09)). |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-LE-08](09-lenses.md#fr-le-08), [FR-LE-09](09-lenses.md#fr-le-09), [FR-CV-08](14-conversations.md#fr-cv-08), [DEC-LE-05](09-lenses.md#dec-le-05) |
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen ([DEC-LE-05](09-lenses.md#dec-le-05)).
@@ -694,8 +694,8 @@ Mia Peeters asks the data team to accept the lens Leads per source, all weeks: o
 | --- | --- | --- |
 | `reads` | size | What one run reads, in bytes |
 | `threshold` | size | The threshold it is above, in bytes: 100 MB for large and 1 GB for very large, to start with ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) |
-| `partitions` | count | How many partitions one run reads |
-| `partitionsTotal` | count | How many partitions there are |
+| `partitions` | count, optional | How many partitions one run reads, when BigQuery tells |
+| `partitionsTotal` | count, optional | How many partitions there are, when BigQuery tells |
 | `smaller` | size, optional | What one run reads at most with a default for From, when Data Hub can tell |
 
 Template, Dutch, plain:
@@ -752,7 +752,7 @@ Until the data team decides, only {writer} sees the lens, and nobody changes it.
 | About | query |
 | From → to | User → Data Team |
 | When | The Pre-flight of a query, or a preview, reads more than 1 GB, and the User sends it to the Data Team ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)). |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-SR-36](04-stacks-and-resources.md#dec-sr-36), [FR-SR-37](04-stacks-and-resources.md#fr-sr-37), [FR-CV-08](14-conversations.md#fr-cv-08) |
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the SQL and its Pre-flight in view; Refuse needs a reason. Accepting lets its writer run that query above the limit, also after its SQL changes ([DEC-SR-36](04-stacks-and-resources.md#dec-sr-36)). The User sends it from the bar of the Pre-flight, with an optional word ([DEC-UX-116](../../design/principles.md#dec-ux-116)).
@@ -1852,7 +1852,7 @@ A filter on `{column}`, the partition column, would make it read less.
 | About | Lens |
 | From → to | Data Hub → Data Team and Owner |
 | When | A run of a Lens reads more than 1 GB, while it was made or last accepted in a range below. Data Hub sends the Request itself ([FR-CV-08](14-conversations.md#fr-cv-08)), and the Lens stops until it is accepted again ([DEC-LE-11](09-lenses.md#dec-le-11)). |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-CV-08](14-conversations.md#fr-cv-08), [DEC-LE-11](09-lenses.md#dec-le-11) |
 
 **What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run ([DEC-LE-11](09-lenses.md#dec-le-11)).
@@ -1902,8 +1902,8 @@ The lens Leads per source name grew into very large: one run now reads 1.4 GB, a
 | --- | --- | --- |
 | `reads` | size | What one run reads, in bytes |
 | `threshold` | size | The threshold it is above, in bytes: 100 MB for large and 1 GB for very large, to start with ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) |
-| `partitions` | count | How many partitions one run reads |
-| `partitionsTotal` | count | How many partitions there are |
+| `partitions` | count, optional | How many partitions one run reads, when BigQuery tells |
+| `partitionsTotal` | count, optional | How many partitions there are, when BigQuery tells |
 
 Template, Dutch, plain:
 

@@ -201,6 +201,16 @@ export const LOG_CATALOGUE = {
     parameters: ['restored', 'run'],
     text: { en: 'Works again: {restored} exists again', nl: 'Werkt weer: {restored} bestaat weer' },
   },
+  'LEN-001': {
+    about: 'output',
+    parameters: ['actor', 'conversation'],
+    text: { en: 'Request accepted by {actor}', nl: 'Aanvraag aanvaard door {actor}' },
+  },
+  'LEN-002': {
+    about: 'output',
+    parameters: ['actor', 'conversation', 'reason'],
+    text: { en: 'Request refused by {actor}', nl: 'Aanvraag geweigerd door {actor}' },
+  },
 } as const satisfies Record<string, LogType>;
 
 export type LogId = keyof typeof LOG_CATALOGUE;

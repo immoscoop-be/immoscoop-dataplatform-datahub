@@ -133,7 +133,7 @@
       <button type="button" class="more" onclick={() => (all[collection.id] = true)}>{t('collections.showAll', { count: items.length })}</button>
     {/if}
     {#each firstLenses as lens (lens.id)}
-      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state !== 'waiting'} broken={brokenText(lens.broken)} />
+      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state !== 'waiting' && lens.state !== 'refused'} broken={brokenText(lens.broken)} />
     {/each}
     {#if firstLenses.length < lensItems.length}
       <button type="button" class="more" onclick={() => (allLenses[collection.id] = true)}>{t('collections.showAll', { count: lensItems.length })}</button>

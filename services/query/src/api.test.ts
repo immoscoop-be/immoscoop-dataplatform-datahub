@@ -215,15 +215,38 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   /** The Google ID of each token, and the Requests catalogue keeps, newest first. */
   const writers = new Map<string, string>();
   const requests: QueryRequest[] = [];
+  /** What query told catalogue about each Lens, and the decisions it recorded (DEC-PF-30). */
+  const told = new Map<string, { state: string; name: string }>();
+  const decisions: { requestId: string; outcome: string; text: string; decider: { id: string; name: string } }[] = [];
   const catalogue: Catalogue = {
     async resource(id, authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
       return ids?.includes(id) ? ([WEEKLY, SOURCES, SECRET].find((resource) => resource.id === id) ?? null) : null;
     },
-    async requests(queryId, authorization) {
+    async requests(queryId, authorization, subjectKind = 'query') {
       if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
-      return requests.filter((sent) => sent.writerId === writers.get(authorization) && (queryId === null || sent.subjectId === queryId));
+      // The Data Team sees everyone's Requests on one Lens, Data Hub's own among them.
+      const everyone = writers.get(authorization) === '103' && queryId !== null && subjectKind === 'lens';
+      return requests.filter((sent) => (everyone || sent.writerId === writers.get(authorization)) && (queryId === null || sent.subjectId === queryId));
+    },
+    async keepLens(lens) {
+      told.set(lens.id, { state: lens.state, name: lens.name });
+    },
+    async lensGrew({ lensId, reads }) {
+      const waiting = requests.find((sent) => sent.subjectId === lensId && sent.type === 'MSG-LEN-03' && sent.state === 'waiting');
+      if (waiting) return { id: waiting.id };
+      const sent: QueryRequest = { id: `m-${requests.length + 1}`, type: 'MSG-LEN-03', subjectId: lensId, writerId: '', reads, text: '', state: 'waiting', decision: null, createdAt: new Date().toISOString() };
+      requests.unshift(sent);
+      return { id: sent.id };
+    },
+    async decideLensRequest(requestId, decision) {
+      decisions.push({ requestId, ...decision });
+      const sent = requests.find((one) => one.id === requestId);
+      if (sent) {
+        sent.state = decision.outcome;
+        sent.decision = { outcome: decision.outcome, text: decision.text, writerName: decision.decider.name, at: new Date().toISOString() };
+      }
     },
     async manages(collectionId, authorization) {
       // Mia is in the Owner Unit of Credit leads, An owns a private Collection; the Data Team manages every Collection.
@@ -240,7 +263,17 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       return seen;
     },
     async sendLensRequest({ lensId, reads, text }, authorization) {
-      const sent: QueryRequest = { id: `m-${requests.length + 1}`, subjectId: lensId, writerId: writers.get(authorization) ?? '', reads, text, state: 'waiting', createdAt: new Date().toISOString() };
+      const sent: QueryRequest = {
+        id: `m-${requests.length + 1}`,
+        type: 'MSG-LEN-01',
+        subjectId: lensId,
+        writerId: writers.get(authorization) ?? '',
+        reads,
+        text,
+        state: 'waiting',
+        decision: null,
+        createdAt: new Date().toISOString(),
+      };
       requests.unshift(sent);
       return sent;
     },
@@ -248,7 +281,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       const writerId = writers.get(authorization) ?? '';
       const waiting = requests.find((sent) => sent.subjectId === queryId && sent.writerId === writerId && sent.state === 'waiting');
       if (waiting) return waiting;
-      const sent: QueryRequest = { id: `m-${requests.length + 1}`, subjectId: queryId, writerId, reads, text, state: 'waiting', createdAt: new Date().toISOString() };
+      const sent: QueryRequest = { id: `m-${requests.length + 1}`, type: 'MSG-QRY-01', subjectId: queryId, writerId, reads, text, state: 'waiting', decision: null, createdAt: new Date().toISOString() };
       requests.unshift(sent);
       return sent;
     },
@@ -544,6 +577,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   let lensId: string;
   let lensQuery: string;
   let largeLens: string;
+  let hugeLens: string;
+  let hugeQuery: string;
 
   it('makes a Lens of a query of its author, into a Collection they own, measured now (FR-LE-07, FR-LE-08, DEC-CO-20)', async () => {
     const made = await call(an, 'POST', '/queries', { name: 'Leads per source, week by week', resources: [WEEKLY.id, SOURCES.id], sql: withParameters, parameters: [dateFrom, channel], forCollection: AN_WORK });
@@ -629,9 +664,13 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(karel, 'GET', '/lenses')).json().lenses.map((lens: { name: string }) => lens.name)).toEqual(['All weeks per source']);
 
     const huge = await make(`${weekly} -- reads 6200000000`, 'Every lead since 2019');
+    hugeQuery = huge;
     const waiting = await call(mia, 'POST', '/lenses', { queryId: huge, collectionId: CREDIT, name: 'Every lead since 2019', text: 'For the yearly review.' });
     expect(waiting.json().lens).toMatchObject({ state: 'waiting', range: 'request', request: { state: 'waiting', text: 'For the yearly review.' } });
     const id = waiting.json().lens.id;
+    hugeLens = id;
+    // catalogue heard of it, to show its Messages to who sees it (DEC-PF-30).
+    expect(told.get(id)).toEqual({ state: 'waiting', name: 'Every lead since 2019' });
     // Until the Data Team decides, only its author and the Data Team see it, and it does not run (DEC-LE-05).
     expect((await call(karel, 'GET', `/lenses/${id}`)).statusCode).toBe(404);
     expect((await call(dataTeam, 'GET', `/lenses/${id}`)).statusCode).toBe(200);
@@ -816,5 +855,39 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(down, 'POST', `/queries/${id}/runs`, { sql: weekly })).statusCode).toBe(503);
     // The list still shows, without the labels of Requests.
     expect((await call(down, 'GET', '/queries')).json().queries[0]).toMatchObject({ request: null });
+  });
+
+  it('lets the Data Team accept or refuse a Lens that waits, or one that stopped (FR-LE-09, DEC-UX-128)', async () => {
+    expect((await call(karel, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'accepted' })).statusCode).toBe(403);
+    expect((await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'refused' })).json()).toMatchObject({ message: 'A refusal needs a reason.' });
+    expect((await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'maybe' })).statusCode).toBe(400);
+    expect((await call(dataTeam, 'POST', `/lenses/${largeLens}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ error: 'not_waiting' });
+
+    // Refused: catalogue records the decision, the Lens stays unpublished and is no longer frozen.
+    const refused = await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'refused', text: 'Give From a default.' });
+    expect(refused.statusCode).toBe(200);
+    expect(refused.json().lens).toMatchObject({ state: 'refused', request: { state: 'refused', decision: { outcome: 'refused', text: 'Give From a default.', writerName: 'Dirk Vos' } } });
+    expect(decisions.at(-1)).toMatchObject({ outcome: 'refused', text: 'Give From a default.', decider: { id: '103', name: 'Dirk Vos' } });
+    expect(told.get(hugeLens)?.state).toBe('refused');
+    expect((await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ error: 'not_waiting' });
+    expect((await call(karel, 'GET', `/lenses/${hugeLens}`)).statusCode).toBe(404);
+    const seen = (await call(mia, 'GET', `/lenses/${hugeLens}`)).json().lens;
+    expect(seen).toMatchObject({ state: 'refused', log: [{ logId: 'LEN-002', params: { actor: 'Dirk Vos', reason: 'Give From a default.' } }] });
+    expect((await call(mia, 'POST', `/lenses/${hugeLens}/runs`, {})).json()).toMatchObject({ error: 'refused' });
+    expect((await call(mia, 'PATCH', `/lenses/${hugeLens}`, { question: 'Which leads came in since 2019?' })).statusCode).toBe(200);
+    // Updated from its query to read less, it is published.
+    expect((await call(mia, 'PATCH', `/queries/${hugeQuery}`, { sql: `${weekly} -- reads 80000000` })).statusCode).toBe(200);
+    expect((await call(mia, 'PUT', `/lenses/${hugeLens}/version`, { queryId: hugeQuery })).json().lens).toMatchObject({ state: 'published', range: 'free' });
+
+    // Stopped past 1 GB, Data Hub asks the Data Team (MSG-LEN-03); accepted, it runs again at that size.
+    fake.resize(1_500_000_000);
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json()).toMatchObject({ error: 'stopped' });
+    expect(requests[0]).toMatchObject({ type: 'MSG-LEN-03', subjectId: lensId, writerId: '', state: 'waiting' });
+    const accepted = await call(dataTeam, 'POST', `/lenses/${lensId}/decision`, { outcome: 'accepted', text: 'Once a quarter.' });
+    expect(accepted.json().lens).toMatchObject({ state: 'published', range: 'request', stoppedAt: null });
+    expect(accepted.json().lens.log[0]).toMatchObject({ logId: 'LEN-001', params: { actor: 'Dirk Vos' } });
+    expect(decisions.at(-1)).toMatchObject({ requestId: requests[0]!.id, outcome: 'accepted' });
+    expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json().preflight).toMatchObject({ range: 'request' });
+    fake.resize(null);
   });
 });

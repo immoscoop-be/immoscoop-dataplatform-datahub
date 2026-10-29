@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 14 of Data Hub · code `CV` |
-| Status | To be specified |
+| Status | The Messages in Data Hub implemented; notifications by e-mail and in Slack follow ([technical](../technical/14-conversations.md)) |
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Gesprek) |
 
@@ -64,14 +64,14 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-cv-01"></a>
 ### FR-CV-01 · A Message is always about something
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [messages](../../design/screens/messages.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [messages](../../design/screens/messages.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Every Message has a Subject ([DEC-CV-01](#dec-cv-01)): a Question, Remark, Signal or Request on an object, and a reply alike. A reply takes the Subject of the Message it answers. There is no Message without a Subject. *Note of 2026-10-24: a Learning Card is an object of Messages too, and a Message can carry one ([FR-LR-06](16-learning.md#fr-lr-06), [FR-LR-07](16-learning.md#fr-lr-07)).*
 
 <a id="fr-cv-02"></a>
 ### FR-CV-02 · A Message links to its object
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [lens-context](../../design/screens/lens-context.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [lens-context](../../design/screens/lens-context.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
 
 Wherever a Message shows, in the Message Centre, in a notification, through Claude or another channel, it carries a link to its object, opening at the Message in the Conversations of that object: the page of a Resource or a Lens, a query in Query. Data Hub builds the link from the Subject when it shows the Message, so that the link keeps working when the object is renamed. The Message shows the object by its kind, with its icon, and its current name.
 
@@ -84,45 +84,47 @@ Wherever a Message shows, in the Message Centre, in a notification, through Clau
 
 A Message has no recipient of its own: it is placed on its object, for everyone who may see it ([DEC-CV-04](#dec-cv-04)). Who gets a notification of it follows its kind: a Question or a Remark notifies the Owner of the object, which is its whole Owner Unit ([FR-LN-01](07-log-and-notifications.md#fr-ln-01)), and everyone already in the conversation ([DEC-CV-09](#dec-cv-09)); a Signal notifies the Owner and the Data Team ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)); a Request notifies the Data Team, and its decision notifies who sent it ([FR-CV-08](#fr-cv-08)).
 
+*Note of 2026-10-29, on building part 7a: in Data Hub the notification is the Message for the User, unread in the Message Centre with its number in the rail ([TR-CV-01](../technical/14-conversations.md#tr-cv-01)); by e-mail and in Slack it follows with part 7b of the [build order](../../design/build-order.md).*
+
 <a id="fr-cv-04"></a>
 ### FR-CV-04 · All Messages about an object can be retrieved
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Data Hub finds every Message about an object by its Subject, kind and ID, with their replies, newest first. The Conversations of the object show them, and the API and the MCP server of Data Hub return them, so that Claude can read what was asked and answered about an object.
 
 <a id="fr-cv-05"></a>
 ### FR-CV-05 · Who sees a Message follows who sees its object
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [messages](../../design/screens/messages.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens-messages](../../design/screens/lens-messages.html), [messages](../../design/screens/messages.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Only a User who may see the object of a Message sees the Message and follows its link: a Resource by its Publication and Collection ([FR-SR-31](04-stacks-and-resources.md#fr-sr-31)), a Lens by its Resources ([DEC-CO-16](03-collections.md#dec-co-16)), a query by who ran it and the Data Team ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Everyone who may see the object sees all its Messages: none is private ([DEC-CV-04](#dec-cv-04)).
 
 <a id="fr-cv-06"></a>
 ### FR-CV-06 · The Message Centre
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [messages](../../design/screens/messages.html)
 
 Every User has a Message Centre, reached from the navigation with the number of unread Messages. It shows, by default, the Messages for them: on the objects their Owner Unit owns, the Messages they wrote or answered, the Signals for the Data Team, and what Data Hub itself tells them, such as a Level that dropped. It filters on unread, written by them and everything they may see; on the kind of Message; and on the kind of object. Each Message shows its object and links to it ([FR-CV-02](#fr-cv-02)); opened, it shows its replies and a field to answer.
 
 <a id="fr-cv-07"></a>
 ### FR-CV-07 · The Messages of an object, on the object
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens](../../design/screens/lens.html), [lens-context](../../design/screens/lens-context.html), [lens-messages](../../design/screens/lens-messages.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [lens](../../design/screens/lens.html), [lens-context](../../design/screens/lens-context.html), [lens-messages](../../design/screens/lens-messages.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
 
 The page of a Collection, a Resource and a Lens has "Messages", with their number, which opens the Messages on that object in a slide-in: the Message Centre filtered on the object ([DEC-CV-02](#dec-cv-02)). It starts with a field for a new Message, whose Subject is that object. A Collection takes a Question or a Remark; a Resource and a Lens also a Signal, as a Signal is about data.
 
 <a id="fr-cv-08"></a>
 ### FR-CV-08 · A Request asks the Data Team for a decision
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · **Screens:** [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
 
 A Request is a Message on an object that asks the Data Team for a decision ([DEC-CV-06](#dec-cv-06)). The first is accepting a very large Lens: "Send to the data team" on making it sends a Request on that Lens, with what one run reads and the word of its author ([FR-LE-09](09-lenses.md#fr-le-09)). Data Hub sends one itself when a Lens grows into very large ([FR-LE-10](09-lenses.md#fr-le-10)). A Request is waiting, accepted or refused. A member of the Data Team decides in the Message Centre, and the decision is its reply, a refusal with a reason; who sent it gets a notification. Every Request waiting is in the Message Centre of the Data Team.
 
 <a id="fr-cv-09"></a>
 ### FR-CV-09 · A Message opens in its context
 
-**Status:** Proposed · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [lens-context](../../design/screens/lens-context.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#messages) · **Screens:** [lens-context](../../design/screens/lens-context.html), [lens-new-context](../../design/screens/lens-new-context.html), [messages](../../design/screens/messages.html)
 
 Every Message in the Message Centre, and the link in a notification of it, has "Open in context". It opens the page of its object as it is, with the Message in a floating window over it: the Message with its replies and a field to reply, or for a Request the decision of the Data Team ([FR-CV-08](#fr-cv-08)). The page stays usable behind the window, so that the User reads the object while answering: the result of a Lens, the columns of a Resource, the size check of a Lens waiting to be accepted. The address of the page names the Message, so that the same link works from a notification ([FR-CV-02](#fr-cv-02)). The window shows one Message; the slide-in shows all Messages on the object ([FR-CV-07](#fr-cv-07)).
 
@@ -170,21 +172,19 @@ The web app shows a Message from the catalogue: the first line of its plain text
 
 
 *Note of 2026-10-28: the part for Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+*Note of 2026-10-29, on building part 7a: the web app shows what Data Hub writes from the catalogue, its first line in a list and its laid-out text when opened; a Message a person wrote shows their words, with its kind, its writer and its object beside them, as the [design](../../design/screens/messages.html) does, so that the frame of the catalogue is for notifications ([TR-CV-03](../technical/14-conversations.md#tr-cv-03)).*
 ## Edge cases
 
 <a id="ec-cv-01"></a>
 ### EC-CV-01 · The object no longer exists
 
-**Status:** Proposed
-
-When the object of a Message is removed, or its Collection dissolved, the Message stays, still found by its Subject. Its link then says that the object no longer exists, with the name it had.
+**Status:** Implemented the object of a Message is removed, or its Collection dissolved, the Message stays, still found by its Subject. Its link then says that the object no longer exists, with the name it had.
 
 <a id="ec-cv-02"></a>
 ### EC-CV-02 · A Resource moves to another Collection
 
-**Status:** Proposed
-
-The Messages about a Resource follow it to its new Collection, as their Subject is the Resource and not its Collection. Who sees them changes with who may see the Resource ([FR-CV-05](#fr-cv-05)).
+**Status:** Implemented Messages about a Resource follow it to its new Collection, as their Subject is the Resource and not its Collection. Who sees them changes with who may see the Resource ([FR-CV-05](#fr-cv-05)).
 
 ## Out of scope
 

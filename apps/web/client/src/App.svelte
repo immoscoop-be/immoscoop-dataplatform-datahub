@@ -9,10 +9,11 @@
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
+  import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
   import { createQuery, type Lens, type LensItem, type QueryItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { lensPath, NEW_COLLECTION, NEW_QUERY, queryPath, route } from './lib/routes.js';
+  import { lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { SECTIONS, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
@@ -23,6 +24,10 @@
   import CollectionsStart from './screens/CollectionsStart.svelte';
   import LensNew from './screens/LensNew.svelte';
   import LensPage from './screens/LensPage.svelte';
+  import MessageCentre from './screens/MessageCentre.svelte';
+  import MessagesPanel from './screens/MessagesPanel.svelte';
+  import MessagesSheet from './screens/MessagesSheet.svelte';
+  import MessageWindow from './screens/MessageWindow.svelte';
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
   import PanelSoon from './screens/PanelSoon.svelte';
@@ -42,6 +47,7 @@
   const catalogue = $derived(createCatalogue(config, session));
   const registry = $derived(createRegistry(config, session));
   const queries = $derived(createQuery(config, session));
+  const messages = $derived(createMessages(config, session));
   const router = new Router();
   const system = new SystemTheme();
 
@@ -67,6 +73,15 @@
   let openedLens: { id: string; lens?: Lens | null } | undefined = $state();
   /** The Resource whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
   let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
+  /** How many conversations for the User moved since they read them, on Messages in the rail (FR-CV-06). */
+  let unread = $state(0);
+  /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
+  let messageFilter = $state<Filter>({ view: 'forYou' });
+  let centre: { messages: Message[]; counts: Counts } | null | undefined = $state();
+  /** The Message opened in the Message Centre or in context: undefined while it comes, null when it could not be read. */
+  let openedMessage: { id: string; message?: Conversation | null } | undefined = $state();
+  /** What a person wrote on the object whose page is open, for "Messages" and its slide-in (FR-CV-07). */
+  let onObject: { key: string; messages?: Conversation[] } | undefined = $state();
 
   /** A sign-in that went wrong comes back with its code in the address, and a refused account in the fragment. */
   function takeProblem(): { problem?: string; account?: string } {
@@ -228,6 +243,99 @@
       },
     );
   }
+  /** The number on Messages in the rail, read when Data Hub starts, every minute, and after a Message moves. */
+  function readUnread(): void {
+    messages.unread().then(
+      (count) => (unread = count),
+      (error: unknown) => console.error('The unread Messages could not be counted', error),
+    );
+  }
+  $effect(() => {
+    if (status.kind !== 'signedIn') return;
+    readUnread();
+    const timer = setInterval(readUnread, 60_000);
+    return () => clearInterval(timer);
+  });
+  /** The Messages of the view chosen in the panel of the Message Centre. */
+  function readCentre(): void {
+    const filter = messageFilter;
+    messages.list(filter).then(
+      (found) => filter === messageFilter && (centre = found),
+      (error: unknown) => {
+        console.error('The Messages could not be read', error);
+        if (filter === messageFilter) centre = null;
+      },
+    );
+  }
+  const inCentre = $derived(page.kind === 'messages');
+  $effect(() => {
+    if (status.kind === 'signedIn' && inCentre && messageFilter) readCentre();
+  });
+  /** The object whose page is open, whose Messages "Messages" counts and its slide-in shows. */
+  const talkedAbout: { kind: WrittenOn; id: string } | undefined = $derived(
+    page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' ? { kind: page.kind, id: page.id } : undefined,
+  );
+  /** The Message the address names: opened in the Message Centre, or in context over the page of its object. */
+  const talkedId = $derived(
+    page.kind === 'messages' ? page.id : page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' || page.kind === 'query' ? (page.message ?? null) : null,
+  );
+  function readOnObject(subject: { kind: WrittenOn; id: string }): void {
+    const key = `${subject.kind}:${subject.id}`;
+    if (onObject?.key !== key) onObject = { key };
+    messages.on(subject.kind, subject.id).then(
+      // What a person writes on it: Questions, Remarks and Signals (FR-CV-07).
+      (found) => onObject?.key === key && (onObject = { key, messages: found.filter((message) => ['question', 'remark', 'signal'].includes(message.kind)) }),
+      (error: unknown) => {
+        if (!(error instanceof Missing)) console.error('The Messages on this page could not be read', error);
+        if (onObject?.key === key) onObject = { key, messages: [] };
+      },
+    );
+  }
+  $effect(() => {
+    if (status.kind === 'signedIn' && talkedAbout && onObject?.key !== `${talkedAbout.kind}:${talkedAbout.id}`) readOnObject(talkedAbout);
+  });
+  /** Opens a Message, and marks it read: the dot and the number in the rail follow. */
+  function openMessage(id: string): void {
+    openedMessage = { id };
+    messages.conversation(id).then(
+      (message) => {
+        if (openedMessage?.id !== id) return;
+        openedMessage = { id, message };
+        if (message.unread) {
+          messages.read(id).then(
+            () => {
+              readUnread();
+              if (centre) centre = { ...centre, messages: centre.messages.map((item) => (item.id === id ? { ...item, unread: false } : item)) };
+            },
+            (error: unknown) => console.error('The Message could not be marked read', error),
+          );
+        }
+      },
+      (error: unknown) => {
+        if (!(error instanceof Missing)) console.error(`The Message ${id} could not be read`, error);
+        if (openedMessage?.id === id) openedMessage = { id, message: null };
+      },
+    );
+  }
+  $effect(() => {
+    if (status.kind === 'signedIn' && talkedId && openedMessage?.id !== talkedId) openMessage(talkedId);
+  });
+  /** After a reply or a decision: the Message as it is now, in the list and on the page of its object. */
+  function changedMessage(message: Conversation): void {
+    openedMessage = { id: message.id, message };
+    if (centre) centre = { ...centre, messages: centre.messages.map((item) => (item.id === message.id ? { ...message, unread: false } : item)) };
+    if (talkedAbout) readOnObject(talkedAbout);
+    readUnread();
+  }
+  /** The decision of the Data Team on a Request on a Lens, in query, which changes the Lens with it (FR-LE-09). */
+  async function decideLens(lensId: string, outcome: 'accepted' | 'refused', text: string): Promise<void> {
+    const lens = await queries.decideLens(lensId, outcome, text);
+    if (openedLens?.id === lensId) openedLens = { id: lensId, lens };
+    refresh();
+  }
+  /** "Messages" in the head of the page, with their number once they are read. */
+  const messagesButton = $derived(talkedAbout ? { count: onObject?.messages?.length ?? null, href: messagesOnPath(talkedAbout) } : undefined);
+
   /** After a Lens is made, edited or updated from its query: the panels show it, and its page opens. */
   async function made(lens: Lens): Promise<void> {
     openedLens = { id: lens.id, lens };
@@ -237,7 +345,7 @@
   }
   $effect(() => {
     const title =
-      page.kind === 'start'
+      page.kind === 'start' || page.kind === 'messages'
         ? sectionLabel(page.section)
         : page.kind === 'me' && status.kind === 'signedIn'
           ? status.me.name
@@ -262,10 +370,11 @@
   });
 
   const items: readonly RailItem[] = $derived(
-    SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path })),
+    SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path, ...(section.id === 'messages' && unread > 0 ? { unread } : {}) })),
   );
   const section = $derived(
     page.kind === 'start' ||
+      page.kind === 'messages' ||
       page.kind === 'resource' ||
       page.kind === 'collection' ||
       page.kind === 'newCollection' ||
@@ -344,6 +453,16 @@
         ondismiss={() => signedIn.settings.set('intro.collections', INTRO_VERSION)}
         onshow={() => signedIn.settings.forget('intro.collections')}
       />
+    {:else if page.kind === 'messages'}
+      <MessageCentre
+        filter={messageFilter}
+        found={centre}
+        opened={page.id ? openedMessage : undefined}
+        client={messages}
+        {dataTeam}
+        {decideLens}
+        onchanged={changedMessage}
+      />
     {:else if page.kind === 'start' && page.section.id !== 'query'}
       <SectionStart title={sectionLabel(page.section)} />
     {:else if page.kind === 'newQuery'}
@@ -399,8 +518,8 @@
         />
       {/key}
     {:else if page.kind === 'lens'}
-      {#if openedLens?.lens?.state === 'waiting'}
-        <!-- A Lens that waits for the Data Team opens as its author made it, frozen (lens-new-context, DEC-LE-05). -->
+      {#if openedLens?.lens?.state === 'waiting' || openedLens?.lens?.state === 'refused'}
+        <!-- A Lens that waits for the Data Team opens as its author made it, frozen (lens-new-context, DEC-LE-05); refused, it says so (DEC-UX-128). -->
         <LensNew
           lens={openedLens.lens}
           client={queries}
@@ -415,6 +534,7 @@
         {@const lens = openedLens.lens}
         <LensPage
           {lens}
+          messages={messagesButton}
           client={queries}
           collection={collections?.find((collection) => collection.id === lens.collectionId)}
           onchanged={() => {
@@ -459,6 +579,7 @@
         {waiting}
         go={(path) => router.go(path)}
         onchanged={refresh}
+        messages={page.kind === 'collection' ? messagesButton : undefined}
       />
     {:else if page.kind === 'me'}
       <MyPage
@@ -477,6 +598,7 @@
         {@const resource = opened.resource}
         <ResourcePage
           {resource}
+          messages={messagesButton}
           log={opened.log}
           collection={collections?.find((collection) => collection.id === resource.collectionId)}
           {collections}
@@ -500,6 +622,41 @@
     {:else if page.kind === 'notFound'}
       <NotFound />
     {/if}
+    {#if talkedAbout && (page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens') && page.messages}
+      {@const about = talkedAbout}
+      {@const collection =
+        page.kind === 'collection'
+          ? collections?.find((one) => one.id === about.id)
+          : collections?.find((one) => one.id === (page.kind === 'resource' ? opened?.resource?.collectionId : openedLens?.lens?.collectionId))}
+      {@const name = page.kind === 'collection' ? collection?.name : page.kind === 'resource' ? opened?.resource?.displayName : openedLens?.lens?.name}
+      {#if name}
+        <MessagesSheet
+          subject={{ ...about, name }}
+          meta={page.kind === 'collection' ? `Collection · ${collection?.ownerUnit.name ?? ''}` : `${SUBJECT_TITLES[about.kind]}${collection ? ` · ${collection.name}` : ''}`}
+          owner={collection?.ownerUnit.name ?? null}
+          messages={onObject?.messages}
+          client={messages}
+          onchanged={() => {
+            readOnObject(about);
+            readUnread();
+          }}
+          onclose={() => router.go(objectPath(about))}
+        />
+      {/if}
+    {/if}
+    {#if talkedId && page.kind !== 'messages'}
+      {@const id = talkedId}
+      <MessageWindow
+        {id}
+        message={openedMessage?.id === id ? openedMessage.message : undefined}
+        count={talkedAbout ? (onObject?.messages?.length ?? 0) : null}
+        client={messages}
+        {dataTeam}
+        {decideLens}
+        onchanged={changedMessage}
+        onclose={() => router.go(messagePath(id))}
+      />
+    {/if}
   </AppShell>
 {/if}
 
@@ -514,6 +671,8 @@
       currentLens={page.kind === 'lens' ? page.id : undefined}
       groups={status.me.groups}
     />
+  {:else if section?.id === 'messages' && status.kind === 'signedIn'}
+    <MessagesPanel filter={messageFilter} counts={centre?.counts} onfilter={(filter) => (messageFilter = filter)} />
   {:else if section?.id === 'query' && status.kind === 'signedIn'}
     <QueryPanel
       queries={ownQueries}

@@ -426,7 +426,15 @@
       {:else if range === 'request'}
         <Callout icon="warning-circle-fill" tone="urgent"><b>{t('lens.size.veryLarge')}</b> {t('lens.size.veryLarge.text', { request: bytes(thresholds.request) })}</Callout>
         {#if warning && warning.bytesWithFilter !== null}<p class="meta advice">{t('lens.size.less', { column: warning.column, bytes: bytes(warning.bytesWithFilter) })}</p>{/if}
-        {#if frozen && lens}
+        {#if frozen && lens && lens.state === 'refused'}
+          <!-- Refused: unpublished, no longer frozen; its author changes it from its query (DEC-UX-128). -->
+          <Callout icon="x-circle-fill" tone="urgent">
+            <b>{t('lens.refused', { name: request?.decision?.writerName ?? 'Data Team', time: since(request?.decision?.at ?? lens.createdAt) })}</b>
+            {#if request?.decision?.text}“{request.decision.text}”{/if}
+            {t('lens.refused.text', { author: lens.mine ? t('messages.you') : lens.authorName })}
+          </Callout>
+          {#if fromId}<Button variant="outline" wide href={queryPath(fromId)}><Icon name="terminal-window-fill" />{t('lens.refused.query')}</Button>{/if}
+        {:else if frozen && lens}
           {#if request}
             <Callout icon="hourglass-medium-fill">
               <b>{t('lens.size.sent', { name: lens.authorName, time: since(request.sentAt) })}</b>

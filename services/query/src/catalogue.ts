@@ -23,15 +23,22 @@ export interface QueryResource {
   parameters: string[];
 }
 
-/** A Request to the Data Team to run a query above 1 GB (MSG-QRY-01), as catalogue keeps it. */
+import type { IdTokenSource } from '@datahub/google';
+import type { Lens } from './lenses.js';
+
+/** A Request to the Data Team, on a query (MSG-QRY-01) or a Lens (MSG-LEN-01, MSG-LEN-03), as catalogue keeps it. */
 export interface QueryRequest {
   id: string;
+  type: 'MSG-QRY-01' | 'MSG-LEN-01' | 'MSG-LEN-03';
   subjectId: string;
+  /** Who sent it; empty for Data Hub itself (MSG-LEN-03). */
   writerId: string;
   reads: number;
   text: string;
   /** It waits until the Data Team answers it in the Message Centre (DEC-SR-36). */
   state: 'waiting' | 'accepted' | 'refused';
+  /** The decision of the Data Team, its reply (MSG-CNV-05). */
+  decision: { outcome: 'accepted' | 'refused'; text: string; writerName: string; at: string } | null;
   createdAt: string;
 }
 
@@ -58,6 +65,12 @@ export interface Catalogue {
   sendLensRequest(fields: { lensId: string; name: string; reads: number; threshold: number; text: string; partitions: number | null }, authorization: string): Promise<QueryRequest>;
   /** The Collections the User sees, with the Resources in them they may use. */
   collections(authorization: string): Promise<SeenCollection[]>;
+  /** Tells catalogue what decides who sees the Messages on a Lens, as query itself (DEC-PF-30). */
+  keepLens(lens: Lens): Promise<void>;
+  /** Sends the Request of Data Hub on a Lens that grew into very large, as query itself (MSG-LEN-03). */
+  lensGrew(fields: { lensId: string; reads: number; threshold: number }): Promise<{ id: string }>;
+  /** Records the decision of a member of the Data Team on a Request on a Lens, as query itself (FR-LE-09). */
+  decideLensRequest(requestId: string, decision: { outcome: 'accepted' | 'refused'; text: string; decider: { id: string; name: string } }): Promise<void>;
 }
 
 /** catalogue did not tell what the User may see; query answers 503 rather than guess. */
@@ -74,8 +87,28 @@ interface RequestBody {
   request: QueryRequest;
 }
 
-/** catalogue, asked with the Access Token of the User, so that it answers for them. */
-export function createCatalogue(baseUrl: string, request: typeof fetch = fetch): Catalogue {
+/**
+ * catalogue, asked with the Access Token of the User, so that it answers for them; about the Lenses
+ * themselves as query, with a Google ID token for catalogue's address.
+ */
+export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, idToken?: IdTokenSource): Catalogue {
+  async function asQuery(method: 'PUT' | 'POST', path: string, body: unknown): Promise<Response> {
+    if (!idToken) throw new CatalogueUnavailable('query has no identity of its own to call catalogue with');
+    let response: Response;
+    try {
+      response = await request(new URL(path, baseUrl), {
+        method,
+        headers: { authorization: `Bearer ${await idToken(baseUrl)}`, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      throw new CatalogueUnavailable('catalogue did not answer', { cause: error });
+    }
+    if (!response.ok) throw new CatalogueUnavailable(`catalogue answered ${response.status} for ${path.split('/').slice(0, 3).join('/')}`);
+    return response;
+  }
+
   async function call(path: string, authorization: string, body?: unknown): Promise<Response> {
     let response: Response;
     try {
@@ -91,9 +124,38 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch):
     if (!response.ok) throw new CatalogueUnavailable(`catalogue answered ${response.status} for ${path.split('?')[0]}`);
     return response;
   }
-  const requestOf = ({ id, subjectId, writerId, reads, text, state, createdAt }: QueryRequest): QueryRequest => ({ id, subjectId, writerId, reads, text, state, createdAt });
+  const requestOf = ({ id, type, subjectId, writerId, reads, text, state, decision, createdAt }: QueryRequest): QueryRequest => ({
+    id,
+    type,
+    subjectId,
+    writerId,
+    reads,
+    text,
+    state,
+    decision: decision ?? null,
+    createdAt,
+  });
 
   return {
+    async keepLens(lens) {
+      await asQuery('PUT', `/internal/lenses/${lens.id}`, {
+        name: lens.name,
+        collectionId: lens.collectionId,
+        resourceIds: lens.resources.map((resource) => resource.id),
+        state: lens.state,
+        authorId: lens.authorId,
+        authorName: lens.authorName,
+      });
+    },
+
+    async lensGrew({ lensId, reads, threshold }) {
+      return ((await (await asQuery('POST', `/internal/lenses/${lensId}/requests`, { reads, threshold })).json()) as { request: { id: string } }).request;
+    },
+
+    async decideLensRequest(requestId, decision) {
+      await asQuery('POST', `/internal/messages/${requestId}/decision`, decision);
+    },
+
     async requests(subjectId, authorization, subjectKind = 'query') {
       const query = new URLSearchParams({ subjectKind, ...(subjectId ? { subjectId } : {}) });
       const { requests } = (await (await call(`/requests?${query}`, authorization)).json()) as { requests: QueryRequest[] };

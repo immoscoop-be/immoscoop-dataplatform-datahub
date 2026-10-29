@@ -38,12 +38,16 @@ export type Parameter =
   | { name: string; kind: 'several'; value: string[]; list: string[] }
   | { name: string; kind: 'yesno'; value: boolean };
 
-/** A Request to the Data Team to run a query above 1 GB (MSG-QRY-01, DEC-UX-116). */
+/** A Request to the Data Team to run a query above 1 GB (MSG-QRY-01, DEC-UX-116), or to accept a Lens (MSG-LEN-01). */
 export interface QueryRequest {
+  /** Its Message, which opens in the Message Centre; given on a Lens. */
+  id?: string;
   state: 'waiting' | 'accepted' | 'refused';
   sentAt: string;
   reads: number;
   text: string;
+  /** The decision of the Data Team, its reply (MSG-CNV-05); given on a Lens. */
+  decision?: { outcome: 'accepted' | 'refused'; text: string; writerName: string; at: string } | null;
 }
 
 /** A query written in Query, the previews of a Resource by one User (FR-SR-38), or the runs of a Lens by one User (FR-LE-12). */
@@ -119,10 +123,11 @@ export interface Query {
 }
 
 /**
- * A Lens is published; or waits for the Data Team while one run reads more than 1 GB (FR-LE-09); or
- * stopped, after a run with its defaults grew past 1 GB, until the Data Team accepts it again (DEC-LE-11).
+ * A Lens is published; or waits for the Data Team while one run reads more than 1 GB (FR-LE-09), and stays
+ * unpublished once they refused it (DEC-UX-128); or stopped, after a run with its defaults grew past 1 GB,
+ * until the Data Team accepts it again (DEC-LE-11).
  */
-export type LensState = 'published' | 'waiting' | 'stopped';
+export type LensState = 'published' | 'waiting' | 'stopped' | 'refused';
 
 /** What a Broken Lens misses: a table or a column, and since when (FR-LE-17). */
 export interface Missing {
@@ -177,7 +182,7 @@ export interface LensSuggestions {
 
 /** A line of the Log of a Lens: it became Broken, or worked again (FR-SR-52). */
 export interface LensLogEntry {
-  logId: 'BRK-001' | 'BRK-002';
+  logId: 'BRK-001' | 'BRK-002' | 'LEN-001' | 'LEN-002';
   params: Record<string, string>;
   at: string;
 }
@@ -193,7 +198,7 @@ export interface Lens extends Omit<LensItem, 'resources'> {
   range: 'free' | 'approve' | 'request';
   reads: number;
   fromQuery: { id: string; name: string } | null;
-  /** Its Request to the Data Team, while it waits (FR-LE-09). */
+  /** Its Request to the Data Team, while it waits or once it was refused (FR-LE-09, DEC-UX-128). */
   request: QueryRequest | null;
   /** Since when it stopped, and what one run with its defaults read then (DEC-LE-11). */
   stoppedAt: string | null;
@@ -471,6 +476,10 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
      * "Update the Lens" from a query used as it (FR-LE-16): its next version, published or waiting for the
      * Data Team; or the size check, when one run reads more than 100 MB and the User did not say to go on.
      */
+    /** The decision of the Data Team on the Request on a Lens: accepted, or refused with a reason (FR-LE-09). */
+    async decideLens(id: string, outcome: 'accepted' | 'refused', text: string): Promise<Lens> {
+      return ((await (await call(`/lenses/${encodeURIComponent(id)}/decision`, { method: 'POST', body: { outcome, text } })).json()) as { lens: Lens }).lens;
+    },
     async updateLens(id: string, queryId: string, approve: boolean, text: string): Promise<{ kind: 'updated'; lens: Lens } | { kind: 'refused'; preflight: Preflight }> {
       try {
         return { kind: 'updated', lens: ((await (await call(`/lenses/${encodeURIComponent(id)}/version`, { method: 'PUT', body: { queryId, approve, text } })).json()) as { lens: Lens }).lens };

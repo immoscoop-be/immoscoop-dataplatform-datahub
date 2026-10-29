@@ -166,9 +166,9 @@ export interface MessageType {
 
 /**
  * The parameters every Message has: its object, by name and kind (FR-CV-02). A Message by a person
- * also has its writer and their words.
+ * also has its writer and their words, which a Request may leave out.
  */
-export function implicitParameters(type: Pick<MessageType, 'from'>): readonly MessageParameter[] {
+export function implicitParameters(type: Pick<MessageType, 'from' | 'kind'>): readonly MessageParameter[] {
   const subject: MessageParameter[] = [
     { name: 'subject', type: 'object', about: 'The object the Message is about, by its current name; laid out as a link to it, with its icon' },
     { name: 'subjectKind', type: 'name', about: 'The kind of that object: collection, resource, lens, query, report or learning card' },
@@ -179,7 +179,8 @@ export function implicitParameters(type: Pick<MessageType, 'from'>): readonly Me
   return [
     ...subject,
     { name: 'writer', type: 'person', about: 'Who wrote it' },
-    { name: 'text', type: 'text', about: 'What they wrote' },
+    // A Request may go without a word of its writer: its facts say what it asks (FR-LE-09).
+    { name: 'text', type: 'text', about: 'What they wrote', ...(type.kind === 'request' ? { optional: true } : {}) },
   ];
 }
 

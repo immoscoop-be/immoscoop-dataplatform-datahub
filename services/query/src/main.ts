@@ -1,6 +1,6 @@
 import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
-import { metadataAccessToken } from '@datahub/google';
+import { metadataAccessToken, metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
 import { createBigQuery } from './bigquery.js';
@@ -22,8 +22,8 @@ const app = await buildApp({
   api: {
     queries: createQueries(database.db),
     lenses: createLenses(database.db),
-    // What the User may see, asked with their own token (FR-SR-41).
-    catalogue: createCatalogue(required('DATAHUB_CATALOGUE_URL')),
+    // What the User may see, asked with their own token (FR-SR-41); about the Lenses as query itself (DEC-PF-30).
+    catalogue: createCatalogue(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
     bigquery,
     beneath,
     project,
