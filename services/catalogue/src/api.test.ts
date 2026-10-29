@@ -5,13 +5,14 @@ import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { parse, parseAdd, parseCard, parseFieldDescriptions, parseUpdate } from './api.js';
+import { parse, parseAdd, parseCard, parseFieldDescriptions, parseRequest, parseUpdate } from './api.js';
 import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
 import { RegistryUnavailable } from './registry.js';
+import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
@@ -118,6 +119,26 @@ describe('what changes about a Resource, in a request (FR-RC-15, FR-RC-16)', () 
   });
 });
 
+describe('a Request to the Data Team, in a request (FR-CV-08, MSG-QRY-01)', () => {
+  const fields = { type: 'MSG-QRY-01', subjectId: '7C0B5A52-3F4A-4BF0-9A49-2F3F5C1D9A10', subject: ' Partner leads ', reads: 4_800_000_000, threshold: 1_000_000_000, text: ' Once. ' };
+
+  it('takes a query that reads more than the threshold, with an optional word', () => {
+    expect(parseRequest(fields)).toEqual({ ...fields, subjectId: '7c0b5a52-3f4a-4bf0-9a49-2f3f5c1d9a10', subject: 'Partner leads', text: 'Once.' });
+    expect(parseRequest({ ...fields, text: undefined })).toMatchObject({ text: '' });
+  });
+
+  it('refuses what does not fit', () => {
+    expect(parseRequest([])).toMatch(/JSON object/);
+    expect(parseRequest({ ...fields, type: 'MSG-LEN-01' })).toBe('The type of a Request is one of MSG-QRY-01.');
+    expect(parseRequest({ ...fields, subjectId: 'q-20261029-4c2e1a' })).toBe('A query is named by its ID.');
+    expect(parseRequest({ ...fields, subject: ' ' })).toMatch(/1 to 120/);
+    expect(parseRequest({ ...fields, reads: '4.8 GB' })).toMatch(/numbers of bytes/);
+    expect(parseRequest({ ...fields, reads: 900_000_000 })).toBe('A query that reads no more than the threshold needs no Request.');
+    expect(parseRequest({ ...fields, text: 'x'.repeat(501) })).toMatch(/at most 500/);
+    expect(parseRequest({ ...fields, state: 'accepted' })).toBe('A Request has no field state.');
+  });
+});
+
 describe.skipIf(!url)('the routes of Collections', () => {
   const schema = `catalogue_api_${randomBytes(4).toString('hex')}`;
   let database: Database<CatalogueDatabase>;
@@ -182,6 +203,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
             return { direction, nodes: [node('cards', 'marts', 0), ...near], edges: [], truncated: false };
           },
         },
+        requests: createRequests(database.db),
       },
     });
   });
@@ -631,6 +653,38 @@ describe.skipIf(!url)('the routes of Collections', () => {
         /Every exposed table/,
       );
     });
+  });
+
+  it('keeps a Request to run a very large query, one waiting per query and writer (MSG-QRY-01)', async () => {
+    const karel = await user('Karel', [DIGIKOM]);
+    const els = await user('Els', [SALES]);
+    const team = await user('Toon', [], ['datateam']);
+    const query = '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+    const body = { type: 'MSG-QRY-01', subjectId: query, subject: 'Partner leads since 2019', reads: 4_800_000_000, threshold: 1_000_000_000, text: 'For the five-year review.' };
+
+    const sent = await karel('POST', '/requests', body);
+    expect(sent.statusCode).toBe(201);
+    expect(sent.json().request).toMatchObject({ type: 'MSG-QRY-01', subjectKind: 'query', subjectId: query, writerId: 'u-Karel', writerName: 'Karel', reads: 4_800_000_000, text: 'For the five-year review.', state: 'waiting' });
+    // While it waits, sending again gives the same Request back, as it was.
+    const again = await karel('POST', '/requests', { ...body, text: 'Please.' });
+    expect(again.statusCode).toBe(200);
+    expect(again.json().request).toMatchObject({ id: sent.json().request.id, text: 'For the five-year review.' });
+    expect((await els('POST', '/requests', body)).statusCode).toBe(201);
+
+    // Each sees their own; the Data Team sees everyone's on a query.
+    expect((await karel('GET', '/requests?subjectKind=query')).json().requests.map((request: { writerName: string }) => request.writerName)).toEqual(['Karel']);
+    expect((await karel('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests).toHaveLength(1);
+    expect((await team('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests).toHaveLength(2);
+    expect((await team('GET', '/requests?subjectKind=query')).json().requests).toEqual([]);
+    expect((await karel('GET', '/requests')).statusCode).toBe(400);
+    expect((await karel('GET', '/requests?subjectKind=query&subjectId=nope')).statusCode).toBe(400);
+
+    // Once answered, a new one can be sent.
+    await sql`update messages set state = 'refused' where id = ${sent.json().request.id}`.execute(database.db);
+    const after = await karel('POST', '/requests', body);
+    expect(after.statusCode).toBe(201);
+    expect(after.json().request.id).not.toBe(sent.json().request.id);
+    expect((await karel('POST', '/requests', { ...body, reads: 10 })).statusCode).toBe(400);
   });
 
   it('answers 503 rather than guess when identity cannot tell the groups', async () => {

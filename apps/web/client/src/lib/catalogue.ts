@@ -134,6 +134,8 @@ export interface OwnerUnit {
 /** A Resource as its Collection lists it, in the panel. */
 export interface CollectionItem {
   id: string;
+  /** Its full name in BigQuery, by which a query names it (DEC-UX-73). */
+  key: string;
   displayName: string;
   level: number;
   published: boolean;

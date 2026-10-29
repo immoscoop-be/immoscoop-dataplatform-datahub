@@ -7,6 +7,7 @@ import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { createIdentity } from './identity.js';
 import { createRegistry } from './registry.js';
+import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
 
 const database = await connectCloudSql<CatalogueDatabase>(cloudSqlOptionsFromEnv('catalogue'));
@@ -26,6 +27,7 @@ const app = await buildApp({
     }),
     // The lineage around a Resource, asked as catalogue with a Google ID token for registry (DEC-AR-06).
     registry: createRegistry(required('DATAHUB_REGISTRY_URL'), metadataIdToken()),
+    requests: createRequests(database.db),
   },
 });
 app.addHook('onClose', () => database.close());

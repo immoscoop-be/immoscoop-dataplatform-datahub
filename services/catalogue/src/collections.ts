@@ -19,6 +19,8 @@ export interface Viewer {
 /** A Resource as a Collection lists it, in the panel and on its page. */
 export interface CollectionItem {
   id: string;
+  /** Its full name in BigQuery, by which a query names it (DEC-UX-73). */
+  key: string;
   displayName: string;
   level: number;
   /** Not published, only its Owner Unit and the Data Team see it (FR-SR-31). */
@@ -118,7 +120,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       // Its Owner Unit and the Data Team see every Resource in it; others only the published ones (FR-SR-31).
       const resources = await from
         .selectFrom('resources')
-        .select(['id', 'collectionId', 'displayName', 'level', 'withdrawnAt', 'publishedAt', 'deprecatedAt'])
+        .select(['id', 'key', 'collectionId', 'displayName', 'level', 'withdrawnAt', 'publishedAt', 'deprecatedAt'])
         .where('collectionId', 'in', rows.map((row) => row.id))
         .orderBy(sql`lower(display_name)`)
         .execute();
@@ -129,6 +131,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         const list = items.get(resource.collectionId!) ?? [];
         list.push({
           id: resource.id,
+          key: resource.key,
           displayName: resource.displayName,
           level: resource.level,
           published: resource.publishedAt !== null,

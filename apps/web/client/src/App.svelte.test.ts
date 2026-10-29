@@ -65,7 +65,7 @@ const CREDIT = {
   createdAt: '2026-09-03T08:00:00Z',
   createdBy: 'An Claes',
   canManage: true,
-  resources: [{ id: 'r2', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false }],
+  resources: [{ id: 'r2', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false }],
   lastChange: { logId: 'COL-006', params: { resource: 'Weekly lead volume', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
 };
 

@@ -6,6 +6,7 @@ import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Vie
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
+import { REQUEST_TYPES, type RequestFields, type Requests, type RequestType } from './requests.js';
 import {
   type AddItem,
   type AddOutcome,
@@ -28,6 +29,8 @@ export interface ApiOptions {
   serviceCallers: ServiceCallerVerifier;
   /** registry, for the lineage around a Resource (DEC-AR-06). */
   registry: Registry;
+  /** The Requests that wait for the Data Team, such as one to run a very large query (MSG-QRY-01). */
+  requests: Requests;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -61,7 +64,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -487,6 +490,74 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         return reply.code(400).send({ error: 'invalid_request', message: 'What to use instead is another Resource that is not withdrawn.' });
     }
   }
+
+  // A Request to the Data Team (FR-CV-08), sent by query for its User with their own token: a query that
+  // reads more than 1 GB (MSG-QRY-01, DEC-SR-29). It waits until the Data Team answers, in the Message
+  // Centre; one of the same writer on the same query that still waits is given back instead.
+  app.post<{ Body: unknown }>('/requests', async (request, reply) => {
+    const fields = parseRequest(request.body);
+    if (typeof fields === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: fields });
+    }
+    const { request: sent, sent: isNew } = await requests.send(fields, viewer(request));
+    return reply.code(isNew ? 201 : 200).send({ request: sent });
+  });
+
+  // The Requests of the User on queries, on one or on all; the Data Team sees everyone's on one query.
+  app.get<{ Querystring: { subjectKind?: string; subjectId?: string } }>('/requests', async (request, reply) => {
+    const { subjectKind, subjectId } = request.query;
+    if (subjectKind !== 'query') {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Name the kind of object: subjectKind=query.' });
+    }
+    if (subjectId !== undefined && !UUID.test(subjectId)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A query is named by its ID.' });
+    }
+    const who = viewer(request);
+    const everyone = who.dataTeam && subjectId !== undefined;
+    return { requests: await requests.list({ subjectId, writerId: everyone ? undefined : who.id }) };
+  });
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Checks a Request to the Data Team: its type, its query and what one run reads above which threshold. */
+export function parseRequest(body: unknown): RequestFields | string {
+  if (typeof body !== 'object' || body === null || Array.isArray(body)) {
+    return 'Send a JSON object.';
+  }
+  const fields = body as Record<string, unknown>;
+  const unknown = Object.keys(fields).find((key) => !['type', 'subjectId', 'subject', 'reads', 'threshold', 'text'].includes(key));
+  if (unknown) {
+    return `A Request has no field ${unknown}.`;
+  }
+  if (!REQUEST_TYPES.includes(fields.type as RequestType)) {
+    return `The type of a Request is one of ${REQUEST_TYPES.join(', ')}.`;
+  }
+  if (typeof fields.subjectId !== 'string' || !UUID.test(fields.subjectId)) {
+    return 'A query is named by its ID.';
+  }
+  if (typeof fields.subject !== 'string' || fields.subject.trim().length < 1 || fields.subject.trim().length > 120) {
+    return 'The name of the query has 1 to 120 characters.';
+  }
+  const size = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+  if (!size(fields.reads) || !size(fields.threshold)) {
+    return 'What a run reads and the threshold are numbers of bytes.';
+  }
+  if ((fields.reads as number) <= (fields.threshold as number)) {
+    return 'A query that reads no more than the threshold needs no Request.';
+  }
+  const text = fields.text ?? '';
+  if (typeof text !== 'string' || text.trim().length > 500) {
+    return 'A word for the Data Team has at most 500 characters.';
+  }
+  return {
+    type: fields.type as RequestType,
+    subjectId: fields.subjectId.toLowerCase(),
+    subject: fields.subject.trim(),
+    reads: fields.reads as number,
+    threshold: fields.threshold as number,
+    text: text.trim(),
+  };
 }
 
 const TEXT_LIMITS = { businessDescription: 4000, intendedUse: 2000, pitfalls: 2000 } as const;
