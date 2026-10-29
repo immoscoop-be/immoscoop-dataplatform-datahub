@@ -15,8 +15,8 @@ export type Route =
   | { readonly kind: 'newCollection'; readonly section: Section }
   /** A new query, on a Resource when it starts from its page (FR-SR-46). */
   | { readonly kind: 'newQuery'; readonly resource: string | null; readonly section: Section }
-  /** A query, in the section Query (FR-SR-41). */
-  | { readonly kind: 'query'; readonly id: string; readonly section: Section }
+  /** A query, in the section Query (FR-SR-41); with `run`, its history, at one run or at all (DEC-UX-74). */
+  | { readonly kind: 'query'; readonly id: string; readonly run: number | 'all' | null; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -27,6 +27,8 @@ export const collectionPath = (id: string): string => `/collections/${encodeURIC
 export const NEW_COLLECTION = '/collections/new';
 export const NEW_QUERY = '/query/new';
 export const queryPath = (id: string): string => `/query/${encodeURIComponent(id)}`;
+/** The history of a query, at one of its runs or at all of them, as the panel opens it (DEC-UX-74). */
+export const queryRunsPath = (id: string, run?: number): string => `${queryPath(id)}/runs${run === undefined ? '' : `/${run}`}`;
 /** A new query on a Resource, as "Query" on its page starts it (FR-SR-46). */
 export const newQueryPath = (resource: string): string => `${NEW_QUERY}/${encodeURIComponent(resource)}`;
 
@@ -51,7 +53,7 @@ export function route(path: string): Route {
     return { kind: 'me', tab };
   }
   const query = SECTIONS.find((candidate) => candidate.id === 'query');
-  const [, queryId] = /^\/query\/([^/]+)$/.exec(clean) ?? [];
+  const [, queryId, runs, runNumber] = /^\/query\/([^/]+)(\/runs(?:\/([1-9]\d{0,8}))?)?$/.exec(clean) ?? [];
   const [, newOn] = /^\/query\/new\/([^/]+)$/.exec(clean) ?? [];
   try {
     if (query && clean === NEW_QUERY) {
@@ -60,8 +62,8 @@ export function route(path: string): Route {
     if (query && newOn) {
       return { kind: 'newQuery', resource: decodeURIComponent(newOn), section: query };
     }
-    if (query && queryId) {
-      return { kind: 'query', id: decodeURIComponent(queryId), section: query };
+    if (query && queryId && queryId !== 'new') {
+      return { kind: 'query', id: decodeURIComponent(queryId), run: runNumber ? Number(runNumber) : runs ? 'all' : null, section: query };
     }
   } catch {
     return { kind: 'notFound' };

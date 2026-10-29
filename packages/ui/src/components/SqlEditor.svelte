@@ -11,11 +11,22 @@
     businessDescription: string;
   }
 
-  /** A stretch of the SQL that stands out as an error, such as a table outside the Resources of the query. */
+  /** A Parameter the editor suggests after `@`: its name, its type in BigQuery and its value (DEC-UX-71). */
+  export interface ParameterSuggestion {
+    name: string;
+    type: string;
+    value: string;
+  }
+
+  /**
+   * A stretch of the SQL that stands out as an error: a table outside the Resources of the query, or an
+   * `@name` that is not a Parameter, which a click defines.
+   */
   export interface ErrorMark {
     from: number;
     to: number;
     message: string;
+    kind?: 'outside' | 'undefined';
   }
 
   /** The CTEs of the SQL: a line that ends in `name as (`. */
@@ -41,20 +52,26 @@
    * gutter and "⋯ n lines" in its place, and the line numbers keep their count; a folded CTE with an error
    * in it shows it on its "⋯ n lines". It suggests the columns of the Resources of the query, partition
    * and cluster columns first and marked, and beside the list the type and descriptions of the one that
-   * is selected (FR-SR-42, DEC-UX-115). It formats on request, Shift+Alt+F (sql-formatter, which knows
-   * BigQuery). What stands out as an error is given by the Pre-flight.
+   * is selected (FR-SR-42, DEC-UX-115); after `@`, the Parameters. It formats on request, Shift+Alt+F
+   * (sql-formatter, which knows BigQuery). What stands out as an error is given by the Pre-flight; a click on
+   * an `@name` that is not a Parameter defines it (DEC-UX-71).
    */
   let {
     value = $bindable(),
     suggestions,
+    parameters = [],
     marks = [],
+    onmark,
     label,
     readonly = false,
     nonce,
   }: {
     value: string;
     suggestions: readonly Suggestion[];
+    parameters?: readonly ParameterSuggestion[];
     marks?: readonly ErrorMark[];
+    /** A click on an `@name` that is not a Parameter. */
+    onmark?: (mark: ErrorMark) => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -118,7 +135,7 @@
         const length = transaction.state.doc.length;
         const ranges: Range<Decoration>[] = effect.value
           .filter((mark) => mark.from < mark.to && mark.to <= length)
-          .map((mark) => Decoration.mark({ class: 'cm-outside', attributes: { title: mark.message } }).range(mark.from, mark.to));
+          .map((mark) => Decoration.mark({ class: mark.kind === 'undefined' ? 'cm-undefined' : 'cm-outside', attributes: { title: mark.message } }).range(mark.from, mark.to));
         next = { marks: effect.value, decorations: Decoration.set(ranges, true) };
       }
       return next;
@@ -192,6 +209,11 @@
   type Suggested = Completion & { role: Suggestion['role'] };
 
   function complete(context: CompletionContext) {
+    const parameter = context.matchBefore(/@\w*/);
+    if (parameter) {
+      const options: Completion[] = parameters.map((suggested) => ({ label: `@${suggested.name}`, detail: suggested.type, info: suggested.value }));
+      return options.length ? { from: parameter.from, options, validFor: /^@\w*$/ } : null;
+    }
     const word = context.matchBefore(/[\w]+/);
     if (!word && !context.explicit) return null;
     const options: Suggested[] = [...suggestions]
@@ -274,6 +296,15 @@
           EditorState.readOnly.of(readonly),
           EditorView.editable.of(!readonly),
           EditorView.contentAttributes.of({ 'aria-label': label }),
+          EditorView.domEventHandlers({
+            click(event, editorView) {
+              const at = editorView.posAtCoords({ x: event.clientX, y: event.clientY });
+              const mark = at === null ? undefined : editorView.state.field(errors).marks.find((candidate) => candidate.kind === 'undefined' && candidate.from <= at && at <= candidate.to);
+              if (!mark || !onmark) return false;
+              onmark(mark);
+              return true;
+            },
+          }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) value = update.state.doc.toString();
           }),
@@ -321,7 +352,8 @@
   .editor :global(.cm-param) { color: var(--col-magenta); }
   .editor :global(.cm-comment) { color: var(--text-muted); }
   .editor :global(.cm-string) { color: var(--col-teal-ink); }
-  .editor :global(.cm-outside) { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: var(--radius-sm); }
+  .editor :global(.cm-outside), .editor :global(.cm-undefined) { color: var(--signal-warn); text-decoration: underline wavy var(--signal-warn); text-underline-offset: 3px; background: color-mix(in srgb, var(--signal-warn) 12%, transparent); border-radius: var(--radius-sm); }
+  .editor :global(.cm-undefined) { cursor: pointer; }
   .editor :global(.cm-tooltip) { border: 0; background: none; }
   .editor :global(.cm-tooltip-autocomplete) { padding: 5px; border-radius: var(--radius-sm); background: var(--surface-solid); box-shadow: var(--sheet-shadow); outline: 1px solid var(--tint-active); font-family: var(--font-family); font-size: var(--text-small); }
   .editor :global(.cm-tooltip-autocomplete > ul) { font-family: var(--font-family); max-height: 16em; min-width: 300px; }

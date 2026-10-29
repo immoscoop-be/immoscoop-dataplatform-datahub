@@ -153,12 +153,18 @@ const QUERY = {
       fields: [{ name: 'week_start', dataType: 'DATE', description: 'Monday of the week', businessDescription: '' }],
     },
   ],
-  lastRun: null,
+  lastRun: null as unknown,
+  parameters: [] as unknown[],
+  runs: 0,
+  request: null as unknown,
+  startedFrom: null,
 };
 
 const RUN = {
   ref: 'q-20261029-4c2e1a',
   number: 1,
+  sql: QUERY.sql,
+  parameters: [] as unknown[],
   state: 'done',
   error: null,
   userName: 'Max Verstraete',
@@ -178,9 +184,17 @@ const RUN = {
 
 const PAGE = { number: 1, size: 100, totalRows: 210, columns: RUN.columns, rows: [['2026-10-19', '413'], ['2026-10-12', null]] };
 
-/** The Pre-flight query gives: 840 MB for SQL that says so, a table outside, or 80 MB. */
-function preflightOf(sql: string) {
-  const base = { partitions: 4, problems: [] as unknown[], warnings: [] as unknown[], thresholds: { approve: 100_000_000, request: 1_000_000_000 } };
+/**
+ * The Pre-flight query gives: an @name that is not a Parameter, 4.8 GB or 840 MB for SQL that says so, a
+ * table outside, or 80 MB.
+ */
+function preflightOf(sql: string, parameters: { name: string }[] = []) {
+  const base = { partitions: 4, problems: [] as unknown[], warnings: [] as unknown[], thresholds: { approve: 100_000_000, request: 1_000_000_000 }, unused: [] as string[] };
+  const at = sql.indexOf('@leadChannel');
+  if (at >= 0 && !parameters.some((parameter) => parameter.name === 'leadChannel')) {
+    return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'undefinedParameter', name: 'leadChannel', start: at, end: at + 12, suggestedKind: 'choice' }] };
+  }
+  if (sql.includes('-- every year')) return { ...base, runnable: true, bytes: 4_800_000_000, range: 'request' };
   if (sql.includes('partner_contracts')) {
     const start = sql.indexOf('`immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts`');
     return { ...base, runnable: false, bytes: null, range: null, partitions: null, problems: [{ kind: 'outside', name: 'immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts', start, end: start + 66 }] };
@@ -320,7 +334,9 @@ function serve({
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     if (path === '/queries' && method === 'GET') {
-      return json({ queries: queries.map(({ id, name, ownerName, resources: on, lastRunAt, createdAt }) => ({ id, name, ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0 })) });
+      return json({
+        queries: queries.map(({ id, name, ownerName, resources: on, lastRunAt, createdAt, request }) => ({ id, name, ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0, request: request ?? null })),
+      });
     }
     if (path === '/queries' && method === 'POST') {
       const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
@@ -333,7 +349,16 @@ function serve({
       return json({ query });
     }
     if (query && path.endsWith('/preflight')) {
-      return json({ preflight: preflightOf((JSON.parse(init.body as string) as { sql: string }).sql) });
+      const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
+      return json({ preflight: preflightOf(body.sql, body.parameters) });
+    }
+    if (query && path.startsWith(`/queries/${query.id as string}/runs?`)) {
+      return json({ runs: (query.history as unknown[] | undefined) ?? (query.lastRun ? [query.lastRun] : []) });
+    }
+    if (query && path.endsWith('/requests')) {
+      const body = JSON.parse(init.body as string) as { text: string };
+      query.request = { state: 'waiting', sentAt: new Date().toISOString(), reads: 4_800_000_000, text: body.text };
+      return json({ request: query.request, preflight: preflightOf(query.sql as string) }, 201);
     }
     if (query && path.endsWith('/runs')) {
       const body = JSON.parse(init.body as string) as { sql: string; approve: boolean };
@@ -342,6 +367,12 @@ function serve({
         return json({ error: 'approval_needed', message: 'Approve it.', preflight: checked }, 409);
       }
       return json({ run: { ...RUN, approved: body.approve }, page: PAGE }, 201);
+    }
+    if (path === '/runs/q-20261027-0b1d2e/rows?page=1') {
+      return json({ error: 'expired' }, 410);
+    }
+    if (path === `/runs/${RUN.ref}/rows?page=1`) {
+      return json({ page: PAGE });
     }
     if (path === `/runs/${RUN.ref}/rows?page=2`) {
       return json({ page: { ...PAGE, number: 2, rows: [['2026-08-03', '7']] } });
@@ -882,7 +913,8 @@ describe('Query', () => {
     open('/query');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' })).toBeTruthy();
+    // The page of a query loads its editor the first time it opens.
+    expect(await main.findByRole('heading', { level: 1, name: 'Leads per source name' }, { timeout: 3000 })).toBeTruthy();
     expect(location.pathname).toBe('/query/q1');
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     expect(panel.getByText('Vandaag')).toBeTruthy();
@@ -922,7 +954,7 @@ describe('Query', () => {
     expect(main.getByText('q-20261029-4c2e1a')).toBeTruthy();
     expect(main.getByText('210 rijen')).toBeTruthy();
     expect(main.getByText('null')).toBeTruthy();
-    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: QUERY.sql, approve: false } });
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: QUERY.sql, parameters: [], approve: false } });
     await fireEvent.click(main.getByRole('button', { name: 'Volgende pagina' }));
     await vi.waitFor(() => expect(main.getByText('2026-08-03')).toBeTruthy());
   });
@@ -935,7 +967,7 @@ describe('Query', () => {
     const run = await main.findByRole('button', { name: /Goedkeuren en uitvoeren\s*840 MB/ }, { timeout: 3000 });
     await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
     await fireEvent.click(run);
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, approve: true } }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, parameters: [], approve: true } }));
   });
 
   it('names a table outside its Resources, and warns without a partition filter, with the filter to add (DEC-UX-73, FR-SR-40)', async () => {
@@ -944,7 +976,8 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    expect(await main.findByText(/is geen van de Resources van deze query/, {}, { timeout: 3000 })).toBeTruthy();
+    // Next to its Resources and in the bar, in place of the Pre-flight.
+    await vi.waitFor(() => expect(main.getAllByText(/is geen van de Resources van deze query/)).toHaveLength(2), { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
@@ -980,6 +1013,86 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     expect(await main.findByText('Zonder filter op week_start leest hij heel Weekly lead volume; met een filter op de recente partities hoogstens 82 MB.', {}, { timeout: 3000 })).toBeTruthy();
     await fireEvent.click(main.getByRole('button', { name: 'Voeg de filter toe' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: `${plain} where week_start >= '2026-10-01'` } }), { timeout: 3000 });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: `${plain} where week_start >= '2026-10-01'`, parameters: [] } }), { timeout: 3000 });
+  });
+
+  const withParameters = 'select week_start\nfrom `immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume`\nwhere week_start >= @dateFrom and lead_source = @leadChannel\n';
+  const dateFrom = { name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' };
+
+  it('defines an @name of the SQL as a Parameter, its kind suggested, and checks the SQL with it (DEC-UX-71, DEC-UX-117, DEC-UX-118)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, sql: withParameters, parameters: [dateFrom] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // A suggested function says what it gives today, worked out by Data Hub itself.
+    expect(await main.findByText(/vandaag 1 jan/)).toBeTruthy();
+    expect(await main.findByText('@leadChannel staat in de query, maar is geen Parameter.', {}, { timeout: 3000 })).toBeTruthy();
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.click(main.getByRole('button', { name: 'Definieer hem' }));
+    const window = within(await screen.findByRole('dialog', { name: '@leadChannel definiëren' }));
+    expect(window.getByRole('radio', { name: /Keuze/ }).getAttribute('aria-checked')).toBe('true');
+    await fireEvent.input(window.getByRole('textbox', { name: 'De lijst' }), { target: { value: 'Form\nPhone\nForm' } });
+    await fireEvent.click(window.getByRole('button', { name: 'Toevoegen' }));
+    const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
+    await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
+  });
+
+  it('shows its history, previews a run read only, and applies it to the query (DEC-UX-74, DEC-UX-99)', async () => {
+    const first = { ...RUN, ref: 'q-20261027-0b1d2e', number: 1, sql: withParameters, parameters: [dateFrom, { name: 'leadChannel', kind: 'choice', value: 'Phone', list: ['Form', 'Phone'] }], startedAt: '2026-10-27T09:14:00Z' };
+    const second = { ...RUN, number: 2 };
+    const calls = serve({ queries: [{ ...QUERY, lastRun: second, lastRunAt: second.startedAt, runs: 2, history: [second, first] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // The query that is open unfolds in the panel to its last runs.
+    const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect((await panel.findByRole('link', { name: /Uitvoering 1/ })).getAttribute('href')).toBe('/query/q1/runs/1');
+    await fireEvent.click(await main.findByRole('radio', { name: 'Geschiedenis · 2 uitvoeringen' }));
+    expect(await main.findByText('Nu getoond')).toBeTruthy();
+    expect(main.getByText(/een nieuwe query op Weekly lead volume/)).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Bekijken' }));
+    // Its result is no longer kept: it runs again as a new run, or its SQL and values are applied.
+    expect(await main.findByText(/Uitvoering 1 bekijken/)).toBeTruthy();
+    expect(await main.findByRole('button', { name: /Opnieuw uitvoeren/ })).toBeTruthy();
+    expect(main.getByText(/met @dateFrom 1 jan\.? 2026, @leadChannel Phone/)).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: /Overnemen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: first.parameters } }), { timeout: 3000 });
+  });
+
+  it('sends a query above 1 GB to the Data Team, and says since when it waits (DEC-UX-116, MSG-QRY-01)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, sql: `${QUERY.sql}-- every year\n` }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const send = await main.findByRole('button', { name: /Naar het Data Team sturen\s*4,8 GB/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect((send as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.click(send);
+    expect(main.getByText(/iemand van het Data Team aanvaardt hem eerst/)).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: /Een woordje voor het Data Team/ }), { target: { value: 'For the five-year review.' } });
+    await fireEvent.click(main.getByRole('button', { name: /Versturen/ }));
+    expect(await main.findByText(/Wacht op het Data Team sinds \d\d:\d\d/)).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/requests', body: { sql: `${QUERY.sql}-- every year\n`, parameters: [], text: 'For the five-year review.' } });
+    expect(await within(screen.getByRole('complementary', { name: 'Query' })).findByText('Naar het Data Team')).toBeTruthy();
+  });
+
+  it('starts a new query without one of its Resources, taking the SQL and Parameters along (DEC-UX-73)', async () => {
+    const sources = { ...QUERY.resources[0], id: 'r9', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.lead_sources', displayName: 'Lead sources', partition: null };
+    const calls = serve({ queries: [{ ...QUERY, resources: [QUERY.resources[0], sources], parameters: [dateFrom] }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: 'Lead sources weghalen' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Zonder Lead sources' }));
+    const name = sheet.getByRole('textbox', { name: /Naam/ }) as HTMLInputElement;
+    expect(name.value).toMatch(/^Weekly lead volume, \d+ /);
+    expect(sheet.getByText('Nog geen Lens gebruikt deze Resources.')).toBeTruthy();
+    await fireEvent.click(sheet.getByRole('button', { name: /De nieuwe query starten/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/query/q-made'));
+    expect(calls).toContainEqual({
+      method: 'POST',
+      path: '/queries',
+      body: { name: name.value, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
+    });
   });
 });
