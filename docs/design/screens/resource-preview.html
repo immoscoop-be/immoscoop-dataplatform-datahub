@@ -4,8 +4,10 @@
   Every preview is a query: a Pre-flight says what it scans, and the result carries its Query ID, kept in the Query Log.
   The weeks are the partition column and the lead source the first cluster column, so a preview reads only what it shows.
   A result shows 100 rows a page; a page is read from the same run, never a new query (FR-SR-51, DEC-SR-30).
-  Requirements: FR-SR-25, FR-SR-36, FR-SR-38, FR-SR-39, FR-SR-40, FR-SR-41, FR-SR-51, FR-LN-05, FR-LN-06, FR-CH-01, FR-CH-02
-  Decisions: DEC-UX-98, DEC-SR-29, DEC-SR-30, DEC-SR-34.
+  The partition column offers its newest 1, 4 or 12 partitions that hold rows (DEC-SR-39). No export tile: a regular export
+  is asked of the Data Team elsewhere (DEC-UX-120).
+  Requirements: FR-SR-25, FR-SR-36, FR-SR-38, FR-SR-39, FR-SR-40, FR-SR-41, FR-SR-51, FR-LN-05, FR-LN-06
+  Decisions: DEC-UX-98, DEC-UX-120, DEC-SR-29, DEC-SR-30, DEC-SR-34, DEC-SR-37, DEC-SR-39.
   Related screens: resource-detail.html (the other tabs), resource-history.html (the queries on it), query.html (Query).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -123,7 +125,7 @@
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Overview</a>
   <a class="tab" href="resource-detail.html" role="tab" aria-selected="false" style="text-decoration:none">Columns</a>
   <a class="tab" href="resource-lineage.html" role="tab" aria-selected="false" style="text-decoration:none">Lineage</a>
-  <a class="tab" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">12</span></a>
+  <a class="tab" data-for="owner datateam" href="resource-history.html" role="tab" aria-selected="false" style="text-decoration:none">History <span class="count">12</span></a>
   <button class="tab on" role="tab" aria-selected="true">Preview</button>
  </div>
  <div class="tab-content card">
@@ -151,9 +153,8 @@
     </span>
    </span>
   </div>
-  <div class="grid" style="grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px">
+  <div class="grid" style="grid-template-columns:minmax(0,1fr);gap:10px;margin-top:14px">
    <div class="sub-tile hint"><i class="ph-fill ph-terminal-window"></i><div><div style="font-weight:500">Your own question?</div><p>Write SQL in Query, on this Resource and any other you may see. Every answer carries its Query ID.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-terminal-window"></i> Query this Resource</a></div></div></div>
-   <div class="sub-tile hint"><i class="ph-fill ph-truck"></i><div><div style="font-weight:500">Need the data regularly?</div><p>Data Hub does not export large or frequent sets. The Data Team sets up a structural export for you.</p><a class="text-link" href="#"><span>Ask the Data Team</span><i class="ph ph-arrow-right"></i></a></div></div>
   </div>
  </div>
  <div class="rg-menu" id="rg-menu" role="menu" hidden>
