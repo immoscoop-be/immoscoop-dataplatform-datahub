@@ -1,3 +1,4 @@
+import { askedWords, HEADLINE, type Marked, marked } from '@datahub/db';
 import { type Kysely, type Selectable, sql } from 'kysely';
 import type { LensLogId, LensParameterRow, LensRange, LensState, Missing, NamedResource, QueryDatabase } from './database.js';
 import type { Query, Viewer } from './queries.js';
@@ -87,11 +88,7 @@ export interface NewLens {
   reads: number;
 }
 
-/** A piece of a text, and whether it is a word the question shares (DEC-UX-23). */
-export interface Marked {
-  text: string;
-  shared: boolean;
-}
+export type { Marked };
 
 /** What a Lens shares with the words of a question: how many, and where they are (FR-SR-48, DEC-SR-42). */
 export interface SharedWords {
@@ -137,21 +134,6 @@ const lensOf = (row: Selectable<QueryDatabase['lenses']>): Lens => ({
   reads: Number(row.reads),
   stoppedReads: row.stoppedReads === null ? null : Number(row.stoppedReads),
 });
-
-/** The marks of `ts_headline` around a shared word: characters no text of a Lens holds. */
-const START = '\u0001';
-const STOP = '\u0002';
-
-/** A text with its shared words marked, in pieces. */
-function marked(text: string): Marked[] {
-  const pieces: Marked[] = [];
-  for (const [index, part] of text.split(START).entries()) {
-    const [word, rest] = index === 0 ? [null, part] : [part.split(STOP)[0] ?? '', part.split(STOP).slice(1).join('')];
-    if (word) pieces.push({ text: word, shared: true });
-    if (rest) pieces.push({ text: rest, shared: false });
-  }
-  return pieces;
-}
 
 /** How BigQuery names what is missing, as the Log says it: a column, or a table. */
 const missingText = (missing: Omit<Missing, 'since'>) => missing.name;
@@ -330,16 +312,9 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
 
     async words(question, ids) {
       if (ids.length === 0) return new Map();
-      const options = `StartSel=${START}, StopSel=${STOP}, HighlightAll=true`;
-      // The words of the question as lexemes, joined by "or" without being stemmed again.
+      const options = HEADLINE;
       const { rows } = await sql<{ id: string; shared: string; name: string; question: string; shows: string; tags: string[] }>`
-        with asked as (
-          select tsvector_to_array(to_tsvector('lens_words', ${question})) as words
-        ), query as (
-          select words, case when cardinality(words) = 0 then null
-            else array_to_string(array(select quote_literal(word) from unnest(words) as word), ' | ')::tsquery end as q
-          from asked
-        ), lens as (
+        with query as ${askedWords('lens_words', question)}, lens as (
           select l.*, array(select jsonb_array_elements_text(l.tags)) as tag_list from lenses l where l.id = any(${ids as string[]}::uuid[])
         )
         select lens.id,

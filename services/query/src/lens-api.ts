@@ -333,6 +333,31 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     }
   });
 
+  // The Lenses the User sees that share words with a question, for the search of the start screen of
+  // Collections (FR-CO-37, DEC-UX-127): those that share most words first, the shared words marked.
+  app.get<{ Querystring: { question?: string } }>('/lenses/search', async (request, reply) => {
+    const question = (request.query.question ?? '').trim();
+    if (question.length > LIMITS.question) return reply.code(400).send({ error: 'invalid_request', message: `The question has at most ${LIMITS.question} characters.` });
+    let sight: Sight;
+    try {
+      sight = await sightOf(request);
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const seen = (await lenses.list()).filter((lens) => sees(sight, lens));
+    const words = await lenses.words(question, seen.map((lens) => lens.id));
+    const found = seen
+      .flatMap((lens) => {
+        const shared = words.get(lens.id);
+        return shared && shared.shared > 0
+          ? [{ ...itemOf(sight, lens), shared: shared.shared, marked: { name: shared.name, question: shared.question, shows: shared.shows }, sharedTags: shared.tags }]
+          : [];
+      })
+      .sort((a, b) => b.shared - a.shared || (b.publishedAt?.getTime() ?? 0) - (a.publishedAt?.getTime() ?? 0) || a.name.localeCompare(b.name))
+      .slice(0, 20);
+    return { lenses: found };
+  });
+
   // The Lenses a new query may reuse (FR-SR-47, DEC-UX-22): those on exactly its Resources, then those on
   // them and more; only Lenses the User may use and that run now (DEC-SR-43); in each group, those that
   // share most words with its question first, the shared words marked (FR-SR-48, DEC-SR-42).
