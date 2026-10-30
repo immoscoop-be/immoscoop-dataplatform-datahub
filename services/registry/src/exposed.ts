@@ -15,6 +15,8 @@ export interface ExposedColumn {
 export interface ExposedTable {
   /** The Key of the Resource: `database.schema.table` in lowercase, as `relation` (DEC-SR-04). */
   key: string;
+  /** The same full name in its own case, as BigQuery knows it: BigQuery names are case-sensitive. */
+  fullName: string;
   nodeId: string;
   name: string;
   resourceType: string;
@@ -66,6 +68,7 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
         tables
           .set(node.relation, {
             key: node.relation,
+            fullName: fullNameOf(node),
             nodeId: node.uniqueId,
             name: node.name,
             resourceType: node.resourceType,
@@ -85,4 +88,10 @@ export function exposedTables(set: NormalisedSet): { tables: ExposedTable[]; emp
     }
   }
   return { tables: [...tables.values()].sort((a, b) => a.key.localeCompare(b.key)), empty };
+}
+
+/** `database.schema.table` as dbt names them, without quotes: the Key in its own case. */
+function fullNameOf(node: NormalisedSet['nodes'][number]): string {
+  const parts = [node.databaseName, node.schemaName, node.tableName];
+  return parts.every((part) => part) ? parts.map((part) => (part as string).replace(/[`"]/g, '')).join('.') : (node.relation as string);
 }

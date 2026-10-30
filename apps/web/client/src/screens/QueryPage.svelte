@@ -406,7 +406,9 @@
       .flatMap((problem) => (problem.kind === 'outside' ? [problem.name] : []))
       .filter((name, index, all) => all.indexOf(name) === index)
       .map((name) => {
-        const item = (collections ?? []).flatMap((collection) => collection.resources).find((candidate) => candidate.key === name || (name.split('.').length === 2 && candidate.key.endsWith(`.${name}`)));
+        // The Key is in lower case; the SQL names the table in its own case.
+        const written = name.toLowerCase();
+        const item = (collections ?? []).flatMap((collection) => collection.resources).find((candidate) => candidate.key === written || (written.split('.').length === 2 && candidate.key.endsWith(`.${written}`)));
         return { name, resource: item && !query?.resources.some((resource) => resource.id === item.id) ? item.id : null };
       }),
   );

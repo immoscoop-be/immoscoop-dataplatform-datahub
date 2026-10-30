@@ -39,6 +39,15 @@
     return () => before?.focus?.();
   });
 
+  /**
+   * It hangs on the page itself, as a pop-out does: in a frame with a backdrop filter, as the main area has
+   * over a picture, a fixed window would be placed from that frame, and moving it would jump aside.
+   */
+  function portal(node: HTMLElement): () => void {
+    document.body.appendChild(node);
+    return () => node.remove();
+  }
+
   /** Moves it by its head, kept within the window of the browser. */
   function grab(event: PointerEvent): void {
     if (!win || (event.target as HTMLElement).closest('button, a, input')) return;
@@ -64,6 +73,7 @@
   aria-label={title}
   tabindex="-1"
   bind:this={win}
+  {@attach portal}
   style:left={place ? `${place.left}px` : null}
   style:top={place ? `${place.top}px` : null}
   style:right={place ? 'auto' : null}
@@ -89,7 +99,7 @@
 </div>
 
 <style>
-  .float { position: fixed; z-index: 25; right: 24px; bottom: 24px; width: 400px; max-width: calc(100vw - 48px); max-height: calc(100vh - 48px); display: flex; flex-direction: column;
+  .float { --card: var(--surface-solid); position: fixed; z-index: 25; right: 24px; bottom: 24px; width: 400px; max-width: calc(100vw - 48px); max-height: calc(100vh - 48px); display: flex; flex-direction: column;
     box-sizing: border-box; border-radius: var(--radius-xl); background: var(--surface-solid); outline: 1px solid var(--tint-active); box-shadow: var(--sheet-shadow); padding: 10px 14px 12px; }
   .float:focus { outline: 1px solid var(--tint-active); }
   .wide { width: 470px; }

@@ -6,6 +6,7 @@ import { choicesOf, chosenParameters, createStorage, partitionStart, previewSql,
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
   key: 'immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume',
+  fullName: 'immoscoop-dataplatform.dbt_prod_stacks.weekly_lead_volume',
   displayName: 'Weekly lead volume',
   collectionId: 'c-credit',
   level: 3,
