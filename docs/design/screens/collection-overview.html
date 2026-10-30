@@ -43,7 +43,20 @@
    <button class="icon-btn" aria-label="New Collection"><i class="ph-fill ph-plus-circle"></i></button>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
-  <label class="search card" style="margin:16px 0 4px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+  <!-- What the Collections unfold to, Resources, Lenses or both, is ticked in the filter next to the search; with one left
+       out, a Collection without the other leaves the panel, and with only Lenses each unfolds to them (DEC-UX-151). -->
+  <div class="q-search-row">
+   <label class="search card"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Resources and Lenses"></label>
+   <button class="icon-btn q-filter-toggle" aria-expanded="false" aria-controls="c-filter" aria-label="Filter: show Resources, Lenses or both" title="Filter"><i class="ph ph-sliders-horizontal"></i></button>
+  </div>
+  <form class="q-filter card" id="c-filter" hidden>
+   <fieldset>
+    <legend>Show</legend>
+    <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Resources</span><span class="meta">the tables of a Collection</span></span><span class="count">23</span></label>
+    <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Lenses</span><span class="meta">the questions answered on its Resources</span></span><span class="count">9</span></label>
+   </fieldset>
+   <div class="q-filter-foot"><button type="reset" class="text-link" disabled>Reset</button><span class="meta">Only your panel changes</span></div>
+  </form>
   <div style="height:14px" data-for="datateam"></div>
   <div class="tree-group card unassigned" data-for="datateam">
    <div class="tree-head"><a class="tree-link" href="#"><span class="item-icon"><i class="ph ph-tray"></i></span><span class="tree-name"><span class="item-title">Without a Collection</span><span class="meta"><b class="count-badge">3</b> waiting · Data Team only</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Without a Collection holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>

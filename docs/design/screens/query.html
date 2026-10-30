@@ -73,7 +73,7 @@
        under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). ?filter=open shows it open. -->
   <div class="q-search-row">
    <label class="search card"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
-   <button class="icon-btn q-filter-toggle" id="q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
+   <button class="icon-btn q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
   </div>
   <form class="q-filter card" id="q-filter" hidden>
    <fieldset>
@@ -84,7 +84,7 @@
    </fieldset>
    <div class="q-filter-foot"><button type="reset" class="text-link">Reset</button><span class="meta">Only your panel changes</span></div>
   </form>
-  <p class="q-filter-on" id="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
+  <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
   <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px" data-for="datateam">
    <button class="seg on" data-target="yours" role="tab" aria-selected="true">Yours</button>
    <button class="seg" data-target="all" role="tab" aria-selected="false">All</button>
@@ -343,20 +343,6 @@
     // Next to the result, the Parameters start folded, so the editor keeps the room (DEC-UX-147).
     document.getElementById('param-box').classList.remove('open');
   }
-</script>
-<script>
-  // The prototype switch: ?filter=open shows the form folded open.
-  if (new URLSearchParams(location.search).get('filter') === 'open') {
-    document.getElementById('q-filter').hidden = false;
-    document.getElementById('q-filter-on').hidden = true;
-    document.getElementById('q-filter-toggle').setAttribute('aria-expanded', 'true');
-  }
-  document.getElementById('q-filter-toggle').addEventListener('click', (event) => {
-    const form = document.getElementById('q-filter');
-    form.hidden = !form.hidden;
-    document.getElementById('q-filter-on').hidden = !form.hidden;
-    event.currentTarget.setAttribute('aria-expanded', String(!form.hidden));
-  });
 </script>
 </main>
 </div>

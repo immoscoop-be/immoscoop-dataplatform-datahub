@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PanelFilter from '@datahub/ui/components/PanelFilter.svelte';
   import Search from '@datahub/ui/components/Search.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -56,8 +57,6 @@
   let unfolded = $state(false);
   let scope = $state<'yours' | 'all'>('yours');
   let show = $state<Shown[]>([]);
-  /** Whether the filter is folded open. */
-  let filtering = $state(false);
   /** How many queries each day holds: undefined while they come, null when they could not be read. */
   let days = $state<QueryDay[] | null | undefined>();
   /** The queries of the periods read so far, by period; null when they could not be read. */
@@ -177,10 +176,6 @@
     return [all ? item.ownerName : null, on, ran].filter(Boolean).join(' · ');
   }
 
-  function toggle(kind: Shown) {
-    show = shown.has(kind) ? show.filter((other) => other !== kind) : SHOWN.filter((other) => other === kind || shown.has(other));
-  }
-
   async function hide(item: QueryItem) {
     const hidden = !item.hidden;
     try {
@@ -233,47 +228,16 @@
 {/snippet}
 
 <!-- What the panel also shows folds open next to the search, as a small form (DEC-UX-150). -->
-<div class="search-row">
-  <div class="search"><Search bind:value={search} placeholder={t('query.search')} /></div>
-  <button type="button" class="filter-toggle" aria-expanded={filtering} aria-controls="query-show" aria-label={t('query.show.toggle')} title={t('query.show.toggle')} onclick={() => (filtering = !filtering)}>
-    <Icon name="sliders-horizontal" />{#if show.length > 0}<span class="badge" aria-hidden="true">{show.length}</span>{/if}
-  </button>
-</div>
-
-<form
-  class="show card"
+<PanelFilter
   id="query-show"
-  hidden={!filtering}
-  onsubmit={(event) => event.preventDefault()}
-  onreset={(event) => {
-    event.preventDefault();
-    show = [];
-  }}
+  label={t('query.show.toggle')}
+  legend={t('query.show')}
+  kinds={SHOWN.map((kind) => ({ value: kind, name: t(KINDS[kind].name), detail: t(KINDS[kind].detail), count: days ? totals[kind] : undefined }))}
+  bind:chosen={show}
+  defaults={[]}
 >
-  <fieldset>
-    <legend>{t('query.show')}</legend>
-    {#each SHOWN as kind (kind)}
-      <label class="option">
-        <input type="checkbox" checked={shown.has(kind)} onchange={() => toggle(kind)} />
-        <span class="option-text"><span>{t(KINDS[kind].name)}</span><span class="meta">{t(KINDS[kind].detail)}</span></span>
-        <span class="count">{totals[kind]}</span>
-      </label>
-    {/each}
-  </fieldset>
-  <div class="foot">
-    <button type="reset" class="text-link" disabled={show.length === 0}>{t('query.show.reset')}</button>
-    <span class="meta">{t('query.show.only')}</span>
-  </div>
-</form>
-
-{#if !filtering && show.length > 0}
-  <p class="on">
-    <span>{t('query.show.on')}</span>
-    {#each show as kind (kind)}
-      <span class="shown">{t(KINDS[kind].name)}<button type="button" class="off" aria-label={t('query.show.off', { kind: t(KINDS[kind].name) })} onclick={() => toggle(kind)}><Icon name="x" /></button></span>
-    {/each}
-  </p>
-{/if}
+  <Search bind:value={search} placeholder={t('query.search')} />
+</PanelFilter>
 
 {#if dataTeam}
   <div class="filter">
@@ -333,36 +297,7 @@
 {/if}
 
 <style>
-  .search-row { display: flex; align-items: center; gap: 6px; margin: 16px 0 12px; }
-  .search { flex: 1; min-width: 0; }
   .filter { margin: 2px 0 8px; }
-  /* The filter: a button with how many kinds it adds, and the small form it folds open (DEC-UX-150). */
-  .filter-toggle { position: relative; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--radius-md); background: none; color: var(--text-secondary);
-    display: inline-flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
-  .filter-toggle:hover { background: var(--tint-hover); }
-  .filter-toggle[aria-expanded='true'] { background: var(--surface-sub); color: var(--text-primary); }
-  .filter-toggle:focus-visible { outline: 2px solid var(--text-secondary); }
-  .badge { position: absolute; top: 2px; right: 2px; min-width: 15px; height: 15px; padding: 0 4px; box-sizing: border-box; border-radius: var(--radius-pill);
-    background: var(--text-primary); color: var(--surface-solid); font-size: 10px; line-height: 15px; text-align: center; }
-  .show { margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md); }
-  .show[hidden] { display: none; }
-  .show fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 2px; min-width: 0; }
-  .show legend { padding: 0; margin-bottom: 6px; font-size: var(--text-meta); color: var(--text-muted); }
-  .option { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: var(--radius-sm); cursor: pointer; }
-  .option:hover { background: var(--tint-hover); }
-  .option input { accent-color: var(--text-primary); margin: 0; }
-  .option-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: var(--text-small); }
-  .option .count { font-size: var(--text-meta); }
-  .foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-hover); }
-  .foot .meta { margin-left: auto; }
-  .text-link { all: unset; cursor: pointer; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
-  .text-link:disabled { cursor: default; color: var(--text-muted); text-decoration: none; }
-  .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
-  .on { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: -4px 4px 8px; font-size: var(--text-meta); color: var(--text-secondary); }
-  .shown { display: inline-flex; align-items: center; gap: 2px; }
-  .off { all: unset; cursor: pointer; display: inline-flex; padding: 2px; border-radius: var(--radius-sm); color: var(--text-muted); }
-  .off:hover { color: var(--text-primary); }
-  .off:focus-visible { outline: 2px solid var(--text-secondary); }
   .count { color: var(--text-muted); }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .period { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }

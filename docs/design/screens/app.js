@@ -1069,3 +1069,17 @@ if (document.querySelector('.lin')) {
   document.addEventListener('click', refresh);
   document.querySelectorAll('.lin-wing').forEach(w => w.addEventListener('scroll', redraw));
 }
+
+// The filter of a panel folds open its small form; folded, the line under the search says what differs.
+// ?filter=open shows it open (DEC-UX-150).
+document.querySelectorAll('.q-filter-toggle').forEach((toggle) => {
+  const form = document.getElementById(toggle.getAttribute('aria-controls'));
+  const line = form?.nextElementSibling?.classList.contains('q-filter-on') ? form.nextElementSibling : null;
+  const fold = (open) => {
+    form.hidden = !open;
+    if (line) line.hidden = open;
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+  if (new URLSearchParams(location.search).get('filter') === 'open') fold(true);
+  toggle.addEventListener('click', () => fold(form.hidden));
+});

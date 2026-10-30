@@ -1687,6 +1687,29 @@ describe('Lenses', () => {
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
   });
 
+  it('shows the Collections with Resources, Lenses or both, as the filter next to the search says (DEC-UX-150, DEC-UX-151)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const filter = await panel.findByRole('button', { name: 'Filter: toon Resources, Lenses of beide' });
+    await fireEvent.click(filter);
+    const resources = panel.getByRole('checkbox', { name: /^Resources/ }) as HTMLInputElement;
+    const lenses = panel.getByRole('checkbox', { name: /^Lenses/ }) as HTMLInputElement;
+    expect(resources.checked && lenses.checked).toBe(true);
+    // Only Lenses: the Collections that hold one, unfolded to them, and no Resources.
+    await fireEvent.click(resources);
+    expect(await panel.findByRole('link', { name: /Leads per source, week by week/ })).toBeTruthy();
+    expect(panel.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/resources/'))).toEqual([]);
+    // One kind always stays.
+    expect(lenses.disabled).toBe(true);
+    // Folded, one line says what is left out, and its cross brings it back.
+    await fireEvent.click(filter);
+    expect(panel.getByText('Niet getoond:')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Resources weer tonen' }));
+    expect(panel.queryByText('Niet getoond:')).toBeNull();
+  });
+
   it('shows a Broken Lens with what it misses, Run off and no result, and a red dot where it is listed (FR-LE-17, DEC-UX-81)', async () => {
     const calls = serve({ groups: ['g1'], lenses: [{ ...LENS, broken: { kind: 'column', name: 'lead_channel', since: '2026-10-28T05:17:00Z' } }] });
     open('/lenses/l1');

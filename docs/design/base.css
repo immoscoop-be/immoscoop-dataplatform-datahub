@@ -1372,8 +1372,9 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .q-work.side .q-body { display: flex; flex-direction: column; }
 .q-body > .param-box { min-height: 0; overflow: auto; margin: 0; }
 .q-body > .sql-fold { min-height: 0; margin: 0; }
-/* The filter of the panel of Query: previews, the queries of Lenses and hidden queries, ticked in a small form
-   that folds open under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). */
+/* The filter of a panel: what it also shows, or leaves out, ticked in a small form that folds open under the
+   search; folded, one line says what differs (DEC-UX-150). Query: previews, Lenses and hidden queries (DEC-UX-137);
+   Collections: Resources, Lenses or both (DEC-UX-151). */
 .q-search-row { display: flex; align-items: center; gap: 6px; margin: 16px 0 10px; }
 .q-search-row .search { flex: 1; min-width: 0; }
 .q-filter-toggle { position: relative; flex: none; width: 36px; height: 36px; font-size: 16px; }
@@ -1392,5 +1393,6 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .q-filter-on { display: flex; align-items: center; gap: 6px; margin: -4px 4px 8px; font-size: var(--text-meta); color: var(--text-secondary); }
 .q-filter-x { all: unset; cursor: pointer; display: inline-flex; color: var(--text-muted); }
 .q-filter-x:hover { color: var(--text-primary); }
+.q-filter-foot .text-link:disabled { color: var(--text-muted); text-decoration: none; cursor: default; }
 /* Day and night switch at once: while the theme changes, nothing slides on its way (DEC-UX-149). */
 :root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after { transition: none !important; }
