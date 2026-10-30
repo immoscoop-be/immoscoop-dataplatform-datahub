@@ -224,6 +224,15 @@ registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every N
 
 When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain is suggested from what the model declares, for the Data Admin to confirm ([DEC-RC-09](05-resource-card.md#dec-rc-09)); the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 
+<a id="fr-ar-18"></a>
+### FR-AR-18 · The Data Team sets the Source Jobs on a page of Data Hub
+
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat
+
+The Data Team sets on a page of Data Hub which dbt projects Data Hub follows and which dbt Cloud job is the Source Job of each ([FR-AR-02](#fr-ar-02)), for the environment of that page. A change applies from the next run dbt Cloud reports, without a deploy of Data Hub. Per dbt project the page shows its Source Job, who set it and when, and the last run that delivered an Artifact Set. The webhook of the environment in dbt Cloud names the same jobs ([DEC-AR-02](#dec-ar-02)); the page says so. The page is designed in the [design](../../design/README.md) before it is built.
+
+*Could, not in v1: set on 2026-10-30, by Max; in version 1 the Source Jobs are set in the configuration of each environment, in Terraform ([DEC-AR-01](#dec-ar-01)).*
+
 ## Kinds of Change
 
 This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
