@@ -105,7 +105,7 @@ For Collections:
   - A Resource that is not published: its name in a lighter grey, without an icon. Hover says "not published" ([DEC-UX-12](#dec-ux-12)).
   - The first eight items, then "Show all" with the number.
   - **Then its Lenses,** right after the Resources, without a label of their own: the icon tells them apart. The Lenses of the Collection that the User sees, each with the lens icon, its name and its Level. Each group shows its first eight, then "Show all". Reports join later as a group of their own ([DEC-UX-65](#dec-ux-65), [FR-CO-36](../requirements/functional/03-collections.md#fr-co-36)).
-- **For the Data Team,** on top: "Without a collection", a card with the Resources that wait for a Collection. It is no Collection, so it has no colour bar: it is in the urgent red instead, with a red tint, a red name and icon, and the number waiting in a red badge ([DEC-UX-16](#dec-ux-16)).
+- **For the Data Team,** on top: "Without a collection", a card with the Resources that wait for a Collection. It is no Collection, so it has no colour bar: it is in the urgent red instead, with a red tint, a red name and icon, and the number waiting in a red badge ([DEC-UX-16](#dec-ux-16)). It is folded until the Data Admin unfolds it; opening one of its Resources, or a search that finds one, unfolds it ([DEC-UX-133](#dec-ux-133)).
 - **One line per name:** a name that is too long ends in an ellipsis and shows in full on hover. This holds for Collections and Resources alike.
 - **Search** filters Collections, Resources and Lenses together. A Collection whose name matches stays as it was; a Collection with a matching Resource or Lens unfolds and shows only those.
 
@@ -204,7 +204,7 @@ Screen: [resource-history](screens/resource-history.html). Designed on 2026-10-2
 
 ### A Resource without a Collection
 
-- Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, unfolded like a Collection.
+- Only the Data Team sees it. In the panel of Collections, the Data Team has "Without a collection" on top, folded, and unfolded like a Collection when this Resource is open ([DEC-UX-133](#dec-ux-133)).
 - Its page says that it is in no Collection and that only the Data Team sees it, where it came from, and has the button "Add to a collection" for the Data Team. It opens the sheet that adds Resources, with as first step the choice of the Collection and this Resource ticked; next its grain and relations, as from the page of a Collection ([DEC-UX-131](#dec-ux-131)). Screen: [resource-unassigned](screens/resource-unassigned.html), `?addto=open`.
 - Its Overview shows what exists already: the description from dbt and the maturity. The rest follows once it has an Owner.
 
@@ -572,6 +572,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-128"></a>**DEC-UX-128** · A refused Request on a Lens shows the decision of the Data Team as its reply, with the reason. The Lens stays unpublished, seen only by its author and the Data Team, and does not run; it is no longer frozen. Its page says "Refused by the Data Team", by whom and when, with "Open its query", where "Update the lens" checks its size again: within range it is published, above 1 GB it waits again with a new Request ([MSG-CNV-05](../requirements/functional/message-catalogue.md#msg-cnv-05), [FR-LE-09](../requirements/functional/09-lenses.md#fr-le-09)). *Decided on 2026-10-29, by Max: drawn in [lens-new-context](screens/lens-new-context.html) (`?state=refused`).*
 - <a id="dec-ux-131"></a>**DEC-UX-131** · "Add to a collection" on a Resource that waits opens the sheet that adds Resources to a Collection ([FR-CO-31](../requirements/functional/03-collections.md#fr-co-31)), with a first step of its own: the choice of the Collection, searchable, each with its Owner Unit, how many Resources it holds and whether it is public; the Resource is ticked. The second step, its grain and relations, is the same as from the page of a Collection. Built as soon as it is drawn, so that the Data Team can add the Resources that came in on uat. *Decided on 2026-10-30, by Max.*
 - <a id="dec-ux-132"></a>**DEC-UX-132** · The sheet that adds Resources to a Collection adds one Resource at a time: its first step chooses one Resource with a radio button, not several with check boxes, and its second step shows the grain and relations of that one Resource. To add another, the Data Admin opens the sheet again. It narrows "one or more" of [FR-CO-31](../requirements/functional/03-collections.md#fr-co-31). *Decided on 2026-10-30, by Max.*
+- <a id="dec-ux-133"></a>**DEC-UX-133** · "Without a collection" in the panel of Collections is folded by default: its number in the red badge says that Resources wait, and the Data Admin unfolds it to see them. Opening one of its Resources unfolds it, as a Collection unfolds when one of its Resources is open, and so does a search that finds one. *Decided on 2026-10-30, by Max.*
 
 ## Open points
 

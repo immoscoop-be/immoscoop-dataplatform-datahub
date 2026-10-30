@@ -46,14 +46,21 @@
   let filter: 'all' | 'yours' = $state('all');
   /** Which Collections the User unfolded; folded unless they did (DEC-UX-13). */
   let unfolded: Record<string, boolean> = $state({});
-  let waitingOpen = $state(true);
+  /** Whether "Without a Collection" is unfolded; folded unless the User unfolds it (DEC-UX-133). */
+  let waitingOpen = $state(false);
   let all: Record<string, boolean> = $state({});
   let allLenses: Record<string, boolean> = $state({});
 
-  // Opening a Collection, or a Resource in it, unfolds it in the panel (FR-CO-19, FR-CO-25).
+  // Opening a Collection, or a Resource in it, unfolds it in the panel (FR-CO-19, FR-CO-25); so does
+  // opening a Resource that waits for "Without a Collection".
   $effect(() => {
     if (currentCollection) {
       unfolded[currentCollection] = true;
+    }
+  });
+  $effect(() => {
+    if (currentResource && waiting?.some((resource) => resource.id === currentResource)) {
+      waitingOpen = true;
     }
   });
 

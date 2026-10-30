@@ -753,13 +753,24 @@ describe('the web app, signed in', () => {
 });
 
 describe('the web app, for the Data Team', () => {
-  it('shows the Resources without a Collection on top of the panel of Collections (FR-SR-35, DEC-UX-16)', async () => {
+  it('shows the Resources without a Collection on top of the panel of Collections, folded until unfolded (FR-SR-35, DEC-UX-16, DEC-UX-133)', async () => {
     serve({ roles: ['datateam'] });
     open('/collections');
     render(App, { config: CONFIG });
-    const resource = await screen.findByRole('link', { name: /Saved searches/ });
-    expect(resource.getAttribute('href')).toBe('/resources/r1');
+    const toggle = await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' });
     expect(screen.getByText('Zonder Collection')).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('link', { name: /Saved searches/ })).toBeNull();
+    await fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('href')).toBe('/resources/r1');
+  });
+
+  it('unfolds Without a Collection when one of its Resources is open (DEC-UX-133)', async () => {
+    serve({ roles: ['datateam'] });
+    open('/resources/r1');
+    render(App, { config: CONFIG });
+    expect((await screen.findByRole('link', { name: /Saved searches/ })).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('button', { name: 'Toon wat Zonder Collection bevat' }).getAttribute('aria-expanded')).toBe('true');
   });
 
@@ -767,6 +778,7 @@ describe('the web app, for the Data Team', () => {
     serve({ roles: ['datateam'] });
     open('/collections');
     render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' }));
     await fireEvent.click(await screen.findByRole('link', { name: /Saved searches/ }));
     expect(location.pathname).toBe('/resources/r1');
     const main = within(screen.getByRole('main'));
