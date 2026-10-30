@@ -20,13 +20,13 @@
   type Added = 'added' | 'elsewhere' | 'refused' | 'failed';
 
   /**
-   * Adding Resources to a Collection, in a sheet over its page, in two steps named on top (FR-CO-31,
-   * DEC-UX-58). First the Resources without a Collection, searchable, each with its description from
-   * dbt, how it came in and its Level, to tick one or more. Then, in a wider sheet, per Resource how it
-   * is stored, its grain and model type, and the mapping of every field, from what dbt and the Domain
-   * Model propose (FR-CO-33, FR-CO-34). They are added, with all of it, in one go. Opened from a
-   * Resource that waits, the first step is the choice of the Collection instead, the Resource ticked
-   * (DEC-UX-131).
+   * Adding a Resource to a Collection, one at a time (DEC-UX-132), in a sheet over its page, in two
+   * steps named on top (FR-CO-31, DEC-UX-58). First the Resources without a Collection, searchable,
+   * each with its description from dbt, how it came in and its Level, to choose one. Then, in a wider
+   * sheet, how it is stored, its grain and model type, and the mapping of every field, from what dbt
+   * and the Domain Model propose (FR-CO-33, FR-CO-34). It is added, with all of it, in one go. Opened
+   * from a Resource that waits, the first step is the choice of the Collection instead, the Resource
+   * chosen (DEC-UX-131).
    */
   let {
     collection,
@@ -51,8 +51,9 @@
 
   let step = $state(0);
   let query = $state('');
+  /** The Resource chosen, as a list of at most one. */
   // svelte-ignore state_referenced_locally
-  let chosen: string[] = $state(into ? waiting.map((resource) => resource.id) : []);
+  let chosen: string[] = $state(into ? waiting.slice(0, 1).map((resource) => resource.id) : []);
   /** The Collection chosen in the sheet, when it is chosen here. */
   let target: string | undefined = $state();
   let adding = $state(false);
@@ -72,10 +73,7 @@
     (into ?? []).filter((one) => !words || [one.name, one.description, one.ownerUnit.name].some((text) => text.toLowerCase().includes(words))),
   );
   const targetName = $derived(into?.find((one) => one.id === target)?.name ?? '');
-
-  function toggle(id: string) {
-    chosen = chosen.includes(id) ? chosen.filter((other) => other !== id) : [...chosen, id];
-  }
+  const chosenName = $derived(waiting.find((resource) => resource.id === chosen[0])?.displayName ?? '');
 
   function readModel() {
     model = undefined;
@@ -148,7 +146,7 @@
 </script>
 
 <Sheet
-  title={step === 1 ? t('grain.title', { count: chosen.length }) : into ? t('add.into.title', { name: waiting[0]?.displayName ?? '' }) : t('add.title', { name: collection ?? '' })}
+  title={step === 1 ? t('grain.title', { name: chosenName }) : into ? t('add.into.title', { name: waiting[0]?.displayName ?? '' }) : t('add.title', { name: collection ?? '' })}
   wide={step === 1}
   {onclose}
 >
@@ -183,11 +181,11 @@
     </div>
   {:else if step === 0}
     <div class="search"><Search bind:value={query} placeholder={t('add.search')} surface="sub" /></div>
-    <div class="list">
+    <div class="list" role="radiogroup" aria-label={t('add.step.choose')}>
       {#each shown as resource (resource.id)}
         {@const on = chosen.includes(resource.id)}
         <label class="pick" class:on>
-          <input type="checkbox" checked={on} onchange={() => toggle(resource.id)} />
+          <input type="radio" name="resource" checked={on} onchange={() => (chosen = [resource.id])} />
           <span class="what">
             <span class="line">
               <span class="kind"><KindIcon kind="resource" /></span>
@@ -244,7 +242,7 @@
   {#snippet foot()}
     {#if step === 0}
       <p class="meta chosen">
-        {#if into}{target ? t('add.into.chosen', { name: targetName }) : t('add.into.nothing')}{:else}{t('add.selected', { count: chosen.length })}{/if}
+        {#if into}{target ? t('add.into.chosen', { name: targetName }) : t('add.into.nothing')}{:else}{chosenName ? t('add.chosen', { name: chosenName }) : t('add.nothing')}{/if}
       </p>
       <Button variant="quiet" onclick={onclose}>{t('collection.cancel')}</Button>
       <Button disabled={into ? !target : chosen.length === 0} onclick={next}>{t('add.next')}<Icon name="arrow-right" /></Button>
@@ -257,7 +255,7 @@
         {:else if open.length > 0}{t('grain.unfinished', { fields: open.join(', ') })}
         {:else}{t('grain.summary', counts)}{/if}
       </p>
-      <Button disabled={adding || loading || unreadable.length > 0 || open.length > 0} onclick={add}><Icon name="plus-circle-fill" />{t('add.button', { count: chosen.length })}</Button>
+      <Button disabled={adding || loading || unreadable.length > 0 || open.length > 0} onclick={add}><Icon name="plus-circle-fill" />{t('add.button')}</Button>
     {/if}
   {/snippet}
 </Sheet>

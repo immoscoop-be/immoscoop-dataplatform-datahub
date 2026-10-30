@@ -293,6 +293,7 @@ function serve({
   queries = [] as Record<string, unknown>[],
   lenses = [] as Record<string, unknown>[],
   conversations = [] as Record<string, unknown>[],
+  waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Messages as catalogue keeps them, changed by what the page asks.
@@ -364,7 +365,7 @@ function serve({
       return dataTeam ? json({ groups: [DATA, SALES] }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/resources?collection=none') {
-      return dataTeam ? json({ resources: [SAVED_SEARCHES] }) : json({ error: 'forbidden' }, 403);
+      return dataTeam ? json({ resources: waiting }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/resources/r1' && dataTeam) {
       return json({ resource: SAVED_SEARCHES });
@@ -795,10 +796,10 @@ describe('the web app, for the Data Team', () => {
     expect(sheet.getByText('In Credit leads · daarna zijn grain en relaties')).toBeTruthy();
     await fireEvent.click(next);
 
-    // The second step is the one of the page of a Collection, with this Resource ticked.
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van 1 Resource' }));
+    // The second step is the one of the page of a Collection, with this Resource chosen.
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
     await fireEvent.input(await second.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
-    await fireEvent.click(second.getByRole('button', { name: '1 Resource toevoegen' }));
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources');
     expect((added?.body as { resources: { id: string }[] }).resources.map((one) => one.id)).toEqual(['r1']);
@@ -1156,21 +1157,28 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
   });
 
-  it('adds Resources without a Collection from the page of a Collection, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+  it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {
+    const reviews = { ...SAVED_SEARCHES, id: 'r9', displayName: 'Agency reviews', name: 'agency_reviews', exposures: ['datahub_agencyReviews'] };
+    const calls = serve({ roles: ['datateam'], waiting: [SAVED_SEARCHES, reviews] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
-    const sheet = within(screen.getByRole('dialog', { name: 'Resources toevoegen aan Credit leads' }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
     expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
+    expect(sheet.queryByRole('checkbox')).toBeNull();
+    expect(sheet.getByText('Nog geen Resource gekozen')).toBeTruthy();
     const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
-    await fireEvent.click(sheet.getByRole('checkbox'));
+    // Choosing another Resource replaces the first: one at a time.
+    await fireEvent.click(sheet.getByRole('radio', { name: /Agency reviews/ }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
+    expect(sheet.getAllByRole('radio', { checked: true }).map((radio) => radio.closest('label')?.textContent)).toEqual([expect.stringContaining('Saved searches')]);
+    expect(sheet.getByText('Saved searches · daarna zijn grain en relaties')).toBeTruthy();
     await fireEvent.click(next);
 
     // Step 2: what dbt and the Domain Model propose, each with where it came from.
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van 1 Resource' }));
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
     expect(await second.findByText(/versie 0\.0\.70, zoals het op prod draait/)).toBeTruthy();
     expect(await second.findByText('Uit een dbt-test')).toBeTruthy();
     const mapping = second.getByRole('combobox', { name: 'Mapping van search_id' }) as HTMLSelectElement;
@@ -1181,11 +1189,11 @@ describe('the web app, for the Data Team, with Collections', () => {
     // A field mapped by hand, with an Entity the Domain Model does not have yet (DEC-CO-21).
     await fireEvent.change(second.getByRole('combobox', { name: 'Mapping van filters' }), { target: { value: 'occurredWithin' } });
     const identity = second.getByRole('combobox', { name: 'Entity-identiteit van filters' });
-    expect((second.getByRole('button', { name: '1 Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((second.getByRole('button', { name: 'Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(identity, { target: { value: 'filter.filterId' } });
     expect(second.getByText(/zit nog niet in het Domain Model/)).toBeTruthy();
     await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
-    await fireEvent.click(second.getByRole('button', { name: '1 Resource toevoegen' }));
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(calls).toContainEqual({
       method: 'POST',
