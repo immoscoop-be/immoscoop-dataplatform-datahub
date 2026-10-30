@@ -13,7 +13,7 @@
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
-  import { createQuery, type Lens, type LensItem, type QueryItem, type Run } from './lib/query.js';
+  import { createQuery, type Lens, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
@@ -70,9 +70,12 @@
   let waiting: readonly Resource[] | undefined = $state();
   /** Every Collection the User sees, read when Data Hub starts and after a change (FR-CO-18). */
   let collections: readonly Collection[] | undefined = $state();
-  /** The queries of the User, for the panel of Query (FR-SR-43); everyone's for the Data Team, once asked. */
-  let ownQueries: readonly QueryItem[] | undefined = $state();
-  let everyone: readonly QueryItem[] | undefined = $state();
+  /** Grows after a new query, a run or a Request: the panel of Query reads its periods again (DEC-UX-139). */
+  let queriesVersion = $state(0);
+  /** The name of the query that is open, for the breadcrumb. */
+  let queryName: { id: string; name: string } | undefined = $state();
+  /** A query hidden or shown again from the panel, which its page then shows so (DEC-UX-138). */
+  let queryHidden: { id: string; hidden: boolean } | undefined = $state();
   /** The name of a new query being made: it stands in the panel as not run yet. */
   let draft = $state('');
   /** The Lenses the User sees, for the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36). */
@@ -226,22 +229,25 @@
   /** Reads again the queries in the panel of Query, after a new one, a run or a Request. */
   async function refreshQueries(): Promise<void> {
     if (openQuery) readRuns(openQuery);
-    await Promise.all([
-      queries.list().then((found) => (ownQueries = found)),
-      ...(everyone ? [queries.list(true).then((found) => (everyone = found))] : []),
-    ]).catch((error: unknown) => console.error('The queries could not be read', error));
+    queriesVersion += 1;
   }
+  // Query opens on the last query of the User, or on a new one when they have none; previews, Lenses and hidden queries do not count (DEC-UX-137).
   $effect(() => {
-    if (status.kind === 'signedIn' && section?.id === 'query' && ownQueries === undefined) {
-      refreshQueries();
-    }
+    if (status.kind !== 'signedIn' || page.kind !== 'start' || page.section.id !== 'query') return;
+    queries.list(false, { show: [], limit: 1 }).then(
+      ([last]) => page.kind === 'start' && page.section.id === 'query' && router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true }),
+      (error: unknown) => console.error('The last query could not be read', error),
+    );
   });
-  // Query opens on the last query of the User, or on a new one when they have none; the runs of a Lens are on its page.
+  // The name of the query that is open, for the breadcrumb; again after a rename.
   $effect(() => {
-    if (page.kind === 'start' && page.section.id === 'query' && ownQueries) {
-      const last = ownQueries.find((item) => item.kind !== 'lens');
-      router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true });
-    }
+    if (status.kind !== 'signedIn' || page.kind !== 'query') return;
+    const id = page.id;
+    void queriesVersion;
+    queries.get(id).then(
+      (found) => (queryName = { id, name: found.name }),
+      () => undefined,
+    );
   });
   $effect(() => {
     const language = currentLanguage();
@@ -454,7 +460,7 @@
                 : page.kind === 'newQuery'
                   ? t('query.new')
                   : page.kind === 'query'
-                    ? (ownQueries?.find((item) => item.id === page.id)?.name ?? 'Query')
+                    ? (queryName?.id === page.id ? queryName.name : 'Query')
                     : page.kind === 'newLens'
                       ? t('lens.make.title')
                       : page.kind === 'lens'
@@ -664,6 +670,11 @@
             router.go(queryPath(made.id));
           }}
           onlens={made}
+          hiddenChange={queryHidden}
+          onhidden={(id, hidden) => {
+            queryHidden = { id, hidden };
+            refreshQueries();
+          }}
         />
       {/await}
     {:else if page.kind === 'newLens'}
@@ -776,7 +787,7 @@
             // Published or deprecated, the panel shows it so.
             refresh();
           }}
-          onrun={() => ownQueries !== undefined && refreshQueries()}
+          onrun={() => refreshQueries()}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -878,13 +889,13 @@
     <MessagesPanel filter={messageFilter} counts={centre?.counts} onfilter={(filter) => (messageFilter = filter)} />
   {:else if section?.id === 'query' && status.kind === 'signedIn'}
     <QueryPanel
-      queries={ownQueries}
-      {everyone}
+      client={queries}
       {dataTeam}
       current={openQuery}
       runs={currentRuns}
       draft={page.kind === 'newQuery' ? draft : null}
-      onall={() => queries.list(true).then((found) => (everyone = found), (error: unknown) => console.error('The queries could not be read', error))}
+      version={queriesVersion}
+      onhidden={(id, hidden) => (queryHidden = { id, hidden })}
     />
   {:else}
     <PanelSoon />

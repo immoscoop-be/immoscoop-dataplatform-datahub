@@ -67,6 +67,30 @@ export interface QueryItem {
   lastRunAt: string | null;
   /** Its Request to the Data Team, if it sent one. */
   request: QueryRequest | null;
+  /** Whether the User hid it from their panel (DEC-UX-138). */
+  hidden?: boolean;
+}
+
+/** What the panel of Query leaves out until its chip is on (DEC-UX-137). */
+export type Shown = 'previews' | 'lenses' | 'hidden';
+export const SHOWN: readonly Shown[] = ['previews', 'lenses', 'hidden'];
+
+/** How many queries a day holds in the time zone of the User, by what the panel shows them as (DEC-UX-139). */
+export interface QueryDay {
+  day: string;
+  queries: number;
+  previews: number;
+  lenses: number;
+  hidden: number;
+}
+
+/** Which queries the panel asks for: a period, what it adds, words that search them all. */
+export interface ListOptions {
+  from?: string;
+  to?: string;
+  show?: readonly Shown[];
+  q?: string;
+  limit?: number;
 }
 
 export interface ResultColumn {
@@ -106,6 +130,8 @@ export interface Query {
   ownerName: string;
   /** Whether the User made it: only they write and run it. */
   mine: boolean;
+  /** Whether the User hid it from their panel (DEC-UX-138). */
+  hidden?: boolean;
   createdAt: string;
   lastRunAt: string | null;
   resources: QueryResource[];
@@ -363,9 +389,26 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
   }
 
   return {
-    /** The queries of the User, or everyone's for the Data Team. */
-    async list(all = false): Promise<QueryItem[]> {
-      return ((await (await call(all ? '/queries?all=true' : '/queries')).json()) as { queries: QueryItem[] }).queries;
+    /** The queries of the User, or everyone's for the Data Team; of a period, with what the panel adds, matching words. */
+    async list(all = false, options: ListOptions = {}): Promise<QueryItem[]> {
+      const params = new URLSearchParams();
+      if (all) params.set('all', 'true');
+      if (options.from) params.set('from', options.from);
+      if (options.to) params.set('to', options.to);
+      if (options.show) params.set('show', options.show.join(','));
+      if (options.q) params.set('q', options.q);
+      if (options.limit) params.set('limit', String(options.limit));
+      const search = params.toString();
+      return ((await (await call(search ? `/queries?${search}` : '/queries')).json()) as { queries: QueryItem[] }).queries;
+    },
+    /** How many queries each day holds, in the time zone of this browser (DEC-UX-139). */
+    async days(all = false): Promise<QueryDay[]> {
+      const params = new URLSearchParams({ tz: Intl.DateTimeFormat().resolvedOptions().timeZone, ...(all ? { all: 'true' } : {}) });
+      return ((await (await call(`/queries/days?${params}`)).json()) as { days: QueryDay[] }).days;
+    },
+    /** Hides a query from the panel of the User, or shows it again (DEC-UX-138). */
+    async hide(id: string, hidden: boolean): Promise<void> {
+      await call(`${query(id)}/hidden`, { method: hidden ? 'PUT' : 'DELETE' });
     },
     async create(fields: NewQuery): Promise<Query> {
       return ((await (await call('/queries', { method: 'POST', body: fields })).json()) as { query: Query }).query;

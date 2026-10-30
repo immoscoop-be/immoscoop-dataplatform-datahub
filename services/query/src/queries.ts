@@ -40,6 +40,31 @@ export interface Query {
 export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt'> {
   resources: Pick<NamedResource, 'id' | 'displayName'>[];
   runs: number;
+  /** Whether the User who asks hid it from their panel (DEC-UX-138). */
+  hidden: boolean;
+}
+
+/** What the panel of Query leaves out until its chip is on (DEC-UX-137): a hidden query counts as hidden, whatever its kind. */
+export type Shown = 'previews' | 'lenses' | 'hidden';
+export const SHOWN: readonly Shown[] = ['previews', 'lenses', 'hidden'];
+
+/** Which queries to list: since and before when they last ran, which of those left out, matching which words. */
+export interface ListOptions {
+  from?: Date;
+  to?: Date;
+  /** Without it, every query; with it, the plain queries and these. */
+  show?: readonly Shown[];
+  search?: string;
+  limit?: number;
+}
+
+/** How many queries a day holds in the time zone of the User, by what the panel shows them as (DEC-UX-139). */
+export interface QueryDay {
+  day: string;
+  queries: number;
+  previews: number;
+  lenses: number;
+  hidden: number;
 }
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44): its last run and what that read. */
@@ -103,7 +128,13 @@ export interface NewQuery {
 export interface Queries {
   create(fields: NewQuery): Promise<Query>;
   /** The queries of the User, or with all, everyone's (DEC-LN-01): the last run or made first. */
-  list(viewer: Viewer, all: boolean): Promise<QueryItem[]>;
+  list(viewer: Viewer, all: boolean, options?: ListOptions): Promise<QueryItem[]>;
+  /** How many queries each day holds, in this time zone, newest day first (DEC-UX-139). */
+  days(viewer: Viewer, all: boolean, timeZone: string): Promise<QueryDay[]>;
+  /** Hides a query from the panel of this User, or shows it again (DEC-UX-138). */
+  hide(queryId: string, userId: string, hidden: boolean): Promise<void>;
+  /** Whether this User hid the query. */
+  hidden(queryId: string, userId: string): Promise<boolean>;
   get(id: string): Promise<Query | undefined>;
   update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters'>>): Promise<Query | undefined>;
   /** The previews of a Resource by this User, made the first time they are asked for (FR-SR-38). */
@@ -188,14 +219,29 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .executeTakeFirstOrThrow();
     },
 
-    async list(viewer, all) {
+    async list(viewer, all, { from, to, show, search, limit = 200 } = {}) {
+      const hidden = sql<boolean>`exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id})`;
+      const words = search?.trim().toLowerCase();
       const rows = await db
         .selectFrom('queries as q')
         .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
+        .select(hidden.as('hidden'))
         .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
+        .$if(from !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) >= ${from}`))
+        .$if(to !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) < ${to}`))
+        // The plain queries, and of what the panel leaves out only what is asked for (DEC-UX-137).
+        .$if(show !== undefined, (query) =>
+          query.where(
+            sql<boolean>`case when ${hidden} then ${(show ?? []).includes('hidden')} when q.kind = 'preview' then ${(show ?? []).includes('previews')} when q.kind = 'lens' then ${(show ?? []).includes('lenses')} else true end`,
+          ),
+        )
+        .$if(!!words, (query) => {
+          const like = `%${(words ?? '').replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+          return query.where(sql<boolean>`(lower(q.name) like ${like} or lower(q.owner_name) like ${like} or lower(q.resources::text) like ${like})`);
+        })
         .orderBy(sql`coalesce(q.last_run_at, q.created_at)`, 'desc')
-        .limit(200)
+        .limit(Math.min(Math.max(limit, 1), 200))
         .execute();
       return rows.map((row) => ({
         id: row.id,
@@ -207,7 +253,35 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         lastRunAt: row.lastRunAt,
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
         runs: Number(row.runs ?? 0),
+        hidden: row.hidden === true,
       }));
+    },
+
+    async days(viewer, all, timeZone) {
+      const { rows } = await sql<{ day: string; queries: string; previews: string; lenses: string; hidden: string }>`
+        with listed as (
+          select to_char((coalesce(q.last_run_at, q.created_at) at time zone ${timeZone})::date, 'YYYY-MM-DD') as day,
+            case when exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id}) then 'hidden'
+              when q.kind = 'preview' then 'previews' when q.kind = 'lens' then 'lenses' else 'queries' end as shown
+          from queries q
+          where ${all} or q.owner_id = ${viewer.id}
+        )
+        select day,
+          count(*) filter (where shown = 'queries') as queries,
+          count(*) filter (where shown = 'previews') as previews,
+          count(*) filter (where shown = 'lenses') as lenses,
+          count(*) filter (where shown = 'hidden') as hidden
+        from listed group by day order by day desc`.execute(db);
+      return rows.map((row) => ({ day: row.day, queries: Number(row.queries), previews: Number(row.previews), lenses: Number(row.lenses), hidden: Number(row.hidden) }));
+    },
+
+    async hide(queryId, userId, hidden) {
+      if (hidden) await db.insertInto('hiddenQueries').values({ queryId, userId }).onConflict((conflict) => conflict.columns(['queryId', 'userId']).doNothing()).execute();
+      else await db.deleteFrom('hiddenQueries').where('queryId', '=', queryId).where('userId', '=', userId).execute();
+    },
+
+    async hidden(queryId, userId) {
+      return (await db.selectFrom('hiddenQueries').select('queryId').where('queryId', '=', queryId).where('userId', '=', userId).executeTakeFirst()) !== undefined;
     },
 
     get: queryById,

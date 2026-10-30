@@ -297,6 +297,8 @@ function serve({
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  /** The queries the User hid from their panel (DEC-UX-138). */
+  const hiddenQueries = new Set<string>();
   // The Messages as catalogue keeps them, changed by what the page asks.
   const talk = conversations.map((message) => ({ replies: [], replyCount: 0, unread: false, mine: false, ...message })) as Record<string, unknown>[];
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
@@ -527,10 +529,50 @@ function serve({
       return json({ run: { ...RUN, ref: 'q-20261029-1e2a3b', parameters: LENS.parameters }, page: PAGE }, 201);
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
-    if (path === '/queries' && method === 'GET') {
-      return json({
-        queries: queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({ id, name, kind: kind ?? 'query', ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0, request: request ?? null })),
-      });
+    const listed = () =>
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({
+        id: id as string,
+        name: name as string,
+        kind: (kind as string | undefined) ?? 'query',
+        ownerName,
+        resources: on,
+        lastRunAt: lastRunAt as string | null,
+        createdAt: createdAt as string,
+        runs: lastRunAt ? 1 : 0,
+        request: request ?? null,
+        hidden: hiddenQueries.has(id as string),
+      }));
+    // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
+    const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
+    if ((path === '/queries' || path.startsWith('/queries?')) && method === 'GET') {
+      const params = new URLSearchParams(path.split('?')[1] ?? '');
+      const show = params.get('show');
+      const from = params.get('from');
+      const to = params.get('to');
+      const words = params.get('q')?.toLowerCase();
+      const found = listed()
+        .filter((item) => show === null || shownAs(item) === 'queries' || show.split(',').includes(shownAs(item)))
+        .filter((item) => !from || new Date(item.lastRunAt ?? item.createdAt) >= new Date(from))
+        .filter((item) => !to || new Date(item.lastRunAt ?? item.createdAt) < new Date(to))
+        .filter((item) => !words || item.name.toLowerCase().includes(words));
+      return json({ queries: found.slice(0, Number(params.get('limit') ?? 200)) });
+    }
+    if (path.startsWith('/queries/days?') && method === 'GET') {
+      const timeZone = new URLSearchParams(path.split('?')[1]).get('tz') ?? 'UTC';
+      const days = new Map<string, Record<string, number>>();
+      for (const item of listed()) {
+        const day = new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(item.lastRunAt ?? item.createdAt));
+        const counts = days.get(day) ?? { queries: 0, previews: 0, lenses: 0, hidden: 0 };
+        counts[shownAs(item)] = (counts[shownAs(item)] ?? 0) + 1;
+        days.set(day, counts);
+      }
+      return json({ days: [...days].map(([day, counts]) => ({ day, ...counts })).toSorted((a, b) => b.day.localeCompare(a.day)) });
+    }
+    const hiding = /^\/queries\/([^/]+)\/hidden$/.exec(path);
+    if (hiding) {
+      if (method === 'PUT') hiddenQueries.add(hiding[1] as string);
+      else hiddenQueries.delete(hiding[1] as string);
+      return json({ hidden: method === 'PUT' });
     }
     if (path === '/queries' && method === 'POST') {
       const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
@@ -1330,6 +1372,49 @@ describe('Query', () => {
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139)', async () => {
+    const today = new Date().toISOString();
+    const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
+    const other = { ...QUERY, id: 'q2', name: 'Partner share per week', createdAt: today, lastRunAt: today };
+    const older = { ...QUERY, id: 'q3', name: 'Weekly volume since 2024', createdAt: old, lastRunAt: old };
+    const calls = serve({ queries: [{ ...QUERY, createdAt: today }, other, older] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // An older period shows with how many it holds, folded, and is read once opened.
+    const period = panel.getAllByRole('button', { expanded: false }).find((button) => button.textContent?.trim().endsWith('1')) as HTMLElement;
+    expect(panel.queryByRole('link', { name: /Weekly volume since 2024/ })).toBeNull();
+    const lists = () => calls.filter((call) => call.path.startsWith('/queries?') && call.path.includes('from=')).length;
+    const before = lists();
+    await fireEvent.click(period);
+    expect(await panel.findByRole('link', { name: /Weekly volume since 2024/ })).toBeTruthy();
+    expect(lists()).toBe(before + 1);
+    // Hidden with its eye: gone from the list, counted under Hidden, shown there again.
+    await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week verbergen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q2/hidden' }));
+    await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Partner share per week/ })).toBeNull());
+    await fireEvent.click(await panel.findByRole('button', { name: /Verborgen\s*1/ }));
+    expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week weer tonen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q2/hidden' }));
+    // A search looks through every period.
+    await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'since 2024' } });
+    await vi.waitFor(() => expect(calls.some((call) => call.path.includes('q=since+2024'))).toBe(true));
+  });
+
+  it('hides the query that is open from its own page, and shows it again (DEC-UX-138)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, createdAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /^Verbergen$/ }, { timeout: 3000 }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
+    await fireEvent.click(await main.findByRole('button', { name: /^Weer tonen$/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q1/hidden' }));
+  });
+
   it('opens a new query for a User who has none yet', async () => {
     serve();
     open('/query');
@@ -1351,17 +1436,21 @@ describe('Query', () => {
     expect(calls.some((call) => call.path.endsWith('/preflight'))).toBe(false);
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     await fireEvent.click(panel.getByRole('radio', { name: 'Alle' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'GET', path: '/queries?all=true' }));
+    await vi.waitFor(() => expect(calls.some((call) => call.path.startsWith('/queries/days?') && call.path.includes('all=true'))).toBe(true));
   });
 
   it('lets who made a query change its name and question in place; a name stays required (DEC-UX-119, FR-SR-45)', async () => {
-    const preview = { ...QUERY, id: 'q-preview', kind: 'preview', name: 'Preview · Weekly lead volume', question: '' };
-    const calls = serve({ queries: [{ ...QUERY }, preview] });
+    const today = new Date().toISOString();
+    const preview = { ...QUERY, id: 'q-preview', kind: 'preview', name: 'Preview · Weekly lead volume', question: '', createdAt: today };
+    const calls = serve({ queries: [{ ...QUERY, createdAt: today }, preview] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // A preview of a Resource is a query of the User, marked so in the panel.
+    // A preview of a Resource is a query of the User, marked so in the panel once Previews is on (DEC-UX-137).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
+    expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
+    await fireEvent.click(panel.getByRole('button', { name: /Voorbeelden\s*1/ }));
     expect(within(await panel.findByRole('link', { name: /Preview · Weekly lead volume/ })).getByText('Voorbeeld')).toBeTruthy();
     await fireEvent.click(await main.findByRole('button', { name: 'Leads per source name' }, { timeout: 3000 }));
     const name = main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement;
@@ -1411,12 +1500,16 @@ describe('Query', () => {
   it('shows its history, previews a run read only, and applies it to the query (DEC-UX-74, DEC-UX-99)', async () => {
     const first = { ...RUN, ref: 'q-20261027-0b1d2e', number: 1, sql: withParameters, parameters: [dateFrom, { name: 'leadChannel', kind: 'choice', value: 'Phone', list: ['Form', 'Phone'] }], startedAt: '2026-10-27T09:14:00Z' };
     const second = { ...RUN, number: 2 };
-    const calls = serve({ queries: [{ ...QUERY, lastRun: second, lastRunAt: second.startedAt, runs: 2, history: [second, first] }] });
+    const calls = serve({ queries: [{ ...QUERY, lastRun: second, lastRunAt: new Date().toISOString(), runs: 2, history: [second, first] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // The query that is open unfolds in the panel to its last runs.
+    // The query that is open unfolds in the panel to its last runs, with its arrow (DEC-UX-140).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    const unfold = await panel.findByRole('button', { name: 'De laatste uitvoeringen' });
+    expect(unfold.getAttribute('aria-expanded')).toBe('false');
+    expect(panel.queryByRole('link', { name: /Uitvoering 1/ })).toBeNull();
+    await fireEvent.click(unfold);
     expect((await panel.findByRole('link', { name: /Uitvoering 1/ })).getAttribute('href')).toBe('/query/q1/runs/1');
     await fireEvent.click(await main.findByRole('radio', { name: 'Geschiedenis · 2 uitvoeringen' }));
     expect(await main.findByText('Nu getoond')).toBeTruthy();
@@ -1431,7 +1524,7 @@ describe('Query', () => {
   });
 
   it('sends a query above 1 GB to the Data Team, and says since when it waits (DEC-UX-116, MSG-QRY-01)', async () => {
-    const calls = serve({ queries: [{ ...QUERY, sql: `${QUERY.sql}-- every year\n` }] });
+    const calls = serve({ queries: [{ ...QUERY, createdAt: new Date().toISOString(), sql: `${QUERY.sql}-- every year\n` }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));

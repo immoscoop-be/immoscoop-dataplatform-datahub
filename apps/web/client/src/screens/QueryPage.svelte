@@ -49,6 +49,8 @@
     onran,
     onmade,
     onlens,
+    hiddenChange,
+    onhidden,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -63,12 +65,31 @@
     onmade: (made: Query) => void;
     /** The Lens it is used as was updated from it. */
     onlens: (lens: Lens) => void;
+    /** The last query hidden or shown again, here or in the panel (DEC-UX-138). */
+    hiddenChange?: { id: string; hidden: boolean };
+    /** It was hidden or shown again here. */
+    onhidden?: (id: string, hidden: boolean) => void;
   } = $props();
 
   /** How long typing pauses before the Pre-flight is asked again. */
   const PAUSE = 600;
 
   let query = $state<Query | null | undefined>();
+  /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
+  const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
+  let hiding = $state(false);
+
+  async function toggleHidden() {
+    hiding = true;
+    try {
+      await client.hide(id, !hidden);
+      onhidden?.(id, !hidden);
+    } catch (error) {
+      console.error('The query could not be hidden', error);
+    } finally {
+      hiding = false;
+    }
+  }
   let sql = $state('');
   let parameters = $state<Parameter[]>([]);
   let preflight = $state<Preflight | null>(null);
@@ -527,6 +548,9 @@
     </div>
     <div class="actions">
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
+      <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
+        ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
+      >
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
         <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}

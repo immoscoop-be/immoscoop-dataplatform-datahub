@@ -489,6 +489,19 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-entry:not(.open) .q-unfold i { transform: rotate(-90deg); }
 .q-entry:not(.open) .q-runs { display: none; }
 .q-entry .pill { margin-right: 6px; }
+/* The panel of Query: chips that add previews, the queries of Lenses and hidden queries (DEC-UX-137);
+   periods that fold, with how many queries they hold (DEC-UX-139); an eye on hover hides a query (DEC-UX-138). */
+.q-show { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.chip-toggle { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); outline: 1px solid var(--tint-active); }
+.chip-toggle[aria-pressed="true"] { background: var(--surface-sub); color: var(--text-primary); outline-color: var(--text-muted); }
+.chip-toggle .count, .q-period .count { color: var(--text-muted); }
+.q-group { margin-top: 4px; }
+.q-period { all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }
+.q-period:hover { color: var(--text-primary); }
+.q-period i { transition: transform 200ms ease; }
+.q-group:not(.open) .q-period i { transform: rotate(-90deg); }
+.q-hide { position: absolute; top: 9px; right: 6px; width: 26px; height: 26px; font-size: 14px; opacity: 0; }
+.q-entry:hover .q-hide, .q-hide:focus-visible { opacity: 1; }
 .q-runs { display: flex; flex-direction: column; gap: 1px; margin: 4px 0 2px 30px; }
 .q-run { display: flex; align-items: baseline; gap: 8px; border: 0; background: none; font: var(--text-small) var(--font-family); color: var(--text-secondary); text-align: left; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
 .q-run:hover { background: var(--surface-float-hover); color: var(--text-primary); }

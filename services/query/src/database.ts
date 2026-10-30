@@ -163,4 +163,10 @@ export interface QueryDatabase {
     startedAt: Timestamp;
     finishedAt: Date | null;
   };
+  /** The queries a User hid from their panel of Query, for them alone (DEC-UX-138). */
+  hiddenQueries: {
+    queryId: string;
+    userId: string;
+    hiddenAt: Generated<Date>;
+  };
 }
