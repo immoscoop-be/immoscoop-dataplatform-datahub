@@ -1415,6 +1415,17 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q1/hidden' }));
   });
 
+  it('runs the query with Ctrl+Enter in its editor, as its button does (DEC-UX-142)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const run = await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
+    await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
+  });
+
   it('opens a new query for a User who has none yet', async () => {
     serve();
     open('/query');

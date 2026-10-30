@@ -60,6 +60,7 @@ export default {
   'editor.lines': '⋯ {count} regels',
   'editor.fold': 'Dichtvouwen',
   'editor.unfold': 'Openvouwen',
+  'editor.template': 'Sjabloon',
   'editor.partition': 'Partitie',
   'editor.cluster': 'Cluster {place}',
 } as const;

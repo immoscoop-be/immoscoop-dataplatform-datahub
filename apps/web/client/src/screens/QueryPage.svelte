@@ -285,6 +285,21 @@
   }
 
   const start = () => runWith(sql, parameters, current?.range !== 'free');
+  let runBar = $state<HTMLElement | undefined>();
+
+  /**
+   * Cmd+Enter, or Ctrl+Enter, in the editor does what the button that runs it does (DEC-UX-142): it runs
+   * what reads up to 100 MB; for more, it puts the focus on the button, which asks for the approval.
+   * What the Pre-flight blocks, or what goes to the Data Team, does not run.
+   */
+  function runFromKeys(): void {
+    if (!query?.mine || running || checking || !current?.runnable) return;
+    if (current.range === 'free') {
+      start();
+      return;
+    }
+    if (current.range === 'approve' || query.request?.state === 'accepted') runBar?.querySelector<HTMLButtonElement>('button.run')?.focus();
+  }
 
   /** Shows a run of its history read only: its SQL and values, and its result while it is kept. */
   async function openPreview(of: Run): Promise<void> {
@@ -630,6 +645,7 @@
               const entry = missing.find((candidate) => sql.slice(mark.from, mark.to) === `@${candidate.name}`);
               if (entry) openParameter(null, entry);
             }}
+            onrun={runFromKeys}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}
@@ -651,7 +667,7 @@
     />
 
     {#if query.mine && !preview}
-      <div class="run-bar">
+      <div class="run-bar" bind:this={runBar}>
         {#if notes.length > 0}
           <ul class="notes" aria-live="polite">
             {#each notes as note, index (index)}
