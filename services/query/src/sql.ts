@@ -254,6 +254,8 @@ export function parametersOf(sql: string): string[] {
 
 export interface TemplateResource {
   key: string;
+  /** The full name of its table in its own case, which the SQL names. */
+  fullName: string;
   fields: { name: string; dataType: string | null }[];
   partition: { field: string; unit: string | null } | null;
 }
@@ -291,7 +293,7 @@ export function template(resources: TemplateResource[]): string {
     const filter = resource.partition ? recent(resource.partition.field, partitionType, resource.partition.unit) : null;
     return [
       `${indent}select ${fields.join(`,\n${indent}       `)}`,
-      `${indent}from \`${resource.key}\``,
+      `${indent}from \`${resource.fullName}\``,
       ...(filter ? [`${indent}where ${filter}`] : []),
     ].join('\n');
   };

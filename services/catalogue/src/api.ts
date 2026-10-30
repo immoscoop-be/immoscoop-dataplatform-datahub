@@ -688,6 +688,7 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
       table !== null &&
       typeof table === 'object' &&
       text(table.key, 1024) &&
+      (table.fullName === undefined || text(table.fullName, 1024)) &&
       text(table.nodeId, 1024) &&
       text(table.name, 1024) &&
       text(table.resourceType, 100) &&

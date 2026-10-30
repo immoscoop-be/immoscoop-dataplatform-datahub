@@ -15,6 +15,7 @@ import circleDashedFill from '@phosphor-icons/core/assets/fill/circle-dashed-fil
 import copyFill from '@phosphor-icons/core/assets/fill/copy-fill.svg?raw';
 import eyeFill from '@phosphor-icons/core/assets/fill/eye-fill.svg?raw';
 import eyeSlashFill from '@phosphor-icons/core/assets/fill/eye-slash-fill.svg?raw';
+import folderPlusFill from '@phosphor-icons/core/assets/fill/folder-plus-fill.svg?raw';
 import gaugeFill from '@phosphor-icons/core/assets/fill/gauge-fill.svg?raw';
 import globeSimpleFill from '@phosphor-icons/core/assets/fill/globe-simple-fill.svg?raw';
 import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-fill.svg?raw';
@@ -138,6 +139,7 @@ export const ICONS = {
   'copy-fill': copyFill,
   'eye-fill': eyeFill,
   'eye-slash-fill': eyeSlashFill,
+  'folder-plus-fill': folderPlusFill,
   'gauge-fill': gaugeFill,
   'globe-simple-fill': globeSimpleFill,
   'graduation-cap-fill': graduationCapFill,

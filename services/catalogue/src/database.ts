@@ -66,6 +66,8 @@ export interface CatalogueDatabase {
   resources: {
     id: Generated<string>;
     key: string;
+    /** The full name of its table in its own case, for BigQuery; null until a run brings it. */
+    fullName: string | null;
     projectId: string;
     projectName: string | null;
     nodeId: string;

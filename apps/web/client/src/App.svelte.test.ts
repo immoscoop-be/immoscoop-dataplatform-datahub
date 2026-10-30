@@ -800,6 +800,29 @@ describe('the web app, for the Data Team', () => {
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
+  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its grain (FR-CO-31, DEC-UX-131)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/resources/r1');
+    render(App, { config: CONFIG });
+    const notice = within(await screen.findByRole('status'));
+    await fireEvent.click(await notice.findByRole('button', { name: /Aan een Collection toevoegen/ }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Saved searches aan een Collection toevoegen' }));
+    expect(sheet.getByText('Nog geen Collection gekozen')).toBeTruthy();
+    const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('radio', { name: /Credit leads/ }));
+    expect(sheet.getByText('In Credit leads · daarna zijn grain en relaties')).toBeTruthy();
+    await fireEvent.click(next);
+
+    // The second step is the one of the page of a Collection, with this Resource ticked.
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van 1 Resource' }));
+    await fireEvent.input(await second.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(second.getByRole('button', { name: '1 Resource toevoegen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources');
+    expect((added?.body as { resources: { id: string }[] }).resources.map((one) => one.id)).toEqual(['r1']);
+  });
+
   it('shows the page for what may not be seen to anyone else (FR-SR-31, DEC-UX-32)', async () => {
     serve();
     open('/resources/r1');

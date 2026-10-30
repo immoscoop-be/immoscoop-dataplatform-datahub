@@ -10,7 +10,8 @@
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import type { Catalogue, Resource } from '../lib/catalogue.js';
+  import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
+  import type { Catalogue, Collection, Resource } from '../lib/catalogue.js';
   import { type Draft, draftOf, requestOf, strangers, unfinished } from '../lib/grain.js';
   import type { DomainModelView, Registry } from '../lib/registry.js';
   import ResourceGrain from './ResourceGrain.svelte';
@@ -23,27 +24,37 @@
    * DEC-UX-58). First the Resources without a Collection, searchable, each with its description from
    * dbt, how it came in and its Level, to tick one or more. Then, in a wider sheet, per Resource how it
    * is stored, its grain and model type, and the mapping of every field, from what dbt and the Domain
-   * Model propose (FR-CO-33, FR-CO-34). They are added, with all of it, in one go.
+   * Model propose (FR-CO-33, FR-CO-34). They are added, with all of it, in one go. Opened from a
+   * Resource that waits, the first step is the choice of the Collection instead, the Resource ticked
+   * (DEC-UX-131).
    */
   let {
     collection,
+    into,
     waiting,
     catalogue,
     registry,
     onadd,
     onclose,
   }: {
-    collection: string;
+    /** The name of the Collection they go into, when they are added from its page. */
+    collection?: string;
+    /** Added from the page of a Resource that waits: the Collections to choose from, first. */
+    into?: readonly Collection[];
     waiting: readonly Resource[];
     catalogue: Catalogue;
     registry: Registry;
-    onadd: (resources: ReturnType<typeof requestOf>[]) => Promise<{ outcome: Added; message?: string }>;
+    /** With the Collection chosen in the sheet, when it was chosen there. */
+    onadd: (resources: ReturnType<typeof requestOf>[], into?: string) => Promise<{ outcome: Added; message?: string }>;
     onclose: () => void;
   } = $props();
 
   let step = $state(0);
   let query = $state('');
-  let chosen: string[] = $state([]);
+  // svelte-ignore state_referenced_locally
+  let chosen: string[] = $state(into ? waiting.map((resource) => resource.id) : []);
+  /** The Collection chosen in the sheet, when it is chosen here. */
+  let target: string | undefined = $state();
   let adding = $state(false);
   let problem: { outcome: Added; message?: string } | undefined = $state();
 
@@ -57,6 +68,10 @@
   const shown = $derived(
     waiting.filter((resource) => !words || [resource.displayName, resource.description, resource.name].some((text) => text.toLowerCase().includes(words))),
   );
+  const collections = $derived(
+    (into ?? []).filter((one) => !words || [one.name, one.description, one.ownerUnit.name].some((text) => text.toLowerCase().includes(words))),
+  );
+  const targetName = $derived(into?.find((one) => one.id === target)?.name ?? '');
 
   function toggle(id: string) {
     chosen = chosen.includes(id) ? chosen.filter((other) => other !== id) : [...chosen, id];
@@ -121,7 +136,10 @@
   async function add() {
     adding = true;
     problem = undefined;
-    const outcome = await onadd(picked.map((one) => requestOf(one, identities)));
+    const outcome = await onadd(
+      picked.map((one) => requestOf(one, identities)),
+      target,
+    );
     adding = false;
     if (outcome.outcome !== 'added') {
       problem = outcome;
@@ -129,12 +147,41 @@
   }
 </script>
 
-<Sheet title={step === 0 ? t('add.title', { name: collection }) : t('grain.title', { count: chosen.length })} wide={step === 1} {onclose}>
+<Sheet
+  title={step === 1 ? t('grain.title', { count: chosen.length }) : into ? t('add.into.title', { name: waiting[0]?.displayName ?? '' }) : t('add.title', { name: collection ?? '' })}
+  wide={step === 1}
+  {onclose}
+>
   {#snippet top()}
-    <Steps label={t('add.steps')} steps={[t('add.step.choose'), t('add.step.grain')]} current={step} onstep={(index) => (step = index)} />
+    <Steps label={t('add.steps')} steps={[t(into ? 'add.step.collection' : 'add.step.choose'), t('add.step.grain')]} current={step} onstep={(index) => (step = index)} />
   {/snippet}
-  {#snippet head()}<p class="meta text">{step === 0 ? t('add.text') : t('grain.text')}</p>{/snippet}
-  {#if step === 0}
+  {#snippet head()}<p class="meta text">{step === 0 ? t(into ? 'add.into.text' : 'add.text') : t('grain.text')}</p>{/snippet}
+  {#if step === 0 && into}
+    <div class="search"><Search bind:value={query} placeholder={t('add.into.search')} surface="sub" /></div>
+    <div class="list" role="radiogroup" aria-label={t('add.step.collection')}>
+      {#each collections as one (one.id)}
+        {@const on = target === one.id}
+        <label class="pick" class:on>
+          <input type="radio" name="into" checked={on} onchange={() => (target = one.id)} />
+          <span class="what">
+            <span class="line">
+              <span class="kind"><CollectionIcon name={one.icon} /></span>
+              <span class="item-title name">{one.name}</span>
+            </span>
+            <span class="meta came">
+              {t('add.into.facts', {
+                owner: one.ownerUnit.name,
+                count: one.resources.length,
+                visibility: t(one.visibility === 'public' ? 'collections.public' : 'collections.private'),
+              })}
+            </span>
+          </span>
+        </label>
+      {:else}
+        <p class="meta empty">{t(words ? 'add.into.noMatch' : 'add.into.none')}</p>
+      {/each}
+    </div>
+  {:else if step === 0}
     <div class="search"><Search bind:value={query} placeholder={t('add.search')} surface="sub" /></div>
     <div class="list">
       {#each shown as resource (resource.id)}
@@ -196,9 +243,11 @@
   {/if}
   {#snippet foot()}
     {#if step === 0}
-      <p class="meta chosen">{t('add.selected', { count: chosen.length })}</p>
+      <p class="meta chosen">
+        {#if into}{target ? t('add.into.chosen', { name: targetName }) : t('add.into.nothing')}{:else}{t('add.selected', { count: chosen.length })}{/if}
+      </p>
       <Button variant="quiet" onclick={onclose}>{t('collection.cancel')}</Button>
-      <Button disabled={chosen.length === 0} onclick={next}>{t('add.next')}<Icon name="arrow-right" /></Button>
+      <Button disabled={into ? !target : chosen.length === 0} onclick={next}>{t('add.next')}<Icon name="arrow-right" /></Button>
     {:else}
       <Button variant="quiet" onclick={() => (step = 0)}><Icon name="arrow-left" />{t('grain.back')}</Button>
       <p class="meta chosen" role={problem ? 'alert' : undefined}>
