@@ -1,8 +1,14 @@
 import { fireEvent, render, screen } from '@testing-library/svelte';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import SqlEditor from './SqlEditor.svelte';
 
 const content = () => screen.getByRole('textbox', { name: 'SQL' });
+
+// jsdom lays out no text: CodeMirror, measuring a short line in a later frame, finds no rectangles and leaves it.
+beforeAll(() => {
+  const range = Range.prototype as Partial<Range>;
+  range.getClientRects ??= () => [] as unknown as DOMRectList;
+});
 
 describe('the SQL editor', () => {
   it('runs the query with Cmd+Enter, or Ctrl+Enter, as its button does (DEC-UX-142)', async () => {

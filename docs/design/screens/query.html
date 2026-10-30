@@ -69,7 +69,22 @@
    <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
-  <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
+  <!-- Previews, the queries of Lenses and hidden queries are left out until they are ticked in the filter, which folds open
+       under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). ?filter=open shows it open. -->
+  <div class="q-search-row">
+   <label class="search card"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
+   <button class="icon-btn q-filter-toggle" id="q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
+  </div>
+  <form class="q-filter card" id="q-filter" hidden>
+   <fieldset>
+    <legend>Also show</legend>
+    <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Previews</span><span class="meta">of Resources, from their Preview tab</span></span><span class="count">6</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Lenses</span><span class="meta">your runs of a Lens</span></span><span class="count">2</span></label>
+    <label class="q-option"><input type="checkbox"><span class="q-option-text"><span>Hidden</span><span class="meta">queries you hid with the eye</span></span><span class="count">3</span></label>
+   </fieldset>
+   <div class="q-filter-foot"><button type="reset" class="text-link">Reset</button><span class="meta">Only your panel changes</span></div>
+  </form>
+  <p class="q-filter-on" id="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
   <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px" data-for="datateam">
    <button class="seg on" data-target="yours" role="tab" aria-selected="true">Yours</button>
    <button class="seg" data-target="all" role="tab" aria-selected="false">All</button>
@@ -77,12 +92,6 @@
   </div>
   <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
-  <!-- Previews, the queries of Lenses and hidden queries are left out until their chip is on, each with how many (DEC-UX-137). -->
-  <div class="q-show" role="group" aria-label="Also show">
-   <button class="chip-toggle" aria-pressed="false">Previews<span class="count">6</span></button>
-   <button class="chip-toggle" aria-pressed="false">Lenses<span class="count">2</span></button>
-   <button class="chip-toggle" aria-pressed="false">Hidden<span class="count">3</span></button>
-  </div>
   <!-- Per day this week, per week back to the start of last month, then per month; only today is open, the others load when opened (DEC-UX-139). -->
   <div class="q-group open">
    <button class="q-period" aria-expanded="true"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
@@ -332,6 +341,20 @@
     document.querySelector('.q-divider').setAttribute('aria-orientation', 'vertical');
     document.querySelectorAll('.q-layouts button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.layout === 'side')));
   }
+</script>
+<script>
+  // The prototype switch: ?filter=open shows the form folded open.
+  if (new URLSearchParams(location.search).get('filter') === 'open') {
+    document.getElementById('q-filter').hidden = false;
+    document.getElementById('q-filter-on').hidden = true;
+    document.getElementById('q-filter-toggle').setAttribute('aria-expanded', 'true');
+  }
+  document.getElementById('q-filter-toggle').addEventListener('click', (event) => {
+    const form = document.getElementById('q-filter');
+    form.hidden = !form.hidden;
+    document.getElementById('q-filter-on').hidden = !form.hidden;
+    event.currentTarget.setAttribute('aria-expanded', String(!form.hidden));
+  });
 </script>
 </main>
 </div>

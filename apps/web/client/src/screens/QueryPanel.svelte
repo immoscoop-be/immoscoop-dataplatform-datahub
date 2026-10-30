@@ -14,8 +14,9 @@
    * when it went to the Data Team (DEC-UX-116). They are grouped per day in this week, per week back to
    * the first of last month, then per month, each period with how many it holds; only today is open, and
    * another period reads its queries when it is opened (DEC-UX-139). A search looks through all of them.
-   * Previews, the queries of Lenses and hidden queries are left out until their chip is on (DEC-UX-137);
-   * the eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
+   * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
+   * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
+   * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
    * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All: everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
    */
@@ -45,12 +46,18 @@
   /** How long typing pauses before the search asks for the queries. */
   const PAUSE = 250;
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
-  const CHIPS: Record<Shown, string> = { previews: 'query.show.previews', lenses: 'query.show.lenses', hidden: 'query.show.hidden' };
+  const KINDS: Record<Shown, { name: string; detail: string }> = {
+    previews: { name: 'query.show.previews', detail: 'query.show.previews.detail' },
+    lenses: { name: 'query.show.lenses', detail: 'query.show.lenses.detail' },
+    hidden: { name: 'query.show.hidden', detail: 'query.show.hidden.detail' },
+  };
 
   let search = $state('');
   let unfolded = $state(false);
   let scope = $state<'yours' | 'all'>('yours');
   let show = $state<Shown[]>([]);
+  /** Whether the filter is folded open. */
+  let filtering = $state(false);
   /** How many queries each day holds: undefined while they come, null when they could not be read. */
   let days = $state<QueryDay[] | null | undefined>();
   /** The queries of the periods read so far, by period; null when they could not be read. */
@@ -225,7 +232,48 @@
   </div>
 {/snippet}
 
-<div class="search"><Search bind:value={search} placeholder={t('query.search')} /></div>
+<!-- What the panel also shows folds open next to the search, as a small form (DEC-UX-150). -->
+<div class="search-row">
+  <div class="search"><Search bind:value={search} placeholder={t('query.search')} /></div>
+  <button type="button" class="filter-toggle" aria-expanded={filtering} aria-controls="query-show" aria-label={t('query.show.toggle')} title={t('query.show.toggle')} onclick={() => (filtering = !filtering)}>
+    <Icon name="sliders-horizontal" />{#if show.length > 0}<span class="badge" aria-hidden="true">{show.length}</span>{/if}
+  </button>
+</div>
+
+<form
+  class="show card"
+  id="query-show"
+  hidden={!filtering}
+  onsubmit={(event) => event.preventDefault()}
+  onreset={(event) => {
+    event.preventDefault();
+    show = [];
+  }}
+>
+  <fieldset>
+    <legend>{t('query.show')}</legend>
+    {#each SHOWN as kind (kind)}
+      <label class="option">
+        <input type="checkbox" checked={shown.has(kind)} onchange={() => toggle(kind)} />
+        <span class="option-text"><span>{t(KINDS[kind].name)}</span><span class="meta">{t(KINDS[kind].detail)}</span></span>
+        <span class="count">{totals[kind]}</span>
+      </label>
+    {/each}
+  </fieldset>
+  <div class="foot">
+    <button type="reset" class="text-link" disabled={show.length === 0}>{t('query.show.reset')}</button>
+    <span class="meta">{t('query.show.only')}</span>
+  </div>
+</form>
+
+{#if !filtering && show.length > 0}
+  <p class="on">
+    <span>{t('query.show.on')}</span>
+    {#each show as kind (kind)}
+      <span class="shown">{t(KINDS[kind].name)}<button type="button" class="off" aria-label={t('query.show.off', { kind: t(KINDS[kind].name) })} onclick={() => toggle(kind)}><Icon name="x" /></button></span>
+    {/each}
+  </p>
+{/if}
 
 {#if dataTeam}
   <div class="filter">
@@ -240,12 +288,6 @@
     />
   </div>
 {/if}
-
-<div class="chips" role="group" aria-label={t('query.show')}>
-  {#each SHOWN as kind (kind)}
-    <button type="button" class="chip" aria-pressed={shown.has(kind)} onclick={() => toggle(kind)}>{t(CHIPS[kind])}<span class="count">{totals[kind]}</span></button>
-  {/each}
-</div>
 
 <p class="label">{t(all ? 'query.everyone' : 'query.yours')}</p>
 
@@ -291,12 +333,36 @@
 {/if}
 
 <style>
-  .search { margin: 16px 0 12px; }
+  .search-row { display: flex; align-items: center; gap: 6px; margin: 16px 0 12px; }
+  .search { flex: 1; min-width: 0; }
   .filter { margin: 2px 0 8px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
-  .chip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); outline: 1px solid var(--tint-active); }
-  .chip[aria-pressed='true'] { background: var(--surface-sub); color: var(--text-primary); outline-color: var(--text-muted); }
-  .chip:focus-visible { outline: 2px solid var(--text-secondary); }
+  /* The filter: a button with how many kinds it adds, and the small form it folds open (DEC-UX-150). */
+  .filter-toggle { position: relative; flex: none; width: 36px; height: 36px; border: 0; border-radius: var(--radius-md); background: none; color: var(--text-secondary);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 16px; cursor: pointer; }
+  .filter-toggle:hover { background: var(--tint-hover); }
+  .filter-toggle[aria-expanded='true'] { background: var(--surface-sub); color: var(--text-primary); }
+  .filter-toggle:focus-visible { outline: 2px solid var(--text-secondary); }
+  .badge { position: absolute; top: 2px; right: 2px; min-width: 15px; height: 15px; padding: 0 4px; box-sizing: border-box; border-radius: var(--radius-pill);
+    background: var(--text-primary); color: var(--surface-solid); font-size: 10px; line-height: 15px; text-align: center; }
+  .show { margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md); }
+  .show[hidden] { display: none; }
+  .show fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 2px; min-width: 0; }
+  .show legend { padding: 0; margin-bottom: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+  .option { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: var(--radius-sm); cursor: pointer; }
+  .option:hover { background: var(--tint-hover); }
+  .option input { accent-color: var(--text-primary); margin: 0; }
+  .option-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: var(--text-small); }
+  .option .count { font-size: var(--text-meta); }
+  .foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-hover); }
+  .foot .meta { margin-left: auto; }
+  .text-link { all: unset; cursor: pointer; font-size: var(--text-meta); color: var(--text-secondary); text-decoration: underline; text-underline-offset: 3px; }
+  .text-link:disabled { cursor: default; color: var(--text-muted); text-decoration: none; }
+  .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
+  .on { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: -4px 4px 8px; font-size: var(--text-meta); color: var(--text-secondary); }
+  .shown { display: inline-flex; align-items: center; gap: 2px; }
+  .off { all: unset; cursor: pointer; display: inline-flex; padding: 2px; border-radius: var(--radius-sm); color: var(--text-muted); }
+  .off:hover { color: var(--text-primary); }
+  .off:focus-visible { outline: 2px solid var(--text-secondary); }
   .count { color: var(--text-muted); }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .period { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }

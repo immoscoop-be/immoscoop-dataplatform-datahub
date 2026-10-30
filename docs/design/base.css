@@ -493,12 +493,9 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-entry:not(.open) .q-unfold i { transform: rotate(-90deg); }
 .q-entry:not(.open) .q-runs { display: none; }
 .q-entry .pill { margin-right: 6px; }
-/* The panel of Query: chips that add previews, the queries of Lenses and hidden queries (DEC-UX-137);
-   periods that fold, with how many queries they hold (DEC-UX-139); an eye on hover hides a query (DEC-UX-138). */
-.q-show { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
-.chip-toggle { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); outline: 1px solid var(--tint-active); }
-.chip-toggle[aria-pressed="true"] { background: var(--surface-sub); color: var(--text-primary); outline-color: var(--text-muted); }
-.chip-toggle .count, .q-period .count { color: var(--text-muted); }
+/* The panel of Query: periods that fold, with how many queries they hold (DEC-UX-139); an eye on hover hides a
+   query (DEC-UX-138). What it also shows is a filter next to the search (DEC-UX-150), further down. */
+.q-period .count { color: var(--text-muted); }
 .q-group { margin-top: 4px; }
 .q-period { all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }
 .q-period:hover { color: var(--text-primary); }
@@ -1375,5 +1372,25 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .q-work.side .q-body { display: flex; flex-direction: column; }
 .q-body > .param-box { min-height: 0; overflow: auto; margin: 0; }
 .q-body > .sql-fold { min-height: 0; margin: 0; }
+/* The filter of the panel of Query: previews, the queries of Lenses and hidden queries, ticked in a small form
+   that folds open under the search; folded, one line says what it adds (DEC-UX-137, DEC-UX-150). */
+.q-search-row { display: flex; align-items: center; gap: 6px; margin: 16px 0 10px; }
+.q-search-row .search { flex: 1; min-width: 0; }
+.q-filter-toggle { position: relative; flex: none; width: 36px; height: 36px; font-size: 16px; }
+.q-filter-toggle[aria-expanded="true"] { background: var(--surface-sub); color: var(--text-primary); }
+.q-filter-count { position: absolute; top: 2px; right: 2px; min-width: 15px; height: 15px; padding: 0 4px; box-sizing: border-box; border-radius: var(--radius-pill); background: var(--text-primary); color: var(--surface-solid); font-size: 10px; line-height: 15px; text-align: center; }
+.q-filter { margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md); }
+.q-filter fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 2px; }
+.q-filter legend { padding: 0; margin-bottom: 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.q-option { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: var(--radius-sm); cursor: pointer; }
+.q-option:hover { background: var(--tint-hover); }
+.q-option input { accent-color: var(--text-primary); margin: 0; }
+.q-option-text { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: var(--text-small); }
+.q-option .count { font-size: var(--text-meta); color: var(--text-muted); }
+.q-filter-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--tint-hover); }
+.q-filter-foot .meta { margin-left: auto; }
+.q-filter-on { display: flex; align-items: center; gap: 6px; margin: -4px 4px 8px; font-size: var(--text-meta); color: var(--text-secondary); }
+.q-filter-x { all: unset; cursor: pointer; display: inline-flex; color: var(--text-muted); }
+.q-filter-x:hover { color: var(--text-primary); }
 /* Day and night switch at once: while the theme changes, nothing slides on its way (DEC-UX-149). */
 :root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after { transition: none !important; }

@@ -1377,7 +1377,7 @@ describe('Query', () => {
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139)', async () => {
+  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139, DEC-UX-150)', async () => {
     const today = new Date().toISOString();
     const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
     const other = { ...QUERY, id: 'q2', name: 'Partner share per week', createdAt: today, lastRunAt: today };
@@ -1400,10 +1400,25 @@ describe('Query', () => {
     await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week verbergen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q2/hidden' }));
     await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Partner share per week/ })).toBeNull());
-    await fireEvent.click(await panel.findByRole('button', { name: /Verborgen\s*1/ }));
+    // The filter folds open next to the search, as a small form (DEC-UX-150).
+    const filter = panel.getByRole('button', { name: /^Filter: toon ook/ });
+    expect(filter.getAttribute('aria-expanded')).toBe('false');
+    await fireEvent.click(filter);
+    expect(filter.getAttribute('aria-expanded')).toBe('true');
+    const hidden = await panel.findByRole('checkbox', { name: /Verborgen.*1$/ });
+    await fireEvent.click(hidden);
     expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // Folded, one line says what it adds, and takes it away again.
+    await fireEvent.click(filter);
+    const off = panel.getByRole('button', { name: 'Verborgen niet meer tonen' });
+    expect(panel.getByText('Ook getoond:')).toBeTruthy();
     await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week weer tonen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q2/hidden' }));
+    await fireEvent.click(off);
+    expect(panel.queryByText('Ook getoond:')).toBeNull();
+    await fireEvent.click(filter);
+    expect((panel.getByRole('checkbox', { name: /Verborgen/ }) as HTMLInputElement).checked).toBe(false);
+    expect((panel.getByRole('button', { name: 'Herstel' }) as HTMLButtonElement).disabled).toBe(true);
     // A search looks through every period.
     await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'since 2024' } });
     await vi.waitFor(() => expect(calls.some((call) => call.path.includes('q=since+2024'))).toBe(true));
@@ -1479,11 +1494,12 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // A preview of a Resource is a query of the User, marked so in the panel once Previews is on (DEC-UX-137).
+    // A preview of a Resource is a query of the User, marked so in the panel once Previews is ticked (DEC-UX-137, DEC-UX-150).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
     expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
-    await fireEvent.click(panel.getByRole('button', { name: /Voorbeelden\s*1/ }));
+    await fireEvent.click(panel.getByRole('button', { name: /^Filter: toon ook/ }));
+    await fireEvent.click(panel.getByRole('checkbox', { name: /Voorbeelden.*1$/ }));
     expect(within(await panel.findByRole('link', { name: /Preview · Weekly lead volume/ })).getByText('Voorbeeld')).toBeTruthy();
     await fireEvent.click(await main.findByRole('button', { name: 'Leads per source name' }, { timeout: 3000 }));
     const name = main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement;
