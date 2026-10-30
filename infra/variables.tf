@@ -111,3 +111,13 @@ variable "dbt_source_jobs" {
     error_message = "dbt projects and jobs are named by their numeric IDs."
   }
 }
+
+variable "mail_from" {
+  description = "Who the e-mail of Data Hub comes from: an address of a Workspace domain whose replies are not read (DEC-PF-31)."
+  type        = string
+
+  validation {
+    condition     = can(regex("^[^<>@]+ <[a-z0-9._-]+@[a-z0-9.-]+>$", var.mail_from)) && contains(var.workspace_domains, try(regex("@([a-z0-9.-]+)>$", var.mail_from)[0], ""))
+    error_message = "A name and an address of a Workspace domain, such as Data Hub <datahub@immoscoop.be>: the relay sends for these only."
+  }
+}

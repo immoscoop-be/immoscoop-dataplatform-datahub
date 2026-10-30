@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--
+  Screen: a notification outside Data Hub, by e-mail and as a Slack direct message (DEC-LN-02, DEC-LN-03, DEC-LN-05, DEC-LN-07)
+  Drawn on 2026-10-29 and decided the same day (DEC-UX-129). A Message notifies at once, never as a digest, in Data Hub always and by e-mail, and in
+  Slack. Every channel takes its texts from the Message Catalogue (FR-CV-15): the e-mail its first line of plain text as
+  subject and its laid-out text as body; Slack its laid-out text in Slack's own mark-up, with the plain text as fallback.
+  The e-mail: from Data Hub, an address of Immoscoop whose replies go nowhere (DEC-PF-31); to the address of the Google
+  group of an Owner Unit (DEC-LN-03) or to one person; the mark and the name on top, the object with its kind and
+  Collection, the text of the Message, "Open in context" as the one button (the buttons of the Message itself, such as
+  Accept or Edit business descriptions, wait in Data Hub, with the Message in view), and at the foot why it came and the way to
+  the Message Centre. It is always light, as e-mail clients show it, and in the language of its receiver: their setting
+  in Data Hub, Dutch for a group (OP-UX-35, DEC-UX-96). Slack: a direct message from the app Data Hub, the same text,
+  "Open in context" as a button and the object under it; a User not in Slack gets e-mail alone.
+  The switch shows: a Question to an Owner Unit, the decision on a Request to its writer, what Data Hub tells an Owner
+  (a changed description), and the Question in Slack.
+  Requirements: FR-LN-01, FR-CV-03, FR-CV-15
+  Decisions: DEC-LN-02, DEC-LN-03, DEC-LN-05, DEC-LN-07, DEC-PF-31, DEC-CV-07, DEC-UX-129.
+  Messages of the catalogue: MSG-CNV-01, MSG-CNV-05, MSG-RES-02.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A notification by e-mail and in Slack</title>
+<style>
+ .note-page { max-width: 760px; margin: 0 auto; padding: 28px 20px 90px; display: grid; gap: 14px; }
+ .client { border-radius: 16px; background: #ffffff; color: #1d1d1b; outline: 1px solid #e4e1dc; overflow: hidden; }
+ .client-head { padding: 16px 22px; border-bottom: 1px solid #ece9e4; font-size: 13px; line-height: 1.7; }
+ .client-head .subject { font-size: 17px; font-weight: 500; margin-bottom: 6px; }
+ .client-head .k { color: #8a867f; display: inline-block; width: 46px; }
+ .mail { max-width: 600px; margin: 0 auto; padding: 28px 24px 32px; font: 14px/1.6 Poppins, Arial, sans-serif; color: #1d1d1b; }
+ .mail-brand { display: flex; align-items: center; gap: 10px; font-weight: 500; font-size: 15px; }
+ .mail-object { margin-top: 24px; padding-top: 18px; border-top: 1px solid #ece9e4; }
+ .mail-kind { font-size: 12px; color: #8a867f; }
+ .mail-object .name { font-size: 18px; font-weight: 500; }
+ .mail-text { margin-top: 14px; }
+ .mail-text p { margin: 0 0 10px; }
+ .mail-text blockquote { margin: 0 0 10px; padding-left: 12px; border-left: 2px solid #dedad3; }
+ .mail-text ul { margin: 0 0 10px; padding-left: 18px; }
+ .mail-text del { color: #8a867f; }
+ .mail-text code { font-family: 'IBM Plex Mono', Menlo, monospace; font-size: 13px; }
+ .mail-button { display: inline-block; margin-top: 8px; padding: 10px 20px; border-radius: 999px; background: #1d1d1b; color: #ffffff; text-decoration: none; font-weight: 500; font-size: 14px; }
+ .mail-foot { margin-top: 28px; padding-top: 16px; border-top: 1px solid #ece9e4; font-size: 12px; color: #8a867f; line-height: 1.6; }
+ .mail-foot a { color: #1d1d1b; }
+ .slack { border-radius: 16px; background: #ffffff; color: #1d1c1d; outline: 1px solid #e4e1dc; padding: 18px 22px; font: 15px/1.46 Lato, Arial, sans-serif; }
+ .slack-head { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid #ece9e4; font-weight: 700; }
+ .slack-row { display: flex; gap: 10px; margin-top: 14px; }
+ .slack-avatar { width: 36px; height: 36px; border-radius: 8px; background: #1d1d1b; display: flex; align-items: center; justify-content: center; flex: none; }
+ .slack-app { font-size: 10px; font-weight: 700; color: #616061; background: #ececec; padding: 1px 4px; border-radius: 3px; margin-left: 4px; }
+ .slack-time { color: #616061; font-size: 12px; margin-left: 6px; }
+ .slack-quote { border-left: 4px solid #dddddd; padding-left: 10px; margin: 4px 0; }
+ .slack-button { display: inline-block; margin-top: 8px; padding: 4px 12px; border-radius: 4px; outline: 1px solid #cccccc; color: #1d1c1d; text-decoration: none; font-weight: 700; font-size: 13px; }
+ .slack-context { margin-top: 6px; font-size: 12px; color: #616061; }
+</style>
+</head>
+<body class="mcp-demo">
+<div class="note-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: what reaches a User outside Data Hub. The texts come from the Message Catalogue; only the frame is drawn here.</p>
+
+ <section class="client" data-pane-group="show" data-pane="group" aria-label="An e-mail to an Owner Unit">
+  <div class="client-head">
+   <div class="subject">Karel Leys asked a question about the lens Leads per source name: “Mailing brings only 3.8% of the leads this year…”</div>
+   <div><span class="k">From</span>Data Hub &lt;datahub@immoscoop.be&gt;</div>
+   <div><span class="k">To</span>credit-team@immoscoop.be</div>
+  </div>
+  <div class="mail">
+   <div class="mail-brand"><svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/></svg>Data Hub</div>
+   <div class="mail-object"><div class="mail-kind">Lens · Credit leads</div><div class="name">Leads per source name</div></div>
+   <div class="mail-text">
+    <p><b>Karel Leys</b> asked a question about the lens Leads per source name</p>
+    <blockquote>Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</blockquote>
+   </div>
+   <a class="mail-button" href="lens-context.html">Open in context</a>
+   <div class="mail-foot">You get this as a member of credit-team, the Owner Unit of this Lens. Every Message is in your <a href="messages.html">Message Centre</a>. Replies to this e-mail are not read: answer in Data Hub.</div>
+  </div>
+ </section>
+
+ <section class="client" data-pane-group="show" data-pane="person" aria-label="An e-mail to one person" hidden>
+  <div class="client-head">
+   <div class="subject">Dirk Vos refused the request on the lens Leads per source, all weeks.</div>
+   <div><span class="k">From</span>Data Hub &lt;datahub@immoscoop.be&gt;</div>
+   <div><span class="k">To</span>mia.peeters@immoscoop.be</div>
+  </div>
+  <div class="mail">
+   <div class="mail-brand"><svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/></svg>Data Hub</div>
+   <div class="mail-object"><div class="mail-kind">Lens · Credit leads</div><div class="name">Leads per source, all weeks</div></div>
+   <div class="mail-text">
+    <p><b>Dirk Vos refused the request on the lens Leads per source, all weeks</b></p>
+    <blockquote>It reads 6.2 GB every run; give From a default of the last two years and send it again.</blockquote>
+    <p>The lens stays unpublished: change it and send it again.</p>
+   </div>
+   <a class="mail-button" href="lens-new-context.html?role=owner&amp;state=refused">Open in context</a>
+   <div class="mail-foot">You get this because you sent the request. Every Message is in your <a href="messages.html">Message Centre</a>. Replies to this e-mail are not read: answer in Data Hub.</div>
+  </div>
+ </section>
+
+ <section class="client" data-pane-group="show" data-pane="datahub" aria-label="An e-mail of what Data Hub tells" hidden>
+  <div class="client-head">
+   <div class="subject">One description of Weekly lead volume changed in dbt. Your business descriptions stay as they are, and nothing is asked of you.</div>
+   <div><span class="k">From</span>Data Hub &lt;datahub@immoscoop.be&gt;</div>
+   <div><span class="k">To</span>credit-team@immoscoop.be</div>
+  </div>
+  <div class="mail">
+   <div class="mail-brand"><svg width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="#1d1d1b" stroke-width="2"/></svg>Data Hub</div>
+   <div class="mail-object"><div class="mail-kind">Resource · Credit leads</div><div class="name">Weekly lead volume</div></div>
+   <div class="mail-text">
+    <p><b>One description of Weekly lead volume changed in dbt</b></p>
+    <p>It happened in the dbt run of 25 October 2026. Your business descriptions stay as they are, next to them: read them again, and change yours where it no longer fits. Nothing is asked of you, and the level and the publication do not change.</p>
+    <p><b><code>lead_count</code></b></p>
+    <ul><li>Before, in dbt: <del>Number of credit leads sent to KBC</del></li><li>Now, in dbt: Number of credit leads sent to KBC, without test and duplicate requests</li><li>Your business description: How many credit leads went to KBC that week from this source.</li></ul>
+   </div>
+   <a class="mail-button" href="resource-detail.html">Open in context</a>
+   <div class="mail-foot">You get this as a member of credit-team, the Owner Unit of this Resource. Every Message is in your <a href="messages.html">Message Centre</a>. Replies to this e-mail are not read: answer in Data Hub.</div>
+  </div>
+ </section>
+
+ <section class="slack" data-pane-group="show" data-pane="slack" aria-label="A direct message in Slack" hidden>
+  <div class="slack-head"><i class="ph ph-chat-circle" aria-hidden="true"></i>Data Hub <span class="slack-app">APP</span></div>
+  <div class="slack-row">
+   <div class="slack-avatar"><svg width="24" height="16" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="#ffffff" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="#ffffff" stroke-width="2"/></svg></div>
+   <div>
+    <div><b>Data Hub</b><span class="slack-app">APP</span><span class="slack-time">14:10</span></div>
+    <div><b>Karel Leys</b> asked a question about the lens Leads per source name</div>
+    <div class="slack-quote">Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</div>
+    <a class="slack-button" href="lens-context.html">Open in context</a>
+    <div class="slack-context">Lens · Credit leads · You get this as a member of credit-team, the Owner Unit of this Lens</div>
+   </div>
+  </div>
+ </section>
+</div>
+<div class="role-switch" data-group="show" role="tablist" aria-label="Prototype: what it shows">Shows
+ <button class="seg on" data-target="group" role="tab" aria-selected="true">To an Owner Unit</button>
+ <button class="seg" data-target="person" role="tab" aria-selected="false">To a person</button>
+ <button class="seg" data-target="datahub" role="tab" aria-selected="false">From Data Hub</button>
+ <button class="seg" data-target="slack" role="tab" aria-selected="false">Slack</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

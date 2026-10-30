@@ -35,3 +35,12 @@ export function day(at: Date | string, language: Language, now: Date = new Date(
   const year = moment.getFullYear() === now.getFullYear() ? undefined : 'numeric';
   return new Intl.DateTimeFormat(LOCALES[language], { day: 'numeric', month: 'short', year }).format(moment);
 }
+
+/** How long ago a day was, as the language says it: "today", "gisteren", "3 days ago"; after four weeks, the day itself. */
+export function daysAgo(date: string, language: Language, now: Date = new Date()): string {
+  const days = Math.round((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.parse(`${date}T00:00:00Z`)) / 86_400_000);
+  if (days > 28) {
+    return day(`${date}T12:00:00Z`, language, now);
+  }
+  return new Intl.RelativeTimeFormat(LOCALES[language], { numeric: 'auto' }).format(-days, 'day');
+}

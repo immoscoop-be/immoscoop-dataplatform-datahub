@@ -81,6 +81,9 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return messages.sight(who, await collections.list(who));
   }
 
+  /** The ID of an object as catalogue keeps it: a UUID in lower case, or the number of a Learning Card as it is. */
+  const objectId = (kind: string, id: string): string | null => (kind === 'learningCard' ? (/^[0-9A-Za-z.]{2,12}$/.test(id) ? id : null) : UUID.test(id) ? id.toLowerCase() : null);
+
   /** Only query, with its Google ID token, calls the internal routes of Lenses. */
   async function onlyQuery(request: FastifyRequest, reply: FastifyReply) {
     const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
@@ -105,13 +108,14 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
   // The number on Messages in the rail (FR-CV-06).
   app.get('/messages/unread', async (request) => ({ unread: await messages.unread(await sightOf(request)) }));
 
-  // The Messages on a Collection, a Resource or a Lens, for its slide-in and its number (FR-CV-04, FR-CV-07).
+  // The Messages on a Collection, a Resource, a Lens or a Learning Card, for its slide-in and its number (FR-CV-04, FR-CV-07).
   app.get<{ Params: { kind: string; id: string } }>('/messages/on/:kind/:id', async (request, reply) => {
-    const { kind, id } = request.params;
-    if (!(kind in WRITTEN_ON) || !UUID.test(id)) return reply.code(404).send(NO_MESSAGE);
+    const { kind } = request.params;
+    const id = objectId(kind, request.params.id);
+    if (!(kind in WRITTEN_ON) || !id) return reply.code(404).send(NO_MESSAGE);
     const sight = await sightOf(request);
-    if (!messages.sees(sight, kind as WrittenOn, id.toLowerCase())) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
-    return { messages: await messages.on(kind as WrittenOn, id.toLowerCase(), sight), kinds: WRITTEN_ON[kind as WrittenOn] };
+    if (!messages.sees(sight, kind as WrittenOn, id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
+    return { messages: await messages.on(kind as WrittenOn, id, sight), kinds: WRITTEN_ON[kind as WrittenOn] };
   });
 
   // One conversation, opened in the Message Centre or in context (FR-CV-09).
@@ -124,15 +128,16 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
   app.post<{ Body: unknown }>('/messages', async (request, reply) => {
     const body = (request.body ?? {}) as Record<string, unknown>;
     const on = body.subjectKind as string;
-    if (!(on in WRITTEN_ON) || typeof body.subjectId !== 'string' || !UUID.test(body.subjectId)) {
-      return reply.code(400).send({ error: 'invalid_request', message: 'A Message is on a Collection, a Resource or a Lens, named by its ID.' });
+    const id = typeof body.subjectId === 'string' ? objectId(on, body.subjectId) : null;
+    if (!(on in WRITTEN_ON) || !id) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Message is on a Collection, a Resource or a Lens, named by its ID, or on a Learning Card, named by its number.' });
     }
     const kinds: readonly string[] = WRITTEN_ON[on as WrittenOn];
     if (!kinds.includes(body.kind as string)) return reply.code(400).send({ error: 'invalid_request', message: `A Message on a ${on} is a ${kinds.join(', a ')}.` });
     const text = parseText(body);
     if (text === null) return reply.code(400).send({ error: 'invalid_request', message: `A Message has 1 to ${TEXT} characters.` });
     const sight = await sightOf(request);
-    const subject = { kind: on as WrittenOn, id: body.subjectId.toLowerCase() };
+    const subject = { kind: on as WrittenOn, id };
     if (!messages.sees(sight, subject.kind, subject.id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
     return reply.code(201).send({ message: await messages.write(sight, subject, body.kind as WrittenKind, text) });
   });
@@ -204,6 +209,17 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
       ...(input.partitions === undefined ? {} : { partitions: input.partitions as number }),
     });
     return reply.code(sent.sent ? 201 : 200).send({ request: { id: sent.id } });
+  });
+
+  // What Data Hub tells the author of a Lens that grew into large and keeps running (MSG-LEN-02, FR-LE-10).
+  app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/growth', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const input = (request.body ?? {}) as Record<string, unknown>;
+    const size = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+    if (!UUID.test(request.params.id) || !size(input.reads) || !size(input.threshold)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Lens by its ID, with what one run reads and the threshold, in bytes.' });
+    }
+    const told = await messages.grewLarge(request.params.id.toLowerCase(), { reads: input.reads as number, threshold: input.threshold as number });
+    return reply.code(201).send({ message: told });
   });
 
   // The decision on a Request on a Lens, recorded for query, which changes the Lens with it (FR-LE-09).

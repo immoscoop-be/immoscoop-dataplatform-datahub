@@ -15,6 +15,7 @@
   import type { Card, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
   import type { Storage } from '../lib/query.js';
+  import LearningRef from './LearningRef.svelte';
 
   /**
    * The Overview of a Resource, in tiles (Detail page of a Resource): its two descriptions with its model
@@ -150,8 +151,16 @@
 {#snippet modelAndGrain()}
   {#if details.modelType || details.grain.length > 0}
     <div class="model">
-      {#if details.modelType}<span class="code">{t('resource.modelType', { type: details.modelType })}</span>{/if}
-      {#if details.grain.length > 0}<span class="code" title={details.grainSentence || undefined}>{t('resource.grain', { fields: details.grain.join(' × ') })}</span>{/if}
+      {#if details.modelType}
+        <LearningRef place="modelType" shape="chip">
+          {#snippet children(mark)}<span class="code">{t('resource.modelType', { type: details.modelType ?? '' })}{@render mark?.()}</span>{/snippet}
+        </LearningRef>
+      {/if}
+      {#if details.grain.length > 0}
+        <LearningRef place="grain" shape="chip">
+          {#snippet children(mark)}<span class="code" title={details.grainSentence || undefined}>{t('resource.grain', { fields: details.grain.join(' × ') })}{@render mark?.()}</span>{/snippet}
+        </LearningRef>
+      {/if}
       <OriginTag origin="dataTeam" />
     </div>
   {/if}

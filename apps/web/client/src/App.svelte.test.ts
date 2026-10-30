@@ -293,6 +293,7 @@ function serve({
   queries = [] as Record<string, unknown>[],
   lenses = [] as Record<string, unknown>[],
   conversations = [] as Record<string, unknown>[],
+  learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
@@ -576,6 +577,24 @@ function serve({
     }
     if (path === '/me/settings') {
       return json({ settings });
+    }
+    // catalogue, as it keeps what the User did with the Learning Cards (FR-LR-32); the Chart Server, as it draws See it.
+    if (path === '/learning/progress') {
+      return json({ progress: learned });
+    }
+    const progressOn = /^\/learning\/progress\/([^/]+)(\/understood)?$/.exec(path);
+    if (progressOn) {
+      const card = decodeURIComponent(progressOn[1]!);
+      const before = learned.find((entry) => entry.card === card);
+      const step = progressOn[2] ? (before?.step ?? 'why') : (JSON.parse(init.body as string) as { step: string }).step;
+      const understoodAt = progressOn[2] ? (method === 'PUT' ? '2026-10-29T10:00:00Z' : null) : (before?.understoodAt ?? null);
+      const entry = { card, seenAt: before?.seenAt ?? '2026-10-29T10:00:00Z', lastAt: '2026-10-29T10:00:00Z', step, understoodAt };
+      if (before) learned.splice(learned.indexOf(before), 1, entry);
+      else learned.push(entry);
+      return json({ progress: entry });
+    }
+    if (path === `${CONFIG.semgraphUrl}/render`) {
+      return new Response('<svg xmlns="http://www.w3.org/2000/svg"><title>Example</title></svg>', { headers: { 'content-type': 'image/svg+xml' } });
     }
     if (path === '/me/groups') {
       return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
@@ -1095,7 +1114,7 @@ describe('the page of a Resource', () => {
     expect(warning.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('Nieuw')).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: 'Markeer als gezien' }));
+    await fireEvent.click(main.getByRole('button', { name: /^Markeer als gezien/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/changes/seen' }));
     await vi.waitFor(() => expect(main.queryByText(/het veld week_start werd toegevoegd/)).toBeNull());
   });
@@ -1755,6 +1774,24 @@ describe('Messages', () => {
     expect(main.queryByRole('textbox', { name: 'Je antwoord' })).toBeNull();
   });
 
+  it('carries the Learning Card that explains it, which opens inline (FR-LR-38, DEC-UX-79)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages/m2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Begrijp wat hier gebeurt')).toBeTruthy();
+    const card = main.getByRole('button', { name: /K3\.4\s*Waar definities leven/ });
+    expect(card.getAttribute('aria-expanded')).toBe('false');
+    expect(card.textContent).toContain('Nog niet gezien');
+    await fireEvent.click(card);
+    expect((await main.findByText('woordenlijst', { selector: 'b' })).parentElement?.textContent).toMatch(/^De woordenlijst legt een begrip uit/);
+    expect(main.getByRole('link', { name: /Open de hele kaart/ }).getAttribute('href')).toBe('/learning/K3.4');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'core' } }));
+    await fireEvent.click(main.getByRole('button', { name: /Ik heb het begrepen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4/understood' }));
+    expect(main.getByRole('button', { name: /K3\.4/ }).textContent).toContain('Begrepen');
+  });
+
   it('lets the Data Team decide on a Request, a refusal with a reason (FR-CV-08)', async () => {
     const calls = serve({ roles: ['datateam'], conversations: [REQUEST] });
     open('/messages/m3');
@@ -1794,5 +1831,136 @@ describe('Messages', () => {
     expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
     // The page stays behind it, usable.
     expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+  });
+});
+
+describe('the Learning Centre', () => {
+  it('opens on top of the rail with its intro, the card to continue, what is suggested and the path through the Levels (DEC-LR-27, FR-LR-32)', async () => {
+    serve({ learned: [{ card: '1.2.2', seenAt: '2026-10-28T09:00:00Z', lastAt: '2026-10-28T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/learning');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 2, name: 'Wat is het Learning Centre?' })).toBeTruthy();
+    expect(main.getByRole('link', { name: /Begin met het Compass/ }).getAttribute('href')).toBe('/learning/K3.4');
+    expect(await main.findByRole('heading', { level: 2, name: 'Verder lezen' })).toBeTruthy();
+    expect(main.getByText('Voorgesteld · Toepassen · je stopte bij Zie het')).toBeTruthy();
+    expect(main.getByText('Compass, 1 · User, nog niet begrepen')).toBeTruthy();
+    expect(main.getAllByRole('link', { name: /Waar definities leven/ })[0]?.getAttribute('href')).toBe('/learning/K3.4');
+    expect(main.getAllByText('1 van 34 gezien').length).toBeGreaterThan(0);
+    const panel = within(screen.getByRole('complementary', { name: 'Learning Centre' }));
+    expect(panel.getByText(/Je zag 1 van \d+ kaarten/)).toBeTruthy();
+    expect(document.title).toBe('Data Hub — Learning Centre');
+  });
+
+  it('lists every card in the panel, the ones to be written without a page (FR-LR-03)', async () => {
+    serve();
+    open('/learning');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Learning Centre' }));
+    await fireEvent.click(panel.getByRole('button', { name: /1 · User/ }));
+    expect(panel.getByRole('link', { name: /Unieke tellingen tel je niet op/ }).getAttribute('href')).toBe('/learning/1.2.2');
+    expect(panel.getAllByTitle('Nog te schrijven')[0]?.textContent).toContain('1.1.1');
+  });
+
+  it('opens a card in five steps, keeps each step it opens, and lets the User say they understand it (FR-LR-27, FR-LR-28)', async () => {
+    const calls = serve();
+    open('/learning/K3.4');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: /Waar definities leven/ })).toBeTruthy();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['1 Waarom nu', '2 Kernidee', '3 Zie het', '4 Check je begrip', '5 Je kan nu']);
+    expect(document.title).toBe('Data Hub — K3.4 Waar definities leven');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'why' } }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Volgende/ }));
+    expect(screen.getByRole('tab', { name: /Kernidee/ }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'core' } }));
+    // The quick path skips See it and Check your understanding.
+    await fireEvent.click(screen.getByRole('button', { name: 'Snel' }));
+    expect(screen.getByText('Volgende: Je kan nu')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /Ik heb het begrepen/ }));
+    expect(screen.getByRole('tab', { name: /Je kan nu/ }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4/understood' }));
+    expect(screen.getByRole('button', { name: /Begrepen/ }).getAttribute('title')).toBe('Begrepen · klik om ongedaan te maken');
+    expect(screen.getByRole('link', { name: /Messages/ }).getAttribute('href')).toBe('/learning/K3.4/messages');
+    expect(screen.queryByRole('navigation', { name: 'Volgende' })).toBeNull();
+  });
+
+  it('opens a card where the User stopped, until they understand it (FR-LR-32)', async () => {
+    serve({ learned: [{ card: '1.2.2', seenAt: '2026-10-28T09:00:00Z', lastAt: '2026-10-28T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/learning/1.2.2');
+    render(App, { config: CONFIG });
+    expect((await screen.findByRole('tab', { name: /Zie het/ })).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('asks one question at a time, and shows the answer and why without a score (FR-LR-30)', async () => {
+    serve();
+    open('/learning/K3.4');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: /Check je begrip/ }));
+    expect(await screen.findByRole('heading', { level: 2, name: /Waar kijk je\?/ })).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /In de woordenlijst/ }));
+    expect(screen.getByRole('status').textContent).toMatch(/^De woordenlijst legt uit/);
+    expect(screen.getByRole('button', { name: /In de woordenlijst/ }).textContent).toContain('Jouw antwoord');
+    expect(screen.getByRole('button', { name: /In de officiële definitie/ }).textContent).toContain('Het antwoord');
+    await fireEvent.click(screen.getByRole('button', { name: /Nog een vraag/ }));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('shows the example of See it as the Chart Server draws it (FR-LR-29, DEC-LR-26)', async () => {
+    const calls = serve();
+    open('/learning/1.2.2/see');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: /Zie het/ })).toBeTruthy();
+    const picture = await screen.findByAltText(/3.700 meer in de eerste staaf/);
+    expect(picture.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+    expect(calls.find((call) => call.path.endsWith('/render'))?.body).toMatchObject({ theme: 'light', size: 'default' });
+    expect(screen.getByRole('link', { name: /Open de hele kaart/ }).getAttribute('href')).toBe('/learning/1.2.2');
+  });
+
+  it('takes a Question or a Remark on a card, for the Data Team (FR-LR-06)', async () => {
+    serve();
+    open('/learning/K3.4/messages');
+    render(App, { config: CONFIG });
+    const sheet = within(await screen.findByRole('dialog'));
+    expect(sheet.getByText('Learning Card · Compass')).toBeTruthy();
+    expect(sheet.queryByRole('radio', { name: /Signaal|Signal/ })).toBeNull();
+  });
+});
+
+describe('the markers of the Learning Centre', () => {
+  const details = { ...WEEKLY_DETAIL.details, grain: ['week_start', 'lead_source'], modelType: 'aggregate' };
+
+  it('explain the grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
+    const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const grain = await screen.findByRole('button', { name: /^grain: week_start × lead_source/ });
+    expect(grain.textContent).toContain('ⓘ');
+    expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
+    await fireEvent.keyDown(grain, { key: 'Enter' });
+    const pop = within(screen.getByRole('dialog', { name: 'Uitgelegd in 3 Learning Cards' }));
+    expect(pop.getAllByRole('button').map((item) => item.textContent?.slice(0, 5))).toEqual(['2.3.5', '1.2.2', '1.2.1']);
+    expect(await pop.findByText(/^Gezien/)).toBeTruthy();
+    expect(pop.getAllByText('Nog niet gezien')).toHaveLength(2);
+    expect(pop.getAllByRole('link', { name: /Zie het/ })[0]?.getAttribute('href')).toBe('/learning/2.3.5/see');
+    await fireEvent.click(pop.getByRole('button', { name: /^2\.3\.5/ }));
+    const window = within(await screen.findByRole('dialog', { name: /^2\.3\.5 De grain-vraag/ }));
+    expect(window.getByRole('tab', { name: 'Waarom nu' }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/2.3.5', body: { step: 'why' } }));
+    await fireEvent.click(window.getByRole('button', { name: /^Volgende/ }));
+    expect(window.getByRole('tab', { name: 'Kernidee' }).getAttribute('aria-selected')).toBe('true');
+    expect(window.getByRole('link', { name: /Open in het Learning Centre/ }).getAttribute('href')).toBe('/learning/2.3.5');
+    expect(location.pathname).toBe('/resources/r2');
+  });
+
+  it('explain the Level with K5.2 and the model type with 2.3.6 (DEC-LR-30, FR-LR-39)', async () => {
+    serve({ weekly: { details } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.keyDown(await screen.findByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Enter' });
+    const items = within(screen.getByRole('dialog', { name: 'Uitgelegd in 2 Learning Cards' })).getAllByRole('button');
+    expect(items.map((item) => item.textContent)).toEqual([expect.stringMatching(/^K5\.2Het Level van een Resource/), expect.stringMatching(/^3\.3\.3/)]);
+    await fireEvent.keyDown(screen.getByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Escape' });
+    await fireEvent.keyDown(screen.getByRole('button', { name: /^modeltype: aggregate/ }), { key: 'Enter' });
+    expect(within(screen.getByRole('dialog', { name: 'Uitgelegd in 1 Learning Card' })).getByRole('button', { name: /^2\.3\.6/ })).toBeTruthy();
   });
 });

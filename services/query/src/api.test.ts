@@ -219,6 +219,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   /** What query told catalogue about each Lens, and the decisions it recorded (DEC-PF-30). */
   const told = new Map<string, { state: string; name: string }>();
   const decisions: { requestId: string; outcome: string; text: string; decider: { id: string; name: string } }[] = [];
+  /** The Lenses that grew into large, as query told catalogue (MSG-LEN-02). */
+  const large: { lensId: string; reads: number; threshold: number }[] = [];
   const catalogue: Catalogue = {
     async resource(id, authorization) {
       const ids = visible.get(authorization);
@@ -240,6 +242,9 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
       const sent: QueryRequest = { id: `m-${requests.length + 1}`, type: 'MSG-LEN-03', subjectId: lensId, writerId: '', reads, text: '', state: 'waiting', decision: null, createdAt: new Date().toISOString() };
       requests.unshift(sent);
       return { id: sent.id };
+    },
+    async lensGrewLarge(fields) {
+      large.push(fields);
     },
     async decideLensRequest(requestId, decision) {
       decisions.push({ requestId, ...decision });
@@ -746,9 +751,10 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // Other values are that run alone.
     expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, { values: { leadChannel: 'Phone' } })).json().preflight).toMatchObject({ range: 'approve' });
     expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'free', state: 'published' });
-    // With its defaults, it grows into large and keeps running.
+    // With its defaults, it grows into large and keeps running; Data Hub tells its author (MSG-LEN-02).
     expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json().preflight).toMatchObject({ range: 'approve' });
     expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'approve', state: 'published' });
+    expect(large.splice(0)).toEqual([{ lensId, reads: 400_000_000, threshold: 100_000_000 }]);
 
     fake.resize(1_500_000_000);
     expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, { values: { leadChannel: 'Phone' } })).json().preflight).toMatchObject({ range: 'request' });
@@ -797,6 +803,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // An's Lens grows into large; Mia's was large already.
     expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 0, works: 2, grown: 1, stopped: 0 });
     expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'approve', broken: null });
+    expect(large.splice(0).map((grew) => grew.lensId)).toEqual([lensId]);
     fake.resize(null);
   });
 

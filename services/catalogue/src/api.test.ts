@@ -12,6 +12,7 @@ import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
 import { RegistryUnavailable } from './registry.js';
+import { createLearning } from './learning.js';
 import { createMessages } from './messages.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
@@ -206,6 +207,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
           },
         },
         requests: createRequests(database.db),
+        learning: createLearning(database.db),
         messages: createMessages(database.db),
         // query tells about its Lenses with its own Google ID token (DEC-PF-30).
         lensCallers: {
@@ -740,6 +742,53 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await mia('POST', '/requests', { ...body, partitions: 'all' })).statusCode).toBe(400);
   });
 
+  describe('the Learning Centre', () => {
+    it('keeps what each User saw and understood, for them alone (FR-LR-32, DEC-LR-13)', async () => {
+      const lies = await user('Lies', [SALES]);
+      const tom = await user('Tom', [SALES]);
+      expect((await lies('GET', '/learning/progress')).json()).toEqual({ progress: [] });
+
+      const opened = await lies('PUT', '/learning/progress/1.2.2', { step: 'why' });
+      expect(opened.statusCode).toBe(200);
+      const first = opened.json().progress;
+      expect(first).toMatchObject({ card: '1.2.2', step: 'why', understoodAt: null });
+      // Later at another step: seen stays the first time, where they are moves on.
+      const later = (await lies('PUT', '/learning/progress/1.2.2', { step: 'see' })).json().progress;
+      expect(later).toMatchObject({ card: '1.2.2', step: 'see', seenAt: first.seenAt });
+
+      // "I understand it", and undoing it (FR-LR-05, FR-LR-28); understanding a card unseen also sees it.
+      expect((await lies('PUT', '/learning/progress/1.2.2/understood')).json().progress.understoodAt).not.toBeNull();
+      expect((await lies('PUT', '/learning/progress/K3.4/understood')).json().progress).toMatchObject({ card: 'K3.4', step: 'can' });
+      expect((await lies('DELETE', '/learning/progress/1.2.2/understood')).json().progress).toMatchObject({ card: '1.2.2', understoodAt: null });
+
+      const mine = (await lies('GET', '/learning/progress')).json().progress;
+      expect(mine.map((entry: { card: string }) => entry.card).sort()).toEqual(['1.2.2', 'K3.4']);
+      expect((await tom('GET', '/learning/progress')).json()).toEqual({ progress: [] });
+
+      expect((await lies('PUT', '/learning/progress/9.9.9', { step: 'why' })).statusCode).toBe(404);
+      expect((await lies('PUT', '/learning/progress/1.2.2', { step: 'congrats' })).statusCode).toBe(400);
+      expect((await app.inject({ method: 'GET', url: '/learning/progress' })).statusCode).toBe(401);
+    });
+
+    it('takes a Question or a Remark on a Learning Card, which everyone sees and the Data Team gets (FR-LR-06)', async () => {
+      const lies = await user('Lies', [SALES]);
+      const tom = await user('Tom', [DIGIKOM]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const asked = await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: 'K3.4', kind: 'question', text: 'Where is the glossary?' });
+      expect(asked.statusCode).toBe(201);
+      expect(asked.json().message).toMatchObject({ subject: { kind: 'learningCard', id: 'K3.4', name: 'K3.4 Where definitions live', exists: true, collection: null } });
+      expect((await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: 'K3.4', kind: 'signal', text: 'Wrong.' })).statusCode).toBe(400);
+      expect((await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: '9.9.9', kind: 'question', text: 'Which card?' })).statusCode).toBe(404);
+
+      // Every User sees it on the card; it is for the Data Team, which writes the cards.
+      expect((await tom('GET', '/messages/on/learningCard/K3.4')).json()).toMatchObject({ messages: [{ id: asked.json().message.id }], kinds: ['question', 'remark'] });
+      const forTeam = (await dirk('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
+      expect(forTeam).toContain(asked.json().message.id);
+      const forTom = (await tom('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
+      expect(forTom).not.toContain(asked.json().message.id);
+    });
+  });
+
   describe('Messages', () => {
     // A group of its own, so that what earlier tests told DigiKom does not count here.
     const CREDIT: Group = { id: 'g-credit', email: 'credit@thenextimmoscoop.be', name: 'Credit' };
@@ -878,6 +927,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(again.json().request.id).toBe(grew.json().request.id);
       expect((await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1 }, 'nope')).statusCode).toBe(401);
       expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests[0]).toMatchObject({ type: 'MSG-LEN-03', writerId: '', state: 'waiting' });
+
+      // Into large, it keeps running, and Data Hub tells its author (MSG-LEN-02).
+      const large = await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000, threshold: 100_000_000 });
+      expect(large.statusCode).toBe(201);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000 })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 1, threshold: 1 }, 'nope')).statusCode).toBe(401);
+      const told = (await team('GET', `/messages/${large.json().message.id}`)).json().message;
+      expect(told).toMatchObject({ type: 'MSG-LEN-02', writer: null, params: { reads: '240000000', threshold: '100000000' }, state: null });
     });
 
     it('enters a Signal on a Resource in its Log (CNV-050)', async () => {

@@ -211,6 +211,9 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     await expect(collections.dissolve(leads.id, dirk)).rejects.toThrow(NotEmpty);
     await resources.apply(prod('104', [table('customers')]));
     expect((await resources.inCollection(leads.id))[0]).toMatchObject({ displayName: 'Orders', withdrawn: true });
+    // Its Owner hears that it was withdrawn (MSG-RES-06); one without a Collection tells nobody.
+    const withdrawn = await database.db.selectFrom('messages').select(['subjectId', 'writerId', 'params']).where('type', '=', 'MSG-RES-06').execute();
+    expect(withdrawn).toEqual([{ subjectId: order.id, writerId: null, params: { run: '2026-10-26' } }]);
     await expect(collections.dissolve(leads.id, dirk)).rejects.toThrow('The Collection still holds 1 Resource; the Data Team removes them first.');
 
     expect(await resources.remove(order.id, dirk)).toBe(true);

@@ -1,5 +1,6 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import type { MessageKind, MessageType, SubjectKind } from '@datahub/contracts/messages';
+import { topicOf } from '@datahub/learning';
 import { type Kysely, type RawBuilder, type Selectable, sql, type SqlBool, type Transaction } from 'kysely';
 import type { Collection, Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
@@ -18,11 +19,15 @@ const idsWhere = (test: (type: MessageType) => boolean) => MESSAGE_CATALOGUE.fil
 export const WRITTEN = { question: 'MSG-CNV-01', remark: 'MSG-CNV-02', signal: 'MSG-CNV-03' } as const;
 export type WrittenKind = keyof typeof WRITTEN;
 
-/** The objects a User writes on from their page, and what each takes: a Signal is about data (FR-CV-07). */
+/**
+ * The objects a User writes on from their page, and what each takes: a Signal is about data (FR-CV-07). A
+ * Learning Card takes a Question or a Remark, for the Data Team, which writes the cards (FR-LR-06).
+ */
 export const WRITTEN_ON = {
   collection: ['question', 'remark'],
   resource: ['question', 'remark', 'signal'],
   lens: ['question', 'remark', 'signal'],
+  learningCard: ['question', 'remark'],
 } as const satisfies Partial<Record<SubjectKind, readonly WrittenKind[]>>;
 export type WrittenOn = keyof typeof WRITTEN_ON;
 
@@ -158,6 +163,8 @@ export interface Messages {
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
   grew(lensId: string, fields: { reads: number; threshold: number; partitions?: number }): Promise<{ id: string; sent: boolean }>;
+  /** What Data Hub tells the author of a Lens that grew into large, past 100 MB a run; it keeps running (MSG-LEN-02). */
+  grewLarge(lensId: string, fields: { reads: number; threshold: number }): Promise<{ id: string }>;
   /** Keeps what query tells about a Lens. */
   keepLens(id: string, facts: LensFacts): Promise<void>;
 }
@@ -178,6 +185,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   }
 
   function sees(sight: Sight, kind: SubjectKind, id: string): boolean {
+    // Every User may open every Learning Card, and so sees the Messages on it (DEC-LR-03, FR-LR-06).
+    if (kind === 'learningCard') return topicOf(id) !== undefined;
     if (sight.viewer.dataTeam) return true;
     if (kind === 'collection') return sight.collections.has(id);
     if (kind === 'resource') return sight.resources.has(id);
@@ -193,6 +202,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.resources)}))
       or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.lenses)}))
       or (m.subject_kind = 'query' and m.writer_id = ${sight.viewer.id})
+      or m.subject_kind = 'learningCard'
     )`;
   }
 
@@ -210,6 +220,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.ownedResources)}))
         or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.ownedLenses)}))))
       or (${sight.viewer.dataTeam} and m.type = any(${list(TO_DATA_TEAM)}))
+      or (${sight.viewer.dataTeam} and m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'learningCard')
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'lens' and m.subject_id = any(${list(sight.authoredLenses)}))
     )`;
   }
@@ -275,6 +286,11 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         case 'lens': {
           const lens = lensMap.get(row.subjectId);
           return { kind: 'lens', id: row.subjectId, name: lens?.name ?? fallback, collection: inCollection(lens?.collectionId ?? null), exists: !!lens };
+        }
+        case 'learningCard': {
+          // Named by its number and its title, as the plan has them; the Data Team writes it (FR-LR-06).
+          const topic = topicOf(row.subjectId);
+          return { kind: 'learningCard', id: row.subjectId, name: topic ? `${topic.number} ${topic.title.en}` : fallback, collection: null, exists: !!topic };
         }
         default:
           return { kind: row.subjectKind, id: row.subjectId, name: fallback, collection: null, exists: true };
@@ -577,6 +593,14 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         .where('state', '=', 'waiting')
         .executeTakeFirstOrThrow();
       return { id: waiting.id, sent: false };
+    },
+
+    async grewLarge(lensId, { reads, threshold }) {
+      return db
+        .insertInto('messages')
+        .values({ type: 'MSG-LEN-02', subjectKind: 'lens', subjectId: lensId, writerId: null, params: { reads: String(reads), threshold: String(threshold) }, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
     },
 
     async keepLens(id, facts) {

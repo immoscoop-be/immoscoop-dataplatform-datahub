@@ -219,7 +219,10 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     return lens;
   }
 
-  /** A run with its defaults grew; past 1 GB the Lens stops and Data Hub asks the Data Team to accept it again (MSG-LEN-03). */
+  /**
+   * A run with its defaults grew. Into large, past 100 MB, it keeps running and Data Hub tells its author
+   * (MSG-LEN-02); past 1 GB it stops and Data Hub asks the Data Team to accept it again (MSG-LEN-03).
+   */
   async function grown(id: string, range: LensRange, reads: number, log: FastifyRequest['log']): Promise<Lens> {
     const lens = await lenses.grow(id, range, reads);
     if (lens.state === 'stopped') {
@@ -227,6 +230,12 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         await catalogue.lensGrew({ lensId: lens.id, reads, threshold: thresholds.request });
       } catch (error) {
         log.error({ err: error, lens: lens.id }, 'The Request on a Lens that stopped could not be sent; the Data Team sends it on deciding');
+      }
+    } else if (range === 'approve') {
+      try {
+        await catalogue.lensGrewLarge({ lensId: lens.id, reads, threshold: thresholds.approve });
+      } catch (error) {
+        log.warn({ err: error, lens: lens.id }, 'The author of a Lens that grew into large could not be told');
       }
     }
     return told(lens, log);
