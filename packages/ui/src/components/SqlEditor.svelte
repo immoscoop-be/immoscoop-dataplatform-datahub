@@ -40,6 +40,8 @@
     { label: 'select … from', template: 'select\n    ${}\nfrom\n    ${}' },
     { label: 'where true and', template: 'where\n    true\n    and ${}' },
     { label: 'where false or', template: 'where\n    false\n    or ${}' },
+    { label: 'with … as', template: 'with ${} as (\n    ${}\n)\n' },
+    { label: 'final as … order by', template: 'final as (\n    ${}\n)\nselect *\nfrom final\norder by ${}' },
   ];
 </script>
 

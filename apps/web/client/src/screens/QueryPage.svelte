@@ -32,7 +32,8 @@
   /**
    * A query (query, DEC-UX-70 to DEC-UX-74): its name and question, and where it started from; on top of
    * its frame "Reads only" and its Resources, another set of which starts a new query in a sheet; the SQL in
-   * an editor at the full width, and under it its Parameters, each box folding; at the foot of the frame,
+   * an editor that takes the height that is left, with its Parameters to its right, or under it next to the result
+   * (DEC-UX-147), each box folding; at the foot of the frame,
    * staying in view, the Pre-flight and Run, or above 1 GB a Request to the Data Team (DEC-UX-116); under
    * it the result, a grid of 100 rows a page with its Query ID (FR-SR-51, FR-LN-06), and its history, every
    * run a variation, to preview and apply. The Pre-flight follows the SQL and the Parameters while typing
@@ -687,7 +688,9 @@
       {/if}
     </div>
 
-    <div class="box">
+    <!-- The editor takes the height that is left; its Parameters stand to its right, or under it next to the result (DEC-UX-147). -->
+    <div class="body">
+    <div class="box editor-box" class:open={boxOpen}>
       <div class="box-head">
         <button type="button" class="toggle" aria-expanded={boxOpen} aria-label={t(boxOpen ? 'editor.fold' : 'editor.unfold')} onclick={() => (boxOpen = !boxOpen)}><Icon name="caret-down" /></button>
         <span class="label">BigQuery SQL</span>
@@ -723,6 +726,7 @@
       </div>
     </div>
 
+    <div class="params">
     <QueryParameters
       parameters={shownParameters}
       sql={shownSql}
@@ -734,6 +738,8 @@
       ondefine={(entry) => openParameter(null, entry)}
       onadd={() => openParameter(null)}
     />
+    </div>
+    </div>
 
     {#if query.mine && !preview}
       <div class="run-bar" bind:this={runBar}>
@@ -991,6 +997,19 @@
   .layouts button[aria-pressed='true'] { background: var(--card); color: var(--text-primary); }
   .layouts button:focus-visible { outline: 2px solid var(--text-secondary); }
   .frame { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+  /* The editor takes the height that is left, scrolling in itself; its Parameters stand to its right, or, next to
+     the result, under it (DEC-UX-147). */
+  .body { flex: 1 1 auto; min-height: 140px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 32%); gap: 10px; align-items: stretch; }
+  .side .body { display: flex; flex-direction: column; }
+  .editor-box { min-height: 0; display: flex; flex-direction: column; }
+  .editor-box:not(.open) { align-self: start; }
+  .side .editor-box.open { flex: 1 1 auto; }
+  .sql { flex: 1 1 auto; min-height: 80px; display: flex; flex-direction: column; }
+  .sql[hidden] { display: none; }
+  .sql > :global(.editor) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .sql > :global(.editor .cm-editor) { flex: 1 1 auto; min-height: 0; }
+  .params { min-height: 0; overflow: auto; }
+  .side .params { flex: none; max-height: 45%; }
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
