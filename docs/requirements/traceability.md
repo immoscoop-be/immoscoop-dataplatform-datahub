@@ -12,7 +12,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub design principles](../design/principles.md) | – | – | 128 | 45 (5 open, 40 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 18 (4 specified, 14 implemented) | 5 (5 specified) | 9 | 9 (1 open, 8 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 19 (5 specified, 14 implemented) | 5 (5 specified) | 9 | 9 (1 open, 8 done) |
 | [User management](functional/02-user-management.md) | 11 (3 specified, 7 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 8 (2 open, 6 done) |
 | [Collections](functional/03-collections.md) | 37 (1 proposed, 1 specified, 31 implemented, 4 withdrawn) | 2 (2 specified) | 25 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (3 proposed, 11 specified, 34 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 43 | 23 (2 open, 21 done) |
@@ -60,7 +60,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-AR-15](functional/01-artifact-registry.md#fr-ar-15) | Read the Domain Model in use | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html) | [TR-AR-09](technical/01-artifact-registry.md#tr-ar-09) | [b8393a4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8393a461197a4933a0d9c77b37162108b1c8274) implements, 2026-10-28 |
 | [FR-AR-16](functional/01-artifact-registry.md#fr-ar-16) | A Node built from the Domain Model knows its Entity | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html) | [TR-AR-03](technical/01-artifact-registry.md#tr-ar-03) | [2764c3a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2764c3a26bee67f9ba20924c0f830c531c54d56f) implements, 2026-10-28 |
 | [FR-AR-17](functional/01-artifact-registry.md#fr-ar-17) | The meta of a column fills in its mapping | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html) | [TR-AR-10](technical/01-artifact-registry.md#tr-ar-10), [TR-CO-05](technical/03-collections.md#tr-co-05) | [9caa711](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9caa71112cd9fc3c9620bd422bce2f14c44ba66e) refs, 2026-10-28<br>[b8393a4](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8393a461197a4933a0d9c77b37162108b1c8274) implements, 2026-10-28 |
-| [FR-AR-18](functional/01-artifact-registry.md#fr-ar-18) | The Data Team sets the Source Jobs on a page of Data Hub | Specified | – | – | – | [83dd936](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/83dd936c4b98f0f6dbb58205ba12b4df4b3f45da) refs, 2026-10-30 |
+| [FR-AR-18](functional/01-artifact-registry.md#fr-ar-18) | A Data Admin sets the Source Jobs on a page of Data Hub | Specified | – | – | – | [83dd936](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/83dd936c4b98f0f6dbb58205ba12b4df4b3f45da) refs, 2026-10-30 |
+| [FR-AR-19](functional/01-artifact-registry.md#fr-ar-19) | A Data Admin sees every delivery of the webhook | Specified | – | – | – | – |
 
 ### [User management](functional/02-user-management.md)
 
