@@ -14,18 +14,23 @@
 </script>
 
 <script lang="ts">
-  import { tick } from 'svelte';
+  import '@xyflow/svelte/dist/style.css';
+  import { Controls, type Edge, MarkerType, type Node, Position, SvelteFlow, type Viewport } from '@xyflow/svelte';
   import Icon from '../foundations/Icon.svelte';
-  import MaturityIcon from '../marks/MaturityIcon.svelte';
+  import { t } from '../foundations/texts.svelte.js';
+  import LineageCard, { type LineageCardData } from './LineageCard.svelte';
+  import LineageFollow from './LineageFollow.svelte';
 
   type Side = 'up' | 'down';
 
   /**
    * The lineage of a Resource, walked one step at a time and never shown whole (Lineage, DEC-UX-100,
-   * FR-SR-54). The Resource stays in the middle; the models it is built on stand in a column on its left,
-   * those built on it on its right. A click on a model adds its own next models a column further out and
-   * marks it; a click on another model opens that branch and closes the one that was open; a click on an
-   * open model closes it. Curves with an arrowhead join the models in the direction the data flows.
+   * FR-SR-54), drawn on the canvas of Svelte Flow (DEC-UX-152). The Resource stays in the middle; the
+   * models it is built on stand in a column on its left, those built on it on its right. A click on a
+   * model adds its own next models a column further out and marks it; a click on another model opens that
+   * branch and closes the one that was open; a click on an open model closes it. Curves with an arrowhead
+   * join the models in the direction the data flows. The canvas pans when dragged and zooms with its
+   * buttons, a pinch, or Cmd or Ctrl and scrolling; each step brings what was walked into view.
    */
   let {
     center,
@@ -44,7 +49,17 @@
     backLabel: string;
   } = $props();
 
-  const uid = $props.id();
+  /** The size of a card, and the room between the columns and between the cards of one. */
+  const WIDTH = 178;
+  const HEIGHT = 100;
+  const BETWEEN = 76;
+  const UNDER = 10;
+  /** The room kept around the walked flow, more on the left where the zoom buttons stand, and how far it may shrink to fit. */
+  const PAD = 24;
+  const BUTTONS = 56;
+  const SMALLEST = 0.5;
+  const NODE_TYPES = { model: LineageCard };
+
   let side: Side | null = $state(null);
   let path: string[] = $state([]);
 
@@ -80,151 +95,172 @@
     path = [];
   }
 
-  // The curves, drawn on a layer over the lineage from where the cards are.
-  let box: HTMLElement | undefined = $state();
-  let leftWing: HTMLElement | undefined = $state();
-  const cards: Record<string, HTMLElement | undefined> = {};
+  // The canvas: a card per model where its column puts it, the Resource at the origin, the columns aligned at the top.
   const keyOf = (direction: Side | 'center', depth: number, id: string) => `${direction}:${depth}:${id}`;
-  let curves: { d: string; on: boolean }[] = $state([]);
+  const HANDLES = [
+    { type: 'target' as const, position: Position.Left, x: 0, y: HEIGHT / 2 - 0.5 },
+    { type: 'source' as const, position: Position.Right, x: WIDTH - 1, y: HEIGHT / 2 - 0.5 },
+  ];
 
-  function draw() {
-    if (!box) {
-      return;
-    }
-    const frame = box.getBoundingClientRect();
-    // A card scrolled out of its side draws no line.
-    const shown = (card: HTMLElement) => {
-      const wing = card.closest('.wing');
-      if (!wing) {
-        return true;
-      }
-      const at = card.getBoundingClientRect();
-      const view = wing.getBoundingClientRect();
-      return at.right > view.left + 4 && at.left < view.right - 4;
+  function card(direction: Side | 'center', depth: number, id: string, x: number, y: number): Node<LineageCardData> {
+    const clickable = direction !== 'center' && nextOf(direction, id).length > 0;
+    return {
+      id: keyOf(direction, depth, id),
+      type: 'model',
+      position: { x, y },
+      width: WIDTH,
+      height: HEIGHT,
+      handles: HANDLES,
+      draggable: false,
+      selectable: false,
+      connectable: false,
+      focusable: false,
+      data: {
+        model: models.get(id)!,
+        center: direction === 'center',
+        clickable,
+        open: direction !== 'center' && open(direction, depth, id),
+        onchoose: () => choose(direction as Side, depth, id),
+      },
     };
-    const curve = (from: HTMLElement | undefined, to: HTMLElement | undefined, on: boolean) => {
-      if (!from || !to || !shown(from) || !shown(to)) {
-        return [];
-      }
-      const a = from.getBoundingClientRect();
-      const b = to.getBoundingClientRect();
-      const [x1, y1, x2, y2] = [a.right - frame.left, a.top + a.height / 2 - frame.top, b.left - frame.left, b.top + b.height / 2 - frame.top];
-      const dx = Math.max(18, (x2 - x1) / 2);
-      return [{ d: `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2 - 2},${y2}`, on }];
+  }
+
+  function edge(source: string, target: string, on: boolean): Edge {
+    return {
+      id: `${source}>${target}`,
+      source,
+      target,
+      type: 'default',
+      class: on ? 'on' : undefined,
+      markerEnd: { type: MarkerType.ArrowClosed, width: 14, height: 14 },
+      selectable: false,
+      focusable: false,
     };
-    const middle = cards[keyOf('center', 0, center)];
-    const drawn: { d: string; on: boolean }[] = [];
+  }
+
+  const graph = $derived.by(() => {
+    const step = WIDTH + BETWEEN;
+    const middle = keyOf('center', 0, center);
+    const nodes: Node[] = [card('center', 0, center, 0, 0)];
+    const edges: Edge[] = [];
     // Right: the Resource feeds the first column, an open model the column it added.
     right.forEach((column, depth) => {
-      const from = depth === 0 ? middle : cards[keyOf('down', depth - 1, path[depth - 1]!)];
-      for (const id of column) {
-        drawn.push(...curve(from, cards[keyOf('down', depth, id)], open('down', depth, id)));
-      }
+      const from = depth === 0 ? middle : keyOf('down', depth - 1, path[depth - 1]!);
+      column.forEach((id, row) => {
+        nodes.push(card('down', depth, id, (depth + 1) * step, row * (HEIGHT + UNDER)));
+        edges.push(edge(from, keyOf('down', depth, id), open('down', depth, id)));
+      });
     });
     // Left: each column feeds the open model of the column nearer the middle, the first the Resource.
     left.forEach((column, depth) => {
-      const to = depth === 0 ? middle : cards[keyOf('up', depth - 1, path[depth - 1]!)];
-      for (const id of column) {
-        drawn.push(...curve(cards[keyOf('up', depth, id)], to, open('up', depth, id)));
-      }
+      const to = depth === 0 ? middle : keyOf('up', depth - 1, path[depth - 1]!);
+      column.forEach((id, row) => {
+        nodes.push(card('up', depth, id, -(depth + 1) * step, row * (HEIGHT + UNDER)));
+        edges.push(edge(keyOf('up', depth, id), to, open('up', depth, id)));
+      });
     });
-    curves = drawn;
-  }
-
-  // The left side shows the columns nearest the middle; columns further out scroll away.
-  $effect(() => {
-    void [left, right, models];
-    tick().then(() => {
-      if (leftWing) {
-        leftWing.scrollLeft = leftWing.scrollWidth;
-      }
-      draw();
-    });
+    const rows = Math.max(1, ...left.map((column) => column.length), ...right.map((column) => column.length));
+    return { nodes, edges, rows };
   });
-  $effect(() => {
-    const redraw = () => requestAnimationFrame(draw);
-    addEventListener('resize', redraw);
-    return () => removeEventListener('resize', redraw);
+
+  let nodes = $state.raw<Node[]>([]);
+  let edges = $state.raw<Edge[]>([]);
+  $effect.pre(() => {
+    nodes = graph.nodes;
+    edges = graph.edges;
+  });
+
+  // What was walked, in view: whole when it fits, shrunk down to half if need be. When even that is too
+  // wide, the Resource stays in view with the columns nearest it, on the side that was walked.
+  let width = $state(0);
+  let height = $state(0);
+  const view: Viewport | null = $derived.by(() => {
+    if (width === 0 || height === 0) {
+      return null;
+    }
+    const xs = graph.nodes.map((node) => node.position.x);
+    const ys = graph.nodes.map((node) => node.position.y);
+    const [fromX, fromY] = [Math.min(...xs), Math.min(...ys)];
+    const [wide, high] = [Math.max(...xs) + WIDTH - fromX, Math.max(...ys) + HEIGHT - fromY];
+    const room = width - BUTTONS - PAD;
+    const zoom = Math.min(1, Math.max(SMALLEST, Math.min(room / wide, (height - 2 * PAD) / high)));
+    const across = wide * zoom <= room;
+    const x = across
+      ? BUTTONS + (room - wide * zoom) / 2 - fromX * zoom
+      : side === 'up'
+        ? width - PAD - WIDTH * zoom
+        : side === 'down'
+          ? BUTTONS
+          : BUTTONS + (room - WIDTH * zoom) / 2;
+    const y = high * zoom <= height - 2 * PAD ? (height - high * zoom) / 2 - fromY * zoom : PAD - fromY * zoom;
+    return { x, y, zoom };
   });
 </script>
-
-{#snippet card(direction: Side | 'center', depth: number, id: string)}
-  {@const model = models.get(id)}
-  {#if model}
-    {@const clickable = direction !== 'center' && nextOf(direction, id).length > 0}
-    <svelte:element
-      this={clickable ? 'button' : 'div'}
-      bind:this={cards[keyOf(direction, depth, id)]}
-      class="node"
-      class:center={direction === 'center'}
-      class:open={direction !== 'center' && open(direction, depth, id)}
-      type={clickable ? 'button' : undefined}
-      aria-expanded={clickable ? open(direction, depth, id) : undefined}
-      title={model.name}
-      onclick={clickable ? () => choose(direction, depth, id) : undefined}
-      role={clickable ? undefined : 'listitem'}
-    >
-      <span class="icon"><Icon name={model.icon} /></span>
-      <span class="text">
-        <span class="mono name">{model.name}</span>
-        <span class="meta">{model.meta}</span>
-        {#if model.resource}<span class="resource"><MaturityIcon level={model.resource.level} tooltip={false} />{model.resource.name}</span>{/if}
-      </span>
-    </svelte:element>
-  {/if}
-{/snippet}
 
 {#if side !== null}
   <div class="back">
     <button type="button" class="reset" onclick={back}><Icon name="arrow-counter-clockwise" />{backLabel}</button>
   </div>
 {/if}
-<div class="lineage" bind:this={box} role="group" aria-label={label}>
-  <svg class="edges" aria-hidden="true">
-    <defs>
-      <marker id="{uid}-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="currentColor" /></marker>
-    </defs>
-    {#each curves as edge, index (index)}<path class="edge" class:on={edge.on} d={edge.d} marker-end="url(#{uid}-arrow)" />{/each}
-  </svg>
-  <div class="wing left" bind:this={leftWing} onscroll={() => requestAnimationFrame(draw)}>
-    {#each [...left.keys()].reverse() as depth (depth)}
-      <div class="column up" role="list">
-        {#each left[depth]! as id (id)}{@render card('up', depth, id)}{/each}
-      </div>
-    {/each}
-  </div>
-  <div class="middle" role="list">{@render card('center', 0, center)}</div>
-  <div class="wing right" onscroll={() => requestAnimationFrame(draw)}>
-    {#each right as column, depth (depth)}
-      <div class="column down" role="list">
-        {#each column as id (id)}{@render card('down', depth, id)}{/each}
-      </div>
-    {/each}
-  </div>
+<div class="lineage" role="group" aria-label={label} style:--rows={graph.rows} bind:clientWidth={width} bind:clientHeight={height}>
+  <SvelteFlow
+    bind:nodes
+    bind:edges
+    nodeTypes={NODE_TYPES}
+    minZoom={0.3}
+    maxZoom={1.5}
+    nodesDraggable={false}
+    nodesConnectable={false}
+    nodesFocusable={false}
+    edgesFocusable={false}
+    elementsSelectable={false}
+    zoomOnScroll={false}
+    zoomOnDoubleClick={false}
+    zoomActivationKey={['Meta', 'Control']}
+    preventScrolling={false}
+    defaultMarkerColor={null}
+    ariaLabelConfig={{
+      'controls.ariaLabel': t('lineage.controls'),
+      'controls.zoomIn.ariaLabel': t('lineage.zoomIn'),
+      'controls.zoomOut.ariaLabel': t('lineage.zoomOut'),
+      'controls.fitView.ariaLabel': t('lineage.fit'),
+      'node.a11yDescription.default': '',
+      'node.a11yDescription.keyboardDisabled': '',
+      'edge.a11yDescription.default': '',
+    }}
+  >
+    <Controls showLock={false} position="bottom-left" fitViewOptions={{ padding: 0.08, maxZoom: 1 }} />
+    <LineageFollow {view} />
+  </SvelteFlow>
 </div>
 
 <style>
-  .lineage { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: start; padding: 6px 0 10px; }
-  .edges { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; color: var(--text-muted); }
-  .edge { fill: none; stroke: currentColor; stroke-width: 1.25; }
-  .edge.on { stroke: var(--text-secondary); stroke-width: 1.5; }
-  .wing { display: flex; align-items: flex-start; overflow-x: auto; padding: 4px 2px 8px; }
-  .wing.left > :first-child { margin-left: auto; }
-  .middle { padding: 4px 6px 0; }
-  .column { display: flex; flex-direction: column; gap: 10px; flex: none; }
-  .column.down { padding-left: 38px; }
-  .column.up { padding-right: 38px; }
-  .node { display: flex; gap: 10px; align-items: flex-start; text-align: left; width: 178px; height: 100px; overflow: hidden; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); border: 0; font: inherit; color: inherit; box-sizing: border-box; }
-  button.node { cursor: pointer; }
-  button.node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
-  button.node:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
-  .node.center { background: var(--surface-solid); box-shadow: 0 0 0 2px var(--text-primary); }
-  .node.open { background: var(--surface-solid); box-shadow: 0 0 0 1.5px var(--text-secondary); }
-  .icon { display: inline-flex; font-size: 17px; color: var(--text-secondary); margin-top: 2px; }
-  .text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .name { font-size: var(--text-meta); line-height: 15px; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 30px; }
-  .text > .meta { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .resource { display: flex; align-items: center; gap: 6px; font-size: var(--text-meta); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* As high as its longest column, within reason; the canvas takes the colours of Data Hub (DEC-UX-152). */
+  .lineage { height: clamp(260px, calc(var(--rows) * 110px + 60px), 70vh); margin: 0 -6px; }
+  .lineage :global(.svelte-flow) {
+    --xy-background-color: transparent;
+    --xy-edge-stroke: var(--text-muted);
+    --xy-edge-stroke-width: 1.25;
+    --xy-node-background-color: transparent;
+    --xy-node-border: none;
+    --xy-node-border-radius: var(--radius-md);
+    --xy-node-boxshadow-hover: none;
+    --xy-node-boxshadow-selected: none;
+    --xy-node-color: inherit;
+    --xy-controls-box-shadow: none;
+    --xy-controls-button-background-color: var(--surface-solid);
+    --xy-controls-button-background-color-hover: var(--tint-hover);
+    --xy-controls-button-color: var(--text-secondary);
+    --xy-controls-button-color-hover: var(--text-primary);
+    --xy-controls-button-border-color: var(--tint-hover);
+    --xy-attribution-background-color: transparent;
+    font: inherit;
+    color: inherit;
+  }
+  .lineage :global(.svelte-flow__node) { cursor: default; padding: 0; }
+  .lineage :global(.svelte-flow__edge.on .svelte-flow__edge-path) { stroke: var(--text-secondary); stroke-width: 1.5; }
+  .lineage :global(.svelte-flow__controls) { border-radius: var(--radius-md); overflow: hidden; }
+  .lineage :global(.svelte-flow__attribution a) { color: var(--text-muted); }
   .back { display: flex; justify-content: flex-end; margin: -6px 0 6px; }
   .reset { display: inline-flex; align-items: center; gap: 6px; font: var(--text-small) var(--font-family); color: var(--text-primary); background: transparent; border: 1px solid var(--tint-active); border-radius: var(--radius-pill); padding: 6px 12px; cursor: pointer; }
   .reset:hover { background: var(--tint-hover); }

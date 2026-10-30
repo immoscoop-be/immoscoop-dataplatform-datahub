@@ -1207,20 +1207,27 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('walks its lineage one step at a time, the Resource in the middle (FR-SR-54, DEC-UX-100)', async () => {
+  it('walks its lineage one step at a time, the Resource in the middle, on a canvas that pans and zooms (FR-SR-54, DEC-UX-100, DEC-UX-152)', async () => {
     serve({ groups: ['g1'] });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Lineage' }));
-    const upstream = await main.findByRole('button', { name: /int_leads/ });
+    // The canvas loads when the tab opens.
+    const upstream = await main.findByRole('button', { name: /int_leads/ }, { timeout: 5000 });
     expect(main.getByText('lead_share')).toBeTruthy();
+    expect(main.getByRole('button', { name: 'Inzoomen' })).toBeTruthy();
+    const edges = () => [...document.querySelectorAll('.svelte-flow__edge')];
+    expect(edges().length).toBeGreaterThan(0);
+    expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(0);
     // Only its direct models at first; a click adds what is next to it, a column further out.
     expect(main.queryByText('stg_leads')).toBeNull();
     await fireEvent.click(upstream);
     expect(upstream.getAttribute('aria-expanded')).toBe('true');
     expect(main.getByText('stg_leads')).toBeTruthy();
+    // The curve to the open model is marked.
+    await vi.waitFor(() => expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(1));
     await fireEvent.click(main.getByRole('button', { name: /Terug naar zijn directe modellen/ }));
     expect(main.queryByText('stg_leads')).toBeNull();
   });
