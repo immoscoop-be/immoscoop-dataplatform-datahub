@@ -237,7 +237,7 @@ When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), ev
 <a id="fr-ar-18"></a>
 ### FR-AR-18 · A Data Admin sets the Source Jobs on a page of Data Hub
 
-**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
 
 A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and which dbt Cloud job is the Source Job of each ([FR-AR-02](#fr-ar-02)), for the environment of that page, in place of the configuration of its deployment. They choose a job from the jobs of the dbt Cloud account, each shown by its name, its ID, its dbt project and its environment in dbt Cloud, as Data Hub reads them from dbt Cloud; nobody types an ID. A change applies from the next run dbt Cloud reports, without a deploy of Data Hub. Per dbt project the page shows its Source Job by name and ID, who set it and when, and the last run that delivered an Artifact Set. The webhook of the environment in dbt Cloud names the same jobs ([DEC-AR-02](#dec-ar-02)); the page says so. The page is designed in the [design](../../design/README.md) before it is built.
 
@@ -246,7 +246,7 @@ A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and 
 <a id="fr-ar-19"></a>
 ### FR-AR-19 · A Data Admin sees every delivery of the webhook
 
-**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
 
 On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every delivery dbt Cloud sent to the webhook of that environment in the last 30 days, the newest first: when it came, the job by its name and its ID, the dbt project, the run and its status in dbt Cloud, and what Data Hub did with it. That is one of:
 

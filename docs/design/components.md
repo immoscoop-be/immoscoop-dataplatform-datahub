@@ -133,7 +133,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 
 | Component | What it is | Behaviour | Built from | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
-| Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre; at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
+| Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre, then Admin for the Data Team ([DEC-UX-130](principles.md#dec-ux-130)); at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
 | Panel | The index of its section, sliding out next to the rail | Opens and shuts; remembers it | surfaces | every screen | [What is in the panel](principles.md#what-is-in-the-panel) |
 | Tree | A list whose items unfold, each in a card, to what they hold: a Collection to its Resources, then its Lenses; a Learning Level to its sections and cards; a query to its last runs | **Fold**, **Filter a list** | fold box, list item, maturity | Collections, learning centre, Query | [DEC-UX-10](principles.md#dec-ux-10), [DEC-UX-65](principles.md#dec-ux-65), [DEC-UX-74](principles.md#dec-ux-74) |
 | List item | Kind icon, name on one line, Level | Ellipsis and full name on hover | kind icon, maturity | panels, lists | [DEC-UX-11](principles.md#dec-ux-11) |
@@ -182,6 +182,15 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Composer | A field to write, the kind to choose, who gets a notification | – | field, segmented | slide-in, Message | [FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07) |
 | Request decision | What a Request asks to decide, with Refuse and Accept for the Data Team | – | facts, composer | Request | [DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06) |
 | Learning Card in a Message | "Understand what is happening here" and the card, opening inline | **Fold** | fold box, kind icon | every Message from Data Hub | [DEC-UX-79](principles.md#dec-ux-79) |
+
+### Admin
+
+| Component | What it is | Behaviour | Built from | Used on | Rules |
+| --- | --- | --- | --- | --- | --- |
+| Source Job tile | A dbt project with its Source Job by name and ID, kind, environment, docs, last delivered run and who set it | "Change" opens the job picker | tile, chip | Webhooks | [FR-AR-18](../requirements/functional/01-artifact-registry.md#fr-ar-18) |
+| Job picker | The jobs of a dbt project as dbt Cloud names them, by environment; one that cannot be a Source Job says why | **Lay over** | sheet, radio, chip | Webhooks | [FR-AR-18](../requirements/functional/01-artifact-registry.md#fr-ar-18) |
+| Delivery item | A delivery of the webhook in a list: what Data Hub did, when, the job by name and ID, the dbt project and the run | Opens it | chip, kind icon | Webhooks | [FR-AR-19](../requirements/functional/01-artifact-registry.md#fr-ar-19) |
+| Delivery | One delivery opened: its job, run and event, what Data Hub did step by step, and what the Data Admin can do | – | facts list, callout, button | Webhooks | [Admin](principles.md#admin) |
 
 ### Learning
 
