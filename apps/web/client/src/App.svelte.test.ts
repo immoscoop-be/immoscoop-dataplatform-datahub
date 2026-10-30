@@ -1597,12 +1597,13 @@ describe('Lenses', () => {
     expect(calls).toContainEqual({ method: 'PUT', path: '/lenses/l1/version', body: { queryId: 'q1', approve: false, text: '' } });
   });
 
-  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123)', async () => {
+  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123, DEC-UX-134)', async () => {
     const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const links = await main.findAllByRole('link', { name: 'Nieuwe Lens' });
+    // In the head "New Lens"; next to the heading Lenses, how a Lens is made.
+    const links = [await main.findByRole('link', { name: 'Nieuwe Lens' }), main.getByRole('link', { name: 'Lens toevoegen: start een query' })];
     expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1', '/query/new/for/c1']);
 
     await fireEvent.click(links[0] as HTMLElement);

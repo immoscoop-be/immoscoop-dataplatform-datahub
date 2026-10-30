@@ -288,7 +288,7 @@
   {#if lenses}
     <div class="section-head">
       <h2>{t('collection.lenses')}</h2>
-      {#if shown.canManage && !editing}<a class="text-link" href={newLensForPath(shown.id)}><Icon name="plus-circle-fill" /><span>{t('collection.newLens')}</span></a>{/if}
+      {#if shown.canManage && !editing}<a class="text-link" href={newLensForPath(shown.id)}><Icon name="plus-circle-fill" /><span>{t('collection.addLens')}</span></a>{/if}
     </div>
     {#if lenses.length === 0}
       <p class="meta empty">{t('collection.lenses.none')}</p>

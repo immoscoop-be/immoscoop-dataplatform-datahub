@@ -714,6 +714,7 @@ export default {
   'collections.search.none': 'Niets deelt een woord met je vraag.',
   'collections.search.none.text': 'Probeer andere woorden, of begin een query op Resources die je kent: een query die je maakt, kan een Lens worden voor de volgende collega met dezelfde vraag.',
   'collection.newLens': 'Nieuwe Lens',
+  'collection.addLens': 'Lens toevoegen: start een query',
   'lens.openInQuery.hint': 'Open de SQL van deze Lens in Query, als een query die als de Lens gebruikt wordt',
   'lens.openInQuery.failed': 'Zijn query kon niet geopend worden. Probeer het zo meteen opnieuw.',
   'lens.openQuery': 'Open zijn query',
