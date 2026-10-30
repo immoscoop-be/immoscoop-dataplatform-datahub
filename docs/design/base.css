@@ -1375,3 +1375,5 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .q-work.side .q-body { display: flex; flex-direction: column; }
 .q-body > .param-box { min-height: 0; overflow: auto; margin: 0; }
 .q-body > .sql-fold { min-height: 0; margin: 0; }
+/* Day and night switch at once: while the theme changes, nothing slides on its way (DEC-UX-149). */
+:root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after { transition: none !important; }

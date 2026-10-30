@@ -54,6 +54,7 @@ There are three layers:
 
 - Light and dark. Dark is **warm dark grey** ([OP-UX-09](#op-ux-09)).
 - By default the theme follows the system. The User can switch; the choice is remembered.
+- A switch happens at once: for that moment every transition is off, so nothing slides from day into night ([DEC-UX-149](#dec-ux-149)).
 
 ## Typography
 
@@ -615,6 +616,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-146"></a>**DEC-UX-146** · The window out of focus, the panel or the main area, fades whole, its text with it, rather than only its reading surfaces becoming softer. *Decided on 2026-10-30, by Max.*
 - <a id="dec-ux-147"></a>**DEC-UX-147** · The SQL editor takes all the height the query has left, and scrolls in itself. With the query above its result, its Parameters stand to the right of the editor; with the query next to its result, under it. *Decided on 2026-10-30, by Max.*
 - <a id="dec-ux-148"></a>**DEC-UX-148** · After `from` and `join`, the SQL editor suggests the Resources of the query by their Display Name and writes the full name of their table, quoted; last comes "New Resource…", which opens the sheet that starts a new query with another Resource, as a query reads only its own ([DEC-UX-73](#dec-ux-73)). *Decided on 2026-10-30, by Max.*
+- <a id="dec-ux-149"></a>**DEC-UX-149** · Switching between day and night happens at once: every transition is off until the new colours are on screen, so no surface, text or background slides from one into the other. *Decided on 2026-10-30, by Max.*
 
 ## Open points
 

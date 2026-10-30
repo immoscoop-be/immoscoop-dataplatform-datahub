@@ -779,6 +779,9 @@ describe('the web app, signed in', () => {
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
+    // At once: every transition is off until the new colours are on screen (DEC-UX-149).
+    expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
+    await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
     expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
   });
 

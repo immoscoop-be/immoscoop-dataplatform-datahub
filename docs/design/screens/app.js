@@ -47,7 +47,11 @@ document.querySelectorAll('.bg-opt').forEach(o => o.addEventListener('click', ()
 
 themeBtn?.addEventListener('click', () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  // Day and night switch at once, with every transition off for that moment (DEC-UX-149).
+  document.documentElement.classList.add('theme-switching');
   document.documentElement.dataset.theme = next;
+  void document.documentElement.offsetHeight;
+  requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('theme-switching')));
   try { localStorage.setItem('dh-theme', next); } catch (e) {}
   const bg = bgFor(next, false); syncBgOpts(); showBg(bg);
 });
