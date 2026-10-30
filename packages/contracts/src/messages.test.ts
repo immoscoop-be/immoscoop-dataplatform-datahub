@@ -237,6 +237,7 @@ describe('the address of a Message in context (FR-CV-09)', () => {
   it('is the page of its object with the Message, or the Message Centre for an object without a page', () => {
     expect(contextPath({ kind: 'lens', id: 'l-1' }, 'm-1')).toBe('/lenses/l-1/messages/m-1');
     expect(contextPath({ kind: 'query', id: 'q 1' }, 'm-1')).toBe('/query/q%201/messages/m-1');
-    expect(contextPath({ kind: 'learningCard', id: 'K3.4' }, 'm-1')).toBe('/messages/m-1');
+    expect(contextPath({ kind: 'learningCard', id: 'K3.4' }, 'm-1')).toBe('/learning/K3.4/messages/m-1');
+    expect(contextPath({ kind: 'report', id: 'r-1' }, 'm-1')).toBe('/messages/m-1');
   });
 });

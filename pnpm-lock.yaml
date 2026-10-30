@@ -60,6 +60,9 @@ importers:
       '@datahub/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@datahub/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
       '@datahub/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -127,6 +130,8 @@ importers:
         version: 8.23.1
 
   packages/google: {}
+
+  packages/learning: {}
 
   packages/server:
     dependencies:
@@ -203,6 +208,9 @@ importers:
       '@datahub/google':
         specifier: workspace:*
         version: link:../../packages/google
+      '@datahub/learning':
+        specifier: workspace:*
+        version: link:../../packages/learning
       '@datahub/server':
         specifier: workspace:*
         version: link:../../packages/server

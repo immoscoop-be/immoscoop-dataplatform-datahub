@@ -6,6 +6,7 @@
   /* Typography */
   --font-family: 'Poppins', system-ui, sans-serif;
   --font-mono: ui-monospace, Menlo, monospace;
+  --font-symbol: 'Segoe UI Symbol', 'Apple Symbols', 'Noto Sans Symbols 2', 'DejaVu Sans', sans-serif; /* the marker ⓘ, which Poppins has not (OP-UX-22) */
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -50,6 +51,8 @@
   --motion-fade: 250ms;             /* the panel fades as it slides */
   --motion-ring: 150ms;             /* the ring of the initials */
   --motion-fold: 200ms;             /* the caret of a fold box turning */
+  --motion-cheer: 500ms cubic-bezier(.3, 1.6, .6, 1); /* the check of You can now popping in, once (DEC-UX-46) */
+  --delay-cheer: 200ms;
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */

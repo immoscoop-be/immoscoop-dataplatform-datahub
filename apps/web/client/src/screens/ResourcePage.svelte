@@ -10,6 +10,8 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import MessagesButton from './MessagesButton.svelte';
+  import { cardsOf } from '../lib/learning.js';
+  import { useLearning } from '../lib/learning-context.js';
   import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
@@ -18,6 +20,8 @@
   import type { requestOf } from '../lib/grain.js';
   import AddResources from './AddResources.svelte';
   import DeprecateSheet from './DeprecateSheet.svelte';
+  import LearningPop from './LearningPop.svelte';
+  import LearningRef from './LearningRef.svelte';
   import PublishSheet from './PublishSheet.svelte';
   import RelationsSheet from './RelationsSheet.svelte';
   import ResourceColumns from './ResourceColumns.svelte';
@@ -215,6 +219,10 @@
       return false;
     }
   }
+
+  /** The Learning Centre explains its Level, its grain, its model type and "Mark as seen" (FR-LR-35). */
+  const learning = useLearning();
+  const levelCards = $derived(learning ? cardsOf('level', learning.shown).length : 0);
 </script>
 
 <Breadcrumb
@@ -247,7 +255,14 @@
     {/if}
   </div>
 </div>
-<StatusRow level={resource.level} published={resource.published} owner={collection?.ownerUnit.name ?? null} deprecated={resource.deprecation?.reason ?? null} />
+{#snippet levelPop(close: () => void)}<LearningPop place="level" {close} />{/snippet}
+<StatusRow
+  level={resource.level}
+  published={resource.published}
+  owner={collection?.ownerUnit.name ?? null}
+  deprecated={resource.deprecation?.reason ?? null}
+  explainLevel={levelCards ? { label: t('learning.pop.head', { count: levelCards }), active: learning?.window?.from === 'level', pop: levelPop } : undefined}
+/>
 {#if failed}<p class="failed" role="alert">{t('resource.actionFailed')}</p>{/if}
 
 {#if resource.collectionId === null}
@@ -288,7 +303,11 @@
     <b>{t('resource.changed.title')}</b>
     {t('resource.changed.text', { changes: changedText, level: levelName(resource.level) })}
     {#snippet action()}
-      {#if canEdit}<Button variant="outline" onclick={() => act(() => catalogue.markSeen(resource.id))}>{t('resource.changed.seen')}</Button>{/if}
+      {#if canEdit}
+        <LearningRef place="changesSeen" shape="pill" focusable={false}>
+          {#snippet children(mark)}<Button variant="outline" onclick={() => act(() => catalogue.markSeen(resource.id))}>{t('resource.changed.seen')}{@render mark?.()}</Button>{/snippet}
+        </LearningRef>
+      {/if}
     {/snippet}
   </Callout>
 {/if}
