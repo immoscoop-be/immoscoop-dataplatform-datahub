@@ -9,7 +9,10 @@ export interface ResourceField {
 /** A Resource as a query needs it, read from catalogue with the token of the User. */
 export interface QueryResource {
   id: string;
+  /** Its Key, in lower case: what knows it again, also in the SQL, whatever the case it is written in. */
   key: string;
+  /** The full name of its table in its own case: what BigQuery is asked for, as its names are case-sensitive. */
+  fullName: string;
   displayName: string;
   collectionId: string | null;
   level: number;
@@ -77,7 +80,9 @@ export interface Catalogue {
 export class CatalogueUnavailable extends Error {}
 
 interface ResourceBody {
-  resource: Omit<QueryResource, 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+    /** Missing from a catalogue that does not keep it yet: then the Key. */
+    fullName?: string;
     details?: { partition?: QueryResource['partition']; clusterBy?: string[]; partitionFilter?: QueryResource['partitionFilter'] };
     card?: { parameters?: string[] };
   };
@@ -198,6 +203,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       return {
         id: resource.id,
         key: resource.key,
+        fullName: resource.fullName ?? resource.key,
         displayName: resource.displayName,
         collectionId: resource.collectionId,
         level: resource.level,

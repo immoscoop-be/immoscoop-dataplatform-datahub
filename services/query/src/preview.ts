@@ -87,7 +87,7 @@ export function previewSql(resource: QueryResource, filter: string | null, chose
   const conditions = [...(filter ? [filter] : []), ...chosen.map((field) => `${quote(field)} = @${field}`)];
   return [
     `select ${fields.join(', ')}`,
-    `from ${quote(resource.key)}`,
+    `from ${quote(resource.fullName)}`,
     ...(conditions.length ? [`where ${conditions.join('\n  and ')}`] : []),
     ...(resource.partition ? [`order by ${quote(resource.partition.field)} desc`] : []),
     `limit ${PREVIEW_ROWS}`,
@@ -97,7 +97,7 @@ export function previewSql(resource: QueryResource, filter: string | null, chose
 /** The SQL that reads the values of its choices, at most 100 each, from the partitions of its window (DEC-SR-37). */
 export function valuesSql(resource: QueryResource, filter: string | null, choices: readonly Choice[]): string {
   const lists = choices.map(({ field }) => `array_agg(distinct ${quote(field)} ignore nulls order by ${quote(field)} limit ${VALUES}) as ${quote(field)}`);
-  return [`select ${lists.join(',\n       ')}`, `from ${quote(resource.key)}`, ...(filter ? [`where ${filter}`] : [])].join('\n');
+  return [`select ${lists.join(',\n       ')}`, `from ${quote(resource.fullName)}`, ...(filter ? [`where ${filter}`] : [])].join('\n');
 }
 
 const LITERAL: Partial<Record<ParameterKind, RegExp>> = {
@@ -153,9 +153,9 @@ export function createStorage(bigquery: BigQuery, beneath: (resource: QueryResou
   const table = (key: string) => kept(facts, key, () => bigquery.table(key));
 
   async function of(resource: QueryResource): Promise<Storage | null> {
-    const own = await table(resource.key);
-    if (own.type !== 'VIEW') return { key: resource.key, ...own };
-    const under = (await beneath(resource)).filter((key) => key !== resource.key);
+    const own = await table(resource.fullName);
+    if (own.type !== 'VIEW') return { key: resource.fullName, ...own };
+    const under = (await beneath(resource)).filter((key) => key.toLowerCase() !== resource.key);
     const candidates = await Promise.all(under.map(async (key) => ({ key, ...(await table(key)) })));
     const field = resource.partition?.field;
     return (field ? candidates.find((candidate) => candidate.partitionField === field) : candidates.length === 1 ? candidates[0] : undefined) ?? null;

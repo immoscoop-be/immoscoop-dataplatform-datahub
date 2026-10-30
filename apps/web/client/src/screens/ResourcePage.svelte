@@ -14,6 +14,9 @@
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
+  import { Refused } from '../lib/api.js';
+  import type { requestOf } from '../lib/grain.js';
+  import AddResources from './AddResources.svelte';
   import DeprecateSheet from './DeprecateSheet.svelte';
   import PublishSheet from './PublishSheet.svelte';
   import RelationsSheet from './RelationsSheet.svelte';
@@ -83,6 +86,8 @@
   let storage: Storage | null | undefined = $state();
   let relating = $state(false);
   let sheet: 'publish' | 'deprecate' | undefined = $state();
+  /** The sheet that adds it to a Collection, while it waits (DEC-UX-131). */
+  let adding = $state(false);
   let failed = $state(false);
 
   // Read again for another Resource: what it relates to, and the first tab.
@@ -98,6 +103,7 @@
     storage = undefined;
     relating = false;
     sheet = undefined;
+    adding = false;
     failed = false;
     catalogue.related(id).then(
       (found) => resource.id === id && (related = found),
@@ -122,6 +128,29 @@
   const others = $derived(
     (collections ?? []).flatMap((one) => one.resources.filter((item) => item.published && item.id !== resource.id).map((item) => ({ ...item, collection: one.name }))),
   );
+
+  /**
+   * Adds it to the Collection chosen in the sheet, with its grain and relations (FR-CO-31, DEC-UX-131),
+   * then reads it again, now with its Owner. A Resource added meanwhile elsewhere is told so.
+   */
+  async function addTo(items: ReturnType<typeof requestOf>[], into?: string): Promise<{ outcome: 'added' | 'elsewhere' | 'refused' | 'failed'; message?: string }> {
+    if (!into) {
+      return { outcome: 'failed' };
+    }
+    try {
+      await catalogue.addResources(into, items);
+    } catch (error) {
+      if (error instanceof Refused && error.code === 'in_another_collection') {
+        return { outcome: 'elsewhere' };
+      }
+      console.error(`${resource.displayName} could not be added`, error);
+      return error instanceof Refused && error.code === 'invalid_request' ? { outcome: 'refused', message: error.detail } : { outcome: 'failed' };
+    }
+    adding = false;
+    const id = resource.id;
+    onchange(await catalogue.resource(id).catch(() => ({ ...resource, collectionId: into })));
+    return { outcome: 'added' };
+  }
 
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const came = $derived(new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short' }).format(new Date(resource.registeredAt)));
@@ -196,7 +225,8 @@
 />
 <div class="head">
   <div class="name">
-    <ObjectHeader name={resource.displayName} key={resource.key} copyLabel={t('resource.copyKey')} />
+    <!-- Its full name in its own case, as BigQuery knows it: the Key is kept in lower case. -->
+    <ObjectHeader name={resource.displayName} key={resource.fullName ?? resource.key} copyLabel={t('resource.copyKey')} />
   </div>
   <div class="actions">
     {#if resource.published && canEdit}
@@ -228,6 +258,10 @@
       values={{ date: came }}
       names={{ exposure: resource.exposures[0] ?? '', project: resource.projectName ?? resource.projectId }}
     />
+    {#snippet action()}
+      <!-- The Data Team adds it to a Collection from here too (DEC-UX-131). -->
+      {#if dataTeam && collections}<Button onclick={() => (adding = true)}><Icon name="folder-plus-fill" />{t('resource.waiting.add')}</Button>{/if}
+    {/snippet}
   </Callout>
 {:else if collection && !resource.published}
   <Callout icon="eye-slash-fill">
@@ -273,6 +307,9 @@
   {/if}
 </Tabs>
 
+{#if adding && collections}
+  <AddResources into={collections} waiting={[resource]} {catalogue} {registry} onadd={addTo} onclose={() => (adding = false)} />
+{/if}
 {#if relating}
   <RelationsSheet {resource} {registry} onsave={saveRelations} onclose={() => (relating = false)} />
 {/if}
