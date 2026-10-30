@@ -1368,3 +1368,10 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .q-layouts { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sub); }
 .q-layouts button { width: 30px; height: 30px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; }
 .q-layouts button[aria-pressed="true"] { background: var(--card); color: var(--text-primary); }
+/* The editor takes the height the query has left; its Parameters stand to its right, or, next to the result,
+   under it (DEC-UX-147). */
+.q-work > .query-card { display: flex; flex-direction: column; }
+.q-body { flex: 1 1 auto; min-height: 140px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 32%); gap: 10px; }
+.q-work.side .q-body { display: flex; flex-direction: column; }
+.q-body > .param-box { min-height: 0; overflow: auto; margin: 0; }
+.q-body > .sql-fold { min-height: 0; margin: 0; }

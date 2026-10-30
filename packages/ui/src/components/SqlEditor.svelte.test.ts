@@ -23,6 +23,6 @@ describe('the SQL editor', () => {
       expect(options.some((option) => option.startsWith('where true and'))).toBe(true);
       return options;
     });
-    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['select … from', 'where false or', 'where true and']);
+    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['final as … order by', 'select … from', 'where false or', 'where true and', 'with … as']);
   });
 });
