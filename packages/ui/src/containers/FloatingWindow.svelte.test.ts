@@ -15,6 +15,24 @@ describe('a floating window (Floating window, Lay over)', () => {
     expect(screen.getByText('Save')).toBeTruthy();
   });
 
+  it('hangs on the page itself, so that a frame with a backdrop filter does not move it while it is dragged', () => {
+    const frame = document.createElement('main');
+    document.body.appendChild(frame);
+    render(FloatingWindow, { target: frame, props: { title: '@dateFrom', onclose: () => {}, children } });
+    expect(screen.getByRole('dialog', { name: '@dateFrom' }).parentElement).toBe(document.body);
+    frame.remove();
+  });
+
+  it('follows the pointer from where it was grabbed', async () => {
+    render(FloatingWindow, { title: '@dateFrom', onclose: () => {}, children });
+    const window = screen.getByRole('dialog', { name: '@dateFrom' });
+    window.getBoundingClientRect = () => ({ left: 600, top: 400, width: 400, height: 300, right: 1000, bottom: 700, x: 600, y: 400, toJSON: () => ({}) });
+    const head = window.querySelector('.head') as HTMLElement;
+    await fireEvent.pointerDown(head, { clientX: 650, clientY: 410, pointerId: 1 });
+    await fireEvent.pointerMove(head, { clientX: 550, clientY: 310, pointerId: 1 });
+    expect([window.style.left, window.style.top]).toEqual(['500px', '300px']);
+  });
+
   it('folds to its head, and unfolds again', async () => {
     render(FloatingWindow, { title: '@dateFrom', onclose: () => {}, children, foot });
     await fireEvent.click(screen.getByRole('button', { name: 'Dichtvouwen' }));
