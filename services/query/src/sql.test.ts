@@ -117,6 +117,7 @@ describe('the Parameters a query uses', () => {
 describe('the SQL a new query starts with (FR-SR-46)', () => {
   const weekly = {
     key: 'p.dbt_prod_stacks.weekly_lead_volume',
+    fullName: 'p.dbt_prod_stacks.weekly_lead_volume',
     fields: [
       { name: 'week_start', dataType: 'DATE' },
       { name: 'lead_source', dataType: 'STRING' },
@@ -131,14 +132,19 @@ describe('the SQL a new query starts with (FR-SR-46)', () => {
   });
 
   it('filters a timestamp as a timestamp, and leaves out a filter it cannot write', () => {
-    const events = { key: 'p.d.events', fields: [{ name: 'at', dataType: 'TIMESTAMP' }], partition: { field: 'at', unit: 'month' } };
+    const events = { key: 'p.d.events', fullName: 'p.d.events', fields: [{ name: 'at', dataType: 'TIMESTAMP' }], partition: { field: 'at', unit: 'month' } };
     expect(template([events])).toContain('where at >= timestamp_sub(current_timestamp(), interval 90 day)');
-    const ranges = { key: 'p.d.ranges', fields: [{ name: 'bucket', dataType: 'INT64' }], partition: { field: 'bucket', unit: null } };
+    const ranges = { key: 'p.d.ranges', fullName: 'p.d.ranges', fields: [{ name: 'bucket', dataType: 'INT64' }], partition: { field: 'bucket', unit: null } };
     expect(template([ranges])).not.toContain('where');
   });
 
+  it('names the table in its own case, as BigQuery names are case-sensitive', () => {
+    const state = { key: 'p.colleciones_dbt.mrt_immoscoop__leadsource__state', fullName: 'p.colleciones_dbt.mrt_immoscoop__leadSource__state', fields: [{ name: 'leadSourceId', dataType: 'STRING' }], partition: null };
+    expect(template([state])).toBe('select leadSourceId\nfrom `p.colleciones_dbt.mrt_immoscoop__leadSource__state`\n');
+  });
+
   it('gives each Resource a CTE when there are more', () => {
-    const sources = { key: 'p.dbt_prod_stacks.lead_sources', fields: [{ name: 'source_name', dataType: 'STRING' }], partition: null };
+    const sources = { key: 'p.dbt_prod_stacks.lead_sources', fullName: 'p.dbt_prod_stacks.lead_sources', fields: [{ name: 'source_name', dataType: 'STRING' }], partition: null };
     const sql = template([weekly, sources]);
     expect(sql).toMatch(/^with weekly_lead_volume as \(\n {2}select week_start,/);
     expect(sql).toContain('lead_sources as (\n  select source_name\n  from `p.dbt_prod_stacks.lead_sources`\n)');
