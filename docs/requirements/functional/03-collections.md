@@ -376,6 +376,8 @@ The Owner Unit edits the details of the Collection on its page ([DEC-CO-15](#dec
 
 From the page of a Collection, a Data Admin picks one or more Resources without a Collection ([FR-SR-35](04-stacks-and-resources.md#fr-sr-35)) and adds them, and removes a Resource again ([FR-CO-14](#fr-co-14)). Only Resources without a Collection can be picked ([FR-CO-07](#fr-co-07), [FR-CO-08](#fr-co-08)). Every addition and removal goes into the Log.
 
+*Note of 2026-10-30: a Data Admin picks one Resource at a time, with a radio button, and adds it ([DEC-UX-132](../../design/principles.md#dec-ux-132)).*
+
 *Note of 2026-10-30: a Data Admin also adds a Resource that waits from its own page, with "Add to a collection": the same sheet, with as first step the choice of the Collection ([DEC-UX-131](../../design/principles.md#dec-ux-131)).*
 
 *Note of 2026-10-25: adding takes two steps; the second records how each Resource picked is stored and the relation of every field ([FR-CO-33](#fr-co-33), [FR-CO-34](#fr-co-34)).*

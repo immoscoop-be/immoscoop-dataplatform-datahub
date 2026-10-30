@@ -22,6 +22,8 @@ export interface LensContext {
   authorization(request: FastifyRequest): string;
   resourcesOf(request: FastifyRequest, of: { resources: NamedResource[] }): Promise<ResourceOfQuery[]>;
   check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[]): Promise<Preflight>;
+  /** The SQL with each Resource by its full name in its own case, as BigQuery gets it (DEC-SR-44). */
+  ownCase(sql: string, resources: ResourceOfQuery[]): string;
   unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined;
   execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }): Promise<unknown>;
 }
@@ -160,7 +162,7 @@ const requestView = (request: QueryRequest | undefined) =>
  * one with its Parameters, every run a query in the Query Log (FR-LE-12).
  */
 export async function lensRoutes(app: FastifyInstance, context: LensContext): Promise<void> {
-  const { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, unavailable, execute } = context;
+  const { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute } = context;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const collections = await catalogue.collections(authorization(request));
@@ -310,12 +312,14 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const already = (await lenses.ofQuery(query.id)) ?? (query.forLens ? await lenses.get(query.forLens) : undefined);
     if (already) return reply.code(409).send({ error: 'already_a_lens', message: 'This query is used as a Lens already.', lens: { id: already.id, name: already.name } });
     let checked: Preflight;
+    let resources: ResourceOfQuery[];
     try {
       // A Lens always goes into a Collection its author owns (DEC-CO-20).
       if ((await catalogue.manages(fields.collectionId, authorization(request))) !== true) {
         return reply.code(400).send({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
       }
-      checked = await check(query.sql, query.parameters, await resourcesOf(request, query));
+      resources = await resourcesOf(request, query);
+      checked = await check(query.sql, query.parameters, resources);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -330,7 +334,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const lens = await told(
       await lenses.create({
         author: who,
-        query,
+        // A Lens keeps its SQL with its Resources as BigQuery knows them, for its daily check without a User (DEC-SR-44).
+        query: { ...query, sql: ownCase(query.sql, resources) },
         collectionId: fields.collectionId,
         name: fields.name,
         question: fields.question,
@@ -548,8 +553,10 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       return reply.code(400).send({ error: 'invalid_request', message: 'A Lens is updated from a query of yours that is used as it.' });
     }
     let checked: Preflight;
+    let resources: ResourceOfQuery[];
     try {
-      checked = await check(query.sql, query.parameters, await resourcesOf(request, query));
+      resources = await resourcesOf(request, query);
+      checked = await check(query.sql, query.parameters, resources);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -562,7 +569,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       .filter((parameter) => !checked.unused.includes(parameter.name))
       .map((parameter) => ({ ...parameter, label: lens.parameters.find((known) => known.name === parameter.name)?.label ?? parameter.name }));
     // Refused, a Lens is no longer frozen: a new version is measured again, and published or sent again (DEC-UX-128).
-    const updated = await told(await lenses.version(lens.id, { by: who, query, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
+    const updated = await told(await lenses.version(lens.id, { by: who, query: { ...query, sql: ownCase(query.sql, resources) }, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
     if (updated.state === 'waiting') {
       try {
         await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: updated.reads, threshold: thresholds.request, text: text.trim(), partitions: checked.partitions }, authorization(request));

@@ -10,7 +10,7 @@ import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import type { Queries, Query, QueryOnResource, Run, Viewer } from './queries.js';
-import { template } from './sql.js';
+import { inOwnCase, template } from './sql.js';
 
 export interface ApiOptions {
   queries: Queries;
@@ -220,6 +220,10 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[]): Promise<Preflight> =>
     preflight(sql, resources, { bigquery, beneath, project, thresholds }, parameters);
 
+  /** The SQL as BigQuery gets it: each Resource the User sees by its full name in its own case (DEC-SR-44). */
+  const ownCase = (sql: string, resources: ResourceOfQuery[]): string =>
+    inOwnCase(sql, resources.flatMap((entry) => (entry.resource ? [entry.resource] : [])), project);
+
   /** The Requests of who made the query on it, newest first (DEC-SR-36). */
   async function requestsOf(request: FastifyRequest, query: Query): Promise<QueryRequest[]> {
     return (await catalogue.requests(query.id, authorization(request))).filter((sent) => sent.writerId === query.ownerId);
@@ -373,9 +377,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   /** Runs a query of the User: checked again, then a job of BigQuery, the run kept in the Query Log. */
   async function execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }) {
     let checked: Preflight;
+    let resources: ResourceOfQuery[];
     let accepted = false;
     try {
-      checked = await check(body.sql, body.parameters, await resourcesOf(request, query));
+      resources = await resourcesOf(request, query);
+      checked = await check(body.sql, body.parameters, resources);
       // Above 1 GB it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
       if (checked.runnable && checked.range === 'request') accepted = (await requestsOf(request, query)).some((sent) => sent.state === 'accepted');
     } catch (error) {
@@ -394,7 +400,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const estimated = checked.bytes ?? 0;
     const run = await queries.startRun({ query, user: who, sql: body.sql, parameters: body.parameters, estimatedBytes: estimated, approved: checked.range !== 'free' });
     try {
-      const finished = await bigquery.run(bound.sql, {
+      const finished = await bigquery.run(ownCase(bound.sql, resources), {
         // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, a little above the Pre-flight.
         maximumBytesBilled: accepted ? Math.max(thresholds.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : thresholds.request,
         labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
@@ -648,7 +654,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
-  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, unavailable, execute });
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute });
 }
 
 function pageView(page: Page, number: number) {

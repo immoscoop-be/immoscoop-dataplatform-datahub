@@ -43,8 +43,8 @@ const WEEKLY: QueryResource = {
   ],
   parameters: ['lead_source'],
 };
-const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
-const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
+const SOURCES: QueryResource = { ...WEEKLY, id: '7a2d3c5f-9b2e-4d4f-8a31-2c3d4e5f6a71', key: `${PROJECT}.dbt_prod_stacks.lead_sources`, fullName: `${PROJECT}.dbt_prod_stacks.lead_sources`, displayName: 'Lead sources', partition: null, clusterBy: [] };
+const SECRET: QueryResource = { ...SOURCES, id: '8b3e4d6a-0c3f-4e5a-9b42-3d4e5f6a7b82', key: `${PROJECT}.dbt_prod_stacks.salaries`, fullName: `${PROJECT}.dbt_prod_stacks.salaries`, displayName: 'Salaries' };
 
 describe('the fields of a Lens, in a request', () => {
   const fields = { queryId: '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d', collectionId: CREDIT, name: ' Leads per source ' };
@@ -409,6 +409,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(run.ref).toMatch(/^q-\d{8}-[0-9a-f]{6}$/);
     expect(page).toEqual({ number: 1, size: 100, totalRows: 210, columns: [{ name: 'week_start', type: 'DATE' }, { name: 'leads', type: 'INT64' }], rows: [['2026-10-19', '413'], ['2026-10-19', null]] });
     expect(fake.runs.at(-1)?.options).toMatchObject({ maximumBytesBilled: 1_000_000_000, labels: { 'datahub-user': '101', 'datahub-query': run.ref }, pageSize: 100 });
+    expect(fake.runs.at(-1)?.sql).toBe(weekly);
 
     const listed = (await call(an, 'GET', '/queries')).json().queries[0];
     expect(listed).toMatchObject({ runs: 1, lastRunAt: expect.any(String) });
@@ -897,5 +898,21 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(decisions.at(-1)).toMatchObject({ requestId: requests[0]!.id, outcome: 'accepted' });
     expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json().preflight).toMatchObject({ range: 'request' });
     fake.resize(null);
+  });
+
+  it('asks BigQuery for a Resource written in another case by its full name in its own case, and keeps a Lens so (DEC-SR-44)', async () => {
+    const shouted = weekly.replace(WEEKLY.key, WEEKLY.key.toUpperCase());
+    const own = weekly.replace(`\`${WEEKLY.key}\``, `\`${WEEKLY.fullName}\``);
+    const made = (await call(an, 'POST', '/queries', { name: 'Leads per week, shouted', resources: [WEEKLY.id], sql: shouted })).json().query.id as string;
+    const ran = await call(an, 'POST', `/queries/${made}/runs`, { sql: shouted });
+    expect(ran.statusCode).toBe(201);
+    expect(fake.runs.at(-1)?.sql).toBe(own);
+    // The query keeps what its author wrote.
+    expect((await call(an, 'GET', `/queries/${made}`)).json().query.sql).toBe(shouted);
+    // A Lens keeps it as BigQuery knows it, for its daily check, which has no User to ask catalogue for.
+    const lens = await call(an, 'POST', '/lenses', { queryId: made, collectionId: AN_WORK, name: 'Leads per week, shouted' });
+    expect(lens.statusCode).toBe(201);
+    const kept = await database.db.selectFrom('lenses').select('sql').where('id', '=', lens.json().lens.id).executeTakeFirstOrThrow();
+    expect(kept.sql).toBe(own);
   });
 });
