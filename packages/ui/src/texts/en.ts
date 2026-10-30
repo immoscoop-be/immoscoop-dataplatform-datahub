@@ -62,6 +62,7 @@ export default {
   'editor.lines': '⋯ {count} lines',
   'editor.fold': 'Fold',
   'editor.unfold': 'Unfold',
+  'editor.template': 'Template',
   'editor.partition': 'Partition',
   'editor.cluster': 'Cluster {place}',
 } as const satisfies Record<keyof typeof nl, string>;

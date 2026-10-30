@@ -31,10 +31,20 @@
 
   /** The CTEs of the SQL: a line that ends in `name as (`. */
   export const CTE_LINE = /\bas\s*\(\s*$/i;
+
+  /**
+   * The templates the editor offers among its suggestions (DEC-UX-141): `${}` is where the cursor goes,
+   * Tab to the next one.
+   */
+  export const TEMPLATES: readonly { label: string; template: string }[] = [
+    { label: 'select … from', template: 'select\n    ${}\nfrom\n    ${}' },
+    { label: 'where true and', template: 'where\n    true\n    and ${}' },
+    { label: 'where false or', template: 'where\n    false\n    or ${}' },
+  ];
 </script>
 
 <script lang="ts">
-  import { autocompletion, type Completion, type CompletionContext, completionKeymap } from '@codemirror/autocomplete';
+  import { autocompletion, type Completion, type CompletionContext, completionKeymap, snippetCompletion } from '@codemirror/autocomplete';
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { SQLDialect } from '@codemirror/lang-sql';
   import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting } from '@codemirror/language';
@@ -62,6 +72,7 @@
     parameters = [],
     marks = [],
     onmark,
+    onrun,
     label,
     readonly = false,
     nonce,
@@ -72,6 +83,8 @@
     marks?: readonly ErrorMark[];
     /** A click on an `@name` that is not a Parameter. */
     onmark?: (mark: ErrorMark) => void;
+    /** Cmd+Enter, or Ctrl+Enter: what the button that runs the query does (DEC-UX-142). */
+    onrun?: () => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -225,7 +238,8 @@
         role: suggestion.role,
         info: () => info(suggestion),
       }));
-    return { from: word?.from ?? context.pos, options, validFor: /^\w*$/ };
+    const templates = TEMPLATES.map(({ label: name, template }) => snippetCompletion(template, { label: name, detail: t('editor.template'), boost: -1 }));
+    return { from: word?.from ?? context.pos, options: [...options, ...templates], validFor: /^\w*$/ };
   }
 
   /** Writes the SQL in the layout of sql-formatter, for BigQuery; SQL it cannot read stays as it is. */
@@ -292,7 +306,16 @@
               },
             ],
           }),
-          keymap.of([{ key: 'Shift-Alt-f', run: () => formatSql() }, indentWithTab, ...completionKeymap, ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
+          keymap.of([
+            { key: 'Shift-Alt-f', run: () => formatSql() },
+            {
+              key: 'Mod-Enter',
+              run: () => {
+                onrun?.();
+                return onrun !== undefined;
+              },
+            },
+            indentWithTab, ...completionKeymap, ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
           EditorState.readOnly.of(readonly),
           EditorView.editable.of(!readonly),
           EditorView.contentAttributes.of({ 'aria-label': label }),

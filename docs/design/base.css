@@ -79,6 +79,10 @@ html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"
 .panel:hover { --card: var(--surface-solid); }
 .app:has(.panel:hover) .main { --card: var(--surface-soft); }
 .card { background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
+/* The window out of focus fades whole, its text with it (DEC-UX-146). */
+.panel-inner, .main > * { transition: opacity var(--motion-focus) var(--delay-focus); }
+.panel:not(:hover) .panel-inner { opacity: var(--opacity-out-of-focus); }
+.app:has(.panel:hover) .main > * { opacity: var(--opacity-out-of-focus); }
 
 .search { display: flex; align-items: center; gap: 8px; border-radius: var(--radius-field); padding: 9px 12px; color: var(--text-muted); }
 .search input { all: unset; flex: 1; font: var(--text-small) var(--font-family); color: var(--text-primary); }
@@ -489,6 +493,19 @@ button.ln-fold i { transition: transform 200ms ease; }
 .q-entry:not(.open) .q-unfold i { transform: rotate(-90deg); }
 .q-entry:not(.open) .q-runs { display: none; }
 .q-entry .pill { margin-right: 6px; }
+/* The panel of Query: chips that add previews, the queries of Lenses and hidden queries (DEC-UX-137);
+   periods that fold, with how many queries they hold (DEC-UX-139); an eye on hover hides a query (DEC-UX-138). */
+.q-show { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 4px; }
+.chip-toggle { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); outline: 1px solid var(--tint-active); }
+.chip-toggle[aria-pressed="true"] { background: var(--surface-sub); color: var(--text-primary); outline-color: var(--text-muted); }
+.chip-toggle .count, .q-period .count { color: var(--text-muted); }
+.q-group { margin-top: 4px; }
+.q-period { all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; box-sizing: border-box; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }
+.q-period:hover { color: var(--text-primary); }
+.q-period i { transition: transform 200ms ease; }
+.q-group:not(.open) .q-period i { transform: rotate(-90deg); }
+.q-hide { position: absolute; top: 9px; right: 6px; width: 26px; height: 26px; font-size: 14px; opacity: 0; }
+.q-entry:hover .q-hide, .q-hide:focus-visible { opacity: 1; }
 .q-runs { display: flex; flex-direction: column; gap: 1px; margin: 4px 0 2px 30px; }
 .q-run { display: flex; align-items: baseline; gap: 8px; border: 0; background: none; font: var(--text-small) var(--font-family); color: var(--text-secondary); text-align: left; padding: 4px 8px; border-radius: 8px; cursor: pointer; }
 .q-run:hover { background: var(--surface-float-hover); color: var(--text-primary); }
@@ -1199,6 +1216,8 @@ a.avatar.active { box-shadow: 0 0 0 2px var(--text-primary); }
 .me-avatar { width: 56px; height: 56px; border-radius: 50%; background: var(--surface-sub); display: flex; align-items: center; justify-content: center; font-weight: var(--weight-medium); font-size: 18px; flex: none; }
 .me-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-tile-gap); margin-top: 22px; }
 .me-tile { padding: 16px 18px; border-radius: var(--radius-lg); }
+/* A list on My page keeps to about six rows and scrolls within itself (DEC-UX-135). */
+.me-list { max-height: 300px; overflow-y: auto; }
 .me-row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: var(--radius-md); color: inherit; text-decoration: none; }
 .me-row:hover { background: var(--tint-hover); }
 /* The tab Background of My page (DEC-UX-108): a tile per background of the current theme, Random first */
@@ -1335,3 +1354,17 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .wh-opt.off:hover { background: none; }
 .wh-opt.off .item-title { color: var(--text-muted); }
 .wh-empty { margin-top: 0; padding: 30px 24px; border-radius: var(--radius-xl); text-align: center; }
+
+/* The page of a query fills the height of the screen: the query and its result split it, each scrolling on
+   its own, the divider between them dragged; or the query next to its result (DEC-UX-143, DEC-UX-144). */
+.q-work { display: grid; grid-template-rows: minmax(0, 55%) 14px minmax(0, 1fr); height: calc(100vh - 200px); min-height: 360px; margin-top: 14px; }
+.q-work.side { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, 45%) 14px minmax(0, 1fr); }
+.q-work > .card { min-height: 0; overflow: auto; margin: 0; }
+.q-divider { display: flex; align-items: center; justify-content: center; cursor: row-resize; }
+.q-work.side .q-divider { cursor: col-resize; }
+.q-divider::before { content: ''; width: 44px; height: 4px; border-radius: var(--radius-pill); background: var(--tint-active); }
+.q-work.side .q-divider::before { width: 4px; height: 44px; }
+.q-divider:hover::before, .q-divider:focus-visible::before { background: var(--text-muted); }
+.q-layouts { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+.q-layouts button { width: 30px; height: 30px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; }
+.q-layouts button[aria-pressed="true"] { background: var(--card); color: var(--text-primary); }

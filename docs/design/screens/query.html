@@ -77,35 +77,61 @@
   </div>
   <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
-  <div class="panel-label">Today</div>
-  <div class="q-entry open" id="q-current">
-   <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
-   <button class="icon-btn q-unfold" aria-expanded="true" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
-   <div class="q-runs" aria-label="Its last runs">
-    <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
-    <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">today, 08:05</span></button>
-    <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday, 17:40</span></button>
-    <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
+  <!-- Previews, the queries of Lenses and hidden queries are left out until their chip is on, each with how many (DEC-UX-137). -->
+  <div class="q-show" role="group" aria-label="Also show">
+   <button class="chip-toggle" aria-pressed="false">Previews<span class="count">6</span></button>
+   <button class="chip-toggle" aria-pressed="false">Lenses<span class="count">2</span></button>
+   <button class="chip-toggle" aria-pressed="false">Hidden<span class="count">3</span></button>
+  </div>
+  <!-- Per day this week, per week back to the start of last month, then per month; only today is open, the others load when opened (DEC-UX-139). -->
+  <div class="q-group open">
+   <button class="q-period" aria-expanded="true"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
+   <div class="q-entry" id="q-current">
+    <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
+    <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
+    <div class="q-runs" aria-label="Its last runs">
+     <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
+     <button class="q-run" data-run="13"><span>Run 13</span><span class="meta">today, 08:05</span></button>
+     <button class="q-run" data-run="12"><span>Run 12</span><span class="meta">yesterday, 17:40</span></button>
+     <button class="q-run q-run-all" data-run="all"><span>All 14 runs</span><i class="ph ph-arrow-right"></i></button>
+    </div>
+   </div>
+   <div class="q-entry">
+    <a class="list-item card q-item" href="query.html" data-name="partner share per week weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per week</span><span class="meta">Weekly lead volume +1 · 3 runs · 07:58</span></span></a><button class="icon-btn q-hide" aria-label="Hide this query" title="Hide this query; Hidden shows it again"><i class="ph ph-eye-slash"></i></button>
    </div>
   </div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="partner share per week weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner share per week</span><span class="meta">Weekly lead volume +1 · 3 runs · 07:58</span></span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Yesterday</span><span class="count">4</span></button>
   </div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="preview weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Preview · Weekly lead volume</span><span class="meta">Weekly lead volume · 6 runs · 07:40</span></span><span class="pill">Preview</span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Wed 28 Oct</span><span class="count">2</span></button>
   </div>
-  <div class="panel-label">Yesterday</div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="partner leads in september weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Partner leads in September</span><span class="meta">Weekly lead volume · 4 runs · 16:05</span></span><span class="pill">Claude</span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>Mon 26 Oct</span><span class="count">1</span></button>
   </div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="lens leads per source week by week"><i class="ph ph-aperture kind-icon" role="img" aria-label="On a Lens"></i><span><span class="item-title">Leads per source, week by week</span><span class="meta">Lens · 2 runs · 09:30</span></span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>19 – 25 Oct</span><span class="count">6</span></button>
   </div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="weekly volume since 2024 weekly lead volume"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Weekly volume since 2024</span><span class="meta">Weekly lead volume · 1 run · 11:31</span></span><span class="pill">Accepted</span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>12 – 18 Oct</span><span class="count">3</span></button>
   </div>
-  <div class="q-entry">
-   <a class="list-item card q-item" href="query.html" data-name="credit lead funnel"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">All of the credit lead funnel</span><span class="meta">Credit lead funnel · not run</span></span><span class="pill" style="color:var(--signal-urgent)">To the Data Team</span></a>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>5 – 11 Oct</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>28 Sep – 4 Oct</span><span class="count">4</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>21 – 27 Sep</span><span class="count">3</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>1 – 6 Sep</span><span class="count">2</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>August</span><span class="count">9</span></button>
+  </div>
+  <div class="q-group">
+   <button class="q-period" aria-expanded="false"><i class="ph ph-caret-down"></i><span>July</span><span class="count">14</span></button>
   </div>
   </div>
   <div data-pane-group="scope" data-pane="all" data-for="datateam" hidden>
@@ -126,13 +152,17 @@
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
+ <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
+ <button class="btn-quiet outline" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i>Hide</button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
  <button class="btn-primary" data-pane-group="lens" data-pane="linked" type="button" data-sheet-open="update-lens" title="Overwrite the Lens with this query: its SQL and Parameters"><i class="ph ph-arrows-clockwise" style="font-size:15px"></i>Update the Lens</button>
 </div>
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
+<!-- The query and its result split the height of the page, each scrolling on its own, the divider between them dragged; ?layout=side puts them next to each other (DEC-UX-143, DEC-UX-144). -->
+<div class="q-work" id="q-work">
 <section class="query-card card" aria-label="The query">
  <div class="q-scope" id="q-scope">
   <span class="label" style="margin:0">Reads only</span>
@@ -238,7 +268,7 @@
   </span>
  </div>
 </section>
-
+<div class="q-divider" role="separator" aria-orientation="horizontal" aria-valuenow="55" tabindex="0" title="Drag, or use the arrow keys, to give the query or the result more room"></div>
 <section class="result-card card" aria-label="Result of your last run">
  <div class="result-head">
   <div data-group="rtab" role="tablist" aria-label="Result or history" class="rtabs">
@@ -292,6 +322,15 @@
   <p class="rg-menu-note">Sorting reorders the 100 rows on this page only. To sort every row, use <span class="mono">order by</span>.</p>
  </div>
 </section>
+</div>
+<script>
+  // The prototype switch: ?layout=side puts the query next to its result.
+  if (new URLSearchParams(location.search).get('layout') === 'side') {
+    document.getElementById('q-work').classList.add('side');
+    document.querySelector('.q-divider').setAttribute('aria-orientation', 'vertical');
+    document.querySelectorAll('.q-layouts button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.layout === 'side')));
+  }
+</script>
 </main>
 </div>
 <section class="float-win pm-win" id="pm" role="dialog" aria-modal="false" aria-labelledby="pm-title" hidden>

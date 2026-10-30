@@ -72,6 +72,7 @@ import check from '@phosphor-icons/core/assets/regular/check.svg?raw';
 import checkCircle from '@phosphor-icons/core/assets/regular/check-circle.svg?raw';
 import circle from '@phosphor-icons/core/assets/regular/circle.svg?raw';
 import columns from '@phosphor-icons/core/assets/regular/columns.svg?raw';
+import rows from '@phosphor-icons/core/assets/regular/rows.svg?raw';
 import cube from '@phosphor-icons/core/assets/regular/cube.svg?raw';
 import database from '@phosphor-icons/core/assets/regular/database.svg?raw';
 import dotsSixVertical from '@phosphor-icons/core/assets/regular/dots-six-vertical.svg?raw';
@@ -196,6 +197,7 @@ export const ICONS = {
   'check-circle': checkCircle,
   circle,
   columns,
+  rows,
   cube,
   database,
   'dots-six-vertical': dotsSixVertical,

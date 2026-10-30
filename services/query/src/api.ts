@@ -9,7 +9,7 @@ import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
-import type { Queries, Query, QueryOnResource, Run, Viewer } from './queries.js';
+import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
 import { inOwnCase, template } from './sql.js';
 
 export interface ApiOptions {
@@ -241,17 +241,20 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const resources = (await resourcesOf(request, query)).map(({ named, resource }) =>
       resource ? { visible: true, ...resource } : { visible: false, id: named.id, displayName: named.displayName },
     );
-    const [last, runs, requests, startedFrom, lens] = await Promise.all([
+    const [last, runs, requests, startedFrom, lens, hidden] = await Promise.all([
       queries.lastRun(query.id),
       queries.runCount(query.id),
       requestsOf(request, query),
       startedFromOf(query),
       // The Lens it is used as: made from it, or opened as it in Query (DEC-LE-03, DEC-LE-18).
       lenses.ofQuery(query.id).then((made) => made ?? (query.forLens ? lenses.get(query.forLens) : undefined)),
+      queries.hidden(query.id, viewer(request).id),
     ]);
     return {
       ...query,
       mine: query.ownerId === viewer(request).id,
+      // Whether the User hid it from their panel (DEC-UX-138).
+      hidden,
       resources,
       lastRun: last ? runView(last) : null,
       runs,
@@ -273,11 +276,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     throw error;
   }
 
-  app.get<{ Querystring: { all?: string } }>('/queries', async (request, reply) => {
+  app.get<{ Querystring: { all?: string; from?: string; to?: string; show?: string; q?: string; limit?: string } }>('/queries', async (request, reply) => {
     const who = viewer(request);
     const all = request.query.all === 'true';
     if (all && !who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team lists the queries of everyone.' });
-    const list = await queries.list(who, all);
+    const options = listOptions(request.query);
+    if (typeof options === 'string') return reply.code(400).send({ error: 'invalid_request', message: options });
+    const list = await queries.list(who, all, options);
     // The label of a query that went to the Data Team (DEC-UX-116); the list shows without it rather than not at all.
     const latest = new Map<string, QueryRequest>();
     try {
@@ -288,6 +293,30 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     return { queries: list.map((item) => ({ ...item, request: requestView(latest.get(item.id)) })) };
   });
+
+  // How many queries each day holds, in the time zone of the User, for the periods and chips of the panel (DEC-UX-137, DEC-UX-139).
+  app.get<{ Querystring: { all?: string; tz?: string } }>('/queries/days', async (request, reply) => {
+    const who = viewer(request);
+    const all = request.query.all === 'true';
+    if (all && !who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team lists the queries of everyone.' });
+    const timeZone = request.query.tz ?? 'UTC';
+    if (!isTimeZone(timeZone)) return reply.code(400).send({ error: 'invalid_request', message: 'tz is a time zone, such as Europe/Brussels.' });
+    return { days: await queries.days(who, all, timeZone) };
+  });
+
+  // Hides a query from the panel of the User, or shows it again; for them alone (DEC-UX-138).
+  for (const [method, hidden] of [['PUT', true], ['DELETE', false]] as const) {
+    app.route<{ Params: { id: string } }>({
+      method,
+      url: '/queries/:id/hidden',
+      handler: async (request, reply) => {
+        const query = await seen(request, reply);
+        if (!query) return reply;
+        await queries.hide(query.id, viewer(request).id, hidden);
+        return { hidden };
+      },
+    });
+  }
 
   app.post<{ Body: unknown }>('/queries', async (request, reply) => {
     const fields = parseQuery(request.body, true);
@@ -664,4 +693,35 @@ function pageView(page: Page, number: number) {
 /** A value of a label in BigQuery: lowercase letters, digits, dashes and underscores, at most 63. */
 export function label(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9_-]/g, '_').slice(0, 63);
+}
+
+/** Whether the time zone is one Node and Postgres both know, such as Europe/Brussels. */
+export function isTimeZone(name: string): boolean {
+  if (!/^[A-Za-z_]+(?:\/[A-Za-z0-9_+-]+)*$/.test(name) && name !== 'UTC') return false;
+  try {
+    new Intl.DateTimeFormat('en', { timeZone: name });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Which queries the panel asks for: a period, the chips that are on, words to search, at most how many (DEC-UX-137, DEC-UX-139). */
+export function listOptions(query: { from?: string; to?: string; show?: string; q?: string; limit?: string }): ListOptions | string {
+  const when = (value: string | undefined) => (value === undefined ? undefined : new Date(value));
+  const from = when(query.from);
+  const to = when(query.to);
+  if ((from && Number.isNaN(from.getTime())) || (to && Number.isNaN(to.getTime()))) return 'from and to are moments, such as 2026-10-30T00:00:00Z.';
+  const show = query.show === undefined ? undefined : query.show.split(',').filter(Boolean);
+  if (show?.some((item) => !(SHOWN as readonly string[]).includes(item))) return `show lists what to add: ${SHOWN.join(', ')}.`;
+  const limit = query.limit === undefined ? undefined : Number(query.limit);
+  if (limit !== undefined && (!Number.isInteger(limit) || limit < 1 || limit > 200)) return 'limit is a number from 1 to 200.';
+  if (query.q !== undefined && query.q.length > 200) return 'q has at most 200 characters.';
+  return {
+    ...(from ? { from } : {}),
+    ...(to ? { to } : {}),
+    ...(show ? { show: show as Shown[] } : {}),
+    ...(query.q?.trim() ? { search: query.q } : {}),
+    ...(limit ? { limit } : {}),
+  };
 }

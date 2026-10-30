@@ -344,7 +344,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     await admin?.close();
   });
 
-  const call = (authorization: string, method: 'GET' | 'POST' | 'PATCH' | 'PUT', path: string, payload?: unknown) =>
+  const call = (authorization: string, method: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE', path: string, payload?: unknown) =>
     app.inject({ method, url: path, headers: { authorization }, ...(payload === undefined ? {} : { payload: payload as object }) });
 
   let id: string;
@@ -898,6 +898,49 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(decisions.at(-1)).toMatchObject({ requestId: requests[0]!.id, outcome: 'accepted' });
     expect((await call(an, 'POST', `/lenses/${lensId}/preflight`, {})).json().preflight).toMatchObject({ range: 'request' });
     fake.resize(null);
+  });
+
+  it('lists the queries of a period, leaves out previews, Lenses and hidden ones until asked, and counts them per day (DEC-UX-137, DEC-UX-138, DEC-UX-139)', async () => {
+    const ruth = `Bearer ${await issuer.sign({ sub: '105', name: 'Ruth Aerts' })}`;
+    visible.set(ruth, [WEEKLY.id]);
+    const made = async (name: string) => (await call(ruth, 'POST', '/queries', { name, resources: [WEEKLY.id], sql: weekly })).json().query.id as string;
+    const kept = await made('Leads per week');
+    const hidden = await made('Leads per day');
+    // A preview and the query of a Lens, as query makes them.
+    const [preview, lens] = await Promise.all(
+      (['preview', 'lens'] as const).map(async (kind) =>
+        (await database.db.insertInto('queries').values({ ownerId: '105', ownerName: 'Ruth Aerts', name: `A ${kind}`, question: '', resources: JSON.stringify([WEEKLY]), sql: '', kind }).returning('id').executeTakeFirstOrThrow()).id,
+      ),
+    );
+    // Hidden for Ruth alone: the Data Team still sees it as it was.
+    expect((await call(ruth, 'PUT', `/queries/${hidden}/hidden`)).json()).toEqual({ hidden: true });
+    expect((await call(ruth, 'GET', `/queries/${hidden}`)).json().query.hidden).toBe(true);
+    expect((await call(karel, 'PUT', `/queries/${hidden}/hidden`)).statusCode).toBe(404);
+
+    const names = async (path: string) => (await call(ruth, 'GET', path)).json().queries.map((item: { name: string }) => item.name).toSorted();
+    expect(await names('/queries?show=')).toEqual(['Leads per week']);
+    expect(await names('/queries?show=previews,lenses')).toEqual(['A lens', 'A preview', 'Leads per week']);
+    expect(await names('/queries?show=hidden')).toEqual(['Leads per day', 'Leads per week']);
+    expect(await names('/queries')).toEqual(['A lens', 'A preview', 'Leads per day', 'Leads per week']);
+    // A period, and words that search them all.
+    const now = Date.now();
+    expect(await names(`/queries?show=&from=${new Date(now - 3_600_000).toISOString()}&to=${new Date(now + 3_600_000).toISOString()}`)).toEqual(['Leads per week']);
+    expect(await names(`/queries?show=&to=${new Date(now - 3_600_000).toISOString()}`)).toEqual([]);
+    expect(await names('/queries?show=hidden&q=PER%20DAY')).toEqual(['Leads per day']);
+    expect((await call(ruth, 'GET', '/queries?show=everything')).statusCode).toBe(400);
+    expect((await call(ruth, 'GET', '/queries?from=yesterday')).statusCode).toBe(400);
+
+    // The counts per day in the time zone of the User, by what the panel shows them as.
+    const days = (await call(ruth, 'GET', '/queries/days?tz=Europe/Brussels')).json().days;
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Brussels' }).format(new Date());
+    expect(days).toEqual([{ day: today, queries: 1, previews: 1, lenses: 1, hidden: 1 }]);
+    expect((await call(ruth, 'GET', '/queries/days?tz=Mars/Olympus')).statusCode).toBe(400);
+    expect((await call(ruth, 'GET', '/queries/days?all=true')).statusCode).toBe(403);
+
+    // Shown again, it is a plain query once more.
+    expect((await call(ruth, 'DELETE', `/queries/${hidden}/hidden`)).json()).toEqual({ hidden: false });
+    expect(await names('/queries?show=')).toEqual(['Leads per day', 'Leads per week']);
+    expect(kept && preview && lens).toBeTruthy();
   });
 
   it('asks BigQuery for a Resource written in another case by its full name in its own case, and keeps a Lens so (DEC-SR-44)', async () => {

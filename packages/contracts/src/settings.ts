@@ -19,6 +19,8 @@ export const USER_SETTINGS = {
   'background.dark': background,
   /** Whether the panel is open (navigation rule 5 of the design). */
   'panel.open': z.boolean(),
+  /** The layout of the page of a query: the query above the result, or next to it (DEC-UX-143). */
+  'query.layout': z.enum(['horizontal', 'sideBySide']),
 } as const;
 
 /** An intro dismissed on the start screen of a section, with the version that was dismissed. */

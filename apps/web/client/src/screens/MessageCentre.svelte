@@ -55,6 +55,8 @@
   let chip = $state<'all' | 'open' | 'answered'>('all');
   const messages = $derived(found?.messages ?? []);
   const shown = $derived(messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : isAnswered(message))));
+  /** Nothing unread at all, not just nothing that matches a filter (DEC-UX-136). */
+  const caughtUp = $derived(filter.view === 'unread' && !filter.kind && !filter.on && !filter.search && chip === 'all');
   const about = $derived(filter.view === 'forYou' && dataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about));
 
   /** The icon of the kind of an object, as the panel shows it. */
@@ -95,7 +97,7 @@
     {:else if found === undefined}
       <p class="meta empty">…</p>
     {:else if shown.length === 0}
-      <p class="meta empty">{t('messages.none')}</p>
+      <p class="meta empty">{t(caughtUp ? 'messages.caughtUp' : 'messages.none')}</p>
     {:else}
       {#each shown as message (message.id)}
         <a class="item" class:on={opened?.id === message.id} class:unread={message.unread} href={messagePath(message.id)} aria-current={opened?.id === message.id ? 'true' : undefined}>
