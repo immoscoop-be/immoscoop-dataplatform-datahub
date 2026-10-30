@@ -1,5 +1,6 @@
 <script lang="ts">
   import ListItem from '@datahub/ui/components/ListItem.svelte';
+  import PanelFilter from '@datahub/ui/components/PanelFilter.svelte';
   import Search from '@datahub/ui/components/Search.svelte';
   import TreeGroup from '@datahub/ui/components/TreeGroup.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -17,6 +18,8 @@
    * User sees, All or Yours (DEC-UX-87), each unfolding to its Resources (FR-CO-18), then its Lenses,
    * without a label of their own (FR-CO-36). For the Data Team, "Without a Collection" is on top
    * (DEC-UX-16). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
+   * The filter next to it shows Resources, Lenses or both: with one kind left out, a Collection without
+   * the other leaves the panel, and with only Lenses each Collection unfolds to them (DEC-UX-151).
    */
   let {
     collections,
@@ -41,9 +44,17 @@
 
   /** How many items an unfolded Collection shows before "Show all" (FR-CO-23). */
   const FIRST = 8;
+  type Kind = 'resources' | 'lenses';
+  const KINDS: readonly Kind[] = ['resources', 'lenses'];
+  const TEXTS: Record<Kind, { name: string; detail: string }> = {
+    resources: { name: 'collections.show.resources', detail: 'collections.show.resources.detail' },
+    lenses: { name: 'collections.show.lenses', detail: 'collections.show.lenses.detail' },
+  };
 
   let query = $state('');
   let filter: 'all' | 'yours' = $state('all');
+  /** What the Collections unfold to: Resources, Lenses or both (DEC-UX-151). */
+  let show = $state<Kind[]>([...KINDS]);
   /** Which Collections the User unfolded; folded unless they did (DEC-UX-13). */
   let unfolded: Record<string, boolean> = $state({});
   /** Whether "Without a Collection" is unfolded; folded unless the User unfolds it (DEC-UX-133). */
@@ -77,22 +88,44 @@
     found: boolean;
   }
   const lensesOf = (collection: Collection) => (lenses ?? []).filter((lens) => lens.collectionId === collection.id).toSorted((a, b) => a.name.localeCompare(b.name));
+  const inScope = $derived((collections ?? []).filter((collection) => filter === 'all' || mine(collection)));
+  const withResources = $derived(show.includes('resources'));
+  const withLenses = $derived(show.includes('lenses'));
+  /** With one kind left out, only the Collections that hold the other stay (DEC-UX-151). */
+  const narrowed = $derived(!withResources || !withLenses);
   const shown: Shown[] = $derived(
-    (collections ?? [])
-      .filter((collection) => filter === 'all' || mine(collection))
-      .flatMap((collection): Shown[] => {
-        if (!words || fits(collection.name)) {
-          return [{ collection, items: collection.resources, lensItems: lensesOf(collection), found: false }];
-        }
-        const items = collection.resources.filter((item) => fits(item.displayName));
-        const lensItems = lensesOf(collection).filter((lens) => fits(lens.name));
-        return items.length + lensItems.length > 0 ? [{ collection, items, lensItems, found: true }] : [];
-      }),
+    inScope.flatMap((collection): Shown[] => {
+      const resources = withResources ? collection.resources : [];
+      const its = withLenses ? lensesOf(collection) : [];
+      if (!words || fits(collection.name)) {
+        if (narrowed && resources.length + its.length === 0) return [];
+        // Only Lenses: each Collection unfolds to them, as few as they are.
+        return [{ collection, items: resources, lensItems: its, found: !withResources }];
+      }
+      const items = resources.filter((item) => fits(item.displayName));
+      const lensItems = its.filter((lens) => fits(lens.name));
+      return items.length + lensItems.length > 0 ? [{ collection, items, lensItems, found: true }] : [];
+    }),
   );
-  const waitingShown = $derived((waiting ?? []).filter((resource) => !words || fits(resource.displayName)));
+  const waitingShown = $derived(withResources ? (waiting ?? []).filter((resource) => !words || fits(resource.displayName)) : []);
+  const counts = $derived({
+    resources: inScope.reduce((sum, collection) => sum + collection.resources.length, 0),
+    lenses: inScope.reduce((sum, collection) => sum + lensesOf(collection).length, 0),
+  });
 </script>
 
-<div class="search"><Search bind:value={query} placeholder={t('collections.search')} /></div>
+<!-- What the Collections unfold to, Resources, Lenses or both, folds open next to the search (DEC-UX-150, DEC-UX-151). -->
+<PanelFilter
+  id="collections-show"
+  label={t('collections.show.toggle')}
+  legend={t('collections.show')}
+  kinds={KINDS.map((kind) => ({ value: kind, name: t(TEXTS[kind].name), detail: t(TEXTS[kind].detail), count: collections ? counts[kind] : undefined }))}
+  bind:chosen={show}
+  defaults={KINDS}
+  atLeastOne
+>
+  <Search bind:value={query} placeholder={t('collections.search')} />
+</PanelFilter>
 
 {#if waiting && waitingShown.length > 0}
   <TreeGroup icon="tray" name={t('collections.unassigned')} urgent bind:open={() => waitingOpen || Boolean(words), (open) => (waitingOpen = open)}>
@@ -150,12 +183,13 @@
 
 {#if collections && words && shown.length === 0 && waitingShown.length === 0}
   <p class="meta empty">{t('collections.noMatch')}</p>
+{:else if collections && !words && shown.length === 0 && narrowed && inScope.length > 0}
+  <p class="meta empty">{t('collections.noneShown')}</p>
 {:else if collections && !words && shown.length === 0}
   <p class="meta empty">{t(filter === 'yours' ? 'collections.noneYours' : 'collections.none')}</p>
 {/if}
 
 <style>
-  .search { margin: 16px 0 12px; }
   .filter { margin: 2px 0 8px; }
   .more { all: unset; display: block; cursor: pointer; padding: 6px 8px 4px 38px; font-size: var(--text-meta); color: var(--text-muted); }
   .more:hover { color: var(--text-primary); }

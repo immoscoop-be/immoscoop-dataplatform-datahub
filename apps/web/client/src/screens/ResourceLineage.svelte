@@ -1,5 +1,5 @@
 <script lang="ts">
-  import Lineage, { type LineageModel } from '@datahub/ui/components/Lineage.svelte';
+  import type { LineageModel } from '@datahub/ui/components/Lineage.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import type { Catalogue, LineageNode, ResourceDetail, ResourceLineage } from '../lib/catalogue.js';
@@ -75,14 +75,17 @@
 {:else if !graph || !graph.models.has(graph.center)}
   <p class="meta state">{t('resource.lineage.unknown')}</p>
 {:else}
-  <Lineage
-    center={graph.center}
-    models={graph.models}
-    upstream={graph.upstream}
-    downstream={graph.downstream}
-    label={t('resource.lineage.label', { name: resource.displayName })}
-    backLabel={t('resource.lineage.back')}
-  />
+  <!-- The canvas of the Lineage loads when its tab opens, so that the rest of the page loads without it. -->
+  {#await import('@datahub/ui/components/Lineage.svelte') then { default: Lineage }}
+    <Lineage
+      center={graph.center}
+      models={graph.models}
+      upstream={graph.upstream}
+      downstream={graph.downstream}
+      label={t('resource.lineage.label', { name: resource.displayName })}
+      backLabel={t('resource.lineage.back')}
+    />
+  {/await}
 {/if}
 
 <style>

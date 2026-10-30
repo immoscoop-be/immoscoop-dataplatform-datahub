@@ -520,7 +520,7 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 
 *Note of 2026-10-29, on building the third piece of part 5: the previews of a Resource by a User are one query in the panel, marked "Preview" ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)).*
 
-*Note of 2026-10-30: the panel groups them per day in this week, per week back to the first of last month, then per month, and reads a period only when it is opened; previews, the queries of Lenses and hidden queries show only when their chip is on, and a User hides a query for themselves alone ([DEC-UX-137](../../design/principles.md#dec-ux-137), [DEC-UX-138](../../design/principles.md#dec-ux-138), [DEC-UX-139](../../design/principles.md#dec-ux-139)).*
+*Note of 2026-10-30: the panel groups them per day in this week, per week back to the first of last month, then per month, and reads a period only when it is opened; previews, the queries of Lenses and hidden queries show only when they are ticked in the filter next to the search ([DEC-UX-150](../../design/principles.md#dec-ux-150)), and a User hides a query for themselves alone ([DEC-UX-137](../../design/principles.md#dec-ux-137), [DEC-UX-138](../../design/principles.md#dec-ux-138), [DEC-UX-139](../../design/principles.md#dec-ux-139)).*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it

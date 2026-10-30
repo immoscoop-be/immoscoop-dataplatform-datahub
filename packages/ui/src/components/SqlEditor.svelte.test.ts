@@ -23,6 +23,23 @@ describe('the SQL editor', () => {
       expect(options.some((option) => option.startsWith('where true and'))).toBe(true);
       return options;
     });
-    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['select … from', 'where false or', 'where true and']);
+    expect(listed.filter((option) => option.endsWith('Sjabloon')).map((option) => option.replace('Sjabloon', ''))).toEqual(['final as … order by', 'select … from', 'where false or', 'where true and', 'with … as']);
+  });
+
+  it('suggests the Resources of the query after from, and a new Resource that starts a new query (DEC-UX-148)', async () => {
+    const onnewtable = vi.fn();
+    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [{ name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' }], onnewtable });
+    const editor = content();
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(editor, { key: ' ', code: 'Space', ctrlKey: true });
+    const options = await vi.waitFor(() => {
+      const listed = [...document.querySelectorAll('.cm-tooltip-autocomplete li')];
+      expect(listed.length).toBe(2);
+      return listed;
+    });
+    expect(options.map((option) => option.textContent)).toEqual(['Weekly lead volumeResource', 'Nieuwe Resource…begint een nieuwe query']);
+    await fireEvent.mouseDown(options[1] as Element);
+    expect(onnewtable).toHaveBeenCalledTimes(1);
   });
 });

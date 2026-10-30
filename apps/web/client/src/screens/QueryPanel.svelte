@@ -1,4 +1,5 @@
 <script lang="ts">
+  import PanelFilter from '@datahub/ui/components/PanelFilter.svelte';
   import Search from '@datahub/ui/components/Search.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -14,8 +15,9 @@
    * when it went to the Data Team (DEC-UX-116). They are grouped per day in this week, per week back to
    * the first of last month, then per month, each period with how many it holds; only today is open, and
    * another period reads its queries when it is opened (DEC-UX-139). A search looks through all of them.
-   * Previews, the queries of Lenses and hidden queries are left out until their chip is on (DEC-UX-137);
-   * the eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
+   * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
+   * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
+   * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
    * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All: everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
    */
@@ -45,7 +47,11 @@
   /** How long typing pauses before the search asks for the queries. */
   const PAUSE = 250;
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
-  const CHIPS: Record<Shown, string> = { previews: 'query.show.previews', lenses: 'query.show.lenses', hidden: 'query.show.hidden' };
+  const KINDS: Record<Shown, { name: string; detail: string }> = {
+    previews: { name: 'query.show.previews', detail: 'query.show.previews.detail' },
+    lenses: { name: 'query.show.lenses', detail: 'query.show.lenses.detail' },
+    hidden: { name: 'query.show.hidden', detail: 'query.show.hidden.detail' },
+  };
 
   let search = $state('');
   let unfolded = $state(false);
@@ -170,10 +176,6 @@
     return [all ? item.ownerName : null, on, ran].filter(Boolean).join(' · ');
   }
 
-  function toggle(kind: Shown) {
-    show = shown.has(kind) ? show.filter((other) => other !== kind) : SHOWN.filter((other) => other === kind || shown.has(other));
-  }
-
   async function hide(item: QueryItem) {
     const hidden = !item.hidden;
     try {
@@ -225,7 +227,17 @@
   </div>
 {/snippet}
 
-<div class="search"><Search bind:value={search} placeholder={t('query.search')} /></div>
+<!-- What the panel also shows folds open next to the search, as a small form (DEC-UX-150). -->
+<PanelFilter
+  id="query-show"
+  label={t('query.show.toggle')}
+  legend={t('query.show')}
+  kinds={SHOWN.map((kind) => ({ value: kind, name: t(KINDS[kind].name), detail: t(KINDS[kind].detail), count: days ? totals[kind] : undefined }))}
+  bind:chosen={show}
+  defaults={[]}
+>
+  <Search bind:value={search} placeholder={t('query.search')} />
+</PanelFilter>
 
 {#if dataTeam}
   <div class="filter">
@@ -240,12 +252,6 @@
     />
   </div>
 {/if}
-
-<div class="chips" role="group" aria-label={t('query.show')}>
-  {#each SHOWN as kind (kind)}
-    <button type="button" class="chip" aria-pressed={shown.has(kind)} onclick={() => toggle(kind)}>{t(CHIPS[kind])}<span class="count">{totals[kind]}</span></button>
-  {/each}
-</div>
 
 <p class="label">{t(all ? 'query.everyone' : 'query.yours')}</p>
 
@@ -291,12 +297,7 @@
 {/if}
 
 <style>
-  .search { margin: 16px 0 12px; }
   .filter { margin: 2px 0 8px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 10px; }
-  .chip { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: var(--radius-pill); font-size: var(--text-meta); color: var(--text-secondary); outline: 1px solid var(--tint-active); }
-  .chip[aria-pressed='true'] { background: var(--surface-sub); color: var(--text-primary); outline-color: var(--text-muted); }
-  .chip:focus-visible { outline: 2px solid var(--text-secondary); }
   .count { color: var(--text-muted); }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .period { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }

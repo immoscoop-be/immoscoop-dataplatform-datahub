@@ -174,8 +174,19 @@
   const theme = $derived(settings ? themeOf(settings, system) : system.current);
   const page = $derived(route(router.path));
 
+  let themed = false;
   $effect(() => {
-    document.documentElement.dataset.theme = theme;
+    const root = document.documentElement;
+    // Day and night switch at once: every transition is off until the new colours are on screen (DEC-UX-149).
+    if (themed && root.dataset.theme !== theme) {
+      root.classList.add('theme-switching');
+      root.dataset.theme = theme;
+      void root.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
+    } else {
+      root.dataset.theme = theme;
+    }
+    themed = true;
   });
   $effect(() => {
     if (settings) {

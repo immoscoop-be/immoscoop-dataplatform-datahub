@@ -779,6 +779,9 @@ describe('the web app, signed in', () => {
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
+    // At once: every transition is off until the new colours are on screen (DEC-UX-149).
+    expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
+    await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
     expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
   });
 
@@ -1204,20 +1207,27 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('walks its lineage one step at a time, the Resource in the middle (FR-SR-54, DEC-UX-100)', async () => {
+  it('walks its lineage one step at a time, the Resource in the middle, on a canvas that pans and zooms (FR-SR-54, DEC-UX-100, DEC-UX-152)', async () => {
     serve({ groups: ['g1'] });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Lineage' }));
-    const upstream = await main.findByRole('button', { name: /int_leads/ });
+    // The canvas loads when the tab opens.
+    const upstream = await main.findByRole('button', { name: /int_leads/ }, { timeout: 5000 });
     expect(main.getByText('lead_share')).toBeTruthy();
+    expect(main.getByRole('button', { name: 'Inzoomen' })).toBeTruthy();
+    const edges = () => [...document.querySelectorAll('.svelte-flow__edge')];
+    expect(edges().length).toBeGreaterThan(0);
+    expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(0);
     // Only its direct models at first; a click adds what is next to it, a column further out.
     expect(main.queryByText('stg_leads')).toBeNull();
     await fireEvent.click(upstream);
     expect(upstream.getAttribute('aria-expanded')).toBe('true');
     expect(main.getByText('stg_leads')).toBeTruthy();
+    // The curve to the open model is marked.
+    await vi.waitFor(() => expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(1));
     await fireEvent.click(main.getByRole('button', { name: /Terug naar zijn directe modellen/ }));
     expect(main.queryByText('stg_leads')).toBeNull();
   });
@@ -1374,7 +1384,7 @@ describe('Query', () => {
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
   });
 
-  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139)', async () => {
+  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139, DEC-UX-150)', async () => {
     const today = new Date().toISOString();
     const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
     const other = { ...QUERY, id: 'q2', name: 'Partner share per week', createdAt: today, lastRunAt: today };
@@ -1397,10 +1407,25 @@ describe('Query', () => {
     await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week verbergen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q2/hidden' }));
     await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Partner share per week/ })).toBeNull());
-    await fireEvent.click(await panel.findByRole('button', { name: /Verborgen\s*1/ }));
+    // The filter folds open next to the search, as a small form (DEC-UX-150).
+    const filter = panel.getByRole('button', { name: /^Filter: toon ook/ });
+    expect(filter.getAttribute('aria-expanded')).toBe('false');
+    await fireEvent.click(filter);
+    expect(filter.getAttribute('aria-expanded')).toBe('true');
+    const hidden = await panel.findByRole('checkbox', { name: /Verborgen.*1$/ });
+    await fireEvent.click(hidden);
     expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // Folded, one line says what it adds, and takes it away again.
+    await fireEvent.click(filter);
+    const off = panel.getByRole('button', { name: 'Verborgen niet meer tonen' });
+    expect(panel.getByText('Ook getoond:')).toBeTruthy();
     await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week weer tonen' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q2/hidden' }));
+    await fireEvent.click(off);
+    expect(panel.queryByText('Ook getoond:')).toBeNull();
+    await fireEvent.click(filter);
+    expect((panel.getByRole('checkbox', { name: /Verborgen/ }) as HTMLInputElement).checked).toBe(false);
+    expect((panel.getByRole('button', { name: 'Herstel' }) as HTMLButtonElement).disabled).toBe(true);
     // A search looks through every period.
     await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'since 2024' } });
     await vi.waitFor(() => expect(calls.some((call) => call.path.includes('q=since+2024'))).toBe(true));
@@ -1476,11 +1501,12 @@ describe('Query', () => {
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // A preview of a Resource is a query of the User, marked so in the panel once Previews is on (DEC-UX-137).
+    // A preview of a Resource is a query of the User, marked so in the panel once Previews is ticked (DEC-UX-137, DEC-UX-150).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
     expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
-    await fireEvent.click(panel.getByRole('button', { name: /Voorbeelden\s*1/ }));
+    await fireEvent.click(panel.getByRole('button', { name: /^Filter: toon ook/ }));
+    await fireEvent.click(panel.getByRole('checkbox', { name: /Voorbeelden.*1$/ }));
     expect(within(await panel.findByRole('link', { name: /Preview · Weekly lead volume/ })).getByText('Voorbeeld')).toBeTruthy();
     await fireEvent.click(await main.findByRole('button', { name: 'Leads per source name' }, { timeout: 3000 }));
     const name = main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement;
@@ -1666,6 +1692,29 @@ describe('Lenses', () => {
     expect(table.getByText('Max Verstraete')).toBeTruthy();
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('shows the Collections with Resources, Lenses or both, as the filter next to the search says (DEC-UX-150, DEC-UX-151)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const filter = await panel.findByRole('button', { name: 'Filter: toon Resources, Lenses of beide' });
+    await fireEvent.click(filter);
+    const resources = panel.getByRole('checkbox', { name: /^Resources/ }) as HTMLInputElement;
+    const lenses = panel.getByRole('checkbox', { name: /^Lenses/ }) as HTMLInputElement;
+    expect(resources.checked && lenses.checked).toBe(true);
+    // Only Lenses: the Collections that hold one, unfolded to them, and no Resources.
+    await fireEvent.click(resources);
+    expect(await panel.findByRole('link', { name: /Leads per source, week by week/ })).toBeTruthy();
+    expect(panel.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/resources/'))).toEqual([]);
+    // One kind always stays.
+    expect(lenses.disabled).toBe(true);
+    // Folded, one line says what is left out, and its cross brings it back.
+    await fireEvent.click(filter);
+    expect(panel.getByText('Niet getoond:')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Resources weer tonen' }));
+    expect(panel.queryByText('Niet getoond:')).toBeNull();
   });
 
   it('shows a Broken Lens with what it misses, Run off and no result, and a red dot where it is listed (FR-LE-17, DEC-UX-81)', async () => {
