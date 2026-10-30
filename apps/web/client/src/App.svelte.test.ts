@@ -613,7 +613,8 @@ function serve({
         const subject = message.subject as { kind: string };
         on[subject.kind] = (on[subject.kind] ?? 0) + 1;
       }
-      return json({ messages: talk, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
+      const listed = new URLSearchParams(path.split('?')[1]).get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
+      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
     }
     const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
     if (onObject) {
@@ -1734,20 +1735,24 @@ describe('Lenses', () => {
 });
 
 describe('Messages', () => {
-  it('counts what moved for the User in the rail, and lists it in the Message Centre (FR-CV-06)', async () => {
+  it('counts what moved for the User in the rail, and lists it in the Message Centre, unread first (FR-CV-06, DEC-UX-136)', async () => {
     const calls = serve({ groups: ['g1'], conversations: [QUESTION, DESCRIBED] });
     open('/messages');
     render(App, { config: CONFIG });
     expect(await screen.findByRole('link', { name: 'Berichten, 1 ongelezen' })).toBeTruthy();
     const main = within(await screen.findByRole('main'));
-    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
-    // A person's words, and the first line of what Data Hub tells, from the Message Catalogue (FR-CV-15).
+    // It opens on what moved since the User last looked.
+    expect(await main.findByRole('heading', { level: 1, name: 'Ongelezen' })).toBeTruthy();
     expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
-    expect(main.getByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt. Je businessbeschrijvingen blijven zoals ze zijn, en er wordt niets van je gevraagd.')).toBeTruthy();
     expect(main.getByRole('img', { name: 'Ongelezen' })).toBeTruthy();
+    expect(main.queryByText(/Eén beschrijving van Weekly lead volume/)).toBeNull();
     // The panel filters on the views, the kinds and the kinds of object.
     const panel = within(screen.getByRole('navigation', { name: 'Berichten' }));
-    expect(panel.getByRole('button', { name: /Voor jou/ }).getAttribute('aria-current')).toBe('true');
+    expect(panel.getByRole('button', { name: /Ongelezen/ }).getAttribute('aria-current')).toBe('true');
+    // For you: a person's words, and the first line of what Data Hub tells, from the Message Catalogue (FR-CV-15).
+    await fireEvent.click(panel.getByRole('button', { name: /Voor jou/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    expect(await main.findByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt. Je businessbeschrijvingen blijven zoals ze zijn, en er wordt niets van je gevraagd.')).toBeTruthy();
     await fireEvent.click(panel.getByRole('button', { name: /Questions/ }));
     await vi.waitFor(() => expect(calls.some((call) => call.path === '/messages?view=forYou&kind=question')).toBe(true));
 
@@ -1760,6 +1765,17 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Antwoorden/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/replies', body: { text: 'Yes, next week.' } }));
     expect(await main.findByText('Yes, next week.')).toBeTruthy();
+  });
+
+  it('says there is nothing to catch up on when nothing is unread, and only then (DEC-UX-136)', async () => {
+    serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Niets in te halen: je hebt alles gelezen.')).toBeTruthy();
+    // Filtered on a kind, nothing found is not the same as nothing to catch up on.
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Berichten' })).getByRole('button', { name: /Questions/ }));
+    expect(await main.findByText('Hier zijn geen berichten.')).toBeTruthy();
   });
 
   it('shows what Data Hub tells laid out, with the way to its object (FR-CV-15)', async () => {

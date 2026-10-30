@@ -84,7 +84,8 @@
   /** How many conversations for the User moved since they read them, on Messages in the rail (FR-CV-06). */
   let unread = $state(0);
   /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
-  let messageFilter = $state<Filter>({ view: 'forYou' });
+  // It opens on what moved since the User last looked (DEC-UX-136).
+  let messageFilter = $state<Filter>({ view: 'unread' });
   let centre: { messages: Message[]; counts: Counts } | null | undefined = $state();
   /** The Message opened in the Message Centre or in context: undefined while it comes, null when it could not be read. */
   let openedMessage: { id: string; message?: Conversation | null } | undefined = $state();

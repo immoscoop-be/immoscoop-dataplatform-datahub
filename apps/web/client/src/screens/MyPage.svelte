@@ -81,12 +81,15 @@
         {:else if groups && groups.length === 0}
           <p class="meta">{t('me.own.none')}</p>
         {:else if groups}
-          {#each groups as group (group.id)}
-            <div class="row">
-              <span class="item-icon"><Icon name="users-three" /></span>
-              <span class="row-text"><span class="item-title">{group.name}</span><span class="meta">{group.email}</span></span>
-            </div>
-          {/each}
+          <!-- About six rows, then the list scrolls within itself (DEC-UX-135). -->
+          <div class="list">
+            {#each groups as group (group.id)}
+              <div class="row">
+                <span class="item-icon"><Icon name="users-three" /></span>
+                <span class="row-text"><span class="item-title">{group.name}</span><span class="meta">{group.email}</span></span>
+              </div>
+            {/each}
+          </div>
         {/if}
         <p class="meta groups">{t('me.own.groups')}</p>
       </SubTile>
@@ -107,6 +110,7 @@
   .follows { margin: 12px 0 0; }
   .groups { margin: 10px 0 0; }
   .line { max-width: 720px; margin: 4px 0 14px; }
+  .list { max-height: 300px; overflow-y: auto; }
   .row { display: flex; align-items: center; gap: 10px; padding: 8px 6px; border-radius: var(--radius-md); }
   .item-icon { width: 26px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--text-secondary); }
   .row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }

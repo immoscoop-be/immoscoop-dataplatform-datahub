@@ -800,6 +800,7 @@ export default {
   'messages.unread': 'Unread',
   'messages.replies': '{count, plural, one {# reply} other {# replies}}',
   'messages.none': 'No Messages here.',
+  'messages.caughtUp': 'Nothing to catch up on: you have read everything.',
   'messages.pick': 'Choose a Message to read it here.',
   'messages.failed': 'The Messages could not be read. Try again later.',
   'messages.you': 'You',

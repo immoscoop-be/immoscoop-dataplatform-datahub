@@ -799,6 +799,7 @@ export default {
   'messages.unread': 'Ongelezen',
   'messages.replies': '{count, plural, one {# antwoord} other {# antwoorden}}',
   'messages.none': 'Hier zijn geen berichten.',
+  'messages.caughtUp': 'Niets in te halen: je hebt alles gelezen.',
   'messages.pick': 'Kies een bericht om het hier te lezen.',
   'messages.failed': 'De berichten konden niet gelezen worden. Probeer het later opnieuw.',
   'messages.you': 'Jij',

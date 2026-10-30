@@ -109,6 +109,8 @@ Only a User who may see the object of a Message sees the Message and follows its
 
 Every User has a Message Centre, reached from the navigation with the number of unread Messages. It shows, by default, the Messages for them: on the objects their Owner Unit owns, the Messages they wrote or answered, the Signals for the Data Team, and what Data Hub itself tells them, such as a Level that dropped. It filters on unread, written by them and everything they may see; on the kind of Message; and on the kind of object. Each Message shows its object and links to it ([FR-CV-02](#fr-cv-02)); opened, it shows its replies and a field to answer.
 
+*Note of 2026-10-30: it opens on its unread Messages, and says "Nothing to catch up on" when there are none; the Messages for them stay one click away ([DEC-UX-136](../../design/principles.md#dec-ux-136)).*
+
 <a id="fr-cv-07"></a>
 ### FR-CV-07 · The Messages of an object, on the object
 
