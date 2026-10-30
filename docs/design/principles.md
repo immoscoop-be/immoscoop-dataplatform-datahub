@@ -166,7 +166,7 @@ Screens: [resource-detail](screens/resource-detail.html), [resource-edit](screen
   - **Key fields and Parameters.**
   - **Entities and relationships:** each Entity with its identifier and the Resources it joins to, also as a picture. An Entity without an identifier at this grain is shown, but joins nothing.
   - **Monitoring:** the active checks and the incidents.
-  - **Partitions and clustering:** the partition column and its unit, the number of partitions, the cluster columns in their order, the size, and a sentence on how to query cheaply. From dbt and BigQuery, read-only.
+  - **Partitions and clustering:** the partition column and its unit, the number of partitions, the cluster columns in their order, the size, and a sentence on how to query cheaply. From dbt and BigQuery, read-only. Two columns wide; the name of the table beneath a view stays on one line, cut off at the end, the full name on hover.
   - **Recent history** with Log IDs, across the full width.
 - **Columns:** each column with its type, its Business Description and its description from dbt side by side, its Entity, and what it serves as: the Partition, a Cluster column with its place, a Parameter. A column without a Business Description shows the one from dbt alone. "Edit" above the table, for the Owner and the Data Team, opens the Business Descriptions of the fields. A Data Admin has "Edit relations" there, which opens step 2 of adding Resources for this one Resource ([DEC-UX-107](#dec-ux-107)).
 

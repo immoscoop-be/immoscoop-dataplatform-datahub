@@ -965,6 +965,8 @@ describe('the page of a Resource', () => {
     // Its size and partitions, from BigQuery (FR-SR-39).
     expect(await main.findByText(/312 partities/)).toBeTruthy();
     expect(main.getByText('6,2 GB in totaal, ongeveer 20 MB per dag')).toBeTruthy();
+    // Its tile is two columns wide, as drawn.
+    expect(main.getByText('Partities en clustering').closest('section')?.getAttribute('style')).toContain('grid-column: span 2');
     expect(main.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
   });
 
