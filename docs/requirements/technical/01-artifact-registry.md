@@ -18,7 +18,7 @@ How a run of a Source Job becomes the Current Version of its dbt project, in the
 registry answers `POST /webhooks/dbt-cloud`. The route is public, because dbt Cloud has no Access Token; the signature protects it instead. A delivery counts only when:
 
 - its `Authorization` header holds the HMAC-SHA256 of the raw body, in hex, keyed with the secret `datahub-dbt-webhook-secret`, compared in constant time; otherwise registry answers `401`;
-- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-01](../functional/01-artifact-registry.md#dec-ar-01)); any other signed delivery is answered `204` and ignored.
+- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-09](../functional/01-artifact-registry.md#dec-ar-09)); any other signed delivery is answered `204` and ignored.
 
 A delivery that counts records the run as an Artifact Set with status `pending`, at most once per run ID: a repeated delivery changes nothing. registry then starts the ingest job ([TR-AR-02](#tr-ar-02)) and answers, well within the 10 seconds dbt Cloud waits before it tries again.
 
