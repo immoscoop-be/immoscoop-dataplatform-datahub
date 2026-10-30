@@ -340,6 +340,8 @@
     document.getElementById('q-work').classList.add('side');
     document.querySelector('.q-divider').setAttribute('aria-orientation', 'vertical');
     document.querySelectorAll('.q-layouts button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.layout === 'side')));
+    // Next to the result, the Parameters start folded, so the editor keeps the room (DEC-UX-147).
+    document.getElementById('param-box').classList.remove('open');
   }
 </script>
 <script>

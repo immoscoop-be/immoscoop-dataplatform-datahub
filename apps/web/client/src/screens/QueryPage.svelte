@@ -166,6 +166,10 @@
   let paging = $state(false);
   let boxOpen = $state(true);
   let parametersOpen = $state(true);
+  // Next to the result, the Parameters start folded to their line of chips, so the editor keeps the room (DEC-UX-147).
+  $effect.pre(() => {
+    parametersOpen = layout !== 'sideBySide';
+  });
   let editor = $state<SqlEditor | undefined>();
   let tab = $state<'result' | 'history'>('result');
   let history = $state<Run[] | undefined>();
@@ -1011,7 +1015,7 @@
   .sql > :global(.editor) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
   .sql > :global(.editor .cm-editor) { flex: 1 1 auto; min-height: 0; }
   .params { min-height: 0; overflow: auto; }
-  .side .params { flex: none; max-height: 45%; }
+  .side .params { flex: none; max-height: 40%; }
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
