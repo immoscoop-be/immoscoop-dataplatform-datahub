@@ -804,6 +804,18 @@ describe('the web app, for the Data Team', () => {
     expect((added?.body as { resources: { id: string }[] }).resources.map((one) => one.id)).toEqual(['r1']);
   });
 
+  it('reads a Resource again when its page opens again, as after it was added to a Collection elsewhere', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/resources/r1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Saved searches' })).toBeTruthy();
+    await fireEvent.click(await screen.findByRole('link', { name: /Credit leads/ }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+    await fireEvent.click(await screen.findByRole('link', { name: /Saved searches/ }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.method === 'GET' && call.path === '/resources/r1')).toHaveLength(2));
+  });
+
   it('shows the page for what may not be seen to anyone else (FR-SR-31, DEC-UX-32)', async () => {
     serve();
     open('/resources/r1');

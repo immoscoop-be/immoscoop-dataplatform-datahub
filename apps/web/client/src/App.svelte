@@ -207,7 +207,15 @@
     }
   });
   $effect(() => {
-    if (status.kind !== 'signedIn' || page.kind !== 'resource' || opened?.id === page.id) {
+    if (status.kind !== 'signedIn') {
+      return;
+    }
+    if (page.kind !== 'resource') {
+      // Opened again later, a Resource is read afresh: it may have changed meanwhile, as when it was added to a Collection.
+      opened = undefined;
+      return;
+    }
+    if (opened?.id === page.id) {
       return;
     }
     const id = page.id;
