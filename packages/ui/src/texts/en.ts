@@ -38,6 +38,7 @@ export default {
   'float.move': 'Drag to move',
   'float.fold': 'Fold',
   'float.unfold': 'Unfold',
+  'marker.explained': ' (explained in the Learning Centre)',
   'intro.hide': 'Hide intro',
   'icon.label': 'Icon',
   'icon.search': 'Search icons, such as money or house',

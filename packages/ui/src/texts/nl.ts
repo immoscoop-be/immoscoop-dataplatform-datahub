@@ -36,6 +36,7 @@ export default {
   'float.move': 'Sleep om te verplaatsen',
   'float.fold': 'Dichtvouwen',
   'float.unfold': 'Openvouwen',
+  'marker.explained': ' (uitgelegd in het Learning Centre)',
   'intro.hide': 'Verberg de intro',
   'icon.label': 'Icoon',
   'icon.search': 'Zoek een icoon, zoals geld of huis',

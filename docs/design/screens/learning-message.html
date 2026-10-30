@@ -5,6 +5,11 @@
   Learning Card 1.2.2: it shows in the answer as a small card with its number, title and Learning Level, and whether the
   reader marked it understood; a click opens it. Next to the field of a new Message, "Add a learning card" finds a card
   by its words. The switch shows the card as the reader sees it, read or not. The Message stays on its Resource.
+  Drawn on 2026-10-29, to approve (OP-UX-48): finding the card. "Add a Learning Card" opens a finder under the field,
+  in the new Message as under the field of a reply. Empty, it lists the cards that explain this object, those of its
+  markers; typed, the written cards whose number, title or gain share the words, the shared words marked, most
+  shared first. A click adds the card: it stands under the field as it will in the Message, with a cross to take it
+  off. A Message carries one card. Only written cards are offered (DEC-LR-28). The second switch shows the finder.
   Requirements: FR-SR-29, FR-LN-01, FR-CV-01, FR-CV-03, FR-CV-04, FR-CV-05, FR-CV-07, FR-LR-05, FR-LR-07
   Decisions: DEC-UX-41, DEC-UX-67, DEC-CV-04, DEC-LR-13.
   Not in v1: "Make it an anomaly" on a Signal, and its mention under the field (FR-SR-30); leave them out.
@@ -249,7 +254,18 @@
     <div data-group="kind" role="tablist" style="display:flex"><button class="seg on" data-target="question" role="tab" aria-selected="true">Question</button><button class="seg" data-target="remark" role="tab" aria-selected="false">Remark</button><button class="seg" data-target="signal" role="tab" aria-selected="false">Signal</button></div>
    </div>
    <textarea placeholder="What do you want to know about this Resource?"></textarea>
-   <div class="composer-attach"><button class="btn-quiet outline" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px"><i class="ph ph-graduation-cap"></i>Add a Learning Card</button></div>
+   <div class="composer-attach" data-pane-group="finder" data-pane="closed"><button class="btn-quiet outline" data-go="finder:finding" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px"><i class="ph ph-graduation-cap"></i>Add a Learning Card</button></div>
+<div class="lc-finder" data-pane-group="finder" data-pane="finding" hidden>
+<label class="search"><i class="ph ph-magnifying-glass" style="font-size:15px"></i><input value="count" aria-label="Find a Learning Card" placeholder="Find a card by its number or words"></label>
+<p class="meta lc-finder-head">3 written cards share your words</p>
+<ul class="lc-finder-list">
+<li><button class="lc-finder-item" data-go="finder:added"><i class="ph ph-book-open-text" aria-hidden="true"></i><span class="lc-finder-body"><span class="lc-attach-title"><span class="lc-num">1.2.2</span>Unique <mark>counts</mark> don't add up</span><span class="meta">You answer "why don't the weeks add up to the month?" yourself</span></span><span class="meta">1 · User · 5 min</span></button></li>
+<li><button class="lc-finder-item" data-go="finder:added"><i class="ph ph-book-open-text" aria-hidden="true"></i><span class="lc-finder-body"><span class="lc-attach-title"><span class="lc-num">1.2.1</span>What a figure <mark>counts</mark> exactly</span><span class="meta">You quote a figure for what it really <mark>counts</mark></span></span><span class="meta">1 · User · 4 min</span></button></li>
+<li><button class="lc-finder-item" data-go="finder:added"><i class="ph ph-book-open-text" aria-hidden="true"></i><span class="lc-finder-body"><span class="lc-attach-title"><span class="lc-num">2.3.6</span>Five model types, and what each means for <mark>counting</mark></span><span class="meta">You tell the model types apart before you add anything up</span></span><span class="meta">2 · Data-aware user · 6 min</span></button></li>
+</ul>
+<div class="lc-finder-foot"><button class="btn-quiet" data-go="finder:closed" style="padding:6px 12px">Cancel</button></div>
+</div>
+<div class="composer-attach" data-pane-group="finder" data-pane="added" hidden><span class="lc-attach"><i class="ph ph-book-open-text" aria-hidden="true"></i><span class="lc-attach-body"><span class="lc-attach-title"><span class="lc-num">1.2.2</span>Unique counts don't add up</span><span class="meta">Learning Card · 1 · User · 5 min</span></span><button class="icon-btn lc-attach-remove" data-go="finder:closed" aria-label="Take the Learning Card off"><i class="ph ph-x"></i></button></span></div>
    <div class="composer-foot"><p class="meta" data-pane-group="kind" data-pane="question"><i class="ph-fill ph-bell-simple"></i>The credit team, Owner of this Resource, gets a notification.</p><p class="meta" data-pane-group="kind" data-pane="remark" hidden><i class="ph-fill ph-bell-simple"></i>The credit team, Owner of this Resource, gets a notification.</p><p class="meta" data-pane-group="kind" data-pane="signal" hidden><i class="ph-fill ph-bell-simple"></i>The credit team and the Data Team get a notification. They can make it an anomaly.</p><button class="btn-primary"><i class="ph-fill ph-paper-plane-tilt" style="font-size:15px"></i>Post</button></div>
   </div>
  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Questions<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Remarks<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Signals<span class="count">1</span></button></div>
@@ -282,7 +298,12 @@
  </div>
  <div class="sheet-foot"><p class="meta">Everyone who may see this Resource sees these Messages.</p><a class="text-link" href="messages.html"><span>In the Message Centre</span><i class="ph ph-arrow-right"></i></a></div>
 </section>
-<div class="proto-switch" data-group="reader" role="tablist" aria-label="Prototype: the reader">The Reader
+<div class="proto-switch" data-group="finder" role="tablist" aria-label="Prototype: adding a card" style="left:110px;right:auto;z-index:40">Adding a card
+ <button class="seg on" data-target="closed" role="tab" aria-selected="true">Not yet</button>
+ <button class="seg" data-target="finding" role="tab" aria-selected="false">Finding</button>
+ <button class="seg" data-target="added" role="tab" aria-selected="false">Added</button>
+</div>
+<div class="proto-switch" data-group="reader" role="tablist" aria-label="Prototype: the reader" style="left:110px;right:auto;bottom:72px;z-index:40">The Reader
  <button class="seg on" data-target="new" role="tab" aria-selected="true">Has not read the card</button>
  <button class="seg" data-target="understood" role="tab" aria-selected="false">Understood it</button>
 </div>

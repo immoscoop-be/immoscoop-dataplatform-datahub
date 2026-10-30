@@ -47,10 +47,10 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
 | [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
-| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Proposed: 4.4.1 | Specified |
-| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Implemented |
+| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Specified |
+| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
-| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Specified |
+| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Specified |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
@@ -1490,7 +1490,7 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | --- | --- | --- |
 | Go to the cause · *Naar de oorzaak* | The page of the Resource at the cause: the Columns tab, the EDA tab or its checks | every recipient |
 
-**Learning Card:** Proposed: **4.4.1 The maturity ladder**. What each Level stands for, and what makes a Resource rise and drop.
+**Learning Card:** Named: **K5.2 The Level of a Resource**. What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29), [DEC-LR-30](16-learning.md#dec-lr-30)).
 
 **Dutch, laid out**, with the example:
 
@@ -1590,7 +1590,7 @@ Template, English, laid out:
 | --- | --- | --- |
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 
-**Learning Card:** Proposed: **K5.1 What a resource is**. An exposure makes a table a Resource, and so its absence withdraws it.
+**Learning Card:** Named: **K5.1 What a resource is**. An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
 
 **Dutch, laid out**, with the example:
 
@@ -1683,7 +1683,7 @@ If that was not intended, ask the data team.
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 | Publish · *Publiceren* | Publish on the page of the Resource, from Described | Owner |
 
-**Learning Card:** Proposed: **4.7.1 Owner and steward**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it.
+**Learning Card:** Named: **4.7.1 Owner and steward**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
 
 **Dutch, laid out**, with the example:
 

@@ -6,6 +6,7 @@ import { buildApp } from './app.js';
 import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { createIdentity, createPeople } from './identity.js';
+import { createLearning } from './learning.js';
 import { createMail } from './mail.js';
 import { createMessages } from './messages.js';
 import { createNotifications } from './notifications.js';
@@ -63,6 +64,7 @@ const app = await buildApp({
       audience: catalogueUrl,
       serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')],
     }),
+    learning: createLearning(database.db),
   },
 });
 app.addHook('onClose', () => database.close());

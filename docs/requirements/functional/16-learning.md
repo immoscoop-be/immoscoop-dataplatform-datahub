@@ -3,12 +3,12 @@
 | | |
 | --- | --- |
 | Domain | 16 of Data Hub · code `LR` |
-| Status | To be specified |
+| Status | Parts 8a and 8b implemented: the Learning Centre in the web app, with its cards, the progress of every User and the Messages on a card; the markers on the page of a Resource, their pop-out and the floating window; and the card under what Data Hub writes ([technical](../technical/16-learning.md)). A card in a Message waits for its drawing to be approved |
 | Source of truth | This file, for screens, flows and implementation. The philosophy and guiding principles are on [Learning-centre: filosofie en guiding principles](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494) (Confluence, Dutch), which this file follows ([DEC-LR-09](#dec-lr-09)). The topics are in the [master learning plan](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1351975139) (Confluence, Dutch) |
 
 **In one sentence:** the Learning Centre offers knowledge when you need it, in small Learning Cards you go through freely, so that you notice yourself that you can do something you could not do before.
 
-*Functional domain 16 of Data Hub. Overview of all domains: [Functional domains](README.md). Asked for by Max on 2026-10-24, and brought in line with the principles page on 2026-10-25; the screens are designed in [design](../../design/principles.md#learning), to review. Everything here is Proposed.*
+*Functional domain 16 of Data Hub. Overview of all domains: [Functional domains](README.md). Asked for by Max on 2026-10-24, and brought in line with the principles page on 2026-10-25; the screens are designed in [design](../../design/principles.md#learning). What is built is in the [technical requirements](../technical/16-learning.md).*
 
 ## Decisions
 
@@ -51,6 +51,12 @@
 - <a id="dec-lr-22"></a>**DEC-LR-22** · Placing the markers on system text is part of the release checks: whenever a functionality is released, its screens are checked for the Learning Cards that could explain them, and the markers and the cards they list are set or brought up to date with that release. *Decided on 2026-10-28, by Max ([OP-LR-26](#op-lr-26)).*
 - <a id="dec-lr-23"></a>**DEC-LR-23** · A minimal Learning Card for a name holds the quick path: Why now, Core idea and You can now, with the Core idea taken from the explanation of the name in the Glossary. See it, with its example, and Check your understanding come when the card grows; until then the minimal card is the one exception to working with a recognisable example ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). *Decided on 2026-10-28, by Max ([OP-LR-27](#op-lr-27)).*
 - <a id="dec-lr-24"></a>**DEC-LR-24** · The Learning Cards are managed in this repository, written originally in English, with a Dutch translation of each. Both versions are kept side by side; a change to the English marks the Dutch as to update. This replaces writing them in Dutch first, as the master learning plan was. *Decided on 2026-10-28, by Max ([OP-LR-28](#op-lr-28)).*
+- <a id="dec-lr-25"></a>**DEC-LR-25** · Part 8 brings every topic of the master learning plan into Data Hub as a Learning Card to be written: its number, title, Learning Level, section and priority, in English with the Dutch it came from, listed in the panel without a page yet. In full, it brings the cards Data Hub itself points to: K3.4 Where definitions live, K5.1 What a resource is, 4.3.2 Versions and agreements with users, 2.3.5 The grain question, 1.2.2 Unique counts don't add up, and the card on the model types ([FR-LR-39](#fr-lr-39)). Claude drafts them from their topics, in English with a Dutch translation; each stays marked as a draft in its file until the Data Team reviewed it, and a draft shows in uat only, not in prod. The Data Team writes the other cards. *Decided on 2026-10-29, by Max ([OP-LR-29](#op-lr-29)).*
+- <a id="dec-lr-26"></a>**DEC-LR-26** · See it draws its example with the charts of the Chart Server as they are, from the figures of the card ([DEC-LR-21](#dec-lr-21)); "Look at …" and "You see …" beside it point at the part that matters. Whether the chart language marks a part of a chart and fades the rest is [OP-LR-31](#op-lr-31). *Decided on 2026-10-29, by Max ([OP-LR-30](#op-lr-30)).*
+- <a id="dec-lr-27"></a>**DEC-LR-27** · Data Hub suggests to everyone the Compass and Learning Level 1; to a member of an Owner Unit that owns a Collection also Learning Level 4; to the Data Team also Learning Levels 3 and 4 ([DEC-LR-14](#dec-lr-14)). A User adds or removes Learning Levels on the start screen, kept as their setting ([DEC-UX-96](../../design/principles.md#dec-ux-96)). *Decided on 2026-10-29, by Max ([OP-LR-32](#op-lr-32)).*
+- <a id="dec-lr-28"></a>**DEC-LR-28** · A pop-out lists only the Learning Cards that are written, so that it promises nothing that cannot be opened; a place gets its marker once one of its cards is written. Part 8b also drafts the cards the markers of the Resource page name: K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)), 3.3.3 Reliable for which purpose, 1.2.1 What a figure counts exactly and 4.3.1 Changing a definition, keeping trust, as drafts to review, as [DEC-LR-25](#dec-lr-25) does. *Decided on 2026-10-29, by Max ([OP-LR-33](#op-lr-33)).*
+- <a id="dec-lr-29"></a>**DEC-LR-29** · The Learning Cards the [Message Catalogue](message-catalogue.md) proposed for what Data Hub writes are confirmed, with K5.2 The Level of a Resource in the place of 4.4.1 ([DEC-LR-30](#dec-lr-30)): K5.2 for "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)), K5.1 What a resource is for "A Resource was withdrawn" ([MSG-RES-06](message-catalogue.md#msg-res-06)), and 4.7.1 Owner and steward for "A Resource arrived in your Collection" ([MSG-RES-08](message-catalogue.md#msg-res-08)). "Understand what is happening here" shows the card of a Message once it is written ([FR-LR-38](#fr-lr-38)). *Decided on 2026-10-29, by Max ([OP-LR-34](#op-lr-34)).*
+- <a id="dec-lr-30"></a>**DEC-LR-30** · The Level of a Resource is explained by a card of its own in the Compass, K5.2 The Level of a Resource, in section K5 Data Hub, written from [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858): what each Level promises, who lifts a Resource to it, and why it drops. It stands on the marker of the Level, with 3.3.3, and under "The Level dropped" ([MSG-RES-05](message-catalogue.md#msg-res-05)). 4.4.1 The maturity ladder keeps the topic the master learning plan gives it, with whom data is shared and when, and is not drafted in part 8b. *Decided on 2026-10-29, by Max ([OP-LR-35](#op-lr-35)).*
 
 ## Terms
 
@@ -90,6 +96,8 @@ Every topic of the master learning plan, the Compass included, is a Learning Car
 
 *Note of 2026-10-25: the page shows no labels any more ([FR-LR-21](#fr-lr-21)). The Learning Level and section stand in the way to it, the cards it builds on on Congrats ([FR-LR-24](#fr-lr-24)); the priority and the thinking level show in the panel and on the start screen.* *Note of 2026-10-25: whether the priority "required" shows at all is open ([OP-LR-18](#op-lr-18)).*
 
+*Note of 2026-10-29: part 8a gives every written card its page; the other topics are listed in the panel as cards to be written, without a page yet ([DEC-LR-25](#dec-lr-25), [TR-LR-01](../technical/16-learning.md#tr-lr-01)).*
+
 <a id="fr-lr-02"></a>
 ### FR-LR-02 · A Learning Card holds an article, a video and test questions
 
@@ -102,7 +110,7 @@ A Learning Card holds an article with text and graphics. It can also hold a vide
 <a id="fr-lr-03"></a>
 ### FR-LR-03 · The panel of Learning lists every card by Learning Level and section
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
 
 The panel of the section Learning lists every Learning Card: first the Compass, then the four Learning Levels from easy to advanced, each unfolding to its sections and their cards. Each card shows the icon of its kind, its name on one line and whether the User marked it understood. Each Learning Level and section shows how many of its cards the User understood. Search in the panel covers the names of the cards.
 
@@ -124,16 +132,18 @@ The User can answer again.
 <a id="fr-lr-05"></a>
 ### FR-LR-05 · A User marks a Learning Card understood
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-message](../../design/screens/learning-message.html), [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-message](../../design/screens/learning-message.html), [messages](../../design/screens/messages.html)
 
 A User marks a Learning Card understood, and can undo it. The mark is kept per User and shows in the panel, on the card and wherever the card appears in a Message. Whether marking needs the test questions answered first is open ([OP-LR-05](#op-lr-05)).
 
 *Note of 2026-10-25: the button is "I understand it". It is always there, and enough to close the card; no question needs answering first ([FR-LR-28](#fr-lr-28)).*
 
+*Note of 2026-10-29: built in part 8a; the mark shows in the panel and on the card, and in a Message once a Message carries a card ([FR-LR-07](#fr-lr-07)).*
+
 <a id="fr-lr-06"></a>
 ### FR-LR-06 · A Learning Card has Messages of its own
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning)
 
 A Learning Card is an object of Messages, as a Collection, a Resource or a Lens is ([FR-CV-01](14-conversations.md#fr-cv-01)): "Messages" on its page opens its Messages in the slide-in ([FR-CV-07](14-conversations.md#fr-cv-07)). It takes a Question or a Remark, which notify the Data Team, as the Data Team writes the cards. Every User sees the Messages on a card, as every User may open it.
 
@@ -146,6 +156,8 @@ Whoever writes a Message can add a Learning Card to it, for example when answeri
 
 *Note of 2026-10-25: whether the writer of a Message may see that the reader understood the card is part of [OP-LR-04](#op-lr-04).*
 
+*Note of 2026-10-29: how a card is found and added, and "Share in a Message", are drawn for approval before they are built ([OP-UX-48](../../design/principles.md#op-ux-48)).*
+
 <a id="fr-lr-08"></a>
 ### FR-LR-08 · The start screen of Learning shows where to go next
 
@@ -154,6 +166,8 @@ Whoever writes a Message can add a Learning Card to it, for example when answeri
 The section Learning opens on a start screen: an intro, a search, the card the User was reading, the required cards of the Learning Levels the User works on that they have not marked understood yet, and new or changed cards.
 
 *Note of 2026-10-25: the start screen shows no game elements any more ([DEC-LR-09](#dec-lr-09)). It lists them as suggested cards ([DEC-LR-18](#dec-lr-18)).*
+
+*Note of 2026-10-29: part 8a builds the start screen without its search, whose results are not drawn yet ([OP-UX-47](../../design/principles.md#op-ux-47)), and suggests the Learning Levels from the role only ([OP-UX-46](../../design/principles.md#op-ux-46)).*
 
 <a id="fr-lr-09"></a>
 ### FR-LR-09 · A card links to what comes before and after
@@ -185,7 +199,7 @@ Wherever Data Hub shows text, a link to a Learning Card can stand inline: in wha
 <a id="fr-lr-12"></a>
 ### FR-LR-12 · The link opens the card in a floating window
 
-**Status:** Proposed · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-24 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A click on the link opens the Learning Card in a floating window over the page, as a Message opens in context ([FR-CV-09](14-conversations.md#fr-cv-09)): its head moves it and folds it, and the page stays usable behind it. The window shows the card in short: its Learning Level, what the reader will be able to do, the article, the video, the questions and "Mark as understood". "Open in the learning centre" opens the full page of the card in the Learning Centre.
 
@@ -356,7 +370,7 @@ Through the MCP server, Claude can show every step of a Learning Card in the con
 <a id="fr-lr-27"></a>
 ### FR-LR-27 · A Learning Card follows five steps, on a quick or a full path
 
-**Status:** Proposed · **Source:** [principles, 3.9 and 4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
+**Status:** Implemented · **Source:** [principles, 3.9 and 4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
 
 A Learning Card has five steps, always in this order ([DEC-LR-10](#dec-lr-10)):
 
@@ -368,26 +382,30 @@ A Learning Card has five steps, always in this order ([DEC-LR-10](#dec-lr-10)):
 
 The User chooses the depth: the quick path (Why now, Core idea, You can now) or the full path (all five). On the quick path See it and Check your understanding stay in the row of steps, muted, and can still be opened. Every step fits on one screen. Every step but the last ends with "Next" in the same place, saying what comes next; it never waits for an answer. The topic of the master learning plan feeds the steps: its core the Core idea, its misconception the wrong answers, its examples Why now and See it, its learning goal You can now.
 
+*Note of 2026-10-29: built in part 8a. The term of the glossary is linked once names carry their marker ([OP-UX-49](../../design/principles.md#op-ux-49)); See it shows the charts of the Chart Server as they are, without highlighting ([DEC-LR-26](#dec-lr-26)).*
+
 <a id="fr-lr-28"></a>
 ### FR-LR-28 · "I understand it" is always there, and closes the card
 
-**Status:** Proposed · **Source:** [principles, 3.2 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html), [learning-see](../../design/screens/learning-see.html)
+**Status:** Implemented · **Source:** [principles, 3.2 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html), [learning-see](../../design/screens/learning-see.html)
 
 The header of every step holds "I understand it", so it stands on every question screen. It is the only button that is always there. It marks the card understood ([FR-LR-05](#fr-lr-05)), opens You can now, and is enough to close the card at any step. No question is mandatory, and no step waits for an answer.
 
 <a id="fr-lr-29"></a>
 ### FR-LR-29 · See it is a page of its own
 
-**Status:** Proposed · **Source:** [principles, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-see](../../design/screens/learning-see.html)
+**Status:** Implemented · **Source:** [principles, 4 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-see](../../design/screens/learning-see.html)
 
 See it has a page of its own, with its own address. The User reaches it from the card, as its third step, and from the context in Data Hub without going through the card, for example from a pitfall in the Known Behaviour of a Resource. Opened from context, it shows the example with "Look at …" and "You see …", the way back to where the User came from, and the whole card. Its example is static content of the card: the chart is drawn from figures in the card, never from a query on live data.
 
 *Note of 2026-10-25: from context, See it opens from every item of a pop-out ([FR-LR-36](#fr-lr-36)).*
 
+*Note of 2026-10-29: the page is built in part 8a; it opens from context with the pop-out of part 8b ([FR-LR-36](#fr-lr-36)).*
+
 <a id="fr-lr-30"></a>
 ### FR-LR-30 · Check your understanding: predict, then reveal
 
-**Status:** Proposed · **Source:** [principles, 3.5, 3.6 and 5](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
+**Status:** Implemented · **Source:** [principles, 3.5, 3.6 and 5](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-card](../../design/screens/learning-card.html), [learning-float](../../design/screens/learning-float.html)
 
 Check your understanding asks one question per screen, from a large set per card. The User first predicts, by choosing an answer, then sees the answer and why ([FR-LR-04](#fr-lr-04)). Every question puts the decision rule to a new situation, never the example of the card, and its wrong answers are real misconceptions heard from colleagues. After each answer the User can take another question, or stop. Nothing is counted: no score, and no number of right answers. A question can be a try-it question, such as "open this Lens and see what the weight does", offered only when it is safe and feasible in the context of the User.
 
@@ -406,10 +424,12 @@ These choices are how a closed card offers the next relevant card ([principles, 
 
 *Note of 2026-10-25: the gain is also the sentence of the card in every pop-out, the same wherever the card appears, so it is one short sentence ([FR-LR-36](#fr-lr-36)).*
 
+*Note of 2026-10-29: part 8a builds You can now without "Share in a message", which comes with a Message that carries a card ([FR-LR-07](#fr-lr-07)).*
+
 <a id="fr-lr-32"></a>
 ### FR-LR-32 · A silent count of the cards seen
 
-**Status:** Proposed · **Source:** [principles, 3.7 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
+**Status:** Implemented · **Source:** [principles, 3.7 and 6](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494), 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-start](../../design/screens/learning-start.html)
 
 The Learning Centre counts the cards a User has seen, and shows it quietly: in the panel, such as "You have seen 14 of 113 cards", and per Learning Level and section. It calculates no score, and shows no badge, no red indicator, no ranking, no number still to do and no deadline.
 
@@ -442,7 +462,7 @@ A click on a reference opens the card in the floating window ([FR-LR-12](#fr-lr-
 <a id="fr-lr-35"></a>
 ### FR-LR-35 · Only system text carries a marker
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 A button, a label, a heading, or a text that Data Hub writes itself, such as a status, the name of a field, the Pre-flight or the footer of a chart, can carry a marker when a Learning Card explains it. The marker is a small Unicode character right after the text, in its colour, a little smaller and raised, such as ⓘ ([OP-UX-22](../../design/principles.md#op-ux-22)). It is the only sign: no underline and no colour. Text that Users provide never carries one: a description, a definition, Known Behaviour, a Message or a name.
 
@@ -453,7 +473,7 @@ A button, a label, a heading, or a text that Data Hub writes itself, such as a s
 <a id="fr-lr-36"></a>
 ### FR-LR-36 · The pop-out: a text bubble with the cards that explain it
 
-**Status:** Proposed · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-25 · [design](../../design/principles.md#learning) · **Screens:** [learning-float](../../design/screens/learning-float.html), [learning-hover](../../design/screens/learning-hover.html), [resource-detail](../../design/screens/resource-detail.html)
 
 Holding the pointer on a marked text or button for a second opens its pop-out; focusing it with the keyboard opens it at once. Passing the pointer over the page opens nothing. The pop-out is a text bubble: its arrow points at the marker it belongs to. It says how many cards explain the text, and shows each card as an item of its own, with:
 
@@ -471,10 +491,12 @@ A click on an item opens the card in the floating window over the page; the User
 
 A name that appears on a screen, such as `creditLead` or `visitorId` ([NFR-LOC-03](../non-functional/localisation.md#nfr-loc-03)), carries the marker like other system text ([FR-LR-35](#fr-lr-35)), and its pop-out lists at least one Learning Card that explains it. A name used on a screen is used as a definition, so it gets a card even before there is a full one: a minimal card, whose Core idea is the explanation of the name in the Glossary ([NFR-LOC-05](../non-functional/localisation.md#nfr-loc-05)). What a minimal card holds is [OP-LR-27](#op-lr-27).
 
+*Note of 2026-10-29: not in part 8b; names with their marker are drawn first ([OP-UX-49](../../design/principles.md#op-ux-49)).*
+
 <a id="fr-lr-38"></a>
 ### FR-LR-38 · A Message from Data Hub links to the card that explains it
 
-**Status:** Specified · **Source:** Max, 2026-10-27 · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-10-27 · **Screens:** [messages](../../design/screens/messages.html)
 
 A Message that Data Hub writes itself, such as a changed description in dbt ([FR-RC-17](05-resource-card.md#fr-rc-17)), a change since the last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)) or a Registration ([FR-SR-10](04-stacks-and-resources.md#fr-sr-10)), carries a clear link under the heading "Understand what is happening here", right under its own text: the Learning Card that explains it, with its number, its title and whether the User has seen it. The card opens inline, in the Message: its core idea and what the User can do with it, with a way to the whole card in the Learning Centre and "I understand it". It is not a marker inside the text of the Message ([DEC-LR-11](#dec-lr-11)). Each kind of Message names its card; a kind without a card yet needs one before it is built ([FR-LR-37](#fr-lr-37)).
 
@@ -484,9 +506,12 @@ A Message that Data Hub writes itself, such as a changed description in dbt ([FR
 <a id="fr-lr-39"></a>
 ### FR-LR-39 · One card explains the model types, and the card on the grain points to it
 
-**Status:** Proposed · **Source:** Max, 2026-10-28 ([DEC-RC-10](05-resource-card.md#dec-rc-10))
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-RC-10](05-resource-card.md#dec-rc-10))
 
 One Learning Card explains the five model types together, so that a User can tell them apart and knows what each means for counting: an `event` is one row per thing that happened, at a moment, and never changes after; a `state` is one row per thing as it is, or was at a moment, and changes over time; a `fact` is one row per business occurrence with the measures to add up; a `dimension` is one row per thing that describes others, such as an agency or a lead source; an `aggregate` is one row per group with its counts or sums already made, which are not added up again. Its place in the master learning plan is next to [2.3.5 The grain question: what is one row?](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1356070916), which points to it. Wherever a model type shows, its marker lists this card ([FR-LR-37](#fr-lr-37)).
+
+*Note of 2026-10-29: the card is 2.3.6, drafted in part 8a, and 2.3.5 points to it ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); since part 8b the model type of a Resource carries its marker ([TR-LR-06](../technical/16-learning.md#tr-lr-06)).*
+
 ## Out of scope
 
 - **Writing the lessons:** the topics, their learning goals and the learning material are made in the master learning plan ([OP-LR-01](#op-lr-01)).
@@ -524,6 +549,13 @@ One Learning Card explains the five model types together, so that a User can tel
 - [x] <a id="op-lr-26"></a>**OP-LR-26** · Decide who places the markers on system text and which cards each lists, and how they stay right when a card or a screen changes ([FR-LR-35](#fr-lr-35)). *Raised on 2026-10-25.* *Note of 2026-10-25: for names, where the markers stand follows from the list of names ([FR-LR-37](#fr-lr-37), [OP-DH-42](../../overview/open-themes.md#op-dh-42)).* *Decided on 2026-10-28, by Max: part of the release checks of every functionality ([DEC-LR-22](#dec-lr-22)).*
 - [x] <a id="op-lr-27"></a>**OP-LR-27** · Decide what a minimal Learning Card for a name holds, and who writes it ([FR-LR-37](#fr-lr-37)). Proposal: the quick path, Why now, Core idea and You can now, with the Core idea taken from the explanation of the name in the Glossary; See it and Check your understanding come when the card grows. Check it against the principles page, which wants every card to work with a recognisable example ([principles, 3.4](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1381138494)). *Raised on 2026-10-25, while recording the decision of Max.* *Decided on 2026-10-28, by Max: as proposed ([DEC-LR-23](#dec-lr-23)).*
 - [x] <a id="op-lr-28"></a>**OP-LR-28** · Decide how the English version of a Learning Card is made ([NFR-LOC-12](../non-functional/localisation.md#nfr-loc-12)): the master learning plan and its cards are written in Dutch. Proposal: each card is written in Dutch, translated into English with Claude, and checked by the Data Team before it is published; both versions are kept, and a change to one marks the other as to update. *Raised on 2026-10-28, in the review of Max.* *Decided on 2026-10-28, by Max: written in English in this repository, with a Dutch translation of each ([DEC-LR-24](#dec-lr-24)).*
+- [x] <a id="op-lr-29"></a>**OP-LR-29** · Decide what Part 8 brings of the content of the Learning Cards. The master learning plan has about 113 topics, each with a learning goal, a core, a misconception and examples, but none is written in the five steps, and no card has questions or the figures of its example yet ([DEC-LR-24](#dec-lr-24)). *Raised on 2026-10-29, while proposing part 8.* *Decided on 2026-10-29, by Max: every topic as a card to be written, and in full the cards Data Hub points to, as drafts to review ([DEC-LR-25](#dec-lr-25)).*
+- [x] <a id="op-lr-30"></a>**OP-LR-30** · See it shows its example with the part that matters highlighted and the rest faded ([FR-LR-27](#fr-lr-27)), drawn by the Chart Server ([DEC-LR-21](#dec-lr-21)); the Chart Server cannot mark a part of a chart, fade the rest or add a note to it. *Raised on 2026-10-29, while proposing part 8.* *Decided on 2026-10-29, by Max: its charts as they are, with "Look at …" and "You see …" pointing ([DEC-LR-26](#dec-lr-26)).*
+- [ ] <a id="op-lr-31"></a>**OP-LR-31** · Decide whether the chart language gets a way to mark a part of a chart, fade the rest and add a short note, so that See it can highlight the part that matters ([FR-LR-27](#fr-lr-27), [DEC-LR-26](#dec-lr-26)). The requirements of the chart language are still in the repository of semgraph ([OP-PF-16](../technical/00-platform.md#op-pf-16)). *Raised on 2026-10-29, while proposing part 8.*
+- [x] <a id="op-lr-32"></a>**OP-LR-32** · Decide which Learning Levels Data Hub suggests from which role ([DEC-LR-14](#dec-lr-14)): only "an Owner gets Learning Level 4" is given as an example, and an Owner is a member of an Owner Unit, not a role of the Naming Convention. *Raised on 2026-10-29, while proposing part 8.* *Decided on 2026-10-29, by Max: the Compass and Learning Level 1 to everyone, Learning Level 4 to a member of an Owner Unit, Learning Levels 3 and 4 to the Data Team ([DEC-LR-27](#dec-lr-27)).*
+- [x] <a id="op-lr-33"></a>**OP-LR-33** · Decide what a pop-out shows for a Learning Card that is not written yet. The markers the prototypes place on the page of a Resource name seven cards, four of them not written: the Level 4.4.1 and 3.3.3, the grain 1.2.1, and "Mark as seen" 4.3.1 ([FR-LR-36](#fr-lr-36)). *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: a pop-out lists the written cards only, and the four are drafted ([DEC-LR-28](#dec-lr-28)).*
+- [x] <a id="op-lr-34"></a>**OP-LR-34** · Decide whether the cards the Message Catalogue only proposes for what Data Hub writes count for "Understand what is happening here" ([FR-LR-38](#fr-lr-38)): 4.4.1 for MSG-RES-05, K5.1 for MSG-RES-06 and 4.7.1 for MSG-RES-08. *Raised on 2026-10-29, while proposing part 8b.* *Decided on 2026-10-29, by Max: confirmed ([DEC-LR-29](#dec-lr-29)).*
+- [x] <a id="op-lr-35"></a>**OP-LR-35** · The designs name 4.4.1 The maturity ladder for the Level of a Resource, on its marker and under "The Level dropped" ([DEC-LR-28](#dec-lr-28), [DEC-LR-29](#dec-lr-29)), as did the Message Catalogue. In the master learning plan, 4.4.1 is about with whom data is shared, from private to external, in section 4.4 Access judgement; the Levels 0 Beta to 5 Monitored are on [Maturity levels of data](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1361608858), and no topic of the plan explains them. Decide which card explains the Level. *Raised on 2026-10-29, while drafting the cards of part 8b.* *Decided on 2026-10-29, by Max: a new card in the Compass, K5.2 The Level of a Resource ([DEC-LR-30](#dec-lr-30)).*
 
 ## Builds on
 

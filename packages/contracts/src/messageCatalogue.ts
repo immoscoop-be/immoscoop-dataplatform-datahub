@@ -743,9 +743,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
-      card: { number: '4.4.1', title: 'The maturity ladder' },
-      why: 'What each Level stands for, and what makes a Resource rise and drop.',
+      fit: 'named',
+      card: { number: 'K5.2', title: 'The Level of a Resource' },
+      why: 'What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 (DEC-LR-29, DEC-LR-30).',
     },
     action: {
       asks: 'act',
@@ -791,9 +791,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
+      fit: 'named',
       card: { number: 'K5.1', title: 'What a resource is' },
-      why: 'An exposure makes a table a Resource, and so its absence withdraws it.',
+      why: 'An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
       asks: 'nothing',
@@ -896,9 +896,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
+      fit: 'named',
       card: { number: '4.7.1', title: 'Owner and steward' },
-      why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it.',
+      why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
       asks: 'act',

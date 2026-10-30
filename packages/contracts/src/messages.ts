@@ -491,7 +491,7 @@ export function textBlocks(rich: string): TextBlock[] {
 }
 
 /** Where the web app shows each kind of object a Message can be about (FR-CV-02). */
-const OBJECT_PATHS: Partial<Record<SubjectKind, string>> = { collection: '/collections', resource: '/resources', lens: '/lenses', query: '/query' };
+const OBJECT_PATHS: Partial<Record<SubjectKind, string>> = { collection: '/collections', resource: '/resources', lens: '/lenses', query: '/query', learningCard: '/learning' };
 
 /**
  * The address of a Message opened in context, from the root of the web app (FR-CV-09): the page of its
