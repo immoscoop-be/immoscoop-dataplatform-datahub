@@ -11,6 +11,7 @@ describe('the tables exposed to Data Hub', () => {
     expect(tables).toEqual([
       {
         key: 'immoscoop-dataplatform.dbt_marts.countries',
+        fullName: 'immoscoop-dataplatform.dbt_marts.countries',
         nodeId: `seed.${P}.countries`,
         name: 'countries',
         resourceType: 'seed',
@@ -22,6 +23,7 @@ describe('the tables exposed to Data Hub', () => {
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.dim_customers',
+        fullName: 'immoscoop-dataplatform.dbt_marts.dim_customers',
         nodeId: `model.${P}.customers`,
         name: 'customers',
         resourceType: 'model',
@@ -33,6 +35,7 @@ describe('the tables exposed to Data Hub', () => {
       },
       {
         key: 'immoscoop-dataplatform.dbt_marts.orders',
+        fullName: 'immoscoop-dataplatform.dbt_marts.orders',
         nodeId: `model.${P}.orders`,
         name: 'orders',
         resourceType: 'model',
@@ -58,6 +61,15 @@ describe('the tables exposed to Data Hub', () => {
     exposure.tags = [];
     exposure.config = { tags: ['datahub'] };
     expect(exposedTables(normalise(manifest, sampleCatalog())).tables.find((table) => table.name === 'orders')?.exposures).toEqual(['datahub_marts', 'datahub_orders']);
+  });
+
+  it('keeps the full name in its own case next to the Key in lower case, as BigQuery names are case-sensitive', () => {
+    const manifest = sampleManifest({ datahub: true });
+    const orders = manifest.nodes[`model.${P}.orders`] as Record<string, unknown>;
+    orders.alias = 'mrt_ordersPerDay';
+    orders.schema = 'Dbt_Marts';
+    const table = exposedTables(normalise(manifest, sampleCatalog())).tables.find((one) => one.name === 'orders');
+    expect(table).toMatchObject({ key: 'immoscoop-dataplatform.dbt_marts.mrt_ordersperday', fullName: 'immoscoop-dataplatform.Dbt_Marts.mrt_ordersPerDay' });
   });
 
   it('ignores exposures without the tag, such as a dashboard', () => {

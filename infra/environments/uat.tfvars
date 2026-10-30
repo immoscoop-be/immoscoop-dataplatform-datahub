@@ -8,10 +8,11 @@ token_signing_key_versions = {
   "2026" = "ENABLED"
 }
 
-# The Source Jobs this environment reads: dbt-prod and Colleciónes (DEC-AR-01)
+# The Source Jobs this environment reads, the merge builds of uat (DEC-AR-09). dbt-prod
+# keeps its daily UAT build until its own merge build exists (OP-AR-09).
 dbt_source_jobs = {
   "9367"  = "322951"
-  "17121" = "739003"
+  "17121" = "748279"
 }
 
 # Who the e-mail of Data Hub comes from; replies are not read (DEC-PF-31)

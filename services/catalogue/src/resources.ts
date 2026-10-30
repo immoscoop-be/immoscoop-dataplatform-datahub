@@ -7,6 +7,8 @@ import { logText, type ResourceLogId } from './log.js';
 /** A table under an exposure tagged `datahub`, as registry tells it (TR-AR-08). */
 export interface ExposedTable {
   key: string;
+  /** The full name in its own case, for BigQuery; a registry that does not send it yet leaves the Key. */
+  fullName?: string;
   nodeId: string;
   name: string;
   resourceType: string;
@@ -32,6 +34,8 @@ export interface ResourcesUpdate {
 export interface Resource {
   id: string;
   key: string;
+  /** The full name of its table in its own case, as BigQuery knows it: what queries, shows and copies it. */
+  fullName: string;
   displayName: string;
   name: string;
   resourceType: string;
@@ -235,6 +239,7 @@ function present(row: Row): Resource {
   return {
     id: row.id,
     key: row.key,
+    fullName: row.fullName ?? row.key,
     displayName: row.displayName,
     name: row.name,
     resourceType: row.resourceType,
@@ -523,6 +528,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             projectId: update.projectId,
             projectName: update.projectName,
             nodeId: table.nodeId,
+            fullName: table.fullName ?? table.key,
             name: table.name,
             resourceType: table.resourceType,
             description: table.description,
