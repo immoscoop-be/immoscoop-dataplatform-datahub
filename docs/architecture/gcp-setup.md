@@ -225,7 +225,7 @@ After the first Terraform run has created the service account of identity in eac
 After the first deploy of registry, dbt Cloud must tell it about every finished run of a Source Job ([DEC-AR-02](../requirements/functional/01-artifact-registry.md#dec-ar-02)). One webhook per environment:
 
 1. dbt Cloud → Account settings → **Webhooks** → **Create webhook**.
-2. Name `Data Hub uat` (or `Data Hub prod`), event **Run completed**, and the Source Jobs of that environment from [DEC-AR-01](../requirements/functional/01-artifact-registry.md#dec-ar-01): `322951` and `739003` for uat, `322950` and `739004` for prod.
+2. Name `Data Hub uat` (or `Data Hub prod`), event **Run completed**, and the Source Jobs of that environment from [DEC-AR-09](../requirements/functional/01-artifact-registry.md#dec-ar-09): `748279` and `322951` for uat, `748278` and `324502` for prod. Each of them has "Generate docs on run" on, or runs `dbt docs generate` as its last command. When a Source Job changes, its webhook changes with it: edit the jobs of the webhook, which keeps its secret.
 3. Endpoint: the Terraform output `registry_webhook_url`, `https://datahub-registry-<project number>.europe-west1.run.app/webhooks/dbt-cloud`.
 4. Save, copy the secret token dbt Cloud shows, and add it to `datahub-dbt-webhook-secret` as in step 8. dbt Cloud shows it only once; if it is lost, create the webhook again.
 5. **Test** in dbt Cloud sends a test event; registry answers it with `204` and ignores it, which shows the signature is right. A wrong secret gives `401`.
