@@ -225,7 +225,8 @@
 />
 <div class="head">
   <div class="name">
-    <ObjectHeader name={resource.displayName} key={resource.key} copyLabel={t('resource.copyKey')} />
+    <!-- Its full name in its own case, as BigQuery knows it: the Key is kept in lower case. -->
+    <ObjectHeader name={resource.displayName} key={resource.fullName ?? resource.key} copyLabel={t('resource.copyKey')} />
   </div>
   <div class="actions">
     {#if resource.published && canEdit}

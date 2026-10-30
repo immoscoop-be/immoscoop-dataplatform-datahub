@@ -462,7 +462,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     try {
       const found = await storage.of(resource);
       return {
-        storage: found && { key: found.key, bytes: found.bytes, rows: found.rows, partitions: found.partitions, modifiedAt: found.modifiedAt, beneath: found.key !== resource.key },
+        storage: found && { key: found.key, bytes: found.bytes, rows: found.rows, partitions: found.partitions, modifiedAt: found.modifiedAt, beneath: found.key.toLowerCase() !== resource.key },
       };
     } catch (error) {
       if (error instanceof BigQueryRefused) return { storage: null };

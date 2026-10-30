@@ -68,8 +68,10 @@
   /** The table of the removed Resource, if the SQL still names it: in the new query, an error. */
   const stillRead = $derived.by(() => {
     if (!removed?.visible) return null;
+    // The Key is in lower case; the SQL names the table in its own case.
+    const text = sql.toLowerCase();
     const short = removed.key.split('.').slice(1).join('.');
-    return sql.includes(removed.key) || sql.includes(short) ? (removed.key.split('.').at(-1) ?? removed.key) : null;
+    return text.includes(removed.key) || text.includes(short) ? (removed.key.split('.').at(-1) ?? removed.key) : null;
   });
 
   const suggested = $derived.by(() => {

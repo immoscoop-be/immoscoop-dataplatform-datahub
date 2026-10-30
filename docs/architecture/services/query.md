@@ -26,7 +26,7 @@
 
 Its service account may read every table of the project ([DEC-SR-32](../../requirements/functional/04-stacks-and-resources.md#dec-sr-32)), so query decides what a query reads, in its Pre-flight and again before every run ([TR-SR-15](../../requirements/technical/04-stacks-and-resources.md#tr-sr-15)):
 
-1. query asks catalogue, with the token of the User, for each Resource of the query: whether the User may see it, its Key, its fields and how it is stored.
+1. query asks catalogue, with the token of the User, for each Resource of the query: whether the User may see it, its Key, the full name of its table in its own case, which is what BigQuery is asked for ([DEC-SR-44](../../requirements/functional/04-stacks-and-resources.md#dec-sr-44)), its fields and how it is stored.
 2. It puts the functions of the Parameters into the SQL in place of their `@names`, and reads the tables named in it: each must be one of those Resources. Every `@name` must be a Parameter.
 3. A dry run in BigQuery says what the query reads at most, that it only reads (`SELECT`), and which tables it reads: those Resources, or the tables beneath them.
 4. The bytes give the range: up to 100 MB it runs, up to 1 GB its author approves it, above it goes to the Data Team. Without a filter on the partition column of a Resource that requires one, it does not run ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)).
