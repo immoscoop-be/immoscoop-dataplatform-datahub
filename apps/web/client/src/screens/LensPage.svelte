@@ -440,7 +440,8 @@
   .was { font-size: var(--text-meta); }
   .run { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
   .too { color: var(--signal-urgent); }
-  .result { margin-top: 14px; display: grid; gap: 10px; }
+  /* One column no wider than the page, so that a wide result scrolls inside its grid instead of spilling out. */
+  .result { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .ran { margin: 0; }
   .grid.stale { opacity: .45; }
   .foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 10px; font-size: var(--text-meta); color: var(--text-muted); }
