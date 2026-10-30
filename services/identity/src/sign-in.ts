@@ -210,6 +210,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       return reply.redirect(back.toString());
     }
     await store.saveUser(identity);
+    await store.saveGroups(identity.sub, claims.groups, claims.roles);
     const code = await store.createCode({
       clientId: pending.clientId,
       redirectUri: pending.redirectUri,
@@ -271,6 +272,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       }
       if (!user || !active || !claims) {
         await store.endSessionsOf(session.googleId, 'account-inactive');
+        await store.saveGroups(session.googleId, [], []);
         return refuse(reply, 'invalid_grant', 'The account is no longer active');
       }
       if (!(await store.consumeRefreshToken(refreshToken))) {
@@ -280,6 +282,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       if (!client.web) {
         await store.extendSession(session.id, MCP_SESSION_SECONDS);
       }
+      await store.saveGroups(session.googleId, claims.groups, claims.roles);
       return issuePair(reply, claims, await store.addRefreshToken(session.id));
     }
 

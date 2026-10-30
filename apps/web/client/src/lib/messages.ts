@@ -1,14 +1,5 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
-import {
-  implicitParameters,
-  type Language,
-  type MessageKind,
-  type MessageType,
-  type MessageValues,
-  type ParameterValue,
-  renderMessage,
-  type SubjectKind,
-} from '@datahub/contracts/messages';
+import { type Language, type MessageKind, type MessageType, type MessageValues, messageValues, renderMessage, type SubjectKind } from '@datahub/contracts/messages';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -159,14 +150,7 @@ export type MessagesClient = ReturnType<typeof createMessages>;
 const TYPES = new Map<string, MessageType>(MESSAGE_CATALOGUE.map((type) => [type.id, type]));
 
 /** The kind of an object as the interface names it in a sentence: a name, never translated (NFR-LOC-01). */
-export const SUBJECT_TITLES: Record<SubjectKind, string> = {
-  collection: 'Collection',
-  resource: 'Resource',
-  lens: 'Lens',
-  query: 'Query',
-  report: 'Report',
-  learningCard: 'Learning Card',
-};
+export { SUBJECT_TITLES } from '@datahub/contracts/messages';
 
 /** The buttons of a type of Message in the Message Catalogue, such as "Accept" (FR-CV-13). */
 export function buttonsOf(type: string): MessageType['action']['buttons'] {
@@ -176,37 +160,9 @@ export function buttonsOf(type: string): MessageType['action']['buttons'] {
 /** "Open in context", which every Message has, as the Message Catalogue names it (FR-CV-09). */
 export const CONTEXT_BUTTON = MESSAGE_CATALOGUE.flatMap((type) => type.action.buttons).find((button) => button.label.en === 'Open in context');
 
-/** How the texts of the Message Catalogue name the kind of an object: as a name, never translated. */
-const SUBJECT_NAMES: Record<SubjectKind, string> = {
-  collection: 'collection',
-  resource: 'resource',
-  lens: 'lens',
-  query: 'query',
-  report: 'report',
-  learningCard: 'learning card',
-};
-
 /** The values of a Message as its texts take them: catalogue keeps them as text, a list as JSON (DEC-CV-07). */
 export function valuesOf(message: Pick<Message, 'type' | 'params' | 'subject' | 'writer'>): MessageValues {
-  const type = TYPES.get(message.type);
-  const values: Record<string, ParameterValue> = { subject: message.subject.name, subjectKind: SUBJECT_NAMES[message.subject.kind] };
-  if (message.writer) values.writer = message.writer.name;
-  for (const parameter of type ? [...implicitParameters(type), ...type.parameters] : []) {
-    const raw = message.params[parameter.name];
-    if (raw === undefined || parameter.name === 'subject' || parameter.name === 'subjectKind') continue;
-    if (parameter.type === 'count' || parameter.type === 'size' || parameter.type === 'level') {
-      values[parameter.name] = Number(raw);
-    } else if (parameter.type === 'list') {
-      try {
-        values[parameter.name] = JSON.parse(raw) as ParameterValue;
-      } catch {
-        values[parameter.name] = [];
-      }
-    } else {
-      values[parameter.name] = raw;
-    }
-  }
-  return values;
+  return messageValues(TYPES.get(message.type), message);
 }
 
 /**

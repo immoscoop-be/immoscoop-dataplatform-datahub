@@ -1,3 +1,6 @@
+import type { IdTokenSource } from '@datahub/google';
+import type { People, Person } from './notifications.js';
+
 /** A group of the User, as identity reads it from Workspace (TR-CO-03). */
 export interface Group {
   id: string;
@@ -34,5 +37,32 @@ export function createIdentity(baseUrl: string, request: typeof fetch = fetch): 
   return {
     groups: (authorization) => groups('/me/groups', authorization),
     domainGroups: (authorization) => groups('/groups', authorization),
+  };
+}
+
+/**
+ * Who catalogue notifies, as identity knows them from their last sign-in (DEC-LN-07): asked as catalogue,
+ * with a Google ID token for identity's address.
+ */
+export function createPeople(baseUrl: string, idToken: IdTokenSource, request: typeof fetch = fetch): People {
+  return {
+    async find(asked) {
+      if (asked.users.length + asked.groups.length + asked.roles.length === 0) return [];
+      let response: Response;
+      try {
+        response = await request(new URL('/internal/people', baseUrl), {
+          method: 'POST',
+          headers: { authorization: `Bearer ${await idToken(baseUrl)}`, 'content-type': 'application/json' },
+          body: JSON.stringify(asked),
+          signal: AbortSignal.timeout(10_000),
+        });
+      } catch (error) {
+        throw new IdentityUnavailable('identity did not answer', { cause: error });
+      }
+      if (!response.ok) {
+        throw new IdentityUnavailable(`identity answered ${response.status} for /internal/people`);
+      }
+      return ((await response.json()) as { people: Person[] }).people;
+    },
   };
 }

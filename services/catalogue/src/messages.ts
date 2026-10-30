@@ -158,6 +158,8 @@ export interface Messages {
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
   grew(lensId: string, fields: { reads: number; threshold: number; partitions?: number }): Promise<{ id: string; sent: boolean }>;
+  /** What Data Hub tells the author of a Lens that grew into large, past 100 MB a run; it keeps running (MSG-LEN-02). */
+  grewLarge(lensId: string, fields: { reads: number; threshold: number }): Promise<{ id: string }>;
   /** Keeps what query tells about a Lens. */
   keepLens(id: string, facts: LensFacts): Promise<void>;
 }
@@ -577,6 +579,14 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         .where('state', '=', 'waiting')
         .executeTakeFirstOrThrow();
       return { id: waiting.id, sent: false };
+    },
+
+    async grewLarge(lensId, { reads, threshold }) {
+      return db
+        .insertInto('messages')
+        .values({ type: 'MSG-LEN-02', subjectKind: 'lens', subjectId: lensId, writerId: null, params: { reads: String(reads), threshold: String(threshold) }, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
     },
 
     async keepLens(id, facts) {

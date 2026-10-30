@@ -878,6 +878,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(again.json().request.id).toBe(grew.json().request.id);
       expect((await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1 }, 'nope')).statusCode).toBe(401);
       expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests[0]).toMatchObject({ type: 'MSG-LEN-03', writerId: '', state: 'waiting' });
+
+      // Into large, it keeps running, and Data Hub tells its author (MSG-LEN-02).
+      const large = await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000, threshold: 100_000_000 });
+      expect(large.statusCode).toBe(201);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000 })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 1, threshold: 1 }, 'nope')).statusCode).toBe(401);
+      const told = (await team('GET', `/messages/${large.json().message.id}`)).json().message;
+      expect(told).toMatchObject({ type: 'MSG-LEN-02', writer: null, params: { reads: '240000000', threshold: '100000000' }, state: null });
     });
 
     it('enters a Signal on a Resource in its Log (CNV-050)', async () => {

@@ -1,4 +1,4 @@
-import { verifierFromEnv } from '@datahub/auth';
+import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken } from '@datahub/google';
 import { start } from '@datahub/server';
@@ -45,6 +45,16 @@ const app = await buildApp({
     webClient: settings.webClient,
     mcpRedirectUris: settings.mcpRedirectUris,
   },
+  // catalogue asks who to notify with a Google ID token for identity's own address (DEC-LN-07).
+  peopleCallers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')] }),
 });
 app.addHook('onClose', () => database.close());
 await start(app);
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing environment variable ${name}`);
+  }
+  return value;
+}
