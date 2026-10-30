@@ -152,6 +152,8 @@ The service account of query may read every table of the project of Data Hub ([D
 
 A Resource the User may no longer see keeps the query from running.
 
+What goes to BigQuery, in a dry run and in a run, names each of its Resources by the full name of its table in its own case, quoted, wherever the SQL names it, as BigQuery names are case-sensitive; the query keeps its SQL as its author wrote it. A Lens keeps its SQL named so when it is made or updated, as its daily check has no User to ask catalogue with ([DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)).
+
 A function as the value of a Parameter goes into the SQL in place of its `@name`, in parentheses, before both checks, so a table in it is checked as any other and stands, in the answer, where its `@name` is ([DEC-UX-118](../../design/principles.md#dec-ux-118)).
 
 <a id="tr-sr-16"></a>

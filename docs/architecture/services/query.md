@@ -28,7 +28,7 @@ Its service account may read every table of the project ([DEC-SR-32](../../requi
 
 1. query asks catalogue, with the token of the User, for each Resource of the query: whether the User may see it, its Key, the full name of its table in its own case, which is what BigQuery is asked for ([DEC-SR-44](../../requirements/functional/04-stacks-and-resources.md#dec-sr-44)), its fields and how it is stored.
 2. It puts the functions of the Parameters into the SQL in place of their `@names`, and reads the tables named in it: each must be one of those Resources. Every `@name` must be a Parameter.
-3. A dry run in BigQuery says what the query reads at most, that it only reads (`SELECT`), and which tables it reads: those Resources, or the tables beneath them.
+3. A dry run in BigQuery, with each Resource named by its full name in its own case ([DEC-SR-44](../../requirements/functional/04-stacks-and-resources.md#dec-sr-44)), says what the query reads at most, that it only reads (`SELECT`), and which tables it reads: those Resources, or the tables beneath them.
 4. The bytes give the range: up to 100 MB it runs, up to 1 GB its author approves it, above it goes to the Data Team. Without a filter on the partition column of a Resource that requires one, it does not run ([TR-SR-16](../../requirements/technical/04-stacks-and-resources.md#tr-sr-16)).
 5. It runs as a job with a maximum on the bytes billed, the values of the Parameters as named query parameters, and labels with the User and its Query ID; the pages of its result are read from that job. Above 1 GB it runs only once the Data Team accepted a Request of its author ([TR-SR-18](../../requirements/technical/04-stacks-and-resources.md#tr-sr-18)).
 

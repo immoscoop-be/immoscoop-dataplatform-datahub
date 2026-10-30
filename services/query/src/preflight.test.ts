@@ -82,6 +82,15 @@ describe('the Pre-flight of a query', () => {
     expect(bigquery.asked).toContain(`select * from \`${state.fullName}\``);
   });
 
+  it('asks BigQuery for a Resource written in lower case by its own name, as BigQuery names are case-sensitive (DEC-SR-44)', async () => {
+    const state = resource('mrt_immoscoop__leadsource__state', { fullName: `${PROJECT}.dbt_prod_stacks.mrt_immoscoop__leadSource__state` });
+    const bigquery = fakeBigQuery(() => dry(1_000, [state.fullName]));
+    const result = await check(`select * from \`${state.key}\` limit 10`, of(state), bigquery);
+    expect(result).toMatchObject({ runnable: true, problems: [] });
+    expect(bigquery.asked).toContain(`select * from \`${state.fullName}\` limit 10`);
+    expect(bigquery.asked.some((sql) => sql.includes(state.key))).toBe(false);
+  });
+
   it('refuses a table that is not one of its Resources, where it stands, without asking BigQuery (DEC-UX-73)', async () => {
     const bigquery = fakeBigQuery(() => dry(1, []));
     const sql = `select * from \`${weekly.key}\` where week_start > '2026-01-01' and lead_source in (select x from \`${PROJECT}.dbt_prod_stacks.partner_contracts\`)`;

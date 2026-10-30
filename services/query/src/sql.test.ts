@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filtersOn, parametersOf, tablesOf, template, tokenize, withFilter } from './sql.js';
+import { filtersOn, inOwnCase, parametersOf, tablesOf, template, tokenize, withFilter } from './sql.js';
 
 const names = (sql: string) => tablesOf(sql).tables.map((table) => table.name);
 
@@ -85,6 +85,43 @@ describe('the tables a query names (DEC-UX-73)', () => {
     const sql = 'select * from `p.d.t`';
     const [table] = tablesOf(sql).tables;
     expect(sql.slice(table?.start, table?.end)).toBe('`p.d.t`');
+  });
+});
+
+describe('the SQL as BigQuery gets it (DEC-SR-44)', () => {
+  const state = { key: 'p.colleciones_dbt.mrt_immoscoop__leadsource__state', fullName: 'p.colleciones_dbt.mrt_immoscoop__leadSource__state' };
+  const own = '`p.colleciones_dbt.mrt_immoscoop__leadSource__state`';
+
+  it('names a Resource written in another case by its full name in its own case', () => {
+    expect(inOwnCase('select * from `p.colleciones_dbt.mrt_immoscoop__leadsource__state`', [state], 'p')).toBe(`select * from ${own}`);
+    expect(inOwnCase('select * from p.colleciones_dbt.MRT_IMMOSCOOP__LEADSOURCE__STATE s', [state], 'p')).toBe(`select * from ${own} s`);
+  });
+
+  it('names it in full when it is written without its project', () => {
+    expect(inOwnCase('select * from colleciones_dbt.mrt_immoscoop__leadsource__state as s where s.x = 1', [state], 'p')).toBe(`select * from ${own} as s where s.x = 1`);
+  });
+
+  it('changes every place it is named and nothing else: other tables, CTEs, columns, strings', () => {
+    const sql = [
+      'with leadsource as (select * from `p.colleciones_dbt.mrt_immoscoop__leadsource__state`)',
+      "select 'p.colleciones_dbt.mrt_immoscoop__leadsource__state' as name, l.x",
+      'from leadsource l join p.other.table o on o.x = l.x',
+      'join `p.colleciones_dbt.mrt_immoscoop__leadsource__state` again on again.x = l.x',
+    ].join('\n');
+    expect(inOwnCase(sql, [state], 'p')).toBe(
+      [
+        `with leadsource as (select * from ${own})`,
+        "select 'p.colleciones_dbt.mrt_immoscoop__leadsource__state' as name, l.x",
+        'from leadsource l join p.other.table o on o.x = l.x',
+        `join ${own} again on again.x = l.x`,
+      ].join('\n'),
+    );
+  });
+
+  it('leaves a name that is already right as it was written', () => {
+    const sql = 'select * from `p.colleciones_dbt.mrt_immoscoop__leadSource__state`';
+    expect(inOwnCase(sql, [state], 'p')).toBe(sql);
+    expect(inOwnCase('select * from `p.dbt.weekly`', [{ key: 'p.dbt.weekly', fullName: 'p.dbt.weekly' }], 'p')).toBe('select * from `p.dbt.weekly`');
   });
 });
 

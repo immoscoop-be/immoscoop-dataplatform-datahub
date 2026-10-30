@@ -2,7 +2,7 @@ import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
-import { comparedWith, filtersOn, recent, tablesOf, withFilter } from './sql.js';
+import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
 
 /** The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides (DEC-SR-29). */
 export interface Thresholds {
@@ -98,17 +98,6 @@ function fixFor(sql: string, resource: QueryResource, project: string): string |
 }
 
 /**
- * Whether a name in the SQL is this Key: in full, or without its project when that is the project the query
- * runs in. In any case: the Key is in lower case, and BigQuery itself tells a name in the wrong case.
- */
-function names(written: string, key: string, project: string): boolean {
-  const name = written.toLowerCase();
-  if (name === key) return true;
-  const [keyProject, ...rest] = key.split('.');
-  return keyProject === project.toLowerCase() && name === rest.join('.');
-}
-
-/**
  * The Pre-flight of a query (FR-SR-36, FR-SR-37, FR-SR-40, DEC-SR-35, DEC-UX-73): whether it reads only its
  * own Resources and only reads, by the names in its SQL and again by what BigQuery says it reads; what it
  * reads at most, and in which range; and whether it filters on the partition column of each Resource it
@@ -162,9 +151,11 @@ export async function preflight(
   }
   if (problems.length > 0) return done({ problems });
 
+  // BigQuery gets each Resource by its full name in its own case, however it is written (DEC-SR-44).
+  const resolved = [...read];
   let dry: Awaited<ReturnType<BigQuery['dryRun']>>;
   try {
-    dry = await bigquery.dryRun(bound.sql, bound.parameters);
+    dry = await bigquery.dryRun(inOwnCase(bound.sql, resolved, project), bound.parameters);
   } catch (error) {
     if (!(error instanceof BigQueryRefused)) throw error;
     const required = REQUIRES_FILTER.exec(error.message);
@@ -194,7 +185,7 @@ export async function preflight(
     if (resource.partitionFilter === 'none') {
       // What it would read with the filter: one more dry run, which costs nothing.
       const filtered = fix ? bind(fix, parameters) : null;
-      const bytesWithFilter = filtered ? await bigquery.dryRun(filtered.sql, filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
+      const bytesWithFilter = filtered ? await bigquery.dryRun(inOwnCase(filtered.sql, resolved, project), filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
       warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field, fix, bytesWithFilter });
     }
     else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });
