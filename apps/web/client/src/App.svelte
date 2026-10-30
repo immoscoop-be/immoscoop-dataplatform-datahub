@@ -671,6 +671,8 @@
           }}
           onlens={made}
           hiddenChange={queryHidden}
+          layout={settings?.values['query.layout'] ?? 'horizontal'}
+          onlayout={(layout) => settings?.set('query.layout', layout)}
           onhidden={(id, hidden) => {
             queryHidden = { id, hidden };
             refreshQueries();

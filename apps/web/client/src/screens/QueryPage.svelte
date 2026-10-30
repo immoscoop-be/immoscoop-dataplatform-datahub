@@ -51,6 +51,8 @@
     onlens,
     hiddenChange,
     onhidden,
+    layout = 'horizontal',
+    onlayout,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -69,7 +71,66 @@
     hiddenChange?: { id: string; hidden: boolean };
     /** It was hidden or shown again here. */
     onhidden?: (id: string, hidden: boolean) => void;
+    /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
+    layout?: Layout;
+    onlayout?: (layout: Layout) => void;
   } = $props();
+
+  /** How much room the query takes, in percent, at first and at least and at most, per layout (DEC-UX-144). */
+  const SPLIT = { horizontal: 55, sideBySide: 45 } as const;
+  const clamp = (value: number) => Math.min(80, Math.max(20, value));
+  const splitKey = (of: Layout) => `datahub.query.split.${of}`;
+  /** Where the User dragged the divider, kept in this browser per layout. */
+  function storedSplit(of: Layout): number {
+    try {
+      const stored = Number(localStorage.getItem(splitKey(of)));
+      return stored >= 20 && stored <= 80 ? stored : SPLIT[of];
+    } catch {
+      return SPLIT[of];
+    }
+  }
+  let work = $state<HTMLElement | undefined>();
+  let split = $state<number>(SPLIT.horizontal);
+  let dragging = $state(false);
+  $effect(() => {
+    split = storedSplit(layout);
+  });
+  function keepSplit(): void {
+    try {
+      localStorage.setItem(splitKey(layout), String(Math.round(split)));
+    } catch {
+      // Without storage, the divider keeps its place for this visit only.
+    }
+  }
+  /** Dragging the divider gives the query or the result more room (DEC-UX-144). */
+  function drag(event: PointerEvent): void {
+    const divider = event.currentTarget as HTMLElement;
+    divider.setPointerCapture?.(event.pointerId);
+    dragging = true;
+    const move = (moved: PointerEvent) => {
+      const box = work?.getBoundingClientRect();
+      if (!box || box.width === 0 || box.height === 0) return;
+      split = clamp(layout === 'sideBySide' ? ((moved.clientX - box.left) / box.width) * 100 : ((moved.clientY - box.top) / box.height) * 100);
+    };
+    const up = () => {
+      dragging = false;
+      divider.removeEventListener('pointermove', move);
+      divider.removeEventListener('pointerup', up);
+      keepSplit();
+    };
+    divider.addEventListener('pointermove', move);
+    divider.addEventListener('pointerup', up);
+  }
+  function nudge(event: KeyboardEvent): void {
+    const step = { ArrowUp: -5, ArrowLeft: -5, ArrowDown: 5, ArrowRight: 5 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    split = clamp(split + step);
+    keepSplit();
+  }
+
+  /** The query above the result, or next to it (DEC-UX-143). */
+  type Layout = 'horizontal' | 'sideBySide';
 
   /** How long typing pauses before the Pre-flight is asked again. */
   const PAUSE = 600;
@@ -518,6 +579,8 @@
   <NotFound />
 {:else if query}
   {@const from = query.startedFrom}
+  <!-- The page fills the height of the screen; the query and the result each scroll on their own (DEC-UX-144). -->
+  <div class="page">
   <header class="head">
     <div class="titles">
       <div class="meta">Query</div>
@@ -562,6 +625,11 @@
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
+      <span class="layouts" role="group" aria-label={t('query.layout')}>
+        {#each [['horizontal', 'rows', t('query.layout.horizontal')], ['sideBySide', 'columns', t('query.layout.sideBySide')]] as const as [option, icon, name] (option)}
+          <button type="button" aria-pressed={layout === option} aria-label={name} title={name} onclick={() => onlayout?.(option)}><Icon name={icon} /></button>
+        {/each}
+      </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
       <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
         ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
@@ -578,6 +646,7 @@
     </div>
   </header>
 
+  <div class="work" class:side={layout === 'sideBySide'} class:dragging bind:this={work} style:--split="{split}%">
   <section class="frame card" aria-label={query.name}>
     <div class="scope">
       <span class="label">{t('query.readsOnly')}</span>
@@ -748,6 +817,21 @@
     {/if}
   </section>
 
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+  <div
+    class="divider"
+    role="separator"
+    tabindex="0"
+    aria-orientation={layout === 'sideBySide' ? 'vertical' : 'horizontal'}
+    aria-valuenow={Math.round(split)}
+    aria-valuemin={20}
+    aria-valuemax={80}
+    aria-label={t('query.divider')}
+    title={t('query.divider')}
+    onpointerdown={drag}
+    onkeydown={nudge}
+  ></div>
+
   <section class="result card" aria-label={t('query.result')}>
     <div class="result-head">
       <Segmented
@@ -807,6 +891,8 @@
       <p class="empty"><Icon name="play-fill" /><span><b>{t('query.notRun')}</b> {t('query.notRun.text')}</span></p>
     {/if}
   </section>
+  </div>
+  </div>
 
   {#if parameterWindow}
     {#key parameterWindow.key}
@@ -888,14 +974,31 @@
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  .frame { margin-top: 14px; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+  /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
+  .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .head { flex: none; }
+  .work { flex: 1; min-height: 360px; display: grid; margin-top: 14px; grid-template-rows: minmax(0, var(--split)) 14px minmax(0, 1fr); }
+  .work.side { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, var(--split)) 14px minmax(0, 1fr); }
+  .work.dragging { user-select: none; }
+  .divider { display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; }
+  .side .divider { cursor: col-resize; }
+  .divider::before { content: ''; width: 44px; height: 4px; border-radius: var(--radius-pill); background: var(--tint-active); transition: background var(--motion-fold) ease; }
+  .side .divider::before { width: 4px; height: 44px; }
+  .divider:hover::before, .divider:focus-visible::before, .dragging .divider::before { background: var(--text-muted); }
+  .divider:focus-visible { outline: none; }
+  .layouts { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+  .layouts button { width: 30px; height: 30px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; }
+  .layouts button[aria-pressed='true'] { background: var(--card); color: var(--text-primary); }
+  .layouts button:focus-visible { outline: 2px solid var(--text-secondary); }
+  .frame { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
-  .scope { display: flex; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+  .scope { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
   .scope > .label { flex: none; line-height: 26px; margin: 0; }
-  .chips { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
+  /* In a narrow query, next to its result, the Lenses on its Resources move to a line of their own (DEC-UX-143). */
+  .chips { flex: 1 1 260px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
   .chip > a, .chip > span { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
@@ -930,7 +1033,7 @@
   .word textarea:focus-visible { outline: 2px solid var(--text-secondary); }
   .after { font-size: var(--text-meta); color: var(--text-muted); }
   .after.failed { color: var(--signal-urgent); }
-  .result { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px; }
+  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }

@@ -1426,6 +1426,23 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
   });
 
+  it('puts the query next to the result or above it, as the User keeps it, with a divider that gives either more room (DEC-UX-143, DEC-UX-144)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const divider = await main.findByRole('separator', {}, { timeout: 3000 });
+    expect(divider.getAttribute('aria-orientation')).toBe('horizontal');
+    expect(divider.getAttribute('aria-valuenow')).toBe('55');
+    await fireEvent.keyDown(divider, { key: 'ArrowDown' });
+    expect(divider.getAttribute('aria-valuenow')).toBe('60');
+    await fireEvent.click(main.getByRole('button', { name: 'De query naast het resultaat' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.layout', body: { value: 'sideBySide' } }));
+    expect(main.getByRole('separator').getAttribute('aria-orientation')).toBe('vertical');
+    expect(main.getByRole('button', { name: 'De query naast het resultaat' }).getAttribute('aria-pressed')).toBe('true');
+    localStorage.removeItem('datahub.query.split.horizontal');
+  });
+
   it('opens a new query for a User who has none yet', async () => {
     serve();
     open('/query');

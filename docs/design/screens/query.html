@@ -152,6 +152,7 @@
 <div class="breadcrumb">Query</div>
 <div style="display:flex;align-items:center;gap:12px;margin-top:8px">
  <h1 class="page-title" style="flex:1" id="q-title">Leads per source name</h1>
+ <span class="q-layouts" role="group" aria-label="Layout"><button aria-pressed="true" data-layout="horizontal" aria-label="The query above the result" onclick="location.search=''"><i class="ph ph-rows"></i></button><button aria-pressed="false" data-layout="side" aria-label="The query next to the result" onclick="location.search='?layout=side'"><i class="ph ph-columns"></i></button></span>
  <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>New query</a>
  <button class="btn-quiet outline" type="button" title="Hide this query from your panel; Hidden in the panel shows it again" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-eye-slash"></i>Hide</button>
  <a class="btn-primary" data-pane-group="lens" data-pane="free" hidden href="lens-new.html" style="text-decoration:none" title="Turn this query into a Lens for everyone who may use its Resources"><i class="ph ph-aperture" style="font-size:15px"></i>Make it a Lens</a>
@@ -160,6 +161,8 @@
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
+<!-- The query and its result split the height of the page, each scrolling on its own, the divider between them dragged; ?layout=side puts them next to each other (DEC-UX-143, DEC-UX-144). -->
+<div class="q-work" id="q-work">
 <section class="query-card card" aria-label="The query">
  <div class="q-scope" id="q-scope">
   <span class="label" style="margin:0">Reads only</span>
@@ -265,7 +268,7 @@
   </span>
  </div>
 </section>
-
+<div class="q-divider" role="separator" aria-orientation="horizontal" aria-valuenow="55" tabindex="0" title="Drag, or use the arrow keys, to give the query or the result more room"></div>
 <section class="result-card card" aria-label="Result of your last run">
  <div class="result-head">
   <div data-group="rtab" role="tablist" aria-label="Result or history" class="rtabs">
@@ -319,6 +322,15 @@
   <p class="rg-menu-note">Sorting reorders the 100 rows on this page only. To sort every row, use <span class="mono">order by</span>.</p>
  </div>
 </section>
+</div>
+<script>
+  // The prototype switch: ?layout=side puts the query next to its result.
+  if (new URLSearchParams(location.search).get('layout') === 'side') {
+    document.getElementById('q-work').classList.add('side');
+    document.querySelector('.q-divider').setAttribute('aria-orientation', 'vertical');
+    document.querySelectorAll('.q-layouts button').forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.layout === 'side')));
+  }
+</script>
 </main>
 </div>
 <section class="float-win pm-win" id="pm" role="dialog" aria-modal="false" aria-labelledby="pm-title" hidden>
