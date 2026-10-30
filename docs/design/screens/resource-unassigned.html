@@ -3,8 +3,10 @@
   Screen: Resource without a collection, as the Data Team sees it
   A new Resource came in through an exposure and waits for the Data Team to add it to a collection.
   Panel = the Collections, with "Without a collection" on top, unfolded, that only the Data Team has; main = the resource.
+  "Add to a Collection" opens the sheet that adds Resources, with as first step the choice of the Collection and this
+  Resource ticked; next, its grain and relations, as from the page of a Collection (DEC-UX-131). ?addto=open opens it.
   Requirements: FR-CO-07, FR-CO-14, FR-CO-18, FR-SR-06, FR-SR-07, FR-SR-09, FR-SR-31, FR-SR-32, FR-SR-35, FR-MR-10
-  Decisions: DEC-UX-16, DEC-SR-22, DEC-CO-12.
+  Decisions: DEC-UX-16, DEC-UX-131, DEC-SR-22, DEC-CO-12.
   Related screens: collections-start.html (the same panel, as everyone sees it).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -123,7 +125,7 @@
   <span class="status"><i class="ph-fill ph-eye-slash"></i>Not published</span>
   <span class="status"><i class="ph-fill ph-users-three"></i>No Owner yet</span>
  </div>
- <div class="notice" role="status"><i class="ph-fill ph-tray"></i><p><b style="font-weight:500">Not in a Collection yet.</b> Until the Data Team adds it to one, only the Data Team sees it. It came in on 21 Oct through the exposure <span class="mono">datahub_savedSearches</span> in <span class="mono">immoscoop_dataplatform_sql</span>.</p><button class="btn-primary"><i class="ph-fill ph-folder-plus" style="font-size:15px"></i>Add to a Collection</button></div>
+ <div class="notice" role="status"><i class="ph-fill ph-tray"></i><p><b style="font-weight:500">Not in a Collection yet.</b> Until the Data Team adds it to one, only the Data Team sees it. It came in on 21 Oct through the exposure <span class="mono">datahub_savedSearches</span> in <span class="mono">immoscoop_dataplatform_sql</span>.</p><button class="btn-primary" data-sheet-open="addto"><i class="ph-fill ph-folder-plus" style="font-size:15px"></i>Add to a Collection</button></div>
  <div class="tabs" data-group="tabs" role="tablist">
   <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
   <button class="tab" data-target="later" role="tab" aria-selected="false">Columns</button>
@@ -151,6 +153,21 @@
  </div>
 </main>
 </div>
+<div class="sheet-wrap" id="addto" data-pane-group="addto" data-pane="open" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="addto-title">
+ <div class="sheet-steps" aria-label="Steps"><span class="on"><b>1</b>Choose a Collection</span><i class="ph ph-arrow-right" aria-hidden="true"></i><a href="collection-add-relations.html"><b>2</b>Grain and relations</a></div>
+ <div style="display:flex;align-items:flex-start;gap:8px"><div style="flex:1"><h2 id="addto-title">Add Saved searches to a Collection</h2><p class="meta" style="margin-top:6px;display:block;line-height:1.5">A Resource is in one Collection at most. It gets the Owner Unit of that Collection, which publishes it afterwards.</p></div><button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button></div>
+ <label class="search card" style="margin-top:14px;background:var(--surface-sub)"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search Collections"></label>
+ <div class="sheet-list" role="radiogroup" aria-label="Collections">
+  <label class="pick on"><input type="radio" name="into" checked><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-coins kind-icon" aria-hidden="true"></i><span class="item-title">Credit leads</span></span><span class="meta" style="display:block;margin-top:4px">Credit team · 6 Resources · public</span></span></label>
+  <label class="pick"><input type="radio" name="into"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-briefcase kind-icon" aria-hidden="true"></i><span class="item-title">Brokers</span></span><span class="meta" style="display:block;margin-top:4px">Broker team · 11 Resources · private</span></span></label>
+  <label class="pick"><input type="radio" name="into"><span style="flex:1;min-width:0"><span style="display:flex;align-items:center;gap:8px"><i class="ph ph-magnifying-glass kind-icon" aria-hidden="true"></i><span class="item-title">Search behaviour</span></span><span class="meta" style="display:block;margin-top:4px">Web team · 4 Resources · public</span></span></label>
+ </div>
+ <div class="sheet-foot"><p class="meta">Into Credit leads · next, its grain and relations</p><button class="btn-quiet" data-sheet-close>Cancel</button><a class="btn-primary" href="collection-add-relations.html" style="text-decoration:none">Next: grain and relations<i class="ph ph-arrow-right" style="font-size:15px"></i></a></div>
+</section>
+</div>
+<div hidden data-group="addto"><button data-target="open"></button></div>
 <script src="app.js"></script>
 </body>
 </html>

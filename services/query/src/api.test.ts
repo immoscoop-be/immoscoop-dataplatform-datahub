@@ -29,6 +29,7 @@ const AN_WORK = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
   key: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume`,
+  fullName: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume`,
   displayName: 'Weekly lead volume',
   collectionId: CREDIT,
   level: 3,

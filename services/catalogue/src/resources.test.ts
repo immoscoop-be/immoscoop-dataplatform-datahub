@@ -279,3 +279,34 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     await expect(sql`delete from resource_log`.execute(database.db)).rejects.toThrow(/append-only/);
   });
 });
+
+describe.skipIf(!url)('the full name of a table, in its own case', () => {
+  const schema = `catalogue_full_name_${randomBytes(4).toString('hex')}`;
+  let database: Database<CatalogueDatabase>;
+  let resources: Resources;
+
+  beforeAll(async () => {
+    database = createDatabase<CatalogueDatabase>({ connectionString: url }, schema);
+    await migrate({ db: database.db as Kysely<unknown>, schema, migrations, serviceUser: 'postgres' });
+    resources = createResources(database.db);
+  });
+
+  afterAll(async () => {
+    await sql`drop schema if exists ${sql.id(schema)} cascade`.execute(database.db);
+    await database.close();
+  });
+
+  it('is kept next to the Key, also for a Resource registered before registry handed it over', async () => {
+    const colleciones = (runId: string, tables: ExposedTable[]): ResourcesUpdate => ({ projectId: '17121', projectName: 'immoscoop_colleciones', runId, generatedAt: '2026-10-30T12:45:00Z', tables });
+    const state = table('mrt_immoscoop__leadsource__state', { key: 'immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__leadsource__state' });
+    await resources.apply(colleciones('500', [state]));
+    const before = (await resources.withoutCollection()).find((one) => one.key === state.key);
+    // Without it, the Key stands in, as before.
+    expect(before?.fullName).toBe(state.key);
+
+    const fullName = 'immoscoop-dataplatform.colleciones_dbt.mrt_immoscoop__leadSource__state';
+    await resources.apply(colleciones('501', [{ ...state, fullName }]));
+    const after = (await resources.withoutCollection()).find((one) => one.key === state.key);
+    expect(after).toMatchObject({ id: before?.id, key: state.key, fullName });
+  });
+});

@@ -72,10 +72,10 @@ const REQUIRES_FILTER = /without a filter over column\(s\) '([^']+)'/i;
  */
 export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => number = Date.now) {
   const cache = new Map<string, { tables: string[]; until: number }>();
-  return async (resource: Pick<QueryResource, 'key' | 'partition'>): Promise<string[]> => {
+  return async (resource: Pick<QueryResource, 'key' | 'fullName' | 'partition'>): Promise<string[]> => {
     const cached = cache.get(resource.key);
     if (cached && cached.until > now()) return cached.tables;
-    const all = `select * from \`${resource.key}\``;
+    const all = `select * from \`${resource.fullName}\``;
     let referenced: string[];
     try {
       referenced = (await bigquery.dryRun(all)).referencedTables;
@@ -83,7 +83,7 @@ export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => 
       if (!(error instanceof BigQueryRefused) || !resource.partition) throw error;
       referenced = (await bigquery.dryRun(`${all} where ${resource.partition.field} is null`)).referencedTables;
     }
-    const tables = [resource.key, ...referenced];
+    const tables = [resource.fullName, ...referenced];
     cache.set(resource.key, { tables, until: now() + ttl });
     return tables;
   };
@@ -97,11 +97,15 @@ function fixFor(sql: string, resource: QueryResource, project: string): string |
   return filter ? withFilter(sql, (name) => names(name, resource.key, project), filter) : null;
 }
 
-/** Whether a name in the SQL is this Key: in full, or without its project when that is the project the query runs in. */
+/**
+ * Whether a name in the SQL is this Key: in full, or without its project when that is the project the query
+ * runs in. In any case: the Key is in lower case, and BigQuery itself tells a name in the wrong case.
+ */
 function names(written: string, key: string, project: string): boolean {
-  if (written === key) return true;
+  const name = written.toLowerCase();
+  if (name === key) return true;
   const [keyProject, ...rest] = key.split('.');
-  return keyProject === project && written === rest.join('.');
+  return keyProject === project.toLowerCase() && name === rest.join('.');
 }
 
 /**
@@ -177,9 +181,9 @@ export async function preflight(
   if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
 
   // And again by what BigQuery reads: only its Resources, or the tables beneath them.
-  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat());
+  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat().map((table) => table.toLowerCase()));
   for (const table of dry.referencedTables) {
-    if (!allowed.has(table)) problems.push({ kind: 'outside', name: table, start: null, end: null });
+    if (!allowed.has(table.toLowerCase())) problems.push({ kind: 'outside', name: table, start: null, end: null });
   }
 
   const warnings: Warning[] = [];

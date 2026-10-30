@@ -7,6 +7,8 @@ import type { Marked } from './query.js';
 export interface Resource {
   id: string;
   key: string;
+  /** The full name of its table in its own case, as BigQuery knows it; what is shown and copied. */
+  fullName?: string;
   displayName: string;
   name: string;
   resourceType: string;

@@ -18,7 +18,7 @@ How a run of a Source Job becomes the Current Version of its dbt project, in the
 registry answers `POST /webhooks/dbt-cloud`. The route is public, because dbt Cloud has no Access Token; the signature protects it instead. A delivery counts only when:
 
 - its `Authorization` header holds the HMAC-SHA256 of the raw body, in hex, keyed with the secret `datahub-dbt-webhook-secret`, compared in constant time; otherwise registry answers `401`;
-- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-01](../functional/01-artifact-registry.md#dec-ar-01)); any other signed delivery is answered `204` and ignored.
+- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-09](../functional/01-artifact-registry.md#dec-ar-09)); any other signed delivery is answered `204` and ignored.
 
 A delivery that counts records the run as an Artifact Set with status `pending`, at most once per run ID: a repeated delivery changes nothing. registry then starts the ingest job ([TR-AR-02](#tr-ar-02)) and answers, well within the 10 seconds dbt Cloud waits before it tries again.
 
@@ -89,9 +89,9 @@ Every route of registry that reads, and processing a run again, needs the role o
 <a id="tr-ar-08"></a>
 ### TR-AR-08 · registry tells catalogue which tables are exposed to Data Hub
 
-**Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-PF-26](00-platform.md#dec-pf-26)
+**Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44), [DEC-PF-26](00-platform.md#dec-pf-26)
 
-When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
+When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its full name in its own case (its database, schema and table name, without quotes; [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)), its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
 
 It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
 

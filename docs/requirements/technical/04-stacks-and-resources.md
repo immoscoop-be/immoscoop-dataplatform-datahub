@@ -20,9 +20,9 @@ How the tables under the exposures of the dbt projects become Resources, in the 
 <a id="tr-sr-02"></a>
 ### TR-SR-02 · Resources live in the schema of catalogue
 
-**Status:** Implemented · **Realises:** [FR-SR-04](../functional/04-stacks-and-resources.md#fr-sr-04), [FR-SR-05](../functional/04-stacks-and-resources.md#fr-sr-05), [FR-SR-06](../functional/04-stacks-and-resources.md#fr-sr-06), [FR-SR-33](../functional/04-stacks-and-resources.md#fr-sr-33), [FR-CO-07](../functional/03-collections.md#fr-co-07)
+**Status:** Implemented · **Realises:** [FR-SR-04](../functional/04-stacks-and-resources.md#fr-sr-04), [FR-SR-05](../functional/04-stacks-and-resources.md#fr-sr-05), [FR-SR-06](../functional/04-stacks-and-resources.md#fr-sr-06), [FR-SR-33](../functional/04-stacks-and-resources.md#fr-sr-33), [FR-CO-07](../functional/03-collections.md#fr-co-07), [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)
 
-The table `resources` holds one row per Resource: a UUID as its ID; the Key, unique, as registry writes a `relation`; the dbt project, its unique ID and the name and kind of its Node; the Display Name; the description; the names of the exposures that make it a Resource; its Collection, if any; its Level ([TR-SR-07](#tr-sr-07)); and when it was registered, last changed and withdrawn.
+The table `resources` holds one row per Resource: a UUID as its ID; the Key, unique, as registry writes a `relation`; the full name of the table in its own case, which registry sends with it, or empty for a Resource registered before it did, which then takes its Key ([DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)); the dbt project, its unique ID and the name and kind of its Node; the Display Name; the description; the names of the exposures that make it a Resource; its Collection, if any; its Level ([TR-SR-07](#tr-sr-07)); and when it was registered, last changed and withdrawn.
 
 - One Collection at most: the Resource holds the ID of its Collection.
 - The Display Name is unique, whatever its case, among the Resources that are not withdrawn. When the label or Node name is taken, the name of the dbt project follows in brackets, and if that is taken too, the Key.
@@ -143,12 +143,12 @@ Once published, a Resource is seen by everyone who sees its Collection: its page
 <a id="tr-sr-15"></a>
 ### TR-SR-15 · A query reads only its own Resources, and only reads
 
-**Status:** Implemented · **Realises:** [FR-SR-41](../functional/04-stacks-and-resources.md#fr-sr-41), [DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32), [DEC-UX-73](../../design/principles.md#dec-ux-73)
+**Status:** Implemented · **Realises:** [FR-SR-41](../functional/04-stacks-and-resources.md#fr-sr-41), [DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32), [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44), [DEC-UX-73](../../design/principles.md#dec-ux-73)
 
 The service account of query may read every table of the project of Data Hub ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), so Data Hub alone decides what a query reads, twice, in its Pre-flight and again before every run:
 
-1. **By its SQL.** query reads the SQL as words, comments and strings skipped, and takes every table named after `from` and `join` and in a list of `from`, leaving out its CTEs, a subquery, `unnest(…)`, an array of a row named through its alias, and the `from` of `extract(…)` and `is distinct from`. Each must be the Key of one of its Resources that the User may see now, as catalogue answers with the token of the User; written without its project, a Key counts when its project is that of Data Hub. Anything else is a table outside, named with where it stands in the SQL, and the query does not go to BigQuery. A table function, such as `ML.PREDICT` or `EXTERNAL_QUERY`, is never allowed; a wildcard table and `INFORMATION_SCHEMA` are no Resource.
-2. **By BigQuery.** A dry run must say `SELECT`: a change, a script or a statement of another kind is refused. The tables the dry run says it reads must be its Resources named in the SQL, or the tables BigQuery reads beneath them, which query learns from a dry run of `select *` of each, kept ten minutes.
+1. **By its SQL.** query reads the SQL as words, comments and strings skipped, and takes every table named after `from` and `join` and in a list of `from`, leaving out its CTEs, a subquery, `unnest(…)`, an array of a row named through its alias, and the `from` of `extract(…)` and `is distinct from`. Each must be the Key of one of its Resources that the User may see now, as catalogue answers with the token of the User, whatever the case it is written in ([DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)); written without its project, a Key counts when its project is that of Data Hub. Anything else is a table outside, named with where it stands in the SQL, and the query does not go to BigQuery. A table function, such as `ML.PREDICT` or `EXTERNAL_QUERY`, is never allowed; a wildcard table and `INFORMATION_SCHEMA` are no Resource.
+2. **By BigQuery.** A dry run must say `SELECT`: a change, a script or a statement of another kind is refused. The tables the dry run says it reads must be its Resources named in the SQL, or the tables BigQuery reads beneath them, which query learns from a dry run of `select *` of each, named in its own case, kept ten minutes.
 
 A Resource the User may no longer see keeps the query from running.
 
@@ -195,9 +195,9 @@ The previews of a Resource by a User are one query of the kind `preview`, named 
 <a id="tr-sr-20"></a>
 ### TR-SR-20 · The size and partitions of a Resource
 
-**Status:** Implemented · **Realises:** [FR-SR-39](../functional/04-stacks-and-resources.md#fr-sr-39), [DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34)
+**Status:** Implemented · **Realises:** [FR-SR-39](../functional/04-stacks-and-resources.md#fr-sr-39), [DEC-SR-34](../functional/04-stacks-and-resources.md#dec-sr-34), [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)
 
-`GET /resources/{id}/storage` gives, for a Resource the User may see, its Key in BigQuery, its size in bytes, its rows, its number of partitions and when it last changed, from the metadata of the table (`tables.get`), which reads nothing of it and costs nothing. For a view these are of the table beneath it: the one partitioned on the same column, or the only table beneath it, as a dry run of `select *` says ([TR-SR-15](#tr-sr-15)); `beneath` says so. Without such a table, or where BigQuery refuses, it gives nothing. query keeps the metadata of a table ten minutes.
+`GET /resources/{id}/storage` gives, for a Resource the User may see, the full name of its table in BigQuery, in its own case, its size in bytes, its rows, its number of partitions and when it last changed, from the metadata of the table (`tables.get`), which reads nothing of it and costs nothing. For a view these are of the table beneath it: the one partitioned on the same column, or the only table beneath it, as a dry run of `select *` says ([TR-SR-15](#tr-sr-15)); `beneath` says so. Without such a table, or where BigQuery refuses, it gives nothing. query keeps the metadata of a table ten minutes.
 
 <a id="tr-sr-21"></a>
 ### TR-SR-21 · The queries on a Resource
