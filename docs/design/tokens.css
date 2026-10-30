@@ -56,6 +56,7 @@
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
+  --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
   --background-cycle: 36s;
   --photo-cycle: 60s;               /* the photo of the sign-in, very slowly closer */
   --blur-frame: blur(8px) saturate(1.05);   /* the frames over a picture (DEC-UX-34) */

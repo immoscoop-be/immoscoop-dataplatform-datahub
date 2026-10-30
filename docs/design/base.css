@@ -79,6 +79,10 @@ html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"
 .panel:hover { --card: var(--surface-solid); }
 .app:has(.panel:hover) .main { --card: var(--surface-soft); }
 .card { background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
+/* The window out of focus fades whole, its text with it (DEC-UX-146). */
+.panel-inner, .main > * { transition: opacity var(--motion-focus) var(--delay-focus); }
+.panel:not(:hover) .panel-inner { opacity: var(--opacity-out-of-focus); }
+.app:has(.panel:hover) .main > * { opacity: var(--opacity-out-of-focus); }
 
 .search { display: flex; align-items: center; gap: 8px; border-radius: var(--radius-field); padding: 9px 12px; color: var(--text-muted); }
 .search input { all: unset; flex: 1; font: var(--text-small) var(--font-family); color: var(--text-primary); }

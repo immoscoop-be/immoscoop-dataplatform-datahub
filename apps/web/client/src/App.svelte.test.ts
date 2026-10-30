@@ -950,7 +950,9 @@ describe('the web app, with Collections', () => {
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
     expect(main.getByText('Owner: Data')).toBeTruthy();
-    expect(main.getByText(/^Aangemaakt op 3 sep\.? door An Claes$/)).toBeTruthy();
+    // The head shows who owns it and who sees it, not how many Resources it holds nor when it was made (DEC-UX-145).
+    expect(main.queryByText(/^Aangemaakt op/)).toBeNull();
+    expect(main.queryByText(/^\d+ Resources?$/)).toBeNull();
     expect(main.getByRole('region', { name: 'Vraagt aandacht' }).textContent).toContain(
       '1 Resource is nog niet gepubliceerd: Weekly lead volume. Tot de Owner hem publiceert, zien enkel Data en het Data Team hem.',
     );
@@ -1738,14 +1740,15 @@ describe('Lenses', () => {
     expect(calls).toContainEqual({ method: 'PUT', path: '/lenses/l1/version', body: { queryId: 'q1', approve: false, text: '' } });
   });
 
-  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123, DEC-UX-134)', async () => {
+  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123, DEC-UX-134, DEC-UX-145)', async () => {
     const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // In the head "New Lens"; next to the heading Lenses, how a Lens is made.
-    const links = [await main.findByRole('link', { name: 'Nieuwe Lens' }), main.getByRole('link', { name: 'Lens toevoegen: start een query' })];
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1', '/query/new/for/c1']);
+    // Next to the heading Lenses, how a Lens is made; the head has no "New Lens" of its own.
+    const links = [await main.findByRole('link', { name: 'Lens toevoegen: start een query' })];
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1']);
+    expect(main.queryByRole('link', { name: 'Nieuwe Lens' })).toBeNull();
 
     await fireEvent.click(links[0] as HTMLElement);
     const start = within(await screen.findByRole('main'));

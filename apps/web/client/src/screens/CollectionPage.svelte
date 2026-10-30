@@ -5,7 +5,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
-  import { ago, day } from '@datahub/ui/foundations/when.js';
+  import { ago } from '@datahub/ui/foundations/when.js';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
@@ -216,8 +216,6 @@
         {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
         {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.edit')}</Button>{/if}
         {#if dataTeam}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
-        <!-- A Lens is made from a query: "New Lens" opens one, and its "Make it a lens" offers this Collection first (DEC-UX-123). -->
-        {#if shown.canManage}<Button href={newLensForPath(shown.id)}><Icon name="aperture" />{t('collection.newLens')}</Button>{/if}
       </div>
     </div>
     <div class="status-row">
@@ -225,8 +223,6 @@
       <Chip>
         <Icon name={shown.visibility === 'public' ? 'globe-simple-fill' : 'lock-simple-fill'} />{t(shown.visibility === 'public' ? 'collections.public' : 'collections.private')}
       </Chip>
-      <Chip><Icon name="table" />{t('collections.count', { count: shown.resources.length })}</Chip>
-      <Chip><Icon name="calendar-blank-fill" />{t('collection.created', { date: day(shown.createdAt, currentLanguage()), name: shown.createdBy })}</Chip>
     </div>
   {/if}
 
