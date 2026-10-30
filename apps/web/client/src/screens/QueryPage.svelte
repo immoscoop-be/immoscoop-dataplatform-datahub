@@ -712,6 +712,8 @@
             bind:value={sql}
             {suggestions}
             parameters={parameterSuggestions}
+            tables={query.resources.flatMap((resource) => (resource.visible ? [{ name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []))}
+            onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
             {marks}
             onmark={(mark) => {
               const entry = missing.find((candidate) => sql.slice(mark.from, mark.to) === `@${candidate.name}`);

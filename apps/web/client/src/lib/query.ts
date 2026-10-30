@@ -16,6 +16,8 @@ export type QueryResource =
       visible: true;
       id: string;
       key: string;
+      /** The full name of its table in its own case, which BigQuery is asked for (DEC-SR-44). */
+      fullName?: string;
       displayName: string;
       collectionId: string | null;
       level: number;

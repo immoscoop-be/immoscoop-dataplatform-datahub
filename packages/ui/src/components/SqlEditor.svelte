@@ -11,6 +11,16 @@
     businessDescription: string;
   }
 
+  /** A Resource of the query, which the editor suggests after `from` and `join` by its Display Name (DEC-UX-148). */
+  export interface TableSuggestion {
+    name: string;
+    /** The full name of its table, in its own case, which the SQL gets, quoted. */
+    fullName: string;
+  }
+
+  /** Whether the text before a word asks for a table: it follows `from` or `join` (DEC-UX-148). */
+  export const AFTER_TABLE = /\b(?:from|join)\s+$/i;
+
   /** A Parameter the editor suggests after `@`: its name, its type in BigQuery and its value (DEC-UX-71). */
   export interface ParameterSuggestion {
     name: string;
@@ -72,9 +82,11 @@
     value = $bindable(),
     suggestions,
     parameters = [],
+    tables = [],
     marks = [],
     onmark,
     onrun,
+    onnewtable,
     label,
     readonly = false,
     nonce,
@@ -82,11 +94,15 @@
     value: string;
     suggestions: readonly Suggestion[];
     parameters?: readonly ParameterSuggestion[];
+    /** The Resources of the query, suggested after `from` and `join` (DEC-UX-148). */
+    tables?: readonly TableSuggestion[];
     marks?: readonly ErrorMark[];
     /** A click on an `@name` that is not a Parameter. */
     onmark?: (mark: ErrorMark) => void;
     /** Cmd+Enter, or Ctrl+Enter: what the button that runs the query does (DEC-UX-142). */
     onrun?: () => void;
+    /** "New Resource…" among the suggestions: another Resource is a new query (DEC-UX-73, DEC-UX-148). */
+    onnewtable?: () => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -230,6 +246,16 @@
       return options.length ? { from: parameter.from, options, validFor: /^@\w*$/ } : null;
     }
     const word = context.matchBefore(/[\w]+/);
+    // After `from` or `join`: the Resources of the query, written as BigQuery knows them, and a way to another (DEC-UX-148).
+    const before = context.state.sliceDoc(context.state.doc.lineAt(context.pos).from, word?.from ?? context.pos);
+    if (AFTER_TABLE.test(before) && (tables.length > 0 || onnewtable)) {
+      const options: Completion[] = tables.map((table) => ({ label: table.name, detail: t('editor.resource'), apply: `\`${table.fullName}\``, boost: 50 }));
+      if (onnewtable) {
+        const start = onnewtable;
+        options.push({ label: t('editor.newResource'), detail: t('editor.newResource.detail'), boost: -50, apply: () => start() });
+      }
+      return { from: word?.from ?? context.pos, options, filter: true };
+    }
     if (!word && !context.explicit) return null;
     const options: Suggested[] = [...suggestions]
       .sort((a, b) => ROLE_ORDER(a) - ROLE_ORDER(b))
