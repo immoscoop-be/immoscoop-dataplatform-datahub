@@ -234,6 +234,30 @@ registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every N
 
 When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain is suggested from what the model declares, for the Data Admin to confirm ([DEC-RC-09](05-resource-card.md#dec-rc-09)); the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 
+<a id="fr-ar-18"></a>
+### FR-AR-18 · A Data Admin sets the Source Jobs on a page of Data Hub
+
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+
+A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and which dbt Cloud job is the Source Job of each ([FR-AR-02](#fr-ar-02)), for the environment of that page, in place of the configuration of its deployment. They choose a job from the jobs of the dbt Cloud account, each shown by its name, its ID, its dbt project and its environment in dbt Cloud, as Data Hub reads them from dbt Cloud; nobody types an ID. A change applies from the next run dbt Cloud reports, without a deploy of Data Hub. Per dbt project the page shows its Source Job by name and ID, who set it and when, and the last run that delivered an Artifact Set. The webhook of the environment in dbt Cloud names the same jobs ([DEC-AR-02](#dec-ar-02)); the page says so. The page is designed in the [design](../../design/README.md) before it is built.
+
+*Could, not in v1: set on 2026-10-30, by Max; in version 1 the Source Jobs are set in the configuration of each environment, in Terraform ([DEC-AR-09](#dec-ar-09)).*
+
+<a id="fr-ar-19"></a>
+### FR-AR-19 · A Data Admin sees every delivery of the webhook
+
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+
+On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every delivery dbt Cloud sent to the webhook of that environment in the last 30 days, the newest first: when it came, the job by its name and its ID, the dbt project, the run and its status in dbt Cloud, and what Data Hub did with it. That is one of:
+
+- recorded as an Artifact Set, with the status of that set: pending, processed, or failed and why ([EC-AR-02](#ec-ar-02));
+- ignored, and why: the job is no Source Job of this environment, its dbt project does not match, the run did not succeed, it comes from another dbt Cloud account, or it is a test from dbt Cloud;
+- refused, because its signature does not match the secret.
+
+So whoever sets up a webhook or a Source Job sees at once whether its runs arrive and are taken, without the logs of Google Cloud, and a job in the webhook that is no Source Job stands out.
+
+*Could, not in v1: set on 2026-10-30, by Max, with the page of the Source Jobs ([FR-AR-18](#fr-ar-18)); in version 1 the deliveries are in the logs of registry.*
+
 ## Kinds of Change
 
 This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).

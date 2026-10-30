@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<!--
+  Screen: Webhooks, the first item of Admin, the section of the Data Team in the rail (DEC-UX-130)
+  Admin sits in the rail after the learning centre, set apart by a little space, and only a Data Admin sees it. Its panel
+  lists its tools; Webhooks is the first, with the number of deliveries to look at. While it is the only one, Admin opens
+  on it (OP-UX-52).
+  Source Jobs (FR-AR-18): per dbt project the job whose runs this environment reads, by its name and its ID, its kind and
+  environment in dbt Cloud, whether it generates the docs, the last run that delivered an Artifact Set, and who set it.
+  "Change" opens a sheet with the jobs of that dbt project as dbt Cloud names them, by environment: a job of another
+  environment, or a CI job that builds pull requests in schemas of their own, cannot be chosen. Under the tiles, the
+  webhook in dbt Cloud that names the same jobs, and its address.
+  Deliveries (FR-AR-19): every delivery of the last 30 days, the newest first, with what Data Hub did with it: recorded,
+  ignored and why, or refused. One opened shows on the right, as a Message does in the Message Centre: the job, the run,
+  the event, what Data Hub did step by step, and what the Data Admin can do. A run without a catalog.json fails (EC-AR-02);
+  processing it again is FR-AR-14. The switch at the bottom opens each kind: ?opened=recorded, ?opened=ignored,
+  ?opened=refused, ?opened=failed, ?opened=test, and ?opened=none for no deliveries yet; ?pick=open opens the sheet.
+  Requirements: FR-AR-18, FR-AR-19
+  Decisions: DEC-AR-02, DEC-AR-09, DEC-UX-130.
+  Decided with it: OP-UX-50, OP-UX-51, OP-UX-52.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Webhooks</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub uat, and how it fares.</p>
+  <a class="mc-filter on" href="admin-webhooks.html" aria-current="page"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Webhooks</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">What dbt Cloud tells Data Hub after a run, and what Data Hub does with it.</p></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
+</div>
+
+<div class="section-head"><h2>Source Jobs</h2></div>
+<p class="meta" style="display:block;line-height:1.5;max-width:760px;margin:-4px 0 12px">Per dbt project, the job whose runs Data Hub uat reads: the merge build of uat, which builds the project after a merge and generates the docs. A change counts from the next run.</p>
+<div class="wh-jobs">
+ <section class="card wh-job">
+  <div class="label">dbt-prod <span class="mono">· immoscoop_dataplatform_sql · 9367</span></div>
+  <div class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build</span><span class="mono wh-id">352118</span></div>
+  <div class="wh-tags"><span class="wh-tag">Merge</span><span class="wh-tag">UAT</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span></div>
+  <div class="wh-last"><i class="ph-fill ph-check-circle"></i><span>Last set: run <span class="mono">58209931</span>, today 11:52, processed</span></div>
+  <div class="wh-job-foot"><span class="meta">Set by Maxime Passenier, today 11:40</span><button class="btn-quiet outline" data-sheet-open="pick" data-go="pick:open">Change</button></div>
+ </section>
+ <section class="card wh-job">
+  <div class="label">Colleciónes <span class="mono">· compilacion-colleciones-dbt · 17121</span></div>
+  <div class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build (triggerd by git ci)</span><span class="mono wh-id">748279</span></div>
+  <div class="wh-tags"><span class="wh-tag">Merge</span><span class="wh-tag">UAT</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span></div>
+  <div class="wh-last"><i class="ph-fill ph-check-circle"></i><span>Last set: run <span class="mono">58214470</span>, today 12:45, processed</span></div>
+  <div class="wh-job-foot"><span class="meta">Set by Maxime Passenier, today 12:38</span><button class="btn-quiet outline">Change</button></div>
+ </section>
+</div>
+<div class="card wh-hook">
+ <i class="ph ph-plugs-connected" aria-hidden="true"></i>
+ <span>In dbt Cloud, the webhook <b style="font-weight:500">Data Hub uat</b> names these two jobs, on Run completed, and sends to</span>
+ <span class="mono">https://datahub-registry-728318088152.europe-west1.run.app/webhooks/dbt-cloud</span>
+ <button class="btn-quiet outline"><i class="ph ph-copy"></i>Copy</button>
+</div>
+
+<div class="section-head"><h2>Deliveries</h2><span class="meta">The last 30 days</span></div>
+<div class="mc" style="margin-top:0" data-pane-group="wh" data-pane="recorded ignored refused failed test">
+ <section class="card mc-list" aria-label="Deliveries" data-group="wh">
+  <div class="mc-chips" role="tablist" aria-label="What Data Hub did"><button class="seg on" role="tab" aria-selected="true">All<span class="count">8</span></button><button class="seg" role="tab" aria-selected="false">Recorded<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Ignored<span class="count">4</span></button><button class="seg" role="tab" aria-selected="false">Refused<span class="count">1</span></button></div>
+  <a class="wh-item on" href="#" data-target="recorded" role="tab" aria-selected="true">
+   <i class="ph-fill ph-check-circle wh-outcome done" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Recorded</span><span class="meta" style="margin-left:auto">today 12:45</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>UAT - Deploy - Merge build (triggerd by git ci)</b><span class="mono wh-id">748279</span></span>
+    <span class="mc-excerpt">Colleciónes · run 58214470 succeeded. Processed: 9 new Resources wait without a Collection.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" data-target="ignored" role="tab" aria-selected="false">
+   <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 12:31</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>CI/CD - UAT - triggered by Github Pipelines</b><span class="mono wh-id">324451</span></span>
+    <span class="mc-excerpt">dbt-prod · no Source Job of uat: a CI job, it builds pull requests.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" role="tab" aria-selected="false">
+   <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 12:19</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>PROD - CI/CD - Deploy - Merge build (triggerd by git ci)</b><span class="mono wh-id">748278</span></span>
+    <span class="mc-excerpt">Colleciónes · no Source Job of uat: a job of Production, which Data Hub prod reads.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" role="tab" aria-selected="false">
+   <i class="ph-fill ph-check-circle wh-outcome done" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Recorded</span><span class="meta" style="margin-left:auto">today 11:52</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>UAT - Deploy - Merge build</b><span class="mono wh-id">352118</span></span>
+    <span class="mc-excerpt">dbt-prod · run 58209931 succeeded. Processed: 3 changes, none to a Resource.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" data-target="test" role="tab" aria-selected="false">
+   <i class="ph-fill ph-flask wh-outcome" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 10:12</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>A test from dbt Cloud</b></span>
+    <span class="mc-excerpt">Sent with Test endpoint. The signature is right.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" data-target="refused" role="tab" aria-selected="false">
+   <i class="ph-fill ph-prohibit wh-outcome warn" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind signal">Refused</span><span class="meta" style="margin-left:auto">today 09:58</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>Unknown sender</b></span>
+    <span class="mc-excerpt">The signature does not match the secret of Data Hub uat.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" data-target="failed" role="tab" aria-selected="false">
+   <i class="ph-fill ph-warning-circle wh-outcome warn" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind signal">Recorded, failed</span><span class="meta" style="margin-left:auto">yesterday 16:20</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>UAT - Deploy - Merge build (triggerd by git ci)</b><span class="mono wh-id">748279</span></span>
+    <span class="mc-excerpt">Colleciónes · run 58141207 has no catalog.json: the job does not generate the docs.</span>
+   </span>
+  </a>
+  <a class="wh-item" href="#" role="tab" aria-selected="false">
+   <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
+   <span style="min-width:0">
+    <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">yesterday 06:05</span></span>
+    <span class="mc-row" style="margin-top:6px"><b>UAT - Deploy - Merge build</b><span class="mono wh-id">352118</span></span>
+    <span class="mc-excerpt">dbt-prod · run 58101536 did not succeed: Error in dbt Cloud.</span>
+   </span>
+  </a>
+  <a hidden data-target="none" href="#">No deliveries</a>
+ </section>
+
+ <section class="card mc-detail" data-pane-group="wh" data-pane="recorded" aria-label="The delivery opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-check-circle wh-big" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Recorded</h2><div class="meta">today 12:45:31, four seconds after the run ended</div></div>
+   <a class="btn-quiet outline" href="#"><i class="ph ph-arrow-square-out"></i>Run in dbt Cloud</a>
+  </div>
+  <dl class="wh-facts">
+   <dt>Job</dt><dd>UAT - Deploy - Merge build (triggerd by git ci) <span class="mono wh-id">748279</span>, the Source Job of Colleciónes</dd>
+   <dt>dbt project</dt><dd>Colleciónes · compilacion-colleciones-dbt <span class="mono wh-id">17121</span></dd>
+   <dt>Environment in dbt Cloud</dt><dd>UAT</dd>
+   <dt>Run</dt><dd><span class="mono">58214470</span> · succeeded · 12:35 to 12:45 · <span class="mono">061b165</span> on uat</dd>
+   <dt>Event</dt><dd><span class="mono">job.run.completed</span> · account <span class="mono">576</span> · signature right</dd>
+  </dl>
+  <div class="label" style="margin-top:18px">What Data Hub did</div>
+  <ol class="wh-steps">
+   <li><i class="ph-fill ph-check-circle"></i><span>Recorded the run as an Artifact Set</span><span class="meta">12:45</span></li>
+   <li><i class="ph-fill ph-check-circle"></i><span>Fetched <span class="mono">manifest.json</span> and <span class="mono">catalog.json</span> from dbt Cloud</span><span class="meta">12:45</span></li>
+   <li><i class="ph-fill ph-check-circle"></i><span>Processed 4,812 Nodes, with 9 exposures tagged <span class="mono">datahub</span></span><span class="meta">12:46</span></li>
+   <li><i class="ph-fill ph-check-circle"></i><span>Made it the Current Version of Colleciónes</span><span class="meta">12:46</span></li>
+   <li><i class="ph-fill ph-check-circle"></i><span>9 Registrations: 9 new Resources wait <a class="text-link" href="resource-unassigned.html">without a Collection</a></span><span class="meta">12:46</span></li>
+  </ol>
+ </section>
+
+ <section class="card mc-detail" data-pane-group="wh" data-pane="ignored" hidden aria-label="The delivery opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-minus-circle wh-big" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Ignored</h2><div class="meta">today 12:31:07 · no Source Job of Data Hub uat</div></div>
+   <a class="btn-quiet outline" href="#"><i class="ph ph-arrow-square-out"></i>Run in dbt Cloud</a>
+  </div>
+  <dl class="wh-facts">
+   <dt>Job</dt><dd>CI/CD - UAT - triggered by Github Pipelines <span class="mono wh-id">324451</span>, a CI job</dd>
+   <dt>dbt project</dt><dd>dbt-prod · immoscoop_dataplatform_sql <span class="mono wh-id">9367</span></dd>
+   <dt>Environment in dbt Cloud</dt><dd>UAT</dd>
+   <dt>Run</dt><dd><span class="mono">58212208</span> · succeeded · on <span class="mono">fix/DAT-531-page-display-dedup</span>, in the schema <span class="mono">DBT_CLOUD_PR_immoscoop_be_979</span></dd>
+   <dt>Event</dt><dd><span class="mono">job.run.completed</span> · account <span class="mono">576</span> · signature right</dd>
+  </dl>
+  <div class="wh-why"><b style="font-weight:500">This job is no Source Job of Data Hub uat.</b> The Source Job of dbt-prod is UAT - Deploy - Merge build (<span class="mono">352118</span>). This one is a CI job: it builds every pull request in a schema of its own, so it cannot be one.</div>
+  <div class="label" style="margin-top:18px">What you can do</div>
+  <p class="wh-text">Nothing has to: Data Hub skips it, and it costs nothing. To keep this list calm, take the job out of the webhook <b style="font-weight:500">Data Hub uat</b> in dbt Cloud.</p>
+  <div class="wh-actions"><a class="btn-quiet outline" href="#"><i class="ph ph-arrow-square-out"></i>The webhook in dbt Cloud</a></div>
+ </section>
+
+ <section class="card mc-detail" data-pane-group="wh" data-pane="refused" hidden aria-label="The delivery opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-prohibit wh-big warn" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Refused</h2><div class="meta">today 09:58:44 · answered <span class="mono">401</span></div></div>
+  </div>
+  <div class="wh-why attention"><b style="font-weight:500">The signature does not match the secret of Data Hub uat.</b> Anyone can send to this address, so Data Hub read nothing of it: not the job, not the run.</div>
+  <dl class="wh-facts">
+   <dt>Sent to</dt><dd><span class="mono">/webhooks/dbt-cloud</span></dd>
+   <dt>Signature</dt><dd>present, but made with another secret</dd>
+  </dl>
+  <div class="label" style="margin-top:18px">What you can do</div>
+  <p class="wh-text">Was the webhook made again in dbt Cloud? It then has a new secret: put it in <span class="mono">datahub-dbt-webhook-secret</span>, as in step 8 of the setup, and send a test from dbt Cloud. A delivery you cannot place may be someone trying the address.</p>
+  <div class="wh-actions"><a class="btn-quiet outline" href="#"><i class="ph ph-book-open-text"></i>Step 8 of the setup</a></div>
+ </section>
+
+ <section class="card mc-detail" data-pane-group="wh" data-pane="failed" hidden aria-label="The delivery opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-warning-circle wh-big warn" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Recorded, failed</h2><div class="meta">yesterday 16:20:12</div></div>
+   <a class="btn-quiet outline" href="#"><i class="ph ph-arrow-square-out"></i>Run in dbt Cloud</a>
+  </div>
+  <dl class="wh-facts">
+   <dt>Job</dt><dd>UAT - Deploy - Merge build (triggerd by git ci) <span class="mono wh-id">748279</span>, the Source Job of Colleciónes</dd>
+   <dt>dbt project</dt><dd>Colleciónes · compilacion-colleciones-dbt <span class="mono wh-id">17121</span></dd>
+   <dt>Environment in dbt Cloud</dt><dd>UAT</dd>
+   <dt>Run</dt><dd><span class="mono">58141207</span> · succeeded · 16:09 to 16:20 · <span class="mono">cea2a43</span> on uat</dd>
+   <dt>Event</dt><dd><span class="mono">job.run.completed</span> · account <span class="mono">576</span> · signature right</dd>
+  </dl>
+  <div class="label" style="margin-top:18px">What Data Hub did</div>
+  <ol class="wh-steps">
+   <li><i class="ph-fill ph-check-circle"></i><span>Recorded the run as an Artifact Set</span><span class="meta">16:20</span></li>
+   <li><i class="ph-fill ph-check-circle"></i><span>Fetched <span class="mono">manifest.json</span></span><span class="meta">16:20</span></li>
+   <li class="fail"><i class="ph-fill ph-warning-circle"></i><span>No <span class="mono">catalog.json</span> in the run, also after a minute and a half: the real columns are not known</span><span class="meta">16:22</span></li>
+   <li class="kept"><i class="ph-fill ph-minus-circle"></i><span>The Current Version of Colleciónes stays the run of 29 Oct, 06:12</span><span class="meta">16:22</span></li>
+  </ol>
+  <div class="wh-why attention" style="margin-top:16px"><b style="font-weight:500">The job does not generate the docs.</b> Turn on "Generate docs on run" for it in dbt Cloud, then run it again: the next run counts. Process again only helps when dbt Cloud published the file late.</div>
+  <div class="wh-actions"><button class="btn-quiet outline"><i class="ph ph-arrow-counter-clockwise"></i>Process again</button><a class="btn-quiet outline" href="#"><i class="ph ph-arrow-square-out"></i>The job in dbt Cloud</a></div>
+ </section>
+
+ <section class="card mc-detail" data-pane-group="wh" data-pane="test" hidden aria-label="The delivery opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-flask wh-big" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Ignored: a test</h2><div class="meta">today 10:12:03 · answered <span class="mono">204</span></div></div>
+  </div>
+  <p class="wh-text" style="margin-top:16px">A test from dbt Cloud, sent with Test endpoint on the webhook <b style="font-weight:500">Data Hub uat</b>. Its signature is right, so dbt Cloud reaches Data Hub uat with the right secret. A test brings no run and changes nothing.</p>
+ </section>
+</div>
+
+<section class="card wh-empty" data-pane-group="wh" data-pane="none" hidden>
+ <i class="ph ph-plugs" aria-hidden="true" style="font-size:28px;color:var(--text-muted)"></i>
+ <p style="margin:10px 0 4px;color:var(--text-primary)">No deliveries in the last 30 days.</p>
+ <p class="meta" style="display:block;line-height:1.5;max-width:520px;margin:0 auto">Is the webhook <b style="font-weight:500">Data Hub uat</b> set up in dbt Cloud, with the Source Jobs above? Send a test from there: it shows here at once.</p>
+</section>
+</main>
+</div>
+
+<div class="sheet-wrap" id="pick" data-pane-group="pick" data-pane="open" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="pick-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-webhooks-logo" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Webhooks · Data Hub uat</div><h2 id="pick-title">Source Job of dbt-prod</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">The jobs of <span class="mono">immoscoop_dataplatform_sql</span> (<span class="mono">9367</span>) as dbt Cloud names them. Data Hub uat reads a job of UAT that builds uat after a merge and generates the docs.</p>
+ <label class="search card" style="margin:12px 0 0"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search by name or ID"></label>
+ <div class="sheet-list" role="radiogroup" aria-label="Jobs">
+  <div class="panel-label">UAT</div>
+  <label class="wh-opt"><input type="radio" name="job" checked>
+   <span><span class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build</span><span class="mono wh-id">352118</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Merge</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span><span class="meta">last run today 11:52, succeeded</span></span>
+   <span class="meta" style="display:block;margin-top:6px">The Source Job now</span></span></label>
+  <label class="wh-opt"><input type="radio" name="job">
+   <span><span class="wh-job-name"><span class="item-title">daily UAT build (uat)</span><span class="mono wh-id">322951</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Scheduled</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span><span class="meta">last run today 06:12, succeeded</span></span></span></label>
+  <label class="wh-opt off"><input type="radio" name="job" disabled>
+   <span><span class="wh-job-name"><span class="item-title">CI/CD - UAT - triggered by Github Pipelines</span><span class="mono wh-id">324451</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">CI</span><span class="meta">builds pull requests in schemas of their own: cannot be one</span></span></span></label>
+  <div class="panel-label">Production</div>
+  <label class="wh-opt off"><input type="radio" name="job" disabled>
+   <span><span class="wh-job-name"><span class="item-title">CI/CD - prod - triggered by Github Pipelines</span><span class="mono wh-id">324502</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Merge</span><span class="meta">of Production: Data Hub prod reads it</span></span></span></label>
+  <label class="wh-opt off"><input type="radio" name="job" disabled>
+   <span><span class="wh-job-name"><span class="item-title">daily production build (prod)</span><span class="mono wh-id">322950</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Scheduled</span><span class="meta">of Production: Data Hub prod reads it</span></span></span></label>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta" style="display:block;line-height:1.5">It counts from the next run. Name it in the webhook <b style="font-weight:500">Data Hub uat</b> in dbt Cloud too.</p>
+  <button class="btn-quiet outline" data-sheet-close>Cancel</button>
+  <button class="btn-primary" data-sheet-close>Make it the Source Job</button>
+ </div>
+</section>
+</div>
+
+<div hidden data-group="pick"><button data-target="open"></button></div>
+<div class="proto-switch" data-group="opened" role="tablist" aria-label="Prototype: the delivery opened">Opened
+ <button class="seg on" data-target="recorded" data-go="wh:recorded" role="tab" aria-selected="true">Recorded</button>
+ <button class="seg" data-target="ignored" data-go="wh:ignored" role="tab" aria-selected="false">Ignored</button>
+ <button class="seg" data-target="refused" data-go="wh:refused" role="tab" aria-selected="false">Refused</button>
+ <button class="seg" data-target="failed" data-go="wh:failed" role="tab" aria-selected="false">Failed</button>
+ <button class="seg" data-target="test" data-go="wh:test" role="tab" aria-selected="false">A test</button>
+ <button class="seg" data-target="none" data-go="wh:none" role="tab" aria-selected="false">None yet</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
