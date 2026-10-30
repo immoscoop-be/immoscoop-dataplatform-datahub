@@ -12,7 +12,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Data Hub design principles](../design/principles.md) | – | – | 128 | 45 (5 open, 40 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
-| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 specified, 14 implemented) | 5 (5 specified) | 8 | 8 (8 done) |
+| [Artifact registry](functional/01-artifact-registry.md) | 17 (3 specified, 14 implemented) | 5 (5 specified) | 9 | 9 (1 open, 8 done) |
 | [User management](functional/02-user-management.md) | 11 (3 specified, 7 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 8 (2 open, 6 done) |
 | [Collections](functional/03-collections.md) | 37 (1 proposed, 1 specified, 31 implemented, 4 withdrawn) | 2 (2 specified) | 25 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (3 proposed, 11 specified, 34 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 43 | 23 (2 open, 21 done) |
