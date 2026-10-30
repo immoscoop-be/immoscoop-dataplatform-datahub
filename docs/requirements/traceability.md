@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 151 | 52 (8 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 152 | 52 (8 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (5 specified, 14 implemented) | 5 (5 specified) | 9 | 9 (1 open, 8 done) |
@@ -180,7 +180,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | [TR-SR-16](technical/04-stacks-and-resources.md#tr-sr-16) | [8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) refs, 2026-10-29<br>[f3da34c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f3da34cc541af1b4bf17a5ca7e8a3184dac870f8) refs, 2026-10-29 |
 | [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52) | Data Hub finds what is Broken, and what works again | Proposed | – | – | [TR-LE-06](technical/09-lenses.md#tr-le-06) | [e79e068](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e79e068ca6d992512b3b2fc9c6155af453a7e8eb) refs, 2026-10-29<br>[e0e427e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e0e427ed6fc1640e0c7695712a32f8971176abae) refs, 2026-10-29 |
 | [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53) | A query that reads what no longer exists is Broken | Proposed | – | – | – | – |
-| [FR-SR-54](functional/04-stacks-and-resources.md#fr-sr-54) | The lineage of a Resource is walked one step at a time | Implemented | – | [resource-lineage](../design/screens/resource-lineage.html) | [TR-AR-11](technical/01-artifact-registry.md#tr-ar-11), [TR-SR-11](technical/04-stacks-and-resources.md#tr-sr-11) | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28 |
+| [FR-SR-54](functional/04-stacks-and-resources.md#fr-sr-54) | The lineage of a Resource is walked one step at a time | Implemented | – | [resource-lineage](../design/screens/resource-lineage.html) | [TR-AR-11](technical/01-artifact-registry.md#tr-ar-11), [TR-SR-11](technical/04-stacks-and-resources.md#tr-sr-11) | [d9cd577](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d9cd577c1037f45efb605d847c76c228a48fc134) refs, 2026-10-30<br>[28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28 |
 
 ### [Resource card](functional/05-resource-card.md)
 
