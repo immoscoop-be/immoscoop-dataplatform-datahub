@@ -72,6 +72,8 @@ export interface Catalogue {
   keepLens(lens: Lens): Promise<void>;
   /** Sends the Request of Data Hub on a Lens that grew into very large, as query itself (MSG-LEN-03). */
   lensGrew(fields: { lensId: string; reads: number; threshold: number }): Promise<{ id: string }>;
+  /** Tells the author of a Lens that grew into large, past 100 MB a run, as query itself; it keeps running (MSG-LEN-02). */
+  lensGrewLarge(fields: { lensId: string; reads: number; threshold: number }): Promise<void>;
   /** Records the decision of a member of the Data Team on a Request on a Lens, as query itself (FR-LE-09). */
   decideLensRequest(requestId: string, decision: { outcome: 'accepted' | 'refused'; text: string; decider: { id: string; name: string } }): Promise<void>;
 }
@@ -155,6 +157,10 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
 
     async lensGrew({ lensId, reads, threshold }) {
       return ((await (await asQuery('POST', `/internal/lenses/${lensId}/requests`, { reads, threshold })).json()) as { request: { id: string } }).request;
+    },
+
+    async lensGrewLarge({ lensId, reads, threshold }) {
+      await asQuery('POST', `/internal/lenses/${lensId}/growth`, { reads, threshold });
     },
 
     async decideLensRequest(requestId, decision) {

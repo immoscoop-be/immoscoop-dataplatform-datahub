@@ -509,10 +509,12 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           .where('projectId', '=', update.projectId)
           .where('withdrawnAt', 'is', null)
           .$if(keys.size > 0, (query) => query.where('key', 'not in', [...keys]))
-          .returning('id')
+          .returning(['id', 'collectionId'])
           .execute();
-        for (const { id } of gone) {
+        for (const { id, collectionId } of gone) {
           await write(trx, id, 'RES-004', { run });
+          // Its Owner hears of it; a Resource without a Collection has none (MSG-RES-06, DEC-SR-26).
+          if (collectionId) await tell(trx, id, 'MSG-RES-06', { run: runDay });
         }
         outcome.withdrawn = gone.length;
 

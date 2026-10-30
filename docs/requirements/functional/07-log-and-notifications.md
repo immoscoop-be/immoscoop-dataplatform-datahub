@@ -40,9 +40,11 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-ln-01"></a>
 ### FR-LN-01 · A notification to an Owner reaches its whole Owner Unit
 
-**Status:** Proposed · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [notifications](../../design/screens/notifications.html), [resource-messages](../../design/screens/resource-messages.html)
 
 A notification to the Owner of a Collection or a Resource reaches every member of its Owner Unit, so that a Collection always potentially has several owners.
+
+*Note of 2026-10-29, on building part 7b: as [DEC-LN-03](#dec-ln-03) and [DEC-LN-07](#dec-ln-07) decide, by e-mail to the address of the Google group of the Owner Unit and as a Slack direct message to each member Data Hub knows ([TR-LN-02](../technical/07-log-and-notifications.md#tr-ln-02)).*
 
 <a id="fr-ln-02"></a>
 ### FR-LN-02 · The Owner can notify the Consumers of a structural Change

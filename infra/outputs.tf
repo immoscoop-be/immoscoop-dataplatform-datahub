@@ -37,3 +37,8 @@ output "registry_webhook_url" {
   description = "The endpoint of the webhook in dbt Cloud (docs/architecture/gcp-setup.md, step 10)."
   value       = "${local.urls["registry"]}/webhooks/dbt-cloud"
 }
+
+output "mail_egress_address" {
+  description = "The fixed address catalogue sends from, to add to the SMTP relay of Workspace (docs/architecture/gcp-setup.md, step 9)."
+  value       = google_compute_address.egress.address
+}

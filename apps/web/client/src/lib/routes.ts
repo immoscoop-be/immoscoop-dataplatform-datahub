@@ -66,8 +66,8 @@ export function objectPath(subject: { kind: string; id: string }): string {
 }
 /** The Messages on an object, in its slide-in (FR-CV-07). */
 export const messagesOnPath = (subject: { kind: string; id: string }): string => `${objectPath(subject)}/messages`;
-/** A Message opened in context: the page of its object, with the Message in a floating window (FR-CV-09). */
-export const contextPath = (subject: { kind: string; id: string }, message: string): string => `${messagesOnPath(subject)}/${encodeURIComponent(message)}`;
+/** A Message opened in context: the page of its object, with the Message in a floating window (FR-CV-09); notifications link to it too. */
+export { contextPath } from '@datahub/contracts/messages';
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does

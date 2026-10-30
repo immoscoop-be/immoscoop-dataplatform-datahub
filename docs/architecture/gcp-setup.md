@@ -60,7 +60,7 @@ for PROJECT in "$PROD" "$UAT"; do
     iam.googleapis.com iamcredentials.googleapis.com sts.googleapis.com \
     cloudresourcemanager.googleapis.com serviceusage.googleapis.com \
     artifactregistry.googleapis.com cloudidentity.googleapis.com cloudkms.googleapis.com \
-    admin.googleapis.com
+    admin.googleapis.com compute.googleapis.com
 done
 ```
 
@@ -96,7 +96,8 @@ for PROJECT in "$PROD" "$UAT"; do
     roles/storage.admin \
     roles/secretmanager.admin \
     roles/cloudkms.admin \
-    roles/cloudscheduler.admin; do
+    roles/cloudscheduler.admin \
+    roles/compute.networkAdmin; do
     gcloud projects add-iam-policy-binding "$PROJECT" --member="serviceAccount:$SA" \
       --role="$ROLE" --condition=None --quiet > /dev/null
   done
@@ -115,6 +116,9 @@ done
 | Secret Manager Admin | The secrets: dbt Cloud token, OAuth client |
 | Cloud KMS Admin | The key that signs Access Tokens ([TR-PF-24](../requirements/technical/00-platform.md#tr-pf-24)); managing the key does not allow signing with it |
 | Cloud Scheduler Admin | The scheduled jobs, such as the Synchronisation of Groups |
+| Compute Network Admin | The network catalogue sends from, with the fixed address the SMTP relay of Workspace admits ([DEC-PF-31](../requirements/technical/00-platform.md#dec-pf-31)) |
+
+A project set up before notifications came (part 7b) needs `compute.googleapis.com` and Compute Network Admin added once: run steps 2 and 4 again.
 
 ## 5. Image repository and CI service account, in the prod project
 
@@ -210,6 +214,7 @@ Terraform creates the secrets in Secret Manager, but some values only a person c
 | --- | --- | --- |
 | `datahub-dbt-cloud-token` | A dbt Cloud service token that may read job Artifacts; one per environment | dbt Cloud → Account settings → Service tokens, with the permission **Job Viewer** on both dbt projects (9367 and 17121). The Source Jobs it reads are in [DEC-AR-01](../requirements/functional/01-artifact-registry.md#dec-ar-01) |
 | `datahub-dbt-webhook-secret` | The secret with which dbt Cloud signs its webhook to this environment | Step 10, once the webhook exists in dbt Cloud |
+| `datahub-slack-bot-token` | The Bot User OAuth Token (`xoxb-…`) of the Slack app of Data Hub. Until it has a value, Data Hub notifies by e-mail alone ([DEC-LN-05](../requirements/functional/07-log-and-notifications.md#dec-ln-05)) | api.slack.com → Your Apps → the app **Data Hub**, owned by the Data Team and installed in the workspace once by a Slack admin ([DEC-LN-06](../requirements/functional/07-log-and-notifications.md#dec-ln-06)), with the bot scopes `chat:write`, `im:write` and `users:read.email` only → OAuth & Permissions. One app serves both environments |
 | `datahub-google-oauth-client` | The JSON file the Google console downloads for an OAuth client of type "Web application", for Sign in with Google; add it with `gcloud secrets versions add datahub-google-oauth-client --project=<project> --data-file=<file>.json` and delete the file | GCP console → Google Auth Platform, per project: branding with audience **Internal**, then a client. Its redirect URI is the login callback of identity: `https://datahub-identity-<project number>.europe-west1.run.app/callback` (the Terraform output `identity_url`), until the domain names are chosen ([OP-PF-08](../requirements/technical/00-platform.md#op-pf-08)) |
 
 ## 9. Google Workspace, by a Workspace admin
@@ -218,7 +223,8 @@ After the first Terraform run has created the service account of identity in eac
 
 1. **Groups Reader for identity.** Admin console → Account → Admin roles → **Groups Reader** → Assign service accounts → add `datahub-identity@immoscoop-dataplatform-398214.iam.gserviceaccount.com` and `datahub-identity@immoscoop-dataplatform.iam.gserviceaccount.com` ([DEC-UM-03](../requirements/functional/02-user-management.md#dec-um-03), [OP-UM-03](../requirements/functional/02-user-management.md#op-um-03)).
 2. **Data Hub user reader for identity.** Admin console → Account → Admin roles → **Create new role** `Data Hub user reader`, with only **Admin API privileges → Users → Read** → Assign service accounts → the same two addresses. identity checks with it at every renewal whether an account is still active ([TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)); it cannot change anything.
-3. **The first Groups**, following the Naming Convention: the Role Group of the Data Team, `datahub-datateam@`, whose members can also read the database in Cloud SQL Studio ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)), and the first Owner Units ([OP-UM-04](../requirements/functional/02-user-management.md#op-um-04), [OP-CO-03](../requirements/functional/03-collections.md#op-co-03)).
+3. **The SMTP relay for Data Hub.** Admin console → Apps → Google Workspace → Gmail → Routing → **SMTP relay service** → Configure, one entry per environment, `Data Hub uat` and `Data Hub prod`: allowed senders **Only addresses in my domains**; authentication **Only accept mail from the specified IP addresses**, with the Terraform output `mail_egress_address` of that environment and no SMTP authentication; **Require TLS encryption** on. catalogue sends from `datahub@immoscoop.be` through `smtp-relay.gmail.com` from that address only, and keeps no password ([DEC-PF-31](../requirements/technical/00-platform.md#dec-pf-31)).
+4. **The first Groups**, following the Naming Convention: the Role Group of the Data Team, `datahub-datateam@`, whose members can also read the database in Cloud SQL Studio ([TR-PF-28](../requirements/technical/00-platform.md#tr-pf-28)), and the first Owner Units ([OP-UM-04](../requirements/functional/02-user-management.md#op-um-04), [OP-CO-03](../requirements/functional/03-collections.md#op-co-03)).
 
 ## 10. The webhook in dbt Cloud
 

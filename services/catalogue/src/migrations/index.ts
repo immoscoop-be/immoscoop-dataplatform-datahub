@@ -11,6 +11,7 @@ import * as requests from './0009-requests.js';
 import * as searchWords from './0010-search-words.js';
 import * as conversations from './0011-conversations.js';
 import * as fullName from './0012-full-name.js';
+import * as notifications from './0013-notifications.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -26,4 +27,5 @@ export const migrations: Record<string, Migration> = {
   '0010-search-words': searchWords,
   '0011-conversations': conversations,
   '0012-full-name': fullName,
+  '0013-notifications': notifications,
 };

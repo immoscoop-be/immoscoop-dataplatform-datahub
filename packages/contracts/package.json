@@ -32,6 +32,10 @@
       "types": "./dist/messageCatalogue.d.ts",
       "default": "./dist/messageCatalogue.js"
     },
+    "./notifications": {
+      "types": "./dist/notifications.d.ts",
+      "default": "./dist/notifications.js"
+    },
     "./settings": {
       "types": "./dist/settings.d.ts",
       "default": "./dist/settings.js"

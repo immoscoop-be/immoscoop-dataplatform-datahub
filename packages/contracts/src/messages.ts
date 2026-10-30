@@ -420,3 +420,133 @@ export function templateParameters(template: string): string[] {
   walk(parseTemplate(template));
   return [...names];
 }
+
+/** A piece of a line of a laid-out text, with its marks: strong, struck, a name as code. */
+export interface MarkedPiece {
+  readonly text: string;
+  readonly strong: boolean;
+  readonly struck: boolean;
+  readonly code: boolean;
+}
+
+/** A block of a laid-out text: a paragraph or the words of a person as a quote, a line each, or a list of items. */
+export type TextBlock = { readonly kind: 'paragraph' | 'quote'; readonly lines: MarkedPiece[][] } | { readonly kind: 'items'; readonly items: MarkedPiece[][] };
+
+const MARKS = [
+  ['**', 'strong'],
+  ['~~', 'struck'],
+  ['`', 'code'],
+] as const;
+
+/**
+ * The marks of a line, in the small part of Markdown the Message Catalogue uses (FR-CV-11): a mark opens only
+ * when it closes later on the line, within a name as code only its closing mark counts, and a backslash keeps
+ * the next mark as text. Every channel lays a Message out from these pieces (FR-CV-15).
+ */
+export function markedPieces(line: string): MarkedPiece[] {
+  const pieces: MarkedPiece[] = [];
+  const on = { strong: false, struck: false, code: false };
+  let text = '';
+  const flush = () => {
+    if (text) pieces.push({ text, ...on });
+    text = '';
+  };
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '\\' && i + 1 < line.length) {
+      text += line[i + 1];
+      i++;
+      continue;
+    }
+    const found = MARKS.find(([mark, name]) => line.startsWith(mark, i) && (on.code ? name === 'code' : on[name] || line.indexOf(mark, i + mark.length) > i));
+    if (found) {
+      flush();
+      on[found[1]] = !on[found[1]];
+      i += found[0].length - 1;
+    } else {
+      text += line[i];
+    }
+  }
+  flush();
+  return pieces;
+}
+
+/** The blocks of a laid-out text: paragraphs, items and the words of a person as a quote, in the order they come. */
+export function textBlocks(rich: string): TextBlock[] {
+  const out: TextBlock[] = [];
+  for (const part of rich.split(/\n{2,}/)) {
+    let last: { kind: 'paragraph' | 'quote'; lines: MarkedPiece[][] } | { kind: 'items'; items: MarkedPiece[][] } | undefined;
+    for (const line of part.split('\n')) {
+      const kind = line.startsWith('- ') ? 'items' : line.startsWith('> ') ? 'quote' : 'paragraph';
+      const pieces = markedPieces(kind === 'paragraph' ? line : line.slice(2));
+      if (last && last.kind === kind) {
+        if (last.kind === 'items') last.items.push(pieces);
+        else last.lines.push(pieces);
+      } else {
+        last = kind === 'items' ? { kind, items: [pieces] } : { kind, lines: [pieces] };
+        out.push(last);
+      }
+    }
+  }
+  return out;
+}
+
+/** Where the web app shows each kind of object a Message can be about (FR-CV-02). */
+const OBJECT_PATHS: Partial<Record<SubjectKind, string>> = { collection: '/collections', resource: '/resources', lens: '/lenses', query: '/query' };
+
+/**
+ * The address of a Message opened in context, from the root of the web app (FR-CV-09): the page of its
+ * object with the Message in a floating window. The web app routes it; a notification links to it.
+ */
+export function contextPath(subject: { readonly kind: SubjectKind | string; readonly id: string }, message: string): string {
+  const base = OBJECT_PATHS[subject.kind as SubjectKind];
+  if (!base) return `/messages/${encodeURIComponent(message)}`;
+  return `${base}/${encodeURIComponent(subject.id)}/messages/${encodeURIComponent(message)}`;
+}
+
+/** How the texts of the Message Catalogue name the kind of an object, in `{subjectKind}`: a name, never translated. */
+export const SUBJECT_NAMES: Readonly<Record<SubjectKind, string>> = {
+  collection: 'collection',
+  resource: 'resource',
+  lens: 'lens',
+  query: 'query',
+  report: 'report',
+  learningCard: 'learning card',
+};
+
+/** The kind of an object as a sentence of the interface names it: a Defined Term, never translated (NFR-LOC-01). */
+export const SUBJECT_TITLES: Readonly<Record<SubjectKind, string>> = {
+  collection: 'Collection',
+  resource: 'Resource',
+  lens: 'Lens',
+  query: 'Query',
+  report: 'Report',
+  learningCard: 'Learning Card',
+};
+
+/**
+ * The values of a kept Message as its texts take them (DEC-CV-07): its object by its current name and kind,
+ * its writer by name, and its parameters, which are kept as text, a list as JSON.
+ */
+export function messageValues(
+  type: MessageType | undefined,
+  message: { readonly params: Readonly<Record<string, string>>; readonly subject: { readonly kind: SubjectKind; readonly name: string }; readonly writer: { readonly name: string } | null },
+): MessageValues {
+  const values: Record<string, ParameterValue> = { subject: message.subject.name, subjectKind: SUBJECT_NAMES[message.subject.kind] };
+  if (message.writer) values.writer = message.writer.name;
+  for (const parameter of type ? [...implicitParameters(type), ...type.parameters] : []) {
+    const raw = message.params[parameter.name];
+    if (raw === undefined || parameter.name === 'subject' || parameter.name === 'subjectKind') continue;
+    if (parameter.type === 'count' || parameter.type === 'size' || parameter.type === 'level') {
+      values[parameter.name] = Number(raw);
+    } else if (parameter.type === 'list') {
+      try {
+        values[parameter.name] = JSON.parse(raw) as ParameterValue;
+      } catch {
+        values[parameter.name] = [];
+      }
+    } else {
+      values[parameter.name] = raw;
+    }
+  }
+  return values;
+}

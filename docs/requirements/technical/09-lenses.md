@@ -51,7 +51,7 @@ A query started with "New Lens" on the page of a Collection keeps that Collectio
 
 **Status:** Implemented · **Realises:** [FR-LE-10](../functional/09-lenses.md#fr-le-10), [DEC-LE-11](../functional/09-lenses.md#dec-le-11), [DEC-LE-19](../functional/09-lenses.md#dec-le-19), [DEC-UX-125](../../design/principles.md#dec-ux-125)
 
-When the Pre-flight or a run of a Lens with its default values, and the daily check ([TR-LE-06](#tr-le-06)), reads more than its range, query moves the Lens on: grown into large, its range follows and it keeps running; grown past 1 GB, its state becomes `stopped`, with since when and what one run read, and the Pre-flight and the run answer `409 stopped`. A stopped Lens stays where it is listed, for everyone who sees it, and runs for nobody. A run with values a User chose is that run alone. A new version that reads less publishes it again ([TR-LE-04](#tr-le-04)).
+When the Pre-flight or a run of a Lens with its default values, and the daily check ([TR-LE-06](#tr-le-06)), reads more than its range, query moves the Lens on: grown into large, its range follows, it keeps running and Data Hub tells its author ([MSG-LEN-02](../functional/message-catalogue.md#msg-len-02)); grown past 1 GB, its state becomes `stopped`, with since when and what one run read, and the Pre-flight and the run answer `409 stopped`. A stopped Lens stays where it is listed, for everyone who sees it, and runs for nobody. A run with values a User chose is that run alone. A new version that reads less publishes it again ([TR-LE-04](#tr-le-04)).
 
 <a id="tr-le-06"></a>
 ### TR-LE-06 · A Broken Lens is found on a failed Pre-flight and by a daily check
