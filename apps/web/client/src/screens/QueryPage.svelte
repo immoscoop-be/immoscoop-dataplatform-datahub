@@ -14,12 +14,14 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import { NotFound as Missing } from '../lib/api.js';
+  import { missingOfQuery } from '../lib/broken.js';
   import type { Collection } from '../lib/catalogue.js';
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
-  import type { Lens, LensSuggestions as Found, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
+  import type { Lens, LensSuggestions as Found, Missing as Lost, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
@@ -158,6 +160,8 @@
   let sql = $state('');
   let parameters = $state<Parameter[]>([]);
   let preflight = $state<Preflight | null>(null);
+  /** What it misses while it is Broken: Run is off and a callout names it, until a change runs or it comes back (FR-SR-53). */
+  let broken = $state<Lost | null>(null);
   /** The SQL and Parameters the Pre-flight is of: its marks hold only while they are the same. */
   let checked = $state('');
   let checking = $state(false);
@@ -201,6 +205,7 @@
     loadedId = id;
     query = undefined;
     preflight = null;
+    broken = null;
     page = null;
     run = null;
     expired = false;
@@ -220,6 +225,7 @@
       async (found) => {
         if (loadedId !== id) return;
         query = found;
+        broken = found.broken ?? null;
         atOnce = true;
         sql = found.sql;
         parameters = found.parameters;
@@ -300,12 +306,13 @@
     checking = true;
     const ask = () => {
       pending = null;
-      client.preflight(id, text, values).then(
+      client.check(id, text, values).then(
         (result) => {
           if (asked !== sequence) return;
-          preflight = result;
+          preflight = result.preflight;
           checked = keyOf(text, values);
           checking = false;
+          brokenNow(result.broken);
           if (runWhenChecked) {
             runWhenChecked = false;
             runFromKeys();
@@ -363,18 +370,29 @@
     if (outcome.kind === 'refused') {
       preflight = outcome.preflight;
       checked = keyOf(text, values);
+      if (outcome.broken !== undefined) brokenNow(outcome.broken);
       return;
     }
     if (outcome.kind === 'ran') {
       [run, page, expired, failure] = [outcome.run, outcome.page, false, null];
+      brokenNow(null);
     } else {
       [run, page, failure] = [outcome.run, null, outcome.message];
+      if (outcome.broken !== undefined) brokenNow(outcome.broken);
     }
     if (outcome.run) {
       history = [outcome.run, ...(history ?? [])];
       if (query) query.runs += 1;
     }
     onran();
+  }
+
+  /** Whether it is Broken now, as query said: the panel shows its red dot, or no longer (FR-SR-53). */
+  function brokenNow(now: Lost | null): void {
+    const changed = (broken === null) !== (now === null);
+    broken = now;
+    if (query) query.broken = now;
+    if (changed) onran();
   }
 
   const start = () => runWith(sql, parameters, current?.range !== 'free');
@@ -727,6 +745,16 @@
     </div>
   </header>
 
+  {#if broken}
+    <!-- A Broken query: Run is off and this names what it misses, and since when (FR-SR-53, DEC-UX-160). -->
+    <div class="broken">
+      <Callout icon="link-break-fill" tone="urgent">
+        <b>{t('query.broken.title')}</b>
+        {t('query.broken.text', { missing: missingOfQuery(broken, query.resources) ?? '', date: formatDay(broken.since.slice(0, 10), currentLanguage()) })}
+      </Callout>
+    </div>
+  {/if}
+
   <div class="work" class:side={layout === 'sideBySide'} class:dragging bind:this={work} style:--split="{split}%">
   <section class="frame card" aria-label={query.name}>
     <div class="scope">
@@ -893,9 +921,9 @@
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
-            disabled={!current?.runnable || checking}
+            disabled={!current?.runnable || checking || broken !== null}
             busy={running}
-            title={!current?.runnable ? t('query.cannotRun') : undefined}
+            title={broken !== null ? t('query.broken.run') : !current?.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
           >
             {#snippet explain()}
@@ -1074,6 +1102,7 @@
   /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
   .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
   .head { flex: none; }
+  .broken { flex: none; }
   .work { flex: 1; min-height: 360px; display: grid; margin-top: 14px; grid-template-rows: minmax(0, var(--split)) 14px minmax(0, 1fr); }
   .work.side { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, var(--split)) 14px minmax(0, 1fr); }
   .work.dragging { user-select: none; }

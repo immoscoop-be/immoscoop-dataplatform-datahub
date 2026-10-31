@@ -726,6 +726,29 @@ run "the_scheduler_checks_every_lens_once_a_day_with_its_own_token" {
   }
 }
 
+run "catalogue_has_query_check_what_reads_a_resource_that_changed" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["catalogue"]
+    override_during = plan
+    values = {
+      email  = "datahub-catalogue@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-catalogue@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_QUERY_URL=https://datahub-query-123456789.europe-west1.run.app")
+    error_message = "catalogue must know where query is, to have it check what reads a Resource that changed (FR-SR-52)."
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_CATALOGUE_SERVICE_ACCOUNT=datahub-catalogue@test-project.iam.gserviceaccount.com")
+    error_message = "query must know catalogue's service account, the only caller besides the scheduler that starts a check (FR-SR-52)."
+  }
+}
+
 run "identity_tells_once_a_day_whose_excel_key_expires_and_knows_who_calls" {
   command = plan
 

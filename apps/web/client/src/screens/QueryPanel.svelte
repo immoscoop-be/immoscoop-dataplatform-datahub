@@ -5,6 +5,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import { isToday, isYesterday, type Period, periodOf, periodsOf } from '../lib/periods.js';
   import { type QueryClient, type QueryDay, type QueryItem, type Run, SHOWN, type Shown } from '../lib/query.js';
@@ -198,7 +199,7 @@
       href={item.kind === 'lens' && item.lensOf ? lensPath(item.lensOf) : queryPath(item.id)}
       aria-current={item.id === current ? 'page' : undefined}
     >
-      <span class="kind"><KindIcon kind={item.kind === 'lens' ? 'lens' : 'resource'} /></span>
+      <span class="kind"><KindIcon kind={item.kind === 'lens' ? 'lens' : 'resource'} broken={brokenText(item.broken ?? null)} /></span>
       <span class="text"><span class="name" title={item.name}>{item.name}</span><span class="meta" title={meta(item)}>{meta(item)}</span></span>
       {#if item.request?.state === 'waiting'}
         <span class="pill urgent">{t('query.toDataTeam')}</span>

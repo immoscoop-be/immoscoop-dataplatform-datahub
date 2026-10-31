@@ -183,14 +183,14 @@ Search works by name (also with a typo or a half-remembered name), by free text 
 <a id="fr-ar-11"></a>
 ### FR-AR-11 · Compare every new version Node by Node
 
-**Status:** Specified · **Confluence:** AR-11
+**Status:** Implemented · **Confluence:** AR-11
 
 Every new Current Version is compared with the previous one, Node by Node. This yields Changes of five kinds: description, logic, type, structural, and Node added or removed (see [Kinds of Change](#kinds-of-change) below).
 
 <a id="fr-ar-12"></a>
 ### FR-AR-12 · Propagate every Change downstream
 
-**Status:** Specified · **Confluence:** AR-12
+**Status:** Implemented · **Confluence:** AR-12
 
 Every Change is followed downstream to all Resources that depend on it, however deep. Every affected Resource gets an entry in its Log, with the original Change and the distance in the lineage. Nothing is filtered out.
 
@@ -300,7 +300,7 @@ In the Artifacts, this looks like one Node disappearing and another appearing. T
 <a id="ec-ar-04"></a>
 ### EC-AR-04 · An upstream model disappears
 
-**Status:** Specified
+**Status:** Implemented
 
 The Resources that depended on it get an entry in their Log, even if the table of the Resource itself is (still) unchanged.
 

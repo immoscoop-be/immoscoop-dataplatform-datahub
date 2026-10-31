@@ -94,12 +94,14 @@ locals {
     # address (TR-SR-01), and asks registry the lineage around a Resource as itself (DEC-AR-06).
     # query tells it about the Lenses and the decisions on them the same way (TR-CV-02). It notifies by
     # e-mail through the SMTP relay of Workspace and in Slack, links to the web app, and the scheduler has
-    # it send what is left (DEC-LN-02, DEC-PF-31).
+    # it send what is left (DEC-LN-02, DEC-PF-31). After a new Current Version it has query check what
+    # reads the Resources that changed, as itself (FR-SR-52).
     catalogue = merge(local.database_env["catalogue"], {
       DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
       DATAHUB_REGISTRY_SERVICE_ACCOUNT  = google_service_account.service["registry"].email
       DATAHUB_REGISTRY_URL              = local.urls["registry"]
       DATAHUB_QUERY_SERVICE_ACCOUNT     = google_service_account.service["query"].email
+      DATAHUB_QUERY_URL                 = local.urls["query"]
       DATAHUB_IDENTITY_SERVICE_ACCOUNT  = google_service_account.service["identity"].email
       DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
       DATAHUB_WEB_URL                   = local.urls["web"]
@@ -116,8 +118,10 @@ locals {
     })
     # query asks catalogue which Resources the User may see, with their token, and runs the jobs in
     # the project and location of Data Hub, where the tables of its dbt projects are (DEC-SR-32). The
-    # scheduler starts its daily check of every Lens, by a Google ID token for its address (DEC-LE-20).
+    # scheduler starts its daily check of every Lens and query, and catalogue its check of what reads a
+    # Resource that changed, each by a Google ID token for its address (DEC-LE-20, FR-SR-52).
     query = merge(local.database_env["query"], {
+      DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
       DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
       DATAHUB_BIGQUERY_PROJECT          = var.project_id
       DATAHUB_BIGQUERY_LOCATION         = var.region
