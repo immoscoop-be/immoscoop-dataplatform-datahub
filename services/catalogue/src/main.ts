@@ -65,6 +65,11 @@ const app = await buildApp({
       audience: catalogueUrl,
       serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')],
     }),
+    // identity tells about the Excel key of a User the same way (FR-PL-03).
+    keyCallers: createServiceCallerVerifier({
+      audience: catalogueUrl,
+      serviceAccounts: [required('DATAHUB_IDENTITY_SERVICE_ACCOUNT')],
+    }),
     learning: createLearning(database.db),
     // After a new Current Version, query checks what reads the Resources that changed, asked as catalogue (FR-SR-52).
     query: createQueryService(required('DATAHUB_QUERY_URL'), idToken),

@@ -197,7 +197,7 @@ Every Change is followed downstream to all Resources that depend on it, however 
 <a id="fr-ar-13"></a>
 ### FR-AR-13 · Anyone with access can read the Log
 
-**Status:** Specified · **Confluence:** AR-13 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Confluence:** AR-13 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 Anyone with access to a Resource can read its Log.
 
@@ -277,14 +277,14 @@ Proposals to confirm.
 <a id="ec-ar-01"></a>
 ### EC-AR-01 · An older run arrives after a newer one
 
-**Status:** Specified
+**Status:** Implemented
 
 It is stored and processed, but does not become the Current Version: the Current Version never goes back in time.
 
 <a id="ec-ar-02"></a>
 ### EC-AR-02 · The catalog is missing
 
-**Status:** Specified
+**Status:** Implemented
 
 Without `catalog.json`, the actual columns are not known. The set gets the status failed, with that reason, and the previous version stays current.
 
@@ -310,7 +310,7 @@ The Resources that depended on it get an entry in their Log, even if the table o
 <a id="ec-ar-05"></a>
 ### EC-AR-05 · The collector does not answer
 
-**Status:** Specified
+**Status:** Implemented
 
 When Data Hub needs the Domain Model and the collector does not answer ([DEC-AR-05](#dec-ar-05)), the step that needs it says so, such as suggesting the mappings when adding a Resource, and offers to try again. Data Hub guesses nothing and falls back on no copy; what does not need the Domain Model goes on as usual.
 ## Out of scope

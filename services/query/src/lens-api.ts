@@ -1,4 +1,4 @@
-import type { ServiceCallerVerifier } from '@datahub/auth';
+import { excelKeyFrom, type ExcelKeyExchanger, type ServiceCallerVerifier, type TokenVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
@@ -28,8 +28,12 @@ export interface LensContext {
   /** The SQL with each Resource by its full name in its own case, as BigQuery gets it (DEC-SR-44). */
   ownCase(sql: string, resources: ResourceOfQuery[]): string;
   unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined;
-  execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }): Promise<unknown>;
+  execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }, excel?: { rows: number }): Promise<unknown>;
+  excel?: { exchanger: ExcelKeyExchanger; verifier: TokenVerifier } | undefined;
 }
+
+/** Excel gets at most this many rows of a Lens per refresh (DEC-CH-06). */
+export const EXCEL_ROWS = 10_000;
 
 const NO_LENS = { error: 'not_found', message: 'There is no such Lens, or you may not see it.' };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -165,7 +169,7 @@ const requestView = (request: QueryRequest | undefined) =>
  * one with its Parameters, every run a query in the Query Log (FR-LE-12).
  */
 export async function lensRoutes(app: FastifyInstance, context: LensContext): Promise<void> {
-  const { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep: broken, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute } = context;
+  const { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep: broken, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel } = context;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const collections = await catalogue.collections(authorization(request));
@@ -513,6 +517,47 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const query = await queries.lensFor(viewer(request), run.lens);
     return execute(request, reply, query, { sql: run.lens.sql, parameters: run.parameters, approve: run.approve });
   });
+
+  // Excel (DEC-CH-03, DEC-CH-06): the result of a Lens as CSV, with its Parameters at their defaults, at most
+  // 10,000 rows. Power Query signs in with Basic, the Excel key as password; query exchanges it at identity for
+  // an Access Token of its User (TR-PF-07), and the Lens runs as it would on its page for them.
+  if (excel) {
+    const askKey = (reply: FastifyReply, message: string) =>
+      reply.code(401).header('www-authenticate', 'Basic realm="Data Hub", charset="UTF-8"').send({ error: 'unauthorized', message });
+    app.get<{ Params: { id: string } }>('/excel/lenses/:id', { config: { public: true } }, async (request, reply) => {
+      const key = excelKeyFrom(request.headers.authorization);
+      if (!key) return askKey(reply, 'Sign in with Basic: your e-mail as user name, and an Excel key as password.');
+      let token: string | undefined;
+      try {
+        token = await excel.exchanger.accessToken(key);
+      } catch (error) {
+        request.log.error({ err: error }, 'identity did not exchange an Excel key');
+        return reply.code(503).header('retry-after', '30').send({ error: 'temporarily_unavailable', message: 'Data Hub could not check the key; try again later.' });
+      }
+      if (!token) return askKey(reply, 'This Excel key is not known, revoked or expired. Make a new one on My page in Data Hub.');
+      // From here on the request is the User's, as if it came with their Access Token.
+      request.user = await excel.verifier.verify(token);
+      request.headers.authorization = `Bearer ${token}`;
+      const seen = await seenLens(request, reply);
+      if (!seen) return reply;
+      const { lens } = seen;
+      // As on its page: waiting, refused or stopped, it runs for nobody (DEC-LE-05, DEC-LE-11).
+      if (lens.state !== 'published') {
+        const why = { waiting: 'it waits for the Data Team', refused: 'the Data Team refused it', stopped: 'it stopped, and waits for the Data Team to accept it again' }[lens.state];
+        return reply.code(409).send({ error: lens.state, message: `This Lens does not run now: ${why}.` });
+      }
+      const parameters = valuesFor(lens, undefined);
+      if (typeof parameters === 'string') return reply.code(400).send({ error: 'invalid_request', message: parameters });
+      try {
+        const checked = await check(lens.sql, parameters, await resourcesOf(request, lens));
+        if (!(await upkeep(request, reply, lens, checked, true))) return reply;
+      } catch (error) {
+        return unavailable(error, reply, request);
+      }
+      const query = await queries.lensFor(viewer(request), lens);
+      return execute(request, reply, query, { sql: lens.sql, parameters, approve: false }, { rows: EXCEL_ROWS });
+    });
+  }
 
   /** The Lens, if the User sees it and may change it; while it waits for the Data Team, nobody changes it (DEC-LE-05). */
   async function managed(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {

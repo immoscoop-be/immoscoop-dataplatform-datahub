@@ -122,7 +122,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Browser | web | Google, through identity |
 | Claude | mcp | OAuth through identity, which delegates to Google ([TR-PF-06](../requirements/technical/00-platform.md#tr-pf-06)) |
-| Excel | query, as a Power Query feed | The Excel key, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
+| Excel | query, the result of a Lens as CSV for Power Query ([TR-LE-08](../requirements/technical/09-lenses.md#tr-le-08)) | The Excel key, as the password of Basic, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
 | Later: HTML reports, others | The same APIs | One of the above |
 
 None of the interfaces holds business logic. Lens and Report components are shared between web and the MCP App ([TR-PF-12](../requirements/technical/00-platform.md#tr-pf-12)).

@@ -57,6 +57,7 @@ const SUBJECTS: Record<string, string> = {
   query: 'query',
   report: 'Report',
   learningCard: 'Learning Card',
+  excelKey: 'Excel key',
 };
 const KINDS: Record<string, string> = {
   question: 'Question',

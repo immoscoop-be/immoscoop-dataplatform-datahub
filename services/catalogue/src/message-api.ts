@@ -22,6 +22,8 @@ export interface MessageRouteOptions {
   messages: Messages;
   /** query, which tells about its Lenses and decides on a Request on one (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
+  /** identity, which tells about an Excel key: it expires within a month, or the Data Team revoked it (FR-PL-03). */
+  keyCallers?: ServiceCallerVerifier;
   viewer: (request: FastifyRequest) => Viewer;
 }
 
@@ -88,7 +90,7 @@ export function parseLensFacts(body: unknown): LensFacts | string {
  * Lens, with its Google ID token: the Lens itself changes in query.
  */
 export async function messageRoutes(app: FastifyInstance, options: MessageRouteOptions): Promise<void> {
-  const { collections, messages, lensCallers, viewer } = options;
+  const { collections, messages, lensCallers, keyCallers, viewer } = options;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const who = viewer(request);
@@ -196,6 +198,47 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
       case 'not_waiting':
         return reply.code(409).send({ error: 'not_waiting', message: 'This Request was decided already.' });
     }
+  }
+
+  // identity tells about the Excel key of a User (MSG-KEY-01, MSG-KEY-02); the Message is for that User alone.
+  if (keyCallers) {
+    app.post<{ Body: unknown }>(
+      '/internal/excel-keys/notices',
+      {
+        config: { public: true },
+        onRequest: async (request, reply) => {
+          const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+          try {
+            await keyCallers.verify(token);
+          } catch (error) {
+            request.log.warn({ err: error }, 'a notice about an Excel key was refused');
+            return reply.code(401).send({ error: 'unauthorized', message: 'Only identity tells about Excel keys.' });
+          }
+        },
+      },
+      async (request, reply) => {
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+        const type = body.type;
+        if ((type !== 'MSG-KEY-01' && type !== 'MSG-KEY-02') || typeof body.keyId !== 'string' || !UUID.test(body.keyId) || !text(body.userId, 200) || !text(body.name, 80)) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A notice names its type, the key, its User and its name.' });
+        }
+        if (type === 'MSG-KEY-01' && !(typeof body.expires === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.expires))) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A key that expires says on which day, as YYYY-MM-DD.' });
+        }
+        if (type === 'MSG-KEY-02' && !text(body.actor, 200)) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A revoked key says who of the Data Team revoked it.' });
+        }
+        const made = await messages.keyNotice({
+          type,
+          keyId: body.keyId.toLowerCase(),
+          userId: body.userId as string,
+          name: body.name as string,
+          ...(type === 'MSG-KEY-01' ? { expires: body.expires as string } : { actor: body.actor as string }),
+        });
+        return reply.code(201).send(made);
+      },
+    );
   }
 
   // query tells what it keeps about a Lens whenever it changes, and all of them once a day (DEC-PF-30).

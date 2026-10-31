@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
-import type { ServiceCallerVerifier } from '@datahub/auth';
+import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Page, ResultExpired } from './bigquery.js';
+import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
@@ -29,6 +29,8 @@ export interface ApiOptions {
   thresholds: Thresholds;
   /** The size and partitions of a Resource, and its newest partitions (FR-SR-39, DEC-SR-39). */
   storage: StorageReader;
+  /** Excel, which signs in with an Excel key, exchanged at identity for an Access Token (TR-PF-07, DEC-CH-06). */
+  excel?: { exchanger: ExcelKeyExchanger; verifier: TokenVerifier };
 }
 
 /** The role of the Data Team in the Access Token (TR-PF-03). */
@@ -156,7 +158,7 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  * them and the Data Team (DEC-LN-01).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers } = options;
+  const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel } = options;
   /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
   const upkeep = createUpkeep({ queries, lenses, catalogue, bigquery });
 
@@ -446,8 +448,11 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return execute(request, reply, query, body);
   });
 
-  /** Runs a query of the User: checked again, then a job of BigQuery, the run kept in the Query Log. */
-  async function execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }) {
+  /**
+   * Runs a query of the User: checked again, then a job of BigQuery, the run kept in the Query Log. For Excel,
+   * its first rows as CSV, at most `excel.rows` (DEC-CH-06), instead of the first page.
+   */
+  async function execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }, excel?: { rows: number }) {
     let checked: Preflight;
     let resources: ResourceOfQuery[];
     let accepted = false;
@@ -479,7 +484,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         maximumBytesBilled: accepted ? Math.max(thresholds.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : thresholds.request,
         labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
         requestId: randomUUID(),
-        pageSize: PAGE_SIZE,
+        pageSize: excel ? excel.rows : PAGE_SIZE,
         parameters: bound.parameters,
       });
       const done = await queries.finishRun(run.id, {
@@ -491,6 +496,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         rowCount: finished.totalRows,
         columns: finished.columns,
       });
+      if (excel) return sendCsv(reply, finished, excel.rows, done.queryRef);
       return reply.code(201).send({ run: runView(done), page: pageView(finished, 1) });
     } catch (error) {
       const failed = await queries.failRun(run.id, error instanceof Error ? error.message : String(error));
@@ -502,6 +508,29 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       }
       return unavailable(error, reply, request);
     }
+  }
+
+  /**
+   * The result for Excel as CSV with a header of its column names: its first rows, read on from the same job
+   * where BigQuery gave fewer, at most `limit` (DEC-CH-06). Its Query ID is in a header, so that the run can be
+   * traced back (FR-LN-06).
+   */
+  async function sendCsv(reply: FastifyReply, finished: Finished, limit: number, queryRef: string) {
+    const rows = finished.rows.slice(0, limit);
+    while (rows.length < Math.min(limit, finished.totalRows)) {
+      const page = await bigquery.page(finished, rows.length, limit - rows.length);
+      if (page.rows.length === 0) break;
+      rows.push(...page.rows.slice(0, limit - rows.length));
+    }
+    const cell = (value: string | null) => (value === null ? '' : /[",\r\n]/.test(value) ? `"${value.replaceAll('"', '""')}"` : value);
+    const lines = [finished.columns.map((column) => cell(column.name)).join(','), ...rows.map((row) => row.map(cell).join(','))];
+    return reply
+      .code(200)
+      .header('content-type', 'text/csv; charset=utf-8')
+      .header('cache-control', 'no-store')
+      .header('x-datahub-query-id', queryRef)
+      .header('x-datahub-rows', `${rows.length} of ${finished.totalRows}`)
+      .send(`\ufeff${lines.join('\r\n')}\r\n`);
   }
 
   // A Request to the Data Team to run it above 1 GB (MSG-QRY-01, DEC-UX-116): sent for its author, with the
@@ -736,7 +765,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
-  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute });
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel });
 }
 
 function pageView(page: Page, number: number) {

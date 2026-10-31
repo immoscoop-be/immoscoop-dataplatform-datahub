@@ -25,23 +25,27 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-pl-01"></a>
 ### FR-PL-01 · A User makes an Excel key on My page, and sees it once
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 On My page, a User makes an Excel key and gives it a name that says where it is used, such as "Excel on my laptop". Data Hub shows the key once, to copy, with how to use it in Power Query. identity keeps only its hash ([TR-PF-07](../technical/00-platform.md#tr-pf-07)): nobody can show it again.
+
+*Note of 2026-10-31: built as [TR-PL-01](../technical/12-permissions-and-library-cards.md#tr-pl-01); the page of a Lens has "Open in Excel" with its address ([DEC-UX-159](../../design/principles.md#dec-ux-159)).*
 
 <a id="fr-pl-02"></a>
 ### FR-PL-02 · My page lists the Excel keys of its User, and revokes one
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · [design](../../design/principles.md#my-page) · **Screens:** [my-page](../../design/screens/my-page.html)
 
 My page lists every Excel key of its User: its name, when it was made, when it was last used and when it expires. Revoking one stops it at once, after a confirmation; the list keeps it, marked revoked. Renewing a key is revoking it and making a new one.
 
 <a id="fr-pl-03"></a>
 ### FR-PL-03 · An Excel key lasts a year, and stops with its User
 
-**Status:** Specified · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · **Screens:** [admin-keys](../../design/screens/admin-keys.html), [my-page](../../design/screens/my-page.html)
+**Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-DH-79](../../overview/data-hub.md#dec-dh-79)) · **Screens:** [admin-keys](../../design/screens/admin-keys.html), [my-page](../../design/screens/my-page.html)
 
 An Excel key expires a year after it was made; a month before, its User gets a notification. It stops at once when its User can no longer sign in with Google, for example after leaving. The Data Team can revoke any key, and its User gets a notification of that.
+
+*Note of 2026-10-31: built as [TR-PL-01](../technical/12-permissions-and-library-cards.md#tr-pl-01) and [TR-PL-02](../technical/12-permissions-and-library-cards.md#tr-pl-02), the notifications as [MSG-KEY-01](message-catalogue.md#msg-key-01) and [MSG-KEY-02](message-catalogue.md#msg-key-02). The Data Team revokes a key with the API of identity; its page Excel keys in the Admin section ([admin-keys](../../design/screens/admin-keys.html)) comes with that section.*
 
 ## Open points
 

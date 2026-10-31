@@ -154,7 +154,7 @@ Resources are only added or removed; moving does not exist. Whoever wants a Reso
 <a id="fr-co-09"></a>
 ### FR-CO-09 · The Owner Unit can change; Confirmations remain valid
 
-**Status:** Specified · **Confluence:** CO-09 · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
+**Status:** Implemented · **Confluence:** CO-09 · **Screens:** [collection-edit](../../design/screens/collection-edit.html)
 
 The Owner Unit of a Collection can be changed. The existing Confirmations of its Resources remain valid.
 

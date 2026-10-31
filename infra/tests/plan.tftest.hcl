@@ -749,6 +749,39 @@ run "catalogue_has_query_check_what_reads_a_resource_that_changed" {
   }
 }
 
+run "identity_tells_once_a_day_whose_excel_key_expires_and_knows_who_calls" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.scheduler
+    override_during = plan
+    values = {
+      email  = "datahub-scheduler@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-scheduler@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition = (
+      google_cloud_scheduler_job.excel_keys.http_target[0].http_method == "POST" &&
+      endswith(google_cloud_scheduler_job.excel_keys.http_target[0].uri, "/internal/excel-keys/expiring") &&
+      google_cloud_scheduler_job.excel_keys.http_target[0].oidc_token[0].service_account_email == "datahub-scheduler@test-project.iam.gserviceaccount.com" &&
+      startswith(google_cloud_scheduler_job.excel_keys.http_target[0].uri, google_cloud_scheduler_job.excel_keys.http_target[0].oidc_token[0].audience)
+    )
+    error_message = "Once a day the scheduler asks identity, with a token of its own for identity's address, which Excel keys expire within a month (FR-PL-03)."
+  }
+
+  assert {
+    condition = alltrue([
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_QUERY_SERVICE_ACCOUNT"),
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_SCHEDULER_SERVICE_ACCOUNT"),
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_CATALOGUE_URL"),
+      contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.name], "DATAHUB_IDENTITY_SERVICE_ACCOUNT"),
+    ])
+    error_message = "identity must know who exchanges a key (query) and who asks which expire (the scheduler), and catalogue who tells it about a key (identity) (TR-PF-07)."
+  }
+}
+
 run "catalogue_sends_mail_from_one_fixed_address_and_nothing_else_does" {
   command = plan
 

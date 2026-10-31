@@ -95,9 +95,11 @@ Only Groups that follow the [Naming Convention](#naming-convention) are pulled i
 <a id="fr-um-06"></a>
 ### FR-UM-06 · Fetch and cache the Groups at login
 
-**Status:** Specified · **Confluence:** GB-06
+**Status:** Implemented · **Confluence:** GB-06
 
 When logging in, the Groups of the User are fetched and kept briefly in a cache.
+
+*Note of 2026-10-31, on checking what was built: the Groups are read at sign-in and again at every renewal of the Access Token, and travel in it for its lifetime of 15 minutes ([TR-PF-26](../technical/00-platform.md#tr-pf-26)).*
 
 <a id="fr-um-07"></a>
 ### FR-UM-07 · Synchronise the members of Groups periodically
@@ -123,9 +125,11 @@ Owner Units are created, filled and dissolved in Workspace. Data Hub shows them,
 <a id="fr-um-10"></a>
 ### FR-UM-10 · Removed or suspended accounts
 
-**Status:** Specified · **Confluence:** GB-10
+**Status:** Implemented · **Confluence:** GB-10
 
 Whoever disappears from Workspace or is suspended can no longer log in, and disappears from their Groups at the next Synchronisation. What they did, such as Confirmations and conversations, stays stored under their name.
+
+*Note of 2026-10-31, on checking what was built: at the next renewal of their Access Token, their sessions end and their Groups are emptied, as Data Hub reads the Groups at sign-in and renewal instead of in a Synchronisation ([DEC-UM-08](#dec-um-08), [TR-PF-26](../technical/00-platform.md#tr-pf-26)).*
 
 <a id="fr-um-11"></a>
 ### FR-UM-11 · Every group of the own domain is pulled in; roles come from Role Groups
