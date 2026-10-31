@@ -34,7 +34,7 @@ The [handover prompt](handover-prompt.md), as the first message of the session. 
 
 - the tokens in the Svelte app, one place for each value;
 - the app shell: the rail, the panel that slides in and out, the frames, light and dark;
-- the backgrounds: the gradients, the pictures, the flowing gradient and the flowing lights, Random, and a choice per theme ([DEC-UX-108](principles.md#dec-ux-108), [DEC-UX-109](principles.md#dec-ux-109));
+- the backgrounds: the gradients, the pictures, the flowing gradient and the flowing lights, Spindrift with its wind, Random, and a choice per theme ([DEC-UX-108](principles.md#dec-ux-108), [DEC-UX-109](principles.md#dec-ux-109), [DEC-UX-153](principles.md#dec-ux-153));
 - the language: translation files, Dutch by default and English, names never translated ([DEC-DH-65](../overview/data-hub.md#dec-dh-65));
 - the settings of a User, kept in Data Hub ([DEC-UX-96](principles.md#dec-ux-96));
 - signing in with Google, for both Workspace domains, with the Groups of a User fetched at sign-in ([DEC-UM-08](../requirements/functional/02-user-management.md#dec-um-08), [DEC-UM-09](../requirements/functional/02-user-management.md#dec-um-09));

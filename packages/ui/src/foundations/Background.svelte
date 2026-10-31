@@ -67,12 +67,10 @@
   <canvas class="flow" bind:this={canvas} aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>
 {:else if background.kind === 'picture' && background.picture && background.wind}
-  <div class="wind-fill" style:--picture={`url("${background.picture}")`} aria-hidden="true"></div>
   <div
     class="wind"
     style:--picture={`url("${background.picture}")`}
     style:--ratio={background.wind.ratio}
-    style:--span={background.wind.span}
     style:--focus={background.wind.focus}
     aria-hidden="true"
   >
@@ -95,15 +93,13 @@
   .picture { background: 50% 30% / 112% auto no-repeat var(--bg-1); background-image: var(--picture); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
   .picture.cover { background-size: cover; }
   @keyframes picture-drift { 0% { background-position: 40% 25%; } 100% { background-position: 60% 35%; } }
-  /* A photo with wind (DEC-UX-153): the window shows its span whole, in the middle, its sides fading into
-     a blur of the photo itself; a narrower window is covered. The canvas of the wind lies over
-     it in its own measures, so that the mist stays in its sky and the snow on its ground. */
-  .wind-fill { position: fixed; inset: -60px; z-index: -2; background: var(--picture) 0 0 / 100% 100% no-repeat var(--bg-1); filter: blur(40px) saturate(.9); }
-  .wind { --tall: min(100vh / var(--span), max(100vh, 100vw / var(--ratio))); position: fixed; z-index: -2; overflow: hidden;
+  /* A photo with wind (DEC-UX-153): the photo covers the window, at the height of its focus, and the
+     canvas of the wind lies over it in its own measures, so that the mist stays in its sky and the snow
+     on its ground. */
+  .wind { --tall: max(100vh, 100vw / var(--ratio)); position: fixed; z-index: -2; overflow: hidden;
     width: calc(var(--tall) * var(--ratio)); height: var(--tall);
     left: calc((100vw - var(--tall) * var(--ratio)) / 2); top: calc((100vh - var(--tall)) * var(--focus));
-    background: var(--picture) 0 0 / 100% 100% no-repeat;
-    mask-image: linear-gradient(to right, transparent, black 9%, black 91%, transparent); }
+    background: var(--picture) 0 0 / 100% 100% no-repeat var(--bg-1); }
   .weather { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
   /* A still grain over the flowing ones */
   .grain { z-index: -1; pointer-events: none; opacity: .32; mix-blend-mode: soft-light;

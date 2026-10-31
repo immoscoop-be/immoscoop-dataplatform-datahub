@@ -31,15 +31,12 @@ export interface Background {
 }
 
 /**
- * Where the wind plays in a photo, each as a fraction of its height. The window shows the part of
- * `span`, from the height of `focus`, whole: a photo taller than the window stands in the middle, its
- * sides fading into a blur of itself. Mist drifts over it down to `sky`, and snow blows over it from
- * `ground` down.
+ * Where the wind plays in a photo, each as a fraction of its height: the photo covers the window, at
+ * the height of `focus`; mist drifts over it down to `sky`, and snow blows over it from `ground` down.
  */
 export interface Wind {
   /** Its width divided by its height. */
   readonly ratio: number;
-  readonly span: number;
   readonly focus: number;
   readonly sky: number;
   readonly ground: number;
@@ -95,8 +92,8 @@ export const BACKGROUNDS: readonly Background[] = [
     name: 'Spindrift',
     picture: PHOTO.spindrift,
     cover: true,
-    previewPosition: '50% 45%',
-    wind: { ratio: 3 / 4, span: 0.8, focus: 0.6, sky: 0.27, ground: 0.66 },
+    previewPosition: '50% 40%',
+    wind: { ratio: 16 / 9, focus: 0.5, sky: 0.3, ground: 0.45 },
   },
   { id: 'village', kind: 'picture', themes: ['dark'], name: 'Lights on', picture: PAINTED.village },
 ];

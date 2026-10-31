@@ -124,7 +124,7 @@ export function startWind(
     }
     // The snow over the ground: low veils and fine flakes, more of them in a gust.
     const { top, height: low } = band();
-    veil(drift, along.drift, top + low * 0.25, low * 0.75, 0.12 + 0.56 * now);
+    veil(drift, along.drift, top + low * 0.25, low * 0.75, 0.06 + 0.34 * now);
     const ratio = width / Math.max(1, canvas.clientWidth);
     const pace = SPEED.flakes * width * (wind + 1.6 * now) * step;
     context.fillStyle = 'white';
