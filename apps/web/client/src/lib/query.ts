@@ -71,6 +71,8 @@ export interface QueryItem {
   request: QueryRequest | null;
   /** Whether the User hid it from their panel (DEC-UX-138). */
   hidden?: boolean;
+  /** What it misses while it is Broken, for the red dot in the panel (FR-SR-53, DEC-UX-81). */
+  broken?: Missing | null;
 }
 
 /** What the panel of Query leaves out until its chip is on (DEC-UX-137). */
@@ -148,6 +150,8 @@ export interface Query {
   lens: { id: string; name: string; collectionId: string; state: LensState; createdAt: string; version: number; range: 'free' | 'approve' | 'request'; reads: number } | null;
   /** The Collection whose "New Lens" started it, offered first when it becomes a Lens (DEC-UX-123). */
   forCollection: string | null;
+  /** What it misses while it is Broken: Run is off, and a callout names it (FR-SR-53, DEC-UX-160). */
+  broken?: Missing | null;
 }
 
 /**
@@ -157,7 +161,7 @@ export interface Query {
  */
 export type LensState = 'published' | 'waiting' | 'stopped' | 'refused';
 
-/** What a Broken Lens misses: a table or a column, and since when (FR-LE-17). */
+/** What a Broken Lens or query misses: a table or a column, and since when (FR-LE-17, FR-SR-53). */
 export interface Missing {
   kind: 'table' | 'column';
   name: string;
@@ -301,10 +305,10 @@ export interface Preflight {
 /** What a run came to: its result, or why it did not run. */
 export type RunOutcome =
   | { kind: 'ran'; run: Run; page: Page }
-  /** The Pre-flight changed: it cannot run, or needs approval, or goes to the Data Team. */
-  | { kind: 'refused'; preflight: Preflight }
+  /** The Pre-flight changed: it cannot run, or needs approval, or goes to the Data Team; and whether the query is Broken now. */
+  | { kind: 'refused'; preflight: Preflight; broken?: Missing | null }
   /** BigQuery refused it, in its own words; the run is kept as failed. */
-  | { kind: 'failed'; message: string; run: Run | null };
+  | { kind: 'failed'; message: string; run: Run | null; broken?: Missing | null };
 
 /** The size and partitions of a Resource, from BigQuery; for a view, of the table beneath it (FR-SR-39). */
 export interface Storage {
@@ -342,6 +346,8 @@ export interface QueryOnResource {
   lastRead: number | null;
   lastEstimate: number;
   lastState: 'running' | 'done' | 'failed';
+  /** What it misses while it is Broken, for the red dot (FR-SR-53, DEC-UX-81); for a Lens, of the Lens. */
+  broken?: Missing | null;
 }
 
 /** What a new query is made of: its own Resources, or the SQL and Parameters of the query it is started from. */
@@ -375,13 +381,24 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
       return { kind: 'ran', ...body };
     } catch (error) {
       if (error instanceof Refused && error.status === 409 && error.body?.preflight) {
-        return { kind: 'refused', preflight: error.body.preflight as Preflight };
+        return { kind: 'refused', preflight: error.body.preflight as Preflight, ...brokenIn(error.body) };
       }
       if (error instanceof Refused && error.status === 422) {
-        return { kind: 'failed', message: error.detail ?? '', run: (error.body?.run as Run | undefined) ?? null };
+        return { kind: 'failed', message: error.detail ?? '', run: (error.body?.run as Run | undefined) ?? null, ...brokenIn(error.body) };
       }
       throw error;
     }
+  }
+
+  /** The Pre-flight, and whether the query is Broken now: a change that runs makes it work again (FR-SR-53). */
+  async function check(id: string, sql: string, parameters: readonly Parameter[]): Promise<{ preflight: Preflight; broken: Missing | null }> {
+    const body = (await (await call(`${query(id)}/preflight`, { method: 'POST', body: { sql, parameters } })).json()) as { preflight: Preflight; broken?: Missing | null };
+    return { preflight: body.preflight, broken: body.broken ?? null };
+  }
+
+  /** Whether a query is Broken now, when query said so with its answer (FR-SR-53). */
+  function brokenIn(body: Record<string, unknown> | undefined): { broken?: Missing | null } {
+    return body && 'broken' in body ? { broken: (body.broken as Missing | null) ?? null } : {};
   }
 
   /** A Lens that stopped or broke when it was checked: its page reads it again (DEC-UX-81, DEC-UX-125). */
@@ -446,8 +463,9 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     },
     /** The Pre-flight of what is written; query keeps the SQL and Parameters with it. */
     async preflight(id: string, sql: string, parameters: readonly Parameter[]): Promise<Preflight> {
-      return ((await (await call(`${query(id)}/preflight`, { method: 'POST', body: { sql, parameters } })).json()) as { preflight: Preflight }).preflight;
+      return (await check(id, sql, parameters)).preflight;
     },
+    check,
     /** Its history, newest first: the runs before a number, or the last ones (DEC-UX-74). */
     async runs(id: string, options: { before?: number; limit?: number } = {}): Promise<Run[]> {
       const search = new URLSearchParams({ limit: String(options.limit ?? 20), ...(options.before ? { before: String(options.before) } : {}) });

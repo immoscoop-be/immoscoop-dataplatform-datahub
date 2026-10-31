@@ -11,7 +11,7 @@ const bytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)
 
 /** The ingest job against fakes: a queue of sets, a bucket in memory and dbt Cloud with given files. */
 function harness(
-  options: { dbtFiles?: Record<string, Uint8Array>; stored?: Record<string, Uint8Array>; saveFails?: boolean; current?: boolean; catalogueFails?: boolean } = {},
+  options: { dbtFiles?: Record<string, Uint8Array>; stored?: Record<string, Uint8Array>; saveFails?: boolean; current?: boolean; catalogueFails?: boolean; previous?: number; changesFail?: boolean } = {},
 ) {
   const queue: ClaimedSet[] = [
     { id: 1, projectId: '9367', jobId: '322951', runId: '100' },
@@ -45,7 +45,7 @@ function harness(
           throw new Error('insert or update on table "edges" violates foreign key constraint');
         }
         saved.push({ set, normalised });
-        return { current: options.current ?? true };
+        return { current: options.current ?? true, previous: options.previous ?? null };
       },
       fail: async (id, error) => {
         failed.push({ id, error });
@@ -59,6 +59,12 @@ function harness(
           throw new Error('catalogue answered 503');
         }
         told.push(update);
+      },
+    },
+    changes: {
+      since: async (previous, current) => {
+        if (options.changesFail) throw new Error('the lineage could not be read');
+        return [{ kind: 'logic', node: `between ${previous} and ${current}`, reaches: [{ nodeId: 'model.p.orders', distance: 1 }] }];
       },
     },
     log,
@@ -137,5 +143,21 @@ describe('the ingest job', () => {
     const down = harness({ dbtFiles: { ...run100, ...run101 }, catalogueFails: true });
     expect(await down.processing.runPending()).toEqual({ processed: 2, failed: 0 });
     expect(down.logged).toContain('catalogue was not told the exposed tables: catalogue answered 503');
+  });
+
+  it('tells catalogue what changed since the version that was current before, and goes on without it when that fails (FR-AR-11, FR-AR-12)', async () => {
+    const first = harness({ dbtFiles: { ...run100 } });
+    await first.processing.runPending();
+    // The first version of a project is compared with nothing.
+    expect(first.told[0]?.changes).toEqual([]);
+
+    const next = harness({ dbtFiles: { ...run100 }, previous: 7 });
+    await next.processing.runPending();
+    expect(next.told[0]?.changes).toEqual([{ kind: 'logic', node: 'between 7 and 1', reaches: [{ nodeId: 'model.p.orders', distance: 1 }] }]);
+
+    const broken = harness({ dbtFiles: { ...run100 }, previous: 7, changesFail: true });
+    await broken.processing.runPending();
+    expect(broken.told[0]?.changes).toEqual([]);
+    expect(broken.logged).toContain('the changes since the previous version could not be followed');
   });
 });

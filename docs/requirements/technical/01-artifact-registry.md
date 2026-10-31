@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Artifact registry](../functional/01-artifact-registry.md) |
-| Status | Fetching, storing, processing and reading implemented; Changes follow |
+| Status | Fetching, storing, processing, reading and Changes implemented |
 | Source of truth | This file |
 
 How a run of a Source Job becomes the Current Version of its dbt project, in the service [registry](../../architecture/services/registry.md).
@@ -149,6 +149,23 @@ Only the Data Team may use these routes (`403` for anyone else).
 Every delivery to `POST /webhooks/dbt-cloud` is kept in the table `deliveries` (migration `0006-webhooks`), with when it came and what registry did: `recorded`, `ignored` with its reason (`notARun` for a test or another event, `otherAccount`, `notSucceeded`, `notSourceJob`, `otherProject`), or `refused` for a signature that does not match. Of a delivery it read, it keeps the event, the webhook, the account, the dbt project, the job and its environment, the run and its status and times; of a refused one nothing but when, as nothing of it can be trusted. At most 100 refused deliveries are kept an hour, so that trying the address cannot fill the table. Deliveries older than 30 days are deleted. Keeping a delivery never fails the webhook: an error is logged, and the answer to dbt Cloud stays the same.
 
 `GET /admin/deliveries` gives the deliveries of the last 30 days, the newest first, each recorded one with the status of its Artifact Set as it stands now, its error and whether it is the Current Version of its dbt project, and how many call for a look: refused, or recorded and failed. A failed set is processed again with `POST /runs/{run ID}/reprocess` ([TR-AR-07](#tr-ar-07)). Only the Data Team may use the route.
+
+<a id="tr-ar-14"></a>
+### TR-AR-14 · registry compares each new Current Version and follows its Changes downstream
+
+**Status:** Implemented · **Realises:** [FR-AR-11](../functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04)
+
+When an Artifact Set takes over from another as the Current Version of its dbt project, the ingest job compares the two, as both keep their rows ([TR-AR-04](#tr-ar-04)), Node by Node, for the models, seeds, snapshots and sources ([Kinds of Change](../functional/01-artifact-registry.md#kinds-of-change)):
+
+- **description:** the description of the Node or of one of its columns differs;
+- **logic:** the checksum of its code differs;
+- **type:** a column keeps its name and gets another type;
+- **structural:** a column is added or removed; a rename is one removed and one added;
+- **added** or **removed:** the Node appears or goes.
+
+Each Change is followed downstream through the links of every Current Version, across both dbt projects as [TR-AR-11](#tr-ar-11) walks them, however deep, up to a hundred steps against a cycle, to the tables of Resources: the Nodes with a `relation` that an exposure tagged `datahub` depends on, in any Current Version ([TR-AR-08](#tr-ar-08)). A Node that went is followed from the Nodes it fed in the previous version. Each table is reached once per Change, at its shortest distance. A Change of a Resource's own table, other than its code, reaches it at distance 0 through the tables registry already sends, which catalogue compares itself ([TR-SR-13](04-stacks-and-resources.md#tr-sr-13)); only a change of its own code is passed on at distance 0.
+
+The Changes go with the tables to `POST /internal/resources`, as `changes`: per Change its kind, the name of the Node, the field, its direction or its types before and after, and the tables it reaches with their distance. A Change that reaches no table is not sent. A set that does not take over, or processes the Current Version again, is compared with nothing. A failure to compare is logged and the tables are sent without Changes.
 
 ## Open points
 

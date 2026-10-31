@@ -79,7 +79,7 @@ describe.skipIf(!url)('the Artifact Sets', () => {
 
   it('makes a processed set the Current Version, with its Nodes, columns, Edges and tests', async () => {
     const set = await claimed('100');
-    expect(await sets.save(set, sample)).toEqual({ current: true });
+    expect(await sets.save(set, sample)).toEqual({ current: true, previous: null });
     expect(await project()).toMatchObject({ name: 'immoscoop_dataplatform_sql', currentSetId: set.id, previousSetId: null });
     expect(await db.selectFrom('artifactSets').selectAll().where('id', '=', set.id).executeTakeFirstOrThrow()).toMatchObject({
       status: 'processed',
@@ -115,7 +115,7 @@ describe.skipIf(!url)('the Artifact Sets', () => {
     const newer = await claimed('200');
     await sets.save(newer, sample);
     const older = await claimed('100');
-    expect(await sets.save(older, sample)).toEqual({ current: false });
+    expect(await sets.save(older, sample)).toEqual({ current: false, previous: null });
     expect(await project()).toMatchObject({ currentSetId: newer.id, previousSetId: null });
     expect(await nodeCount(older.id)).toBe(0);
   });
@@ -125,7 +125,7 @@ describe.skipIf(!url)('the Artifact Sets', () => {
     await sets.save(first, sample);
     const second = await claimed('200');
     await sets.save(second, sample);
-    expect(await sets.save(second, normalise(sampleManifest({ ordersDescription: 'Changed.' }), sampleCatalog()))).toEqual({ current: true });
+    expect(await sets.save(second, normalise(sampleManifest({ ordersDescription: 'Changed.' }), sampleCatalog()))).toEqual({ current: true, previous: null });
     expect(await project()).toMatchObject({ currentSetId: second.id, previousSetId: first.id });
     const orders = await db
       .selectFrom('nodes')

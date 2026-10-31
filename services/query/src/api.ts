@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
+import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
 import { lensRoutes } from './lens-api.js';
@@ -11,10 +12,11 @@ import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
 import { inOwnCase, template } from './sql.js';
+import { createUpkeep, type Lost } from './upkeep.js';
 
 export interface ApiOptions {
   queries: Queries;
-  /** Who may start the daily check of every Lens: the scheduler (DEC-LE-20). */
+  /** Who may start a check of Lenses and queries: the scheduler once a day (DEC-LE-20), catalogue after a new Current Version (FR-SR-52). */
   checkers: ServiceCallerVerifier;
   /** The Lenses, made from queries and run on their pages (DEC-PF-30). */
   lenses: Lenses;
@@ -44,6 +46,9 @@ const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, o
 /** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
 const MONTH = 30 * 86_400_000;
 const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query writes and runs it.' };
+
+/** A query as the web app gets it: without the SQL Data Hub keeps for its own checks (DEC-SR-44). */
+const shown = ({ checkSql: _checkSql, checkParameters: _checkParameters, ...query }: Query) => query;
 
 /**
  * A run as the web app shows it: its SQL and values, what it read, its result's columns and how many rows.
@@ -154,6 +159,8 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
   const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel } = options;
+  /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
+  const upkeep = createUpkeep({ queries, lenses, catalogue, bigquery });
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
@@ -253,7 +260,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       queries.hidden(query.id, viewer(request).id),
     ]);
     return {
-      ...query,
+      ...shown(query),
       mine: query.ownerId === viewer(request).id,
       // Whether the User hid it from their panel (DEC-UX-138).
       hidden,
@@ -379,8 +386,39 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
     if (!(await own(request, reply))) return reply;
     const query = await queries.update(request.params.id, fields);
-    return { query };
+    return { query: query && shown(query) };
   });
+
+  /**
+   * What a Pre-flight or a run tells about a query of the User (FR-SR-52, FR-SR-53). SQL that can run is kept,
+   * as BigQuery reads it, for the checks without them, and makes a Broken query work again. A table or a
+   * column not found has Data Hub check what reads a Resource whose table is gone, and dry-run what the query
+   * itself read before: only if that misses something too is it Broken, as a typo is not.
+   */
+  async function kept(request: FastifyRequest, query: Query, run: { sql: string; parameters: Parameter[] }, resources: ResourceOfQuery[], checked: Preflight): Promise<Query> {
+    if (query.kind === 'lens') return query;
+    if (checked.runnable) {
+      if (query.kind !== 'query') return query;
+      await queries.keepCheck(query.id, ownCase(run.sql, resources), run.parameters);
+      return query.broken ? upkeep.query(query, null, request.log) : query;
+    }
+    const missing = missingIn(checked);
+    return missing ? lost(request, query, missing) : query;
+  }
+
+  /** A run, a Pre-flight or a Preview did not find a table or a column (FR-SR-52, the third moment). */
+  async function lost(request: FastifyRequest, query: Query, missing: Lost): Promise<Query> {
+    // A Preview reads one Resource, made afresh from its fields: what it misses is of that Resource.
+    const gone = query.resources.filter((resource) => query.kind === 'preview' || (missing.kind === 'table' && resource.key === missing.name.toLowerCase()));
+    await upkeep.lost(
+      gone.map((resource) => resource.id),
+      request.log,
+    );
+    if (query.kind !== 'query' || !query.checkSql) return (await queries.get(query.id)) ?? query;
+    const again = await upkeep.dryRun(query.checkSql, query.checkParameters);
+    if (!again.works && again.missing) return upkeep.query(query, again.missing, request.log);
+    return (await queries.get(query.id)) ?? query;
+  }
 
   // The Pre-flight while the SQL is written (FR-SR-36); it keeps what is written, so nothing is lost.
   app.post<{ Params: { id: string }; Body: unknown }>('/queries/:id/preflight', async (request, reply) => {
@@ -389,8 +427,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     const query = await own(request, reply);
     if (!query) return reply;
     try {
-      if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
-      return { preflight: await check(body.sql, body.parameters, await resourcesOf(request, query)) };
+      const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
+      const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
+      const resources = await resourcesOf(request, current);
+      const checked = await check(body.sql, body.parameters, resources);
+      // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
+      const after = await kept(request, current, body, resources, checked);
+      return { preflight: checked, broken: after.broken };
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -413,15 +456,17 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     let checked: Preflight;
     let resources: ResourceOfQuery[];
     let accepted = false;
+    let now: Query;
     try {
       resources = await resourcesOf(request, query);
       checked = await check(body.sql, body.parameters, resources);
+      now = await kept(request, query, body, resources, checked);
       // Above 1 GB it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
       if (checked.runnable && checked.range === 'request') accepted = (await requestsOf(request, query)).some((sent) => sent.state === 'accepted');
     } catch (error) {
       return unavailable(error, reply, request);
     }
-    if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
+    if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked, broken: now.broken });
     if (checked.range === 'request' && !accepted) {
       return reply.code(409).send({ error: 'request_needed', message: 'This query reads more than 1 GB: the Data Team accepts it first.', preflight: checked });
     }
@@ -455,7 +500,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(201).send({ run: runView(done), page: pageView(finished, 1) });
     } catch (error) {
       const failed = await queries.failRun(run.id, error instanceof Error ? error.message : String(error));
-      if (error instanceof BigQueryRefused) return reply.code(422).send({ error: 'failed', message: error.message, run: runView(failed) });
+      if (error instanceof BigQueryRefused) {
+        // What the run did not find, as its Pre-flight might have (FR-SR-52, the third moment).
+        const missing = missingOf(error.message);
+        const after = missing ? await lost(request, now, missing) : now;
+        return reply.code(422).send({ error: 'failed', message: error.message, run: runView(failed), broken: after.broken });
+      }
       return unavailable(error, reply, request);
     }
   }
@@ -622,6 +672,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
         check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }]),
         known ? requestsOf(request, known) : Promise.resolve([]),
       ]);
+      // A Preview that does not find its table or a column has Data Hub check what reads the Resource (FR-SR-52).
+      if (missingIn(checked)) await upkeep.lost([preview.resource.id], request.log);
       // Above 1 GB its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
       return { preflight: checked, queryId: known?.id ?? null, request: requestView(requests[0]) };
     } catch (error) {
@@ -680,7 +732,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       }
       const lens = await lenses.get(query.lensOf);
       if (!lens) continue;
-      const first = { ...query, id: lens.id, name: lens.name, ownerId: lens.authorId, ownerName: lens.authorName };
+      // A Lens row carries the red dot of the Lens itself (DEC-UX-81).
+      const first = { ...query, id: lens.id, name: lens.name, ownerId: lens.authorId, ownerName: lens.authorName, broken: lens.broken };
       byLens.set(query.lensOf, first);
       rows.push(first);
     }
@@ -712,7 +765,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
-  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel });
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel });
 }
 
 function pageView(page: Page, number: number) {

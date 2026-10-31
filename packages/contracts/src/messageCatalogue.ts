@@ -662,7 +662,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema.',
     per: 'One per Resource and Artifact Set.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-DH-27', 'DEC-LN-04', 'FR-AR-12'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
@@ -1113,7 +1113,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per Lens, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-LE-17', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {
@@ -1301,7 +1301,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per query, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-SR-53', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {

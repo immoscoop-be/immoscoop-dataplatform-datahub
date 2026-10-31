@@ -137,7 +137,7 @@ The request and response schemas of every service are defined with zod in `packa
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
-| `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06)) |
+| `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens and query, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06), [TR-SR-23](04-stacks-and-resources.md#tr-sr-23)) |
 | `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
 | The Data Team, not a service | Cloud SQL Studio User, as its Role Group `datahub-datateam@`; read-only on the tables of registry, catalogue and query ([TR-PF-28](#tr-pf-28)) |
 

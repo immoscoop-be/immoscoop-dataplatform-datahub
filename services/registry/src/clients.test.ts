@@ -19,12 +19,12 @@ describe('catalogue', () => {
         return Response.json({ registered: 0 });
       },
     );
-    await catalogue.resources({ projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [] });
+    await catalogue.resources({ projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [], changes: [] });
     expect(audiences).toEqual(['https://catalogue.test']);
-    expect(calls).toEqual([{ url: 'https://catalogue.test/internal/resources', authorization: 'Bearer id-token', body: { projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [] } }]);
+    expect(calls).toEqual([{ url: 'https://catalogue.test/internal/resources', authorization: 'Bearer id-token', body: { projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [], changes: [] } }]);
 
     const refusing = createCatalogue('https://catalogue.test', async () => 't', async () => Response.json({ message: 'Not a service that may call.' }, { status: 401 }));
-    await expect(refusing.resources({ projectId: '9367', projectName: null, runId: '100', generatedAt: null, tables: [] })).rejects.toThrow('catalogue answered 401: Not a service that may call.');
+    await expect(refusing.resources({ projectId: '9367', projectName: null, runId: '100', generatedAt: null, tables: [], changes: [] })).rejects.toThrow('catalogue answered 401: Not a service that may call.');
   });
 });
 

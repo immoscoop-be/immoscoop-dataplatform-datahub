@@ -79,6 +79,12 @@ export interface QueryDatabase {
     createdAt: Timestamp;
     updatedAt: Timestamp;
     lastRunAt: Date | null;
+    /** What it misses while it is Broken, a table or a column, and since when (FR-SR-53). */
+    broken: ColumnType<Missing | null, string | null | undefined, string | null>;
+    /** Its SQL with the full names of its Resources in their own case, for a dry run without its User (DEC-SR-44). */
+    checkSql: ColumnType<string | null, string | null | undefined, string | null>;
+    /** The Parameters that SQL was checked with. */
+    checkParameters: ColumnType<Parameter[], string | undefined, string>;
   };
   /** One row per Lens: a query with its Parameters, in a Collection (DEC-LE-06, DEC-CO-20). */
   lenses: {
@@ -116,6 +122,14 @@ export interface QueryDatabase {
     id: Generated<string>;
     lensId: string;
     logId: LensLogId;
+    params: ColumnType<Record<string, string>, string, string>;
+    at: Timestamp;
+  };
+  /** The Log of a query (FR-SR-52): when it became Broken and when it worked again. */
+  queryLog: {
+    id: Generated<string>;
+    queryId: string;
+    logId: 'BRK-001' | 'BRK-002';
     params: ColumnType<Record<string, string>, string, string>;
     at: Timestamp;
   };
