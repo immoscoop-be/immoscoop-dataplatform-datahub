@@ -45,13 +45,11 @@ export interface Wind {
   readonly ground: number;
 }
 
-/** The layers of the wind: two veils of mist, the low veils of blown snow, and fine snow, far and near. */
+/** The pictures of the wind: two veils of mist and the low veils of blown snow; the flakes are drawn. */
 export const WIND_LAYERS = {
   mistFar: new URL('../../../../docs/design/backgrounds/wind/mist-far.webp', import.meta.url).href,
   mistNear: new URL('../../../../docs/design/backgrounds/wind/mist-near.webp', import.meta.url).href,
   drift: new URL('../../../../docs/design/backgrounds/wind/drift.webp', import.meta.url).href,
-  flakesFar: new URL('../../../../docs/design/backgrounds/wind/flakes-far.svg', import.meta.url).href,
-  flakesNear: new URL('../../../../docs/design/backgrounds/wind/flakes-near.svg', import.meta.url).href,
 } as const;
 
 // Each address is written out, so that the build finds the picture and takes it along.
