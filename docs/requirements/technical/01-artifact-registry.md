@@ -126,8 +126,8 @@ Without the Domain Model the proposal still holds what dbt says, without a mappi
 
 `GET /internal/nodes/{id}/lineage?direction=upstream|downstream` takes no Access Token but a Google ID token for registry's own address, of the service account of catalogue only (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`, `DATAHUB_REGISTRY_URL`), as catalogue checks who may see the Resource ([TR-SR-11](04-stacks-and-resources.md#tr-sr-11)). It walks the lineage of the Node as `GET /nodes/{id}/lineage` does, up to fifty steps and five hundred models, across both dbt projects, and gives of each model only what everyone who sees the Resource may read: its name, kind, layer, project and distance, and the links between them ([DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)). The layer is the one Colleciónes tags it with, else the folder under `models/` it sits in, else its kind, such as `seed`. Exposures are left out. A Node no Current Version holds answers 404.
 
-<a id="tr-ar-12"></a>
-### TR-AR-12 · registry compares each new Current Version and follows its Changes downstream
+<a id="tr-ar-14"></a>
+### TR-AR-14 · registry compares each new Current Version and follows its Changes downstream
 
 **Status:** Implemented · **Realises:** [FR-AR-11](../functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04)
 
