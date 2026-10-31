@@ -16,6 +16,7 @@
 - Search by name, free text and lineage: [FR-AR-10](../../requirements/functional/01-artifact-registry.md#fr-ar-10)
 - Comparing versions and following Changes downstream: [FR-AR-11](../../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../../requirements/functional/01-artifact-registry.md#fr-ar-12). registry knows the lineage; catalogue knows which Nodes are Resources. registry therefore hands over each Change with the downstream Nodes and their distance, and catalogue writes the Log Entries.
 - Fetching and processing a run again manually: [FR-AR-14](../../requirements/functional/01-artifact-registry.md#fr-ar-14)
+- The Source Jobs, which a Data Admin changes on the page Webhooks, and every delivery of the webhook with what registry did: [FR-AR-18](../../requirements/functional/01-artifact-registry.md#fr-ar-18), [FR-AR-19](../../requirements/functional/01-artifact-registry.md#fr-ar-19)
 - Telling catalogue which tables the exposures tagged `datahub` make Resources, after every new Current Version: [FR-SR-32](../../requirements/functional/04-stacks-and-resources.md#fr-sr-32), built as [TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)
 
 In the proposal this service was called ingest, as a Cloud Run job. It became a service because catalogue, query and mcp need to read Nodes and lineage from it, and [DEC-PF-05](../../requirements/technical/00-platform.md#dec-pf-05) forbids reading its schema directly. The processing itself still runs as a job ([DEC-PF-20](../../requirements/technical/00-platform.md#dec-pf-20)).
@@ -23,7 +24,7 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 ## How a run comes in
 
 1. A Source Job finishes in dbt Cloud, which calls `POST /webhooks/dbt-cloud`, signed with the shared secret ([TR-AR-01](../../requirements/technical/01-artifact-registry.md#tr-ar-01)).
-2. registry checks the signature, records the run once as a pending Artifact Set, starts the job `datahub-registry-ingest` and answers.
+2. registry checks the signature, records the run once as a pending Artifact Set when it comes from a Source Job, starts the job `datahub-registry-ingest` and answers. It keeps every delivery, with what it did with it ([TR-AR-13](../../requirements/technical/01-artifact-registry.md#tr-ar-13)).
 3. The job fetches `manifest.json` and `catalog.json`, stores them unchanged in the artifact bucket ([TR-AR-02](../../requirements/technical/01-artifact-registry.md#tr-ar-02)), normalises them ([TR-AR-03](../../requirements/technical/01-artifact-registry.md#tr-ar-03)), and makes the set the Current Version in the same transaction ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)).
 
 ## API
@@ -40,16 +41,20 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `GET /internal/nodes/{id}/lineage?direction=` | The lineage around a Resource, for catalogue only, with a Google ID token: names, kinds, layers and projects of the models ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)) |
 | `GET /domain-model` | The Domain Model in use, read from the collector at that moment: its release, the relation types a field can map to, and every identity ([TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)) |
 | `POST /runs/{id}/reprocess` | Fetch and process a run again ([TR-AR-07](../../requirements/technical/01-artifact-registry.md#tr-ar-07)) |
+| `GET /admin/source-jobs` | Per dbt project its Source Job, who set it and when, its last Artifact Set, and the address of the webhook ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)) |
+| `GET /admin/source-jobs/{project}/jobs` | The jobs of a dbt project in dbt Cloud, by environment, each saying whether it can be its Source Job ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)) |
+| `PUT /admin/source-jobs/{project}` | Makes a job the Source Job of the dbt project, from the next run ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)) |
+| `GET /admin/deliveries` | The deliveries of the webhook of the last 30 days, with what registry did, and how many call for a look ([TR-AR-13](../../requirements/technical/01-artifact-registry.md#tr-ar-13)) |
 
 Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)), through catalogue, which checks who may see it and asks registry as itself ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)).*
 
 ## Data
 
-Artifact Sets with their status and error, Nodes, columns, Edges, tests and Changes, the last four for the Current Version and the one before it ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)). A Node of Colleciónes keeps its Entity, action, strategy and layer, and every column its meta, where Colleciónes says what it maps to ([FR-AR-16](../../requirements/functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-07](../../requirements/functional/01-artifact-registry.md#dec-ar-07)). The files themselves, unchanged, in the artifact bucket per project and per run, kept for good.
+The Source Jobs a Data Admin chose, and the deliveries of the webhook of the last 30 days ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12), [TR-AR-13](../../requirements/technical/01-artifact-registry.md#tr-ar-13)). Artifact Sets with their status and error, Nodes, columns, Edges, tests and Changes, the last four for the Current Version and the one before it ([TR-AR-04](../../requirements/technical/01-artifact-registry.md#tr-ar-04)). A Node of Colleciónes keeps its Entity, action, strategy and layer, and every column its meta, where Colleciónes says what it maps to ([FR-AR-16](../../requirements/functional/01-artifact-registry.md#fr-ar-16), [DEC-AR-07](../../requirements/functional/01-artifact-registry.md#dec-ar-07)). The files themselves, unchanged, in the artifact bucket per project and per run, kept for good.
 
 ## Talks to
 
-The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
+The dbt Cloud Admin API, for the artifacts of a run and the jobs and environments of a dbt project; the artifact bucket; and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
 
 The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)).
 

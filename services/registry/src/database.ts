@@ -12,8 +12,40 @@ export type PartitionUnit = 'hour' | 'day' | 'month' | 'year';
 /** Where an Artifact Set stands (TR-AR-01 to TR-AR-04). */
 export type SetStatus = 'pending' | 'processing' | 'processed' | 'failed';
 
+/** What Data Hub did with a delivery of the webhook (FR-AR-19). */
+export type DeliveryOutcome = 'recorded' | 'ignored' | 'refused';
+/** Why a delivery was ignored or refused. */
+export type DeliveryReason = 'notARun' | 'otherAccount' | 'notSucceeded' | 'notSourceJob' | 'otherProject' | 'signature';
+
 /** The tables of registry, in camelCase (the columns are snake_case in Postgres). */
 export interface RegistryDatabase {
+  /** The Source Job a Data Admin set per dbt project, in place of the configuration (FR-AR-18). */
+  sourceJobs: {
+    projectId: DbtId;
+    jobId: DbtId;
+    jobName: string;
+    setBy: string;
+    setByName: string;
+    setAt: Timestamp;
+  };
+  /** Every delivery of the webhook of the last 30 days, and what Data Hub did with it (FR-AR-19). */
+  deliveries: {
+    id: Generated<string>;
+    receivedAt: Timestamp;
+    outcome: DeliveryOutcome;
+    reason: DeliveryReason | null;
+    eventType: string | null;
+    webhookName: string | null;
+    accountId: string | null;
+    projectId: string | null;
+    jobId: string | null;
+    jobName: string | null;
+    environmentName: string | null;
+    runId: string | null;
+    runStatus: string | null;
+    runStartedAt: string | null;
+    runFinishedAt: string | null;
+  };
   artifactSets: {
     id: Generated<number>;
     projectId: DbtId;

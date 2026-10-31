@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { Run } from './artifact-sets.js';
 import type { SetStatus } from './database.js';
+import type { NewDelivery } from './deliveries.js';
 
 const SECRET = 'webhook-secret';
 
@@ -37,12 +38,14 @@ describe('the webhook of dbt Cloud', () => {
   let status: SetStatus;
   let started: number;
   let secretReadable: boolean;
+  let kept: NewDelivery[];
 
   beforeEach(async () => {
     recorded = [];
     status = 'pending';
     started = 0;
     secretReadable = true;
+    kept = [];
     app = await buildApp({
       verifier: (await createTestIssuer()).verifier,
       logger: false,
@@ -54,10 +57,16 @@ describe('the webhook of dbt Cloud', () => {
           return SECRET;
         },
         accountId: '576',
-        sourceJobs: new Map([
-          ['322951', '9367'],
-          ['739003', '17121'],
-        ]),
+        sourceJobs: async () =>
+          new Map([
+            ['322951', '9367'],
+            ['739003', '17121'],
+          ]),
+        deliveries: {
+          record: async (delivery) => {
+            kept.push(delivery);
+          },
+        },
         sets: {
           record: async (run) => {
             recorded.push(run);
@@ -86,6 +95,10 @@ describe('the webhook of dbt Cloud', () => {
     expect(response.json()).toEqual({ runId: '56757522', status: 'pending' });
     expect(recorded).toEqual([{ projectId: '9367', jobId: '322951', runId: '56757522' }]);
     expect(started).toBe(1);
+    // Kept for the page Webhooks, with what the delivery said (FR-AR-19).
+    expect(kept).toEqual([
+      expect.objectContaining({ outcome: 'recorded', jobId: '322951', jobName: 'daily UAT build (uat)', projectId: '9367', runId: '56757522', runStatus: 'Success', webhookName: 'Data Hub uat' }),
+    ]);
   });
 
   it('does not start the job again for a run it has already taken', async () => {
@@ -108,20 +121,23 @@ describe('the webhook of dbt Cloud', () => {
     });
     expect(respaced.statusCode).toBe(401);
     expect(recorded).toEqual([]);
+    // Nothing of a delivery that is not signed is read or kept but that it was refused.
+    expect(kept).toEqual([{ outcome: 'refused', reason: 'signature' }, { outcome: 'refused', reason: 'signature' }, { outcome: 'refused', reason: 'signature' }]);
   });
 
   it.each([
-    ['a failed run', event({ runStatus: 'Error', runStatusCode: 20 })],
-    ['a run that started', event({}, { eventType: 'job.run.started' })],
-    ['another job', event({ jobId: '324451' })],
-    ['a Source Job of the other environment', event({ jobId: '322950', projectId: '9367' })],
-    ['a job with the wrong project', event({ jobId: '739003', projectId: '9367' })],
-    ['another dbt Cloud account', event({}, { accountId: 1 })],
-    ['the test event of dbt Cloud', { eventType: 'job.run.completed', data: { jobId: '123', runId: '456', runStatus: 'Success' } }],
-  ])('ignores %s', async (_case, body) => {
+    ['a failed run', event({ runStatus: 'Error', runStatusCode: 20 }), 'notSucceeded'],
+    ['a run that started', event({}, { eventType: 'job.run.started' }), 'notARun'],
+    ['another job', event({ jobId: '324451' }), 'notSourceJob'],
+    ['a Source Job of the other environment', event({ jobId: '322950', projectId: '9367' }), 'notSourceJob'],
+    ['a job with the wrong project', event({ jobId: '739003', projectId: '9367' }), 'otherProject'],
+    ['another dbt Cloud account', event({}, { accountId: 1 }), 'otherAccount'],
+    ['the test event of dbt Cloud', { eventType: 'job.run.completed', data: { jobId: '123', runId: '456', runStatus: 'Success' } }, 'notARun'],
+  ])('ignores %s, and keeps why (FR-AR-19)', async (_case, body, reason) => {
     expect((await deliver(body)).statusCode).toBe(204);
     expect(recorded).toEqual([]);
     expect(started).toBe(0);
+    expect(kept).toEqual([expect.objectContaining({ outcome: 'ignored', reason })]);
   });
 
   it('records a run of the other dbt project too', async () => {

@@ -12,6 +12,7 @@ import chatCircleTextFill from '@phosphor-icons/core/assets/fill/chat-circle-tex
 import checkCircleFill from '@phosphor-icons/core/assets/fill/check-circle-fill.svg?raw';
 import checkFill from '@phosphor-icons/core/assets/fill/check-fill.svg?raw';
 import circleDashedFill from '@phosphor-icons/core/assets/fill/circle-dashed-fill.svg?raw';
+import cloudFill from '@phosphor-icons/core/assets/fill/cloud-fill.svg?raw';
 import copyFill from '@phosphor-icons/core/assets/fill/copy-fill.svg?raw';
 import eyeFill from '@phosphor-icons/core/assets/fill/eye-fill.svg?raw';
 import eyeSlashFill from '@phosphor-icons/core/assets/fill/eye-slash-fill.svg?raw';
@@ -36,6 +37,7 @@ import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
+import toolboxFill from '@phosphor-icons/core/assets/fill/toolbox-fill.svg?raw';
 import trashFill from '@phosphor-icons/core/assets/fill/trash-fill.svg?raw';
 import trayFill from '@phosphor-icons/core/assets/fill/tray-fill.svg?raw';
 import usersThreeFill from '@phosphor-icons/core/assets/fill/users-three-fill.svg?raw';
@@ -129,6 +131,7 @@ import user from '@phosphor-icons/core/assets/regular/user.svg?raw';
 import usersThree from '@phosphor-icons/core/assets/regular/users-three.svg?raw';
 import warning from '@phosphor-icons/core/assets/regular/warning.svg?raw';
 import warningDiamond from '@phosphor-icons/core/assets/regular/warning-diamond.svg?raw';
+import webhooksLogo from '@phosphor-icons/core/assets/regular/webhooks-logo.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 import xCircle from '@phosphor-icons/core/assets/regular/x-circle.svg?raw';
 
@@ -144,6 +147,7 @@ export const ICONS = {
   'check-circle-fill': checkCircleFill,
   'check-fill': checkFill,
   'circle-dashed-fill': circleDashedFill,
+  'cloud-fill': cloudFill,
   'copy-fill': copyFill,
   'eye-fill': eyeFill,
   'eye-slash-fill': eyeSlashFill,
@@ -168,6 +172,7 @@ export const ICONS = {
   'plus-circle-fill': plusCircleFill,
   'stack-fill': stackFill,
   'terminal-window-fill': terminalWindowFill,
+  'toolbox-fill': toolboxFill,
   'trash-fill': trashFill,
   'tray-fill': trayFill,
   'users-three-fill': usersThreeFill,
@@ -261,6 +266,7 @@ export const ICONS = {
   'users-three': usersThree,
   warning,
   'warning-diamond': warningDiamond,
+  'webhooks-logo': webhooksLogo,
   x,
   'x-circle': xCircle,
 } as const;

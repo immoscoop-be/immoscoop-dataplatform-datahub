@@ -80,6 +80,47 @@ describe('dbt Cloud', () => {
   });
 });
 
+describe('the jobs of a dbt project in dbt Cloud (FR-AR-18)', () => {
+  it('lists them with their kind, their environment and whether they generate the docs', async () => {
+    const asked: string[] = [];
+    const dbt = createDbtCloud({
+      url: 'https://emea.dbt.com',
+      accountId: '576',
+      token: async () => 'service-token',
+      request: async (url) => {
+        asked.push(String(url));
+        if (String(url).includes('/environments/')) return Response.json({ data: [{ id: 22845, name: 'UAT' }, { id: 22846, name: 'Production' }] });
+        return Response.json({
+          data: [
+            { id: 352118, name: 'UAT - Deploy - Merge build', project_id: 9367, environment_id: 22845, job_type: 'other', triggers: { on_merge: true }, generate_docs: true, most_recent_run: { finished_at: '2026-10-31T11:52:00Z', status_humanized: 'Success' } },
+            { id: 324451, name: 'CI/CD - UAT', project_id: 9367, environment_id: 22845, job_type: 'ci', generate_docs: false },
+            { id: 322950, name: 'daily production build', project_id: 9367, environment_id: 22846, triggers: { schedule: true }, generate_docs: true },
+            { id: 1, name: 'deleted', project_id: 9367, environment_id: 22845, state: 2 },
+          ],
+        });
+      },
+    });
+    expect(await dbt.jobs('9367')).toEqual([
+      { id: '352118', name: 'UAT - Deploy - Merge build', projectId: '9367', environmentId: '22845', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: { at: '2026-10-31T11:52:00Z', status: 'Success' } },
+      { id: '324451', name: 'CI/CD - UAT', projectId: '9367', environmentId: '22845', environmentName: 'UAT', kind: 'ci', generatesDocs: false, lastRun: null },
+      { id: '322950', name: 'daily production build', projectId: '9367', environmentId: '22846', environmentName: 'Production', kind: 'scheduled', generatesDocs: true, lastRun: null },
+    ]);
+    expect(asked[0]).toContain('/api/v2/accounts/576/jobs/?project_id=9367');
+    expect(asked[1]).toBe('https://emea.dbt.com/api/v3/accounts/576/projects/9367/environments/');
+  });
+
+  it('still lists the jobs, without the names of their environments, when those are not given', async () => {
+    const dbt = createDbtCloud({
+      url: 'https://emea.dbt.com',
+      accountId: '576',
+      token: async () => 'service-token',
+      request: async (url) =>
+        String(url).includes('/environments/') ? new Response('no', { status: 404 }) : Response.json({ data: [{ id: 7, name: 'A job', project_id: 9367, environment_id: 3 }] }),
+    });
+    expect(await dbt.jobs('9367')).toEqual([{ id: '7', name: 'A job', projectId: '9367', environmentId: '3', environmentName: null, kind: 'other', generatesDocs: false, lastRun: null }]);
+  });
+});
+
 describe('the artifact bucket', () => {
   it('reads a file, or tells that it is not there', async () => {
     const asked: string[] = [];

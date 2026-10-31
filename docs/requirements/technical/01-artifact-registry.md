@@ -22,6 +22,8 @@ registry answers `POST /webhooks/dbt-cloud`. The route is public, because dbt Cl
 
 A delivery that counts records the run as an Artifact Set with status `pending`, at most once per run ID: a repeated delivery changes nothing. registry then starts the ingest job ([TR-AR-02](#tr-ar-02)) and answers, well within the 10 seconds dbt Cloud waits before it tries again.
 
+*Note of 2026-10-31: the Source Jobs are read at every delivery, so that a change on the page Webhooks counts from the next run ([TR-AR-12](#tr-ar-12)), and every delivery is kept with what registry did with it ([TR-AR-13](#tr-ar-13)).*
+
 <a id="tr-ar-02"></a>
 ### TR-AR-02 · The ingest job fetches and stores the Artifacts
 
@@ -125,6 +127,28 @@ Without the Domain Model the proposal still holds what dbt says, without a mappi
 **Status:** Implemented · **Realises:** [DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06), [FR-SR-54](../functional/04-stacks-and-resources.md#fr-sr-54)
 
 `GET /internal/nodes/{id}/lineage?direction=upstream|downstream` takes no Access Token but a Google ID token for registry's own address, of the service account of catalogue only (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`, `DATAHUB_REGISTRY_URL`), as catalogue checks who may see the Resource ([TR-SR-11](04-stacks-and-resources.md#tr-sr-11)). It walks the lineage of the Node as `GET /nodes/{id}/lineage` does, up to fifty steps and five hundred models, across both dbt projects, and gives of each model only what everyone who sees the Resource may read: its name, kind, layer, project and distance, and the links between them ([DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)). The layer is the one Colleciónes tags it with, else the folder under `models/` it sits in, else its kind, such as `seed`. Exposures are left out. A Node no Current Version holds answers 404.
+
+<a id="tr-ar-12"></a>
+### TR-AR-12 · registry keeps the Source Jobs, and a Data Admin changes them
+
+**Status:** Implemented · **Realises:** [FR-AR-18](../functional/01-artifact-registry.md#fr-ar-18), [DEC-AR-09](../functional/01-artifact-registry.md#dec-ar-09)
+
+The configuration of the environment names the dbt projects Data Hub follows and the Source Job each starts with (`DATAHUB_DBT_SOURCE_JOBS`, from `dbt_source_jobs` in its `.tfvars`). The table `source_jobs` (migration `0006-webhooks`) keeps, per dbt project, the job a Data Admin chose instead, its name, who chose it and when; that choice counts in place of the configuration, for the webhook ([TR-AR-01](#tr-ar-01)) and for processing a run again ([TR-AR-07](#tr-ar-07)). How the two relate later is open ([OP-AR-10](../functional/01-artifact-registry.md#op-ar-10)).
+
+- `GET /admin/source-jobs` gives per dbt project its Source Job, with its name, kind and environment in dbt Cloud and whether it generates the docs, who set it and when, the last run that delivered an Artifact Set, and the address of the webhook. When dbt Cloud does not answer, it gives what registry keeps itself, and says so.
+- `GET /admin/source-jobs/{dbt project ID}/jobs` reads the jobs of the dbt project from the dbt Cloud Admin API (`/api/v2/accounts/<account>/jobs/?project_id=` with its most recent run, and the environments from `/api/v3/accounts/<account>/projects/<project>/environments/`). A job is of the kind merge when it runs on a merge, CI when it builds pull requests, scheduled when it runs on a schedule, else other. A CI job, and a job of another environment than the configured Source Job of that dbt project, cannot be chosen, and the answer says why.
+- `PUT /admin/source-jobs/{dbt project ID}` with `jobId` makes a job the Source Job, from the next delivery. It answers `400` without a numeric job ID, `404` for a dbt project the configuration does not name or a job that is not one of the dbt project, `409` for a job that cannot be chosen, and `503` when dbt Cloud does not answer: nobody sets a job registry could not check.
+
+Only the Data Team may use these routes (`403` for anyone else).
+
+<a id="tr-ar-13"></a>
+### TR-AR-13 · registry keeps every delivery of the webhook for 30 days
+
+**Status:** Implemented · **Realises:** [FR-AR-19](../functional/01-artifact-registry.md#fr-ar-19)
+
+Every delivery to `POST /webhooks/dbt-cloud` is kept in the table `deliveries` (migration `0006-webhooks`), with when it came and what registry did: `recorded`, `ignored` with its reason (`notARun` for a test or another event, `otherAccount`, `notSucceeded`, `notSourceJob`, `otherProject`), or `refused` for a signature that does not match. Of a delivery it read, it keeps the event, the webhook, the account, the dbt project, the job and its environment, the run and its status and times; of a refused one nothing but when, as nothing of it can be trusted. At most 100 refused deliveries are kept an hour, so that trying the address cannot fill the table. Deliveries older than 30 days are deleted. Keeping a delivery never fails the webhook: an error is logged, and the answer to dbt Cloud stays the same.
+
+`GET /admin/deliveries` gives the deliveries of the last 30 days, the newest first, each recorded one with the status of its Artifact Set as it stands now, its error and whether it is the Current Version of its dbt project, and how many call for a look: refused, or recorded and failed. A failed set is processed again with `POST /runs/{run ID}/reprocess` ([TR-AR-07](#tr-ar-07)). Only the Data Team may use the route.
 
 ## Open points
 

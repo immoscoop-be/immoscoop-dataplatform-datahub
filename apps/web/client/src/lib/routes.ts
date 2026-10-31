@@ -1,4 +1,4 @@
-import { SECTIONS, type Section } from './sections.js';
+import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
 export const MY_PAGE_TABS = ['profile', 'background'] as const;
@@ -37,6 +37,8 @@ export type Route =
   | ({ readonly kind: 'learningCard'; readonly id: string; readonly section: Section } & Talk)
   /** See it of a Learning Card, on a page of its own (FR-LR-29). */
   | { readonly kind: 'learningSee'; readonly id: string; readonly section: Section }
+  /** A tool of Admin, for the Data Team (DEC-UX-130). */
+  | { readonly kind: 'admin'; readonly tool: AdminTool; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -91,6 +93,15 @@ export function route(path: string): Route {
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
   if (clean === '/') {
     return { kind: 'redirect', to: HOME };
+  }
+  // Admin opens on its first tool (OP-UX-52).
+  const admin = SECTIONS.find((candidate) => candidate.id === 'admin');
+  if (admin && clean === admin.path) {
+    return { kind: 'redirect', to: ADMIN_TOOLS[0].path };
+  }
+  const tool = ADMIN_TOOLS.find((candidate) => candidate.path === clean);
+  if (admin && tool) {
+    return { kind: 'admin', tool: tool.id, section: admin };
   }
   const section = SECTIONS.find((candidate) => candidate.path === clean);
   if (section) {

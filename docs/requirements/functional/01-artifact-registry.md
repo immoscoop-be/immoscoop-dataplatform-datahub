@@ -51,7 +51,7 @@ Decisions taken while building this domain:
   | dbt-prod (9367) | 324502 · CI/CD - prod - triggered by Github Pipelines | 322951 · daily UAT build (uat), until its merge build exists ([OP-AR-09](#op-ar-09)) |
   | Colleciónes (17121) | 748278 · PROD - Deploy - Merge build | 748279 · UAT - Deploy - Merge build |
 
-  *Decided on 2026-10-30, by Max, in place of the daily builds of [DEC-AR-01](#dec-ar-01).*
+  *Decided on 2026-10-30, by Max, in place of the daily builds of [DEC-AR-01](#dec-ar-01).* *Note of 2026-10-31: the table is where each environment starts; a Data Admin changes the Source Job of a dbt project on the page Webhooks ([FR-AR-18](#fr-ar-18)), from its next run. How that choice relates to the configuration is open ([OP-AR-10](#op-ar-10)).*
 
 ## Terms
 
@@ -237,16 +237,16 @@ When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), ev
 <a id="fr-ar-18"></a>
 ### FR-AR-18 · A Data Admin sets the Source Jobs on a page of Data Hub
 
-**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+**Status:** Implemented · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
 
 A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and which dbt Cloud job is the Source Job of each ([FR-AR-02](#fr-ar-02)), for the environment of that page, in place of the configuration of its deployment. They choose a job from the jobs of the dbt Cloud account, each shown by its name, its ID, its dbt project and its environment in dbt Cloud, as Data Hub reads them from dbt Cloud; nobody types an ID. A change applies from the next run dbt Cloud reports, without a deploy of Data Hub. Per dbt project the page shows its Source Job by name and ID, who set it and when, and the last run that delivered an Artifact Set. The webhook of the environment in dbt Cloud names the same jobs ([DEC-AR-02](#dec-ar-02)); the page says so. The page is designed in the [design](../../design/README.md) before it is built.
 
-*Could, not in v1: set on 2026-10-30, by Max; in version 1 the Source Jobs are set in the configuration of each environment, in Terraform ([DEC-AR-09](#dec-ar-09)).*
+*Moved into v1 on 2026-10-31, at the request of Max; on 2026-10-30 it had been left out of v1, with the Source Jobs set in the configuration of each environment, in Terraform ([DEC-AR-09](#dec-ar-09)).* *Note of 2026-10-31: built for the dbt projects the configuration of the environment names, whose Source Job a Data Admin changes on the page Webhooks of Admin; whether the page also adds a dbt project, and how its choice relates to the configuration in Terraform, is open ([OP-AR-10](#op-ar-10)).*
 
 <a id="fr-ar-19"></a>
 ### FR-AR-19 · A Data Admin sees every delivery of the webhook
 
-**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+**Status:** Implemented · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
 
 On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every delivery dbt Cloud sent to the webhook of that environment in the last 30 days, the newest first: when it came, the job by its name and its ID, the dbt project, the run and its status in dbt Cloud, and what Data Hub did with it. That is one of:
 
@@ -256,7 +256,7 @@ On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every 
 
 So whoever sets up a webhook or a Source Job sees at once whether its runs arrive and are taken, without the logs of Google Cloud, and a job in the webhook that is no Source Job stands out.
 
-*Could, not in v1: set on 2026-10-30, by Max, with the page of the Source Jobs ([FR-AR-18](#fr-ar-18)); in version 1 the deliveries are in the logs of registry.*
+*Moved into v1 on 2026-10-31, at the request of Max, with the page of the Source Jobs ([FR-AR-18](#fr-ar-18)); on 2026-10-30 it had been left out of v1, with the deliveries in the logs of registry.*
 
 ## Kinds of Change
 
@@ -328,6 +328,7 @@ Which views are Resources and how their ID stays stable ([Resources](04-stacks-a
 - [x] <a id="op-ar-08"></a>**OP-AR-08** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).* *Decided on 2026-10-28, by Max: as is, by any of its identifiers ([DEC-AR-08](#dec-ar-08)).*
 - [x] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)). *Decided on 2026-10-28, by Max: the lineage around a Resource for everyone who sees it, the rest for the Data Team ([DEC-AR-06](#dec-ar-06)).*
 - [ ] <a id="op-ar-09"></a>**OP-AR-09** · Make the merge build of dbt-prod the Source Job of uat once it exists. Job 324451 runs both the PR checks of dbt-prod, in their own `DBT_CLOUD_PR_*` schemas, and the deploy of `uat`, so it cannot be a Source Job; the deploy of `uat` gets its own job, "UAT - Deploy - Merge build" ([immoscoop-dataplatform-data#980](https://github.com/immoscoop-be/immoscoop-dataplatform-data/pull/980)). Its ID then goes in `uat.tfvars` and in the webhook of uat; until then, uat reads the daily UAT build 322951 ([DEC-AR-09](#dec-ar-09)). *Raised on 2026-10-30, by Max.*
+- [ ] <a id="op-ar-10"></a>**OP-AR-10** · **The Source Job chosen on the page and the one in Terraform** ([FR-AR-18](#fr-ar-18)). The configuration of each environment names its dbt projects and their Source Jobs (`dbt_source_jobs` in its `.tfvars`, which becomes `DATAHUB_DBT_SOURCE_JOBS`); the page keeps its choice, with who made it and when, in the database of registry. Built for now: the configuration names the dbt projects Data Hub follows and the Source Job each starts with, and a choice on the page takes its place for that dbt project from the next run, until it is changed again; a deploy does not undo it. Open: whether the configuration then has to follow the page, or keeps only the dbt projects, so that the `.tfvars`, which [OP-AR-09](#op-ar-09) still changes, and a fresh database tell the same story as the page; and whether the page also adds a dbt project or stops following one, as FR-AR-18 asks, which only the configuration does now. *Raised on 2026-10-31, while building [FR-AR-18](#fr-ar-18).*
 
 ## Builds on
 
