@@ -338,6 +338,7 @@ function serve({
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
   creditWith = {} as Partial<typeof CREDIT>,
   excelKeys = [] as Record<string, unknown>[],
+  everyKey = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // Credit leads as catalogue keeps it, with its folders, changed by what the page asks (FR-CO-38 to FR-CO-41).
@@ -757,6 +758,17 @@ function serve({
       Object.assign(key, { revokedAt: '2026-10-31T09:00:00Z', revokedBy: 'Max Verstraete' });
       return new Response(null, { status: 204 });
     }
+    // identity, as the Data Team sees every Excel key and revokes any (FR-PL-03).
+    if (path === '/excel-keys' && method === 'GET') {
+      return roles.includes('datateam') ? json({ keys: everyKey }) : json({ error: 'forbidden' }, 403);
+    }
+    const anyKey = /^\/excel-keys\/([^/]+)$/.exec(path);
+    if (anyKey && method === 'DELETE') {
+      const key = everyKey.find((candidate) => candidate.id === anyKey[1]);
+      if (!key) return json({ error: 'not_found' }, 404);
+      Object.assign(key, { revokedAt: new Date().toISOString(), revokedBy: 'Max Verstraete', revokedById: '1' });
+      return new Response(null, { status: 204 });
+    }
     if (path === '/me/groups') {
       return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
     }
@@ -1077,7 +1089,7 @@ describe('Admin, for the Data Team', () => {
     const links = rail.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
     expect(links.indexOf('Admin')).toBe(links.indexOf('Learning Centre') + 1);
     const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
-    expect(panel.getByText('Voor het Data Team: wat Data Hub uat voedt, en hoe dat loopt.')).toBeTruthy();
+    expect(panel.getByText('Voor het Data Team: wat Data Hub uat voedt, en wie er van buiten bij kan.')).toBeTruthy();
     const tool = panel.getByRole('link', { name: /Webhooks/ });
     expect(tool.getAttribute('aria-current')).toBe('page');
     // The deliveries to look at: one refused, one failed.
@@ -1154,6 +1166,50 @@ describe('Admin, for the Data Team', () => {
     expect(refused.getByRole('heading', { name: 'Geweigerd' })).toBeTruthy();
     expect(refused.getByText('De handtekening past niet bij het geheim van Data Hub uat.')).toBeTruthy();
     expect(refused.getByText(/zet het in datahub-dbt-webhook-secret/)).toBeTruthy();
+  });
+
+  it('lists every Excel key with its User, finds one, and revokes it after asking; its User is told by identity (FR-PL-03, MSG-KEY-02)', async () => {
+    const soon = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
+    const later = new Date(Date.now() + 200 * 24 * 60 * 60 * 1000).toISOString();
+    const calls = serve({
+      roles: ['datateam'],
+      settings: { language: 'en' },
+      everyKey: [
+        { id: 'k-1', name: 'Monthly KBC report', createdAt: '2026-09-02T08:00:00Z', lastUsedAt: '2026-10-31T08:12:00Z', expiresAt: later, revokedAt: null, revokedBy: null, revokedById: null, user: { id: 'an', name: 'An Claes', email: 'an.claes@immoscoop.be' } },
+        { id: 'k-2', name: 'Sales dashboard, shared drive', createdAt: '2025-11-10T08:00:00Z', lastUsedAt: '2026-10-10T08:00:00Z', expiresAt: soon, revokedAt: null, revokedBy: null, revokedById: null, user: { id: 'karel', name: 'Karel Leys', email: 'karel.leys@immoscoop.be' } },
+        { id: 'k-3', name: 'Old laptop', createdAt: '2026-01-20T08:00:00Z', lastUsedAt: '2026-08-31T08:00:00Z', expiresAt: '2027-01-20T08:00:00Z', revokedAt: '2026-09-02T08:00:00Z', revokedBy: 'Dirk Vos', revokedById: 'dirk', user: { id: 'dirk', name: 'Dirk Vos', email: 'dirk.vos@immoscoop.be' } },
+      ],
+    });
+    open('/admin/keys');
+    render(App, { config: UAT });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Excel keys' })).toBeTruthy();
+    const table = within(await screen.findByRole('table', { name: 'Excel keys' }));
+    // The active keys, newest last used on top; the revoked one only under Revoked.
+    const rows = () => table.getAllByRole('row').slice(1).map((row) => row.textContent ?? '');
+    expect(rows()[0]).toContain('Monthly KBC report');
+    expect(rows()[1]).toContain('Sales dashboard, shared drive');
+    expect(table.queryByText('Old laptop')).toBeNull();
+    const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
+    await vi.waitFor(() => expect(panel.getByRole('link', { name: /Excel keys/ }).textContent).toContain('2'));
+
+    await fireEvent.click(screen.getByRole('radio', { name: /Expiring within a month/ }));
+    expect(rows()).toHaveLength(1);
+    expect(table.getByText('Sales dashboard, shared drive').closest('tr')!.querySelector('.soon')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('radio', { name: /Revoked/ }));
+    expect(table.getByText(/^revoked 2 Sep.* by Dirk Vos$/)).toBeTruthy();
+    await fireEvent.click(screen.getByRole('radio', { name: /Active/ }));
+    await fireEvent.input(screen.getByRole('searchbox', { name: 'Search a User or a key' }), { target: { value: 'karel' } });
+    expect(rows()).toHaveLength(1);
+
+    await fireEvent.click(table.getByRole('button', { name: 'Revoke' }));
+    expect(table.getByText('Revoke “Sales dashboard, shared drive” of Karel Leys?')).toBeTruthy();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(table.getAllByRole('button', { name: 'Revoke' }).find((button) => button.closest('tr')?.classList.contains('confirm'))!);
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/excel-keys/k-2' });
+    // It stays in its place, struck through, with who revoked it.
+    await vi.waitFor(() => expect(table.getByText('Sales dashboard, shared drive').closest('tr')!.classList.contains('revoked')).toBe(true));
+    expect(table.getByText('revoked today by you')).toBeTruthy();
+    await vi.waitFor(() => expect(panel.getByRole('link', { name: /Excel keys/ }).textContent).toContain('1'));
   });
 });
 
