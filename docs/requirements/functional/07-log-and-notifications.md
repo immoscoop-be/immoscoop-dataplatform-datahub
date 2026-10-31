@@ -81,11 +81,13 @@ Every query that Data Hub executes, ad hoc, for a Lens, a Report or an export, o
 <a id="fr-ln-06"></a>
 ### FR-LN-06 · Every output carries its Query ID
 
-**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Every output, a chart, a Report, a PDF or an export, visibly carries the Query ID of its query, so that a screenshot can always be traced back to the SQL. The Chart Server already does this; Data Hub extends it to all assets.
 
 *Note of 2026-10-29, on building part 5: the result of a query in Query carries its Query ID, with a button that copies it ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the other outputs carry theirs as they come.*
+
+*Note of 2026-10-31, on checking what was built: the result of a query, of a Preview and of a Lens carry their Query ID; a chart, a Report and an export carry theirs when they come.*
 
 ## Open points
 

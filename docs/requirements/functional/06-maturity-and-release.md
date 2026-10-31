@@ -128,10 +128,11 @@ Every rise and drop goes into the Log, and every drop gives the Owner an alert.
 <a id="fr-mr-10"></a>
 ### FR-MR-10 · The Level restricts nothing and is shown everywhere
 
-**Status:** Specified · **Confluence:** MO-10 · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [collection-overview](../../design/screens/collection-overview.html), [resource-detail](../../design/screens/resource-detail.html), [resource-lineage](../../design/screens/resource-lineage.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
+**Status:** Implemented · **Confluence:** MO-10 · **Screens:** [collection-add-resources](../../design/screens/collection-add-resources.html), [collection-overview](../../design/screens/collection-overview.html), [resource-detail](../../design/screens/resource-detail.html), [resource-lineage](../../design/screens/resource-lineage.html), [resource-unassigned](../../design/screens/resource-unassigned.html)
 
 The Level restricts no access or channel. It is shown everywhere, also by Claude.
 
+*Note of 2026-10-31, on checking what was built: the Level shows in the panel, on every list and on every page; Claude shows it from version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-mr-11"></a>
 ### FR-MR-11 · Confirming again shows what changed
