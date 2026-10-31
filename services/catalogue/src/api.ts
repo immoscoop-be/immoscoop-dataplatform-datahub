@@ -789,6 +789,26 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
       return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures, a label or null, a checksum or null, and its columns.';
     }
   }
+  if (input.changes !== undefined) {
+    const KINDS = ['description', 'logic', 'type', 'structural', 'added', 'removed'];
+    const changes = Array.isArray(input.changes) ? (input.changes as Record<string, unknown>[]) : null;
+    const fits = (change: Record<string, unknown>) =>
+      change !== null &&
+      typeof change === 'object' &&
+      KINDS.includes(change.kind as string) &&
+      text(change.node, 1024) &&
+      (change.field === undefined || text(change.field, 1024)) &&
+      (change.direction === undefined || change.direction === 'added' || change.direction === 'removed') &&
+      (change.old === undefined || change.old === null || text(change.old, 4096)) &&
+      (change.new === undefined || change.new === null || text(change.new, 4096)) &&
+      Array.isArray(change.reaches) &&
+      (change.reaches as Record<string, unknown>[]).every(
+        (reach) => reach !== null && typeof reach === 'object' && text(reach.nodeId, 1024) && Number.isInteger(reach.distance) && (reach.distance as number) >= 0,
+      );
+    if (!changes || !changes.every(fits)) {
+      return 'Every change has a kind, the Node that changed and the tables it reaches, each with its distance.';
+    }
+  }
   return input as unknown as ResourcesUpdate;
 }
 

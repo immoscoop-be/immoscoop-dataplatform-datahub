@@ -28,7 +28,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 
 | Endpoint | Purpose |
 | --- | --- |
-| `POST /internal/resources` | The exposed tables of one dbt project, from registry with its service identity: registers, renames, withdraws and brings back Resources ([TR-SR-01](../../requirements/technical/04-stacks-and-resources.md#tr-sr-01)) |
+| `POST /internal/resources` | The exposed tables of one dbt project, from registry with its service identity: registers, renames, withdraws and brings back Resources ([TR-SR-01](../../requirements/technical/04-stacks-and-resources.md#tr-sr-01)), and logs the Changes upstream of each Resource ([TR-SR-22](../../requirements/technical/04-stacks-and-resources.md#tr-sr-22)) |
 | `GET /resources?collection=none` | The Resources without Collection, each with its Level (Data Team) |
 | `POST /collections/{id}/resources` | Add Resources to a Collection, all of them or none, each with its grain, model type, storage and mappings ([TR-CO-05](../../requirements/technical/03-collections.md#tr-co-05)) (Data Team) |
 | `PUT /resources/{id}/collection`, `DELETE /resources/{id}/collection` | Add a Resource to a Collection, or remove it (Data Team) |

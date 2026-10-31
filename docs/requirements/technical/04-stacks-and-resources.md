@@ -208,6 +208,13 @@ The previews of a Resource by a User are one query of the kind `preview`, named 
 
 `GET /resources/{id}/queries` gives every query with a run on the Resource, of every User, newest run first: its name, its kind, who made it and whether that is the User, its runs, its last run, and what that read, or what its Pre-flight said, or that it failed. On top, the queries with a run in the last 30 days, how many of them are Lenses, and how many colleagues made them. Only the Owner Unit of the Resource and the Data Team get it, as catalogue answers whether the User manages its Collection with the token of the User (`GET /collections/{id}`); anyone else gets `403 forbidden`. Each opens as a query, with its SQL and history, for them ([TR-SR-17](#tr-sr-17)); the pages of a result stay with who ran it.
 
+<a id="tr-sr-22"></a>
+### TR-SR-22 · The Changes upstream of a Resource, in its Log
+
+**Status:** Implemented · **Realises:** [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04), [MSG-RES-04](../functional/message-catalogue.md#msg-res-04)
+
+The `changes` that registry sends with the tables of a dbt project ([TR-AR-12](01-artifact-registry.md#tr-ar-12)) go, in the same transaction, into the Log of every Resource on a table they reach that is not withdrawn, whatever its dbt project, each with the name of the model it happened in and its distance, nothing filtered out: `ART-010` for a field added or removed, `ART-011` for new code, `ART-012` for a field retyped, `ART-013` for a description, `ART-014` for a model upstream that was removed and `ART-015` for one added. The text of `ART-010` and `ART-012` names the model when it is upstream. A Resource in a Collection whose own code or code upstream changed gets one Message per call, [MSG-RES-04](../functional/message-catalogue.md#msg-res-04), with the nearest such model and its distance.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

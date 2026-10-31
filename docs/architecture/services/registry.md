@@ -14,7 +14,7 @@
 - Fetching and storing the Artifacts of the Source Jobs: [FR-AR-01](../../requirements/functional/01-artifact-registry.md#fr-ar-01) to [FR-AR-06](../../requirements/functional/01-artifact-registry.md#fr-ar-06)
 - Processing into Nodes, columns, Edges and tests, across both dbt projects: [FR-AR-07](../../requirements/functional/01-artifact-registry.md#fr-ar-07) to [FR-AR-09](../../requirements/functional/01-artifact-registry.md#fr-ar-09)
 - Search by name, free text and lineage: [FR-AR-10](../../requirements/functional/01-artifact-registry.md#fr-ar-10)
-- Comparing versions and following Changes downstream: [FR-AR-11](../../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../../requirements/functional/01-artifact-registry.md#fr-ar-12). registry knows the lineage; catalogue knows which Nodes are Resources. registry therefore hands over each Change with the downstream Nodes and their distance, and catalogue writes the Log Entries.
+- Comparing versions and following Changes downstream: [FR-AR-11](../../requirements/functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../../requirements/functional/01-artifact-registry.md#fr-ar-12). registry knows the lineage and the tables under the exposures tagged `datahub`; catalogue knows the Resources on them. registry therefore hands over each Change with the tables of Resources it reaches and their distance, and catalogue writes the Log Entries ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12), [TR-SR-22](../../requirements/technical/04-stacks-and-resources.md#tr-sr-22)).
 - Fetching and processing a run again manually: [FR-AR-14](../../requirements/functional/01-artifact-registry.md#fr-ar-14)
 - Telling catalogue which tables the exposures tagged `datahub` make Resources, after every new Current Version: [FR-SR-32](../../requirements/functional/04-stacks-and-resources.md#fr-sr-32), built as [TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)
 
@@ -49,7 +49,7 @@ Artifact Sets with their status and error, Nodes, columns, Edges, tests and Chan
 
 ## Talks to
 
-The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and later the Changes.
+The dbt Cloud Admin API, the artifact bucket, and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and the Changes since the previous Current Version with the tables they reach ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)).
 
 The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)).
 

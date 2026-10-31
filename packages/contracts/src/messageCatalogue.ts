@@ -662,7 +662,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema.',
     per: 'One per Resource and Artifact Set.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-DH-27', 'DEC-LN-04', 'FR-AR-12'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },

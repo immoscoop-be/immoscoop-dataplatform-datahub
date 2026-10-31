@@ -1,4 +1,5 @@
 import type { IdTokenSource } from '@datahub/google';
+import type { UpstreamChange } from './changes.js';
 import type { ExposedTable } from './exposed.js';
 
 /** What registry tells catalogue about one dbt project after a new Current Version (TR-AR-08). */
@@ -10,6 +11,8 @@ export interface ResourcesUpdate {
   generatedAt: string | null;
   /** Every exposed table of the project: the whole state, so a lost call is repaired by the next. */
   tables: ExposedTable[];
+  /** What changed since the previous Current Version, with the Resources it reaches downstream (FR-AR-12). */
+  changes: UpstreamChange[];
 }
 
 export interface Catalogue {

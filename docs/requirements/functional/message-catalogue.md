@@ -46,7 +46,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
-| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
+| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Implemented |
 | [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Specified |
 | [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
@@ -1392,7 +1392,7 @@ One item of `changes`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema. |
 | How many | One per Resource and Artifact Set. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-DH-27](../../overview/data-hub.md#dec-dh-27), [DEC-LN-04](07-log-and-notifications.md#dec-ln-04), [FR-AR-12](01-artifact-registry.md#fr-ar-12) |
 
 **What it asks:** Nothing. The Owner reads the descriptions again, and changes theirs where they no longer fit; nothing more is needed.

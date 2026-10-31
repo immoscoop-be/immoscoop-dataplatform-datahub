@@ -746,6 +746,11 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(parseUpdate({ ...update('3', []), tables: [{ key: 'x' }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), projectName: 5 })).toBe('The name of the dbt project is a text, or null.');
       expect(parseUpdate({ ...update('3', []), generatedAt: 'yesterday' })).toMatch(/ISO 8601/);
+      // What changed upstream, followed downstream by registry (FR-AR-12).
+      const change = { kind: 'logic', node: 'stg_leads', reaches: [{ nodeId: 'model.p.leads', distance: 2 }] };
+      expect(parseUpdate({ ...update('3', []), changes: [change] })).toMatchObject({ changes: [change] });
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, kind: 'moved' }] })).toMatch(/Every change has a kind/);
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, reaches: [{ nodeId: 'model.p.leads', distance: -1 }] }] })).toMatch(/Every change/);
       const [visits] = update('3', ['visits']).tables;
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: undefined }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: [{ name: 'x', position: 1.5, dataType: null, description: '' }] }] })).toMatch(

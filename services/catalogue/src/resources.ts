@@ -21,6 +21,19 @@ export interface ExposedTable {
   columns: Column[];
 }
 
+/** A Change in a dbt project and the tables of Resources it reaches downstream, as registry follows it (FR-AR-12). */
+export interface UpstreamChange {
+  kind: 'description' | 'logic' | 'type' | 'structural' | 'added' | 'removed';
+  /** The name of the Node that changed. */
+  node: string;
+  field?: string;
+  direction?: 'added' | 'removed';
+  old?: string | null;
+  new?: string | null;
+  /** The Node of each table it reaches, and how many steps downstream; 0 only for a change of its own code. */
+  reaches: { nodeId: string; distance: number }[];
+}
+
 /** Every exposed table of one dbt project, after a new Current Version. */
 export interface ResourcesUpdate {
   projectId: string;
@@ -29,6 +42,8 @@ export interface ResourcesUpdate {
   /** When dbt made the manifest of the run, as ISO 8601. */
   generatedAt: string | null;
   tables: ExposedTable[];
+  /** What changed since its previous Current Version, followed downstream; a registry that does not send it yet leaves it out. */
+  changes?: UpstreamChange[];
 }
 
 export interface Resource {
@@ -385,6 +400,59 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     }
   }
 
+  /**
+   * The Changes upstream of Resources, each in the Log of every Resource it reaches with its distance, nothing
+   * filtered out (FR-AR-12, EC-AR-04), and one Message per Resource whose code, or code upstream, changed: the
+   * nearest such change (MSG-RES-04). The Changes of a Resource's own fields and descriptions are logged as its
+   * table is read; registry passes them on only from distance 1.
+   */
+  async function upstream(trx: Database, changes: readonly UpstreamChange[], runDay: string) {
+    if (changes.length === 0) return;
+    const nodeIds = [...new Set(changes.flatMap((change) => change.reaches.map((reach) => reach.nodeId)))];
+    const rows = await trx.selectFrom('resources').select(['id', 'nodeId', 'collectionId']).where('nodeId', 'in', nodeIds).where('withdrawnAt', 'is', null).execute();
+    const byNode = new Map<string, typeof rows>();
+    for (const row of rows) byNode.set(row.nodeId, [...(byNode.get(row.nodeId) ?? []), row]);
+    const entries: { resourceId: string; logId: ResourceLogId; params: Record<string, string> }[] = [];
+    const logic = new Map<string, { node: string; distance: number; owned: boolean }>();
+    for (const change of changes) {
+      for (const reach of change.reaches) {
+        for (const row of byNode.get(reach.nodeId) ?? []) {
+          const at = { sourceNode: change.node, distance: String(reach.distance) };
+          switch (change.kind) {
+            case 'structural':
+              entries.push({ resourceId: row.id, logId: 'ART-010', params: { field: change.field ?? '', direction: change.direction ?? 'changed', ...at } });
+              break;
+            case 'type':
+              entries.push({ resourceId: row.id, logId: 'ART-012', params: { field: change.field ?? '', old: change.old ?? '', new: change.new ?? '', ...at } });
+              break;
+            case 'description':
+              entries.push({ resourceId: row.id, logId: 'ART-013', params: at });
+              break;
+            case 'logic': {
+              entries.push({ resourceId: row.id, logId: 'ART-011', params: at });
+              const nearest = logic.get(row.id);
+              if (!nearest || reach.distance < nearest.distance) logic.set(row.id, { node: change.node, distance: reach.distance, owned: row.collectionId !== null });
+              break;
+            }
+            case 'removed':
+              entries.push({ resourceId: row.id, logId: 'ART-014', params: at });
+              break;
+            case 'added':
+              entries.push({ resourceId: row.id, logId: 'ART-015', params: at });
+              break;
+          }
+        }
+      }
+    }
+    for (let start = 0; start < entries.length; start += 500) {
+      await trx.insertInto('resourceLog').values(entries.slice(start, start + 500).map((entry) => ({ ...entry, actorId: null }))).execute();
+    }
+    for (const [resourceId, { node, distance, owned }] of logic) {
+      // Its Owner is told, one Message per Artifact Set; a Resource without a Collection has none (DEC-SR-26).
+      if (owned) await tell(trx, resourceId, 'MSG-RES-04', { run: runDay, node, distance: String(distance) });
+    }
+  }
+
   /** A Message from Data Hub on a Resource, for its Owner; lists are kept as JSON in its parameters. */
   async function tell(trx: Database, resourceId: string, type: string, params: Record<string, string>) {
     await trx.insertInto('messages').values({ type, subjectKind: 'resource', subjectId: resourceId, writerId: null, params, state: null }).execute();
@@ -588,6 +656,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             outcome.renamed++;
           }
         }
+        await upstream(trx, update.changes ?? [], runDay);
         await trx.updateTable('resourceSyncs').set({ runId: update.runId, syncedAt: new Date() }).where('projectId', '=', update.projectId).execute();
         return outcome;
       });

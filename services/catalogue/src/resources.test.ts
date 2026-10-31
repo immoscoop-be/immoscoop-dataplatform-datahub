@@ -274,6 +274,51 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     ).toBe('the relation of b starts from a, which is not mapped as is.');
   });
 
+  it('logs every Change upstream in each Resource it reaches, with its distance, and tells the Owner of new code once (FR-AR-12, EC-AR-04, MSG-RES-04)', async () => {
+    const other = (runId: string, tables: ExposedTable[], changes?: ResourcesUpdate['changes']): ResourcesUpdate => ({
+      projectId: '4242',
+      projectName: 'colleciones',
+      runId,
+      generatedAt: '2026-10-30T06:00:00Z',
+      tables,
+      ...(changes ? { changes } : {}),
+    });
+    const funnel = table('funnel_upstream');
+    const report = table('report_upstream');
+    await resources.apply(other('1', [funnel, report]));
+    const { funnel_upstream: funnelResource, report_upstream: reportResource } = await byKey();
+    const team = await collections.create({ name: 'Funnels', description: 'Funnels.', icon: 'funnel', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    await resources.add([{ id: reportResource!.id }], team, dirk);
+
+    await resources.apply(
+      other('2', [funnel, report], [
+        { kind: 'logic', node: 'stg_leads', reaches: [{ nodeId: funnel.nodeId, distance: 2 }, { nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'logic', node: 'int_leads', reaches: [{ nodeId: report.nodeId, distance: 1 }] },
+        { kind: 'structural', node: 'stg_leads', field: 'channel', direction: 'removed', reaches: [{ nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'type', node: 'stg_leads', field: 'amount', old: 'INT64', new: 'NUMERIC', reaches: [{ nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'description', node: 'raw_leads', reaches: [{ nodeId: report.nodeId, distance: 4 }] },
+        { kind: 'removed', node: 'old_leads', reaches: [{ nodeId: report.nodeId, distance: 2 }] },
+        { kind: 'added', node: 'new_leads', reaches: [{ nodeId: report.nodeId, distance: 1 }] },
+        // A table that is no Resource is passed over.
+        { kind: 'logic', node: 'stg_visits', reaches: [{ nodeId: 'model.immoscoop_dataplatform_sql.nobody', distance: 1 }] },
+      ]),
+    );
+    const logged = (await texts(reportResource!.id)).slice(0, 7);
+    expect(logged).toEqual([
+      'Model new_leads upstream was added',
+      'Model old_leads upstream was removed',
+      'Description changed in raw_leads',
+      'Type of amount changed from INT64 to NUMERIC in stg_leads',
+      'Structural change: field channel removed in stg_leads',
+      'Logic change in int_leads',
+      'Logic change in stg_leads',
+    ]);
+    expect(await texts(funnelResource!.id)).toContain('Logic change in stg_leads');
+    // The Owner hears once per Artifact Set, of the nearest change of code; a Resource without a Collection has none.
+    const told = await database.db.selectFrom('messages').select(['subjectId', 'params']).where('type', '=', 'MSG-RES-04').execute();
+    expect(told).toEqual([{ subjectId: reportResource!.id, params: { run: '2026-10-30', node: 'int_leads', distance: '1' } }]);
+  });
+
   it('never lets a Log Entry of a Resource be changed or removed (FR-SR-11)', async () => {
     await expect(sql`update resource_log set log_id = 'RES-004'`.execute(database.db)).rejects.toThrow(/append-only/);
     await expect(sql`delete from resource_log`.execute(database.db)).rejects.toThrow(/append-only/);
