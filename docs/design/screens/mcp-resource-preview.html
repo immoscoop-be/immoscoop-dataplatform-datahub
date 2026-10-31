@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!--
+  Screen: the Preview of a Resource in Claude, as an MCP App (FR-CL-09)
+  A conversation in Claude, drawn plainly: a colleague asks for rows, and Claude answers with preview_resource from the MCP
+  server of Data Hub. Claude chooses the Parameters from the question; the frame shows them as on the Preview tab of
+  resource-preview.html, and the User can change them there. The partition column offers its newest 1, 4 or 12 partitions
+  (DEC-SR-39). The Pre-flight decides what happens (DEC-SR-29), and the switch shows its three ranges:
+  · up to 100 MB it runs at once: the grid, 100 rows a page, with its Query ID; Claude gets the rows too and answers from them;
+  · from 100 MB to 1 GB the frame shows what it reads, and only the button of the User runs it: Claude cannot approve;
+  · above 1 GB the frame offers a Request to the Data Team, which only the User sends (MSG-QRY-01).
+  Only the User approves and sends, with buttons Claude cannot use (DEC-CL-07); Claude gets the rows for every Resource the
+  User sees (DEC-CL-06). No export (DEC-UX-120). "Open in Data Hub"
+  opens the Preview tab of the Resource (FR-CL-06); Claude names the Level of the Resource in its answer (FR-CL-05).
+  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-09
+  Decisions: DEC-CL-02, DEC-CL-06, DEC-CL-07, DEC-SR-29, DEC-SR-30, DEC-SR-39, DEC-UX-120, DEC-DH-15.
+  Open points: OP-CL-01, OP-CL-04.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-preview.html and
+  the Run button of query.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A Preview in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude shows the Preview of a Resource, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+ <div class="mcp-msg user" data-pane-group="reads" data-pane="free">How many listing views did Antwerp get yesterday, per type of listing?</div>
+ <div class="mcp-msg user" data-pane-group="reads" data-pane="approve" hidden>Show me the last four days, for every region.</div>
+ <div class="mcp-msg user" data-pane-group="reads" data-pane="request" hidden>Show me the last twelve days, for every region.</div>
+ <div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">preview_resource</span></div>
+ <section class="mcp-app" aria-label="Preview of Listing views per day, from Data Hub">
+  <div class="mcp-app-head"><i class="ph-fill ph-table" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Preview · Listings</span><div class="float-title">Listing views per day</div></div><span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span></div>
+  <div class="param-bar">
+   <span class="label" style="margin:0">Parameters</span>
+   <label class="param" data-pane-group="reads" data-pane="free"><span>Days</span><span class="pill pill-strong" title="The partition column: choosing days reads only those partitions">Partition</span><select><option selected>Newest 1 day</option><option>Newest 4 days</option><option>Newest 12 days</option></select></label>
+   <label class="param" data-pane-group="reads" data-pane="approve" hidden><span>Days</span><span class="pill pill-strong" title="The partition column: choosing days reads only those partitions">Partition</span><select><option>Newest 1 day</option><option selected>Newest 4 days</option><option>Newest 12 days</option></select></label>
+   <label class="param" data-pane-group="reads" data-pane="request" hidden><span>Days</span><span class="pill pill-strong" title="The partition column: choosing days reads only those partitions">Partition</span><select><option>Newest 1 day</option><option>Newest 4 days</option><option selected>Newest 12 days</option></select></label>
+   <label class="param" data-pane-group="reads" data-pane="free"><span>Region</span><span class="pill pill-strong" title="The first cluster column: choosing a region reads less">Cluster</span><select><option>All regions</option><option selected>Antwerpen</option><option>Brussel</option><option>Limburg</option><option>Oost-Vlaanderen</option><option>Vlaams-Brabant</option><option>West-Vlaanderen</option><option>Wallonia</option></select></label>
+   <label class="param" data-pane-group="reads" data-pane="approve request" hidden><span>Region</span><span class="pill pill-strong" title="The first cluster column: choosing a region reads less">Cluster</span><select><option selected>All regions</option><option>Antwerpen</option><option>Brussel</option><option>Limburg</option><option>Oost-Vlaanderen</option><option>Vlaams-Brabant</option><option>West-Vlaanderen</option><option>Wallonia</option></select></label>
+   <label class="param"><span>Listing type</span><select><option>All types</option><option>sale</option><option>rent</option><option>new_project</option></select></label>
+   <span style="flex:1"></span>
+   <span class="preflight ok" data-pane-group="reads" data-pane="free"><i class="ph-fill ph-gauge"></i>Scans about 30 MB · 1 of 730 partitions</span>
+   <span class="preflight" data-pane-group="reads" data-pane="approve" hidden><i class="ph-fill ph-gauge"></i>Reads about 480 MB · 4 of 730 partitions</span>
+   <span class="preflight" data-pane-group="reads" data-pane="request" hidden><i class="ph-fill ph-gauge"></i>Reads about 1.4 GB · 12 of 730 partitions</span>
+  </div>
+
+  <div data-pane-group="reads" data-pane="free">
+   <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the preview">
+    <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
+   </div>
+   <script type="application/json" id="result-data">{"cols": [{"name": "view_date", "type": "DATE"}, {"name": "region", "type": "STRING"}, {"name": "listing_type", "type": "STRING"}, {"name": "views", "type": "INT64"}, {"name": "unique_visitors", "type": "INT64"}], "rows": [["2026-10-29", "Antwerpen", "sale", 24310, 9120], ["2026-10-29", "Antwerpen", "rent", 13870, 6045], ["2026-10-29", "Antwerpen", "new_project", 3050, 1488]]}</script>
+   <div class="result-foot">
+    <span id="rg-total">3 rows</span><span class="dot">·</span><span>29 Oct 2026 · Antwerpen</span><span class="dot">·</span><span>scanned 30 MB, 1 of 730 partitions</span><span class="dot">·</span>
+    <span class="query-id">Query ID <span class="mono">q-20261030-c41e09</span><button class="icon-btn" aria-label="Copy the Query ID" title="Copy the Query ID"><i class="ph ph-copy"></i></button></span>
+    <span class="rg-pager">
+     <span>100 rows a page</span><span class="dot">·</span><span id="rg-range">1 – 3 of 3</span>
+     <span class="pager">
+      <button class="icon-btn" data-page="first" aria-label="First page" title="First page"><i class="ph ph-caret-double-left"></i></button>
+      <button class="icon-btn" data-page="prev" aria-label="Previous page" title="Previous page"><i class="ph ph-caret-left"></i></button>
+      <button class="icon-btn" data-page="next" aria-label="Next page" title="Next page"><i class="ph ph-caret-right"></i></button>
+      <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
+     </span>
+    </span>
+   </div>
+  </div>
+
+  <div class="sub-tile" data-pane-group="reads" data-pane="approve" hidden>
+   <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span class="run-gauge" aria-hidden="true" style="flex:1;min-width:200px"><span class="gauge"><span class="gauge-fill" style="width:48%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+    <button class="btn-primary run-btn high" type="button"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">480 MB</span></button>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0"><b style="font-weight:500;color:var(--text-primary)">480 MB at most, above 100 MB:</b> you approve this preview yourself; Claude cannot do it for you. It reads 4 of the 730 partitions, through <span class="mono">view_date</span>. Antwerpen alone reads about a quarter of that.</p>
+  </div>
+
+  <div class="sub-tile" data-pane-group="reads" data-pane="request" hidden>
+   <div style="display:flex;align-items:flex-start;gap:12px">
+    <i class="ph-fill ph-hand-palm" style="font-size:20px;color:var(--signal-urgent);margin-top:2px" aria-hidden="true"></i>
+    <div style="flex:1;min-width:0">
+     <div style="font-weight:500;font-size:var(--text-small)">Very large: one run reads more than 1 GB</div>
+     <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes back in your Message Centre, and the preview then runs here and in Data Hub.</p>
+     <label class="field"><span>A word for the Data Team (optional)</span><textarea rows="2">For the regional review of the autumn campaign; it runs once.</textarea></label>
+     <button class="btn-primary" type="button" style="margin-top:4px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send to the Data Team</button>
+    </div>
+   </div>
+  </div>
+
+  <div class="mcp-app-foot"><span><i class="ph ph-user" aria-hidden="true"></i> Kept in your Query Log, as a preview</span><a class="text-link open-dh" href="resource-preview.html"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+ <div class="mcp-msg" data-pane-group="reads" data-pane="free">
+  <p>Yesterday, 29 October, listings in Antwerp were viewed 41,230 times: 24,310 views of listings for sale, 13,870 for rent and 3,050 of new projects.</p>
+  <p>Listing views per day is at <b>3 · Confirmed</b>. Its visitors are unique per day and per type, so don't add the 16,653 visitors of the three types up as people: someone who looked at a sale and a rental counts in both.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="reads" data-pane="approve" hidden>
+  <p>Four days for every region reads about 480 MB, more than the 100 MB Data Hub runs freely. You approve that yourself, in the window above; I can't do it for you.</p>
+  <p>If Antwerp is enough, choose it alone: that reads about a quarter, some 120 MB.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="reads" data-pane="request" hidden>
+  <p>Twelve days for every region reads about 1.4 GB. Above 1 GB, someone of the Data Team accepts it first: you can send them a Request from the window above, with a word on why.</p>
+  <p>Or narrow it down: twelve days for Antwerp alone reads about 350 MB, which you can approve yourself.</p>
+ </div>
+</div>
+<div class="rg-menu" id="rg-menu" role="menu" hidden>
+ <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
+ <button class="menu-item" role="menuitem" data-act="desc"><i class="ph ph-sort-descending"></i>Sort this page, largest first</button>
+ <button class="menu-item" role="menuitem" data-act="fit"><i class="ph ph-arrows-out-line-horizontal"></i>Fit the width to its values</button>
+ <button class="menu-item" role="menuitem" data-act="copy"><i class="ph ph-copy"></i>Copy the name</button>
+ <p class="rg-menu-note">Sorting reorders the 100 rows on this page only.</p>
+</div>
+<div class="proto-switch" data-group="reads" role="tablist" aria-label="Prototype: what the preview reads">Reads
+ <button class="seg on" data-target="free" role="tab" aria-selected="true">Up to 100 MB</button>
+ <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
+ <button class="seg" data-target="request" role="tab" aria-selected="false">Above 1 GB</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

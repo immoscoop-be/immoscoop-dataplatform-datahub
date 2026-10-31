@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<!--
+  Screen: a Resource in Claude, as an MCP App (FR-CL-07, DEC-CL-02)
+  A conversation in Claude, drawn plainly: a colleague asks about a Resource, and Claude answers with show_resource from the
+  MCP server of Data Hub. The frame holds the head of the Resource with its Level and state, then its Overview and Columns,
+  the same components as resource-detail.html. Lineage, History and Preview are not in the frame: they stay in Data Hub, or
+  come through their own tools (preview_resource opens mcp-resource-preview.html). No rail, no panel and no edit links: an
+  MCP App has no navigation of its own and carries "Open in Data Hub" at its foot (FR-CL-06). It shows what the User sees
+  in Data Hub, nothing more (FR-CL-02). Under the frame, Claude answers in its own words and names the Level, and a
+  deprecation with what to use instead (FR-CL-05). The switch shows the Resource published, and deprecated.
+  Requirements: FR-CL-01, FR-CL-02, FR-CL-05, FR-CL-06, FR-CL-07
+  Decisions: DEC-CL-02, DEC-MR-06, DEC-DH-15, DEC-LR-08, DEC-UX-101.
+  Open points: OP-CL-01.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-detail.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A Resource in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude shows a Resource, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+ <div class="mcp-msg user">I need weekly credit leads for the KBC review. Can you show me Weekly lead volume?</div>
+ <div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">show_resource</span></div>
+ <section class="mcp-app" aria-label="Weekly lead volume, a Resource from Data Hub">
+  <div class="mcp-app-head"><i class="ph-fill ph-table" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Resource · Credit leads</span><div class="float-title">Weekly lead volume</div><span class="meta mono">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume</span></div></div>
+  <div class="status-row">
+   <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+   <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+   <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+   <span class="status dep-chip" data-pane-group="dep" data-pane="on" hidden title="Deprecated by the credit team on 20 Oct 2026: replaced by Weekly lead volume v2"><i class="ph-fill ph-archive"></i>Deprecated</span>
+  </div>
+  <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads, Weekly lead volume v2. It stays usable.</p></div>
+  <div>
+   <div class="tabs" data-group="tabs" role="tablist">
+    <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
+    <button class="tab" data-target="columns" role="tab" aria-selected="false">Columns</button>
+   </div>
+   <div class="tab-content card">
+    <div class="grid" data-pane-group="tabs" data-pane="overview">
+     <div class="sub-tile" style="grid-column:1/-1">
+      <div class="label">Description</div>
+      <div class="desc-pair">
+       <div>
+        <div class="desc-head"><span class="label">Business Description</span><span class="origin">From the Owner</span></div>
+        <p class="prose" style="color:var(--text-primary)">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people, so the weeks don't add up to unique people.</p>
+       </div>
+       <div>
+        <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+       </div>
+      </div>
+      <div style="margin-top:12px;display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="code-chip">model type: aggregate</span><span class="code-chip">grain: week × lead source</span><span class="origin">From the Data Team</span></div>
+     </div>
+     <div class="sub-tile">
+      <div class="label">Known behaviour</div>
+      <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-check-circle" style="color:var(--text-secondary)"></i>Intended use</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 10px 20px;line-height:1.5">Weekly trends and comparing lead sources.</p>
+      <div style="font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><i class="ph-fill ph-warning" style="color:var(--text-secondary)"></i>Pitfalls</div><p style="font-size:12px;color:var(--text-secondary);margin:3px 0 0 20px;line-height:1.5">The current week is incomplete. Don’t sum across sources for unique people.</p>
+     </div>
+     <div class="sub-tile">
+      <div class="label">Known gaps</div>
+      <div style="font-size:12px;line-height:1.5;display:flex;gap:8px"><i class="ph-fill ph-circle-dashed" style="color:var(--text-muted);margin-top:2px"></i><span>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</span></div>
+     </div>
+     <div class="sub-tile">
+      <div class="label">Publication</div>
+      <dl class="facts">
+       <dt>Published</dt><dd>2 Sep 2026 by An Claes</dd>
+       <dt>Confirmed</dt><dd>14 Oct 2026 by An Claes</dd>
+       <dt>Reliable since</dt><dd>1 Jan 2025</dd>
+      </dl>
+     </div>
+     <div class="sub-tile">
+      <div class="label">Key fields</div>
+      <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span>
+      <div class="label" style="margin-top:12px">Parameters</div><span class="code-chip">lead_source</span><span class="code-chip">week_start</span>
+     </div>
+     <div class="sub-tile" style="grid-column:1/-1">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="label" style="margin:0;flex:1">Partitions and clustering</span><span class="origin">From dbt and BigQuery</span></div>
+      <dl class="facts">
+       <dt>Partitioned</dt><dd>by <span class="mono">week_start</span>, a partition per week · 312 partitions</dd>
+       <dt>Clustered</dt><dd>by <span class="mono">lead_source</span>, then <span class="mono">lead_channel</span></dd>
+       <dt>Size</dt><dd>6.2 GB in all, about 20 MB a week</dd>
+      </dl>
+      <p class="prose" style="font-size:12px;margin:10px 0 0;color:var(--text-secondary)">Filter on <span class="mono">week_start</span> first: without it, a query reads all 6.2 GB. A filter on <span class="mono">lead_source</span> then reads less again.</p>
+     </div>
+    </div>
+    <div data-pane-group="tabs" data-pane="columns" hidden>
+     <p class="meta" style="margin:0 6px 6px">Every field with its Business Description, from the Owner, next to its description from dbt.</p>
+     <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th></th></tr></thead><tbody>
+      <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td></tr>
+      <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td><span class="pill pill-strong">Cluster 2</span></td></tr>
+     </tbody></table>
+    </div>
+   </div>
+  </div>
+  <div class="mcp-app-foot"><span><i class="ph ph-user" aria-hidden="true"></i> As you see it in Data Hub</span><a class="text-link open-dh" href="resource-detail.html"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+ <div class="mcp-msg" data-pane-group="dep" data-pane="off">
+  <p>Weekly lead volume is at <b>4 · Explored</b>: published and confirmed by the credit team, with an exploration of its data. One row is a week and a lead source, and it counts leads, not people.</p>
+  <p>For the KBC review, mind three things:</p>
+  <ul><li>The current week is still incomplete, so stop at last week.</li><li>There are no partner leads before 1 March 2025.</li><li>Filter on <span class="mono">week_start</span>: the whole table is 6.2 GB, one week about 20 MB.</li></ul>
+  <p>Shall I preview the last four weeks?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="dep" data-pane="on" hidden>
+  <p>Careful: Weekly lead volume is <b>deprecated</b>. The credit team marked it on 20 October 2026, as it leaves out partner leads; they point to <b>Weekly lead volume v2</b> instead. It still works, at 4 · Explored, but for the KBC review I would use v2.</p>
+  <p>Shall I show you Weekly lead volume v2?</p>
+ </div>
+</div>
+<div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: state of the Resource">Resource
+ <button class="seg on" data-target="off" role="tab" aria-selected="true">Published</button>
+ <button class="seg" data-target="on" role="tab" aria-selected="false">Deprecated</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

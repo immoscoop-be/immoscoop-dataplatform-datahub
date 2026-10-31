@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<!--
+  Screen: publishing a Resource in Claude, as an MCP App (FR-CL-12)
+  A conversation in Claude, drawn plainly: the Owner asks Claude to publish a Resource. A Publication cannot be undone
+  (DEC-SR-28) and is the first Confirmation (DEC-MR-07), so Claude does not publish: publish_resource opens the same
+  publication as the sheet of resource-publish.html, and only the User completes it. The frame holds who will see it,
+  what Data Hub checked and what the User confirms; at its foot the declaration and "Publish and confirm" are one bar,
+  the button off until the box is ticked (DEC-UX-63). Claude gets an account of what happened, and names the new Level.
+  The switch shows four cases:
+  · ready: Described, and the User is in the Owner Unit;
+  · published: what the frame and Claude show once the User published it;
+  · not ready: without a description of the view in dbt it stays 1 · Available and cannot be published, as on the page (DEC-MR-10);
+  · not the Owner: the User is in the Data Team but not in the Owner Unit, which alone publishes (FR-SR-16); no frame is
+    opened, and Claude says who publishes and offers to ask them (FR-CL-03).
+  The button is the User's alone: Claude cannot use it (DEC-CL-07). The Log says it was published through Claude (DEC-CL-08).
+  Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12
+  Decisions: DEC-CL-01, DEC-CL-02, DEC-CL-07, DEC-CL-08, DEC-SR-28, DEC-MR-07, DEC-MR-10, DEC-UX-31, DEC-UX-63, DEC-DH-15.
+  Open points: OP-CL-01.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-publish.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Publishing a Resource in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how the Owner publishes a Resource from Claude, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+ <div class="mcp-msg user">The descriptions of Weekly lead volume are done. Publish it for me.</div>
+ <div class="mcp-msg" data-pane-group="pub" data-pane="ready done notready"><p>Publishing is yours to do: it can't be undone, and it is your Confirmation of what the Resource is. I've opened it for you below.</p></div>
+ <div class="mcp-tool" data-pane-group="pub" data-pane="ready done notready"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">publish_resource</span></div>
+ <div class="mcp-tool" data-pane-group="pub" data-pane="notowner" hidden><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">get_resource</span></div>
+ <section class="mcp-app" aria-label="Publish Weekly lead volume, in Data Hub" data-pane-group="pub" data-pane="ready done notready">
+  <div class="mcp-app-head"><i class="ph-fill ph-globe-simple" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Publish · Resource · Credit leads · Owner: Credit team</span><div class="float-title">Weekly lead volume</div></div>
+   <span class="status" data-pane-group="pub" data-pane="ready"><span class="maturity" data-level="2" data-no-tooltip></span>2 · Described</span>
+   <span class="status" data-pane-group="pub" data-pane="notready" hidden><span class="maturity" data-level="1" data-no-tooltip></span>1 · Available</span>
+   <span class="status" data-pane-group="pub" data-pane="done" hidden><span class="maturity" data-level="3" data-no-tooltip></span>3 · Confirmed</span>
+  </div>
+  <div class="sheet-list" data-pane-group="pub" data-pane="ready notready">
+   <div class="pub-block">
+    <div class="label">Who will see it</div>
+    <div class="check-line"><i class="ph-fill ph-globe-simple"></i><span><b>Everyone who sees Credit leads:</b> the whole company, as the Collection is public. Now only the credit team and the Data Team see it.</span></div>
+   </div><div class="pub-block">
+    <div class="label">What Data Hub checked</div>
+    <div class="check-line"><i class="ph-fill ph-check-circle"></i><span>In Credit leads, owned by the credit team: you may publish it.</span></div>
+    <div class="check-line" data-pane-group="pub" data-pane="ready"><i class="ph-fill ph-check-circle"></i><span><b>Described in dbt:</b> the view and its 4 columns have a description.</span></div>
+    <div class="check-line missing" data-pane-group="pub" data-pane="notready" hidden><i class="ph-fill ph-warning-circle"></i><span><b>Not described in dbt:</b> the view has no description yet, and none of its columns has one. The Data Team describes it in dbt; until then the Resource stays 1 · Available and cannot be published.</span></div>
+   </div><div class="pub-block" data-pane-group="pub" data-pane="ready">
+    <div class="label">What you confirm</div>
+    <p class="meta" style="display:block;line-height:1.5;margin:0">Publishing is also the first Confirmation: for the credit team, you confirm what this Resource is and what it stands for, as its descriptions say. The Level rises from 2 · Described to 3 · Confirmed.</p>
+    <div class="confirm-what">
+     <div class="desc-head"><span class="label">Business Description</span><span class="origin">From the Owner</span></div>
+     <p class="lead">The number of credit leads we send to KBC each week, per lead source. Use it to follow the trend and to compare sources; it counts leads, not people.</p>
+     <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
+     <p>One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
+     <a class="text-link" href="mcp-resource.html"><span>And its 4 fields, each with a description</span><i class="ph ph-arrow-right"></i></a>
+    </div>
+    <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">You confirm what the Resource is, not the figures in it: its data is explored in the EDA.</p>
+   </div><div class="pub-block" data-pane-group="pub" data-pane="notready" hidden>
+    <div class="label">Your Confirmation</div>
+    <p class="meta" style="display:block;line-height:1.5;margin:0">A Resource is published from 2 · Described, which it reaches once the Data Team describes it in dbt. Then you confirm it here.</p>
+   </div>
+  </div>
+  <div class="sheet-list" data-pane-group="pub" data-pane="done" hidden>
+   <div class="pub-block">
+    <div class="check-line"><i class="ph-fill ph-check-circle"></i><span><b>Published and confirmed</b> on 30 Oct 2026, by you, for the credit team. It does not expire; a field that changes later gives a warning, and the Level stays.</span></div>
+    <div class="check-line"><i class="ph-fill ph-globe-simple"></i><span><b>Everyone who sees Credit leads sees it now:</b> the whole company.</span></div>
+   </div>
+  </div>
+  <div class="mcp-app-foot">
+   <div class="confirm-bar" data-pane-group="pub" data-pane="ready"><label><input type="checkbox"><span>For the credit team, I confirm that this Resource is correct: what it is and what it stands for.</span></label><button class="btn-primary" data-go="pub:done"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
+   <div class="confirm-bar" data-pane-group="pub" data-pane="notready" hidden><label><input type="checkbox" disabled><span>For the credit team, I confirm that this Resource is correct: what it is and what it stands for.</span></label><button class="btn-primary" disabled><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
+   <span data-pane-group="pub" data-pane="ready notready">Only you can publish it; Claude cannot.</span>
+   <span data-pane-group="pub" data-pane="done" hidden>Kept in the Log of the Resource with the fingerprint of today: by you, through Claude.</span>
+   <a class="text-link open-dh" href="resource-publish.html"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a>
+  </div>
+ </section>
+ <div class="mcp-msg" data-pane-group="pub" data-pane="ready">
+  <p>I checked it first: it is Described, and you are in the credit team, its Owner Unit, so you may publish it. Read what you confirm, tick the declaration and press <b>Publish and confirm</b>.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="pub" data-pane="done" hidden>
+  <p>Done: you published Weekly lead volume. It is now at <b>3 · Confirmed</b>, and everyone who sees Credit leads, the whole company, can find and use it.</p>
+  <p>Shall I let the colleagues who asked about it know, with a Remark on the Resource?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="pub" data-pane="notready" hidden>
+  <p>It can't be published yet: dbt has no description of the view, nor of any of its columns, so the Resource is still at <b>1 · Available</b>. The Data Team describes it in dbt; once it reaches 2 · Described, you can publish it.</p>
+  <p>Shall I ask the Data Team with a Question on the Resource?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="pub" data-pane="notowner" hidden>
+  <p>I can't publish Weekly lead volume for you, and neither can you: only a member of the Owner Unit of Credit leads publishes it, and that is the credit team. You're in the Data Team, which does not publish as such.</p>
+  <p>It is ready, at <b>2 · Described</b>. Shall I ask the credit team to publish it, with a Remark on the Resource? You can also <a class="text-link" href="resource-detail.html" style="display:inline"><span>open it in Data Hub</span></a>.</p>
+ </div>
+</div>
+<div class="proto-switch" data-group="pub" role="tablist" aria-label="Prototype: the case">Case
+ <button class="seg on" data-target="ready" role="tab" aria-selected="true">Ready</button>
+ <button class="seg" data-target="done" role="tab" aria-selected="false">Published</button>
+ <button class="seg" data-target="notready" role="tab" aria-selected="false">Not ready</button>
+ <button class="seg" data-target="notowner" role="tab" aria-selected="false">Not the Owner</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

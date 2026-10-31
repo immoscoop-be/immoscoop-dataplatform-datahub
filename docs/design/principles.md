@@ -455,6 +455,16 @@ Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC
   - With "Reduce motion" it is one still frame, and the mouse does nothing. Without WebGL the usual background stays.
 - **The flowing lights** ([DEC-UX-109](#dec-ux-109)): soft spots and arcs of colour, drawn live with WebGL as the flowing gradient is, after pictures Max chose. By night Aurora, Embers, Dusk and Horizon, light adding up on black; by day Periwinkle, Sunrise, Apricot, Blush and Sky, colour painted over a pale ground. Each light drifts, breathes and its arc swells at a random speed of its own, in periods of 8 to 18 seconds, and leans a little towards the mouse; nothing repeats. With "Reduce motion" they stand still. Any screen shows one with `?bg=aurora` and so on in its address.
 
+## Claude
+
+Screens: [a Resource](screens/mcp-resource.html), [its Preview](screens/mcp-resource-preview.html) and [its publication](screens/mcp-resource-publish.html), as MCP Apps in a conversation in Claude; and [a Learning Card](screens/learning-mcp.html). Designed on 2026-10-30, to review ([OP-CL-01](../requirements/functional/17-claude.md#op-cl-01)). Claude comes in version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)).
+
+- **Text or a window** ([DEC-CL-02](../requirements/functional/17-claude.md#dec-cl-02), [FR-CL-01](../requirements/functional/17-claude.md#fr-cl-01)): most answers are Claude's own words, from what a tool gave it. An MCP App opens only where the User should see the object or must decide: a Resource asked to be shown, a Preview, a publication.
+- **The same components, without the app around them** ([DEC-DH-15](../overview/data-hub.md#dec-dh-15)): an MCP App puts together the components of the page, with no rail, panel, breadcrumb or edit links. On its head the icon, the kind and Collection, and the name; at its foot what it is (as you see it, kept in your Query Log) and "Open in Data Hub", which opens the page at the matching tab ([FR-CL-06](../requirements/functional/17-claude.md#fr-cl-06)).
+- **The Level, always:** on the head of the frame or in its status row, and in Claude's own answer, with a deprecation and what to use instead ([FR-CL-05](../requirements/functional/17-claude.md#fr-cl-05)).
+- **The User decides in the window, Claude never** ([FR-CL-09](../requirements/functional/17-claude.md#fr-cl-09), [FR-CL-12](../requirements/functional/17-claude.md#fr-cl-12)): "Approve and run" above 100 MB, the Request above 1 GB, and the declaration with "Publish and confirm" are buttons of the User in the MCP App, each saying that Claude cannot do it; Claude has no way to use them ([DEC-CL-07](../requirements/functional/17-claude.md#dec-cl-07)).
+- **A conversation, drawn plainly:** the prototypes show the question of the User in a bubble, the tool that opened the window above it in grey, and Claude's answer under it, so that the frame is seen in its place. Only the frame comes from Data Hub.
+
 ## Decisions
 
 All decided on 2026-10-22, in the design session.
