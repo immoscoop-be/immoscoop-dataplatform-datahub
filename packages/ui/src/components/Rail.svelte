@@ -9,6 +9,8 @@
     readonly href: string;
     /** For Messages: how many are unread (DEC-UX-29). */
     readonly unread?: number;
+    /** Set a little apart from the items above it, as Admin is (DEC-UX-130). */
+    readonly apart?: boolean;
   }
 </script>
 
@@ -61,6 +63,7 @@
   {#each items as item (item.id)}
     <a
       class="nav-btn"
+      class:apart={item.apart}
       class:active={item.id === active}
       href={item.href}
       data-label={item.label}
@@ -99,6 +102,7 @@
     display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 0; position: relative; z-index: 3; }
   .logo { margin-bottom: 28px; color: var(--text-primary); }
   .spacer { flex: 1; }
+  .apart { margin-top: 14px; }
   .nav-btn { width: var(--nav-icon-size); height: var(--nav-icon-size); border-radius: var(--radius-nav-icon); border: 0; background: none;
     display: flex; align-items: center; justify-content: center; color: var(--text-secondary); cursor: pointer; font-size: 22px; position: relative; text-decoration: none; }
   .nav-btn:hover { background: var(--surface-float-hover); }
