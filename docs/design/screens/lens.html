@@ -9,11 +9,13 @@
   a date, or a function such as "today − 3 days". About: the question, what it shows,
   what it does step by step, what it is built on, its Parameters and their defaults, its history.
   No SQL on this page and no adding of Parameters: both belong to editing, by the Owner Unit (DEC-UX-27).
+  "Open in Excel" opens a sheet with the address of the Lens for Power Query and how to sign in with an Excel key
+  (DEC-UX-159, DEC-CH-06): Excel gets its result as data, with the Parameters at their defaults, at most 10,000 rows.
   The switches at the bottom show the result up to date, after a change, before the first run, while choosing a value, Broken (?state=broken, DEC-UX-81) and stopped, after a run with its defaults grew past 1 GB (?state=stopped, DEC-UX-125, DEC-LE-11), as the Owner Unit or a colleague.
   The page sits under Collections (DEC-UX-66): the panel is that of Collections, with Credit leads unfolded and this Lens
   marked as open; there is no section Lenses.
   Requirements: FR-CO-19, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-51, FR-LN-06, FR-LE-03, FR-LE-04, FR-LE-06, FR-LE-11, FR-LE-12, FR-LE-13, FR-LE-14, FR-LE-17, FR-CH-01, FR-CV-07
-  Decisions: DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-UX-121, DEC-UX-122, DEC-LE-08, DEC-LE-12, DEC-LE-16, DEC-LE-17, DEC-DH-10, DEC-CO-16.
+  Decisions: DEC-UX-159, DEC-CH-03, DEC-CH-06, DEC-DH-79, DEC-UX-26, DEC-UX-27, DEC-UX-28, DEC-UX-66, DEC-UX-81, DEC-UX-83, DEC-UX-106, DEC-UX-121, DEC-UX-122, DEC-LE-08, DEC-LE-12, DEC-LE-16, DEC-LE-17, DEC-DH-10, DEC-CO-16.
   Related screens: lens-new.html (Make it a lens), query-new.html (Use this lens), collection-overview.html (its Lenses).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -121,6 +123,7 @@
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h1 class="page-title" style="display:flex;align-items:center;gap:10px"><i class="ph ph-aperture" style="font-size:24px;color:var(--text-secondary)" aria-hidden="true"></i>Leads per source name</h1><span style="display:flex;gap:8px;align-items:center"><span class="maturity" data-level="4" role="img" aria-label="Level 4 · Explored" title="4 · Explored"></span><span class="status broken" data-pane-group="state" data-pane="broken" hidden>Broken</span><span class="status" data-pane-group="state" data-pane="stopped" hidden>Stopped</span></span></div>
   <p style="margin:6px 0 0;color:var(--text-secondary);font-size:var(--text-small);line-height:1.5;max-width:640px">How many leads each lead source brings in, from a week you choose.</p>
  </div>
+ <button class="btn-quiet outline" type="button" data-sheet-open="excel" style="display:inline-flex;align-items:center;gap:6px" title="Get the result of this Lens in Excel, with an Excel key"><i class="ph ph-file-xls"></i>Open in Excel</button>
  <a class="btn-quiet outline" href="lens-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
  <a class="btn-quiet outline" href="query.html" data-for="owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Start a query from the SQL of this Lens"><i class="ph ph-terminal-window"></i>Open in Query</a>
  <a class="btn-quiet outline" href="lens-new.html" data-for="owner" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
@@ -299,6 +302,35 @@
  </div>
 </main>
 </div>
+<!-- Open in Excel (DEC-UX-159): the address of the Lens for Power Query, and how to sign in with an Excel key. -->
+<div class="sheet-wrap" id="excel" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="excel-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-file-xls" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Leads per source name</div><h2 id="excel-title">Open in Excel</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list">
+  <p class="meta" style="display:block;line-height:1.5;margin-top:4px">Excel gets the result of this Lens as data, with its Parameters at their defaults, worked out again at every refresh: at most 10,000 rows, never a chart.</p>
+  <div class="key-once" style="margin-top:12px">
+   <div class="label">Address of this Lens</div>
+   <div class="key-box"><span class="mono">https://datahub-query.immoscoop.be/excel/lenses/7f3c2a91-0b4e-4c1d-9a55-2e8f61d0c7ab</span><button class="btn-quiet outline"><i class="ph ph-copy"></i>Copy</button></div>
+  </div>
+  <div class="label" style="margin-top:16px">In Excel</div>
+  <ol class="steps-plain">
+   <li>Data › Get data › From web, and paste the address.</li>
+   <li>Choose Basic as how to sign in: your e-mail as user name, and an Excel key as password. No key yet? Make one on <a href="my-page.html?metab=keys">My page</a>.</li>
+   <li>Load the table. Refresh whenever you like.</li>
+  </ol>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">Excel acts in your name: it gets only what you may see.</p>
+  <button class="btn-primary" data-sheet-close>Done</button>
+ </div>
+</section>
+</div>
+
 <div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: state of the result">Result
  <button class="seg on" data-target="fresh" role="tab" aria-selected="true">Up to date</button>
  <button class="seg" data-target="changed" role="tab" aria-selected="false">Parameters changed</button>

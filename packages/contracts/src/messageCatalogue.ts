@@ -662,7 +662,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema.',
     per: 'One per Resource and Artifact Set.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-DH-27', 'DEC-LN-04', 'FR-AR-12'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
@@ -1113,7 +1113,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per Lens, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-LE-17', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {
@@ -1158,6 +1158,85 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
   },
 
   // Queries
+  // An Excel key, made on My page: only its User sees the Messages about it (FR-PL-03, DEC-DH-79).
+  {
+    id: 'MSG-KEY-01',
+    title: 'An Excel key expires within a month',
+    kind: 'dataHub',
+    subjects: ['excelKey'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'An Excel key that is not revoked expires within a month; Data Hub looks once a day.',
+    per: 'One per key.',
+    status: 'Implemented',
+    sources: ['FR-PL-03', 'DEC-DH-79'],
+    parameters: [{ name: 'expires', type: 'date', about: 'The day the key stops' }],
+    text: {
+      nl: {
+        plain: 'Je Excel key {subject} vervalt op {expires}. Maak op My page een nieuwe en zet die in Excel.',
+        rich: lines(
+          '**Je Excel key {subject} vervalt op {expires}**',
+          '',
+          'Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.',
+        ),
+      },
+      en: {
+        plain: 'Your Excel key {subject} expires on {expires}. Make a new one on My page and put it in Excel.',
+        rich: lines(
+          '**Your Excel key {subject} expires on {expires}**',
+          '',
+          'After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    action: {
+      asks: 'nothing',
+      what: 'Its User can make a new key on My page and put it in Excel, before this one stops.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page, at its Excel keys' }],
+      done: 'When it is read; the key stops on its day whatever happens.',
+    },
+    example: { subject: 'Excel on my laptop', expires: '2027-10-31' },
+  },
+  {
+    id: 'MSG-KEY-02',
+    title: 'The Data Team revoked an Excel key',
+    kind: 'dataHub',
+    subjects: ['excelKey'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'Someone of the Data Team revokes the Excel key of another User, in Admin.',
+    per: 'One per key.',
+    status: 'Implemented',
+    sources: ['FR-PL-03', 'DEC-DH-79'],
+    parameters: [{ name: 'actor', type: 'person', about: 'Who of the Data Team revoked it' }],
+    text: {
+      nl: {
+        plain: '{actor} van het Data Team trok je Excel key {subject} in. Excel haalt er geen gegevens meer mee op.',
+        rich: lines(
+          '**{actor} van het Data Team trok je Excel key {subject} in**',
+          '',
+          'Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag {actor} waarom.',
+        ),
+      },
+      en: {
+        plain: '{actor} of the Data Team revoked your Excel key {subject}. Excel no longer gets data with it.',
+        rich: lines(
+          '**{actor} of the Data Team revoked your Excel key {subject}**',
+          '',
+          'From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    action: {
+      asks: 'nothing',
+      what: 'Its User makes a new key on My page if they still need one.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page, at its Excel keys' }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
+  },
   {
     id: 'MSG-QRY-01',
     title: 'Request to run a very large query',
@@ -1222,7 +1301,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per query, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-SR-53', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {

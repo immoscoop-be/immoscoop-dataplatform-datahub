@@ -3,6 +3,7 @@ import { metadataAccessToken, metadataIdToken, readSecret } from '@datahub/googl
 import { createArtifactSets } from './artifact-sets.js';
 import { createBucket } from './bucket.js';
 import { createCatalogue } from './catalogue.js';
+import { createChanges } from './changes.js';
 import type { RegistryDatabase } from './database.js';
 import { createDbtCloud } from './dbt-cloud.js';
 import { createProcessing, type Log } from './processing.js';
@@ -35,6 +36,7 @@ try {
       token: lazy(() => readSecret(settings.dbtCloudToken, accessToken)),
     }),
     catalogue: createCatalogue(settings.catalogueUrl, metadataIdToken()),
+    changes: createChanges(database.db),
     log,
   });
   const result = await processing.runPending();

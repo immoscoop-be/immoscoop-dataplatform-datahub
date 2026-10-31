@@ -9,6 +9,7 @@ import type { Learning } from './learning.js';
 import { messageRoutes } from './message-api.js';
 import type { Messages } from './messages.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
+import type { QueryService } from './query.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
 import { REQUEST_TYPES, type RequestFields, type Requests, type RequestType } from './requests.js';
 import {
@@ -39,8 +40,12 @@ export interface ApiOptions {
   messages: Messages;
   /** Who may tell about the Lenses and decide on a Request on one: the service account of query (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
+  /** identity, which tells about an Excel key (FR-PL-03). */
+  keyCallers?: ServiceCallerVerifier;
   /** The progress of every User in the Learning Centre (FR-LR-32). */
   learning: Learning;
+  /** query, to check what reads the Resources a new Current Version changed (FR-SR-52); absent, nothing is checked then. */
+  query?: QueryService;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -79,7 +84,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, learning } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, keyCallers, learning } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -140,7 +145,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   }
 
-  await messageRoutes(app, { collections, messages, lensCallers, viewer });
+  await messageRoutes(app, { collections, messages, lensCallers, keyCallers, viewer });
   await learningRoutes(app, { learning, viewer });
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));
@@ -319,6 +324,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       }
       const outcome = await resources.apply(update);
       request.log.info({ projectId: update.projectId, runId: update.runId, ...outcome }, 'Resources brought in line with the exposures');
+      // What reads a Resource that was withdrawn, came back or lost or regained a field is checked now (FR-SR-52);
+      // if query does not answer, its daily check finds the same within a day.
+      if (outcome.changed.length > 0 && options.query) {
+        try {
+          await options.query.check(outcome.changed);
+        } catch (error) {
+          request.log.warn({ err: error, resources: outcome.changed.length }, 'query could not check what reads the Resources that changed; its daily check will');
+        }
+      }
       return outcome;
     },
   );
@@ -787,6 +801,26 @@ export function parseUpdate(body: unknown): ResourcesUpdate | string {
       );
     if (!fits) {
       return 'Every exposed table has a key, a Node, a name, a kind, a description, its exposures, a label or null, a checksum or null, and its columns.';
+    }
+  }
+  if (input.changes !== undefined) {
+    const KINDS = ['description', 'logic', 'type', 'structural', 'added', 'removed'];
+    const changes = Array.isArray(input.changes) ? (input.changes as Record<string, unknown>[]) : null;
+    const fits = (change: Record<string, unknown>) =>
+      change !== null &&
+      typeof change === 'object' &&
+      KINDS.includes(change.kind as string) &&
+      text(change.node, 1024) &&
+      (change.field === undefined || text(change.field, 1024)) &&
+      (change.direction === undefined || change.direction === 'added' || change.direction === 'removed') &&
+      (change.old === undefined || change.old === null || text(change.old, 4096)) &&
+      (change.new === undefined || change.new === null || text(change.new, 4096)) &&
+      Array.isArray(change.reaches) &&
+      (change.reaches as Record<string, unknown>[]).every(
+        (reach) => reach !== null && typeof reach === 'object' && text(reach.nodeId, 1024) && Number.isInteger(reach.distance) && (reach.distance as number) >= 0,
+      );
+    if (!changes || !changes.every(fits)) {
+      return 'Every change has a kind, the Node that changed and the tables it reaches, each with its distance.';
     }
   }
   return input as unknown as ResourcesUpdate;

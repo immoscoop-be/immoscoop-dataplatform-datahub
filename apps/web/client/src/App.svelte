@@ -759,6 +759,7 @@
         <LensPage
           {lens}
           messages={messagesButton}
+          excelAddress={`${config.queryUrl}/excel/lenses/${encodeURIComponent(lens.id)}`}
           client={queries}
           collection={collections?.find((collection) => collection.id === lens.collectionId)}
           onchanged={() => {
@@ -828,6 +829,7 @@
         backgroundChoice={signedIn.backgrounds.choiceOf(theme)}
         onlanguage={(language: Language) => signedIn.settings.set('language', language)}
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
+        {identity}
       />
     {:else if page.kind === 'resource'}
       {#if opened?.resource}

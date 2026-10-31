@@ -21,6 +21,8 @@ export const STATE_TEXTS: Readonly<Record<string, string>> = {
   waiting: 'messages.state.waiting',
   accepted: 'messages.state.accepted',
   refused: 'messages.state.refused',
+  broken: 'messages.state.broken',
+  worksAgain: 'messages.state.worksAgain',
 };
 /** The kinds it filters on: what a person writes, and what Data Hub tells. */
 export type FilterKind = 'question' | 'remark' | 'signal' | 'request' | 'dataHub';

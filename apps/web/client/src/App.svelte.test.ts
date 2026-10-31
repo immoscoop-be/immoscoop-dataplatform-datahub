@@ -337,6 +337,7 @@ function serve({
   learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
   creditWith = {} as Partial<typeof CREDIT>,
+  excelKeys = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // Credit leads as catalogue keeps it, with its folders, changed by what the page asks (FR-CO-38 to FR-CO-41).
@@ -623,7 +624,7 @@ function serve({
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     const listed = () =>
-      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken }) => ({
         id: id as string,
         name: name as string,
         kind: (kind as string | undefined) ?? 'query',
@@ -634,6 +635,7 @@ function serve({
         runs: lastRunAt ? 1 : 0,
         request: request ?? null,
         hidden: hiddenQueries.has(id as string),
+        broken: (broken as Record<string, string> | null | undefined) ?? null,
       }));
     // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
     const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
@@ -683,7 +685,14 @@ function serve({
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
-      return json({ preflight: preflightOf(body.sql, body.parameters) });
+      // What it ran before no longer finds a column: the query is Broken now, until a change no longer reads it (FR-SR-53).
+      const lost = (query.loses ?? query.broken) as { name: string } | undefined;
+      if (lost && body.sql.includes(lost.name)) {
+        query.broken = lost;
+        return json({ preflight: { ...preflightOf(body.sql), runnable: false, bytes: null, range: null, problems: [{ kind: 'invalid', message: `Unrecognized name: ${lost.name}` }] }, broken: lost });
+      }
+      query.broken = null;
+      return json({ preflight: preflightOf(body.sql, body.parameters), broken: null });
     }
     if (query && path.startsWith(`/queries/${query.id as string}/runs?`)) {
       return json({ runs: (query.history as unknown[] | undefined) ?? (query.lastRun ? [query.lastRun] : []) });
@@ -730,6 +739,23 @@ function serve({
     }
     if (path === `${CONFIG.semgraphUrl}/render`) {
       return new Response('<svg xmlns="http://www.w3.org/2000/svg"><title>Example</title></svg>', { headers: { 'content-type': 'image/svg+xml' } });
+    }
+    // identity, as it keeps the Excel keys of the User (FR-PL-01, FR-PL-02).
+    if (path === '/me/excel-keys' && method === 'GET') {
+      return json({ keys: excelKeys });
+    }
+    if (path === '/me/excel-keys' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string };
+      const key = { id: `k-${excelKeys.length + 1}`, name: body.name, createdAt: '2026-10-31T08:00:00Z', lastUsedAt: null, expiresAt: '2027-10-31T08:00:00Z', revokedAt: null, revokedBy: null };
+      excelKeys.unshift(key);
+      return json({ key, secret: 'dhx_once-and-never-again-0123456' }, 201);
+    }
+    const keyOn = /^\/me\/excel-keys\/([^/]+)$/.exec(path);
+    if (keyOn && method === 'DELETE') {
+      const key = excelKeys.find((candidate) => candidate.id === keyOn[1]);
+      if (!key) return json({ error: 'not_found' }, 404);
+      Object.assign(key, { revokedAt: '2026-10-31T09:00:00Z', revokedBy: 'Max Verstraete' });
+      return new Response(null, { status: 204 });
     }
     if (path === '/me/groups') {
       return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
@@ -900,6 +926,47 @@ describe('the web app, signed in', () => {
     await fireEvent.click(await screen.findByRole('radio', { name: /Fresh piste/ }));
     expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'piste' } });
     expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Fresh piste');
+  });
+
+  it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {
+    const calls = serve({
+      settings: { language: 'en' },
+      excelKeys: [{ id: 'k-old', name: 'Old laptop', createdAt: '2025-11-20T08:00:00Z', lastUsedAt: null, expiresAt: '2026-11-20T08:00:00Z', revokedAt: null, revokedBy: null }],
+    });
+    open('/me/keys');
+    render(App, { config: CONFIG });
+    const table = within(await screen.findByRole('table', { name: 'Excel keys' }));
+    const old = (await table.findByText('Old laptop')).closest('tr')!;
+    expect(within(old).getByText('not yet')).toBeTruthy();
+    // It expires within a month: its date in the warning colour.
+    expect(old.querySelector('.soon')).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole('button', { name: 'New Excel key' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'New Excel key' }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Make the key' }));
+    expect(sheet.getByText('A name has 1 to 80 characters.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('textbox', { name: /^Name/ }), { target: { value: 'Excel on my laptop' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Make the key' }));
+    expect(await sheet.findByText('dhx_once-and-never-again-0123456')).toBeTruthy();
+    expect(sheet.getByText('You see it only now.')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/me/excel-keys', body: { name: 'Excel on my laptop' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Done' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // Once closed, the key itself is gone for good: only its name is in the list.
+    expect(await table.findByText('Excel on my laptop')).toBeTruthy();
+    expect(screen.queryByText('dhx_once-and-never-again-0123456')).toBeNull();
+
+    // Revoke asks first, in the place of the row.
+    await fireEvent.click(within(table.getByText('Old laptop').closest('tr')!).getByRole('button', { name: 'Revoke' }));
+    expect(table.getByText('Revoke “Old laptop”?')).toBeTruthy();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(table.getAllByRole('button', { name: 'Revoke' }).find((button) => button.closest('tr')?.classList.contains('confirm'))!);
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/me/excel-keys/k-old' });
+    // It stays in the list, struck through.
+    await vi.waitFor(() => expect(table.getByText('Old laptop').closest('tr')!.classList.contains('revoked')).toBe(true));
+    const revoked = table.getByText('Old laptop').closest('tr')!;
+    expect(within(revoked).getByText(/^revoked /)).toBeTruthy();
+    expect(within(revoked).queryByRole('button', { name: 'Revoke' })).toBeNull();
   });
 
   it('shows one page for what does not exist or may not be seen (DEC-UX-32)', async () => {
@@ -1572,6 +1639,33 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, parameters: [], approve: true } }));
   });
 
+  it('shows a Broken query with what it misses and since when, Run off, and a red dot in the panel (FR-SR-53, DEC-UX-160)', async () => {
+    const missing = { kind: 'column', name: 'lead_source', since: '2026-10-28T05:17:00Z' };
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), broken: missing }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Deze query kan niet draaien.')).toBeTruthy();
+    expect(main.getByText(/Hij leest de kolom lead_source, die sinds 28 okt\.? 2026 niet meer bestaat\. Wijzig de SQL/)).toBeTruthy();
+    // Its Pre-flight still finds it missing: Run stays off, and says why.
+    await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).getAttribute('title')).toBe('Hij draait nu niet: wat hij leest, bestaat niet meer'), { timeout: 3000 });
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: 'Resource · Broken: de kolom lead_source bestaat niet meer' })).toBeTruthy();
+  });
+
+  it('shows a query Broken as soon as its Pre-flight finds what it ran with gone, and the panel follows (FR-SR-52, FR-SR-53)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), loses: { kind: 'table', name: 'weekly_lead_volume', since: '2026-10-31T09:00:00Z' } }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // A table of one of its Resources is named by that Resource.
+    expect(await main.findByText('Deze query kan niet draaien.', {}, { timeout: 3000 })).toBeTruthy();
+    expect(main.getByText(/Hij leest de tabel weekly_lead_volume, die sinds 31 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: /Resource · Broken/ })).toBeTruthy();
+  });
+
   it('names a table outside its Resources, and warns without a partition filter, with the filter to add (DEC-UX-73, FR-SR-40)', async () => {
     const outside = 'select * from `immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts` where x = 1';
     serve({ queries: [{ ...QUERY, sql: outside }] });
@@ -2071,6 +2165,20 @@ describe('Lenses', () => {
     expect(main.getByText('Keeps one lead channel.')).toBeTruthy();
     expect(main.getByText('Geschreven door wie hem maakte, in gewone taal.')).toBeTruthy();
     expect(main.queryByText(/select/)).toBeNull();
+  });
+
+  it('gives the address of a Lens for Excel, with the steps and a way to an Excel key (FR-PL-01, DEC-UX-159)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Open in Excel/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Open in Excel' }));
+    expect(sheet.getByText('https://query.test/excel/lenses/l1')).toBeTruthy();
+    expect(sheet.getByText(/hoogstens 10.000 rijen/)).toBeTruthy();
+    expect(sheet.getByRole('link', { name: 'Nog geen key? Maak er een op Mijn pagina.' }).getAttribute('href')).toBe('/me/keys');
+    await fireEvent.click(sheet.getByRole('button', { name: 'Klaar' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
   it('lists the Lenses of a Collection on its page and in the panel (FR-CO-28, FR-CO-36)', async () => {

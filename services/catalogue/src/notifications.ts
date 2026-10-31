@@ -250,6 +250,9 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         const topic = topicOf(row.subjectId);
         return topic ? { ...named, name: `${topic.number} ${topic.title.en}`, exists: true } : named;
       }
+      // The User of an Excel key gets the Messages about it, as the one who made it (MSG-KEY-01, MSG-KEY-02).
+      case 'excelKey':
+        return { ...named, exists: true, authorId: row.params.user ?? null };
       default:
         return { ...named, exists: true };
     }
@@ -281,6 +284,8 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
       if (recipient === 'owner') {
         if (subject.owner) groups.push(subject.owner);
         else if (subject.kind === 'resource' || subject.kind === 'learningCard') team = true;
+        // A query answers to who made it, whom Data Hub names in its Message (MSG-QRY-02).
+        else if (subject.kind === 'query') addUser(row.params.owner ?? null, 'owner');
       }
       if (recipient === 'dataTeam') team = true;
       if (recipient === 'writer' && parent) addUser(parent.writerId, TYPES.get(parent.type)?.kind === 'request' ? 'request' : 'started');

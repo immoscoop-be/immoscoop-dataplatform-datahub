@@ -2,3 +2,4 @@ export { createVerifier, TokenError, type TokenVerifier, type VerifierOptions } 
 export { createServiceCallerVerifier, type ServiceCallerOptions, type ServiceCallerVerifier } from './service-caller.js';
 export { verifierFromEnv } from './env.js';
 export { authPlugin, type AuthPluginOptions } from './plugin.js';
+export { createExcelKeyExchanger, excelKeyFrom, type ExcelKeyExchanger, type ExcelKeyExchangerOptions } from './excel-key.js';

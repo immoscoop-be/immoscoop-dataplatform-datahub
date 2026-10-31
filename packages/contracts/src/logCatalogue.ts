@@ -174,8 +174,8 @@ export const LOG_CATALOGUE = {
     about: 'resource',
     parameters: ['field', 'direction', 'sourceNode', 'distance'],
     text: {
-      en: 'Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}}',
-      nl: 'Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}}',
+      en: 'Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}}{distance, select, 0 {} other { in {sourceNode}}}',
+      nl: 'Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}}{distance, select, 0 {} other { in {sourceNode}}}',
     },
   },
   'ART-011': {
@@ -186,12 +186,25 @@ export const LOG_CATALOGUE = {
   'ART-012': {
     about: 'resource',
     parameters: ['field', 'old', 'new', 'sourceNode', 'distance'],
-    text: { en: 'Type of {field} changed from {old} to {new}', nl: 'Type van {field} gewijzigd van {old} naar {new}' },
+    text: {
+      en: 'Type of {field} changed from {old} to {new}{distance, select, 0 {} other { in {sourceNode}}}',
+      nl: 'Type van {field} gewijzigd van {old} naar {new}{distance, select, 0 {} other { in {sourceNode}}}',
+    },
   },
   'ART-013': {
     about: 'resource',
     parameters: ['sourceNode', 'distance'],
     text: { en: 'Description changed in {sourceNode}', nl: 'Beschrijving gewijzigd in {sourceNode}' },
+  },
+  'ART-014': {
+    about: 'resource',
+    parameters: ['sourceNode', 'distance'],
+    text: { en: 'Model {sourceNode} upstream was removed', nl: 'Model {sourceNode} stroomopwaarts is verwijderd' },
+  },
+  'ART-015': {
+    about: 'resource',
+    parameters: ['sourceNode', 'distance'],
+    text: { en: 'Model {sourceNode} upstream was added', nl: 'Model {sourceNode} stroomopwaarts is toegevoegd' },
   },
   'MAT-020': {
     about: 'resource',

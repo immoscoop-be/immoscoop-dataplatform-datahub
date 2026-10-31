@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<!--
+  Screen: Excel keys, a tool of Admin, the section of the Data Team (PROPOSAL, FR-PL-03, DEC-DH-79)
+  Every Excel key of this environment of Data Hub, the active ones first, newest last used on top: its User, the name
+  they gave it, when it was made, last used and expires. The Data Team revokes a key at once, for example after a lost
+  laptop or a key seen where it should not be; it asks to confirm in the place of the row, as on My page, and its User
+  gets a Message that says so. A revoked key stays, struck through, with when and by whom. The search finds a User or a
+  key by name; the filter shows the active keys, those expiring within a month, or the revoked ones.
+  Admin lists its tools in its panel; in version 1 Excel keys is the one that is built, so Admin opens on it, as it did
+  on Webhooks while that was the only one (OP-UX-52).
+  The switch at the bottom shows the list, revoking and revoked: ?akeys=list, ?akeys=revoking, ?akeys=revoked.
+  Requirements: FR-PL-03
+  Decisions: DEC-DH-79, DEC-UX-130.
+  Related screens: my-page.html (the keys of one User), admin-webhooks.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Excel keys</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-keys.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub uat, and who reaches it from outside.</p>
+  <a class="mc-filter" href="admin-webhooks.html"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+  <a class="mc-filter on" href="admin-keys.html" aria-current="page"><i class="ph ph-key"></i><span>Excel keys</span><span class="count" title="Active keys">14</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Excel keys</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">Every Excel key of Data Hub uat. A key lets Excel fetch the result of a Lens in the name of its User. Revoke one at once when it should stop, such as after a lost laptop: its User gets a Message that you did.</p></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin:18px 0 12px;flex-wrap:wrap">
+ <label class="search card" style="flex:1;max-width:420px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search a User or a key"></label>
+ <div data-group="akfilter" role="tablist" aria-label="Which keys" style="display:inline-flex;gap:2px">
+  <button class="seg on" data-target="active" role="tab" aria-selected="true">Active <span class="count">14</span></button>
+  <button class="seg" data-target="soon" role="tab" aria-selected="false">Expiring within a month <span class="count">2</span></button>
+  <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked <span class="count">5</span></button>
+ </div>
+</div>
+<div class="table-card">
+ <table>
+ <thead><tr><th>User</th><th>Key</th><th>Made</th><th>Last used</th><th>Expires</th><th></th></tr></thead>
+ <tbody>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">AC</span><span>An Claes<span class="meta" style="display:block">an.claes@immoscoop.be</span></span></span></td><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Monthly KBC report</span></span></td><td class="muted nowrap">2 Sep 2026</td><td class="nowrap">today, 08:12</td><td class="muted nowrap">2 Sep 2027</td><td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+  <tr data-pane-group="akeys" data-pane="list"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">KL</span><span>Karel Leys<span class="meta" style="display:block">karel.leys@immoscoop.be</span></span></span></td><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="nowrap"><span class="key-soon">14 Mar 2027</span></td><td style="text-align:right"><button class="btn-quiet outline" data-go="akeys:revoking">Revoke</button></td></tr>
+  <tr data-pane-group="akeys" data-pane="revoking" hidden class="key-confirm"><td colspan="6"><span class="key-confirm-row"><i class="ph-fill ph-warning"></i><span style="flex:1"><b>Revoke "Sales dashboard, shared drive" of Karel Leys?</b> Excel stops getting data with it at once, and Karel Leys gets a Message that you did. This cannot be undone: to use Excel there again, he makes a new key.</span><button class="btn-quiet outline" data-go="akeys:list">Cancel</button><button class="btn-primary danger" data-go="akeys:revoked">Revoke</button></span></td></tr>
+  <tr data-pane-group="akeys" data-pane="revoked" hidden class="key-revoked"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">KL</span><span>Karel Leys<span class="meta" style="display:block">karel.leys@immoscoop.be</span></span></span></td><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Sales dashboard, shared drive</span></span></td><td class="muted nowrap">14 Mar 2026</td><td class="muted nowrap">3 weeks ago</td><td class="muted">revoked today by you</td><td></td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">RA</span><span>Ruth Aerts<span class="meta" style="display:block">ruth.aerts@immoscoop.be</span></span></span></td><td><span class="name-cell"><i class="ph ph-key kind-icon" aria-hidden="true"></i><span>Excel on my laptop</span></span></td><td class="muted nowrap">20 Oct 2026</td><td class="muted">not yet</td><td class="muted nowrap">20 Oct 2027</td><td style="text-align:right"><button class="btn-quiet outline">Revoke</button></td></tr>
+ </tbody>
+ </table>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">A key lasts a year, and its User gets a Message a month before. It stops at once when its User can no longer sign in with Google. Revoked keys stay listed under Revoked.</p>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+<div class="proto-switch" data-group="akeys" role="tablist" aria-label="Prototype: revoking a key">Excel keys
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="revoking" role="tab" aria-selected="false">Revoking</button>
+ <button class="seg" data-target="revoked" role="tab" aria-selected="false">Revoked</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

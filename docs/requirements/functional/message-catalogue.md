@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
 
 ## Overview
 
@@ -46,7 +46,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Implemented |
 | [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Implemented |
-| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
+| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Implemented |
 | [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Implemented |
 | [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
@@ -55,9 +55,11 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
-| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Implemented |
+| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
 
 ## Messages a person writes
@@ -1392,7 +1394,7 @@ One item of `changes`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema. |
 | How many | One per Resource and Artifact Set. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-DH-27](../../overview/data-hub.md#dec-dh-27), [DEC-LN-04](07-log-and-notifications.md#dec-ln-04), [FR-AR-12](01-artifact-registry.md#fr-ar-12) |
 
 **What it asks:** Nothing. The Owner reads the descriptions again, and changes theirs where they no longer fit; nothing more is needed.
@@ -2035,7 +2037,7 @@ It builds on {resource}, which your team owns: everyone who may see the lens now
 | From → to | Data Hub → Owner |
 | When | A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per Lens, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-LE-17](09-lenses.md#fr-le-17), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. The Owner Unit repairs the Lens from its query ([DEC-LE-04](09-lenses.md#dec-le-04)), or asks the Data Team whether what is missing comes back. Nothing is needed when it does.
@@ -2155,6 +2157,176 @@ One item of `missing`, English, laid out:
 
 </details>
 
+<a id="msg-key-01"></a>
+
+### MSG-KEY-01 · An Excel key expires within a month
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Excel key |
+| From → to | Data Hub → its author |
+| When | An Excel key that is not revoked expires within a month; Data Hub looks once a day. |
+| How many | One per key. |
+| Status | Implemented |
+| Comes from | [FR-PL-03](12-permissions-and-library-cards.md#fr-pl-03), [DEC-DH-79](../../overview/data-hub.md#dec-dh-79) |
+
+**What it asks:** Nothing. Its User can make a new key on My page and put it in Excel, before this one stops.
+
+**How it ends:** When it is read; the key stops on its day whatever happens.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page, at its Excel keys | every recipient |
+
+**Learning Card:** To write: *The result of a Lens in Excel: an Excel key, Power Query and refreshing*. The Message is about the key with which Excel gets the result of a Lens ([DEC-CH-03](13-channels.md#dec-ch-03)).
+
+**Dutch, laid out**, with the example:
+
+> **Je Excel key Excel on my laptop vervalt op 31 oktober 2027**
+>
+> Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.
+
+**Dutch, plain:**
+
+```text
+Je Excel key Excel on my laptop vervalt op 31 oktober 2027. Maak op My page een nieuwe en zet die in Excel.
+```
+
+**English, laid out**, with the example:
+
+> **Your Excel key Excel on my laptop expires on 31 October 2027**
+>
+> After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.
+
+**English, plain:**
+
+```text
+Your Excel key Excel on my laptop expires on 31 October 2027. Make a new one on My page and put it in Excel.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `expires` | date | The day the key stops |
+
+Template, Dutch, plain:
+
+```text
+Je Excel key {subject} vervalt op {expires}. Maak op My page een nieuwe en zet die in Excel.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**Je Excel key {subject} vervalt op {expires}**
+
+Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.
+```
+
+Template, English, plain:
+
+```text
+Your Excel key {subject} expires on {expires}. Make a new one on My page and put it in Excel.
+```
+
+Template, English, laid out:
+
+```markdown
+**Your Excel key {subject} expires on {expires}**
+
+After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.
+```
+
+</details>
+
+<a id="msg-key-02"></a>
+
+### MSG-KEY-02 · The Data Team revoked an Excel key
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Excel key |
+| From → to | Data Hub → its author |
+| When | Someone of the Data Team revokes the Excel key of another User, in Admin. |
+| How many | One per key. |
+| Status | Implemented |
+| Comes from | [FR-PL-03](12-permissions-and-library-cards.md#fr-pl-03), [DEC-DH-79](../../overview/data-hub.md#dec-dh-79) |
+
+**What it asks:** Nothing. Its User makes a new key on My page if they still need one.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page, at its Excel keys | every recipient |
+
+**Learning Card:** To write: *The result of a Lens in Excel: an Excel key, Power Query and refreshing*. The Message is about the key with which Excel gets the result of a Lens ([DEC-CH-03](13-channels.md#dec-ch-03)).
+
+**Dutch, laid out**, with the example:
+
+> **Dirk Vos van het Data Team trok je Excel key Sales dashboard, shared drive in**
+>
+> Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag Dirk Vos waarom.
+
+**Dutch, plain:**
+
+```text
+Dirk Vos van het Data Team trok je Excel key Sales dashboard, shared drive in. Excel haalt er geen gegevens meer mee op.
+```
+
+**English, laid out**, with the example:
+
+> **Dirk Vos of the Data Team revoked your Excel key Sales dashboard, shared drive**
+>
+> From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask Dirk Vos why.
+
+**English, plain:**
+
+```text
+Dirk Vos of the Data Team revoked your Excel key Sales dashboard, shared drive. Excel no longer gets data with it.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who of the Data Team revoked it |
+
+Template, Dutch, plain:
+
+```text
+{actor} van het Data Team trok je Excel key {subject} in. Excel haalt er geen gegevens meer mee op.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} van het Data Team trok je Excel key {subject} in**
+
+Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag {actor} waarom.
+```
+
+Template, English, plain:
+
+```text
+{actor} of the Data Team revoked your Excel key {subject}. Excel no longer gets data with it.
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} of the Data Team revoked your Excel key {subject}**
+
+From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.
+```
+
+</details>
+
 <a id="msg-qry-02"></a>
 
 ### MSG-QRY-02 · A query is Broken
@@ -2166,7 +2338,7 @@ One item of `missing`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per query, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-53](04-stacks-and-resources.md#fr-sr-53), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. Who made the query changes its SQL, or waits for what is missing to come back. Using other Resources is a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).
