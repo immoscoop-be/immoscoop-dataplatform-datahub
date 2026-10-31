@@ -167,6 +167,18 @@ export interface Messages {
   grewLarge(lensId: string, fields: { reads: number; threshold: number }): Promise<{ id: string }>;
   /** Keeps what query tells about a Lens. */
   keepLens(id: string, facts: LensFacts): Promise<void>;
+  /** What identity tells about the Excel key of a User: it expires within a month, or the Data Team revoked it (FR-PL-03). */
+  keyNotice(notice: KeyNotice): Promise<{ id: string }>;
+}
+
+/** What identity tells about an Excel key (MSG-KEY-01, MSG-KEY-02): only its User sees the Message. */
+export interface KeyNotice {
+  type: 'MSG-KEY-01' | 'MSG-KEY-02';
+  keyId: string;
+  userId: string;
+  name: string;
+  expires?: string;
+  actor?: string;
 }
 
 type Row = Selectable<CatalogueDatabase['messages']>;
@@ -178,7 +190,9 @@ const list = (values: Iterable<string>) => sql`${[...values]}::text[]`;
 
 export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   /** Whether the viewer sees the object of a Message: a query only by whoever wrote on it, and the Data Team. */
-  function seesRow(sight: Sight, row: Pick<Row, 'subjectKind' | 'subjectId' | 'writerId'>): boolean {
+  function seesRow(sight: Sight, row: Pick<Row, 'subjectKind' | 'subjectId' | 'writerId' | 'params'>): boolean {
+    // An Excel key is personal: the Messages about it are for its User alone (FR-PL-03).
+    if (row.subjectKind === 'excelKey') return row.params.user === sight.viewer.id;
     if (sight.viewer.dataTeam) return true;
     if (row.subjectKind === 'query') return row.writerId === sight.viewer.id;
     return sees(sight, row.subjectKind, row.subjectId);
@@ -196,8 +210,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
 
   /** The first Messages of conversations on objects the viewer sees (FR-CV-05). */
   function visible(sight: Sight): RawBuilder<SqlBool> {
-    if (sight.viewer.dataTeam) return sql<SqlBool>`true`;
+    if (sight.viewer.dataTeam) return sql<SqlBool>`(m.subject_kind <> 'excelKey' or m.params->>'user' = ${sight.viewer.id})`;
     return sql<SqlBool>`(
+      (m.subject_kind = 'excelKey' and m.params->>'user' = ${sight.viewer.id})
+      or
       (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.collections)}))
       or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.resources)}))
       or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.lenses)}))
@@ -222,6 +238,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (${sight.viewer.dataTeam} and m.type = any(${list(TO_DATA_TEAM)}))
       or (${sight.viewer.dataTeam} and m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'learningCard')
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'lens' and m.subject_id = any(${list(sight.authoredLenses)}))
+      or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'excelKey' and m.params->>'user' = ${me})
     )`;
   }
 
@@ -599,6 +616,17 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       return db
         .insertInto('messages')
         .values({ type: 'MSG-LEN-02', subjectKind: 'lens', subjectId: lensId, writerId: null, params: { reads: String(reads), threshold: String(threshold) }, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
+    },
+
+    async keyNotice(notice) {
+      const params: Record<string, string> = { subject: notice.name, user: notice.userId };
+      if (notice.expires) params.expires = notice.expires;
+      if (notice.actor) params.actor = notice.actor;
+      return db
+        .insertInto('messages')
+        .values({ type: notice.type, subjectKind: 'excelKey', subjectId: notice.keyId, writerId: null, params, state: null })
         .returning('id')
         .executeTakeFirstOrThrow();
     },

@@ -56,6 +56,20 @@ export interface IdentityDatabase {
     createdAt: Timestamp;
     usedAt: Date | null;
   };
+  /** The Excel keys of the Users, by hash only (TR-PF-07). */
+  excelKeys: {
+    id: Generated<string>;
+    googleId: string;
+    name: string;
+    keyHash: string;
+    createdAt: Timestamp;
+    expiresAt: Date;
+    lastUsedAt: Date | null;
+    revokedAt: Date | null;
+    revokedBy: string | null;
+    revokedByName: string | null;
+    warnedAt: Date | null;
+  };
   settings: {
     googleId: string;
     key: string;

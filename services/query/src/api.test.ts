@@ -192,8 +192,8 @@ function fakeBigQuery() {
     refuse: (message: string) => {
       refuseNext = message;
     },
-    expire: () => {
-      expired = true;
+    expire: (gone = true) => {
+      expired = gone;
     },
     resize: (bytes: number | null) => {
       size = bytes;
@@ -332,6 +332,11 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
             if (token !== 'scheduler-id-token') throw new TokenError('Service token rejected: ERR_JWS_INVALID');
             return 'datahub-scheduler@project.iam.gserviceaccount.com';
           },
+        },
+        // identity, as it would exchange the Excel key of An and of Mia (TR-PF-07).
+        excel: {
+          exchanger: { accessToken: async (key) => ({ dhx_an: an, dhx_mia: mia })[key]?.slice('Bearer '.length) },
+          verifier: issuer.verifier,
         },
       },
     });
@@ -686,9 +691,39 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(an, 'POST', `/lenses/${lensId}/requests`, {})).json()).toMatchObject({ error: 'not_needed' });
   });
 
+  it('gives Excel the result of a Lens as CSV with an Excel key: its defaults, at most 10,000 rows, as a run of the User (DEC-CH-06, TR-PF-07)', async () => {
+    const basic = (key: string) => `Basic ${Buffer.from(`an.claes@immoscoop.be:${key}`).toString('base64')}`;
+    const excel = (authorization?: string, id = lensId) => app.inject({ method: 'GET', url: `/excel/lenses/${id}`, headers: authorization ? { authorization } : {} });
+    const asked = await excel();
+    expect(asked.statusCode).toBe(401);
+    expect(asked.headers['www-authenticate']).toMatch(/^Basic realm="Data Hub"/);
+    expect((await excel(basic('dhx_unknown'))).statusCode).toBe(401);
+    expect((await excel(`Bearer ${an.slice(7)}`)).statusCode).toBe(401);
+
+    // A result read on from its job, as the earlier test left the pages expired.
+    fake.expire(false);
+    const got = await excel(basic('dhx_an'));
+    expect(got.statusCode).toBe(200);
+    expect(got.headers['content-type']).toMatch(/^text\/csv/);
+    expect(got.headers['x-datahub-query-id']).toMatch(/^q-\d{8}-[0-9a-f]{6}$/);
+    const lines = got.body.replace(/^\ufeff/, '').trimEnd().split('\r\n');
+    expect(lines.slice(0, 3)).toEqual(['week_start,leads', '2026-10-19,413', '2026-10-19,']);
+    expect(lines).toHaveLength(211);
+    // Its defaults, as many rows as Excel takes at once, and a run in the Query Log of the User.
+    expect(fake.runs.at(-1)?.options.pageSize).toBe(10_000);
+    expect(fake.runs.at(-1)?.options.parameters?.find((parameter) => parameter.name === 'leadChannel')?.parameterValue).toEqual({ value: 'Form' });
+    const item = (await call(an, 'GET', '/queries')).json().queries.find((query: { lensOf?: string }) => query.lensOf === lensId);
+    expect(item.runs).toBeGreaterThan(1);
+
+    // A Lens that waits for the Data Team runs for nobody, in Excel neither; one the User does not see is not found.
+    expect((await excel(basic('dhx_mia'), hugeLens)).json()).toMatchObject({ error: 'waiting' });
+    expect((await excel(basic('dhx_mia'), lensId)).statusCode).toBe(404);
+  });
+
   it('lists a Lens on a Resource as one row, made by its author, for its tab History (FR-SR-44)', async () => {
     const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
-    expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 1 });
+    // Two runs: one on its page, one from Excel.
+    expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 2 });
     expect(history.summary.lenses).toBe(1);
   });
 

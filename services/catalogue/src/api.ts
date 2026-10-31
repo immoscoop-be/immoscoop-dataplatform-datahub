@@ -39,6 +39,8 @@ export interface ApiOptions {
   messages: Messages;
   /** Who may tell about the Lenses and decide on a Request on one: the service account of query (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
+  /** identity, which tells about an Excel key (FR-PL-03). */
+  keyCallers?: ServiceCallerVerifier;
   /** The progress of every User in the Learning Centre (FR-LR-32). */
   learning: Learning;
 }
@@ -79,7 +81,7 @@ const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
  * does not see answers 404, as one that does not exist (FR-CO-17).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
-  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, learning } = options;
+  const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, keyCallers, learning } = options;
 
   app.setErrorHandler(async (error, request, reply) => {
     if (error instanceof NameTaken) {
@@ -140,7 +142,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   }
 
-  await messageRoutes(app, { collections, messages, lensCallers, viewer });
+  await messageRoutes(app, { collections, messages, lensCallers, keyCallers, viewer });
   await learningRoutes(app, { learning, viewer });
 
   app.get('/collections', async (request) => ({ collections: await collections.list(viewer(request)) }));

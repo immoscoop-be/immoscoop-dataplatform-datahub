@@ -1,7 +1,7 @@
 import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
-export const MY_PAGE_TABS = ['profile', 'background'] as const;
+export const MY_PAGE_TABS = ['profile', 'keys', 'background'] as const;
 export type MyPageTab = (typeof MY_PAGE_TABS)[number];
 
 /**
@@ -78,7 +78,10 @@ export function objectPath(subject: { kind: string; id: string }): string {
         ? lensPath(subject.id)
         : subject.kind === 'learningCard'
           ? learningPath(subject.id)
-          : queryPath(subject.id);
+          : // An Excel key is listed on My page, with the other keys of its User (FR-PL-02).
+            subject.kind === 'excelKey'
+            ? myPagePath('keys')
+            : queryPath(subject.id);
 }
 /** The Messages on an object, in its slide-in (FR-CV-07). */
 export const messagesOnPath = (subject: { kind: string; id: string }): string => `${objectPath(subject)}/messages`;

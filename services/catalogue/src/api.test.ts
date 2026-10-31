@@ -219,6 +219,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
             return 'datahub-query@project.iam.gserviceaccount.com';
           },
         },
+        // identity tells about the Excel key of a User (FR-PL-03).
+        keyCallers: {
+          async verify(token) {
+            if (token !== 'identity-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-identity@project.iam.gserviceaccount.com';
+          },
+        },
       },
     });
   });
@@ -846,6 +855,29 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const forTom = (await tom('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
       expect(forTom).not.toContain(asked.json().message.id);
     });
+  });
+
+  it('puts what identity tells about an Excel key to its User alone (FR-PL-03, MSG-KEY-01, MSG-KEY-02)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const bert = await user('Bert', [SALES]);
+    const dirk = await user('Dirk', [], ['datateam']);
+    const keyId = '5a6b7c8d-0000-4000-8000-00000000ab01';
+    const notice = (payload: object, token = 'identity-token') =>
+      app.inject({ method: 'POST', url: '/internal/excel-keys/notices', headers: { authorization: `Bearer ${token}` }, payload });
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' }, 'query-token')).statusCode).toBe(401);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop' })).statusCode).toBe(400);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' })).statusCode).toBe(201);
+    expect((await notice({ type: 'MSG-KEY-02', keyId, userId: 'u-An', name: 'Excel on my laptop', actor: 'Dirk Vos' })).statusCode).toBe(201);
+
+    const forAn = (await an('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string }) => message.type.startsWith('MSG-KEY'));
+    expect(forAn.map((message: { type: string; subject: { kind: string; name: string } }) => [message.type, message.subject.kind, message.subject.name])).toEqual([
+      ['MSG-KEY-02', 'excelKey', 'Excel on my laptop'],
+      ['MSG-KEY-01', 'excelKey', 'Excel on my laptop'],
+    ]);
+    for (const other of [bert, dirk]) {
+      const everything = (await other('GET', '/messages?view=everything')).json().messages;
+      expect(everything.some((message: { type: string }) => message.type.startsWith('MSG-KEY'))).toBe(false);
+    }
   });
 
   describe('Messages', () => {

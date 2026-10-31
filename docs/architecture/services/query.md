@@ -7,7 +7,7 @@
 | Schema | `query` |
 | Domains | [Resources](../../requirements/functional/04-stacks-and-resources.md) (querying), [Lenses](../../requirements/functional/09-lenses.md), [Log and notifications](../../requirements/functional/07-log-and-notifications.md) (the Query Log), [Channels](../../requirements/functional/13-channels.md) |
 
-**In one sentence:** query is the only service that reads the tables of the Resources: it runs the queries of Query, the previews of Resources and the Lenses, and keeps them in the Query Log, and later runs free SQL for Claude and serves feeds to Excel, always only over Resources the User may see.
+**In one sentence:** query is the only service that reads the tables of the Resources: it runs the queries of Query, the previews of Resources and the Lenses, and keeps them in the Query Log, gives Excel the result of a Lens, and later runs free SQL for Claude, always only over Resources the User may see.
 
 ## Responsibilities
 
@@ -20,7 +20,8 @@
 - The size and partitions of a Resource from BigQuery, and the queries on it for its Owner Unit and the Data Team: [FR-SR-39](../../requirements/functional/04-stacks-and-resources.md#fr-sr-39), [FR-SR-44](../../requirements/functional/04-stacks-and-resources.md#fr-sr-44), built as [TR-SR-20](../../requirements/technical/04-stacks-and-resources.md#tr-sr-20) and [TR-SR-21](../../requirements/technical/04-stacks-and-resources.md#tr-sr-21)
 - Lenses: made from a query with their size check, seen as the User may see their Resources, never with their SQL, and run on their page; updated from a query used as them, edited, stopped when a run with their defaults grows past 1 GB, and Broken when what they read no longer exists: [FR-LE-07](../../requirements/functional/09-lenses.md#fr-le-07), [FR-LE-08](../../requirements/functional/09-lenses.md#fr-le-08), [FR-LE-10](../../requirements/functional/09-lenses.md#fr-le-10), [FR-LE-12](../../requirements/functional/09-lenses.md#fr-le-12), [FR-LE-16](../../requirements/functional/09-lenses.md#fr-le-16), [FR-LE-17](../../requirements/functional/09-lenses.md#fr-le-17), built as [TR-LE-01](../../requirements/technical/09-lenses.md#tr-le-01) to [TR-LE-06](../../requirements/technical/09-lenses.md#tr-le-06) ([DEC-PF-30](../../requirements/technical/00-platform.md#dec-pf-30))
 - The Lenses a new query may reuse, on its Resources and by the words of its question: [FR-SR-47](../../requirements/functional/04-stacks-and-resources.md#fr-sr-47), [FR-SR-48](../../requirements/functional/04-stacks-and-resources.md#fr-sr-48), built as [TR-LE-07](../../requirements/technical/09-lenses.md#tr-le-07)
-- Later: free SQL through Claude ([FR-SR-26](../../requirements/functional/04-stacks-and-resources.md#fr-sr-26)) and feeds for Excel through Power Query ([DEC-DH-46](../../overview/data-hub.md#dec-dh-46))
+- The result of a Lens for Excel through Power Query, with an Excel key: [DEC-DH-46](../../overview/data-hub.md#dec-dh-46), [DEC-CH-06](../../requirements/functional/13-channels.md#dec-ch-06), built as [TR-LE-08](../../requirements/technical/09-lenses.md#tr-le-08)
+- Later: free SQL through Claude ([FR-SR-26](../../requirements/functional/04-stacks-and-resources.md#fr-sr-26))
 
 ## How a query is checked
 
@@ -62,7 +63,7 @@ Its service account may read every table of the project ([DEC-SR-32](../../requi
 | `POST /lenses/{id}/query` | "Open in Query": the query a Lens is made from for its author, a query of their own used as it for anyone else of its Owner Unit ([TR-LE-04](../../requirements/technical/09-lenses.md#tr-le-04)) |
 | `PUT /lenses/{id}/version` | "Update the lens": its next version from a query used as it, after its size check ([TR-LE-04](../../requirements/technical/09-lenses.md#tr-le-04)) |
 | `POST /internal/lenses/check` | The daily check of every Lens, for Cloud Scheduler only, by a Google ID token for query's own address ([TR-LE-06](../../requirements/technical/09-lenses.md#tr-le-06)) |
-| `GET /feeds/{id}` | Later: a feed for Power Query with an Excel key ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
+| `GET /excel/lenses/{id}` | For Power Query, without an Access Token: with an Excel key as the password of Basic, the result of a Lens with its defaults as CSV, at most 10,000 rows ([TR-LE-08](../../requirements/technical/09-lenses.md#tr-le-08), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
 
 ## Data
 
@@ -70,7 +71,7 @@ The schema `query` ([DEC-PF-29](../../requirements/technical/00-platform.md#dec-
 
 ## Talks to
 
-BigQuery, in the project and location of Data Hub (`DATAHUB_BIGQUERY_PROJECT`, `DATAHUB_BIGQUERY_LOCATION`), and catalogue (`DATAHUB_CATALOGUE_URL`), with the token of the User: for the Resources of a query, the Collections the User sees and the Resources in them, whether the User manages a Collection, and to send and read the Requests on queries and Lenses. Besides its queries, it reads the metadata of tables and `INFORMATION_SCHEMA.PARTITIONS`, which read no data. Cloud Scheduler calls it once a day to check every Lens, with a Google ID token of `datahub-scheduler` for its own address (`DATAHUB_QUERY_URL`, `DATAHUB_SCHEDULER_SERVICE_ACCOUNT`). It tells catalogue as itself, with a Google ID token for catalogue's address, what decides who sees the Messages on each Lens, the Request of Data Hub on a Lens that stopped, that a Lens grew into large ([MSG-LEN-02](../../requirements/functional/message-catalogue.md#msg-len-02)), and the decision of the Data Team on a Request on a Lens ([TR-CV-02](../../requirements/technical/14-conversations.md#tr-cv-02)): when a Lens changes, when query starts, and in the daily check.
+BigQuery, in the project and location of Data Hub (`DATAHUB_BIGQUERY_PROJECT`, `DATAHUB_BIGQUERY_LOCATION`), identity (`DATAHUB_TOKEN_ISSUER`), with its Google ID token for identity's address, to exchange an Excel key for an Access Token ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)), and catalogue (`DATAHUB_CATALOGUE_URL`), with the token of the User: for the Resources of a query, the Collections the User sees and the Resources in them, whether the User manages a Collection, and to send and read the Requests on queries and Lenses. Besides its queries, it reads the metadata of tables and `INFORMATION_SCHEMA.PARTITIONS`, which read no data. Cloud Scheduler calls it once a day to check every Lens, with a Google ID token of `datahub-scheduler` for its own address (`DATAHUB_QUERY_URL`, `DATAHUB_SCHEDULER_SERVICE_ACCOUNT`). It tells catalogue as itself, with a Google ID token for catalogue's address, what decides who sees the Messages on each Lens, the Request of Data Hub on a Lens that stopped, that a Lens grew into large ([MSG-LEN-02](../../requirements/functional/message-catalogue.md#msg-len-02)), and the decision of the Data Team on a Request on a Lens ([TR-CV-02](../../requirements/technical/14-conversations.md#tr-cv-02)): when a Lens changes, when query starts, and in the daily check.
 
 ## Permissions
 
