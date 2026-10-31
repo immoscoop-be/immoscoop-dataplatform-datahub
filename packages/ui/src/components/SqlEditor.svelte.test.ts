@@ -28,7 +28,7 @@ describe('the SQL editor', () => {
 
   it('suggests the Resources of the query after from, and a new Resource that starts a new query (DEC-UX-148)', async () => {
     const onnewtable = vi.fn();
-    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [{ name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' }], onnewtable });
+    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [{ id: 'r2', name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' }], onnewtable });
     const editor = content();
     editor.focus();
     await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
@@ -41,5 +41,25 @@ describe('the SQL editor', () => {
     expect(options.map((option) => option.textContent)).toEqual(['Weekly lead volumeResource', 'Nieuwe Resource…begint een nieuwe query']);
     await fireEvent.mouseDown(options[1] as Element);
     expect(onnewtable).toHaveBeenCalledTimes(1);
+  });
+
+  it('suggests every other Resource the User may use after those of the query, and starts a new query with the one picked (DEC-UX-155)', async () => {
+    const onothertable = vi.fn();
+    const own = { id: 'r2', name: 'Weekly lead volume', fullName: 'p.dbt.weekly_lead_Volume' };
+    const other = { id: 'r5', name: 'Lead sources', fullName: 'p.dbt.lead_sources', other: true };
+    render(SqlEditor, { value: 'select *\nfrom ', suggestions: [], label: 'SQL', tables: [own, other], onothertable });
+    const editor = content();
+    editor.focus();
+    await fireEvent.keyDown(editor, { key: 'End', code: 'End', ctrlKey: true });
+    await fireEvent.keyDown(editor, { key: ' ', code: 'Space', ctrlKey: true });
+    const options = await vi.waitFor(() => {
+      const listed = [...document.querySelectorAll('.cm-tooltip-autocomplete li')];
+      expect(listed.length).toBe(2);
+      return listed;
+    });
+    expect(options.map((option) => option.textContent)).toEqual(['Weekly lead volumeResource', 'Lead sourcesResource · nieuwe query']);
+    await fireEvent.mouseDown(options[1] as Element);
+    expect(onothertable).toHaveBeenCalledWith(other);
+    expect(editor.textContent).toContain('`p.dbt.lead_sources`');
   });
 });

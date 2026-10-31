@@ -11,11 +11,17 @@
     businessDescription: string;
   }
 
-  /** A Resource of the query, which the editor suggests after `from` and `join` by its Display Name (DEC-UX-148). */
+  /**
+   * A Resource the editor suggests after `from` and `join` by its Display Name: one of the query
+   * (DEC-UX-148), or another the User may use, which is a new query (DEC-UX-155).
+   */
   export interface TableSuggestion {
+    id: string;
     name: string;
     /** The full name of its table, in its own case, which the SQL gets, quoted. */
     fullName: string;
+    /** Not one of the query's: picking it starts a new query with it (DEC-UX-73). */
+    other?: boolean;
   }
 
   /** Whether the text before a word asks for a table: it follows `from` or `join` (DEC-UX-148). */
@@ -87,6 +93,7 @@
     onmark,
     onrun,
     onnewtable,
+    onothertable,
     label,
     readonly = false,
     nonce,
@@ -94,7 +101,7 @@
     value: string;
     suggestions: readonly Suggestion[];
     parameters?: readonly ParameterSuggestion[];
-    /** The Resources of the query, suggested after `from` and `join` (DEC-UX-148). */
+    /** The Resources of the query, then the others the User may use, suggested after `from` and `join` (DEC-UX-148, DEC-UX-155). */
     tables?: readonly TableSuggestion[];
     marks?: readonly ErrorMark[];
     /** A click on an `@name` that is not a Parameter. */
@@ -103,6 +110,8 @@
     onrun?: () => void;
     /** "New Resource…" among the suggestions: another Resource is a new query (DEC-UX-73, DEC-UX-148). */
     onnewtable?: () => void;
+    /** Another Resource picked among the suggestions, after its name is written: it starts a new query (DEC-UX-155). */
+    onothertable?: (table: TableSuggestion) => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -246,10 +255,24 @@
       return options.length ? { from: parameter.from, options, validFor: /^@\w*$/ } : null;
     }
     const word = context.matchBefore(/[\w]+/);
-    // After `from` or `join`: the Resources of the query, written as BigQuery knows them, and a way to another (DEC-UX-148).
+    // After `from` or `join`: the Resources of the query, written as BigQuery knows them, then every other
+    // the User may use, which starts a new query, and a way to choose one (DEC-UX-148, DEC-UX-155).
     const before = context.state.sliceDoc(context.state.doc.lineAt(context.pos).from, word?.from ?? context.pos);
     if (AFTER_TABLE.test(before) && (tables.length > 0 || onnewtable)) {
-      const options: Completion[] = tables.map((table) => ({ label: table.name, detail: t('editor.resource'), apply: `\`${table.fullName}\``, boost: 50 }));
+      const options: Completion[] = tables.map((table): Completion => {
+        const written = `\`${table.fullName}\``;
+        if (!table.other) return { label: table.name, detail: t('editor.resource'), apply: written, boost: 50 };
+        const picked = onothertable;
+        return {
+          label: table.name,
+          detail: t('editor.otherResource'),
+          boost: 0,
+          apply: (view, _completion, from, to) => {
+            view.dispatch({ changes: { from, to, insert: written }, selection: { anchor: from + written.length } });
+            picked?.(table);
+          },
+        };
+      });
       if (onnewtable) {
         const start = onnewtable;
         options.push({ label: t('editor.newResource'), detail: t('editor.newResource.detail'), boost: -50, apply: () => start() });

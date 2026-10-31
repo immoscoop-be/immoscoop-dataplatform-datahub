@@ -2,7 +2,7 @@
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
@@ -577,6 +577,27 @@
           : t('query.warning.noFilter.with', { name: problem.resource.displayName, column: problem.column, bytes: bytes(problem.bytesWithFilter) });
     }
   }
+  /**
+   * What the editor suggests after `from` and `join`: the Resources of the query, then every other one
+   * the User may use, while the query may take one more, each once (DEC-UX-148, DEC-UX-155).
+   */
+  const tables: TableSuggestion[] = $derived.by(() => {
+    if (!query) return [];
+    const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
+    if (!query.mine || query.resources.length >= 10) return own;
+    const taken = new Set(query.resources.map((resource) => resource.id));
+    const others = (collections ?? [])
+      .flatMap((collection) => collection.resources)
+      .filter((item) => {
+        // A Resource in two Collections is suggested once.
+        if (item.withdrawn || taken.has(item.id)) return false;
+        taken.add(item.id);
+        return true;
+      })
+      .map((item) => ({ id: item.id, name: item.displayName, fullName: item.key, other: true }));
+    return [...own, ...others];
+  });
+
   /** Each problem once: an @name is named once, however often it is in the SQL. */
   const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
     notes.filter((note, index, all) => note.kind !== 'undefinedParameter' || all.findIndex((other) => other.kind === 'undefinedParameter' && other.name === note.name) === index);
@@ -771,8 +792,9 @@
             bind:value={sql}
             {suggestions}
             parameters={parameterSuggestions}
-            tables={query.resources.flatMap((resource) => (resource.visible ? [{ name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []))}
+            {tables}
             onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
+            onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
             onmark={(mark) => {
               const entry = missing.find((candidate) => sql.slice(mark.from, mark.to) === `@${candidate.name}`);

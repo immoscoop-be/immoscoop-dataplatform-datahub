@@ -63,6 +63,7 @@ export default {
   'editor.fold': 'Fold',
   'editor.unfold': 'Unfold',
   'editor.resource': 'Resource',
+  'editor.otherResource': 'Resource · new query',
   'editor.newResource': 'New Resource…',
   'editor.newResource.detail': 'starts a new query',
   'filter.reset': 'Reset',
