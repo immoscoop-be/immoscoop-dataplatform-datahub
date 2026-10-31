@@ -611,8 +611,9 @@ const syncRun = () => {
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
   if (noFilter) notes.push('Weekly lead volume requires a filter on its partition column, <span class="mono">week_start</span>.');
   btn.disabled = notes.length > 0;
-  document.getElementById('run-pf').hidden = notes.length > 0;
-  document.getElementById('run-note').hidden = !notes.length;
+  // One line: the Pre-flight or what stops the query, cross-fading (DEC-UX-154).
+  document.getElementById('run-pf').classList.toggle('shown', !notes.length);
+  document.getElementById('run-note').classList.toggle('shown', notes.length > 0);
   document.getElementById('run-note-text').innerHTML = notes.join(' ');
   document.querySelector('[data-define-first]').hidden = !params.length;
   document.querySelector('[data-add-filter]').hidden = !noFilter;

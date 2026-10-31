@@ -133,8 +133,11 @@
   /** The query above the result, or next to it (DEC-UX-143). */
   type Layout = 'horizontal' | 'sideBySide';
 
-  /** How long typing pauses before the Pre-flight is asked again. */
-  const PAUSE = 600;
+  /**
+   * How long typing pauses before the Pre-flight is asked again; anything else is checked at once: a
+   * query opened, a change of its Parameters, a filter added, a run taken over (DEC-UX-154).
+   */
+  const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
   /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
@@ -217,6 +220,7 @@
       async (found) => {
         if (loadedId !== id) return;
         query = found;
+        atOnce = true;
         sql = found.sql;
         parameters = found.parameters;
         run = found.lastRun;
@@ -273,29 +277,52 @@
   const keyOf = (text: string, values: readonly Parameter[]) => `${text}\u0000${JSON.stringify(values)}`;
   const key = $derived(keyOf(sql, parameters));
 
-  // The Pre-flight follows the SQL and the Parameters, once typing pauses; query keeps both.
+  // The Pre-flight follows the SQL and the Parameters, once typing pauses two seconds; anything else
+  // is checked at once (DEC-UX-154). query keeps both.
   let sequence = 0;
+  /** The SQL of the last Pre-flight asked: a different text was typed. */
+  let askedText: string | null = null;
+  /** The next change is no typing: a query opened, a filter added, a run taken over. */
+  let atOnce = true;
+  /** The Pre-flight waiting for typing to pause, to ask it at once instead. */
+  let pending: { timer: ReturnType<typeof setTimeout>; ask: () => void } | null = null;
+  /** Cmd+Enter came before the Pre-flight: it runs as soon as that comes back. */
+  let runWhenChecked = false;
   $effect(() => {
     const text = sql;
     const values = JSON.parse(JSON.stringify(parameters)) as Parameter[];
     if (!query?.mine) return;
+    const typed = !atOnce && askedText !== null && text !== askedText;
+    atOnce = false;
+    askedText = text;
+    runWhenChecked = false;
     const asked = ++sequence;
     checking = true;
-    const timer = setTimeout(() => {
+    const ask = () => {
+      pending = null;
       client.preflight(id, text, values).then(
         (result) => {
           if (asked !== sequence) return;
           preflight = result;
           checked = keyOf(text, values);
           checking = false;
+          if (runWhenChecked) {
+            runWhenChecked = false;
+            runFromKeys();
+          }
         },
         (error: unknown) => {
           if (asked === sequence) checking = false;
           console.error('The Pre-flight could not be read', error);
         },
       );
-    }, PAUSE);
-    return () => clearTimeout(timer);
+    };
+    const timer = setTimeout(ask, typed ? PAUSE : 0);
+    pending = { timer, ask };
+    return () => {
+      clearTimeout(timer);
+      if (pending?.timer === timer) pending = null;
+    };
   });
 
   /** A page of a run; null once BigQuery no longer keeps it, undefined when it could not be read. */
@@ -359,7 +386,19 @@
    * What the Pre-flight blocks, or what goes to the Data Team, does not run.
    */
   function runFromKeys(): void {
-    if (!query?.mine || running || checking || !current?.runnable) return;
+    if (!query?.mine || running) return;
+    // Typed just now: it is checked at once, and runs when the Pre-flight says it may (DEC-UX-154).
+    if (pending) {
+      clearTimeout(pending.timer);
+      runWhenChecked = true;
+      pending.ask();
+      return;
+    }
+    if (checking) {
+      runWhenChecked = true;
+      return;
+    }
+    if (!current?.runnable) return;
     if (current.range === 'free') {
       start();
       return;
@@ -379,6 +418,7 @@
 
   /** Takes the SQL and values of a run into the query: its next run is a new variation (DEC-UX-74). */
   function apply(of: Run): void {
+    atOnce = true;
     sql = of.sql;
     parameters = JSON.parse(JSON.stringify(of.parameters)) as Parameter[];
     preview = null;
@@ -537,12 +577,27 @@
           : t('query.warning.noFilter.with', { name: problem.resource.displayName, column: problem.column, bytes: bytes(problem.bytesWithFilter) });
     }
   }
-  /** What the bar says, each problem once: an @name is named once, however often it is in the SQL. */
-  const notes = $derived(
-    [...problems, ...(current?.warnings ?? [])].filter(
-      (note, index, all) => note.kind !== 'undefinedParameter' || all.findIndex((other) => other.kind === 'undefinedParameter' && other.name === note.name) === index,
-    ),
-  );
+  /** Each problem once: an @name is named once, however often it is in the SQL. */
+  const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
+    notes.filter((note, index, all) => note.kind !== 'undefinedParameter' || all.findIndex((other) => other.kind === 'undefinedParameter' && other.name === note.name) === index);
+  /**
+   * The line at the foot of the query (DEC-UX-154): the last Pre-flight, kept, softer, while what is
+   * written is checked again; what stops the query when it cannot run. Each keeps what it said while
+   * it fades out.
+   */
+  const failing = $derived((preflight?.problems.length ?? 0) > 0);
+  let flight = $state<Preflight | null>(null);
+  let fault = $state<Problem[]>([]);
+  $effect.pre(() => {
+    if (!preflight) {
+      flight = null;
+      fault = [];
+    } else if (preflight.problems.length > 0) {
+      fault = once(preflight.problems);
+    } else {
+      flight = preflight;
+    }
+  });
 
   /** The box of the SQL folded: how many lines and CTEs (DEC-UX-76). */
   const summary = $derived(t('query.sqlSummary', { lines: shownSql.split('\n').length, ctes: shownSql.split('\n').filter((line) => CTE_LINE.test(line)).length }));
@@ -749,39 +804,47 @@
 
     {#if query.mine && !preview}
       <div class="run-bar" bind:this={runBar}>
-        {#if notes.length > 0}
-          <ul class="notes" aria-live="polite">
-            {#each notes as note, index (index)}
-              <li class:problem={note.kind !== 'noPartitionFilter'}>
-                <Icon name="warning-fill" /><span>{said(note)}</span>
-                {#if (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix}
-                  {@const fix = note.fix}
-                  <button type="button" class="text-link" onclick={() => (sql = fix)}>{t('query.addFilter')}</button>
-                {:else if note.kind === 'undefinedParameter'}
-                  {@const entry = missing.find((candidate) => candidate.name === note.name)}
-                  {#if entry}<button type="button" class="text-link" onclick={() => openParameter(null, entry)}>{t('query.defineIt')}</button>{/if}
-                {/if}
-              </li>
-            {/each}
-          </ul>
-        {/if}
-        <span class="preflight" aria-busy={checking}>
-          <span class="meta">Pre-flight</span>
-          {#if current?.bytes !== null && current?.bytes !== undefined}
-            <Gauge bytes={current.bytes} approve={current.thresholds.approve} request={current.thresholds.request} />
-            <span class="meta"
-              >{[
-                current.partitions !== null ? t('query.partitions', { count: current.partitions }) : t('query.reads', { bytes: bytes(current.bytes) }),
-                partitioned.length === 1 && partitioned[0]?.partition ? t('query.through', { column: partitioned[0].partition.field }) : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}</span
-            >
-          {:else if checking || !current}
-            <span class="meta">{t(checking ? 'query.checking' : 'query.notChecked')}</span>
+        {#snippet fixOf(note: Problem | Warning)}
+          {#if (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix}
+            {@const fix = note.fix}
+            <button type="button" class="text-link" onclick={() => ((atOnce = true), (sql = fix))}>{t('query.addFilter')}</button>
+          {:else if note.kind === 'undefinedParameter'}
+            {@const entry = missing.find((candidate) => candidate.name === note.name)}
+            {#if entry}<button type="button" class="text-link" onclick={() => openParameter(null, entry)}>{t('query.defineIt')}</button>{/if}
           {/if}
-        </span>
-        <span class="grow"></span>
+        {/snippet}
+        <!-- One line of a fixed height: the Pre-flight, or what stops the query; the one fades out a
+             little quicker than the other fades in, so the query never changes height (DEC-UX-154). -->
+        <div class="status" class:stale={!current} aria-busy={checking} aria-live="polite">
+          <span class="layer flight" class:shown={!failing} aria-hidden={failing} inert={failing}>
+            <span class="meta">Pre-flight</span>
+            {#if flight?.bytes !== null && flight?.bytes !== undefined}
+              <Gauge bytes={flight.bytes} approve={flight.thresholds.approve} request={flight.thresholds.request} />
+              <span class="meta reads"
+                >{[
+                  flight.partitions !== null ? t('query.partitions', { count: flight.partitions }) : t('query.reads', { bytes: bytes(flight.bytes) }),
+                  partitioned.length === 1 && partitioned[0]?.partition ? t('query.through', { column: partitioned[0].partition.field }) : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}</span
+              >
+              {#each flight.warnings.slice(0, 1) as warning, index (index)}
+                <span class="warning" title={said(warning)}><Icon name="warning-fill" /><span class="said">{said(warning)}</span>{@render fixOf(warning)}</span>
+              {/each}
+            {:else}
+              <span class="meta">{t(checking ? 'query.checking' : 'query.notChecked')}</span>
+            {/if}
+          </span>
+          <span class="layer fault" class:shown={failing} aria-hidden={!failing} inert={!failing}>
+            {#if fault[0]}
+              {@const first = fault[0]}
+              <Icon name="warning-fill" />
+              <span class="said" title={fault.map(said).join('\n')}>{said(first)}</span>
+              {@render fixOf(first)}
+              {#if fault.length > 1}<span class="more" title={fault.slice(1).map(said).join('\n')}>+{fault.length - 1}</span>{/if}
+            {/if}
+          </span>
+        </div>
         {#if current?.range === 'request' && query.request?.state === 'waiting'}
           <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(query.request.sentAt) })}</span>
         {:else if current?.range === 'request' && query.request?.state !== 'accepted'}
@@ -1042,15 +1105,25 @@
   .toggle :global(.icon) { transition: transform var(--motion-fold) ease; }
   .toggle[aria-expanded='false'] :global(.icon) { transform: rotate(-90deg); }
   .grow { flex: 1; }
-  .run-bar { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 2px -14px 0; padding: 12px 14px;
+  .run-bar { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin: 2px -14px 0; padding: 12px 14px;
     border-top: 1px solid var(--tint-hover); border-radius: 0 0 var(--radius-xl) var(--radius-xl); background: var(--card); }
   .frame:not(:has(.run-bar)) { padding-bottom: 14px; }
-  .notes { flex: 1 1 100%; list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-  .notes li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); color: var(--signal-warn); }
+  /* The line at the foot: a fixed height, the Pre-flight and what stops the query in one place,
+     cross-fading, the old one a little quicker; while what is written is checked again, softer (DEC-UX-154). */
+  .status { flex: 1 1 auto; min-width: 0; height: 48px; display: grid; align-items: center; }
+  .layer { grid-area: 1 / 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; overflow: hidden; max-height: 48px;
+    opacity: 0; transition: opacity var(--motion-status-out); }
+  .layer.shown { opacity: 1; transition: opacity var(--motion-status-in); }
+  .status.stale .layer.shown { opacity: .6; }
+  .reads { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .warning { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--signal-warn); white-space: nowrap; }
+  .warning .said { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .warning .text-link, .fault .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); flex: none; }
+  .fault { flex-wrap: nowrap; gap: 6px; font-size: var(--text-small); color: var(--signal-warn); }
+  .fault .said { min-width: 0; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+  .fault .more { flex: none; font-size: var(--text-meta); color: var(--text-muted); }
   .text-link { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
   .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
-  .notes .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
-  .preflight { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .waiting { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-secondary); }
   .request { display: flex; flex-direction: column; gap: 10px; }
   .word { display: flex; flex-direction: column; gap: 4px; font-size: var(--text-meta); color: var(--text-muted); }

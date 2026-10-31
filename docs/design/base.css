@@ -441,7 +441,7 @@ button.ln-fold i { transition: transform 200ms ease; }
 .sql-comment { color: var(--text-muted); }
 [data-theme="dark"] .sql-ref { color: var(--col-teal); }
 /* The bar at the foot of the query stays in view while the SQL scrolls: the Pre-flight and Run */
-.run-bar { position: sticky; bottom: -26px; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 2px -14px 0;
+.run-bar { position: sticky; bottom: -26px; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin: 2px -14px 0;
   padding: 12px 14px; border-top: 1px solid var(--tint-hover); border-radius: 0 0 var(--radius-xl) var(--radius-xl); background: var(--card); }
 .run-pf { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .run-gauge { display: block; width: 130px; }
@@ -450,6 +450,11 @@ button.ln-fold i { transition: transform 200ms ease; }
 .run-gauge .gauge-legend { margin-top: 4px; height: 12px; }
 .run-anchor { position: relative; display: inline-block; }
 .run-note { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); color: var(--signal-warn); }
+/* One line of a fixed height at the foot of a query: the Pre-flight and what stops it in one place, cross-fading,
+   the one going out a little quicker (DEC-UX-154). */
+.run-status { flex: 1 1 auto; min-width: 0; height: 48px; display: grid; align-items: center; }
+.run-status > .run-pf, .run-status > .run-note { grid-area: 1 / 1; min-width: 0; max-height: 48px; overflow: hidden; opacity: 0; pointer-events: none; transition: opacity var(--motion-status-out); }
+.run-status > .shown { opacity: 1; pointer-events: auto; transition: opacity var(--motion-status-in); }
 .run-note .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
 .run-btn:disabled { opacity: .4; cursor: default; }
 .run-btn:disabled + .run-pop.up { display: none !important; }
