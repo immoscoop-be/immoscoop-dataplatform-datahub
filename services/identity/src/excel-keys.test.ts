@@ -104,7 +104,7 @@ describe.skipIf(!url)('Excel keys (FR-PL-01 to FR-PL-03, TR-PF-07)', () => {
     expect((await dirk('DELETE', `/me/excel-keys/${first.key.id}`)).statusCode).toBe(404);
     expect((await an('DELETE', `/me/excel-keys/${first.key.id}`)).statusCode).toBe(204);
     expect((await exchange(first.secret)).statusCode).toBe(401);
-    expect((await an('GET', '/me/excel-keys')).json().keys.find((key: { id: string }) => key.id === first.key.id)).toMatchObject({ revokedBy: 'An Claes' });
+    expect((await an('GET', '/me/excel-keys')).json().keys.find((key: { id: string }) => key.id === first.key.id)).toMatchObject({ revokedBy: 'An Claes', revokedById: 'an' });
 
     const second = (await an('POST', '/me/excel-keys', { name: 'Monthly KBC report' })).json();
     active.delete('an');

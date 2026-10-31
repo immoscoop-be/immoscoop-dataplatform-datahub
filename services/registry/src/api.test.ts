@@ -75,7 +75,7 @@ describe('the registry API', () => {
           },
         },
         dbtCloud: { run: async (runId) => dbtRuns[runId] },
-        sourceJobs: new Map([['322951', '9367']]),
+        sourceJobs: async () => new Map([['322951', '9367']]),
         startIngest: async () => {
           started++;
         },

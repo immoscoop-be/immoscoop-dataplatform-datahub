@@ -20,10 +20,13 @@
   import { createRegistry } from './lib/registry.js';
   import { lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
-  import { SECTIONS, sectionLabel } from './lib/sections.js';
+  import { ADMIN_TOOLS, SECTIONS, sectionFor, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
   import { Settings } from './lib/settings.svelte.js';
   import { SystemTheme, themeOf } from './lib/theme.svelte.js';
+  import AdminPanel from './screens/AdminPanel.svelte';
+  import AdminExcelKeys from './screens/AdminExcelKeys.svelte';
+  import AdminWebhooks from './screens/AdminWebhooks.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
@@ -90,6 +93,10 @@
   let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
   /** How many conversations for the User moved since they read them, on Messages in the rail (FR-CV-06). */
   let unread = $state(0);
+  /** For the Data Team, the deliveries of the webhook to look at, for the panel of Admin (FR-AR-19). */
+  let webhooksToLookAt: number | undefined = $state();
+  /** How many Excel keys are active, for the panel of Admin, once its page told (FR-PL-03). */
+  let activeKeys: number | undefined = $state();
   /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
   // It opens on what moved since the User last looked (DEC-UX-136).
   let messageFilter = $state<Filter>({ view: 'unread' });
@@ -478,6 +485,8 @@
     const title =
       page.kind === 'start' || page.kind === 'messages'
         ? sectionLabel(page.section)
+        : page.kind === 'admin'
+          ? ADMIN_TOOLS.find((tool) => tool.id === page.tool)?.name
         : page.kind === 'me' && status.kind === 'signedIn'
           ? status.me.name
           : page.kind === 'resource'
@@ -505,7 +514,15 @@
   });
 
   const items: readonly RailItem[] = $derived(
-    SECTIONS.map((section) => ({ id: section.id, label: sectionLabel(section), icon: section.icon, href: section.path, ...(section.id === 'messages' && unread > 0 ? { unread } : {}) })),
+    SECTIONS.filter((section) => sectionFor(section, dataTeam)).map((section) => ({
+      id: section.id,
+      label: sectionLabel(section),
+      icon: section.icon,
+      href: section.path,
+      ...(section.id === 'messages' && unread > 0 ? { unread } : {}),
+      // Admin, a little apart from the sections above it (DEC-UX-130).
+      ...(section.id === 'admin' ? { apart: true } : {}),
+    })),
   );
   const section = $derived(
     page.kind === 'start' ||
@@ -520,7 +537,8 @@
       page.kind === 'lens' ||
       page.kind === 'editLens' ||
       page.kind === 'learningCard' ||
-      page.kind === 'learningSee'
+      page.kind === 'learningSee' ||
+      page.kind === 'admin'
       ? page.section
       : undefined,
   );
@@ -842,6 +860,17 @@
       {:else if opened?.resource === null}
         <NotFound />
       {/if}
+    {:else if page.kind === 'admin'}
+      <!-- Admin is for the Data Team only; registry refuses the others too (DEC-UX-130). -->
+      {#if dataTeam}
+        {#if page.tool === 'keys' && status.kind === 'signedIn'}
+          <AdminExcelKeys {identity} environment={config.environment ?? 'local'} me={status.me.sub} onactive={(count) => (activeKeys = count)} />
+        {:else}
+          <AdminWebhooks {registry} environment={config.environment ?? 'local'} ontolookat={(count) => (webhooksToLookAt = count)} />
+        {/if}
+      {:else}
+        <NotFound />
+      {/if}
     {:else if page.kind === 'notFound'}
       <NotFound />
     {/if}
@@ -942,6 +971,12 @@
     />
   {:else if section?.id === 'learning' && status.kind === 'signedIn'}
     <LearningPanel shown={shownCards} progress={progress ?? []} current={page.kind === 'learningCard' || page.kind === 'learningSee' ? page.id : undefined} unfold={unfoldLevel} />
+  {:else if section?.id === 'admin' && dataTeam}
+    <AdminPanel
+      current={page.kind === 'admin' ? page.tool : undefined}
+      environment={config.environment ?? 'local'}
+      counts={{ ...(webhooksToLookAt === undefined ? {} : { webhooks: webhooksToLookAt }), ...(activeKeys === undefined ? {} : { keys: activeKeys }) }}
+    />
   {:else if section?.id === 'messages' && status.kind === 'signedIn'}
     <MessagesPanel filter={messageFilter} counts={centre?.counts} onfilter={(filter) => (messageFilter = filter)} />
   {:else if section?.id === 'query' && status.kind === 'signedIn'}
