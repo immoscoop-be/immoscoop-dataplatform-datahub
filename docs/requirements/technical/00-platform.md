@@ -95,9 +95,11 @@ identity acts as the OAuth 2.1 authorisation server for MCP clients, following t
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Excel key
 
-**Status:** Proposed · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
+**Status:** Specified · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
 
 Power Query sends the Excel key with every request. The shared package `@datahub/auth` exchanges it at identity for an Access Token, cached for the lifetime of that token, so that services only ever handle Access Tokens. identity keeps only a hash of each Excel key: it can be revoked or renewed, but never read back.
+
+*Note of 2026-10-31: Power Query sends the key with Basic, as password, with the e-mail of the User as user name, in the header `Authorization` ([DEC-CH-06](../functional/13-channels.md#dec-ch-06)).*
 
 <a id="tr-pf-08"></a>
 ### TR-PF-08 · One schema per service

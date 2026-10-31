@@ -20,6 +20,7 @@
 - <a id="dec-ch-04"></a>**DEC-CH-04** · The documentation of how to use Data Hub is the Learning Cards it provides itself, in the Learning Centre. The web app links to the right card in context, with the marker on its system text ([FR-LR-33](16-learning.md#fr-lr-33), [FR-LR-37](16-learning.md#fr-lr-37)); no separate guide is written. *Decided on 2026-10-28, by Max ([OP-CH-01](#op-ch-01)), given as the answer to [OP-DH-28](../../overview/open-themes.md#op-dh-28), where it did not fit.*
 
 - <a id="dec-ch-05"></a>**DEC-CH-05** · The HTML report is not a channel of version 1. It comes with Reports and their visualisations ([DEC-LE-08](09-lenses.md#dec-le-08)). *Decided on 2026-10-28, by Max ([OP-CH-03](#op-ch-03)).*
+- <a id="dec-ch-06"></a>**DEC-CH-06** · Excel signs in with Basic: the e-mail of the User as user name, and an Excel key as password, so that the key travels in a header and never in the address. It gets at most 10,000 rows of a Lens per refresh; more is a structural export for the Data Team ([FR-CH-01](#fr-ch-01), [FR-CH-02](#fr-ch-02)). The page of a Lens has "Open in Excel", with its address and how to sign in ([DEC-UX-159](../../design/principles.md#dec-ux-159)). *Decided on 2026-10-31, by Max.*
 
 ## Channels per asset
 
