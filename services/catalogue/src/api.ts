@@ -2,7 +2,7 @@ import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { type CollectionChanges, type Collections, NameTaken, NotEmpty, type Viewer } from './collections.js';
+import { type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
 import { learningRoutes } from './learning-api.js';
 import type { Learning } from './learning.js';
@@ -53,7 +53,11 @@ interface Fields {
   icon?: CollectionIcon;
   visibility?: CollectionVisibility;
   ownerUnit?: string;
+  intro?: string;
 }
+
+/** The longest intro of a Collection, in characters of Markdown (TR-CO-08). */
+export const INTRO_LIMIT = 10_000;
 
 /** The chosen Owner Unit is not one of the groups of whoever chose it (FR-CO-15), nor of the domain (FR-CO-35). */
 class NotYourGroup extends Error {}
@@ -63,6 +67,7 @@ const ADD_LIMIT = 200;
 
 const NOT_FOUND = { error: 'not_found', message: 'No such Collection.' };
 const NO_RESOURCE = { error: 'not_found', message: 'No such Resource.' };
+const NO_FOLDER = { error: 'not_found', message: 'No such folder, Resource or Lens in this Collection.' };
 const DATA_TEAM_ONLY = { error: 'forbidden', message: 'Only the Data Team adds Resources to Collections and removes them.' };
 
 /** A project with thousands of exposed tables, with their descriptions, fits well within this. */
@@ -194,6 +199,79 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit and the Data Team may dissolve this Collection.' });
     }
     return (await collections.dissolve(current.id, who)) ? reply.code(204).send() : reply.code(404).send(NOT_FOUND);
+  });
+
+  // The folders of a Collection (FR-CO-38 to FR-CO-40): its Owner Unit and the Data Team make, rename, delete
+  // and move them, and move its Resources and Lenses between them; who sees the Collection sees them.
+  /** The Collection, when the User may manage its folders; else the answer has been sent. */
+  async function manageable(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
+    const current = await collections.get(request.params.id, viewer(request));
+    if (!current) {
+      await reply.code(404).send(NOT_FOUND);
+      return undefined;
+    }
+    if (!current.canManage) {
+      await reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit and the Data Team manage the folders of this Collection.' });
+      return undefined;
+    }
+    return current;
+  }
+
+  function folderAnswer<T>(reply: FastifyReply, outcome: FolderOutcome<T>, code = 200) {
+    switch (outcome.outcome) {
+      case 'done':
+        return outcome.value === undefined ? reply.code(204).send() : reply.code(code).send(outcome.value);
+      case 'not_found':
+        return reply.code(404).send(NO_FOLDER);
+      case 'no_folder':
+        return reply.code(404).send({ error: 'not_found', message: 'No such folder in this Collection.' });
+      case 'into_itself':
+        return reply.code(409).send({ error: 'into_itself', message: 'A folder does not go into itself or into a folder inside it.' });
+      case 'not_empty':
+        return reply.code(409).send({ error: 'not_empty', message: 'Only an empty folder is deleted; move what it holds out first.', holds: outcome.holds });
+    }
+  }
+
+  app.post<{ Params: { id: string }; Body: unknown }>('/collections/:id/folders', async (request, reply) => {
+    const input = parseFolder(request.body, true);
+    if (typeof input === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: input });
+    }
+    const current = await manageable(request, reply);
+    if (!current) return reply;
+    return folderAnswer(reply, await collections.makeFolder(current.id, input.name, input.parentId ?? null, viewer(request)), 201);
+  });
+
+  app.patch<{ Params: { id: string; folderId: string }; Body: unknown }>('/collections/:id/folders/:folderId', async (request, reply) => {
+    const input = parseFolder(request.body, false);
+    if (typeof input === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: input });
+    }
+    const current = await manageable(request, reply);
+    if (!current) return reply;
+    return folderAnswer(reply, await collections.renameFolder(current.id, request.params.folderId, input.name, viewer(request)));
+  });
+
+  app.delete<{ Params: { id: string; folderId: string } }>('/collections/:id/folders/:folderId', async (request, reply) => {
+    const current = await manageable(request, reply);
+    if (!current) return reply;
+    return folderAnswer(reply, await collections.deleteFolder(current.id, request.params.folderId, viewer(request)));
+  });
+
+  // Where a Resource, a Lens or a folder sits: in a folder of the Collection, or at its top with null.
+  app.put<{ Params: { id: string; kind: string; itemId: string }; Body: unknown }>('/collections/:id/places/:kind/:itemId', async (request, reply) => {
+    const { kind, itemId } = request.params;
+    if (kind !== 'resource' && kind !== 'lens' && kind !== 'folder') {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Move a resource, a lens or a folder.' });
+    }
+    const to = (request.body as { folderId?: unknown } | null)?.folderId;
+    if (to !== null && typeof to !== 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Send the folderId to move it to, or null for the top of the Collection.' });
+    }
+    const current = await manageable(request, reply);
+    if (!current) return reply;
+    const item: Movable = { kind, id: itemId };
+    return folderAnswer(reply, await collections.move(current.id, item, to, viewer(request)));
   });
 
   app.get<{ Params: { id: string } }>('/collections/:id/log', async (request, reply) => {
@@ -725,7 +803,7 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     return 'Send the fields of the Collection as a JSON object.';
   }
   const input = body as Record<string, unknown>;
-  const known = new Set(['name', 'description', 'icon', 'visibility', 'ownerUnit']);
+  const known = new Set(['name', 'description', 'icon', 'visibility', 'ownerUnit', 'intro']);
   const unknown = Object.keys(input).find((key) => !known.has(key));
   if (unknown !== undefined) {
     return `A Collection has no field ${unknown}.`;
@@ -765,6 +843,13 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     }
     fields.ownerUnit = input.ownerUnit;
   }
+  if (input.intro !== undefined) {
+    // Markdown, kept as written but for the white space at its ends; empty for none (FR-CO-41).
+    if (typeof input.intro !== 'string' || input.intro.length > INTRO_LIMIT) {
+      return `The intro is Markdown of at most ${INTRO_LIMIT} characters.`;
+    }
+    fields.intro = input.intro.trim();
+  }
   if (creating) {
     const missing = (['name', 'description', 'icon', 'ownerUnit'] as const).find((key) => fields[key] === undefined);
     if (missing) {
@@ -774,6 +859,26 @@ export function parse(body: unknown, creating: boolean): Fields | string {
     return 'Send at least one field to change.';
   }
   return fields;
+}
+
+/** The name of a folder, and for a new one the folder it goes in, if any (FR-CO-39). */
+export function parseFolder(body: unknown, creating: boolean): { name: string; parentId?: string | null } | string {
+  if (body === null || typeof body !== 'object' || Array.isArray(body)) {
+    return 'Send the folder as a JSON object.';
+  }
+  const input = body as Record<string, unknown>;
+  const unknown = Object.keys(input).find((key) => key !== 'name' && !(creating && key === 'parentId'));
+  if (unknown !== undefined) {
+    return `A folder has no field ${unknown}${creating ? '' : ' to change'}.`;
+  }
+  const name = typeof input.name === 'string' ? input.name.trim() : '';
+  if (name.length < 1 || name.length > 80) {
+    return 'The name of a folder has 1 to 80 characters.';
+  }
+  if (input.parentId !== undefined && input.parentId !== null && typeof input.parentId !== 'string') {
+    return 'The parentId is the ID of a folder of the Collection, or null for its top.';
+  }
+  return { name, ...(creating ? { parentId: (input.parentId as string | null | undefined) ?? null } : {}) };
 }
 
 const UNITS = ['hour', 'day', 'month', 'year'] as const;

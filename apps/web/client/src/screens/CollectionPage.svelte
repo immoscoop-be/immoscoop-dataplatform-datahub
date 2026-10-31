@@ -1,6 +1,8 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
+  import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
   import Table from '@datahub/ui/containers/Table.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -21,16 +23,22 @@
   import type { Registry } from '../lib/registry.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
-  import { collectionPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
+  import { dragging, dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
+  import { contents, counted, holdsText } from '../lib/folders.js';
+  import { collectionPath, folderPath, lensPath, newLensForPath, resourcePath } from '../lib/routes.js';
+  import { rowOf } from '../lib/rows.js';
   import AddResources from './AddResources.svelte';
   import CollectionForm, { type Saved } from './CollectionForm.svelte';
+  import NewFolderRow from './NewFolderRow.svelte';
   import NotFound from './NotFound.svelte';
 
   /**
    * The page of a Collection (Page of a Collection, FR-CO-25 to FR-CO-31): what it is, what needs
    * attention, its Resources, the Lenses its Owner Unit added to it (FR-CO-28) and its recent history.
    * Its Owner Unit and the Data Team edit it in place; the Data Team adds Resources in a sheet and
-   * removes them. Without an ID, it is an empty Collection being made (FR-CO-12).
+   * removes them. Without an ID, it is an empty Collection being made (FR-CO-12). Under its head stands
+   * its intro (FR-CO-41); it shows only what sits at its top, its folders first (FR-CO-38), and a whole row
+   * opens with a click and, for its Owner Unit and the Data Team, moves with a drag onto a folder (FR-CO-40).
    */
   let {
     id,
@@ -43,6 +51,8 @@
     waiting,
     go,
     onchanged,
+    onmove,
+    listed,
     messages,
   }: {
     id: string | undefined;
@@ -58,6 +68,10 @@
     go: (path: string) => void;
     /** Something changed that the panel shows: the Collections, or the Resources that wait. */
     onchanged: () => Promise<void>;
+    /** Moves something of the Collection into one of its folders (FR-CO-40). */
+    onmove: Mover;
+    /** The Collection as the panel has it, read again after every move: where its Resources and Lenses sit. */
+    listed?: Collection | undefined;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
     messages?: { count: number | null; href: string };
   } = $props();
@@ -68,6 +82,7 @@
   let log: readonly LogEntry[] | undefined = $state();
   let editing = $state(false);
   let adding = $state(false);
+  let making = $state(false);
   let groups: readonly OwnerUnit[] | null | undefined = $state();
 
   async function load(wanted: string) {
@@ -90,7 +105,7 @@
 
   $effect(() => {
     const wanted = id;
-    [collection, resources, log, editing, adding] = [undefined, undefined, undefined, wanted === undefined, false];
+    [collection, resources, log, editing, adding, making] = [undefined, undefined, undefined, wanted === undefined, false, false];
     if (wanted) {
       load(wanted);
     }
@@ -129,6 +144,30 @@
       }
       console.error('The Collection could not be saved', error);
       return 'failed';
+    }
+  }
+
+  /** "Edit the intro": the head turns into fields, at the intro (DEC-UX-158). */
+  async function editIntro() {
+    editing = true;
+    await tick();
+    const field = document.getElementById('intro') as HTMLTextAreaElement | null;
+    field?.scrollIntoView?.({ block: 'center' });
+    field?.focus({ preventScroll: true });
+    field?.setSelectionRange(0, 0);
+    if (field) field.scrollTop = 0;
+  }
+
+  async function make(name: string): Promise<boolean> {
+    if (!collection) return false;
+    try {
+      await catalogue.makeFolder(collection.id, name, null);
+      await Promise.all([load(collection.id), onchanged()]);
+      making = false;
+      return true;
+    } catch (error) {
+      console.error('The folder could not be made', error);
+      return false;
     }
   }
 
@@ -177,6 +216,11 @@
   }
 
   const published = $derived(new Set(collection?.resources.filter((item) => item.published).map((item) => item.id)));
+  /** What sits at its top: its folders, and the Resources and Lenses in none (FR-CO-38). */
+  const placed = $derived(listed && listed.id === collection?.id ? listed : collection);
+  const top = $derived(placed ? contents(placed, lenses ?? [], null) : undefined);
+  const atTop = $derived(new Set(top?.resources.map((item) => item.id)));
+  const topResources = $derived(collection?.folders.length ? (resources ?? []).filter((resource) => atTop.has(resource.id)) : resources);
   const unpublished = $derived((resources ?? []).filter((resource) => !published.has(resource.id)));
   const names = $derived(
     new Intl.ListFormat(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB').format(
@@ -192,6 +236,7 @@
   <NotFound />
 {:else if collection}
   {@const shown = collection}
+  {@const here = placed ?? collection}
   <Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, { label: shown.name }]} />
   {#if editing}
     {#key shown.id}
@@ -224,6 +269,16 @@
         <Icon name={shown.visibility === 'public' ? 'globe-simple-fill' : 'lock-simple-fill'} />{t(shown.visibility === 'public' ? 'collections.public' : 'collections.private')}
       </Chip>
     </div>
+    <!-- The intro its Owner Unit writes, in Markdown, under the head; without one, nothing shows (DEC-UX-158). -->
+    {#if shown.intro.trim()}
+      <section class="intro card" aria-label={t('collection.intro')}>
+        <div class="intro-head">
+          <p class="label">{t('collection.intro')}</p>
+          {#if shown.canManage}<button type="button" class="text-link" onclick={editIntro}><Icon name="pencil-simple-fill" /><span>{t('collection.intro.edit')}</span></button>{/if}
+        </div>
+        <MarkdownText source={shown.intro} />
+      </section>
+    {/if}
   {/if}
 
   {#if shown.canManage && unpublished.length > 0 && !editing}
@@ -236,6 +291,44 @@
     </section>
   {/if}
 
+  {#if top && (here.folders.length > 0 || (shown.canManage && !editing))}
+    <!-- Its folders, each with what it holds; a whole row opens it, and something dragged onto it goes in (DEC-UX-156, DEC-UX-157). -->
+    <div class="section-head">
+      <h2>{t('collection.folders')}</h2>
+      {#if shown.canManage && !editing}
+        <button type="button" class="text-link" onclick={() => (making = true)}><Icon name="folder-simple-plus-fill" /><span>{t('folder.new')}</span></button>
+      {/if}
+    </div>
+    {#if top.folders.length === 0 && !making}
+      <p class="meta empty">{t('collection.folders.none')}</p>
+    {:else}
+      <Table label={t('collection.folders')}>
+        {#snippet head()}
+          <tr>
+            <th>{t('collection.column.name')}</th>
+            <th>{t('collection.folders.holds')}</th>
+            <th>{t('collection.column.change')}</th>
+          </tr>
+        {/snippet}
+        {#if making}<NewFolderRow columns={3} onmake={make} oncancel={() => (making = false)} />{/if}
+        {#each top.folders as folder (folder.id)}
+          <tr
+            class="row"
+            class:drop={isOver(here, folder.id)}
+            class:dragging={dragging.item?.id === folder.id}
+            {...rowOf(folderPath(shown.id, folder.id), go)}
+            {...dragOf({ kind: 'folder', id: folder.id, name: folder.name, collectionId: shown.id, from: null }, shown.canManage)}
+            {...shown.canManage ? dropOf(here, folder, onmove) : {}}
+          >
+            <td><span class="name"><span class="folder" role="img" aria-label={t('folder.kind')}><Icon name="folder-fill" /></span><span>{folder.name}</span></span></td>
+            <td class="muted">{holdsText(contents(here, lenses ?? [], folder.id))}</td>
+            <td class="muted">{t('folder.made', { name: folder.createdBy, time: ago(folder.createdAt, currentLanguage()) })}</td>
+          </tr>
+        {/each}
+      </Table>
+    {/if}
+  {/if}
+
   <div class="section-head">
     <h2>Resources</h2>
     {#if dataTeam && !editing}
@@ -244,7 +337,9 @@
   </div>
   {#if resources && resources.length === 0}
     <p class="meta empty">{t(shown.canManage ? 'collection.resources.none' : 'collection.resources.nonePublished')}</p>
-  {:else if resources}
+  {:else if topResources && topResources.length === 0}
+    <p class="meta empty">{t('collection.resources.inFolders', { name: shown.name, count: resources?.length ?? 0 })}</p>
+  {:else if topResources}
     <Table label="Resources">
       {#snippet head()}
         <tr>
@@ -256,9 +351,15 @@
           {#if dataTeam}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
-      {#each resources as resource (resource.id)}
-        <tr class:quiet={!published.has(resource.id)}>
-          <td><a class="name" href={resourcePath(resource.id)}><KindIcon kind="resource" /><span>{resource.displayName}</span></a></td>
+      {#each topResources as resource (resource.id)}
+        <tr
+          class="row"
+          class:quiet={!published.has(resource.id)}
+          class:dragging={dragging.item?.id === resource.id}
+          {...rowOf(resourcePath(resource.id), go)}
+          {...dragOf({ kind: 'resource', id: resource.id, name: resource.displayName, collectionId: shown.id, from: null }, shown.canManage)}
+        >
+          <td><span class="name"><KindIcon kind="resource" /><span>{resource.displayName}</span></span></td>
           <td>
             <span class="level"><MaturityIcon level={resource.level} tooltip={false} />{levelName(resource.level)}</span>
             {#if resource.deprecated}<span class="deprecated">{t('status.deprecated')}</span>{/if}
@@ -278,16 +379,19 @@
           {/if}
         </tr>
       {/each}
+      {#snippet after()}{#if here.folders.length > 0}<p class="meta foot">{t('collection.resources.top')}</p>{/if}{/snippet}
     </Table>
   {/if}
 
-  {#if lenses}
+  {#if lenses && top}
     <div class="section-head">
       <h2>{t('collection.lenses')}</h2>
       {#if shown.canManage && !editing}<a class="text-link" href={newLensForPath(shown.id)}><Icon name="plus-circle-fill" /><span>{t('collection.addLens')}</span></a>{/if}
     </div>
     {#if lenses.length === 0}
       <p class="meta empty">{t('collection.lenses.none')}</p>
+    {:else if top.lenses.length === 0}
+      <p class="meta empty">{t('collection.lenses.top', { name: shown.name, count: lenses.length })}</p>
     {:else}
       <Table label={t('collection.lenses')}>
         {#snippet head()}
@@ -298,10 +402,16 @@
             <th>{t('collection.lenses.madeBy')}</th>
           </tr>
         {/snippet}
-        {#each lenses.toSorted((a, b) => a.name.localeCompare(b.name)) as lens (lens.id)}
-          <tr class:quiet={lens.state === 'waiting' || lens.state === 'refused'}>
+        {#each top.lenses as lens (lens.id)}
+          <tr
+            class="row"
+            class:quiet={lens.state === 'waiting' || lens.state === 'refused'}
+            class:dragging={dragging.item?.id === lens.id}
+            {...rowOf(lensPath(lens.id), go)}
+            {...dragOf({ kind: 'lens', id: lens.id, name: lens.name, collectionId: shown.id, from: null }, shown.canManage)}
+          >
             <td>
-              <a class="name" href={lensPath(lens.id)}><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span>{lens.name}</span></a>
+              <span class="name"><KindIcon kind="lens" broken={brokenText(lens.broken)} /><span>{lens.name}</span></span>
               {#if lens.state === 'waiting'}<span class="deprecated">{t('collection.lenses.waiting')}</span>{:else if lens.state === 'refused'}<span class="deprecated">{t('lens.state.refused')}</span>{:else if lens.state === 'stopped'}<span class="deprecated">{t('status.stopped')}</span>{/if}
             </td>
             <td class="muted">{lens.resources.map((resource) => resource.displayName).join(', ')}</td>
@@ -341,8 +451,12 @@
   .text-link { all: unset; font-size: var(--text-small); color: var(--text-secondary); display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
   .text-link:hover span { text-decoration: underline; text-underline-offset: 3px; }
   .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
-  .name { display: flex; align-items: center; gap: 8px; color: inherit; text-decoration: none; font-weight: var(--weight-medium); }
-  .name:hover span { text-decoration: underline; text-underline-offset: 3px; }
+  .name { display: flex; align-items: center; gap: 8px; color: inherit; font-weight: var(--weight-medium); }
+  .folder { display: inline-flex; font-size: 17px; color: var(--text-secondary); }
+  .foot { margin: 8px 10px 2px; }
+  .intro { margin-top: 16px; padding: 16px 20px; border-radius: var(--radius-lg); }
+  .intro-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+  .intro-head .label { flex: 1; margin: 0; }
   .name :global(.kind) { font-size: 14px; color: var(--text-muted); }
   .level { display: inline-flex; align-items: center; gap: 7px; color: var(--text-secondary); white-space: nowrap; }
   .muted { color: var(--text-muted); }

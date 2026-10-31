@@ -50,6 +50,24 @@ export interface CatalogueDatabase {
     createdByName: string;
     createdAt: Timestamp;
     dissolvedAt: Date | null;
+    /** What its Owner Unit tells about it, in Markdown (FR-CO-41). */
+    intro: ColumnType<string, string | undefined, string>;
+  };
+  /** The folders of the Collections, at the top of one or in one of its folders (FR-CO-38). */
+  folders: {
+    id: Generated<string>;
+    collectionId: string;
+    parentId: string | null;
+    name: string;
+    createdBy: string;
+    createdByName: string;
+    createdAt: Timestamp;
+  };
+  /** The folder a Resource or a Lens sits in; without a row it sits at the top of its Collection (FR-CO-38). */
+  folderPlaces: {
+    kind: 'resource' | 'lens';
+    itemId: string;
+    folderId: string;
   };
   /** The Log of the Collections: append-only, with a Log ID from the Log catalogue (TR-CO-04). */
   collectionLog: {

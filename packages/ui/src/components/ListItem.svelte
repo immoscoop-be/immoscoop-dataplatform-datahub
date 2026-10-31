@@ -1,13 +1,15 @@
 <script lang="ts">
   import { t } from '../foundations/texts.svelte.js';
   import KindIcon from '../marks/KindIcon.svelte';
+  import type { HTMLAnchorAttributes } from 'svelte/elements';
   import MaturityIcon from '../marks/MaturityIcon.svelte';
 
   /**
    * An item in a list: the icon of its kind, a Resource or a Lens, its name on one line, and its Level,
    * small and grey (DEC-UX-11). A name too long ends in an ellipsis and shows in full on hover. A Resource that is
    * not published has its name in a lighter grey; hover and a screen reader say so (DEC-UX-12). A Broken
-   * one carries the red dot on its icon, with what is missing on hover (DEC-UX-81).
+   * one carries the red dot on its icon, with what is missing on hover (DEC-UX-81). The Owner Unit and the
+   * Data Team drag it onto a folder to move it there (DEC-UX-157): what is left of the props goes on the link.
    */
   let {
     href,
@@ -18,10 +20,20 @@
     published = true,
     deprecated = false,
     broken = null,
-  }: { href: string; kind?: 'resource' | 'lens'; name: string; level: number; current?: boolean; published?: boolean; deprecated?: boolean; broken?: string | null } = $props();
+    ...rest
+  }: {
+    href: string;
+    kind?: 'resource' | 'lens';
+    name: string;
+    level: number;
+    current?: boolean;
+    published?: boolean;
+    deprecated?: boolean;
+    broken?: string | null;
+  } & Omit<HTMLAnchorAttributes, 'href'> = $props();
 </script>
 
-<a class="item" class:current class:unpublished={!published} {href} aria-current={current ? 'page' : undefined}>
+<a {...rest} class="item" class:current class:unpublished={!published} {href} aria-current={current ? 'page' : undefined}>
   <span class="kind"><KindIcon {kind} {broken} /></span>
   <span class="name" title={published ? name : t('item.notPublished', { name })}
     >{name}{#if !published}<span class="hidden">{t('item.notPublishedLabel')}</span>{/if}</span
