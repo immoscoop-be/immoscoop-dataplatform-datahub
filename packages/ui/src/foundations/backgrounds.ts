@@ -6,7 +6,8 @@ export type Theme = 'light' | 'dark';
 
 /**
  * - `gradient`: the soft clouds by day, the slow gradient by night (DEC-UX-78), in CSS
- * - `picture`: a painted picture, or a photo shown as it is (DEC-UX-34, DEC-UX-110)
+ * - `picture`: a painted picture, or a photo shown as it is (DEC-UX-34, DEC-UX-110), in which the wind
+ *   can play (DEC-UX-153)
  * - `flow`: the flowing gradient, drawn with WebGL (DEC-UX-80)
  * - `lights`: the flowing lights, drawn with WebGL (DEC-UX-109)
  */
@@ -25,7 +26,33 @@ export interface Background {
   readonly cover?: boolean;
   /** Where the small picture on My page looks, when not in the middle. */
   readonly previewPosition?: string;
+  /** A photo in which the wind plays: mist drifts over its sky and snow blows over its ground (DEC-UX-153). */
+  readonly wind?: Wind;
 }
+
+/**
+ * Where the wind plays in a photo, each as a fraction of its height. The window shows the part of
+ * `span`, from the height of `focus`, whole: a photo taller than the window stands in the middle, its
+ * sides fading into a blur of itself. Mist drifts over it down to `sky`, and snow blows over it from
+ * `ground` down.
+ */
+export interface Wind {
+  /** Its width divided by its height. */
+  readonly ratio: number;
+  readonly span: number;
+  readonly focus: number;
+  readonly sky: number;
+  readonly ground: number;
+}
+
+/** The layers of the wind: two veils of mist, the low veils of blown snow, and fine snow, far and near. */
+export const WIND_LAYERS = {
+  mistFar: new URL('../../../../docs/design/backgrounds/wind/mist-far.webp', import.meta.url).href,
+  mistNear: new URL('../../../../docs/design/backgrounds/wind/mist-near.webp', import.meta.url).href,
+  drift: new URL('../../../../docs/design/backgrounds/wind/drift.webp', import.meta.url).href,
+  flakesFar: new URL('../../../../docs/design/backgrounds/wind/flakes-far.svg', import.meta.url).href,
+  flakesNear: new URL('../../../../docs/design/backgrounds/wind/flakes-near.svg', import.meta.url).href,
+} as const;
 
 // Each address is written out, so that the build finds the picture and takes it along.
 const PAINTED = {
@@ -41,6 +68,7 @@ const PHOTO = {
   alpenglow: new URL('../../../../docs/design/backgrounds/photos/light/alpenglow.jpg', import.meta.url).href,
   spring: new URL('../../../../docs/design/backgrounds/photos/light/spring-snow.jpg', import.meta.url).href,
   village: new URL('../../../../docs/design/backgrounds/photos/dark/village-lights.jpg', import.meta.url).href,
+  spindrift: new URL('../../../../docs/design/backgrounds/photos/light/spindrift.jpg', import.meta.url).href,
 };
 
 /** Every background, in the order My page offers them: the gradient, the flowing ones, then the pictures. */
@@ -62,6 +90,16 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'fusilli', kind: 'picture', themes: ['light'], name: 'Fusilli', picture: PAINTED.fusilli, cover: true },
   { id: 'piste', kind: 'picture', themes: ['light'], name: 'Fresh piste', picture: PAINTED.piste, cover: true, previewPosition: '50% 35%' },
   { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: PAINTED.concrete, cover: true },
+  {
+    id: 'spindrift',
+    kind: 'picture',
+    themes: ['light'],
+    name: 'Spindrift',
+    picture: PHOTO.spindrift,
+    cover: true,
+    previewPosition: '50% 45%',
+    wind: { ratio: 3 / 4, span: 0.8, focus: 0.6, sky: 0.27, ground: 0.66 },
+  },
   { id: 'village', kind: 'picture', themes: ['dark'], name: 'Lights on', picture: PAINTED.village },
 ];
 

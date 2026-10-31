@@ -59,6 +59,9 @@
   --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
   --background-cycle: 36s;
   --photo-cycle: 60s;               /* the photo of the sign-in, very slowly closer */
+  --wind-cloud: 150s;               /* a veil of mist crossing the sky of Spindrift; the nearer one is faster (DEC-UX-153) */
+  --wind-snow: 22s;                 /* the fine snow blowing over its ground; the farther flakes are slower */
+  --wind-gust: 13s;                 /* the wind rising and falling */
   --blur-frame: blur(8px) saturate(1.05);   /* the frames over a picture (DEC-UX-34) */
   --blur-glass: blur(22px) saturate(1.3);   /* a glass card over a photo (DEC-UX-35) */
 

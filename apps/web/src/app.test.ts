@@ -67,6 +67,7 @@ async function builtClient(): Promise<string> {
   );
   await writeFile(join(dir, 'assets', 'index-a1b2.js'), 'console.log("Data Hub");');
   await writeFile(join(dir, 'assets', 'alpenglow-c3d4.jpg'), 'jpg');
+  await writeFile(join(dir, 'assets', 'mist-e5f6.webp'), 'webp');
   await writeFile(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
   return dir;
 }
@@ -142,6 +143,9 @@ describe('the server of the web app', () => {
     expect(script.body).toBe('console.log("Data Hub");');
     const picture = await app.inject({ url: '/assets/alpenglow-c3d4.jpg' });
     expect(picture.headers['content-type']).toBe('image/jpeg');
+    // The mist and the blown snow of a background with wind (DEC-UX-153).
+    const mist = await app.inject({ url: '/assets/mist-e5f6.webp' });
+    expect(mist.headers['content-type']).toBe('image/webp');
     const icon = await app.inject({ url: '/favicon.svg' });
     expect(icon.headers['content-type']).toBe('image/svg+xml');
     expect(icon.headers['cache-control']).not.toContain('immutable');

@@ -20,7 +20,7 @@ describe('the background on screen (DEC-UX-108)', () => {
     const backgrounds = new Backgrounds(new Settings({}, async () => {}), sequence(0, 0.99, 0.99));
     expect(backgrounds.of('light').id).toBe('gradient');
     expect(backgrounds.of('dark').id).toBe('village');
-    expect(backgrounds.of('light').id).toBe('concrete');
+    expect(backgrounds.of('light').id).toBe('spindrift');
   });
 
   it('is the one the User chose for the theme, kept per theme', () => {
@@ -38,6 +38,6 @@ describe('the background on screen (DEC-UX-108)', () => {
     backgrounds.choose('light', 'random');
     expect(backgrounds.of('light').id).toBe('gradient');
     backgrounds.choose('light', 'random');
-    expect(backgrounds.of('light').id).toBe('concrete');
+    expect(backgrounds.of('light').id).toBe('spindrift');
   });
 });
