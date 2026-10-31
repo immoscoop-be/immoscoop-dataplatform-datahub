@@ -6,9 +6,17 @@
     detail: string;
     count?: number | undefined;
   }
+
+  /** One choice of what a panel lists, such as All or Yours, as the first group of the filter (DEC-UX-161). */
+  export interface FilterChoice<C extends string = string> {
+    legend: string;
+    options: readonly { value: C; name: string; detail: string }[];
+    /** What the panel lists by itself, and what "Reset" goes back to. */
+    initial: C;
+  }
 </script>
 
-<script lang="ts" generics="T extends string">
+<script lang="ts" generics="T extends string, C extends string = string">
   import type { Snippet } from 'svelte';
   import Icon from '../foundations/Icon.svelte';
   import { t } from '../foundations/texts.svelte.js';
@@ -17,7 +25,8 @@
    * The filter of a panel, next to its search (Filter a list, DEC-UX-150): a button with how many kinds
    * differ from what the panel shows by itself folds open a small form, with a checkbox per kind, what it
    * is and how many there are, "Reset" and the reminder that only the panel of the User changes. Folded,
-   * one line says what differs, each kind with a cross that puts it back.
+   * one line says what differs, each kind with a cross that puts it back. A panel that lists All or Yours
+   * has that choice first in the form, counted and shown the same way when it is not the default (DEC-UX-161).
    */
   let {
     id,
@@ -27,6 +36,8 @@
     chosen = $bindable(),
     defaults,
     atLeastOne = false,
+    choice,
+    picked = $bindable(),
     children,
   }: {
     /** The id of the form, which the button opens. */
@@ -41,6 +52,10 @@
     defaults: readonly T[];
     /** One kind always stays ticked, so that the panel shows something. */
     atLeastOne?: boolean;
+    /** What the panel lists, chosen first in the form, such as All or Yours. */
+    choice?: FilterChoice<C> | undefined;
+    /** The option of the choice that is picked. */
+    picked?: C;
     /** The search the filter stands next to. */
     children: Snippet;
   } = $props();
@@ -49,7 +64,8 @@
 
   const added = $derived(kinds.filter((kind) => chosen.includes(kind.value) && !defaults.includes(kind.value)));
   const removed = $derived(kinds.filter((kind) => !chosen.includes(kind.value) && defaults.includes(kind.value)));
-  const differs = $derived(added.length + removed.length);
+  const elsewhere = $derived(choice && picked !== undefined && picked !== choice.initial ? choice.options.find((option) => option.value === picked) : undefined);
+  const differs = $derived(added.length + removed.length + (elsewhere ? 1 : 0));
 
   function toggle(value: T) {
     chosen = kinds.filter((kind) => (kind.value === value) !== chosen.includes(kind.value)).map((kind) => kind.value);
@@ -71,8 +87,20 @@
   onreset={(event) => {
     event.preventDefault();
     chosen = kinds.filter((kind) => defaults.includes(kind.value)).map((kind) => kind.value);
+    if (choice) picked = choice.initial;
   }}
 >
+  {#if choice}
+    <fieldset>
+      <legend>{choice.legend}</legend>
+      {#each choice.options as option (option.value)}
+        <label class="option">
+          <input type="radio" name="{id}-choice" checked={picked === option.value} onchange={() => (picked = option.value)} />
+          <span class="text"><span>{option.name}</span><span class="meta">{option.detail}</span></span>
+        </label>
+      {/each}
+    </fieldset>
+  {/if}
   <fieldset>
     <legend>{legend}</legend>
     {#each kinds as kind (kind.value)}
@@ -92,6 +120,10 @@
 
 {#if !open && differs > 0}
   <p class="on">
+    {#if elsewhere && choice}
+      <span>{choice.legend}:</span>
+      <span class="kind">{elsewhere.name}<button type="button" class="undo" aria-label={t('filter.back', { name: choice.options.find((option) => option.value === choice.initial)?.name ?? '' })} onclick={() => (picked = choice.initial)}><Icon name="x" /></button></span>
+    {/if}
     {#if added.length > 0}
       <span>{t('filter.added')}</span>
       {#each added as kind (kind.value)}
@@ -120,6 +152,7 @@
   .form { margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md); }
   .form[hidden] { display: none; }
   fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 2px; min-width: 0; }
+  fieldset + fieldset { margin-top: 10px; }
   legend { padding: 0; margin-bottom: 6px; font-size: var(--text-meta); color: var(--text-muted); }
   .option { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: var(--radius-sm); cursor: pointer; }
   .option:hover { background: var(--tint-hover); }
