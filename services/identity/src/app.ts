@@ -1,6 +1,7 @@
 import type { ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
+import { type ExcelKeys, excelKeyRoutes, type Notices } from './excel-keys.js';
 import { ownDomainGroups } from './naming-convention.js';
 import { peopleRoutes } from './people.js';
 import { settingsRoutes } from './settings.js';
@@ -14,6 +15,8 @@ export interface AppOptions {
   signIn?: SignInOptions;
   /** catalogue, which asks who to notify with its Google ID token (DEC-LN-07); needs the database. */
   peopleCallers?: ServiceCallerVerifier;
+  /** The Excel keys (FR-PL-01 to FR-PL-03): query exchanges them, Cloud Scheduler asks which expire; needs the database. */
+  excelKeys?: { keys: ExcelKeys; exchangers: ServiceCallerVerifier; schedulers?: ServiceCallerVerifier; notices: Notices };
   logger?: ServerOptions['logger'];
 }
 
@@ -64,6 +67,7 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     await app.register(signInRoutes, options.signIn);
     await app.register(settingsRoutes, { store: options.signIn.store });
     if (options.peopleCallers) await app.register(peopleRoutes, { store: options.signIn.store, callers: options.peopleCallers });
+    if (options.excelKeys) await app.register(excelKeyRoutes, { ...options.excelKeys, workspace, tokens: options.tokens, domains });
   }
 
   return app;
