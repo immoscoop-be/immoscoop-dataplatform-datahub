@@ -110,7 +110,7 @@ Each change goes into the Log of the Collection: `COL-008` to `COL-013` in the [
 <a id="tr-co-08"></a>
 ### TR-CO-08 · The intro of a Collection is Markdown, never shown as HTML
 
-**Status:** Specified · **Realises:** [FR-CO-41](../functional/03-collections.md#fr-co-41), [DEC-UX-158](../../design/principles.md#dec-ux-158)
+**Status:** Implemented · **Realises:** [FR-CO-41](../functional/03-collections.md#fr-co-41), [DEC-UX-158](../../design/principles.md#dec-ux-158)
 
 The column `intro` of `collections`, empty by default, holds the intro as its Owner Unit wrote it, at most 10,000 characters, without the white space at its ends; `POST` and `PATCH /collections/{id}` take it as `intro`. A change is logged as `COL-014`, without the text. The web app reads the Markdown itself into headings, paragraphs, lists, bold, italic, code and links, and builds the page from those pieces, as it does for the text of a Message: HTML in the intro shows as the text it is. A link opens only an address with `http`, `https` or `mailto`, or a path within Data Hub; any other address stays text.
 

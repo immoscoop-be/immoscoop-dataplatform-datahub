@@ -335,9 +335,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await an('PUT', `/collections/${id}/places/folder/${folder}`, { folderId: inner.id })).json().error).toBe('into_itself');
     expect((await an('PUT', `/collections/${id}/places/table/${folder}`, { folderId: null })).statusCode).toBe(400);
 
-    expect((await bert('GET', `/collections/${id}`)).json().folders).toEqual([
-      { id: folder, name: 'By source', parentId: null },
-      { id: inner.id, name: 'Paid', parentId: folder },
+    expect((await bert('GET', `/collections/${id}`)).json().folders).toMatchObject([
+      { id: folder, name: 'By source', parentId: null, createdBy: 'An' },
+      { id: inner.id, name: 'Paid', parentId: folder, createdBy: 'Dirk' },
     ]);
     // Only an empty folder is deleted (FR-CO-39).
     const refused = await an('DELETE', `/collections/${id}/folders/${folder}`);

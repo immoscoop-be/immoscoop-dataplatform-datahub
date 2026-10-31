@@ -2,6 +2,7 @@
   import ListItem from '@datahub/ui/components/ListItem.svelte';
   import PanelFilter from '@datahub/ui/components/PanelFilter.svelte';
   import Search from '@datahub/ui/components/Search.svelte';
+  import TreeFolder from '@datahub/ui/components/TreeFolder.svelte';
   import TreeGroup from '@datahub/ui/components/TreeGroup.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -11,7 +12,9 @@
   import type { Collection, Resource } from '../lib/catalogue.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
-  import { collectionPath, lensPath, resourcePath } from '../lib/routes.js';
+  import { dragOf, dropOf, isOver, type Mover } from '../lib/dragging.svelte.js';
+  import { contents, counted, lensFolder, pathTo } from '../lib/folders.js';
+  import { collectionPath, folderPath, lensPath, resourcePath } from '../lib/routes.js';
 
   /**
    * The panel of Collections, the index of the section (What is in the panel): every Collection the
@@ -20,6 +23,9 @@
    * (DEC-UX-16). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
    * The filter next to it shows Resources, Lenses or both: with one kind left out, a Collection without
    * the other leaves the panel, and with only Lenses each Collection unfolds to them (DEC-UX-151).
+   * An unfolded Collection shows its folders first, each folding to what it holds, then what sits at its top
+   * (DEC-UX-156); the Owner Unit and the Data Team drag a Resource, a Lens or a folder onto another folder, or
+   * onto the Collection for its top (DEC-UX-157). While searching, what matches shows without its folders.
    */
   let {
     collections,
@@ -28,7 +34,9 @@
     currentCollection,
     currentResource,
     currentLens,
+    currentFolder,
     groups,
+    onmove,
   }: {
     collections: readonly Collection[] | undefined;
     /** The Lenses the User sees, each in its Collection. */
@@ -38,8 +46,11 @@
     currentCollection: string | undefined;
     currentResource: string | undefined;
     currentLens?: string | undefined;
+    /** The folder whose page is open. */
+    currentFolder?: string | undefined;
     /** The fixed IDs of the groups of the User: their Collections are theirs. */
     groups: readonly string[];
+    onmove: Mover;
   } = $props();
 
   /** How many items an unfolded Collection shows before "Show all" (FR-CO-23). */
@@ -61,6 +72,8 @@
   let waitingOpen = $state(false);
   let all: Record<string, boolean> = $state({});
   let allLenses: Record<string, boolean> = $state({});
+  /** Which folders the User unfolded; folded unless they did, or what is open is in it. */
+  let openFolders: Record<string, boolean> = $state({});
 
   // Opening a Collection, or a Resource in it, unfolds it in the panel (FR-CO-19, FR-CO-25); so does
   // opening a Resource that waits for "Without a Collection".
@@ -74,6 +87,17 @@
       waitingOpen = true;
     }
   });
+  // The folder whose page is open unfolds, and so does every folder around what is open.
+  $effect(() => {
+    const collection = collections?.find((candidate) => candidate.id === currentCollection);
+    if (!collection) return;
+    const from =
+      currentFolder ??
+      (currentResource ? collection.resources.find((item) => item.id === currentResource)?.folderId : currentLens ? lensFolder(collection, currentLens) : null);
+    for (const folder of from ? pathTo(collection, from) : []) {
+      openFolders[folder.id] = true;
+    }
+  });
 
   const words = $derived(query.trim().toLowerCase());
   const fits = (name: string) => name.toLowerCase().includes(words);
@@ -81,11 +105,16 @@
 
   interface Shown {
     collection: Collection;
-    /** Its items as the search leaves them: all of them, or only those that match. */
+    /** The Collection with only the Resources the filter shows, and its Lenses the filter shows: what its folders hold. */
+    view: Collection;
+    lensView: LensItem[];
+    /** Its items at its top, or while searching all those that match, without their folders. */
     items: Collection['resources'];
     lensItems: LensItem[];
     /** Unfolded by the search, to show what matches. */
     found: boolean;
+    /** What the search found, without its folders. */
+    flat: boolean;
   }
   const lensesOf = (collection: Collection) => (lenses ?? []).filter((lens) => lens.collectionId === collection.id).toSorted((a, b) => a.name.localeCompare(b.name));
   const inScope = $derived((collections ?? []).filter((collection) => filter === 'all' || mine(collection)));
@@ -97,14 +126,16 @@
     inScope.flatMap((collection): Shown[] => {
       const resources = withResources ? collection.resources : [];
       const its = withLenses ? lensesOf(collection) : [];
+      const view = { ...collection, resources };
       if (!words || fits(collection.name)) {
         if (narrowed && resources.length + its.length === 0) return [];
+        const top = contents(view, its, null);
         // Only Lenses: each Collection unfolds to them, as few as they are.
-        return [{ collection, items: resources, lensItems: its, found: !withResources }];
+        return [{ collection, view, lensView: its, items: top.resources, lensItems: top.lenses, found: !withResources, flat: false }];
       }
       const items = resources.filter((item) => fits(item.displayName));
       const lensItems = its.filter((lens) => fits(lens.name));
-      return items.length + lensItems.length > 0 ? [{ collection, items, lensItems, found: true }] : [];
+      return items.length + lensItems.length > 0 ? [{ collection, view, lensView: its, items, lensItems, found: true, flat: true }] : [];
     }),
   );
   const waitingShown = $derived(withResources ? (waiting ?? []).filter((resource) => !words || fits(resource.displayName)) : []);
@@ -148,7 +179,51 @@
   />
 </div>
 
-{#each shown as { collection, items, lensItems, found } (collection.id)}
+<!-- What a folder holds, or the folders at the top of a Collection: its folders, each folding, then its Resources and Lenses. -->
+{#snippet tree(collection: Collection, view: Collection, lensView: LensItem[], folderId: string | null)}
+  {@const inside = contents(view, lensView, folderId)}
+  {#each inside.folders as folder (folder.id)}
+    <TreeFolder
+      href={folderPath(collection.id, folder.id)}
+      name={folder.name}
+      count={counted(contents(view, lensView, folder.id))}
+      current={folder.id === currentFolder}
+      drop={isOver(collection, folder.id)}
+      bind:open={() => openFolders[folder.id] ?? false, (open) => (openFolders[folder.id] = open)}
+      {...dragOf({ kind: 'folder', id: folder.id, name: folder.name, collectionId: collection.id, from: folder.parentId }, collection.canManage)}
+      {...collection.canManage ? dropOf(collection, folder, onmove) : {}}
+    >
+      {@render tree(collection, view, lensView, folder.id)}
+    </TreeFolder>
+  {/each}
+  {#if folderId !== null}
+    {#each inside.resources as item (item.id)}
+      <ListItem
+        href={resourcePath(item.id)}
+        name={item.displayName}
+        level={item.level}
+        current={item.id === currentResource}
+        published={item.published}
+        deprecated={item.deprecated}
+        {...dragOf({ kind: 'resource', id: item.id, name: item.displayName, collectionId: collection.id, from: folderId }, collection.canManage)}
+      />
+    {/each}
+    {#each inside.lenses as lens (lens.id)}
+      <ListItem
+        href={lensPath(lens.id)}
+        kind="lens"
+        name={lens.name}
+        level={lens.level}
+        current={lens.id === currentLens}
+        published={lens.state !== 'waiting' && lens.state !== 'refused'}
+        broken={brokenText(lens.broken)}
+        {...dragOf({ kind: 'lens', id: lens.id, name: lens.name, collectionId: collection.id, from: folderId }, collection.canManage)}
+      />
+    {/each}
+  {/if}
+{/snippet}
+
+{#each shown as { collection, view, lensView, items, lensItems, found, flat } (collection.id)}
   {@const first = all[collection.id] || found ? items : items.slice(0, FIRST)}
   {@const firstLenses = allLenses[collection.id] || found ? lensItems : lensItems.slice(0, FIRST)}
   <TreeGroup
@@ -156,6 +231,8 @@
     name={collection.name}
     current={collection.id === currentCollection}
     bind:open={() => found || (unfolded[collection.id] ?? false), (open) => (unfolded[collection.id] = open)}
+    drop={isOver(collection, null)}
+    {...collection.canManage ? dropOf(collection, null, onmove) : {}}
   >
     {#snippet mark()}<CollectionIcon name={collection.icon} />{/snippet}
     {#snippet meta()}
@@ -166,14 +243,32 @@
         )}
       {/if}
     {/snippet}
+    {#if !flat}{@render tree(collection, view, lensView, null)}{/if}
     {#each first as item (item.id)}
-      <ListItem href={resourcePath(item.id)} name={item.displayName} level={item.level} current={item.id === currentResource} published={item.published} deprecated={item.deprecated} />
+      <ListItem
+        href={resourcePath(item.id)}
+        name={item.displayName}
+        level={item.level}
+        current={item.id === currentResource}
+        published={item.published}
+        deprecated={item.deprecated}
+        {...dragOf({ kind: 'resource', id: item.id, name: item.displayName, collectionId: collection.id, from: item.folderId }, collection.canManage)}
+      />
     {/each}
     {#if first.length < items.length}
       <button type="button" class="more" onclick={() => (all[collection.id] = true)}>{t('collections.showAll', { count: items.length })}</button>
     {/if}
     {#each firstLenses as lens (lens.id)}
-      <ListItem href={lensPath(lens.id)} kind="lens" name={lens.name} level={lens.level} current={lens.id === currentLens} published={lens.state !== 'waiting' && lens.state !== 'refused'} broken={brokenText(lens.broken)} />
+      <ListItem
+        href={lensPath(lens.id)}
+        kind="lens"
+        name={lens.name}
+        level={lens.level}
+        current={lens.id === currentLens}
+        published={lens.state !== 'waiting' && lens.state !== 'refused'}
+        broken={brokenText(lens.broken)}
+        {...dragOf({ kind: 'lens', id: lens.id, name: lens.name, collectionId: collection.id, from: lensFolder(collection, lens.id) }, collection.canManage)}
+      />
     {/each}
     {#if firstLenses.length < lensItems.length}
       <button type="button" class="more" onclick={() => (allLenses[collection.id] = true)}>{t('collections.showAll', { count: lensItems.length })}</button>

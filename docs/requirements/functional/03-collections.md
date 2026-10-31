@@ -313,28 +313,28 @@ How a Collection keeps a growing number of Resources and Lenses easy to oversee 
 <a id="fr-co-38"></a>
 ### FR-CO-38 · A Collection holds folders
 
-**Status:** Specified · **Source:** Max, 2026-10-31 ([DEC-CO-26](#dec-co-26), [DEC-UX-156](../../design/principles.md#dec-ux-156)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html), [collection-overview](../../design/screens/collection-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-10-31 ([DEC-CO-26](#dec-co-26), [DEC-UX-156](../../design/principles.md#dec-ux-156)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html), [collection-overview](../../design/screens/collection-overview.html)
 
 Each folder, Resource and Lens of a Collection sits at the top of the Collection or in one folder of it, and a folder holds folders, as deep as needed. The panel shows the folders of an unfolded Collection first, each folding to what it holds, then what sits at its top; the page of a Collection shows only what sits at its top, with its folders, and a folder has a page of its own with what it holds: its folders first, then its Resources and Lenses, each A to Z. A Resource or a Lens the User does not see is not shown and not counted. New Resources and Lenses come in at the top of the Collection.
 
 <a id="fr-co-39"></a>
 ### FR-CO-39 · The Owner Unit and the Data Team make, rename and delete folders
 
-**Status:** Specified · **Source:** Max, 2026-10-31 ([DEC-CO-26](#dec-co-26)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html)
+**Status:** Implemented · **Source:** Max, 2026-10-31 ([DEC-CO-26](#dec-co-26)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html)
 
 The Owner Unit of a Collection and the Data Team make a folder in the Collection or in one of its folders, rename it, and delete it. Only an empty folder is deleted: on a folder that holds something, Delete says so and deletes nothing. A name has 1 to 80 characters. Each of these goes into the Log of the Collection ([FR-CO-11](#fr-co-11)).
 
 <a id="fr-co-40"></a>
 ### FR-CO-40 · What a Collection holds moves between its folders by dragging
 
-**Status:** Specified · **Source:** Max, 2026-10-31 ([DEC-UX-157](../../design/principles.md#dec-ux-157)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html)
+**Status:** Implemented · **Source:** Max, 2026-10-31 ([DEC-UX-157](../../design/principles.md#dec-ux-157)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html)
 
 The Owner Unit and the Data Team move a Resource, a Lens or a folder by dragging its row onto a folder of the same Collection, in a list, in the panel or in the path above a page, or onto the Collection to put it at its top. A folder does not go into itself or into a folder inside it. A short line on screen says where it went, and the move goes into the Log of the Collection ([FR-CO-11](#fr-co-11)). Moving to another Collection stays as it is ([FR-CO-08](#fr-co-08)).
 
 <a id="fr-co-41"></a>
 ### FR-CO-41 · A Collection has an intro in Markdown
 
-**Status:** Specified · **Source:** Max, 2026-10-31 ([DEC-UX-158](../../design/principles.md#dec-ux-158)) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [collection-edit](../../design/screens/collection-edit.html)
+**Status:** Implemented · **Source:** Max, 2026-10-31 ([DEC-UX-158](../../design/principles.md#dec-ux-158)) · **Screens:** [collection-overview](../../design/screens/collection-overview.html), [collection-edit](../../design/screens/collection-edit.html)
 
 The Owner Unit and the Data Team write an intro to a Collection in Markdown, with a preview, when they edit it. The page of the Collection shows it under its head, as written: headings, bold, italic, lists, links and code, never HTML of its own. A change of the intro goes into the Log of the Collection ([FR-CO-11](#fr-co-11)).
 

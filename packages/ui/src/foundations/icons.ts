@@ -15,7 +15,10 @@ import circleDashedFill from '@phosphor-icons/core/assets/fill/circle-dashed-fil
 import copyFill from '@phosphor-icons/core/assets/fill/copy-fill.svg?raw';
 import eyeFill from '@phosphor-icons/core/assets/fill/eye-fill.svg?raw';
 import eyeSlashFill from '@phosphor-icons/core/assets/fill/eye-slash-fill.svg?raw';
+import folderFill from '@phosphor-icons/core/assets/fill/folder-fill.svg?raw';
+import folderOpenFill from '@phosphor-icons/core/assets/fill/folder-open-fill.svg?raw';
 import folderPlusFill from '@phosphor-icons/core/assets/fill/folder-plus-fill.svg?raw';
+import folderSimplePlusFill from '@phosphor-icons/core/assets/fill/folder-simple-plus-fill.svg?raw';
 import gaugeFill from '@phosphor-icons/core/assets/fill/gauge-fill.svg?raw';
 import globeSimpleFill from '@phosphor-icons/core/assets/fill/globe-simple-fill.svg?raw';
 import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-fill.svg?raw';
@@ -44,6 +47,10 @@ import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg
 import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
 import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
 import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
+import link from '@phosphor-icons/core/assets/regular/link.svg?raw';
+import textB from '@phosphor-icons/core/assets/regular/text-b.svg?raw';
+import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
+import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
 import userFocus from '@phosphor-icons/core/assets/regular/user-focus.svg?raw';
 import userGear from '@phosphor-icons/core/assets/regular/user-gear.svg?raw';
 import arrowCounterClockwise from '@phosphor-icons/core/assets/regular/arrow-counter-clockwise.svg?raw';
@@ -140,7 +147,10 @@ export const ICONS = {
   'copy-fill': copyFill,
   'eye-fill': eyeFill,
   'eye-slash-fill': eyeSlashFill,
+  'folder-fill': folderFill,
+  'folder-open-fill': folderOpenFill,
   'folder-plus-fill': folderPlusFill,
+  'folder-simple-plus-fill': folderSimplePlusFill,
   'gauge-fill': gaugeFill,
   'globe-simple-fill': globeSimpleFill,
   'graduation-cap-fill': graduationCapFill,
@@ -169,6 +179,10 @@ export const ICONS = {
   'chart-line': chartLine,
   'chart-scatter': chartScatter,
   compass,
+  link,
+  'text-b': textB,
+  'text-h': textH,
+  'text-italic': textItalic,
   'user-focus': userFocus,
   'user-gear': userGear,
   'arrow-counter-clockwise': arrowCounterClockwise,

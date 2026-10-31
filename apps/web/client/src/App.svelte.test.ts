@@ -103,13 +103,16 @@ const CREDIT = {
   id: 'c1',
   name: 'Credit leads',
   description: 'The credit leads Immoscoop sends to KBC.',
+  intro: '',
   icon: 'coins',
   ownerUnit: DATA,
   visibility: 'public',
   createdAt: '2026-09-03T08:00:00Z',
   createdBy: 'An Claes',
   canManage: true,
-  resources: [{ id: 'r2', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false }],
+  resources: [{ id: 'r2', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false, folderId: null as string | null }],
+  folders: [] as { id: string; name: string; parentId: string | null; createdBy: string; createdAt: string }[],
+  lensFolders: {} as Record<string, string>,
   lastChange: { logId: 'COL-006', params: { resource: 'Weekly lead volume', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
 };
 
@@ -295,8 +298,11 @@ function serve({
   conversations = [] as Record<string, unknown>[],
   learned = [] as Record<string, unknown>[],
   waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
+  creditWith = {} as Partial<typeof CREDIT>,
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  // Credit leads as catalogue keeps it, with its folders, changed by what the page asks (FR-CO-38 to FR-CO-41).
+  let credit = { ...CREDIT, ...creditWith };
   /** The queries the User hid from their panel (DEC-UX-138). */
   const hiddenQueries = new Set<string>();
   // The Messages as catalogue keeps them, changed by what the page asks.
@@ -317,14 +323,41 @@ function serve({
     }
     const dataTeam = roles.includes('datateam');
     if (path === '/collections' && method === 'GET') {
-      return json({ collections: [CREDIT, LISTINGS] });
+      return json({ collections: [credit, LISTINGS] });
+    }
+    if (path === '/collections/c1/folders' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; parentId: string | null };
+      const made = { id: 'f-new', name: body.name, parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
+      credit = { ...credit, folders: [...credit.folders, made] };
+      return json(made, 201);
+    }
+    const [, folderId] = /^\/collections\/c1\/folders\/([^/]+)$/.exec(path) ?? [];
+    if (folderId && method === 'PATCH') {
+      const { name } = JSON.parse(init.body as string) as { name: string };
+      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, name } : folder)) };
+      return json(credit.folders.find((folder) => folder.id === folderId));
+    }
+    if (folderId && method === 'DELETE') {
+      const holds = credit.folders.filter((folder) => folder.parentId === folderId).length + credit.resources.filter((item) => item.folderId === folderId).length;
+      if (holds > 0) return json({ error: 'not_empty', holds }, 409);
+      credit = { ...credit, folders: credit.folders.filter((folder) => folder.id !== folderId) };
+      return new Response(null, { status: 204 });
+    }
+    const [, kind, itemId] = /^\/collections\/c1\/places\/(resource|lens|folder)\/([^/]+)$/.exec(path) ?? [];
+    if (kind && itemId && method === 'PUT') {
+      const to = (JSON.parse(init.body as string) as { folderId: string | null }).folderId;
+      if (kind === 'resource') credit = { ...credit, resources: credit.resources.map((item) => (item.id === itemId ? { ...item, folderId: to } : item)) };
+      if (kind === 'folder') credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === itemId ? { ...folder, parentId: to } : folder)) };
+      if (kind === 'lens') credit = { ...credit, lensFolders: Object.fromEntries([...Object.entries(credit.lensFolders).filter(([id]) => id !== itemId), ...(to ? [[itemId, to]] : [])]) };
+      return new Response(null, { status: 204 });
     }
     if (path === '/collections' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; ownerUnit: string };
       return json({ ...CREDIT, ...body, id: 'c-new', ownerUnit: DATA, resources: [], lastChange: null }, 201);
     }
     if (path === '/collections/c1') {
-      return method === 'PATCH' ? json({ ...CREDIT, ...JSON.parse(init.body as string) }) : json(CREDIT);
+      if (method === 'PATCH') credit = { ...credit, ...JSON.parse(init.body as string) };
+      return json(credit);
     }
     if (path === '/collections/c2') {
       return json(LISTINGS);
@@ -1005,7 +1038,7 @@ describe('the web app, with Collections', () => {
     expect(calls).toContainEqual({
       method: 'POST',
       path: '/collections',
-      body: { name: 'Search behaviour', description: 'What visitors search for.', icon: 'binoculars', ownerUnit: 'g1', visibility: 'public' },
+      body: { name: 'Search behaviour', description: 'What visitors search for.', icon: 'binoculars', ownerUnit: 'g1', visibility: 'public', intro: '' },
     });
   });
 
@@ -1653,6 +1686,161 @@ describe('Query', () => {
   });
 });
 
+/** Credit leads with folders: Leads in at its top holds By source and Weekly lead volume; By source holds the Lens; Response is empty. */
+const FOLDERED = {
+  folders: [
+    { id: 'f1', name: 'Leads in', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
+    { id: 'f2', name: 'By source', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
+    { id: 'f3', name: 'Response', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
+  ],
+  resources: [{ ...CREDIT.resources[0]!, folderId: 'f1' }],
+  lensFolders: { l1: 'f2' },
+};
+
+/** What a drag carries, as a browser gives it. */
+const transfer = () => ({ effectAllowed: 'all', dropEffect: 'none', setData: () => undefined, setDragImage: () => undefined });
+
+describe('Folders', () => {
+  it('keeps what a Collection holds in folders: the panel unfolds them, its page shows only its top (FR-CO-38, DEC-UX-156)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const folders = within(await main.findByRole('table', { name: 'Mappen' }));
+    expect(folders.getByText('Leads in').closest('tr')?.textContent).toContain('1 map · 1 Resource');
+    expect(folders.getByText('Response').closest('tr')?.textContent).toContain('Leeg');
+    expect(main.getByText(/Geen Resource staat bovenaan in Credit leads: de Resource zit in een map/)).toBeTruthy();
+    expect(main.getByText(/Geen Lens staat bovenaan in Credit leads/)).toBeTruthy();
+
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    expect(panel.queryByRole('link', { name: /Weekly lead volume/ })).toBeNull();
+    await fireEvent.click(panel.getByRole('button', { name: 'Toon wat Leads in bevat' }));
+    expect(panel.getByRole('link', { name: /Weekly lead volume/ })).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Toon wat By source bevat' }));
+    expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('opens a folder on a page of its own, with the path above it, and a row opens with a click (FR-CO-38, DEC-UX-157)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { name: 'By source', level: 1 })).toBeTruthy();
+    const path = within(main.getByRole('navigation', { name: 'Waar je bent' }));
+    expect(path.getByRole('link', { name: 'Credit leads' }).getAttribute('href')).toBe('/collections/c1');
+    expect(path.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    // The panel unfolds to the folder whose page is open.
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('link', { name: 'By source' }).getAttribute('aria-current')).toBe('page');
+    await fireEvent.click(within(main.getByRole('table', { name: 'In deze map' })).getByText('Max Verstraete', { exact: false }));
+    expect(location.pathname).toBe('/lenses/l1');
+  });
+
+  it('makes, renames and deletes folders, only an empty one, with a warning for one that is not (FR-CO-39)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Nieuwe map/ }));
+    const name = main.getByRole('textbox', { name: 'Naam van de nieuwe map' });
+    await fireEvent.input(name, { target: { value: 'Paid' } });
+    await fireEvent.keyDown(name, { key: 'Enter' });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/collections/c1/folders', body: { name: 'Paid', parentId: 'f1' } }));
+    expect(await main.findByText('Paid')).toBeTruthy();
+
+    // Delete stays on: on a folder that holds something it says so, and deletes nothing.
+    await fireEvent.click(main.getByRole('button', { name: 'Verwijder de map, zodra ze leeg is' }));
+    expect(await main.findByText('Leads in is niet leeg.')).toBeTruthy();
+    expect(main.getByText(/Ze bevat nog 2 mappen · 1 Resource/)).toBeTruthy();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+
+    await fireEvent.click(main.getByRole('button', { name: /Hernoemen/ }));
+    const rename = main.getByRole('textbox', { name: 'Nieuwe naam van de map' });
+    await fireEvent.input(rename, { target: { value: 'Leads coming in' } });
+    await fireEvent.keyDown(rename, { key: 'Enter' });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { name: 'Leads coming in' } }));
+    expect(await main.findByRole('heading', { name: 'Leads coming in', level: 1 })).toBeTruthy();
+
+    // An empty folder goes, and its Collection opens.
+    await fireEvent.click(within(screen.getByRole('complementary', { name: 'Collections' })).getByRole('link', { name: 'Response' }));
+    expect(await main.findByRole('heading', { name: 'Response', level: 1 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Verwijder de map, zodra ze leeg is' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/collections/c1/folders/f3' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+  });
+
+  it('moves a Resource onto a folder by dragging its row, and says where it went (FR-CO-40, DEC-UX-157)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    const row = table.getByText('Weekly lead volume').closest('tr')!;
+    const folder = table.getByText('By source').closest('tr')!;
+    expect(row.getAttribute('draggable')).toBe('true');
+    const dataTransfer = transfer();
+    await fireEvent.dragStart(row, { dataTransfer });
+    await fireEvent.dragOver(folder, { dataTransfer });
+    expect(folder.classList.contains('drop')).toBe(true);
+    await fireEvent.drop(folder, { dataTransfer });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/collections/c1/places/resource/r2', body: { folderId: 'f2' } }));
+    const said = await screen.findByText(/Weekly lead volume verplaatst naar/);
+    expect(said.closest('[role="status"]')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Weekly lead volume verplaatst naar By source');
+  });
+
+  it('never lets a folder go into itself or into a folder inside it (FR-CO-40)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const leadsIn = (await panel.findByRole('link', { name: 'Leads in' })).closest('.folder')!;
+    const bySource = panel.getByRole('link', { name: 'By source' }).closest('.folder')!;
+    const dataTransfer = transfer();
+    await fireEvent.dragStart(leadsIn, { dataTransfer });
+    await fireEvent.dragOver(bySource, { dataTransfer });
+    expect(bySource.classList.contains('drop')).toBe(false);
+    await fireEvent.dragOver(panel.getByRole('link', { name: 'Response' }).closest('.folder')!, { dataTransfer });
+    expect(panel.getByRole('link', { name: 'Response' }).closest('.folder')!.classList.contains('drop')).toBe(true);
+    await fireEvent.dragEnd(leadsIn, { dataTransfer });
+  });
+
+  it('lets a colleague open folders, and drag nothing (FR-CO-39, DEC-CO-26)', async () => {
+    serve({ groups: ['g2'], lenses: [{ ...LENS }], creditWith: { ...FOLDERED, canManage: false } });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    expect(table.getByText('Weekly lead volume').closest('tr')?.hasAttribute('draggable')).toBe(false);
+    expect(main.queryByRole('button', { name: /Nieuwe map/ })).toBeNull();
+    expect(main.queryByRole('button', { name: 'Verwijder de map, zodra ze leeg is' })).toBeNull();
+  });
+
+  it('shows the intro of a Collection as written, never as HTML, and edits it in Markdown (FR-CO-41, DEC-UX-158)', async () => {
+    const intro = '### Start here\n**Weekly** volumes first; see [Leads in](/collections/c1/folders/f1).\n\n<b>not bold</b>';
+    const calls = serve({ groups: ['g1'], creditWith: { intro } });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const about = within(await main.findByRole('region', { name: 'Over deze Collection' }));
+    expect(about.getByRole('heading', { name: 'Start here', level: 3 })).toBeTruthy();
+    expect(about.getByText('Weekly').tagName).toBe('STRONG');
+    expect(about.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    expect(about.getByText('<b>not bold</b>')).toBeTruthy();
+
+    await fireEvent.click(about.getByRole('button', { name: /Bewerk de intro/ }));
+    const field = (await main.findByRole('textbox', { name: 'Intro' })) as HTMLTextAreaElement;
+    expect(field.value).toBe(intro);
+    field.setSelectionRange(field.value.length, field.value.length);
+    await fireEvent.click(main.getByRole('button', { name: 'Lijst' }));
+    expect(field.value.endsWith('- <b>not bold</b>')).toBe(true);
+    await fireEvent.click(main.getByRole('radio', { name: 'Voorbeeld' }));
+    expect(main.getByRole('listitem').textContent).toBe('<b>not bold</b>');
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { intro: intro.replace('<b>not bold</b>', '- <b>not bold</b>') } }));
+  });
+});
+
 describe('Lenses', () => {
   it('makes a Lens of a query, with what it does step by step, into a Collection its author owns (FR-LE-07, FR-LE-08, DEC-UX-121)', async () => {
     const calls = serve({ groups: ['g1'], queries: [{ ...QUERY, sql: `${QUERY.sql} where 1 = 1`, parameters: [{ name: 'dateFrom', kind: 'date', value: 'DATE_TRUNC(CURRENT_DATE(), YEAR)' }] }] });
@@ -1725,10 +1913,12 @@ describe('Lenses', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const table = within(await main.findByRole('table', { name: 'Lenses' }));
-    expect(table.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
     expect(table.getByText('Max Verstraete')).toBeTruthy();
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+    // The row is no link: a click anywhere on it opens the Lens, so that a drag anywhere on it moves it (DEC-UX-157).
+    await fireEvent.click(table.getByText('Max Verstraete'));
+    expect(location.pathname).toBe('/lenses/l1');
   });
 
   it('shows the Collections with Resources, Lenses or both, as the filter next to the search says (DEC-UX-150, DEC-UX-151)', async () => {

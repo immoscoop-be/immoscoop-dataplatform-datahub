@@ -19,6 +19,8 @@ export type Route =
   | ({ readonly kind: 'resource'; readonly id: string; readonly section: Section } & Talk)
   /** The page of a Collection (FR-CO-25). */
   | ({ readonly kind: 'collection'; readonly id: string; readonly section: Section } & Talk)
+  /** The page of a folder of a Collection (FR-CO-38). */
+  | { readonly kind: 'folder'; readonly collection: string; readonly id: string; readonly section: Section }
   /** An empty Collection page, being made (FR-CO-12). */
   | { readonly kind: 'newCollection'; readonly section: Section }
   /** A new query, on a Resource when it starts from its page (FR-SR-46), or for a Collection from its "New Lens" (DEC-UX-123). */
@@ -43,6 +45,8 @@ export const myPagePath = (tab: MyPageTab): string => (tab === 'profile' ? '/me'
 export const resourcePath = (id: string): string => `/resources/${encodeURIComponent(id)}`;
 export const collectionPath = (id: string): string => `/collections/${encodeURIComponent(id)}`;
 export const NEW_COLLECTION = '/collections/new';
+/** A folder of a Collection, at an address under it (FR-CO-38). */
+export const folderPath = (collection: string, id: string): string => `${collectionPath(collection)}/folders/${encodeURIComponent(id)}`;
 export const NEW_QUERY = '/query/new';
 export const queryPath = (id: string): string => `/query/${encodeURIComponent(id)}`;
 /** The history of a query, at one of its runs or at all of them, as the panel opens it (DEC-UX-74). */
@@ -166,6 +170,14 @@ export function route(path: string): Route {
   if (editing) {
     try {
       return { kind: 'editLens', id: decodeURIComponent(editing), section: collections };
+    } catch {
+      return { kind: 'notFound' };
+    }
+  }
+  const [, inCollection, folder] = /^\/collections\/([^/]+)\/folders\/([^/]+)$/.exec(clean) ?? [];
+  if (inCollection && folder) {
+    try {
+      return { kind: 'folder', collection: decodeURIComponent(inCollection), id: decodeURIComponent(folder), section: collections };
     } catch {
       return { kind: 'notFound' };
     }

@@ -39,6 +39,9 @@ export interface Folder {
   name: string;
   /** The folder it sits in, or null at the top of the Collection. */
   parentId: string | null;
+  /** The name of whoever made it, and when. */
+  createdBy: string;
+  createdAt: Date;
 }
 
 export interface Collection {
@@ -206,12 +209,13 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       }
       for (const folder of await from
         .selectFrom('folders')
-        .select(['id', 'collectionId', 'parentId', 'name'])
+        .select(['id', 'collectionId', 'parentId', 'name', 'createdByName', 'createdAt'])
         .where('collectionId', 'in', rows.map((row) => row.id))
         .orderBy(sql`lower(name)`)
         .orderBy('id')
         .execute()) {
-        folders.set(folder.collectionId, [...(folders.get(folder.collectionId) ?? []), { id: folder.id, name: folder.name, parentId: folder.parentId }]);
+        const shown = { id: folder.id, name: folder.name, parentId: folder.parentId, createdBy: folder.createdByName, createdAt: folder.createdAt };
+        folders.set(folder.collectionId, [...(folders.get(folder.collectionId) ?? []), shown]);
       }
       for (const resource of resources) {
         if (!managed.includes(resource.collectionId!) && (resource.publishedAt === null || resource.withdrawnAt !== null)) {
@@ -313,7 +317,12 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
     if (!UUID.test(folderId)) {
       return undefined;
     }
-    return trx.selectFrom('folders').select(['id', 'name', 'parentId']).where('id', '=', folderId).where('collectionId', '=', collectionId).executeTakeFirst();
+    return trx
+      .selectFrom('folders')
+      .select(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
+      .where('id', '=', folderId)
+      .where('collectionId', '=', collectionId)
+      .executeTakeFirst();
   }
 
   /** Turns the unique index on the name into NameTaken. */
@@ -516,7 +525,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         const row = await trx
           .insertInto('folders')
           .values({ collectionId, parentId, name, createdBy: viewer.id, createdByName: viewer.name })
-          .returning(['id', 'name', 'parentId'])
+          .returning(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
           .executeTakeFirstOrThrow();
         await write(trx, collectionId, 'COL-008', { folder: name, in: parent?.name ?? collection.name }, viewer);
         return { outcome: 'done', value: row };
@@ -533,7 +542,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
           await trx.updateTable('folders').set({ name }).where('id', '=', folder.id).execute();
           await write(trx, collectionId, 'COL-009', { old: folder.name, new: name }, viewer);
         }
-        return { outcome: 'done', value: { id: folder.id, name, parentId: folder.parentId } };
+        return { outcome: 'done', value: { id: folder.id, name, parentId: folder.parentId, createdBy: folder.createdBy, createdAt: folder.createdAt } };
       });
     },
 

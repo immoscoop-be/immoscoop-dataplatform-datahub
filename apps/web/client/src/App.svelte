@@ -1,12 +1,15 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import DragGhost from '@datahub/ui/components/DragGhost.svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
+  import Toast from '@datahub/ui/components/Toast.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import { NotFound as Missing } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
+  import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
@@ -24,6 +27,7 @@
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
+  import FolderPage from './screens/FolderPage.svelte';
   import LearningCardPage from './screens/LearningCardPage.svelte';
   import LearningPanel from './screens/LearningPanel.svelte';
   import LearningSee from './screens/LearningSee.svelte';
@@ -208,6 +212,20 @@
   });
   /** The Data Team, from its Role Group: it sees the Resources without a Collection (Naming Convention). */
   const dataTeam = $derived(status.kind === 'signedIn' && status.me.roles.includes('datateam'));
+
+  /** What was moved last, and where to, for the line on screen (DEC-UX-157); a new key shows it again. */
+  let moved = $state({ key: 0, name: '', to: '', failed: false });
+  /** Moves something of a Collection into one of its folders, or to its top, and says where it went (FR-CO-40). */
+  const move: Mover = async (collection, item, to) => {
+    try {
+      await catalogue.move(collection.id, item.kind, item.id, to?.id ?? null);
+      await refresh();
+      moved = { key: moved.key + 1, name: item.name, to: to?.name ?? collection.name, failed: false };
+    } catch (error) {
+      console.error(`${item.name} could not be moved`, error);
+      moved = { key: moved.key + 1, name: item.name, to: '', failed: true };
+    }
+  };
 
   /** Reads again what the panel shows: the Collections, and for the Data Team the Resources that wait. */
   async function refresh(): Promise<void> {
@@ -466,6 +484,8 @@
             ? opened?.resource?.displayName
             : page.kind === 'collection'
               ? collections?.find((collection) => collection.id === page.id)?.name
+              : page.kind === 'folder'
+                ? collections?.find((collection) => collection.id === page.collection)?.folders.find((folder) => folder.id === page.id)?.name
               : page.kind === 'newCollection'
                 ? t('collections.new')
                 : page.kind === 'newQuery'
@@ -492,6 +512,7 @@
       page.kind === 'messages' ||
       page.kind === 'resource' ||
       page.kind === 'collection' ||
+      page.kind === 'folder' ||
       page.kind === 'newCollection' ||
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
@@ -507,7 +528,9 @@
   const currentCollection = $derived(
     page.kind === 'collection'
       ? page.id
-      : page.kind === 'resource'
+      : page.kind === 'folder'
+        ? page.collection
+        : page.kind === 'resource'
         ? (opened?.resource?.collectionId ?? undefined)
         : page.kind === 'lens' || page.kind === 'editLens'
           ? (openedLens?.lens?.collectionId ?? undefined)
@@ -765,7 +788,19 @@
         {waiting}
         go={(path) => router.go(path)}
         onchanged={refresh}
+        onmove={move}
+        listed={page.kind === 'collection' ? collections?.find((collection) => collection.id === page.id) : undefined}
         messages={page.kind === 'collection' ? messagesButton : undefined}
+      />
+    {:else if page.kind === 'folder'}
+      <FolderPage
+        collection={collections === undefined ? undefined : (collections.find((collection) => collection.id === page.collection) ?? null)}
+        folderId={page.id}
+        {lenses}
+        {catalogue}
+        go={(path) => router.go(path)}
+        onchanged={refresh}
+        onmove={move}
       />
     {:else if page.kind === 'me'}
       <MyPage
@@ -883,6 +918,11 @@
       />
     {/if}
   </AppShell>
+  <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
+  <DragGhost item={dragging.item} />
+  <Toast key={moved.key} tone={moved.failed ? 'failed' : 'done'}>
+    {#if moved.failed}{t('folder.moveFailed', { name: moved.name })}{:else}{t('folder.moved', { name: moved.name })} <b>{moved.to}</b>{/if}
+  </Toast>
 {/if}
 
 {#snippet panel()}
@@ -894,7 +934,9 @@
       {currentCollection}
       currentResource={page.kind === 'resource' ? page.id : undefined}
       currentLens={page.kind === 'lens' ? page.id : undefined}
+      currentFolder={page.kind === 'folder' ? page.id : undefined}
       groups={status.me.groups}
+      onmove={move}
     />
   {:else if section?.id === 'learning' && status.kind === 'signedIn'}
     <LearningPanel shown={shownCards} progress={progress ?? []} current={page.kind === 'learningCard' || page.kind === 'learningSee' ? page.id : undefined} unfold={unfoldLevel} />

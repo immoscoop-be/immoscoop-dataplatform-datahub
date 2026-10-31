@@ -25,6 +25,8 @@ describe('the addresses of the web app', () => {
     expect(route('/collections/c-1')).toMatchObject({ kind: 'collection', id: 'c-1', section: { id: 'collections' } });
     expect(route('/collections/new')).toMatchObject({ kind: 'newCollection', section: { id: 'collections' } });
     expect(route('/collections/c-1/log')).toEqual({ kind: 'notFound' });
+    expect(route('/collections/c-1/folders/f-1')).toMatchObject({ kind: 'folder', collection: 'c-1', id: 'f-1', section: { id: 'collections' } });
+    expect(route('/collections/c-1/folders')).toEqual({ kind: 'notFound' });
   });
 
   it('has a page per query, and a new query, also on a Resource, in the section Query (FR-SR-41, FR-SR-46)', () => {
