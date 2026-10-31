@@ -1403,8 +1403,8 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 /* Day and night switch at once: while the theme changes, nothing slides on its way (DEC-UX-149). */
 :root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after { transition: none !important; }
 
-/* PROPOSAL, to approve: folders in a Collection. In the panel, a folder unfolds to what it holds, indented under it;
-   on its page, what it holds is a list to tick and move, by dragging onto a folder or with "Move to…". */
+/* Folders in a Collection (DEC-UX-156, DEC-UX-157). In the panel, a folder unfolds to what it holds, indented under it;
+   on its page, what it holds is a list of whole rows that open with a click and move with a drag onto a folder. */
 .tree-folder { display: flex; align-items: center; gap: 2px; padding: 3px 6px 3px 2px; border-radius: var(--radius-sm); font-size: var(--text-small); color: var(--text-secondary); }
 .tree-folder:hover { color: var(--text-primary); }
 .tree-fold { all: unset; cursor: pointer; flex: none; width: 18px; height: 22px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: var(--text-muted); }
@@ -1422,36 +1422,43 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .crumbs a { color: inherit; text-decoration: none; }
 .crumbs a:hover { color: var(--text-primary); text-decoration: underline; text-underline-offset: 3px; }
 .files table { border-collapse: separate; border-spacing: 0; }
-.files .tick { width: 26px; padding-right: 0; }
 .files input[type="checkbox"] { accent-color: var(--text-primary); margin: 0; }
 .files .folder-icon { font-size: 17px; color: var(--text-secondary); }
 .files .name-cell .in-name { font-weight: var(--weight-regular); margin-left: 4px; }
 .files .name-cell:hover .in-name { text-decoration: none; }
-/* A ticked row, and the folder a row is dragged onto, stand out from the name on; the tick box stays plain. */
-.files tr.selected td:not(.tick) { background: var(--tint-hover); }
-.files tr.selected td.tick + td { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
-.files tr.selected td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-.files tr.dragging td:not(.tick) { opacity: .4; }
-.files tr.drop td:not(.tick) { background: var(--tint-hover); box-shadow: inset 0 1.5px 0 var(--text-muted), inset 0 -1.5px 0 var(--text-muted); }
-.files tr.drop td.tick + td { box-shadow: inset 1.5px 1.5px 0 var(--text-muted), inset 0 -1.5px 0 var(--text-muted); border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+/* A whole row opens with a click and moves with a drag; the folder it is dragged onto stands out. */
+.files tr.row { cursor: pointer; }
+.files tr.row:hover td { background: var(--tint-hover); }
+.files tr.row:hover td:first-child, .files tr.drop td:first-child { border-radius: var(--radius-sm) 0 0 var(--radius-sm); }
+.files tr.row:hover td:last-child { border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
+.files tr.row:focus-visible { outline: 2px solid var(--text-secondary); }
+.files tr.dragging td { opacity: .4; }
+.files tr.drop td { background: var(--tint-hover); box-shadow: inset 0 1.5px 0 var(--text-muted), inset 0 -1.5px 0 var(--text-muted); }
+.files tr.drop td:first-child { box-shadow: inset 1.5px 1.5px 0 var(--text-muted), inset 0 -1.5px 0 var(--text-muted); }
 .files tr.drop td:last-child { box-shadow: inset -1.5px 1.5px 0 var(--text-muted), inset 0 -1.5px 0 var(--text-muted); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
-.files .row-act { width: 40px; text-align: right; }
-.files .row-act .icon-btn { margin-left: auto; opacity: 0; font-size: 15px; }
-.files tr:hover .row-act .icon-btn, .files .row-act .icon-btn:focus-visible { opacity: 1; }
 .files .new-folder .rename { font: inherit; font-weight: var(--weight-medium); color: var(--text-primary); background: var(--surface-solid); border: 1.5px solid var(--text-muted); border-radius: var(--radius-sm); padding: 4px 8px; width: 220px; }
 .files-foot { padding: 8px 10px 2px; }
-.select-bar { position: sticky; bottom: 18px; z-index: 5; display: flex; align-items: center; gap: 12px; width: fit-content; max-width: 100%; margin: 14px auto 0; padding: 8px 8px 8px 18px; border-radius: var(--radius-pill); box-shadow: 0 0 0 1px var(--tint-active); font-size: var(--text-small); }
-.select-bar .meta { max-width: 320px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.select-bar .btn-primary { display: inline-flex; align-items: center; gap: 6px; }
-.move-tree { flex: 1; overflow: auto; margin: 14px -6px 0; display: grid; align-content: start; gap: 2px; }
-.move-row { display: flex; align-items: center; gap: 8px; padding: 8px 10px 8px calc(10px + var(--depth) * 20px); border-radius: var(--radius-sm); font-size: var(--text-small); cursor: pointer; }
-.move-row:hover { background: var(--tint-hover); }
-.move-row:has(input:checked) { background: var(--surface-sub); outline: 1.5px solid var(--text-muted); }
-.move-row input { accent-color: var(--text-primary); margin: 0; }
-.move-row .folder-icon { color: var(--text-muted); }
-.move-row .meta { margin-left: auto; }
-.move-row.here { cursor: default; color: var(--text-muted); }
-.move-new { padding: 6px 10px 6px calc(10px + var(--depth) * 20px); }
 .moved-toast { position: fixed; z-index: 40; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-radius: var(--radius-pill); box-shadow: 0 0 0 1px var(--tint-active); font-size: var(--text-small); }
 .moved-toast > i { color: var(--text-secondary); }
 .drag-ghost { position: fixed; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-sm); box-shadow: 0 0 0 1px var(--tint-active); font-size: var(--text-small); font-weight: var(--weight-medium); transform: rotate(-2deg); pointer-events: none; }
+.folder-warn { margin-top: 14px; display: flex; align-items: center; gap: 10px; }
+.folder-warn > i { color: var(--signal-warn); }
+.folder-warn p { flex: 1; margin: 0; font-size: var(--text-small); }
+/* The intro of a Collection, written by its Owner Unit in Markdown and shown on its page (DEC-UX-158). */
+.intro { margin-top: 16px; padding: 16px 20px; border-radius: var(--radius-lg); }
+.intro-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.intro-head .label { flex: 1; margin: 0; }
+.md { font-size: var(--text-small); line-height: 1.6; color: var(--text-secondary); max-width: 76ch; }
+.md h3 { font-size: var(--text-body); font-weight: var(--weight-medium); color: var(--text-primary); margin: 12px 0 4px; }
+.md h3:first-child { margin-top: 0; }
+.md p { margin: 0 0 8px; }
+.md ul, .md ol { margin: 0 0 8px; padding-left: 20px; }
+.md a { color: var(--text-primary); text-underline-offset: 3px; }
+.md strong { color: var(--text-primary); font-weight: var(--weight-medium); }
+.md code { font-family: var(--font-mono); font-size: .92em; background: var(--surface-sub); padding: 1px 5px; border-radius: var(--radius-pill); }
+.md-editor { border-radius: var(--radius-field); background: var(--surface-solid); outline: 1px solid var(--tint-active); overflow: hidden; }
+.md-bar { display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-bottom: 1px solid var(--tint-hover); }
+.md-bar .icon-btn { width: 28px; height: 28px; font-size: 15px; }
+.md-bar .grow { flex: 1; }
+.md-editor textarea { display: block; width: 100%; box-sizing: border-box; border: 0; resize: vertical; min-height: 170px; padding: 10px 12px; font: var(--text-small) var(--font-mono); line-height: 1.6; background: none; color: var(--text-primary); }
+.md-editor textarea:focus { outline: none; }

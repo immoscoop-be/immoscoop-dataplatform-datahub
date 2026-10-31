@@ -2,7 +2,7 @@
 <!--
   Screen: the page of a Collection, editing its details
   The Owner Unit or the Data Team clicked "Edit": the head of the page turns into fields, in place.
-  Requirements: FR-UM-11, FR-CO-02, FR-CO-03, FR-CO-09, FR-CO-10, FR-CO-11, FR-CO-13, FR-CO-15, FR-CO-16, FR-CO-17, FR-CO-30
+  Requirements: FR-UM-11, FR-CO-02, FR-CO-03, FR-CO-09, FR-CO-10, FR-CO-11, FR-CO-13, FR-CO-15, FR-CO-16, FR-CO-17, FR-CO-30, FR-CO-41
   Decisions: DEC-CO-09, DEC-CO-18, DEC-CO-19, DEC-CO-23, DEC-CO-25, DEC-UX-105. Log: COL-002 to COL-004.
   Related screens: collection-overview.html (Cancel and Save go back there).
   Rules: ../principles.md  ·  Placeholder content only.
@@ -121,6 +121,30 @@
   <div class="sub-tile">
    <label class="field"><span>Name</span><input value="Credit leads" maxlength="80"></label>
    <label class="field"><span>Description</span><textarea rows="3">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</textarea></label>
+   <!-- The intro: Markdown, with buttons for what is used most and a preview, shown on the page of the Collection (DEC-UX-158). -->
+   <div class="field" id="intro"><span>Intro</span>
+    <div class="md-editor">
+     <div class="md-bar" role="toolbar" aria-label="Format the intro">
+      <button type="button" class="icon-btn" aria-label="Heading" title="Heading"><i class="ph ph-text-h"></i></button>
+      <button type="button" class="icon-btn" aria-label="Bold" title="Bold"><i class="ph ph-text-b"></i></button>
+      <button type="button" class="icon-btn" aria-label="Italic" title="Italic"><i class="ph ph-text-italic"></i></button>
+      <button type="button" class="icon-btn" aria-label="List" title="List"><i class="ph ph-list-bullets"></i></button>
+      <button type="button" class="icon-btn" aria-label="Link" title="Link"><i class="ph ph-link"></i></button>
+      <span class="grow"></span>
+      <span data-group="introview" role="tablist" aria-label="Write or preview" style="display:inline-flex;gap:2px"><button type="button" class="seg on" data-target="write" role="tab" aria-selected="true">Write</button><button type="button" class="seg" data-target="preview" role="tab" aria-selected="false">Preview</button></span>
+     </div>
+     <textarea data-pane-group="introview" data-pane="write" rows="9">### What you find here
+Every credit lead Immoscoop sends to **KBC**, from the moment it comes in until KBC follows it up. Start with [Leads in](collection-folder.html) for the volumes per week and per source.
+
+- **Leads in**: how many come in, and from where
+- **Funnel and KBC**: what happens after, up to the follow-up by KBC
+- **Response**: how fast the credit team answers
+
+Questions? Ask the credit team in the `#credit-data` channel, or with Messages above.</textarea>
+     <div class="md" data-pane-group="introview" data-pane="preview" style="padding:10px 12px" hidden><h3>What you find here</h3><p>Every credit lead Immoscoop sends to <strong>KBC</strong>, from the moment it comes in until KBC follows it up. Start with <a href="collection-folder.html">Leads in</a> for the volumes per week and per source.</p><ul><li><strong>Leads in</strong>: how many come in, and from where</li><li><strong>Funnel and KBC</strong>: what happens after, up to the follow-up by KBC</li><li><strong>Response</strong>: how fast the credit team answers</li></ul><p>Questions? Ask the credit team in the <code>#credit-data</code> channel, or with Messages above.</p></div>
+    </div>
+    <span class="meta" style="margin-top:6px;display:block">Markdown: <span class="mono">### heading</span>, <span class="mono">**bold**</span>, <span class="mono">_italic_</span>, <span class="mono">- list</span>, <span class="mono">[link](address)</span>. Shown on the page of the Collection, under its head.</span>
+   </div>
    <label class="field"><span>Owner Unit</span><select><option>Credit team · credit-team@immoscoop.be</option><option>Data Team · datahub-datateam@immoscoop.be</option><option>Sales · sales@immoscoop.be</option></select></label>
    <div class="meta" style="margin:-6px 0 12px">Only groups you are in. The Owner Unit answers for the Resources of the Collection.</div>
    <div class="field"><span>Who sees it</span>

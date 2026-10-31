@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <!--
-  Screen: a folder in a Collection. PROPOSAL, to approve (asked for by Max on 2026-10-31).
+  Screen: a folder in a Collection (DEC-UX-156).
   Folders keep a growing Collection easy to oversee. Every folder, Resource and Lens of a Collection sits at its top
-  or in one folder of it; a folder can hold folders. On the left the panel shows them as a tree, each folder unfolding
-  to what it holds (one panel, DEC-UX-10); on the right, the page of the folder: what it is and what it holds, which is
-  moved by dragging it onto a folder, or by ticking it and choosing "Move to…".
-  Prototype switches: ?select shows two ticked, with the bar to move them; ?drag a row dragged onto a folder;
-  ?move the sheet to choose where; ?moved what is said after a move; ?new a new folder being named.
+  or in one folder of it; a folder holds folders, as deep as needed. On the left the panel shows them as a tree, each
+  folder unfolding to what it holds (one panel, DEC-UX-10); on the right, the page of the folder: what it is and what
+  it holds. A whole row opens what it is with a click, and moves with a drag onto a folder, in the list, in the panel or
+  in the path above; once dropped, a short line on screen says where it went.
+  Prototype switches: ?drag shows a row dragged onto a folder; ?moved the line said after a move; ?new a new folder
+  being named; ?delete the warning of Delete on a folder that is not empty.
   The switch at the bottom right shows the page as a Data Admin, the Owner or a colleague: only the Owner Unit and the
   Data Team make, name, move and delete folders and move what is in them.
-  Requirements: none yet; folders get their own once the design is approved.
-  Decisions: DEC-UX-10, DEC-UX-13, DEC-CO-15, DEC-DH-77.
-  Related screens: collection-overview.html (the top of a Collection, which shows its folders the same way).
-  Rules: ../principles.md, once approved  ·  Placeholder content only.
+  Requirements: FR-CO-38, FR-CO-39, FR-CO-40
+  Decisions: DEC-UX-156, DEC-UX-157, DEC-UX-10, DEC-UX-13, DEC-CO-15.
+  Related screens: collection-overview.html (the top of a Collection, with its folders and what sits at its top).
+  Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
 <head>
@@ -112,8 +113,7 @@
  <div class="coll-actions" data-for="owner datateam">
   <button class="btn-quiet outline" type="button" data-new-folder style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-folder-simple-plus"></i>New folder</button>
   <button class="btn-quiet outline" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Rename</button>
-  <button class="btn-quiet outline" type="button" data-move-this style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-elbow-down-right"></i>Move</button>
-  <button class="icon-btn" type="button" aria-label="Delete the folder: what it holds goes up to Credit leads" title="Delete the folder: what it holds goes up to Credit leads"><i class="ph ph-trash"></i></button>
+  <button class="icon-btn" type="button" data-delete aria-label="Delete the folder" title="Delete the folder, once it is empty"><i class="ph ph-trash"></i></button>
  </div>
 </div>
 <div class="status-row">
@@ -121,49 +121,30 @@
  <span class="status">1 folder · <span data-for="owner datateam">3</span><span data-for="colleague">2</span> Resources · 2 Lenses</span>
  <span class="status"><i class="ph-fill ph-users-three"></i>Folders kept by the credit team</span>
 </div>
-<div class="section-head"><h2>In this folder</h2><span class="meta" data-for="owner datateam">Drag onto a folder to move, or tick and choose Move to…</span></div>
+<!-- Delete stays on; on a folder that holds something it says so, and deletes nothing (DEC-UX-156). -->
+<div class="notice folder-warn" id="delete-warn" role="alert" data-for="owner datateam" hidden><i class="ph-fill ph-warning"></i><p><b>Leads in is not empty.</b> It still holds 1 folder, 3 Resources and 2 Lenses: drag them out first, then delete it.</p><button class="text-link" type="button" data-close-warn><span>OK</span></button></div>
+<div class="section-head"><h2>In this folder</h2><span class="meta" data-for="owner datateam">Drag a row onto a folder, here, in the panel or in the path above, to move it</span></div>
 <div class="table-card card files"><table>
- <thead><tr><th class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select all"></th><th>Name</th><th>Level</th><th>Last change</th><th class="row-act" data-for="owner datateam"></th></tr></thead>
+ <thead><tr><th>Name</th><th>Level</th><th>Last change</th></tr></thead>
  <tbody>
-  <tr class="new-folder" id="new-folder" data-for="owner datateam" hidden><td class="tick"></td><td colspan="3"><span class="name-cell"><i class="ph-fill ph-folder-simple-plus folder-icon" aria-hidden="true"></i><input class="rename" value="New folder" aria-label="Name of the new folder"><span class="meta">Enter to make it, Esc to cancel</span></span></td><td></td></tr>
-  <tr class="drop-target folder-row" draggable="true" id="row-by-source"><td class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select By source"></td><td><a class="name-cell" href="#"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>By source</span><span class="meta in-name">3 items</span></a></td><td><span class="muted">—</span></td><td class="muted">Made by An Claes · 2 days ago</td><td class="row-act" data-for="owner datateam"><button class="icon-btn" aria-label="Move By source to…" title="Move to…" data-move-one><i class="ph ph-arrow-elbow-down-right"></i></button></td></tr>
-  <tr class="pickable" draggable="true" id="row-weekly"><td class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select Weekly lead volume"></td><td><a class="name-cell" href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly lead volume</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">Field lead_channel added · 3 days ago</td><td class="row-act" data-for="owner datateam"><button class="icon-btn" aria-label="Move Weekly lead volume to…" title="Move to…" data-move-one><i class="ph ph-arrow-elbow-down-right"></i></button></td></tr>
-  <tr class="" draggable="true"><td class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select Lead response time"></td><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead response time</span></a></td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td class="muted">Confirmed by An Claes · 1 week ago</td><td class="row-act" data-for="owner datateam"><button class="icon-btn" aria-label="Move Lead response time to…" title="Move to…" data-move-one><i class="ph ph-arrow-elbow-down-right"></i></button></td></tr>
-  <tr class="unpublished" data-for="owner datateam" draggable="true"><td class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select Rejected leads"></td><td><a class="name-cell" href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></a></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted">Added by Dirk Vos · 5 days ago</td><td class="row-act" data-for="owner datateam"><button class="icon-btn" aria-label="Move Rejected leads to…" title="Move to…" data-move-one><i class="ph ph-arrow-elbow-down-right"></i></button></td></tr>
-  <tr class="pickable" draggable="true" id="row-lens"><td class="tick" data-for="owner datateam"><input type="checkbox" aria-label="Select Leads per source, week by week"></td><td><a class="name-cell" href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Leads per source, week by week</span></a></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">Made by Sara Peeters · 2 weeks ago</td><td class="row-act" data-for="owner datateam"><button class="icon-btn" aria-label="Move Leads per source, week by week to…" title="Move to…" data-move-one><i class="ph ph-arrow-elbow-down-right"></i></button></td></tr>
+  <tr class="new-folder" id="new-folder" data-for="owner datateam" hidden><td colspan="3"><span class="name-cell"><i class="ph-fill ph-folder-simple-plus folder-icon" aria-hidden="true"></i><input class="rename" value="New folder" aria-label="Name of the new folder"><span class="meta">Enter to make it, Esc to cancel</span></span></td></tr>
+  <tr class="drop-target folder-row" draggable="true" tabindex="0" role="link" id="row-by-source"><td><span class="name-cell" data-href="#"><i class="ph-fill ph-folder folder-icon" role="img" aria-label="Folder"></i><span>By source</span><span class="meta in-name">3 items</span></span></td><td><span class="muted">—</span></td><td class="muted">Made by An Claes · 2 days ago</td></tr>
+  <tr class="row" draggable="true" tabindex="0" role="link" id="row-weekly"><td><span class="name-cell" data-href="resource-detail.html"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Weekly lead volume</span></span></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">Field lead_channel added · 3 days ago</td></tr>
+  <tr class="row" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Lead response time</span></span></td><td><span class="level-cell"><span class="maturity" data-level="3"></span>3 · Confirmed</span></td><td class="muted">Confirmed by An Claes · 1 week ago</td></tr>
+  <tr class="row unpublished" data-for="owner datateam" draggable="true" tabindex="0" role="link"><td><span class="name-cell" data-href="#"><i class="ph ph-table kind-icon" role="img" aria-label="Resource"></i><span>Rejected leads</span></span></td><td><span class="level-cell"><span class="maturity" data-level="2"></span>2 · Described</span></td><td class="muted">Added by Dirk Vos · 5 days ago</td></tr>
+  <tr class="row" draggable="true" tabindex="0" role="link" id="row-lens"><td><span class="name-cell" data-href="lens.html"><i class="ph ph-aperture lens-icon" role="img" aria-label="Lens"></i><span>Leads per source, week by week</span></span></td><td><span class="level-cell"><span class="maturity" data-level="4"></span>4 · Explored</span></td><td class="muted">Made by Sara Peeters · 2 weeks ago</td></tr>
  </tbody></table>
  <p class="meta files-foot">Folders first, then Resources and Lenses, each A to Z. A Resource the User does not see is not in the count of its folder.</p>
 </div>
-<div class="select-bar card" id="select-bar" data-for="owner datateam" hidden><b>2 selected</b><span class="meta">Weekly lead volume, Leads per source, week by week</span><button class="btn-primary" type="button" data-move-selected><i class="ph ph-arrow-elbow-down-right"></i>Move to…</button><button class="text-link" type="button" data-clear>Clear</button></div>
 <div style="height:60px"></div>
 </main>
 </div>
 
-<!-- Where to: the folders of the Collection, as a tree; where it is now, and the folder moved into itself, cannot be chosen. -->
-<div class="sheet-backdrop" id="move-backdrop" hidden></div>
-<section class="sheet card" id="move-sheet" role="dialog" aria-modal="true" aria-labelledby="move-title" hidden>
- <div style="display:flex;align-items:flex-start;gap:8px">
-  <div style="flex:1;min-width:0"><span class="meta">Credit leads</span><h2 id="move-title">Move 2 to…</h2></div>
-  <button class="icon-btn" type="button" aria-label="Close" data-close-move><i class="ph ph-x"></i></button>
- </div>
- <p class="meta" style="margin:8px 0 0">Weekly lead volume and Leads per source, week by week. Their pages, Lenses and queries stay as they are; only where they sit changes.</p>
- <div class="move-tree" role="radiogroup" aria-label="Where to">
-  <label class="move-row" style="--depth:0"><input type="radio" name="to"><i class="ph ph-coins"></i><span>Credit leads</span><span class="meta">the top of the Collection</span></label>
-  <label class="move-row here" style="--depth:1"><input type="radio" name="to" disabled><i class="ph-fill ph-folder-open folder-icon"></i><span>Leads in</span><span class="meta">here now</span></label>
-  <label class="move-row" style="--depth:2"><input type="radio" name="to" checked><i class="ph-fill ph-folder folder-icon"></i><span>By source</span></label>
-  <label class="move-row" style="--depth:1"><input type="radio" name="to"><i class="ph-fill ph-folder folder-icon"></i><span>Funnel and KBC</span></label>
-  <label class="move-row" style="--depth:2"><input type="radio" name="to"><i class="ph-fill ph-folder folder-icon"></i><span>Follow-up</span></label>
-  <label class="move-row" style="--depth:1"><input type="radio" name="to"><i class="ph-fill ph-folder folder-icon"></i><span>Response</span></label>
-  <div class="move-new" style="--depth:3"><button class="text-link" type="button"><i class="ph ph-folder-simple-plus"></i><span>New folder in By source</span></button></div>
- </div>
- <div class="sheet-foot"><p class="meta">Within Credit leads. To another Collection: the Data Team, as today.</p><button class="btn-quiet" type="button" data-close-move>Cancel</button><button class="btn-primary" type="button" data-close-move data-moved>Move to By source</button></div>
-</section>
-
-<!-- Said after a move, with the way back. -->
-<div class="moved-toast card" id="moved" role="status" hidden><i class="ph-fill ph-check-circle"></i><span>Moved 2 to <b>By source</b></span><button class="text-link" type="button">Undo</button></div>
+<!-- Said on screen after a move, for a moment (DEC-UX-157). -->
+<div class="moved-toast card" id="moved" role="status" hidden><i class="ph-fill ph-check-circle"></i><span>Weekly lead volume moved to <b>By source</b></span></div>
 
 <!-- What is dragged, under the pointer. -->
-<div class="drag-ghost card" id="drag-ghost" hidden><i class="ph ph-table"></i><span>Weekly lead volume</span><span class="count">+1</span></div>
+<div class="drag-ghost card" id="drag-ghost" hidden><i class="ph ph-table"></i><span>Weekly lead volume</span></div>
 
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Admin</button>
@@ -173,34 +154,26 @@
 
 <script src="app.js"></script>
 <script>
-  // The prototype switches of this screen (PROPOSAL).
+  // The prototype switches of this screen; a row opens what it is, as a link would.
   const ask = new URLSearchParams(location.search);
   const $ = (selector) => document.querySelector(selector);
-  const select = (on) => {
-    ['#row-weekly', '#row-lens'].forEach((id) => { $(id).classList.toggle('selected', on); $(id).querySelector('input').checked = on; });
-    $('#select-bar').hidden = !on;
-  };
-  const sheet = (open) => { $('#move-sheet').hidden = !open; $('#move-backdrop').hidden = !open; };
-  if (ask.has('select') || ask.has('move')) select(true);
-  if (ask.has('move')) sheet(true);
   if (ask.has('moved')) $('#moved').hidden = false;
   if (ask.has('new')) $('#new-folder').hidden = false;
+  if (ask.has('delete')) $('#delete-warn').hidden = false;
   if (ask.has('drag')) {
-    select(true);
-    $('#select-bar').hidden = true;
-    ['#row-weekly', '#row-lens'].forEach((id) => $(id).classList.add('dragging'));
+    $('#row-weekly').classList.add('dragging');
     $('#row-by-source').classList.add('drop');
     $('#tree-by-source').classList.add('drop');
     const ghost = $('#drag-ghost');
     const at = $('#row-by-source').getBoundingClientRect();
-    ghost.style.left = `${at.left + 160}px`;
+    ghost.style.left = `${at.left + 190}px`;
     ghost.style.top = `${at.top + 18}px`;
     ghost.hidden = false;
   }
-  document.querySelectorAll('[data-move-selected], [data-move-one], [data-move-this]').forEach((button) => button.addEventListener('click', () => sheet(true)));
-  document.querySelectorAll('[data-close-move]').forEach((button) => button.addEventListener('click', () => { sheet(false); if (button.hasAttribute('data-moved')) { select(false); $('#moved').hidden = false; } }));
-  document.querySelector('[data-clear]').addEventListener('click', () => select(false));
-  document.querySelector('[data-new-folder]').addEventListener('click', () => { $('#new-folder').hidden = false; $('#new-folder input').select(); });
+  document.querySelectorAll('tr.row').forEach((row) => row.addEventListener('click', () => { const to = row.querySelector('[data-href]')?.dataset.href; if (to && to !== '#') location.href = to; }));
+  $('[data-delete]').addEventListener('click', () => { $('#delete-warn').hidden = false; });
+  $('[data-close-warn]').addEventListener('click', () => { $('#delete-warn').hidden = true; });
+  $('[data-new-folder]').addEventListener('click', () => { $('#new-folder').hidden = false; $('#new-folder input').select(); });
 </script>
 </body>
 </html>
