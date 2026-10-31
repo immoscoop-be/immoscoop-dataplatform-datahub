@@ -76,6 +76,17 @@ export interface Catalogue {
   lensGrewLarge(fields: { lensId: string; reads: number; threshold: number }): Promise<void>;
   /** Records the decision of a member of the Data Team on a Request on a Lens, as query itself (FR-LE-09). */
   decideLensRequest(requestId: string, decision: { outcome: 'accepted' | 'refused'; text: string; decider: { id: string; name: string } }): Promise<void>;
+  /** Tells who made a query, or the Owner Unit of a Lens, that it became Broken, as query itself (MSG-QRY-02, MSG-LEN-05). */
+  broken(subject: { kind: 'query'; id: string; name: string; ownerId: string } | { kind: 'lens'; id: string }, fields: BrokenMessage): Promise<void>;
+  /** Tells them it works again, in the same Message (MSG-QRY-02, MSG-LEN-05). */
+  worksAgain(subject: { kind: 'query' | 'lens'; id: string }): Promise<void>;
+}
+
+/** What a Message on a Broken query or Lens names: the day it was found and what no longer exists (FR-SR-52). */
+export interface BrokenMessage {
+  /** `YYYY-MM-DD`. */
+  since: string;
+  missing: { kind: 'resource' | 'column'; resource: string; column?: string }[];
 }
 
 /** catalogue did not tell what the User may see; query answers 503 rather than guess. */
@@ -165,6 +176,15 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
 
     async decideLensRequest(requestId, decision) {
       await asQuery('POST', `/internal/messages/${requestId}/decision`, decision);
+    },
+
+    async broken(subject, fields) {
+      const body = subject.kind === 'query' ? { ...fields, name: subject.name, ownerId: subject.ownerId } : fields;
+      await asQuery('POST', `/internal/${subject.kind === 'query' ? 'queries' : 'lenses'}/${subject.id}/broken`, body);
+    },
+
+    async worksAgain(subject) {
+      await asQuery('POST', `/internal/${subject.kind === 'query' ? 'queries' : 'lenses'}/${subject.id}/works`, {});
     },
 
     async requests(subjectId, authorization, subjectKind = 'query') {

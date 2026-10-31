@@ -10,6 +10,7 @@ import { createLearning } from './learning.js';
 import { createMail } from './mail.js';
 import { createMessages } from './messages.js';
 import { createNotifications } from './notifications.js';
+import { createQueryService } from './query.js';
 import { createRegistry } from './registry.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
@@ -65,6 +66,8 @@ const app = await buildApp({
       serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')],
     }),
     learning: createLearning(database.db),
+    // After a new Current Version, query checks what reads the Resources that changed, asked as catalogue (FR-SR-52).
+    query: createQueryService(required('DATAHUB_QUERY_URL'), idToken),
   },
 });
 app.addHook('onClose', () => database.close());

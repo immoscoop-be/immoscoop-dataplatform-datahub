@@ -2,6 +2,7 @@ import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Collections, Viewer } from './collections.js';
 import {
+  type BrokenFields,
   FILTER_KINDS,
   FILTER_ON,
   type FilterKind,
@@ -45,6 +46,19 @@ export function parseDecision(body: unknown): { outcome: 'accepted' | 'refused';
   if (text === null || text.length > REASON) return `The reason is a text of at most ${REASON} characters.`;
   if (input.outcome === 'refused' && text.length === 0) return 'A refusal needs a reason.';
   return { outcome: input.outcome, text };
+}
+
+/** What a query or a Lens misses, as query tells it (MSG-QRY-02, MSG-LEN-05). */
+export function parseBroken(body: unknown): BrokenFields | string {
+  const input = (body ?? {}) as Record<string, unknown>;
+  const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+  const missing = Array.isArray(input.missing) ? (input.missing as Record<string, unknown>[]) : null;
+  const fits = (item: Record<string, unknown>) =>
+    item !== null && typeof item === 'object' && (item.kind === 'resource' || item.kind === 'column') && text(item.resource, 1024) && (item.kind === 'resource' || text(item.column, 1024));
+  if (typeof input.since !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(input.since) || !missing || missing.length === 0 || missing.length > 50 || !missing.every(fits)) {
+    return 'What is missing: the day it was found, and each Resource or column, with its Resource.';
+  }
+  return { since: input.since, missing: missing.map((item) => ({ kind: item.kind as 'resource' | 'column', resource: item.resource as string, ...(item.kind === 'column' ? { column: item.column as string } : {}) })) };
 }
 
 /** What query tells about a Lens. */
@@ -220,6 +234,28 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     }
     const told = await messages.grewLarge(request.params.id.toLowerCase(), { reads: input.reads as number, threshold: input.threshold as number });
     return reply.code(201).send({ message: told });
+  });
+
+  // What Data Hub tells when a query or a Lens became Broken (MSG-QRY-02, MSG-LEN-05, FR-SR-52): query finds it.
+  app.post<{ Params: { kind: string; id: string }; Body: unknown }>('/internal/:kind/:id/broken', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const { kind, id } = request.params;
+    const fields = parseBroken(request.body);
+    if ((kind !== 'queries' && kind !== 'lenses') || !UUID.test(id) || typeof fields === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: typeof fields === 'string' ? fields : 'A query or a Lens, by its ID.' });
+    }
+    const input = (request.body ?? {}) as Record<string, unknown>;
+    if (kind === 'queries' && (typeof input.name !== 'string' || !input.name || input.name.length > 200 || typeof input.ownerId !== 'string' || !input.ownerId || input.ownerId.length > 128)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Broken query comes with its name and who made it.' });
+    }
+    const subject = kind === 'queries' ? { kind: 'query' as const, id: id.toLowerCase(), name: input.name as string, ownerId: input.ownerId as string } : { kind: 'lens' as const, id: id.toLowerCase() };
+    return reply.code(201).send({ message: await messages.broken(subject, fields) });
+  });
+
+  // It works again: its Message says so, and is unread again for whom it is for (MSG-QRY-02, MSG-LEN-05).
+  app.post<{ Params: { kind: string; id: string } }>('/internal/:kind/:id/works', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const { kind, id } = request.params;
+    if ((kind !== 'queries' && kind !== 'lenses') || !UUID.test(id)) return reply.code(400).send({ error: 'invalid_request', message: 'A query or a Lens, by its ID.' });
+    return { message: await messages.worksAgain({ kind: kind === 'queries' ? 'query' : 'lens', id: id.toLowerCase() }) };
   });
 
   // The decision on a Request on a Lens, recorded for query, which changes the Lens with it (FR-LE-09).

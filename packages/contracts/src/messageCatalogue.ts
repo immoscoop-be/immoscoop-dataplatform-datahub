@@ -1113,7 +1113,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per Lens, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-LE-17', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {
@@ -1222,7 +1222,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per query, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-SR-53', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {

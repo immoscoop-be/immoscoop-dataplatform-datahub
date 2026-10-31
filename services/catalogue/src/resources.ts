@@ -183,6 +183,11 @@ export interface UpdateOutcome {
   renamed: number;
   withdrawn: number;
   back: number;
+  /**
+   * The Resources withdrawn, brought back, or with a field removed or added (one renamed is both): what reads them
+   * may have become Broken, or work again (FR-SR-52).
+   */
+  changed: string[];
 }
 
 export interface LogEntry {
@@ -323,7 +328,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
    * every description that changed goes into its Log with the text before; its Level follows the
    * descriptions in dbt; and once it has an Owner, the Owner is told.
    */
-  async function follow(trx: Database, row: Row, before: readonly Column[], table: ExposedTable, fields: readonly Column[], run: string, runDay: string) {
+  async function follow(trx: Database, row: Row, before: readonly Column[], table: ExposedTable, fields: readonly Column[], run: string, runDay: string): Promise<boolean> {
     const sourceNode = table.name;
     const was = new Map(before.map((field) => [field.name, field]));
     const now = new Map(fields.map((field) => [field.name, field]));
@@ -386,6 +391,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       }
     }
 
+    const structural = changes.some((change) => change.change !== 'retyped');
     if (level !== row.level) {
       await trx.updateTable('resources').set({ level }).where('id', '=', row.id).execute();
       if (level > row.level) {
@@ -398,6 +404,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         }
       }
     }
+    return structural;
   }
 
   /**
@@ -558,7 +565,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   return {
     async apply(update) {
       return db.transaction().execute(async (trx) => {
-        const outcome: UpdateOutcome = { applied: true, registered: 0, renamed: 0, withdrawn: 0, back: 0 };
+        const outcome: UpdateOutcome = { applied: true, registered: 0, renamed: 0, withdrawn: 0, back: 0, changed: [] };
         // One call per dbt project at a time, and never one about an older run (TR-SR-02).
         await trx.insertInto('resourceSyncs').values({ projectId: update.projectId, runId: update.runId }).onConflict((conflict) => conflict.doNothing()).execute();
         const last = await trx.selectFrom('resourceSyncs').select('runId').where('projectId', '=', update.projectId).forUpdate().executeTakeFirstOrThrow();
@@ -585,6 +592,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
           if (collectionId) await tell(trx, id, 'MSG-RES-06', { run: runDay });
         }
         outcome.withdrawn = gone.length;
+        outcome.changed.push(...gone.map((row) => row.id));
 
         const known = new Map(
           keys.size === 0 ? [] : (await trx.selectFrom('resources').selectAll().where('key', 'in', [...keys]).forUpdate().execute()).map((row) => [row.key, row]),
@@ -646,7 +654,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
             .where('id', '=', row.id)
             .execute();
           await keepColumns(trx, row.id, columns);
-          await follow(trx, row, before, table, columns.fields, run, runDay);
+          if ((await follow(trx, row, before, table, columns.fields, run, runDay)) || back) outcome.changed.push(row.id);
           if (back) {
             await write(trx, row.id, 'RES-006', { exposure, run });
             outcome.back++;

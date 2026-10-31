@@ -563,7 +563,7 @@ function serve({
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     const listed = () =>
-      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken }) => ({
         id: id as string,
         name: name as string,
         kind: (kind as string | undefined) ?? 'query',
@@ -574,6 +574,7 @@ function serve({
         runs: lastRunAt ? 1 : 0,
         request: request ?? null,
         hidden: hiddenQueries.has(id as string),
+        broken: (broken as Record<string, string> | null | undefined) ?? null,
       }));
     // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
     const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
@@ -623,7 +624,14 @@ function serve({
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
-      return json({ preflight: preflightOf(body.sql, body.parameters) });
+      // What it ran before no longer finds a column: the query is Broken now, until a change no longer reads it (FR-SR-53).
+      const lost = (query.loses ?? query.broken) as { name: string } | undefined;
+      if (lost && body.sql.includes(lost.name)) {
+        query.broken = lost;
+        return json({ preflight: { ...preflightOf(body.sql), runnable: false, bytes: null, range: null, problems: [{ kind: 'invalid', message: `Unrecognized name: ${lost.name}` }] }, broken: lost });
+      }
+      query.broken = null;
+      return json({ preflight: preflightOf(body.sql, body.parameters), broken: null });
     }
     if (query && path.startsWith(`/queries/${query.id as string}/runs?`)) {
       return json({ runs: (query.history as unknown[] | undefined) ?? (query.lastRun ? [query.lastRun] : []) });
@@ -1404,6 +1412,33 @@ describe('Query', () => {
     await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
     await fireEvent.click(run);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, parameters: [], approve: true } }));
+  });
+
+  it('shows a Broken query with what it misses and since when, Run off, and a red dot in the panel (FR-SR-53, DEC-UX-160)', async () => {
+    const missing = { kind: 'column', name: 'lead_source', since: '2026-10-28T05:17:00Z' };
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), broken: missing }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Deze query kan niet draaien.')).toBeTruthy();
+    expect(main.getByText(/Hij leest de kolom lead_source, die sinds 28 okt\.? 2026 niet meer bestaat\. Wijzig de SQL/)).toBeTruthy();
+    // Its Pre-flight still finds it missing: Run stays off, and says why.
+    await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).getAttribute('title')).toBe('Hij draait nu niet: wat hij leest, bestaat niet meer'), { timeout: 3000 });
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: 'Resource · Broken: de kolom lead_source bestaat niet meer' })).toBeTruthy();
+  });
+
+  it('shows a query Broken as soon as its Pre-flight finds what it ran with gone, and the panel follows (FR-SR-52, FR-SR-53)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), loses: { kind: 'table', name: 'weekly_lead_volume', since: '2026-10-31T09:00:00Z' } }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // A table of one of its Resources is named by that Resource.
+    expect(await main.findByText('Deze query kan niet draaien.', {}, { timeout: 3000 })).toBeTruthy();
+    expect(main.getByText(/Hij leest de tabel weekly_lead_volume, die sinds 31 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: /Resource · Broken/ })).toBeTruthy();
   });
 
   it('names a table outside its Resources, and warns without a partition filter, with the filter to add (DEC-UX-73, FR-SR-40)', async () => {

@@ -9,6 +9,7 @@ import type { Learning } from './learning.js';
 import { messageRoutes } from './message-api.js';
 import type { Messages } from './messages.js';
 import { MODEL_TYPES, type ModelType, type Origins, type PartitionUnit } from './database.js';
+import type { QueryService } from './query.js';
 import { type Registry, RegistryUnavailable } from './registry.js';
 import { REQUEST_TYPES, type RequestFields, type Requests, type RequestType } from './requests.js';
 import {
@@ -41,6 +42,8 @@ export interface ApiOptions {
   lensCallers: ServiceCallerVerifier;
   /** The progress of every User in the Learning Centre (FR-LR-32). */
   learning: Learning;
+  /** query, to check what reads the Resources a new Current Version changed (FR-SR-52); absent, nothing is checked then. */
+  query?: QueryService;
 }
 
 /** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
@@ -319,6 +322,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       }
       const outcome = await resources.apply(update);
       request.log.info({ projectId: update.projectId, runId: update.runId, ...outcome }, 'Resources brought in line with the exposures');
+      // What reads a Resource that was withdrawn, came back or lost or regained a field is checked now (FR-SR-52);
+      // if query does not answer, its daily check finds the same within a day.
+      if (outcome.changed.length > 0 && options.query) {
+        try {
+          await options.query.check(outcome.changed);
+        } catch (error) {
+          request.log.warn({ err: error, resources: outcome.changed.length }, 'query could not check what reads the Resources that changed; its daily check will');
+        }
+      }
       return outcome;
     },
   );

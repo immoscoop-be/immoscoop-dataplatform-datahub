@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
-import type { NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
+import type { Missing, NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
 import type { Parameter } from './parameters.js';
 
 /** Who asks: the fixed Google ID and name from the Access Token, and whether they are in the Data Team. */
@@ -34,10 +34,15 @@ export interface Query {
   createdAt: Date;
   updatedAt: Date;
   lastRunAt: Date | null;
+  /** What it misses while it is Broken (FR-SR-53). */
+  broken: Missing | null;
+  /** Its SQL as BigQuery reads it, and its Parameters, kept at its last Pre-flight that passed, for a dry run without its User (DEC-SR-44). */
+  checkSql: string | null;
+  checkParameters: Parameter[];
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
-export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt'> {
+export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt' | 'broken'> {
   resources: Pick<NamedResource, 'id' | 'displayName'>[];
   runs: number;
   /** Whether the User who asks hid it from their panel (DEC-UX-138). */
@@ -68,7 +73,7 @@ export interface QueryDay {
 }
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44): its last run and what that read. */
-export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt'> {
+export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt' | 'broken'> {
   runs: number;
   lastRead: number | null;
   lastEstimate: number;
@@ -166,6 +171,17 @@ export interface Queries {
   runs(queryId: string, options: { before?: number; limit: number }): Promise<Run[]>;
   /** How many runs a query has. */
   runCount(queryId: string): Promise<number>;
+  /** It misses a table or a column (`BRK-001`), or works again (`BRK-002`); `changed` says whether that is news (FR-SR-53). */
+  breaks(id: string, missing: Omit<Missing, 'since'>): Promise<{ query: Query; changed: boolean }>;
+  works(id: string): Promise<{ query: Query; changed: boolean }>;
+  /** Keeps its SQL as BigQuery reads it, with its Parameters, for a dry run without its User (DEC-SR-44). */
+  keepCheck(id: string, checkSql: string, parameters: readonly Parameter[]): Promise<void>;
+  /**
+   * The queries Data Hub can dry-run without their User: every one with its SQL kept, or those that read one of
+   * these Resources (FR-SR-52). A Preview is made afresh from its Resource each time, and the runs of a Lens
+   * follow their Lens, so neither is checked.
+   */
+  toCheck(resourceIds?: readonly string[]): Promise<Query[]>;
 }
 
 /** The Query ID of a run: the day and six random hex digits, such as q-20261029-4c2e1a (FR-LN-05). */
@@ -224,7 +240,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
       const words = search?.trim().toLowerCase();
       const rows = await db
         .selectFrom('queries as q')
-        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt'])
+        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
         .select(hidden.as('hidden'))
         .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
@@ -251,6 +267,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         lensOf: row.lensOf,
         createdAt: row.createdAt,
         lastRunAt: row.lastRunAt,
+        broken: row.broken,
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
         runs: Number(row.runs ?? 0),
         hidden: row.hidden === true,
@@ -380,7 +397,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
           (join) => join.onRef('counted.queryId', '=', 'q.id'),
         )
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
-        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
+        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
@@ -393,6 +410,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         kind: row.kind,
         lensOf: row.lensOf,
         lastRunAt: row.lastRunAt,
+        broken: row.broken,
         runs: Number(row.runs),
         lastRead: row.processedBytes === null ? null : Number(row.processedBytes),
         lastEstimate: Number(row.estimatedBytes),
@@ -485,6 +503,51 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     async runCount(queryId) {
       const row = await db.selectFrom('runs').select(sql<string>`count(*)`.as('count')).where('queryId', '=', queryId).where('purpose', '=', 'run').executeTakeFirstOrThrow();
       return Number(row.count);
+    },
+
+    async breaks(id, missing) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('queries').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
+        if (row.broken) return { query: row, changed: false };
+        const broken: Missing = { ...missing, since: new Date().toISOString() };
+        const query = await trx.updateTable('queries').set({ broken: JSON.stringify(broken) }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+        await trx.insertInto('queryLog').values({ queryId: id, logId: 'BRK-001', params: JSON.stringify({ missing: missing.name, run: '' }) }).execute();
+        return { query, changed: true };
+      });
+    },
+
+    async works(id) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('queries').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
+        if (!row.broken) return { query: row, changed: false };
+        const query = await trx.updateTable('queries').set({ broken: null }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+        await trx.insertInto('queryLog').values({ queryId: id, logId: 'BRK-002', params: JSON.stringify({ restored: row.broken.name, run: '' }) }).execute();
+        return { query, changed: true };
+      });
+    },
+
+    async keepCheck(id, checkSql, parameters) {
+      const kept = JSON.stringify(parameters);
+      await db
+        .updateTable('queries')
+        .set({ checkSql, checkParameters: kept })
+        .where('id', '=', id)
+        .where(sql<boolean>`(check_sql is distinct from ${checkSql} or check_parameters <> ${kept}::jsonb)`)
+        .execute();
+    },
+
+    async toCheck(resourceIds) {
+      if (resourceIds && resourceIds.length === 0) return [];
+      return db
+        .selectFrom('queries')
+        .selectAll()
+        .where('kind', '=', 'query')
+        .where('checkSql', 'is not', null)
+        .$if(resourceIds !== undefined, (query) =>
+          query.where((eb) => eb.or((resourceIds ?? []).map((id) => sql<boolean>`resources @> ${JSON.stringify([{ id }])}::jsonb`))),
+        )
+        .orderBy('id')
+        .execute();
     },
   };
 }

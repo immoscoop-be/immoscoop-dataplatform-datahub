@@ -55,9 +55,9 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
-| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
 
 ## Messages a person writes
@@ -2035,7 +2035,7 @@ It builds on {resource}, which your team owns: everyone who may see the lens now
 | From → to | Data Hub → Owner |
 | When | A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per Lens, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-LE-17](09-lenses.md#fr-le-17), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. The Owner Unit repairs the Lens from its query ([DEC-LE-04](09-lenses.md#dec-le-04)), or asks the Data Team whether what is missing comes back. Nothing is needed when it does.
@@ -2166,7 +2166,7 @@ One item of `missing`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per query, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-53](04-stacks-and-resources.md#fr-sr-53), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. Who made the query changes its SQL, or waits for what is missing to come back. Using other Resources is a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).
