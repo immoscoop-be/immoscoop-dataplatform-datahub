@@ -95,11 +95,13 @@ identity acts as the OAuth 2.1 authorisation server for MCP clients, following t
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Excel key
 
-**Status:** Specified · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
+**Status:** Implemented · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
 
 Power Query sends the Excel key with every request. The shared package `@datahub/auth` exchanges it at identity for an Access Token, cached for the lifetime of that token, so that services only ever handle Access Tokens. identity keeps only a hash of each Excel key: it can be revoked or renewed, but never read back.
 
 *Note of 2026-10-31: Power Query sends the key with Basic, as password, with the e-mail of the User as user name, in the header `Authorization` ([DEC-CH-06](../functional/13-channels.md#dec-ch-06)).*
+
+*Note of 2026-10-31, on building it: the address Power Query asks is that of query, which `@datahub/auth` (`createExcelKeyExchanger`) has exchange the key at identity, `POST /internal/excel-keys/exchange`, with query's Google ID token for identity's address. The key travels in the body, never in an address. The Access Token comes back with the Groups and roles of the User as Workspace gives them at that moment, and query keeps it, by the hash of the key, until a minute before it expires, at most 1,000 keys. A key that is not known, revoked or expired, or whose User can no longer sign in, is refused with 401 ([TR-PL-01](12-permissions-and-library-cards.md#tr-pl-01)).*
 
 <a id="tr-pf-08"></a>
 ### TR-PF-08 · One schema per service

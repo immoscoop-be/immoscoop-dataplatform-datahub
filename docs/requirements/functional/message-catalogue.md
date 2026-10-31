@@ -56,8 +56,8 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
-| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month |  | Data Hub → its author | Nothing | To write | Implemented |
-| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key |  | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
@@ -2164,7 +2164,7 @@ One item of `missing`, English, laid out:
 | | |
 | --- | --- |
 | Kind | Data Hub |
-| About |  |
+| About | Excel key |
 | From → to | Data Hub → its author |
 | When | An Excel key that is not revoked expires within a month; Data Hub looks once a day. |
 | How many | One per key. |
@@ -2249,7 +2249,7 @@ After that, Excel no longer gets data with it. Make a new key on My page and put
 | | |
 | --- | --- |
 | Kind | Data Hub |
-| About |  |
+| About | Excel key |
 | From → to | Data Hub → its author |
 | When | Someone of the Data Team revokes the Excel key of another User, in Admin. |
 | How many | One per key. |
