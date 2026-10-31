@@ -631,7 +631,7 @@ A preview, and the result of a query in Query, shows its rows 100 at a time, wit
 <a id="fr-sr-52"></a>
 ### FR-SR-52 · Data Hub finds what is Broken, and what works again
 
-**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-DH-68](../../overview/data-hub.md#dec-dh-68)
+**Status:** Specified · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [DEC-DH-68](../../overview/data-hub.md#dec-dh-68)
 
 Data Hub looks for Broken assets at three moments:
 
@@ -646,7 +646,7 @@ For each Resource found, Data Hub takes from its database what reads it ([DEC-DH
 <a id="fr-sr-53"></a>
 ### FR-SR-53 · A query that reads what no longer exists is Broken
 
-**Status:** Proposed · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67)
+**Status:** Specified · **Source:** [DEC-DH-67](../../overview/data-hub.md#dec-dh-67) · **Screens:** [query](../../design/screens/query.html)
 
 A Broken query cannot run: Run is off, and a callout on top of it names what no longer exists. It carries a red dot in the panel of Query and in the Queries of a Resource ([FR-SR-43](#fr-sr-43), [FR-SR-44](#fr-sr-44)). Who made it gets a Message ([MSG-QRY-02](message-catalogue.md#msg-qry-02)). Its SQL can still be opened, copied and changed; a change that runs makes it work again, as does the return of what it reads.
 

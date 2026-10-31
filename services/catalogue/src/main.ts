@@ -64,6 +64,11 @@ const app = await buildApp({
       audience: catalogueUrl,
       serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')],
     }),
+    // identity tells about the Excel key of a User the same way (FR-PL-03).
+    keyCallers: createServiceCallerVerifier({
+      audience: catalogueUrl,
+      serviceAccounts: [required('DATAHUB_IDENTITY_SERVICE_ACCOUNT')],
+    }),
     learning: createLearning(database.db),
   },
 });

@@ -81,7 +81,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 
 | Component | Variants | Behaviour | Used on | Rules |
 | --- | --- | --- | --- | --- |
-| Button | primary, quiet, outline, icon; off (disabled) | – | every screen | – |
+| Button | primary, quiet, outline, icon, danger (what cannot be undone, such as Revoke); off (disabled) | – | every screen | – |
 | Chip | status, code, pill, tag, count, scope (a Resource of a query, removable), parameter | Removable where it has × | every screen | – |
 | Field | text, text area, select, date, checkbox and radio; with a label above | – | editing, sheets, Query | – |
 | Segmented control | two to four choices | Switch a pane | 22 screens | – |

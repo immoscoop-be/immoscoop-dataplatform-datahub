@@ -9,14 +9,15 @@
   import Tabs from '@datahub/ui/containers/Tabs.svelte';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import type { Group, Me } from '../lib/identity.js';
+  import type { Group, Identity, Me } from '../lib/identity.js';
   import { myPagePath, type MyPageTab } from '../lib/routes.js';
+  import ExcelKeys from './ExcelKeys.svelte';
 
   /**
    * My page, behind the initials at the foot of the rail (DEC-UX-84): who the User is in Data Hub,
    * and their settings. Profile: the language of Data Hub (DEC-UX-85) and the groups they own through
-   * (DEC-DH-78); Background: one choice for day and one for night (DEC-UX-108). The tab Excel keys
-   * comes with part 9, and the Collections and queries a User owns with parts 3 and 5.
+   * (DEC-DH-78); Excel keys, with which Excel gets the result of a Lens (FR-PL-01, FR-PL-02); Background: one
+   * choice for day and one for night (DEC-UX-108).
    */
   let {
     me,
@@ -28,6 +29,7 @@
     backgroundChoice,
     onlanguage,
     onbackground,
+    identity,
   }: {
     me: Me;
     initials: string;
@@ -39,6 +41,8 @@
     backgroundChoice: string;
     onlanguage: (language: Language) => void;
     onbackground: (choice: string) => void;
+    /** identity, for the Excel keys of the User. */
+    identity: Pick<Identity, 'excelKeys' | 'makeExcelKey' | 'revokeExcelKey'>;
   } = $props();
 
   // The names of the languages, each written in its own language, whatever the language of Data Hub.
@@ -63,6 +67,7 @@
   current={tab}
   tabs={[
     { id: 'profile', label: t('me.tab.profile'), href: myPagePath('profile') },
+    { id: 'keys', label: t('me.tab.keys'), href: myPagePath('keys') },
     { id: 'background', label: t('me.tab.background'), href: myPagePath('background') },
   ]}
 >
@@ -94,6 +99,8 @@
         <p class="meta groups">{t('me.own.groups')}</p>
       </SubTile>
     </Grid>
+  {:else if tab === 'keys'}
+    <ExcelKeys {identity} />
   {:else}
     <p class="meta text line">{t('me.background.text', { theme })}</p>
     <BackgroundPicker {theme} choice={backgroundChoice} onchoose={onbackground} />

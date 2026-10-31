@@ -71,6 +71,15 @@ Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/c
 
 `GET /lenses` gives with each Lens when the User last ran it, from their query of the kind `lens`, for "Yours" on the start screen of Collections. Which Lenses are new there, published in the last 30 days in a public Collection outside the User's own Owner Units, the web app works out from the Lenses and Collections it has.
 
+<a id="tr-le-08"></a>
+### TR-LE-08 · Excel gets the result of a Lens as CSV, with an Excel key
+
+**Status:** Implemented · **Realises:** [DEC-CH-06](../functional/13-channels.md#dec-ch-06), [FR-CH-01](../functional/13-channels.md#fr-ch-01), [DEC-UX-159](../../design/principles.md#dec-ux-159), [TR-PF-07](00-platform.md#tr-pf-07)
+
+`GET /excel/lenses/{id}` of query is the address Power Query asks, which "Open in Excel" on the page of a Lens shows. It is reachable without an Access Token: without an Excel key in `Authorization`, Basic with the key as password, it answers 401 with `WWW-Authenticate: Basic realm="Data Hub"`, so that Excel asks how to sign in. The key is exchanged at identity for an Access Token of its User ([TR-PF-07](00-platform.md#tr-pf-07)); from then on the request is checked as theirs, as on the page of the Lens ([TR-LE-02](#tr-le-02)).
+
+Only a published Lens answers: a waiting, refused or stopped Lens answers 409 with why, and a Broken one as on its page ([TR-LE-06](#tr-le-06)). It runs with the defaults of its Parameters, as a run of the User in the Query Log ([TR-LE-03](#tr-le-03)), only within 100 MB: Excel cannot approve a run ([OP-CH-04](../functional/13-channels.md#op-ch-04)). Its result is CSV in UTF-8 with a BOM and CRLF, at most 10,000 rows, read from the same job page after page; the Query ID of the run is in the header `X-Datahub-Query-Id`.
+
 ## Open points
 
 None yet.

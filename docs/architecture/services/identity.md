@@ -20,7 +20,7 @@
 - Keeping them signed in with Refresh Tokens, and checking Groups and account at every renewal: [TR-PF-25](../../requirements/technical/00-platform.md#tr-pf-25), [TR-PF-26](../../requirements/technical/00-platform.md#tr-pf-26)
 - The settings of each User, as keys and values: [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)
 - Who catalogue notifies: the Groups and roles of each User as last read, and which members of a Group Data Hub knows ([DEC-LN-07](../../requirements/functional/07-log-and-notifications.md#dec-ln-07), [TR-LN-02](../../requirements/technical/07-log-and-notifications.md#tr-ln-02))
-- Excel keys for Excel: issuing, revoking, renewing and exchanging them for Access Tokens: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)
+- Excel keys for Excel: making, listing and revoking them, exchanging them for Access Tokens, and telling their User a month before one expires or when the Data Team revoked one: [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07), built as [TR-PL-01](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-01) and [TR-PL-02](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-02)
 
 ## API
 
@@ -36,18 +36,20 @@ First sketch; the exact contracts follow in the technical requirements of the do
 | `GET /me/groups` | The groups of the current User with their address and name, read from Workspace; for choosing an Owner Unit ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
 | `GET /groups` | Every group of the own domains, for the Data Team to hand a Collection to any of them ([TR-CO-03](../../requirements/technical/03-collections.md#tr-co-03)) |
 | `GET /me/settings`, `PUT /me/settings/{key}`, `DELETE /me/settings/{key}` | The settings of the current User: read them all, set one with `{ "value": … }`, or forget one ([TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)) |
-| `POST /excel-keys`, `DELETE /excel-keys/{id}` | Make and revoke an Excel key |
-| `POST /exchange` | Exchange a Excel key for an Access Token; used by `@datahub/auth` |
+| `GET /me/excel-keys`, `POST /me/excel-keys`, `DELETE /me/excel-keys/{id}` | The Excel keys of the User, revoked ones included; a new one, whose key comes this once; and revoking one of their own ([TR-PL-01](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-01)) |
+| `GET /excel-keys`, `DELETE /excel-keys/{id}` | For the Data Team: every Excel key with its User, and revoking any key, which tells its User ([TR-PL-02](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-02)) |
+| `POST /internal/excel-keys/exchange` | From query, with its Google ID token for identity's address (`DATAHUB_QUERY_SERVICE_ACCOUNT`): an Excel key in the body, exchanged for an Access Token of its User; used by `@datahub/auth` ([TR-PF-07](../../requirements/technical/00-platform.md#tr-pf-07)) |
+| `POST /internal/excel-keys/expiring` | Once a day, from Cloud Scheduler with the Google ID token of `datahub-scheduler` (`DATAHUB_SCHEDULER_SERVICE_ACCOUNT`): tells the User of each key that expires within a month, once ([TR-PL-02](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-02)) |
 | `POST /internal/people` | From catalogue, with its Google ID token for identity's address (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`): the Users it names, and the members of the Groups and holders of the roles it names that Data Hub knows, with their address, name and language ([TR-LN-02](../../requirements/technical/07-log-and-notifications.md#tr-ln-02)) |
 | `POST /internal/sync-groups` | Synchronise the Groups; called by Cloud Scheduler with the service identity |
 
 ## Data
 
-Users (by fixed Google ID), with their Groups and roles as identity last read them at a sign-in or a renewal (migration `0004-groups`), Groups (by fixed Google ID) and memberships, Excel keys (hashes only), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants, and the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96), [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)).
+Users (by fixed Google ID), with their Groups and roles as identity last read them at a sign-in or a renewal (migration `0004-groups`), Groups (by fixed Google ID) and memberships, Excel keys (hashes only, migration `0005-excel-keys`), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants, and the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96), [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)).
 
 ## Talks to
 
-Google Sign-In (OpenID Connect), the Cloud Identity Groups API, the Admin SDK Directory API to check accounts, and Cloud KMS to sign Access Tokens.
+Google Sign-In (OpenID Connect), the Cloud Identity Groups API, the Admin SDK Directory API to check accounts, and Cloud KMS to sign Access Tokens. It tells catalogue (`DATAHUB_CATALOGUE_URL`), with its Google ID token for catalogue's address, of an Excel key that expires within a month or that the Data Team revoked, at `POST /internal/excel-keys/notices` ([TR-PL-02](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-02)).
 
 For the nested groups of [FR-UM-04](../../requirements/functional/02-user-management.md#fr-um-04), identity asks the Cloud Identity Groups API for the direct groups of the User, then for the direct groups of each of those groups, one level at a time, until no new group turns up. Google's search for every nested group in one call (`searchTransitiveGroups`) only works on Workspace Enterprise and Cloud Identity Premium, and answers 403 on other editions.
 

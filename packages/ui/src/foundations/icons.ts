@@ -25,6 +25,7 @@ import graduationCapFill from '@phosphor-icons/core/assets/fill/graduation-cap-f
 import graphFill from '@phosphor-icons/core/assets/fill/graph-fill.svg?raw';
 import hourglassMediumFill from '@phosphor-icons/core/assets/fill/hourglass-medium-fill.svg?raw';
 import infoFill from '@phosphor-icons/core/assets/fill/info-fill.svg?raw';
+import keyFill from '@phosphor-icons/core/assets/fill/key-fill.svg?raw';
 import linkBreakFill from '@phosphor-icons/core/assets/fill/link-break-fill.svg?raw';
 import lockSimpleFill from '@phosphor-icons/core/assets/fill/lock-simple-fill.svg?raw';
 import magnifyingGlassFill from '@phosphor-icons/core/assets/fill/magnifying-glass-fill.svg?raw';
@@ -47,6 +48,7 @@ import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg
 import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
 import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
 import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
+import fileXls from '@phosphor-icons/core/assets/regular/file-xls.svg?raw';
 import link from '@phosphor-icons/core/assets/regular/link.svg?raw';
 import textB from '@phosphor-icons/core/assets/regular/text-b.svg?raw';
 import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
@@ -157,6 +159,7 @@ export const ICONS = {
   'graph-fill': graphFill,
   'hourglass-medium-fill': hourglassMediumFill,
   'info-fill': infoFill,
+  'key-fill': keyFill,
   'link-break-fill': linkBreakFill,
   'lock-simple-fill': lockSimpleFill,
   'magnifying-glass-fill': magnifyingGlassFill,
@@ -179,6 +182,7 @@ export const ICONS = {
   'chart-line': chartLine,
   'chart-scatter': chartScatter,
   compass,
+  'file-xls': fileXls,
   link,
   'text-b': textB,
   'text-h': textH,

@@ -82,8 +82,13 @@ locals {
 
   service_env = {
     # catalogue asks identity who to notify, by a Google ID token for identity's address (DEC-LN-07).
+    # query exchanges an Excel key there, the scheduler asks which keys expire, and identity tells catalogue,
+    # each by a Google ID token for the address it calls (TR-PF-07, FR-PL-03).
     identity = merge(local.database_env["identity"], local.token_signing_env, local.sign_in_env, {
       DATAHUB_CATALOGUE_SERVICE_ACCOUNT = google_service_account.service["catalogue"].email
+      DATAHUB_QUERY_SERVICE_ACCOUNT     = google_service_account.service["query"].email
+      DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
+      DATAHUB_CATALOGUE_URL             = local.urls["catalogue"]
     })
     # catalogue takes the exposed tables only from registry, by a Google ID token for its own
     # address (TR-SR-01), and asks registry the lineage around a Resource as itself (DEC-AR-06).
@@ -95,6 +100,7 @@ locals {
       DATAHUB_REGISTRY_SERVICE_ACCOUNT  = google_service_account.service["registry"].email
       DATAHUB_REGISTRY_URL              = local.urls["registry"]
       DATAHUB_QUERY_SERVICE_ACCOUNT     = google_service_account.service["query"].email
+      DATAHUB_IDENTITY_SERVICE_ACCOUNT  = google_service_account.service["identity"].email
       DATAHUB_SCHEDULER_SERVICE_ACCOUNT = google_service_account.scheduler.email
       DATAHUB_WEB_URL                   = local.urls["web"]
       DATAHUB_SMTP_HOST                 = "smtp-relay.gmail.com"

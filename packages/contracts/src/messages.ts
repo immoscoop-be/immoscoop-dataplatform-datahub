@@ -15,7 +15,7 @@ export const LANGUAGES: readonly Language[] = ['nl', 'en'];
 const LOCALES: Readonly<Record<Language, string>> = { nl: 'nl-BE', en: 'en-GB' };
 
 /** The kinds of object a Message can be about (DEC-CV-03). */
-export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard';
+export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard' | 'excelKey';
 
 /**
  * The kind of a Message, what the Message Centre filters on (FR-CV-06): what a person writes, or
@@ -511,6 +511,7 @@ export const SUBJECT_NAMES: Readonly<Record<SubjectKind, string>> = {
   query: 'query',
   report: 'report',
   learningCard: 'learning card',
+  excelKey: 'Excel key',
 };
 
 /** The kind of an object as a sentence of the interface names it: a Defined Term, never translated (NFR-LOC-01). */
@@ -521,6 +522,7 @@ export const SUBJECT_TITLES: Readonly<Record<SubjectKind, string>> = {
   query: 'Query',
   report: 'Report',
   learningCard: 'Learning Card',
+  excelKey: 'Excel key',
 };
 
 /**
