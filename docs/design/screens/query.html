@@ -261,14 +261,16 @@
  </div>
 
  <div class="run-bar">
-  <span class="run-note" id="run-note" hidden><i class="ph-fill ph-warning"></i><span id="run-note-text"></span><button class="text-link" type="button" data-define-first><span>Define it</span></button><button class="text-link" type="button" data-add-filter hidden><span>Add the filter</span></button></span>
-  <span class="run-pf" id="run-pf">
-   <span class="meta">Pre-flight</span>
-   <span class="run-gauge" aria-hidden="true"><span class="gauge"><span class="gauge-fill" style="width:84%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
-   <span class="meta">42 of 312 partitions of Weekly lead volume, through <span class="mono">week_start</span></span>
+  <!-- One line of a fixed height: the Pre-flight, or what stops the query, cross-fading (DEC-UX-154). -->
+  <span class="run-status">
+   <span class="run-note" id="run-note"><i class="ph-fill ph-warning"></i><span id="run-note-text"></span><button class="text-link" type="button" data-define-first><span>Define it</span></button><button class="text-link" type="button" data-add-filter hidden><span>Add the filter</span></button></span>
+   <span class="run-pf shown" id="run-pf">
+    <span class="meta">Pre-flight</span>
+    <span class="run-gauge" aria-hidden="true"><span class="gauge"><span class="gauge-fill" style="width:84%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+    <span class="meta">42 of 312 partitions of Weekly lead volume, through <span class="mono">week_start</span></span>
+   </span>
   </span>
   <span class="run-wait meta" id="run-wait" hidden><i class="ph-fill ph-hourglass-medium"></i>Waiting for the Data Team since 10:12</span>
-  <span style="flex:1"></span>
   <span class="run-anchor">
    <button class="btn-primary run-btn high" id="run-btn"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
    <span class="run-pop up request-pop" id="request-pop" role="dialog" aria-label="Send to the Data Team" hidden><b>Very large:</b> one run reads more than 1 GB; someone of the Data Team accepts it first.

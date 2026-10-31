@@ -1442,6 +1442,37 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q1/hidden' }));
   });
 
+  it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
+    const before = checks();
+    // A change in the editor, as typing is: the Pre-flight waits, and the line keeps what it said, softer.
+    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(checks()).toBe(before);
+    expect(main.getByText('Pre-flight').closest('.status')?.classList.contains('stale')).toBe(true);
+    await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 3000 });
+    await vi.waitFor(() => expect(main.getByText('Pre-flight').closest('.status')?.classList.contains('stale')).toBe(false));
+  });
+
+  it('checks at once on Ctrl+Enter after typing, and runs as soon as it may (DEC-UX-154, DEC-UX-142)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
+    const before = checks();
+    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
+    await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 800 });
+    await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
+  });
+
   it('runs the query with Ctrl+Enter in its editor, as its button does (DEC-UX-142)', async () => {
     const calls = serve({ queries: [{ ...QUERY }] });
     open('/query/q1');
@@ -1541,8 +1572,12 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // A suggested function says what it gives today, worked out by Data Hub itself.
     expect(await main.findByText(/vandaag 1 jan/)).toBeTruthy();
-    expect(await main.findByText('@leadChannel staat in de query, maar is geen Parameter.', {}, { timeout: 3000 })).toBeTruthy();
+    const problem = await main.findByText('@leadChannel staat in de query, maar is geen Parameter.', {}, { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    // One line: what stops the query in place of the Pre-flight, which fades out (DEC-UX-154).
+    const layerOf = (element: Element) => element.closest('.layer') as HTMLElement;
+    expect(layerOf(problem).classList.contains('shown')).toBe(true);
+    expect(layerOf(main.getByText('Pre-flight')).getAttribute('aria-hidden')).toBe('true');
     await fireEvent.click(main.getByRole('button', { name: 'Definieer hem' }));
     const window = within(await screen.findByRole('dialog', { name: '@leadChannel definiëren' }));
     expect(window.getByRole('radio', { name: /Keuze/ }).getAttribute('aria-checked')).toBe('true');
@@ -1551,6 +1586,8 @@ describe('Query', () => {
     const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
     await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
+    expect(layerOf(main.getByText('Pre-flight')).classList.contains('shown')).toBe(true);
+    expect(layerOf(problem).getAttribute('aria-hidden')).toBe('true');
   });
 
   it('shows its history, previews a run read only, and applies it to the query (DEC-UX-74, DEC-UX-99)', async () => {

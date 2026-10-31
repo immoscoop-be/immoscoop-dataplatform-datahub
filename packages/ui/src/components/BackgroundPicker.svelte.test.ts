@@ -28,6 +28,6 @@ describe('the background picker (DEC-UX-108)', () => {
     await fireEvent.keyDown(random, { key: 'ArrowRight' });
     expect(onchoose).toHaveBeenLastCalledWith('gradient');
     await fireEvent.keyDown(random, { key: 'ArrowLeft' });
-    expect(onchoose).toHaveBeenLastCalledWith('concrete');
+    expect(onchoose).toHaveBeenLastCalledWith('peaks');
   });
 });

@@ -61,6 +61,7 @@ export default {
   'editor.fold': 'Dichtvouwen',
   'editor.unfold': 'Openvouwen',
   'editor.resource': 'Resource',
+  'editor.otherResource': 'Resource · nieuwe query',
   'editor.newResource': 'Nieuwe Resource…',
   'editor.newResource.detail': 'begint een nieuwe query',
   'filter.reset': 'Herstel',
