@@ -203,11 +203,13 @@ At Registration, the Log of the Resource starts with the entries for Registratio
 <a id="fr-sr-10"></a>
 ### FR-SR-10 · Notify the Data Admins of every Registration
 
-**Status:** Specified · **Confluence:** SR-10 · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Confluence:** SR-10 · **Screens:** [messages](../../design/screens/messages.html)
 
 Every Registration sends a message to the Message Centre of the Data Admins.
 
 *Note of 2026-10-28: every Registration places the Message "A new Resource waits for a Collection" ([MSG-RES-01](message-catalogue.md#msg-res-01)) on the Resource ([TR-SR-09](../technical/04-stacks-and-resources.md#tr-sr-09)); the Message Centre that shows it to the Data Team comes with part 7 of the [build order](../../design/build-order.md).*
+
+*Note of 2026-10-31, on checking what was built: the Data Team finds [MSG-RES-01](message-catalogue.md#msg-res-01) under For you in the Message Centre, built with part 7.*
 
 <a id="fr-sr-11"></a>
 ### FR-SR-11 · Structure of a Log Entry
@@ -303,11 +305,13 @@ Search covers title, description, Collection and Owner. A result shows those fou
 <a id="fr-sr-22"></a>
 ### FR-SR-22 · Browse per Collection
 
-**Status:** Specified · **Confluence:** SR-22 · **Screens:** [collections-start](../../design/screens/collections-start.html)
+**Status:** Implemented · **Confluence:** SR-22 · **Screens:** [collections-start](../../design/screens/collections-start.html)
 
 Browsing per Collection shows the Resources of a Collection, with the colour and the icon of that Collection.
 
 *Note of 2026-10-22: in the web app, a Collection unfolds to its Resources in the panel of Collections ([FR-CO-18](03-collections.md#fr-co-18)).*
+
+*Note of 2026-10-31, on checking what was built: a Collection shows with its icon only, as it has no colour ([DEC-CO-23](03-collections.md#dec-co-23)).*
 
 <a id="fr-sr-23"></a>
 ### FR-SR-23 · Derive the Entities from the manifest and the lineage
@@ -319,7 +323,7 @@ The Entities of a Resource are derived from the manifest and the lineage, in the
 <a id="fr-sr-24"></a>
 ### FR-SR-24 · Read a Resource in tabs
 
-**Status:** Specified · **Confluence:** SR-24 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Confluence:** SR-24 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Conversations and Preview. History is filterable by kind of Log Entry.
 
@@ -334,7 +338,7 @@ A Resource is read in the tabs Overview, Columns, Lineage, EDA, History, Convers
 <a id="fr-sr-25"></a>
 ### FR-SR-25 · The preview shows a limited number of rows
 
-**Status:** Specified · **Confluence:** SR-25 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Confluence:** SR-25 · **Screens:** [resource-preview](../../design/screens/resource-preview.html)
 
 The Preview shows a limited number of first rows. There is no query builder in the interface.
 
@@ -374,7 +378,7 @@ The Owner and the Data Team can supplement intended use, pitfalls, Anomalies, ke
 <a id="fr-sr-29"></a>
 ### FR-SR-29 · React with a Question, a Remark or a Signal
 
-**Status:** Specified · **Confluence:** SR-29 · **Screens:** [learning-message](../../design/screens/learning-message.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Confluence:** SR-29 · **Screens:** [learning-message](../../design/screens/learning-message.html), [resource-detail](../../design/screens/resource-detail.html), [resource-messages](../../design/screens/resource-messages.html)
 
 Everyone who may see a Resource can react with a Question, a Remark or a Signal.
 
@@ -508,7 +512,7 @@ The SQL editor in Query formats the SQL on request, and suggests while typing: t
 <a id="fr-sr-43"></a>
 ### FR-SR-43 · The panel of Query lists the queries that ran
 
-**Status:** Proposed · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** [DEC-UX-20](../../design/principles.md#dec-ux-20) · **Screens:** [query](../../design/screens/query.html), [query-new](../../design/screens/query-new.html)
 
 The panel of Query lists the queries a User ran, through Query, a preview or Claude, newest first and grouped by day. The Data Team can also list everyone's, with who ran them and their SQL; nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). Each query shows whether it ran on Resources or on a Lens, its name, what it ran on, what it read, and whether it was approved or blocked, and opens in Query with a click.
 
@@ -521,6 +525,8 @@ The panel of Query lists the queries a User ran, through Query, a preview or Cla
 *Note of 2026-10-29, on building the third piece of part 5: the previews of a Resource by a User are one query in the panel, marked "Preview" ([TR-SR-19](../technical/04-stacks-and-resources.md#tr-sr-19)).*
 
 *Note of 2026-10-30: the panel groups them per day in this week, per week back to the first of last month, then per month, and reads a period only when it is opened; previews, the queries of Lenses and hidden queries show only when they are ticked in the filter next to the search ([DEC-UX-150](../../design/principles.md#dec-ux-150)), and a User hides a query for themselves alone ([DEC-UX-137](../../design/principles.md#dec-ux-137), [DEC-UX-138](../../design/principles.md#dec-ux-138), [DEC-UX-139](../../design/principles.md#dec-ux-139)).*
+
+*Note of 2026-10-31, on checking what was built: built as the notes above say; the queries of Claude come with Claude, in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-sr-44"></a>
 ### FR-SR-44 · The page of a Resource lists the queries on it
@@ -614,11 +620,13 @@ The Owner and the Data Team can mark a published Resource deprecated: its use is
 <a id="fr-sr-51"></a>
 ### FR-SR-51 · A result shows 100 rows a page
 
-**Status:** Specified · **Source:** Max, 2026-10-26 ([OP-SR-07](#op-sr-07)) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-07](#op-sr-07)) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 A preview, and the result of a query in Query, shows its rows 100 at a time, with how many rows there are in all and a way to the next and the previous page. Turning a page reads the next rows of the same run; it runs no query again ([DEC-SR-30](#dec-sr-30)).
 
 *Note of 2026-10-29, on building part 5: built for a result in Query, from the job of its run ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the preview follows with its tab.*
+
+*Note of 2026-10-31, on checking what was built: the Preview pages its result 100 rows at a time too.*
 
 <a id="fr-sr-52"></a>
 ### FR-SR-52 · Data Hub finds what is Broken, and what works again

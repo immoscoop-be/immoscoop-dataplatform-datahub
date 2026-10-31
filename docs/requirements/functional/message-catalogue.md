@@ -43,14 +43,14 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
-| [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
-| [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
-| [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
+| [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
+| [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Implemented |
+| [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Implemented |
 | [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
-| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Specified |
+| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Implemented |
 | [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
-| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Specified |
+| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
@@ -1026,7 +1026,7 @@ Its owner unit, {group}, {cause, select, dissolved {was dissolved in Workspace} 
 | From → to | Data Hub → Data Team |
 | When | A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on. |
 | How many | One per Resource, never one per run ([DEC-CV-10](14-conversations.md#dec-cv-10)). |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [DEC-SR-12](04-stacks-and-resources.md#dec-sr-12), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [DEC-CV-10](14-conversations.md#dec-cv-10) |
 
 **What it asks:** Something to do, of the Data Team. The Data Team adds the Resource to a Collection, in Data Hub, never in the dbt project ([FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27)).
@@ -1113,7 +1113,7 @@ The dbt run of {run} registered it through the exposure `{exposure}` in `{projec
 | From → to | Data Hub → Owner |
 | When | An Artifact Set changes the description from dbt of a Resource, or of one of its fields. A Change further upstream stays an entry in the Log ([FR-AR-12](01-artifact-registry.md#fr-ar-12)). |
 | How many | One per Resource and Artifact Set, with every description that changed. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-RC-17](05-resource-card.md#fr-rc-17), [DEC-RC-03](05-resource-card.md#dec-rc-03), [FR-LR-38](16-learning.md#fr-lr-38) |
 
 **What it asks:** Nothing. It asks for no review ([DEC-RC-03](05-resource-card.md#dec-rc-03)); the Owner may change their Business Descriptions.
@@ -1264,7 +1264,7 @@ One item of `changes`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | An Artifact Set adds, removes, renames or retypes a field of a Resource after its last Confirmation. |
 | How many | One per Resource and Artifact Set; all point to its one warning. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-MR-12](06-maturity-and-release.md#fr-mr-12), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08), [DEC-DH-66](../../overview/data-hub.md#dec-dh-66), [FR-LR-38](16-learning.md#fr-lr-38) |
 
 **What it asks:** Something to do, of the Owner. The Owner marks the warning seen; the Data Team can too, on the page of the Resource ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)). The Owner may tell the Consumers ([MSG-RES-07](#msg-res-07)).
@@ -1478,7 +1478,7 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-MR-09](06-maturity-and-release.md#fr-mr-09), [DEC-SR-08](04-stacks-and-resources.md#dec-sr-08), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08) |
 | Open points | [OP-MR-04](06-maturity-and-release.md#op-mr-04) |
 
@@ -1671,7 +1671,7 @@ If that was not intended, ask the data team.
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07), [DEC-CV-11](14-conversations.md#dec-cv-11) |
 
 **What it asks:** Something to do, of the Owner. The Owner reads the Resource, adds Business Descriptions where they help, and publishes it from Described ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)).
