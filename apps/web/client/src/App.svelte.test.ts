@@ -141,6 +141,44 @@ const WEEKLY = {
 };
 
 /** Weekly lead volume as its page reads it, with what its Owner keeps about it. */
+/** The Source Job of dbt-prod in uat, as the configuration of the environment sets it (FR-AR-18). */
+const SOURCE_JOB_TILE = {
+  projectId: '9367',
+  projectName: 'immoscoop_dataplatform_sql',
+  job: { id: '322951', name: 'daily UAT build', environmentName: 'UAT', kind: 'scheduled', generatesDocs: true },
+  setBy: null as string | null,
+  setAt: null as string | null,
+  lastSet: { runId: '58101536', status: 'processed', receivedAt: '2026-10-31T06:05:00Z', processedAt: '2026-10-31T06:07:00Z' },
+  dbtCloud: true,
+};
+
+/** The jobs of dbt-prod in dbt Cloud: a CI job and a job of Production cannot be its Source Job in uat. */
+const DBT_JOBS = [
+  { id: '322951', name: 'daily UAT build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'scheduled', generatesDocs: true, lastRun: { at: '2026-10-31T06:00:00Z', status: 'Success' }, current: true, notChoosable: null },
+  { id: '352118', name: 'UAT - Deploy - Merge build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: { at: '2026-10-31T09:50:00Z', status: 'Success' }, current: false, notChoosable: null },
+  { id: '324451', name: 'CI/CD - UAT - triggered by Github Pipelines', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'ci', generatesDocs: false, lastRun: null, current: false, notChoosable: 'ci' },
+  { id: '324502', name: 'CI/CD - prod - triggered by Github Pipelines', projectId: '9367', environmentId: '2', environmentName: 'Production', kind: 'merge', generatesDocs: true, lastRun: null, current: false, notChoosable: 'otherEnvironment' },
+];
+
+/** A delivery of the webhook, as registry keeps it (FR-AR-19). */
+const DELIVERY = {
+  eventType: 'job.run.completed',
+  webhookName: 'Data Hub uat',
+  accountId: '576',
+  projectId: '9367',
+  environmentName: 'UAT',
+  runStartedAt: null,
+  runFinishedAt: null,
+};
+
+/** The deliveries of the last 30 days, the newest first: failed, ignored, refused and recorded. */
+const DELIVERIES = [
+  { ...DELIVERY, id: '4', receivedAt: '2026-10-31T09:20:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58141207', runStatus: 'Success', set: { status: 'failed', error: 'The run has no catalog.json.', processedAt: null, current: false }, sourceJob: true },
+  { ...DELIVERY, id: '3', receivedAt: '2026-10-31T09:10:00Z', outcome: 'ignored', reason: 'notSourceJob', jobId: '324451', jobName: 'CI/CD - UAT - triggered by Github Pipelines', runId: '58212208', runStatus: 'Success', set: null, sourceJob: false },
+  { ...DELIVERY, id: '2', receivedAt: '2026-10-31T08:58:00Z', outcome: 'refused', reason: 'signature', eventType: null, webhookName: null, accountId: null, projectId: null, environmentName: null, jobId: null, jobName: null, runId: null, runStatus: null, set: null, sourceJob: false },
+  { ...DELIVERY, id: '1', receivedAt: '2026-10-31T06:05:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58101536', runStatus: 'Success', set: { status: 'processed', error: null, processedAt: '2026-10-31T06:07:00Z', current: true }, sourceJob: true },
+];
+
 const WEEKLY_DETAIL = {
   ...WEEKLY,
   description: 'One row per week and lead source.',
@@ -308,6 +346,8 @@ function serve({
   const hiddenQueries = new Set<string>();
   // The Messages as catalogue keeps them, changed by what the page asks.
   const talk = conversations.map((message) => ({ replies: [], replyCount: 0, unread: false, mine: false, ...message })) as Record<string, unknown>[];
+  // The Source Job of dbt-prod as registry keeps it, changed by what the page asks (FR-AR-18).
+  let sourceJob = { ...SOURCE_JOB_TILE };
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
   let resource: Record<string, unknown> = { ...WEEKLY_DETAIL, ...weekly };
   const PUBLICATION = { publishedAt: '2026-10-28T09:00:00Z', publishedBy: 'Max Verstraete', confirmedAt: '2026-10-28T09:00:00Z', confirmedBy: 'Max Verstraete' };
@@ -377,6 +417,26 @@ function serve({
     }
     if (/^\/collections\/(c1|c2|c-new)\/log$/.test(path)) {
       return json({ entries: [{ logId: 'COL-001', params: { actor: 'An Claes', name: 'Credit leads' }, at: '2026-09-03T08:00:00Z' }] });
+    }
+    // registry, as it keeps the Source Jobs and every delivery of the webhook (FR-AR-18, FR-AR-19).
+    if (path === '/admin/source-jobs' && method === 'GET') {
+      return json({ projects: [sourceJob], webhookUrl: 'https://registry.test/webhooks/dbt-cloud' });
+    }
+    if (path === '/admin/source-jobs/9367/jobs') {
+      return json({ environment: { id: '1', name: 'UAT' }, jobs: DBT_JOBS });
+    }
+    if (path === '/admin/source-jobs/9367' && method === 'PUT') {
+      const { jobId } = JSON.parse(init.body as string) as { jobId: string };
+      const job = DBT_JOBS.find((candidate) => candidate.id === jobId)!;
+      sourceJob = { ...sourceJob, job: { id: job.id, name: job.name, environmentName: job.environmentName, kind: job.kind, generatesDocs: job.generatesDocs }, setBy: 'Max Verstraete', setAt: new Date().toISOString() };
+      return json(sourceJob);
+    }
+    if (path === '/admin/deliveries') {
+      return json({ deliveries: DELIVERIES, toLookAt: 2 });
+    }
+    const again = /^\/runs\/(\d+)\/reprocess$/.exec(path);
+    if (again && method === 'POST') {
+      return json({ runId: again[1], status: 'pending' }, 202);
     }
     if (path === '/domain-model') {
       return json({
@@ -988,6 +1048,112 @@ describe('the web app, for the Data Team', () => {
     render(App, { config: CONFIG });
     expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
     expect(screen.queryByText('Zonder Collection')).toBeNull();
+  });
+});
+
+describe('Admin, for the Data Team', () => {
+  const UAT: Config = { ...CONFIG, environment: 'uat' };
+
+  it('is not in the rail of anyone else, and its address shows the page for what may not be seen (DEC-UX-130)', async () => {
+    const calls = serve();
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+    const rail = within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' }));
+    expect(rail.getByRole('link', { name: 'Learning Centre' })).toBeTruthy();
+    expect(rail.queryByRole('link', { name: 'Admin' })).toBeNull();
+    expect(calls.some((call) => call.path.startsWith('/admin/'))).toBe(false);
+  });
+
+  it('sits in the rail after the Learning Centre, a little apart, and opens on Webhooks (DEC-UX-130, OP-UX-51, OP-UX-52)', async () => {
+    serve({ roles: ['datateam'] });
+    open('/admin');
+    render(App, { config: UAT });
+    const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
+    const admin = await rail.findByRole('link', { name: 'Admin' });
+    await vi.waitFor(() => expect(location.pathname).toBe('/admin/webhooks'));
+    expect(admin.getAttribute('aria-current')).toBe('page');
+    expect(admin.classList.contains('apart')).toBe(true);
+    const links = rail.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
+    expect(links.indexOf('Admin')).toBe(links.indexOf('Learning Centre') + 1);
+    const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
+    expect(panel.getByText('Voor het Data Team: wat Data Hub uat voedt, en hoe dat loopt.')).toBeTruthy();
+    const tool = panel.getByRole('link', { name: /Webhooks/ });
+    expect(tool.getAttribute('aria-current')).toBe('page');
+    // The deliveries to look at: one refused, one failed.
+    await vi.waitFor(() => expect(tool.textContent).toContain('2'));
+    expect(screen.getByRole('heading', { level: 1, name: 'Webhooks' })).toBeTruthy();
+    expect(document.title).toBe('Data Hub — Webhooks');
+  });
+
+  it('shows the Source Job of each dbt project, and changes it to a job of this environment in a sheet (FR-AR-18)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    const tile = within(await screen.findByRole('region', { name: 'immoscoop_dataplatform_sql' }));
+    expect(tile.getByText('daily UAT build')).toBeTruthy();
+    expect(tile.getByText('322951')).toBeTruthy();
+    expect(tile.getByText('Gepland')).toBeTruthy();
+    expect(tile.getByText('Maakt de docs')).toBeTruthy();
+    expect(tile.getByText(/Laatste set: run 58101536, .*, verwerkt/)).toBeTruthy();
+    expect(tile.getByText('Uit de configuratie van Data Hub uat')).toBeTruthy();
+    expect(screen.getByText('https://registry.test/webhooks/dbt-cloud')).toBeTruthy();
+
+    await fireEvent.click(tile.getByRole('button', { name: 'Wijzig' }));
+    const sheet = within(screen.getByRole('dialog', { name: 'De Source Job van immoscoop_dataplatform_sql' }));
+    expect(((await sheet.findByRole('radio', { name: /^daily UAT build/ })) as HTMLInputElement).checked).toBe(true);
+    const make = sheet.getByRole('button', { name: 'Maak er de Source Job van' }) as HTMLButtonElement;
+    expect(make.disabled).toBe(true);
+    // A CI job, or a job of another environment, cannot be chosen, and says why.
+    expect((sheet.getByRole('radio', { name: /^CI\/CD - UAT/ }) as HTMLInputElement).disabled).toBe(true);
+    expect(sheet.getByText(/Een CI-job: hij bouwt pull requests/)).toBeTruthy();
+    expect((sheet.getByRole('radio', { name: /^CI\/CD - prod/ }) as HTMLInputElement).disabled).toBe(true);
+    expect(sheet.getByText('Een job van een andere omgeving, die een andere Data Hub leest.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('searchbox', { name: 'Zoek een job op naam of ID' }), { target: { value: '352118' } });
+    expect(sheet.queryByRole('radio', { name: /^daily UAT build/ })).toBeNull();
+    await fireEvent.click(sheet.getByRole('radio', { name: /^UAT - Deploy - Merge build/ }));
+    await fireEvent.click(make);
+
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(calls).toContainEqual({ method: 'PUT', path: '/admin/source-jobs/9367', body: { jobId: '352118' } });
+    const changed = within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql' }));
+    expect(changed.getByText('UAT - Deploy - Merge build')).toBeTruthy();
+    expect(changed.getByText('Merge')).toBeTruthy();
+    expect(changed.getByText(/^Ingesteld door Max Verstraete/)).toBeTruthy();
+  });
+
+  it('lists every delivery with what Data Hub did, and processes a failed set again (FR-AR-19, FR-AR-14)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    const list = within(await screen.findByRole('region', { name: 'Leveringen' }));
+    const items = await list.findAllByRole('button', { pressed: false });
+    expect(items).toHaveLength(3);
+    // The newest opens first: recorded, but its set failed.
+    const opened = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(opened.getByRole('heading', { name: 'Opgenomen, mislukt' })).toBeTruthy();
+    expect(opened.getByText('De verwerking mislukte: The run has no catalog.json.')).toBeTruthy();
+    expect(opened.getByText('De Current Version van immoscoop_dataplatform_sql blijft de vorige')).toBeTruthy();
+    await fireEvent.click(opened.getByRole('button', { name: 'Opnieuw verwerken' }));
+    expect(await opened.findByText('Data Hub haalt de run opnieuw op en verwerkt hem; de lijst toont hoe het liep.')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/runs/58141207/reprocess' });
+
+    // An ignored delivery says why, and what the Data Admin can do.
+    await fireEvent.click(list.getByRole('button', { name: /^Genegeerd/ }));
+    const ignored = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(ignored.getByText('Deze job is geen Source Job van Data Hub uat.')).toBeTruthy();
+    expect(ignored.getByText(/haal de job uit de webhook Data Hub uat in dbt Cloud/)).toBeTruthy();
+    expect(ignored.queryByRole('button', { name: 'Opnieuw verwerken' })).toBeNull();
+
+    // The filter shows one kind: a refused delivery reads nothing of the job or the run.
+    await fireEvent.click(list.getByRole('radio', { name: 'Geweigerd 1' }));
+    expect(list.getAllByRole('button', { pressed: true })).toHaveLength(1);
+    expect(list.queryAllByRole('button', { pressed: false })).toHaveLength(0);
+    const refused = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(list.getByText('Onbekende afzender')).toBeTruthy();
+    expect(refused.getByRole('heading', { name: 'Geweigerd' })).toBeTruthy();
+    expect(refused.getByText('De handtekening past niet bij het geheim van Data Hub uat.')).toBeTruthy();
+    expect(refused.getByText(/zet het in datahub-dbt-webhook-secret/)).toBeTruthy();
   });
 });
 

@@ -4,6 +4,7 @@ import * as search from './0002-search.js';
 import * as nodeMeta from './0003-node-meta.js';
 import * as domainModel from './0004-domain-model.js';
 import * as storage from './0005-storage.js';
+import * as webhooks from './0006-webhooks.js';
 
 /** The migrations of registry, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -12,4 +13,5 @@ export const migrations: Record<string, Migration> = {
   '0003-node-meta': nodeMeta,
   '0004-domain-model': domainModel,
   '0005-storage': storage,
+  '0006-webhooks': webhooks,
 };

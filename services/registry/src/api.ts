@@ -9,8 +9,8 @@ export interface ApiOptions {
   reading: Reading;
   sets: Pick<ArtifactSets, 'record' | 'reprocess'>;
   dbtCloud: Pick<DbtCloud, 'run'>;
-  /** The Source Jobs of this environment: job ID → dbt project ID (DEC-AR-01). */
-  sourceJobs: ReadonlyMap<string, string>;
+  /** The Source Jobs of this environment now: job ID → dbt project ID (DEC-AR-01, FR-AR-18). */
+  sourceJobs: () => Promise<ReadonlyMap<string, string>>;
   /** Starts the ingest job, which processes the pending sets. */
   startIngest: () => Promise<void>;
   /** The Domain Model in use, read from the collector each time (DEC-AR-05). */
@@ -115,7 +115,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (!run) {
         return reply.code(404).send({ error: 'not_found', message: `dbt Cloud knows no run ${runId}.` });
       }
-      if (!run.success || options.sourceJobs.get(run.jobId) !== run.projectId) {
+      if (!run.success || (await options.sourceJobs()).get(run.jobId) !== run.projectId) {
         return reply.code(409).send({ error: 'not_a_source_run', message: `Run ${runId} is not a successful run of a Source Job of this environment.` });
       }
       status = await options.sets.record({ runId, jobId: run.jobId, projectId: run.projectId });
