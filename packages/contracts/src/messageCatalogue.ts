@@ -425,7 +425,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['dataTeam'],
     when: 'A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on.',
     per: 'One per Resource, never one per run (DEC-CV-10).',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-10', 'DEC-SR-12', 'DEC-SR-27', 'DEC-CV-10'],
     parameters: [
       { name: 'exposure', type: 'name', about: 'The exposure it came in through' },
@@ -474,7 +474,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the description from dbt of a Resource, or of one of its fields. A Change further upstream stays an entry in the Log (FR-AR-12).',
     per: 'One per Resource and Artifact Set, with every description that changed.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-RC-17', 'DEC-RC-03', 'FR-LR-38'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
@@ -591,7 +591,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set adds, removes, renames or retypes a field of a Resource after its last Confirmation.',
     per: 'One per Resource and Artifact Set; all point to its one warning.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-MR-12', 'DEC-MR-08', 'DEC-DH-66', 'FR-LR-38'],
     parameters: [
       { name: 'confirmed', type: 'date', about: 'The day of its last Confirmation' },
@@ -708,7 +708,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-MR-09', 'DEC-SR-08', 'DEC-MR-08'],
     openPoints: ['OP-MR-04'],
     parameters: [
@@ -870,7 +870,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
       { name: 'collection', type: 'object', about: 'The Collection it is in now' },
