@@ -8,11 +8,12 @@
   · up to 100 MB it runs at once: the grid, 100 rows a page, with its Query ID; Claude gets the rows too and answers from them;
   · from 100 MB to 1 GB the frame shows what it reads, and only the button of the User runs it: Claude cannot approve;
   · above 1 GB the frame offers a Request to the Data Team, which only the User sends (MSG-QRY-01).
-  How the User approves and sends, and that Claude cannot, is open (OP-CL-02). No export (DEC-UX-120). "Open in Data Hub"
+  Only the User approves and sends, with buttons Claude cannot use (DEC-CL-07); Claude gets the rows for every Resource the
+  User sees (DEC-CL-06). No export (DEC-UX-120). "Open in Data Hub"
   opens the Preview tab of the Resource (FR-CL-06); Claude names the Level of the Resource in its answer (FR-CL-05).
   Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-09
-  Decisions: DEC-CL-02, DEC-SR-29, DEC-SR-30, DEC-SR-39, DEC-UX-120, DEC-DH-15.
-  Open points: OP-CL-01, OP-CL-02, OP-CL-04, OP-CL-06.
+  Decisions: DEC-CL-02, DEC-CL-06, DEC-CL-07, DEC-SR-29, DEC-SR-30, DEC-SR-39, DEC-UX-120, DEC-DH-15.
+  Open points: OP-CL-01, OP-CL-04.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-preview.html and
   the Run button of query.html.
   Rules: ../principles.md  ·  Placeholder content only.

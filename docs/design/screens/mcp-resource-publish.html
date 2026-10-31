@@ -12,10 +12,10 @@
   · not ready: without a description of the view in dbt it stays 1 · Available and cannot be published, as on the page (DEC-MR-10);
   · not the Owner: the User is in the Data Team but not in the Owner Unit, which alone publishes (FR-SR-16); no frame is
     opened, and Claude says who publishes and offers to ask them (FR-CL-03).
-  How the button is kept from Claude is open (OP-CL-02).
+  The button is the User's alone: Claude cannot use it (DEC-CL-07). The Log says it was published through Claude (DEC-CL-08).
   Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12
-  Decisions: DEC-CL-01, DEC-CL-02, DEC-SR-28, DEC-MR-07, DEC-MR-10, DEC-UX-31, DEC-UX-63, DEC-DH-15.
-  Open points: OP-CL-01, OP-CL-02.
+  Decisions: DEC-CL-01, DEC-CL-02, DEC-CL-07, DEC-CL-08, DEC-SR-28, DEC-MR-07, DEC-MR-10, DEC-UX-31, DEC-UX-63, DEC-DH-15.
+  Open points: OP-CL-01.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-publish.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -78,7 +78,7 @@
    <div class="confirm-bar" data-pane-group="pub" data-pane="ready"><label><input type="checkbox"><span>For the credit team, I confirm that this Resource is correct: what it is and what it stands for.</span></label><button class="btn-primary" data-go="pub:done"><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
    <div class="confirm-bar" data-pane-group="pub" data-pane="notready" hidden><label><input type="checkbox" disabled><span>For the credit team, I confirm that this Resource is correct: what it is and what it stands for.</span></label><button class="btn-primary" disabled><i class="ph-fill ph-globe-simple" style="font-size:15px"></i>Publish and confirm</button></div>
    <span data-pane-group="pub" data-pane="ready notready">Only you can publish it; Claude cannot.</span>
-   <span data-pane-group="pub" data-pane="done" hidden>Kept in the Log of the Resource, with the fingerprint of today.</span>
+   <span data-pane-group="pub" data-pane="done" hidden>Kept in the Log of the Resource with the fingerprint of today: by you, through Claude.</span>
    <a class="text-link open-dh" href="resource-publish.html"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a>
   </div>
  </section>
