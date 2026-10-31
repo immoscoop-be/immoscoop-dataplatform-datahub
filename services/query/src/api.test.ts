@@ -10,7 +10,7 @@ import { parseLens, valuesFor } from './lens-api.js';
 import { createLenses } from './lenses.js';
 import { buildApp } from './app.js';
 import { type BigQuery, BigQueryRefused, type DryRun, type RunOptions, ResultExpired } from './bigquery.js';
-import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
+import { type BrokenMessage, type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource, type SeenCollection } from './catalogue.js';
 import type { QueryDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
 import { createBeneath } from './preflight.js';
@@ -192,8 +192,8 @@ function fakeBigQuery() {
     refuse: (message: string) => {
       refuseNext = message;
     },
-    expire: () => {
-      expired = true;
+    expire: (gone = true) => {
+      expired = gone;
     },
     resize: (bytes: number | null) => {
       size = bytes;
@@ -221,7 +221,16 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   const decisions: { requestId: string; outcome: string; text: string; decider: { id: string; name: string } }[] = [];
   /** The Lenses that grew into large, as query told catalogue (MSG-LEN-02). */
   const large: { lensId: string; reads: number; threshold: number }[] = [];
+  /** What query told catalogue became Broken, and works again (MSG-QRY-02, MSG-LEN-05). */
+  const brokenTold: { subject: { kind: string; id: string; name?: string; ownerId?: string }; fields: BrokenMessage }[] = [];
+  const worksTold: { kind: string; id: string }[] = [];
   const catalogue: Catalogue = {
+    async broken(subject, fields) {
+      brokenTold.push({ subject, fields });
+    },
+    async worksAgain(subject) {
+      worksTold.push(subject);
+    },
     async resource(id, authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
@@ -329,9 +338,16 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         // The scheduler, by its Google ID token for query's own address (DEC-LE-20).
         checkers: {
           async verify(token) {
+            // catalogue, after a new Current Version (FR-SR-52).
+            if (token === 'catalogue-id-token') return 'datahub-catalogue@project.iam.gserviceaccount.com';
             if (token !== 'scheduler-id-token') throw new TokenError('Service token rejected: ERR_JWS_INVALID');
             return 'datahub-scheduler@project.iam.gserviceaccount.com';
           },
+        },
+        // identity, as it would exchange the Excel key of An and of Mia (TR-PF-07).
+        excel: {
+          exchanger: { accessToken: async (key) => ({ dhx_an: an, dhx_mia: mia })[key]?.slice('Bearer '.length) },
+          verifier: issuer.verifier,
         },
       },
     });
@@ -686,9 +702,39 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(an, 'POST', `/lenses/${lensId}/requests`, {})).json()).toMatchObject({ error: 'not_needed' });
   });
 
+  it('gives Excel the result of a Lens as CSV with an Excel key: its defaults, at most 10,000 rows, as a run of the User (DEC-CH-06, TR-PF-07)', async () => {
+    const basic = (key: string) => `Basic ${Buffer.from(`an.claes@immoscoop.be:${key}`).toString('base64')}`;
+    const excel = (authorization?: string, id = lensId) => app.inject({ method: 'GET', url: `/excel/lenses/${id}`, headers: authorization ? { authorization } : {} });
+    const asked = await excel();
+    expect(asked.statusCode).toBe(401);
+    expect(asked.headers['www-authenticate']).toMatch(/^Basic realm="Data Hub"/);
+    expect((await excel(basic('dhx_unknown'))).statusCode).toBe(401);
+    expect((await excel(`Bearer ${an.slice(7)}`)).statusCode).toBe(401);
+
+    // A result read on from its job, as the earlier test left the pages expired.
+    fake.expire(false);
+    const got = await excel(basic('dhx_an'));
+    expect(got.statusCode).toBe(200);
+    expect(got.headers['content-type']).toMatch(/^text\/csv/);
+    expect(got.headers['x-datahub-query-id']).toMatch(/^q-\d{8}-[0-9a-f]{6}$/);
+    const lines = got.body.replace(/^\ufeff/, '').trimEnd().split('\r\n');
+    expect(lines.slice(0, 3)).toEqual(['week_start,leads', '2026-10-19,413', '2026-10-19,']);
+    expect(lines).toHaveLength(211);
+    // Its defaults, as many rows as Excel takes at once, and a run in the Query Log of the User.
+    expect(fake.runs.at(-1)?.options.pageSize).toBe(10_000);
+    expect(fake.runs.at(-1)?.options.parameters?.find((parameter) => parameter.name === 'leadChannel')?.parameterValue).toEqual({ value: 'Form' });
+    const item = (await call(an, 'GET', '/queries')).json().queries.find((query: { lensOf?: string }) => query.lensOf === lensId);
+    expect(item.runs).toBeGreaterThan(1);
+
+    // A Lens that waits for the Data Team runs for nobody, in Excel neither; one the User does not see is not found.
+    expect((await excel(basic('dhx_mia'), hugeLens)).json()).toMatchObject({ error: 'waiting' });
+    expect((await excel(basic('dhx_mia'), lensId)).statusCode).toBe(404);
+  });
+
   it('lists a Lens on a Resource as one row, made by its author, for its tab History (FR-SR-44)', async () => {
     const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
-    expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 1 });
+    // Two runs: one on its page, one from Excel.
+    expect(history.queries[0]).toMatchObject({ id: lensId, kind: 'lens', name: 'Leads per source, week by week', ownerName: 'An Claes', runs: 2 });
     expect(history.summary.lenses).toBe(1);
   });
 
@@ -788,23 +834,113 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(lens.log).toMatchObject([{ logId: 'BRK-002', params: { restored: 'lead_source' } }, { logId: 'BRK-001' }]);
   });
 
-  it('checks every Lens once a day with its defaults, for the scheduler only (DEC-LE-20)', async () => {
+  it('checks every Lens once a day with its defaults, and every query with what it kept, for the scheduler only (DEC-LE-20, FR-SR-52)', async () => {
     const check = (authorization?: string) => app.inject({ method: 'POST', url: '/internal/lenses/check', headers: authorization ? { authorization } : {} });
     expect((await check()).statusCode).toBe(401);
     expect((await check(an)).statusCode).toBe(401);
 
     fake.lose({ text: 'weekly_lead_volume', message: `Not found: Table ${PROJECT}:dbt_prod_stacks.weekly_lead_volume was not found in location europe-west1` });
     // The waiting Lens of Mia is not checked: it does not run until the Data Team decides.
-    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 2, works: 0, grown: 0, stopped: 0 });
+    brokenTold.splice(0);
+    // Of the queries, only An's first ran a Pre-flight that passed, so only it kept SQL to check without An.
+    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 2, works: 0, grown: 0, stopped: 0, queries: { checked: 1, broken: 1, works: 0 } });
     expect((await call(mia, 'GET', `/lenses/${largeLens}`)).json().lens.broken).toMatchObject({ kind: 'table', name: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume` });
+    expect((await call(an, 'GET', `/queries/${id}`)).json().query.broken).toMatchObject({ kind: 'table', name: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume` });
+    // Each is told once: the Owner Unit of each Lens (MSG-LEN-05), and An of the query, with the Resource by its name (MSG-QRY-02).
+    const today = new Date().toISOString().slice(0, 10);
+    expect(brokenTold.map(({ subject }) => subject.kind).sort()).toEqual(['lens', 'lens', 'query']);
+    expect(brokenTold.find(({ subject }) => subject.kind === 'query')).toEqual({
+      subject: { kind: 'query', id, name: 'Leads per source', ownerId: '101' },
+      fields: { since: today, missing: [{ kind: 'resource', resource: 'Weekly lead volume' }] },
+    });
+    expect((await check('Bearer scheduler-id-token')).json()).toMatchObject({ broken: 0, queries: { checked: 1, broken: 0, works: 0 } });
+    expect(brokenTold).toHaveLength(3);
 
     fake.lose(null);
     fake.resize(400_000_000);
     // An's Lens grows into large; Mia's was large already.
-    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 0, works: 2, grown: 1, stopped: 0 });
+    worksTold.splice(0);
+    expect((await check('Bearer scheduler-id-token')).json()).toEqual({ checked: 2, broken: 0, works: 2, grown: 1, stopped: 0, queries: { checked: 1, broken: 0, works: 1 } });
     expect((await call(an, 'GET', `/lenses/${lensId}`)).json().lens).toMatchObject({ range: 'approve', broken: null });
+    expect((await call(an, 'GET', `/queries/${id}`)).json().query.broken).toBeNull();
+    expect(worksTold.map((subject) => subject.kind).sort()).toEqual(['lens', 'lens', 'query']);
     expect(large.splice(0).map((grew) => grew.lensId)).toEqual([lensId]);
     fake.resize(null);
+  });
+
+  let brokenQuery: string;
+  const reading = `select week_start, lead_source from \`${WEEKLY.key}\` where week_start >= '2026-09-01'`;
+
+  it('calls a query Broken when what it ran before reads what no longer exists, and tells who made it once; a typo is not (FR-SR-53, FR-SR-52)', async () => {
+    brokenQuery = (await call(an, 'POST', '/queries', { name: 'Sources by week', resources: [WEEKLY.id, SOURCES.id] })).json().query.id;
+    expect((await call(an, 'POST', `/queries/${brokenQuery}/preflight`, { sql: reading })).json()).toMatchObject({ preflight: { runnable: true }, broken: null });
+    expect((await call(an, 'POST', `/queries/${brokenQuery}/runs`, { sql: reading })).statusCode).toBe(201);
+    // What the web app gets never holds the SQL Data Hub keeps for its own checks.
+    expect((await call(an, 'GET', `/queries/${brokenQuery}`)).json().query).not.toHaveProperty('checkSql');
+
+    // A typo is not Broken: what the query ran before still works.
+    brokenTold.splice(0);
+    fake.lose({ text: 'week_strt', message: 'Unrecognized name: week_strt at [1:8]' });
+    const typo = await call(an, 'POST', `/queries/${brokenQuery}/preflight`, { sql: reading.replace('week_start,', 'week_strt,') });
+    expect(typo.json()).toMatchObject({ preflight: { runnable: false, problems: [{ kind: 'invalid' }] }, broken: null });
+
+    // The column it ran with is gone: it is Broken, in its Log, and An is told once (MSG-QRY-02).
+    fake.lose({ text: 'lead_source', message: 'Unrecognized name: lead_source at [1:20]' });
+    const broken = await call(an, 'POST', `/queries/${brokenQuery}/preflight`, { sql: reading });
+    expect(broken.json()).toMatchObject({ preflight: { runnable: false }, broken: { kind: 'column', name: 'lead_source', since: expect.any(String) } });
+    expect((await call(an, 'POST', `/queries/${brokenQuery}/runs`, { sql: reading })).json()).toMatchObject({ error: 'not_runnable', broken: { kind: 'column', name: 'lead_source' } });
+    // BigQuery does not say of which Resource the column was: the Message names those the query reads.
+    expect(brokenTold).toEqual([
+      {
+        subject: { kind: 'query', id: brokenQuery, name: 'Sources by week', ownerId: '101' },
+        fields: { since: new Date().toISOString().slice(0, 10), missing: [{ kind: 'column', column: 'lead_source', resource: 'Weekly lead volume / Lead sources' }] },
+      },
+    ]);
+    expect(await database.db.selectFrom('queryLog').select(['logId', 'params']).where('queryId', '=', brokenQuery).execute()).toEqual([{ logId: 'BRK-001', params: { missing: 'lead_source', run: '' } }]);
+    // The red dot: in the panel of Query, and in the queries on a Resource for its Owner Unit (FR-SR-43, FR-SR-44).
+    expect((await call(an, 'GET', '/queries')).json().queries.find((query: { id: string }) => query.id === brokenQuery).broken).toMatchObject({ kind: 'column', name: 'lead_source' });
+    expect((await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json().queries.find((query: { id: string }) => query.id === brokenQuery).broken).toMatchObject({ kind: 'column' });
+    expect((await call(an, 'GET', `/queries/${brokenQuery}`)).json().query.broken).toMatchObject({ kind: 'column', name: 'lead_source' });
+  });
+
+  it('works again by a change that runs, and by the return of what it reads (FR-SR-53)', async () => {
+    worksTold.splice(0);
+    // A change that no longer reads the column runs, and makes it work again.
+    const without = `select week_start from \`${WEEKLY.key}\` where week_start >= '2026-09-01'`;
+    expect((await call(an, 'POST', `/queries/${brokenQuery}/preflight`, { sql: without })).json()).toMatchObject({ preflight: { runnable: true }, broken: null });
+    expect(worksTold).toEqual([{ kind: 'query', id: brokenQuery }]);
+    expect((await database.db.selectFrom('queryLog').select('logId').where('queryId', '=', brokenQuery).orderBy('id').execute()).map((row) => row.logId)).toEqual(['BRK-001', 'BRK-002']);
+    fake.lose(null);
+
+    // A run that does not find the table of one of its Resources has Data Hub check what reads it (FR-SR-52, the third moment).
+    brokenTold.splice(0);
+    fake.lose({ text: 'weekly_lead_volume', message: `Not found: Table ${PROJECT}:dbt_prod_stacks.weekly_lead_volume was not found in location europe-west1` });
+    expect((await call(an, 'POST', `/queries/${brokenQuery}/runs`, { sql: without })).json()).toMatchObject({ error: 'not_runnable', broken: { kind: 'table' } });
+    // Mia's Lens reads it too, without anyone running it.
+    expect((await call(mia, 'GET', `/lenses/${largeLens}`)).json().lens.broken).toMatchObject({ kind: 'table' });
+    expect(brokenTold.map(({ subject }) => `${subject.kind} ${subject.id}`).sort()).toEqual([`lens ${largeLens}`, `lens ${lensId}`, `query ${brokenQuery}`, `query ${id}`].sort());
+
+    // It comes back: the daily check finds it, and each is told it works again.
+    fake.lose(null);
+    worksTold.splice(0);
+    await app.inject({ method: 'POST', url: '/internal/lenses/check', headers: { authorization: 'Bearer scheduler-id-token' } });
+    expect((await call(an, 'GET', `/queries/${brokenQuery}`)).json().query.broken).toBeNull();
+    expect(worksTold.map((subject) => `${subject.kind} ${subject.id}`).sort()).toEqual([`lens ${largeLens}`, `lens ${lensId}`, `query ${brokenQuery}`, `query ${id}`].sort());
+  });
+
+  it('checks what reads the Resources that changed after a new Current Version, for catalogue and the scheduler only (FR-SR-52)', async () => {
+    const checks = (authorization: string | undefined, resources: unknown) =>
+      app.inject({ method: 'POST', url: '/internal/checks', headers: authorization ? { authorization } : {}, payload: { resources } });
+    expect((await checks(undefined, [WEEKLY.id])).statusCode).toBe(401);
+    expect((await checks(an, [WEEKLY.id])).statusCode).toBe(401);
+    expect((await checks('Bearer catalogue-id-token', ['weekly'])).statusCode).toBe(400);
+    // Nothing reads Salaries.
+    expect((await checks('Bearer catalogue-id-token', [SECRET.id])).json()).toEqual({ queries: { checked: 0, broken: 0, works: 0 }, lenses: { checked: 0, broken: 0, works: 0 } });
+
+    fake.lose({ text: 'weekly_lead_volume', message: `Not found: Table ${PROJECT}:dbt_prod_stacks.weekly_lead_volume was not found in location europe-west1` });
+    expect((await checks('Bearer catalogue-id-token', [WEEKLY.id.toUpperCase()])).json()).toEqual({ queries: { checked: 2, broken: 2, works: 0 }, lenses: { checked: 2, broken: 2, works: 0 } });
+    fake.lose(null);
+    expect((await checks('Bearer catalogue-id-token', [WEEKLY.id])).json()).toEqual({ queries: { checked: 2, broken: 0, works: 2 }, lenses: { checked: 2, broken: 0, works: 2 } });
   });
 
   it('offers a new query the Lenses on its Resources, exactly these first, by the words of its question (FR-SR-47, FR-SR-48, DEC-SR-42)', async () => {

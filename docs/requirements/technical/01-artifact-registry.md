@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Artifact registry](../functional/01-artifact-registry.md) |
-| Status | Fetching, storing, processing and reading implemented; Changes follow |
+| Status | Fetching, storing, processing, reading and Changes implemented |
 | Source of truth | This file |
 
 How a run of a Source Job becomes the Current Version of its dbt project, in the service [registry](../../architecture/services/registry.md).
@@ -125,6 +125,23 @@ Without the Domain Model the proposal still holds what dbt says, without a mappi
 **Status:** Implemented · **Realises:** [DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06), [FR-SR-54](../functional/04-stacks-and-resources.md#fr-sr-54)
 
 `GET /internal/nodes/{id}/lineage?direction=upstream|downstream` takes no Access Token but a Google ID token for registry's own address, of the service account of catalogue only (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`, `DATAHUB_REGISTRY_URL`), as catalogue checks who may see the Resource ([TR-SR-11](04-stacks-and-resources.md#tr-sr-11)). It walks the lineage of the Node as `GET /nodes/{id}/lineage` does, up to fifty steps and five hundred models, across both dbt projects, and gives of each model only what everyone who sees the Resource may read: its name, kind, layer, project and distance, and the links between them ([DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)). The layer is the one Colleciónes tags it with, else the folder under `models/` it sits in, else its kind, such as `seed`. Exposures are left out. A Node no Current Version holds answers 404.
+
+<a id="tr-ar-14"></a>
+### TR-AR-14 · registry compares each new Current Version and follows its Changes downstream
+
+**Status:** Implemented · **Realises:** [FR-AR-11](../functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04)
+
+When an Artifact Set takes over from another as the Current Version of its dbt project, the ingest job compares the two, as both keep their rows ([TR-AR-04](#tr-ar-04)), Node by Node, for the models, seeds, snapshots and sources ([Kinds of Change](../functional/01-artifact-registry.md#kinds-of-change)):
+
+- **description:** the description of the Node or of one of its columns differs;
+- **logic:** the checksum of its code differs;
+- **type:** a column keeps its name and gets another type;
+- **structural:** a column is added or removed; a rename is one removed and one added;
+- **added** or **removed:** the Node appears or goes.
+
+Each Change is followed downstream through the links of every Current Version, across both dbt projects as [TR-AR-11](#tr-ar-11) walks them, however deep, up to a hundred steps against a cycle, to the tables of Resources: the Nodes with a `relation` that an exposure tagged `datahub` depends on, in any Current Version ([TR-AR-08](#tr-ar-08)). A Node that went is followed from the Nodes it fed in the previous version. Each table is reached once per Change, at its shortest distance. A Change of a Resource's own table, other than its code, reaches it at distance 0 through the tables registry already sends, which catalogue compares itself ([TR-SR-13](04-stacks-and-resources.md#tr-sr-13)); only a change of its own code is passed on at distance 0.
+
+The Changes go with the tables to `POST /internal/resources`, as `changes`: per Change its kind, the name of the Node, the field, its direction or its types before and after, and the tables it reaches with their distance. A Change that reaches no table is not sent. A set that does not take over, or processes the Current Version again, is compared with nothing. A failure to compare is logged and the tables are sent without Changes.
 
 ## Open points
 

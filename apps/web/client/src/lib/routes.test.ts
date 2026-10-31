@@ -78,10 +78,11 @@ describe('the addresses of the web app', () => {
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });
+    expect(route('/me/keys')).toEqual({ kind: 'me', tab: 'keys' });
   });
 
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {
-    for (const path of ['/me/profile', '/me/keys', '/collections/c-1/edit', '/lenses', '/x']) {
+    for (const path of ['/me/profile', '/me/tokens', '/collections/c-1/edit', '/lenses', '/x']) {
       expect([path, route(path)]).toEqual([path, { kind: 'notFound' }]);
     }
   });

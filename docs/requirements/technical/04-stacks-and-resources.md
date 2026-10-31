@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Resources](../functional/04-stacks-and-resources.md) |
-| Status | Registration through exposures, with the fields, Level, Fingerprint and Message of a new Resource, Resources in Collections and their Log implemented; Publication, Changes and reading the data follow |
+| Status | Registration through exposures, with the fields, Level, Fingerprint and Message of a new Resource, Resources in Collections and their Log, the Changes upstream and Broken queries implemented; Publication and reading the data follow |
 | Source of truth | This file |
 
 How the tables under the exposures of the dbt projects become Resources, in the service [catalogue](../../architecture/services/catalogue.md), from what [registry](../../architecture/services/registry.md) hands over ([TR-AR-08](01-artifact-registry.md#tr-ar-08)).
@@ -207,6 +207,28 @@ The previews of a Resource by a User are one query of the kind `preview`, named 
 **Status:** Implemented · **Realises:** [FR-SR-44](../functional/04-stacks-and-resources.md#fr-sr-44), [DEC-SR-31](../functional/04-stacks-and-resources.md#dec-sr-31), [DEC-SR-41](../functional/04-stacks-and-resources.md#dec-sr-41)
 
 `GET /resources/{id}/queries` gives every query with a run on the Resource, of every User, newest run first: its name, its kind, who made it and whether that is the User, its runs, its last run, and what that read, or what its Pre-flight said, or that it failed. On top, the queries with a run in the last 30 days, how many of them are Lenses, and how many colleagues made them. Only the Owner Unit of the Resource and the Data Team get it, as catalogue answers whether the User manages its Collection with the token of the User (`GET /collections/{id}`); anyone else gets `403 forbidden`. Each opens as a query, with its SQL and history, for them ([TR-SR-17](#tr-sr-17)); the pages of a result stay with who ran it.
+
+<a id="tr-sr-22"></a>
+### TR-SR-22 · The Changes upstream of a Resource, in its Log
+
+**Status:** Implemented · **Realises:** [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04), [MSG-RES-04](../functional/message-catalogue.md#msg-res-04)
+
+The `changes` that registry sends with the tables of a dbt project ([TR-AR-14](01-artifact-registry.md#tr-ar-14)) go, in the same transaction, into the Log of every Resource on a table they reach that is not withdrawn, whatever its dbt project, each with the name of the model it happened in and its distance, nothing filtered out: `ART-010` for a field added or removed, `ART-011` for new code, `ART-012` for a field retyped, `ART-013` for a description, `ART-014` for a model upstream that was removed and `ART-015` for one added. The text of `ART-010` and `ART-012` names the model when it is upstream. A Resource in a Collection whose own code or code upstream changed gets one Message per call, [MSG-RES-04](../functional/message-catalogue.md#msg-res-04), with the nearest such model and its distance.
+
+<a id="tr-sr-23"></a>
+### TR-SR-23 · Broken queries, and what reads a Resource checked at three moments
+
+**Status:** Implemented · **Realises:** [FR-SR-52](../functional/04-stacks-and-resources.md#fr-sr-52), [FR-SR-53](../functional/04-stacks-and-resources.md#fr-sr-53), [DEC-UX-160](../../design/principles.md#dec-ux-160), [MSG-QRY-02](../functional/message-catalogue.md#msg-qry-02), [MSG-LEN-05](../functional/message-catalogue.md#msg-len-05)
+
+Each Pre-flight or run of a query that can run keeps its SQL as BigQuery reads it, with the full names of its Resources in their own case ([DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)), and its Parameters (`queries.check_sql`, `queries.check_parameters`), so that Data Hub can dry-run it without its User. A query is Broken when a dry run of that kept SQL fails because a table, view or dataset is not found, or a column is not recognised: query keeps what it misses and since when (`queries.broken`) and writes `BRK-001` in its Log (`query_log`); a typo in SQL being written is not Broken, as the kept SQL still runs. A Pre-flight that can run, of a changed SQL or of the same, or a dry run of the kept SQL that succeeds again, makes it work again, with `BRK-002`. Every change of state is written once. A Broken query answers its Pre-flight, a refused run and a failed run with what it misses (`broken`); the panel of Query and the queries on a Resource ([TR-SR-21](#tr-sr-21)) list it with what it misses, a Lens there with what the Lens misses. A Preview is made afresh from its Resource each time and the runs of a Lens follow their Lens, so neither is Broken itself.
+
+What reads a Resource is checked at three moments, each a dry run of every Lens that runs, with its defaults ([TR-LE-06](09-lenses.md#tr-le-06)), and of every query with kept SQL, eight at a time:
+
+1. After a new Current Version, catalogue sends the Resources it withdrew, brought back, or whose fields were removed, renamed or added, to `POST /internal/checks` of query, with a Google ID token of its own service account for the address of query (`DATAHUB_QUERY_URL`, `DATAHUB_CATALOGUE_SERVICE_ACCOUNT`). It waits at most 20 seconds and answers registry either way.
+2. Once a day the scheduler's `POST /internal/lenses/check` also dry-runs every query with kept SQL, which finds a table dropped outside dbt too.
+3. When a Pre-flight, a run or a Preview of a User does not find the table of one of its Resources, query checks what reads that Resource, at most once in ten minutes per Resource.
+
+Each time one becomes Broken, query asks catalogue, as itself, to tell who made the query ([MSG-QRY-02](../functional/message-catalogue.md#msg-qry-02)) or the Owner Unit of the Lens ([MSG-LEN-05](../functional/message-catalogue.md#msg-len-05)): `POST /internal/queries/{id}/broken` with its name and who made it, or `POST /internal/lenses/{id}/broken`, with the day it was found and what is missing, a table by the Display Name of its Resource, a column with the Resources the query reads, as BigQuery does not say of which. The Message starts in the state `broken`, is seen by who made the query (`params.owner`) or by who sees the Lens, and is For you for them. When it works again, `POST /internal/{queries|lenses}/{id}/works` puts that Message in the state `worksAgain` and makes it unread again. A Message that could not be sent is logged, not sent again.
 
 ## Open points
 

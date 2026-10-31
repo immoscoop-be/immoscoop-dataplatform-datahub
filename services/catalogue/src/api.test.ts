@@ -11,6 +11,7 @@ import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
+import { QueryUnavailable } from './query.js';
 import { RegistryUnavailable } from './registry.js';
 import { createLearning } from './learning.js';
 import { createMessages } from './messages.js';
@@ -152,6 +153,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
   const groupsOf = new Map<string, Group[]>();
   let identityDown = false;
   let registryDown = false;
+  /** What catalogue had query check after a new Current Version (FR-SR-52). */
+  const checkedByQuery: string[][] = [];
+  let queryDown = false;
 
   beforeAll(async () => {
     database = createDatabase<CatalogueDatabase>({ connectionString: url }, schema);
@@ -210,6 +214,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         requests: createRequests(database.db),
         learning: createLearning(database.db),
         messages: createMessages(database.db),
+        query: {
+          async check(resourceIds) {
+            if (queryDown) throw new QueryUnavailable('query answered 503');
+            checkedByQuery.push([...resourceIds]);
+          },
+        },
         // query tells about its Lenses with its own Google ID token (DEC-PF-30).
         lensCallers: {
           async verify(token) {
@@ -217,6 +227,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
               throw new TokenError('Service token rejected: ERR_JWS_INVALID');
             }
             return 'datahub-query@project.iam.gserviceaccount.com';
+          },
+        },
+        // identity tells about the Excel key of a User (FR-PL-03).
+        keyCallers: {
+          async verify(token) {
+            if (token !== 'identity-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-identity@project.iam.gserviceaccount.com';
           },
         },
       },
@@ -402,7 +421,23 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
       const answer = await fromRegistry(update('1', ['visits', 'leads']));
       expect(answer.statusCode).toBe(200);
-      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0 });
+      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
+      expect(checkedByQuery).toEqual([]);
+    });
+
+    it('has query check what reads a Resource a new Current Version withdrew or brought back, and answers registry when query does not (FR-SR-52)', async () => {
+      const withdrawn = (await fromRegistry(update('2', ['visits']))).json();
+      expect(withdrawn).toMatchObject({ withdrawn: 1, changed: [expect.any(String)] });
+      expect(checkedByQuery.splice(0)).toEqual([withdrawn.changed]);
+      queryDown = true;
+      try {
+        const back = await fromRegistry(update('2', ['visits', 'leads']));
+        expect(back.statusCode).toBe(200);
+        expect(back.json()).toMatchObject({ back: 1, changed: withdrawn.changed });
+        expect(checkedByQuery).toEqual([]);
+      } finally {
+        queryDown = false;
+      }
     });
 
     it('lets only the Data Team see the Resources without Collection and add them to one (TR-SR-04)', async () => {
@@ -746,6 +781,11 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(parseUpdate({ ...update('3', []), tables: [{ key: 'x' }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), projectName: 5 })).toBe('The name of the dbt project is a text, or null.');
       expect(parseUpdate({ ...update('3', []), generatedAt: 'yesterday' })).toMatch(/ISO 8601/);
+      // What changed upstream, followed downstream by registry (FR-AR-12).
+      const change = { kind: 'logic', node: 'stg_leads', reaches: [{ nodeId: 'model.p.leads', distance: 2 }] };
+      expect(parseUpdate({ ...update('3', []), changes: [change] })).toMatchObject({ changes: [change] });
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, kind: 'moved' }] })).toMatch(/Every change has a kind/);
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, reaches: [{ nodeId: 'model.p.leads', distance: -1 }] }] })).toMatch(/Every change/);
       const [visits] = update('3', ['visits']).tables;
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: undefined }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: [{ name: 'x', position: 1.5, dataType: null, description: '' }] }] })).toMatch(
@@ -846,6 +886,29 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const forTom = (await tom('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
       expect(forTom).not.toContain(asked.json().message.id);
     });
+  });
+
+  it('puts what identity tells about an Excel key to its User alone (FR-PL-03, MSG-KEY-01, MSG-KEY-02)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const bert = await user('Bert', [SALES]);
+    const dirk = await user('Dirk', [], ['datateam']);
+    const keyId = '5a6b7c8d-0000-4000-8000-00000000ab01';
+    const notice = (payload: object, token = 'identity-token') =>
+      app.inject({ method: 'POST', url: '/internal/excel-keys/notices', headers: { authorization: `Bearer ${token}` }, payload });
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' }, 'query-token')).statusCode).toBe(401);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop' })).statusCode).toBe(400);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' })).statusCode).toBe(201);
+    expect((await notice({ type: 'MSG-KEY-02', keyId, userId: 'u-An', name: 'Excel on my laptop', actor: 'Dirk Vos' })).statusCode).toBe(201);
+
+    const forAn = (await an('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string }) => message.type.startsWith('MSG-KEY'));
+    expect(forAn.map((message: { type: string; subject: { kind: string; name: string } }) => [message.type, message.subject.kind, message.subject.name])).toEqual([
+      ['MSG-KEY-02', 'excelKey', 'Excel on my laptop'],
+      ['MSG-KEY-01', 'excelKey', 'Excel on my laptop'],
+    ]);
+    for (const other of [bert, dirk]) {
+      const everything = (await other('GET', '/messages?view=everything')).json().messages;
+      expect(everything.some((message: { type: string }) => message.type.startsWith('MSG-KEY'))).toBe(false);
+    }
   });
 
   describe('Messages', () => {
@@ -994,6 +1057,61 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 1, threshold: 1 }, 'nope')).statusCode).toBe(401);
       const told = (await team('GET', `/messages/${large.json().message.id}`)).json().message;
       expect(told).toMatchObject({ type: 'MSG-LEN-02', writer: null, params: { reads: '240000000', threshold: '100000000' }, state: null });
+    });
+
+    it('tells who made a query, or the Owner Unit of a Lens, that it is Broken, and in the same Message that it works again (MSG-QRY-02, MSG-LEN-05, FR-SR-52)', async () => {
+      const karel = await user('Karel', [DIGIKOM]);
+      const mia = await user('Mia', [DIGIKOM]);
+      const ann = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const query = '6c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const missing = [{ kind: 'column', column: 'lead_source', resource: 'Weekly lead volume / Lead sources' }];
+      const broken = { name: 'Sources by week', ownerId: 'u-Karel', since: '2026-10-31', missing };
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, broken, 'nope')).statusCode).toBe(401);
+      expect((await karel('POST', `/internal/queries/${query}/broken`, broken)).statusCode).toBe(401);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { since: '2026-10-31', missing })).json().message).toMatch(/name and who made it/);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { ...broken, since: '31 Oct' })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { ...broken, missing: [{ kind: 'column', resource: 'Weekly lead volume' }] })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/reports/${query}/broken`, broken)).statusCode).toBe(400);
+
+      const told = await fromQuery('POST', `/internal/queries/${query}/broken`, broken);
+      expect(told.statusCode).toBe(201);
+      const id = told.json().message.id as string;
+      // Only who made the query sees it, For you; a colleague does not.
+      const seen = (await karel('GET', `/messages/${id}`)).json().message;
+      expect(seen).toMatchObject({
+        type: 'MSG-QRY-02',
+        kind: 'dataHub',
+        state: 'broken',
+        unread: true,
+        subject: { kind: 'query', id: query, name: 'Sources by week' },
+        params: { since: '2026-10-31', count: '1' },
+      });
+      // A list goes into the params as JSON, as the Message Catalogue renders it (MSG-QRY-02).
+      expect(JSON.parse(seen.params.missing)).toEqual(missing);
+      expect((await karel('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(id);
+      expect((await mia('GET', `/messages/${id}`)).statusCode).toBe(404);
+      expect((await mia('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(id);
+
+      // It works again: the same Message says so, and is new again for Karel.
+      await karel('POST', `/messages/${id}/read`);
+      expect((await karel('GET', `/messages/${id}`)).json().message.unread).toBe(false);
+      expect((await fromQuery('POST', `/internal/queries/${query}/works`, {})).json().message).toEqual({ id });
+      expect((await karel('GET', `/messages/${id}`)).json().message).toMatchObject({ state: 'worksAgain', unread: true });
+      // Nothing waits to work again any more.
+      expect((await fromQuery('POST', `/internal/queries/${query}/works`, {})).json().message).toBeNull();
+
+      // A Lens: its Owner Unit hears it, For you; who may not see the Lens does not.
+      const talk = (await ann('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const lens = '7d1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      await fromQuery('PUT', `/internal/lenses/${lens}`, { name: 'Weekly sources', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Mia', authorName: 'Mia' });
+      const onLens = await fromQuery('POST', `/internal/lenses/${lens}/broken`, { since: '2026-10-31', missing: [{ kind: 'resource', resource: 'Weekly lead volume' }] });
+      expect(onLens.statusCode).toBe(201);
+      const lensMessage = onLens.json().message.id as string;
+      expect((await ann('GET', `/messages/${lensMessage}`)).json().message).toMatchObject({ type: 'MSG-LEN-05', state: 'broken', subject: { kind: 'lens', name: 'Weekly sources' }, params: { count: '1' } });
+      expect((await ann('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(lensMessage);
+      expect((await bert('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).not.toContain(lensMessage);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/works`, {})).json().message).toEqual({ id: lensMessage });
     });
 
     it('enters a Signal on a Resource in its Log (CNV-050)', async () => {

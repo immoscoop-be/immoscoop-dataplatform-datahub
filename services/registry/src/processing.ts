@@ -1,6 +1,7 @@
 import type { ArtifactSets, ClaimedSet } from './artifact-sets.js';
 import type { Bucket } from './bucket.js';
 import type { Catalogue } from './catalogue.js';
+import type { Changes, UpstreamChange } from './changes.js';
 import type { DbtCloud } from './dbt-cloud.js';
 import { exposedTables } from './exposed.js';
 import { type NormalisedSet, normalise } from './normalise.js';
@@ -17,6 +18,8 @@ export interface ProcessingOptions {
   dbtCloud: Pick<DbtCloud, 'artifact'>;
   /** Told the exposed tables of every new Current Version (TR-AR-08); left out in tests that do not need it. */
   catalogue?: Catalogue;
+  /** What changed since the previous Current Version, and the Resources it reaches (FR-AR-11, FR-AR-12). */
+  changes?: Pick<Changes, 'since'>;
   log: Log;
 }
 
@@ -25,12 +28,12 @@ export interface ProcessingOptions {
  * normalises them and saves them as the Current Version (TR-AR-04). A set that fails gets its reason
  * and the job goes on with the next one.
  */
-export function createProcessing({ sets, bucket, dbtCloud, catalogue, log }: ProcessingOptions) {
+export function createProcessing({ sets, bucket, dbtCloud, catalogue, changes, log }: ProcessingOptions) {
   /**
    * Tells catalogue every table the exposures tagged `datahub` of the project depend on. A failure is
    * logged and does not fail the set: the next run of the project tells the whole state again.
    */
-  async function tellCatalogue(set: ClaimedSet, normalised: NormalisedSet): Promise<void> {
+  async function tellCatalogue(set: ClaimedSet, normalised: NormalisedSet, upstream: UpstreamChange[]): Promise<void> {
     if (!catalogue) {
       return;
     }
@@ -46,11 +49,27 @@ export function createProcessing({ sets, bucket, dbtCloud, catalogue, log }: Pro
         runId: set.runId,
         generatedAt: normalised.generatedAt?.toISOString() ?? null,
         tables,
+        changes: upstream,
       });
-      log.info({ ...about, tables: tables.length }, `catalogue told the ${tables.length} exposed tables`);
+      log.info({ ...about, tables: tables.length, changes: upstream.length }, `catalogue told the ${tables.length} exposed tables and ${upstream.length} changes`);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       log.error({ ...about, err: error }, `catalogue was not told the exposed tables: ${reason}`);
+    }
+  }
+
+  /**
+   * What changed since the version that was current before, followed to the Resources it reaches (FR-AR-11,
+   * FR-AR-12); nothing for the first version of a project. A failure is logged and does not fail the set:
+   * catalogue is still told the tables.
+   */
+  async function changesSince(set: ClaimedSet, previous: number | null): Promise<UpstreamChange[]> {
+    if (!changes || previous === null) return [];
+    try {
+      return await changes.since(previous, set.id);
+    } catch (error) {
+      log.error({ runId: set.runId, projectId: set.projectId, err: error }, 'the changes since the previous version could not be followed');
+      return [];
     }
   }
 
@@ -83,13 +102,13 @@ export function createProcessing({ sets, bucket, dbtCloud, catalogue, log }: Pro
         throw new Error('dbt Cloud has no catalog.json for this run: does the Source Job generate the docs?');
       }
       const normalised = normalise(parse(manifest, 'manifest.json'), parse(catalog, 'catalog.json'));
-      const { current } = await sets.save(set, normalised);
+      const { current, previous } = await sets.save(set, normalised);
       log.info(
         { runId: set.runId, projectId: set.projectId, nodes: normalised.nodes.length, columns: normalised.columns.length, current },
         current ? 'Artifact Set processed and made current' : 'Artifact Set processed; a later run is current',
       );
       if (current) {
-        await tellCatalogue(set, normalised);
+        await tellCatalogue(set, normalised, await changesSince(set, previous));
       }
       return true;
     } catch (error) {

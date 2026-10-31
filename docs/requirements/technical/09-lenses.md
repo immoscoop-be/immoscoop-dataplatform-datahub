@@ -56,11 +56,11 @@ When the Pre-flight or a run of a Lens with its default values, and the daily ch
 <a id="tr-le-06"></a>
 ### TR-LE-06 · A Broken Lens is found on a failed Pre-flight and by a daily check
 
-**Status:** Implemented · **Realises:** [FR-LE-17](../functional/09-lenses.md#fr-le-17), [FR-SR-52](../functional/04-stacks-and-resources.md#fr-sr-52), [DEC-LE-20](../functional/09-lenses.md#dec-le-20), [DEC-UX-81](../../design/principles.md#dec-ux-81)
+**Status:** Implemented · **Realises:** [FR-LE-17](../functional/09-lenses.md#fr-le-17), [FR-SR-52](../functional/04-stacks-and-resources.md#fr-sr-52), [DEC-LE-20](../functional/09-lenses.md#dec-le-20), [DEC-UX-81](../../design/principles.md#dec-ux-81), [MSG-LEN-05](../functional/message-catalogue.md#msg-len-05)
 
 When BigQuery refuses the dry run of a Lens because a table, view or dataset is not found, or a column is not recognised, query keeps what it misses and since when (`lenses.broken`), writes `BRK-001` in its Log (`lens_log`), and answers the Pre-flight and the run with `409 broken`. Any other refusal is no reason to call it Broken. When a dry run succeeds again, or a new version replaces it, the Lens works again and its Log gets `BRK-002`. Every change of state is written once. Wherever a Lens is listed, it comes with what it misses, for the red dot.
 
-Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/check` with a Google ID token of its own service account `datahub-scheduler`, for the address of query, which query checks itself (`DATAHUB_SCHEDULER_SERVICE_ACCOUNT`, `DATAHUB_QUERY_URL`), as Cloud Run does not check callers. query dry-runs every Lens that does not wait for the Data Team with its defaults: what it misses, what works again, and what grew ([TR-LE-05](#tr-le-05)). A dry run reads nothing and costs nothing. The check right after a new Current Version of a dbt project comes later.
+Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/check` with a Google ID token of its own service account `datahub-scheduler`, for the address of query, which query checks itself (`DATAHUB_SCHEDULER_SERVICE_ACCOUNT`, `DATAHUB_QUERY_URL`), as Cloud Run does not check callers. query dry-runs every Lens that does not wait for the Data Team with its defaults: what it misses, what works again, and what grew ([TR-LE-05](#tr-le-05)); and every query with the SQL it kept ([TR-SR-23](04-stacks-and-resources.md#tr-sr-23)). A dry run reads nothing and costs nothing. Right after a new Current Version of a dbt project, catalogue has query check the Lenses on the Resources that changed, and a Pre-flight that does not find the table of a Resource has query check the other Lenses on it ([TR-SR-23](04-stacks-and-resources.md#tr-sr-23)). Each time a Lens becomes Broken, its Owner Unit is told ([MSG-LEN-05](../functional/message-catalogue.md#msg-len-05)), and the same Message says when it works again.
 
 <a id="tr-le-07"></a>
 ### TR-LE-07 · A new query finds the Lenses on its Resources by the words of its question
@@ -70,6 +70,15 @@ Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/c
 `GET /lenses/suggestions?resources=…&question=…` gives the Lenses a new query may reuse, for 1 to 10 Resources and a question: those on exactly these Resources, then those on these and more. Only Lenses the User sees and that run now are given: published, not stopped and not Broken. In each group, the Lenses that share most words with the question come first, then the newest. The words are those of the full-text search of Postgres in the configuration `lens_words`: English, with `unaccent` before the stemmer, so that common words are left out, every word counts by its stem and accents do not count. They are matched against the name of a Lens, its question, what it shows and its tags; each Lens comes with how many words it shares, those texts in pieces with the shared words marked, from `ts_headline`, and its tags that share one. The same call gives the count of "Lenses on these Resources" on a query and the Lenses on the new set of a new query.
 
 `GET /lenses` gives with each Lens when the User last ran it, from their query of the kind `lens`, for "Yours" on the start screen of Collections. Which Lenses are new there, published in the last 30 days in a public Collection outside the User's own Owner Units, the web app works out from the Lenses and Collections it has.
+
+<a id="tr-le-08"></a>
+### TR-LE-08 · Excel gets the result of a Lens as CSV, with an Excel key
+
+**Status:** Implemented · **Realises:** [DEC-CH-06](../functional/13-channels.md#dec-ch-06), [FR-CH-01](../functional/13-channels.md#fr-ch-01), [DEC-UX-159](../../design/principles.md#dec-ux-159), [TR-PF-07](00-platform.md#tr-pf-07)
+
+`GET /excel/lenses/{id}` of query is the address Power Query asks, which "Open in Excel" on the page of a Lens shows. It is reachable without an Access Token: without an Excel key in `Authorization`, Basic with the key as password, it answers 401 with `WWW-Authenticate: Basic realm="Data Hub"`, so that Excel asks how to sign in. The key is exchanged at identity for an Access Token of its User ([TR-PF-07](00-platform.md#tr-pf-07)); from then on the request is checked as theirs, as on the page of the Lens ([TR-LE-02](#tr-le-02)).
+
+Only a published Lens answers: a waiting, refused or stopped Lens answers 409 with why, and a Broken one as on its page ([TR-LE-06](#tr-le-06)). It runs with the defaults of its Parameters, as a run of the User in the Query Log ([TR-LE-03](#tr-le-03)), only within 100 MB: Excel cannot approve a run ([OP-CH-04](../functional/13-channels.md#op-ch-04)). Its result is CSV in UTF-8 with a BOM and CRLF, at most 10,000 rows, read from the same job page after page; the Query ID of the run is in the header `X-Datahub-Query-Id`.
 
 ## Open points
 

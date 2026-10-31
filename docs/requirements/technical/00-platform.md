@@ -49,7 +49,7 @@ Decided on 2026-10-17, on the proposal for the architecture and technology.
 <a id="tr-pf-01"></a>
 ### TR-PF-01 · Services and runtime
 
-**Status:** Specified · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-DH-53](../../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../../overview/data-hub.md#dec-dh-54)
+**Status:** Implemented · **Realises:** [DEC-PF-01](#dec-pf-01), [DEC-DH-53](../../overview/data-hub.md#dec-dh-53), [DEC-DH-54](../../overview/data-hub.md#dec-dh-54)
 
 Every backend service and client application is a TypeScript Node.js application in its own container, deployed as its own Cloud Run service. In v1: the services identity, catalogue, registry and query, and the applications web and mcp. See the [service map](../../architecture/README.md#services).
 
@@ -70,7 +70,7 @@ Every request to every service is checked by the shared package `@datahub/auth`:
 <a id="tr-pf-04"></a>
 ### TR-PF-04 · Every service authorises itself
 
-**Status:** Specified · **Realises:** [NFR-SEC-01](../non-functional/security.md#nfr-sec-01), [FR-SR-16](../functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](../functional/04-stacks-and-resources.md#fr-sr-18)
+**Status:** Implemented · **Realises:** [NFR-SEC-01](../non-functional/security.md#nfr-sec-01), [FR-SR-16](../functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](../functional/04-stacks-and-resources.md#fr-sr-18)
 
 After validating the token, each service decides with its own data whether the User may do what they ask, and answers `403` otherwise. For example, catalogue checks visibility before showing a Resource, and ownership before publishing one.
 
@@ -95,14 +95,18 @@ identity acts as the OAuth 2.1 authorisation server for MCP clients, following t
 <a id="tr-pf-07"></a>
 ### TR-PF-07 · Excel uses the Excel key
 
-**Status:** Proposed · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
+**Status:** Implemented · **Realises:** [DEC-DH-47](../../overview/data-hub.md#dec-dh-47), [DEC-PF-02](#dec-pf-02)
 
 Power Query sends the Excel key with every request. The shared package `@datahub/auth` exchanges it at identity for an Access Token, cached for the lifetime of that token, so that services only ever handle Access Tokens. identity keeps only a hash of each Excel key: it can be revoked or renewed, but never read back.
+
+*Note of 2026-10-31: Power Query sends the key with Basic, as password, with the e-mail of the User as user name, in the header `Authorization` ([DEC-CH-06](../functional/13-channels.md#dec-ch-06)).*
+
+*Note of 2026-10-31, on building it: the address Power Query asks is that of query, which `@datahub/auth` (`createExcelKeyExchanger`) has exchange the key at identity, `POST /internal/excel-keys/exchange`, with query's Google ID token for identity's address. The key travels in the body, never in an address. The Access Token comes back with the Groups and roles of the User as Workspace gives them at that moment, and query keeps it, by the hash of the key, until a minute before it expires, at most 1,000 keys. A key that is not known, revoked or expired, or whose User can no longer sign in, is refused with 401 ([TR-PL-01](12-permissions-and-library-cards.md#tr-pl-01)).*
 
 <a id="tr-pf-08"></a>
 ### TR-PF-08 · One schema per service
 
-**Status:** Specified · **Realises:** [DEC-PF-05](#dec-pf-05), [DEC-DH-55](../../overview/data-hub.md#dec-dh-55)
+**Status:** Implemented · **Realises:** [DEC-PF-05](#dec-pf-05), [DEC-DH-55](../../overview/data-hub.md#dec-dh-55)
 
 Each service that stores data owns exactly one schema in the shared Cloud SQL Postgres instance, and connects with its own database role that has rights on that schema only. The data of another service is reached through the API of that service.
 
@@ -123,7 +127,7 @@ The request and response schemas of every service are defined with zod in `packa
 <a id="tr-pf-11"></a>
 ### TR-PF-11 · Own service account per service
 
-**Status:** Specified · **Realises:** [DEC-PF-08](#dec-pf-08), [DEC-DH-08](../../overview/data-hub.md#dec-dh-08), [DEC-DH-49](../../overview/data-hub.md#dec-dh-49), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+**Status:** Implemented · **Realises:** [DEC-PF-08](#dec-pf-08), [DEC-DH-08](../../overview/data-hub.md#dec-dh-08), [DEC-DH-49](../../overview/data-hub.md#dec-dh-49), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
 | Service | Permissions |
 | --- | --- |
@@ -133,9 +137,11 @@ The request and response schemas of every service are defined with zod in `packa
 | query | BigQuery Data Viewer on the project of Data Hub, where the tables of its dbt projects are ([DEC-SR-32](../functional/04-stacks-and-resources.md#dec-sr-32)), and BigQuery Job User; Cloud SQL client, for its queries and the Query Log ([DEC-PF-29](#dec-pf-29)) |
 | semgraph | None: no data and no secrets, as it is open to everyone ([DEC-PF-24](#dec-pf-24)) |
 | web, mcp | None beyond calling the services; web keeps the Refresh Tokens of its Users in their cookies, not in a store of its own |
-| `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06)) |
+| `datahub-scheduler`, not a service | None: Cloud Scheduler calls query with its Google ID token once a day to check every Lens and query, and query checks the token itself ([TR-LE-06](09-lenses.md#tr-le-06), [TR-SR-23](04-stacks-and-resources.md#tr-sr-23)) |
 | `datahub-migrator`, not a service | Cloud SQL client and login, as a member of `cloudsqlsuperuser`; only the migration jobs run as it ([TR-PF-22](#tr-pf-22)) |
 | The Data Team, not a service | Cloud SQL Studio User, as its Role Group `datahub-datateam@`; read-only on the tables of registry, catalogue and query ([TR-PF-28](#tr-pf-28)) |
+
+*Note of 2026-10-31, on checking what was built: the roles in Workspace are given by hand, once per environment ([OP-UM-03](../functional/02-user-management.md#op-um-03)).*
 
 <a id="tr-pf-12"></a>
 ### TR-PF-12 · Shared components for Lenses and Reports
@@ -158,7 +164,7 @@ All GCP resources of Data Hub (Cloud Run services, Cloud SQL, the artifact bucke
 <a id="tr-pf-14"></a>
 ### TR-PF-14 · Public ingress, protected by the token checks
 
-**Status:** Specified · **Realises:** [DEC-PF-10](#dec-pf-10), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
+**Status:** Implemented · **Realises:** [DEC-PF-10](#dec-pf-10), [NFR-SEC-01](../non-functional/security.md#nfr-sec-01)
 
 Every service and application runs on Cloud Run with public ingress. Every endpoint requires a valid Access Token ([TR-PF-03](#tr-pf-03)), except the endpoints that start a login. Endpoints for work that no User started accept only the service accounts of Data Hub ([TR-PF-05](#tr-pf-05)). semgraph is the one exception: it is open without Access Token, behind a rate limit ([DEC-PF-24](#dec-pf-24), [TR-PF-30](#tr-pf-30)).
 
@@ -179,14 +185,14 @@ GitHub Actions builds the image of every service on every pull request, and push
 <a id="tr-pf-17"></a>
 ### TR-PF-17 · Build once, deploy many
 
-**Status:** Proposed · **Realises:** [DEC-PF-11](#dec-pf-11)
+**Status:** Implemented · **Realises:** [DEC-PF-11](#dec-pf-11)
 
 An image is built once, when a change lands on `uat`, and is tagged with the git tree hash of its code. uat runs it. When `uat` is merged into `main`, the code on `main` has the same tree hash, because `main` only receives merges from `uat` ([DEC-PF-14](#dec-pf-14)); prod therefore runs the very same image, found by that tag. An image is never rebuilt for another environment.
 
 <a id="tr-pf-18"></a>
 ### TR-PF-18 · One image repository, shared by both environments
 
-**Status:** Proposed · **Realises:** [TR-PF-17](#tr-pf-17), [DEC-PF-13](#dec-pf-13)
+**Status:** Implemented · **Realises:** [TR-PF-17](#tr-pf-17), [DEC-PF-13](#dec-pf-13)
 
 The Artifact Registry repository `datahub`, the CI service account and Workload Identity Federation live in the prod project, `immoscoop-dataplatform-398214`, in `europe-west1`. Cloud Run in the uat project may read images from that repository, so that uat and prod run the very same image. The Terraform service account of each environment may read them too, because Cloud Run only deploys an image that the deploying identity may read.
 
@@ -214,14 +220,14 @@ A push to `uat` plans and applies the Terraform in `infra/` to the uat project; 
 <a id="tr-pf-22"></a>
 ### TR-PF-22 · Services log in to Postgres with their Google identity
 
-**Status:** Specified · **Realises:** [TR-PF-08](#tr-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+**Status:** Implemented · **Realises:** [TR-PF-08](#tr-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
 Every service that keeps data logs in to Cloud SQL as its own service account, through IAM database authentication and the Cloud SQL connector. No database password exists for a service, and no network may connect to the database directly. The migrations run as a separate identity, `datahub-migrator`, a member of `cloudsqlsuperuser`: it creates the schema of each service and its tables, and gives the service's own login read and write access to the rows of that schema, nothing more ([TR-PF-09](#tr-pf-09)). A service cannot change its tables, and cannot see the schema of another service ([TR-PF-08](#tr-pf-08)).
 
 <a id="tr-pf-23"></a>
 ### TR-PF-23 · Secrets are created by Terraform and filled by a person
 
-**Status:** Specified · **Realises:** [DEC-PF-08](#dec-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
+**Status:** Implemented · **Realises:** [DEC-PF-08](#dec-pf-08), [NFR-SEC-02](../non-functional/security.md#nfr-sec-02)
 
 Terraform creates every secret in Secret Manager and gives exactly one service read access to it; the value is added by a person ([GCP setup](../../architecture/gcp-setup.md), step 8) and never passes through GitHub or the repository. A service reads a secret through the API when it needs it, so a secret without a value does not block a deployment.
 

@@ -24,6 +24,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-31, while building folders: `COL-008` to `COL-013` are new, for the folders of a Collection and what moves between them ([FR-CO-39](03-collections.md#fr-co-39), [FR-CO-40](03-collections.md#fr-co-40)), and `COL-014`, for a change of its intro ([FR-CO-41](03-collections.md#fr-co-41)). `COL-011`, a Resource that moved, is about a Resource: only who sees the Resource sees it.*
 
+*Changed on 2026-10-31, while building the Changes downstream: `ART-014` and `ART-015` are new, for a model upstream that is removed or added ([EC-AR-04](01-artifact-registry.md#ec-ar-04)), and `ART-010` and `ART-012` name the model they happened in when it is upstream of the Resource ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -58,10 +60,12 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `COL-014` | Intro changed by {actor} | Intro gewijzigd door {actor} | actor |
 | `COL-030` | Added to the Collection {collection} by {actor} | Toegevoegd aan de Collection {collection} door {actor} | collection, actor |
 | `COL-031` | Removed from the Collection {collection} by {actor} | Verwijderd uit de Collection {collection} door {actor} | collection, actor |
-| `ART-010` | Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}} | Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}} | field, direction, sourceNode, distance |
+| `ART-010` | Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}}{distance, select, 0 {} other { in {sourceNode}}} | Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}}{distance, select, 0 {} other { in {sourceNode}}} | field, direction, sourceNode, distance |
 | `ART-011` | Logic change in {sourceNode} | Wijziging van de logica in {sourceNode} | sourceNode, distance |
-| `ART-012` | Type of {field} changed from {old} to {new} | Type van {field} gewijzigd van {old} naar {new} | field, old, new, sourceNode, distance |
+| `ART-012` | Type of {field} changed from {old} to {new}{distance, select, 0 {} other { in {sourceNode}}} | Type van {field} gewijzigd van {old} naar {new}{distance, select, 0 {} other { in {sourceNode}}} | field, old, new, sourceNode, distance |
 | `ART-013` | Description changed in {sourceNode} | Beschrijving gewijzigd in {sourceNode} | sourceNode, distance |
+| `ART-014` | Model {sourceNode} upstream was removed | Model {sourceNode} stroomopwaarts is verwijderd | sourceNode, distance |
+| `ART-015` | Model {sourceNode} upstream was added | Model {sourceNode} stroomopwaarts is toegevoegd | sourceNode, distance |
 | `MAT-020` | Confirmed by {owner} | Bevestigd door {owner} | owner, fingerprint |
 | `MAT-021` | Maturity dropped to Level {level}; the Owner was alerted | Maturiteit gedaald naar Level {level}; de Owner is verwittigd | level, reason |
 | `MAT-022` | Changes since the last Confirmation marked seen by {actor} | Changes sinds de laatste Confirmation als gezien gemarkeerd door {actor} | actor, changes |

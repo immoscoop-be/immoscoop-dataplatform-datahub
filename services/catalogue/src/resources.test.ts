@@ -67,7 +67,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
 
   it('registers every exposed table once, named by its label or its Node, and waits for a Collection (FR-SR-32, FR-SR-35)', async () => {
     const outcome = await resources.apply(prod('100', [orders, table('customers')]));
-    expect(outcome).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0 });
+    expect(outcome).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
     const known = await byKey();
     expect(known.orders).toMatchObject({ displayName: 'Orders', key: 'immoscoop-dataplatform.dbt_marts.orders', description: 'About orders.', collectionId: null, withdrawn: false });
     expect(known.customers?.displayName).toBe('customers');
@@ -87,7 +87,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
 
   it('keeps the plain fields of a Resource and names the columns it leaves out, refreshed by every call (FR-SR-06, DEC-SR-33)', async () => {
     const withArray = (fields: ExposedTable['columns']) => table('visits', { description: '', columns: fields });
-    await resources.apply(
+    const outcome = await resources.apply(
       prod('100', [
         orders,
         table('customers'),
@@ -99,6 +99,8 @@ describe.skipIf(!url)('Resources in Postgres', () => {
       ]),
     );
     const visits = (await byKey()).visits!;
+    // Its fields were removed and others added: what reads it is checked (FR-SR-52); the others did not change.
+    expect(outcome.changed).toEqual([visits.id]);
     expect(await resources.detail(visits.id)).toMatchObject({
       fields: [{ name: 'visit_id', position: 1, dataType: 'STRING', description: 'The visit.' }],
       leftOut: [
@@ -131,16 +133,19 @@ describe.skipIf(!url)('Resources in Postgres', () => {
 
   it('renames, refreshes, withdraws and brings back, with the whole state of the project each time (FR-SR-33, FR-SR-34)', async () => {
     // The label changes, the description too, and customers and visits are no longer exposed.
-    await resources.apply(prod('101', [table('orders', { label: 'All orders', description: 'Every order.' })]));
+    const withdrawing = await resources.apply(prod('101', [table('orders', { label: 'All orders', description: 'Every order.' })]));
     let known = await byKey();
     expect(known.orders).toMatchObject({ displayName: 'All orders', description: 'Every order.' });
     expect(known.customers?.withdrawn).toBe(true);
+    // What reads a Resource that was withdrawn, or comes back, is checked; a new label or description changes nothing it reads (FR-SR-52).
+    expect(withdrawing.changed.sort()).toEqual([known.customers!.id, known.visits!.id].sort());
 
     // customers comes back as it was.
     const outcome = await resources.apply(prod('102', [table('orders', { label: 'All orders' }), table('customers')]));
     expect(outcome).toMatchObject({ registered: 0, renamed: 0, withdrawn: 0, back: 1 });
     known = await byKey();
     expect(known.customers?.withdrawn).toBe(false);
+    expect(outcome.changed).toEqual([known.customers!.id]);
     expect(await texts(known.customers!.id)).toEqual([
       'Back through exposure datahub_customers',
       'Withdrawn: no exposure with the tag datahub depends on it any more',
@@ -272,6 +277,51 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect(
       checkDetails({ ...base, mappings: [{ field: 'b', kind: 'relation', relationType: 'basedOn', identity: 'y.b', subject: 'a', origin: 'here', inDomainModel: true }] }, ['a', 'b']),
     ).toBe('the relation of b starts from a, which is not mapped as is.');
+  });
+
+  it('logs every Change upstream in each Resource it reaches, with its distance, and tells the Owner of new code once (FR-AR-12, EC-AR-04, MSG-RES-04)', async () => {
+    const other = (runId: string, tables: ExposedTable[], changes?: ResourcesUpdate['changes']): ResourcesUpdate => ({
+      projectId: '4242',
+      projectName: 'colleciones',
+      runId,
+      generatedAt: '2026-10-30T06:00:00Z',
+      tables,
+      ...(changes ? { changes } : {}),
+    });
+    const funnel = table('funnel_upstream');
+    const report = table('report_upstream');
+    await resources.apply(other('1', [funnel, report]));
+    const { funnel_upstream: funnelResource, report_upstream: reportResource } = await byKey();
+    const team = await collections.create({ name: 'Funnels', description: 'Funnels.', icon: 'funnel', ownerUnit: DIGIKOM, visibility: 'private' }, dirk);
+    await resources.add([{ id: reportResource!.id }], team, dirk);
+
+    await resources.apply(
+      other('2', [funnel, report], [
+        { kind: 'logic', node: 'stg_leads', reaches: [{ nodeId: funnel.nodeId, distance: 2 }, { nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'logic', node: 'int_leads', reaches: [{ nodeId: report.nodeId, distance: 1 }] },
+        { kind: 'structural', node: 'stg_leads', field: 'channel', direction: 'removed', reaches: [{ nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'type', node: 'stg_leads', field: 'amount', old: 'INT64', new: 'NUMERIC', reaches: [{ nodeId: report.nodeId, distance: 3 }] },
+        { kind: 'description', node: 'raw_leads', reaches: [{ nodeId: report.nodeId, distance: 4 }] },
+        { kind: 'removed', node: 'old_leads', reaches: [{ nodeId: report.nodeId, distance: 2 }] },
+        { kind: 'added', node: 'new_leads', reaches: [{ nodeId: report.nodeId, distance: 1 }] },
+        // A table that is no Resource is passed over.
+        { kind: 'logic', node: 'stg_visits', reaches: [{ nodeId: 'model.immoscoop_dataplatform_sql.nobody', distance: 1 }] },
+      ]),
+    );
+    const logged = (await texts(reportResource!.id)).slice(0, 7);
+    expect(logged).toEqual([
+      'Model new_leads upstream was added',
+      'Model old_leads upstream was removed',
+      'Description changed in raw_leads',
+      'Type of amount changed from INT64 to NUMERIC in stg_leads',
+      'Structural change: field channel removed in stg_leads',
+      'Logic change in int_leads',
+      'Logic change in stg_leads',
+    ]);
+    expect(await texts(funnelResource!.id)).toContain('Logic change in stg_leads');
+    // The Owner hears once per Artifact Set, of the nearest change of code; a Resource without a Collection has none.
+    const told = await database.db.selectFrom('messages').select(['subjectId', 'params']).where('type', '=', 'MSG-RES-04').execute();
+    expect(told).toEqual([{ subjectId: reportResource!.id, params: { run: '2026-10-30', node: 'int_leads', distance: '1' } }]);
   });
 
   it('never lets a Log Entry of a Resource be changed or removed (FR-SR-11)', async () => {

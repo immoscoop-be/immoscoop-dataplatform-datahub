@@ -28,7 +28,10 @@
   100 rows a page, read from the same run (FR-SR-51); the menu of a column sorts this page only; a click selects a cell,
   Ctrl+C copies it; null in grey. Every result carries its Query ID (DEC-UX-72).
   The icon of each query in the panel says whether it ran on Resources (a table) or on a Lens (an aperture); "All" is for the Data Team only.
-  Requirements: FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
+  The switch "Query" shows it Broken (DEC-UX-160, FR-SR-53, DEC-UX-81): a table or column it reads no longer exists, so
+  Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
+  changed, and a change that runs makes it work again, as does the return of what it reads.
+  Requirements: FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
   Decisions: DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
@@ -97,7 +100,7 @@
   <div class="q-group open">
    <button class="q-period" aria-expanded="true"><i class="ph ph-caret-down"></i><span>Today</span><span class="count">2</span></button>
    <div class="q-entry" id="q-current">
-    <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources"></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
+    <a class="list-item card q-item current" aria-current="page" href="query.html" data-name="leads per source name weekly lead volume lead sources"><i class="ph ph-table kind-icon" role="img" aria-label="On Resources" data-pane-group="qstate" data-pane="works"></i><i class="ph ph-table kind-icon broken-mark" role="img" aria-label="On Resources, broken" title="Broken: the column lead_channel of Weekly lead volume no longer exists" data-pane-group="qstate" data-pane="broken" hidden></i><span><span class="item-title">Leads per source name</span><span class="meta">Weekly lead volume +1 · 14 runs · 08:12</span></span></a>
     <button class="icon-btn q-unfold" aria-expanded="false" aria-label="Its runs"><i class="ph ph-caret-down"></i></button>
     <div class="q-runs" aria-label="Its last runs">
      <button class="q-run on" data-run="14"><span>Run 14</span><span class="meta">today, 08:12</span></button>
@@ -171,6 +174,7 @@
 <p class="q-question" id="q-question">Which sources bring our leads, week by week?</p>
 <p class="q-origin" data-pane-group="lens" data-pane="linked"><i class="ph ph-aperture"></i><span>Used as the Lens <a href="lens.html">Leads per source name</a>, in Credit leads, since 23 Oct. "Update the Lens" overwrites it with this query.</span></p>
 <p class="q-origin" id="q-origin" hidden><i class="ph ph-git-branch"></i><span>Started from <a href="query.html">Leads per source name</a>, after run 14. That query stays as it was.</span></p>
+<div class="alert urgent" data-pane-group="qstate" data-pane="broken" hidden><i class="ph-fill ph-link-break"></i><p><b>This query can't run.</b> The column <span class="mono">lead_channel</span> of Weekly lead volume no longer exists, since the dbt run of 28 Oct 2026. Change the SQL so that it no longer reads it and run it, and the query works again; it also works again by itself when the column comes back.</p></div>
 <!-- The query and its result split the height of the page, each scrolling on its own, the divider between them dragged; ?layout=side puts them next to each other (DEC-UX-143, DEC-UX-144). -->
 <div class="q-work" id="q-work">
 <section class="query-card card" aria-label="The query">
@@ -273,7 +277,8 @@
   </span>
   <span class="run-wait meta" id="run-wait" hidden><i class="ph-fill ph-hourglass-medium"></i>Waiting for the Data Team since 10:12</span>
   <span class="run-anchor">
-   <button class="btn-primary run-btn high" id="run-btn"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
+   <button class="btn-primary run-btn high" id="run-btn" data-pane-group="qstate" data-pane="works"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">840 MB</span></button>
+   <button class="btn-primary run-btn" disabled title="It does not run now: what it reads no longer exists" data-pane-group="qstate" data-pane="broken" hidden><i class="ph-fill ph-play" style="font-size:14px"></i>Run</button>
    <span class="run-pop up request-pop" id="request-pop" role="dialog" aria-label="Send to the Data Team" hidden><b>Very large:</b> one run reads more than 1 GB; someone of the Data Team accepts it first.
     <label class="field" style="margin-top:10px"><span>A word for the Data Team (optional)</span><textarea rows="2">For the five-year review of the partner deal; it runs once.</textarea></label>
     <button class="btn-primary" type="button" id="request-send" style="width:100%;justify-content:center;margin-top:4px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send</button>
@@ -529,6 +534,10 @@
 </section>
 </div>
 
+<div class="proto-switch" data-group="qstate" role="tablist" aria-label="Prototype: the state of the query" style="bottom:24px;top:auto;right:24px">Query
+ <button class="seg on" data-target="works" role="tab" aria-selected="true">Works</button>
+ <button class="seg" data-target="broken" role="tab" aria-selected="false">Broken</button>
+</div>
 <div class="proto-switch" data-group="lens" role="tablist" aria-label="Prototype: used as a Lens" style="top:28px;bottom:auto;right:600px">Lens
  <button class="seg on" data-target="linked" role="tab" aria-selected="true">Used as a Lens</button>
  <button class="seg" data-target="free" role="tab" aria-selected="false">Not a Lens</button>
