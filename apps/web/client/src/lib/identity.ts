@@ -30,8 +30,9 @@ export interface ExcelKey {
   lastUsedAt: string | null;
   expiresAt: string;
   revokedAt: string | null;
-  /** Who revoked it, by name. */
+  /** Who revoked it, by name, and by Google ID. */
   revokedBy: string | null;
+  revokedById: string | null;
 }
 
 /** An Excel key with its User, as the Data Team lists every key (FR-PL-03). */

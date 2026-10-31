@@ -32,7 +32,10 @@ export function sectionFor(section: Section, dataTeam: boolean): boolean {
  * The tools of Admin, in the order of its panel; the first is where Admin opens (OP-UX-52). A new tool is one
  * entry here, with its page.
  */
-export const ADMIN_TOOLS = [{ id: 'webhooks', path: '/admin/webhooks', icon: 'webhooks-logo', name: 'Webhooks' }] as const satisfies readonly {
+export const ADMIN_TOOLS = [
+  { id: 'webhooks', path: '/admin/webhooks', icon: 'webhooks-logo', name: 'Webhooks' },
+  { id: 'keys', path: '/admin/keys', icon: 'key', name: 'Excel keys' },
+] as const satisfies readonly {
   id: string;
   path: string;
   icon: IconName;

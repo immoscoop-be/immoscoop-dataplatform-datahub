@@ -6,7 +6,7 @@
   /**
    * The panel of Admin, the section of the Data Team (DEC-UX-130): a line on what it is for, then its tools,
    * each with the number of things in it to look at, such as the deliveries of the webhook that were refused
-   * or failed. Its tools are the list in sections.ts.
+   * or failed, or the Excel keys that are active. Its tools are the list in sections.ts.
    */
   let {
     current,
@@ -21,7 +21,7 @@
     counts: Partial<Record<AdminTool, number>>;
   } = $props();
 
-  const TITLES: Record<AdminTool, string> = { webhooks: 'admin.webhooks.count' };
+  const TITLES: Record<AdminTool, string> = { webhooks: 'admin.webhooks.count', keys: 'admin.keys.count' };
 </script>
 
 <p class="about">{t('admin.about', { environment })}</p>
