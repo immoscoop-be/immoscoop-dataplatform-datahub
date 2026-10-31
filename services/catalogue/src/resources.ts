@@ -751,6 +751,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         for (const row of adding) {
           const details = wanted.find((item) => item.id === row.id)?.details;
           await trx.updateTable('resources').set({ collectionId: collection.id, updatedAt: new Date() }).where('id', '=', row.id).execute();
+          // A Resource comes in at the top of the Collection (FR-CO-38).
+          await trx.deleteFrom('folderPlaces').where('kind', '=', 'resource').where('itemId', '=', row.id).execute();
           await registrationMessage(trx, row.id, 'inCollection');
           await write(trx, row.id, 'COL-030', { collection: collection.name, actor: viewer.name }, viewer.id);
           if (details) {
@@ -785,6 +787,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         }
         const collection = await trx.selectFrom('collections').select('name').where('id', '=', row.collectionId).executeTakeFirstOrThrow();
         await trx.updateTable('resources').set({ collectionId: null, updatedAt: new Date() }).where('id', '=', id).execute();
+        // It leaves its folder with its Collection (FR-CO-38).
+        await trx.deleteFrom('folderPlaces').where('kind', '=', 'resource').where('itemId', '=', id).execute();
         // Without a Collection, it waits for one again.
         await registrationMessage(trx, id, 'waiting');
         await write(trx, id, 'COL-031', { collection: collection.name, actor: viewer.name }, viewer.id);

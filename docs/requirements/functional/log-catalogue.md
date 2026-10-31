@@ -22,6 +22,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-29, while building part 7a: `LEN-001` and `LEN-002` are new: the decision of the Data Team on a Request on a Lens, in its Log ([FR-LE-09](09-lenses.md#fr-le-09)).*
 
+*Changed on 2026-10-31, while building folders: `COL-008` to `COL-013` are new, for the folders of a Collection and what moves between them ([FR-CO-39](03-collections.md#fr-co-39), [FR-CO-40](03-collections.md#fr-co-40)), and `COL-014`, for a change of its intro ([FR-CO-41](03-collections.md#fr-co-41)). `COL-011`, a Resource that moved, is about a Resource: only who sees the Resource sees it.*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -47,6 +49,13 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `COL-005` | Collection dissolved by {actor} | Collection opgeheven door {actor} | actor |
 | `COL-006` | {resource} added by {actor} | {resource} toegevoegd door {actor} | resource, actor |
 | `COL-007` | {resource} removed by {actor} | {resource} verwijderd door {actor} | resource, actor |
+| `COL-008` | Folder {folder} made in {in} by {actor} | Map {folder} gemaakt in {in} door {actor} | folder, in, actor |
+| `COL-009` | Folder {old} renamed to {new} by {actor} | Map {old} hernoemd naar {new} door {actor} | old, new, actor |
+| `COL-010` | Folder {folder} deleted by {actor} | Map {folder} verwijderd door {actor} | folder, actor |
+| `COL-011` | {resource} moved to {to} by {actor} | {resource} verplaatst naar {to} door {actor} | resource, to, actor |
+| `COL-012` | {lens} moved to {to} by {actor} | {lens} verplaatst naar {to} door {actor} | lens, to, actor |
+| `COL-013` | Folder {folder} moved to {to} by {actor} | Map {folder} verplaatst naar {to} door {actor} | folder, to, actor |
+| `COL-014` | Intro changed by {actor} | Intro gewijzigd door {actor} | actor |
 | `COL-030` | Added to the Collection {collection} by {actor} | Toegevoegd aan de Collection {collection} door {actor} | collection, actor |
 | `COL-031` | Removed from the Collection {collection} by {actor} | Verwijderd uit de Collection {collection} door {actor} | collection, actor |
 | `ART-010` | Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}} | Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}} | field, direction, sourceNode, distance |

@@ -48,6 +48,7 @@ describe('the fields of a Collection in a request', () => {
     expect(parse({ ...complete, visibility: 'secret' }, true)).toBe('The visibility is private or public.');
     expect(parse({ ...complete, ownerUnit: 'sales@thenextimmoscoop.be' }, true)).toBe('The Owner Unit is named by the ID of a group.');
     expect(parse({ ...complete, owner: 'me' }, true)).toBe('A Collection has no field owner.');
+    expect(parse({ intro: 42 }, false)).toBe('The intro is Markdown of at most 10000 characters.');
     const refused = 'The icon is the name of an icon of Phosphor that is not the logo of a brand.';
     expect(parse({ ...complete, icon: 'unicorn' }, true)).toBe(refused);
     expect(parse({ ...complete, icon: 'google-logo' }, true)).toBe(refused);
@@ -313,6 +314,59 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect(handed.json()).toMatchObject({ ownerUnit: DIGIKOM });
   });
 
+  it('lets the Owner Unit and the Data Team keep folders, and shows them to everyone who sees the Collection (FR-CO-38 to FR-CO-40)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const bert = await user('Bert', [SALES]);
+    const dirk = await user('Dirk', [], ['datateam']);
+    const id = (await an('POST', '/collections', { name: 'Folders', description: 'Kept in folders.', icon: 'folder', ownerUnit: DIGIKOM.id, visibility: 'public' })).json().id;
+
+    const made = await an('POST', `/collections/${id}/folders`, { name: ' By source ' });
+    expect(made.statusCode).toBe(201);
+    expect(made.json()).toMatchObject({ name: 'By source', parentId: null });
+    const folder = made.json().id;
+    const inner = (await dirk('POST', `/collections/${id}/folders`, { name: 'Paid', parentId: folder })).json();
+    expect(inner).toMatchObject({ name: 'Paid', parentId: folder });
+
+    expect((await bert('POST', `/collections/${id}/folders`, { name: 'Mine' })).statusCode).toBe(403);
+    expect((await bert('PUT', `/collections/${id}/places/folder/${inner.id}`, { folderId: null })).statusCode).toBe(403);
+    expect((await an('POST', `/collections/${id}/folders`, { name: '' })).statusCode).toBe(400);
+    expect((await an('POST', `/collections/${id}/folders`, { name: 'x'.repeat(81) })).json().message).toBe('The name of a folder has 1 to 80 characters.');
+    expect((await an('POST', `/collections/${id}/folders`, { name: 'Lost', parentId: '00000000-0000-4000-8000-000000000000' })).statusCode).toBe(404);
+    expect((await an('PUT', `/collections/${id}/places/folder/${folder}`, { folderId: inner.id })).json().error).toBe('into_itself');
+    expect((await an('PUT', `/collections/${id}/places/table/${folder}`, { folderId: null })).statusCode).toBe(400);
+
+    expect((await bert('GET', `/collections/${id}`)).json().folders).toEqual([
+      { id: folder, name: 'By source', parentId: null },
+      { id: inner.id, name: 'Paid', parentId: folder },
+    ]);
+    // Only an empty folder is deleted (FR-CO-39).
+    const refused = await an('DELETE', `/collections/${id}/folders/${folder}`);
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ error: 'not_empty', holds: 1 });
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { name: 'Paid ads' })).json()).toMatchObject({ name: 'Paid ads' });
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { parentId: null })).statusCode).toBe(400);
+    expect((await an('PUT', `/collections/${id}/places/folder/${inner.id}`, { folderId: null })).statusCode).toBe(204);
+    expect((await an('DELETE', `/collections/${id}/folders/${folder}`)).statusCode).toBe(204);
+
+    expect((await bert('GET', `/collections/${id}/log`)).json().entries.map((entry: { text: string }) => entry.text)).toEqual([
+      'Folder By source deleted by An',
+      'Folder Paid ads moved to Folders by An',
+      'Folder Paid renamed to Paid ads by An',
+      'Folder Paid made in By source by Dirk',
+      'Folder By source made in Folders by An',
+      'Collection created by An',
+    ]);
+  });
+
+  it('keeps the intro of a Collection in Markdown (FR-CO-41)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const id = (await an('POST', '/collections', { name: 'Introduced', description: 'With an intro.', icon: 'book-open', ownerUnit: DIGIKOM.id })).json().id;
+    expect((await an('GET', `/collections/${id}`)).json().intro).toBe('');
+    const changed = await an('PATCH', `/collections/${id}`, { intro: '### Start here\n\n- **Weekly** figures\n' });
+    expect(changed.json().intro).toBe('### Start here\n\n- **Weekly** figures');
+    expect((await an('PATCH', `/collections/${id}`, { intro: 'x'.repeat(10_001) })).statusCode).toBe(400);
+  });
+
   describe('Resources', () => {
     const update = (runId: string, names: string[]) => ({
       projectId: '9367',
@@ -384,7 +438,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         ['leads', 'Added to the Collection Visits by Dirk'],
         ['visits', 'Added to the Collection Visits by Dirk'],
       ]);
+      // In a folder, it leaves the folder with the Collection, and comes back at its top (FR-CO-38).
+      const kept = (await an('POST', `/collections/${collection.id}/folders`, { name: 'Kept' })).json();
+      expect((await an('PUT', `/collections/${collection.id}/places/resource/${leads.id}`, { folderId: kept.id })).statusCode).toBe(204);
+      expect((await an('DELETE', `/collections/${collection.id}/folders/${kept.id}`)).statusCode).toBe(409);
       expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
+      expect((await an('DELETE', `/collections/${collection.id}/folders/${kept.id}`)).statusCode).toBe(204);
       // With what the Data Admin recorded at step 2: a field the Resource lacks is refused (FR-CO-33).
       const recorded = { partition: null, clusterBy: [], partitionFilter: 'none', grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact', origins: { grain: 'here' }, release: null, mappings: [] };
       const lacking = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, grain: ['nope'] }] });
