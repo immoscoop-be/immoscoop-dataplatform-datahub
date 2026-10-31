@@ -9,13 +9,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 158 | 52 (8 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 160 | 52 (8 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (5 specified, 14 implemented) | 5 (5 specified) | 9 | 9 (1 open, 8 done) |
 | [User management](functional/02-user-management.md) | 11 (3 specified, 7 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 8 (2 open, 6 done) |
 | [Collections](functional/03-collections.md) | 41 (1 proposed, 1 specified, 35 implemented, 4 withdrawn) | 2 (2 specified) | 26 | 18 (1 open, 17 done) |
-| [Resources](functional/04-stacks-and-resources.md) | 54 (3 proposed, 11 specified, 34 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 44 | 23 (2 open, 21 done) |
+| [Resources](functional/04-stacks-and-resources.md) | 54 (1 proposed, 13 specified, 34 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 44 | 23 (2 open, 21 done) |
 | [Resource card](functional/05-resource-card.md) | 18 (3 proposed, 2 specified, 12 implemented, 1 withdrawn) | – | 15 | 27 (2 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 15 (5 specified, 5 implemented, 5 withdrawn) | – | 14 | 8 (3 open, 5 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (3 proposed, 1 specified, 2 implemented) | – | 7 | 7 (7 done) |
@@ -23,14 +23,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses](functional/09-lenses.md) | 17 (14 implemented, 3 withdrawn) | – | 20 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
-| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 proposed) | – | – | 1 (1 open) |
-| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 5 | 3 (1 open, 2 done) |
+| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 specified) | – | – | 1 (1 open) |
+| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 6 | 3 (1 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 15 (15 implemented) | 2 (2 implemented) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (10 proposed, 13 implemented, 16 withdrawn) | – | 30 | 35 (4 open, 31 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (1 proposed, 3 specified) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 33 (3 proposed, 10 specified, 19 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 33 (2 proposed, 11 specified, 19 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 11 (11 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 8 (8 implemented) | – | – | 2 (2 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 21 (21 implemented) | – | – | – |
@@ -182,8 +182,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-SR-49](functional/04-stacks-and-resources.md#fr-sr-49) | Publishing says who will see the Resource and asks for the Confirmation | Implemented | – | [resource-publish](../design/screens/resource-publish.html) | [TR-SR-12](technical/04-stacks-and-resources.md#tr-sr-12) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28 |
 | [FR-SR-50](functional/04-stacks-and-resources.md#fr-sr-50) | A Resource can be marked deprecated | Implemented | – | [resource-deprecate](../design/screens/resource-deprecate.html), [resource-detail](../design/screens/resource-detail.html) | [TR-SR-14](technical/04-stacks-and-resources.md#tr-sr-14) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28<br>[ef8d4d1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ef8d4d17abfdcee3c89491fbfcf9baba1b1dc6fc) refs, 2026-10-28 |
 | [FR-SR-51](functional/04-stacks-and-resources.md#fr-sr-51) | A result shows 100 rows a page | Specified | – | [lens](../design/screens/lens.html), [query](../design/screens/query.html), [resource-preview](../design/screens/resource-preview.html) | [TR-SR-16](technical/04-stacks-and-resources.md#tr-sr-16) | [8723a4b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8723a4b3dcd0566348203fc7d7a2bcc2e487c93e) refs, 2026-10-29<br>[f3da34c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/f3da34cc541af1b4bf17a5ca7e8a3184dac870f8) refs, 2026-10-29 |
-| [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52) | Data Hub finds what is Broken, and what works again | Proposed | – | – | [TR-LE-06](technical/09-lenses.md#tr-le-06) | [e79e068](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e79e068ca6d992512b3b2fc9c6155af453a7e8eb) refs, 2026-10-29<br>[e0e427e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e0e427ed6fc1640e0c7695712a32f8971176abae) refs, 2026-10-29 |
-| [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53) | A query that reads what no longer exists is Broken | Proposed | – | – | – | – |
+| [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52) | Data Hub finds what is Broken, and what works again | Specified | – | – | [TR-LE-06](technical/09-lenses.md#tr-le-06) | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31<br>[e79e068](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e79e068ca6d992512b3b2fc9c6155af453a7e8eb) refs, 2026-10-29<br>[e0e427e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e0e427ed6fc1640e0c7695712a32f8971176abae) refs, 2026-10-29 |
+| [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53) | A query that reads what no longer exists is Broken | Specified | – | [query](../design/screens/query.html) | – | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
 | [FR-SR-54](functional/04-stacks-and-resources.md#fr-sr-54) | The lineage of a Resource is walked one step at a time | Implemented | – | [resource-lineage](../design/screens/resource-lineage.html) | [TR-AR-11](technical/01-artifact-registry.md#tr-ar-11), [TR-SR-11](technical/04-stacks-and-resources.md#tr-sr-11) | [d9cd577](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d9cd577c1037f45efb605d847c76c228a48fc134) refs, 2026-10-30<br>[28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28 |
 
 ### [Resource card](functional/05-resource-card.md)
@@ -266,9 +266,9 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- | --- |
-| [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | A User makes an Excel key on My page, and sees it once | Proposed | – | [my-page](../design/screens/my-page.html) | – | – |
-| [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | My page lists the Excel keys of its User, and revokes one | Proposed | – | [my-page](../design/screens/my-page.html) | – | – |
-| [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | An Excel key lasts a year, and stops with its User | Proposed | – | [my-page](../design/screens/my-page.html) | – | – |
+| [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | A User makes an Excel key on My page, and sees it once | Specified | – | [my-page](../design/screens/my-page.html) | – | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
+| [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | My page lists the Excel keys of its User, and revokes one | Specified | – | [my-page](../design/screens/my-page.html) | – | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
+| [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | An Excel key lasts a year, and stops with its User | Specified | – | [admin-keys](../design/screens/admin-keys.html), [my-page](../design/screens/my-page.html) | – | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
 
 ### [Channels](functional/13-channels.md)
 
@@ -400,7 +400,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-04](technical/00-platform.md#tr-pf-04) | Every service authorises itself | Specified | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-16](functional/04-stacks-and-resources.md#fr-sr-16), [FR-SR-18](functional/04-stacks-and-resources.md#fr-sr-18) | – |
 | [TR-PF-05](technical/00-platform.md#tr-pf-05) | Calls between services | Implemented | [NFR-SEC-01](non-functional/security.md#nfr-sec-01), [FR-SR-11](functional/04-stacks-and-resources.md#fr-sr-11) | [4f3ced6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4f3ced6fe82108250ba97f0cab3675a2260c03cc) implements, 2026-10-19<br>[99749ad](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/99749adf66519d375050d879c313644fea3fdf98) refs, 2026-10-18 |
 | [TR-PF-06](technical/00-platform.md#tr-pf-06) | Claude signs in through identity | Implemented | [DEC-UM-02](functional/02-user-management.md#dec-um-02), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [99749ad](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/99749adf66519d375050d879c313644fea3fdf98) implements, 2026-10-18<br>[2e955ec](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2e955ece465f2e4b35484beb0f3055d78fd74df5) refs, 2026-10-18 |
-| [TR-PF-07](technical/00-platform.md#tr-pf-07) | Excel uses the Excel key | Proposed | [DEC-DH-47](../overview/data-hub.md#dec-dh-47), [DEC-PF-02](technical/00-platform.md#dec-pf-02) | – |
+| [TR-PF-07](technical/00-platform.md#tr-pf-07) | Excel uses the Excel key | Specified | [DEC-DH-47](../overview/data-hub.md#dec-dh-47), [DEC-PF-02](technical/00-platform.md#dec-pf-02) | [04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
 | [TR-PF-08](technical/00-platform.md#tr-pf-08) | One schema per service | Specified | [DEC-PF-05](technical/00-platform.md#dec-pf-05), [DEC-DH-55](../overview/data-hub.md#dec-dh-55) | [a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) refs, 2026-10-18<br>[4da4a21](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4da4a218e1fdbdcec07ba3786752c5d5474408bc) refs, 2026-10-17 |
 | [TR-PF-09](technical/00-platform.md#tr-pf-09) | Migrations per service | Implemented | [DEC-DH-59](../overview/data-hub.md#dec-dh-59) | [fa8b907](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fa8b9079bbf8ed8343bfb7c159dc4e55c88b234a) refs, 2026-10-28<br>[a9f1a37](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a9f1a379234e881b7815ef4f4b251b519e0dcc7f) implements, 2026-10-18 |
 | [TR-PF-10](technical/00-platform.md#tr-pf-10) | API contracts from zod schemas | Specified | [DEC-PF-07](technical/00-platform.md#dec-pf-07), [DEC-PF-03](technical/00-platform.md#dec-pf-03) | [195ddba](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/195ddbac22da583811d503242a241c43aab093b4) refs, 2026-10-17 |
