@@ -4,7 +4,6 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
-  import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import { isToday, isYesterday, type Period, periodOf, periodsOf } from '../lib/periods.js';
@@ -19,7 +18,7 @@
    * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
    * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
-   * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All: everyone's
+   * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All, chosen first in the filter (DEC-UX-161): everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
    */
   let {
@@ -236,23 +235,21 @@
   kinds={SHOWN.map((kind) => ({ value: kind, name: t(KINDS[kind].name), detail: t(KINDS[kind].detail), count: days ? totals[kind] : undefined }))}
   bind:chosen={show}
   defaults={[]}
+  choice={dataTeam
+    ? {
+        legend: t('query.filter'),
+        options: [
+          { value: 'yours', name: t('query.filter.yours'), detail: t('query.filter.yours.detail') },
+          { value: 'all', name: t('query.filter.all'), detail: t('query.filter.all.detail') },
+        ],
+        initial: 'yours',
+      }
+    : undefined}
+  bind:picked={scope}
 >
   <Search bind:value={search} placeholder={t('query.search')} />
 </PanelFilter>
 
-{#if dataTeam}
-  <div class="filter">
-    <Segmented
-      options={[
-        { value: 'yours', label: t('query.filter.yours') },
-        { value: 'all', label: t('query.filter.all') },
-      ]}
-      bind:value={scope}
-      label={t('query.filter')}
-      surface="sub"
-    />
-  </div>
-{/if}
 
 <p class="label">{t(all ? 'query.everyone' : 'query.yours')}</p>
 
@@ -298,7 +295,6 @@
 {/if}
 
 <style>
-  .filter { margin: 2px 0 8px; }
   .count { color: var(--text-muted); }
   .label { margin: 4px 4px 8px; font-size: var(--text-meta); color: var(--text-muted); }
   .period { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 6px; width: 100%; padding: 8px 4px; font-size: var(--text-meta); color: var(--text-muted); border-radius: var(--radius-sm); }

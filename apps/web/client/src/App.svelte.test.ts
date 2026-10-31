@@ -1231,9 +1231,16 @@ describe('the web app, with Collections', () => {
     // Not published: a lighter name, and hover says so.
     expect(weekly.querySelector('[title]')?.getAttribute('title')).toBe('Weekly lead volume · niet gepubliceerd');
 
-    await fireEvent.click(panel.getByRole('radio', { name: 'Van jou' }));
+    // All or Yours is the first choice of the filter next to the search (DEC-UX-161).
+    const filter = panel.getByRole('button', { name: /^Filter/ });
+    await fireEvent.click(filter);
+    await fireEvent.click(panel.getByRole('radio', { name: /^Van jou/ }));
     expect(panel.queryByRole('link', { name: /Listings/ })).toBeNull();
     expect(panel.getByRole('link', { name: /Credit leads/ })).toBeTruthy();
+    await fireEvent.click(filter);
+    expect(panel.getByText('Welke Collections:')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Terug naar Alle' }));
+    expect(panel.getByRole('link', { name: /Listings/ })).toBeTruthy();
   });
 
   it('searches the Collections and their Resources together, unfolding where a Resource matches (FR-CO-24)', async () => {
@@ -1870,7 +1877,8 @@ describe('Query', () => {
     expect(main.getByText(/Uitgevoerd door Max Verstraete als q-20261029-4c2e1a/)).toBeTruthy();
     expect(calls.some((call) => call.path.endsWith('/preflight'))).toBe(false);
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
-    await fireEvent.click(panel.getByRole('radio', { name: 'Alle' }));
+    await fireEvent.click(panel.getByRole('button', { name: /^Filter/ }));
+    await fireEvent.click(panel.getByRole('radio', { name: /^Alle/ }));
     await vi.waitFor(() => expect(calls.some((call) => call.path.startsWith('/queries/days?') && call.path.includes('all=true'))).toBe(true));
   });
 
@@ -2256,7 +2264,7 @@ describe('Lenses', () => {
     open('/collections');
     render(App, { config: CONFIG });
     const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
-    const filter = await panel.findByRole('button', { name: 'Filter: toon Resources, Lenses of beide' });
+    const filter = await panel.findByRole('button', { name: 'Filter: welke Collections, en Resources, Lenses of beide' });
     await fireEvent.click(filter);
     const resources = panel.getByRole('checkbox', { name: /^Resources/ }) as HTMLInputElement;
     const lenses = panel.getByRole('checkbox', { name: /^Lenses/ }) as HTMLInputElement;
