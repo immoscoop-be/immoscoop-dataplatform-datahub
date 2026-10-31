@@ -126,13 +126,87 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     );
 
     expect((await collections.get(credit.id, an))?.resources).toEqual([
-      { id: '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', key: 'p.d.leads', displayName: 'Weekly leads', level: 2, published: false, deprecated: false, withdrawn: false },
+      { id: '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', key: 'p.d.leads', displayName: 'Weekly leads', level: 2, published: false, deprecated: false, withdrawn: false, folderId: null },
     ]);
     expect((await collections.get(credit.id, an))?.lastChange?.text).toBe('Weekly leads added by Dirk');
     const colleague = await collections.get(credit.id, bert);
     expect(colleague).toMatchObject({ resources: [], lastChange: null, canManage: false });
     expect((await collections.log(colleague!, 10)).map((entry) => entry.logId)).toEqual(['COL-001']);
     expect((await collections.log({ id: credit.id, canManage: true }, 10)).map((entry) => entry.logId)).toEqual(['COL-006', 'COL-001']);
+  });
+
+  it('keeps folders as deep as needed, and moves Resources, Lenses and folders between them (FR-CO-38 to FR-CO-40)', async () => {
+    const homes = await collections.create({ name: 'Homes', description: 'Homes for sale.', icon: 'house', ownerUnit: DIGIKOM, visibility: 'public' }, an);
+    const resource = 'a1b2c3d4-0000-4000-8000-000000000001';
+    const lens = 'a1b2c3d4-0000-4000-8000-000000000002';
+    await sql`
+      insert into resources (id, key, project_id, node_id, name, resource_type, requested_name, display_name, level, collection_id, published_at)
+      values (${resource}, 'p.d.homes', '9367', 'model.p.homes', 'homes', 'model', 'homes', 'Homes per week', 3, ${homes.id}, now())`.execute(database.db);
+    await sql`
+      insert into lenses (id, name, collection_id, resource_ids, state, author_id, author_name)
+      values (${lens}, 'Homes by region', ${homes.id}, ${[resource]}, 'published', 'u-an', 'An')`.execute(database.db);
+
+    const made = await collections.makeFolder(homes.id, 'By region', null, an);
+    expect(made).toMatchObject({ outcome: 'done', value: { name: 'By region', parentId: null } });
+    const region = made.outcome === 'done' ? made.value.id : '';
+    const inner = await collections.makeFolder(homes.id, 'Antwerp', region, an);
+    const antwerp = inner.outcome === 'done' ? inner.value.id : '';
+    const deeper = await collections.makeFolder(homes.id, 'Old town', antwerp, an);
+    expect(deeper).toMatchObject({ outcome: 'done', value: { parentId: antwerp } });
+    // A folder of another Collection is no place to make one in.
+    const other = await collections.create({ name: 'Elsewhere', description: 'Another.', icon: 'house', ownerUnit: DIGIKOM, visibility: 'public' }, an);
+    expect(await collections.makeFolder(other.id, 'Lost', region, an)).toEqual({ outcome: 'no_folder' });
+
+    expect(await collections.move(homes.id, { kind: 'resource', id: resource }, antwerp, an)).toEqual({ outcome: 'done', value: undefined });
+    expect(await collections.move(homes.id, { kind: 'lens', id: lens }, region, an)).toEqual({ outcome: 'done', value: undefined });
+    // A folder does not go into itself, nor into a folder inside it.
+    expect(await collections.move(homes.id, { kind: 'folder', id: region }, region, an)).toEqual({ outcome: 'into_itself' });
+    const oldTown = deeper.outcome === 'done' ? deeper.value.id : '';
+    expect(await collections.move(homes.id, { kind: 'folder', id: region }, oldTown, an)).toEqual({ outcome: 'into_itself' });
+    // Something of another Collection does not move here.
+    expect(await collections.move(other.id, { kind: 'resource', id: resource }, null, an)).toEqual({ outcome: 'not_found' });
+
+    // Everyone who sees the Collection sees its folders and where everything sits.
+    const seen = await collections.get(homes.id, bert);
+    expect(seen?.folders.map((folder) => [folder.name, folder.parentId])).toEqual([
+      ['Antwerp', region],
+      ['By region', null],
+      ['Old town', antwerp],
+    ]);
+    expect(seen?.resources.map((item) => item.folderId)).toEqual([antwerp]);
+    expect(seen?.lensFolders).toEqual({ [lens]: region });
+
+    // Only an empty folder is deleted (FR-CO-39).
+    expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_empty', holds: 2 });
+    expect(await collections.move(homes.id, { kind: 'resource', id: resource }, null, an)).toMatchObject({ outcome: 'done' });
+    expect(await collections.move(homes.id, { kind: 'folder', id: oldTown }, null, an)).toMatchObject({ outcome: 'done' });
+    expect(await collections.renameFolder(homes.id, antwerp, 'Antwerpen', an)).toMatchObject({ outcome: 'done', value: { name: 'Antwerpen' } });
+    expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'done', value: undefined });
+    expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_found' });
+
+    expect((await collections.log({ id: homes.id, canManage: true }, 20)).map((entry) => entry.text)).toEqual([
+      'Folder Antwerpen deleted by An',
+      'Folder Antwerp renamed to Antwerpen by An',
+      'Folder Old town moved to Homes by An',
+      'Homes per week moved to Homes by An',
+      'Homes by region moved to By region by An',
+      'Homes per week moved to Antwerp by An',
+      'Folder Old town made in Antwerp by An',
+      'Folder Antwerp made in By region by An',
+      'Folder By region made in Homes by An',
+      'Collection created by An',
+    ]);
+  });
+
+  it('keeps an intro in Markdown, and logs only that it changed (FR-CO-41)', async () => {
+    const created = await collections.create(
+      { name: 'With an intro', description: 'An intro.', icon: 'book-open', ownerUnit: DIGIKOM, visibility: 'private', intro: '### Start here' },
+      an,
+    );
+    expect(created.intro).toBe('### Start here');
+    const changed = await collections.change(created.id, { intro: '**Read** this first.' }, an);
+    expect(changed?.intro).toBe('**Read** this first.');
+    expect(changed?.lastChange).toMatchObject({ logId: 'COL-014', text: 'Intro changed by An', params: { actor: 'An' } });
   });
 
   it('never lets a Log Entry be changed or removed, not even by the service (FR-CO-11)', async () => {

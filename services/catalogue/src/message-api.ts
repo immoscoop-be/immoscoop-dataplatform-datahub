@@ -2,6 +2,7 @@ import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Collections, Viewer } from './collections.js';
 import {
+  type BrokenFields,
   FILTER_KINDS,
   FILTER_ON,
   type FilterKind,
@@ -21,6 +22,8 @@ export interface MessageRouteOptions {
   messages: Messages;
   /** query, which tells about its Lenses and decides on a Request on one (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
+  /** identity, which tells about an Excel key: it expires within a month, or the Data Team revoked it (FR-PL-03). */
+  keyCallers?: ServiceCallerVerifier;
   viewer: (request: FastifyRequest) => Viewer;
 }
 
@@ -45,6 +48,19 @@ export function parseDecision(body: unknown): { outcome: 'accepted' | 'refused';
   if (text === null || text.length > REASON) return `The reason is a text of at most ${REASON} characters.`;
   if (input.outcome === 'refused' && text.length === 0) return 'A refusal needs a reason.';
   return { outcome: input.outcome, text };
+}
+
+/** What a query or a Lens misses, as query tells it (MSG-QRY-02, MSG-LEN-05). */
+export function parseBroken(body: unknown): BrokenFields | string {
+  const input = (body ?? {}) as Record<string, unknown>;
+  const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+  const missing = Array.isArray(input.missing) ? (input.missing as Record<string, unknown>[]) : null;
+  const fits = (item: Record<string, unknown>) =>
+    item !== null && typeof item === 'object' && (item.kind === 'resource' || item.kind === 'column') && text(item.resource, 1024) && (item.kind === 'resource' || text(item.column, 1024));
+  if (typeof input.since !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(input.since) || !missing || missing.length === 0 || missing.length > 50 || !missing.every(fits)) {
+    return 'What is missing: the day it was found, and each Resource or column, with its Resource.';
+  }
+  return { since: input.since, missing: missing.map((item) => ({ kind: item.kind as 'resource' | 'column', resource: item.resource as string, ...(item.kind === 'column' ? { column: item.column as string } : {}) })) };
 }
 
 /** What query tells about a Lens. */
@@ -74,12 +90,15 @@ export function parseLensFacts(body: unknown): LensFacts | string {
  * Lens, with its Google ID token: the Lens itself changes in query.
  */
 export async function messageRoutes(app: FastifyInstance, options: MessageRouteOptions): Promise<void> {
-  const { collections, messages, lensCallers, viewer } = options;
+  const { collections, messages, lensCallers, keyCallers, viewer } = options;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const who = viewer(request);
     return messages.sight(who, await collections.list(who));
   }
+
+  /** The ID of an object as catalogue keeps it: a UUID in lower case, or the number of a Learning Card as it is. */
+  const objectId = (kind: string, id: string): string | null => (kind === 'learningCard' ? (/^[0-9A-Za-z.]{2,12}$/.test(id) ? id : null) : UUID.test(id) ? id.toLowerCase() : null);
 
   /** Only query, with its Google ID token, calls the internal routes of Lenses. */
   async function onlyQuery(request: FastifyRequest, reply: FastifyReply) {
@@ -105,13 +124,14 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
   // The number on Messages in the rail (FR-CV-06).
   app.get('/messages/unread', async (request) => ({ unread: await messages.unread(await sightOf(request)) }));
 
-  // The Messages on a Collection, a Resource or a Lens, for its slide-in and its number (FR-CV-04, FR-CV-07).
+  // The Messages on a Collection, a Resource, a Lens or a Learning Card, for its slide-in and its number (FR-CV-04, FR-CV-07).
   app.get<{ Params: { kind: string; id: string } }>('/messages/on/:kind/:id', async (request, reply) => {
-    const { kind, id } = request.params;
-    if (!(kind in WRITTEN_ON) || !UUID.test(id)) return reply.code(404).send(NO_MESSAGE);
+    const { kind } = request.params;
+    const id = objectId(kind, request.params.id);
+    if (!(kind in WRITTEN_ON) || !id) return reply.code(404).send(NO_MESSAGE);
     const sight = await sightOf(request);
-    if (!messages.sees(sight, kind as WrittenOn, id.toLowerCase())) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
-    return { messages: await messages.on(kind as WrittenOn, id.toLowerCase(), sight), kinds: WRITTEN_ON[kind as WrittenOn] };
+    if (!messages.sees(sight, kind as WrittenOn, id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
+    return { messages: await messages.on(kind as WrittenOn, id, sight), kinds: WRITTEN_ON[kind as WrittenOn] };
   });
 
   // One conversation, opened in the Message Centre or in context (FR-CV-09).
@@ -124,15 +144,16 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
   app.post<{ Body: unknown }>('/messages', async (request, reply) => {
     const body = (request.body ?? {}) as Record<string, unknown>;
     const on = body.subjectKind as string;
-    if (!(on in WRITTEN_ON) || typeof body.subjectId !== 'string' || !UUID.test(body.subjectId)) {
-      return reply.code(400).send({ error: 'invalid_request', message: 'A Message is on a Collection, a Resource or a Lens, named by its ID.' });
+    const id = typeof body.subjectId === 'string' ? objectId(on, body.subjectId) : null;
+    if (!(on in WRITTEN_ON) || !id) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Message is on a Collection, a Resource or a Lens, named by its ID, or on a Learning Card, named by its number.' });
     }
     const kinds: readonly string[] = WRITTEN_ON[on as WrittenOn];
     if (!kinds.includes(body.kind as string)) return reply.code(400).send({ error: 'invalid_request', message: `A Message on a ${on} is a ${kinds.join(', a ')}.` });
     const text = parseText(body);
     if (text === null) return reply.code(400).send({ error: 'invalid_request', message: `A Message has 1 to ${TEXT} characters.` });
     const sight = await sightOf(request);
-    const subject = { kind: on as WrittenOn, id: body.subjectId.toLowerCase() };
+    const subject = { kind: on as WrittenOn, id };
     if (!messages.sees(sight, subject.kind, subject.id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
     return reply.code(201).send({ message: await messages.write(sight, subject, body.kind as WrittenKind, text) });
   });
@@ -179,6 +200,47 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     }
   }
 
+  // identity tells about the Excel key of a User (MSG-KEY-01, MSG-KEY-02); the Message is for that User alone.
+  if (keyCallers) {
+    app.post<{ Body: unknown }>(
+      '/internal/excel-keys/notices',
+      {
+        config: { public: true },
+        onRequest: async (request, reply) => {
+          const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+          try {
+            await keyCallers.verify(token);
+          } catch (error) {
+            request.log.warn({ err: error }, 'a notice about an Excel key was refused');
+            return reply.code(401).send({ error: 'unauthorized', message: 'Only identity tells about Excel keys.' });
+          }
+        },
+      },
+      async (request, reply) => {
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+        const type = body.type;
+        if ((type !== 'MSG-KEY-01' && type !== 'MSG-KEY-02') || typeof body.keyId !== 'string' || !UUID.test(body.keyId) || !text(body.userId, 200) || !text(body.name, 80)) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A notice names its type, the key, its User and its name.' });
+        }
+        if (type === 'MSG-KEY-01' && !(typeof body.expires === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(body.expires))) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A key that expires says on which day, as YYYY-MM-DD.' });
+        }
+        if (type === 'MSG-KEY-02' && !text(body.actor, 200)) {
+          return reply.code(400).send({ error: 'invalid_request', message: 'A revoked key says who of the Data Team revoked it.' });
+        }
+        const made = await messages.keyNotice({
+          type,
+          keyId: body.keyId.toLowerCase(),
+          userId: body.userId as string,
+          name: body.name as string,
+          ...(type === 'MSG-KEY-01' ? { expires: body.expires as string } : { actor: body.actor as string }),
+        });
+        return reply.code(201).send(made);
+      },
+    );
+  }
+
   // query tells what it keeps about a Lens whenever it changes, and all of them once a day (DEC-PF-30).
   app.put<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
     if (!UUID.test(request.params.id)) return reply.code(400).send({ error: 'invalid_request', message: 'A Lens is named by its ID.' });
@@ -204,6 +266,39 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
       ...(input.partitions === undefined ? {} : { partitions: input.partitions as number }),
     });
     return reply.code(sent.sent ? 201 : 200).send({ request: { id: sent.id } });
+  });
+
+  // What Data Hub tells the author of a Lens that grew into large and keeps running (MSG-LEN-02, FR-LE-10).
+  app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/growth', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const input = (request.body ?? {}) as Record<string, unknown>;
+    const size = (value: unknown) => typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
+    if (!UUID.test(request.params.id) || !size(input.reads) || !size(input.threshold)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Lens by its ID, with what one run reads and the threshold, in bytes.' });
+    }
+    const told = await messages.grewLarge(request.params.id.toLowerCase(), { reads: input.reads as number, threshold: input.threshold as number });
+    return reply.code(201).send({ message: told });
+  });
+
+  // What Data Hub tells when a query or a Lens became Broken (MSG-QRY-02, MSG-LEN-05, FR-SR-52): query finds it.
+  app.post<{ Params: { kind: string; id: string }; Body: unknown }>('/internal/:kind/:id/broken', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const { kind, id } = request.params;
+    const fields = parseBroken(request.body);
+    if ((kind !== 'queries' && kind !== 'lenses') || !UUID.test(id) || typeof fields === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: typeof fields === 'string' ? fields : 'A query or a Lens, by its ID.' });
+    }
+    const input = (request.body ?? {}) as Record<string, unknown>;
+    if (kind === 'queries' && (typeof input.name !== 'string' || !input.name || input.name.length > 200 || typeof input.ownerId !== 'string' || !input.ownerId || input.ownerId.length > 128)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A Broken query comes with its name and who made it.' });
+    }
+    const subject = kind === 'queries' ? { kind: 'query' as const, id: id.toLowerCase(), name: input.name as string, ownerId: input.ownerId as string } : { kind: 'lens' as const, id: id.toLowerCase() };
+    return reply.code(201).send({ message: await messages.broken(subject, fields) });
+  });
+
+  // It works again: its Message says so, and is unread again for whom it is for (MSG-QRY-02, MSG-LEN-05).
+  app.post<{ Params: { kind: string; id: string } }>('/internal/:kind/:id/works', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const { kind, id } = request.params;
+    if ((kind !== 'queries' && kind !== 'lenses') || !UUID.test(id)) return reply.code(400).send({ error: 'invalid_request', message: 'A query or a Lens, by its ID.' });
+    return { message: await messages.worksAgain({ kind: kind === 'queries' ? 'query' : 'lens', id: id.toLowerCase() }) };
   });
 
   // The decision on a Request on a Lens, recorded for query, which changes the Lens with it (FR-LE-09).

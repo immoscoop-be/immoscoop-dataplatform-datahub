@@ -1,8 +1,10 @@
-import { verifierFromEnv } from '@datahub/auth';
+import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
-import { metadataAccessToken } from '@datahub/google';
+import { metadataAccessToken, metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
+import { createCatalogueNotices } from './catalogue.js';
+import { createExcelKeys } from './excel-keys.js';
 import type { IdentityDatabase } from './database.js';
 import { signInSettingsFromEnv, tokenIssuerFromEnv } from './env.js';
 import { readGoogleClient } from './google-client.js';
@@ -45,6 +47,24 @@ const app = await buildApp({
     webClient: settings.webClient,
     mcpRedirectUris: settings.mcpRedirectUris,
   },
+  // catalogue asks who to notify with a Google ID token for identity's own address (DEC-LN-07).
+  peopleCallers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')] }),
+  // query exchanges the Excel key Excel sends for an Access Token (TR-PF-07); Cloud Scheduler asks once a day
+  // which keys expire within a month, and catalogue puts the Message (FR-PL-03).
+  excelKeys: {
+    keys: createExcelKeys(database.db),
+    exchangers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_QUERY_SERVICE_ACCOUNT')] }),
+    schedulers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_SCHEDULER_SERVICE_ACCOUNT')] }),
+    notices: createCatalogueNotices(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
+  },
 });
 app.addHook('onClose', () => database.close());
 await start(app);
+
+function required(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing environment variable ${name}`);
+  }
+  return value;
+}

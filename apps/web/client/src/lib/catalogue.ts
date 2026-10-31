@@ -7,6 +7,8 @@ import type { Marked } from './query.js';
 export interface Resource {
   id: string;
   key: string;
+  /** The full name of its table in its own case, as BigQuery knows it; what is shown and copied. */
+  fullName?: string;
   displayName: string;
   name: string;
   resourceType: string;
@@ -142,13 +144,31 @@ export interface CollectionItem {
   published: boolean;
   deprecated: boolean;
   withdrawn: boolean;
+  /** The folder it sits in, or null at the top of its Collection (FR-CO-38). */
+  folderId: string | null;
 }
+
+/** A folder of a Collection (FR-CO-38, TR-CO-07). */
+export interface Folder {
+  id: string;
+  name: string;
+  /** The folder it sits in, or null at the top of its Collection. */
+  parentId: string | null;
+  /** The name of whoever made it, and when. */
+  createdBy: string;
+  createdAt: string;
+}
+
+/** What moves between the folders of a Collection (FR-CO-40). */
+export type MovableKind = 'resource' | 'lens' | 'folder';
 
 /** A Collection as the User sees it (TR-CO-02): with the Resources in it they see, and its last change. */
 export interface Collection {
   id: string;
   name: string;
   description: string;
+  /** What its Owner Unit tells about it, in Markdown; empty when there is none (FR-CO-41). */
+  intro: string;
   icon: string | null;
   ownerUnit: OwnerUnit;
   visibility: 'private' | 'public';
@@ -156,6 +176,10 @@ export interface Collection {
   createdBy: string;
   canManage: boolean;
   resources: CollectionItem[];
+  /** Its folders, by name (FR-CO-38). */
+  folders: Folder[];
+  /** The folder of each of its Lenses that sits in one, by the ID of the Lens. */
+  lensFolders: Record<string, string>;
   lastChange: LogEntry | null;
 }
 
@@ -171,6 +195,8 @@ export interface CollectionFields {
   icon: string;
   ownerUnit: string;
   visibility: 'private' | 'public';
+  /** In Markdown (FR-CO-41); a new Collection may be made without. */
+  intro?: string;
 }
 
 /** The calls of the page to catalogue, with the Access Token of the User. */
@@ -279,6 +305,21 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
      */
     async addResources(id: string, resources: readonly (string | ({ id: string } & Record<string, unknown>))[]): Promise<CollectionResource[]> {
       return ((await (await call(`${collection(id)}/resources`, { method: 'POST', body: { resources } })).json()) as { resources: CollectionResource[] }).resources;
+    },
+    /** Makes a folder at the top of a Collection, or in one of its folders (FR-CO-39). */
+    async makeFolder(id: string, name: string, parentId: string | null): Promise<Folder> {
+      return (await call(`${collection(id)}/folders`, { method: 'POST', body: { name, parentId } })).json() as Promise<Folder>;
+    },
+    async renameFolder(id: string, folderId: string, name: string): Promise<Folder> {
+      return (await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'PATCH', body: { name } })).json() as Promise<Folder>;
+    },
+    /** Deletes an empty folder; one that holds something is refused with not_empty (FR-CO-39). */
+    async deleteFolder(id: string, folderId: string): Promise<void> {
+      await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'DELETE' });
+    },
+    /** Puts a Resource, Lens or folder of a Collection in one of its folders, or at its top with null (FR-CO-40). */
+    async move(id: string, kind: MovableKind, itemId: string, folderId: string | null): Promise<void> {
+      await call(`${collection(id)}/places/${kind}/${encodeURIComponent(itemId)}`, { method: 'PUT', body: { folderId } });
     },
     /** Takes a Resource out of its Collection: only the Data Team may (FR-CO-14). */
     async removeResource(id: string): Promise<void> {

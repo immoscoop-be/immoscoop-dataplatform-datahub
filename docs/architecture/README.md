@@ -66,7 +66,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | Service | Responsibility | Functional domains | Schema |
 | --- | --- | --- | --- |
 | [identity](services/identity.md) | Sign in with Google, Groups from Workspace, Excel keys, Access Tokens | [User management](../requirements/functional/02-user-management.md), [Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md) | `identity` |
-| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md) | `catalogue` |
+| [catalogue](services/catalogue.md) | Resources, Collections, maturity, Resource Card, Log, search, conversations, the progress in the Learning Centre | [Resources](../requirements/functional/04-stacks-and-resources.md), [Collections](../requirements/functional/03-collections.md), [Maturity and release](../requirements/functional/06-maturity-and-release.md), [Resource card](../requirements/functional/05-resource-card.md), [Log and notifications](../requirements/functional/07-log-and-notifications.md), [Conversations](../requirements/functional/14-conversations.md), [Learning](../requirements/functional/16-learning.md) | `catalogue` |
 | [registry](services/registry.md) | Fetching, storing and processing the dbt Artifacts; Nodes, lineage and Changes | [Artifact registry](../requirements/functional/01-artifact-registry.md) | `registry` |
 | [query](services/query.md) | Running queries on the Resources: Query, previews, later free SQL for Claude and feeds for Excel, and the Query Log | [Resources](../requirements/functional/04-stacks-and-resources.md) (querying), [Channels](../requirements/functional/13-channels.md) | `query` |
 | [semgraph](services/semgraph.md) | The Chart Server: drawing every chart by what it means, following the chart language. Moved in from its own repository, with its history ([DEC-PF-23](../requirements/technical/00-platform.md#dec-pf-23), [DEC-PF-25](../requirements/technical/00-platform.md#dec-pf-25)) | The chart language, for [Lenses](../requirements/functional/09-lenses.md) and [Reports](../requirements/functional/10-reports.md) | none |
@@ -76,7 +76,7 @@ Every service also fetches the public keys of identity to validate tokens; those
 | [web](services/web.md) | People in the browser | identity, catalogue, registry, query, semgraph |
 | [mcp](services/mcp.md) | Claude, as an MCP server and later MCP Apps | catalogue, registry, query, semgraph; signs in through identity |
 
-Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md), [EDA](../requirements/functional/15-eda.md) and [Learning](../requirements/functional/16-learning.md) live is decided with those domains.
+Later, once their domains are specified: Lenses and Reports ([Lenses](../requirements/functional/09-lenses.md), [Reports](../requirements/functional/10-reports.md)), checks ([Checks and monitoring](../requirements/functional/08-checks-and-monitoring.md)) and notifications ([OP-PF-06](../requirements/technical/00-platform.md#op-pf-06)). Where [Beta and promotion](../requirements/functional/11-beta-and-promotion.md) and [EDA](../requirements/functional/15-eda.md) live is decided with those domains. [Learning](../requirements/functional/16-learning.md) lives in the web app: its Learning Cards are files in the package `packages/learning`, and catalogue keeps what every User did with them ([TR-LR-01](../requirements/technical/16-learning.md#tr-lr-01), [TR-LR-02](../requirements/technical/16-learning.md#tr-lr-02)).
 
 ## How a User is validated
 
@@ -122,7 +122,7 @@ sequenceDiagram
 | --- | --- | --- |
 | Browser | web | Google, through identity |
 | Claude | mcp | OAuth through identity, which delegates to Google ([TR-PF-06](../requirements/technical/00-platform.md#tr-pf-06)) |
-| Excel | query, as a Power Query feed | The Excel key, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
+| Excel | query, the result of a Lens as CSV for Power Query ([TR-LE-08](../requirements/technical/09-lenses.md#tr-le-08)) | The Excel key, as the password of Basic, exchanged at identity for an Access Token ([TR-PF-07](../requirements/technical/00-platform.md#tr-pf-07)) |
 | Later: HTML reports, others | The same APIs | One of the above |
 
 None of the interfaces holds business logic. Lens and Report components are shared between web and the MCP App ([TR-PF-12](../requirements/technical/00-platform.md#tr-pf-12)).

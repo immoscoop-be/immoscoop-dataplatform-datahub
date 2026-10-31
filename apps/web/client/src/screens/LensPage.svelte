@@ -16,6 +16,7 @@
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import MessagesButton from './MessagesButton.svelte';
+  import OpenInExcel from './OpenInExcel.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import type { Collection } from '../lib/catalogue.js';
@@ -45,6 +46,7 @@
     onchanged,
     onopened,
     messages,
+    excelAddress,
   }: {
     lens: Lens;
     client: QueryClient;
@@ -55,7 +57,11 @@
     onopened: (queryId: string) => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
     messages?: { count: number | null; href: string };
+    /** The address Power Query fetches the result of the Lens from (DEC-UX-159, DEC-CH-06). */
+    excelAddress?: string;
   } = $props();
+
+  let excel = $state(false);
 
   /** How long changing a value pauses before the Pre-flight is asked. */
   const PAUSE = 400;
@@ -251,6 +257,7 @@
     {#if lens.shows}<p class="shows">{lens.shows}</p>{/if}
   </div>
   <div class="actions">
+    {#if excelAddress}<Button variant="outline" title={t('excel.hint')} onclick={() => (excel = true)}><Icon name="file-xls" />{t('excel.title')}</Button>{/if}
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if lens.canManage}
       <Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
@@ -417,6 +424,8 @@
   {/if}
 </Tabs>
 
+{#if excel && excelAddress}<OpenInExcel lens={lens.name} address={excelAddress} onclose={() => (excel = false)} />{/if}
+
 <style>
   b { font-weight: var(--weight-medium); }
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 8px; }
@@ -440,7 +449,8 @@
   .was { font-size: var(--text-meta); }
   .run { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
   .too { color: var(--signal-urgent); }
-  .result { margin-top: 14px; display: grid; gap: 10px; }
+  /* One column no wider than the page, so that a wide result scrolls inside its grid instead of spilling out. */
+  .result { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
   .ran { margin: 0; }
   .grid.stale { opacity: .45; }
   .foot { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 0 10px; font-size: var(--text-meta); color: var(--text-muted); }

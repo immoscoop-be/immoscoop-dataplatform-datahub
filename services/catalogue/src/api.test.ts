@@ -11,7 +11,9 @@ import { createCollections } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { type Group, IdentityUnavailable } from './identity.js';
 import { migrations } from './migrations/index.js';
+import { QueryUnavailable } from './query.js';
 import { RegistryUnavailable } from './registry.js';
+import { createLearning } from './learning.js';
 import { createMessages } from './messages.js';
 import { createRequests } from './requests.js';
 import { createResources } from './resources.js';
@@ -47,6 +49,7 @@ describe('the fields of a Collection in a request', () => {
     expect(parse({ ...complete, visibility: 'secret' }, true)).toBe('The visibility is private or public.');
     expect(parse({ ...complete, ownerUnit: 'sales@thenextimmoscoop.be' }, true)).toBe('The Owner Unit is named by the ID of a group.');
     expect(parse({ ...complete, owner: 'me' }, true)).toBe('A Collection has no field owner.');
+    expect(parse({ intro: 42 }, false)).toBe('The intro is Markdown of at most 10000 characters.');
     const refused = 'The icon is the name of an icon of Phosphor that is not the logo of a brand.';
     expect(parse({ ...complete, icon: 'unicorn' }, true)).toBe(refused);
     expect(parse({ ...complete, icon: 'google-logo' }, true)).toBe(refused);
@@ -150,6 +153,9 @@ describe.skipIf(!url)('the routes of Collections', () => {
   const groupsOf = new Map<string, Group[]>();
   let identityDown = false;
   let registryDown = false;
+  /** What catalogue had query check after a new Current Version (FR-SR-52). */
+  const checkedByQuery: string[][] = [];
+  let queryDown = false;
 
   beforeAll(async () => {
     database = createDatabase<CatalogueDatabase>({ connectionString: url }, schema);
@@ -206,7 +212,14 @@ describe.skipIf(!url)('the routes of Collections', () => {
           },
         },
         requests: createRequests(database.db),
+        learning: createLearning(database.db),
         messages: createMessages(database.db),
+        query: {
+          async check(resourceIds) {
+            if (queryDown) throw new QueryUnavailable('query answered 503');
+            checkedByQuery.push([...resourceIds]);
+          },
+        },
         // query tells about its Lenses with its own Google ID token (DEC-PF-30).
         lensCallers: {
           async verify(token) {
@@ -214,6 +227,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
               throw new TokenError('Service token rejected: ERR_JWS_INVALID');
             }
             return 'datahub-query@project.iam.gserviceaccount.com';
+          },
+        },
+        // identity tells about the Excel key of a User (FR-PL-03).
+        keyCallers: {
+          async verify(token) {
+            if (token !== 'identity-token') {
+              throw new TokenError('Service token rejected: ERR_JWS_INVALID');
+            }
+            return 'datahub-identity@project.iam.gserviceaccount.com';
           },
         },
       },
@@ -311,6 +333,59 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect(handed.json()).toMatchObject({ ownerUnit: DIGIKOM });
   });
 
+  it('lets the Owner Unit and the Data Team keep folders, and shows them to everyone who sees the Collection (FR-CO-38 to FR-CO-40)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const bert = await user('Bert', [SALES]);
+    const dirk = await user('Dirk', [], ['datateam']);
+    const id = (await an('POST', '/collections', { name: 'Folders', description: 'Kept in folders.', icon: 'folder', ownerUnit: DIGIKOM.id, visibility: 'public' })).json().id;
+
+    const made = await an('POST', `/collections/${id}/folders`, { name: ' By source ' });
+    expect(made.statusCode).toBe(201);
+    expect(made.json()).toMatchObject({ name: 'By source', parentId: null });
+    const folder = made.json().id;
+    const inner = (await dirk('POST', `/collections/${id}/folders`, { name: 'Paid', parentId: folder })).json();
+    expect(inner).toMatchObject({ name: 'Paid', parentId: folder });
+
+    expect((await bert('POST', `/collections/${id}/folders`, { name: 'Mine' })).statusCode).toBe(403);
+    expect((await bert('PUT', `/collections/${id}/places/folder/${inner.id}`, { folderId: null })).statusCode).toBe(403);
+    expect((await an('POST', `/collections/${id}/folders`, { name: '' })).statusCode).toBe(400);
+    expect((await an('POST', `/collections/${id}/folders`, { name: 'x'.repeat(81) })).json().message).toBe('The name of a folder has 1 to 80 characters.');
+    expect((await an('POST', `/collections/${id}/folders`, { name: 'Lost', parentId: '00000000-0000-4000-8000-000000000000' })).statusCode).toBe(404);
+    expect((await an('PUT', `/collections/${id}/places/folder/${folder}`, { folderId: inner.id })).json().error).toBe('into_itself');
+    expect((await an('PUT', `/collections/${id}/places/table/${folder}`, { folderId: null })).statusCode).toBe(400);
+
+    expect((await bert('GET', `/collections/${id}`)).json().folders).toMatchObject([
+      { id: folder, name: 'By source', parentId: null, createdBy: 'An' },
+      { id: inner.id, name: 'Paid', parentId: folder, createdBy: 'Dirk' },
+    ]);
+    // Only an empty folder is deleted (FR-CO-39).
+    const refused = await an('DELETE', `/collections/${id}/folders/${folder}`);
+    expect(refused.statusCode).toBe(409);
+    expect(refused.json()).toMatchObject({ error: 'not_empty', holds: 1 });
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { name: 'Paid ads' })).json()).toMatchObject({ name: 'Paid ads' });
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { parentId: null })).statusCode).toBe(400);
+    expect((await an('PUT', `/collections/${id}/places/folder/${inner.id}`, { folderId: null })).statusCode).toBe(204);
+    expect((await an('DELETE', `/collections/${id}/folders/${folder}`)).statusCode).toBe(204);
+
+    expect((await bert('GET', `/collections/${id}/log`)).json().entries.map((entry: { text: string }) => entry.text)).toEqual([
+      'Folder By source deleted by An',
+      'Folder Paid ads moved to Folders by An',
+      'Folder Paid renamed to Paid ads by An',
+      'Folder Paid made in By source by Dirk',
+      'Folder By source made in Folders by An',
+      'Collection created by An',
+    ]);
+  });
+
+  it('keeps the intro of a Collection in Markdown (FR-CO-41)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const id = (await an('POST', '/collections', { name: 'Introduced', description: 'With an intro.', icon: 'book-open', ownerUnit: DIGIKOM.id })).json().id;
+    expect((await an('GET', `/collections/${id}`)).json().intro).toBe('');
+    const changed = await an('PATCH', `/collections/${id}`, { intro: '### Start here\n\n- **Weekly** figures\n' });
+    expect(changed.json().intro).toBe('### Start here\n\n- **Weekly** figures');
+    expect((await an('PATCH', `/collections/${id}`, { intro: 'x'.repeat(10_001) })).statusCode).toBe(400);
+  });
+
   describe('Resources', () => {
     const update = (runId: string, names: string[]) => ({
       projectId: '9367',
@@ -346,7 +421,23 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
       const answer = await fromRegistry(update('1', ['visits', 'leads']));
       expect(answer.statusCode).toBe(200);
-      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0 });
+      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
+      expect(checkedByQuery).toEqual([]);
+    });
+
+    it('has query check what reads a Resource a new Current Version withdrew or brought back, and answers registry when query does not (FR-SR-52)', async () => {
+      const withdrawn = (await fromRegistry(update('2', ['visits']))).json();
+      expect(withdrawn).toMatchObject({ withdrawn: 1, changed: [expect.any(String)] });
+      expect(checkedByQuery.splice(0)).toEqual([withdrawn.changed]);
+      queryDown = true;
+      try {
+        const back = await fromRegistry(update('2', ['visits', 'leads']));
+        expect(back.statusCode).toBe(200);
+        expect(back.json()).toMatchObject({ back: 1, changed: withdrawn.changed });
+        expect(checkedByQuery).toEqual([]);
+      } finally {
+        queryDown = false;
+      }
     });
 
     it('lets only the Data Team see the Resources without Collection and add them to one (TR-SR-04)', async () => {
@@ -382,7 +473,12 @@ describe.skipIf(!url)('the routes of Collections', () => {
         ['leads', 'Added to the Collection Visits by Dirk'],
         ['visits', 'Added to the Collection Visits by Dirk'],
       ]);
+      // In a folder, it leaves the folder with the Collection, and comes back at its top (FR-CO-38).
+      const kept = (await an('POST', `/collections/${collection.id}/folders`, { name: 'Kept' })).json();
+      expect((await an('PUT', `/collections/${collection.id}/places/resource/${leads.id}`, { folderId: kept.id })).statusCode).toBe(204);
+      expect((await an('DELETE', `/collections/${collection.id}/folders/${kept.id}`)).statusCode).toBe(409);
       expect((await dirk('DELETE', `/resources/${leads.id}/collection`)).statusCode).toBe(204);
+      expect((await an('DELETE', `/collections/${collection.id}/folders/${kept.id}`)).statusCode).toBe(204);
       // With what the Data Admin recorded at step 2: a field the Resource lacks is refused (FR-CO-33).
       const recorded = { partition: null, clusterBy: [], partitionFilter: 'none', grain: ['leads_id'], grainSentence: 'lead', modelType: 'fact', origins: { grain: 'here' }, release: null, mappings: [] };
       const lacking = await dirk('POST', `/collections/${collection.id}/resources`, { resources: [{ id: leads.id, ...recorded, grain: ['nope'] }] });
@@ -685,6 +781,11 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(parseUpdate({ ...update('3', []), tables: [{ key: 'x' }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), projectName: 5 })).toBe('The name of the dbt project is a text, or null.');
       expect(parseUpdate({ ...update('3', []), generatedAt: 'yesterday' })).toMatch(/ISO 8601/);
+      // What changed upstream, followed downstream by registry (FR-AR-12).
+      const change = { kind: 'logic', node: 'stg_leads', reaches: [{ nodeId: 'model.p.leads', distance: 2 }] };
+      expect(parseUpdate({ ...update('3', []), changes: [change] })).toMatchObject({ changes: [change] });
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, kind: 'moved' }] })).toMatch(/Every change has a kind/);
+      expect(parseUpdate({ ...update('3', []), changes: [{ ...change, reaches: [{ nodeId: 'model.p.leads', distance: -1 }] }] })).toMatch(/Every change/);
       const [visits] = update('3', ['visits']).tables;
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: undefined }] })).toMatch(/Every exposed table/);
       expect(parseUpdate({ ...update('3', []), tables: [{ ...visits, columns: [{ name: 'x', position: 1.5, dataType: null, description: '' }] }] })).toMatch(
@@ -738,6 +839,76 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await mia('GET', '/requests?subjectKind=query')).json().requests).toEqual([]);
     expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests).toHaveLength(1);
     expect((await mia('POST', '/requests', { ...body, partitions: 'all' })).statusCode).toBe(400);
+  });
+
+  describe('the Learning Centre', () => {
+    it('keeps what each User saw and understood, for them alone (FR-LR-32, DEC-LR-13)', async () => {
+      const lies = await user('Lies', [SALES]);
+      const tom = await user('Tom', [SALES]);
+      expect((await lies('GET', '/learning/progress')).json()).toEqual({ progress: [] });
+
+      const opened = await lies('PUT', '/learning/progress/1.2.2', { step: 'why' });
+      expect(opened.statusCode).toBe(200);
+      const first = opened.json().progress;
+      expect(first).toMatchObject({ card: '1.2.2', step: 'why', understoodAt: null });
+      // Later at another step: seen stays the first time, where they are moves on.
+      const later = (await lies('PUT', '/learning/progress/1.2.2', { step: 'see' })).json().progress;
+      expect(later).toMatchObject({ card: '1.2.2', step: 'see', seenAt: first.seenAt });
+
+      // "I understand it", and undoing it (FR-LR-05, FR-LR-28); understanding a card unseen also sees it.
+      expect((await lies('PUT', '/learning/progress/1.2.2/understood')).json().progress.understoodAt).not.toBeNull();
+      expect((await lies('PUT', '/learning/progress/K3.4/understood')).json().progress).toMatchObject({ card: 'K3.4', step: 'can' });
+      expect((await lies('DELETE', '/learning/progress/1.2.2/understood')).json().progress).toMatchObject({ card: '1.2.2', understoodAt: null });
+
+      const mine = (await lies('GET', '/learning/progress')).json().progress;
+      expect(mine.map((entry: { card: string }) => entry.card).sort()).toEqual(['1.2.2', 'K3.4']);
+      expect((await tom('GET', '/learning/progress')).json()).toEqual({ progress: [] });
+
+      expect((await lies('PUT', '/learning/progress/9.9.9', { step: 'why' })).statusCode).toBe(404);
+      expect((await lies('PUT', '/learning/progress/1.2.2', { step: 'congrats' })).statusCode).toBe(400);
+      expect((await app.inject({ method: 'GET', url: '/learning/progress' })).statusCode).toBe(401);
+    });
+
+    it('takes a Question or a Remark on a Learning Card, which everyone sees and the Data Team gets (FR-LR-06)', async () => {
+      const lies = await user('Lies', [SALES]);
+      const tom = await user('Tom', [DIGIKOM]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const asked = await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: 'K3.4', kind: 'question', text: 'Where is the glossary?' });
+      expect(asked.statusCode).toBe(201);
+      expect(asked.json().message).toMatchObject({ subject: { kind: 'learningCard', id: 'K3.4', name: 'K3.4 Where definitions live', exists: true, collection: null } });
+      expect((await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: 'K3.4', kind: 'signal', text: 'Wrong.' })).statusCode).toBe(400);
+      expect((await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: '9.9.9', kind: 'question', text: 'Which card?' })).statusCode).toBe(404);
+
+      // Every User sees it on the card; it is for the Data Team, which writes the cards.
+      expect((await tom('GET', '/messages/on/learningCard/K3.4')).json()).toMatchObject({ messages: [{ id: asked.json().message.id }], kinds: ['question', 'remark'] });
+      const forTeam = (await dirk('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
+      expect(forTeam).toContain(asked.json().message.id);
+      const forTom = (await tom('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id);
+      expect(forTom).not.toContain(asked.json().message.id);
+    });
+  });
+
+  it('puts what identity tells about an Excel key to its User alone (FR-PL-03, MSG-KEY-01, MSG-KEY-02)', async () => {
+    const an = await user('An', [DIGIKOM]);
+    const bert = await user('Bert', [SALES]);
+    const dirk = await user('Dirk', [], ['datateam']);
+    const keyId = '5a6b7c8d-0000-4000-8000-00000000ab01';
+    const notice = (payload: object, token = 'identity-token') =>
+      app.inject({ method: 'POST', url: '/internal/excel-keys/notices', headers: { authorization: `Bearer ${token}` }, payload });
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' }, 'query-token')).statusCode).toBe(401);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop' })).statusCode).toBe(400);
+    expect((await notice({ type: 'MSG-KEY-01', keyId, userId: 'u-An', name: 'Excel on my laptop', expires: '2027-10-31' })).statusCode).toBe(201);
+    expect((await notice({ type: 'MSG-KEY-02', keyId, userId: 'u-An', name: 'Excel on my laptop', actor: 'Dirk Vos' })).statusCode).toBe(201);
+
+    const forAn = (await an('GET', '/messages?view=forYou')).json().messages.filter((message: { type: string }) => message.type.startsWith('MSG-KEY'));
+    expect(forAn.map((message: { type: string; subject: { kind: string; name: string } }) => [message.type, message.subject.kind, message.subject.name])).toEqual([
+      ['MSG-KEY-02', 'excelKey', 'Excel on my laptop'],
+      ['MSG-KEY-01', 'excelKey', 'Excel on my laptop'],
+    ]);
+    for (const other of [bert, dirk]) {
+      const everything = (await other('GET', '/messages?view=everything')).json().messages;
+      expect(everything.some((message: { type: string }) => message.type.startsWith('MSG-KEY'))).toBe(false);
+    }
   });
 
   describe('Messages', () => {
@@ -878,6 +1049,69 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(again.json().request.id).toBe(grew.json().request.id);
       expect((await fromQuery('POST', `/internal/lenses/${lens}/requests`, { reads: 1 }, 'nope')).statusCode).toBe(401);
       expect((await team('GET', `/requests?subjectKind=lens&subjectId=${lens}`)).json().requests[0]).toMatchObject({ type: 'MSG-LEN-03', writerId: '', state: 'waiting' });
+
+      // Into large, it keeps running, and Data Hub tells its author (MSG-LEN-02).
+      const large = await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000, threshold: 100_000_000 });
+      expect(large.statusCode).toBe(201);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 240_000_000 })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/growth`, { reads: 1, threshold: 1 }, 'nope')).statusCode).toBe(401);
+      const told = (await team('GET', `/messages/${large.json().message.id}`)).json().message;
+      expect(told).toMatchObject({ type: 'MSG-LEN-02', writer: null, params: { reads: '240000000', threshold: '100000000' }, state: null });
+    });
+
+    it('tells who made a query, or the Owner Unit of a Lens, that it is Broken, and in the same Message that it works again (MSG-QRY-02, MSG-LEN-05, FR-SR-52)', async () => {
+      const karel = await user('Karel', [DIGIKOM]);
+      const mia = await user('Mia', [DIGIKOM]);
+      const ann = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const query = '6c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const missing = [{ kind: 'column', column: 'lead_source', resource: 'Weekly lead volume / Lead sources' }];
+      const broken = { name: 'Sources by week', ownerId: 'u-Karel', since: '2026-10-31', missing };
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, broken, 'nope')).statusCode).toBe(401);
+      expect((await karel('POST', `/internal/queries/${query}/broken`, broken)).statusCode).toBe(401);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { since: '2026-10-31', missing })).json().message).toMatch(/name and who made it/);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { ...broken, since: '31 Oct' })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/queries/${query}/broken`, { ...broken, missing: [{ kind: 'column', resource: 'Weekly lead volume' }] })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/reports/${query}/broken`, broken)).statusCode).toBe(400);
+
+      const told = await fromQuery('POST', `/internal/queries/${query}/broken`, broken);
+      expect(told.statusCode).toBe(201);
+      const id = told.json().message.id as string;
+      // Only who made the query sees it, For you; a colleague does not.
+      const seen = (await karel('GET', `/messages/${id}`)).json().message;
+      expect(seen).toMatchObject({
+        type: 'MSG-QRY-02',
+        kind: 'dataHub',
+        state: 'broken',
+        unread: true,
+        subject: { kind: 'query', id: query, name: 'Sources by week' },
+        params: { since: '2026-10-31', count: '1' },
+      });
+      // A list goes into the params as JSON, as the Message Catalogue renders it (MSG-QRY-02).
+      expect(JSON.parse(seen.params.missing)).toEqual(missing);
+      expect((await karel('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(id);
+      expect((await mia('GET', `/messages/${id}`)).statusCode).toBe(404);
+      expect((await mia('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(id);
+
+      // It works again: the same Message says so, and is new again for Karel.
+      await karel('POST', `/messages/${id}/read`);
+      expect((await karel('GET', `/messages/${id}`)).json().message.unread).toBe(false);
+      expect((await fromQuery('POST', `/internal/queries/${query}/works`, {})).json().message).toEqual({ id });
+      expect((await karel('GET', `/messages/${id}`)).json().message).toMatchObject({ state: 'worksAgain', unread: true });
+      // Nothing waits to work again any more.
+      expect((await fromQuery('POST', `/internal/queries/${query}/works`, {})).json().message).toBeNull();
+
+      // A Lens: its Owner Unit hears it, For you; who may not see the Lens does not.
+      const talk = (await ann('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const lens = '7d1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      await fromQuery('PUT', `/internal/lenses/${lens}`, { name: 'Weekly sources', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Mia', authorName: 'Mia' });
+      const onLens = await fromQuery('POST', `/internal/lenses/${lens}/broken`, { since: '2026-10-31', missing: [{ kind: 'resource', resource: 'Weekly lead volume' }] });
+      expect(onLens.statusCode).toBe(201);
+      const lensMessage = onLens.json().message.id as string;
+      expect((await ann('GET', `/messages/${lensMessage}`)).json().message).toMatchObject({ type: 'MSG-LEN-05', state: 'broken', subject: { kind: 'lens', name: 'Weekly sources' }, params: { count: '1' } });
+      expect((await ann('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).toContain(lensMessage);
+      expect((await bert('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).not.toContain(lensMessage);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/works`, {})).json().message).toEqual({ id: lensMessage });
     });
 
     it('enters a Signal on a Resource in its Log (CNV-050)', async () => {

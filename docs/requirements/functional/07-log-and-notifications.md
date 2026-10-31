@@ -40,9 +40,11 @@ Pointers to material this domain will build on, collected during the migration. 
 <a id="fr-ln-01"></a>
 ### FR-LN-01 · A notification to an Owner reaches its whole Owner Unit
 
-**Status:** Proposed · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [resource-messages](../../design/screens/resource-messages.html)
+**Status:** Implemented · **Source:** [REQ-DH-OWNERS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-owners) · **Screens:** [collection-messages](../../design/screens/collection-messages.html), [learning-message](../../design/screens/learning-message.html), [notifications](../../design/screens/notifications.html), [resource-messages](../../design/screens/resource-messages.html)
 
 A notification to the Owner of a Collection or a Resource reaches every member of its Owner Unit, so that a Collection always potentially has several owners.
+
+*Note of 2026-10-29, on building part 7b: as [DEC-LN-03](#dec-ln-03) and [DEC-LN-07](#dec-ln-07) decide, by e-mail to the address of the Google group of the Owner Unit and as a Slack direct message to each member Data Hub knows ([TR-LN-02](../technical/07-log-and-notifications.md#tr-ln-02)).*
 
 <a id="fr-ln-02"></a>
 ### FR-LN-02 · The Owner can notify the Consumers of a structural Change
@@ -79,11 +81,13 @@ Every query that Data Hub executes, ad hoc, for a Lens, a Report or an export, o
 <a id="fr-ln-06"></a>
 ### FR-LN-06 · Every output carries its Query ID
 
-**Status:** Specified · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
+**Status:** Implemented · **Source:** [REQ-DH-SQLLOG](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-sqllog) · **Screens:** [lens](../../design/screens/lens.html), [query](../../design/screens/query.html), [resource-preview](../../design/screens/resource-preview.html)
 
 Every output, a chart, a Report, a PDF or an export, visibly carries the Query ID of its query, so that a screenshot can always be traced back to the SQL. The Chart Server already does this; Data Hub extends it to all assets.
 
 *Note of 2026-10-29, on building part 5: the result of a query in Query carries its Query ID, with a button that copies it ([TR-SR-16](../technical/04-stacks-and-resources.md#tr-sr-16)); the other outputs carry theirs as they come.*
+
+*Note of 2026-10-31, on checking what was built: the result of a query, of a Preview and of a Lens carry their Query ID; a chart, a Report and an export carry theirs when they come.*
 
 ## Open points
 

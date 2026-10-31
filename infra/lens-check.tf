@@ -36,3 +36,31 @@ resource "google_cloud_scheduler_job" "lens_check" {
 
   depends_on = [google_cloud_run_v2_service.service]
 }
+
+# The keys of Excel that expire within a month (FR-PL-03): once a day the scheduler asks identity, which has
+# catalogue put a Message to each of their Users, once per key (MSG-KEY-01).
+resource "google_cloud_scheduler_job" "excel_keys" {
+  name        = "datahub-excel-keys"
+  description = "Tells the Users whose Excel key expires within a month (FR-PL-03, MSG-KEY-01)."
+  region      = var.region
+  schedule    = "43 7 * * *"
+  time_zone   = "Europe/Brussels"
+  # identity answers within seconds; a try that fails is tried once more.
+  attempt_deadline = "120s"
+
+  retry_config {
+    retry_count = 1
+  }
+
+  http_target {
+    http_method = "POST"
+    uri         = "${local.urls["identity"]}/internal/excel-keys/expiring"
+
+    oidc_token {
+      service_account_email = google_service_account.scheduler.email
+      audience              = local.urls["identity"]
+    }
+  }
+
+  depends_on = [google_cloud_run_v2_service.service]
+}

@@ -36,6 +36,10 @@ describe('the Log Catalogue', () => {
     expect(renderLog('RES-001', params, 'nl')).toBe('Geregistreerd via de exposure datahub_saved_searches');
     expect(renderLog('RES-002', { level: '1', reason: 'fields-undescribed' }, 'nl')).toBe('Maturiteit beoordeeld op Level 1');
     expect(renderLog('COL-004', { visibility: 'public', actor: 'Max' }, 'nl')).toBe('Publiek gemaakt door Max');
+    // A change upstream names the model it happened in; one of the Resource's own table does not (FR-AR-12).
+    expect(renderLog('ART-010', { field: 'lead_channel', direction: 'removed', sourceNode: 'stg_leads', distance: '2' }, 'en')).toBe('Structural change: field lead_channel removed in stg_leads');
+    expect(renderLog('ART-010', { field: 'lead_channel', direction: 'added', sourceNode: 'leads', distance: '0' }, 'en')).toBe('Structural change: field lead_channel added');
+    expect(renderLog('ART-012', { field: 'amount', old: 'INT64', new: 'NUMERIC', sourceNode: 'stg_leads', distance: '1' }, 'nl')).toBe('Type van amount gewijzigd van INT64 naar NUMERIC in stg_leads');
   });
 
   it('gives a field name a capital, and keeps the spelling of a name', () => {

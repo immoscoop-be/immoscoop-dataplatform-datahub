@@ -9,7 +9,10 @@ export interface ResourceField {
 /** A Resource as a query needs it, read from catalogue with the token of the User. */
 export interface QueryResource {
   id: string;
+  /** Its Key, in lower case: what knows it again, also in the SQL, whatever the case it is written in. */
   key: string;
+  /** The full name of its table in its own case: what BigQuery is asked for, as its names are case-sensitive. */
+  fullName: string;
   displayName: string;
   collectionId: string | null;
   level: number;
@@ -69,15 +72,30 @@ export interface Catalogue {
   keepLens(lens: Lens): Promise<void>;
   /** Sends the Request of Data Hub on a Lens that grew into very large, as query itself (MSG-LEN-03). */
   lensGrew(fields: { lensId: string; reads: number; threshold: number }): Promise<{ id: string }>;
+  /** Tells the author of a Lens that grew into large, past 100 MB a run, as query itself; it keeps running (MSG-LEN-02). */
+  lensGrewLarge(fields: { lensId: string; reads: number; threshold: number }): Promise<void>;
   /** Records the decision of a member of the Data Team on a Request on a Lens, as query itself (FR-LE-09). */
   decideLensRequest(requestId: string, decision: { outcome: 'accepted' | 'refused'; text: string; decider: { id: string; name: string } }): Promise<void>;
+  /** Tells who made a query, or the Owner Unit of a Lens, that it became Broken, as query itself (MSG-QRY-02, MSG-LEN-05). */
+  broken(subject: { kind: 'query'; id: string; name: string; ownerId: string } | { kind: 'lens'; id: string }, fields: BrokenMessage): Promise<void>;
+  /** Tells them it works again, in the same Message (MSG-QRY-02, MSG-LEN-05). */
+  worksAgain(subject: { kind: 'query' | 'lens'; id: string }): Promise<void>;
+}
+
+/** What a Message on a Broken query or Lens names: the day it was found and what no longer exists (FR-SR-52). */
+export interface BrokenMessage {
+  /** `YYYY-MM-DD`. */
+  since: string;
+  missing: { kind: 'resource' | 'column'; resource: string; column?: string }[];
 }
 
 /** catalogue did not tell what the User may see; query answers 503 rather than guess. */
 export class CatalogueUnavailable extends Error {}
 
 interface ResourceBody {
-  resource: Omit<QueryResource, 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+  resource: Omit<QueryResource, 'fullName' | 'partition' | 'clusterBy' | 'partitionFilter' | 'parameters'> & {
+    /** Missing from a catalogue that does not keep it yet: then the Key. */
+    fullName?: string;
     details?: { partition?: QueryResource['partition']; clusterBy?: string[]; partitionFilter?: QueryResource['partitionFilter'] };
     card?: { parameters?: string[] };
   };
@@ -152,8 +170,21 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       return ((await (await asQuery('POST', `/internal/lenses/${lensId}/requests`, { reads, threshold })).json()) as { request: { id: string } }).request;
     },
 
+    async lensGrewLarge({ lensId, reads, threshold }) {
+      await asQuery('POST', `/internal/lenses/${lensId}/growth`, { reads, threshold });
+    },
+
     async decideLensRequest(requestId, decision) {
       await asQuery('POST', `/internal/messages/${requestId}/decision`, decision);
+    },
+
+    async broken(subject, fields) {
+      const body = subject.kind === 'query' ? { ...fields, name: subject.name, ownerId: subject.ownerId } : fields;
+      await asQuery('POST', `/internal/${subject.kind === 'query' ? 'queries' : 'lenses'}/${subject.id}/broken`, body);
+    },
+
+    async worksAgain(subject) {
+      await asQuery('POST', `/internal/${subject.kind === 'query' ? 'queries' : 'lenses'}/${subject.id}/works`, {});
     },
 
     async requests(subjectId, authorization, subjectKind = 'query') {
@@ -198,6 +229,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       return {
         id: resource.id,
         key: resource.key,
+        fullName: resource.fullName ?? resource.key,
         displayName: resource.displayName,
         collectionId: resource.collectionId,
         level: resource.level,

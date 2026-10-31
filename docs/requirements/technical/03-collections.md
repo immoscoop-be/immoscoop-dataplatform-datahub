@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Collections](../functional/03-collections.md) |
-| Status | Implemented: Collections, their Log, their Resources ([Resources](04-stacks-and-resources.md)), the groups of the domain for the Data Team, and the search of the start screen |
+| Status | Implemented: Collections, their Log, their Resources ([Resources](04-stacks-and-resources.md)), the groups of the domain for the Data Team, the search of the start screen, folders and the intro |
 | Source of truth | This file |
 
 How Collections are kept and guarded, in the service [catalogue](../../architecture/services/catalogue.md), with the Groups of the User from [identity](../../architecture/services/identity.md).
@@ -88,6 +88,31 @@ catalogue keeps them on the Resource and in `resource_mappings`, one row per map
 **Status:** Implemented · **Realises:** [FR-CO-37](../functional/03-collections.md#fr-co-37), [DEC-UX-127](../../design/principles.md#dec-ux-127), [FR-SR-48](../functional/04-stacks-and-resources.md#fr-sr-48)
 
 `GET /search?question=…` of catalogue gives the Collections and the Resources the User sees that share words with a question: the Collections as `GET /collections` gives them, and in them the Resources the User sees, without the withdrawn ones. The words are those of the full-text search of Postgres in the configuration `search_words`, English with `unaccent` before the stemmer, made in migration `0010-search-words`, as query finds Lenses ([TR-LE-07](09-lenses.md#tr-le-07)): common words left out, every word by its stem, accents not counted. They are matched against the name and description of a Collection, and the name, description and Business Description of a Resource. Each comes with how many words it shares and its texts in pieces with the shared words marked; a Resource with its Business Description, or else its description from dbt, its Collection and its Level. Those that share most words come first, at most 20 of each. `GET /lenses/search?question=…` of query gives the Lenses the User sees in the same way, at most 20. The web app asks both at once and shows Lenses, then Resources, then Collections. The configuration and its helpers are shared in `@datahub/db`.
+
+<a id="tr-co-07"></a>
+### TR-CO-07 · Folders live in the schema of catalogue, and only the Owner Unit and the Data Team change them
+
+**Status:** Implemented · **Realises:** [FR-CO-38](../functional/03-collections.md#fr-co-38), [FR-CO-39](../functional/03-collections.md#fr-co-39), [FR-CO-40](../functional/03-collections.md#fr-co-40), [DEC-CO-26](../functional/03-collections.md#dec-co-26)
+
+Migration `0015-folders` adds two tables. `folders` holds one row per folder: a UUID as its ID, its Collection, the folder it sits in (`parent_id`, null at the top of the Collection), its name of 1 to 80 characters, and who made it and when. `folder_places` holds, for a Resource or a Lens that sits in a folder, its kind, its ID and the folder; without a row it sits at the top. A Lens is kept by query, so its place is kept here by its ID, and catalogue knows it is in the Collection from what query tells about it ([DEC-PF-30](00-platform.md#dec-pf-30)). A Resource that is added to a Collection, or leaves one, has no place: it comes in at the top.
+
+| Route | What | Who |
+| --- | --- | --- |
+| `POST /collections/{id}/folders` | Make a folder, with its name and the `parentId` of the folder it goes in, or none for the top | The Owner Unit and the Data Team |
+| `PATCH /collections/{id}/folders/{folderId}` | Rename it | The Owner Unit and the Data Team |
+| `DELETE /collections/{id}/folders/{folderId}` | Delete it, only when it holds nothing: else `409 not_empty`, with how many folders, Resources and Lenses it holds | The Owner Unit and the Data Team |
+| `PUT /collections/{id}/places/{kind}/{itemId}` | Put a `resource`, `lens` or `folder` of the Collection in the folder `folderId`, or at the top with `null` | The Owner Unit and the Data Team |
+
+A Collection comes with its folders, each with its name and the folder it sits in, with the folder of each of its Resources, and with the folder of each of its Lenses that sits in one: everyone who sees the Collection sees them, and the web app shows only the Resources and Lenses the User sees. A folder that would go into itself or into a folder inside it is refused with `409 into_itself`; a folder, Resource or Lens that is not in the Collection is answered with `404`. Each change takes a lock on the Collection, so that changes to its folders happen one at a time and no folder is deleted while something moves into it.
+
+Each change goes into the Log of the Collection: `COL-008` to `COL-013` in the [Log Catalogue](../functional/log-catalogue.md). Moving a Resource is an entry about a Resource, seen only by who sees the Resource ([TR-CO-02](#tr-co-02)).
+
+<a id="tr-co-08"></a>
+### TR-CO-08 · The intro of a Collection is Markdown, never shown as HTML
+
+**Status:** Implemented · **Realises:** [FR-CO-41](../functional/03-collections.md#fr-co-41), [DEC-UX-158](../../design/principles.md#dec-ux-158)
+
+The column `intro` of `collections`, empty by default, holds the intro as its Owner Unit wrote it, at most 10,000 characters, without the white space at its ends; `POST` and `PATCH /collections/{id}` take it as `intro`. A change is logged as `COL-014`, without the text. The web app reads the Markdown itself into headings, paragraphs, lists, bold, italic, code and links, and builds the page from those pieces, as it does for the text of a Message: HTML in the intro shows as the text it is. A link opens only an address with `http`, `https` or `mailto`, or a path within Data Hub; any other address stays text.
 
 ## Open points
 

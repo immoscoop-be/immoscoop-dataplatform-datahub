@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
 
 ## Overview
 
@@ -43,21 +43,23 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
-| [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Specified |
-| [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Specified |
-| [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Specified |
-| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Specified |
-| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Proposed: 4.4.1 | Specified |
-| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Proposed: K5.1 | Specified |
+| [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
+| [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Implemented |
+| [MSG-RES-03](#msg-res-03) | The schema changed since the last Confirmation | Resource | Data Hub → Owner | Something to do | Named: 4.3.2 | Implemented |
+| [MSG-RES-04](#msg-res-04) | The logic changed | Resource | Data Hub → Owner | Nothing | Proposed: 4.3.1 | Implemented |
+| [MSG-RES-05](#msg-res-05) | The Level dropped | Resource | Data Hub → Owner | Something to do | Named: K5.2 | Implemented |
+| [MSG-RES-06](#msg-res-06) | A Resource was withdrawn | Resource | Data Hub → Owner | Nothing | Named: K5.1 | Implemented |
 | [MSG-RES-07](#msg-res-07) | The Owner tells the Consumers about a change | Resource | Owner → Consumers | Nothing | By the writer | Proposed |
-| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Proposed: 4.7.1 | Specified |
+| [MSG-RES-08](#msg-res-08) | A Resource arrived in your Collection | Resource | Data Hub → Owner | Something to do | Named: 4.7.1 | Implemented |
 | [MSG-LEN-01](#msg-len-01) | Request to accept a very large Lens | Lens | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Proposed |
+| [MSG-LEN-02](#msg-len-02) | A Lens grew into large | Lens | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
-| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Implemented |
+| [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
-| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Proposed |
+| [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
 
 ## Messages a person writes
@@ -1026,7 +1028,7 @@ Its owner unit, {group}, {cause, select, dissolved {was dissolved in Workspace} 
 | From → to | Data Hub → Data Team |
 | When | A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on. |
 | How many | One per Resource, never one per run ([DEC-CV-10](14-conversations.md#dec-cv-10)). |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-SR-10](04-stacks-and-resources.md#fr-sr-10), [DEC-SR-12](04-stacks-and-resources.md#dec-sr-12), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [DEC-CV-10](14-conversations.md#dec-cv-10) |
 
 **What it asks:** Something to do, of the Data Team. The Data Team adds the Resource to a Collection, in Data Hub, never in the dbt project ([FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27)).
@@ -1113,7 +1115,7 @@ The dbt run of {run} registered it through the exposure `{exposure}` in `{projec
 | From → to | Data Hub → Owner |
 | When | An Artifact Set changes the description from dbt of a Resource, or of one of its fields. A Change further upstream stays an entry in the Log ([FR-AR-12](01-artifact-registry.md#fr-ar-12)). |
 | How many | One per Resource and Artifact Set, with every description that changed. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-RC-17](05-resource-card.md#fr-rc-17), [DEC-RC-03](05-resource-card.md#dec-rc-03), [FR-LR-38](16-learning.md#fr-lr-38) |
 
 **What it asks:** Nothing. It asks for no review ([DEC-RC-03](05-resource-card.md#dec-rc-03)); the Owner may change their Business Descriptions.
@@ -1264,7 +1266,7 @@ One item of `changes`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | An Artifact Set adds, removes, renames or retypes a field of a Resource after its last Confirmation. |
 | How many | One per Resource and Artifact Set; all point to its one warning. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-MR-12](06-maturity-and-release.md#fr-mr-12), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08), [DEC-DH-66](../../overview/data-hub.md#dec-dh-66), [FR-LR-38](16-learning.md#fr-lr-38) |
 
 **What it asks:** Something to do, of the Owner. The Owner marks the warning seen; the Data Team can too, on the page of the Resource ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)). The Owner may tell the Consumers ([MSG-RES-07](#msg-res-07)).
@@ -1392,7 +1394,7 @@ One item of `changes`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema. |
 | How many | One per Resource and Artifact Set. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-DH-27](../../overview/data-hub.md#dec-dh-27), [DEC-LN-04](07-log-and-notifications.md#dec-ln-04), [FR-AR-12](01-artifact-registry.md#fr-ar-12) |
 
 **What it asks:** Nothing. The Owner reads the descriptions again, and changes theirs where they no longer fit; nothing more is needed.
@@ -1478,7 +1480,7 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [FR-MR-09](06-maturity-and-release.md#fr-mr-09), [DEC-SR-08](04-stacks-and-resources.md#dec-sr-08), [DEC-MR-08](06-maturity-and-release.md#dec-mr-08) |
 | Open points | [OP-MR-04](06-maturity-and-release.md#op-mr-04) |
 
@@ -1490,7 +1492,7 @@ The dbt run of {run} changed the code of `{node}`, {distance, plural, =0 {the ta
 | --- | --- | --- |
 | Go to the cause · *Naar de oorzaak* | The page of the Resource at the cause: the Columns tab, the EDA tab or its checks | every recipient |
 
-**Learning Card:** Proposed: **4.4.1 The maturity ladder**. What each Level stands for, and what makes a Resource rise and drop.
+**Learning Card:** Named: **K5.2 The Level of a Resource**. What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29), [DEC-LR-30](16-learning.md#dec-lr-30)).
 
 **Dutch, laid out**, with the example:
 
@@ -1579,7 +1581,7 @@ Template, English, laid out:
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection. |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-SR-26](04-stacks-and-resources.md#dec-sr-26), [DEC-CV-12](14-conversations.md#dec-cv-12) |
 
 **What it asks:** Nothing. If it was not intended, the Owner asks the Data Team, which restores the exposure in the dbt project.
@@ -1590,7 +1592,7 @@ Template, English, laid out:
 | --- | --- | --- |
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 
-**Learning Card:** Proposed: **K5.1 What a resource is**. An exposure makes a table a Resource, and so its absence withdraws it.
+**Learning Card:** Named: **K5.1 What a resource is**. An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
 
 **Dutch, laid out**, with the example:
 
@@ -1671,7 +1673,7 @@ If that was not intended, ask the data team.
 | About | Resource |
 | From → to | Data Hub → Owner |
 | When | The Data Team adds a Resource to a Collection ([FR-CO-14](03-collections.md#fr-co-14)). |
-| Status | Specified |
+| Status | Implemented |
 | Comes from | [DEC-SR-27](04-stacks-and-resources.md#dec-sr-27), [FR-CO-14](03-collections.md#fr-co-14), [DEC-SR-07](04-stacks-and-resources.md#dec-sr-07), [DEC-CV-11](14-conversations.md#dec-cv-11) |
 
 **What it asks:** Something to do, of the Owner. The Owner reads the Resource, adds Business Descriptions where they help, and publishes it from Described ([DEC-SR-07](04-stacks-and-resources.md#dec-sr-07)).
@@ -1683,7 +1685,7 @@ If that was not intended, ask the data team.
 | Open the resource · *Resource openen* | The page of the Resource | every recipient |
 | Publish · *Publiceren* | Publish on the page of the Resource, from Described | Owner |
 
-**Learning Card:** Proposed: **4.7.1 Owner and steward**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it.
+**Learning Card:** Named: **4.7.1 Owner and steward**. What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 ([DEC-LR-29](16-learning.md#dec-lr-29)).
 
 **Dutch, laid out**, with the example:
 
@@ -1758,7 +1760,7 @@ Template, English, laid out:
 | About | Lens |
 | From → to | Data Hub → its author |
 | When | A run of a Lens reads more than 100 MB, while it was made in the range below. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [FR-LE-10](09-lenses.md#fr-le-10), [FR-LE-08](09-lenses.md#fr-le-08), [FR-SR-40](04-stacks-and-resources.md#fr-sr-40) |
 
 **What it asks:** Nothing. Its author can make it read less, but need not.
@@ -2035,7 +2037,7 @@ It builds on {resource}, which your team owns: everyone who may see the lens now
 | From → to | Data Hub → Owner |
 | When | A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per Lens, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-LE-17](09-lenses.md#fr-le-17), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. The Owner Unit repairs the Lens from its query ([DEC-LE-04](09-lenses.md#dec-le-04)), or asks the Data Team whether what is missing comes back. Nothing is needed when it does.
@@ -2155,6 +2157,176 @@ One item of `missing`, English, laid out:
 
 </details>
 
+<a id="msg-key-01"></a>
+
+### MSG-KEY-01 · An Excel key expires within a month
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Excel key |
+| From → to | Data Hub → its author |
+| When | An Excel key that is not revoked expires within a month; Data Hub looks once a day. |
+| How many | One per key. |
+| Status | Implemented |
+| Comes from | [FR-PL-03](12-permissions-and-library-cards.md#fr-pl-03), [DEC-DH-79](../../overview/data-hub.md#dec-dh-79) |
+
+**What it asks:** Nothing. Its User can make a new key on My page and put it in Excel, before this one stops.
+
+**How it ends:** When it is read; the key stops on its day whatever happens.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page, at its Excel keys | every recipient |
+
+**Learning Card:** To write: *The result of a Lens in Excel: an Excel key, Power Query and refreshing*. The Message is about the key with which Excel gets the result of a Lens ([DEC-CH-03](13-channels.md#dec-ch-03)).
+
+**Dutch, laid out**, with the example:
+
+> **Je Excel key Excel on my laptop vervalt op 31 oktober 2027**
+>
+> Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.
+
+**Dutch, plain:**
+
+```text
+Je Excel key Excel on my laptop vervalt op 31 oktober 2027. Maak op My page een nieuwe en zet die in Excel.
+```
+
+**English, laid out**, with the example:
+
+> **Your Excel key Excel on my laptop expires on 31 October 2027**
+>
+> After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.
+
+**English, plain:**
+
+```text
+Your Excel key Excel on my laptop expires on 31 October 2027. Make a new one on My page and put it in Excel.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `expires` | date | The day the key stops |
+
+Template, Dutch, plain:
+
+```text
+Je Excel key {subject} vervalt op {expires}. Maak op My page een nieuwe en zet die in Excel.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**Je Excel key {subject} vervalt op {expires}**
+
+Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.
+```
+
+Template, English, plain:
+
+```text
+Your Excel key {subject} expires on {expires}. Make a new one on My page and put it in Excel.
+```
+
+Template, English, laid out:
+
+```markdown
+**Your Excel key {subject} expires on {expires}**
+
+After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.
+```
+
+</details>
+
+<a id="msg-key-02"></a>
+
+### MSG-KEY-02 · The Data Team revoked an Excel key
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Excel key |
+| From → to | Data Hub → its author |
+| When | Someone of the Data Team revokes the Excel key of another User, in Admin. |
+| How many | One per key. |
+| Status | Implemented |
+| Comes from | [FR-PL-03](12-permissions-and-library-cards.md#fr-pl-03), [DEC-DH-79](../../overview/data-hub.md#dec-dh-79) |
+
+**What it asks:** Nothing. Its User makes a new key on My page if they still need one.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page, at its Excel keys | every recipient |
+
+**Learning Card:** To write: *The result of a Lens in Excel: an Excel key, Power Query and refreshing*. The Message is about the key with which Excel gets the result of a Lens ([DEC-CH-03](13-channels.md#dec-ch-03)).
+
+**Dutch, laid out**, with the example:
+
+> **Dirk Vos van het Data Team trok je Excel key Sales dashboard, shared drive in**
+>
+> Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag Dirk Vos waarom.
+
+**Dutch, plain:**
+
+```text
+Dirk Vos van het Data Team trok je Excel key Sales dashboard, shared drive in. Excel haalt er geen gegevens meer mee op.
+```
+
+**English, laid out**, with the example:
+
+> **Dirk Vos of the Data Team revoked your Excel key Sales dashboard, shared drive**
+>
+> From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask Dirk Vos why.
+
+**English, plain:**
+
+```text
+Dirk Vos of the Data Team revoked your Excel key Sales dashboard, shared drive. Excel no longer gets data with it.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who of the Data Team revoked it |
+
+Template, Dutch, plain:
+
+```text
+{actor} van het Data Team trok je Excel key {subject} in. Excel haalt er geen gegevens meer mee op.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} van het Data Team trok je Excel key {subject} in**
+
+Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag {actor} waarom.
+```
+
+Template, English, plain:
+
+```text
+{actor} of the Data Team revoked your Excel key {subject}. Excel no longer gets data with it.
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} of the Data Team revoked your Excel key {subject}**
+
+From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.
+```
+
+</details>
+
 <a id="msg-qry-02"></a>
 
 ### MSG-QRY-02 · A query is Broken
@@ -2166,7 +2338,7 @@ One item of `missing`, English, laid out:
 | From → to | Data Hub → Owner |
 | When | A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)). |
 | How many | One per query, however much of what it reads is missing; what goes missing later joins it. |
-| Status | Proposed |
+| Status | Implemented |
 | Comes from | [DEC-DH-67](../../overview/data-hub.md#dec-dh-67), [FR-SR-53](04-stacks-and-resources.md#fr-sr-53), [FR-SR-52](04-stacks-and-resources.md#fr-sr-52) |
 
 **What it asks:** Something to do, of the Owner. Who made the query changes its SQL, or waits for what is missing to come back. Using other Resources is a new query ([DEC-UX-73](../../design/principles.md#dec-ux-73)).

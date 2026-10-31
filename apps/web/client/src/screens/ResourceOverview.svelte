@@ -15,6 +15,7 @@
   import type { Card, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
   import type { Storage } from '../lib/query.js';
+  import LearningRef from './LearningRef.svelte';
 
   /**
    * The Overview of a Resource, in tiles (Detail page of a Resource): its two descriptions with its model
@@ -150,8 +151,16 @@
 {#snippet modelAndGrain()}
   {#if details.modelType || details.grain.length > 0}
     <div class="model">
-      {#if details.modelType}<span class="code">{t('resource.modelType', { type: details.modelType })}</span>{/if}
-      {#if details.grain.length > 0}<span class="code" title={details.grainSentence || undefined}>{t('resource.grain', { fields: details.grain.join(' × ') })}</span>{/if}
+      {#if details.modelType}
+        <LearningRef place="modelType" shape="chip">
+          {#snippet children(mark)}<span class="code">{t('resource.modelType', { type: details.modelType ?? '' })}{@render mark?.()}</span>{/snippet}
+        </LearningRef>
+      {/if}
+      {#if details.grain.length > 0}
+        <LearningRef place="grain" shape="chip">
+          {#snippet children(mark)}<span class="code" title={details.grainSentence || undefined}>{t('resource.grain', { fields: details.grain.join(' × ') })}{@render mark?.()}</span>{/snippet}
+        </LearningRef>
+      {/if}
       <OriginTag origin="dataTeam" />
     </div>
   {/if}
@@ -297,7 +306,7 @@
       <div class="chosen">{@render chips(card.parameters)}</div>
     </SubTile>
 
-    <SubTile label={t('resource.storage')}>
+    <SubTile label={t('resource.storage')} span={2}>
       {#snippet aside()}<OriginTag origin={details.origins.partition === 'dbt' || details.origins.clusterBy === 'dbt' ? 'dbt' : 'dataTeam'} />{/snippet}
       {#if details.partition || details.clusterBy.length > 0}
         <FactsList>
@@ -312,7 +321,7 @@
           {/if}
           {#if size}<dt>{t('resource.size')}</dt><dd>{size}</dd>{/if}
         </FactsList>
-        {#if size && storage?.beneath}<p class="cheap">{t('resource.beneath', { key: storage.key })}</p>{/if}
+        {#if size && storage?.beneath}<p class="cheap beneath" title={storage.key}>{t('resource.beneath', { key: storage.key })}</p>{/if}
         <p class="cheap">
           {#if details.partition && details.partitionFilter !== 'none'}{t('resource.filterRequired', { field: details.partition.field })}
           {:else if details.partition}{t('resource.filterFirst', { field: details.partition.field })}{/if}
@@ -321,7 +330,7 @@
       {:else}
         {#if size}
           <FactsList><dt>{t('resource.size')}</dt><dd>{size}</dd></FactsList>
-          {#if storage?.beneath}<p class="cheap">{t('resource.beneath', { key: storage.key })}</p>{/if}
+          {#if storage?.beneath}<p class="cheap beneath" title={storage.key}>{t('resource.beneath', { key: storage.key })}</p>{/if}
         {/if}
         <p class="empty" class:cheap={size !== null}>{t('resource.notStored')}</p>
       {/if}
@@ -361,6 +370,8 @@
   .gap :global(.icon) { color: var(--text-muted); margin-top: 2px; flex: none; }
   .empty { margin: 0; font-size: var(--text-small); color: var(--text-muted); line-height: 1.5; }
   .cheap { margin: 10px 0 0; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.6; }
+  /* The name of the table beneath stays on one line, cut off rather than wrapped or spilling over. */
+  .beneath { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
   .entities { display: grid; gap: 14px; align-items: center; }
   .entities.drawn { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
   .entities svg { max-width: 440px; justify-self: center; }

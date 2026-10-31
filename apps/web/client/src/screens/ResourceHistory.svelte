@@ -6,6 +6,7 @@
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
+  import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import type { QueryClient, QueryOnResource } from '../lib/query.js';
   import { lensPath, newQueryPath, queryPath } from '../lib/routes.js';
@@ -65,7 +66,7 @@
       {#each found.queries as query (query.id)}
         <tr>
           <td>
-            <a class="name" href={query.kind === 'lens' ? lensPath(query.id) : queryPath(query.id)}><KindIcon kind={query.kind === 'lens' ? 'lens' : 'resource'} />{query.name}</a>
+            <a class="name" href={query.kind === 'lens' ? lensPath(query.id) : queryPath(query.id)}><KindIcon kind={query.kind === 'lens' ? 'lens' : 'resource'} broken={brokenText(query.broken ?? null)} />{query.name}</a>
           </td>
           <td>{t(KINDS[query.kind])}</td>
           <td>{query.mine ? t('resource.history.you') : query.ownerName}</td>

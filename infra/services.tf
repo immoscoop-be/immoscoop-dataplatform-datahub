@@ -15,6 +15,19 @@ resource "google_cloud_run_v2_service" "service" {
   template {
     service_account = google_service_account.service[each.key].email
 
+    # catalogue sends all its traffic out through the fixed address of Data Hub, which the SMTP relay of
+    # Workspace admits (DEC-PF-31, notifications.tf).
+    dynamic "vpc_access" {
+      for_each = each.key == "catalogue" ? [1] : []
+      content {
+        egress = "ALL_TRAFFIC"
+        network_interfaces {
+          network    = google_compute_network.datahub.id
+          subnetwork = google_compute_subnetwork.datahub.id
+        }
+      }
+    }
+
     scaling {
       min_instance_count = 0
       max_instance_count = 2

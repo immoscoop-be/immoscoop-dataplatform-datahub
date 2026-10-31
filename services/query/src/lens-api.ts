@@ -1,4 +1,4 @@
-import type { ServiceCallerVerifier } from '@datahub/auth';
+import { excelKeyFrom, type ExcelKeyExchanger, type ServiceCallerVerifier, type TokenVerifier } from '@datahub/auth';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
@@ -8,6 +8,7 @@ import type { Lens, LensParameter, Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
 import { type Preflight, rangeOf, type ResourceOfQuery, type Thresholds } from './preflight.js';
 import type { Queries, Query, Viewer } from './queries.js';
+import type { Upkeep } from './upkeep.js';
 
 /** What the routes of Lenses share with those of queries: who asks, the checks and a run. */
 export interface LensContext {
@@ -16,15 +17,23 @@ export interface LensContext {
   catalogue: Catalogue;
   thresholds: Thresholds;
   bigquery: BigQuery;
-  /** Who may start the daily check of every Lens: the scheduler, by a Google ID token (DEC-LE-20). */
+  /** Who may start a check: the scheduler once a day (DEC-LE-20), catalogue after a new Current Version (FR-SR-52), by a Google ID token. */
   checkers: ServiceCallerVerifier;
+  /** What keeps queries and Lenses Broken while what they read is missing, and working again (FR-SR-52). */
+  upkeep: Upkeep;
   viewer(request: FastifyRequest): Viewer;
   authorization(request: FastifyRequest): string;
   resourcesOf(request: FastifyRequest, of: { resources: NamedResource[] }): Promise<ResourceOfQuery[]>;
   check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[]): Promise<Preflight>;
+  /** The SQL with each Resource by its full name in its own case, as BigQuery gets it (DEC-SR-44). */
+  ownCase(sql: string, resources: ResourceOfQuery[]): string;
   unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined;
-  execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }): Promise<unknown>;
+  execute(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; approve: boolean }, excel?: { rows: number }): Promise<unknown>;
+  excel?: { exchanger: ExcelKeyExchanger; verifier: TokenVerifier } | undefined;
 }
+
+/** Excel gets at most this many rows of a Lens per refresh (DEC-CH-06). */
+export const EXCEL_ROWS = 10_000;
 
 const NO_LENS = { error: 'not_found', message: 'There is no such Lens, or you may not see it.' };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -160,7 +169,7 @@ const requestView = (request: QueryRequest | undefined) =>
  * one with its Parameters, every run a query in the Query Log (FR-LE-12).
  */
 export async function lensRoutes(app: FastifyInstance, context: LensContext): Promise<void> {
-  const { lenses, queries, catalogue, thresholds, bigquery, checkers, viewer, authorization, resourcesOf, check, unavailable, execute } = context;
+  const { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep: broken, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel } = context;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const collections = await catalogue.collections(authorization(request));
@@ -217,7 +226,10 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     return lens;
   }
 
-  /** A run with its defaults grew; past 1 GB the Lens stops and Data Hub asks the Data Team to accept it again (MSG-LEN-03). */
+  /**
+   * A run with its defaults grew. Into large, past 100 MB, it keeps running and Data Hub tells its author
+   * (MSG-LEN-02); past 1 GB it stops and Data Hub asks the Data Team to accept it again (MSG-LEN-03).
+   */
   async function grown(id: string, range: LensRange, reads: number, log: FastifyRequest['log']): Promise<Lens> {
     const lens = await lenses.grow(id, range, reads);
     if (lens.state === 'stopped') {
@@ -225,6 +237,12 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         await catalogue.lensGrew({ lensId: lens.id, reads, threshold: thresholds.request });
       } catch (error) {
         log.error({ err: error, lens: lens.id }, 'The Request on a Lens that stopped could not be sent; the Data Team sends it on deciding');
+      }
+    } else if (range === 'approve') {
+      try {
+        await catalogue.lensGrewLarge({ lensId: lens.id, reads, threshold: thresholds.approve });
+      } catch (error) {
+        log.warn({ err: error, lens: lens.id }, 'The author of a Lens that grew into large could not be told');
       }
     }
     return told(lens, log);
@@ -301,12 +319,14 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const already = (await lenses.ofQuery(query.id)) ?? (query.forLens ? await lenses.get(query.forLens) : undefined);
     if (already) return reply.code(409).send({ error: 'already_a_lens', message: 'This query is used as a Lens already.', lens: { id: already.id, name: already.name } });
     let checked: Preflight;
+    let resources: ResourceOfQuery[];
     try {
       // A Lens always goes into a Collection its author owns (DEC-CO-20).
       if ((await catalogue.manages(fields.collectionId, authorization(request))) !== true) {
         return reply.code(400).send({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
       }
-      checked = await check(query.sql, query.parameters, await resourcesOf(request, query));
+      resources = await resourcesOf(request, query);
+      checked = await check(query.sql, query.parameters, resources);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -321,7 +341,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const lens = await told(
       await lenses.create({
         author: who,
-        query,
+        // A Lens keeps its SQL with its Resources as BigQuery knows them, for its daily check without a User (DEC-SR-44).
+        query: { ...query, sql: ownCase(query.sql, resources) },
         collectionId: fields.collectionId,
         name: fields.name,
         question: fields.question,
@@ -448,12 +469,18 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   async function upkeep(request: FastifyRequest, reply: FastifyReply, lens: Lens, checked: Preflight, defaults: boolean): Promise<Lens | undefined> {
     const missing = missingIn(checked);
     if (missing) {
-      const broken = await lenses.breaks(lens.id, missing);
-      void reply.code(409).send({ error: 'broken', message: `This Lens reads ${missing.name}, which no longer exists.`, broken: broken.broken });
+      // A table not found is of one of its Resources: what else reads it is checked too (FR-SR-52, the third moment).
+      const gone = lens.resources.filter((resource) => missing.kind === 'table' && resource.key === missing.name.toLowerCase());
+      await broken.lost(
+        gone.map((resource) => resource.id),
+        request.log,
+      );
+      const kept = await broken.lens(lens, missing, request.log);
+      void reply.code(409).send({ error: 'broken', message: `This Lens reads ${missing.name}, which no longer exists.`, broken: kept.broken });
       return undefined;
     }
     let kept = lens;
-    if (lens.broken && checked.runnable) kept = await lenses.works(lens.id);
+    if (lens.broken && checked.runnable) kept = await broken.lens(lens, null, request.log);
     if (defaults && checked.runnable && checked.range && ORDER[checked.range] > ORDER[kept.range]) {
       kept = await grown(lens.id, checked.range, checked.bytes ?? 0, request.log);
       if (kept.state === 'stopped') {
@@ -490,6 +517,47 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const query = await queries.lensFor(viewer(request), run.lens);
     return execute(request, reply, query, { sql: run.lens.sql, parameters: run.parameters, approve: run.approve });
   });
+
+  // Excel (DEC-CH-03, DEC-CH-06): the result of a Lens as CSV, with its Parameters at their defaults, at most
+  // 10,000 rows. Power Query signs in with Basic, the Excel key as password; query exchanges it at identity for
+  // an Access Token of its User (TR-PF-07), and the Lens runs as it would on its page for them.
+  if (excel) {
+    const askKey = (reply: FastifyReply, message: string) =>
+      reply.code(401).header('www-authenticate', 'Basic realm="Data Hub", charset="UTF-8"').send({ error: 'unauthorized', message });
+    app.get<{ Params: { id: string } }>('/excel/lenses/:id', { config: { public: true } }, async (request, reply) => {
+      const key = excelKeyFrom(request.headers.authorization);
+      if (!key) return askKey(reply, 'Sign in with Basic: your e-mail as user name, and an Excel key as password.');
+      let token: string | undefined;
+      try {
+        token = await excel.exchanger.accessToken(key);
+      } catch (error) {
+        request.log.error({ err: error }, 'identity did not exchange an Excel key');
+        return reply.code(503).header('retry-after', '30').send({ error: 'temporarily_unavailable', message: 'Data Hub could not check the key; try again later.' });
+      }
+      if (!token) return askKey(reply, 'This Excel key is not known, revoked or expired. Make a new one on My page in Data Hub.');
+      // From here on the request is the User's, as if it came with their Access Token.
+      request.user = await excel.verifier.verify(token);
+      request.headers.authorization = `Bearer ${token}`;
+      const seen = await seenLens(request, reply);
+      if (!seen) return reply;
+      const { lens } = seen;
+      // As on its page: waiting, refused or stopped, it runs for nobody (DEC-LE-05, DEC-LE-11).
+      if (lens.state !== 'published') {
+        const why = { waiting: 'it waits for the Data Team', refused: 'the Data Team refused it', stopped: 'it stopped, and waits for the Data Team to accept it again' }[lens.state];
+        return reply.code(409).send({ error: lens.state, message: `This Lens does not run now: ${why}.` });
+      }
+      const parameters = valuesFor(lens, undefined);
+      if (typeof parameters === 'string') return reply.code(400).send({ error: 'invalid_request', message: parameters });
+      try {
+        const checked = await check(lens.sql, parameters, await resourcesOf(request, lens));
+        if (!(await upkeep(request, reply, lens, checked, true))) return reply;
+      } catch (error) {
+        return unavailable(error, reply, request);
+      }
+      const query = await queries.lensFor(viewer(request), lens);
+      return execute(request, reply, query, { sql: lens.sql, parameters, approve: false }, { rows: EXCEL_ROWS });
+    });
+  }
 
   /** The Lens, if the User sees it and may change it; while it waits for the Data Team, nobody changes it (DEC-LE-05). */
   async function managed(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
@@ -539,8 +607,10 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       return reply.code(400).send({ error: 'invalid_request', message: 'A Lens is updated from a query of yours that is used as it.' });
     }
     let checked: Preflight;
+    let resources: ResourceOfQuery[];
     try {
-      checked = await check(query.sql, query.parameters, await resourcesOf(request, query));
+      resources = await resourcesOf(request, query);
+      checked = await check(query.sql, query.parameters, resources);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -553,7 +623,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       .filter((parameter) => !checked.unused.includes(parameter.name))
       .map((parameter) => ({ ...parameter, label: lens.parameters.find((known) => known.name === parameter.name)?.label ?? parameter.name }));
     // Refused, a Lens is no longer frozen: a new version is measured again, and published or sent again (DEC-UX-128).
-    const updated = await told(await lenses.version(lens.id, { by: who, query, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
+    const updated = await told(await lenses.version(lens.id, { by: who, query: { ...query, sql: ownCase(query.sql, resources) }, parameters, range: checked.range, reads: checked.bytes ?? 0 }), request.log);
     if (updated.state === 'waiting') {
       try {
         await catalogue.sendLensRequest({ lensId: lens.id, name: lens.name, reads: updated.reads, threshold: thresholds.request, text: text.trim(), partitions: checked.partitions }, authorization(request));
@@ -564,58 +634,67 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     return { lens: await viewOf(request, seen.sight, updated), preflight: checked };
   });
 
+  /** No User starts a check, so it takes the Google ID token of the scheduler or catalogue instead of an Access Token. */
+  const onlyCheckers = async (request: FastifyRequest, reply: FastifyReply) => {
+    const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+    try {
+      await checkers.verify(token);
+    } catch (error) {
+      request.log.warn({ err: error }, `a call for ${request.url} was refused`);
+      return reply.code(401).send({ error: 'unauthorized', message: 'Only the scheduler and catalogue start a check.' });
+    }
+  };
+
   // Once a day the scheduler has every Lens dry-run with its defaults (DEC-LE-20): what it misses, what works
-  // again, and what grew (DEC-LE-19). A dry run reads nothing and costs nothing. No User starts it, so it
-  // takes the Google ID token of the scheduler instead of an Access Token.
-  app.post(
-    '/internal/lenses/check',
-    {
-      config: { public: true },
-      onRequest: async (request, reply) => {
-        const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
-        try {
-          await checkers.verify(token);
-        } catch (error) {
-          request.log.warn({ err: error }, 'a call for /internal/lenses/check was refused');
-          return reply.code(401).send({ error: 'unauthorized', message: 'Only the scheduler checks every Lens.' });
+  // again, and what grew (DEC-LE-19); and every query with the SQL it kept at its last Pre-flight that passed
+  // (FR-SR-52, the second moment). A dry run reads nothing and costs nothing.
+  app.post('/internal/lenses/check', { config: { public: true }, onRequest: onlyCheckers }, async (request) => {
+    const outcome = { checked: 0, broken: 0, works: 0, grown: 0, stopped: 0 };
+    const all = await lenses.list();
+    // catalogue hears of every Lens once a day too, in case a change did not reach it (DEC-PF-30).
+    await Promise.all(all.map((lens) => told(lens, request.log)));
+    for (const lens of all) {
+      // A Lens that waits for the Data Team, or that it refused, does not run.
+      if (lens.state === 'waiting' || lens.state === 'refused') continue;
+      outcome.checked += 1;
+      const bound = bind(lens.sql, valuesFor(lens, undefined) as Parameter[]);
+      try {
+        const dry = await bigquery.dryRun(bound.sql, bound.parameters);
+        if (lens.broken) {
+          await broken.lens(lens, null, request.log);
+          outcome.works += 1;
         }
-      },
-    },
-    async (request) => {
-      const outcome = { checked: 0, broken: 0, works: 0, grown: 0, stopped: 0 };
-      const all = await lenses.list();
-      // catalogue hears of every Lens once a day too, in case a change did not reach it (DEC-PF-30).
-      await Promise.all(all.map((lens) => told(lens, request.log)));
-      for (const lens of all) {
-        // A Lens that waits for the Data Team, or that it refused, does not run.
-        if (lens.state === 'waiting' || lens.state === 'refused') continue;
-        outcome.checked += 1;
-        const bound = bind(lens.sql, valuesFor(lens, undefined) as Parameter[]);
-        try {
-          const dry = await bigquery.dryRun(bound.sql, bound.parameters);
-          if (lens.broken) {
-            await lenses.works(lens.id);
-            outcome.works += 1;
-          }
-          const range = rangeOf(dry.bytes, thresholds);
-          if (lens.state === 'published' && ORDER[range] > ORDER[lens.range]) {
-            const after = await grown(lens.id, range, dry.bytes, request.log);
-            outcome[after.state === 'stopped' ? 'stopped' : 'grown'] += 1;
-          }
-        } catch (error) {
-          const missing = error instanceof BigQueryRefused ? missingOf(error.message) : null;
-          if (missing) {
-            if (!lens.broken) outcome.broken += 1;
-            await lenses.breaks(lens.id, missing);
-          } else {
-            request.log.warn({ err: error, lens: lens.id }, 'A Lens could not be checked');
-          }
+        const range = rangeOf(dry.bytes, thresholds);
+        if (lens.state === 'published' && ORDER[range] > ORDER[lens.range]) {
+          const after = await grown(lens.id, range, dry.bytes, request.log);
+          outcome[after.state === 'stopped' ? 'stopped' : 'grown'] += 1;
+        }
+      } catch (error) {
+        const missing = error instanceof BigQueryRefused ? missingOf(error.message) : null;
+        if (missing) {
+          if (!lens.broken) outcome.broken += 1;
+          await broken.lens(lens, missing, request.log);
+        } else {
+          request.log.warn({ err: error, lens: lens.id }, 'A Lens could not be checked');
         }
       }
-      request.log.info(outcome, 'Every Lens checked');
-      return outcome;
-    },
-  );
+    }
+    const checkedQueries = await broken.checkQueries(undefined, request.log);
+    request.log.info({ ...outcome, queries: checkedQueries }, 'Every Lens and query checked');
+    return { ...outcome, queries: checkedQueries };
+  });
+
+  // After a new Current Version, catalogue tells which Resources were withdrawn, came back, or lost or regained a
+  // field: every Lens and query that reads one is dry-run (FR-SR-52, the first moment).
+  app.post<{ Body: unknown }>('/internal/checks', { config: { public: true }, onRequest: onlyCheckers }, async (request, reply) => {
+    const ids = (request.body as { resources?: unknown } | undefined)?.resources;
+    if (!Array.isArray(ids) || ids.length > 5000 || !ids.every((id) => typeof id === 'string' && UUID.test(id))) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Send the Resources that changed, by their IDs.' });
+    }
+    const outcome = await broken.checkReading([...new Set(ids.map((id: string) => id.toLowerCase()))], request.log);
+    request.log.info(outcome, 'What reads the Resources that changed checked');
+    return outcome;
+  });
 
   // Its author sends the Request on a waiting Lens again, when it could not be sent; one that waits is given back.
   app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/requests', async (request, reply) => {

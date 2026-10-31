@@ -32,6 +32,7 @@
   <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
   <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
   <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
   <div class="spacer"></div>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
   <a class="avatar active" href="my-page.html" aria-label="My page" aria-current="page">MP</a>
@@ -65,8 +66,10 @@
  <section class="sub-tile me-tile">
   <div class="label">You own</div>
   <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Everything in the Collections of your groups: their Resources, and every Lens made in them. Of all else you see, you are a Reader.</p>
+  <div class="me-list">
   <a class="me-row" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span style="flex:1;min-width:0"><span class="item-title">Credit leads</span><span class="meta" style="display:block">6 Resources · 4 Lenses · public</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Credit team</span></a>
   <a class="me-row" href="#"><span class="item-icon"><i class="ph ph-briefcase"></i></span><span style="flex:1;min-width:0"><span class="item-title">Brokers</span><span class="meta" style="display:block">11 Resources · private</span></span><span class="status"><i class="ph-fill ph-users-three"></i>Broker team</span></a>
+  </div>
   <p class="meta" style="display:block;margin-top:10px">Your groups come from Google; ask IT to join or leave one.</p>
  </section>
  <section class="sub-tile me-tile">
@@ -97,6 +100,7 @@
  <button type="button" class="bg-opt" role="radio" data-bgchoice="fusilli" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/fusilli.jpg)"></span><span class="item-title">Fusilli</span></button>
  <button type="button" class="bg-opt" role="radio" data-bgchoice="piste" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/piste.jpg);background-position:50% 35%"></span><span class="item-title">Fresh piste</span></button>
  <button type="button" class="bg-opt" role="radio" data-bgchoice="concrete" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/painted/light/concrete.jpg)"></span><span class="item-title">Concrete</span></button>
+ <button type="button" class="bg-opt" role="radio" data-bgchoice="peaks" data-themes="light"><span class="bg-prev" style="background-image:url(../backgrounds/photos/light/peaks.jpg);background-position:50% 40%"></span><span class="item-title">Sunlit peaks</span></button>
  <button type="button" class="bg-opt" role="radio" data-bgchoice="village" data-themes="dark"><span class="bg-prev" style="background-image:url(../backgrounds/painted/dark/village-lights.jpg)"></span><span class="item-title">Lights on</span></button>
 </div>
 </div>
@@ -144,7 +148,7 @@
   <div class="label" style="margin-top:16px">In Excel</div>
   <ol class="steps-plain">
    <li>Data › Get data › From web, with the address of a Lens: "Open in Excel" on its page.</li>
-   <li>Choose Web API as how to sign in, and paste the key.</li>
+   <li>Choose Basic as how to sign in: your e-mail as user name, and the key as password.</li>
    <li>Refresh whenever you like: Excel gets the result with the Parameters at their defaults.</li>
   </ol>
  </div>

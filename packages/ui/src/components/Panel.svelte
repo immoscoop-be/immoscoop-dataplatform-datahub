@@ -46,6 +46,10 @@
   .panel.open { width: var(--panel-width); padding: 20px 16px; opacity: 1; }
   .panel.focused { --card: var(--surface-solid); }
   @media (hover: hover) { .panel:hover { --card: var(--surface-solid); } }
+  /* Out of focus, the panel fades whole, its text with it (DEC-UX-146). */
+  .inner { transition: opacity var(--motion-focus) var(--delay-focus); }
+  .panel:not(.focused) .inner { opacity: var(--opacity-out-of-focus); }
+  @media (hover: hover) { .panel:hover .inner { opacity: 1; } }
   .panel.blur { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
   .inner { width: calc(var(--panel-width) - 32px); }
   .head { display: flex; align-items: center; gap: 4px; }

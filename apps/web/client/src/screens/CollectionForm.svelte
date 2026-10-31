@@ -5,6 +5,7 @@
 
 <script lang="ts">
   import IconPicker from '@datahub/ui/components/IconPicker.svelte';
+  import MarkdownEditor from '@datahub/ui/components/MarkdownEditor.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
@@ -15,7 +16,7 @@
 
   /**
    * The head of the page of a Collection turned into fields, in place, with the edit bar on top
-   * (FR-CO-30): its name, description, Owner Unit, who sees it and its icon. Empty, it makes a new
+   * (FR-CO-30): its name, description, intro in Markdown (FR-CO-41), Owner Unit, who sees it and its icon. Empty, it makes a new
    * Collection (FR-CO-12). The Owner Unit is one of the groups of whoever edits; the Data Team chooses
    * from every group of the domain (FR-CO-15, FR-CO-35). Dissolving is at the bottom, only for an
    * empty Collection (FR-CO-10).
@@ -48,6 +49,7 @@
   const start = collection;
   let name = $state(start?.name ?? '');
   let description = $state(start?.description ?? '');
+  let intro = $state(start?.intro ?? '');
   let icon: string | null = $state(start?.icon ?? null);
   let visibility: 'private' | 'public' = $state(start?.visibility ?? 'private');
   let ownerUnit = $state(start?.ownerUnit.id ?? '');
@@ -84,7 +86,7 @@
       return;
     }
     saving = true;
-    const outcome = await onsave({ name: name.trim(), description: description.trim(), icon, ownerUnit, visibility });
+    const outcome = await onsave({ name: name.trim(), description: description.trim(), icon, ownerUnit, visibility, intro: intro.trim() });
     saving = false;
     if (outcome === 'nameTaken') {
       taken = name.trim();
@@ -109,6 +111,10 @@
       </Field>
       <Field label={t('collection.field.description')} problem={tried ? problems.description : undefined}>
         <textarea bind:value={description} rows="3" maxlength="500"></textarea>
+      </Field>
+      <!-- The intro, in Markdown, shown on the page of the Collection (DEC-UX-158). -->
+      <Field label={t('collection.field.intro')} group>
+        <MarkdownEditor id="intro" bind:value={intro} label={t('collection.field.intro')} note={t('collection.field.intro.note')} maxlength={10000} />
       </Field>
       <Field
         label={t('collection.field.owner')}

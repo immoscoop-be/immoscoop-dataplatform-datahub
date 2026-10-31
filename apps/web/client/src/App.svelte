@@ -1,17 +1,22 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import DragGhost from '@datahub/ui/components/DragGhost.svelte';
   import type { RailItem } from '@datahub/ui/components/Rail.svelte';
+  import Toast from '@datahub/ui/components/Toast.svelte';
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import { NotFound as Missing } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
+  import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
   import { type Conversation, type Counts, createMessages, type Filter, type Message, SUBJECT_TITLES, type WrittenOn } from './lib/messages.js';
   import { initialsOf } from './lib/initials.js';
-  import { createQuery, type Lens, type LensItem, type QueryItem, type Run } from './lib/query.js';
+  import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
+  import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
+  import { createQuery, type Lens, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
   import { lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
@@ -22,6 +27,12 @@
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
+  import FolderPage from './screens/FolderPage.svelte';
+  import LearningCardPage from './screens/LearningCardPage.svelte';
+  import LearningPanel from './screens/LearningPanel.svelte';
+  import LearningSee from './screens/LearningSee.svelte';
+  import LearningStart from './screens/LearningStart.svelte';
+  import LearningWindow from './screens/LearningWindow.svelte';
   import LensNew from './screens/LensNew.svelte';
   import LensPage from './screens/LensPage.svelte';
   import MessageCentre from './screens/MessageCentre.svelte';
@@ -48,6 +59,7 @@
   const registry = $derived(createRegistry(config, session));
   const queries = $derived(createQuery(config, session));
   const messages = $derived(createMessages(config, session));
+  const learning = $derived(createLearning(config, session));
   const router = new Router();
   const system = new SystemTheme();
 
@@ -62,9 +74,12 @@
   let waiting: readonly Resource[] | undefined = $state();
   /** Every Collection the User sees, read when Data Hub starts and after a change (FR-CO-18). */
   let collections: readonly Collection[] | undefined = $state();
-  /** The queries of the User, for the panel of Query (FR-SR-43); everyone's for the Data Team, once asked. */
-  let ownQueries: readonly QueryItem[] | undefined = $state();
-  let everyone: readonly QueryItem[] | undefined = $state();
+  /** Grows after a new query, a run or a Request: the panel of Query reads its periods again (DEC-UX-139). */
+  let queriesVersion = $state(0);
+  /** The name of the query that is open, for the breadcrumb. */
+  let queryName: { id: string; name: string } | undefined = $state();
+  /** A query hidden or shown again from the panel, which its page then shows so (DEC-UX-138). */
+  let queryHidden: { id: string; hidden: boolean } | undefined = $state();
   /** The name of a new query being made: it stands in the panel as not run yet. */
   let draft = $state('');
   /** The Lenses the User sees, for the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36). */
@@ -76,12 +91,48 @@
   /** How many conversations for the User moved since they read them, on Messages in the rail (FR-CV-06). */
   let unread = $state(0);
   /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
-  let messageFilter = $state<Filter>({ view: 'forYou' });
+  // It opens on what moved since the User last looked (DEC-UX-136).
+  let messageFilter = $state<Filter>({ view: 'unread' });
   let centre: { messages: Message[]; counts: Counts } | null | undefined = $state();
   /** The Message opened in the Message Centre or in context: undefined while it comes, null when it could not be read. */
   let openedMessage: { id: string; message?: Conversation | null } | undefined = $state();
   /** What a person wrote on the object whose page is open, for "Messages" and its slide-in (FR-CV-07). */
   let onObject: { key: string; messages?: Conversation[] } | undefined = $state();
+  /** The written Learning Cards this page shows: a draft only outside prod (DEC-LR-25). */
+  const shownCards = $derived(writtenCards(config.environment));
+  /** The same cards in a language, once its translations are read; in English until then. */
+  let translated: { language: Language; cards: ReadonlyMap<string, Card> } | undefined = $state();
+  const localCards = $derived(translated?.language === currentLanguage() ? translated.cards : shownCards);
+  /** What the User did with the Learning Cards, read when the Learning Centre opens (FR-LR-32): null when it could not be read. */
+  let progress: readonly Progress[] | null | undefined = $state();
+  /** A Learning Level the start screen of the Learning Centre unfolds in its panel. */
+  let unfoldLevel: { id: LevelId } | undefined = $state();
+  /** The step the page of a card opens on, asked for by See it on its own; taken when that page opens. */
+  let openOn: { card: string; step: Step } | undefined;
+  /** A page explains its system text: the progress and the translations are read, once (FR-LR-36). */
+  let learningWanted = $state(false);
+  /** The card open in the floating window, over the page, and where it was opened from (FR-LR-12). */
+  let windowCard: { card: string; from: OpenedFrom } | undefined = $state();
+  provideLearning({
+    get shown() {
+      return shownCards;
+    },
+    get cards() {
+      return localCards;
+    },
+    get progress() {
+      return progress;
+    },
+    get window() {
+      return windowCard;
+    },
+    want: () => (learningWanted = true),
+    open: (card, from) => (windowCard = { card, from }),
+    seen: (card) => {
+      if (progress && !progress.some((one) => one.card === card)) openStep(card, 'core');
+    },
+    understand: (card, understood) => understandCard(card, understood),
+  });
 
   /** A sign-in that went wrong comes back with its code in the address, and a refused account in the fragment. */
   function takeProblem(): { problem?: string; account?: string } {
@@ -127,8 +178,19 @@
   const theme = $derived(settings ? themeOf(settings, system) : system.current);
   const page = $derived(route(router.path));
 
+  let themed = false;
   $effect(() => {
-    document.documentElement.dataset.theme = theme;
+    const root = document.documentElement;
+    // Day and night switch at once: every transition is off until the new colours are on screen (DEC-UX-149).
+    if (themed && root.dataset.theme !== theme) {
+      root.classList.add('theme-switching');
+      root.dataset.theme = theme;
+      void root.offsetHeight;
+      requestAnimationFrame(() => requestAnimationFrame(() => root.classList.remove('theme-switching')));
+    } else {
+      root.dataset.theme = theme;
+    }
+    themed = true;
   });
   $effect(() => {
     if (settings) {
@@ -150,6 +212,20 @@
   });
   /** The Data Team, from its Role Group: it sees the Resources without a Collection (Naming Convention). */
   const dataTeam = $derived(status.kind === 'signedIn' && status.me.roles.includes('datateam'));
+
+  /** What was moved last, and where to, for the line on screen (DEC-UX-157); a new key shows it again. */
+  let moved = $state({ key: 0, name: '', to: '', failed: false });
+  /** Moves something of a Collection into one of its folders, or to its top, and says where it went (FR-CO-40). */
+  const move: Mover = async (collection, item, to) => {
+    try {
+      await catalogue.move(collection.id, item.kind, item.id, to?.id ?? null);
+      await refresh();
+      moved = { key: moved.key + 1, name: item.name, to: to?.name ?? collection.name, failed: false };
+    } catch (error) {
+      console.error(`${item.name} could not be moved`, error);
+      moved = { key: moved.key + 1, name: item.name, to: '', failed: true };
+    }
+  };
 
   /** Reads again what the panel shows: the Collections, and for the Data Team the Resources that wait. */
   async function refresh(): Promise<void> {
@@ -182,23 +258,74 @@
   /** Reads again the queries in the panel of Query, after a new one, a run or a Request. */
   async function refreshQueries(): Promise<void> {
     if (openQuery) readRuns(openQuery);
-    await Promise.all([
-      queries.list().then((found) => (ownQueries = found)),
-      ...(everyone ? [queries.list(true).then((found) => (everyone = found))] : []),
-    ]).catch((error: unknown) => console.error('The queries could not be read', error));
+    queriesVersion += 1;
   }
+  // Query opens on the last query of the User, or on a new one when they have none; previews, Lenses and hidden queries do not count (DEC-UX-137).
   $effect(() => {
-    if (status.kind === 'signedIn' && section?.id === 'query' && ownQueries === undefined) {
-      refreshQueries();
+    if (status.kind !== 'signedIn' || page.kind !== 'start' || page.section.id !== 'query') return;
+    queries.list(false, { show: [], limit: 1 }).then(
+      ([last]) => page.kind === 'start' && page.section.id === 'query' && router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true }),
+      (error: unknown) => console.error('The last query could not be read', error),
+    );
+  });
+  // The name of the query that is open, for the breadcrumb; again after a rename.
+  $effect(() => {
+    if (status.kind !== 'signedIn' || page.kind !== 'query') return;
+    const id = page.id;
+    void queriesVersion;
+    queries.get(id).then(
+      (found) => (queryName = { id, name: found.name }),
+      () => undefined,
+    );
+  });
+  $effect(() => {
+    const language = currentLanguage();
+    if ((section?.id !== 'learning' && !learningWanted) || translated?.language === language) return;
+    cardsIn(language, shownCards).then((cards) => (translated = { language, cards }));
+  });
+  $effect(() => {
+    if (status.kind === 'signedIn' && (section?.id === 'learning' || learningWanted) && progress === undefined) {
+      learning.progress().then(
+        (found) => (progress = found),
+        (error: unknown) => {
+          console.error('The progress in the Learning Centre could not be read', error);
+          progress = null;
+        },
+      );
     }
   });
-  // Query opens on the last query of the User, or on a new one when they have none; the runs of a Lens are on its page.
-  $effect(() => {
-    if (page.kind === 'start' && page.section.id === 'query' && ownQueries) {
-      const last = ownQueries.find((item) => item.kind !== 'lens');
-      router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true });
-    }
-  });
+  /** What the User did with a card, as catalogue keeps it now. */
+  function keepProgress(card: string, entry: Progress | undefined): void {
+    progress = [...(progress ?? []).filter((one) => one.card !== card), ...(entry ? [entry] : [])];
+  }
+  /** The User opened a step of a card: it is seen, and Continue opens it there (FR-LR-32). */
+  function openStep(card: string, step: Step): void {
+    openOn = undefined;
+    learning.open(card, step).then(
+      (entry) => keepProgress(card, entry),
+      (error: unknown) => console.error(`The progress on ${card} could not be kept`, error),
+    );
+  }
+  /** "I understand it", or undone: shown at once, then as catalogue keeps it (FR-LR-28). */
+  function understandCard(card: string, understood: boolean): void {
+    const before = progress?.find((one) => one.card === card);
+    const now = new Date().toISOString();
+    keepProgress(card, { card, seenAt: before?.seenAt ?? now, lastAt: now, step: before?.step ?? 'why', understoodAt: understood ? now : null });
+    learning.understand(card, understood).then(
+      (entry) => keepProgress(card, entry),
+      (error: unknown) => {
+        console.error(`Understanding ${card} could not be kept`, error);
+        keepProgress(card, before);
+      },
+    );
+  }
+  /** The step a card opens on: the one asked for, or where the User stopped while they do not understand it yet. */
+  function startOf(card: string): Step {
+    if (openOn?.card === card) return openOn.step;
+    const entry = progress?.find((one) => one.card === card);
+    return entry && !entry.understoodAt ? entry.step : 'why';
+  }
+  const drawCard = (chart: Parameters<typeof drawExample>[1], drawn: 'light' | 'dark') => drawExample(config, chart, drawn);
   let started = false;
   $effect(() => {
     if (status.kind === 'signedIn' && !started) {
@@ -273,11 +400,15 @@
   });
   /** The object whose page is open, whose Messages "Messages" counts and its slide-in shows. */
   const talkedAbout: { kind: WrittenOn; id: string } | undefined = $derived(
-    page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' ? { kind: page.kind, id: page.id } : undefined,
+    page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' || page.kind === 'learningCard' ? { kind: page.kind, id: page.id } : undefined,
   );
   /** The Message the address names: opened in the Message Centre, or in context over the page of its object. */
   const talkedId = $derived(
-    page.kind === 'messages' ? page.id : page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' || page.kind === 'query' ? (page.message ?? null) : null,
+    page.kind === 'messages'
+      ? page.id
+      : page.kind === 'resource' || page.kind === 'collection' || page.kind === 'lens' || page.kind === 'query' || page.kind === 'learningCard'
+        ? (page.message ?? null)
+        : null,
   );
   function readOnObject(subject: { kind: WrittenOn; id: string }): void {
     const key = `${subject.kind}:${subject.id}`;
@@ -353,19 +484,23 @@
             ? opened?.resource?.displayName
             : page.kind === 'collection'
               ? collections?.find((collection) => collection.id === page.id)?.name
+              : page.kind === 'folder'
+                ? collections?.find((collection) => collection.id === page.collection)?.folders.find((folder) => folder.id === page.id)?.name
               : page.kind === 'newCollection'
                 ? t('collections.new')
                 : page.kind === 'newQuery'
                   ? t('query.new')
                   : page.kind === 'query'
-                    ? (ownQueries?.find((item) => item.id === page.id)?.name ?? 'Query')
+                    ? (queryName?.id === page.id ? queryName.name : 'Query')
                     : page.kind === 'newLens'
                       ? t('lens.make.title')
                       : page.kind === 'lens'
                         ? openedLens?.lens?.name
                         : page.kind === 'editLens'
                           ? t('lens.edit.title')
-                          : undefined;
+                          : page.kind === 'learningCard' || page.kind === 'learningSee'
+                            ? cardTitle(page.id)
+                            : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
@@ -377,12 +512,15 @@
       page.kind === 'messages' ||
       page.kind === 'resource' ||
       page.kind === 'collection' ||
+      page.kind === 'folder' ||
       page.kind === 'newCollection' ||
       page.kind === 'newQuery' ||
       page.kind === 'query' ||
       page.kind === 'newLens' ||
       page.kind === 'lens' ||
-      page.kind === 'editLens'
+      page.kind === 'editLens' ||
+      page.kind === 'learningCard' ||
+      page.kind === 'learningSee'
       ? page.section
       : undefined,
   );
@@ -390,7 +528,9 @@
   const currentCollection = $derived(
     page.kind === 'collection'
       ? page.id
-      : page.kind === 'resource'
+      : page.kind === 'folder'
+        ? page.collection
+        : page.kind === 'resource'
         ? (opened?.resource?.collectionId ?? undefined)
         : page.kind === 'lens' || page.kind === 'editLens'
           ? (openedLens?.lens?.collectionId ?? undefined)
@@ -398,6 +538,19 @@
   );
   /** The version of the intro of Collections: after a big change it is raised, and the intro shows again. */
   const INTRO_VERSION = 1;
+  /** The version of the intro of the Learning Centre. */
+  const LEARNING_INTRO = 1;
+  /** A Learning Card by its number and title, in the language of the User. */
+  function cardTitle(number: string): string | undefined {
+    const topic = topicOf(number);
+    return topic && `${topic.number} ${topic.title[currentLanguage()]}`;
+  }
+  /** The Learning Levels Data Hub suggests to the User: Learning Level 4 also to a member of an Owner Unit that owns a Collection (DEC-LR-27). */
+  const levels = $derived(
+    status.kind === 'signedIn'
+      ? suggestedLevels({ dataTeam, owner: (collections ?? []).some((collection) => status.kind === 'signedIn' && status.me.groups.includes(collection.ownerUnit.id)) })
+      : suggestedLevels({ dataTeam: false, owner: false }),
+  );
   /** The panel is open unless the User shut it; that is remembered (navigation rule 5). */
   const panelOpen = $derived(settings?.values['panel.open'] ?? true);
 
@@ -463,6 +616,55 @@
         {decideLens}
         onchanged={changedMessage}
       />
+    {:else if page.kind === 'start' && page.section.id === 'learning'}
+      <LearningStart
+        shown={shownCards}
+        cards={localCards}
+        progress={progress ?? undefined}
+        {levels}
+        intro={signedIn.settings.values['intro.learning'] !== LEARNING_INTRO}
+        ondismiss={() => signedIn.settings.set('intro.learning', LEARNING_INTRO)}
+        onshow={() => signedIn.settings.forget('intro.learning')}
+        onlevel={(id) => {
+          unfoldLevel = { id };
+          signedIn.settings.set('panel.open', true);
+        }}
+      />
+    {:else if page.kind === 'learningCard' || page.kind === 'learningSee'}
+      {@const topic = topicOf(page.id)}
+      {@const card = localCards.get(page.id)}
+      {@const understood = Boolean(progress?.find((one) => one.card === page.id)?.understoodAt)}
+      {#if topic && card && page.kind === 'learningCard'}
+        <!-- A card opens where the User stopped, so it waits for their progress. -->
+        {#if progress !== undefined}{#key topic.number}
+          <LearningCardPage
+            {topic}
+            {card}
+            cards={localCards}
+            {understood}
+            start={startOf(topic.number)}
+            {theme}
+            draw={drawCard}
+            messages={messagesButton ?? { href: messagesOnPath({ kind: 'learningCard', id: topic.number }), count: null }}
+            onstep={(step) => openStep(topic.number, step)}
+            onunderstand={(yes) => understandCard(topic.number, yes)}
+          />
+        {/key}{/if}
+      {:else if topic && card?.see}
+        <LearningSee
+          {topic}
+          card={{ ...card, see: card.see }}
+          {understood}
+          {theme}
+          draw={drawCard}
+          onopen={() => openStep(topic.number, 'see')}
+          onunderstand={(yes) => understandCard(topic.number, yes)}
+          onwhole={(step) => (openOn = { card: topic.number, step })}
+          onback={() => history.back()}
+        />
+      {:else}
+        <NotFound />
+      {/if}
     {:else if page.kind === 'start' && page.section.id !== 'query'}
       <SectionStart title={sectionLabel(page.section)} />
     {:else if page.kind === 'newQuery'}
@@ -502,6 +704,13 @@
             router.go(queryPath(made.id));
           }}
           onlens={made}
+          hiddenChange={queryHidden}
+          layout={settings?.values['query.layout'] ?? 'horizontal'}
+          onlayout={(layout) => settings?.set('query.layout', layout)}
+          onhidden={(id, hidden) => {
+            queryHidden = { id, hidden };
+            refreshQueries();
+          }}
         />
       {/await}
     {:else if page.kind === 'newLens'}
@@ -535,6 +744,7 @@
         <LensPage
           {lens}
           messages={messagesButton}
+          excelAddress={`${config.queryUrl}/excel/lenses/${encodeURIComponent(lens.id)}`}
           client={queries}
           collection={collections?.find((collection) => collection.id === lens.collectionId)}
           onchanged={() => {
@@ -579,7 +789,19 @@
         {waiting}
         go={(path) => router.go(path)}
         onchanged={refresh}
+        onmove={move}
+        listed={page.kind === 'collection' ? collections?.find((collection) => collection.id === page.id) : undefined}
         messages={page.kind === 'collection' ? messagesButton : undefined}
+      />
+    {:else if page.kind === 'folder'}
+      <FolderPage
+        collection={collections === undefined ? undefined : (collections.find((collection) => collection.id === page.collection) ?? null)}
+        folderId={page.id}
+        {lenses}
+        {catalogue}
+        go={(path) => router.go(path)}
+        onchanged={refresh}
+        onmove={move}
       />
     {:else if page.kind === 'me'}
       <MyPage
@@ -592,6 +814,7 @@
         backgroundChoice={signedIn.backgrounds.choiceOf(theme)}
         onlanguage={(language: Language) => signedIn.settings.set('language', language)}
         onbackground={(choice) => signedIn.backgrounds.choose(theme, choice)}
+        {identity}
       />
     {:else if page.kind === 'resource'}
       {#if opened?.resource}
@@ -614,7 +837,7 @@
             // Published or deprecated, the panel shows it so.
             refresh();
           }}
-          onrun={() => ownQueries !== undefined && refreshQueries()}
+          onrun={() => refreshQueries()}
         />
       {:else if opened?.resource === null}
         <NotFound />
@@ -644,6 +867,45 @@
         />
       {/if}
     {/if}
+    {#if page.kind === 'learningCard' && page.messages}
+      {@const about = { kind: 'learningCard' as const, id: page.id }}
+      {@const name = cardTitle(page.id)}
+      {#if name && localCards.has(page.id)}
+        <MessagesSheet
+          subject={{ ...about, name }}
+          meta={t('learning.messages.meta', { level: LEVELS.find((level) => level.id === topicOf(page.id)?.level)?.name ?? '' })}
+          owner={null}
+          messages={onObject?.messages}
+          client={messages}
+          onchanged={() => {
+            readOnObject(about);
+            readUnread();
+          }}
+          onclose={() => router.go(objectPath(about))}
+        />
+      {/if}
+    {/if}
+    {#if windowCard}
+      {@const opened = windowCard}
+      {@const topic = topicOf(opened.card)}
+      {@const card = localCards.get(opened.card)}
+      {#if topic && card}
+        {#key opened.card}
+          <LearningWindow
+            {topic}
+            {card}
+            cards={localCards}
+            understood={Boolean(progress?.find((one) => one.card === opened.card)?.understoodAt)}
+            start={startOf(opened.card)}
+            {theme}
+            draw={drawCard}
+            onstep={(step) => openStep(opened.card, step)}
+            onunderstand={(yes) => understandCard(opened.card, yes)}
+            onclose={() => (windowCard = undefined)}
+          />
+        {/key}
+      {/if}
+    {/if}
     {#if talkedId && page.kind !== 'messages'}
       {@const id = talkedId}
       <MessageWindow
@@ -658,6 +920,11 @@
       />
     {/if}
   </AppShell>
+  <!-- What is dragged, and the line that says where it went (DEC-UX-157). -->
+  <DragGhost item={dragging.item} />
+  <Toast key={moved.key} tone={moved.failed ? 'failed' : 'done'}>
+    {#if moved.failed}{t('folder.moveFailed', { name: moved.name })}{:else}{t('folder.moved', { name: moved.name })} <b>{moved.to}</b>{/if}
+  </Toast>
 {/if}
 
 {#snippet panel()}
@@ -669,19 +936,23 @@
       {currentCollection}
       currentResource={page.kind === 'resource' ? page.id : undefined}
       currentLens={page.kind === 'lens' ? page.id : undefined}
+      currentFolder={page.kind === 'folder' ? page.id : undefined}
       groups={status.me.groups}
+      onmove={move}
     />
+  {:else if section?.id === 'learning' && status.kind === 'signedIn'}
+    <LearningPanel shown={shownCards} progress={progress ?? []} current={page.kind === 'learningCard' || page.kind === 'learningSee' ? page.id : undefined} unfold={unfoldLevel} />
   {:else if section?.id === 'messages' && status.kind === 'signedIn'}
     <MessagesPanel filter={messageFilter} counts={centre?.counts} onfilter={(filter) => (messageFilter = filter)} />
   {:else if section?.id === 'query' && status.kind === 'signedIn'}
     <QueryPanel
-      queries={ownQueries}
-      {everyone}
+      client={queries}
       {dataTeam}
       current={openQuery}
       runs={currentRuns}
       draft={page.kind === 'newQuery' ? draft : null}
-      onall={() => queries.list(true).then((found) => (everyone = found), (error: unknown) => console.error('The queries could not be read', error))}
+      version={queriesVersion}
+      onhidden={(id, hidden) => (queryHidden = { id, hidden })}
     />
   {:else}
     <PanelSoon />

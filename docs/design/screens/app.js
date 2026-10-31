@@ -8,7 +8,7 @@ try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'fusilli', 'piste', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
+const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'fusilli', 'piste', 'concrete', 'peaks', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
 // The backgrounds drawn live with WebGL: the flowing gradient, and the flowing lights (DEC-UX-109)
 const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
@@ -47,7 +47,11 @@ document.querySelectorAll('.bg-opt').forEach(o => o.addEventListener('click', ()
 
 themeBtn?.addEventListener('click', () => {
   const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  // Day and night switch at once, with every transition off for that moment (DEC-UX-149).
+  document.documentElement.classList.add('theme-switching');
   document.documentElement.dataset.theme = next;
+  void document.documentElement.offsetHeight;
+  requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('theme-switching')));
   try { localStorage.setItem('dh-theme', next); } catch (e) {}
   const bg = bgFor(next, false); syncBgOpts(); showBg(bg);
 });
@@ -607,8 +611,9 @@ const syncRun = () => {
   if (params.length) notes.push(`${params.map(n => `<span class="mono">@${n}</span>`).join(', ')} ${params.length > 1 ? 'are' : 'is'} in the query, but not a parameter.`);
   if (noFilter) notes.push('Weekly lead volume requires a filter on its partition column, <span class="mono">week_start</span>.');
   btn.disabled = notes.length > 0;
-  document.getElementById('run-pf').hidden = notes.length > 0;
-  document.getElementById('run-note').hidden = !notes.length;
+  // One line: the Pre-flight or what stops the query, cross-fading (DEC-UX-154).
+  document.getElementById('run-pf').classList.toggle('shown', !notes.length);
+  document.getElementById('run-note').classList.toggle('shown', notes.length > 0);
   document.getElementById('run-note-text').innerHTML = notes.join(' ');
   document.querySelector('[data-define-first]').hidden = !params.length;
   document.querySelector('[data-add-filter]').hidden = !noFilter;
@@ -1065,3 +1070,17 @@ if (document.querySelector('.lin')) {
   document.addEventListener('click', refresh);
   document.querySelectorAll('.lin-wing').forEach(w => w.addEventListener('scroll', redraw));
 }
+
+// The filter of a panel folds open its small form; folded, the line under the search says what differs.
+// ?filter=open shows it open (DEC-UX-150).
+document.querySelectorAll('.q-filter-toggle').forEach((toggle) => {
+  const form = document.getElementById(toggle.getAttribute('aria-controls'));
+  const line = form?.nextElementSibling?.classList.contains('q-filter-on') ? form.nextElementSibling : null;
+  const fold = (open) => {
+    form.hidden = !open;
+    if (line) line.hidden = open;
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+  if (new URLSearchParams(location.search).get('filter') === 'open') fold(true);
+  toggle.addEventListener('click', () => fold(form.hidden));
+});

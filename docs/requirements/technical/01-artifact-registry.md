@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Realises | [Artifact registry](../functional/01-artifact-registry.md) |
-| Status | Fetching, storing, processing and reading implemented; Changes follow |
+| Status | Fetching, storing, processing, reading and Changes implemented |
 | Source of truth | This file |
 
 How a run of a Source Job becomes the Current Version of its dbt project, in the service [registry](../../architecture/services/registry.md).
@@ -18,7 +18,7 @@ How a run of a Source Job becomes the Current Version of its dbt project, in the
 registry answers `POST /webhooks/dbt-cloud`. The route is public, because dbt Cloud has no Access Token; the signature protects it instead. A delivery counts only when:
 
 - its `Authorization` header holds the HMAC-SHA256 of the raw body, in hex, keyed with the secret `datahub-dbt-webhook-secret`, compared in constant time; otherwise registry answers `401`;
-- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-01](../functional/01-artifact-registry.md#dec-ar-01)); any other signed delivery is answered `204` and ignored.
+- it reports `job.run.completed` with run status `Success`, for the dbt Cloud account of Data Hub and a Source Job of this environment ([DEC-AR-09](../functional/01-artifact-registry.md#dec-ar-09)); any other signed delivery is answered `204` and ignored.
 
 A delivery that counts records the run as an Artifact Set with status `pending`, at most once per run ID: a repeated delivery changes nothing. registry then starts the ingest job ([TR-AR-02](#tr-ar-02)) and answers, well within the 10 seconds dbt Cloud waits before it tries again.
 
@@ -89,9 +89,9 @@ Every route of registry that reads, and processing a run again, needs the role o
 <a id="tr-ar-08"></a>
 ### TR-AR-08 · registry tells catalogue which tables are exposed to Data Hub
 
-**Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-PF-26](00-platform.md#dec-pf-26)
+**Status:** Implemented · **Realises:** [FR-SR-32](../functional/04-stacks-and-resources.md#fr-sr-32), [DEC-SR-22](../functional/04-stacks-and-resources.md#dec-sr-22), [DEC-SR-23](../functional/04-stacks-and-resources.md#dec-sr-23), [DEC-SR-24](../functional/04-stacks-and-resources.md#dec-sr-24), [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44), [DEC-PF-26](00-platform.md#dec-pf-26)
 
-When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
+When the ingest job has made an Artifact Set the Current Version of its dbt project, it collects every Node an exposure with the tag `datahub` depends on and that is a table or view in BigQuery (the tag may stand at the top of the exposure or in its `config`, as dbt Fusion prefers), so with a `relation` ([TR-AR-03](#tr-ar-03)). Per table it sends its `relation` as Key, its full name in its own case (its database, schema and table name, without quotes; [DEC-SR-44](../functional/04-stacks-and-resources.md#dec-sr-44)), its unique ID, name, kind of Node and description, the names of those exposures, the `label` of an exposure that depends on that table alone, the checksum of its code, and its columns in the order of the table, each with its name, type and description.
 
 It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
 
@@ -125,6 +125,23 @@ Without the Domain Model the proposal still holds what dbt says, without a mappi
 **Status:** Implemented · **Realises:** [DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06), [FR-SR-54](../functional/04-stacks-and-resources.md#fr-sr-54)
 
 `GET /internal/nodes/{id}/lineage?direction=upstream|downstream` takes no Access Token but a Google ID token for registry's own address, of the service account of catalogue only (`DATAHUB_CATALOGUE_SERVICE_ACCOUNT`, `DATAHUB_REGISTRY_URL`), as catalogue checks who may see the Resource ([TR-SR-11](04-stacks-and-resources.md#tr-sr-11)). It walks the lineage of the Node as `GET /nodes/{id}/lineage` does, up to fifty steps and five hundred models, across both dbt projects, and gives of each model only what everyone who sees the Resource may read: its name, kind, layer, project and distance, and the links between them ([DEC-AR-06](../functional/01-artifact-registry.md#dec-ar-06)). The layer is the one Colleciónes tags it with, else the folder under `models/` it sits in, else its kind, such as `seed`. Exposures are left out. A Node no Current Version holds answers 404.
+
+<a id="tr-ar-14"></a>
+### TR-AR-14 · registry compares each new Current Version and follows its Changes downstream
+
+**Status:** Implemented · **Realises:** [FR-AR-11](../functional/01-artifact-registry.md#fr-ar-11), [FR-AR-12](../functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](../functional/01-artifact-registry.md#ec-ar-04)
+
+When an Artifact Set takes over from another as the Current Version of its dbt project, the ingest job compares the two, as both keep their rows ([TR-AR-04](#tr-ar-04)), Node by Node, for the models, seeds, snapshots and sources ([Kinds of Change](../functional/01-artifact-registry.md#kinds-of-change)):
+
+- **description:** the description of the Node or of one of its columns differs;
+- **logic:** the checksum of its code differs;
+- **type:** a column keeps its name and gets another type;
+- **structural:** a column is added or removed; a rename is one removed and one added;
+- **added** or **removed:** the Node appears or goes.
+
+Each Change is followed downstream through the links of every Current Version, across both dbt projects as [TR-AR-11](#tr-ar-11) walks them, however deep, up to a hundred steps against a cycle, to the tables of Resources: the Nodes with a `relation` that an exposure tagged `datahub` depends on, in any Current Version ([TR-AR-08](#tr-ar-08)). A Node that went is followed from the Nodes it fed in the previous version. Each table is reached once per Change, at its shortest distance. A Change of a Resource's own table, other than its code, reaches it at distance 0 through the tables registry already sends, which catalogue compares itself ([TR-SR-13](04-stacks-and-resources.md#tr-sr-13)); only a change of its own code is passed on at distance 0.
+
+The Changes go with the tables to `POST /internal/resources`, as `changes`: per Change its kind, the name of the Node, the field, its direction or its types before and after, and the tables it reaches with their distance. A Change that reaches no table is not sent. A set that does not take over, or processes the Current Version again, is compared with nothing. A failure to compare is logged and the tables are sent without Changes.
 
 ## Open points
 

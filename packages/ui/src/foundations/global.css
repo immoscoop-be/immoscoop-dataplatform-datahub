@@ -22,6 +22,9 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
 /* Surfaces: a reading surface takes the colour of the frame it is in, which focus follows (Layers and focus) */
 .card { background: var(--card); transition: background-color var(--motion-focus) var(--delay-focus); }
 
+/* Day and night switch at once: while the theme changes, nothing slides on its way (DEC-UX-149). */
+:root.theme-switching *, :root.theme-switching *::before, :root.theme-switching *::after { transition: none !important; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }

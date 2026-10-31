@@ -18,6 +18,10 @@ export type Origins = Partial<Record<'partition' | 'clusterBy' | 'partitionFilte
 /** A timestamp: read as a Date, written as a Date or left to the database. */
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
 
+/** The five steps of a Learning Card (DEC-LR-10). */
+export type LearningStep = 'why' | 'core' | 'see' | 'check' | 'can';
+export const LEARNING_STEPS: readonly LearningStep[] = ['why', 'core', 'see', 'check', 'can'];
+
 /** The tables of catalogue, in camelCase (the columns are snake_case in Postgres). */
 /** A field as it was at a Confirmation. */
 export interface ConfirmedField {
@@ -46,6 +50,24 @@ export interface CatalogueDatabase {
     createdByName: string;
     createdAt: Timestamp;
     dissolvedAt: Date | null;
+    /** What its Owner Unit tells about it, in Markdown (FR-CO-41). */
+    intro: ColumnType<string, string | undefined, string>;
+  };
+  /** The folders of the Collections, at the top of one or in one of its folders (FR-CO-38). */
+  folders: {
+    id: Generated<string>;
+    collectionId: string;
+    parentId: string | null;
+    name: string;
+    createdBy: string;
+    createdByName: string;
+    createdAt: Timestamp;
+  };
+  /** The folder a Resource or a Lens sits in; without a row it sits at the top of its Collection (FR-CO-38). */
+  folderPlaces: {
+    kind: 'resource' | 'lens';
+    itemId: string;
+    folderId: string;
   };
   /** The Log of the Collections: append-only, with a Log ID from the Log catalogue (TR-CO-04). */
   collectionLog: {
@@ -62,6 +84,8 @@ export interface CatalogueDatabase {
   resources: {
     id: Generated<string>;
     key: string;
+    /** The full name of its table in its own case, for BigQuery; null until a run brings it. */
+    fullName: string | null;
     projectId: string;
     projectName: string | null;
     nodeId: string;
@@ -229,6 +253,32 @@ export interface CatalogueDatabase {
     messageId: string;
     userId: string;
     readAt: Timestamp;
+  };
+  /** The outbox of notifications: every Message, from the moment it is written, until it went out (DEC-LN-02). */
+  notifications: {
+    messageId: string;
+    createdAt: Timestamp;
+    attempts: Generated<number>;
+    nextAt: Timestamp;
+    doneAt: Date | null;
+    failure: string | null;
+  };
+  /** What went out of a notification, so that trying again never sends twice. */
+  notificationDeliveries: {
+    messageId: string;
+    channel: 'email' | 'slack';
+    /** An e-mail address, or the fixed Google ID of a User for a direct message in Slack. */
+    address: string;
+    sentAt: Timestamp;
+  };
+  /** What each User did with each Learning Card, by its number (FR-LR-32, DEC-LR-13). */
+  learningProgress: {
+    userId: string;
+    card: string;
+    seenAt: Timestamp;
+    lastAt: Timestamp;
+    step: LearningStep;
+    understoodAt: Date | null;
   };
   /** What query tells about its Lenses, to decide who sees the Messages on one (FR-CV-05, DEC-CO-16). */
   lenses: {

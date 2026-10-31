@@ -10,6 +10,7 @@ const thresholds = { approve: 100_000_000, request: 1_000_000_000 };
 const resource = (name: string, extra: Partial<QueryResource> = {}): QueryResource => ({
   id: `00000000-0000-4000-8000-00000000000${name.length}`,
   key: `${PROJECT}.dbt_prod_stacks.${name}`,
+  fullName: `${PROJECT}.dbt_prod_stacks.${name}`,
   displayName: name,
   collectionId: 'c1',
   level: 3,
@@ -71,6 +72,23 @@ describe('the Pre-flight of a query', () => {
       bigquery,
     );
     expect(result).toMatchObject({ runnable: true, bytes: 80_000_000, range: 'free', problems: [], warnings: [] });
+  });
+
+  it('knows a Resource written in its own case, as BigQuery names it, and asks BigQuery for that name', async () => {
+    const state = resource('mrt_immoscoop__leadsource__state', { fullName: `${PROJECT}.dbt_prod_stacks.mrt_immoscoop__leadSource__state` });
+    const bigquery = fakeBigQuery(() => dry(1_000, [state.fullName]));
+    const result = await check(`select * from \`${state.fullName}\``, of(state), bigquery);
+    expect(result).toMatchObject({ runnable: true, problems: [] });
+    expect(bigquery.asked).toContain(`select * from \`${state.fullName}\``);
+  });
+
+  it('asks BigQuery for a Resource written in lower case by its own name, as BigQuery names are case-sensitive (DEC-SR-44)', async () => {
+    const state = resource('mrt_immoscoop__leadsource__state', { fullName: `${PROJECT}.dbt_prod_stacks.mrt_immoscoop__leadSource__state` });
+    const bigquery = fakeBigQuery(() => dry(1_000, [state.fullName]));
+    const result = await check(`select * from \`${state.key}\` limit 10`, of(state), bigquery);
+    expect(result).toMatchObject({ runnable: true, problems: [] });
+    expect(bigquery.asked).toContain(`select * from \`${state.fullName}\` limit 10`);
+    expect(bigquery.asked.some((sql) => sql.includes(state.key))).toBe(false);
   });
 
   it('refuses a table that is not one of its Resources, where it stands, without asking BigQuery (DEC-UX-73)', async () => {

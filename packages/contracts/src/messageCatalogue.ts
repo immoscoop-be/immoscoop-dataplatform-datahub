@@ -425,7 +425,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['dataTeam'],
     when: 'A Registration: a run of a Source Job brings a table that an exposure with the tag `datahub` depends on.',
     per: 'One per Resource, never one per run (DEC-CV-10).',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-SR-10', 'DEC-SR-12', 'DEC-SR-27', 'DEC-CV-10'],
     parameters: [
       { name: 'exposure', type: 'name', about: 'The exposure it came in through' },
@@ -474,7 +474,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the description from dbt of a Resource, or of one of its fields. A Change further upstream stays an entry in the Log (FR-AR-12).',
     per: 'One per Resource and Artifact Set, with every description that changed.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-RC-17', 'DEC-RC-03', 'FR-LR-38'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
@@ -591,7 +591,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set adds, removes, renames or retypes a field of a Resource after its last Confirmation.',
     per: 'One per Resource and Artifact Set; all point to its one warning.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-MR-12', 'DEC-MR-08', 'DEC-DH-66', 'FR-LR-38'],
     parameters: [
       { name: 'confirmed', type: 'date', about: 'The day of its last Confirmation' },
@@ -662,7 +662,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'An Artifact Set changes the code of the Node of a Resource, or of a Node it depends on: a filter or a join, with the same schema.',
     per: 'One per Resource and Artifact Set.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-DH-27', 'DEC-LN-04', 'FR-AR-12'],
     parameters: [
       { name: 'run', type: 'date', about: 'The day of the run of the Source Job' },
@@ -708,7 +708,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'The Level of a Resource drops: a description goes missing, its EDA document is no longer linked, or its last active check is switched off.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['FR-MR-09', 'DEC-SR-08', 'DEC-MR-08'],
     openPoints: ['OP-MR-04'],
     parameters: [
@@ -743,9 +743,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
-      card: { number: '4.4.1', title: 'The maturity ladder' },
-      why: 'What each Level stands for, and what makes a Resource rise and drop.',
+      fit: 'named',
+      card: { number: 'K5.2', title: 'The Level of a Resource' },
+      why: 'What each Level stands for, and what makes a Resource rise and drop; confirmed on 2026-10-29 (DEC-LR-29, DEC-LR-30).',
     },
     action: {
       asks: 'act',
@@ -765,7 +765,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'An Artifact Set no longer has an exposure with the tag `datahub` that depends on a Resource in a Collection.',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-SR-26', 'DEC-CV-12'],
     parameters: [{ name: 'run', type: 'date', about: 'The day of the run of the Source Job' }],
     text: {
@@ -791,9 +791,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
+      fit: 'named',
       card: { number: 'K5.1', title: 'What a resource is' },
-      why: 'An exposure makes a table a Resource, and so its absence withdraws it.',
+      why: 'An exposure makes a table a Resource, and so its absence withdraws it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
       asks: 'nothing',
@@ -870,7 +870,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['owner'],
     when: 'The Data Team adds a Resource to a Collection (FR-CO-14).',
-    status: 'Specified',
+    status: 'Implemented',
     sources: ['DEC-SR-27', 'FR-CO-14', 'DEC-SR-07', 'DEC-CV-11'],
     parameters: [
       { name: 'collection', type: 'object', about: 'The Collection it is in now' },
@@ -896,9 +896,9 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       },
     },
     learningCard: {
-      fit: 'proposed',
+      fit: 'named',
       card: { number: '4.7.1', title: 'Owner and steward' },
-      why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it.',
+      why: 'What the Owner takes on with a Resource: vouching for it, describing it and publishing it; confirmed on 2026-10-29 (DEC-LR-29).',
     },
     action: {
       asks: 'act',
@@ -982,7 +982,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     from: 'dataHub',
     to: ['author'],
     when: 'A run of a Lens reads more than 100 MB, while it was made in the range below.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['FR-LE-10', 'FR-LE-08', 'FR-SR-40'],
     parameters: [...SIZE, { name: 'column', type: 'name', about: 'The partition column, when a filter on it would make the Lens read less (FR-SR-40)', optional: true }],
     text: {
@@ -1113,7 +1113,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A Lens reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per Lens, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-LE-17', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {
@@ -1158,6 +1158,85 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
   },
 
   // Queries
+  // An Excel key, made on My page: only its User sees the Messages about it (FR-PL-03, DEC-DH-79).
+  {
+    id: 'MSG-KEY-01',
+    title: 'An Excel key expires within a month',
+    kind: 'dataHub',
+    subjects: ['excelKey'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'An Excel key that is not revoked expires within a month; Data Hub looks once a day.',
+    per: 'One per key.',
+    status: 'Implemented',
+    sources: ['FR-PL-03', 'DEC-DH-79'],
+    parameters: [{ name: 'expires', type: 'date', about: 'The day the key stops' }],
+    text: {
+      nl: {
+        plain: 'Je Excel key {subject} vervalt op {expires}. Maak op My page een nieuwe en zet die in Excel.',
+        rich: lines(
+          '**Je Excel key {subject} vervalt op {expires}**',
+          '',
+          'Daarna haalt Excel er geen gegevens meer mee op. Maak op My page een nieuwe key en zet die in Excel in de plaats van deze.',
+        ),
+      },
+      en: {
+        plain: 'Your Excel key {subject} expires on {expires}. Make a new one on My page and put it in Excel.',
+        rich: lines(
+          '**Your Excel key {subject} expires on {expires}**',
+          '',
+          'After that, Excel no longer gets data with it. Make a new key on My page and put it in Excel in the place of this one.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    action: {
+      asks: 'nothing',
+      what: 'Its User can make a new key on My page and put it in Excel, before this one stops.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page, at its Excel keys' }],
+      done: 'When it is read; the key stops on its day whatever happens.',
+    },
+    example: { subject: 'Excel on my laptop', expires: '2027-10-31' },
+  },
+  {
+    id: 'MSG-KEY-02',
+    title: 'The Data Team revoked an Excel key',
+    kind: 'dataHub',
+    subjects: ['excelKey'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'Someone of the Data Team revokes the Excel key of another User, in Admin.',
+    per: 'One per key.',
+    status: 'Implemented',
+    sources: ['FR-PL-03', 'DEC-DH-79'],
+    parameters: [{ name: 'actor', type: 'person', about: 'Who of the Data Team revoked it' }],
+    text: {
+      nl: {
+        plain: '{actor} van het Data Team trok je Excel key {subject} in. Excel haalt er geen gegevens meer mee op.',
+        rich: lines(
+          '**{actor} van het Data Team trok je Excel key {subject} in**',
+          '',
+          'Excel haalt er vanaf nu geen gegevens meer mee op. Heb je hem nog nodig, maak dan op My page een nieuwe, of vraag {actor} waarom.',
+        ),
+      },
+      en: {
+        plain: '{actor} of the Data Team revoked your Excel key {subject}. Excel no longer gets data with it.',
+        rich: lines(
+          '**{actor} of the Data Team revoked your Excel key {subject}**',
+          '',
+          'From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'The result of a Lens in Excel: an Excel key, Power Query and refreshing', why: 'The Message is about the key with which Excel gets the result of a Lens (DEC-CH-03).' },
+    action: {
+      asks: 'nothing',
+      what: 'Its User makes a new key on My page if they still need one.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page, at its Excel keys' }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
+  },
   {
     id: 'MSG-QRY-01',
     title: 'Request to run a very large query',
@@ -1222,7 +1301,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner'],
     when: 'A query reads a Resource or a column that no longer exists: Data Hub finds it after a new Current Version, in its daily check, or when a run fails (FR-SR-52).',
     per: 'One per query, however much of what it reads is missing; what goes missing later joins it.',
-    status: 'Proposed',
+    status: 'Implemented',
     sources: ['DEC-DH-67', 'FR-SR-53', 'FR-SR-52'],
     parameters: [...BROKEN],
     text: {

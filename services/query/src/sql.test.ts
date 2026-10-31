@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filtersOn, parametersOf, tablesOf, template, tokenize, withFilter } from './sql.js';
+import { filtersOn, inOwnCase, parametersOf, tablesOf, template, tokenize, withFilter } from './sql.js';
 
 const names = (sql: string) => tablesOf(sql).tables.map((table) => table.name);
 
@@ -88,6 +88,43 @@ describe('the tables a query names (DEC-UX-73)', () => {
   });
 });
 
+describe('the SQL as BigQuery gets it (DEC-SR-44)', () => {
+  const state = { key: 'p.colleciones_dbt.mrt_immoscoop__leadsource__state', fullName: 'p.colleciones_dbt.mrt_immoscoop__leadSource__state' };
+  const own = '`p.colleciones_dbt.mrt_immoscoop__leadSource__state`';
+
+  it('names a Resource written in another case by its full name in its own case', () => {
+    expect(inOwnCase('select * from `p.colleciones_dbt.mrt_immoscoop__leadsource__state`', [state], 'p')).toBe(`select * from ${own}`);
+    expect(inOwnCase('select * from p.colleciones_dbt.MRT_IMMOSCOOP__LEADSOURCE__STATE s', [state], 'p')).toBe(`select * from ${own} s`);
+  });
+
+  it('names it in full when it is written without its project', () => {
+    expect(inOwnCase('select * from colleciones_dbt.mrt_immoscoop__leadsource__state as s where s.x = 1', [state], 'p')).toBe(`select * from ${own} as s where s.x = 1`);
+  });
+
+  it('changes every place it is named and nothing else: other tables, CTEs, columns, strings', () => {
+    const sql = [
+      'with leadsource as (select * from `p.colleciones_dbt.mrt_immoscoop__leadsource__state`)',
+      "select 'p.colleciones_dbt.mrt_immoscoop__leadsource__state' as name, l.x",
+      'from leadsource l join p.other.table o on o.x = l.x',
+      'join `p.colleciones_dbt.mrt_immoscoop__leadsource__state` again on again.x = l.x',
+    ].join('\n');
+    expect(inOwnCase(sql, [state], 'p')).toBe(
+      [
+        `with leadsource as (select * from ${own})`,
+        "select 'p.colleciones_dbt.mrt_immoscoop__leadsource__state' as name, l.x",
+        'from leadsource l join p.other.table o on o.x = l.x',
+        `join ${own} again on again.x = l.x`,
+      ].join('\n'),
+    );
+  });
+
+  it('leaves a name that is already right as it was written', () => {
+    const sql = 'select * from `p.colleciones_dbt.mrt_immoscoop__leadSource__state`';
+    expect(inOwnCase(sql, [state], 'p')).toBe(sql);
+    expect(inOwnCase('select * from `p.dbt.weekly`', [{ key: 'p.dbt.weekly', fullName: 'p.dbt.weekly' }], 'p')).toBe('select * from `p.dbt.weekly`');
+  });
+});
+
 describe('a filter on the partition column (DEC-SR-35, FR-SR-40)', () => {
   it('is there when the column is named in a where', () => {
     expect(filtersOn('select * from t where week_start >= @from', 'week_start')).toBe(true);
@@ -117,6 +154,7 @@ describe('the Parameters a query uses', () => {
 describe('the SQL a new query starts with (FR-SR-46)', () => {
   const weekly = {
     key: 'p.dbt_prod_stacks.weekly_lead_volume',
+    fullName: 'p.dbt_prod_stacks.weekly_lead_volume',
     fields: [
       { name: 'week_start', dataType: 'DATE' },
       { name: 'lead_source', dataType: 'STRING' },
@@ -131,14 +169,19 @@ describe('the SQL a new query starts with (FR-SR-46)', () => {
   });
 
   it('filters a timestamp as a timestamp, and leaves out a filter it cannot write', () => {
-    const events = { key: 'p.d.events', fields: [{ name: 'at', dataType: 'TIMESTAMP' }], partition: { field: 'at', unit: 'month' } };
+    const events = { key: 'p.d.events', fullName: 'p.d.events', fields: [{ name: 'at', dataType: 'TIMESTAMP' }], partition: { field: 'at', unit: 'month' } };
     expect(template([events])).toContain('where at >= timestamp_sub(current_timestamp(), interval 90 day)');
-    const ranges = { key: 'p.d.ranges', fields: [{ name: 'bucket', dataType: 'INT64' }], partition: { field: 'bucket', unit: null } };
+    const ranges = { key: 'p.d.ranges', fullName: 'p.d.ranges', fields: [{ name: 'bucket', dataType: 'INT64' }], partition: { field: 'bucket', unit: null } };
     expect(template([ranges])).not.toContain('where');
   });
 
+  it('names the table in its own case, as BigQuery names are case-sensitive', () => {
+    const state = { key: 'p.colleciones_dbt.mrt_immoscoop__leadsource__state', fullName: 'p.colleciones_dbt.mrt_immoscoop__leadSource__state', fields: [{ name: 'leadSourceId', dataType: 'STRING' }], partition: null };
+    expect(template([state])).toBe('select leadSourceId\nfrom `p.colleciones_dbt.mrt_immoscoop__leadSource__state`\n');
+  });
+
   it('gives each Resource a CTE when there are more', () => {
-    const sources = { key: 'p.dbt_prod_stacks.lead_sources', fields: [{ name: 'source_name', dataType: 'STRING' }], partition: null };
+    const sources = { key: 'p.dbt_prod_stacks.lead_sources', fullName: 'p.dbt_prod_stacks.lead_sources', fields: [{ name: 'source_name', dataType: 'STRING' }], partition: null };
     const sql = template([weekly, sources]);
     expect(sql).toMatch(/^with weekly_lead_volume as \(\n {2}select week_start,/);
     expect(sql).toContain('lead_sources as (\n  select source_name\n  from `p.dbt_prod_stacks.lead_sources`\n)');

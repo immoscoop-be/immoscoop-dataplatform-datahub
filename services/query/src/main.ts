@@ -1,4 +1,4 @@
-import { createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
+import { createExcelKeyExchanger, createServiceCallerVerifier, verifierFromEnv } from '@datahub/auth';
 import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken, metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
@@ -17,8 +17,9 @@ const project = required('DATAHUB_BIGQUERY_PROJECT');
 const bigquery = createBigQuery({ project, location: required('DATAHUB_BIGQUERY_LOCATION'), token: metadataAccessToken() });
 const beneath = createBeneath(bigquery);
 
+const verifier = verifierFromEnv();
 const app = await buildApp({
-  verifier: verifierFromEnv(),
+  verifier,
   api: {
     queries: createQueries(database.db),
     lenses: createLenses(database.db),
@@ -34,11 +35,17 @@ const app = await buildApp({
       approve: Number(process.env.DATAHUB_QUERY_APPROVE_BYTES ?? 100_000_000),
       request: Number(process.env.DATAHUB_QUERY_REQUEST_BYTES ?? 1_000_000_000),
     },
-    // Cloud Scheduler checks every Lens once a day, with a Google ID token for query's own address (FR-LE-17).
+    // Cloud Scheduler checks every Lens and query once a day, and catalogue what reads a Resource that changed
+    // after a new Current Version, each with a Google ID token for query's own address (FR-LE-17, FR-SR-52).
     checkers: createServiceCallerVerifier({
       audience: required('DATAHUB_QUERY_URL'),
-      serviceAccounts: [required('DATAHUB_SCHEDULER_SERVICE_ACCOUNT')],
+      serviceAccounts: [required('DATAHUB_SCHEDULER_SERVICE_ACCOUNT'), required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')],
     }),
+    // Excel signs in with an Excel key, which identity exchanges for an Access Token (TR-PF-07, DEC-CH-06).
+    excel: {
+      exchanger: createExcelKeyExchanger({ identityUrl: required('DATAHUB_TOKEN_ISSUER'), idToken: metadataIdToken() }),
+      verifier,
+    },
   },
 });
 app.addHook('onClose', () => database.close());

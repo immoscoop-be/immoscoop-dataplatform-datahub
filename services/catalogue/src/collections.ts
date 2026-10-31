@@ -29,12 +29,27 @@ export interface CollectionItem {
   /** Its use is discouraged (FR-SR-50). */
   deprecated: boolean;
   withdrawn: boolean;
+  /** The folder it sits in, or null at the top of the Collection (FR-CO-38). */
+  folderId: string | null;
+}
+
+/** A folder of a Collection (FR-CO-38): everyone who sees the Collection sees its folders (DEC-CO-26). */
+export interface Folder {
+  id: string;
+  name: string;
+  /** The folder it sits in, or null at the top of the Collection. */
+  parentId: string | null;
+  /** The name of whoever made it, and when. */
+  createdBy: string;
+  createdAt: Date;
 }
 
 export interface Collection {
   id: string;
   name: string;
   description: string;
+  /** What its Owner Unit tells about it, in Markdown; empty when there is none (FR-CO-41). */
+  intro: string;
   /** Null only for an icon a later version of Phosphor no longer has. */
   icon: CollectionIcon | null;
   ownerUnit: Group;
@@ -46,6 +61,10 @@ export interface Collection {
   canManage: boolean;
   /** The Resources in it that the viewer sees, by name (FR-CO-18, FR-SR-31). */
   resources: CollectionItem[];
+  /** Its folders, by name (FR-CO-38). */
+  folders: Folder[];
+  /** The folder each of its Lenses in a folder sits in, by the ID of the Lens; a Lens left out sits at the top. */
+  lensFolders: Record<string, string>;
   /** The latest entry of its Log since it was created that the viewer sees, if any. */
   lastChange: LogEntry | null;
 }
@@ -56,6 +75,8 @@ export interface NewCollection {
   icon: CollectionIcon;
   ownerUnit: Group;
   visibility: CollectionVisibility;
+  /** In Markdown; empty when left out (FR-CO-41). */
+  intro?: string;
 }
 
 export type CollectionChanges = Partial<NewCollection>;
@@ -80,6 +101,21 @@ export class NotEmpty extends Error {
     super(`The Collection still holds ${count === 1 ? '1 Resource' : `${count} Resources`}; the Data Team removes them first.`);
   }
 }
+
+/** What can be moved between the folders of a Collection (FR-CO-40). */
+export type Movable = { kind: 'resource' | 'lens' | 'folder'; id: string };
+
+/** Why a folder was not made, renamed, deleted or moved; `done` when it was. */
+export type FolderOutcome<T = undefined> =
+  | { outcome: 'done'; value: T }
+  /** The Collection is gone, or the folder or the item is not in it. */
+  | { outcome: 'not_found' }
+  /** The folder to put it in is not in the Collection. */
+  | { outcome: 'no_folder' }
+  /** A folder would go into itself or into a folder inside it (FR-CO-40). */
+  | { outcome: 'into_itself' }
+  /** Only an empty folder is deleted (FR-CO-39): how many folders, Resources and Lenses it holds. */
+  | { outcome: 'not_empty'; holds: number };
 
 /** Collections in Postgres (TR-CO-01, TR-CO-04). Who may do what is decided by the routes. */
 /** A Collection that shares words with a question, its name and description with them marked (DEC-UX-127). */
@@ -114,6 +150,13 @@ export interface Collections {
   change(id: string, changes: CollectionChanges, viewer: Viewer): Promise<Collection | undefined>;
   /** Dissolves an empty Collection (else NotEmpty); false when it was already gone. */
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
+  /** Makes a folder at the top of a Collection, or in the folder `parentId` of it (FR-CO-39). */
+  makeFolder(collectionId: string, name: string, parentId: string | null, viewer: Viewer): Promise<FolderOutcome<Folder>>;
+  renameFolder(collectionId: string, folderId: string, name: string, viewer: Viewer): Promise<FolderOutcome<Folder>>;
+  /** Deletes a folder that holds nothing, else says how much it holds (FR-CO-39). */
+  deleteFolder(collectionId: string, folderId: string, viewer: Viewer): Promise<FolderOutcome>;
+  /** Puts a Resource, Lens or folder of a Collection in one of its folders, or at its top with null (FR-CO-40). */
+  move(collectionId: string, item: Movable, to: string | null, viewer: Viewer): Promise<FolderOutcome>;
   /** The Log of a Collection that the viewer sees, newest first. */
   log(collection: Pick<Collection, 'id' | 'canManage'>, limit: number): Promise<LogEntry[]>;
   /**
@@ -132,7 +175,7 @@ const FIELDS = ['name', 'description', 'icon'] as const;
  * The entries about a Resource in the Log of a Collection. Only who sees the Resource sees them: while
  * no Resource is published, its Owner Unit and the Data Team (DEC-CO-12).
  */
-const ABOUT_RESOURCES: readonly CollectionLogId[] = ['COL-006', 'COL-007'];
+const ABOUT_RESOURCES: readonly CollectionLogId[] = ['COL-006', 'COL-007', 'COL-011'];
 
 type Row = Selectable<CatalogueDatabase['collections']>;
 type Database = Kysely<CatalogueDatabase> | Transaction<CatalogueDatabase>;
@@ -144,6 +187,9 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
   async function present(rows: Row[], viewer: Viewer, from: Database = db): Promise<Collection[]> {
     const managed = rows.filter((row) => canManage(row, viewer)).map((row) => row.id);
     const items = new Map<string, CollectionItem[]>();
+    const folders = new Map<string, Folder[]>();
+    const places = new Map<string, string>();
+    const lensPlaces = new Map<string, string>();
     if (rows.length > 0) {
       // Its Owner Unit and the Data Team see every Resource in it; others only the published ones (FR-SR-31).
       const resources = await from
@@ -152,6 +198,25 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         .where('collectionId', 'in', rows.map((row) => row.id))
         .orderBy(sql`lower(display_name)`)
         .execute();
+      const placed = await from
+        .selectFrom('folderPlaces')
+        .innerJoin('folders', 'folders.id', 'folderPlaces.folderId')
+        .select(['folderPlaces.kind', 'folderPlaces.itemId', 'folderPlaces.folderId'])
+        .where('folders.collectionId', 'in', rows.map((row) => row.id))
+        .execute();
+      for (const place of placed) {
+        (place.kind === 'resource' ? places : lensPlaces).set(place.itemId, place.folderId);
+      }
+      for (const folder of await from
+        .selectFrom('folders')
+        .select(['id', 'collectionId', 'parentId', 'name', 'createdByName', 'createdAt'])
+        .where('collectionId', 'in', rows.map((row) => row.id))
+        .orderBy(sql`lower(name)`)
+        .orderBy('id')
+        .execute()) {
+        const shown = { id: folder.id, name: folder.name, parentId: folder.parentId, createdBy: folder.createdByName, createdAt: folder.createdAt };
+        folders.set(folder.collectionId, [...(folders.get(folder.collectionId) ?? []), shown]);
+      }
       for (const resource of resources) {
         if (!managed.includes(resource.collectionId!) && (resource.publishedAt === null || resource.withdrawnAt !== null)) {
           continue;
@@ -165,6 +230,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
           published: resource.publishedAt !== null,
           deprecated: resource.deprecatedAt !== null,
           withdrawn: resource.withdrawnAt !== null,
+          folderId: places.get(resource.id) ?? null,
         });
         items.set(resource.collectionId!, list);
       }
@@ -189,6 +255,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       id: row.id,
       name: row.name,
       description: row.description,
+      intro: row.intro,
       // An icon a later version of Phosphor no longer has is none, so the web app never asks for a drawing that is gone.
       icon: isCollectionIcon(row.icon) ? row.icon : null,
       ownerUnit: { id: row.ownerUnitId, email: row.ownerUnitEmail, name: row.ownerUnitName },
@@ -197,6 +264,10 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       createdBy: row.createdByName,
       canManage: canManage(row, viewer),
       resources: items.get(row.id) ?? [],
+      folders: folders.get(row.id) ?? [],
+      lensFolders: Object.fromEntries(
+        [...lensPlaces].filter(([, folderId]) => (folders.get(row.id) ?? []).some((folder) => folder.id === folderId)),
+      ),
       lastChange: changes.get(row.id) ?? null,
     }));
   }
@@ -224,6 +295,34 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       .insertInto('collectionLog')
       .values({ collectionId, logId, params: { ...params, actor: viewer.name }, actorId: viewer.id })
       .execute();
+  }
+
+  /**
+   * Work on the folders of a Collection that is not dissolved, with the Collection locked: one change to
+   * its folders at a time, so that no folder ends up inside itself and no folder is deleted while something
+   * moves into it.
+   */
+  async function inCollection<T>(collectionId: string, work: (trx: Transaction<CatalogueDatabase>, collection: Row) => Promise<FolderOutcome<T>>): Promise<FolderOutcome<T>> {
+    if (!UUID.test(collectionId)) {
+      return { outcome: 'not_found' };
+    }
+    return db.transaction().execute(async (trx) => {
+      const collection = await trx.selectFrom('collections').selectAll().where('id', '=', collectionId).where('dissolvedAt', 'is', null).forUpdate().executeTakeFirst();
+      return collection ? work(trx, collection) : { outcome: 'not_found' };
+    });
+  }
+
+  /** A folder of the Collection, or undefined when there is none by that ID in it. */
+  async function folderOf(trx: Database, collectionId: string, folderId: string) {
+    if (!UUID.test(folderId)) {
+      return undefined;
+    }
+    return trx
+      .selectFrom('folders')
+      .select(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
+      .where('id', '=', folderId)
+      .where('collectionId', '=', collectionId)
+      .executeTakeFirst();
   }
 
   /** Turns the unique index on the name into NameTaken. */
@@ -323,6 +422,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
             .values({
               name: collection.name,
               description: collection.description,
+              intro: collection.intro ?? '',
               icon: collection.icon,
               ownerUnitId: collection.ownerUnit.id,
               ownerUnitEmail: collection.ownerUnit.email,
@@ -367,6 +467,11 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
             update.visibility = changes.visibility;
             entries.push(['COL-004', { visibility: changes.visibility }]);
           }
+          // The intro itself is not logged, only that it changed (FR-CO-41).
+          if (changes.intro !== undefined && changes.intro !== before.intro) {
+            update.intro = changes.intro;
+            entries.push(['COL-014', {}]);
+          }
           if (entries.length === 0) {
             return presentOne(before, viewer, trx);
           }
@@ -408,6 +513,115 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
           await write(trx, id, 'COL-005', {}, viewer);
         }
         return dissolved !== undefined;
+      });
+    },
+
+    async makeFolder(collectionId, name, parentId, viewer) {
+      return inCollection<Folder>(collectionId, async (trx, collection) => {
+        const parent = parentId === null ? null : await folderOf(trx, collectionId, parentId);
+        if (parent === undefined) {
+          return { outcome: 'no_folder' };
+        }
+        const row = await trx
+          .insertInto('folders')
+          .values({ collectionId, parentId, name, createdBy: viewer.id, createdByName: viewer.name })
+          .returning(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
+          .executeTakeFirstOrThrow();
+        await write(trx, collectionId, 'COL-008', { folder: name, in: parent?.name ?? collection.name }, viewer);
+        return { outcome: 'done', value: row };
+      });
+    },
+
+    async renameFolder(collectionId, folderId, name, viewer) {
+      return inCollection<Folder>(collectionId, async (trx) => {
+        const folder = await folderOf(trx, collectionId, folderId);
+        if (!folder) {
+          return { outcome: 'not_found' };
+        }
+        if (folder.name !== name) {
+          await trx.updateTable('folders').set({ name }).where('id', '=', folder.id).execute();
+          await write(trx, collectionId, 'COL-009', { old: folder.name, new: name }, viewer);
+        }
+        return { outcome: 'done', value: { id: folder.id, name, parentId: folder.parentId, createdBy: folder.createdBy, createdAt: folder.createdAt } };
+      });
+    },
+
+    async deleteFolder(collectionId, folderId, viewer) {
+      return inCollection(collectionId, async (trx) => {
+        const folder = await folderOf(trx, collectionId, folderId);
+        if (!folder) {
+          return { outcome: 'not_found' };
+        }
+        const [{ folders }, { items }] = await Promise.all([
+          trx.selectFrom('folders').select((eb) => eb.fn.countAll<string>().as('folders')).where('parentId', '=', folder.id).executeTakeFirstOrThrow(),
+          trx.selectFrom('folderPlaces').select((eb) => eb.fn.countAll<string>().as('items')).where('folderId', '=', folder.id).executeTakeFirstOrThrow(),
+        ]);
+        const holds = Number(folders) + Number(items);
+        if (holds > 0) {
+          return { outcome: 'not_empty', holds };
+        }
+        await trx.deleteFrom('folders').where('id', '=', folder.id).execute();
+        await write(trx, collectionId, 'COL-010', { folder: folder.name }, viewer);
+        return { outcome: 'done', value: undefined };
+      });
+    },
+
+    async move(collectionId, item, to, viewer) {
+      if (!UUID.test(item.id)) {
+        return { outcome: 'not_found' };
+      }
+      return inCollection(collectionId, async (trx, collection) => {
+        const target = to === null ? null : await folderOf(trx, collectionId, to);
+        if (target === undefined) {
+          return { outcome: 'no_folder' };
+        }
+        const where = target?.name ?? collection.name;
+        if (item.kind === 'folder') {
+          const folder = await folderOf(trx, collectionId, item.id);
+          if (!folder) {
+            return { outcome: 'not_found' };
+          }
+          // Up from where it goes to the top: it must not pass the folder itself (FR-CO-40).
+          const all = await trx.selectFrom('folders').select(['id', 'parentId']).where('collectionId', '=', collectionId).execute();
+          const parents = new Map(all.map((row) => [row.id, row.parentId]));
+          for (let at = target?.id ?? null; at !== null; at = parents.get(at) ?? null) {
+            if (at === folder.id) {
+              return { outcome: 'into_itself' };
+            }
+          }
+          if (folder.parentId !== (target?.id ?? null)) {
+            await trx.updateTable('folders').set({ parentId: target?.id ?? null }).where('id', '=', folder.id).execute();
+            await write(trx, collectionId, 'COL-013', { folder: folder.name, to: where }, viewer);
+          }
+          return { outcome: 'done', value: undefined };
+        }
+        // A Resource is locked, so that it does not leave the Collection while it moves; a Lens stays in its Collection.
+        const found =
+          item.kind === 'resource'
+            ? await trx.selectFrom('resources').select('displayName as name').where('id', '=', item.id).where('collectionId', '=', collectionId).forUpdate().executeTakeFirst()
+            : await trx.selectFrom('lenses').select('name').where('id', '=', item.id).where('collectionId', '=', collectionId).executeTakeFirst();
+        if (!found) {
+          return { outcome: 'not_found' };
+        }
+        const place = await trx.selectFrom('folderPlaces').select('folderId').where('kind', '=', item.kind).where('itemId', '=', item.id).executeTakeFirst();
+        if ((place?.folderId ?? null) === (target?.id ?? null)) {
+          return { outcome: 'done', value: undefined };
+        }
+        if (target === null) {
+          await trx.deleteFrom('folderPlaces').where('kind', '=', item.kind).where('itemId', '=', item.id).execute();
+        } else {
+          await trx
+            .insertInto('folderPlaces')
+            .values({ kind: item.kind, itemId: item.id, folderId: target.id })
+            .onConflict((conflict) => conflict.columns(['kind', 'itemId']).doUpdateSet({ folderId: target.id }))
+            .execute();
+        }
+        if (item.kind === 'resource') {
+          await write(trx, collectionId, 'COL-011', { resource: found.name, to: where }, viewer);
+        } else {
+          await write(trx, collectionId, 'COL-012', { lens: found.name, to: where }, viewer);
+        }
+        return { outcome: 'done', value: undefined };
       });
     },
 

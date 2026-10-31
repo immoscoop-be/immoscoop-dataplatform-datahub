@@ -14,5 +14,8 @@ export default defineProject({
     dir: fileURLToPath(new URL('../../..', import.meta.url)),
     environment: 'jsdom',
     include: ['apps/web/client/src/**/*.test.ts', 'packages/ui/src/**/*.svelte.test.ts'],
+    setupFiles: [fileURLToPath(new URL('test-setup.ts', import.meta.url))],
+    // Svelte Flow comes as Svelte components, which Vite compiles rather than Node loading them as they are.
+    server: { deps: { inline: ['@xyflow/svelte'] } },
   },
 });

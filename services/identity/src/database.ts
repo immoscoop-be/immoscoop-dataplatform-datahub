@@ -12,6 +12,9 @@ export interface IdentityDatabase {
     name: string;
     createdAt: Timestamp;
     lastLoginAt: Timestamp;
+    /** The fixed IDs of their Groups of the own domains, and their roles, as last read (DEC-LN-07). */
+    groups: ColumnType<string[], string[] | undefined, string[]>;
+    roles: ColumnType<string[], string[] | undefined, string[]>;
   };
   clients: {
     clientId: string;
@@ -52,6 +55,20 @@ export interface IdentityDatabase {
     sessionId: string;
     createdAt: Timestamp;
     usedAt: Date | null;
+  };
+  /** The Excel keys of the Users, by hash only (TR-PF-07). */
+  excelKeys: {
+    id: Generated<string>;
+    googleId: string;
+    name: string;
+    keyHash: string;
+    createdAt: Timestamp;
+    expiresAt: Date;
+    lastUsedAt: Date | null;
+    revokedAt: Date | null;
+    revokedBy: string | null;
+    revokedByName: string | null;
+    warnedAt: Date | null;
   };
   settings: {
     googleId: string;

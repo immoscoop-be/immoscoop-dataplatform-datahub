@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
+  import type { HTMLAttributes } from 'svelte/elements';
   import FoldBox from '../containers/FoldBox.svelte';
   import Icon from '../foundations/Icon.svelte';
   import type { IconName } from '../foundations/icons.js';
@@ -10,7 +11,8 @@
    * of its own, and its arrow unfolds what it holds (Tree, DEC-UX-10). The group whose page is open
    * has an outline. Its icon is one of the interface, or its own mark, such as the icon of a
    * Collection. "Without a Collection" is in the urgent red: it is no Collection, and it waits for the
-   * Data Team (DEC-UX-16).
+   * Data Team (DEC-UX-16). Something dragged onto its head goes to the top of the Collection (DEC-UX-157):
+   * `drop` marks it, and what is left of the props goes on the head.
    */
   let {
     href,
@@ -22,6 +24,8 @@
     open = $bindable(true),
     meta,
     children,
+    drop = false,
+    ...rest
   }: {
     href?: string;
     icon?: IconName;
@@ -32,13 +36,15 @@
     open?: boolean;
     meta: Snippet;
     children: Snippet;
-  } = $props();
+    /** What is dragged would go here. */
+    drop?: boolean;
+  } & HTMLAttributes<HTMLElement> = $props();
 </script>
 
 <div class="group card" class:urgent class:open class:current>
   <FoldBox bind:open toggleLabel={t('tree.toggle', { name })}>
     {#snippet head()}
-      <svelte:element this={href ? 'a' : 'div'} class="link" {href} aria-current={href && current ? 'page' : undefined}>
+      <svelte:element this={href ? 'a' : 'div'} {...rest} class="link" class:drop {href} aria-current={href && current ? 'page' : undefined}>
         {#if mark}{@render mark()}{:else if icon}<span class="icon"><Icon name={icon} /></span>{/if}
         <span class="text"><span class="item-title name" title={name}>{name}</span><span class="meta">{@render meta()}</span></span>
       </svelte:element>
@@ -53,6 +59,7 @@
   .group.current, .group.current:hover { outline: 1.5px solid var(--text-muted); }
   .link { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 12px; color: inherit; text-decoration: none; border-radius: var(--radius-md); }
   .link:focus-visible { outline: 2px solid var(--text-secondary); }
+  .link.drop { background: var(--tint-hover); outline: 1.5px dashed var(--text-muted); }
   .icon { width: 26px; height: 34px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; color: var(--text-secondary); }
   .text { flex: 1; min-width: 0; }
   .name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

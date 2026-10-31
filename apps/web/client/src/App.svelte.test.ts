@@ -103,13 +103,16 @@ const CREDIT = {
   id: 'c1',
   name: 'Credit leads',
   description: 'The credit leads Immoscoop sends to KBC.',
+  intro: '',
   icon: 'coins',
   ownerUnit: DATA,
   visibility: 'public',
   createdAt: '2026-09-03T08:00:00Z',
   createdBy: 'An Claes',
   canManage: true,
-  resources: [{ id: 'r2', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false }],
+  resources: [{ id: 'r2', key: 'immoscoop-dataplatform-398214.dbt_prod_leads.weekly_lead_volume', displayName: 'Weekly lead volume', level: 2, published: false, deprecated: false, withdrawn: false, folderId: null as string | null }],
+  folders: [] as { id: string; name: string; parentId: string | null; createdBy: string; createdAt: string }[],
+  lensFolders: {} as Record<string, string>,
   lastChange: { logId: 'COL-006', params: { resource: 'Weekly lead volume', actor: 'Dirk Vos' }, at: '2026-10-27T08:00:00Z' },
 };
 
@@ -293,8 +296,16 @@ function serve({
   queries = [] as Record<string, unknown>[],
   lenses = [] as Record<string, unknown>[],
   conversations = [] as Record<string, unknown>[],
+  learned = [] as Record<string, unknown>[],
+  waiting = [SAVED_SEARCHES] as Record<string, unknown>[],
+  creditWith = {} as Partial<typeof CREDIT>,
+  excelKeys = [] as Record<string, unknown>[],
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  // Credit leads as catalogue keeps it, with its folders, changed by what the page asks (FR-CO-38 to FR-CO-41).
+  let credit = { ...CREDIT, ...creditWith };
+  /** The queries the User hid from their panel (DEC-UX-138). */
+  const hiddenQueries = new Set<string>();
   // The Messages as catalogue keeps them, changed by what the page asks.
   const talk = conversations.map((message) => ({ replies: [], replyCount: 0, unread: false, mine: false, ...message })) as Record<string, unknown>[];
   // Weekly lead volume as catalogue keeps it, changed by what the page asks.
@@ -313,14 +324,41 @@ function serve({
     }
     const dataTeam = roles.includes('datateam');
     if (path === '/collections' && method === 'GET') {
-      return json({ collections: [CREDIT, LISTINGS] });
+      return json({ collections: [credit, LISTINGS] });
+    }
+    if (path === '/collections/c1/folders' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; parentId: string | null };
+      const made = { id: 'f-new', name: body.name, parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
+      credit = { ...credit, folders: [...credit.folders, made] };
+      return json(made, 201);
+    }
+    const [, folderId] = /^\/collections\/c1\/folders\/([^/]+)$/.exec(path) ?? [];
+    if (folderId && method === 'PATCH') {
+      const { name } = JSON.parse(init.body as string) as { name: string };
+      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, name } : folder)) };
+      return json(credit.folders.find((folder) => folder.id === folderId));
+    }
+    if (folderId && method === 'DELETE') {
+      const holds = credit.folders.filter((folder) => folder.parentId === folderId).length + credit.resources.filter((item) => item.folderId === folderId).length;
+      if (holds > 0) return json({ error: 'not_empty', holds }, 409);
+      credit = { ...credit, folders: credit.folders.filter((folder) => folder.id !== folderId) };
+      return new Response(null, { status: 204 });
+    }
+    const [, kind, itemId] = /^\/collections\/c1\/places\/(resource|lens|folder)\/([^/]+)$/.exec(path) ?? [];
+    if (kind && itemId && method === 'PUT') {
+      const to = (JSON.parse(init.body as string) as { folderId: string | null }).folderId;
+      if (kind === 'resource') credit = { ...credit, resources: credit.resources.map((item) => (item.id === itemId ? { ...item, folderId: to } : item)) };
+      if (kind === 'folder') credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === itemId ? { ...folder, parentId: to } : folder)) };
+      if (kind === 'lens') credit = { ...credit, lensFolders: Object.fromEntries([...Object.entries(credit.lensFolders).filter(([id]) => id !== itemId), ...(to ? [[itemId, to]] : [])]) };
+      return new Response(null, { status: 204 });
     }
     if (path === '/collections' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; ownerUnit: string };
       return json({ ...CREDIT, ...body, id: 'c-new', ownerUnit: DATA, resources: [], lastChange: null }, 201);
     }
     if (path === '/collections/c1') {
-      return method === 'PATCH' ? json({ ...CREDIT, ...JSON.parse(init.body as string) }) : json(CREDIT);
+      if (method === 'PATCH') credit = { ...credit, ...JSON.parse(init.body as string) };
+      return json(credit);
     }
     if (path === '/collections/c2') {
       return json(LISTINGS);
@@ -364,7 +402,7 @@ function serve({
       return dataTeam ? json({ groups: [DATA, SALES] }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/resources?collection=none') {
-      return dataTeam ? json({ resources: [SAVED_SEARCHES] }) : json({ error: 'forbidden' }, 403);
+      return dataTeam ? json({ resources: waiting }) : json({ error: 'forbidden' }, 403);
     }
     if (path === '/resources/r1' && dataTeam) {
       return json({ resource: SAVED_SEARCHES });
@@ -525,10 +563,51 @@ function serve({
       return json({ run: { ...RUN, ref: 'q-20261029-1e2a3b', parameters: LENS.parameters }, page: PAGE }, 201);
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
-    if (path === '/queries' && method === 'GET') {
-      return json({
-        queries: queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request }) => ({ id, name, kind: kind ?? 'query', ownerName, resources: on, lastRunAt, createdAt, runs: lastRunAt ? 1 : 0, request: request ?? null })),
-      });
+    const listed = () =>
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken }) => ({
+        id: id as string,
+        name: name as string,
+        kind: (kind as string | undefined) ?? 'query',
+        ownerName,
+        resources: on,
+        lastRunAt: lastRunAt as string | null,
+        createdAt: createdAt as string,
+        runs: lastRunAt ? 1 : 0,
+        request: request ?? null,
+        hidden: hiddenQueries.has(id as string),
+        broken: (broken as Record<string, string> | null | undefined) ?? null,
+      }));
+    // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
+    const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
+    if ((path === '/queries' || path.startsWith('/queries?')) && method === 'GET') {
+      const params = new URLSearchParams(path.split('?')[1] ?? '');
+      const show = params.get('show');
+      const from = params.get('from');
+      const to = params.get('to');
+      const words = params.get('q')?.toLowerCase();
+      const found = listed()
+        .filter((item) => show === null || shownAs(item) === 'queries' || show.split(',').includes(shownAs(item)))
+        .filter((item) => !from || new Date(item.lastRunAt ?? item.createdAt) >= new Date(from))
+        .filter((item) => !to || new Date(item.lastRunAt ?? item.createdAt) < new Date(to))
+        .filter((item) => !words || item.name.toLowerCase().includes(words));
+      return json({ queries: found.slice(0, Number(params.get('limit') ?? 200)) });
+    }
+    if (path.startsWith('/queries/days?') && method === 'GET') {
+      const timeZone = new URLSearchParams(path.split('?')[1]).get('tz') ?? 'UTC';
+      const days = new Map<string, Record<string, number>>();
+      for (const item of listed()) {
+        const day = new Intl.DateTimeFormat('en-CA', { timeZone }).format(new Date(item.lastRunAt ?? item.createdAt));
+        const counts = days.get(day) ?? { queries: 0, previews: 0, lenses: 0, hidden: 0 };
+        counts[shownAs(item)] = (counts[shownAs(item)] ?? 0) + 1;
+        days.set(day, counts);
+      }
+      return json({ days: [...days].map(([day, counts]) => ({ day, ...counts })).toSorted((a, b) => b.day.localeCompare(a.day)) });
+    }
+    const hiding = /^\/queries\/([^/]+)\/hidden$/.exec(path);
+    if (hiding) {
+      if (method === 'PUT') hiddenQueries.add(hiding[1] as string);
+      else hiddenQueries.delete(hiding[1] as string);
+      return json({ hidden: method === 'PUT' });
     }
     if (path === '/queries' && method === 'POST') {
       const { name, question } = JSON.parse(init.body as string) as { name: string; question: string };
@@ -546,7 +625,14 @@ function serve({
     }
     if (query && path.endsWith('/preflight')) {
       const body = JSON.parse(init.body as string) as { sql: string; parameters: { name: string }[] };
-      return json({ preflight: preflightOf(body.sql, body.parameters) });
+      // What it ran before no longer finds a column: the query is Broken now, until a change no longer reads it (FR-SR-53).
+      const lost = (query.loses ?? query.broken) as { name: string } | undefined;
+      if (lost && body.sql.includes(lost.name)) {
+        query.broken = lost;
+        return json({ preflight: { ...preflightOf(body.sql), runnable: false, bytes: null, range: null, problems: [{ kind: 'invalid', message: `Unrecognized name: ${lost.name}` }] }, broken: lost });
+      }
+      query.broken = null;
+      return json({ preflight: preflightOf(body.sql, body.parameters), broken: null });
     }
     if (query && path.startsWith(`/queries/${query.id as string}/runs?`)) {
       return json({ runs: (query.history as unknown[] | undefined) ?? (query.lastRun ? [query.lastRun] : []) });
@@ -576,6 +662,41 @@ function serve({
     if (path === '/me/settings') {
       return json({ settings });
     }
+    // catalogue, as it keeps what the User did with the Learning Cards (FR-LR-32); the Chart Server, as it draws See it.
+    if (path === '/learning/progress') {
+      return json({ progress: learned });
+    }
+    const progressOn = /^\/learning\/progress\/([^/]+)(\/understood)?$/.exec(path);
+    if (progressOn) {
+      const card = decodeURIComponent(progressOn[1]!);
+      const before = learned.find((entry) => entry.card === card);
+      const step = progressOn[2] ? (before?.step ?? 'why') : (JSON.parse(init.body as string) as { step: string }).step;
+      const understoodAt = progressOn[2] ? (method === 'PUT' ? '2026-10-29T10:00:00Z' : null) : (before?.understoodAt ?? null);
+      const entry = { card, seenAt: before?.seenAt ?? '2026-10-29T10:00:00Z', lastAt: '2026-10-29T10:00:00Z', step, understoodAt };
+      if (before) learned.splice(learned.indexOf(before), 1, entry);
+      else learned.push(entry);
+      return json({ progress: entry });
+    }
+    if (path === `${CONFIG.semgraphUrl}/render`) {
+      return new Response('<svg xmlns="http://www.w3.org/2000/svg"><title>Example</title></svg>', { headers: { 'content-type': 'image/svg+xml' } });
+    }
+    // identity, as it keeps the Excel keys of the User (FR-PL-01, FR-PL-02).
+    if (path === '/me/excel-keys' && method === 'GET') {
+      return json({ keys: excelKeys });
+    }
+    if (path === '/me/excel-keys' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string };
+      const key = { id: `k-${excelKeys.length + 1}`, name: body.name, createdAt: '2026-10-31T08:00:00Z', lastUsedAt: null, expiresAt: '2027-10-31T08:00:00Z', revokedAt: null, revokedBy: null };
+      excelKeys.unshift(key);
+      return json({ key, secret: 'dhx_once-and-never-again-0123456' }, 201);
+    }
+    const keyOn = /^\/me\/excel-keys\/([^/]+)$/.exec(path);
+    if (keyOn && method === 'DELETE') {
+      const key = excelKeys.find((candidate) => candidate.id === keyOn[1]);
+      if (!key) return json({ error: 'not_found' }, 404);
+      Object.assign(key, { revokedAt: '2026-10-31T09:00:00Z', revokedBy: 'Max Verstraete' });
+      return new Response(null, { status: 204 });
+    }
     if (path === '/me/groups') {
       return json({ groups: [{ id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' }] });
     }
@@ -593,7 +714,8 @@ function serve({
         const subject = message.subject as { kind: string };
         on[subject.kind] = (on[subject.kind] ?? 0) + 1;
       }
-      return json({ messages: talk, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
+      const listed = new URLSearchParams(path.split('?')[1]).get('view') === 'unread' ? talk.filter((message) => message.unread) : talk;
+      return json({ messages: listed, counts: { forYou: talk.length, unread: talk.filter((message) => message.unread).length, written: 0, kinds, on } });
     }
     const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
     if (onObject) {
@@ -716,6 +838,9 @@ describe('the web app, signed in', () => {
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
     expect(document.documentElement.dataset.theme).toBe('dark');
+    // At once: every transition is off until the new colours are on screen (DEC-UX-149).
+    expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
+    await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
     expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
   });
 
@@ -743,6 +868,47 @@ describe('the web app, signed in', () => {
     expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Fresh piste');
   });
 
+  it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {
+    const calls = serve({
+      settings: { language: 'en' },
+      excelKeys: [{ id: 'k-old', name: 'Old laptop', createdAt: '2025-11-20T08:00:00Z', lastUsedAt: null, expiresAt: '2026-11-20T08:00:00Z', revokedAt: null, revokedBy: null }],
+    });
+    open('/me/keys');
+    render(App, { config: CONFIG });
+    const table = within(await screen.findByRole('table', { name: 'Excel keys' }));
+    const old = (await table.findByText('Old laptop')).closest('tr')!;
+    expect(within(old).getByText('not yet')).toBeTruthy();
+    // It expires within a month: its date in the warning colour.
+    expect(old.querySelector('.soon')).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole('button', { name: 'New Excel key' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'New Excel key' }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Make the key' }));
+    expect(sheet.getByText('A name has 1 to 80 characters.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('textbox', { name: /^Name/ }), { target: { value: 'Excel on my laptop' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Make the key' }));
+    expect(await sheet.findByText('dhx_once-and-never-again-0123456')).toBeTruthy();
+    expect(sheet.getByText('You see it only now.')).toBeTruthy();
+    expect(calls).toContainEqual({ method: 'POST', path: '/me/excel-keys', body: { name: 'Excel on my laptop' } });
+    await fireEvent.click(sheet.getByRole('button', { name: 'Done' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    // Once closed, the key itself is gone for good: only its name is in the list.
+    expect(await table.findByText('Excel on my laptop')).toBeTruthy();
+    expect(screen.queryByText('dhx_once-and-never-again-0123456')).toBeNull();
+
+    // Revoke asks first, in the place of the row.
+    await fireEvent.click(within(table.getByText('Old laptop').closest('tr')!).getByRole('button', { name: 'Revoke' }));
+    expect(table.getByText('Revoke “Old laptop”?')).toBeTruthy();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(table.getAllByRole('button', { name: 'Revoke' }).find((button) => button.closest('tr')?.classList.contains('confirm'))!);
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/me/excel-keys/k-old' });
+    // It stays in the list, struck through.
+    await vi.waitFor(() => expect(table.getByText('Old laptop').closest('tr')!.classList.contains('revoked')).toBe(true));
+    const revoked = table.getByText('Old laptop').closest('tr')!;
+    expect(within(revoked).getByText(/^revoked /)).toBeTruthy();
+    expect(within(revoked).queryByRole('button', { name: 'Revoke' })).toBeNull();
+  });
+
   it('shows one page for what does not exist or may not be seen (DEC-UX-32)', async () => {
     serve();
     open('/collections/secret');
@@ -752,13 +918,24 @@ describe('the web app, signed in', () => {
 });
 
 describe('the web app, for the Data Team', () => {
-  it('shows the Resources without a Collection on top of the panel of Collections (FR-SR-35, DEC-UX-16)', async () => {
+  it('shows the Resources without a Collection on top of the panel of Collections, folded until unfolded (FR-SR-35, DEC-UX-16, DEC-UX-133)', async () => {
     serve({ roles: ['datateam'] });
     open('/collections');
     render(App, { config: CONFIG });
-    const resource = await screen.findByRole('link', { name: /Saved searches/ });
-    expect(resource.getAttribute('href')).toBe('/resources/r1');
+    const toggle = await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' });
     expect(screen.getByText('Zonder Collection')).toBeTruthy();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('link', { name: /Saved searches/ })).toBeNull();
+    await fireEvent.click(toggle);
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('href')).toBe('/resources/r1');
+  });
+
+  it('unfolds Without a Collection when one of its Resources is open (DEC-UX-133)', async () => {
+    serve({ roles: ['datateam'] });
+    open('/resources/r1');
+    render(App, { config: CONFIG });
+    expect((await screen.findByRole('link', { name: /Saved searches/ })).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('button', { name: 'Toon wat Zonder Collection bevat' }).getAttribute('aria-expanded')).toBe('true');
   });
 
@@ -766,6 +943,7 @@ describe('the web app, for the Data Team', () => {
     serve({ roles: ['datateam'] });
     open('/collections');
     render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' }));
     await fireEvent.click(await screen.findByRole('link', { name: /Saved searches/ }));
     expect(location.pathname).toBe('/resources/r1');
     const main = within(screen.getByRole('main'));
@@ -779,6 +957,29 @@ describe('the web app, for the Data Team', () => {
     expect(await main.findByText('Geregistreerd via de exposure datahub_savedSearches')).toBeTruthy();
     expect(document.title).toBe('Data Hub — Saved searches');
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('adds a waiting Resource to a Collection from its own page: the Collection first, then its grain (FR-CO-31, DEC-UX-131)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/resources/r1');
+    render(App, { config: CONFIG });
+    const notice = within(await screen.findByRole('status'));
+    await fireEvent.click(await notice.findByRole('button', { name: /Aan een Collection toevoegen/ }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Saved searches aan een Collection toevoegen' }));
+    expect(sheet.getByText('Nog geen Collection gekozen')).toBeTruthy();
+    const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
+    expect(next.disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('radio', { name: /Credit leads/ }));
+    expect(sheet.getByText('In Credit leads · daarna zijn grain en relaties')).toBeTruthy();
+    await fireEvent.click(next);
+
+    // The second step is the one of the page of a Collection, with this Resource chosen.
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
+    await fireEvent.input(await second.findByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    const added = calls.find((call) => call.method === 'POST' && call.path === '/collections/c1/resources');
+    expect((added?.body as { resources: { id: string }[] }).resources.map((one) => one.id)).toEqual(['r1']);
   });
 
   it('shows the page for what may not be seen to anyone else (FR-SR-31, DEC-UX-32)', async () => {
@@ -852,7 +1053,9 @@ describe('the web app, with Collections', () => {
     const main = within(await screen.findByRole('main'));
     expect(await main.findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
     expect(main.getByText('Owner: Data')).toBeTruthy();
-    expect(main.getByText(/^Aangemaakt op 3 sep\.? door An Claes$/)).toBeTruthy();
+    // The head shows who owns it and who sees it, not how many Resources it holds nor when it was made (DEC-UX-145).
+    expect(main.queryByText(/^Aangemaakt op/)).toBeNull();
+    expect(main.queryByText(/^\d+ Resources?$/)).toBeNull();
     expect(main.getByRole('region', { name: 'Vraagt aandacht' }).textContent).toContain(
       '1 Resource is nog niet gepubliceerd: Weekly lead volume. Tot de Owner hem publiceert, zien enkel Data en het Data Team hem.',
     );
@@ -902,7 +1105,7 @@ describe('the web app, with Collections', () => {
     expect(calls).toContainEqual({
       method: 'POST',
       path: '/collections',
-      body: { name: 'Search behaviour', description: 'What visitors search for.', icon: 'binoculars', ownerUnit: 'g1', visibility: 'public' },
+      body: { name: 'Search behaviour', description: 'What visitors search for.', icon: 'binoculars', ownerUnit: 'g1', visibility: 'public', intro: '' },
     });
   });
 
@@ -941,6 +1144,8 @@ describe('the page of a Resource', () => {
     // Its size and partitions, from BigQuery (FR-SR-39).
     expect(await main.findByText(/312 partities/)).toBeTruthy();
     expect(main.getByText('6,2 GB in totaal, ongeveer 20 MB per dag')).toBeTruthy();
+    // Its tile is two columns wide, as drawn.
+    expect(main.getByText('Partities en clustering').closest('section')?.getAttribute('style')).toContain('grid-column: span 2');
     expect(main.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
   });
 
@@ -1057,7 +1262,7 @@ describe('the page of a Resource', () => {
     expect(warning.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('Nieuw')).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: 'Markeer als gezien' }));
+    await fireEvent.click(main.getByRole('button', { name: /^Markeer als gezien/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/changes/seen' }));
     await vi.waitFor(() => expect(main.queryByText(/het veld week_start werd toegevoegd/)).toBeNull());
   });
@@ -1102,20 +1307,27 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   });
 
-  it('walks its lineage one step at a time, the Resource in the middle (FR-SR-54, DEC-UX-100)', async () => {
+  it('walks its lineage one step at a time, the Resource in the middle, on a canvas that pans and zooms (FR-SR-54, DEC-UX-100, DEC-UX-152)', async () => {
     serve({ groups: ['g1'] });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
     await fireEvent.click(main.getByRole('tab', { name: 'Lineage' }));
-    const upstream = await main.findByRole('button', { name: /int_leads/ });
+    // The canvas loads when the tab opens.
+    const upstream = await main.findByRole('button', { name: /int_leads/ }, { timeout: 5000 });
     expect(main.getByText('lead_share')).toBeTruthy();
+    expect(main.getByRole('button', { name: 'Inzoomen' })).toBeTruthy();
+    const edges = () => [...document.querySelectorAll('.svelte-flow__edge')];
+    expect(edges().length).toBeGreaterThan(0);
+    expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(0);
     // Only its direct models at first; a click adds what is next to it, a column further out.
     expect(main.queryByText('stg_leads')).toBeNull();
     await fireEvent.click(upstream);
     expect(upstream.getAttribute('aria-expanded')).toBe('true');
     expect(main.getByText('stg_leads')).toBeTruthy();
+    // The curve to the open model is marked.
+    await vi.waitFor(() => expect(edges().filter((edge) => edge.classList.contains('on'))).toHaveLength(1));
     await fireEvent.click(main.getByRole('button', { name: /Terug naar zijn directe modellen/ }));
     expect(main.queryByText('stg_leads')).toBeNull();
   });
@@ -1133,21 +1345,28 @@ describe('the web app, for the Data Team, with Collections', () => {
     expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
   });
 
-  it('adds Resources without a Collection from the page of a Collection, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+  it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {
+    const reviews = { ...SAVED_SEARCHES, id: 'r9', displayName: 'Agency reviews', name: 'agency_reviews', exposures: ['datahub_agencyReviews'] };
+    const calls = serve({ roles: ['datateam'], waiting: [SAVED_SEARCHES, reviews] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await fireEvent.click((await main.findAllByRole('button', { name: /Resources toevoegen/ }))[0]!);
-    const sheet = within(screen.getByRole('dialog', { name: 'Resources toevoegen aan Credit leads' }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Een Resource toevoegen aan Credit leads' }));
     expect(sheet.getByText(/^Kwam binnen op 21 okt\.? via de exposure datahub_savedSearches$/)).toBeTruthy();
+    expect(sheet.queryByRole('checkbox')).toBeNull();
+    expect(sheet.getByText('Nog geen Resource gekozen')).toBeTruthy();
     const next = sheet.getByRole('button', { name: /Volgende: grain en relaties/ }) as HTMLButtonElement;
     expect(next.disabled).toBe(true);
-    await fireEvent.click(sheet.getByRole('checkbox'));
+    // Choosing another Resource replaces the first: one at a time.
+    await fireEvent.click(sheet.getByRole('radio', { name: /Agency reviews/ }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Saved searches/ }));
+    expect(sheet.getAllByRole('radio', { checked: true }).map((radio) => radio.closest('label')?.textContent)).toEqual([expect.stringContaining('Saved searches')]);
+    expect(sheet.getByText('Saved searches · daarna zijn grain en relaties')).toBeTruthy();
     await fireEvent.click(next);
 
     // Step 2: what dbt and the Domain Model propose, each with where it came from.
-    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van 1 Resource' }));
+    const second = within(await screen.findByRole('dialog', { name: 'Grain en relaties van Saved searches' }));
     expect(await second.findByText(/versie 0\.0\.70, zoals het op prod draait/)).toBeTruthy();
     expect(await second.findByText('Uit een dbt-test')).toBeTruthy();
     const mapping = second.getByRole('combobox', { name: 'Mapping van search_id' }) as HTMLSelectElement;
@@ -1158,11 +1377,11 @@ describe('the web app, for the Data Team, with Collections', () => {
     // A field mapped by hand, with an Entity the Domain Model does not have yet (DEC-CO-21).
     await fireEvent.change(second.getByRole('combobox', { name: 'Mapping van filters' }), { target: { value: 'occurredWithin' } });
     const identity = second.getByRole('combobox', { name: 'Entity-identiteit van filters' });
-    expect((second.getByRole('button', { name: '1 Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
+    expect((second.getByRole('button', { name: 'Resource toevoegen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(identity, { target: { value: 'filter.filterId' } });
     expect(second.getByText(/zit nog niet in het Domain Model/)).toBeTruthy();
     await fireEvent.input(second.getByRole('textbox', { name: 'Wat één rij is, in woorden' }), { target: { value: 'saved search' } });
-    await fireEvent.click(second.getByRole('button', { name: '1 Resource toevoegen' }));
+    await fireEvent.click(second.getByRole('button', { name: 'Resource toevoegen' }));
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(calls).toContainEqual({
       method: 'POST',
@@ -1254,6 +1473,33 @@ describe('Query', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/runs', body: { sql: `${QUERY.sql}-- all weeks\n`, parameters: [], approve: true } }));
   });
 
+  it('shows a Broken query with what it misses and since when, Run off, and a red dot in the panel (FR-SR-53, DEC-UX-160)', async () => {
+    const missing = { kind: 'column', name: 'lead_source', since: '2026-10-28T05:17:00Z' };
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), broken: missing }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Deze query kan niet draaien.')).toBeTruthy();
+    expect(main.getByText(/Hij leest de kolom lead_source, die sinds 28 okt\.? 2026 niet meer bestaat\. Wijzig de SQL/)).toBeTruthy();
+    // Its Pre-flight still finds it missing: Run stays off, and says why.
+    await vi.waitFor(() => expect(main.getByRole('button', { name: /Uitvoeren/ }).getAttribute('title')).toBe('Hij draait nu niet: wat hij leest, bestaat niet meer'), { timeout: 3000 });
+    expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: 'Resource · Broken: de kolom lead_source bestaat niet meer' })).toBeTruthy();
+  });
+
+  it('shows a query Broken as soon as its Pre-flight finds what it ran with gone, and the panel follows (FR-SR-52, FR-SR-53)', async () => {
+    serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString(), loses: { kind: 'table', name: 'weekly_lead_volume', since: '2026-10-31T09:00:00Z' } }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    // A table of one of its Resources is named by that Resource.
+    expect(await main.findByText('Deze query kan niet draaien.', {}, { timeout: 3000 })).toBeTruthy();
+    expect(main.getByText(/Hij leest de tabel weekly_lead_volume, die sinds 31 okt\.? 2026 niet meer bestaat/)).toBeTruthy();
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('img', { name: /Resource · Broken/ })).toBeTruthy();
+  });
+
   it('names a table outside its Resources, and warns without a partition filter, with the filter to add (DEC-UX-73, FR-SR-40)', async () => {
     const outside = 'select * from `immoscoop-dataplatform-398214.dbt_prod_stacks.partner_contracts` where x = 1';
     serve({ queries: [{ ...QUERY, sql: outside }] });
@@ -1263,6 +1509,123 @@ describe('Query', () => {
     // Next to its Resources and in the bar, in place of the Pre-flight.
     await vi.waitFor(() => expect(main.getAllByText(/is geen van de Resources van deze query/)).toHaveLength(2), { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('hides a query for the User, shows it under Hidden, and reads a period only when it is opened (DEC-UX-137, DEC-UX-138, DEC-UX-139, DEC-UX-150)', async () => {
+    const today = new Date().toISOString();
+    const old = new Date(Date.now() - 40 * 86_400_000).toISOString();
+    const other = { ...QUERY, id: 'q2', name: 'Partner share per week', createdAt: today, lastRunAt: today };
+    const older = { ...QUERY, id: 'q3', name: 'Weekly volume since 2024', createdAt: old, lastRunAt: old };
+    const calls = serve({ queries: [{ ...QUERY, createdAt: today }, other, older] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    await screen.findByRole('main');
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // An older period shows with how many it holds, folded, and is read once opened.
+    const period = panel.getAllByRole('button', { expanded: false }).find((button) => button.textContent?.trim().endsWith('1')) as HTMLElement;
+    expect(panel.queryByRole('link', { name: /Weekly volume since 2024/ })).toBeNull();
+    const lists = () => calls.filter((call) => call.path.startsWith('/queries?') && call.path.includes('from=')).length;
+    const before = lists();
+    await fireEvent.click(period);
+    expect(await panel.findByRole('link', { name: /Weekly volume since 2024/ })).toBeTruthy();
+    expect(lists()).toBe(before + 1);
+    // Hidden with its eye: gone from the list, counted under Hidden, shown there again.
+    await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week verbergen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q2/hidden' }));
+    await vi.waitFor(() => expect(panel.queryByRole('link', { name: /Partner share per week/ })).toBeNull());
+    // The filter folds open next to the search, as a small form (DEC-UX-150).
+    const filter = panel.getByRole('button', { name: /^Filter: toon ook/ });
+    expect(filter.getAttribute('aria-expanded')).toBe('false');
+    await fireEvent.click(filter);
+    expect(filter.getAttribute('aria-expanded')).toBe('true');
+    const hidden = await panel.findByRole('checkbox', { name: /Verborgen.*1$/ });
+    await fireEvent.click(hidden);
+    expect(await panel.findByRole('link', { name: /Partner share per week/ })).toBeTruthy();
+    // Folded, one line says what it adds, and takes it away again.
+    await fireEvent.click(filter);
+    const off = panel.getByRole('button', { name: 'Verborgen niet meer tonen' });
+    expect(panel.getByText('Ook getoond:')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Partner share per week weer tonen' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q2/hidden' }));
+    await fireEvent.click(off);
+    expect(panel.queryByText('Ook getoond:')).toBeNull();
+    await fireEvent.click(filter);
+    expect((panel.getByRole('checkbox', { name: /Verborgen/ }) as HTMLInputElement).checked).toBe(false);
+    expect((panel.getByRole('button', { name: 'Herstel' }) as HTMLButtonElement).disabled).toBe(true);
+    // A search looks through every period.
+    await fireEvent.input(panel.getByRole('searchbox'), { target: { value: 'since 2024' } });
+    await vi.waitFor(() => expect(calls.some((call) => call.path.includes('q=since+2024'))).toBe(true));
+  });
+
+  it('hides the query that is open from its own page, and shows it again (DEC-UX-138)', async () => {
+    const calls = serve({ queries: [{ ...QUERY, createdAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /^Verbergen$/ }, { timeout: 3000 }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/queries/q1/hidden' }));
+    await fireEvent.click(await main.findByRole('button', { name: /^Weer tonen$/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/queries/q1/hidden' }));
+  });
+
+  it('checks what is typed once it pauses two seconds, a query that opens at once (DEC-UX-154)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
+    const before = checks();
+    // A change in the editor, as typing is: the Pre-flight waits, and the line keeps what it said, softer.
+    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await new Promise((resolve) => setTimeout(resolve, 900));
+    expect(checks()).toBe(before);
+    expect(main.getByText('Pre-flight').closest('.status')?.classList.contains('stale')).toBe(true);
+    await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 3000 });
+    await vi.waitFor(() => expect(main.getByText('Pre-flight').closest('.status')?.classList.contains('stale')).toBe(false));
+  });
+
+  it('checks at once on Ctrl+Enter after typing, and runs as soon as it may (DEC-UX-154, DEC-UX-142)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    const checks = () => calls.filter((call) => call.path === '/queries/q1/preflight').length;
+    const before = checks();
+    await fireEvent.click(main.getByRole('button', { name: 'Opmaken' }));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
+    await vi.waitFor(() => expect(checks()).toBe(before + 1), { timeout: 800 });
+    await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
+  });
+
+  it('runs the query with Ctrl+Enter in its editor, as its button does (DEC-UX-142)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const run = await main.findByRole('button', { name: /Uitvoeren\s*80 MB/ }, { timeout: 3000 });
+    await vi.waitFor(() => expect((run as HTMLButtonElement).disabled).toBe(false));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: /Leads per source name/ }), { key: 'Enter', ctrlKey: true });
+    await vi.waitFor(() => expect(calls.some((call) => call.method === 'POST' && call.path === '/queries/q1/runs')).toBe(true));
+  });
+
+  it('puts the query next to the result or above it, as the User keeps it, with a divider that gives either more room (DEC-UX-143, DEC-UX-144)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const divider = await main.findByRole('separator', {}, { timeout: 3000 });
+    expect(divider.getAttribute('aria-orientation')).toBe('horizontal');
+    expect(divider.getAttribute('aria-valuenow')).toBe('55');
+    await fireEvent.keyDown(divider, { key: 'ArrowDown' });
+    expect(divider.getAttribute('aria-valuenow')).toBe('60');
+    await fireEvent.click(main.getByRole('button', { name: 'De query naast het resultaat' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/query.layout', body: { value: 'sideBySide' } }));
+    expect(main.getByRole('separator').getAttribute('aria-orientation')).toBe('vertical');
+    expect(main.getByRole('button', { name: 'De query naast het resultaat' }).getAttribute('aria-pressed')).toBe('true');
+    localStorage.removeItem('datahub.query.split.horizontal');
   });
 
   it('opens a new query for a User who has none yet', async () => {
@@ -1286,17 +1649,22 @@ describe('Query', () => {
     expect(calls.some((call) => call.path.endsWith('/preflight'))).toBe(false);
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
     await fireEvent.click(panel.getByRole('radio', { name: 'Alle' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'GET', path: '/queries?all=true' }));
+    await vi.waitFor(() => expect(calls.some((call) => call.path.startsWith('/queries/days?') && call.path.includes('all=true'))).toBe(true));
   });
 
   it('lets who made a query change its name and question in place; a name stays required (DEC-UX-119, FR-SR-45)', async () => {
-    const preview = { ...QUERY, id: 'q-preview', kind: 'preview', name: 'Preview · Weekly lead volume', question: '' };
-    const calls = serve({ queries: [{ ...QUERY }, preview] });
+    const today = new Date().toISOString();
+    const preview = { ...QUERY, id: 'q-preview', kind: 'preview', name: 'Preview · Weekly lead volume', question: '', createdAt: today };
+    const calls = serve({ queries: [{ ...QUERY, createdAt: today }, preview] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // A preview of a Resource is a query of the User, marked so in the panel.
+    // A preview of a Resource is a query of the User, marked so in the panel once Previews is ticked (DEC-UX-137, DEC-UX-150).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    expect(await panel.findByRole('link', { name: /Leads per source name/ })).toBeTruthy();
+    expect(panel.queryByRole('link', { name: /Preview · Weekly lead volume/ })).toBeNull();
+    await fireEvent.click(panel.getByRole('button', { name: /^Filter: toon ook/ }));
+    await fireEvent.click(panel.getByRole('checkbox', { name: /Voorbeelden.*1$/ }));
     expect(within(await panel.findByRole('link', { name: /Preview · Weekly lead volume/ })).getByText('Voorbeeld')).toBeTruthy();
     await fireEvent.click(await main.findByRole('button', { name: 'Leads per source name' }, { timeout: 3000 }));
     const name = main.getByRole('textbox', { name: 'Naam' }) as HTMLInputElement;
@@ -1331,8 +1699,12 @@ describe('Query', () => {
     const main = within(await screen.findByRole('main'));
     // A suggested function says what it gives today, worked out by Data Hub itself.
     expect(await main.findByText(/vandaag 1 jan/)).toBeTruthy();
-    expect(await main.findByText('@leadChannel staat in de query, maar is geen Parameter.', {}, { timeout: 3000 })).toBeTruthy();
+    const problem = await main.findByText('@leadChannel staat in de query, maar is geen Parameter.', {}, { timeout: 3000 });
     expect((main.getByRole('button', { name: /Uitvoeren/ }) as HTMLButtonElement).disabled).toBe(true);
+    // One line: what stops the query in place of the Pre-flight, which fades out (DEC-UX-154).
+    const layerOf = (element: Element) => element.closest('.layer') as HTMLElement;
+    expect(layerOf(problem).classList.contains('shown')).toBe(true);
+    expect(layerOf(main.getByText('Pre-flight')).getAttribute('aria-hidden')).toBe('true');
     await fireEvent.click(main.getByRole('button', { name: 'Definieer hem' }));
     const window = within(await screen.findByRole('dialog', { name: '@leadChannel definiëren' }));
     expect(window.getByRole('radio', { name: /Keuze/ }).getAttribute('aria-checked')).toBe('true');
@@ -1341,17 +1713,23 @@ describe('Query', () => {
     const leadChannel = { name: 'leadChannel', kind: 'choice', value: 'Form', list: ['Form', 'Phone'] };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/queries/q1/preflight', body: { sql: withParameters, parameters: [dateFrom, leadChannel] } }), { timeout: 3000 });
     await vi.waitFor(() => expect((main.getByRole('button', { name: /Uitvoeren\s*80 MB/ }) as HTMLButtonElement).disabled).toBe(false), { timeout: 3000 });
+    expect(layerOf(main.getByText('Pre-flight')).classList.contains('shown')).toBe(true);
+    expect(layerOf(problem).getAttribute('aria-hidden')).toBe('true');
   });
 
   it('shows its history, previews a run read only, and applies it to the query (DEC-UX-74, DEC-UX-99)', async () => {
     const first = { ...RUN, ref: 'q-20261027-0b1d2e', number: 1, sql: withParameters, parameters: [dateFrom, { name: 'leadChannel', kind: 'choice', value: 'Phone', list: ['Form', 'Phone'] }], startedAt: '2026-10-27T09:14:00Z' };
     const second = { ...RUN, number: 2 };
-    const calls = serve({ queries: [{ ...QUERY, lastRun: second, lastRunAt: second.startedAt, runs: 2, history: [second, first] }] });
+    const calls = serve({ queries: [{ ...QUERY, lastRun: second, lastRunAt: new Date().toISOString(), runs: 2, history: [second, first] }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    // The query that is open unfolds in the panel to its last runs.
+    // The query that is open unfolds in the panel to its last runs, with its arrow (DEC-UX-140).
     const panel = within(screen.getByRole('complementary', { name: 'Query' }));
+    const unfold = await panel.findByRole('button', { name: 'De laatste uitvoeringen' });
+    expect(unfold.getAttribute('aria-expanded')).toBe('false');
+    expect(panel.queryByRole('link', { name: /Uitvoering 1/ })).toBeNull();
+    await fireEvent.click(unfold);
     expect((await panel.findByRole('link', { name: /Uitvoering 1/ })).getAttribute('href')).toBe('/query/q1/runs/1');
     await fireEvent.click(await main.findByRole('radio', { name: 'Geschiedenis · 2 uitvoeringen' }));
     expect(await main.findByText('Nu getoond')).toBeTruthy();
@@ -1366,7 +1744,7 @@ describe('Query', () => {
   });
 
   it('sends a query above 1 GB to the Data Team, and says since when it waits (DEC-UX-116, MSG-QRY-01)', async () => {
-    const calls = serve({ queries: [{ ...QUERY, sql: `${QUERY.sql}-- every year\n` }] });
+    const calls = serve({ queries: [{ ...QUERY, createdAt: new Date().toISOString(), sql: `${QUERY.sql}-- every year\n` }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -1399,6 +1777,161 @@ describe('Query', () => {
       path: '/queries',
       body: { name: name.value, question: QUERY.question, resources: ['r2'], sql: QUERY.sql, parameters: [dateFrom], startedFrom: 'q1' },
     });
+  });
+});
+
+/** Credit leads with folders: Leads in at its top holds By source and Weekly lead volume; By source holds the Lens; Response is empty. */
+const FOLDERED = {
+  folders: [
+    { id: 'f1', name: 'Leads in', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
+    { id: 'f2', name: 'By source', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
+    { id: 'f3', name: 'Response', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
+  ],
+  resources: [{ ...CREDIT.resources[0]!, folderId: 'f1' }],
+  lensFolders: { l1: 'f2' },
+};
+
+/** What a drag carries, as a browser gives it. */
+const transfer = () => ({ effectAllowed: 'all', dropEffect: 'none', setData: () => undefined, setDragImage: () => undefined });
+
+describe('Folders', () => {
+  it('keeps what a Collection holds in folders: the panel unfolds them, its page shows only its top (FR-CO-38, DEC-UX-156)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const folders = within(await main.findByRole('table', { name: 'Mappen' }));
+    expect(folders.getByText('Leads in').closest('tr')?.textContent).toContain('1 map · 1 Resource');
+    expect(folders.getByText('Response').closest('tr')?.textContent).toContain('Leeg');
+    expect(main.getByText(/Geen Resource staat bovenaan in Credit leads: de Resource zit in een map/)).toBeTruthy();
+    expect(main.getByText(/Geen Lens staat bovenaan in Credit leads/)).toBeTruthy();
+
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    expect(panel.queryByRole('link', { name: /Weekly lead volume/ })).toBeNull();
+    await fireEvent.click(panel.getByRole('button', { name: 'Toon wat Leads in bevat' }));
+    expect(panel.getByRole('link', { name: /Weekly lead volume/ })).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Toon wat By source bevat' }));
+    expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+  });
+
+  it('opens a folder on a page of its own, with the path above it, and a row opens with a click (FR-CO-38, DEC-UX-157)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { name: 'By source', level: 1 })).toBeTruthy();
+    const path = within(main.getByRole('navigation', { name: 'Waar je bent' }));
+    expect(path.getByRole('link', { name: 'Credit leads' }).getAttribute('href')).toBe('/collections/c1');
+    expect(path.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    // The panel unfolds to the folder whose page is open.
+    const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
+    expect(panel.getByRole('link', { name: 'By source' }).getAttribute('aria-current')).toBe('page');
+    await fireEvent.click(within(main.getByRole('table', { name: 'In deze map' })).getByText('Max Verstraete', { exact: false }));
+    expect(location.pathname).toBe('/lenses/l1');
+  });
+
+  it('makes, renames and deletes folders, only an empty one, with a warning for one that is not (FR-CO-39)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Nieuwe map/ }));
+    const name = main.getByRole('textbox', { name: 'Naam van de nieuwe map' });
+    await fireEvent.input(name, { target: { value: 'Paid' } });
+    await fireEvent.keyDown(name, { key: 'Enter' });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/collections/c1/folders', body: { name: 'Paid', parentId: 'f1' } }));
+    expect(await main.findByText('Paid')).toBeTruthy();
+
+    // Delete stays on: on a folder that holds something it says so, and deletes nothing.
+    await fireEvent.click(main.getByRole('button', { name: 'Verwijder de map, zodra ze leeg is' }));
+    expect(await main.findByText('Leads in is niet leeg.')).toBeTruthy();
+    expect(main.getByText(/Ze bevat nog 2 mappen · 1 Resource/)).toBeTruthy();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+
+    await fireEvent.click(main.getByRole('button', { name: /Hernoemen/ }));
+    const rename = main.getByRole('textbox', { name: 'Nieuwe naam van de map' });
+    await fireEvent.input(rename, { target: { value: 'Leads coming in' } });
+    await fireEvent.keyDown(rename, { key: 'Enter' });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { name: 'Leads coming in' } }));
+    expect(await main.findByRole('heading', { name: 'Leads coming in', level: 1 })).toBeTruthy();
+
+    // An empty folder goes, and its Collection opens.
+    await fireEvent.click(within(screen.getByRole('complementary', { name: 'Collections' })).getByRole('link', { name: 'Response' }));
+    expect(await main.findByRole('heading', { name: 'Response', level: 1 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Verwijder de map, zodra ze leeg is' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/collections/c1/folders/f3' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+  });
+
+  it('moves a Resource onto a folder by dragging its row, and says where it went (FR-CO-40, DEC-UX-157)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    const row = table.getByText('Weekly lead volume').closest('tr')!;
+    const folder = table.getByText('By source').closest('tr')!;
+    expect(row.getAttribute('draggable')).toBe('true');
+    const dataTransfer = transfer();
+    await fireEvent.dragStart(row, { dataTransfer });
+    await fireEvent.dragOver(folder, { dataTransfer });
+    expect(folder.classList.contains('drop')).toBe(true);
+    await fireEvent.drop(folder, { dataTransfer });
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/collections/c1/places/resource/r2', body: { folderId: 'f2' } }));
+    const said = await screen.findByText(/Weekly lead volume verplaatst naar/);
+    expect(said.closest('[role="status"]')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('Weekly lead volume verplaatst naar By source');
+  });
+
+  it('never lets a folder go into itself or into a folder inside it (FR-CO-40)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }], creditWith: FOLDERED });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const leadsIn = (await panel.findByRole('link', { name: 'Leads in' })).closest('.folder')!;
+    const bySource = panel.getByRole('link', { name: 'By source' }).closest('.folder')!;
+    const dataTransfer = transfer();
+    await fireEvent.dragStart(leadsIn, { dataTransfer });
+    await fireEvent.dragOver(bySource, { dataTransfer });
+    expect(bySource.classList.contains('drop')).toBe(false);
+    await fireEvent.dragOver(panel.getByRole('link', { name: 'Response' }).closest('.folder')!, { dataTransfer });
+    expect(panel.getByRole('link', { name: 'Response' }).closest('.folder')!.classList.contains('drop')).toBe(true);
+    await fireEvent.dragEnd(leadsIn, { dataTransfer });
+  });
+
+  it('lets a colleague open folders, and drag nothing (FR-CO-39, DEC-CO-26)', async () => {
+    serve({ groups: ['g2'], lenses: [{ ...LENS }], creditWith: { ...FOLDERED, canManage: false } });
+    open('/collections/c1/folders/f1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const table = within(await main.findByRole('table', { name: 'In deze map' }));
+    expect(table.getByText('Weekly lead volume').closest('tr')?.hasAttribute('draggable')).toBe(false);
+    expect(main.queryByRole('button', { name: /Nieuwe map/ })).toBeNull();
+    expect(main.queryByRole('button', { name: 'Verwijder de map, zodra ze leeg is' })).toBeNull();
+  });
+
+  it('shows the intro of a Collection as written, never as HTML, and edits it in Markdown (FR-CO-41, DEC-UX-158)', async () => {
+    const intro = '### Start here\n**Weekly** volumes first; see [Leads in](/collections/c1/folders/f1).\n\n<b>not bold</b>';
+    const calls = serve({ groups: ['g1'], creditWith: { intro } });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const about = within(await main.findByRole('region', { name: 'Over deze Collection' }));
+    expect(about.getByRole('heading', { name: 'Start here', level: 3 })).toBeTruthy();
+    expect(about.getByText('Weekly').tagName).toBe('STRONG');
+    expect(about.getByRole('link', { name: 'Leads in' }).getAttribute('href')).toBe('/collections/c1/folders/f1');
+    expect(about.getByText('<b>not bold</b>')).toBeTruthy();
+
+    await fireEvent.click(about.getByRole('button', { name: /Bewerk de intro/ }));
+    const field = (await main.findByRole('textbox', { name: 'Intro' })) as HTMLTextAreaElement;
+    expect(field.value).toBe(intro);
+    field.setSelectionRange(field.value.length, field.value.length);
+    await fireEvent.click(main.getByRole('button', { name: 'Lijst' }));
+    expect(field.value.endsWith('- <b>not bold</b>')).toBe(true);
+    await fireEvent.click(main.getByRole('radio', { name: 'Voorbeeld' }));
+    expect(main.getByRole('listitem').textContent).toBe('<b>not bold</b>');
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { intro: intro.replace('<b>not bold</b>', '- <b>not bold</b>') } }));
   });
 });
 
@@ -1468,16 +2001,55 @@ describe('Lenses', () => {
     expect(main.queryByText(/select/)).toBeNull();
   });
 
+  it('gives the address of a Lens for Excel, with the steps and a way to an Excel key (FR-PL-01, DEC-UX-159)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Open in Excel/ }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Open in Excel' }));
+    expect(sheet.getByText('https://query.test/excel/lenses/l1')).toBeTruthy();
+    expect(sheet.getByText(/hoogstens 10.000 rijen/)).toBeTruthy();
+    expect(sheet.getByRole('link', { name: 'Nog geen key? Maak er een op Mijn pagina.' }).getAttribute('href')).toBe('/me/keys');
+    await fireEvent.click(sheet.getByRole('button', { name: 'Klaar' }));
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
   it('lists the Lenses of a Collection on its page and in the panel (FR-CO-28, FR-CO-36)', async () => {
     serve({ groups: ['g1'], lenses: [{ ...LENS }] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const table = within(await main.findByRole('table', { name: 'Lenses' }));
-    expect(table.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
     expect(table.getByText('Max Verstraete')).toBeTruthy();
     const panel = within(screen.getByRole('complementary', { name: 'Collections' }));
     expect(panel.getByRole('link', { name: /Leads per source, week by week/ }).getAttribute('href')).toBe('/lenses/l1');
+    // The row is no link: a click anywhere on it opens the Lens, so that a drag anywhere on it moves it (DEC-UX-157).
+    await fireEvent.click(table.getByText('Max Verstraete'));
+    expect(location.pathname).toBe('/lenses/l1');
+  });
+
+  it('shows the Collections with Resources, Lenses or both, as the filter next to the search says (DEC-UX-150, DEC-UX-151)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Collections' }));
+    const filter = await panel.findByRole('button', { name: 'Filter: toon Resources, Lenses of beide' });
+    await fireEvent.click(filter);
+    const resources = panel.getByRole('checkbox', { name: /^Resources/ }) as HTMLInputElement;
+    const lenses = panel.getByRole('checkbox', { name: /^Lenses/ }) as HTMLInputElement;
+    expect(resources.checked && lenses.checked).toBe(true);
+    // Only Lenses: the Collections that hold one, unfolded to them, and no Resources.
+    await fireEvent.click(resources);
+    expect(await panel.findByRole('link', { name: /Leads per source, week by week/ })).toBeTruthy();
+    expect(panel.queryAllByRole('link').filter((link) => link.getAttribute('href')?.startsWith('/resources/'))).toEqual([]);
+    // One kind always stays.
+    expect(lenses.disabled).toBe(true);
+    // Folded, one line says what is left out, and its cross brings it back.
+    await fireEvent.click(filter);
+    expect(panel.getByText('Niet getoond:')).toBeTruthy();
+    await fireEvent.click(panel.getByRole('button', { name: 'Resources weer tonen' }));
+    expect(panel.queryByText('Niet getoond:')).toBeNull();
   });
 
   it('shows a Broken Lens with what it misses, Run off and no result, and a red dot where it is listed (FR-LE-17, DEC-UX-81)', async () => {
@@ -1552,13 +2124,15 @@ describe('Lenses', () => {
     expect(calls).toContainEqual({ method: 'PUT', path: '/lenses/l1/version', body: { queryId: 'q1', approve: false, text: '' } });
   });
 
-  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123)', async () => {
+  it('starts a new Lens from its Collection with a query that remembers it (DEC-UX-123, DEC-UX-134, DEC-UX-145)', async () => {
     const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const links = await main.findAllByRole('link', { name: 'Nieuwe Lens' });
-    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1', '/query/new/for/c1']);
+    // Next to the heading Lenses, how a Lens is made; the head has no "New Lens" of its own.
+    const links = [await main.findByRole('link', { name: 'Lens toevoegen: start een query' })];
+    expect(links.map((link) => link.getAttribute('href'))).toEqual(['/query/new/for/c1']);
+    expect(main.queryByRole('link', { name: 'Nieuwe Lens' })).toBeNull();
 
     await fireEvent.click(links[0] as HTMLElement);
     const start = within(await screen.findByRole('main'));
@@ -1669,20 +2243,24 @@ describe('Lenses', () => {
 });
 
 describe('Messages', () => {
-  it('counts what moved for the User in the rail, and lists it in the Message Centre (FR-CV-06)', async () => {
+  it('counts what moved for the User in the rail, and lists it in the Message Centre, unread first (FR-CV-06, DEC-UX-136)', async () => {
     const calls = serve({ groups: ['g1'], conversations: [QUESTION, DESCRIBED] });
     open('/messages');
     render(App, { config: CONFIG });
     expect(await screen.findByRole('link', { name: 'Berichten, 1 ongelezen' })).toBeTruthy();
     const main = within(await screen.findByRole('main'));
-    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
-    // A person's words, and the first line of what Data Hub tells, from the Message Catalogue (FR-CV-15).
+    // It opens on what moved since the User last looked.
+    expect(await main.findByRole('heading', { level: 1, name: 'Ongelezen' })).toBeTruthy();
     expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
-    expect(main.getByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt. Je businessbeschrijvingen blijven zoals ze zijn, en er wordt niets van je gevraagd.')).toBeTruthy();
     expect(main.getByRole('img', { name: 'Ongelezen' })).toBeTruthy();
+    expect(main.queryByText(/Eén beschrijving van Weekly lead volume/)).toBeNull();
     // The panel filters on the views, the kinds and the kinds of object.
     const panel = within(screen.getByRole('navigation', { name: 'Berichten' }));
-    expect(panel.getByRole('button', { name: /Voor jou/ }).getAttribute('aria-current')).toBe('true');
+    expect(panel.getByRole('button', { name: /Ongelezen/ }).getAttribute('aria-current')).toBe('true');
+    // For you: a person's words, and the first line of what Data Hub tells, from the Message Catalogue (FR-CV-15).
+    await fireEvent.click(panel.getByRole('button', { name: /Voor jou/ }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Voor jou' })).toBeTruthy();
+    expect(await main.findByText('Eén beschrijving van Weekly lead volume is gewijzigd in dbt. Je businessbeschrijvingen blijven zoals ze zijn, en er wordt niets van je gevraagd.')).toBeTruthy();
     await fireEvent.click(panel.getByRole('button', { name: /Questions/ }));
     await vi.waitFor(() => expect(calls.some((call) => call.path === '/messages?view=forYou&kind=question')).toBe(true));
 
@@ -1697,6 +2275,17 @@ describe('Messages', () => {
     expect(await main.findByText('Yes, next week.')).toBeTruthy();
   });
 
+  it('says there is nothing to catch up on when nothing is unread, and only then (DEC-UX-136)', async () => {
+    serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Niets in te halen: je hebt alles gelezen.')).toBeTruthy();
+    // Filtered on a kind, nothing found is not the same as nothing to catch up on.
+    await fireEvent.click(within(screen.getByRole('navigation', { name: 'Berichten' })).getByRole('button', { name: /Questions/ }));
+    expect(await main.findByText('Hier zijn geen berichten.')).toBeTruthy();
+  });
+
   it('shows what Data Hub tells laid out, with the way to its object (FR-CV-15)', async () => {
     serve({ groups: ['g1'], conversations: [DESCRIBED] });
     open('/messages/m2');
@@ -1707,6 +2296,24 @@ describe('Messages', () => {
     expect(main.getByText('Number of leads', { selector: 'del' })).toBeTruthy();
     // It asks nothing, so it takes no reply.
     expect(main.queryByRole('textbox', { name: 'Je antwoord' })).toBeNull();
+  });
+
+  it('carries the Learning Card that explains it, which opens inline (FR-LR-38, DEC-UX-79)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [DESCRIBED] });
+    open('/messages/m2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Begrijp wat hier gebeurt')).toBeTruthy();
+    const card = main.getByRole('button', { name: /K3\.4\s*Waar definities leven/ });
+    expect(card.getAttribute('aria-expanded')).toBe('false');
+    expect(card.textContent).toContain('Nog niet gezien');
+    await fireEvent.click(card);
+    expect((await main.findByText('woordenlijst', { selector: 'b' })).parentElement?.textContent).toMatch(/^De woordenlijst legt een begrip uit/);
+    expect(main.getByRole('link', { name: /Open de hele kaart/ }).getAttribute('href')).toBe('/learning/K3.4');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'core' } }));
+    await fireEvent.click(main.getByRole('button', { name: /Ik heb het begrepen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4/understood' }));
+    expect(main.getByRole('button', { name: /K3\.4/ }).textContent).toContain('Begrepen');
   });
 
   it('lets the Data Team decide on a Request, a refusal with a reason (FR-CV-08)', async () => {
@@ -1748,5 +2355,136 @@ describe('Messages', () => {
     expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
     // The page stays behind it, usable.
     expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+  });
+});
+
+describe('the Learning Centre', () => {
+  it('opens on top of the rail with its intro, the card to continue, what is suggested and the path through the Levels (DEC-LR-27, FR-LR-32)', async () => {
+    serve({ learned: [{ card: '1.2.2', seenAt: '2026-10-28T09:00:00Z', lastAt: '2026-10-28T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/learning');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 2, name: 'Wat is het Learning Centre?' })).toBeTruthy();
+    expect(main.getByRole('link', { name: /Begin met het Compass/ }).getAttribute('href')).toBe('/learning/K3.4');
+    expect(await main.findByRole('heading', { level: 2, name: 'Verder lezen' })).toBeTruthy();
+    expect(main.getByText('Voorgesteld · Toepassen · je stopte bij Zie het')).toBeTruthy();
+    expect(main.getByText('Compass, 1 · User, nog niet begrepen')).toBeTruthy();
+    expect(main.getAllByRole('link', { name: /Waar definities leven/ })[0]?.getAttribute('href')).toBe('/learning/K3.4');
+    expect(main.getAllByText('1 van 34 gezien').length).toBeGreaterThan(0);
+    const panel = within(screen.getByRole('complementary', { name: 'Learning Centre' }));
+    expect(panel.getByText(/Je zag 1 van \d+ kaarten/)).toBeTruthy();
+    expect(document.title).toBe('Data Hub — Learning Centre');
+  });
+
+  it('lists every card in the panel, the ones to be written without a page (FR-LR-03)', async () => {
+    serve();
+    open('/learning');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Learning Centre' }));
+    await fireEvent.click(panel.getByRole('button', { name: /1 · User/ }));
+    expect(panel.getByRole('link', { name: /Unieke tellingen tel je niet op/ }).getAttribute('href')).toBe('/learning/1.2.2');
+    expect(panel.getAllByTitle('Nog te schrijven')[0]?.textContent).toContain('1.1.1');
+  });
+
+  it('opens a card in five steps, keeps each step it opens, and lets the User say they understand it (FR-LR-27, FR-LR-28)', async () => {
+    const calls = serve();
+    open('/learning/K3.4');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: /Waar definities leven/ })).toBeTruthy();
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['1 Waarom nu', '2 Kernidee', '3 Zie het', '4 Check je begrip', '5 Je kan nu']);
+    expect(document.title).toBe('Data Hub — K3.4 Waar definities leven');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'why' } }));
+    await fireEvent.click(screen.getByRole('button', { name: /^Volgende/ }));
+    expect(screen.getByRole('tab', { name: /Kernidee/ }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4', body: { step: 'core' } }));
+    // The quick path skips See it and Check your understanding.
+    await fireEvent.click(screen.getByRole('button', { name: 'Snel' }));
+    expect(screen.getByText('Volgende: Je kan nu')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /Ik heb het begrepen/ }));
+    expect(screen.getByRole('tab', { name: /Je kan nu/ }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/K3.4/understood' }));
+    expect(screen.getByRole('button', { name: /Begrepen/ }).getAttribute('title')).toBe('Begrepen · klik om ongedaan te maken');
+    expect(screen.getByRole('link', { name: /Messages/ }).getAttribute('href')).toBe('/learning/K3.4/messages');
+    expect(screen.queryByRole('navigation', { name: 'Volgende' })).toBeNull();
+  });
+
+  it('opens a card where the User stopped, until they understand it (FR-LR-32)', async () => {
+    serve({ learned: [{ card: '1.2.2', seenAt: '2026-10-28T09:00:00Z', lastAt: '2026-10-28T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/learning/1.2.2');
+    render(App, { config: CONFIG });
+    expect((await screen.findByRole('tab', { name: /Zie het/ })).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('asks one question at a time, and shows the answer and why without a score (FR-LR-30)', async () => {
+    serve();
+    open('/learning/K3.4');
+    render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: /Check je begrip/ }));
+    expect(await screen.findByRole('heading', { level: 2, name: /Waar kijk je\?/ })).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: /In de woordenlijst/ }));
+    expect(screen.getByRole('status').textContent).toMatch(/^De woordenlijst legt uit/);
+    expect(screen.getByRole('button', { name: /In de woordenlijst/ }).textContent).toContain('Jouw antwoord');
+    expect(screen.getByRole('button', { name: /In de officiële definitie/ }).textContent).toContain('Het antwoord');
+    await fireEvent.click(screen.getByRole('button', { name: /Nog een vraag/ }));
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
+  it('shows the example of See it as the Chart Server draws it (FR-LR-29, DEC-LR-26)', async () => {
+    const calls = serve();
+    open('/learning/1.2.2/see');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: /Zie het/ })).toBeTruthy();
+    const picture = await screen.findByAltText(/3.700 meer in de eerste staaf/);
+    expect(picture.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+    expect(calls.find((call) => call.path.endsWith('/render'))?.body).toMatchObject({ theme: 'light', size: 'default' });
+    expect(screen.getByRole('link', { name: /Open de hele kaart/ }).getAttribute('href')).toBe('/learning/1.2.2');
+  });
+
+  it('takes a Question or a Remark on a card, for the Data Team (FR-LR-06)', async () => {
+    serve();
+    open('/learning/K3.4/messages');
+    render(App, { config: CONFIG });
+    const sheet = within(await screen.findByRole('dialog'));
+    expect(sheet.getByText('Learning Card · Compass')).toBeTruthy();
+    expect(sheet.queryByRole('radio', { name: /Signaal|Signal/ })).toBeNull();
+  });
+});
+
+describe('the markers of the Learning Centre', () => {
+  const details = { ...WEEKLY_DETAIL.details, grain: ['week_start', 'lead_source'], modelType: 'aggregate' };
+
+  it('explain the grain of a Resource with its written cards, and open one in a floating window over the page (FR-LR-12, FR-LR-35, FR-LR-36)', async () => {
+    const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const grain = await screen.findByRole('button', { name: /^grain: week_start × lead_source/ });
+    expect(grain.textContent).toContain('ⓘ');
+    expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
+    await fireEvent.keyDown(grain, { key: 'Enter' });
+    const pop = within(screen.getByRole('dialog', { name: 'Uitgelegd in 3 Learning Cards' }));
+    expect(pop.getAllByRole('button').map((item) => item.textContent?.slice(0, 5))).toEqual(['2.3.5', '1.2.2', '1.2.1']);
+    expect(await pop.findByText(/^Gezien/)).toBeTruthy();
+    expect(pop.getAllByText('Nog niet gezien')).toHaveLength(2);
+    expect(pop.getAllByRole('link', { name: /Zie het/ })[0]?.getAttribute('href')).toBe('/learning/2.3.5/see');
+    await fireEvent.click(pop.getByRole('button', { name: /^2\.3\.5/ }));
+    const window = within(await screen.findByRole('dialog', { name: /^2\.3\.5 De grain-vraag/ }));
+    expect(window.getByRole('tab', { name: 'Waarom nu' }).getAttribute('aria-selected')).toBe('true');
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/learning/progress/2.3.5', body: { step: 'why' } }));
+    await fireEvent.click(window.getByRole('button', { name: /^Volgende/ }));
+    expect(window.getByRole('tab', { name: 'Kernidee' }).getAttribute('aria-selected')).toBe('true');
+    expect(window.getByRole('link', { name: /Open in het Learning Centre/ }).getAttribute('href')).toBe('/learning/2.3.5');
+    expect(location.pathname).toBe('/resources/r2');
+  });
+
+  it('explain the Level with K5.2 and the model type with 2.3.6 (DEC-LR-30, FR-LR-39)', async () => {
+    serve({ weekly: { details } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    await fireEvent.keyDown(await screen.findByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Enter' });
+    const items = within(screen.getByRole('dialog', { name: 'Uitgelegd in 2 Learning Cards' })).getAllByRole('button');
+    expect(items.map((item) => item.textContent)).toEqual([expect.stringMatching(/^K5\.2Het Level van een Resource/), expect.stringMatching(/^3\.3\.3/)]);
+    await fireEvent.keyDown(screen.getByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Escape' });
+    await fireEvent.keyDown(screen.getByRole('button', { name: /^modeltype: aggregate/ }), { key: 'Enter' });
+    expect(within(screen.getByRole('dialog', { name: 'Uitgelegd in 1 Learning Card' })).getByRole('button', { name: /^2\.3\.6/ })).toBeTruthy();
   });
 });

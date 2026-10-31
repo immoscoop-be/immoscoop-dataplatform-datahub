@@ -28,6 +28,8 @@ export interface AppOptions {
   queryUrl: string;
   /** semgraph's address (DATAHUB_SEMGRAPH_URL): the page shows its charts. */
   semgraphUrl: string;
+  /** uat or prod (DATAHUB_ENVIRONMENT): a Learning Card still in draft shows in uat only (DEC-LR-25). */
+  environment?: string;
   /** The page as Vite built it: `dist/client` next to the server. */
   clientDir: string;
   /** Calls to identity; tests pass a stand-in. */
@@ -105,10 +107,11 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   }
 
   // Every address of a page of Data Hub is the same page, which shows what the address asks, or the
-  // page for what does not exist (DEC-UX-32). An address of a file that was not built is not found.
+  // page for what does not exist (DEC-UX-32). An address of a file that was not built is not found;
+  // an extension starts with a letter, so the number of a Learning Card, such as 1.2.2, is a page.
   app.get<{ Params: { '*': string } }>('/*', open, async (incoming, reply) => {
     const path = `/${incoming.params['*']}`;
-    if (/\.[A-Za-z0-9]+$/.test(path) || path.startsWith('/auth/') || path.startsWith('/assets/')) {
+    if (/\.[A-Za-z][A-Za-z0-9]*$/.test(path) || path.startsWith('/auth/') || path.startsWith('/assets/')) {
       return reply.code(404).send({ error: 'not_found' });
     }
     return sendPage(reply);

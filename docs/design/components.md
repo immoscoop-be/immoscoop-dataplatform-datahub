@@ -55,12 +55,13 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | **Filter a list** | Tree, list | A search hides what does not match, unfolds where a child matches, drops a label with nothing left under it | The panel of Collections | [FR-CO-24](../requirements/functional/03-collections.md#fr-co-24) |
 | **Explain on rest** | Pop-out of cards | Opens after a second of rest, or at once on keyboard focus; a tap on the marker opens it and keeps a button from acting | Resource page, learning screens | [DEC-UX-56](principles.md#dec-ux-56), [DEC-UX-57](principles.md#dec-ux-57) |
 | **Confirm before acting** | Confirm bar | The button stays off until the declaration is ticked | Publishing | [DEC-UX-63](principles.md#dec-ux-63) |
-| **Remember for the User** | App shell, intro, fold box | Theme, panel open or shut, intros dismissed per section and version, language, the background of each theme | Browser storage in the prototypes; in the app, the settings of the User, kept in Data Hub | [DEC-UX-96](principles.md#dec-ux-96) |
+| **Remember for the User** | App shell, intro, fold box | Theme, panel open or shut, intros dismissed per section and version, language, the background of each theme, the layout of the page of a query ([DEC-UX-143](principles.md#dec-ux-143)) | Browser storage in the prototypes; in the app, the settings of the User, kept in Data Hub | [DEC-UX-96](principles.md#dec-ux-96) |
 | **Focus follows the mouse** | Surfaces | Reading surfaces are opaque only in the window in focus | Every screen | [Layers and focus](principles.md#layers-and-focus) |
 | **Drift** | Background | Moves very slowly; still with reduced motion | Every screen; the flowing gradient follows the mouse | [DEC-UX-78](principles.md#dec-ux-78), [DEC-UX-80](principles.md#dec-ux-80) |
 | **Page through** | Pager | 100 rows a page, read from the same run, never a new query | Preview, Query | [FR-SR-51](../requirements/functional/04-stacks-and-resources.md#fr-sr-51) |
 | **Copy** | Copy button | Copies a Key, a Query ID, a cell | Object header, result | [FR-LN-06](../requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | **Show only what the User may** | Every component, from data | A component hides an action the User may not take, from a flag the service sends (`canEdit`, `canPublish`); it never decides by role itself | `data-for` and the role switch, prototype only | [DEC-CO-15](../requirements/functional/03-collections.md#dec-co-15), [DEC-SR-31](../requirements/functional/04-stacks-and-resources.md#dec-sr-31) |
+| **Move by dragging** | Row, list item, tree folder, breadcrumb | A whole row is dragged onto a folder, in a list, in the panel or in the path above a page; the folder it would go into stands out, a folder never into itself, and once dropped a toast says where it went. A row is no link: a click anywhere on it opens what it is | The page of a folder and of a Collection, the panel of Collections | [DEC-UX-157](principles.md#dec-ux-157) |
 | **Show Broken** | Broken mark, callout, Run button | From a state the service sends (`broken`, with what is missing): the dot in every list, the chip, the urgent callout on the page, Run off. No screen decides it | The Lens page (`?state=broken`), the Lens "Response time and conversion" in the lists | [DEC-UX-81](principles.md#dec-ux-81), [DEC-DH-67](../overview/data-hub.md#dec-dh-67) |
 
 ## 1 · Foundations
@@ -80,7 +81,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 
 | Component | Variants | Behaviour | Used on | Rules |
 | --- | --- | --- | --- | --- |
-| Button | primary, quiet, outline, icon; off (disabled) | – | every screen | – |
+| Button | primary, quiet, outline, icon, danger (what cannot be undone, such as Revoke); off (disabled) | – | every screen | – |
 | Chip | status, code, pill, tag, count, scope (a Resource of a query, removable), parameter | Removable where it has × | every screen | – |
 | Field | text, text area, select, date, checkbox and radio; with a label above | – | editing, sheets, Query | – |
 | Segmented control | two to four choices | Switch a pane | 22 screens | – |
@@ -118,7 +119,8 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Pop-out | A text bubble with its arrow on what it explains | **Explain on rest** | card | marker ⓘ, Run button | [DEC-UX-57](principles.md#dec-ux-57) |
 | Menu | A list of choices from a control | **Lay over** | card | Parameter values, column of a grid | – |
 | Layer manager | What is laid over the page: which layer is on top, what closes it, and what stays usable behind it | **Lay over** | – | every sheet, floating window, pop-out and menu | [Sheets](principles.md#sheets), [Floating window](principles.md#floating-window) |
-| Table | A simple table: a head and rows, nothing more | – | – | Collection page, History, Excel keys | – |
+| Table | A simple table: a head and rows; a row that opens what it is with a click, and moves with a drag | **Move by dragging** | – | Collection page, page of a folder, History, Excel keys | [DEC-UX-157](principles.md#dec-ux-157) |
+| Toast | A short line at the bottom of the screen that says what just happened, for a few seconds, read out | – | card | moving something to a folder | [DEC-UX-157](principles.md#dec-ux-157) |
 | Steps | Named steps in a row, an arrow between each; the current one marked | – | – | adding Resources, a Learning Card | [DEC-UX-58](principles.md#dec-ux-58), [DEC-UX-48](principles.md#dec-ux-48) |
 | Callout | One line that tells a state, with an icon and at most one action; tones: neutral, warning, urgent, fine | – | button | alert on a change, notice, needs attention, size state, check line | [DEC-UX-64](principles.md#dec-ux-64) |
 | Edit bar | The bar on top while editing in place: what happens, Cancel and Save | – | button | editing screens | [Editing a Resource](principles.md#editing-a-resource) |
@@ -133,12 +135,15 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 
 | Component | What it is | Behaviour | Built from | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
-| Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre; at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
+| Rail | Floating icons of the main sections, Collections, Query, Charts, Messages with its count and the Learning Centre, then Admin for the Data Team ([DEC-UX-130](principles.md#dec-ux-130)); at the bottom the theme and the initials that open My page ([DEC-UX-89](principles.md#dec-ux-89), [DEC-UX-84](principles.md#dec-ux-84)) | The active icon flows into the panel | button, tooltip | every screen | [DEC-UX-66](principles.md#dec-ux-66) |
 | Panel | The index of its section, sliding out next to the rail | Opens and shuts; remembers it | surfaces | every screen | [What is in the panel](principles.md#what-is-in-the-panel) |
 | Tree | A list whose items unfold, each in a card, to what they hold: a Collection to its Resources, then its Lenses; a Learning Level to its sections and cards; a query to its last runs | **Fold**, **Filter a list** | fold box, list item, maturity | Collections, learning centre, Query | [DEC-UX-10](principles.md#dec-ux-10), [DEC-UX-65](principles.md#dec-ux-65), [DEC-UX-74](principles.md#dec-ux-74) |
-| List item | Kind icon, name on one line, Level | Ellipsis and full name on hover | kind icon, maturity | panels, lists | [DEC-UX-11](principles.md#dec-ux-11) |
+| List item | Kind icon, name on one line, Level | Ellipsis and full name on hover; **Move by dragging** | kind icon, maturity | panels, lists | [DEC-UX-11](principles.md#dec-ux-11) |
+| Tree folder | A folder of a Collection in the panel: an arrow that unfolds it, its icon, its name that opens its page, and how many it holds; unfolded, what it holds indented under it with a thin line | **Fold**, **Move by dragging** | button, list item | panel of Collections | [DEC-UX-156](principles.md#dec-ux-156), [DEC-UX-157](principles.md#dec-ux-157) |
+| Drag ghost | What is dragged, as a small card with its icon and name under the pointer | – | card, kind icon | wherever something moves by dragging | [DEC-UX-157](principles.md#dec-ux-157) |
 | Search | A field that filters its list, or a search by question | **Filter a list** | field | panels, start screens | [FR-CO-37](../requirements/functional/03-collections.md#fr-co-37) |
-| Breadcrumb | Where the page sits | – | – | object pages | – |
+| Panel filter | A button next to the search, with how many kinds differ from what the panel shows by itself; it folds open a small form with a checkbox per kind, what it is and how many there are, "Reset" and "Only your panel changes". Folded, one line says what differs, each with a cross | **Filter a list**, **Fold** | button, checkbox, search | panels of Query and Collections | [DEC-UX-150](principles.md#dec-ux-150), [DEC-UX-151](principles.md#dec-ux-151) |
+| Breadcrumb | Where the page sits; a step that is a folder or a Collection takes what is dragged onto it | **Move by dragging** | – | object pages, page of a folder | [DEC-UX-157](principles.md#dec-ux-157) |
 | Background picker | A tile per background of the current theme, Random first, the chosen one with a ring | Chooses the background of the theme, kept as a setting | grid, tile | My page | [DEC-UX-108](principles.md#dec-ux-108) |
 
 ### Objects: Collection, Resource, Lens
@@ -152,10 +157,12 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Facts list | Labels and values, such as Published and Confirmed | – | – | Overview tiles | – |
 | Maturity ladder | The six Levels drawn large, with the current one | – | maturity | Resource Overview | [Maturity](principles.md#maturity) |
 | Change block | A description before and now, with the Business Description next to it | – | sub-tile | Message on a changed description | [FR-RC-17](../requirements/functional/05-resource-card.md#fr-rc-17) |
-| Lineage | This Resource in the middle, its direct models on either side, joined by curves; walked a step at a time | Opens a branch, closes the other | card | Resource Lineage | [DEC-UX-100](principles.md#dec-ux-100), [DEC-UX-102](principles.md#dec-ux-102) |
+| Lineage | This Resource in the middle, its direct models on either side, joined by curves; walked a step at a time, on the canvas of Svelte Flow | Opens a branch, closes the other; pans and zooms, and brings each step into view | card, Svelte Flow | Resource Lineage | [DEC-UX-100](principles.md#dec-ux-100), [DEC-UX-102](principles.md#dec-ux-102), [DEC-UX-152](principles.md#dec-ux-152) |
 | Log list | The latest entries of a Log, with their Log ID, text and time | – | – | Resource Overview, Collection page | [FR-SR-11](../requirements/functional/04-stacks-and-resources.md#fr-sr-11) |
 | Field mapping | Per field its type, description, mapping and identity, with the cardinality shown, never chosen | – | table, field, chip | adding Resources, step 2; Edit relations | [DEC-UX-58](principles.md#dec-ux-58), [DEC-UX-107](principles.md#dec-ux-107) |
 | Icon picker | The line icons of Phosphor, searched by name, one chosen | – | field, grid | making and editing a Collection | [DEC-CO-25](../requirements/functional/03-collections.md#dec-co-25) |
+| Markdown text | A text in Markdown as its writer meant it: headings, paragraphs, lists, bold, italic, code and links; built from its pieces, never from HTML | – | – | the intro of a Collection | [DEC-UX-158](principles.md#dec-ux-158), [TR-CO-08](../requirements/technical/03-collections.md#tr-co-08) |
+| Markdown editor | A text area for Markdown, with buttons for a heading, bold, italic, a list and a link around what is selected, Write and Preview, and what Markdown it takes under it | **Switch a pane** | field, icon button, segmented control, Markdown text | editing a Collection | [DEC-UX-158](principles.md#dec-ux-158) |
 
 ### Querying and Lenses
 
@@ -182,6 +189,15 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Composer | A field to write, the kind to choose, who gets a notification | – | field, segmented | slide-in, Message | [FR-CV-07](../requirements/functional/14-conversations.md#fr-cv-07) |
 | Request decision | What a Request asks to decide, with Refuse and Accept for the Data Team | – | facts, composer | Request | [DEC-CV-06](../requirements/functional/14-conversations.md#dec-cv-06) |
 | Learning Card in a Message | "Understand what is happening here" and the card, opening inline | **Fold** | fold box, kind icon | every Message from Data Hub | [DEC-UX-79](principles.md#dec-ux-79) |
+
+### Admin
+
+| Component | What it is | Behaviour | Built from | Used on | Rules |
+| --- | --- | --- | --- | --- | --- |
+| Source Job tile | A dbt project with its Source Job by name and ID, kind, environment, docs, last delivered run and who set it | "Change" opens the job picker | tile, chip | Webhooks | [FR-AR-18](../requirements/functional/01-artifact-registry.md#fr-ar-18) |
+| Job picker | The jobs of a dbt project as dbt Cloud names them, by environment; one that cannot be a Source Job says why | **Lay over** | sheet, radio, chip | Webhooks | [FR-AR-18](../requirements/functional/01-artifact-registry.md#fr-ar-18) |
+| Delivery item | A delivery of the webhook in a list: what Data Hub did, when, the job by name and ID, the dbt project and the run | Opens it | chip, kind icon | Webhooks | [FR-AR-19](../requirements/functional/01-artifact-registry.md#fr-ar-19) |
+| Delivery | One delivery opened: its job, run and event, what Data Hub did step by step, and what the Data Admin can do | – | facts list, callout, button | Webhooks | [Admin](principles.md#admin) |
 
 ### Learning
 

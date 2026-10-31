@@ -17,13 +17,15 @@
   /** How a writer stands to the object, by its name: Owner, Data Team. */
   export const STANDING_NAMES = { owner: 'Owner', dataTeam: 'Data Team' } as const;
 
-  /** The states a Message shows, with their icons: open, answered; waiting, accepted, refused. */
+  /** The states a Message shows, with their icons: open, answered; waiting, accepted, refused; broken, works again. */
   export const STATE_ICONS: Record<string, IconName> = {
     open: 'circle',
     answered: 'check-circle',
     waiting: 'hourglass-medium',
     accepted: 'check-circle',
     refused: 'x-circle',
+    broken: 'warning-circle-fill',
+    worksAgain: 'check-circle',
   };
 </script>
 
@@ -34,8 +36,9 @@
   import { ago } from '@datahub/ui/foundations/when.js';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import { initialsOf } from '../lib/initials.js';
-  import { type Conversation, messageText, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
+  import { cardOfType, type Conversation, messageText, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
+  import LearningInline from './LearningInline.svelte';
   import MessageText from './MessageText.svelte';
 
   /**
@@ -59,6 +62,8 @@
   const language = $derived(currentLanguage());
   const person = $derived(message.writer !== null);
   const rich = $derived(person ? null : messageText(message, language, 'rich'));
+  /** What Data Hub writes carries the card that explains it (FR-LR-38). */
+  const learningCard = $derived(person ? null : cardOfType(message.type));
   const isRequest = $derived(message.kind === 'request');
   const repliable = $derived(onreply !== undefined && ['question', 'remark', 'signal'].includes(message.kind));
   let replying = $state(false);
@@ -83,6 +88,7 @@
     {:else if rich}
       <div class="rich"><MessageText text={rich} /></div>
     {/if}
+    {#if !person && learningCard}<LearningInline number={learningCard} />{/if}
     {#if isRequest && reads > 0}
       <dl class="facts">
         <div><dt>{t('messages.facts.reads')}</dt><dd><b>{formatBytes(reads, language)}</b></dd></div>

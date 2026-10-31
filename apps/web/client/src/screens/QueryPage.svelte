@@ -2,7 +2,7 @@
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
-  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion } from '@datahub/ui/components/SqlEditor.svelte';
+  import SqlEditor, { CTE_LINE, type ErrorMark, type ParameterSuggestion, type Suggestion, type TableSuggestion } from '@datahub/ui/components/SqlEditor.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
@@ -14,12 +14,14 @@
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
+  import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import { NotFound as Missing } from '../lib/api.js';
+  import { missingOfQuery } from '../lib/broken.js';
   import type { Collection } from '../lib/catalogue.js';
   import { clock, when as whenIn } from '../lib/moment.js';
   import { dayOf, describe, formatDay, isFunction, kindOf, lineOf, namesOf } from '../lib/parameters.js';
-  import type { Lens, LensSuggestions as Found, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
+  import type { Lens, LensSuggestions as Found, Missing as Lost, NewQuery, Page, Parameter, Preflight, Problem, Query, QueryClient, Run, Warning } from '../lib/query.js';
   import { lensPath, NEW_QUERY, newLensPath, queryPath, resourcePath } from '../lib/routes.js';
   import NewSetSheet from './NewSetSheet.svelte';
   import NotFound from './NotFound.svelte';
@@ -32,7 +34,8 @@
   /**
    * A query (query, DEC-UX-70 to DEC-UX-74): its name and question, and where it started from; on top of
    * its frame "Reads only" and its Resources, another set of which starts a new query in a sheet; the SQL in
-   * an editor at the full width, and under it its Parameters, each box folding; at the foot of the frame,
+   * an editor that takes the height that is left, with its Parameters to its right, or under it next to the result
+   * (DEC-UX-147), each box folding; at the foot of the frame,
    * staying in view, the Pre-flight and Run, or above 1 GB a Request to the Data Team (DEC-UX-116); under
    * it the result, a grid of 100 rows a page with its Query ID (FR-SR-51, FR-LN-06), and its history, every
    * run a variation, to preview and apply. The Pre-flight follows the SQL and the Parameters while typing
@@ -49,6 +52,10 @@
     onran,
     onmade,
     onlens,
+    hiddenChange,
+    onhidden,
+    layout = 'horizontal',
+    onlayout,
   }: {
     id: string;
     /** Its history opened from the panel, at one of its runs or at all of them. */
@@ -63,15 +70,98 @@
     onmade: (made: Query) => void;
     /** The Lens it is used as was updated from it. */
     onlens: (lens: Lens) => void;
+    /** The last query hidden or shown again, here or in the panel (DEC-UX-138). */
+    hiddenChange?: { id: string; hidden: boolean };
+    /** It was hidden or shown again here. */
+    onhidden?: (id: string, hidden: boolean) => void;
+    /** The query above the result, or next to it, as the User chose it (DEC-UX-143). */
+    layout?: Layout;
+    onlayout?: (layout: Layout) => void;
   } = $props();
 
-  /** How long typing pauses before the Pre-flight is asked again. */
-  const PAUSE = 600;
+  /** How much room the query takes, in percent, at first and at least and at most, per layout (DEC-UX-144). */
+  const SPLIT = { horizontal: 55, sideBySide: 45 } as const;
+  const clamp = (value: number) => Math.min(80, Math.max(20, value));
+  const splitKey = (of: Layout) => `datahub.query.split.${of}`;
+  /** Where the User dragged the divider, kept in this browser per layout. */
+  function storedSplit(of: Layout): number {
+    try {
+      const stored = Number(localStorage.getItem(splitKey(of)));
+      return stored >= 20 && stored <= 80 ? stored : SPLIT[of];
+    } catch {
+      return SPLIT[of];
+    }
+  }
+  let work = $state<HTMLElement | undefined>();
+  let split = $state<number>(SPLIT.horizontal);
+  let dragging = $state(false);
+  $effect(() => {
+    split = storedSplit(layout);
+  });
+  function keepSplit(): void {
+    try {
+      localStorage.setItem(splitKey(layout), String(Math.round(split)));
+    } catch {
+      // Without storage, the divider keeps its place for this visit only.
+    }
+  }
+  /** Dragging the divider gives the query or the result more room (DEC-UX-144). */
+  function drag(event: PointerEvent): void {
+    const divider = event.currentTarget as HTMLElement;
+    divider.setPointerCapture?.(event.pointerId);
+    dragging = true;
+    const move = (moved: PointerEvent) => {
+      const box = work?.getBoundingClientRect();
+      if (!box || box.width === 0 || box.height === 0) return;
+      split = clamp(layout === 'sideBySide' ? ((moved.clientX - box.left) / box.width) * 100 : ((moved.clientY - box.top) / box.height) * 100);
+    };
+    const up = () => {
+      dragging = false;
+      divider.removeEventListener('pointermove', move);
+      divider.removeEventListener('pointerup', up);
+      keepSplit();
+    };
+    divider.addEventListener('pointermove', move);
+    divider.addEventListener('pointerup', up);
+  }
+  function nudge(event: KeyboardEvent): void {
+    const step = { ArrowUp: -5, ArrowLeft: -5, ArrowDown: 5, ArrowRight: 5 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    split = clamp(split + step);
+    keepSplit();
+  }
+
+  /** The query above the result, or next to it (DEC-UX-143). */
+  type Layout = 'horizontal' | 'sideBySide';
+
+  /**
+   * How long typing pauses before the Pre-flight is asked again; anything else is checked at once: a
+   * query opened, a change of its Parameters, a filter added, a run taken over (DEC-UX-154).
+   */
+  const PAUSE = 2000;
 
   let query = $state<Query | null | undefined>();
+  /** Whether the User hid it from their panel: as it was read, or as changed since (DEC-UX-138). */
+  const hidden = $derived(hiddenChange?.id === id ? hiddenChange.hidden : (query?.hidden ?? false));
+  let hiding = $state(false);
+
+  async function toggleHidden() {
+    hiding = true;
+    try {
+      await client.hide(id, !hidden);
+      onhidden?.(id, !hidden);
+    } catch (error) {
+      console.error('The query could not be hidden', error);
+    } finally {
+      hiding = false;
+    }
+  }
   let sql = $state('');
   let parameters = $state<Parameter[]>([]);
   let preflight = $state<Preflight | null>(null);
+  /** What it misses while it is Broken: Run is off and a callout names it, until a change runs or it comes back (FR-SR-53). */
+  let broken = $state<Lost | null>(null);
   /** The SQL and Parameters the Pre-flight is of: its marks hold only while they are the same. */
   let checked = $state('');
   let checking = $state(false);
@@ -83,6 +173,10 @@
   let paging = $state(false);
   let boxOpen = $state(true);
   let parametersOpen = $state(true);
+  // Next to the result, the Parameters start folded to their line of chips, so the editor keeps the room (DEC-UX-147).
+  $effect.pre(() => {
+    parametersOpen = layout !== 'sideBySide';
+  });
   let editor = $state<SqlEditor | undefined>();
   let tab = $state<'result' | 'history'>('result');
   let history = $state<Run[] | undefined>();
@@ -111,6 +205,7 @@
     loadedId = id;
     query = undefined;
     preflight = null;
+    broken = null;
     page = null;
     run = null;
     expired = false;
@@ -130,6 +225,8 @@
       async (found) => {
         if (loadedId !== id) return;
         query = found;
+        broken = found.broken ?? null;
+        atOnce = true;
         sql = found.sql;
         parameters = found.parameters;
         run = found.lastRun;
@@ -186,29 +283,53 @@
   const keyOf = (text: string, values: readonly Parameter[]) => `${text}\u0000${JSON.stringify(values)}`;
   const key = $derived(keyOf(sql, parameters));
 
-  // The Pre-flight follows the SQL and the Parameters, once typing pauses; query keeps both.
+  // The Pre-flight follows the SQL and the Parameters, once typing pauses two seconds; anything else
+  // is checked at once (DEC-UX-154). query keeps both.
   let sequence = 0;
+  /** The SQL of the last Pre-flight asked: a different text was typed. */
+  let askedText: string | null = null;
+  /** The next change is no typing: a query opened, a filter added, a run taken over. */
+  let atOnce = true;
+  /** The Pre-flight waiting for typing to pause, to ask it at once instead. */
+  let pending: { timer: ReturnType<typeof setTimeout>; ask: () => void } | null = null;
+  /** Cmd+Enter came before the Pre-flight: it runs as soon as that comes back. */
+  let runWhenChecked = false;
   $effect(() => {
     const text = sql;
     const values = JSON.parse(JSON.stringify(parameters)) as Parameter[];
     if (!query?.mine) return;
+    const typed = !atOnce && askedText !== null && text !== askedText;
+    atOnce = false;
+    askedText = text;
+    runWhenChecked = false;
     const asked = ++sequence;
     checking = true;
-    const timer = setTimeout(() => {
-      client.preflight(id, text, values).then(
+    const ask = () => {
+      pending = null;
+      client.check(id, text, values).then(
         (result) => {
           if (asked !== sequence) return;
-          preflight = result;
+          preflight = result.preflight;
           checked = keyOf(text, values);
           checking = false;
+          brokenNow(result.broken);
+          if (runWhenChecked) {
+            runWhenChecked = false;
+            runFromKeys();
+          }
         },
         (error: unknown) => {
           if (asked === sequence) checking = false;
           console.error('The Pre-flight could not be read', error);
         },
       );
-    }, PAUSE);
-    return () => clearTimeout(timer);
+    };
+    const timer = setTimeout(ask, typed ? PAUSE : 0);
+    pending = { timer, ask };
+    return () => {
+      clearTimeout(timer);
+      if (pending?.timer === timer) pending = null;
+    };
   });
 
   /** A page of a run; null once BigQuery no longer keeps it, undefined when it could not be read. */
@@ -249,12 +370,15 @@
     if (outcome.kind === 'refused') {
       preflight = outcome.preflight;
       checked = keyOf(text, values);
+      if (outcome.broken !== undefined) brokenNow(outcome.broken);
       return;
     }
     if (outcome.kind === 'ran') {
       [run, page, expired, failure] = [outcome.run, outcome.page, false, null];
+      brokenNow(null);
     } else {
       [run, page, failure] = [outcome.run, null, outcome.message];
+      if (outcome.broken !== undefined) brokenNow(outcome.broken);
     }
     if (outcome.run) {
       history = [outcome.run, ...(history ?? [])];
@@ -263,7 +387,42 @@
     onran();
   }
 
+  /** Whether it is Broken now, as query said: the panel shows its red dot, or no longer (FR-SR-53). */
+  function brokenNow(now: Lost | null): void {
+    const changed = (broken === null) !== (now === null);
+    broken = now;
+    if (query) query.broken = now;
+    if (changed) onran();
+  }
+
   const start = () => runWith(sql, parameters, current?.range !== 'free');
+  let runBar = $state<HTMLElement | undefined>();
+
+  /**
+   * Cmd+Enter, or Ctrl+Enter, in the editor does what the button that runs it does (DEC-UX-142): it runs
+   * what reads up to 100 MB; for more, it puts the focus on the button, which asks for the approval.
+   * What the Pre-flight blocks, or what goes to the Data Team, does not run.
+   */
+  function runFromKeys(): void {
+    if (!query?.mine || running) return;
+    // Typed just now: it is checked at once, and runs when the Pre-flight says it may (DEC-UX-154).
+    if (pending) {
+      clearTimeout(pending.timer);
+      runWhenChecked = true;
+      pending.ask();
+      return;
+    }
+    if (checking) {
+      runWhenChecked = true;
+      return;
+    }
+    if (!current?.runnable) return;
+    if (current.range === 'free') {
+      start();
+      return;
+    }
+    if (current.range === 'approve' || query.request?.state === 'accepted') runBar?.querySelector<HTMLButtonElement>('button.run')?.focus();
+  }
 
   /** Shows a run of its history read only: its SQL and values, and its result while it is kept. */
   async function openPreview(of: Run): Promise<void> {
@@ -277,6 +436,7 @@
 
   /** Takes the SQL and values of a run into the query: its next run is a new variation (DEC-UX-74). */
   function apply(of: Run): void {
+    atOnce = true;
     sql = of.sql;
     parameters = JSON.parse(JSON.stringify(of.parameters)) as Parameter[];
     preview = null;
@@ -406,7 +566,9 @@
       .flatMap((problem) => (problem.kind === 'outside' ? [problem.name] : []))
       .filter((name, index, all) => all.indexOf(name) === index)
       .map((name) => {
-        const item = (collections ?? []).flatMap((collection) => collection.resources).find((candidate) => candidate.key === name || (name.split('.').length === 2 && candidate.key.endsWith(`.${name}`)));
+        // The Key is in lower case; the SQL names the table in its own case.
+        const written = name.toLowerCase();
+        const item = (collections ?? []).flatMap((collection) => collection.resources).find((candidate) => candidate.key === written || (written.split('.').length === 2 && candidate.key.endsWith(`.${written}`)));
         return { name, resource: item && !query?.resources.some((resource) => resource.id === item.id) ? item.id : null };
       }),
   );
@@ -433,12 +595,48 @@
           : t('query.warning.noFilter.with', { name: problem.resource.displayName, column: problem.column, bytes: bytes(problem.bytesWithFilter) });
     }
   }
-  /** What the bar says, each problem once: an @name is named once, however often it is in the SQL. */
-  const notes = $derived(
-    [...problems, ...(current?.warnings ?? [])].filter(
-      (note, index, all) => note.kind !== 'undefinedParameter' || all.findIndex((other) => other.kind === 'undefinedParameter' && other.name === note.name) === index,
-    ),
-  );
+  /**
+   * What the editor suggests after `from` and `join`: the Resources of the query, then every other one
+   * the User may use, while the query may take one more, each once (DEC-UX-148, DEC-UX-155).
+   */
+  const tables: TableSuggestion[] = $derived.by(() => {
+    if (!query) return [];
+    const own = query.resources.flatMap((resource) => (resource.visible ? [{ id: resource.id, name: resource.displayName, fullName: resource.fullName ?? resource.key }] : []));
+    if (!query.mine || query.resources.length >= 10) return own;
+    const taken = new Set(query.resources.map((resource) => resource.id));
+    const others = (collections ?? [])
+      .flatMap((collection) => collection.resources)
+      .filter((item) => {
+        // A Resource in two Collections is suggested once.
+        if (item.withdrawn || taken.has(item.id)) return false;
+        taken.add(item.id);
+        return true;
+      })
+      .map((item) => ({ id: item.id, name: item.displayName, fullName: item.key, other: true }));
+    return [...own, ...others];
+  });
+
+  /** Each problem once: an @name is named once, however often it is in the SQL. */
+  const once = <T extends Problem | Warning>(notes: readonly T[]): T[] =>
+    notes.filter((note, index, all) => note.kind !== 'undefinedParameter' || all.findIndex((other) => other.kind === 'undefinedParameter' && other.name === note.name) === index);
+  /**
+   * The line at the foot of the query (DEC-UX-154): the last Pre-flight, kept, softer, while what is
+   * written is checked again; what stops the query when it cannot run. Each keeps what it said while
+   * it fades out.
+   */
+  const failing = $derived((preflight?.problems.length ?? 0) > 0);
+  let flight = $state<Preflight | null>(null);
+  let fault = $state<Problem[]>([]);
+  $effect.pre(() => {
+    if (!preflight) {
+      flight = null;
+      fault = [];
+    } else if (preflight.problems.length > 0) {
+      fault = once(preflight.problems);
+    } else {
+      flight = preflight;
+    }
+  });
 
   /** The box of the SQL folded: how many lines and CTEs (DEC-UX-76). */
   const summary = $derived(t('query.sqlSummary', { lines: shownSql.split('\n').length, ctes: shownSql.split('\n').filter((line) => CTE_LINE.test(line)).length }));
@@ -480,6 +678,8 @@
   <NotFound />
 {:else if query}
   {@const from = query.startedFrom}
+  <!-- The page fills the height of the screen; the query and the result each scroll on their own (DEC-UX-144). -->
+  <div class="page">
   <header class="head">
     <div class="titles">
       <div class="meta">Query</div>
@@ -524,7 +724,15 @@
       {#if !query.mine}<p class="meta">{t('query.of', { name: query.ownerName })}</p>{/if}
     </div>
     <div class="actions">
+      <span class="layouts" role="group" aria-label={t('query.layout')}>
+        {#each [['horizontal', 'rows', t('query.layout.horizontal')], ['sideBySide', 'columns', t('query.layout.sideBySide')]] as const as [option, icon, name] (option)}
+          <button type="button" aria-pressed={layout === option} aria-label={name} title={name} onclick={() => onlayout?.(option)}><Icon name={icon} /></button>
+        {/each}
+      </span>
       <Button variant="outline" href={NEW_QUERY}><Icon name="plus-circle-fill" />{t('query.new')}</Button>
+      <Button variant="outline" disabled={hiding} title={t(hidden ? 'query.unhide.hint' : 'query.hide.hint')} onclick={toggleHidden}
+        ><Icon name={hidden ? 'eye' : 'eye-slash-fill'} />{t(hidden ? 'query.page.unhide' : 'query.page.hide')}</Button
+      >
       {#if query.mine && query.kind === 'query' && query.lens}
         <!-- A query used as a Lens overwrites it, after its size check (DEC-UX-77). -->
         <Button disabled={query.lens.state === 'waiting'} title={t(query.lens.state === 'waiting' ? 'lens.update.waiting' : 'lens.update.hint')} onclick={() => (updating = true)}
@@ -537,6 +745,17 @@
     </div>
   </header>
 
+  {#if broken}
+    <!-- A Broken query: Run is off and this names what it misses, and since when (FR-SR-53, DEC-UX-160). -->
+    <div class="broken">
+      <Callout icon="link-break-fill" tone="urgent">
+        <b>{t('query.broken.title')}</b>
+        {t('query.broken.text', { missing: missingOfQuery(broken, query.resources) ?? '', date: formatDay(broken.since.slice(0, 10), currentLanguage()) })}
+      </Callout>
+    </div>
+  {/if}
+
+  <div class="work" class:side={layout === 'sideBySide'} class:dragging bind:this={work} style:--split="{split}%">
   <section class="frame card" aria-label={query.name}>
     <div class="scope">
       <span class="label">{t('query.readsOnly')}</span>
@@ -577,7 +796,9 @@
       {/if}
     </div>
 
-    <div class="box">
+    <!-- The editor takes the height that is left; its Parameters stand to its right, or under it next to the result (DEC-UX-147). -->
+    <div class="body">
+    <div class="box editor-box" class:open={boxOpen}>
       <div class="box-head">
         <button type="button" class="toggle" aria-expanded={boxOpen} aria-label={t(boxOpen ? 'editor.fold' : 'editor.unfold')} onclick={() => (boxOpen = !boxOpen)}><Icon name="caret-down" /></button>
         <span class="label">BigQuery SQL</span>
@@ -599,11 +820,15 @@
             bind:value={sql}
             {suggestions}
             parameters={parameterSuggestions}
+            {tables}
+            onnewtable={query.mine && query.resources.length < 10 ? () => (newSet = { mode: 'add', resource: null }) : undefined}
+            onothertable={(table) => (newSet = { mode: 'add', resource: table.id })}
             {marks}
             onmark={(mark) => {
               const entry = missing.find((candidate) => sql.slice(mark.from, mark.to) === `@${candidate.name}`);
               if (entry) openParameter(null, entry);
             }}
+            onrun={runFromKeys}
             label={t('query.sql', { name: query.name })}
             readonly={!query.mine}
             {nonce}
@@ -612,6 +837,7 @@
       </div>
     </div>
 
+    <div class="params">
     <QueryParameters
       parameters={shownParameters}
       sql={shownSql}
@@ -623,42 +849,52 @@
       ondefine={(entry) => openParameter(null, entry)}
       onadd={() => openParameter(null)}
     />
+    </div>
+    </div>
 
     {#if query.mine && !preview}
-      <div class="run-bar">
-        {#if notes.length > 0}
-          <ul class="notes" aria-live="polite">
-            {#each notes as note, index (index)}
-              <li class:problem={note.kind !== 'noPartitionFilter'}>
-                <Icon name="warning-fill" /><span>{said(note)}</span>
-                {#if (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix}
-                  {@const fix = note.fix}
-                  <button type="button" class="text-link" onclick={() => (sql = fix)}>{t('query.addFilter')}</button>
-                {:else if note.kind === 'undefinedParameter'}
-                  {@const entry = missing.find((candidate) => candidate.name === note.name)}
-                  {#if entry}<button type="button" class="text-link" onclick={() => openParameter(null, entry)}>{t('query.defineIt')}</button>{/if}
-                {/if}
-              </li>
-            {/each}
-          </ul>
-        {/if}
-        <span class="preflight" aria-busy={checking}>
-          <span class="meta">Pre-flight</span>
-          {#if current?.bytes !== null && current?.bytes !== undefined}
-            <Gauge bytes={current.bytes} approve={current.thresholds.approve} request={current.thresholds.request} />
-            <span class="meta"
-              >{[
-                current.partitions !== null ? t('query.partitions', { count: current.partitions }) : t('query.reads', { bytes: bytes(current.bytes) }),
-                partitioned.length === 1 && partitioned[0]?.partition ? t('query.through', { column: partitioned[0].partition.field }) : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}</span
-            >
-          {:else if checking || !current}
-            <span class="meta">{t(checking ? 'query.checking' : 'query.notChecked')}</span>
+      <div class="run-bar" bind:this={runBar}>
+        {#snippet fixOf(note: Problem | Warning)}
+          {#if (note.kind === 'filterRequired' || note.kind === 'noPartitionFilter') && note.fix}
+            {@const fix = note.fix}
+            <button type="button" class="text-link" onclick={() => ((atOnce = true), (sql = fix))}>{t('query.addFilter')}</button>
+          {:else if note.kind === 'undefinedParameter'}
+            {@const entry = missing.find((candidate) => candidate.name === note.name)}
+            {#if entry}<button type="button" class="text-link" onclick={() => openParameter(null, entry)}>{t('query.defineIt')}</button>{/if}
           {/if}
-        </span>
-        <span class="grow"></span>
+        {/snippet}
+        <!-- One line of a fixed height: the Pre-flight, or what stops the query; the one fades out a
+             little quicker than the other fades in, so the query never changes height (DEC-UX-154). -->
+        <div class="status" class:stale={!current} aria-busy={checking} aria-live="polite">
+          <span class="layer flight" class:shown={!failing} aria-hidden={failing} inert={failing}>
+            <span class="meta">Pre-flight</span>
+            {#if flight?.bytes !== null && flight?.bytes !== undefined}
+              <Gauge bytes={flight.bytes} approve={flight.thresholds.approve} request={flight.thresholds.request} />
+              <span class="meta reads"
+                >{[
+                  flight.partitions !== null ? t('query.partitions', { count: flight.partitions }) : t('query.reads', { bytes: bytes(flight.bytes) }),
+                  partitioned.length === 1 && partitioned[0]?.partition ? t('query.through', { column: partitioned[0].partition.field }) : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}</span
+              >
+              {#each flight.warnings.slice(0, 1) as warning, index (index)}
+                <span class="warning" title={said(warning)}><Icon name="warning-fill" /><span class="said">{said(warning)}</span>{@render fixOf(warning)}</span>
+              {/each}
+            {:else}
+              <span class="meta">{t(checking ? 'query.checking' : 'query.notChecked')}</span>
+            {/if}
+          </span>
+          <span class="layer fault" class:shown={failing} aria-hidden={!failing} inert={!failing}>
+            {#if fault[0]}
+              {@const first = fault[0]}
+              <Icon name="warning-fill" />
+              <span class="said" title={fault.map(said).join('\n')}>{said(first)}</span>
+              {@render fixOf(first)}
+              {#if fault.length > 1}<span class="more" title={fault.slice(1).map(said).join('\n')}>+{fault.length - 1}</span>{/if}
+            {/if}
+          </span>
+        </div>
         {#if current?.range === 'request' && query.request?.state === 'waiting'}
           <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(query.request.sentAt) })}</span>
         {:else if current?.range === 'request' && query.request?.state !== 'accepted'}
@@ -685,9 +921,9 @@
           <RunButton
             bytes={current?.bytes ?? null}
             approve={current?.range === 'approve' || current?.range === 'request'}
-            disabled={!current?.runnable || checking}
+            disabled={!current?.runnable || checking || broken !== null}
             busy={running}
-            title={!current?.runnable ? t('query.cannotRun') : undefined}
+            title={broken !== null ? t('query.broken.run') : !current?.runnable ? t('query.cannotRun') : undefined}
             onclick={start}
           >
             {#snippet explain()}
@@ -705,6 +941,21 @@
       </div>
     {/if}
   </section>
+
+  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+  <div
+    class="divider"
+    role="separator"
+    tabindex="0"
+    aria-orientation={layout === 'sideBySide' ? 'vertical' : 'horizontal'}
+    aria-valuenow={Math.round(split)}
+    aria-valuemin={20}
+    aria-valuemax={80}
+    aria-label={t('query.divider')}
+    title={t('query.divider')}
+    onpointerdown={drag}
+    onkeydown={nudge}
+  ></div>
 
   <section class="result card" aria-label={t('query.result')}>
     <div class="result-head">
@@ -765,6 +1016,8 @@
       <p class="empty"><Icon name="play-fill" /><span><b>{t('query.notRun')}</b> {t('query.notRun.text')}</span></p>
     {/if}
   </section>
+  </div>
+  </div>
 
   {#if parameterWindow}
     {#key parameterWindow.key}
@@ -846,14 +1099,45 @@
   .origin { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; }
   .origin a { color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
-  .frame { margin-top: 14px; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+  /* The page fills the height of the screen: the query and the result split it, each scrolling on its own (DEC-UX-144). */
+  .page { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+  .head { flex: none; }
+  .broken { flex: none; }
+  .work { flex: 1; min-height: 360px; display: grid; margin-top: 14px; grid-template-rows: minmax(0, var(--split)) 14px minmax(0, 1fr); }
+  .work.side { grid-template-rows: minmax(0, 1fr); grid-template-columns: minmax(0, var(--split)) 14px minmax(0, 1fr); }
+  .work.dragging { user-select: none; }
+  .divider { display: flex; align-items: center; justify-content: center; cursor: row-resize; touch-action: none; }
+  .side .divider { cursor: col-resize; }
+  .divider::before { content: ''; width: 44px; height: 4px; border-radius: var(--radius-pill); background: var(--tint-active); transition: background var(--motion-fold) ease; }
+  .side .divider::before { width: 4px; height: 44px; }
+  .divider:hover::before, .divider:focus-visible::before, .dragging .divider::before { background: var(--text-muted); }
+  .divider:focus-visible { outline: none; }
+  .layouts { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+  .layouts button { width: 30px; height: 30px; border: 0; border-radius: var(--radius-pill); background: none; color: var(--text-muted); display: inline-flex; align-items: center; justify-content: center; font-size: 15px; cursor: pointer; }
+  .layouts button[aria-pressed='true'] { background: var(--card); color: var(--text-primary); }
+  .layouts button:focus-visible { outline: 2px solid var(--text-secondary); }
+  .frame { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 14px 14px 0; display: flex; flex-direction: column; gap: 10px; }
+  /* The editor takes the height that is left, scrolling in itself; its Parameters stand to its right, or, next to
+     the result, under it (DEC-UX-147). */
+  .body { flex: 1 1 auto; min-height: 140px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 32%); gap: 10px; align-items: stretch; }
+  .side .body { display: flex; flex-direction: column; }
+  .editor-box { min-height: 0; display: flex; flex-direction: column; }
+  .editor-box:not(.open) { align-self: start; }
+  .side .editor-box.open { flex: 1 1 auto; }
+  .sql { flex: 1 1 auto; min-height: 80px; display: flex; flex-direction: column; }
+  .sql[hidden] { display: none; }
+  .sql > :global(.editor) { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+  .sql > :global(.editor .cm-editor) { flex: 1 1 auto; min-height: 0; }
+  .params { min-height: 0; overflow: auto; }
+  .side .params { flex: none; max-height: 40%; }
   .sheet-over { display: block; margin: 0 0 2px; }
   .sheet-intro { display: block; line-height: 1.5; margin: 8px 0 0; }
   .sheet-lenses { flex: 1; overflow: auto; margin: 4px -4px 0; padding: 0 4px; }
-  .scope { display: flex; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
+  .scope { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 10px; padding: 2px 2px 0; }
   .scope > .label { flex: none; line-height: 26px; margin: 0; }
-  .chips { flex: 1 1 0; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
+  /* In a narrow query, next to its result, the Lenses on its Resources move to a line of their own (DEC-UX-143). */
+  .chips { flex: 1 1 260px; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; font-size: var(--text-meta); color: var(--text-primary); background: var(--surface-sub); padding: 4px 6px 4px 10px; border-radius: var(--radius-pill); }
   .chip > a, .chip > span { display: inline-flex; align-items: center; gap: 5px; color: inherit; text-decoration: none; padding-right: 4px; }
   .chip:hover { background: var(--tint-active); }
   .chip .meta { white-space: nowrap; }
@@ -872,15 +1156,25 @@
   .toggle :global(.icon) { transition: transform var(--motion-fold) ease; }
   .toggle[aria-expanded='false'] :global(.icon) { transform: rotate(-90deg); }
   .grow { flex: 1; }
-  .run-bar { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 2px -14px 0; padding: 12px 14px;
+  .run-bar { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 12px; flex-wrap: nowrap; margin: 2px -14px 0; padding: 12px 14px;
     border-top: 1px solid var(--tint-hover); border-radius: 0 0 var(--radius-xl) var(--radius-xl); background: var(--card); }
   .frame:not(:has(.run-bar)) { padding-bottom: 14px; }
-  .notes { flex: 1 1 100%; list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
-  .notes li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--text-small); color: var(--signal-warn); }
+  /* The line at the foot: a fixed height, the Pre-flight and what stops the query in one place,
+     cross-fading, the old one a little quicker; while what is written is checked again, softer (DEC-UX-154). */
+  .status { flex: 1 1 auto; min-width: 0; height: 48px; display: grid; align-items: center; }
+  .layer { grid-area: 1 / 1; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 10px; overflow: hidden; max-height: 48px;
+    opacity: 0; transition: opacity var(--motion-status-out); }
+  .layer.shown { opacity: 1; transition: opacity var(--motion-status-in); }
+  .status.stale .layer.shown { opacity: .6; }
+  .reads { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .warning { flex: 1 1 100%; min-width: 0; display: flex; align-items: center; gap: 6px; font-size: var(--text-meta); color: var(--signal-warn); white-space: nowrap; }
+  .warning .said { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+  .warning .text-link, .fault .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); flex: none; }
+  .fault { flex-wrap: nowrap; gap: 6px; font-size: var(--text-small); color: var(--signal-warn); }
+  .fault .said { min-width: 0; line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+  .fault .more { flex: none; font-size: var(--text-meta); color: var(--text-muted); }
   .text-link { all: unset; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
   .text-link:focus-visible { outline: 2px solid var(--text-secondary); }
-  .notes .text-link { color: var(--signal-warn); font-weight: var(--weight-medium); }
-  .preflight { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   .waiting { display: inline-flex; align-items: center; gap: 6px; font-size: var(--text-small); color: var(--text-secondary); }
   .request { display: flex; flex-direction: column; gap: 10px; }
   .word { display: flex; flex-direction: column; gap: 4px; font-size: var(--text-meta); color: var(--text-muted); }
@@ -888,7 +1182,7 @@
   .word textarea:focus-visible { outline: 2px solid var(--text-secondary); }
   .after { font-size: var(--text-meta); color: var(--text-muted); }
   .after.failed { color: var(--signal-urgent); }
-  .result { margin-top: 14px; border-radius: var(--radius-xl); padding: 16px; }
+  .result { min-height: 0; overflow: auto; border-radius: var(--radius-xl); padding: 16px; }
   .result-head { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
   .preview-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 10px; padding: 12px 14px; border-radius: var(--radius-md);
     background: color-mix(in srgb, var(--signal-warn) 10%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }

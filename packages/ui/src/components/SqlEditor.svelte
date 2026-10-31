@@ -11,6 +11,22 @@
     businessDescription: string;
   }
 
+  /**
+   * A Resource the editor suggests after `from` and `join` by its Display Name: one of the query
+   * (DEC-UX-148), or another the User may use, which is a new query (DEC-UX-155).
+   */
+  export interface TableSuggestion {
+    id: string;
+    name: string;
+    /** The full name of its table, in its own case, which the SQL gets, quoted. */
+    fullName: string;
+    /** Not one of the query's: picking it starts a new query with it (DEC-UX-73). */
+    other?: boolean;
+  }
+
+  /** Whether the text before a word asks for a table: it follows `from` or `join` (DEC-UX-148). */
+  export const AFTER_TABLE = /\b(?:from|join)\s+$/i;
+
   /** A Parameter the editor suggests after `@`: its name, its type in BigQuery and its value (DEC-UX-71). */
   export interface ParameterSuggestion {
     name: string;
@@ -31,10 +47,22 @@
 
   /** The CTEs of the SQL: a line that ends in `name as (`. */
   export const CTE_LINE = /\bas\s*\(\s*$/i;
+
+  /**
+   * The templates the editor offers among its suggestions (DEC-UX-141): `${}` is where the cursor goes,
+   * Tab to the next one.
+   */
+  export const TEMPLATES: readonly { label: string; template: string }[] = [
+    { label: 'select … from', template: 'select\n    ${}\nfrom\n    ${}' },
+    { label: 'where true and', template: 'where\n    true\n    and ${}' },
+    { label: 'where false or', template: 'where\n    false\n    or ${}' },
+    { label: 'with … as', template: 'with ${} as (\n    ${}\n)\n' },
+    { label: 'final as … order by', template: 'final as (\n    ${}\n)\nselect *\nfrom final\norder by ${}' },
+  ];
 </script>
 
 <script lang="ts">
-  import { autocompletion, type Completion, type CompletionContext, completionKeymap } from '@codemirror/autocomplete';
+  import { autocompletion, type Completion, type CompletionContext, completionKeymap, snippetCompletion } from '@codemirror/autocomplete';
   import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands';
   import { SQLDialect } from '@codemirror/lang-sql';
   import { codeFolding, foldedRanges, foldEffect, foldGutter, foldKeymap, foldNodeProp, foldService, HighlightStyle, LanguageSupport, syntaxHighlighting } from '@codemirror/language';
@@ -60,8 +88,12 @@
     value = $bindable(),
     suggestions,
     parameters = [],
+    tables = [],
     marks = [],
     onmark,
+    onrun,
+    onnewtable,
+    onothertable,
     label,
     readonly = false,
     nonce,
@@ -69,9 +101,17 @@
     value: string;
     suggestions: readonly Suggestion[];
     parameters?: readonly ParameterSuggestion[];
+    /** The Resources of the query, then the others the User may use, suggested after `from` and `join` (DEC-UX-148, DEC-UX-155). */
+    tables?: readonly TableSuggestion[];
     marks?: readonly ErrorMark[];
     /** A click on an `@name` that is not a Parameter. */
     onmark?: (mark: ErrorMark) => void;
+    /** Cmd+Enter, or Ctrl+Enter: what the button that runs the query does (DEC-UX-142). */
+    onrun?: () => void;
+    /** "New Resource…" among the suggestions: another Resource is a new query (DEC-UX-73, DEC-UX-148). */
+    onnewtable?: () => void;
+    /** Another Resource picked among the suggestions, after its name is written: it starts a new query (DEC-UX-155). */
+    onothertable?: (table: TableSuggestion) => void;
     label: string;
     readonly?: boolean;
     /** The nonce of the page: CodeMirror adds its own styles, which the Content Security Policy allows by it. */
@@ -215,6 +255,30 @@
       return options.length ? { from: parameter.from, options, validFor: /^@\w*$/ } : null;
     }
     const word = context.matchBefore(/[\w]+/);
+    // After `from` or `join`: the Resources of the query, written as BigQuery knows them, then every other
+    // the User may use, which starts a new query, and a way to choose one (DEC-UX-148, DEC-UX-155).
+    const before = context.state.sliceDoc(context.state.doc.lineAt(context.pos).from, word?.from ?? context.pos);
+    if (AFTER_TABLE.test(before) && (tables.length > 0 || onnewtable)) {
+      const options: Completion[] = tables.map((table): Completion => {
+        const written = `\`${table.fullName}\``;
+        if (!table.other) return { label: table.name, detail: t('editor.resource'), apply: written, boost: 50 };
+        const picked = onothertable;
+        return {
+          label: table.name,
+          detail: t('editor.otherResource'),
+          boost: 0,
+          apply: (view, _completion, from, to) => {
+            view.dispatch({ changes: { from, to, insert: written }, selection: { anchor: from + written.length } });
+            picked?.(table);
+          },
+        };
+      });
+      if (onnewtable) {
+        const start = onnewtable;
+        options.push({ label: t('editor.newResource'), detail: t('editor.newResource.detail'), boost: -50, apply: () => start() });
+      }
+      return { from: word?.from ?? context.pos, options, filter: true };
+    }
     if (!word && !context.explicit) return null;
     const options: Suggested[] = [...suggestions]
       .sort((a, b) => ROLE_ORDER(a) - ROLE_ORDER(b))
@@ -225,7 +289,8 @@
         role: suggestion.role,
         info: () => info(suggestion),
       }));
-    return { from: word?.from ?? context.pos, options, validFor: /^\w*$/ };
+    const templates = TEMPLATES.map(({ label: name, template }) => snippetCompletion(template, { label: name, detail: t('editor.template'), boost: -1 }));
+    return { from: word?.from ?? context.pos, options: [...options, ...templates], validFor: /^\w*$/ };
   }
 
   /** Writes the SQL in the layout of sql-formatter, for BigQuery; SQL it cannot read stays as it is. */
@@ -292,7 +357,16 @@
               },
             ],
           }),
-          keymap.of([{ key: 'Shift-Alt-f', run: () => formatSql() }, indentWithTab, ...completionKeymap, ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
+          keymap.of([
+            { key: 'Shift-Alt-f', run: () => formatSql() },
+            {
+              key: 'Mod-Enter',
+              run: () => {
+                onrun?.();
+                return onrun !== undefined;
+              },
+            },
+            indentWithTab, ...completionKeymap, ...foldKeymap, ...historyKeymap, ...defaultKeymap]),
           EditorState.readOnly.of(readonly),
           EditorView.editable.of(!readonly),
           EditorView.contentAttributes.of({ 'aria-label': label }),

@@ -35,6 +35,8 @@ Decisions taken while building this domain:
   | dbt-prod (9367) | 322950 · daily production build (prod) | 322951 · daily UAT build (uat) |
   | Colleciónes (17121) | 739004 · PROD - Scheduled - Daily build | 739003 · UAT - Scheduled - Daily build |
 
+  *Note of 2026-10-30: the Source Jobs are the merge builds now ([DEC-AR-09](#dec-ar-09)).*
+
 - <a id="dec-ar-02"></a>**DEC-AR-02** · dbt Cloud announces a finished run with a webhook (`job.run.completed`), signed with a secret that only dbt Cloud and Data Hub know. Data Hub does not poll. A delivery that is lost even after dbt Cloud's retries is recovered by fetching the run again by hand ([FR-AR-14](#fr-ar-14)).
 - <a id="dec-ar-03"></a>**DEC-AR-03** · A source in one dbt project is linked to the Node in the other project that builds the same table: the same database, schema and table name. The link is made when the lineage is read, between the Current Versions of both projects, so it always follows both.
 - <a id="dec-ar-04"></a>**DEC-AR-04** · Data Hub reads the Domain Model in use from the public API of the collector of Colleciónes: `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`. It answers with the contract that actually validates the events: its name and version, such as `immoscoop` 0.1.0, its release with tag and commit, such as 0.0.70, the package it comes from, `@compilacion/colleciones-domain-model@0.0.70`, and its domains, Entities, events, contexts and actors. Data Hub does not join the Cloud Run setup of Colleciónes, and connects to it through this API only. *Decided on 2026-10-28, by Max, with the dev tool that loads the Domain Model this way ([OP-DH-35](../../overview/open-themes.md#op-dh-35), [OP-AR-06](#op-ar-06)).*
@@ -42,12 +44,20 @@ Decisions taken while building this domain:
 - <a id="dec-ar-06"></a>**DEC-AR-06** · Everyone who may see a Resource may read the lineage around it, through its tab Lineage: the names, layers and projects of the models it is built on and those built on it ([FR-SR-54](04-stacks-and-resources.md#fr-sr-54)). The rest of the registry, searching all dbt models and reading their columns and tests, stays with the Data Team ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)). *Decided on 2026-10-28, by Max ([OP-AR-05](#op-ar-05)).*
 - <a id="dec-ar-07"></a>**DEC-AR-07** · The Colleciónes generator is extended, in the shared code of its strategies, so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, with `is` or a relation type and the identity of its Entity; the references of an Entity in `meta.domain` of the model; and the release of the Domain Model on every model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Adding a Colleciónes model as a Resource then arrives filled in, for the Data Admin to confirm ([FR-AR-17](#fr-ar-17)). The grain and the model type stay in Data Hub ([DEC-RC-09](05-resource-card.md#dec-rc-09)). *Decided on 2026-10-28, by Max ([OP-AR-07](#op-ar-07)).* *Note of 2026-10-28: the generic columns `identifiers`, `references` and `collections` are lists and are left out of a Resource ([DEC-SR-33](04-stacks-and-resources.md#dec-sr-33)); what they hold reaches a Resource as fields the Data Team selects.*
 - <a id="dec-ar-08"></a>**DEC-AR-08** · On a state mart, Data Hub maps `identifierValue` as `is` the Entity by whichever of its identifiers `identifierName` names; the step that adds a Resource shows it as "is businessGoal, by any of its identifiers". The generator does not change. To link it with another Resource on one identifier, such as `businessGoalId`, Data Hub filters on `identifierName = 'businessGoalId'`. *Decided on 2026-10-28, by Max ([OP-AR-08](#op-ar-08)).*
+- <a id="dec-ar-09"></a>**DEC-AR-09** · The Source Jobs are the merge builds: per dbt project and environment, the job that the GitHub pipeline of its repository starts after a merge into `uat` or `main`. Tables and columns change only through a merge, so Data Hub shows a change minutes after its merge instead of after the next daily build. A column that changes without a merge is not followed; the checks of both projects allow no `select *`. A merge build also runs `dbt docs generate`, or its runs have no catalog ([EC-AR-02](#ec-ar-02)). A failed merge build changes nothing in Data Hub until the next successful run of that job, such as a rerun in dbt Cloud ([FR-AR-03](#fr-ar-03)). Each environment of Data Hub reads the merge builds of the same environment:
+
+  | dbt project | Source Job for prod | Source Job for uat |
+  | --- | --- | --- |
+  | dbt-prod (9367) | 324502 · CI/CD - prod - triggered by Github Pipelines | 322951 · daily UAT build (uat), until its merge build exists ([OP-AR-09](#op-ar-09)) |
+  | Colleciónes (17121) | 748278 · PROD - Deploy - Merge build | 748279 · UAT - Deploy - Merge build |
+
+  *Decided on 2026-10-30, by Max, in place of the daily builds of [DEC-AR-01](#dec-ar-01).*
 
 ## Terms
 
 | Term | Meaning |
 | --- | --- |
-| Source Job | The one prod job in dbt Cloud, per dbt project, whose Artifacts Data Hub uses: a full build that also runs `dbt docs generate`. uat of Data Hub reads the UAT counterpart ([DEC-AR-01](#dec-ar-01)) |
+| Source Job | The one job in dbt Cloud, per dbt project and environment, whose Artifacts Data Hub uses: the merge build, which builds the project after a merge and also runs `dbt docs generate`. uat of Data Hub reads the merge builds of uat ([DEC-AR-09](#dec-ar-09)) |
 | Artifact Set | The Artifacts of one successful run of a Source Job: `manifest.json` and `catalog.json`, with run ID, git SHA and timestamp |
 | Current Version | Per dbt project, the most recent fully processed Artifact Set; the rest of Data Hub works on it |
 | Node | A model, seed, snapshot, source or exposure from the manifest, with its columns |
@@ -173,21 +183,21 @@ Search works by name (also with a typo or a half-remembered name), by free text 
 <a id="fr-ar-11"></a>
 ### FR-AR-11 · Compare every new version Node by Node
 
-**Status:** Specified · **Confluence:** AR-11
+**Status:** Implemented · **Confluence:** AR-11
 
 Every new Current Version is compared with the previous one, Node by Node. This yields Changes of five kinds: description, logic, type, structural, and Node added or removed (see [Kinds of Change](#kinds-of-change) below).
 
 <a id="fr-ar-12"></a>
 ### FR-AR-12 · Propagate every Change downstream
 
-**Status:** Specified · **Confluence:** AR-12
+**Status:** Implemented · **Confluence:** AR-12
 
 Every Change is followed downstream to all Resources that depend on it, however deep. Every affected Resource gets an entry in its Log, with the original Change and the distance in the lineage. Nothing is filtered out.
 
 <a id="fr-ar-13"></a>
 ### FR-AR-13 · Anyone with access can read the Log
 
-**Status:** Specified · **Confluence:** AR-13 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Confluence:** AR-13 · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
 Anyone with access to a Resource can read its Log.
 
@@ -224,6 +234,30 @@ registry reads `meta.domain`, `meta.model` and the `colleciones` tags of every N
 
 When the Data Admin adds a Resource ([FR-CO-33](03-collections.md#fr-co-33)), every field whose column carries `meta.domain` arrives filled in, with `is` or its relation type and the identity of its Entity, and the grain is suggested from what the model declares, for the Data Admin to confirm ([DEC-RC-09](05-resource-card.md#dec-rc-09)); the Data Admin confirms or changes them. On a Resource outside Colleciónes, a column named as an identifier of an Entity in its lineage is suggested as that identity. Each mapping records the release of the Domain Model it comes from ([FR-AR-15](#fr-ar-15)).
 
+<a id="fr-ar-18"></a>
+### FR-AR-18 · A Data Admin sets the Source Jobs on a page of Data Hub
+
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+
+A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and which dbt Cloud job is the Source Job of each ([FR-AR-02](#fr-ar-02)), for the environment of that page, in place of the configuration of its deployment. They choose a job from the jobs of the dbt Cloud account, each shown by its name, its ID, its dbt project and its environment in dbt Cloud, as Data Hub reads them from dbt Cloud; nobody types an ID. A change applies from the next run dbt Cloud reports, without a deploy of Data Hub. Per dbt project the page shows its Source Job by name and ID, who set it and when, and the last run that delivered an Artifact Set. The webhook of the environment in dbt Cloud names the same jobs ([DEC-AR-02](#dec-ar-02)); the page says so. The page is designed in the [design](../../design/README.md) before it is built.
+
+*Could, not in v1: set on 2026-10-30, by Max; in version 1 the Source Jobs are set in the configuration of each environment, in Terraform ([DEC-AR-09](#dec-ar-09)).*
+
+<a id="fr-ar-19"></a>
+### FR-AR-19 · A Data Admin sees every delivery of the webhook
+
+**Status:** Specified · **Source:** Max, 2026-10-30, while testing on uat · **Screens:** [admin-webhooks](../../design/screens/admin-webhooks.html)
+
+On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every delivery dbt Cloud sent to the webhook of that environment in the last 30 days, the newest first: when it came, the job by its name and its ID, the dbt project, the run and its status in dbt Cloud, and what Data Hub did with it. That is one of:
+
+- recorded as an Artifact Set, with the status of that set: pending, processed, or failed and why ([EC-AR-02](#ec-ar-02));
+- ignored, and why: the job is no Source Job of this environment, its dbt project does not match, the run did not succeed, it comes from another dbt Cloud account, or it is a test from dbt Cloud;
+- refused, because its signature does not match the secret.
+
+So whoever sets up a webhook or a Source Job sees at once whether its runs arrive and are taken, without the logs of Google Cloud, and a job in the webhook that is no Source Job stands out.
+
+*Could, not in v1: set on 2026-10-30, by Max, with the page of the Source Jobs ([FR-AR-18](#fr-ar-18)); in version 1 the deliveries are in the logs of registry.*
+
 ## Kinds of Change
 
 This domain detects the Change and passes it on. What happens next (a warning on the Resource, notifying the Owner, running checks) belongs to the domains [Maturity and release](06-maturity-and-release.md), [Log and notifications](07-log-and-notifications.md), and [Checks and monitoring](08-checks-and-monitoring.md).
@@ -243,14 +277,14 @@ Proposals to confirm.
 <a id="ec-ar-01"></a>
 ### EC-AR-01 · An older run arrives after a newer one
 
-**Status:** Specified
+**Status:** Implemented
 
 It is stored and processed, but does not become the Current Version: the Current Version never goes back in time.
 
 <a id="ec-ar-02"></a>
 ### EC-AR-02 · The catalog is missing
 
-**Status:** Specified
+**Status:** Implemented
 
 Without `catalog.json`, the actual columns are not known. The set gets the status failed, with that reason, and the previous version stays current.
 
@@ -266,7 +300,7 @@ In the Artifacts, this looks like one Node disappearing and another appearing. T
 <a id="ec-ar-04"></a>
 ### EC-AR-04 · An upstream model disappears
 
-**Status:** Specified
+**Status:** Implemented
 
 The Resources that depended on it get an entry in their Log, even if the table of the Resource itself is (still) unchanged.
 
@@ -276,7 +310,7 @@ The Resources that depended on it get an entry in their Log, even if the table o
 <a id="ec-ar-05"></a>
 ### EC-AR-05 · The collector does not answer
 
-**Status:** Specified
+**Status:** Implemented
 
 When Data Hub needs the Domain Model and the collector does not answer ([DEC-AR-05](#dec-ar-05)), the step that needs it says so, such as suggesting the mappings when adding a Resource, and offers to try again. Data Hub guesses nothing and falls back on no copy; what does not need the Domain Model goes on as usual.
 ## Out of scope
@@ -293,6 +327,7 @@ Which views are Resources and how their ID stays stable ([Resources](04-stacks-a
 - [x] <a id="op-ar-07"></a>**OP-AR-07** · Decide the extension of the Colleciónes strategies so that the manifest says per column what the Domain Model says about it: `meta.domain` per column, the references of an Entity and the release of the Domain Model ([The Domain Model in the manifest](#the-domain-model-in-the-manifest)). Its alternative: Data Hub matches columns by name and the Data Admin fills in the rest by hand. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).* *Decided on 2026-10-28, by Max: extend Colleciónes ([DEC-AR-07](#dec-ar-07)).*
 - [x] <a id="op-ar-08"></a>**OP-AR-08** · Decide how the identity of an Entity on a state mart is mapped ([DEC-RC-06](05-resource-card.md#dec-rc-06)): `identifierValue` holds whichever identifier `identifierName` names. Either Data Hub shows that field as `is` the Entity by any of its identifiers, or the mart gets one column per identifier, each mapping as `is` that identifier. *Raised on 2026-10-28, while reading the generated project for [OP-DH-06](../../overview/open-themes.md#op-dh-06).* *Decided on 2026-10-28, by Max: as is, by any of its identifiers ([DEC-AR-08](#dec-ar-08)).*
 - [x] <a id="op-ar-05"></a>**OP-AR-05** · Decide who besides the Data Team may read the registry: its search, Nodes and lineage. Until then only the Data Team may ([TR-AR-05](../technical/01-artifact-registry.md#tr-ar-05)); the domain [Permissions and Excel keys](12-permissions-and-library-cards.md) decides ([OP-DH-24](../../overview/open-themes.md#op-dh-24)). *Decided on 2026-10-28, by Max: the lineage around a Resource for everyone who sees it, the rest for the Data Team ([DEC-AR-06](#dec-ar-06)).*
+- [ ] <a id="op-ar-09"></a>**OP-AR-09** · Make the merge build of dbt-prod the Source Job of uat once it exists. Job 324451 runs both the PR checks of dbt-prod, in their own `DBT_CLOUD_PR_*` schemas, and the deploy of `uat`, so it cannot be a Source Job; the deploy of `uat` gets its own job, "UAT - Deploy - Merge build" ([immoscoop-dataplatform-data#980](https://github.com/immoscoop-be/immoscoop-dataplatform-data/pull/980)). Its ID then goes in `uat.tfvars` and in the webhook of uat; until then, uat reads the daily UAT build 322951 ([DEC-AR-09](#dec-ar-09)). *Raised on 2026-10-30, by Max.*
 
 ## Builds on
 

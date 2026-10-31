@@ -254,6 +254,8 @@ export function parametersOf(sql: string): string[] {
 
 export interface TemplateResource {
   key: string;
+  /** The full name of its table in its own case, which the SQL names. */
+  fullName: string;
   fields: { name: string; dataType: string | null }[];
   partition: { field: string; unit: string | null } | null;
 }
@@ -291,7 +293,7 @@ export function template(resources: TemplateResource[]): string {
     const filter = resource.partition ? recent(resource.partition.field, partitionType, resource.partition.unit) : null;
     return [
       `${indent}select ${fields.join(`,\n${indent}       `)}`,
-      `${indent}from \`${resource.key}\``,
+      `${indent}from \`${resource.fullName}\``,
       ...(filter ? [`${indent}where ${filter}`] : []),
     ].join('\n');
   };
@@ -299,6 +301,32 @@ export function template(resources: TemplateResource[]): string {
   if (resources.length === 1) return `${select(resources[0] as TemplateResource, '')}\n`;
   const ctes = resources.map((resource) => `${cteName(resource.key)} as (\n${select(resource, '  ')}\n)`);
   return `with ${ctes.join(',\n')}\n\nselect *\nfrom ${cteName((resources[0] as TemplateResource).key)}\n`;
+}
+
+/**
+ * Whether a name in the SQL is this Key: in full, or without its project when that is the project the query
+ * runs in. In any case: the Key is in lower case, and BigQuery itself tells a name in the wrong case.
+ */
+export function names(written: string, key: string, project: string): boolean {
+  const name = written.toLowerCase();
+  if (name === key) return true;
+  const [keyProject, ...rest] = key.split('.');
+  return keyProject === project.toLowerCase() && name === rest.join('.');
+}
+
+/**
+ * The SQL with every table that names one of these Resources written as BigQuery knows it: its full name in
+ * its own case, quoted (DEC-SR-44). Data Hub knows a Resource whatever the case it is written in; BigQuery
+ * names are case-sensitive, so this is the SQL it gets. Everything else stays as it was written.
+ */
+export function inOwnCase(sql: string, resources: readonly { key: string; fullName: string }[], project: string): string {
+  const named = tablesOf(sql)
+    .tables.flatMap((table) => {
+      const resource = resources.find((candidate) => names(table.name, candidate.key, project));
+      return resource && table.name !== resource.fullName ? [{ table, fullName: resource.fullName }] : [];
+    })
+    .toSorted((a, b) => b.table.start - a.table.start);
+  return named.reduce((text, { table, fullName }) => `${text.slice(0, table.start)}\`${fullName}\`${text.slice(table.end)}`, sql);
 }
 
 /** Words that may follow a table where a `where` can still go in between. */

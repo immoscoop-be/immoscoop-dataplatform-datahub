@@ -24,6 +24,8 @@ variables {
     "9367"  = "322951"
     "17121" = "739003"
   }
+
+  mail_from = "Data Hub uat <datahub@immoscoop.be>"
 }
 
 run "every_service_runs_the_shared_image_of_this_code" {
@@ -123,7 +125,12 @@ run "only_the_right_service_reads_each_secret" {
   }
 
   assert {
-    condition     = length(google_secret_manager_secret_iam_member.reader) == 3
+    condition     = google_secret_manager_secret_iam_member.reader["datahub-slack-bot-token"].role == "roles/secretmanager.secretAccessor"
+    error_message = "catalogue must be able to read the bot token of the Slack app (DEC-LN-05)."
+  }
+
+  assert {
+    condition     = length(google_secret_manager_secret_iam_member.reader) == 4
     error_message = "Each secret has exactly one reader."
   }
 }
@@ -716,5 +723,174 @@ run "the_scheduler_checks_every_lens_once_a_day_with_its_own_token" {
   assert {
     condition     = google_cloud_scheduler_job.lens_check.schedule == "17 5 * * *" && google_cloud_scheduler_job.lens_check.time_zone == "Europe/Brussels"
     error_message = "Every Lens is checked once a day, early in the morning in Belgium, so a Broken one is found within a day (DEC-LE-20)."
+  }
+}
+
+run "catalogue_has_query_check_what_reads_a_resource_that_changed" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["catalogue"]
+    override_during = plan
+    values = {
+      email  = "datahub-catalogue@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-catalogue@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_QUERY_URL=https://datahub-query-123456789.europe-west1.run.app")
+    error_message = "catalogue must know where query is, to have it check what reads a Resource that changed (FR-SR-52)."
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["query"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_CATALOGUE_SERVICE_ACCOUNT=datahub-catalogue@test-project.iam.gserviceaccount.com")
+    error_message = "query must know catalogue's service account, the only caller besides the scheduler that starts a check (FR-SR-52)."
+  }
+}
+
+run "identity_tells_once_a_day_whose_excel_key_expires_and_knows_who_calls" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.scheduler
+    override_during = plan
+    values = {
+      email  = "datahub-scheduler@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-scheduler@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition = (
+      google_cloud_scheduler_job.excel_keys.http_target[0].http_method == "POST" &&
+      endswith(google_cloud_scheduler_job.excel_keys.http_target[0].uri, "/internal/excel-keys/expiring") &&
+      google_cloud_scheduler_job.excel_keys.http_target[0].oidc_token[0].service_account_email == "datahub-scheduler@test-project.iam.gserviceaccount.com" &&
+      startswith(google_cloud_scheduler_job.excel_keys.http_target[0].uri, google_cloud_scheduler_job.excel_keys.http_target[0].oidc_token[0].audience)
+    )
+    error_message = "Once a day the scheduler asks identity, with a token of its own for identity's address, which Excel keys expire within a month (FR-PL-03)."
+  }
+
+  assert {
+    condition = alltrue([
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_QUERY_SERVICE_ACCOUNT"),
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_SCHEDULER_SERVICE_ACCOUNT"),
+      contains([for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.name], "DATAHUB_CATALOGUE_URL"),
+      contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : env.name], "DATAHUB_IDENTITY_SERVICE_ACCOUNT"),
+    ])
+    error_message = "identity must know who exchanges a key (query) and who asks which expire (the scheduler), and catalogue who tells it about a key (identity) (TR-PF-07)."
+  }
+}
+
+run "catalogue_sends_mail_from_one_fixed_address_and_nothing_else_does" {
+  command = plan
+
+  assert {
+    condition     = google_compute_address.egress.address_type == "EXTERNAL" && google_compute_router_nat.datahub.nat_ip_allocate_option == "MANUAL_ONLY"
+    error_message = "The traffic leaves from one static address of Data Hub, never one Google picks, as the SMTP relay of Workspace admits that address only (DEC-PF-31)."
+  }
+
+  assert {
+    condition     = google_compute_router_nat.datahub.source_subnetwork_ip_ranges_to_nat == "LIST_OF_SUBNETWORKS" && google_compute_subnetwork.datahub.private_ip_google_access
+    error_message = "Only the network of Data Hub goes out through the NAT; Google's own APIs stay on Google's network."
+  }
+
+  assert {
+    condition     = google_cloud_run_v2_service.service["catalogue"].template[0].vpc_access[0].egress == "ALL_TRAFFIC"
+    error_message = "All traffic of catalogue goes out through the fixed address, the mail to the relay included (DEC-PF-31)."
+  }
+
+  assert {
+    condition     = alltrue([for name, service in google_cloud_run_v2_service.service : length(service.template[0].vpc_access) == 0 if name != "catalogue"])
+    error_message = "Only catalogue sends notifications; the other services keep the network of Cloud Run."
+  }
+}
+
+run "catalogue_notifies_by_mail_and_slack_and_asks_identity_who_as_itself" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.service["catalogue"]
+    override_during = plan
+    values = {
+      email  = "datahub-catalogue@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-catalogue@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  override_resource {
+    target          = google_secret_manager_secret.secret["datahub-slack-bot-token"]
+    override_during = plan
+    values = {
+      id = "projects/test-project/secrets/datahub-slack-bot-token"
+    }
+  }
+
+  assert {
+    condition = alltrue([
+      for pair in [
+        "DATAHUB_SMTP_HOST=smtp-relay.gmail.com",
+        "DATAHUB_SMTP_PORT=587",
+        "DATAHUB_MAIL_FROM=Data Hub uat <datahub@immoscoop.be>",
+        "DATAHUB_DATA_TEAM_EMAIL=datahub-datateam@thenextimmoscoop.be",
+        "DATAHUB_WEB_URL=https://datahub-web-123456789.europe-west1.run.app",
+        "DATAHUB_SLACK_BOT_TOKEN=projects/test-project/secrets/datahub-slack-bot-token/versions/latest",
+      ] : contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : "${env.name}=${env.value}"], pair)
+    ])
+    error_message = "catalogue sends through the relay of Workspace from an address of Immoscoop, to the group of the Data Team, links to the web app and reads the Slack token from its secret (DEC-PF-31, DEC-LN-03, DEC-LN-05)."
+  }
+
+  assert {
+    condition = (
+      [for env in google_cloud_run_v2_service.service["identity"].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_SERVICE_ACCOUNT"]
+      == ["datahub-catalogue@test-project.iam.gserviceaccount.com"]
+    )
+    error_message = "identity tells who to notify to the service account of catalogue, and to no one else (DEC-LN-07)."
+  }
+}
+
+run "mail_comes_from_an_address_of_a_workspace_domain" {
+  command = plan
+
+  variables {
+    mail_from = "Data Hub <noreply@example.com>"
+  }
+
+  expect_failures = [var.mail_from]
+}
+
+run "the_scheduler_has_catalogue_send_what_is_left_every_few_minutes" {
+  command = plan
+
+  override_resource {
+    target          = google_service_account.scheduler
+    override_during = plan
+    values = {
+      email  = "datahub-scheduler@test-project.iam.gserviceaccount.com"
+      member = "serviceAccount:datahub-scheduler@test-project.iam.gserviceaccount.com"
+    }
+  }
+
+  assert {
+    condition     = google_cloud_scheduler_job.notifications.http_target[0].http_method == "POST" && google_cloud_scheduler_job.notifications.http_target[0].uri == "https://datahub-catalogue-123456789.europe-west1.run.app/internal/notifications/deliver"
+    error_message = "The scheduler starts a delivery round at catalogue (DEC-LN-02)."
+  }
+
+  assert {
+    condition = (
+      google_cloud_scheduler_job.notifications.http_target[0].oidc_token[0].service_account_email == "datahub-scheduler@test-project.iam.gserviceaccount.com" &&
+      google_cloud_scheduler_job.notifications.http_target[0].oidc_token[0].audience == "https://datahub-catalogue-123456789.europe-west1.run.app"
+    )
+    error_message = "The scheduler calls with a Google ID token of its own, for catalogue's own address, which catalogue checks itself (TR-PF-14)."
+  }
+
+  assert {
+    condition     = contains([for env in google_cloud_run_v2_service.service["catalogue"].template[0].containers[0].env : "${env.name}=${env.value}"], "DATAHUB_SCHEDULER_SERVICE_ACCOUNT=datahub-scheduler@test-project.iam.gserviceaccount.com")
+    error_message = "catalogue must know the scheduler, to check who starts a delivery round."
+  }
+
+  assert {
+    condition     = google_cloud_scheduler_job.notifications.schedule == "*/5 * * * *"
+    error_message = "What did not go out at once goes within five minutes; a notification is never held for a digest (DEC-LN-02)."
   }
 }

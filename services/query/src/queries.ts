@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { type Kysely, sql } from 'kysely';
-import type { NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
+import type { Missing, NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
 import type { Parameter } from './parameters.js';
 
 /** Who asks: the fixed Google ID and name from the Access Token, and whether they are in the Data Team. */
@@ -34,16 +34,46 @@ export interface Query {
   createdAt: Date;
   updatedAt: Date;
   lastRunAt: Date | null;
+  /** What it misses while it is Broken (FR-SR-53). */
+  broken: Missing | null;
+  /** Its SQL as BigQuery reads it, and its Parameters, kept at its last Pre-flight that passed, for a dry run without its User (DEC-SR-44). */
+  checkSql: string | null;
+  checkParameters: Parameter[];
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
-export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt'> {
+export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt' | 'broken'> {
   resources: Pick<NamedResource, 'id' | 'displayName'>[];
   runs: number;
+  /** Whether the User who asks hid it from their panel (DEC-UX-138). */
+  hidden: boolean;
+}
+
+/** What the panel of Query leaves out until its chip is on (DEC-UX-137): a hidden query counts as hidden, whatever its kind. */
+export type Shown = 'previews' | 'lenses' | 'hidden';
+export const SHOWN: readonly Shown[] = ['previews', 'lenses', 'hidden'];
+
+/** Which queries to list: since and before when they last ran, which of those left out, matching which words. */
+export interface ListOptions {
+  from?: Date;
+  to?: Date;
+  /** Without it, every query; with it, the plain queries and these. */
+  show?: readonly Shown[];
+  search?: string;
+  limit?: number;
+}
+
+/** How many queries a day holds in the time zone of the User, by what the panel shows them as (DEC-UX-139). */
+export interface QueryDay {
+  day: string;
+  queries: number;
+  previews: number;
+  lenses: number;
+  hidden: number;
 }
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44): its last run and what that read. */
-export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt'> {
+export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt' | 'broken'> {
   runs: number;
   lastRead: number | null;
   lastEstimate: number;
@@ -103,7 +133,13 @@ export interface NewQuery {
 export interface Queries {
   create(fields: NewQuery): Promise<Query>;
   /** The queries of the User, or with all, everyone's (DEC-LN-01): the last run or made first. */
-  list(viewer: Viewer, all: boolean): Promise<QueryItem[]>;
+  list(viewer: Viewer, all: boolean, options?: ListOptions): Promise<QueryItem[]>;
+  /** How many queries each day holds, in this time zone, newest day first (DEC-UX-139). */
+  days(viewer: Viewer, all: boolean, timeZone: string): Promise<QueryDay[]>;
+  /** Hides a query from the panel of this User, or shows it again (DEC-UX-138). */
+  hide(queryId: string, userId: string, hidden: boolean): Promise<void>;
+  /** Whether this User hid the query. */
+  hidden(queryId: string, userId: string): Promise<boolean>;
   get(id: string): Promise<Query | undefined>;
   update(id: string, fields: Partial<Pick<Query, 'name' | 'question' | 'sql' | 'parameters'>>): Promise<Query | undefined>;
   /** The previews of a Resource by this User, made the first time they are asked for (FR-SR-38). */
@@ -135,6 +171,17 @@ export interface Queries {
   runs(queryId: string, options: { before?: number; limit: number }): Promise<Run[]>;
   /** How many runs a query has. */
   runCount(queryId: string): Promise<number>;
+  /** It misses a table or a column (`BRK-001`), or works again (`BRK-002`); `changed` says whether that is news (FR-SR-53). */
+  breaks(id: string, missing: Omit<Missing, 'since'>): Promise<{ query: Query; changed: boolean }>;
+  works(id: string): Promise<{ query: Query; changed: boolean }>;
+  /** Keeps its SQL as BigQuery reads it, with its Parameters, for a dry run without its User (DEC-SR-44). */
+  keepCheck(id: string, checkSql: string, parameters: readonly Parameter[]): Promise<void>;
+  /**
+   * The queries Data Hub can dry-run without their User: every one with its SQL kept, or those that read one of
+   * these Resources (FR-SR-52). A Preview is made afresh from its Resource each time, and the runs of a Lens
+   * follow their Lens, so neither is checked.
+   */
+  toCheck(resourceIds?: readonly string[]): Promise<Query[]>;
 }
 
 /** The Query ID of a run: the day and six random hex digits, such as q-20261029-4c2e1a (FR-LN-05). */
@@ -188,14 +235,29 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .executeTakeFirstOrThrow();
     },
 
-    async list(viewer, all) {
+    async list(viewer, all, { from, to, show, search, limit = 200 } = {}) {
+      const hidden = sql<boolean>`exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id})`;
+      const words = search?.trim().toLowerCase();
       const rows = await db
         .selectFrom('queries as q')
-        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt'])
+        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
+        .select(hidden.as('hidden'))
         .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
+        .$if(from !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) >= ${from}`))
+        .$if(to !== undefined, (query) => query.where(sql<boolean>`coalesce(q.last_run_at, q.created_at) < ${to}`))
+        // The plain queries, and of what the panel leaves out only what is asked for (DEC-UX-137).
+        .$if(show !== undefined, (query) =>
+          query.where(
+            sql<boolean>`case when ${hidden} then ${(show ?? []).includes('hidden')} when q.kind = 'preview' then ${(show ?? []).includes('previews')} when q.kind = 'lens' then ${(show ?? []).includes('lenses')} else true end`,
+          ),
+        )
+        .$if(!!words, (query) => {
+          const like = `%${(words ?? '').replace(/[\\%_]/g, (character) => `\\${character}`)}%`;
+          return query.where(sql<boolean>`(lower(q.name) like ${like} or lower(q.owner_name) like ${like} or lower(q.resources::text) like ${like})`);
+        })
         .orderBy(sql`coalesce(q.last_run_at, q.created_at)`, 'desc')
-        .limit(200)
+        .limit(Math.min(Math.max(limit, 1), 200))
         .execute();
       return rows.map((row) => ({
         id: row.id,
@@ -205,9 +267,38 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         lensOf: row.lensOf,
         createdAt: row.createdAt,
         lastRunAt: row.lastRunAt,
+        broken: row.broken,
         resources: row.resources.map(({ id, displayName }) => ({ id, displayName })),
         runs: Number(row.runs ?? 0),
+        hidden: row.hidden === true,
       }));
+    },
+
+    async days(viewer, all, timeZone) {
+      const { rows } = await sql<{ day: string; queries: string; previews: string; lenses: string; hidden: string }>`
+        with listed as (
+          select to_char((coalesce(q.last_run_at, q.created_at) at time zone ${timeZone})::date, 'YYYY-MM-DD') as day,
+            case when exists (select 1 from hidden_queries h where h.query_id = q.id and h.user_id = ${viewer.id}) then 'hidden'
+              when q.kind = 'preview' then 'previews' when q.kind = 'lens' then 'lenses' else 'queries' end as shown
+          from queries q
+          where ${all} or q.owner_id = ${viewer.id}
+        )
+        select day,
+          count(*) filter (where shown = 'queries') as queries,
+          count(*) filter (where shown = 'previews') as previews,
+          count(*) filter (where shown = 'lenses') as lenses,
+          count(*) filter (where shown = 'hidden') as hidden
+        from listed group by day order by day desc`.execute(db);
+      return rows.map((row) => ({ day: row.day, queries: Number(row.queries), previews: Number(row.previews), lenses: Number(row.lenses), hidden: Number(row.hidden) }));
+    },
+
+    async hide(queryId, userId, hidden) {
+      if (hidden) await db.insertInto('hiddenQueries').values({ queryId, userId }).onConflict((conflict) => conflict.columns(['queryId', 'userId']).doNothing()).execute();
+      else await db.deleteFrom('hiddenQueries').where('queryId', '=', queryId).where('userId', '=', userId).execute();
+    },
+
+    async hidden(queryId, userId) {
+      return (await db.selectFrom('hiddenQueries').select('queryId').where('queryId', '=', queryId).where('userId', '=', userId).executeTakeFirst()) !== undefined;
     },
 
     get: queryById,
@@ -306,7 +397,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
           (join) => join.onRef('counted.queryId', '=', 'q.id'),
         )
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
-        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
+        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
@@ -319,6 +410,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         kind: row.kind,
         lensOf: row.lensOf,
         lastRunAt: row.lastRunAt,
+        broken: row.broken,
         runs: Number(row.runs),
         lastRead: row.processedBytes === null ? null : Number(row.processedBytes),
         lastEstimate: Number(row.estimatedBytes),
@@ -411,6 +503,51 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
     async runCount(queryId) {
       const row = await db.selectFrom('runs').select(sql<string>`count(*)`.as('count')).where('queryId', '=', queryId).where('purpose', '=', 'run').executeTakeFirstOrThrow();
       return Number(row.count);
+    },
+
+    async breaks(id, missing) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('queries').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
+        if (row.broken) return { query: row, changed: false };
+        const broken: Missing = { ...missing, since: new Date().toISOString() };
+        const query = await trx.updateTable('queries').set({ broken: JSON.stringify(broken) }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+        await trx.insertInto('queryLog').values({ queryId: id, logId: 'BRK-001', params: JSON.stringify({ missing: missing.name, run: '' }) }).execute();
+        return { query, changed: true };
+      });
+    },
+
+    async works(id) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('queries').selectAll().where('id', '=', id).forUpdate().executeTakeFirstOrThrow();
+        if (!row.broken) return { query: row, changed: false };
+        const query = await trx.updateTable('queries').set({ broken: null }).where('id', '=', id).returningAll().executeTakeFirstOrThrow();
+        await trx.insertInto('queryLog').values({ queryId: id, logId: 'BRK-002', params: JSON.stringify({ restored: row.broken.name, run: '' }) }).execute();
+        return { query, changed: true };
+      });
+    },
+
+    async keepCheck(id, checkSql, parameters) {
+      const kept = JSON.stringify(parameters);
+      await db
+        .updateTable('queries')
+        .set({ checkSql, checkParameters: kept })
+        .where('id', '=', id)
+        .where(sql<boolean>`(check_sql is distinct from ${checkSql} or check_parameters <> ${kept}::jsonb)`)
+        .execute();
+    },
+
+    async toCheck(resourceIds) {
+      if (resourceIds && resourceIds.length === 0) return [];
+      return db
+        .selectFrom('queries')
+        .selectAll()
+        .where('kind', '=', 'query')
+        .where('checkSql', 'is not', null)
+        .$if(resourceIds !== undefined, (query) =>
+          query.where((eb) => eb.or((resourceIds ?? []).map((id) => sql<boolean>`resources @> ${JSON.stringify([{ id }])}::jsonb`))),
+        )
+        .orderBy('id')
+        .execute();
     },
   };
 }

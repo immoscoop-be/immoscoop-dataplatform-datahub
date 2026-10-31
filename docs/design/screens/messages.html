@@ -2,6 +2,7 @@
 <!--
   Screen: the Message Centre (DEC-UX-29)
   "Messages" in the rail, with the number unread. The panel filters: For you, Unread, Written by you, Everything you may see;
+  it opens on Unread, which says "Nothing to catch up on" when it is empty (DEC-UX-136);
   by kind, Question, Remark, Signal and what Data Hub tells you; and by the kind of object the Messages are on.
   The list: each Message with its object, its kind and state, who and when, and a first line; the one opened shows on the
   right with its replies and "Open in context" (FR-CV-09); the Request and the Question on a Lens open there. Opened here: a Request on a very large Lens (FR-CV-08), with
@@ -26,6 +27,10 @@
 <link rel="stylesheet" href="../tokens.css">
 <link rel="stylesheet" href="../base.css">
 <title>Data Hub — Messages</title>
+<style>
+  /* It opens on Unread (DEC-UX-136): the Messages already read are under For you. */
+  .mc-list .mc-item:not(.unread) { display: none; }
+</style>
 </head>
 <body>
 <div class="app panel-open">
@@ -36,6 +41,7 @@
   <a class="nav-btn" href="#" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
   <a class="nav-btn active" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread" aria-current="page"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span><span class="flare top"></span><span class="flare bottom"></span></a>
   <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin" href="admin-webhooks.html" data-label="Admin" aria-label="Admin, for the Data Team" data-for="datateam"><i class="ph-fill ph-toolbox"></i></a>
   <div class="spacer"></div>
   <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
   <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
@@ -47,8 +53,8 @@
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
   <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search Messages"></label>
-  <a class="mc-filter on" href="#" aria-current="page"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
-  <a class="mc-filter" href="#"><i class="ph ph-circle"></i><span>Unread</span><span class="count">3</span></a>
+  <a class="mc-filter" href="#"><i class="ph ph-tray"></i><span>For you</span><span class="count">6</span></a>
+  <a class="mc-filter on" href="#" aria-current="page"><i class="ph ph-circle"></i><span>Unread</span><span class="count">3</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-pencil-simple-line"></i><span>Written by you</span><span class="count">1</span></a>
   <a class="mc-filter" href="#"><i class="ph ph-globe-simple"></i><span>Everything you may see</span></a>
   <div class="panel-label">Kind</div>
@@ -67,13 +73,12 @@
 <main class="main">
 <div class="breadcrumb">Messages</div>
 <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px">
- <div style="flex:1"><h1 class="page-title">For you</h1>
- <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="owner">Messages on what the credit team owns, on what you wrote or answered, and what Data Hub tells you.</p>
- <p class="meta" style="display:block;margin-top:4px;line-height:1.5" data-for="datateam">The requests waiting for the Data Team, the signals, and what Data Hub tells the Data Team.</p></div>
+ <div style="flex:1"><h1 class="page-title">Unread</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">The Messages for you that moved since you last read them.</p></div>
 </div>
 <div class="mc">
  <section class="card mc-list" aria-label="Messages" data-group="msg">
-  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">6</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
+  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">5</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
   <a class="mc-item on unread" href="#" data-target="request" role="tab" aria-selected="true">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">

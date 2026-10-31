@@ -66,6 +66,11 @@ describe.skipIf(!url)('catalogue migrations', () => {
       ['0009-requests', 'Success'],
       ['0010-search-words', 'Success'],
       ['0011-conversations', 'Success'],
+      ['0012-full-name', 'Success'],
+      ['0013-notifications', 'Success'],
+      ['0014-learning-progress', 'Success'],
+      ['0015-folders', 'Success'],
+      ['0016-excel-key-messages', 'Success'],
     ]);
 
     expect(await count('collections')).toBe(0);
@@ -82,5 +87,9 @@ describe.skipIf(!url)('catalogue migrations', () => {
       values ('Leads', 'Leads.', 'g1', 'g1@thenextimmoscoop.be', 'G1', 'u1', 'An')`.execute(admin.db)).rejects.toThrow(/icon/);
     await expect(sql`update resources set collection_id = '7c0b5a52-3f4a-4bf0-9a49-2f3f5c1d9a10'`.execute(admin.db)).rejects.toThrow(/foreign key/);
     await expect(sql`truncate collection_log`.execute(admin.db)).rejects.toThrow(/append-only/);
+    // A Message from before is not notified; one written now is, from the moment it is written (DEC-LN-02).
+    expect(await count('notifications')).toBe(0);
+    await sql`insert into messages (type, subject_kind, subject_id, state) values ('MSG-RES-01', 'resource', 'r-2', 'waiting')`.execute(admin.db);
+    expect(await count('notifications')).toBe(1);
   });
 });

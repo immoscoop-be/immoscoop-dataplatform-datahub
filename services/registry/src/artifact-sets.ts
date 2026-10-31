@@ -88,9 +88,10 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
     /**
      * Writes the rows of a processed set and, in the same transaction, makes it the Current Version of
      * its project, unless the project already has one from a later run (TR-AR-04). Afterwards only the
-     * Current Version and the one before it keep their rows. Tells whether the set became current.
+     * Current Version and the one before it keep their rows. Tells whether the set became current and, when
+     * it took over from another, which set was current before it, to compare the two (FR-AR-11).
      */
-    async save(set: ClaimedSet, normalised: NormalisedSet): Promise<{ current: boolean }> {
+    async save(set: ClaimedSet, normalised: NormalisedSet): Promise<{ current: boolean; previous: number | null }> {
       return db.transaction().execute(async (trx) => {
         await deleteRows(trx, [set.id]);
         await insertRows(trx, set.id, normalised);
@@ -114,7 +115,9 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
         // The Current Version never goes back in time (EC-AR-01).
         const current = currentRun === undefined || BigInt(set.runId) >= BigInt(currentRun);
         let keep = [project.currentSetId, project.previousSetId];
+        let previous: number | null = null;
         if (current && project.currentSetId !== set.id) {
+          previous = project.currentSetId;
           await trx
             .updateTable('projects')
             .set({ currentSetId: set.id, previousSetId: project.currentSetId })
@@ -140,7 +143,7 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
           trx,
           others.map((other) => other.id),
         );
-        return { current };
+        return { current, previous };
       });
     },
   };

@@ -2,7 +2,7 @@ import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { NamedResource } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
-import { comparedWith, filtersOn, recent, tablesOf, withFilter } from './sql.js';
+import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
 
 /** The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides (DEC-SR-29). */
 export interface Thresholds {
@@ -72,10 +72,10 @@ const REQUIRES_FILTER = /without a filter over column\(s\) '([^']+)'/i;
  */
 export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => number = Date.now) {
   const cache = new Map<string, { tables: string[]; until: number }>();
-  return async (resource: Pick<QueryResource, 'key' | 'partition'>): Promise<string[]> => {
+  return async (resource: Pick<QueryResource, 'key' | 'fullName' | 'partition'>): Promise<string[]> => {
     const cached = cache.get(resource.key);
     if (cached && cached.until > now()) return cached.tables;
-    const all = `select * from \`${resource.key}\``;
+    const all = `select * from \`${resource.fullName}\``;
     let referenced: string[];
     try {
       referenced = (await bigquery.dryRun(all)).referencedTables;
@@ -83,7 +83,7 @@ export function createBeneath(bigquery: BigQuery, ttl = 10 * 60_000, now: () => 
       if (!(error instanceof BigQueryRefused) || !resource.partition) throw error;
       referenced = (await bigquery.dryRun(`${all} where ${resource.partition.field} is null`)).referencedTables;
     }
-    const tables = [resource.key, ...referenced];
+    const tables = [resource.fullName, ...referenced];
     cache.set(resource.key, { tables, until: now() + ttl });
     return tables;
   };
@@ -95,13 +95,6 @@ function fixFor(sql: string, resource: QueryResource, project: string): string |
   const { field, unit } = resource.partition;
   const filter = recent(field, resource.fields.find((candidate) => candidate.name === field)?.dataType ?? null, unit);
   return filter ? withFilter(sql, (name) => names(name, resource.key, project), filter) : null;
-}
-
-/** Whether a name in the SQL is this Key: in full, or without its project when that is the project the query runs in. */
-function names(written: string, key: string, project: string): boolean {
-  if (written === key) return true;
-  const [keyProject, ...rest] = key.split('.');
-  return keyProject === project && written === rest.join('.');
 }
 
 /**
@@ -158,9 +151,11 @@ export async function preflight(
   }
   if (problems.length > 0) return done({ problems });
 
+  // BigQuery gets each Resource by its full name in its own case, however it is written (DEC-SR-44).
+  const resolved = [...read];
   let dry: Awaited<ReturnType<BigQuery['dryRun']>>;
   try {
-    dry = await bigquery.dryRun(bound.sql, bound.parameters);
+    dry = await bigquery.dryRun(inOwnCase(bound.sql, resolved, project), bound.parameters);
   } catch (error) {
     if (!(error instanceof BigQueryRefused)) throw error;
     const required = REQUIRES_FILTER.exec(error.message);
@@ -177,9 +172,9 @@ export async function preflight(
   if (dry.statementType !== 'SELECT') return done({ problems: [{ kind: 'notSelect', statementType: dry.statementType }] });
 
   // And again by what BigQuery reads: only its Resources, or the tables beneath them.
-  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat());
+  const allowed = new Set((await Promise.all([...read].map((resource) => beneath(resource)))).flat().map((table) => table.toLowerCase()));
   for (const table of dry.referencedTables) {
-    if (!allowed.has(table)) problems.push({ kind: 'outside', name: table, start: null, end: null });
+    if (!allowed.has(table.toLowerCase())) problems.push({ kind: 'outside', name: table, start: null, end: null });
   }
 
   const warnings: Warning[] = [];
@@ -190,7 +185,7 @@ export async function preflight(
     if (resource.partitionFilter === 'none') {
       // What it would read with the filter: one more dry run, which costs nothing.
       const filtered = fix ? bind(fix, parameters) : null;
-      const bytesWithFilter = filtered ? await bigquery.dryRun(filtered.sql, filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
+      const bytesWithFilter = filtered ? await bigquery.dryRun(inOwnCase(filtered.sql, resolved, project), filtered.parameters).then((dryRun) => dryRun.bytes, () => null) : null;
       warnings.push({ kind: 'noPartitionFilter', resource: named, column: resource.partition.field, fix, bytesWithFilter });
     }
     else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });

@@ -101,6 +101,10 @@
   .main { --card: var(--surface-solid); flex: 1; min-width: 0; background: var(--surface-glass); border-radius: var(--radius-xl); padding: 26px 30px; overflow: auto; }
   @media (hover: hover) { .app:has(:global(.panel:hover)) .main { --card: var(--surface-soft); } }
   .app[data-focus='panel'] .main { --card: var(--surface-soft); }
+  /* Out of focus, the main area fades whole, its text with it (DEC-UX-146). */
+  .main > :global(*) { transition: opacity var(--motion-focus) var(--delay-focus); }
+  @media (hover: hover) { .app:has(:global(.panel:hover)) .main > :global(*) { opacity: var(--opacity-out-of-focus); } }
+  .app[data-focus='panel'] .main > :global(*) { opacity: var(--opacity-out-of-focus); }
   .main.blur { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
   .narrow { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; }
   .narrow p { margin: 18px 0 0; max-width: 360px; font-size: var(--text-body); line-height: 1.6; color: var(--text-secondary); }

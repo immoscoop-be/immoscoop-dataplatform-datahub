@@ -41,6 +41,7 @@ const PHOTO = {
   alpenglow: new URL('../../../../docs/design/backgrounds/photos/light/alpenglow.jpg', import.meta.url).href,
   spring: new URL('../../../../docs/design/backgrounds/photos/light/spring-snow.jpg', import.meta.url).href,
   village: new URL('../../../../docs/design/backgrounds/photos/dark/village-lights.jpg', import.meta.url).href,
+  peaks: new URL('../../../../docs/design/backgrounds/photos/light/peaks.jpg', import.meta.url).href,
 };
 
 /** Every background, in the order My page offers them: the gradient, the flowing ones, then the pictures. */
@@ -62,6 +63,7 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'fusilli', kind: 'picture', themes: ['light'], name: 'Fusilli', picture: PAINTED.fusilli, cover: true },
   { id: 'piste', kind: 'picture', themes: ['light'], name: 'Fresh piste', picture: PAINTED.piste, cover: true, previewPosition: '50% 35%' },
   { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: PAINTED.concrete, cover: true },
+  { id: 'peaks', kind: 'picture', themes: ['light'], name: 'Sunlit peaks', picture: PHOTO.peaks, cover: true, previewPosition: '50% 40%' },
   { id: 'village', kind: 'picture', themes: ['dark'], name: 'Lights on', picture: PAINTED.village },
 ];
 

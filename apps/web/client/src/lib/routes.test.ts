@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextPath, editLensPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route } from './routes.js';
+import { contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route, seePath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -25,6 +25,8 @@ describe('the addresses of the web app', () => {
     expect(route('/collections/c-1')).toMatchObject({ kind: 'collection', id: 'c-1', section: { id: 'collections' } });
     expect(route('/collections/new')).toMatchObject({ kind: 'newCollection', section: { id: 'collections' } });
     expect(route('/collections/c-1/log')).toEqual({ kind: 'notFound' });
+    expect(route('/collections/c-1/folders/f-1')).toMatchObject({ kind: 'folder', collection: 'c-1', id: 'f-1', section: { id: 'collections' } });
+    expect(route('/collections/c-1/folders')).toEqual({ kind: 'notFound' });
   });
 
   it('has a page per query, and a new query, also on a Resource, in the section Query (FR-SR-41, FR-SR-46)', () => {
@@ -63,13 +65,24 @@ describe('the addresses of the web app', () => {
     expect(route('/lenses/7c1f/edit/messages')).toEqual({ kind: 'notFound' });
   });
 
+  it('has a page per Learning Card by its number, See it on its own, and its Messages (FR-LR-06, FR-LR-27, FR-LR-29)', () => {
+    expect(route(learningPath('K3.4'))).toMatchObject({ kind: 'learningCard', id: 'K3.4', section: { id: 'learning' } });
+    expect(route(seePath('1.2.2'))).toMatchObject({ kind: 'learningSee', id: '1.2.2', section: { id: 'learning' } });
+    expect(route(messagesOnPath({ kind: 'learningCard', id: 'K3.4' }))).toMatchObject({ kind: 'learningCard', id: 'K3.4', messages: true });
+    expect(route(contextPath({ kind: 'learningCard', id: '1.2.2' }, 'm-5'))).toMatchObject({ kind: 'learningCard', id: '1.2.2', message: 'm-5', section: { id: 'learning' } });
+    expect(route('/learning/1.2.2/see/messages')).toEqual({ kind: 'notFound' });
+    expect(route('/learning/1.2.2/check')).toEqual({ kind: 'notFound' });
+    expect(route('/learning/%E0%A4%A')).toEqual({ kind: 'notFound' });
+  });
+
   it('has My page, with the tabs Profile and Background (DEC-UX-84, DEC-UX-108)', () => {
     expect(route('/me')).toEqual({ kind: 'me', tab: 'profile' });
     expect(route('/me/background')).toEqual({ kind: 'me', tab: 'background' });
+    expect(route('/me/keys')).toEqual({ kind: 'me', tab: 'keys' });
   });
 
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {
-    for (const path of ['/me/profile', '/me/keys', '/collections/c-1/edit', '/lenses', '/x']) {
+    for (const path of ['/me/profile', '/me/tokens', '/collections/c-1/edit', '/lenses', '/x']) {
       expect([path, route(path)]).toEqual([path, { kind: 'notFound' }]);
     }
   });

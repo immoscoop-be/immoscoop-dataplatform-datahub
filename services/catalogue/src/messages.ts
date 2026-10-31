@@ -1,5 +1,6 @@
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import type { MessageKind, MessageType, SubjectKind } from '@datahub/contracts/messages';
+import { topicOf } from '@datahub/learning';
 import { type Kysely, type RawBuilder, type Selectable, sql, type SqlBool, type Transaction } from 'kysely';
 import type { Collection, Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
@@ -18,11 +19,15 @@ const idsWhere = (test: (type: MessageType) => boolean) => MESSAGE_CATALOGUE.fil
 export const WRITTEN = { question: 'MSG-CNV-01', remark: 'MSG-CNV-02', signal: 'MSG-CNV-03' } as const;
 export type WrittenKind = keyof typeof WRITTEN;
 
-/** The objects a User writes on from their page, and what each takes: a Signal is about data (FR-CV-07). */
+/**
+ * The objects a User writes on from their page, and what each takes: a Signal is about data (FR-CV-07). A
+ * Learning Card takes a Question or a Remark, for the Data Team, which writes the cards (FR-LR-06).
+ */
 export const WRITTEN_ON = {
   collection: ['question', 'remark'],
   resource: ['question', 'remark', 'signal'],
   lens: ['question', 'remark', 'signal'],
+  learningCard: ['question', 'remark'],
 } as const satisfies Partial<Record<SubjectKind, readonly WrittenKind[]>>;
 export type WrittenOn = keyof typeof WRITTEN_ON;
 
@@ -158,8 +163,29 @@ export interface Messages {
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
   grew(lensId: string, fields: { reads: number; threshold: number; partitions?: number }): Promise<{ id: string; sent: boolean }>;
+  /** What Data Hub tells the author of a Lens that grew into large, past 100 MB a run; it keeps running (MSG-LEN-02). */
+  grewLarge(lensId: string, fields: { reads: number; threshold: number }): Promise<{ id: string }>;
+  /**
+   * What Data Hub tells when a query or a Lens became Broken (MSG-QRY-02, MSG-LEN-05): who made the query, or the
+   * Owner Unit of the Lens, with what no longer exists (FR-SR-52). A query's Message is for its owner only.
+   */
+  broken(subject: { kind: 'query'; id: string; name: string; ownerId: string } | { kind: 'lens'; id: string }, fields: BrokenFields): Promise<{ id: string }>;
+  /** The query or Lens works again: its Message on being Broken says so, and is new again for whom it is for. */
+  worksAgain(subject: { kind: 'query' | 'lens'; id: string }): Promise<{ id: string } | null>;
   /** Keeps what query tells about a Lens. */
   keepLens(id: string, facts: LensFacts): Promise<void>;
+  /** What identity tells about the Excel key of a User: it expires within a month, or the Data Team revoked it (FR-PL-03). */
+  keyNotice(notice: KeyNotice): Promise<{ id: string }>;
+}
+
+/** What identity tells about an Excel key (MSG-KEY-01, MSG-KEY-02): only its User sees the Message. */
+export interface KeyNotice {
+  type: 'MSG-KEY-01' | 'MSG-KEY-02';
+  keyId: string;
+  userId: string;
+  name: string;
+  expires?: string;
+  actor?: string;
 }
 
 type Row = Selectable<CatalogueDatabase['messages']>;
@@ -169,15 +195,27 @@ const kindOf = (type: string): MessageKind => TYPES.get(type)?.kind ?? 'dataHub'
 const LIMIT = 200;
 const list = (values: Iterable<string>) => sql`${[...values]}::text[]`;
 
+/** What no longer exists, in a Message about a Broken query or Lens (MSG-QRY-02, MSG-LEN-05). */
+export interface BrokenFields {
+  /** The day it was found, `YYYY-MM-DD`. */
+  since: string;
+  missing: { kind: 'resource' | 'column'; resource: string; column?: string }[];
+}
+
 export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
   /** Whether the viewer sees the object of a Message: a query only by whoever wrote on it, and the Data Team. */
-  function seesRow(sight: Sight, row: Pick<Row, 'subjectKind' | 'subjectId' | 'writerId'>): boolean {
+  function seesRow(sight: Sight, row: Pick<Row, 'subjectKind' | 'subjectId' | 'writerId' | 'params'>): boolean {
+    // An Excel key is personal: the Messages about it are for its User alone (FR-PL-03).
+    if (row.subjectKind === 'excelKey') return row.params.user === sight.viewer.id;
     if (sight.viewer.dataTeam) return true;
-    if (row.subjectKind === 'query') return row.writerId === sight.viewer.id;
+    // A query: who wrote on it, and who made it, to whom Data Hub writes about it (MSG-QRY-02).
+    if (row.subjectKind === 'query') return row.writerId === sight.viewer.id || row.params.owner === sight.viewer.id;
     return sees(sight, row.subjectKind, row.subjectId);
   }
 
   function sees(sight: Sight, kind: SubjectKind, id: string): boolean {
+    // Every User may open every Learning Card, and so sees the Messages on it (DEC-LR-03, FR-LR-06).
+    if (kind === 'learningCard') return topicOf(id) !== undefined;
     if (sight.viewer.dataTeam) return true;
     if (kind === 'collection') return sight.collections.has(id);
     if (kind === 'resource') return sight.resources.has(id);
@@ -187,12 +225,15 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
 
   /** The first Messages of conversations on objects the viewer sees (FR-CV-05). */
   function visible(sight: Sight): RawBuilder<SqlBool> {
-    if (sight.viewer.dataTeam) return sql<SqlBool>`true`;
+    if (sight.viewer.dataTeam) return sql<SqlBool>`(m.subject_kind <> 'excelKey' or m.params->>'user' = ${sight.viewer.id})`;
     return sql<SqlBool>`(
+      (m.subject_kind = 'excelKey' and m.params->>'user' = ${sight.viewer.id})
+      or
       (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.collections)}))
       or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.resources)}))
       or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.lenses)}))
-      or (m.subject_kind = 'query' and m.writer_id = ${sight.viewer.id})
+      or (m.subject_kind = 'query' and (m.writer_id = ${sight.viewer.id} or m.params->>'owner' = ${sight.viewer.id}))
+      or m.subject_kind = 'learningCard'
     )`;
   }
 
@@ -210,7 +251,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.ownedResources)}))
         or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.ownedLenses)}))))
       or (${sight.viewer.dataTeam} and m.type = any(${list(TO_DATA_TEAM)}))
+      or (${sight.viewer.dataTeam} and m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'learningCard')
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'lens' and m.subject_id = any(${list(sight.authoredLenses)}))
+      or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
+      or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'excelKey' and m.params->>'user' = ${me})
     )`;
   }
 
@@ -275,6 +319,11 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         case 'lens': {
           const lens = lensMap.get(row.subjectId);
           return { kind: 'lens', id: row.subjectId, name: lens?.name ?? fallback, collection: inCollection(lens?.collectionId ?? null), exists: !!lens };
+        }
+        case 'learningCard': {
+          // Named by its number and its title, as the plan has them; the Data Team writes it (FR-LR-06).
+          const topic = topicOf(row.subjectId);
+          return { kind: 'learningCard', id: row.subjectId, name: topic ? `${topic.number} ${topic.title.en}` : fallback, collection: null, exists: !!topic };
         }
         default:
           return { kind: row.subjectKind, id: row.subjectId, name: fallback, collection: null, exists: true };
@@ -577,6 +626,55 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         .where('state', '=', 'waiting')
         .executeTakeFirstOrThrow();
       return { id: waiting.id, sent: false };
+    },
+
+    async broken(subject, { since, missing }) {
+      const params: Record<string, string> = { since, count: String(missing.length), missing: JSON.stringify(missing) };
+      const row =
+        subject.kind === 'query'
+          ? { type: 'MSG-QRY-02', subjectKind: 'query' as const, subjectId: subject.id, params: { ...params, subject: subject.name, owner: subject.ownerId } }
+          : { type: 'MSG-LEN-05', subjectKind: 'lens' as const, subjectId: subject.id, params };
+      return db.insertInto('messages').values({ ...row, writerId: null, state: 'broken' }).returning('id').executeTakeFirstOrThrow();
+    },
+
+    async worksAgain({ kind, id }) {
+      const now = new Date();
+      const row = await db
+        .updateTable('messages')
+        .set({ state: 'worksAgain', lastAt: now, updatedAt: now })
+        .where('id', '=', (eb) =>
+          eb
+            .selectFrom('messages')
+            .select('id')
+            .where('type', '=', kind === 'query' ? 'MSG-QRY-02' : 'MSG-LEN-05')
+            .where('subjectKind', '=', kind)
+            .where('subjectId', '=', id)
+            .where('state', '=', 'broken')
+            .orderBy('createdAt', 'desc')
+            .limit(1),
+        )
+        .returning('id')
+        .executeTakeFirst();
+      return row ?? null;
+    },
+
+    async grewLarge(lensId, { reads, threshold }) {
+      return db
+        .insertInto('messages')
+        .values({ type: 'MSG-LEN-02', subjectKind: 'lens', subjectId: lensId, writerId: null, params: { reads: String(reads), threshold: String(threshold) }, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
+    },
+
+    async keyNotice(notice) {
+      const params: Record<string, string> = { subject: notice.name, user: notice.userId };
+      if (notice.expires) params.expires = notice.expires;
+      if (notice.actor) params.actor = notice.actor;
+      return db
+        .insertInto('messages')
+        .values({ type: notice.type, subjectKind: 'excelKey', subjectId: notice.keyId, writerId: null, params, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
     },
 
     async keepLens(id, facts) {
