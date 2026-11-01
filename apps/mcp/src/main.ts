@@ -6,6 +6,11 @@ const app = await buildApp({
   verifier: verifierFromEnv(),
   resource: required('DATAHUB_MCP_RESOURCE'),
   authorizationServer: required('DATAHUB_TOKEN_ISSUER'),
+  services: {
+    catalogueUrl: required('DATAHUB_CATALOGUE_URL'),
+    queryUrl: required('DATAHUB_QUERY_URL'),
+    webUrl: required('DATAHUB_WEB_URL'),
+  },
 });
 await start(app);
 

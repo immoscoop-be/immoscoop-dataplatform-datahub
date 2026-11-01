@@ -2,7 +2,9 @@ import type { TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import type { FastifyInstance } from 'fastify';
+import { createDataHub, type DataHubOptions } from './datahub.js';
 import { createMcpServer } from './tools.js';
+import { viewHtml } from './view.js';
 
 export interface AppOptions {
   verifier: TokenVerifier;
@@ -10,12 +12,15 @@ export interface AppOptions {
   resource: string;
   /** Where MCP clients sign in: identity (TR-PF-06). */
   authorizationServer: string;
+  /** catalogue, query and the web app, which the tools ask and link to as the User. */
+  services: DataHubOptions;
   logger?: ServerOptions['logger'];
 }
 
 /** The mcp application: Data Hub for Claude, over MCP. See docs/architecture/services/mcp.md. */
 export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   const resource = new URL(options.resource);
+  const html = await viewHtml();
   const metadataPaths = ['/.well-known/oauth-protected-resource', `/.well-known/oauth-protected-resource${resource.pathname}`];
   const app = await createServer({
     name: 'mcp',
@@ -41,7 +46,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     if (!user) {
       return reply.code(401).send({ error: 'unauthorized' });
     }
-    const server = createMcpServer(user);
+    const hub = createDataHub(options.services, request.headers.authorization ?? '');
+    const server = createMcpServer(user, { hub, viewHtml: html, serverUrl: options.resource });
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     reply.hijack();
     reply.raw.on('close', () => {
