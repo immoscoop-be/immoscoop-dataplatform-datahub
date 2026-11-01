@@ -1056,6 +1056,7 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .mcp-msg p { margin: 0 0 8px; }
 .mcp-msg p:last-child { margin-bottom: 0; }
 .mcp-msg ul { margin: 0 0 8px; padding-left: 20px; }
+.mcp-msg .text-link { font-size: inherit; }
 .mcp-app-head .meta { display: block; }
 .mcp-app .status-row, .mcp-app .alert { margin-top: 0; }
 .mcp-app .tabs { margin-top: 0; padding: 0 8px; }

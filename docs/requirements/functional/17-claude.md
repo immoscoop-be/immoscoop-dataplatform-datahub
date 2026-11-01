@@ -3,12 +3,12 @@
 | | |
 | --- | --- |
 | Domain | 17 of Data Hub · code `CL` |
-| Status | To be specified: Resources first, the other assets chapter by chapter |
+| Status | To be specified: Resources and queries first, the other assets chapter by chapter |
 | Version | 2: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)), so every requirement and open point in this file is *Could, not in v1* |
 | Source of truth | This file |
 | Origin | Asked by Max on 2026-10-29: the going-over of every endpoint that [DEC-CH-02](13-channels.md#dec-ch-02) foresees for version 2 |
 
-**In one sentence:** Claude works with Data Hub through its MCP server, as the signed-in User: it finds, reads, previews and helps describe what that User may, explains the concepts of Data Hub with its Learning Cards, and leaves what a person must see or decide to an MCP App in the conversation.
+**In one sentence:** Claude works with Data Hub through its MCP server, as the signed-in User: it finds, reads, previews, queries and helps describe what that User may, explains the concepts of Data Hub with its Learning Cards, and leaves what a person must see or decide to an MCP App in the conversation.
 
 *Functional domain 17 of Data Hub. Overview of all domains: [Functional domains](README.md). Which asset reaches which channel is in [Channels](13-channels.md); this file works out the channel Claude, endpoint by endpoint, starting with Resources.*
 
@@ -25,6 +25,10 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-07"></a>**DEC-CL-07** · What the User approves, sends or publishes in Claude, they do with a button in the MCP App that only the MCP App can use, never Claude: "Approve and run" between 100 MB and 1 GB, the Request above 1 GB, and "Publish and confirm". Where the client cannot show an MCP App, Claude offers "Open in Data Hub" instead. *Decided on 2026-10-31, by Max ([OP-CL-02](#op-cl-02)).*
 - <a id="dec-cl-08"></a>**DEC-CL-08** · The Log says when a change was made through Claude: "through Claude" next to the name of the User, for a Business Description, a deprecation, changes marked seen, a Message and a Publication in an MCP App, so that the Owner knows the words were drafted by Claude for that User. *Decided on 2026-10-31, by Max ([OP-CL-05](#op-cl-05)).*
 - <a id="dec-cl-09"></a>**DEC-CL-09** · The how-to-use lives in Claude only; the web app gets none of its own for Claude. *Decided on 2026-10-31, by Max.*
+- <a id="dec-cl-10"></a>**DEC-CL-10** · A Lens first: before Claude writes a new query, it looks for the Lenses on its Resources and offers one that answers the question, as a new query in Query does ([FR-SR-47](04-stacks-and-resources.md#fr-sr-47)). *Decided on 2026-11-01, by Max.*
+- <a id="dec-cl-11"></a>**DEC-CL-11** · A query made through Claude, and a run of a query or a Preview through Claude, is marked so: the panel of Query labels it Claude, and the Query Log keeps where it came from. *Decided on 2026-11-01, by Max.*
+- <a id="dec-cl-12"></a>**DEC-CL-12** · The Data Team can list the queries of everyone through Claude, with who ran them and their SQL, as it can in Query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-01, by Max.*
+- <a id="dec-cl-13"></a>**DEC-CL-13** · The result of a query shows in an MCP App: the grid of Query, with "Open in Query". *Decided on 2026-11-01, by Max.*
 
 ## Terms
 
@@ -118,12 +122,45 @@ Every endpoint around Resources, with the tool that answers it. Who may use a to
 
 Claude answers a question about these with where in Data Hub it happens and who does it ([FR-CL-03](#fr-cl-03)).
 
+## Queries through the MCP
+
+Free SQL over the Resources a User sees ([FR-SR-26](04-stacks-and-resources.md#fr-sr-26)), through the same endpoints as Query in the web app ([FR-SR-41](04-stacks-and-resources.md#fr-sr-41)). A query Claude makes is a query of the User: it is in their panel of Query at once, and they can go on with it there.
+
+### Build a query
+
+| Step | Tool | Endpoint | Who | Answer |
+| --- | --- | --- | --- | --- |
+| 1 · Find the Resources | `list_resources`, `search` | catalogue `GET /resources`, to add ([FR-CL-04](#fr-cl-04)); `GET /search` | Every User | Text |
+| 2 · Know them: fields, partition, grain, what joins | `get_resource`, `get_related_resources` | catalogue `GET /resources/:id`, `GET /resources/:id/related`; query `GET /resources/:id/storage` | Whoever sees them | Text |
+| 3 · A Lens first | `suggest_lenses` | query `GET /lenses/suggestions` | Every User | Text ([FR-CL-17](#fr-cl-17)) |
+| 4 · Make the query | `create_query` | query `POST /queries` | Every User | Text ([FR-CL-18](#fr-cl-18)) |
+| 5 · Check it until it can run | `check_query` | query `POST /queries/:id/preflight` | Its author | Text ([FR-CL-19](#fr-cl-19)) |
+| 6 · Run it | `run_query` | query `POST /queries/:id/runs`, `POST /queries/:id/requests`; catalogue `GET /requests` | Its author | MCP App: the result ([FR-CL-20](#fr-cl-20), [FR-CL-21](#fr-cl-21)) |
+| 7 · Read further | `get_result_page` | query `GET /runs/:ref/rows` | Who ran it | Text |
+
+### Find and change a query
+
+| The User asks | Tool | Endpoint | Who | Answer |
+| --- | --- | --- | --- | --- |
+| "What did I query last week?" | `list_queries` | query `GET /queries` | Every User their own; the Data Team everyone's ([DEC-CL-12](#dec-cl-12)) | Text ([FR-CL-23](#fr-cl-23)) |
+| "Show me that query again" | `show_query` | query `GET /queries/:id`, `GET /runs/:ref/rows` | Its author and the Data Team | MCP App: the result ([FR-CL-21](#fr-cl-21)) |
+| "What did it give before?" | `get_query` | query `GET /queries/:id`, `GET /queries/:id/runs` | Its author and the Data Team | Text |
+| "Call it Partner share per week" | `update_query` | query `PATCH /queries/:id` | Its author | Text |
+
+### Not through the MCP, for queries
+
+| Endpoint | What it does | Why not |
+| --- | --- | --- |
+| query `PUT` and `DELETE /queries/:id/hidden` | Hiding a query from the panel of Query, and showing it again | A matter of the panel of Query |
+| query `GET /queries/days` | How many queries each day holds | The periods and chips of the panel of Query |
+| query and catalogue `/internal/…` | Calls between services and from Cloud Scheduler | No User calls them |
+
 ## Requirements
 
 <a id="fr-cl-01"></a>
 ### FR-CL-01 · A tool either informs Claude or shows the User
 
-**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
 
 A get tool, and a tool that lists or searches, answers Claude in text with structured data, for Claude to reason with and to write its answer from. A show tool opens an MCP App with the same data for the User, when the User asks to see the object or must decide something; Claude gets a short account of what it showed. Where the client of the User cannot show an MCP App, a show tool answers in text with a link to the same place in Data Hub. This works out [DEC-CL-02](#dec-cl-02).
 
@@ -159,7 +196,7 @@ When a User asks for what Claude has no tool for, the work of the Data Admin ([D
 <a id="fr-cl-05"></a>
 ### FR-CL-05 · Every answer about a Resource names its Level and its state
 
-**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
 
 Whenever Claude uses a Resource, in a list, an answer or a query, it names its Level ([DEC-MR-06](06-maturity-and-release.md#dec-mr-06)) and, when it is deprecated, why and what to use instead ([FR-SR-50](04-stacks-and-resources.md#fr-sr-50)). To its Owner Unit and the Data Team it also says when the Resource is not published or is withdrawn ([DEC-SR-26](04-stacks-and-resources.md#dec-sr-26)). Every tool returns these with the Resource, so Claude needs no second call for them.
 
@@ -168,7 +205,7 @@ Whenever Claude uses a Resource, in a list, an answer or a query, it names its L
 <a id="fr-cl-06"></a>
 ### FR-CL-06 · Every answer about an object links to it in Data Hub
 
-**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html)
+**Status:** Proposed · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
 
 Each tool that returns an object returns the address of its page in Data Hub, at the tab that matches what was asked: Overview, Columns, Lineage, History or Preview. Claude gives it with its answer, and every MCP App carries "Open in Data Hub" in place of the navigation of Data Hub ([components](../../design/components.md)).
 
@@ -260,7 +297,70 @@ The server instructions tell Claude what Data Hub is, its concepts in a sentence
 
 **Status:** Proposed
 
-`how_to_use` tells the User what Claude can do for them in Data Hub, by what they may: every User finds, reads, previews and discusses; the Owner Unit of a Collection also describes, publishes and deprecates its Resources. Each part comes with three example questions, and with what stays in the web app ([FR-CL-03](#fr-cl-03)). It is offered as a prompt in the menu of Claude, "Start with Data Hub", and Claude calls it when the User asks what it can do. This works out [DEC-CL-04](#dec-cl-04); it lives in Claude only ([DEC-CL-09](#dec-cl-09)).
+`how_to_use` tells the User what Claude can do for them in Data Hub, by what they may: every User finds, reads, previews, queries and discusses; the Owner Unit of a Collection also describes, publishes and deprecates its Resources. Each part comes with three example questions, and with what stays in the web app ([FR-CL-03](#fr-cl-03)). It is offered as a prompt in the menu of Claude, "Start with Data Hub", and Claude calls it when the User asks what it can do. This works out [DEC-CL-04](#dec-cl-04); it lives in Claude only ([DEC-CL-09](#dec-cl-09)).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-17"></a>
+### FR-CL-17 · A Lens first, then a query
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+Before Claude writes a new query, `suggest_lenses` gives the Lenses that use its Resources: first those on exactly these Resources, then those on these and more, only Lenses that run now ([FR-SR-47](04-stacks-and-resources.md#fr-sr-47), [DEC-SR-43](04-stacks-and-resources.md#dec-sr-43)), in each group those that share most words with the question first ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)). When one answers the question, Claude offers it, with what it shows and a link to it, and writes a query only when the User wants their own. Running a Lens through Claude is the chapter Lenses. This works out [DEC-CL-10](#dec-cl-10).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-18"></a>
+### FR-CL-18 · Claude makes a query on the Resources it needs
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+`create_query` makes a query of the User, with a name, the question in the words of the User, and the 1 to 10 Resources it reads ([FR-SR-45](04-stacks-and-resources.md#fr-sr-45), [DEC-UX-73](../../design/principles.md#dec-ux-73)). It reads only those, so Claude chooses them before it writes the SQL; when it needs another Resource, it makes a new query started from this one, as Query does. The query is in the panel of Query of the User at once.
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-19"></a>
+### FR-CL-19 · Claude checks the SQL until it can run
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+`check_query` keeps the SQL and its Parameters, and gives the Pre-flight ([FR-SR-36](04-stacks-and-resources.md#fr-sr-36)): whether it can run, what it reads and in which range, how many partitions, what keeps it from running and what it warns about. Claude fixes what the Pre-flight names: a table outside the Resources of the query, a Parameter that is not defined ([DEC-UX-71](../../design/principles.md#dec-ux-71)), a filter a partition column requires ([DEC-SR-35](04-stacks-and-resources.md#dec-sr-35)), and what BigQuery refuses in its own words. Where the Pre-flight warns that a partition column is not filtered ([FR-SR-40](04-stacks-and-resources.md#fr-sr-40)), Claude adds a filter, unless the User needs every partition. Claude also follows what the Resource Card says, such as a week that is not complete yet. It never runs a query the Pre-flight says cannot run.
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-20"></a>
+### FR-CL-20 · Claude runs a query within the same limits as Query
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+`run_query` runs the query as its author, with the checks of Query again, a byte limit and a label with the User ([FR-SR-27](04-stacks-and-resources.md#fr-sr-27), [FR-SR-41](04-stacks-and-resources.md#fr-sr-41)). Up to 100 MB it runs at once, and Claude gets the first 100 rows ([DEC-CL-06](#dec-cl-06)). From 100 MB to 1 GB the User approves it in the MCP App, and above 1 GB sends a Request to the Data Team there ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29), [DEC-CL-07](#dec-cl-07)). Once the Data Team accepted a Request, the query runs above 1 GB for its author, also after its SQL changed ([DEC-SR-36](04-stacks-and-resources.md#dec-sr-36)); while a Request waits, Claude says since when, and sends no second one. Every run goes into the Query Log with its Query ID ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-21"></a>
+### FR-CL-21 · The result of a query in an MCP App
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+`run_query` and `show_query` show the result as an MCP App: the name and question of the query, the Resources it reads with their Level, the grid of Query with 100 rows a page read from the same run ([FR-SR-51](04-stacks-and-resources.md#fr-sr-51)), what it read, its Query ID, the SQL to look at, folded, and "Open in Query". The SQL and the Parameters are not edited in the MCP App: the User asks Claude, or goes on in Query ([OP-CL-09](#op-cl-09)). This works out [DEC-CL-13](#dec-cl-13).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-22"></a>
+### FR-CL-22 · A query through Claude is marked so
+
+**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+A query made through Claude, and every run through Claude of a query or a Preview, is marked so ([DEC-CL-11](#dec-cl-11)): the panel of Query labels it Claude ([FR-SR-43](04-stacks-and-resources.md#fr-sr-43), [DEC-UX-74](../../design/principles.md#dec-ux-74)), so does the tab History of the Resources it reads ([FR-SR-44](04-stacks-and-resources.md#fr-sr-44)), and the Query Log keeps it. query keeps no such mark yet ([OP-CL-10](#op-cl-10)).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-23"></a>
+### FR-CL-23 · Finding a query again, and everyone's for the Data Team
+
+**Status:** Proposed
+
+`list_queries` lists the queries of the User, newest first, narrowed by a period or by words, each with what it ran on, how many runs it has, and whether it went to the Data Team ([FR-SR-43](04-stacks-and-resources.md#fr-sr-43)). `get_query` gives one with its SQL, Resources, Parameters, last runs, Request, whether it is Broken and the Lens made of it. `update_query` changes its name, question, SQL or Parameters, for its author. For the Data Team, `list_queries` also lists the queries of everyone, with who ran them and their SQL, as in Query ([DEC-CL-12](#dec-cl-12)); nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -287,10 +387,24 @@ Every tool reads anew, with the Access Token of that moment. Once identity renew
 
 Just before it writes, Claude reads the Resource again. When what it would replace has changed since it showed its proposal, it shows the User the new text and asks again, so that it never overwrites the work of a colleague unseen.
 
+<a id="ec-cl-04"></a>
+### EC-CL-04 · A query of the User is Broken
+
+**Status:** Proposed
+
+When a Resource or a column a query reads no longer exists, its Pre-flight and the query say so ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52), [FR-SR-53](04-stacks-and-resources.md#fr-sr-53)). Claude tells the User what is missing, and does not work around it by reading a table outside the Resources of the query.
+
+<a id="ec-cl-05"></a>
+### EC-CL-05 · The result of a run is no longer kept
+
+**Status:** Proposed
+
+BigQuery keeps a result for a limited time; a page asked after that answers that it is gone. Claude says so, and offers to run the query again, through the Pre-flight and its ranges like every run.
+
 ## Out of scope
 
 - The work of the Data Admin ([DEC-CL-01](#dec-cl-01)): it stays in the web app.
-- Collections, Query with free SQL over several Resources ([FR-SR-26](04-stacks-and-resources.md#fr-sr-26)), Lenses, the Message Centre and the Learning Centre: the next chapters of this file.
+- Collections, Lenses, including making a query a Lens, the Message Centre and the Learning Centre: the next chapters of this file.
 - Excel and the HTML report: [Channels](13-channels.md).
 
 ## Open points
@@ -298,11 +412,13 @@ Just before it writes, Claude reads the Resource again. When what it would repla
 - [ ] <a id="op-cl-01"></a>**OP-CL-01** · Confirm per tool whether it answers in text, in an MCP App or both, as proposed in [Resources through the MCP](#resources-through-the-mcp), once the MCP Apps of Resources are drawn: the Resource Card, the Preview and the publication. *Raised on 2026-10-30, in working out [DEC-CL-02](#dec-cl-02).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [x] <a id="op-cl-02"></a>**OP-CL-02** · Decide how the User approves a Preview between 100 MB and 1 GB, sends a Request, and publishes in Claude: with a button in the MCP App that only the MCP App can use and Claude cannot, or with a question the MCP server asks through Claude. Proposal: the button in the MCP App; where the client cannot show one, "Open in Data Hub". *Raised on 2026-10-30.* *Decided on 2026-10-31, by Max: the button in the MCP App, as proposed ([DEC-CL-07](#dec-cl-07)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-03"></a>**OP-CL-03** · Decide the endpoint of the list of [FR-CL-04](#fr-cl-04): `GET /resources` of catalogue for everything the User sees, next to `collection=none` for the Data Team. Decide too whether the web app shows the same list, for example on the start screen of Collections. *Raised on 2026-10-30.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
-- [ ] <a id="op-cl-04"></a>**OP-CL-04** · Decide how a Preview through Claude shows in the panel of Query and the tab History of the Resource. A query of Claude is an item of its own ([DEC-UX-74](../../design/principles.md#dec-ux-74)); a Preview through Claude could be a run of the previews of the Resource by the User, labelled Claude. Proposal: that run, labelled Claude. *Raised on 2026-10-30.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [ ] <a id="op-cl-04"></a>**OP-CL-04** · Decide how a Preview through Claude shows in the panel of Query and the tab History of the Resource. A query of Claude is an item of its own ([DEC-UX-74](../../design/principles.md#dec-ux-74)); a Preview through Claude could be a run of the previews of the Resource by the User, labelled Claude. Proposal: that run, labelled Claude. *Raised on 2026-10-30.* *Note of 2026-11-01: that a run through Claude is labelled Claude is decided ([DEC-CL-11](#dec-cl-11)); what stays open is whether a Preview through Claude is a run of the previews of the Resource or an item of its own.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [x] <a id="op-cl-05"></a>**OP-CL-05** · Decide whether the Log says that a change came through Claude: a Business Description, a deprecation, a Message. Proposal: yes, "through Claude" next to the name of the User, so that the Owner knows the words were drafted by Claude for that User. *Raised on 2026-10-30.* *Decided on 2026-10-31, by Max: yes, as proposed ([DEC-CL-08](#dec-cl-08)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [x] <a id="op-cl-06"></a>**OP-CL-06** · Decide whether the rows of a Preview, and later of a query, may go into the conversation with Claude, and so to Anthropic, for every Resource, or not for some Collections or Levels. [FR-CH-03](13-channels.md#fr-ch-03) has Claude work with data through the MCP, but does not say which data. *Raised on 2026-10-30.* *Decided on 2026-10-31, by Max: yes, for every Resource the User sees ([DEC-CL-06](#dec-cl-06)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-07"></a>**OP-CL-07** · The Learning Centre has no service yet. Decide where `explain` and the concepts in the server instructions read from until it has one, and which Compass cards the Data Team writes for the concepts of [FR-CL-14](#fr-cl-14). Proposal: the server instructions are built from the core ideas of those cards; until they exist, from the Defined Terms. *Raised on 2026-10-30.* *Note of 2026-10-31: the Learning Centre is built. Its cards are files in `packages/learning` ([TR-LR-01](../technical/16-learning.md#tr-lr-01)), and the section K5 Data Hub of the Compass holds K5.1 What a resource is and K5.2 The Level of a Resource ([DEC-LR-30](16-learning.md#dec-lr-30)); the MCP server reads them from there. What stays open is which cards the Data Team writes for the other concepts.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-08"></a>**OP-CL-08** · Confirm that Claude gets the concepts of Data Hub in its server instructions ([FR-CL-14](#fr-cl-14)) and explains them with the Learning Cards ([FR-CL-15](#fr-cl-15)). *Raised on 2026-10-30, by Max: "shouldn't the MCP add what the concepts are: Collection, Resource, Lens, the Learning Centre with its cards linked?"* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [ ] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 ## Builds on
 

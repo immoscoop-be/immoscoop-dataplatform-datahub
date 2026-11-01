@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<!--
+  Screen: a query in Claude, its result as an MCP App (FR-CL-21, DEC-CL-13)
+  A conversation in Claude, drawn plainly. Claude first looks for a Lens on the Resources of the question (FR-CL-17,
+  DEC-CL-10); only when the User wants their own does it make a query of the User on the Resources it needs (FR-CL-18),
+  check it with the Pre-flight until it can run (FR-CL-19), and run it within the ranges of Query (FR-CL-20). Here it
+  leaves out the current week, as the Resource Card says it is incomplete. The frame holds the name and question of the
+  query, the Resources it reads with their Level, the Pre-flight, the grid of Query with its pages and Query ID, the SQL
+  folded, and "Open in Query": no editor, no Parameters to change (OP-CL-09). The query is labelled Claude in the panel
+  of Query (FR-CL-22, DEC-CL-11). The switch shows four cases:
+  · a Lens fits: Claude offers the Lens and writes nothing; no frame is opened;
+  · up to 100 MB: it runs at once, and Claude answers from the rows (DEC-CL-06), names the Levels, and offers a Signal;
+  · from 100 MB to 1 GB: only the button of the User runs it (DEC-CL-07);
+  · above 1 GB: only the User sends the Request to the Data Team (MSG-QRY-01).
+  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-17, FR-CL-18, FR-CL-19, FR-CL-20, FR-CL-21, FR-CL-22
+  Decisions: DEC-CL-06, DEC-CL-07, DEC-CL-10, DEC-CL-11, DEC-CL-13, DEC-SR-29, DEC-SR-43, DEC-UX-73, DEC-DH-15.
+  Open points: OP-CL-01, OP-CL-09, OP-CL-10.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of query.html and
+  mcp-resource-preview.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A query in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude builds a query and shows its result, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+
+ <div class="mcp-msg user" data-pane-group="q" data-pane="lens">How many credit leads came in from each source last week?</div>
+ <div class="mcp-msg user" data-pane-group="q" data-pane="free" hidden>I need something else: the share of partner leads per week, for the last four complete weeks. Write your own query.</div>
+ <div class="mcp-msg user" data-pane-group="q" data-pane="approve" hidden>And for the last half year?</div>
+ <div class="mcp-msg user" data-pane-group="q" data-pane="request" hidden>And since the start of 2024?</div>
+
+ <div class="mcp-tool" data-pane-group="q" data-pane="lens"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">search</span> · <span class="mono">suggest_lenses</span></div>
+ <div class="mcp-tool" data-pane-group="q" data-pane="free" hidden><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">suggest_lenses</span> · <span class="mono">create_query</span> · <span class="mono">check_query</span> · <span class="mono">run_query</span></div>
+ <div class="mcp-tool" data-pane-group="q" data-pane="approve request" hidden><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">update_query</span> · <span class="mono">check_query</span> · <span class="mono">run_query</span></div>
+
+ <div class="mcp-msg" data-pane-group="q" data-pane="lens">
+  <p>There is a Lens for exactly that: <a class="text-link" href="lens.html" style="display:inline"><span>Leads per source name</span></a>, in Credit leads. It reads Weekly lead volume and Lead sources, and shows the credit leads of each source per week, with the name of the source. It is published and runs now.</p>
+  <p>Shall I run it for last week, or do you want a query of your own?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="q" data-pane="free" hidden>
+  <p>No Lens shows the share of partners, so I made a query of yours on Weekly lead volume and Lead sources. I left out the current week, as its Resource Card says it is not complete yet.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="q" data-pane="approve" hidden>
+  <p>Half a year reads about 522 MB, more than the 100 MB Data Hub runs freely. Approve it in the window below; I can't do that for you.</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="q" data-pane="request" hidden>
+  <p>Since the start of 2024 reads about 2.9 GB. Above 1 GB, someone of the Data Team accepts it first: you can send them a Request from the window below.</p>
+ </div>
+
+ <section class="mcp-app" aria-label="The query Partner share per week, from Data Hub" data-pane-group="q" data-pane="free approve request" hidden>
+  <div class="mcp-app-head"><i class="ph-fill ph-terminal-window" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Query · yours, made through Claude</span><div class="float-title">Partner share per week</div><span class="meta">What share of the credit leads came from partners, per complete week?</span></div></div>
+  <div class="status-row">
+   <span class="meta" style="align-self:center">Reads only</span>
+   <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>Weekly lead volume · 4 · Explored</span>
+   <span class="status"><span class="maturity" data-level="3" data-no-tooltip></span>Lead sources · 3 · Confirmed</span>
+  </div>
+
+  <div data-pane-group="q" data-pane="free">
+   <div class="rgrid-scroll" id="result-grid" tabindex="0" aria-label="Rows of the result">
+    <table class="rgrid"><colgroup></colgroup><thead></thead><tbody></tbody></table>
+   </div>
+   <script type="application/json" id="result-data">{"cols": [{"name": "week_start", "type": "DATE"}, {"name": "partner_leads", "type": "INT64"}, {"name": "all_leads", "type": "INT64"}, {"name": "partner_share", "type": "FLOAT64"}], "rows": [["2026-10-19", 37, 566, 6.5], ["2026-10-12", 0, 517, 0], ["2026-10-05", 41, 558, 7.3], ["2026-09-28", 39, 555, 7]]}</script>
+   <div class="result-foot">
+    <span id="rg-total">4 rows</span><span class="dot">·</span><span>scanned 82 MB, 4 of 312 partitions of Weekly lead volume, through <span class="mono">week_start</span></span><span class="dot">·</span>
+    <span class="query-id">Query ID <span class="mono">q-20261101-5be812</span><button class="icon-btn" aria-label="Copy the Query ID" title="Copy the Query ID"><i class="ph ph-copy"></i></button></span>
+    <span class="rg-pager">
+     <span>100 rows a page</span><span class="dot">·</span><span id="rg-range">1 – 4 of 4</span>
+     <span class="pager">
+      <button class="icon-btn" data-page="first" aria-label="First page" title="First page"><i class="ph ph-caret-double-left"></i></button>
+      <button class="icon-btn" data-page="prev" aria-label="Previous page" title="Previous page"><i class="ph ph-caret-left"></i></button>
+      <button class="icon-btn" data-page="next" aria-label="Next page" title="Next page"><i class="ph ph-caret-right"></i></button>
+      <button class="icon-btn" data-page="last" aria-label="Last page" title="Last page"><i class="ph ph-caret-double-right"></i></button>
+     </span>
+    </span>
+   </div>
+  </div>
+
+  <div class="sub-tile" data-pane-group="q" data-pane="approve" hidden>
+   <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+    <span class="run-gauge" aria-hidden="true" style="flex:1;min-width:200px"><span class="gauge"><span class="gauge-fill" style="width:52%"></span><span class="gauge-mark" style="left:10%"></span><span class="gauge-mark" style="left:100%"></span></span><span class="gauge-legend"><span>0</span><span style="left:10%">100 MB</span><span style="left:100%">1 GB</span></span></span>
+    <button class="btn-primary run-btn high" type="button"><i class="ph-fill ph-play" style="font-size:14px"></i>Approve and run<span class="run-gb">522 MB</span></button>
+   </div>
+   <p class="meta" style="display:block;line-height:1.5;margin:12px 0 0"><b style="font-weight:500;color:var(--text-primary)">522 MB at most, above 100 MB:</b> you approve this query yourself; Claude cannot do it for you. It reads 26 of the 312 partitions of Weekly lead volume, through <span class="mono">week_start</span>, and all of Lead sources, 2 MB.</p>
+  </div>
+
+  <div class="sub-tile" data-pane-group="q" data-pane="request" hidden>
+   <div style="display:flex;align-items:flex-start;gap:12px">
+    <i class="ph-fill ph-hand-palm" style="font-size:20px;color:var(--signal-urgent);margin-top:2px" aria-hidden="true"></i>
+    <div style="flex:1;min-width:0">
+     <div style="font-weight:500;font-size:var(--text-small)">Very large: one run reads about 2.9 GB, more than 1 GB</div>
+     <p class="meta" style="display:block;line-height:1.5;margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Once accepted, this query runs for you, also when its SQL changes. Their answer comes back in your Message Centre.</p>
+     <label class="field"><span>A word for the Data Team (optional)</span><textarea rows="2">For the yearly review of the partner deal; it runs once.</textarea></label>
+     <button class="btn-primary" type="button" style="margin-top:4px"><i class="ph ph-paper-plane-tilt" style="font-size:15px"></i>Send to the Data Team</button>
+    </div>
+   </div>
+  </div>
+
+  <details class="sub-tile">
+   <summary class="meta" style="cursor:pointer">The SQL, written by Claude</summary>
+   <div class="sql-box" style="margin-top:10px"><pre class="sql">with weekly as (
+  select week_start, lead_source, lead_count
+  from `immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume`
+<span data-pane-group="q" data-pane="free">  where week_start &gt;= date_sub(date_trunc(current_date(), week(monday)), interval 4 week)
+    and week_start &lt; date_trunc(current_date(), week(monday))</span><span data-pane-group="q" data-pane="approve" hidden>  where week_start &gt;= date_sub(date_trunc(current_date(), week(monday)), interval 26 week)
+    and week_start &lt; date_trunc(current_date(), week(monday))</span><span data-pane-group="q" data-pane="request" hidden>  where week_start &gt;= '2024-01-01'
+    and week_start &lt; date_trunc(current_date(), week(monday))</span>
+)
+select w.week_start,
+       sum(if(s.is_partner, w.lead_count, 0)) as partner_leads,
+       sum(w.lead_count) as all_leads,
+       round(100 * sum(if(s.is_partner, w.lead_count, 0)) / sum(w.lead_count), 1) as partner_share
+from weekly as w
+join `immoscoop-dataplatform-398214.dbt_prod_stacks.lead_sources` as s using (lead_source)
+group by w.week_start
+order by w.week_start desc</pre></div>
+  </details>
+
+  <div class="mcp-app-foot"><span><i class="ph ph-terminal-window" aria-hidden="true"></i> In your panel of Query, labelled Claude</span><a class="text-link open-dh" href="query.html"><span>Open in Query</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+
+ <div class="mcp-msg" data-pane-group="q" data-pane="free" hidden>
+  <p>Apart from one week, partners brought 6.5 to 7.3% of the credit leads over the last four complete weeks: 6.5% in the week of 19 October. The week that stands out: the week of 12 October has no partner leads at all, 0 of 517. That looks more like a gap in the data than a real zero.</p>
+  <p>Weekly lead volume is at <b>4 · Explored</b>, Lead sources at <b>3 · Confirmed</b>. Shall I raise a Signal on Weekly lead volume, so that the credit team checks that week?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="q" data-pane="request" hidden>
+  <p>Or narrow it down: since the start of this year reads about 860 MB, which you can approve yourself.</p>
+ </div>
+</div>
+<div class="rg-menu" id="rg-menu" role="menu" hidden>
+ <button class="menu-item" role="menuitem" data-act="asc"><i class="ph ph-sort-ascending"></i>Sort this page, smallest first</button>
+ <button class="menu-item" role="menuitem" data-act="desc"><i class="ph ph-sort-descending"></i>Sort this page, largest first</button>
+ <button class="menu-item" role="menuitem" data-act="fit"><i class="ph ph-arrows-out-line-horizontal"></i>Fit the width to its values</button>
+ <button class="menu-item" role="menuitem" data-act="copy"><i class="ph ph-copy"></i>Copy the name</button>
+ <p class="rg-menu-note">Sorting reorders the 100 rows on this page only. To sort every row, use <span class="mono">order by</span>.</p>
+</div>
+<div class="proto-switch" data-group="q" role="tablist" aria-label="Prototype: the case">Case
+ <button class="seg on" data-target="lens" role="tab" aria-selected="true">A Lens fits</button>
+ <button class="seg" data-target="free" role="tab" aria-selected="false">Up to 100 MB</button>
+ <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
+ <button class="seg" data-target="request" role="tab" aria-selected="false">Above 1 GB</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
