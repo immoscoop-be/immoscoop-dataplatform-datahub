@@ -384,6 +384,17 @@ run "the_web_app_signs_in_at_its_own_address_and_may_call_the_services" {
   }
 
   assert {
+    condition = alltrue([
+      for name, url in {
+        DATAHUB_CATALOGUE_URL = "https://datahub-catalogue-123456789.europe-west1.run.app"
+        DATAHUB_QUERY_URL     = "https://datahub-query-123456789.europe-west1.run.app"
+        DATAHUB_WEB_URL       = "https://datahub-web-123456789.europe-west1.run.app"
+      } : contains([for env in google_cloud_run_v2_service.service["mcp"].template[0].containers[0].env : env.value if env.name == name], url)
+    ])
+    error_message = "The tools of mcp ask catalogue and query as the User, and link to the pages of the web app, at their fixed addresses."
+  }
+
+  assert {
     condition = contains(
       [for env in google_cloud_run_v2_service.service["web"].template[0].containers[0].env : env.value if env.name == "DATAHUB_CATALOGUE_URL"],
       "https://datahub-catalogue-123456789.europe-west1.run.app"

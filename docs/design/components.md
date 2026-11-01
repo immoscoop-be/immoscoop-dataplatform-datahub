@@ -227,6 +227,10 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Learning steps, Check your understanding | Yes | Yes, compact ([FR-LR-26](../requirements/functional/16-learning.md#fr-lr-26)) | No |
 | Lens: Parameters, Run, Data grid, charts | Yes | Yes ([DEC-DH-15](../overview/data-hub.md#dec-dh-15)) | The result |
 | Maturity icon, Level | Yes | Yes | Yes, with the date ([DEC-DH-37](../overview/data-hub.md#dec-dh-37)) |
+| Resource: object header, status row, Overview and Columns | Yes | Yes, without edit links ([FR-CL-07](../requirements/functional/17-claude.md#fr-cl-07)) | No |
+| Preview: Parameters, Pre-flight, Data grid, Run with approval | Yes | Yes ([FR-CL-09](../requirements/functional/17-claude.md#fr-cl-09)) | No |
+| Publishing: who will see it, what was checked, the declaration bar | Yes | Yes ([FR-CL-12](../requirements/functional/17-claude.md#fr-cl-12)) | No |
+| Query: the Resources it reads, the Data grid, Run with approval, the SQL folded | Yes, with the editor | Yes, without the editor ([FR-CL-21](../requirements/functional/17-claude.md#fr-cl-21)) | No |
 
 A component used in Claude takes its look from the same theme in `packages/ui` and has no navigation of its own: it carries "Open in Data Hub" instead.
 
