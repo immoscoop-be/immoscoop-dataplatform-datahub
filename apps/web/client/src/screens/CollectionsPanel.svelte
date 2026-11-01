@@ -8,7 +8,6 @@
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
-  import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Collection, Resource } from '../lib/catalogue.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
@@ -18,7 +17,7 @@
 
   /**
    * The panel of Collections, the index of the section (What is in the panel): every Collection the
-   * User sees, All or Yours (DEC-UX-87), each unfolding to its Resources (FR-CO-18), then its Lenses,
+   * User sees, All or Yours, chosen first in the filter next to the search (DEC-UX-87, DEC-UX-161), each unfolding to its Resources (FR-CO-18), then its Lenses,
    * without a label of their own (FR-CO-36). For the Data Team, "Without a Collection" is on top
    * (DEC-UX-16). Search filters the Collections, their Resources and their Lenses together (FR-CO-24).
    * The filter next to it shows Resources, Lenses or both: with one kind left out, a Collection without
@@ -154,6 +153,15 @@
   bind:chosen={show}
   defaults={KINDS}
   atLeastOne
+  choice={{
+    legend: t('collections.filter'),
+    options: [
+      { value: 'all', name: t('collections.filter.all'), detail: t('collections.filter.all.detail') },
+      { value: 'yours', name: t('collections.filter.yours'), detail: t('collections.filter.yours.detail') },
+    ],
+    initial: 'all',
+  }}
+  bind:picked={filter}
 >
   <Search bind:value={query} placeholder={t('collections.search')} />
 </PanelFilter>
@@ -167,17 +175,6 @@
   </TreeGroup>
 {/if}
 
-<div class="filter">
-  <Segmented
-    options={[
-      { value: 'all', label: t('collections.filter.all') },
-      { value: 'yours', label: t('collections.filter.yours') },
-    ]}
-    bind:value={filter}
-    label={t('collections.filter')}
-    surface="sub"
-  />
-</div>
 
 <!-- What a folder holds, or the folders at the top of a Collection: its folders, each folding, then its Resources and Lenses. -->
 {#snippet tree(collection: Collection, view: Collection, lensView: LensItem[], folderId: string | null)}
@@ -285,7 +282,6 @@
 {/if}
 
 <style>
-  .filter { margin: 2px 0 8px; }
   .more { all: unset; display: block; cursor: pointer; padding: 6px 8px 4px 38px; font-size: var(--text-meta); color: var(--text-muted); }
   .more:hover { color: var(--text-primary); }
   .more:focus-visible { outline: 2px solid var(--text-secondary); }

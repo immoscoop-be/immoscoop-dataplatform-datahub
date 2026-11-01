@@ -26,8 +26,9 @@ export interface ExcelKey {
   lastUsedAt: Date | null;
   expiresAt: Date;
   revokedAt: Date | null;
-  /** Who revoked it, by name. */
+  /** Who revoked it, by name, and by Google ID. */
   revokedBy: string | null;
+  revokedById: string | null;
 }
 
 /** An Excel key with its User, for the Data Team (FR-PL-03). */
@@ -60,6 +61,7 @@ const view = (row: Row): ExcelKey => ({
   expiresAt: row.expiresAt,
   revokedAt: row.revokedAt,
   revokedBy: row.revokedByName,
+  revokedById: row.revokedBy,
 });
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

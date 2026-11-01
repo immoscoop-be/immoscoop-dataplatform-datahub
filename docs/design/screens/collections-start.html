@@ -53,16 +53,17 @@
   </div>
   <form class="q-filter card" id="c-filter" hidden>
    <fieldset>
+    <legend>Which Collections</legend>
+    <label class="q-option"><input type="radio" name="which" checked><span class="q-option-text"><span>All</span><span class="meta">every Collection you see</span></span></label>
+    <label class="q-option"><input type="radio" name="which"><span class="q-option-text"><span>Yours</span><span class="meta">those of your Owner Units</span></span></label>
+   </fieldset>
+   <fieldset>
     <legend>Show</legend>
     <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Resources</span><span class="meta">the tables of a Collection</span></span><span class="count">23</span></label>
     <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Lenses</span><span class="meta">the questions answered on its Resources</span></span><span class="count">9</span></label>
    </fieldset>
    <div class="q-filter-foot"><button type="reset" class="text-link" disabled>Reset</button><span class="meta">Only your panel changes</span></div>
   </form>
-  <div class="coll-filter" data-group="collfilter" role="tablist" aria-label="Which Collections">
-   <button class="seg on" data-target="all" role="tab" aria-selected="true">All</button>
-   <button class="seg" data-target="mine" role="tab" aria-selected="false">Yours</button>
-  </div>
   <div class="tree-group card">
    <div class="tree-head"><a class="tree-link" href="collection-overview.html"><span class="item-icon"><i class="ph ph-coins"></i></span><span class="tree-name"><span class="item-title">Credit leads</span><span class="meta"><span data-for="owner datateam">6</span><span data-for="colleague">4</span> Resources · <i class="ph-fill ph-globe-simple"></i>Public</span></span></a><button class="tree-toggle" aria-expanded="false" aria-label="Show what Credit leads holds"><i class="ph ph-caret-down caret" aria-hidden="true"></i></button></div>
    <div class="tree-children">

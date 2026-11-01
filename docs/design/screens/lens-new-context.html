@@ -47,11 +47,7 @@
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>
   <label class="search card" style="margin:16px 0 10px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input id="panel-search" placeholder="Search queries"></label>
-  <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px" data-for="datateam">
-   <button class="seg on" data-target="yours" role="tab" aria-selected="true">Yours</button>
-   <button class="seg" data-target="all" role="tab" aria-selected="false">All</button>
-   <span class="pill" style="margin-left:auto;align-self:center">Data Team only</span>
-  </div>
+  <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
   <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
   <div class="panel-label">Today</div>

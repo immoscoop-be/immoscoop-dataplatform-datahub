@@ -81,6 +81,15 @@ describe('the addresses of the web app', () => {
     expect(route('/me/keys')).toEqual({ kind: 'me', tab: 'keys' });
   });
 
+  it('has Admin, which opens on its first tool, Webhooks (DEC-UX-130, OP-UX-52)', () => {
+    expect(route('/admin')).toEqual({ kind: 'redirect', to: '/admin/webhooks' });
+    expect(route('/admin/')).toEqual({ kind: 'redirect', to: '/admin/webhooks' });
+    expect(route('/admin/webhooks')).toMatchObject({ kind: 'admin', tool: 'webhooks', section: { id: 'admin' } });
+    expect(route('/admin/webhooks/')).toMatchObject({ kind: 'admin', tool: 'webhooks', section: { id: 'admin' } });
+    expect(route('/admin/keys')).toMatchObject({ kind: 'admin', tool: 'keys', section: { id: 'admin' } });
+    expect(route('/admin/tokens')).toEqual({ kind: 'notFound' });
+  });
+
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {
     for (const path of ['/me/profile', '/me/tokens', '/collections/c-1/edit', '/lenses', '/x']) {
       expect([path, route(path)]).toEqual([path, { kind: 'notFound' }]);

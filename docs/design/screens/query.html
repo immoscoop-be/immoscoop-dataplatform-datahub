@@ -79,6 +79,11 @@
    <button class="icon-btn q-filter-toggle" aria-expanded="false" aria-controls="q-filter" aria-label="Filter: also show previews, Lenses or hidden queries" title="Filter"><i class="ph ph-sliders-horizontal"></i><span class="q-filter-count">1</span></button>
   </div>
   <form class="q-filter card" id="q-filter" hidden>
+   <fieldset data-for="datateam">
+    <legend>Whose queries</legend>
+    <label class="q-option"><input type="radio" name="whose" checked onchange="document.querySelector('[data-group=scope] [data-target=yours]').click()"><span class="q-option-text"><span>Yours</span><span class="meta">the queries you ran</span></span></label>
+    <label class="q-option"><input type="radio" name="whose" onchange="document.querySelector('[data-group=scope] [data-target=all]').click()"><span class="q-option-text"><span>All</span><span class="meta">everyone's, for the Data Team only</span></span></label>
+   </fieldset>
    <fieldset>
     <legend>Also show</legend>
     <label class="q-option"><input type="checkbox" checked><span class="q-option-text"><span>Previews</span><span class="meta">of Resources, from their Preview tab</span></span><span class="count">6</span></label>
@@ -88,11 +93,7 @@
    <div class="q-filter-foot"><button type="reset" class="text-link">Reset</button><span class="meta">Only your panel changes</span></div>
   </form>
   <p class="q-filter-on"><span>Also showing: Previews</span><button class="q-filter-x" aria-label="Stop showing Previews"><i class="ph ph-x"></i></button></p>
-  <div data-group="scope" role="tablist" aria-label="Whose queries" style="display:flex;gap:4px" data-for="datateam">
-   <button class="seg on" data-target="yours" role="tab" aria-selected="true">Yours</button>
-   <button class="seg" data-target="all" role="tab" aria-selected="false">All</button>
-   <span class="pill" style="margin-left:auto;align-self:center">Data Team only</span>
-  </div>
+  <div data-group="scope" hidden><button data-target="yours"></button><button data-target="all"></button></div>
   <div class="meta" data-for="owner colleague" style="margin:0 4px">Your queries</div>
   <div data-pane-group="scope" data-pane="yours">
   <!-- Per day this week, per week back to the start of last month, then per month; only today is open, the others load when opened (DEC-UX-139). -->

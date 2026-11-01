@@ -38,4 +38,21 @@ describe('the filter of a panel (DEC-UX-150)', () => {
     expect(screen.getByText('Niet getoond:')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Voorbeelden weer tonen' })).toBeTruthy();
   });
+
+  it('starts with a choice of what the panel lists, counted and shown when it is not the default (DEC-UX-161)', async () => {
+    const choice = { legend: 'Welke Collections', options: [{ value: 'all', name: 'Alle', detail: 'elke' }, { value: 'yours', name: 'Van jou', detail: 'de jouwe' }], initial: 'all' };
+    render(PanelFilter, { id: 'f', label: 'Filter', legend: 'Toon', kinds: KINDS, chosen: [], defaults: [], choice, picked: 'all', children });
+    const toggle = screen.getByRole('button', { name: 'Filter' });
+    await fireEvent.click(toggle);
+    await fireEvent.click(screen.getByRole('radio', { name: /^Van jou/ }));
+    expect(toggle.textContent).toContain('1');
+    await fireEvent.click(toggle);
+    expect(screen.getByText('Welke Collections:')).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: 'Terug naar Alle' }));
+    expect(screen.queryByText('Welke Collections:')).toBeNull();
+    await fireEvent.click(toggle);
+    await fireEvent.click(screen.getByRole('radio', { name: /^Van jou/ }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Herstel' }));
+    expect((screen.getByRole('radio', { name: /^Alle/ }) as HTMLInputElement).checked).toBe(true);
+  });
 });

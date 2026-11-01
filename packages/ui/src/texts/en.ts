@@ -72,6 +72,7 @@ export default {
   'filter.removed': 'Not showing:',
   'filter.remove': 'Stop showing {name}',
   'filter.add': 'Show {name} again',
+  'filter.back': 'Back to {name}',
   'lineage.controls': 'Zoom the lineage',
   'lineage.zoomIn': 'Zoom in',
   'lineage.zoomOut': 'Zoom out',

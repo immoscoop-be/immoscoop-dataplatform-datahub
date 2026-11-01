@@ -45,7 +45,7 @@ My page lists every Excel key of its User: its name, when it was made, when it w
 
 An Excel key expires a year after it was made; a month before, its User gets a notification. It stops at once when its User can no longer sign in with Google, for example after leaving. The Data Team can revoke any key, and its User gets a notification of that.
 
-*Note of 2026-10-31: built as [TR-PL-01](../technical/12-permissions-and-library-cards.md#tr-pl-01) and [TR-PL-02](../technical/12-permissions-and-library-cards.md#tr-pl-02), the notifications as [MSG-KEY-01](message-catalogue.md#msg-key-01) and [MSG-KEY-02](message-catalogue.md#msg-key-02). The Data Team revokes a key with the API of identity; its page Excel keys in the Admin section ([admin-keys](../../design/screens/admin-keys.html)) comes with that section.*
+*Note of 2026-10-31: built as [TR-PL-01](../technical/12-permissions-and-library-cards.md#tr-pl-01) and [TR-PL-02](../technical/12-permissions-and-library-cards.md#tr-pl-02), the notifications as [MSG-KEY-01](message-catalogue.md#msg-key-01) and [MSG-KEY-02](message-catalogue.md#msg-key-02). The Data Team revokes a key on the page Excel keys in Admin ([admin-keys](../../design/screens/admin-keys.html)).*
 
 ## Open points
 

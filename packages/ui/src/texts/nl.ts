@@ -70,6 +70,7 @@ export default {
   'filter.removed': 'Niet getoond:',
   'filter.remove': '{name} niet meer tonen',
   'filter.add': '{name} weer tonen',
+  'filter.back': 'Terug naar {name}',
   'lineage.controls': 'Zoom de lineage',
   'lineage.zoomIn': 'Inzoomen',
   'lineage.zoomOut': 'Uitzoomen',

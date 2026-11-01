@@ -1,6 +1,7 @@
 import type { TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
+import { type AdminOptions, adminRoutes } from './admin-api.js';
 import { type ApiOptions, apiRoutes } from './api.js';
 import { type InternalOptions, internalRoutes } from './internal.js';
 import { type WebhookOptions, webhookRoutes } from './webhook.js';
@@ -14,6 +15,8 @@ export interface AppOptions {
   api?: ApiOptions;
   /** What other services ask as themselves; left out in tests that do not need it. */
   internal?: InternalOptions;
+  /** The page Webhooks of Admin, for the Data Team (FR-AR-18, FR-AR-19); left out in tests that do not need it. */
+  admin?: AdminOptions;
 }
 
 /** The registry service: fetching, storing and processing the dbt artifacts: nodes, lineage and changes. See docs/architecture/services/registry.md. */
@@ -27,6 +30,9 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
   }
   if (options.internal) {
     await app.register(internalRoutes, options.internal);
+  }
+  if (options.admin) {
+    await app.register(adminRoutes, options.admin);
   }
   return app;
 }
