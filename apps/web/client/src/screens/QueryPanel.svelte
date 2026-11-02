@@ -206,6 +206,9 @@
         <span class="pill">{t('query.label.accepted')}</span>
       {:else if item.kind === 'preview'}
         <span class="pill">{t('query.label.preview')}</span>
+      {:else if item.through === 'claude'}
+        <!-- Made through Claude, as it stays once its User goes on in Query (DEC-CL-11, FR-CL-22). -->
+        <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>
       {/if}
     </a>
     <span class="buttons">

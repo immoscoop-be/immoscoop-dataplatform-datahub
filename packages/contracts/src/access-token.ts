@@ -13,6 +13,8 @@ export const accessTokenClaims = z.object({
   groups: z.array(z.string()),
   /** Roles derived from the role groups, such as the data team. */
   roles: z.array(z.string()),
+  /** The channel the User came through when it is not the web app: Claude, through the MCP (DEC-CL-11, OP-CL-10). */
+  client: z.literal('claude').optional(),
   iss: z.string(),
   aud: z.union([z.string(), z.array(z.string())]),
   iat: z.number().int(),

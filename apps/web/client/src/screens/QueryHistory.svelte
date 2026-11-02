@@ -54,7 +54,7 @@
     {#each runs as run (run.number)}
       <div class="run" class:flash={flash === run.number} data-run={run.number}>
         <span class="number">{t('history.run', { number: run.number })}</span>
-        <span class="meta">{when(run.startedAt)}{#if run.state === 'failed'} · {t('history.failed')}{/if}</span>
+        <span class="meta">{when(run.startedAt)}{#if run.through === 'claude'} · {t('history.throughClaude')}{/if}{#if run.state === 'failed'} · {t('history.failed')}{/if}</span>
         <span class="acts">
           {#if shown === run.number}
             <span class="pill">{t('history.shown')}</span>

@@ -71,6 +71,8 @@ export interface QueryItem {
   request: QueryRequest | null;
   /** Whether the User hid it from their panel (DEC-UX-138). */
   hidden?: boolean;
+  /** Made through Claude, which it keeps once its User goes on in Query (DEC-CL-11). */
+  through?: 'claude' | null;
   /** What it misses while it is Broken, for the red dot in the panel (FR-SR-53, DEC-UX-81). */
   broken?: Missing | null;
 }
@@ -107,6 +109,8 @@ export interface Run {
   /** Its Query ID, such as q-20261029-4c2e1a (FR-LN-06). */
   ref: string;
   number: number;
+  /** Run through Claude, or in the web app (DEC-CL-11). */
+  through?: 'claude' | null;
   /** The SQL and values it ran with: a variation of its query (DEC-UX-74). */
   sql: string;
   parameters: Parameter[];
@@ -340,6 +344,8 @@ export interface QueryOnResource {
   name: string;
   kind: QueryKind;
   ownerName: string;
+  /** Made through Claude (DEC-CL-11). */
+  through?: 'claude' | null;
   mine: boolean;
   runs: number;
   lastRunAt: string | null;

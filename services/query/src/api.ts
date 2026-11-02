@@ -63,6 +63,8 @@ function runView(run: Run) {
     state: run.state,
     error: run.error,
     userName: run.userName,
+    // Run through Claude, or in the web app (DEC-CL-11).
+    through: run.through,
     estimatedBytes: run.estimatedBytes,
     approved: run.approved,
     processedBytes: run.processedBytes,
@@ -164,7 +166,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
-    return { id: user?.sub ?? '', name: user?.name || user?.email || '', dataTeam: user?.roles.includes(DATA_TEAM) ?? false };
+    return { id: user?.sub ?? '', name: user?.name || user?.email || '', dataTeam: user?.roles.includes(DATA_TEAM) ?? false, through: user?.client ?? null };
   }
 
   const authorization = (request: FastifyRequest) => request.headers.authorization ?? '';

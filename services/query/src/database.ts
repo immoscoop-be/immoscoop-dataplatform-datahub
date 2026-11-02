@@ -58,6 +58,8 @@ export interface QueryDatabase {
     /** The fixed Google ID of who made it, and their name at that moment. */
     ownerId: string;
     ownerName: string;
+    /** Made through Claude, which it keeps also when its User goes on in Query; null for the web app (DEC-CL-11). */
+    through: Generated<'claude' | null>;
     name: string;
     question: Generated<string>;
     resources: ColumnType<NamedResource[], string, string>;
@@ -157,6 +159,8 @@ export interface QueryDatabase {
     queryRef: string;
     userId: string;
     userName: string;
+    /** Run through Claude; null for the web app (DEC-CL-11). */
+    through: Generated<'claude' | null>;
     sql: string;
     /** The Parameters and the values it ran with. */
     parameters: ColumnType<Parameter[], string | undefined, string>;
