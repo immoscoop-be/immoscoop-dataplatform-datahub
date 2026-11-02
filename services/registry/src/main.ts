@@ -20,8 +20,8 @@ const database = await connectCloudSql<RegistryDatabase>(cloudSqlOptionsFromEnv(
 const sets = createArtifactSets(database.db);
 const startIngest = createIngestStarter(settings.ingestJob, accessToken);
 const reading = createReading(database.db);
-// The Source Jobs: those of the configuration, until a Data Admin sets another on the page Webhooks (FR-AR-18).
-const sourceJobs = createSourceJobs(database.db, settings.sourceJobs);
+// The dbt projects Data Hub follows and their Source Jobs, which a Data Admin sets on the page Webhooks (DEC-AR-10).
+const sourceJobs = createSourceJobs(database.db);
 const deliveries = createDeliveries(database.db);
 const dbtCloud = createDbtCloud({
   url: settings.dbtCloudUrl,
@@ -60,7 +60,7 @@ const app = await buildApp({
       serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')],
     }),
   },
-  admin: { sourceJobs, deliveries, dbtCloud, reading, configured: settings.sourceJobs, webhookUrl: `${registryUrl.replace(/\/$/, '')}/webhooks/dbt-cloud` },
+  admin: { sourceJobs, deliveries, dbtCloud, reading, webhookUrl: `${registryUrl.replace(/\/$/, '')}/webhooks/dbt-cloud` },
 });
 app.addHook('onClose', () => database.close());
 await start(app);

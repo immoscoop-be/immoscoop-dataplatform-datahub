@@ -13,11 +13,6 @@ if (!url && process.env.CI) {
   throw new Error('DATAHUB_TEST_DATABASE_URL must be set in CI');
 }
 
-/** The configuration of uat: job → dbt project (DEC-AR-01). */
-const CONFIGURED = new Map([
-  ['322951', '9367'],
-  ['739003', '17121'],
-]);
 const MAX = { id: 'u-max', name: 'Maxime Passenier' };
 
 describe.skipIf(!url)('the Source Jobs and the deliveries of the webhook (FR-AR-18, FR-AR-19)', () => {
@@ -41,33 +36,48 @@ describe.skipIf(!url)('the Source Jobs and the deliveries of the webhook (FR-AR-
     await sql`truncate source_jobs, deliveries, projects, artifact_sets restart identity cascade`.execute(db);
   });
 
-  it('starts from the configuration, and a job a Data Admin chose takes its place, with who and when', async () => {
-    const jobs = createSourceJobs(db, CONFIGURED);
-    expect(await jobs.list()).toEqual([
-      { projectId: '9367', jobId: '322951', jobName: null, setBy: null, setAt: null },
-      { projectId: '17121', jobId: '739003', jobName: null, setBy: null, setAt: null },
-    ]);
+  it('starts empty outside uat and prod, and follows, changes and stops following a dbt project (DEC-AR-10)', async () => {
+    const jobs = createSourceJobs(db);
+    expect(await jobs.list()).toEqual([]);
+
+    const followed = await jobs.follow('9367', { id: '322951', name: 'daily UAT build (uat)' }, MAX);
+    expect(followed).toMatchObject({ projectId: '9367', jobId: '322951', jobName: 'daily UAT build (uat)', setBy: 'Maxime Passenier' });
+    expect(followed?.setAt).toBeInstanceOf(Date);
+    // Following it again is no way to change it.
+    expect(await jobs.follow('9367', { id: '352118', name: 'UAT - Deploy - Merge build' }, MAX)).toBeNull();
+    await jobs.follow('17121', { id: '748279', name: 'UAT - Deploy - Merge build' }, MAX);
+
     const saved = await jobs.set('9367', { id: '352118', name: 'UAT - Deploy - Merge build' }, MAX);
     expect(saved).toMatchObject({ projectId: '9367', jobId: '352118', jobName: 'UAT - Deploy - Merge build', setBy: 'Maxime Passenier' });
     expect(await jobs.current()).toEqual(
       new Map([
+        ['748279', '17121'],
         ['352118', '9367'],
-        ['739003', '17121'],
       ]),
     );
-    // Choosing again replaces it; a project Data Hub does not follow is no place for a job.
-    await jobs.set('9367', { id: '322951', name: 'daily UAT build (uat)' }, MAX);
-    expect((await jobs.current()).get('322951')).toBe('9367');
-    await expect(jobs.set('5', { id: '1', name: 'x' }, MAX)).rejects.toThrow('does not follow');
+    // A dbt project Data Hub does not follow is no place for a job.
+    expect(await jobs.set('5', { id: '1', name: 'x' }, MAX)).toBeNull();
+
+    // Stopping keeps its Artifact Sets; its runs are no longer taken.
+    await db.insertInto('artifactSets').values({ projectId: '17121', jobId: '748279', runId: '50', status: 'processed' }).execute();
+    expect(await jobs.stop('17121')).toBe(true);
+    expect(await jobs.stop('17121')).toBe(false);
+    expect([...(await jobs.current()).keys()]).toEqual(['352118']);
+    expect((await db.selectFrom('artifactSets').select('runId').execute()).map((set) => String(set.runId))).toEqual(['50']);
+    expect(await jobs.lastSets()).toEqual([]);
   });
 
-  it('tells the last Artifact Set of each dbt project', async () => {
+  it('tells the last Artifact Set of each dbt project it follows', async () => {
+    const jobs = createSourceJobs(db);
+    await jobs.follow('9367', { id: '322951', name: 'daily UAT build (uat)' }, MAX);
+    await jobs.follow('17121', { id: '739003', name: 'UAT - Scheduled - Daily build' }, MAX);
     await db.insertInto('artifactSets').values([
       { projectId: '9367', jobId: '322951', runId: '100', status: 'processed' },
       { projectId: '9367', jobId: '322951', runId: '101', status: 'failed' },
       { projectId: '17121', jobId: '739003', runId: '50' },
+      { projectId: '5', jobId: '7', runId: '60' },
     ]).execute();
-    const last = await createSourceJobs(db, CONFIGURED).lastSets();
+    const last = await jobs.lastSets();
     expect(last.map((set) => [set.projectId, set.runId, set.status]).sort()).toEqual([
       ['17121', '50', 'pending'],
       ['9367', '101', 'failed'],
@@ -107,5 +117,66 @@ describe.skipIf(!url)('the Source Jobs and the deliveries of the webhook (FR-AR-
     expect((await deliveries.list()).length).toBe(REFUSED_PER_HOUR);
     await deliveries.record({ outcome: 'ignored', reason: 'notARun' });
     expect((await deliveries.list()).length).toBe(REFUSED_PER_HOUR + 1);
+  });
+});
+
+describe.skipIf(!url)('the Source Jobs taken over from the configuration (DEC-AR-10)', () => {
+  const schemas: string[] = [];
+  const opened: Database<RegistryDatabase>[] = [];
+
+  afterAll(async () => {
+    for (const [index, database] of opened.entries()) {
+      await sql`drop schema if exists ${sql.id(schemas[index] ?? '')} cascade`.execute(database.db);
+      await database.close();
+    }
+  });
+
+  /** Migrates a fresh schema as the migration job of an environment would, with a choice made before 0007 when given. */
+  async function migrated(environment: string | undefined, before?: (db: Kysely<RegistryDatabase>) => Promise<void>) {
+    const schema = `registry_taken_${randomBytes(4).toString('hex')}`;
+    const database = createDatabase<RegistryDatabase>({ connectionString: url }, schema);
+    schemas.push(schema);
+    opened.push(database);
+    const was = process.env.DATAHUB_ENVIRONMENT;
+    try {
+      if (environment === undefined) delete process.env.DATAHUB_ENVIRONMENT;
+      else process.env.DATAHUB_ENVIRONMENT = environment;
+      if (before) {
+        const upTo = Object.fromEntries(Object.entries(migrations).filter(([name]) => name < '0007'));
+        await migrate({ db: database.db as Kysely<unknown>, schema, migrations: upTo, serviceUser: 'postgres' });
+        await before(database.db);
+      }
+      await migrate({ db: database.db as Kysely<unknown>, schema, migrations, serviceUser: 'postgres' });
+    } finally {
+      if (was === undefined) delete process.env.DATAHUB_ENVIRONMENT;
+      else process.env.DATAHUB_ENVIRONMENT = was;
+    }
+    return createSourceJobs(database.db);
+  }
+
+  it('follows in uat and prod what Terraform named, without a name or who set it', async () => {
+    expect(await (await migrated('uat')).list()).toEqual([
+      { projectId: '9367', jobId: '322951', jobName: null, setBy: null, setAt: null },
+      { projectId: '17121', jobId: '748279', jobName: null, setBy: null, setAt: null },
+    ]);
+    expect(await (await migrated('prod')).current()).toEqual(
+      new Map([
+        ['748278', '17121'],
+        ['324502', '9367'],
+      ]),
+    );
+    expect(await (await migrated(undefined)).list()).toEqual([]);
+  });
+
+  it('keeps a job a Data Admin had chosen already', async () => {
+    const jobs = await migrated('uat', async (db) => {
+      await db.insertInto('sourceJobs').values({ projectId: '9367', jobId: '352118', jobName: 'UAT - Deploy - Merge build', setBy: 'u-max', setByName: 'Maxime Passenier' }).execute();
+    });
+    expect(await jobs.current()).toEqual(
+      new Map([
+        ['748279', '17121'],
+        ['352118', '9367'],
+      ]),
+    );
   });
 });

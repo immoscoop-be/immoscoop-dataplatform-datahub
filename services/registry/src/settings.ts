@@ -1,14 +1,12 @@
-/** The settings of registry and its ingest job, from the environment Terraform gives them. */
+/**
+ * The settings of registry and its ingest job, from the environment Terraform gives them. The dbt projects
+ * Data Hub follows and their Source Jobs are no setting: a Data Admin sets them on the page Webhooks (DEC-AR-10).
+ */
 export interface RegistrySettings {
   /** The access URL of the dbt Cloud account (DATAHUB_DBT_CLOUD_URL). */
   dbtCloudUrl: string;
   /** The dbt Cloud account (DATAHUB_DBT_ACCOUNT_ID). */
   accountId: string;
-  /**
-   * The Source Jobs of this environment, job ID → dbt project ID (DEC-AR-01), from
-   * DATAHUB_DBT_SOURCE_JOBS as `<project>:<job>`, comma-separated.
-   */
-  sourceJobs: Map<string, string>;
   /** The secret version of the dbt Cloud service token (DATAHUB_DBT_CLOUD_TOKEN). */
   dbtCloudToken: string;
   /** The secret version dbt Cloud signs its webhook with (DATAHUB_DBT_WEBHOOK_SECRET). */
@@ -25,25 +23,12 @@ export function settingsFromEnv(env: NodeJS.ProcessEnv = process.env): RegistryS
   return {
     dbtCloudUrl: required(env, 'DATAHUB_DBT_CLOUD_URL'),
     accountId: required(env, 'DATAHUB_DBT_ACCOUNT_ID'),
-    sourceJobs: sourceJobs(required(env, 'DATAHUB_DBT_SOURCE_JOBS')),
     dbtCloudToken: required(env, 'DATAHUB_DBT_CLOUD_TOKEN'),
     webhookSecret: required(env, 'DATAHUB_DBT_WEBHOOK_SECRET'),
     bucket: required(env, 'DATAHUB_ARTIFACT_BUCKET'),
     ingestJob: required(env, 'DATAHUB_INGEST_JOB'),
     catalogueUrl: required(env, 'DATAHUB_CATALOGUE_URL'),
   };
-}
-
-function sourceJobs(value: string): Map<string, string> {
-  const jobs = new Map<string, string>();
-  for (const pair of value.split(',').filter(Boolean)) {
-    const [project, job] = pair.split(':');
-    if (!project || !job || !/^\d+$/.test(project) || !/^\d+$/.test(job)) {
-      throw new Error(`DATAHUB_DBT_SOURCE_JOBS holds "${pair}"; expected <project>:<job>`);
-    }
-    jobs.set(job, project);
-  }
-  return jobs;
 }
 
 function required(env: NodeJS.ProcessEnv, name: string): string {

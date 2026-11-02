@@ -35,6 +35,15 @@ export interface Proposal {
 
 /** What a job of dbt Cloud does: build after a merge, build pull requests, build on a schedule, or else. */
 export type JobKind = 'merge' | 'ci' | 'scheduled' | 'other';
+/** Why a job cannot be a Source Job: a CI job, a job of another environment, or one that does not generate the docs. */
+export type NotChoosable = 'ci' | 'otherEnvironment' | 'noDocs';
+
+/** A dbt project of the dbt Cloud account, and whether Data Hub follows it (DEC-AR-10). */
+export interface DbtProject {
+  id: string;
+  name: string;
+  following: boolean;
+}
 
 /** The Source Job of a dbt project, as the page Webhooks shows it (FR-AR-18). */
 export interface SourceJobTile {
@@ -61,7 +70,7 @@ export interface DbtJob {
   lastRun: { at: string | null; status: string | null } | null;
   current: boolean;
   /** Why it cannot be a Source Job of this environment: a CI job, or a job of another environment. */
-  notChoosable: 'ci' | 'otherEnvironment' | null;
+  notChoosable: NotChoosable | null;
 }
 
 export type SetStatus = 'pending' | 'processing' | 'processed' | 'failed';
@@ -112,6 +121,18 @@ export function createRegistry(config: Config, session: Pick<Session, 'accessTok
     /** Makes a job the Source Job of a dbt project, from the next run (FR-AR-18). */
     async setSourceJob(projectId: string, jobId: string): Promise<SourceJobTile> {
       return (await call(`/admin/source-jobs/${encodeURIComponent(projectId)}`, { method: 'PUT', body: { jobId } })).json() as Promise<SourceJobTile>;
+    },
+    /** The dbt projects of the dbt Cloud account, to follow one (DEC-AR-10). */
+    async dbtProjects(): Promise<DbtProject[]> {
+      return ((await call('/admin/dbt-projects')).json() as Promise<{ projects: DbtProject[] }>).then((answer) => answer.projects);
+    },
+    /** Follows a dbt project with a job as its Source Job, from its next run (DEC-AR-10). */
+    async followProject(projectId: string, jobId: string): Promise<SourceJobTile> {
+      return (await call('/admin/source-jobs', { method: 'POST', body: { projectId, jobId } })).json() as Promise<SourceJobTile>;
+    },
+    /** Stops following a dbt project; its Resources stay as they are (DEC-AR-10). */
+    async stopFollowing(projectId: string): Promise<void> {
+      await call(`/admin/source-jobs/${encodeURIComponent(projectId)}`, { method: 'DELETE' });
     },
     /** Every delivery of the webhook of the last 30 days, and how many call for a look (FR-AR-19). */
     async deliveries(): Promise<{ deliveries: Delivery[]; toLookAt: number }> {

@@ -16,6 +16,12 @@ export interface DbtJob {
   lastRun: { at: string | null; status: string | null } | null;
 }
 
+/** A dbt project of the dbt Cloud account, as the page Webhooks offers it to be followed (DEC-AR-10). */
+export interface DbtProject {
+  id: string;
+  name: string;
+}
+
 /** The Artifacts of a run, from the dbt Cloud Admin API (TR-AR-02). */
 export interface DbtCloud {
   /**
@@ -28,6 +34,8 @@ export interface DbtCloud {
   run(runId: string): Promise<{ jobId: string; projectId: string; success: boolean } | undefined>;
   /** The jobs of a dbt project, with the name of their environment (FR-AR-18). */
   jobs(projectId: string): Promise<DbtJob[]>;
+  /** The dbt projects of the account (DEC-AR-10). */
+  projects(): Promise<DbtProject[]>;
 }
 
 export interface DbtCloudOptions {
@@ -89,6 +97,15 @@ export function createDbtCloud(options: DbtCloudOptions): DbtCloud {
       const { data } = (await response.json()) as { data?: { job_definition_id?: number; project_id?: number; status?: number } };
       // Status 10 is a successful run in the dbt Cloud API.
       return data ? { jobId: String(data.job_definition_id), projectId: String(data.project_id), success: data.status === 10 } : undefined;
+    },
+
+    async projects() {
+      const { data } = await read<{ data?: { id: number; name?: string; state?: number }[] }>(
+        `${base}/api/v3/accounts/${options.accountId}/projects/?limit=100`,
+        'the dbt projects of the account',
+      );
+      // State 2 is a deleted project.
+      return (data ?? []).filter((project) => project.state !== 2).map((project) => ({ id: String(project.id), name: project.name ?? `dbt project ${project.id}` }));
     },
 
     async jobs(projectId) {

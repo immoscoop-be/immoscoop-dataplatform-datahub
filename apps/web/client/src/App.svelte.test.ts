@@ -157,6 +157,7 @@ const DBT_JOBS = [
   { id: '322951', name: 'daily UAT build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'scheduled', generatesDocs: true, lastRun: { at: '2026-10-31T06:00:00Z', status: 'Success' }, current: true, notChoosable: null },
   { id: '352118', name: 'UAT - Deploy - Merge build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: { at: '2026-10-31T09:50:00Z', status: 'Success' }, current: false, notChoosable: null },
   { id: '324451', name: 'CI/CD - UAT - triggered by Github Pipelines', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'ci', generatesDocs: false, lastRun: null, current: false, notChoosable: 'ci' },
+  { id: '351870', name: 'UAT - Hourly freshness', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'scheduled', generatesDocs: false, lastRun: null, current: false, notChoosable: 'noDocs' },
   { id: '324502', name: 'CI/CD - prod - triggered by Github Pipelines', projectId: '9367', environmentId: '2', environmentName: 'Production', kind: 'merge', generatesDocs: true, lastRun: null, current: false, notChoosable: 'otherEnvironment' },
 ];
 
@@ -425,6 +426,26 @@ function serve({
     }
     if (path === '/admin/source-jobs/9367/jobs') {
       return json({ environment: { id: '1', name: 'UAT' }, jobs: DBT_JOBS });
+    }
+    // A dbt project not followed yet: its jobs of every environment, but no CI job and none without the docs (DEC-AR-10).
+    if (path === '/admin/source-jobs/15890/jobs') {
+      return json({
+        environment: null,
+        jobs: [
+          { id: '802114', name: 'UAT - Deploy - Merge build', projectId: '15890', environmentId: '5', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: null, current: false, notChoosable: null },
+          { id: '802131', name: 'PROD - Daily export', projectId: '15890', environmentId: '6', environmentName: 'Production', kind: 'scheduled', generatesDocs: false, lastRun: null, current: false, notChoosable: 'noDocs' },
+        ],
+      });
+    }
+    if (path === '/admin/dbt-projects') {
+      return json({ projects: [{ id: '9367', name: 'dbt-prod', following: true }, { id: '15890', name: 'dbt-marketing', following: false }] });
+    }
+    if (path === '/admin/source-jobs' && method === 'POST') {
+      const { projectId, jobId } = JSON.parse(init.body as string) as { projectId: string; jobId: string };
+      return json({ ...SOURCE_JOB_TILE, projectId, projectName: 'dbt-marketing', job: { id: jobId, name: 'UAT - Deploy - Merge build', environmentName: 'UAT', kind: 'merge', generatesDocs: true }, setBy: 'Max Verstraete', setAt: new Date().toISOString(), lastSet: null }, 201);
+    }
+    if (path === '/admin/source-jobs/9367' && method === 'DELETE') {
+      return new Response(null, { status: 204 });
     }
     if (path === '/admin/source-jobs/9367' && method === 'PUT') {
       const { jobId } = JSON.parse(init.body as string) as { jobId: string };
@@ -1121,7 +1142,7 @@ describe('Admin, for the Data Team', () => {
     expect(tile.getByText('Gepland')).toBeTruthy();
     expect(tile.getByText('Maakt de docs')).toBeTruthy();
     expect(tile.getByText(/Laatste set: run 58101536, .*, verwerkt/)).toBeTruthy();
-    expect(tile.getByText('Uit de configuratie van Data Hub uat')).toBeTruthy();
+    expect(tile.getByText('Overgenomen uit de configuratie van Data Hub uat')).toBeTruthy();
     expect(screen.getByText('https://registry.test/webhooks/dbt-cloud')).toBeTruthy();
 
     await fireEvent.click(tile.getByRole('button', { name: 'Wijzig' }));
@@ -1134,6 +1155,9 @@ describe('Admin, for the Data Team', () => {
     expect(sheet.getByText(/Een CI-job: hij bouwt pull requests/)).toBeTruthy();
     expect((sheet.getByRole('radio', { name: /^CI\/CD - prod/ }) as HTMLInputElement).disabled).toBe(true);
     expect(sheet.getByText('Een job van een andere omgeving, die een andere Data Hub leest.')).toBeTruthy();
+    // Nor can a job that does not generate the docs (DEC-UX-166).
+    expect((sheet.getByRole('radio', { name: /^UAT - Hourly freshness/ }) as HTMLInputElement).disabled).toBe(true);
+    expect(sheet.getByText('Hij maakt geen docs: zijn runs hebben geen catalog.')).toBeTruthy();
     await fireEvent.input(sheet.getByRole('searchbox', { name: 'Zoek een job op naam of ID' }), { target: { value: '352118' } });
     expect(sheet.queryByRole('radio', { name: /^daily UAT build/ })).toBeNull();
     await fireEvent.click(sheet.getByRole('radio', { name: /^UAT - Deploy - Merge build/ }));
@@ -1145,6 +1169,43 @@ describe('Admin, for the Data Team', () => {
     expect(changed.getByText('UAT - Deploy - Merge build')).toBeTruthy();
     expect(changed.getByText('Merge')).toBeTruthy();
     expect(changed.getByText(/^Ingesteld door Max Verstraete/)).toBeTruthy();
+  });
+
+  it('follows a dbt project of the account with one of its jobs, and stops following one after asking (DEC-AR-10, DEC-UX-166)', async () => {
+    const calls = serve({ roles: ['datateam'] });
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    await screen.findByRole('region', { name: 'immoscoop_dataplatform_sql' });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Volg een dbt project' }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Volg een dbt project' }));
+    // Only the dbt projects Data Hub does not follow yet.
+    const projects = within(await sheet.findByRole('radiogroup', { name: 'dbt projecten' }));
+    expect(projects.queryByRole('radio', { name: /dbt-prod/ })).toBeNull();
+    const follow = sheet.getByRole('button', { name: 'Volg het' }) as HTMLButtonElement;
+    expect(follow.disabled).toBe(true);
+    await fireEvent.click(projects.getByRole('radio', { name: /^dbt-marketing/ }));
+    expect(await sheet.findByText('De jobs van dbt-marketing')).toBeTruthy();
+    expect(((await sheet.findByRole('radio', { name: /^PROD - Daily export/ })) as HTMLInputElement).disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('radio', { name: /^UAT - Deploy - Merge build/ }));
+    await fireEvent.click(follow);
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(calls).toContainEqual({ method: 'POST', path: '/admin/source-jobs', body: { projectId: '15890', jobId: '802114' } });
+    const added = within(screen.getByRole('region', { name: 'dbt-marketing' }));
+    expect(added.getByText(/^Ingesteld door Max Verstraete/)).toBeTruthy();
+
+    // Stopping asks first, in the place of the tile, and says the Resources stay.
+    const tile = within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql' }));
+    await fireEvent.click(tile.getByRole('button', { name: 'Niet meer volgen' }));
+    const asking = within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql niet meer volgen?' }));
+    expect(asking.getByText(/Zijn Resources blijven zoals ze zijn, op zijn laatste versie/)).toBeTruthy();
+    await fireEvent.click(asking.getByRole('button', { name: 'Annuleer' }));
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql' })).getByRole('button', { name: 'Niet meer volgen' }));
+    await fireEvent.click(within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql niet meer volgen?' })).getByRole('button', { name: 'Niet meer volgen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('region', { name: /^immoscoop_dataplatform_sql/ })).toBeNull());
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/admin/source-jobs/9367' });
+    expect(screen.getByRole('region', { name: 'dbt-marketing' })).toBeTruthy();
   });
 
   it('lists every delivery with what Data Hub did, and processes a failed set again (FR-AR-19, FR-AR-14)', async () => {
