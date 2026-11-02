@@ -97,4 +97,9 @@ export default {
   'editor.template': 'Template',
   'editor.partition': 'Partition',
   'editor.cluster': 'Cluster {place}',
+  'inPlace.hint': 'Click to change',
+  'inPlace.addDescription': 'Add a description',
+  'inPlace.save': 'Save',
+  'inPlace.cancel': 'Cancel',
+  'inPlace.failed': 'It could not be saved. Try again in a moment.',
 } as const satisfies Record<keyof typeof nl, string>;

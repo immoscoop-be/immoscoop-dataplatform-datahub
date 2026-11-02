@@ -160,6 +160,11 @@ export const LOG_CATALOGUE = {
     parameters: ['actor'],
     text: { en: 'Intro changed by {actor}', nl: 'Intro gewijzigd door {actor}' },
   },
+  'COL-015': {
+    about: 'collection',
+    parameters: ['folder', 'actor'],
+    text: { en: 'Description of folder {folder} changed by {actor}', nl: 'Beschrijving van map {folder} gewijzigd door {actor}' },
+  },
   'COL-030': {
     about: 'resource',
     parameters: ['collection', 'actor'],

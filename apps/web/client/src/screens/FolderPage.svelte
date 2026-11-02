@@ -1,5 +1,6 @@
 <script lang="ts">
   import Breadcrumb, { type Step } from '@datahub/ui/components/Breadcrumb.svelte';
+  import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Table from '@datahub/ui/containers/Table.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
@@ -28,7 +29,7 @@
    * The page of a folder of a Collection (FR-CO-38 to FR-CO-40, DEC-UX-156): the path above it, its name and
    * what it holds, its folders first, then its Resources and Lenses, each A to Z. A whole row opens what it is
    * with a click; the Owner Unit and the Data Team drag it onto a folder, here, in the panel or in the path, to
-   * move it (DEC-UX-157), and make, rename and delete folders. Delete stays on: on a folder that holds
+   * move it (DEC-UX-157), make and delete folders, and change the name and description of this one in place (DEC-UX-162). Delete stays on: on a folder that holds
    * something, it says so and deletes nothing.
    */
   let {
@@ -69,9 +70,6 @@
   });
 
   let making = $state(false);
-  let renaming = $state(false);
-  let name = $state('');
-  let problem = $state('');
   /** Delete on a folder that is not empty: it says what it still holds, or that it holds what the User does not see. */
   let warning: 'holds' | 'hidden' | undefined = $state();
   // Once what it held is moved out, the warning has done its work.
@@ -80,14 +78,8 @@
   });
   $effect(() => {
     void folderId;
-    [making, renaming, warning] = [false, false, undefined];
+    [making, warning] = [false, undefined];
   });
-
-  /** The name is ready to type over as soon as the field is there. */
-  const chosen = (input: HTMLInputElement) => {
-    input.focus();
-    input.select();
-  };
 
   /** Where something dragged onto a step of the path goes, for those who may move it. */
   const targetOf = (shown: Collection, at: Folder | null): Step['target'] =>
@@ -106,30 +98,13 @@
     }
   }
 
-  async function rename(event: KeyboardEvent) {
-    if (!collection || !folder) return;
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      renaming = false;
-      return;
-    }
-    if (event.key !== 'Enter') return;
-    event.preventDefault();
-    const wanted = name.trim();
-    if (wanted.length < 1 || wanted.length > 80) {
-      problem = t('folder.problem.name');
-      return;
-    }
-    try {
-      if (wanted !== folder.name) {
-        await catalogue.renameFolder(collection.id, folder.id, wanted);
-        await onchanged();
-      }
-      renaming = false;
-    } catch (error) {
-      console.error('The folder could not be renamed', error);
-      problem = t('folder.problem.failed');
-    }
+  /** Its name or description, changed in place (FR-CO-42, DEC-UX-162); a sentence when it is refused. */
+  async function change(changes: { name?: string; description?: string }): Promise<string | undefined> {
+    if (!collection || !folder) return undefined;
+    if (changes.name !== undefined && changes.name.length > 80) return t('folder.problem.name');
+    await catalogue.changeFolder(collection.id, folder.id, changes);
+    await onchanged();
+    return undefined;
   }
 
   async function remove() {
@@ -169,22 +144,19 @@
   <div class="head">
     <CollectionIcon name="folder-open" large />
     <div class="what">
-      {#if renaming}
-        <input class="page-title rename" bind:value={name} aria-label={t('folder.renameLabel')} maxlength="80" {@attach chosen} onkeydown={rename} />
-        <p class="meta hint">{problem || t('folder.renameHint')}</p>
-      {:else}
-        <h1 class="page-title">{folder.name}</h1>
-      {/if}
+      <!-- Its name and description, edited in place by its Owner Unit and the Data Team (DEC-UX-162). -->
+      <InPlaceHead
+        name={folder.name}
+        description={folder.description}
+        canEdit={manage}
+        nameLabel={t('folder.field.name')}
+        descriptionLabel={t('folder.field.description')}
+        onsave={change}
+      />
     </div>
     {#if manage}
       <div class="actions">
         <Button variant="outline" onclick={() => (making = true)}><Icon name="folder-simple-plus-fill" />{t('folder.new')}</Button>
-        <Button
-          variant="outline"
-          onclick={() => {
-            [name, problem, renaming] = [folder.name, '', true];
-          }}><Icon name="pencil-simple-fill" />{t('folder.rename')}</Button
-        >
         <IconButton icon="trash" label={t('folder.delete')} onclick={remove} />
       </div>
     {/if}
@@ -277,9 +249,6 @@
 <style>
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 10px; }
   .what { flex: 1; min-width: 0; }
-  .rename { display: block; width: min(100%, 520px); box-sizing: border-box; margin: 0; padding: 2px 8px; background: var(--surface-solid); color: var(--text-primary); border: 1.5px solid var(--text-muted); border-radius: var(--radius-sm); }
-  .rename:focus { outline: none; border-color: var(--text-secondary); }
-  .hint { margin: 6px 0 0; }
   .actions { display: flex; gap: 8px; align-items: center; flex: none; }
   .status-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
   .section-head { display: flex; align-items: baseline; gap: 12px; margin: 26px 0 12px; }

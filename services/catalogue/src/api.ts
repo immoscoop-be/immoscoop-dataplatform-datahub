@@ -244,7 +244,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     const current = await manageable(request, reply);
     if (!current) return reply;
-    return folderAnswer(reply, await collections.makeFolder(current.id, input.name, input.parentId ?? null, viewer(request)), 201);
+    return folderAnswer(reply, await collections.makeFolder(current.id, input.name!, input.parentId ?? null, viewer(request), input.description), 201);
   });
 
   app.patch<{ Params: { id: string; folderId: string }; Body: unknown }>('/collections/:id/folders/:folderId', async (request, reply) => {
@@ -254,7 +254,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
     const current = await manageable(request, reply);
     if (!current) return reply;
-    return folderAnswer(reply, await collections.renameFolder(current.id, request.params.folderId, input.name, viewer(request)));
+    return folderAnswer(reply, await collections.changeFolder(current.id, request.params.folderId, input, viewer(request)));
   });
 
   app.delete<{ Params: { id: string; folderId: string } }>('/collections/:id/folders/:folderId', async (request, reply) => {
@@ -896,23 +896,41 @@ export function parse(body: unknown, creating: boolean): Fields | string {
 }
 
 /** The name of a folder, and for a new one the folder it goes in, if any (FR-CO-39). */
-export function parseFolder(body: unknown, creating: boolean): { name: string; parentId?: string | null } | string {
+/**
+ * A folder to make, with its name and where; or what changes about one: its name, its description or both
+ * (FR-CO-39, FR-CO-42). The description is plain text, at most 500 characters, and may be empty.
+ */
+export function parseFolder(body: unknown, creating: boolean): { name?: string; description?: string; parentId?: string | null } | string {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return 'Send the folder as a JSON object.';
   }
   const input = body as Record<string, unknown>;
-  const unknown = Object.keys(input).find((key) => key !== 'name' && !(creating && key === 'parentId'));
+  const unknown = Object.keys(input).find((key) => key !== 'name' && key !== 'description' && !(creating && key === 'parentId'));
   if (unknown !== undefined) {
     return `A folder has no field ${unknown}${creating ? '' : ' to change'}.`;
   }
-  const name = typeof input.name === 'string' ? input.name.trim() : '';
-  if (name.length < 1 || name.length > 80) {
-    return 'The name of a folder has 1 to 80 characters.';
+  if (!creating && input.name === undefined && input.description === undefined) {
+    return 'Send the name of the folder, its description, or both.';
+  }
+  const result: { name?: string; description?: string; parentId?: string | null } = {};
+  if (creating || input.name !== undefined) {
+    const name = typeof input.name === 'string' ? input.name.trim() : '';
+    if (name.length < 1 || name.length > 80) {
+      return 'The name of a folder has 1 to 80 characters.';
+    }
+    result.name = name;
+  }
+  if (input.description !== undefined) {
+    if (typeof input.description !== 'string' || input.description.trim().length > 500) {
+      return 'The description of a folder is text of at most 500 characters.';
+    }
+    result.description = input.description.trim();
   }
   if (input.parentId !== undefined && input.parentId !== null && typeof input.parentId !== 'string') {
     return 'The parentId is the ID of a folder of the Collection, or null for its top.';
   }
-  return { name, ...(creating ? { parentId: (input.parentId as string | null | undefined) ?? null } : {}) };
+  if (creating) result.parentId = (input.parentId as string | null | undefined) ?? null;
+  return result;
 }
 
 const UNITS = ['hour', 'day', 'month', 'year'] as const;

@@ -32,7 +32,7 @@
   Run is off, a callout on top names what is missing, and the query has the red dot in the panel; its SQL can still be
   changed, and a change that runs makes it work again, as does the return of what it reads.
   Requirements: FR-SR-53, FR-SR-36, FR-SR-37, FR-SR-40, FR-SR-41, FR-SR-42, FR-SR-43, FR-SR-45, FR-SR-47, FR-SR-48, FR-SR-51, FR-LN-05, FR-LN-06, FR-LE-07, FR-LE-08, FR-LE-16, FR-RC-18
-  Decisions: DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
+  Decisions: DEC-UX-163, DEC-UX-17, DEC-UX-20, DEC-UX-70, DEC-UX-71, DEC-UX-72, DEC-UX-73, DEC-UX-74, DEC-UX-76, DEC-UX-77, DEC-UX-88, DEC-UX-97, DEC-UX-99, DEC-UX-115, DEC-SR-29, DEC-SR-35, DEC-LN-01.
   Not in v1: the label "Claude" on a query in the panel (FR-SR-26, DEC-CH-02); leave it out.
   "Make it a lens" turns the query into a Lens (FR-LE-07, DEC-UX-25). The query stays, used as the Lens: then "Update the lens"
   takes its place and overwrites the Lens after a size check, and "Lenses on these resources" goes (DEC-LE-03, DEC-LE-04,
@@ -69,6 +69,7 @@
  <div class="panel-inner">
   <div style="display:flex;align-items:center;gap:4px">
    <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Query</h1>
+   <button class="icon-btn" type="button" aria-label="Refresh the list of queries" title="Refresh the list of queries, such as those Claude made meanwhile (DEC-UX-163)"><i class="ph ph-arrows-clockwise"></i></button>
    <a class="icon-btn" href="query-new.html" aria-label="New query"><i class="ph-fill ph-plus-circle"></i></a>
    <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
   </div>

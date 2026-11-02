@@ -33,10 +33,18 @@ export interface CollectionItem {
   folderId: string | null;
 }
 
+/** What changes about a folder: its name, its description, or both (FR-CO-39, FR-CO-42). */
+export interface FolderChanges {
+  name?: string;
+  description?: string;
+}
+
 /** A folder of a Collection (FR-CO-38): everyone who sees the Collection sees its folders (DEC-CO-26). */
 export interface Folder {
   id: string;
   name: string;
+  /** Plain text under its name, empty when it has none (FR-CO-42). */
+  description: string;
   /** The folder it sits in, or null at the top of the Collection. */
   parentId: string | null;
   /** The name of whoever made it, and when. */
@@ -151,8 +159,9 @@ export interface Collections {
   /** Dissolves an empty Collection (else NotEmpty); false when it was already gone. */
   dissolve(id: string, viewer: Viewer): Promise<boolean>;
   /** Makes a folder at the top of a Collection, or in the folder `parentId` of it (FR-CO-39). */
-  makeFolder(collectionId: string, name: string, parentId: string | null, viewer: Viewer): Promise<FolderOutcome<Folder>>;
-  renameFolder(collectionId: string, folderId: string, name: string, viewer: Viewer): Promise<FolderOutcome<Folder>>;
+  makeFolder(collectionId: string, name: string, parentId: string | null, viewer: Viewer, description?: string): Promise<FolderOutcome<Folder>>;
+  /** Its name, its description or both, each change in the Log of the Collection (FR-CO-39, FR-CO-42). */
+  changeFolder(collectionId: string, folderId: string, changes: FolderChanges, viewer: Viewer): Promise<FolderOutcome<Folder>>;
   /** Deletes a folder that holds nothing, else says how much it holds (FR-CO-39). */
   deleteFolder(collectionId: string, folderId: string, viewer: Viewer): Promise<FolderOutcome>;
   /** Puts a Resource, Lens or folder of a Collection in one of its folders, or at its top with null (FR-CO-40). */
@@ -209,12 +218,12 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       }
       for (const folder of await from
         .selectFrom('folders')
-        .select(['id', 'collectionId', 'parentId', 'name', 'createdByName', 'createdAt'])
+        .select(['id', 'collectionId', 'parentId', 'name', 'description', 'createdByName', 'createdAt'])
         .where('collectionId', 'in', rows.map((row) => row.id))
         .orderBy(sql`lower(name)`)
         .orderBy('id')
         .execute()) {
-        const shown = { id: folder.id, name: folder.name, parentId: folder.parentId, createdBy: folder.createdByName, createdAt: folder.createdAt };
+        const shown = { id: folder.id, name: folder.name, description: folder.description, parentId: folder.parentId, createdBy: folder.createdByName, createdAt: folder.createdAt };
         folders.set(folder.collectionId, [...(folders.get(folder.collectionId) ?? []), shown]);
       }
       for (const resource of resources) {
@@ -319,7 +328,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
     }
     return trx
       .selectFrom('folders')
-      .select(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
+      .select(['id', 'name', 'description', 'parentId', 'createdByName as createdBy', 'createdAt'])
       .where('id', '=', folderId)
       .where('collectionId', '=', collectionId)
       .executeTakeFirst();
@@ -516,7 +525,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       });
     },
 
-    async makeFolder(collectionId, name, parentId, viewer) {
+    async makeFolder(collectionId, name, parentId, viewer, description = '') {
       return inCollection<Folder>(collectionId, async (trx, collection) => {
         const parent = parentId === null ? null : await folderOf(trx, collectionId, parentId);
         if (parent === undefined) {
@@ -524,25 +533,32 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         }
         const row = await trx
           .insertInto('folders')
-          .values({ collectionId, parentId, name, createdBy: viewer.id, createdByName: viewer.name })
-          .returning(['id', 'name', 'parentId', 'createdByName as createdBy', 'createdAt'])
+          .values({ collectionId, parentId, name, description, createdBy: viewer.id, createdByName: viewer.name })
+          .returning(['id', 'name', 'description', 'parentId', 'createdByName as createdBy', 'createdAt'])
           .executeTakeFirstOrThrow();
         await write(trx, collectionId, 'COL-008', { folder: name, in: parent?.name ?? collection.name }, viewer);
         return { outcome: 'done', value: row };
       });
     },
 
-    async renameFolder(collectionId, folderId, name, viewer) {
+    async changeFolder(collectionId, folderId, changes, viewer) {
       return inCollection<Folder>(collectionId, async (trx) => {
         const folder = await folderOf(trx, collectionId, folderId);
         if (!folder) {
           return { outcome: 'not_found' };
         }
-        if (folder.name !== name) {
-          await trx.updateTable('folders').set({ name }).where('id', '=', folder.id).execute();
+        const name = changes.name ?? folder.name;
+        const description = changes.description ?? folder.description;
+        if (name !== folder.name || description !== folder.description) {
+          await trx.updateTable('folders').set({ name, description }).where('id', '=', folder.id).execute();
+        }
+        if (name !== folder.name) {
           await write(trx, collectionId, 'COL-009', { old: folder.name, new: name }, viewer);
         }
-        return { outcome: 'done', value: { id: folder.id, name, parentId: folder.parentId, createdBy: folder.createdBy, createdAt: folder.createdAt } };
+        if (description !== folder.description) {
+          await write(trx, collectionId, 'COL-015', { folder: name }, viewer);
+        }
+        return { outcome: 'done', value: { ...folder, name, description } };
       });
     },
 

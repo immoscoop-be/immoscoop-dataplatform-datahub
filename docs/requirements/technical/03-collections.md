@@ -92,20 +92,22 @@ catalogue keeps them on the Resource and in `resource_mappings`, one row per map
 <a id="tr-co-07"></a>
 ### TR-CO-07 · Folders live in the schema of catalogue, and only the Owner Unit and the Data Team change them
 
-**Status:** Implemented · **Realises:** [FR-CO-38](../functional/03-collections.md#fr-co-38), [FR-CO-39](../functional/03-collections.md#fr-co-39), [FR-CO-40](../functional/03-collections.md#fr-co-40), [DEC-CO-26](../functional/03-collections.md#dec-co-26)
+**Status:** Implemented · **Realises:** [FR-CO-38](../functional/03-collections.md#fr-co-38), [FR-CO-39](../functional/03-collections.md#fr-co-39), [FR-CO-40](../functional/03-collections.md#fr-co-40), [FR-CO-42](../functional/03-collections.md#fr-co-42), [DEC-CO-26](../functional/03-collections.md#dec-co-26)
 
 Migration `0015-folders` adds two tables. `folders` holds one row per folder: a UUID as its ID, its Collection, the folder it sits in (`parent_id`, null at the top of the Collection), its name of 1 to 80 characters, and who made it and when. `folder_places` holds, for a Resource or a Lens that sits in a folder, its kind, its ID and the folder; without a row it sits at the top. A Lens is kept by query, so its place is kept here by its ID, and catalogue knows it is in the Collection from what query tells about it ([DEC-PF-30](00-platform.md#dec-pf-30)). A Resource that is added to a Collection, or leaves one, has no place: it comes in at the top.
 
 | Route | What | Who |
 | --- | --- | --- |
 | `POST /collections/{id}/folders` | Make a folder, with its name and the `parentId` of the folder it goes in, or none for the top | The Owner Unit and the Data Team |
-| `PATCH /collections/{id}/folders/{folderId}` | Rename it | The Owner Unit and the Data Team |
+| `PATCH /collections/{id}/folders/{folderId}` | Change its `name`, its `description`, or both | The Owner Unit and the Data Team |
 | `DELETE /collections/{id}/folders/{folderId}` | Delete it, only when it holds nothing: else `409 not_empty`, with how many folders, Resources and Lenses it holds | The Owner Unit and the Data Team |
 | `PUT /collections/{id}/places/{kind}/{itemId}` | Put a `resource`, `lens` or `folder` of the Collection in the folder `folderId`, or at the top with `null` | The Owner Unit and the Data Team |
 
 A Collection comes with its folders, each with its name and the folder it sits in, with the folder of each of its Resources, and with the folder of each of its Lenses that sits in one: everyone who sees the Collection sees them, and the web app shows only the Resources and Lenses the User sees. A folder that would go into itself or into a folder inside it is refused with `409 into_itself`; a folder, Resource or Lens that is not in the Collection is answered with `404`. Each change takes a lock on the Collection, so that changes to its folders happen one at a time and no folder is deleted while something moves into it.
 
-Each change goes into the Log of the Collection: `COL-008` to `COL-013` in the [Log Catalogue](../functional/log-catalogue.md). Moving a Resource is an entry about a Resource, seen only by who sees the Resource ([TR-CO-02](#tr-co-02)).
+Each change goes into the Log of the Collection: `COL-008` to `COL-013`, and `COL-015` for a changed description, in the [Log Catalogue](../functional/log-catalogue.md). Moving a Resource is an entry about a Resource, seen only by who sees the Resource ([TR-CO-02](#tr-co-02)).
+
+*Note of 2026-11-02: migration `0017-folder-descriptions` gives a folder its `description`, plain text of at most 500 characters, empty by default ([FR-CO-42](../functional/03-collections.md#fr-co-42)). A folder is made with a name and, if wanted, a description.*
 
 <a id="tr-co-08"></a>
 ### TR-CO-08 · The intro of a Collection is Markdown, never shown as HTML
