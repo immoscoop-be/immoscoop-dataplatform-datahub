@@ -8,6 +8,7 @@
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
   import Tabs from '@datahub/ui/containers/Tabs.svelte';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Group, Identity, Me } from '../lib/identity.js';
   import { myPagePath, type MyPageTab } from '../lib/routes.js';
@@ -95,6 +96,8 @@
               </div>
             {/each}
           </div>
+        {:else}
+          <Loading />
         {/if}
         <p class="meta groups">{t('me.own.groups')}</p>
       </SubTile>

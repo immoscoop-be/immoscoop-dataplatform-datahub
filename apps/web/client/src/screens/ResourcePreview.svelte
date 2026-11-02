@@ -7,6 +7,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { clock, when } from '../lib/moment.js';
   import { formatDay } from '../lib/parameters.js';
@@ -193,7 +194,7 @@
     {/each}
     <span class="grow"></span>
     <span class="scans meta" aria-busy={checking}>
-      {#if scanned}<Icon name="gauge-fill" />{scanned}{:else if checking || !offered}{t('query.checking')}{/if}
+      {#if scanned}<Icon name="gauge-fill" />{scanned}{:else if checking || !offered}{t('query.checking')} <Loading inline />{/if}
     </span>
     {#if preflight && preflight.runnable && preflight.range === 'request' && current?.request?.state === 'waiting'}
       <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(current.request.sentAt) })}</span>
@@ -215,7 +216,7 @@
   {#if notes.length > 0}<p class="notes" role="alert"><Icon name="warning-fill" />{notes.join(' ')}</p>{/if}
 
   {#if running}
-    <p class="empty"><Icon name="play-fill" /><span>{t('preview.running')}</span></p>
+    <p class="empty"><Icon name="play-fill" /><span>{t('preview.running')}</span><Loading inline /></p>
   {:else if failure}
     <p class="empty failed" role="alert"><Icon name="warning-fill" /><span><b>{t('query.failed')}</b> {failure}</span></p>
   {:else if shown && run && page && page.totalRows === 0}

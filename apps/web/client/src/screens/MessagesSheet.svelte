@@ -2,6 +2,7 @@
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { type Conversation, type MessagesClient, SUBJECT_TITLES, WRITTEN_ON, type WrittenKind, type WrittenOn } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
@@ -86,7 +87,7 @@
   </div>
   <div class="list">
     {#if messages === undefined}
-      <p class="meta">…</p>
+      <Loading />
     {:else if shown.length === 0}
       <p class="meta none">{t('messages.sheet.none', { kind: kindName })}</p>
     {:else}

@@ -9,6 +9,7 @@
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import MaturityIcon from '@datahub/ui/marks/MaturityIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
   import type { Catalogue, Collection, Resource } from '../lib/catalogue.js';
@@ -226,7 +227,7 @@
     </div>
     <div class="list">
       {#if loading}
-        <p class="meta empty">{t('grain.loading')}</p>
+        <p class="meta empty">{t('grain.loading')} <Loading inline /></p>
       {:else}
         {#each unreadable as resource (resource.id)}
           <p class="meta empty warn">{t('grain.failed', { name: resource.displayName })} <button type="button" class="text-link" onclick={retry}>{t('grain.model.retry')}</button></p>

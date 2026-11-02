@@ -2,6 +2,7 @@
   import type { LineageModel } from '@datahub/ui/components/Lineage.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Catalogue, LineageNode, ResourceDetail, ResourceLineage } from '../lib/catalogue.js';
 
   /**
@@ -69,7 +70,7 @@
 
 <p class="meta text">{t('resource.lineage.text')}</p>
 {#if lineage === undefined}
-  <p class="meta state">{t('resource.lineage.loading')}</p>
+  <p class="meta state">{t('resource.lineage.loading')} <Loading inline /></p>
 {:else if lineage === null}
   <p class="meta state" role="alert">{t('resource.lineage.failed')}</p>
 {:else if !graph || !graph.models.has(graph.center)}

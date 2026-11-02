@@ -7,6 +7,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { ExcelKey, Identity } from '../lib/identity.js';
 
   /**
@@ -127,6 +128,8 @@
     {/each}
     {#snippet after()}<p class="meta foot">{t('keys.foot')}</p>{/snippet}
   </Table>
+{:else}
+  <Loading />
 {/if}
 
 {#if making}

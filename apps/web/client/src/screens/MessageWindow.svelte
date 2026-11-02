@@ -2,6 +2,7 @@
   import FloatingWindow from '@datahub/ui/containers/FloatingWindow.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { type Conversation, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
   import { messagePath, messagesOnPath } from '../lib/routes.js';
   import MessageOpened from './MessageOpened.svelte';
@@ -51,7 +52,7 @@
   {:else if message === null}
     <p class="meta" role="alert">{t('messages.failed.read')}</p>
   {:else}
-    <p class="meta">…</p>
+    <Loading />
   {/if}
   {#snippet foot()}
     {#if message && count !== null && message.kind !== 'request'}

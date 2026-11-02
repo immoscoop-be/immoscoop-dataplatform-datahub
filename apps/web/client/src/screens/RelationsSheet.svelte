@@ -4,6 +4,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { type Draft, recordedDraftOf, requestOf, strangers, unfinished } from '../lib/grain.js';
@@ -90,7 +91,7 @@
   </div>
   <div class="list">
     {#if model === undefined}
-      <p class="meta empty">{t('grain.loading')}</p>
+      <p class="meta empty">{t('grain.loading')} <Loading inline /></p>
     {:else}
       <ResourceGrain bind:draft model={model ?? null} {show} />
     {/if}

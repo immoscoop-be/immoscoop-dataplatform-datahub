@@ -982,6 +982,18 @@ describe('the web app, signed in', () => {
     expect(within(revoked).queryByRole('button', { name: 'Revoke' })).toBeNull();
   });
 
+  it('shows three dots where a page will show, while it is read (DEC-UX-165)', async () => {
+    serve();
+    // catalogue takes its time with the Resource: it does not answer during the test.
+    const answer = globalThis.fetch;
+    vi.stubGlobal('fetch', (input: string, init?: RequestInit) => (input === `${CONFIG.catalogueUrl}/resources/r2` ? new Promise(() => {}) : answer(input, init)));
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('progressbar', { name: 'Laden…' })).toBeTruthy();
+    expect(main.queryByRole('heading', { level: 1 })).toBeNull();
+  });
+
   it('shows one page for what does not exist or may not be seen (DEC-UX-32)', async () => {
     serve();
     open('/collections/secret');

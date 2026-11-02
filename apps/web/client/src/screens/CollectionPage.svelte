@@ -17,6 +17,7 @@
   import MessagesButton from './MessagesButton.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing, Refused } from '../lib/api.js';
   import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, OwnerUnit, Resource } from '../lib/catalogue.js';
   import type { requestOf } from '../lib/grain.js';
@@ -402,6 +403,8 @@
       {/each}
       {#snippet after()}{#if here.folders.length > 0}<p class="meta foot">{t('collection.resources.top')}</p>{/if}{/snippet}
     </Table>
+  {:else}
+    <Loading />
   {/if}
 
   {#if lenses && top}
@@ -443,16 +446,22 @@
       </Table>
       <p class="meta note">{t('collection.lenses.note', { owner: shown.ownerUnit.name })}</p>
     {/if}
+  {:else if lenses === undefined}
+    <Loading />
   {/if}
 
   <div class="section-head"><h2>{t('collection.history')}</h2></div>
   {#if log}
     <div class="history card"><LogList entries={log.slice(0, 8)} /></div>
+  {:else}
+    <Loading />
   {/if}
 
   {#if adding && waiting}
     <AddResources collection={shown.name} {waiting} {catalogue} {registry} onadd={add} onclose={() => (adding = false)} />
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>

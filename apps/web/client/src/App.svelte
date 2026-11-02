@@ -6,6 +6,7 @@
   import { addTexts, setLanguage, currentLanguage, type Language } from '@datahub/ui/foundations/texts.svelte.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
@@ -667,7 +668,7 @@
             onstep={(step) => openStep(topic.number, step)}
             onunderstand={(yes) => understandCard(topic.number, yes)}
           />
-        {/key}{/if}
+        {/key}{:else}<Loading />{/if}
       {:else if topic && card?.see}
         <LearningSee
           {topic}
@@ -776,6 +777,8 @@
         />
       {:else if openedLens?.lens === null}
         <NotFound />
+      {:else}
+        <Loading />
       {/if}
     {:else if page.kind === 'editLens'}
       <!-- Its Owner Unit edits what a Lens tells; a Lens that waits for the Data Team is not changed (DEC-LE-05). -->
@@ -794,6 +797,8 @@
         {/key}
       {:else if openedLens?.lens !== undefined}
         <NotFound />
+      {:else}
+        <Loading />
       {/if}
     {:else if page.kind === 'collection' || page.kind === 'newCollection'}
       <CollectionPage
@@ -859,6 +864,8 @@
         />
       {:else if opened?.resource === null}
         <NotFound />
+      {:else}
+        <Loading />
       {/if}
     {:else if page.kind === 'admin'}
       <!-- Admin is for the Data Team only; registry refuses the others too (DEC-UX-130). -->

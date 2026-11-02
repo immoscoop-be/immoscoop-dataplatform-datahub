@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Card, ChartRequest } from '../lib/learning.js';
   import LearningText from './LearningText.svelte';
 
@@ -43,7 +44,7 @@
     {:else if picture === null}
       <p class="meta failed">{t('learning.example.failed')}</p>
     {:else}
-      <div class="drawing" aria-hidden="true"></div>
+      <div class="drawing"><Loading /></div>
     {/if}
     <figcaption>{t('learning.example.drawn')}</figcaption>
   </figure>
