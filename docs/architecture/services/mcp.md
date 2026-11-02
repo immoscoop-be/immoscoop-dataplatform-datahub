@@ -12,7 +12,7 @@
 
 - Signing in through identity, as an OAuth client of it ([TR-PF-06](../../requirements/technical/00-platform.md#tr-pf-06)): without a valid Access Token, mcp answers `401` with a pointer to its protected resource metadata, which names identity as the place to sign in
 - The MCP endpoint `/mcp`, Streamable HTTP without sessions: every request gets its own MCP server, for the User of its Access Token
-- The server instructions: what Data Hub is, its concepts and the rules Claude follows in it ([FR-CL-14](../../requirements/functional/17-claude.md#fr-cl-14)), in `src/guide.ts`
+- The server instructions: what Data Hub is, its concepts and the rules Claude follows in it, analysing in SQL among them ([FR-CL-14](../../requirements/functional/17-claude.md#fr-cl-14), [FR-CL-24](../../requirements/functional/17-claude.md#fr-cl-24)), in `src/guide.ts`
 - The tools of [Claude](../../requirements/functional/17-claude.md), each asking catalogue or query with the Access Token of the User, so that it answers as they may see ([FR-CL-02](../../requirements/functional/17-claude.md#fr-cl-02)):
   - `who_am_i`, `how_to_use` and the prompt `start_with_data_hub`, and `explain`, which reads the Learning Cards of `packages/learning` (`src/tools.ts`, `src/learning.ts`)
   - Resources: `list_resources`, `search`, `get_resource`, `show_resource`, `get_resource_lineage`, `get_related_resources`, `get_resource_log`, `get_resource_queries`, `update_resource_card`, `describe_fields`, `mark_changes_seen`, `deprecate_resource`, `undeprecate_resource`, `publish_resource` and `preview_resource` (`src/resources.ts`)

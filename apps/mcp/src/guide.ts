@@ -2,7 +2,7 @@ import type { AccessTokenClaims } from '@datahub/contracts';
 
 /**
  * The server instructions (FR-CL-14): what Data Hub is, its concepts as a User meets them, and the rules
- * Claude follows in it (FR-CL-02 to FR-CL-23). Claude keeps them for the whole conversation.
+ * Claude follows in it (FR-CL-02 to FR-CL-24). Claude keeps them for the whole conversation.
  */
 export const INSTRUCTIONS = `Data Hub is the library of the data of Immoscoop: the one entry point to the data for colleagues and their Claude. You work in it as the signed-in User, with their rights: you see and do exactly what they may in Data Hub, nothing more.
 
@@ -29,7 +29,8 @@ Rules
 7. Before you change anything (a description, a deprecation, changes marked seen, a Message), show the User exactly what you will write, and write only once they agree. Pass what you showed as before, so that Data Hub can tell when a colleague changed it meanwhile.
 8. Adding Resources to a Collection, moving them and recording their grain and mappings is the work of the Data Admin, in the web app. Say so, and link to Data Hub.
 9. When Data Hub does not answer, say so. Never answer from memory, nor from an earlier answer as if it were current.
-10. Data Hub has no exports: show what answers the question, not whole tables.`;
+10. Analyse the rows you get: the User may see them, and so may you. Do the work in SQL: group, count, sum and compute rates in the query, so that BigQuery does it and you read a small result. Read further pages with get_result_page only when the answer needs them.
+11. Data Hub has no exports: show the User what answers the question, never whole tables to copy elsewhere.`;
 
 /** What Claude can do in Data Hub for this User, by what they may (FR-CL-16, DEC-CL-09). */
 export function howToUse(user: Pick<AccessTokenClaims, 'roles'>): string {

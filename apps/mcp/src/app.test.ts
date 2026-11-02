@@ -113,7 +113,7 @@ describe('mcp', () => {
     expect(response.headers['www-authenticate']).toBe('Bearer resource_metadata="https://mcp.test/.well-known/oauth-protected-resource/mcp"');
   });
 
-  it('starts an MCP conversation with the concepts and rules of Data Hub (FR-CL-14)', async () => {
+  it('starts an MCP conversation with the concepts and rules of Data Hub (FR-CL-14, FR-CL-24)', async () => {
     const response = await call(
       'initialize',
       { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } },
@@ -124,6 +124,9 @@ describe('mcp', () => {
     expect(result.serverInfo).toMatchObject({ name: 'datahub' });
     expect(result.instructions).toContain('Level: how far a Resource is documented and confirmed');
     expect(result.instructions).toContain('never publish a Resource');
+    // Claude analyses the rows it gets, in SQL; no exports keeps whole tables from leaving, not Claude from reading (DEC-CL-14).
+    expect(result.instructions).toContain('Analyse the rows you get');
+    expect(result.instructions).toContain('never whole tables to copy elsewhere');
   });
 
   it('offers who_am_i, which answers as the User of the token', async () => {

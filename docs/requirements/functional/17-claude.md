@@ -29,6 +29,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-11"></a>**DEC-CL-11** · A query made through Claude, and a run of a query or a Preview through Claude, is marked so: the panel of Query labels it Claude, and the Query Log keeps where it came from. *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-12"></a>**DEC-CL-12** · The Data Team can list the queries of everyone through Claude, with who ran them and their SQL, as it can in Query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-13"></a>**DEC-CL-13** · The result of a query shows in an MCP App: the grid of Query, with "Open in Query". *Decided on 2026-11-01, by Max.*
+- <a id="dec-cl-14"></a>**DEC-CL-14** · Claude analyses the rows it gets for the User ([DEC-CL-06](#dec-cl-06)), and does the work in SQL: it groups, counts and computes in the query, so that BigQuery does the work and Claude reads a small result, rather than paging through raw rows. That Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)) limits what leaves Data Hub to be kept elsewhere, not what Claude may read to answer. *Decided on 2026-11-02, by Max, while trying the MCP: the rules in the server instructions had Claude hold back from analysing the data.*
 
 ## Terms
 
@@ -289,6 +290,8 @@ For its Owner Unit and the Data Team, Claude can mark the changes since the last
 
 The server instructions tell Claude what Data Hub is, its concepts in a sentence or two each, and the rules of this file, [FR-CL-02](#fr-cl-02) to [FR-CL-13](#fr-cl-13). The concepts are those a User meets: Collection and Owner Unit; Resource, its Level, Publication and Confirmation, deprecated and withdrawn; the Data Team; Query and the Pre-flight; Lens; Message; Learning Card and the Learning Centre. The sentences of each concept are the core idea of the Learning Card that explains it in the Compass, so that Claude and Data Hub say the same ([DEC-CH-04](13-channels.md#dec-ch-04)). The MCP server reads them from the Learning Cards in `packages/learning`, as the web app does ([TR-LR-01](../technical/16-learning.md#tr-lr-01)); which card explains which concept is [OP-CL-07](#op-cl-07).
 
+*Note of 2026-11-02: the rules in the server instructions also include analysing in SQL ([FR-CL-24](#fr-cl-24), [DEC-CL-14](#dec-cl-14)), next to those of [FR-CL-02](#fr-cl-02) to [FR-CL-23](#fr-cl-23).*
+
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-cl-15"></a>
@@ -376,6 +379,15 @@ A query made through Claude, and every run through Claude of a query or a Previe
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
+<a id="fr-cl-24"></a>
+### FR-CL-24 · Claude analyses in SQL, and shows what answers
+
+**Status:** Implemented
+
+The server instructions tell Claude to analyse the rows it gets, and to do the work in SQL: to group, count, sum and compute rates in the query, so that BigQuery does it within the ranges of the Pre-flight ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) and Claude reads a small result, reading further pages with `get_result_page` only when the answer needs them. What Claude shows the User is what answers the question, never whole tables to copy elsewhere: Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)). This works out [DEC-CL-14](#dec-cl-14).
+
+*Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
 ## Edge cases
 
 <a id="ec-cl-01"></a>
@@ -431,6 +443,7 @@ BigQuery keeps a result for a limited time; a page asked after that answers that
 - [ ] <a id="op-cl-08"></a>**OP-CL-08** · Confirm that Claude gets the concepts of Data Hub in its server instructions ([FR-CL-14](#fr-cl-14)) and explains them with the Learning Cards ([FR-CL-15](#fr-cl-15)). *Raised on 2026-10-30, by Max: "shouldn't the MCP add what the concepts are: Collection, Resource, Lens, the Learning Centre with its cards linked?"* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [ ] <a id="op-cl-11"></a>**OP-CL-11** · Decide whether Claude can run the steps of an analysis without showing their result. Today every run through Claude opens the grid in the conversation ([FR-CL-21](#fr-cl-21)), so an analysis in five queries shows five grids. Proposal: `run_query` gets a choice not to show, for a step Claude reads itself; the result the User asks to see, and every run that needs their approval or a Request, still opens the MCP App ([DEC-CL-07](#dec-cl-07)). Each run stays a run of the User in the Query Log, with its Query ID ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Raised on 2026-11-02, by Max, while trying the MCP: Claude gets the rows ([DEC-CL-06](#dec-cl-06)), but an analysis in several steps fills the conversation with grids.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 ## Builds on
 
