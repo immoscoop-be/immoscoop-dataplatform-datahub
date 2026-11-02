@@ -58,6 +58,9 @@
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
+  --motion-loading: 1s ease-in-out;  /* the three dots going back and forth while something is read (DEC-UX-165) */
+  --delay-loading: 300ms;           /* before the dots show: a quick answer shows none */
+  --delay-loading-step: 160ms;      /* each dot a little after the one before it */
   --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
   --background-cycle: 36s;
   --photo-cycle: 60s;               /* the photo of the sign-in, very slowly closer */

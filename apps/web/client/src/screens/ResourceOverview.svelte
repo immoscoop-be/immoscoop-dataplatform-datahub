@@ -12,6 +12,7 @@
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import { formatBytes } from '@datahub/ui/foundations/bytes.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Card, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
   import type { Storage } from '../lib/query.js';
@@ -167,7 +168,9 @@
 {/snippet}
 
 {#snippet entities(drawn: boolean)}
-  {#if shownRelated.length === 0}
+  {#if related === undefined}
+    <Loading />
+  {:else if shownRelated.length === 0}
     <p class="empty">{t('resource.entity.none')}</p>
   {:else}
     <div class="entities" class:drawn={drawn && picture.rows.length > 0}>
@@ -319,7 +322,7 @@
           {#if details.clusterBy.length > 0}
             <dt>{t('resource.clustered')}</dt><dd>{t('resource.clusteredBy', { fields: list(details.clusterBy) })}</dd>
           {/if}
-          {#if size}<dt>{t('resource.size')}</dt><dd>{size}</dd>{/if}
+          {#if size}<dt>{t('resource.size')}</dt><dd>{size}</dd>{:else if storage === undefined}<dt>{t('resource.size')}</dt><dd><Loading inline /></dd>{/if}
         </FactsList>
         {#if size && storage?.beneath}<p class="cheap beneath" title={storage.key}>{t('resource.beneath', { key: storage.key })}</p>{/if}
         <p class="cheap">
@@ -328,7 +331,9 @@
           {#if details.clusterBy[0]}{t('resource.clusterThen', { field: details.clusterBy[0] })}{/if}
         </p>
       {:else}
-        {#if size}
+        {#if storage === undefined}
+          <FactsList><dt>{t('resource.size')}</dt><dd><Loading inline /></dd></FactsList>
+        {:else if size}
           <FactsList><dt>{t('resource.size')}</dt><dd>{size}</dd></FactsList>
           {#if storage?.beneath}<p class="cheap beneath" title={storage.key}>{t('resource.beneath', { key: storage.key })}</p>{/if}
         {/if}
@@ -342,7 +347,7 @@
     </SubTile>
 
     <SubTile label={t('resource.history')} span="all">
-      {#if log}<LogList entries={log.slice(0, 5)} />{/if}
+      {#if log}<LogList entries={log.slice(0, 5)} />{:else}<Loading />{/if}
     </SubTile>
   </Grid>
 {/if}

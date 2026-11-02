@@ -8,6 +8,7 @@
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import CollectionIcon from '@datahub/ui/marks/CollectionIcon.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Collection, Resource } from '../lib/catalogue.js';
   import type { LensItem } from '../lib/query.js';
   import { brokenText } from '../lib/broken.js';
@@ -279,6 +280,8 @@
   <p class="meta empty">{t('collections.noneShown')}</p>
 {:else if collections && !words && shown.length === 0}
   <p class="meta empty">{t(filter === 'yours' ? 'collections.noneYours' : 'collections.none')}</p>
+{:else if !collections}
+  <Loading />
 {/if}
 
 <style>

@@ -8,6 +8,7 @@
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Identity, KeyOfUser } from '../lib/identity.js';
   import { initialsOf } from '../lib/initials.js';
@@ -178,6 +179,8 @@
     {/each}
     {#snippet after()}<p class="meta foot">{t('admin.keys.foot')}</p>{/snippet}
   </Table>
+{:else}
+  <Loading />
 {/if}
 
 <style>

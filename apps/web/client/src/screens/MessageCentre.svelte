@@ -5,6 +5,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import {
     CONTEXT_BUTTON,
@@ -95,7 +96,7 @@
     {#if found === null}
       <p class="meta empty" role="alert">{t('messages.failed')}</p>
     {:else if found === undefined}
-      <p class="meta empty">…</p>
+      <Loading />
     {:else if shown.length === 0}
       <p class="meta empty">{t(caughtUp ? 'messages.caughtUp' : 'messages.none')}</p>
     {:else}
@@ -142,7 +143,7 @@
     {:else if opened?.message === null}
       <p class="meta empty" role="alert">{t('messages.failed.read')}</p>
     {:else if opened}
-      <p class="meta empty">…</p>
+      <Loading />
     {:else}
       <p class="meta empty">{t('messages.pick')}</p>
     {/if}

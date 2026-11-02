@@ -10,6 +10,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Catalogue, Collection } from '../lib/catalogue.js';
   import type { Group } from '../lib/identity.js';
   import { clock, when } from '../lib/moment.js';
@@ -456,6 +457,8 @@
     </aside>
     {/if}
   </div>
+{:else}
+  <Loading />
 {/if}
 
 <style>

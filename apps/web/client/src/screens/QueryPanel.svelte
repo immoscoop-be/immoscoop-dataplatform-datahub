@@ -4,6 +4,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import { isToday, isYesterday, type Period, periodOf, periodsOf } from '../lib/periods.js';
@@ -268,6 +269,8 @@
     <p class="meta empty" role="alert">{t('query.failed.list')}</p>
   {:else if found?.words === words && foundGroups.length === 0}
     <p class="meta empty">{t('query.noMatch')}</p>
+  {:else if found?.words !== words}
+    <Loading />
   {/if}
   {#each foundGroups as group (group.period.key)}
     <p class="period found"><span>{label(group.period)}</span><span class="count">{group.period.count}</span></p>
@@ -288,13 +291,15 @@
       {:else if items && items.length > 0}
         {#each items as item (item.id)}{@render entry(item)}{/each}
       {:else}
-        <p class="meta empty">…</p>
+        <Loading />
       {/if}
     {/if}
   {/each}
   {#if periods.length === 0 && draft === null}
     <p class="meta empty">{t(all ? 'query.noneAll' : 'query.none')}</p>
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>

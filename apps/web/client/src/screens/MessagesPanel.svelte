@@ -4,6 +4,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import type { IconName } from '@datahub/ui/foundations/icons.js';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { type Counts, type Filter, type FilterKind, type FilterOn, type View, VIEW_TEXTS } from '../lib/messages.js';
 
   /**
@@ -58,7 +59,7 @@
 <nav aria-label={t('section.messages')}>
   {#each VIEWS as item (item.view)}
     <button type="button" class="filter" class:on={filter.view === item.view} aria-current={filter.view === item.view ? 'true' : undefined} onclick={() => onfilter({ ...filter, view: item.view })}>
-      <Icon name={item.icon} /><span>{t(VIEW_TEXTS[item.view].name)}</span>{#if item.count && counts}<span class="count">{counts[item.count]}</span>{/if}
+      <Icon name={item.icon} /><span>{t(VIEW_TEXTS[item.view].name)}</span>{#if item.count && counts}<span class="count">{counts[item.count]}</span>{:else if item.count}<span class="count"><Loading inline /></span>{/if}
     </button>
   {/each}
   <div class="label">{t('messages.kind')}</div>

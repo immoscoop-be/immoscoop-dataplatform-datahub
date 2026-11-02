@@ -2,6 +2,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Run } from '../lib/query.js';
 
   /**
@@ -71,6 +72,8 @@
       <div class="start"><Icon name="flag" />{start}</div>
     {/if}
   </div>
+{:else}
+  <Loading />
 {/if}
 
 <style>

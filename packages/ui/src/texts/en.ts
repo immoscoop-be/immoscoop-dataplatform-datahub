@@ -97,6 +97,7 @@ export default {
   'editor.template': 'Template',
   'editor.partition': 'Partition',
   'editor.cluster': 'Cluster {place}',
+  'loading': 'Loading…',
   'inPlace.hint': 'Click to change',
   'inPlace.addDescription': 'Add a description',
   'inPlace.save': 'Save',

@@ -5,6 +5,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
@@ -78,6 +79,8 @@
     </Table>
   {/if}
   <p class="meta intro">{t('resource.history.intro')}</p>
+{:else}
+  <Loading />
 {/if}
 
 <style>

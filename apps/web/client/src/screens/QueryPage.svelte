@@ -13,6 +13,7 @@
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
@@ -1000,7 +1001,7 @@
         <p class="empty"><Icon name="info" /><span>{t('query.notYours', { name: shown.run.userName, ref: shown.run.ref })}</span></p>
       {/if}
     {:else if running}
-      <p class="empty"><Icon name="play-fill" /><span>{t('query.running')}</span></p>
+      <p class="empty"><Icon name="play-fill" /><span>{t('query.running')}</span><Loading inline /></p>
     {:else if failure}
       <p class="empty failed" role="alert"><Icon name="warning-fill" /><span><b>{t('query.failed')}</b> {failure}</span></p>
     {:else if expired && run}
@@ -1072,6 +1073,8 @@
       }}
     />
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 {#snippet grid(of: Run, rows: Page)}

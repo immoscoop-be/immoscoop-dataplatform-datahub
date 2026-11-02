@@ -5,6 +5,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Lens, Preflight, Query, QueryClient } from '../lib/query.js';
 
   /**
@@ -73,7 +74,7 @@
     <section class="block">
       <div class="label">{t('lens.size.title')}</div>
       {#if check === null}
-        <p class="line"><Icon name="circle-dashed-fill" /><span>{t('query.checking')}</span></p>
+        <p class="line"><Icon name="circle-dashed-fill" /><span>{t('query.checking')}</span><Loading inline /></p>
       {:else if !check.runnable || check.bytes === null || check.range === null}
         <p class="line warn"><Icon name="warning-fill" /><span>{t('lens.update.cannot')}</span></p>
       {:else if check.range === 'free'}

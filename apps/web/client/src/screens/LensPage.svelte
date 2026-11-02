@@ -20,6 +20,7 @@
   import OpenInExcel from './OpenInExcel.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Collection } from '../lib/catalogue.js';
   import { missingText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
@@ -362,6 +363,8 @@
         <Callout icon="hourglass-medium-fill"><b>{t('lens.result.stopped')}</b> {t('lens.result.stopped.text')}</Callout>
       {:else if failure}
         <Callout icon="warning-fill" tone="urgent"><b>{t('query.failed')}</b> {failure}</Callout>
+      {:else if running}
+        <Loading />
       {:else if !run || !page}
         <Callout icon="play-fill"><b>{t('lens.result.notRun')}</b> {t('lens.result.notRun.text')}</Callout>
       {:else}

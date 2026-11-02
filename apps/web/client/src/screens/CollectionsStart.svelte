@@ -15,6 +15,7 @@
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { brokenText } from '../lib/broken.js';
   import type { Collection, FoundCollection, FoundResource } from '../lib/catalogue.js';
@@ -159,7 +160,7 @@
     · <button type="button" class="clear" onclick={clear}>{t('collections.search.clear')}</button>
   </p>
   {#if found === undefined}
-    <p class="meta">{t('collections.search.looking')}</p>
+    <p class="meta">{t('collections.search.looking')} <Loading inline /></p>
   {:else if found === null}
     <Callout icon="warning-fill" tone="warning">{t('collections.search.failed')}</Callout>
   {:else if found.lenses.length + found.resources.length + found.collections.length === 0}
@@ -239,7 +240,9 @@
   </Tile>
 {/snippet}
 
-{#if collections && yours.length === 0 && yourLenses.length === 0}
+{#if !collections}
+  <Loading />
+{:else if yours.length === 0 && yourLenses.length === 0}
   <p class="meta empty">{t('collections.yours.none')}</p>
 {:else}
   <Grid fill>
@@ -268,7 +271,9 @@
     label={t('collections.recently.label')}
   />
 </div>
-{#if collections && (recently === 'updated' ? updated : added).length === 0}
+{#if !collections}
+  <Loading />
+{:else if (recently === 'updated' ? updated : added).length === 0}
   <p class="meta empty">{t('collections.recently.none')}</p>
 {:else}
   <Grid fill>
@@ -307,6 +312,8 @@
       {/each}
     </Grid>
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 {/if}

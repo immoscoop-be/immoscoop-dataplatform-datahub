@@ -95,6 +95,7 @@ export default {
   'editor.template': 'Sjabloon',
   'editor.partition': 'Partitie',
   'editor.cluster': 'Cluster {place}',
+  'loading': 'Laden…',
   'inPlace.hint': 'Klik om te wijzigen',
   'inPlace.addDescription': 'Een beschrijving toevoegen',
   'inPlace.save': 'Bewaren',

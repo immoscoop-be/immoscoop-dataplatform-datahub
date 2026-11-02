@@ -1,6 +1,7 @@
 <script lang="ts">
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Collection } from '../lib/catalogue.js';
   import type { LensSuggestions } from '../lib/query.js';
   import LensCard from './LensCard.svelte';
@@ -43,7 +44,7 @@
     {/each}
   {/if}
 {:else}
-  <p class="meta checking"><Icon name="circle-dashed-fill" />{t('lenses.looking')}</p>
+  <p class="meta checking"><Icon name="circle-dashed-fill" />{t('lenses.looking')}<Loading inline /></p>
 {/if}
 
 <style>

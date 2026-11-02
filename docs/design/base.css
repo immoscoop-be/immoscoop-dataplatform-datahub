@@ -179,6 +179,15 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 .btn-quiet { font: var(--weight-medium) var(--text-small) var(--font-family); padding: 8px 14px; border-radius: var(--radius-pill); border: 0;
   background: var(--tint-hover); color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .btn-quiet:hover { background: var(--tint-active); }
+/* Loading: three dots going back and forth where something will show (DEC-UX-165) */
+.loading-dots { display: flex; justify-content: center; gap: 6px; padding: 28px 0; color: var(--text-muted); opacity: 0; animation: loading-appear var(--delay-loading) step-end forwards; }
+.loading-dots i { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: loading-sway var(--motion-loading) infinite alternate; }
+.loading-dots i:nth-child(2) { animation-delay: var(--delay-loading-step); }
+.loading-dots i:nth-child(3) { animation-delay: calc(var(--delay-loading-step) * 2); }
+@keyframes loading-appear { to { opacity: 1; } }
+@keyframes loading-sway { from { transform: translateX(-4px); opacity: .35; } to { transform: translateX(4px); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .loading-dots i { animation: none; opacity: .6; } }
+
 /* A name or description edited in place, as on a query (DEC-UX-119, DEC-UX-162) */
 .in-place { cursor: text; border-radius: var(--radius-sm); }
 .in-place:hover { background: var(--tint-hover); }

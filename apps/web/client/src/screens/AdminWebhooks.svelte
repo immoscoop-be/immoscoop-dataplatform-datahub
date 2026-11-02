@@ -7,6 +7,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
   import type { DbtJob, Delivery, DeliveryReason, JobKind, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
@@ -212,6 +213,8 @@
       <CopyButton text={webhookUrl} label={t('admin.webhooks.copy')} />
     </div>
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <div class="section-head"><h2>{t('admin.deliveries')}</h2><span class="meta">{t('admin.deliveries.days')}</span></div>
@@ -317,6 +320,8 @@
       </section>
     {/if}
   </div>
+{:else}
+  <Loading />
 {/if}
 
 {#if picking}
@@ -325,7 +330,7 @@
     {#snippet top()}<div class="meta">Webhooks · Data Hub {environment}</div>{/snippet}
     <p class="meta sheet-lead">{t('admin.webhooks.pick.lead', { project: tile.projectName ?? tile.projectId, id: tile.projectId, environment })}</p>
     {#if offered === undefined}
-      <p class="meta">{t('admin.webhooks.pick.reading')}</p>
+      <p class="meta">{t('admin.webhooks.pick.reading')} <Loading inline /></p>
     {:else if offered === null}
       <p class="meta">{t('admin.webhooks.dbtCloudDown')}</p>
     {:else}

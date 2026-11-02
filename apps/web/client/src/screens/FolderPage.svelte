@@ -13,6 +13,7 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { renderLog } from '@datahub/contracts/log';
   import { Refused } from '../lib/api.js';
   import { brokenText } from '../lib/broken.js';
@@ -244,6 +245,8 @@
       {#snippet after()}<p class="meta foot">{t('folder.order')}</p>{/snippet}
     </Table>
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>
