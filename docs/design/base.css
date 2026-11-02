@@ -1389,6 +1389,11 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .wh-opt.off:hover { background: none; }
 .wh-opt.off .item-title { color: var(--text-muted); }
 .wh-empty { margin-top: 0; padding: 30px 24px; border-radius: var(--radius-xl); text-align: center; }
+/* The deliveries keep to the height of the main frame, inside its padding, and scroll within themselves (DEC-UX-167) */
+.wh-list { box-sizing: border-box; max-height: calc(100vh - 2 * var(--space-frame) - 52px); overflow-y: auto; padding-top: 0; }
+.wh-list .mc-chips { position: sticky; top: 0; z-index: 1; margin: 0 -8px 8px; padding: 12px 12px 8px; background: var(--card); }
+.wh-stop-row { display: flex; gap: 10px; font-size: var(--text-small); line-height: 1.5; }
+.wh-stop-row > i { color: var(--signal-urgent); font-size: 18px; flex: none; }
 
 /* The page of a query fills the height of the screen: the query and its result split it, each scrolling on
    its own, the divider between them dragged; or the query next to its result (DEC-UX-143, DEC-UX-144). */

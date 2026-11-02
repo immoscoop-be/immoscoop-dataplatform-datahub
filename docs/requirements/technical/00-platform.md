@@ -115,7 +115,7 @@ Each service that stores data owns exactly one schema in the shared Cloud SQL Po
 
 **Status:** Implemented · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
 
-Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
+Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. The job knows the environment it runs in (`DATAHUB_ENVIRONMENT`), for a migration that starts a table with what an environment held before, such as the Source Jobs ([TR-AR-12](01-artifact-registry.md#tr-ar-12)). Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
 
 <a id="tr-pf-10"></a>
 ### TR-PF-10 · API contracts from zod schemas
