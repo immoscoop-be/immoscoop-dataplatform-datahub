@@ -188,6 +188,25 @@ describe('Resources through Claude', () => {
     expect(result.structuredContent).toMatchObject({ levelName: '4 · Explored', storage: { size: '6.2 GB' }, mayPublish: true, collection: { owner: 'Credit team' } });
   });
 
+  it('gives the cards of one Collection the drawing of its icon, as the MCP App loads nothing from outside (DEC-UX-164)', async () => {
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, { ...collection, icon: 'coins' }];
+    const shown = await tool('show_resource', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }));
+    const { resource } = shown.structuredContent as { resource: { collection: { name: string; icon: string } } };
+    expect(resource.collection.name).toBe('Credit leads');
+    expect(resource.collection.icon).toMatch(/^<svg[^>]*viewBox="0 0 256 256"/);
+
+    // A query whose Resources sit in one Collection carries it too; an icon it may not carry draws nothing.
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, { ...collection, icon: '../../package' }];
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = () => [200, { query: { id: QUERY_ID, name: 'q', question: '', sql: 'select 1', parameters: [], lastRun: null, resources: [{ id: RESOURCE_ID, displayName: 'Weekly lead volume', level: 4, collectionId: 'c-1' }] } }];
+    const query = await tool('show_query', { id: QUERY_ID }, await issuer.sign());
+    expect(query.structuredContent).toMatchObject({ view: 'query', collection: { name: 'Credit leads', icon: '' } });
+
+    // Resources in several Collections: no Collection at all.
+    answers[`GET ${QUERY}/queries/${QUERY_ID}`] = () => [200, { query: { id: QUERY_ID, name: 'q', question: '', sql: 'select 1', parameters: [], lastRun: null, resources: [{ id: RESOURCE_ID, displayName: 'Weekly lead volume', level: 4, collectionId: 'c-1' }, { id: 'r-2', displayName: 'Listings', level: 2, collectionId: 'c-2' }] } }];
+    expect((await tool('show_query', { id: QUERY_ID }, await issuer.sign())).structuredContent).toMatchObject({ collection: null });
+  });
+
   it('answers what it may not see as not found, without saying which (FR-CL-02)', async () => {
     const result = await tool('get_resource', { id: RESOURCE_ID }, await issuer.sign());
     expect(result.isError).toBe(true);
