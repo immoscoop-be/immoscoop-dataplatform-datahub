@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { answer, attempt, firstSentence, levelName, plain, refusal } from './answers.js';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
+import { collectionIcon } from './icons.js';
 
 /** A Resource as a Collection lists it. */
 interface Item {
@@ -18,6 +19,8 @@ interface Item {
 interface Collection {
   id: string;
   name: string;
+  /** The name of its icon in Phosphor, such as `coins` (DEC-CO-19). */
+  icon: string | null;
   visibility: 'private' | 'public';
   canManage: boolean;
   ownerUnit: { id: string; name: string };
@@ -148,11 +151,13 @@ export function resourceTools({ server, hub, user }: Context): void {
         .catch(() => null),
       resource.collectionId ? hub.get<Collection>('catalogue', `/collections/${enc(resource.collectionId)}`).catch(() => null) : Promise.resolve(null),
     ]);
+    // Its icon goes with the card, as the MCP App loads nothing from outside (DEC-UX-164).
+    const icon = collection ? await collectionIcon(collection.icon) : '';
     return {
       ...resource,
       levelName: levelName(resource.level),
       storage,
-      collection: collection ? { id: collection.id, name: collection.name, owner: collection.ownerUnit.name, visibility: collection.visibility } : null,
+      collection: collection ? { id: collection.id, name: collection.name, icon, owner: collection.ownerUnit.name, visibility: collection.visibility } : null,
       // Who may change it, and who may publish it: its Owner Unit, not the Data Team as such (FR-SR-16).
       mayChange: collection?.canManage ?? false,
       mayPublish: collection !== null && user.groups.includes(collection.ownerUnit.id),
@@ -433,8 +438,11 @@ export function resourceTools({ server, hub, user }: Context): void {
       hub.send<Record<string, unknown>>('query', 'POST', `${path}/choices`, { window: size }),
       hub.send<{ preflight: Preflight; request: { state: string } | null }>('query', 'POST', `${path}/preflight`, body),
     ]);
+    // The Collection of the Resource, with its icon, for the head of the Preview (DEC-UX-164).
+    const collection = resource.collectionId ? await hub.get<Collection>('catalogue', `/collections/${enc(resource.collectionId)}`).catch(() => null) : null;
     const head = {
       view: 'preview',
+      collection: collection ? { name: collection.name, icon: await collectionIcon(collection.icon) } : null,
       resource: { id: resource.id, displayName: resource.displayName, level: resource.level, levelName: levelName(resource.level), page: hub.page(pages.resource(resource.id)) },
       window: size,
       values: chosen,

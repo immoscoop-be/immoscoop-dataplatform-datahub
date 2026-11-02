@@ -68,7 +68,7 @@
           <td>
             <a class="name" href={query.kind === 'lens' ? lensPath(query.id) : queryPath(query.id)}><KindIcon kind={query.kind === 'lens' ? 'lens' : 'resource'} broken={brokenText(query.broken ?? null)} />{query.name}</a>
           </td>
-          <td>{t(KINDS[query.kind])}</td>
+          <td>{t(KINDS[query.kind])}{#if query.through === 'claude'} <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>{/if}</td>
           <td>{query.mine ? t('resource.history.you') : query.ownerName}</td>
           <td class="number-cell">{query.runs}</td>
           <td>{query.lastRunAt ? when(query.lastRunAt, language) : ''}</td>
@@ -82,6 +82,7 @@
 
 <style>
   .numbers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .pill { font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-sub); padding: 2px 8px; border-radius: var(--radius-pill); margin-left: 4px; }
   .number { font-size: var(--text-small); color: var(--text-secondary); background: var(--surface-sub); padding: 6px 12px; border-radius: var(--radius-pill); }
   .grow { flex: 1; }
   .name { display: inline-flex; align-items: center; gap: 7px; color: var(--text-primary); text-decoration: none; font-weight: var(--weight-medium); }

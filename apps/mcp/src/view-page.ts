@@ -54,6 +54,8 @@ html, body { margin: 0; background: transparent; }
 body { font-family: var(--font-family); font-size: var(--text-body); color: var(--text-primary); line-height: 1.5; }
 #root { border-radius: 16px; background: var(--surface-solid); outline: 1px solid var(--tint-active); outline-offset: -1px; padding: 14px 16px 16px; display: grid; gap: 12px; }
 .meta { font-size: var(--text-meta); color: var(--text-muted); display: block; }
+.ci { display: inline-flex; vertical-align: -2px; margin-right: 4px; }
+.ci svg { width: 14px; height: 14px; }
 .mono { font-family: var(--font-mono); }
 .title { font-size: 15px; font-weight: var(--weight-medium); }
 .head { display: flex; align-items: flex-start; gap: 10px; }
@@ -125,8 +127,11 @@ const bars = (level) => '<span class="bars" aria-hidden="true">' + [0, 1, 2, 3, 
 const level = (name) => (name ? '<span class="status">' + bars(levelOf(name)) + esc(name) + '</span>' : '');
 const link = (url, label) => (url ? '<a data-open="' + esc(url) + '">' + esc(label) + ' ↗</a>' : '');
 const foot = (note, url, label = 'Open in Data Hub') => '<div class="foot"><span>' + esc(note) + '</span>' + link(url, label) + '</div>';
-const head = (kind, title, sub, right = '') =>
-  '<div class="head"><div><span class="meta">' + esc(kind) + '</span><div class="title">' + esc(title) + '</div>' + (sub ? '<span class="meta">' + esc(sub) + '</span>' : '') + '</div>' + right + '</div>';
+// The Collection of a card, with its icon: a drawing of Phosphor that mcp read itself, never text of a User (DEC-UX-164).
+const icon = (svg) => (typeof svg === 'string' && svg.startsWith('<svg') ? '<span class="ci" aria-hidden="true">' + svg + '</span>' : '');
+const of = (collection) => (collection ? ' · ' + icon(collection.icon) + esc(collection.name) : '');
+const head = (kind, title, sub, right = '', collection = null) =>
+  '<div class="head"><div><span class="meta">' + esc(kind) + of(collection) + '</span><div class="title">' + esc(title) + '</div>' + (sub ? '<span class="meta">' + esc(sub) + '</span>' : '') + '</div>' + right + '</div>';
 
 /** The rows of a run: 100 a page, read from the same run (FR-SR-51). */
 function grid(page, ref) {
@@ -158,7 +163,7 @@ function requestPanel(reads, request) {
 function renderResource(r) {
   const card = r.card ?? {};
   const details = r.details ?? {};
-  const kind = 'Resource · ' + (r.collection ? r.collection.name : 'without a Collection');
+  const kind = r.collection ? 'Resource' : 'Resource · without a Collection';
   const state = '<div class="row">' + level(r.levelName) + '<span class="status">' + (r.published ? 'Published' : 'Not published') + '</span>' +
     (r.collection ? '<span class="status">Owner: ' + esc(r.collection.owner) + '</span>' : '') + (r.deprecated ? '<span class="status warn">Deprecated</span>' : '') + (r.withdrawn ? '<span class="status warn">Withdrawn</span>' : '') + '</div>';
   const dep = r.deprecation ? '<div class="alert"><span><b>Deprecated</b> by ' + esc(r.deprecation.by) + ' on ' + esc(day(r.deprecation.at)) + ': ' + esc(r.deprecation.reason) + (r.deprecation.insteadOf ? ' Use ' + esc(r.deprecation.insteadOf.displayName) + ' instead.' : '') + '</span></div>' : '';
@@ -178,7 +183,7 @@ function renderResource(r) {
   const role = (name) => [details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : '', (card.parameters ?? []).includes(name) ? '<span class="pill">Parameter</span>' : ''].join('');
   const columns = '<div class="scroll"><table><thead><tr><th>Column</th><th>Type</th><th>Business Description</th><th>Description, from dbt</th><th></th></tr></thead><tbody>' +
     (r.fields ?? []).map((f) => '<tr><td class="mono">' + esc(f.name) + '</td><td class="meta">' + esc(f.dataType) + '</td><td>' + (esc(f.businessDescription) || '–') + '</td><td>' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table></div>';
-  root.innerHTML = head(kind, r.displayName, r.key) + state + dep + changes +
+  root.innerHTML = head(kind, r.displayName, r.key, '', r.collection) + state + dep + changes +
     '<div class="tabs"><button class="tab' + (tab === 'overview' ? ' on' : '') + '" data-tab="overview">Overview</button><button class="tab' + (tab === 'columns' ? ' on' : '') + '" data-tab="columns">Columns</button></div>' +
     (tab === 'overview' ? overview : columns) + foot('As you see it in Data Hub', r.page);
 }
@@ -195,21 +200,21 @@ function renderPreview(v) {
   }).join('');
   const pf = v.preflight ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads ') + esc(v.reads ?? '?') + (v.preflight.partitions !== null && v.preflight.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';
   const body = v.outcome === 'ran' ? grid(v.page, v.run?.ref) : v.outcome === 'approve' ? approvePanel(v.reads, v.request) : v.outcome === 'request' ? requestPanel(v.reads, v.request) : problems(v.preflight, v.problem);
-  root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName)) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page);
+  root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName), v.collection) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page);
 }
 
 function renderPublish(v) {
   const r = v.resource;
   const owner = r.collection ? r.collection.owner : 'its Owner Unit';
   if (r.published) {
-    root.innerHTML = head('Publish · Resource · ' + (r.collection?.name ?? ''), r.displayName, null, level(r.levelName)) +
+    root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
       '<div class="checks"><div>✓ <b>Published and confirmed</b> on ' + esc(day(r.publication?.publishedAt)) + ' by ' + esc(r.publication?.publishedBy) + ', for ' + esc(owner) + '. It does not expire; a field that changes later gives a warning, and the Level stays.</div><div>✓ Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ' sees it now.</div></div>' +
       foot('Kept in the Log of the Resource', r.page);
     return;
   }
   const who = r.collection?.visibility === 'public' ? 'the whole company, as the Collection is public' : 'everyone who sees the Collection';
   const may = r.mayPublish;
-  root.innerHTML = head('Publish · Resource · ' + (r.collection?.name ?? ''), r.displayName, null, level(r.levelName)) +
+  root.innerHTML = head('Publish · Resource', r.displayName, null, level(r.levelName), r.collection) +
     '<div><div class="label">Who will see it</div><div class="checks"><div><b>Everyone who sees ' + esc(r.collection?.name ?? 'its Collection') + ':</b> ' + esc(who) + '. Now only ' + esc(owner) + ' and the Data Team see it.</div></div></div>' +
     '<div><div class="label">What Data Hub checked</div><div class="checks"><div>' + (may ? '✓ Owned by ' + esc(owner) + ': you may publish it.' : '⚠ Only a member of ' + esc(owner) + ' publishes it.') + '</div><div>' + (v.ready ? '✓ <b>Described in dbt:</b> the table and at least one field have a description.' : '⚠ <b>Not described in dbt yet:</b> it is published from 2 · Described.') + '</div></div></div>' +
     (v.ready ? '<div><div class="label">What you confirm</div><p class="meta">Publishing is also the first Confirmation: for ' + esc(owner) + ', you confirm what this Resource is and what it stands for, as its descriptions say; not the figures in it.</p><div class="tile">' +
@@ -230,7 +235,7 @@ function renderQuery(v) {
     : v.outcome === 'notRun' ? '<p class="meta">Not run yet.</p>'
     : v.outcome === 'expired' ? '<p class="meta">BigQuery no longer keeps the result of its last run.</p>'
     : problems(v.preflight, v.problem);
-  root.innerHTML = head('Query · yours', q.name, q.question) + reads + body +
+  root.innerHTML = head('Query · yours', q.name, q.question, '', v.collection) + reads + body +
     '<details><summary>The SQL</summary><pre>' + esc(v.sql) + '</pre></details>' + foot('In your panel of Query', q.page, 'Open in Query');
 }
 

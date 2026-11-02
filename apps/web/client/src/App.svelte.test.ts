@@ -625,7 +625,7 @@ function serve({
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     const listed = () =>
-      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken }) => ({
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken, through }) => ({
         id: id as string,
         name: name as string,
         kind: (kind as string | undefined) ?? 'query',
@@ -637,6 +637,7 @@ function serve({
         request: request ?? null,
         hidden: hiddenQueries.has(id as string),
         broken: (broken as Record<string, string> | null | undefined) ?? null,
+        through: (through as string | null | undefined) ?? null,
       }));
     // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
     const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
@@ -1669,6 +1670,15 @@ describe('the web app, for the Data Team, with Collections', () => {
 });
 
 describe('Query', () => {
+  it('labels a query made through Claude in the panel (DEC-CL-11, FR-CL-22)', async () => {
+    serve({ queries: [{ ...QUERY, through: 'claude', lastRunAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    const item = (await panel.findByRole('link', { name: /Leads per source name/ }, { timeout: 3000 })).closest('.item')!;
+    expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
+  });
+
   it('reads the queries again with Refresh, such as those Claude made meanwhile (DEC-UX-163)', async () => {
     const calls = serve({ queries: [{ ...QUERY }] });
     open('/query/q1');

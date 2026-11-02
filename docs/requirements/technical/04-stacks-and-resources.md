@@ -230,6 +230,13 @@ What reads a Resource is checked at three moments, each a dry run of every Lens 
 
 Each time one becomes Broken, query asks catalogue, as itself, to tell who made the query ([MSG-QRY-02](../functional/message-catalogue.md#msg-qry-02)) or the Owner Unit of the Lens ([MSG-LEN-05](../functional/message-catalogue.md#msg-len-05)): `POST /internal/queries/{id}/broken` with its name and who made it, or `POST /internal/lenses/{id}/broken`, with the day it was found and what is missing, a table by the Display Name of its Resource, a column with the Resources the query reads, as BigQuery does not say of which. The Message starts in the state `broken`, is seen by who made the query (`params.owner`) or by who sees the Lens, and is For you for them. When it works again, `POST /internal/{queries|lenses}/{id}/works` puts that Message in the state `worksAgain` and makes it unread again. A Message that could not be sent is logged, not sent again.
 
+<a id="tr-sr-24"></a>
+### TR-SR-24 · A query and a run through Claude are marked so
+
+**Status:** Implemented · **Realises:** [FR-CL-22](../functional/17-claude.md#fr-cl-22), [DEC-CL-11](../functional/17-claude.md#dec-cl-11), [DEC-CL-15](../functional/17-claude.md#dec-cl-15)
+
+identity gives an MCP client, and only Claude's callbacks may register one ([TR-PF-06](00-platform.md#tr-pf-06)), Access Tokens with the claim `client: "claude"`, at sign-in and at every renewal; the web app's have none. query reads it with the User: a query made with such a token keeps `through = 'claude'` (migration `0010-through-claude`), and so does each run made with one, in the Query Log. A query keeps its mark once its User goes on in Query; a run says how it ran. Previews and the queries of the runs of a Lens are kept per User, so only their runs are marked. `GET /queries`, `GET /queries/{id}`, its runs and `GET /resources/{id}/queries` give `through`, `null` for the web app.
+
 ## Open points
 
 None yet; reading the data of Resources is [OP-SR-10](../functional/04-stacks-and-resources.md#op-sr-10).

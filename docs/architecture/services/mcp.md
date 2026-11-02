@@ -19,6 +19,7 @@
   - Messages: `get_messages`, `write_message`, `reply_to_message` (`src/messages.ts`)
   - Queries: `suggest_lenses`, `create_query`, `check_query`, `run_query`, `show_query`, `get_result_page`, `list_queries`, `get_query`, `update_query` (`src/queries.ts`)
 - One MCP App, `ui://datahub/view.html`, that the show tools open: a Resource, a Preview, a publication or the result of a query (`src/view.ts`, `src/view-page.ts`). The MCP Apps SDK is inlined in it, as the sandbox in Claude loads nothing from outside, and its values are those of `docs/design/tokens.css`, checked by a test
+- A window of one Collection shows the icon of that Collection, as the panel of the web app does; mcp reads its drawing from `@phosphor-icons/core` (`src/icons.ts`) and sends it with the data, as the MCP App loads nothing from outside ([DEC-UX-164](../../design/principles.md#dec-ux-164))
 - The buttons of the User in that MCP App are tools only the MCP App may call, never Claude ([DEC-CL-07](../../requirements/functional/17-claude.md#dec-cl-07)): `run_preview_approved`, `send_preview_request`, `run_query_approved`, `send_query_request` and `confirm_publication`
 - Mentioning the Level of every Resource it uses ([DEC-MR-06](../../requirements/functional/06-maturity-and-release.md#dec-mr-06), [FR-CL-05](../../requirements/functional/17-claude.md#fr-cl-05))
 - Later: Lenses and Reports as an MCP App, with the same components as web ([DEC-DH-15](../../overview/data-hub.md#dec-dh-15), [TR-PF-12](../../requirements/technical/00-platform.md#tr-pf-12))

@@ -29,6 +29,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-11"></a>**DEC-CL-11** · A query made through Claude, and a run of a query or a Preview through Claude, is marked so: the panel of Query labels it Claude, and the Query Log keeps where it came from. *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-12"></a>**DEC-CL-12** · The Data Team can list the queries of everyone through Claude, with who ran them and their SQL, as it can in Query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-13"></a>**DEC-CL-13** · The result of a query shows in an MCP App: the grid of Query, with "Open in Query". *Decided on 2026-11-01, by Max.*
+- <a id="dec-cl-15"></a>**DEC-CL-15** · A query made through Claude keeps the mark Claude, also once its User goes on with it in Query, and each run says how it ran: through Claude or in the web app. identity says so in the Access Tokens it gives Claude, so that every service can tell. *Decided on 2026-11-02, by Max ([OP-CL-10](#op-cl-10)), asking for the label Claude on the queries that come from Claude.*
 
 ## Terms
 
@@ -359,11 +360,13 @@ Before Claude writes a new query, `suggest_lenses` gives the Lenses that use its
 <a id="fr-cl-22"></a>
 ### FR-CL-22 · A query through Claude is marked so
 
-**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+**Status:** Implemented · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
 
 A query made through Claude, and every run through Claude of a query or a Preview, is marked so ([DEC-CL-11](#dec-cl-11)): the panel of Query labels it Claude ([FR-SR-43](04-stacks-and-resources.md#fr-sr-43), [DEC-UX-74](../../design/principles.md#dec-ux-74)), so does the tab History of the Resources it reads ([FR-SR-44](04-stacks-and-resources.md#fr-sr-44)), and the Query Log keeps it. query keeps no such mark yet ([OP-CL-10](#op-cl-10)).
 
 *Note of 2026-11-01: not built with the other tools; it needs the client in the Access Token, a mark in query and a label in the panel of Query ([OP-CL-10](#op-cl-10)).*
+
+*Note of 2026-11-02, on building it: built as [TR-SR-24](../technical/04-stacks-and-resources.md#tr-sr-24) ([DEC-CL-15](#dec-cl-15)). The panel of Query and the tab History of a Resource label a query made through Claude "Claude"; the history of a query says "through Claude" of each run that ran so. A Preview and the runs of a Lens are no query of their own, so only their runs carry the mark.*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -430,7 +433,7 @@ BigQuery keeps a result for a limited time; a page asked after that answers that
 - [ ] <a id="op-cl-07"></a>**OP-CL-07** · The Learning Centre has no service yet. Decide where `explain` and the concepts in the server instructions read from until it has one, and which Compass cards the Data Team writes for the concepts of [FR-CL-14](#fr-cl-14). Proposal: the server instructions are built from the core ideas of those cards; until they exist, from the Defined Terms. *Raised on 2026-10-30.* *Note of 2026-10-31: the Learning Centre is built. Its cards are files in `packages/learning` ([TR-LR-01](../technical/16-learning.md#tr-lr-01)), and the section K5 Data Hub of the Compass holds K5.1 What a resource is and K5.2 The Level of a Resource ([DEC-LR-30](16-learning.md#dec-lr-30)); the MCP server reads them from there. What stays open is which cards the Data Team writes for the other concepts.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-08"></a>**OP-CL-08** · Confirm that Claude gets the concepts of Data Hub in its server instructions ([FR-CL-14](#fr-cl-14)) and explains them with the Learning Cards ([FR-CL-15](#fr-cl-15)). *Raised on 2026-10-30, by Max: "shouldn't the MCP add what the concepts are: Collection, Resource, Lens, the Learning Centre with its cards linked?"* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
-- [ ] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [x] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Decided on 2026-11-02, by Max: both, as proposed ([DEC-CL-15](#dec-cl-15)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 ## Builds on
 

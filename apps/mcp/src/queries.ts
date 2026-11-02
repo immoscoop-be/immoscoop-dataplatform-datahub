@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { answer, attempt, levelName, refusal } from './answers.js';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
+import { collectionIcon } from './icons.js';
 import type { Preflight } from './resources.js';
 
 /** A Parameter of a query (DEC-UX-71), as query keeps it. */
@@ -23,7 +24,7 @@ interface Query {
   question: string;
   sql: string;
   parameters: unknown[];
-  resources: { id: string; displayName: string; level?: number; deprecated?: boolean }[];
+  resources: { id: string; displayName: string; level?: number; deprecated?: boolean; collectionId?: string | null }[];
   lastRun: Run | null;
   [key: string]: unknown;
 }
@@ -41,9 +42,19 @@ interface Run {
 export function queryTools({ server, hub, user }: Context): void {
   const enc = encodeURIComponent;
   const linked = (query: Query) => ({ ...query, page: hub.page(pages.query(query.id)) });
+  /** The one Collection all Resources of a query sit in, with its icon; none when they sit in several (DEC-UX-164). */
+  async function oneCollection(query: Query): Promise<{ name: string; icon: string } | null> {
+    const ids = new Set(query.resources.map((resource) => resource.collectionId ?? null));
+    const [id] = [...ids];
+    if (ids.size !== 1 || !id) return null;
+    const collection = await hub.get<{ name: string; icon: string | null }>('catalogue', `/collections/${enc(id)}`).catch(() => null);
+    return collection ? { name: collection.name, icon: await collectionIcon(collection.icon) } : null;
+  }
+
   /** A query as the MCP App and Claude read its result: its name and question, and its Resources with their Level (FR-CL-21). */
-  const headOf = (query: Query, sql: string, values: unknown[]) => ({
+  const headOf = async (query: Query, sql: string, values: unknown[]) => ({
     view: 'query',
+    collection: await oneCollection(query),
     query: { id: query.id, name: query.name, question: query.question, page: hub.page(pages.query(query.id)) },
     sql,
     parameters: values,
@@ -132,7 +143,7 @@ export function queryTools({ server, hub, user }: Context): void {
     const { query } = await hub.get<{ query: Query }>('query', `/queries/${enc(queryId)}`);
     const sql = given.sql ?? query.sql;
     const values = given.parameters ?? query.parameters;
-    const head = headOf(query, sql, values);
+    const head = await headOf(query, sql, values);
     try {
       const ran = await hub.send<{ run: Run; page: Record<string, unknown> }>('query', 'POST', `/queries/${enc(queryId)}/runs`, { sql, parameters: values, approve });
       return { ...head, outcome: 'ran' as const, run: ran.run, page: ran.page, reads: bytes(ran.run.processedBytes) };
@@ -225,7 +236,7 @@ export function queryTools({ server, hub, user }: Context): void {
     ({ id: queryId }) =>
       attempt(async () => {
         const { query } = await hub.get<{ query: Query }>('query', `/queries/${enc(queryId)}`);
-        const head = headOf(query, query.sql, query.parameters);
+        const head = await headOf(query, query.sql, query.parameters);
         const last = query.lastRun;
         if (!last || last.state !== 'done') return answer({ ...head, outcome: 'notRun' }, 'It has no result to show: run it with run_query.');
         try {

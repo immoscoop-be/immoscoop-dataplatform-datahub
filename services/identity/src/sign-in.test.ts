@@ -220,6 +220,8 @@ describe.skipIf(!url)('signing in', () => {
     const verifier = createVerifier({ issuer: ISSUER, audience: 'datahub', keys: createLocalJWKSet(await tokens.jwks()) });
     const claims = await verifier.verify(pair.access_token);
     expect(claims).toMatchObject({ sub: JAN.sub, email: JAN.email, name: JAN.name });
+    // Only Claude registers as a client: its tokens say so, for what the services mark (DEC-CL-11).
+    expect(claims.client).toBe('claude');
     // Every group of the own domain (FR-UM-11); only the Role Group gives a role.
     expect(claims.groups).toEqual(['g-datateam', 'g-digikom', 'g-sales']);
     expect(claims.roles).toEqual(['datateam']);
@@ -351,6 +353,8 @@ describe.skipIf(!url)('signing in', () => {
       (await database.db.selectFrom('sessions').select(['clientId', 'expiresAt']).orderBy('createdAt', 'desc').executeTakeFirstOrThrow()).expiresAt.getTime();
 
     const web = await signIn(WEB.clientId, WEB.redirectUri);
+    const verifier = createVerifier({ issuer: ISSUER, audience: 'datahub', keys: createLocalJWKSet(await tokens.jwks()) });
+    expect((await verifier.verify(web.access_token)).client).toBeUndefined();
     const webExpiry = await expiry();
     expect(webExpiry - clock).toBeCloseTo(12 * 3600 * 1000, -4);
     clock += 3600 * 1000;
@@ -361,7 +365,10 @@ describe.skipIf(!url)('signing in', () => {
     const claude = await signIn(clientId, CLAUDE);
     const claudeExpiry = await expiry();
     clock += 24 * 3600 * 1000;
-    expect((await renew(clientId, claude.refresh_token)).statusCode).toBe(200);
+    const renewed = await renew(clientId, claude.refresh_token);
+    expect(renewed.statusCode).toBe(200);
+    // A renewal for Claude still says so.
+    expect((await verifier.verify(renewed.json().access_token)).client).toBe('claude');
     expect((await expiry()) - claudeExpiry).toBeCloseTo(24 * 3600 * 1000, -4);
   });
 

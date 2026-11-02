@@ -1094,4 +1094,27 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     const kept = await database.db.selectFrom('lenses').select('sql').where('id', '=', lens.json().lens.id).executeTakeFirstOrThrow();
     expect(kept.sql).toBe(own);
   });
+
+  it('marks a query made through Claude, which it keeps, and each run by how it ran (DEC-CL-11, FR-CL-22)', async () => {
+    // An, as Claude signs her in: catalogue sees the same User behind it.
+    const claude = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes', client: 'claude' })}`;
+    writers.set(claude, '101');
+    visible.set(claude, [WEEKLY.id, SOURCES.id]);
+    const made = (await call(claude, 'POST', '/queries', { name: 'Leads per week, through Claude', resources: [WEEKLY.id], sql: weekly })).json().query;
+    expect(made.through).toBe('claude');
+    const ran = (await call(claude, 'POST', `/queries/${made.id}/runs`, { sql: weekly })).json().run;
+    expect(ran.through).toBe('claude');
+    // Its User goes on in Query: the query keeps the mark, the run says it ran in the web app.
+    const again = (await call(an, 'POST', `/queries/${made.id}/runs`, { sql: weekly })).json().run;
+    expect(again.through).toBeNull();
+    expect((await call(an, 'GET', `/queries/${made.id}`)).json().query).toMatchObject({ through: 'claude', lastRun: { through: null } });
+    const listed = (await call(an, 'GET', '/queries')).json().queries;
+    expect(listed.find((item: { id: string }) => item.id === made.id)).toMatchObject({ through: 'claude' });
+    expect(listed.find((item: { id: string }) => item.id !== made.id)).toMatchObject({ through: null });
+    const history = (await call(an, 'GET', `/queries/${made.id}/runs`)).json().runs;
+    expect(history.map((run: { through: string | null }) => run.through)).toEqual([null, 'claude']);
+    // The History of the Resource it reads says so too.
+    const onWeekly = (await call(dataTeam, 'GET', `/resources/${WEEKLY.id}/queries`)).json().queries;
+    expect(onWeekly.find((item: { id: string }) => item.id === made.id)).toMatchObject({ through: 'claude' });
+  });
 });

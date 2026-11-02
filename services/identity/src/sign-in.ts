@@ -65,10 +65,14 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     return { sub: user.googleId, email: user.email, name: user.name, groups, roles };
   }
 
-  async function issuePair(reply: FastifyReply, claims: TokenSubject, refreshToken: string) {
+  /**
+   * An Access Token for the web app, or for an MCP client: only Claude's callbacks may register one, so its tokens say
+   * the User came through Claude, and every service can mark what they do so (DEC-CL-11, OP-CL-10).
+   */
+  async function issuePair(reply: FastifyReply, client: Client, claims: TokenSubject, refreshToken: string) {
     reply.header('cache-control', 'no-store');
     return {
-      access_token: await tokens.issue(claims),
+      access_token: await tokens.issue(client.web ? claims : { ...claims, client: 'claude' }),
       token_type: 'Bearer',
       expires_in: ACCESS_TOKEN_SECONDS,
       refresh_token: refreshToken,
@@ -245,7 +249,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
         clientId: client.clientId,
         lifetimeSeconds: client.web ? WEB_SESSION_SECONDS : MCP_SESSION_SECONDS,
       });
-      return issuePair(reply, code.claims, refreshToken);
+      return issuePair(reply, client, code.claims, refreshToken);
     }
 
     if (body.grant_type === 'refresh_token') {
@@ -283,7 +287,7 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
         await store.extendSession(session.id, MCP_SESSION_SECONDS);
       }
       await store.saveGroups(session.googleId, claims.groups, claims.roles);
-      return issuePair(reply, claims, await store.addRefreshToken(session.id));
+      return issuePair(reply, client, claims, await store.addRefreshToken(session.id));
     }
 
     return refuse(reply, 'unsupported_grant_type', 'Use authorization_code or refresh_token');

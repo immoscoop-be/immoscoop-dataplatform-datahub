@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 163 | 53 (9 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 164 | 53 (9 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 9 | 10 (2 open, 8 done) |
@@ -28,13 +28,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | 15 (15 implemented) | 2 (2 implemented) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (10 proposed, 13 implemented, 16 withdrawn) | – | 30 | 35 (4 open, 31 done) |
-| [Claude](functional/17-claude.md) | 23 (1 proposed, 22 implemented) | 5 (5 implemented) | 13 | 10 (7 open, 3 done) |
+| [Claude](functional/17-claude.md) | 23 (23 implemented) | 5 (5 implemented) | 14 | 10 (6 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 33 (3 specified, 29 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 14 (14 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 8 (8 implemented) | – | – | 2 (2 done) |
-| [Resources: technical requirements](technical/04-stacks-and-resources.md) | 23 (23 implemented) | – | – | – |
+| [Resources: technical requirements](technical/04-stacks-and-resources.md) | 24 (24 implemented) | – | – | – |
 | [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 4 (4 implemented) | – | – | – |
 | [Lenses: technical requirements](technical/09-lenses.md) | 8 (8 implemented) | – | – | – |
 | [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 2 (2 implemented) | – | – | – |
@@ -372,7 +372,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-19](functional/17-claude.md#fr-cl-19) | Claude checks the SQL until it can run | Implemented | – | [mcp-query](../design/screens/mcp-query.html) | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) implements, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 | [FR-CL-20](functional/17-claude.md#fr-cl-20) | Claude runs a query within the same limits as Query | Implemented | – | [mcp-query](../design/screens/mcp-query.html) | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) implements, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 | [FR-CL-21](functional/17-claude.md#fr-cl-21) | The result of a query in an MCP App | Implemented | – | [mcp-query](../design/screens/mcp-query.html) | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) implements, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
-| [FR-CL-22](functional/17-claude.md#fr-cl-22) | A query through Claude is marked so | Proposed | – | [mcp-query](../design/screens/mcp-query.html) | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) refs, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
+| [FR-CL-22](functional/17-claude.md#fr-cl-22) | A query through Claude is marked so | Implemented | – | [mcp-query](../design/screens/mcp-query.html) | [TR-SR-24](technical/04-stacks-and-resources.md#tr-sr-24) | [be43c2c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be43c2cb0b4163bbba6874f54b23d69795e78ff8) implements, 2026-11-02<br>[473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) refs, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 | [FR-CL-23](functional/17-claude.md#fr-cl-23) | Finding a query again, and everyone's for the Data Team | Implemented | – | – | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) implements, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 
 ## Edge cases
@@ -528,6 +528,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-SR-21](technical/04-stacks-and-resources.md#tr-sr-21) | The queries on a Resource | Implemented | [FR-SR-44](functional/04-stacks-and-resources.md#fr-sr-44), [DEC-SR-31](functional/04-stacks-and-resources.md#dec-sr-31), [DEC-SR-41](functional/04-stacks-and-resources.md#dec-sr-41) | [624a77b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/624a77b114bd6c032be772d5eb2286460f1fdd7a) implements, 2026-10-29 |
 | [TR-SR-22](technical/04-stacks-and-resources.md#tr-sr-22) | The Changes upstream of a Resource, in its Log | Implemented | [FR-AR-12](functional/01-artifact-registry.md#fr-ar-12), [EC-AR-04](functional/01-artifact-registry.md#ec-ar-04) | [9e03f14](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/9e03f14a0de3f0ea670e8563e8dc0ac09dd12981) implements, 2026-10-31 |
 | [TR-SR-23](technical/04-stacks-and-resources.md#tr-sr-23) | Broken queries, and what reads a Resource checked at three moments | Implemented | [FR-SR-52](functional/04-stacks-and-resources.md#fr-sr-52), [FR-SR-53](functional/04-stacks-and-resources.md#fr-sr-53), [DEC-UX-160](../design/principles.md#dec-ux-160) | [a71ee3b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a71ee3b61ee61441086bdd8c2fbc55c3a95486ad) implements, 2026-10-31 |
+| [TR-SR-24](technical/04-stacks-and-resources.md#tr-sr-24) | A query and a run through Claude are marked so | Implemented | [FR-CL-22](functional/17-claude.md#fr-cl-22), [DEC-CL-11](functional/17-claude.md#dec-cl-11), [DEC-CL-15](functional/17-claude.md#dec-cl-15) | [be43c2c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be43c2cb0b4163bbba6874f54b23d69795e78ff8) implements, 2026-11-02 |
 
 ### [Log and notifications: technical requirements](technical/07-log-and-notifications.md)
 

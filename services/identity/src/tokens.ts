@@ -4,7 +4,7 @@ import { base64url, calculateJwkThumbprint, type JWK } from 'jose';
 import type { KeyService } from './signing-keys.js';
 
 /** The User an Access Token is for; identity adds who issued it, for whom, and until when. */
-export type TokenSubject = Pick<AccessTokenClaims, 'sub' | 'email' | 'name' | 'groups' | 'roles'>;
+export type TokenSubject = Pick<AccessTokenClaims, 'sub' | 'email' | 'name' | 'groups' | 'roles' | 'client'>;
 
 export interface TokenIssuerOptions {
   keys: KeyService;

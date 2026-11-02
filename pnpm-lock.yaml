@@ -44,6 +44,9 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.0
         version: 1.32.0(zod@4.6.7)
+      '@phosphor-icons/core':
+        specifier: 2.1.1
+        version: 2.1.1
       fastify:
         specifier: ^5.12.7
         version: 5.12.7
