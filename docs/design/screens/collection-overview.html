@@ -6,10 +6,11 @@
   The rest sits in its folders (collection-folder.html, DEC-UX-156); the intro is Markdown its Owner Unit writes (DEC-UX-158).
   Prototype: the switch at the bottom right shows the page as a Data Admin, the Owner or a colleague.
   Requirements: FR-CO-38, FR-CO-41, FR-CO-11, FR-CO-13, FR-CO-14, FR-CO-25, FR-CO-26, FR-CO-27, FR-CO-28, FR-CO-29, FR-CO-31, FR-SR-31, FR-MR-10, FR-LE-17
-  Decisions: DEC-UX-13, DEC-UX-14, DEC-UX-105, DEC-CO-15, DEC-CO-18, DEC-DH-10.
+  Decisions: DEC-UX-162, DEC-UX-13, DEC-UX-14, DEC-UX-105, DEC-CO-15, DEC-CO-18, DEC-DH-10.
   Not in v1: the checks and the EDA named in the column "Last change" (DEC-MR-13, OP-MR-01).
-  "New lens" and "Edit" are for the Owner Unit and the Data Team (DEC-CO-18); the prototype still shows "New lens" to the Owner only.
-  Related screens: collection-edit.html (Edit), collection-add-resources.html (Add resources).
+  "New lens" and "Edit all" are for the Owner Unit and the Data Team (DEC-CO-18); the prototype still shows "New lens" to the Owner only.
+  For them a click on the name or the description edits both in place, as on a query; "Edit all" opens every field (DEC-UX-162).
+  Related screens: collection-edit.html (Edit all), collection-add-resources.html (Add resources), collection-folder.html (a name and description in place, ?edit).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="datateam">
@@ -155,12 +156,12 @@
 <div class="coll-head">
  <span class="item-icon large"><i class="ph ph-coins"></i></span>
  <div style="flex:1;min-width:0">
-  <h1 class="page-title">Credit leads</h1>
-  <p class="prose">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</p>
+  <h1 class="page-title"><span class="in-place" data-for="owner datateam" title="Click to change">Credit leads</span><span data-for="colleague">Credit leads</span></h1>
+  <p class="prose"><span class="in-place" data-for="owner datateam" title="Click to change">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</span><span data-for="colleague">The credit leads Immoscoop sends to KBC: how many come in, where they come from, and what happens to them after.</span></p>
  </div>
  <div class="coll-actions">
   <a class="btn-quiet outline" href="collection-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">2</span></a>
-  <a class="btn-quiet outline" href="collection-edit.html" data-for="owner datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
+  <a class="btn-quiet outline" href="collection-edit.html" data-for="owner datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Edit all</a>
   <a class="btn-quiet outline" href="collection-add-resources.html" data-for="datateam" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-plus-circle"></i>Add Resources</a>
  </div>
 </div>

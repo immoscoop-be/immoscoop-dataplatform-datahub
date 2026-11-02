@@ -179,6 +179,12 @@ td { padding: 10px; border-top: 1px solid var(--tint-hover); vertical-align: top
 .btn-quiet { font: var(--weight-medium) var(--text-small) var(--font-family); padding: 8px 14px; border-radius: var(--radius-pill); border: 0;
   background: var(--tint-hover); color: var(--text-primary); cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .btn-quiet:hover { background: var(--tint-active); }
+/* A name or description edited in place, as on a query (DEC-UX-119, DEC-UX-162) */
+.in-place { cursor: text; border-radius: var(--radius-sm); }
+.in-place:hover { background: var(--tint-hover); }
+.in-place-form { max-width: 640px; margin-top: 6px; }
+.in-place-actions { display: flex; gap: 8px; align-items: center; }
+.lead-text { margin: 6px 0 0; max-width: 68ch; line-height: 1.65; color: var(--text-secondary); }
 .field { display: block; margin-bottom: 12px; }
 .field:last-child { margin-bottom: 0; }
 .field > span { display: block; font-size: var(--text-meta); color: var(--text-muted); margin-bottom: 5px; }

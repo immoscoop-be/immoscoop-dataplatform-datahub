@@ -6,12 +6,15 @@
   folder unfolding to what it holds (one panel, DEC-UX-10); on the right, the page of the folder: what it is and what
   it holds. A whole row opens what it is with a click, and moves with a drag onto a folder, in the list, in the panel or
   in the path above; once dropped, a short line on screen says where it went.
+  Its name and description are edited in place, as those of a query: for the Owner Unit and the Data Team a click on
+  either turns both into fields, with Save and Cancel (DEC-UX-162); a folder without a description shows them
+  "Add a description" in its place.
   Prototype switches: ?drag shows a row dragged onto a folder; ?moved the line said after a move; ?new a new folder
-  being named; ?delete the warning of Delete on a folder that is not empty.
+  being named; ?delete the warning of Delete on a folder that is not empty; ?edit its name and description in place.
   The switch at the bottom right shows the page as a Data Admin, the Owner or a colleague: only the Owner Unit and the
   Data Team make, name, move and delete folders and move what is in them.
-  Requirements: FR-CO-38, FR-CO-39, FR-CO-40
-  Decisions: DEC-UX-156, DEC-UX-157, DEC-UX-10, DEC-UX-13, DEC-CO-15.
+  Requirements: FR-CO-38, FR-CO-39, FR-CO-40, FR-CO-42
+  Decisions: DEC-UX-156, DEC-UX-157, DEC-UX-162, DEC-UX-10, DEC-UX-13, DEC-CO-15.
   Related screens: collection-overview.html (the top of a Collection, with its folders and what sits at its top).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -103,11 +106,18 @@
 <div class="coll-head">
  <span class="item-icon large"><i class="ph ph-folder-open"></i></span>
  <div style="flex:1;min-width:0">
-  <h1 class="page-title">Leads in</h1>
+  <div data-head-view>
+   <h1 class="page-title"><span class="in-place" data-for="owner datateam" data-edit title="Click to change">Leads in</span><span data-for="colleague">Leads in</span></h1>
+   <p class="lead-text"><span class="in-place" data-for="owner datateam" data-edit title="Click to change">Every credit lead as it comes in, by where it came from.</span><span data-for="colleague">Every credit lead as it comes in, by where it came from.</span></p>
+  </div>
+  <form class="in-place-form" data-head-edit hidden>
+   <label class="field"><span>Name</span><input value="Leads in" maxlength="80"></label>
+   <label class="field"><span>Description</span><textarea rows="2" maxlength="500">Every credit lead as it comes in, by where it came from.</textarea></label>
+   <span class="in-place-actions"><button class="btn-primary" type="button" data-edit-done>Save</button><button class="btn-quiet" type="button" data-edit-done>Cancel</button></span>
+  </form>
  </div>
  <div class="coll-actions" data-for="owner datateam">
   <button class="btn-quiet outline" type="button" data-new-folder style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-folder-simple-plus"></i>New folder</button>
-  <button class="btn-quiet outline" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-pencil-simple"></i>Rename</button>
   <button class="icon-btn" type="button" data-delete aria-label="Delete the folder" title="Delete the folder, once it is empty"><i class="ph ph-trash"></i></button>
  </div>
 </div>
@@ -154,6 +164,11 @@
   if (ask.has('moved')) $('#moved').hidden = false;
   if (ask.has('new')) $('#new-folder').hidden = false;
   if (ask.has('delete')) $('#delete-warn').hidden = false;
+  // Its name and description, in place (DEC-UX-162).
+  const editing = (on) => { $('[data-head-view]').hidden = on; $('[data-head-edit]').hidden = !on; };
+  if (ask.has('edit')) editing(true);
+  document.querySelectorAll('[data-edit]').forEach((text) => text.addEventListener('click', () => editing(true)));
+  document.querySelectorAll('[data-edit-done]').forEach((button) => button.addEventListener('click', () => editing(false)));
   if (ask.has('drag')) {
     $('#row-weekly').classList.add('dragging');
     $('#row-by-source').classList.add('drop');

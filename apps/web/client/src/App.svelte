@@ -995,6 +995,8 @@
 {/snippet}
 
 {#snippet newQuery()}
+  <!-- Reads the queries again, such as those Claude made meanwhile (DEC-UX-163). -->
+  <IconButton icon="arrows-clockwise" label={t('query.refresh')} onclick={() => refreshQueries()} />
   <IconButton icon="plus-circle-fill" label={t('query.new')} href={NEW_QUERY} />
 {/snippet}
 

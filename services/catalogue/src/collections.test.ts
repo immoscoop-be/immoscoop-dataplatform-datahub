@@ -180,12 +180,19 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_empty', holds: 2 });
     expect(await collections.move(homes.id, { kind: 'resource', id: resource }, null, an)).toMatchObject({ outcome: 'done' });
     expect(await collections.move(homes.id, { kind: 'folder', id: oldTown }, null, an)).toMatchObject({ outcome: 'done' });
-    expect(await collections.renameFolder(homes.id, antwerp, 'Antwerpen', an)).toMatchObject({ outcome: 'done', value: { name: 'Antwerpen' } });
+    expect(await collections.changeFolder(homes.id, antwerp, { name: 'Antwerpen' }, an)).toMatchObject({ outcome: 'done', value: { name: 'Antwerpen', description: '' } });
+    // A description of its own, plain text under its name, in the Log as well (FR-CO-42).
+    expect(await collections.changeFolder(homes.id, antwerp, { description: 'Homes in the city of Antwerp.' }, an)).toMatchObject({
+      outcome: 'done',
+      value: { name: 'Antwerpen', description: 'Homes in the city of Antwerp.' },
+    });
+    expect((await collections.list(an)).find((one) => one.id === homes.id)?.folders.find((one) => one.id === antwerp)?.description).toBe('Homes in the city of Antwerp.');
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'done', value: undefined });
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_found' });
 
     expect((await collections.log({ id: homes.id, canManage: true }, 20)).map((entry) => entry.text)).toEqual([
       'Folder Antwerpen deleted by An',
+      'Description of folder Antwerpen changed by An',
       'Folder Antwerp renamed to Antwerpen by An',
       'Folder Old town moved to Homes by An',
       'Homes per week moved to Homes by An',

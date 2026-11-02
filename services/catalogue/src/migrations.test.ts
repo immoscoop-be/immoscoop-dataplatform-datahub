@@ -71,6 +71,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
       ['0014-learning-progress', 'Success'],
       ['0015-folders', 'Success'],
       ['0016-excel-key-messages', 'Success'],
+      ['0017-folder-descriptions', 'Success'],
     ]);
 
     expect(await count('collections')).toBe(0);
