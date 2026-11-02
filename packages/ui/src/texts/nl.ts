@@ -95,4 +95,9 @@ export default {
   'editor.template': 'Sjabloon',
   'editor.partition': 'Partitie',
   'editor.cluster': 'Cluster {place}',
+  'inPlace.hint': 'Klik om te wijzigen',
+  'inPlace.addDescription': 'Een beschrijving toevoegen',
+  'inPlace.save': 'Bewaren',
+  'inPlace.cancel': 'Annuleren',
+  'inPlace.failed': 'Het kon niet bewaard worden. Probeer het zo meteen opnieuw.',
 } as const;

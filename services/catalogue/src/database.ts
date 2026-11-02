@@ -59,6 +59,8 @@ export interface CatalogueDatabase {
     collectionId: string;
     parentId: string | null;
     name: string;
+    /** Plain text under its name, at most 500 characters; empty when it has none (FR-CO-42). */
+    description: Generated<string>;
     createdBy: string;
     createdByName: string;
     createdAt: Timestamp;

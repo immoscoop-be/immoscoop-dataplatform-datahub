@@ -363,6 +363,10 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect(refused.statusCode).toBe(409);
     expect(refused.json()).toMatchObject({ error: 'not_empty', holds: 1 });
     expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { name: 'Paid ads' })).json()).toMatchObject({ name: 'Paid ads' });
+    // Its description alone, plain text of at most 500 characters (FR-CO-42).
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { description: ' Leads from paid ads. ' })).json()).toMatchObject({ name: 'Paid ads', description: 'Leads from paid ads.' });
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { description: 'x'.repeat(501) })).statusCode).toBe(400);
+    expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, {})).statusCode).toBe(400);
     expect((await an('PATCH', `/collections/${id}/folders/${inner.id}`, { parentId: null })).statusCode).toBe(400);
     expect((await an('PUT', `/collections/${id}/places/folder/${inner.id}`, { folderId: null })).statusCode).toBe(204);
     expect((await an('DELETE', `/collections/${id}/folders/${folder}`)).statusCode).toBe(204);
@@ -370,6 +374,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     expect((await bert('GET', `/collections/${id}/log`)).json().entries.map((entry: { text: string }) => entry.text)).toEqual([
       'Folder By source deleted by An',
       'Folder Paid ads moved to Folders by An',
+      'Description of folder Paid ads changed by An',
       'Folder Paid renamed to Paid ads by An',
       'Folder Paid made in By source by Dirk',
       'Folder By source made in Folders by An',

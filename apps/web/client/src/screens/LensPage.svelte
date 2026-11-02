@@ -1,6 +1,7 @@
 <script lang="ts">
   import { renderLog } from '@datahub/contracts/log';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
+  import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import DataGrid from '@datahub/ui/components/DataGrid.svelte';
   import Pager from '@datahub/ui/components/Pager.svelte';
   import RunButton from '@datahub/ui/components/RunButton.svelte';
@@ -62,6 +63,14 @@
   } = $props();
 
   let excel = $state(false);
+
+  /** Its name, changed in place (DEC-UX-162): read again, so the page and the panel show it. */
+  async function rename(changes: { name?: string }): Promise<string | undefined> {
+    if (changes.name === undefined) return undefined;
+    await client.editLens(lens.id, { name: changes.name });
+    onchanged();
+    return undefined;
+  }
 
   /** How long changing a value pauses before the Pre-flight is asked. */
   const PAUSE = 400;
@@ -251,7 +260,11 @@
 <div class="head">
   <div class="titles">
     <div class="title-row">
-      <h1 class="page-title"><KindIcon kind="lens" />{lens.name}<MaturityIcon level={lens.level} /></h1>
+      <!-- Its name, edited in place by its Owner Unit and the Data Team, not while it waits for them; "Edit more" for the rest (DEC-UX-162). -->
+      <InPlaceHead name={lens.name} canEdit={lens.canManage && lens.state !== 'waiting'} nameLabel={t('lens.field.name')} nameMax={120} onsave={rename}>
+        {#snippet lead()}<KindIcon kind="lens" />{/snippet}
+        {#snippet trail()}<MaturityIcon level={lens.level} />{/snippet}
+      </InPlaceHead>
       {#if lens.broken}<Chip variant="broken">{t('status.broken')}</Chip>{:else if lens.state === 'stopped'}<Chip variant="warn"><Icon name="hourglass-medium-fill" />{t('status.stopped')}</Chip>{/if}
     </div>
     {#if lens.shows}<p class="shows">{lens.shows}</p>{/if}
@@ -261,7 +274,7 @@
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if lens.canManage}
       <Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
-      <Button variant="outline" href={editLensPath(lens.id)}><Icon name="pencil-simple-fill" />{t('lens.edit')}</Button>
+      <Button variant="outline" href={editLensPath(lens.id)}><Icon name="pencil-simple-fill" />{t('lens.editMore')}</Button>
     {/if}
   </div>
 </div>
@@ -431,7 +444,6 @@
   .head { display: flex; align-items: flex-start; gap: 14px; margin-top: 8px; }
   .titles { flex: 1; min-width: 0; }
   .title-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-  .page-title { display: flex; align-items: center; gap: 10px; }
   .failed { margin: 8px 0 0; color: var(--signal-urgent); font-size: var(--text-small); }
   .shows { margin: 4px 0 0; font-size: var(--text-small); color: var(--text-secondary); }
   .actions { display: flex; gap: 8px; flex: none; margin-top: 6px; }

@@ -58,6 +58,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `COL-012` | {lens} moved to {to} by {actor} | {lens} verplaatst naar {to} door {actor} | lens, to, actor |
 | `COL-013` | Folder {folder} moved to {to} by {actor} | Map {folder} verplaatst naar {to} door {actor} | folder, to, actor |
 | `COL-014` | Intro changed by {actor} | Intro gewijzigd door {actor} | actor |
+| `COL-015` | Description of folder {folder} changed by {actor} | Beschrijving van map {folder} gewijzigd door {actor} | folder, actor |
 | `COL-030` | Added to the Collection {collection} by {actor} | Toegevoegd aan de Collection {collection} door {actor} | collection, actor |
 | `COL-031` | Removed from the Collection {collection} by {actor} | Verwijderd uit de Collection {collection} door {actor} | collection, actor |
 | `ART-010` | Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}}{distance, select, 0 {} other { in {sourceNode}}} | Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}}{distance, select, 0 {} other { in {sourceNode}}} | field, direction, sourceNode, distance |

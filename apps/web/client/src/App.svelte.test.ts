@@ -369,14 +369,14 @@ function serve({
     }
     if (path === '/collections/c1/folders' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; parentId: string | null };
-      const made = { id: 'f-new', name: body.name, parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
+      const made = { id: 'f-new', name: body.name, description: '', parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
       credit = { ...credit, folders: [...credit.folders, made] };
       return json(made, 201);
     }
     const [, folderId] = /^\/collections\/c1\/folders\/([^/]+)$/.exec(path) ?? [];
     if (folderId && method === 'PATCH') {
-      const { name } = JSON.parse(init.body as string) as { name: string };
-      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, name } : folder)) };
+      const changes = JSON.parse(init.body as string) as { name?: string; description?: string };
+      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, ...changes } : folder)) };
       return json(credit.folders.find((folder) => folder.id === folderId));
     }
     if (folderId && method === 'DELETE') {
@@ -1343,13 +1343,43 @@ describe('the web app, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
     expect(main.getByText('Enkel groepen waar je zelf in zit. De Owner Unit staat in voor de Resources van de Collection.')).toBeTruthy();
     // It still holds a Resource, so it cannot be dissolved (FR-CO-10).
     expect((main.getByRole('button', { name: 'Opheffen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { description: 'Every credit lead.' } }));
+  });
+
+  it('changes the name or description of a Collection with a click on it, as a query does, and only for who may (DEC-UX-162)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: 'Credit leads' });
+    await fireEvent.click(within(heading).getByRole('button'));
+    // Both turn into fields; only what changed is sent.
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads in' } });
+    expect(main.getByRole('textbox', { name: 'Beschrijving' })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { name: 'Credit leads in' } }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Credit leads in' })).toBeTruthy();
+    // An empty description is not saved: a Collection keeps one.
+    await fireEvent.click(within(main.getByRole('heading', { level: 1, name: 'Credit leads in' })).getByRole('button'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving' }), { target: { value: ' ' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    expect(await main.findByRole('alert')).toBeTruthy();
+    expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(1);
+  });
+
+  it('shows a colleague the name and description of a Collection as plain text (DEC-UX-162)', async () => {
+    serve({ creditWith: { canManage: false } });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: 'Credit leads' });
+    expect(within(heading).queryByRole('button')).toBeNull();
   });
 });
 
@@ -1568,7 +1598,7 @@ describe('the web app, for the Data Team, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
     const owner = main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement;
     await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
     expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
@@ -1639,6 +1669,16 @@ describe('the web app, for the Data Team, with Collections', () => {
 });
 
 describe('Query', () => {
+  it('reads the queries again with Refresh, such as those Claude made meanwhile (DEC-UX-163)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(1));
+    await fireEvent.click(panel.getByRole('button', { name: 'De lijst van queries vernieuwen' }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(2));
+  });
+
   it('opens the last query of the User, listed in the panel by the day of its last run (FR-SR-43, DEC-UX-74)', async () => {
     serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }] });
     open('/query');
@@ -2013,9 +2053,9 @@ describe('Query', () => {
 /** Credit leads with folders: Leads in at its top holds By source and Weekly lead volume; By source holds the Lens; Response is empty. */
 const FOLDERED = {
   folders: [
-    { id: 'f1', name: 'Leads in', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
-    { id: 'f2', name: 'By source', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
-    { id: 'f3', name: 'Response', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
+    { id: 'f1', name: 'Leads in', description: '', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
+    { id: 'f2', name: 'By source', description: 'Leads by where they came from.', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
+    { id: 'f3', name: 'Response', description: '', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
   ],
   resources: [{ ...CREDIT.resources[0]!, folderId: 'f1' }],
   lensFolders: { l1: 'f2' },
@@ -2079,12 +2119,21 @@ describe('Folders', () => {
     expect(main.getByText(/Ze bevat nog 2 mappen · 1 Resource/)).toBeTruthy();
     expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
 
-    await fireEvent.click(main.getByRole('button', { name: /Hernoemen/ }));
-    const rename = main.getByRole('textbox', { name: 'Nieuwe naam van de map' });
-    await fireEvent.input(rename, { target: { value: 'Leads coming in' } });
-    await fireEvent.keyDown(rename, { key: 'Enter' });
+    // Its name and description change in place, as those of a query do (DEC-UX-162, FR-CO-42): only what changed is sent.
+    await fireEvent.click(within(main.getByRole('heading', { name: 'Leads in', level: 1 })).getByRole('button'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Leads coming in' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { name: 'Leads coming in' } }));
     expect(await main.findByRole('heading', { name: 'Leads coming in', level: 1 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Een beschrijving toevoegen' }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving' }), { target: { value: 'Every lead as it comes in.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { description: 'Every lead as it comes in.' } }));
+    expect(await main.findByText('Every lead as it comes in.')).toBeTruthy();
+    // Escape puts it back without saving.
+    await fireEvent.click(main.getByRole('button', { name: 'Every lead as it comes in.' }));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: 'Beschrijving' }), { key: 'Escape' });
+    expect(main.queryByRole('textbox', { name: 'Beschrijving' })).toBeNull();
 
     // An empty folder goes, and its Collection opens.
     await fireEvent.click(within(screen.getByRole('complementary', { name: 'Collections' })).getByRole('link', { name: 'Response' }));
@@ -2314,12 +2363,28 @@ describe('Lenses', () => {
     expect(main.getByText('Gestopt: één run met zijn standaardwaarden las 1,4 GB')).toBeTruthy();
   });
 
+  it('changes the name of a Lens with a click on it, its other parts with Edit more (DEC-UX-162)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: /Leads per source, week by week/ });
+    await fireEvent.click(within(heading).getByRole('button'));
+    // Its name alone: what it shows and its steps stay for Edit more.
+    expect(main.queryByRole('textbox', { name: 'Beschrijving' })).toBeNull();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Leads per source, per week' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/lenses/l1', body: { name: 'Leads per source, per week' } }));
+    expect(await main.findByRole('heading', { level: 1, name: /Leads per source, per week/ })).toBeTruthy();
+    expect(main.getByRole('link', { name: 'Meer bewerken' }).getAttribute('href')).toBe('/lenses/l1/edit');
+  });
+
   it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {
     const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
     open('/lenses/l1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('link', { name: 'Bewerken' }));
+    await fireEvent.click(await main.findByRole('link', { name: 'Meer bewerken' }));
     const edit = within(await screen.findByRole('main'));
     expect(await edit.findByRole('heading', { level: 1, name: 'De Lens bewerken' })).toBeTruthy();
     const shows = (await edit.findByRole('textbox', { name: 'Wat hij toont' })) as HTMLTextAreaElement;

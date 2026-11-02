@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
+  import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
   import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
   import Table from '@datahub/ui/containers/Table.svelte';
@@ -147,6 +148,19 @@
     }
   }
 
+  /** Its name or description, changed in place (DEC-UX-162); a sentence when it is refused. */
+  async function saveInPlace(shown: Collection, changes: { name?: string; description?: string }): Promise<string | undefined> {
+    if (changes.description !== undefined && changes.description.length < 1) return t('collection.problem.description');
+    try {
+      await catalogue.changeCollection(shown.id, changes);
+    } catch (error) {
+      if (error instanceof Refused && error.code === 'name_taken') return t('collection.problem.nameTaken', { name: changes.name ?? '' });
+      throw error;
+    }
+    await Promise.all([load(shown.id), onchanged()]);
+    return undefined;
+  }
+
   /** "Edit the intro": the head turns into fields, at the intro (DEC-UX-158). */
   async function editIntro() {
     editing = true;
@@ -254,12 +268,19 @@
     <div class="head">
       <CollectionIcon name={shown.icon} large />
       <div class="what">
-        <h1 class="page-title">{shown.name}</h1>
-        <p class="prose">{shown.description}</p>
+        <!-- Its name and description, edited in place by its Owner Unit and the Data Team; "Edit all" for the rest (DEC-UX-162). -->
+        <InPlaceHead
+          name={shown.name}
+          description={shown.description}
+          canEdit={shown.canManage}
+          nameLabel={t('collection.field.name')}
+          descriptionLabel={t('collection.field.description')}
+          onsave={(changes) => saveInPlace(shown, changes)}
+        />
       </div>
       <div class="actions">
         {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
-        {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.edit')}</Button>{/if}
+        {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.editAll')}</Button>{/if}
         {#if dataTeam}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
       </div>
     </div>

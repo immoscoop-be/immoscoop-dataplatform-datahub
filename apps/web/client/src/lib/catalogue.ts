@@ -152,6 +152,8 @@ export interface CollectionItem {
 export interface Folder {
   id: string;
   name: string;
+  /** Plain text under its name, empty when it has none (FR-CO-42). */
+  description: string;
   /** The folder it sits in, or null at the top of its Collection. */
   parentId: string | null;
   /** The name of whoever made it, and when. */
@@ -310,8 +312,9 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async makeFolder(id: string, name: string, parentId: string | null): Promise<Folder> {
       return (await call(`${collection(id)}/folders`, { method: 'POST', body: { name, parentId } })).json() as Promise<Folder>;
     },
-    async renameFolder(id: string, folderId: string, name: string): Promise<Folder> {
-      return (await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'PATCH', body: { name } })).json() as Promise<Folder>;
+    /** Its name, its description or both (FR-CO-39, FR-CO-42). */
+    async changeFolder(id: string, folderId: string, changes: { name?: string; description?: string }): Promise<Folder> {
+      return (await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'PATCH', body: changes })).json() as Promise<Folder>;
     },
     /** Deletes an empty folder; one that holds something is refused with not_empty (FR-CO-39). */
     async deleteFolder(id: string, folderId: string): Promise<void> {

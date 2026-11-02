@@ -338,6 +338,13 @@ The Owner Unit and the Data Team move a Resource, a Lens or a folder by dragging
 
 The Owner Unit and the Data Team write an intro to a Collection in Markdown, with a preview, when they edit it. The page of the Collection shows it under its head, as written: headings, bold, italic, lists, links and code, never HTML of its own. A change of the intro goes into the Log of the Collection ([FR-CO-11](#fr-co-11)).
 
+<a id="fr-co-42"></a>
+### FR-CO-42 · A folder has a description
+
+**Status:** Implemented · **Source:** Max, 2026-11-02 ([DEC-UX-162](../../design/principles.md#dec-ux-162)) · **Screens:** [collection-folder](../../design/screens/collection-folder.html)
+
+A folder has a description of its own: plain text of at most 500 characters, under its name on its page, as a Collection has. It may be empty. The Owner Unit and the Data Team write and change it, and its name, in place with a click; a change of either goes into the Log of the Collection ([FR-CO-11](#fr-co-11)).
+
 ## The page of a Collection
 
 What a User sees and does on the page of a Collection ([DEC-UX-13](../../design/principles.md#dec-ux-13), [DEC-UX-14](../../design/principles.md#dec-ux-14)). The screens are in the [design](../../design/principles.md#page-of-a-collection). Specified on 2026-10-23, when the design was approved.
