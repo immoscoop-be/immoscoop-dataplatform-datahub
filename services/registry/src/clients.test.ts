@@ -121,6 +121,32 @@ describe('the jobs of a dbt project in dbt Cloud (FR-AR-18)', () => {
   });
 });
 
+describe('the dbt projects of the account in dbt Cloud (DEC-AR-10)', () => {
+  it('lists them by name, without the deleted ones', async () => {
+    const asked: string[] = [];
+    const dbt = createDbtCloud({
+      url: 'https://emea.dbt.com/',
+      accountId: '576',
+      token: async () => 'service-token',
+      request: async (url, init) => {
+        asked.push(`${String(url)} ${new Headers(init?.headers).get('authorization')}`);
+        return Response.json({ data: [{ id: 9367, name: 'dbt-prod', state: 1 }, { id: 17121, name: 'Colleciónes' }, { id: 3, name: 'old', state: 2 }, { id: 15890 }] });
+      },
+    });
+    expect(await dbt.projects()).toEqual([
+      { id: '9367', name: 'dbt-prod' },
+      { id: '17121', name: 'Colleciónes' },
+      { id: '15890', name: 'dbt project 15890' },
+    ]);
+    expect(asked).toEqual(['https://emea.dbt.com/api/v3/accounts/576/projects/?limit=100 Token service-token']);
+  });
+
+  it('says so when dbt Cloud does not answer', async () => {
+    const dbt = createDbtCloud({ url: 'https://emea.dbt.com', accountId: '576', token: async () => 'service-token', request: async () => new Response('down', { status: 503 }) });
+    await expect(dbt.projects()).rejects.toThrow('dbt Cloud did not give the dbt projects of the account: 503 down');
+  });
+});
+
 describe('the artifact bucket', () => {
   it('reads a file, or tells that it is not there', async () => {
     const asked: string[] = [];
@@ -166,7 +192,6 @@ describe('the settings', () => {
   const env = {
     DATAHUB_DBT_CLOUD_URL: 'https://emea.dbt.com',
     DATAHUB_DBT_ACCOUNT_ID: '576',
-    DATAHUB_DBT_SOURCE_JOBS: '9367:322951,17121:739003',
     DATAHUB_DBT_CLOUD_TOKEN: 'projects/p/secrets/datahub-dbt-cloud-token/versions/latest',
     DATAHUB_DBT_WEBHOOK_SECRET: 'projects/p/secrets/datahub-dbt-webhook-secret/versions/latest',
     DATAHUB_ARTIFACT_BUCKET: 'p-datahub-artifacts',
@@ -174,14 +199,16 @@ describe('the settings', () => {
     DATAHUB_CATALOGUE_URL: 'https://catalogue.test',
   };
 
-  it('reads the Source Jobs as job → project', () => {
-    expect(settingsFromEnv(env).sourceJobs).toEqual(
-      new Map([
-        ['322951', '9367'],
-        ['739003', '17121'],
-      ]),
-    );
-    expect(() => settingsFromEnv({ ...env, DATAHUB_DBT_SOURCE_JOBS: '9367' })).toThrow(/expected <project>:<job>/);
+  it('reads what registry needs, and no Source Jobs: the page Webhooks sets those (DEC-AR-10)', () => {
+    expect(settingsFromEnv(env)).toEqual({
+      dbtCloudUrl: 'https://emea.dbt.com',
+      accountId: '576',
+      dbtCloudToken: 'projects/p/secrets/datahub-dbt-cloud-token/versions/latest',
+      webhookSecret: 'projects/p/secrets/datahub-dbt-webhook-secret/versions/latest',
+      bucket: 'p-datahub-artifacts',
+      ingestJob: 'projects/p/locations/europe-west1/jobs/datahub-registry-ingest',
+      catalogueUrl: 'https://catalogue.test',
+    });
     expect(() => settingsFromEnv({ ...env, DATAHUB_INGEST_JOB: '' })).toThrow('Missing environment variable DATAHUB_INGEST_JOB');
   });
 

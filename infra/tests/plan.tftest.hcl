@@ -20,11 +20,6 @@ variables {
     "2026" = "ENABLED"
   }
 
-  dbt_source_jobs = {
-    "9367"  = "322951"
-    "17121" = "739003"
-  }
-
   mail_from = "Data Hub uat <datahub@immoscoop.be>"
 }
 
@@ -557,33 +552,29 @@ run "catalogue_reads_the_lineage_around_a_resource_from_registry_as_itself" {
   }
 }
 
-run "registry_reads_the_source_jobs_of_its_own_environment" {
+run "the_source_jobs_are_set_on_the_page_not_in_terraform" {
   command = plan
 
   assert {
+    condition = length(concat(
+      [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.name if env.name == "DATAHUB_DBT_SOURCE_JOBS"],
+      [for env in google_cloud_run_v2_service.service["registry"].template[0].containers[0].env : env.name if env.name == "DATAHUB_DBT_SOURCE_JOBS"],
+    )) == 0
+    error_message = "A Data Admin sets the dbt projects and their Source Jobs on the page Webhooks; Terraform names none (DEC-AR-10)."
+  }
+
+  assert {
     condition = contains(
-      [for env in google_cloud_run_v2_job.registry_ingest.template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_DBT_SOURCE_JOBS"],
-      "17121:739003,9367:322951"
+      [for env in google_cloud_run_v2_job.migrate["registry"].template[0].template[0].containers[0].env : env.value if env.name == "DATAHUB_ENVIRONMENT"],
+      "uat"
     )
-    error_message = "The Source Jobs reach registry and its job as <project>:<job> (DEC-AR-01)."
+    error_message = "The migration of registry knows its environment, to start the Source Jobs with what it followed (TR-AR-12)."
   }
 
   assert {
     condition     = output.registry_webhook_url == "https://datahub-registry-123456789.europe-west1.run.app/webhooks/dbt-cloud"
     error_message = "The webhook endpoint to give dbt Cloud is registry's /webhooks/dbt-cloud."
   }
-}
-
-run "source_jobs_are_named_by_their_ids" {
-  command = plan
-
-  variables {
-    dbt_source_jobs = {
-      "dbt-prod" = "daily build"
-    }
-  }
-
-  expect_failures = [var.dbt_source_jobs]
 }
 
 run "the_data_team_reads_registry_catalogue_and_query_in_cloud_sql_studio" {

@@ -66,13 +66,14 @@ locals {
     DATAHUB_WEB_REDIRECT_URI = "${local.urls["web"]}/auth/callback"
   }
 
-  # registry and its ingest job: where the Artifacts come from and where they go (TR-AR-01, TR-AR-02).
+  # registry and its ingest job: where the Artifacts come from and where they go (TR-AR-01, TR-AR-02). The dbt
+  # projects Data Hub follows and their Source Jobs are no setting: a Data Admin sets them on the page Webhooks
+  # (DEC-AR-10).
   ingest_job = "datahub-registry-ingest"
   registry_env = merge(local.database_env["registry"], {
     DATAHUB_ARTIFACT_BUCKET    = google_storage_bucket.artifacts.name
     DATAHUB_DBT_CLOUD_URL      = var.dbt_cloud_url
     DATAHUB_DBT_ACCOUNT_ID     = var.dbt_account_id
-    DATAHUB_DBT_SOURCE_JOBS    = join(",", [for project, job in var.dbt_source_jobs : "${project}:${job}"])
     DATAHUB_DBT_CLOUD_TOKEN    = "${google_secret_manager_secret.secret["datahub-dbt-cloud-token"].id}/versions/latest"
     DATAHUB_DBT_WEBHOOK_SECRET = "${google_secret_manager_secret.secret["datahub-dbt-webhook-secret"].id}/versions/latest"
     DATAHUB_INGEST_JOB         = "projects/${var.project_id}/locations/${var.region}/jobs/${local.ingest_job}"

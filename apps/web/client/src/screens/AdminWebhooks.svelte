@@ -10,15 +10,18 @@
   import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
-  import type { DbtJob, Delivery, DeliveryReason, JobKind, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
+  import type { DbtJob, DbtProject, Delivery, DeliveryReason, JobKind, NotChoosable, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
 
   /**
-   * Webhooks, the first tool of Admin (FR-AR-18, FR-AR-19, DEC-UX-130): per dbt project its Source Job, by
-   * name and ID, its kind and environment in dbt Cloud, whether it generates the docs, the last run that
-   * delivered an Artifact Set and who set it; "Change" opens a sheet with the jobs of that project, a CI job
-   * or a job of another environment not to be chosen. Under them the address dbt Cloud sends to, and the
-   * deliveries of the last 30 days, the newest first, filtered by what Data Hub did: one opened shows on the
-   * right, as a Message does in the Message Centre, with what it means and what to do.
+   * Webhooks, the first tool of Admin (FR-AR-18, FR-AR-19, DEC-UX-130): per dbt project Data Hub follows its
+   * Source Job, by name and ID, its kind and environment in dbt Cloud, whether it generates the docs, the last
+   * run that delivered an Artifact Set and who set it. The page is the only place where they are set (DEC-AR-10):
+   * "Change" opens a sheet with the jobs of that project, a CI job, a job without the docs or a job of another
+   * environment not to be chosen; "Stop following" asks to confirm in the place of the tile; "Follow a dbt
+   * project" opens a sheet with the dbt projects of the account not followed yet and, once one is chosen, its
+   * jobs (DEC-UX-166). Under them the address dbt Cloud sends to, and the deliveries of the last 30 days, the
+   * newest first, filtered by what Data Hub did, in a list that keeps to the height of the screen (DEC-UX-167):
+   * one opened shows on the right, as a Message does in the Message Centre, with what it means and what to do.
    */
   let {
     registry,
@@ -131,6 +134,78 @@
     }
   }
 
+  // Stop following a dbt project, after a confirmation in the place of its tile (DEC-UX-166).
+  let stopping: string | undefined = $state();
+  let stopBusy = $state(false);
+  let stopProblem = $state('');
+
+  async function stop(tile: SourceJobTile) {
+    stopBusy = true;
+    stopProblem = '';
+    try {
+      await registry.stopFollowing(tile.projectId);
+      tiles = (tiles ?? []).filter((one) => one.projectId !== tile.projectId);
+      stopping = undefined;
+    } catch (error) {
+      console.error(`${tile.projectId} could not be left`, error);
+      stopProblem = error instanceof Refused ? error.detail || t('admin.webhooks.pick.failed') : t('admin.webhooks.pick.failed');
+    } finally {
+      stopBusy = false;
+    }
+  }
+
+  // The sheet that follows a dbt project: its dbt projects not followed yet, then the jobs of the one chosen (DEC-UX-166).
+  let adding = $state(false);
+  let projects: DbtProject[] | null | undefined = $state();
+  let project: DbtProject | undefined = $state();
+  let projectJobs: DbtJob[] | null | undefined = $state();
+  let firstJob: string | undefined = $state();
+  let following = $state(false);
+  let followProblem = $state('');
+
+  async function startFollowing() {
+    [adding, projects, project, projectJobs, firstJob, followProblem] = [true, undefined, undefined, undefined, undefined, ''];
+    try {
+      projects = (await registry.dbtProjects()).filter((one) => !one.following);
+    } catch (error) {
+      console.error('The dbt projects could not be read', error);
+      projects = null;
+    }
+  }
+
+  async function chooseProject(chosen: DbtProject) {
+    [project, projectJobs, firstJob, followProblem] = [chosen, undefined, undefined, ''];
+    try {
+      const jobs = (await registry.jobsOf(chosen.id)).jobs;
+      // The answer of another project chosen meanwhile is not shown.
+      if (project?.id === chosen.id) projectJobs = jobs;
+    } catch (error) {
+      console.error('The jobs could not be read', error);
+      if (project?.id === chosen.id) projectJobs = null;
+    }
+  }
+
+  const projectGroups = $derived.by(() => {
+    const jobs = projectJobs ?? [];
+    const names = [...new Set(jobs.map((job) => job.environmentName ?? t('admin.webhooks.noEnvironment')))].sort((a, b) => a.localeCompare(b));
+    return names.map((name) => ({ name, jobs: jobs.filter((job) => (job.environmentName ?? t('admin.webhooks.noEnvironment')) === name) }));
+  });
+
+  async function follow() {
+    if (!project || !firstJob) return;
+    following = true;
+    followProblem = '';
+    try {
+      const saved = await registry.followProject(project.id, firstJob);
+      tiles = [...(tiles ?? []), saved];
+      adding = false;
+    } catch (error) {
+      followProblem = error instanceof Refused ? error.detail || t('admin.webhooks.pick.failed') : t('admin.webhooks.pick.failed');
+    } finally {
+      following = false;
+    }
+  }
+
   /** The line of a delivery in the list: its dbt project, and why it was ignored or refused, or how its set fares. */
   function excerpt(delivery: Delivery): string {
     if (delivery.outcome === 'refused') return t('admin.why.signature', { environment });
@@ -160,7 +235,7 @@
     otherProject: 'admin.todo.otherProject',
     signature: 'admin.todo.signature',
   };
-  const NOT_CHOOSABLE: Record<'ci' | 'otherEnvironment', string> = { ci: 'admin.notChoosable.ci', otherEnvironment: 'admin.notChoosable.otherEnvironment' };
+  const NOT_CHOOSABLE: Record<NotChoosable, string> = { ci: 'admin.notChoosable.ci', otherEnvironment: 'admin.notChoosable.otherEnvironment', noDocs: 'admin.notChoosable.noDocs' };
 </script>
 
 <Breadcrumb steps={[{ label: 'Admin' }]} />
@@ -172,13 +247,31 @@
   <Chip><Icon name="cloud-fill" />Data Hub {environment}</Chip>
 </div>
 
-<div class="section-head"><h2>Source Jobs</h2></div>
+<div class="section-head"><h2>Source Jobs</h2>{#if tiles !== null}<Button variant="outline" onclick={startFollowing}><Icon name="plus" />{t('admin.webhooks.follow')}</Button>{/if}</div>
 <p class="meta explain">{t('admin.webhooks.sourceJobs', { environment })}</p>
 {#if tiles === null}
   <p class="meta">{t('admin.webhooks.unavailable')}</p>
+{:else if tiles && tiles.length === 0}
+  <p class="meta explain">{t('admin.webhooks.none', { environment })}</p>
 {:else if tiles}
   <div class="jobs">
     {#each tiles as tile (tile.projectId)}
+      {#if stopping === tile.projectId}
+        <section class="card job" aria-label={t('admin.webhooks.stop.title', { project: tile.projectName ?? tile.projectId })}>
+          <div class="label">{tile.projectName ?? 'dbt project'} <span class="mono">· {tile.projectId}</span></div>
+          <div class="stop-row">
+            <span class="sign"><Icon name="warning-fill" /></span>
+            <span><b>{t('admin.webhooks.stop.title', { project: tile.projectName ?? tile.projectId })}</b> {t('admin.webhooks.stop.text', { environment })}</span>
+          </div>
+          <div class="foot">
+            <span class="meta warn" role={stopProblem ? 'alert' : undefined}>{stopProblem}</span>
+            <span class="buttons">
+              <Button variant="outline" onclick={() => (stopping = undefined)}>{t('admin.cancel')}</Button>
+              <Button variant="danger" disabled={stopBusy} onclick={() => stop(tile)}>{t('admin.webhooks.stop')}</Button>
+            </span>
+          </div>
+        </section>
+      {:else}
       <section class="card job" aria-label={tile.projectName ?? tile.projectId}>
         <div class="label">{tile.projectName ?? 'dbt project'} <span class="mono">· {tile.projectId}</span></div>
         <div class="name"><span class="title">{tile.job.name ?? t('admin.webhooks.job', { id: tile.job.id })}</span><span class="mono id">{tile.job.id}</span></div>
@@ -200,9 +293,13 @@
         </div>
         <div class="foot">
           <span class="meta">{tile.setBy && tile.setAt ? t('admin.webhooks.setBy', { name: tile.setBy, when: when(tile.setAt) }) : t('admin.webhooks.fromConfig', { environment })}</span>
-          <Button variant="outline" onclick={() => pick(tile)}>{t('admin.webhooks.change')}</Button>
+          <span class="buttons">
+            <Button variant="quiet" onclick={() => ([stopping, stopProblem] = [tile.projectId, ''])}>{t('admin.webhooks.stop')}</Button>
+            <Button variant="outline" onclick={() => pick(tile)}>{t('admin.webhooks.change')}</Button>
+          </span>
         </div>
       </section>
+      {/if}
     {/each}
   </div>
   {#if webhookUrl}
@@ -367,6 +464,67 @@
   </Sheet>
 {/if}
 
+{#if adding}
+  <Sheet title={t('admin.webhooks.follow')} onclose={() => (adding = false)}>
+    {#snippet top()}<div class="meta">Webhooks · Data Hub {environment}</div>{/snippet}
+    <p class="meta sheet-lead">{t('admin.webhooks.follow.lead', { environment })}</p>
+    {#if projects === undefined}
+      <p class="meta">{t('admin.webhooks.follow.reading')} <Loading inline /></p>
+    {:else if projects === null}
+      <p class="meta">{t('admin.webhooks.dbtCloudDown')}</p>
+    {:else if projects.length === 0}
+      <p class="meta">{t('admin.webhooks.follow.all', { environment })}</p>
+    {:else}
+      <div class="options" role="radiogroup" aria-label={t('admin.webhooks.follow.projects')}>
+        {#each projects as one (one.id)}
+          <label class="option">
+            <input type="radio" name="project" value={one.id} checked={project?.id === one.id} onchange={() => chooseProject(one)} />
+            <span class="name"><span class="title">{one.name}</span><span class="mono id">{one.id}</span></span>
+          </label>
+        {/each}
+      </div>
+      {#if project}
+        <div class="group jobs-of">{t('admin.webhooks.follow.jobsOf', { project: project.name })}</div>
+        {#if projectJobs === undefined}
+          <p class="meta"><Loading inline /></p>
+        {:else if projectJobs === null}
+          <p class="meta">{t('admin.webhooks.dbtCloudDown')}</p>
+        {:else if projectJobs.length === 0}
+          <p class="meta">{t('admin.webhooks.follow.noJobs')}</p>
+        {:else}
+          <div class="options" role="radiogroup" aria-label={t('admin.webhooks.pick.jobs')}>
+            {#each projectGroups as group (group.name)}
+              <div class="group">{group.name}</div>
+              {#each group.jobs as job (job.id)}
+                <label class="option" class:off={job.notChoosable !== null}>
+                  <input type="radio" name="first-job" value={job.id} bind:group={firstJob} disabled={job.notChoosable !== null} />
+                  <span class="option-text">
+                    <span class="name"><span class="title">{job.name}</span><span class="mono id">{job.id}</span></span>
+                    <span class="tags">
+                      <span class="tag">{t(JOB_KIND[job.kind])}</span>
+                      {#if job.generatesDocs}<span class="tag">{t('admin.webhooks.docs')}</span>{/if}
+                      {#if job.notChoosable}
+                        <span class="meta">{t(NOT_CHOOSABLE[job.notChoosable])}</span>
+                      {:else if job.lastRun?.at}
+                        <span class="meta">{t('admin.webhooks.lastRun', { when: when(job.lastRun.at), status: job.lastRun.status ?? '' })}</span>
+                      {/if}
+                    </span>
+                  </span>
+                </label>
+              {/each}
+            {/each}
+          </div>
+        {/if}
+      {/if}
+    {/if}
+    {#snippet foot()}
+      <p class="meta note">{followProblem || t('admin.webhooks.follow.note', { environment })}</p>
+      <Button variant="quiet" onclick={() => (adding = false)}>{t('admin.cancel')}</Button>
+      <Button disabled={following || !project || !firstJob} onclick={follow}>{t('admin.webhooks.follow.make')}</Button>
+    {/snippet}
+  </Sheet>
+{/if}
+
 <style>
   .head { display: flex; align-items: flex-end; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
   .what { flex: 1; min-width: 280px; }
@@ -385,12 +543,19 @@
   .tag { font-size: var(--text-meta); padding: 2px 8px; border-radius: var(--radius-pill); background: var(--surface-sub); color: var(--text-secondary); }
   .tag.warn, .warn { color: var(--signal-warn); }
   .last { font-size: var(--text-small); color: var(--text-secondary); }
-  .foot { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-top: 2px; }
+  .foot { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-top: auto; }
+  .buttons { display: flex; align-items: center; gap: 6px; flex: none; }
+  .stop-row { display: flex; gap: 10px; font-size: var(--text-small); line-height: 1.5; }
+  .stop-row b { font-weight: var(--weight-medium); }
+  .stop-row .sign { display: inline-flex; flex: none; color: var(--signal-urgent); font-size: 18px; }
+  .jobs-of { margin-top: 16px; }
   .hook { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 12px 16px; border-radius: var(--radius-lg); font-size: var(--text-small); }
   .url { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--text-secondary); }
   .centre { display: grid; grid-template-columns: minmax(300px, 420px) minmax(0, 1fr); gap: 14px; align-items: start; }
-  .list { padding: 12px 8px 8px; }
-  .chips { margin: 0 4px 8px; overflow-x: auto; }
+  /* The deliveries keep to the height of the main frame, inside its padding, and scroll within themselves; their
+     filter stays on top (DEC-UX-167). */
+  .list { box-sizing: border-box; max-height: calc(100vh - 2 * var(--space-frame) - 52px); overflow-y: auto; padding: 0 8px 8px; }
+  .chips { position: sticky; top: 0; z-index: 1; margin: 0 -8px 8px; padding: 12px 12px 8px; overflow-x: auto; background: var(--surface-solid); }
   .item { all: unset; box-sizing: border-box; text-align: left; display: flex; flex-direction: column; gap: 6px; width: 100%; padding: 12px; border-radius: var(--radius-md); cursor: pointer; }
   .item:hover { background: var(--tint-hover); }
   .item.on { background: var(--surface-sub); }
@@ -402,7 +567,7 @@
   .kind.signal { color: var(--signal-warn); background: color-mix(in srgb, var(--signal-warn) 13%, var(--surface-solid)); }
   .excerpt { font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
   .empty-list { padding: 12px; margin: 0; }
-  .detail { padding: 18px 20px 20px; position: sticky; top: 16px; }
+  .detail { padding: 18px 20px 20px; }
   .detail-head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
   .facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 16px 0 0; font-size: var(--text-small); }
   .facts dt { color: var(--text-muted); }

@@ -32,6 +32,9 @@ resource "google_cloud_run_v2_job" "migrate" {
             {
               DATAHUB_DB_USER         = google_sql_user.migrator.name
               DATAHUB_DB_SERVICE_USER = google_sql_user.service[each.key].name
+              # For a migration that starts a table with what this environment held before, such as the
+              # Source Jobs of registry (TR-AR-12).
+              DATAHUB_ENVIRONMENT = var.environment
             },
             contains(local.readable_services, each.key) ? { DATAHUB_DB_READERS = join(",", [for reader in google_sql_user.reader : reader.name]) } : {},
           )
