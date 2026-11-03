@@ -59,7 +59,28 @@ The dbt projects Data Hub follows with their Source Jobs, which a Data Admin set
 
 The dbt Cloud Admin API, for the artifacts of a run and the jobs and environments of a dbt project; the artifact bucket; and catalogue, with the service identity: after every new Current Version, the tables under the exposures tagged `datahub`, with their columns and the checksum of their code ([TR-AR-08](../../requirements/technical/01-artifact-registry.md#tr-ar-08)), and the Changes since the previous Current Version with the tables they reach ([TR-AR-14](../../requirements/technical/01-artifact-registry.md#tr-ar-14)).
 
-The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)).
+The collector of Colleciónes, `GET /domain-model` at `https://colleciones-eventos.immoscoop.be`, its public API, for the Domain Model in use, read each time it is needed ([DEC-AR-04](../../requirements/functional/01-artifact-registry.md#dec-ar-04), [TR-AR-09](../../requirements/technical/01-artifact-registry.md#tr-ar-09)). The routes are below.
+
+### The Domain Model API
+
+The collector serves the Domain Model it validates events against, read in real time ([DEC-AR-05](../../requirements/functional/01-artifact-registry.md#dec-ar-05)). There is no authentication, as for its `/info` and `/healthz`.
+
+| Environment | Base URL |
+| --- | --- |
+| prod | `https://colleciones-eventos.immoscoop.be` |
+| uat | `https://colleciones-eventos.uat.immoscoop.be` |
+
+| Route | What it answers |
+| --- | --- |
+| `GET /domain-model` | Which model is loaded, its version, release and npm package, counts, the domains (`domain@version`) and an index of every Entity. The release Data Hub records with a mapping comes from here |
+| `GET /domain-model/:model` | The whole contract: every Entity in detail, with the contexts, event groups, actors, the prose per domain, and the vocabulary of actions, relation types and datatypes |
+| `GET /domain-model/:model/entities` | The index of Entities: per Entity its domain, identifiers, actions, counts and whether it has a state schema |
+| `GET /domain-model/:model/entities/:entity` | One Entity in full, with the names of its events (`email.click`, …) |
+| `GET /domain-model/:model/entities/:entity/actions/:action` | One action, the smallest thing the model declares |
+
+`:model` is `immoscoop`; another name answers 404 with the model the collector does serve. Two parameters are off by default, and only the exact string `true` turns them on: `?schemas=true` adds the JSON Schemas an event is validated against (on the contract, an Entity and an action), and `?customArgs=true`, on an action only, says which `cc_dm_*` key each reference, attribute and identifier of that action carries. The read routes came with the server release rc1.0.43, `customArgs` with rc1.0.44. On 2026-11-03, prod and uat both ran `@compilacion/colleciones-domain-model` 0.0.70: model `immoscoop` 0.1.0, with 11 domains, 49 Entities, 103 events, 66 contexts, 21 event groups and 4 actors.
+
+**Data Hub only reads, with GET.** `POST /domain-model/:model` and `POST /web/domain-model/:model` share these paths and are where events come in; registry never sends anything there.
 
 ## Permissions
 
