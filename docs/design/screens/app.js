@@ -127,6 +127,9 @@ document.querySelectorAll('[data-group]').forEach(group => {
   }));
 });
 
+// Prototype: the width an MCP App is seen at, Claude on a computer or on a phone (DEC-UX-180): ?width=phone
+document.querySelectorAll('[data-group="width"] [data-target]').forEach(b => b.addEventListener('click', () => { document.body.dataset.width = b.dataset.target; }));
+
 // Prototype: a button that switches one or more groups, such as "Next" on a step: data-go="state:understood step:congrats"
 const go = spec => spec.split(' ').forEach(p => { const [g, t] = p.split(':'); document.querySelector(`[data-group="${g}"] [data-target="${t}"]`)?.click(); });
 document.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', e => {
