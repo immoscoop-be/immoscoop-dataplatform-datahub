@@ -179,6 +179,13 @@ Data Hub derives Described from the Current Version of the dbt project: the tabl
 **Status:** Implemented · **Source:** Max, 2026-10-28 ([DEC-MR-12](#dec-mr-12)) · **Screens:** [resource-publish](../../design/screens/resource-publish.html)
 
 Data Hub derives Described from the Current Version of the dbt project: the table has a description, and at least one field has one. Only what is in dbt counts; a Business Description does not, nor what the Data Admin sets in Data Hub. When the description of the table, or the last one of a field, goes missing, the Level drops to Available.
+<a id="fr-mr-16"></a>
+### FR-MR-16 · The Overview explains every Level, passed or what it takes
+
+**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-UX-175](../../design/principles.md#dec-ux-175)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+Beside the ladder of a Resource, its Overview explains every Level from 1 · Available to 5 · Monitored. A Level passed is marked so, with how it was reached: registered through an exposure of a dbt project, the table and how many fields described in dbt ([FR-MR-15](#fr-mr-15)), published and confirmed by whom and when ([FR-SR-49](04-stacks-and-resources.md#fr-sr-49)), with a change since the last Confirmation ([FR-MR-12](#fr-mr-12)). The Level it is at stands out. A Level still to reach says what it takes and who does it: the Data Team describes it in dbt, its Owner publishes it, an EDA document is linked ([DEC-MR-14](#dec-mr-14)), an active check runs on it, which comes in version 2 ([DEC-MR-13](#dec-mr-13)). 0 · Beta is named under them, for concepts. The Publication has no tile of its own.
+
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch). *Could, not in v1: set on 2026-10-28, by Max; a domain for EDA is not part of version 1.*

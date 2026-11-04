@@ -1577,3 +1577,47 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .sum-warn { color: var(--signal-warn); }
 .sum-dep { background: color-mix(in srgb, var(--signal-warn) 9%, var(--surface-sub)); }
 .sum-dep .sum-n { font-size: 18px; color: var(--signal-warn); }
+
+/* Maturity in the Overview: the ladder, and beside it every Level, passed or what it takes (DEC-UX-175) */
+.lvl-layout { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.lvl-ladder svg { max-width: 240px; }
+.lvl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lvl { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.lvl > .ph, .lvl > .ph-fill { font-size: 18px; margin-top: 1px; flex: none; color: var(--text-secondary); }
+.lvl.now { outline: 1.5px solid var(--text-primary); outline-offset: -1.5px; }
+.lvl.now > .ph-fill { color: var(--text-primary); }
+.lvl.next > .ph, .lvl.later > .ph { color: var(--text-muted); }
+.lvl.later { background: none; outline: 1px dashed var(--tint-active); outline-offset: -1px; }
+.lvl > div { flex: 1; min-width: 0; }
+.lvl-name { display: flex; align-items: baseline; gap: 8px; }
+.lvl-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.lvl-tag { font-size: 10px; font-weight: var(--weight-medium); color: var(--text-muted); text-transform: none; }
+.lvl.now .lvl-tag { color: var(--text-primary); }
+.lvl p { margin: 4px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+.lvl.later p, .lvl.next p { color: var(--text-muted); }
+.lvl p a { color: var(--text-primary); text-underline-offset: 3px; }
+.lvl .lvl-warn { display: flex; align-items: center; gap: 6px; color: var(--signal-warn); }
+.lvl-act { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; text-decoration: none; }
+@media (max-width: 1100px) { .lvl-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* The Danger zone of the Overview: what changes how everyone may rely on a Resource, explained, with its form (DEC-UX-176) */
+.danger { border-radius: var(--radius-lg); outline: 1px solid var(--tint-active); outline-offset: -1px; padding: 18px 20px; }
+.danger-head { display: flex; gap: 12px; align-items: flex-start; }
+.danger-head > .ph-fill { font-size: 22px; color: var(--text-secondary); margin-top: 2px; }
+.danger-head h3 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.danger-head p { margin: 4px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); max-width: 720px; }
+.danger-what { margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--tint-hover); }
+.danger-what .line { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 4px 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+.danger-what .line > i { font-size: 16px; margin-top: 2px; flex: none; }
+.danger-what b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.danger-form { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); max-width: 720px; }
+.danger-form .field { display: flex; flex-direction: column; gap: 6px; }
+.danger-form .field-label { font-size: var(--text-meta); color: var(--text-muted); }
+.danger-form textarea, .danger-form select { font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; }
+.danger-foot { display: flex; align-items: center; gap: 12px; }
+.danger-foot .meta { flex: 1; }
+.danger-now { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); line-height: 1.55; }
+.danger-now p { flex: 1; margin: 0; color: var(--text-secondary); }
+.danger-now b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.danger-now a { color: var(--text-primary); text-underline-offset: 3px; }
+.danger-now .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }

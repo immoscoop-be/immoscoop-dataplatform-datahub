@@ -10,7 +10,7 @@
   - Description: the Business Description, written in Markdown and shown
     rendered, the description from dbt under it, and the model type and grain. Edit opens the Markdown editor of the app
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
-  - Known behaviour: intended use, pitfalls, since when it is reliable; plain text.
+  - Known behaviour: intended use and pitfalls, in Markdown, and since when it is reliable (DEC-RC-19).
   - Known Gaps: a list, one gap per line, each with who added it and when; the Owner and the Data Team add one at the
     bottom, and change or remove one on its line. Plain text.
   - Querying: partitions and clustering, size, key fields and Parameters, with "Query".
@@ -18,12 +18,16 @@
   The Messages are no part of their own: "Messages" in the header opens them, as before. The Summary takes the Q&A of the
   Owner and the Data Team, every thread they started or answered in, which stays for good as a curated Q&A, with the
   open Signals; and what colleagues wrote that they have not touched yet, as context. Its links open the Messages.
-  - Maturity: the Level, Publication and monitoring. Changes: the recent log.
+  - Maturity: the ladder, and beside it every Level explained: those passed, with who and when (Registered, Described in
+    dbt, Published and confirmed, and a change since), the one it is at, and what the next ones take; no separate tile for
+    the Publication (DEC-UX-175). Changes: the recent log.
+  - Danger zone, apart at the end, for its Owner Unit and the Data Team: what deprecating does and why, and its form, or
+    who deprecated it and "Take it away"; "Deprecate" is no longer in the header (DEC-UX-176).
   The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=gaps, ?ov=querying,
-  ?ov=entities, ?ov=maturity, ?ov=changes; ?dep=on shows a deprecated Resource, its deprecation first
+  ?ov=entities, ?ov=maturity, ?ov=changes, ?ov=danger; ?lvl=two shows Maturity at 2 · Described; ?dep=on shows a deprecated Resource, its deprecation first
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
-  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22
-  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171.
+  Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22, FR-RC-23, FR-SR-50, FR-MR-16
+  Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-RC-19, DEC-UX-101, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171, DEC-UX-175, DEC-UX-176.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -123,8 +127,6 @@
  <div class="breadcrumb">Collections / Credit leads</div>
  <div style="display:flex;align-items:flex-start;gap:14px;margin-top:8px">
   <div style="flex:1;min-width:0"><h1 class="page-title">Weekly lead volume</h1><div class="meta mono" style="margin-top:4px">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume <button class="icon-btn" aria-label="Copy key" style="width:22px;height:22px;font-size:13px"><i class="ph-fill ph-copy"></i></button></div></div>
-  <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="off" data-go="dep:on" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-archive"></i>Deprecate</button>
-  <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="on" data-go="dep:off" type="button" hidden style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-counter-clockwise"></i>Take it away</button>
   <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
   <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">5</span></a>
   <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
@@ -136,7 +138,7 @@
   <span class="status"><i class="ph-fill ph-warning-circle"></i>1 open signal</span>
   <span class="status dep-chip" data-pane-group="dep" data-pane="on" hidden title="Deprecated by the credit team on 20 Oct 2026: replaced by Weekly lead volume v2"><i class="ph-fill ph-archive"></i>Deprecated</span>
  </div>
- <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. It stays usable, and so do the Lenses on it; a new Lens on it gets a warning.</p><a class="alert-btn" href="#">Use Weekly lead volume v2</a></div>
+ <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. It stays usable, and so do the Lenses on it; a new Lens on it gets a warning.</p><a class="alert-btn" href="#">Use Weekly lead volume v2</a><button class="alert-btn" data-for="owner datateam" data-go="ov:danger">Danger zone</button></div>
  <div class="alert" role="status"><i class="ph-fill ph-warning-circle"></i><p><b style="font-weight:500">Changed since it was confirmed:</b> the field <span class="mono">lead_channel</span> was added yesterday. Its Level stays 4 · Explored; the Owner has been told.</p><button class="alert-btn" data-seen data-for="owner datateam" data-pop="pop-rec" aria-haspopup="dialog" aria-expanded="false">Mark as seen<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the Learning Centre)</span></button></div>
  <div class="tabs" data-group="tabs" role="tablist">
   <button class="tab on" data-target="overview" role="tab" aria-selected="true">Overview</button>
@@ -159,6 +161,8 @@
     <button class="ov-item" data-target="entities" role="tab" aria-selected="false"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
     <button class="ov-item" data-target="maturity" role="tab" aria-selected="false"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="ov-name">Maturity</span><span class="ov-dot warn" title="Changed since it was confirmed" aria-label="Changed since it was confirmed"></span></button>
     <button class="ov-item" data-target="changes" role="tab" aria-selected="false"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="ov-name">Changes</span></button>
+    <div class="ov-sep" role="presentation" data-for="owner datateam"></div>
+    <button class="ov-item" data-target="danger" role="tab" aria-selected="false" data-for="owner datateam"><i class="ph ph-warning-octagon" aria-hidden="true"></i><span class="ov-name">Danger zone</span></button>
    </nav>
 
    <div class="ov-body">
@@ -229,12 +233,12 @@ The lead source is set by the form the visitor used: website, app, partner or ma
     <!-- ───────────── Known behaviour: intended use, pitfalls, since when reliable; plain text ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="behaviour" hidden aria-label="Known behaviour">
      <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted.</p></div>
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted. Intended use and pitfalls are written in Markdown.</p></div>
       <a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
      </div>
      <div class="ov-grid">
-      <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><p class="prose">Weekly trends and comparing lead sources.</p></div>
-      <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div><p class="prose">The current week is incomplete. Don’t sum across sources for unique people.</p></div>
+      <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><div class="md"><p>Weekly trends, and comparing <b>lead sources</b>:</p><ul><li>the review with KBC on Monday</li><li>the share of partner leads</li></ul></div></div>
+      <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div><div class="md"><p>The <b>current week</b> is incomplete until Monday morning.</p><p>Don’t sum across sources for <i>unique</i> people.</p></div></div>
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-calendar-check"></i>Reliable since</div><p class="prose"><b style="font-weight:500;color:var(--text-primary)">1 Jan 2025</b>. Earlier weeks are incomplete.</p></div>
      </div>
     </section>
@@ -307,21 +311,55 @@ The lead source is set by the form the visitor used: website, app, partner or ma
     <!-- ───────────── Maturity: the Level, Publication, monitoring ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="maturity" hidden aria-label="Maturity">
      <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title">Maturity</h2><p class="ov-lead">How far it is documented and confirmed, and who stands behind it.</p></div>
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Maturity</h2><p class="ov-lead">How far it is documented and confirmed, and who stands behind it: each Level, passed or what it takes.</p></div>
      </div>
-     <div class="ov-grid">
-      <div class="sub-tile"><div class="label">Level</div>
-       <svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 4 of 5"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--text-primary)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="var(--text-primary)"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle">2</text><text x="141" y="42" text-anchor="middle">3</text><text x="181" y="26" text-anchor="middle" fill="var(--text-primary)" font-weight="600">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg>
-       <div style="font-size:14px;font-weight:500;margin-top:6px">4 · Explored</div><div class="meta">Confirmed, and an EDA document is linked</div></div>
-      <div class="sub-tile">
-       <div class="tile-head"><div class="label">Publication</div><a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a></div>
-       <dl class="facts"><dt>Published</dt><dd>2 Sep 2026 by An Claes</dd><dt>Confirmed</dt><dd>14 Oct 2026 by An Claes</dd><dt>Changed since</dt><dd style="color:var(--signal-warn)">yesterday: <span class="mono">lead_channel</span> added</dd></dl>
-      </div>
-      <div class="sub-tile"><div class="label">Monitoring</div><dl class="facts"><dt>Checks</dt><dd>None. Checks, and Level 5, Monitored, come in a later version.</dd><dt>Incidents</dt><dd>None</dd></dl></div>
+     <div class="lvl-layout" data-pane-group="lvl" data-pane="four">
+      <div class="sub-tile lvl-ladder"><div class="label">Level</div><svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 4 of 5"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--text-primary)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="var(--text-primary)"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle">2</text><text x="141" y="42" text-anchor="middle">3</text><text x="181" y="26" text-anchor="middle" fill="var(--text-primary)" font-weight="600">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg><div style="font-size:14px;font-weight:500;margin-top:6px">4 · Explored</div></div>
+      <ol class="lvl-list">
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Passed</span></div><p>The table and 14 of its 16 fields have a description in dbt.</p></div></li>
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Passed</span></div><p>Published on 2 Sep 2026 by An Claes, its first Confirmation; confirmed again on 14 Oct 2026 by An Claes.</p><p class="lvl-warn"><i class="ph-fill ph-warning-circle" aria-hidden="true"></i>Changed since: <span class="mono">lead_channel</span> added yesterday. The Level stays.</p></div></li>
+       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Its Level</span></div><p>An EDA document is linked: <a href="#">EDA · weekly lead volume</a>.</p></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
+      </ol>
      </div>
+     <div class="lvl-layout" data-pane-group="lvl" data-pane="two" hidden>
+      <div class="sub-tile lvl-ladder"><div class="label">Level</div><svg viewBox="0 0 240 120" width="100%" role="img" aria-label="Maturity ladder: level 2 of 5"><g font-family="Poppins" font-size="9" fill="var(--text-muted)"><rect x="4" y="96" width="34" height="14" rx="5" fill="var(--text-primary)"/><rect x="44" y="80" width="34" height="30" rx="5" fill="var(--text-primary)"/><rect x="84" y="64" width="34" height="46" rx="5" fill="var(--text-primary)"/><rect x="124" y="48" width="34" height="62" rx="5" fill="var(--tint-active)"/><rect x="164" y="32" width="34" height="78" rx="5" fill="var(--tint-active)"/><rect x="204" y="16" width="34" height="94" rx="5" fill="var(--tint-active)"/><text x="21" y="90" text-anchor="middle">0</text><text x="61" y="74" text-anchor="middle">1</text><text x="101" y="58" text-anchor="middle" fill="var(--text-primary)" font-weight="600">2</text><text x="141" y="42" text-anchor="middle">3</text><text x="181" y="26" text-anchor="middle">4</text><text x="221" y="10" text-anchor="middle">5</text></g></svg><div style="font-size:14px;font-weight:500;margin-top:6px">2 · Described</div></div>
+      <ol class="lvl-list">
+       <li class="lvl done"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><div><div class="lvl-name"><b>1 · Available</b><span class="lvl-tag">Passed</span></div><p>Registered on 2 Sep 2026, through the exposure <span class="mono">datahub_weeklyLeads</span> of dbt-prod.</p></div></li>
+       <li class="lvl now"><i class="ph-fill ph-seal-check" aria-hidden="true"></i><div><div class="lvl-name"><b>2 · Described</b><span class="lvl-tag">Its Level</span></div><p>The table and 9 of its 16 fields have a description in dbt.</p></div></li>
+       <li class="lvl next"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>3 · Confirmed</b><span class="lvl-tag">Next</span></div><p>Takes its Owner publishing it: publishing is its first Confirmation, and everyone who sees its Collection sees it then.</p><a class="btn-quiet outline sm lvl-act" data-for="owner" href="resource-publish.html"><i class="ph-fill ph-globe-simple"></i>Publish</a></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>4 · Explored</b><span class="lvl-tag">Later</span></div><p>Takes an EDA document linked to it. Data Hub links none yet.</p></div></li>
+       <li class="lvl later"><i class="ph ph-circle-dashed" aria-hidden="true"></i><div><div class="lvl-name"><b>5 · Monitored</b><span class="lvl-tag">Later</span></div><p>Takes at least one active check on it. Checks come in a later version, with the monitors.</p></div></li>
+      </ol>
+     </div>
+     <p class="meta ov-help">0 · Beta is for a concept business defines itself, in a Lens or a query; a Resource from dbt starts at 1 · Available. The Level informs, and restricts nothing.</p>
     </section>
 
-    <!-- ───────────── Changes: the recent log ───────────── -->
+    <!-- ───────────── Danger zone: what changes how everyone may rely on it, explained, with its form ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="danger" hidden aria-label="Danger zone">
+     <div class="ov-head">
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Danger zone</h2><p class="ov-lead">What changes how everyone may rely on Weekly lead volume. Read it before you act: every step goes into its history, with your name.</p></div>
+     </div>
+     <section class="danger">
+      <div class="danger-head"><i class="ph-fill ph-archive" aria-hidden="true"></i><div><h3>Deprecate</h3><p>Say that its use is discouraged, why, and what to use instead: when a better Resource replaces it, when what it means changed, or when it will no longer be built.</p></div></div>
+      <div class="danger-what">
+       <p class="line"><i class="ph-fill ph-archive" aria-hidden="true"></i><span><b>Its use is discouraged:</b> “Deprecated” stands next to its Level wherever it shows, in search, on its Collection and to Claude, with your reason; its page says who deprecated it, when, why and what to use instead.</span></p>
+       <p class="line"><i class="ph-fill ph-check-circle" aria-hidden="true"></i><span><b>Nothing is hidden or blocked:</b> it stays published and usable, and so do the queries and Lenses on it. A new Lens on it gets a warning.</span></p>
+       <p class="line"><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i><span><b>It can be taken away:</b> by its Owner Unit or the Data Team, here. It is no withdrawal: only dbt withdraws a Resource, when it no longer exposes it.</span></p>
+      </div>
+      <form class="danger-form" data-pane-group="dep" data-pane="off" onsubmit="return false">
+       <label class="field"><span class="field-label">Why it is deprecated</span><textarea rows="3" placeholder="Replaced by the weekly figures that include partner leads"></textarea></label>
+       <label class="field"><span class="field-label">What to use instead · optional</span><select><option>Nothing to use instead</option><option>Weekly lead volume v2 · Credit leads</option><option>Lead sources · Credit leads</option></select><span class="meta">A Resource you may see. Its page gets a button to it.</span></label>
+       <div class="danger-foot"><span class="meta">Goes into the history, with your name.</span><button class="btn-primary" type="submit" data-go="dep:on"><i class="ph-fill ph-archive"></i>Deprecate</button></div>
+      </form>
+      <div class="danger-now" data-pane-group="dep" data-pane="on" hidden>
+       <p><b>Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. Use <a href="#">Weekly lead volume v2</a> instead.</p>
+       <button class="btn-quiet outline" type="button" data-go="dep:off"><i class="ph ph-arrow-counter-clockwise"></i>Take it away</button>
+      </div>
+     </section>
+    </section>
+
     <section class="ov-pane" data-pane-group="ov" data-pane="changes" hidden aria-label="Changes">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Changes</h2><p class="ov-lead">What happened to it lately, with its Log ID; the queries on it are under History.</p></div>
@@ -536,6 +574,12 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="description" data-go="ov:description descedit:off" role="tab" aria-selected="false">Description</button>
  <button class="seg" data-target="edit" data-go="ov:description descedit:on" role="tab" aria-selected="false">Editing it</button>
  <button class="seg" data-target="gaps" data-go="ov:gaps" role="tab" aria-selected="false">Known Gaps</button>
+ <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
+ <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="lvl" role="tablist" aria-label="Prototype: the Level on Maturity" style="bottom:168px">Level
+ <button class="seg on" data-target="four" role="tab" aria-selected="true">4 · Explored</button>
+ <button class="seg" data-target="two" role="tab" aria-selected="false">2 · Described</button>
 </div>
 <div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: deprecated or not" style="bottom:72px">Deprecated
  <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>
