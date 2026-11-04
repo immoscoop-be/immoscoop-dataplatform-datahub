@@ -584,7 +584,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
         businessDescription: 'The cards we send each week.',
         intendedUse: 'Trends.',
         pitfalls: '',
-        knownGaps: ['No cards before March.'],
+        knownGaps: [{ id: expect.any(String), text: 'No cards before March.', addedBy: 'An', addedAt: expect.any(String) }],
         reliableSince: '2025-01-01',
         keyFields: ['cards_id'],
         parameters: ['listing_id'],
@@ -593,12 +593,38 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('PATCH', `/resources/${cards}`, { intendedUse: 'Trends.', pitfalls: 'Weeks overlap.' })).statusCode).toBe(200);
       expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 7).map((entry: { text: string }) => entry.text)).toEqual([
         'Pitfalls updated by Dirk',
+        'Known Gap added by An: No cards before March.',
         'Parameters updated by An',
         'Key fields updated by An',
         'Reliable since updated by An',
-        'Known Gaps updated by An',
         'Intended use updated by An',
         'Business Description updated by An',
+      ]);
+
+      // The Known Gaps one at a time, each with who added it; who added one stays when it changes (FR-RC-21).
+      const newGap = await dirk('POST', `/resources/${cards}/gaps`, { text: '  visitorId is missing for MySQL leads. ' });
+      expect(newGap.statusCode).toBe(201);
+      expect(newGap.json().gap).toEqual({ id: expect.any(String), text: 'visitorId is missing for MySQL leads.', addedBy: 'Dirk', addedAt: expect.any(String) });
+      const gapId = newGap.json().gap.id as string;
+      expect((await an('PATCH', `/resources/${cards}/gaps/${gapId}`, { text: 'visitorId is missing for leads from MySQL.' })).json().gap).toMatchObject({ text: 'visitorId is missing for leads from MySQL.', addedBy: 'Dirk' });
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: '  ' })).statusCode).toBe(400);
+      expect((await bert('POST', `/resources/${cards}/gaps`, { text: 'Mine.' })).statusCode).toBe(404);
+      expect((await an('GET', `/resources/${cards}`)).json().resource.card.knownGaps.map((gap: { text: string }) => gap.text)).toEqual([
+        'No cards before March.',
+        'visitorId is missing for leads from MySQL.',
+      ]);
+      expect((await an('DELETE', `/resources/${cards}/gaps/${gapId}`)).statusCode).toBe(204);
+      expect((await an('DELETE', `/resources/${cards}/gaps/${gapId}`)).statusCode).toBe(404);
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries.slice(0, 3).map((entry: { text: string }) => entry.text)).toEqual([
+        'Known Gap removed by An: visitorId is missing for leads from MySQL.',
+        'Known Gap changed by An: visitorId is missing for leads from MySQL.',
+        'Known Gap added by Dirk: visitorId is missing for MySQL leads.',
+      ]);
+      // The whole list at once, as Claude sends it: a gap that stays keeps who added it.
+      await an('PATCH', `/resources/${cards}`, { knownGaps: ['No cards before March.', 'No decks.'] });
+      expect((await an('GET', `/resources/${cards}`)).json().resource.card.knownGaps).toEqual([
+        { id: expect.any(String), text: 'No cards before March.', addedBy: 'An', addedAt: expect.any(String) },
+        { id: expect.any(String), text: 'No decks.', addedBy: 'An', addedAt: expect.any(String) },
       ]);
       expect((await bert('PATCH', `/resources/${cards}`, { intendedUse: 'Mine.' })).statusCode).toBe(404);
       // A Business Description from 2 · Described on (DEC-MR-10); the rest of the card before that.

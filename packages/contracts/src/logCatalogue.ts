@@ -84,6 +84,30 @@ export const LOG_CATALOGUE = {
       nl: 'Business Description van het veld {field} bijgewerkt door {actor}',
     },
   },
+  'RES-011': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap added by {actor}: {gap}',
+      nl: 'Known Gap toegevoegd door {actor}: {gap}',
+    },
+  },
+  'RES-012': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap changed by {actor}: {gap}',
+      nl: 'Known Gap gewijzigd door {actor}: {gap}',
+    },
+  },
+  'RES-013': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap removed by {actor}: {gap}',
+      nl: 'Known Gap verwijderd door {actor}: {gap}',
+    },
+  },
   'COL-001': {
     about: 'collection',
     parameters: ['actor', 'name', 'ownerUnit', 'visibility'],

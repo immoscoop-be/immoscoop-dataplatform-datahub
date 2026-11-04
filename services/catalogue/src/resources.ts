@@ -110,7 +110,8 @@ export interface Card {
   /** The Known Behaviour (DEC-DH-18): intended use and pitfalls, and the Known Gaps (DEC-RC-12). */
   intendedUse: string;
   pitfalls: string;
-  knownGaps: string[];
+  /** One item each, in the order they were added (FR-RC-21). */
+  knownGaps: KnownGap[];
   /** Since when its data is reliable (FR-RC-13): a day, `YYYY-MM-DD`, or null. */
   reliableSince: string | null;
   /** Fields of the Resource, by name, in the order chosen. */
@@ -119,6 +120,23 @@ export interface Card {
 }
 
 export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+
+/** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
+export interface KnownGap {
+  id: string;
+  text: string;
+  addedBy: string | null;
+  addedAt: Date | null;
+}
+
+/**
+ * What changes about a Resource at once (FR-RC-15): its Known Gaps as their texts, the whole list, which Data Hub
+ * turns into the gaps added and removed; one gap at a time goes through addGap, changeGap and removeGap.
+ */
+export type CardChanges = Partial<Omit<Card, 'knownGaps'> & { knownGaps: string[] }>;
+
+/** At most this many Known Gaps per Resource. */
+export const MAX_GAPS = 50;
 
 /** A field with its Business Description next to its description from dbt (FR-RC-16). */
 export interface Field extends Column {
@@ -169,6 +187,9 @@ export type EditOutcome =
   /** A Business Description is written from Described on (DEC-MR-10). */
   | { outcome: 'not_described' }
   | { outcome: 'invalid'; message: string };
+
+/** What adding, changing or removing a Known Gap came to: the gap, or why not. */
+export type GapOutcome = { outcome: 'done'; gap: KnownGap | null } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
 
 /** A Resource to add, with what the Data Admin recorded for it, if anything. */
 export interface AddItem {
@@ -231,7 +252,13 @@ export interface Resources {
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
   /** Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28). */
-  edit(id: string, changes: Partial<Card>, viewer: Viewer): Promise<EditOutcome>;
+  edit(id: string, changes: CardChanges, viewer: Viewer): Promise<EditOutcome>;
+  /** Adds a Known Gap, with who added it and when (FR-RC-21). */
+  addGap(id: string, text: string, viewer: Viewer): Promise<GapOutcome>;
+  /** Changes the text of one Known Gap; who added it stays. */
+  changeGap(id: string, gapId: string, text: string, viewer: Viewer): Promise<GapOutcome>;
+  /** Removes one Known Gap. */
+  removeGap(id: string, gapId: string, viewer: Viewer): Promise<GapOutcome>;
   /** Writes, changes or removes the Business Descriptions of fields; an empty text removes one (FR-RC-16). */
   describeFields(id: string, descriptions: readonly { field: string; text: string }[], viewer: Viewer): Promise<EditOutcome>;
   /** Records the grain, storage and mappings of a Resource again, from Edit relations (DEC-UX-107). */
@@ -277,18 +304,31 @@ function present(row: Row): Resource {
   };
 }
 
-/** What Data Hub keeps about a Resource, from its row, with its reliable day read as text. */
-function cardOf(row: Row, reliableSince: string | null): Card {
+/** What Data Hub keeps about a Resource, from its row and its Known Gaps, with its reliable day read as text. */
+function cardOf(row: Row, reliableSince: string | null, knownGaps: KnownGap[]): Card {
   return {
     businessDescription: row.businessDescription,
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
-    knownGaps: row.knownGaps,
+    knownGaps,
     reliableSince,
     keyFields: row.keyFields,
     parameters: row.parameters,
   };
 }
+
+/** The Known Gaps of a Resource, in the order they were added (FR-RC-21). */
+async function gapsOf(from: Database, resourceId: string): Promise<KnownGap[]> {
+  const rows = await from.selectFrom('knownGaps').select(['id', 'text', 'addedByName', 'addedAt']).where('resourceId', '=', resourceId).orderBy('id').execute();
+  return rows.map(gapOf);
+}
+
+function gapOf(row: { id: string; text: string; addedByName: string | null; addedAt: Date | null }): KnownGap {
+  return { id: String(row.id), text: row.text, addedBy: row.addedByName, addedAt: row.addedAt };
+}
+
+/** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */
+const gapWords = (text: string) => (text.length > 200 ? `${text.slice(0, 199)}…` : text);
 
 /** A Business Description is written from 2 · Described on (DEC-MR-10). */
 const DESCRIBED = 2;
@@ -776,7 +816,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         fields,
         leftOut,
         details,
-        card: cardOf(row, row.reliableDay),
+        card: cardOf(row, row.reliableDay, await gapsOf(db, id)),
         publication:
           row.publishedAt && confirmation
             ? { publishedAt: row.publishedAt, publishedBy: row.publishedBy ?? '', confirmedAt: confirmation.confirmedAt, confirmedBy: confirmation.ownerName }
@@ -900,7 +940,8 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (!row) {
           return { outcome: 'not_found' };
         }
-        const current = cardOf(row, row.reliableDay);
+        const gaps = await gapsOf(trx, id);
+        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text) };
         const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
         if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
           return { outcome: 'not_described' };
@@ -913,15 +954,101 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (changed.length === 0) {
           return { outcome: 'edited', changed };
         }
+        if (changes.knownGaps && changes.knownGaps.length > MAX_GAPS) {
+          return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
+        }
+        const onRow = changed.filter((key) => key !== 'knownGaps');
         await trx
           .updateTable('resources')
-          .set({ ...Object.fromEntries(changed.map((key) => [key, changes[key]])), updatedAt: new Date() })
+          .set({ ...Object.fromEntries(onRow.map((key) => [key, changes[key]])), updatedAt: new Date() })
           .where('id', '=', id)
           .execute();
-        for (const key of changed) {
+        for (const key of onRow) {
           await write(trx, id, 'RES-005', { field: key, actor: viewer.name }, viewer.id);
         }
+        if (changes.knownGaps && changed.includes('knownGaps')) {
+          // The whole list, as its texts: a gap whose text stays keeps who added it; the others go, and the new come.
+          const wanted = [...changes.knownGaps];
+          const kept = new Set<string>();
+          for (const gap of gaps) {
+            const place = wanted.indexOf(gap.text);
+            if (place >= 0) {
+              wanted.splice(place, 1);
+              kept.add(gap.id);
+            }
+          }
+          for (const gap of gaps.filter((one) => !kept.has(one.id))) {
+            await trx.deleteFrom('knownGaps').where('id', '=', gap.id).execute();
+            await write(trx, id, 'RES-013', { actor: viewer.name, gap: gapWords(gap.text) }, viewer.id);
+          }
+          for (const text of wanted) {
+            await trx.insertInto('knownGaps').values({ resourceId: id, text, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() }).execute();
+            await write(trx, id, 'RES-011', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+          }
+        }
         return { outcome: 'edited', changed };
+      });
+    },
+
+    async addGap(id, text, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const row = await trx.selectFrom('resources').select('id').where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        const { count } = await trx.selectFrom('knownGaps').select((eb) => eb.fn.countAll<string>().as('count')).where('resourceId', '=', id).executeTakeFirstOrThrow();
+        if (Number(count) >= MAX_GAPS) {
+          return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
+        }
+        const added = await trx
+          .insertInto('knownGaps')
+          .values({ resourceId: id, text, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() })
+          .returning(['id', 'text', 'addedByName', 'addedAt'])
+          .executeTakeFirstOrThrow();
+        await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-011', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+        return { outcome: 'done', gap: gapOf(added) };
+      });
+    },
+
+    async changeGap(id, gapId, text, viewer) {
+      if (!UUID.test(id) || !/^\d{1,18}$/.test(gapId)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const gap = await trx.selectFrom('knownGaps').select('text').where('id', '=', gapId).where('resourceId', '=', id).forUpdate().executeTakeFirst();
+        if (!gap) {
+          return { outcome: 'not_found' };
+        }
+        const changed = await trx
+          .updateTable('knownGaps')
+          .set({ text })
+          .where('id', '=', gapId)
+          .returning(['id', 'text', 'addedByName', 'addedAt'])
+          .executeTakeFirstOrThrow();
+        if (gap.text !== text) {
+          await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+          await write(trx, id, 'RES-012', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+        }
+        return { outcome: 'done', gap: gapOf(changed) };
+      });
+    },
+
+    async removeGap(id, gapId, viewer) {
+      if (!UUID.test(id) || !/^\d{1,18}$/.test(gapId)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const gone = await trx.deleteFrom('knownGaps').where('id', '=', gapId).where('resourceId', '=', id).returning('text').executeTakeFirst();
+        if (!gone) {
+          return { outcome: 'not_found' };
+        }
+        await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-013', { actor: viewer.name, gap: gapWords(gone.text) }, viewer.id);
+        return { outcome: 'done', gap: null };
       });
     },
 
