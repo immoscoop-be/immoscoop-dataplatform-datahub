@@ -46,7 +46,7 @@ First sketch; the exact contracts follow in the technical requirements of the do
 
 ## Data
 
-Users (by fixed Google ID), with their Groups and roles as identity last read them at a sign-in or a renewal (migration `0004-groups`), Groups (by fixed Google ID) and memberships, Excel keys (hashes only, migration `0005-excel-keys`), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants, and the settings of each User, a list of keys and values ([DEC-UX-96](../../design/principles.md#dec-ux-96), [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)).
+Users (by fixed Google ID), with their Groups and roles as identity last read them at a sign-in or a renewal (migration `0004-groups`), Groups (by fixed Google ID) and memberships, Excel keys (hashes only, migration `0005-excel-keys`), Refresh Tokens (hashes only) and their sessions, OAuth clients and grants, and the settings of each User, a list of keys and values, without the theme since migration `0006-forget-theme` ([DEC-UX-96](../../design/principles.md#dec-ux-96), [DEC-UX-172](../../design/principles.md#dec-ux-172), [TR-PF-32](../../requirements/technical/00-platform.md#tr-pf-32)).
 
 ## Talks to
 
