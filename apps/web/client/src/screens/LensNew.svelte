@@ -16,6 +16,7 @@
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, Parameter, Preflight, Query, QueryClient, QueryRequest, Storage } from '../lib/query.js';
+  import LensDanger from './LensDanger.svelte';
   import { lensPath, queryPath } from '../lib/routes.js';
 
   /**
@@ -41,6 +42,7 @@
     dataTeam,
     loadGroups,
     onmade,
+    ondeleted,
   }: {
     /** The query it is made from. */
     queryId?: string;
@@ -56,7 +58,22 @@
     /** The groups of the User, to own a new Collection (DEC-CO-24). */
     loadGroups: () => Promise<Group[]>;
     onmade: (lens: Lens) => void;
+    /** After its Owner Unit or the Data Team deleted the Lens being edited (FR-LE-18). */
+    ondeleted?: (lens: { id: string; name: string; collectionId: string }) => void;
   } = $props();
+
+  /** Deletes the Lens being edited, with why (FR-LE-18); false when it did not. */
+  async function remove(reason: string): Promise<boolean> {
+    if (!editing) return false;
+    try {
+      const { lens: gone } = await client.deleteLens(editing.id, reason);
+      ondeleted?.(gone);
+      return true;
+    } catch (error) {
+      console.error('The Lens could not be deleted', error);
+      return false;
+    }
+  }
 
   let query = $state<Query | null | undefined>();
   let preflight = $state<Preflight | null>(null);
@@ -457,6 +474,8 @@
     </aside>
     {/if}
   </div>
+  <!-- At the foot of Edit, apart: the Danger zone, with Delete (DEC-UX-185, FR-LE-18). -->
+  {#if editing}<LensDanger name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} />{/if}
 {:else}
   <Loading />
 {/if}

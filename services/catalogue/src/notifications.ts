@@ -241,10 +241,11 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         return { ...named, name: resource.displayName, collection: found?.name ?? null, exists: true, owner: ownerOf(found) };
       }
       case 'lens': {
-        const lens = await db.selectFrom('lenses').select(['name', 'collectionId', 'authorId']).where('id', '=', row.subjectId).executeTakeFirst();
+        const lens = await db.selectFrom('lenses').select(['name', 'collectionId', 'authorId', 'state']).where('id', '=', row.subjectId).executeTakeFirst();
         if (!lens) return named;
         const found = await collection(lens.collectionId);
-        return { ...named, name: lens.name, collection: found?.name ?? null, exists: true, owner: ownerOf(found), authorId: lens.authorId };
+        // A deleted Lens: its notification links to the Message itself (FR-LE-18).
+        return { ...named, name: lens.name, collection: found?.name ?? null, exists: lens.state !== 'deleted', owner: ownerOf(found), authorId: lens.authorId };
       }
       case 'learningCard': {
         const topic = topicOf(row.subjectId);
@@ -294,6 +295,8 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         for (const reply of earlier) addUser(reply.writerId, 'participant');
       }
       if (recipient === 'author') addUser(subject.authorId, 'author');
+      // Who ran a deleted Lens lately, named in its Message by query, never who deleted it (MSG-LEN-06, FR-LE-18).
+      if (recipient === 'lensUsers') for (const id of (row.params.users ?? '').split(',').filter(Boolean)) addUser(id, 'lensUser');
       // The Owners of the Resources under a Lens, and the Consumers of a Resource, come with the Messages that need them.
     }
 

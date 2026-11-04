@@ -38,8 +38,9 @@ export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
  * - `participants`: who already wrote in the conversation
  * - `author`: who made the Lens or the query
  * - `consumers`: the Consumers of a Resource (FR-LN-03)
+ * - `lensUsers`: who ran a Lens in the 30 days before it was deleted, also from Excel, named in the Message (FR-LE-18)
  */
-export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers';
+export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers' | 'lensUsers';
 
 /** The status of a type of Message: that of the requirement it comes from (docs/requirements/README.md). */
 export type MessageStatus = 'Proposed' | 'Specified' | 'Implemented' | 'Verified' | 'Withdrawn';

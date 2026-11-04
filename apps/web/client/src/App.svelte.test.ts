@@ -625,7 +625,7 @@ function serve({
     }
     // query, as it keeps the Lenses: made from a query, seen and run as the User may (TR-LE-01).
     if (path === '/lenses' && method === 'GET') {
-      return json({ lenses: lenses.map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
+      return json({ lenses: lenses.filter((candidate) => !candidate.gone).map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
     }
     if (path === '/lenses' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; collectionId: string; steps: string[] };
@@ -676,6 +676,14 @@ function serve({
       return json({ exact: offered.filter((item) => item.exact), more: offered.filter((item) => !item.exact) });
     }
     const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
+    // Deleted, for good: its address says so to whoever saw it (FR-LE-18).
+    if (lens && path === `/lenses/${lens.id as string}` && method === 'DELETE') {
+      lens.gone = { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: (JSON.parse(init.body as string) as { reason: string }).reason };
+      return json({ lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId }, told: lens.usedBy ?? 0 });
+    }
+    if (lens?.gone && path === `/lenses/${lens.id as string}`) {
+      return json({ error: 'deleted', message: 'This Lens was deleted.', lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId, deleted: lens.gone } }, 410);
+    }
     if (lens && path === `/lenses/${lens.id as string}` && method === 'PATCH') {
       const { labels: _labels, ...changes } = JSON.parse(init.body as string) as Record<string, unknown>;
       Object.assign(lens, changes);
@@ -2762,6 +2770,40 @@ describe('Lenses', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/lenses/l1', body: { name: 'Leads per source, per week' } }));
     expect(await main.findByRole('heading', { level: 1, name: /Leads per source, per week/ })).toBeTruthy();
     expect(main.getByRole('link', { name: 'Meer bewerken' }).getAttribute('href')).toBe('/lenses/l1/edit');
+  });
+
+  it('deletes a Lens in the Danger zone of its Edit, asking once more, and its address then says so (FR-LE-18, DEC-UX-185)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS, usedBy: 4 }] });
+    open('/lenses/l1/edit');
+    render(App, { config: CONFIG });
+    const edit = within(await screen.findByRole('main'));
+    const zone = within(await edit.findByRole('region', { name: 'Deze lens verwijderen' }));
+    expect(zone.getByText('4 collega’s gebruikten hem de voorbije 30 dagen,')).toBeTruthy();
+    await fireEvent.input(zone.getByRole('textbox', { name: 'Waarom je hem verwijdert · optioneel' }), { target: { value: ' Replaced by the weekly lens. ' } });
+    await fireEvent.click(zone.getByRole('button', { name: 'Verwijderen…' }));
+    // It asks once more, in place; "Behouden" goes back without deleting.
+    expect(zone.getByText('4 collega’s krijgen bericht. Dit kan niet ongedaan gemaakt worden.', { exact: false })).toBeTruthy();
+    await fireEvent.click(zone.getByRole('button', { name: 'Behouden' }));
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(zone.getByRole('button', { name: 'Verwijderen…' }));
+    await fireEvent.click(zone.getByRole('button', { name: 'Voorgoed verwijderen' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/lenses/l1', body: { reason: 'Replaced by the weekly lens.' } });
+  });
+
+  it('says at the address of a deleted Lens that it was deleted, by whom, when and why, and runs nothing (FR-LE-18)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS, gone: { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: 'Replaced by the weekly lens' } }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const gone = within(await screen.findByRole('main'));
+    expect(await gone.findByText('Deze Lens werd verwijderd')).toBeTruthy();
+    expect(gone.getByRole('heading', { level: 1, name: /Leads per source, week by week$/ })).toBeTruthy();
+    expect(gone.getByText(/door Max Verstraete op 4 nov\.? 2026: Replaced by the weekly lens\. Hij draait niet meer, ook niet in Excel\./)).toBeTruthy();
+    // The breadcrumb and a button lead to its Collection.
+    expect(gone.getAllByRole('link', { name: 'Credit leads' }).map((link) => link.getAttribute('href'))).toEqual(['/collections/c1', '/collections/c1']);
+    expect(gone.queryByRole('button', { name: /Run/ })).toBeNull();
+    // It is listed nowhere.
+    expect(within(screen.getByRole('complementary', { name: /Collections/ })).queryByText('Leads per source, week by week')).toBeNull();
   });
 
   it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {

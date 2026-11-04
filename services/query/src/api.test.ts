@@ -224,7 +224,14 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   /** What query told catalogue became Broken, and works again (MSG-QRY-02, MSG-LEN-05). */
   const brokenTold: { subject: { kind: string; id: string; name?: string; ownerId?: string }; fields: BrokenMessage }[] = [];
   const worksTold: { kind: string; id: string }[] = [];
+  /** The Lenses query told catalogue were deleted (FR-LE-18); while catalogueDown, catalogue does not answer. */
+  const deletedTold: { lensId: string; name: string; actor: { id: string; name: string }; reason: string; users: string[] }[] = [];
+  let catalogueDown = false;
   const catalogue: Catalogue = {
+    async lensDeleted(lensId, fields) {
+      if (catalogueDown) throw new CatalogueUnavailable('down');
+      deletedTold.push({ lensId, ...fields });
+    },
     async broken(subject, fields) {
       brokenTold.push({ subject, fields });
     },
@@ -1116,5 +1123,46 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     // The History of the Resource it reads says so too.
     const onWeekly = (await call(dataTeam, 'GET', `/resources/${WEEKLY.id}/queries`)).json().queries;
     expect(onWeekly.find((item: { id: string }) => item.id === made.id)).toMatchObject({ through: 'claude' });
+  });
+
+  it('lets its Owner Unit and the Data Team delete a Lens, keeping its record and telling who used it lately (FR-LE-18, DEC-LE-21)', async () => {
+    const made = (await call(mia, 'POST', '/queries', { name: 'Weekly leads to delete', resources: [WEEKLY.id], sql: weekly })).json().query.id as string;
+    const lens = (await call(mia, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Weekly leads to delete' })).json().lens.id as string;
+    // Karel and the Data Team ran it; Mia, who deletes it, ran it too, and is never told.
+    for (const who of [karel, dataTeam, mia]) expect((await call(who, 'POST', `/lenses/${lens}/runs`, {})).statusCode).toBe(201);
+    expect((await call(mia, 'GET', `/lenses/${lens}`)).json().lens.usedBy).toBe(3);
+    expect((await call(karel, 'GET', `/lenses/${lens}`)).json().lens.usedBy).toBeUndefined();
+
+    expect((await call(karel, 'DELETE', `/lenses/${lens}`, {})).statusCode).toBe(403);
+    expect((await call(mia, 'DELETE', `/lenses/${lens}`, { reason: 'x'.repeat(501) })).statusCode).toBe(400);
+    // When catalogue does not answer, nothing is deleted.
+    catalogueDown = true;
+    expect((await call(mia, 'DELETE', `/lenses/${lens}`, { reason: 'Replaced.' })).statusCode).toBe(503);
+    catalogueDown = false;
+    expect((await call(karel, 'GET', `/lenses/${lens}`)).statusCode).toBe(200);
+
+    const deleted = await call(mia, 'DELETE', `/lenses/${lens}`, { reason: ' Replaced by the weekly report. ' });
+    expect(deleted.statusCode).toBe(200);
+    expect(deleted.json()).toEqual({ lens: { id: lens, name: 'Weekly leads to delete', collectionId: CREDIT }, told: 2 });
+    expect(deletedTold.at(-1)).toEqual({ lensId: lens, name: 'Weekly leads to delete', actor: { id: '104', name: 'Mia Peeters' }, reason: 'Replaced by the weekly report.', users: expect.arrayContaining(['102', '103']) });
+    expect(deletedTold.at(-1)?.users).toHaveLength(2);
+
+    // Its address says so to whoever saw it; it is listed nowhere, runs for nobody, and changes no more.
+    expect((await call(karel, 'GET', `/lenses/${lens}`)).json()).toMatchObject({
+      error: 'deleted',
+      lens: { id: lens, name: 'Weekly leads to delete', collectionId: CREDIT, deleted: { byName: 'Mia Peeters', reason: 'Replaced by the weekly report.' } },
+    });
+    expect((await call(karel, 'GET', `/lenses/${lens}`)).statusCode).toBe(410);
+    expect((await call(an, 'GET', '/lenses')).json().lenses.map((one: { id: string }) => one.id)).not.toContain(lens);
+    expect((await call(karel, 'POST', `/lenses/${lens}/preflight`, {})).statusCode).toBe(404);
+    expect((await call(karel, 'POST', `/lenses/${lens}/runs`, {})).statusCode).toBe(404);
+    expect((await call(mia, 'PATCH', `/lenses/${lens}`, { name: 'Back' })).statusCode).toBe(404);
+    expect((await call(mia, 'DELETE', `/lenses/${lens}`, {})).statusCode).toBe(404);
+    // Its record is kept: its runs, and its Log says who deleted it and why.
+    const log = await database.db.selectFrom('lensLog').select(['logId', 'params']).where('lensId', '=', lens).execute();
+    expect(log).toContainEqual({ logId: 'LEN-003', params: { actor: 'Mia Peeters', reason: 'Replaced by the weekly report.' } });
+    expect((await database.db.selectFrom('queries').select('id').where('lensOf', '=', lens).execute()).length).toBe(3);
+    // Its query is a query again, and may become a new Lens.
+    expect((await call(mia, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Weekly leads, again' })).statusCode).toBe(201);
   });
 });

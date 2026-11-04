@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
 
 ## Overview
 
@@ -57,6 +57,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Implemented |
+| [MSG-LEN-06](#msg-len-06) | A Lens was deleted | Lens | Data Hub → who used the Lens lately | Nothing | To write | Implemented |
 | [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
@@ -728,7 +729,7 @@ One item of `changes`, English, laid out:
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen ([DEC-LE-05](09-lenses.md#dec-le-05)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It waits until the Data Team decides ([DEC-LE-15](09-lenses.md#dec-le-15)). It starts `waiting` and ends `accepted` or `refused`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It waits until the Data Team decides ([DEC-LE-15](09-lenses.md#dec-le-15)), or until the Lens is deleted, which withdraws it ([FR-LE-18](09-lenses.md#fr-le-18)). It starts `waiting` and ends `accepted`, `refused` or `withdrawn`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -1946,7 +1947,7 @@ A filter on `{column}`, the partition column, would make it read less.
 
 **What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run ([DEC-LE-11](09-lenses.md#dec-le-11)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted` or `refused`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted`, `refused` or `withdrawn`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -2240,6 +2241,104 @@ One item of `missing`, English, laid out:
 
 ```markdown
 - {kind, select, resource {the resource {resource}} other {the column `{column}` of {resource}}}
+```
+
+</details>
+
+<a id="msg-len-06"></a>
+
+### MSG-LEN-06 · A Lens was deleted
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Lens |
+| From → to | Data Hub → who used the Lens lately |
+| When | Its Owner Unit or the Data Team deletes a Lens, in the Danger zone of its Edit ([FR-LE-18](09-lenses.md#fr-le-18)). |
+| How many | One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it. |
+| Status | Implemented |
+| Comes from | [FR-LE-18](09-lenses.md#fr-le-18), [DEC-LE-21](09-lenses.md#dec-le-21) |
+
+**What it asks:** Nothing. Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the collection · *Collectie openen* | The Collection the Lens was in | every recipient |
+
+**Learning Card:** To write: *Finding a Lens that answers your question, and when to write your own query*. Who used the Lens needs another way to their answer. The nearest card today is K5.1 What a resource is.
+
+**Dutch, laid out**, with the example:
+
+> **Mia Peeters verwijderde de lens Leads per source name**
+>
+> > Replaced by the lens Leads per source, week by week.
+>
+> Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.
+
+**Dutch, plain:**
+
+```text
+Mia Peeters verwijderde de lens Leads per source name. Hij draait niet meer, ook niet in Excel.
+“Replaced by the lens Leads per source, week by week.”
+```
+
+**English, laid out**, with the example:
+
+> **Mia Peeters deleted the lens Leads per source name**
+>
+> > Replaced by the lens Leads per source, week by week.
+>
+> It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.
+
+**English, plain:**
+
+```text
+Mia Peeters deleted the lens Leads per source name. It no longer runs, also not in Excel.
+“Replaced by the lens Leads per source, week by week.”
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who deleted it |
+| `reason` | text, optional | Why, as they wrote it |
+
+Template, Dutch, plain:
+
+```text
+{actor} verwijderde de lens {subject}. Hij draait niet meer, ook niet in Excel.
+“{reason}”
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} verwijderde de lens {subject}**
+
+> {reason}
+
+Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.
+```
+
+Template, English, plain:
+
+```text
+{actor} deleted the lens {subject}. It no longer runs, also not in Excel.
+“{reason}”
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} deleted the lens {subject}**
+
+> {reason}
+
+It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.
 ```
 
 </details>

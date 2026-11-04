@@ -124,7 +124,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
     await sql`update known_gaps set scope = ${JSON.stringify(period)}::jsonb where text like 'No partner%'`.execute(admin.db);
     await sql`update known_gaps set scope = ${JSON.stringify({ fields: ['visitorId'] })}::jsonb where text like 'visitorId%'`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0021'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0020-gap-period-without-field', 'Success']]);
 
     const scopes = await sql<{ scope: unknown }>`select scope from known_gaps order by id`.execute(admin.db);
@@ -134,5 +134,14 @@ describe.skipIf(!url)('catalogue migrations', () => {
     ]);
     await sql`delete from resources`.execute(admin.db);
     expect(await count('known_gaps')).toBe(0);
+  });
+
+  it('keeps a Lens that query deleted, for the Messages on it (FR-LE-18)', async () => {
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0021-lens-deleted', 'Success']]);
+    const lens = (state: string) => sql`insert into lenses (id, name, collection_id, resource_ids, state, author_id, author_name)
+      values (gen_random_uuid(), 'Leads', gen_random_uuid(), '{}', ${state}, 'u-an', 'An')`;
+    await lens('deleted').execute(admin.db);
+    await expect(lens('gone').execute(admin.db)).rejects.toThrow(/lenses_state_check/);
   });
 });

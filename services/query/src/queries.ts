@@ -158,6 +158,8 @@ export interface Queries {
    */
   /** When the User last ran each Lens, by the queries of the kind lens that hold their runs (FR-CO-37). */
   lensRuns(ownerId: string): Promise<Map<string, Date>>;
+  /** Who ran a Lens since then, on its page or from Excel, by their IDs (FR-LE-18). */
+  lensUsers(lensId: string, since: Date): Promise<string[]>;
   forLens(owner: Viewer, lens: { id: string; name: string; question: string; resources: NamedResource[]; sql: string; parameters: Parameter[] }): Promise<{ query: Query; created: boolean }>;
   /** The runs of a Lens by this User, a query made the first time they run it (FR-LE-12). */
   lensFor(owner: Viewer, lens: { id: string; name: string; resources: NamedResource[]; sql: string }): Promise<Query>;
@@ -344,6 +346,19 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .where('lastRunAt', 'is not', null)
         .execute();
       return new Map(rows.flatMap((row) => (row.lensOf && row.lastRunAt ? [[row.lensOf, row.lastRunAt] as const] : [])));
+    },
+
+    async lensUsers(lensId, since) {
+      const rows = await db
+        .selectFrom('runs')
+        .innerJoin('queries', 'queries.id', 'runs.queryId')
+        .select('runs.userId')
+        .distinct()
+        .where('queries.kind', '=', 'lens')
+        .where('queries.lensOf', '=', lensId)
+        .where('runs.startedAt', '>=', since)
+        .execute();
+      return rows.map((row) => row.userId);
     },
 
     async forLens(owner, lens) {

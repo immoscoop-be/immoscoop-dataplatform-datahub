@@ -41,6 +41,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-le-18"></a>**DEC-LE-18** · "Open in Query" on a Lens, for its Owner Unit and the Data Team ([DEC-UX-27](../../design/principles.md#dec-ux-27)), opens the query the Lens is made from for its author; anyone else gets a new query of their own from the SQL and Parameters of the Lens, which is used as the Lens from then on, so "Update the lens" works from it ([DEC-LE-04](#dec-le-04)). The history of the Lens says from which query each version came. *Decided on 2026-10-29, by Max.*
 - <a id="dec-le-19"></a>**DEC-LE-19** · Only a run with the default values of a Lens measures it for growth ([FR-LE-10](#fr-le-10)). A run in which a User chose other values is that run alone: its author approves it above 100 MB, and above 1 GB it does not run; the Lens stays as it is. *Decided on 2026-10-29, by Max.*
 - <a id="dec-le-20"></a>**DEC-LE-20** · To start with, Data Hub finds a Broken Lens when its Pre-flight or a run fails on a table or column that is not found, and once a day, when it dry-runs every Lens; the check right after a new Current Version of a dbt project ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)) comes later, and until then the daily check finds it within a day. *Decided on 2026-10-29, by Max.*
+- <a id="dec-le-21"></a>**DEC-LE-21** · A Lens can be deleted, by its Owner Unit and the Data Team. Deleting is for good and for everyone: the Lens is gone from every list, search, Claude and Excel, and runs for nobody; its address tells whoever saw it that it was deleted, by whom, when and why. What hangs on it is kept for the record: its runs in the Query Log, its versions and its Log, and the Messages on it, which still show for whoever saw it, with the Lens marked as deleted. A Request on it that still waits is withdrawn. The queries made from it stay, as they are their owners' own. Whoever ran it in the 30 days before, also from Excel, is told, with the reason when one was given; never who deleted it. *Decided on 2026-11-04, by Max: who may delete, what goes and what stays, and who is told, each as proposed.*
 
 ## Requirements
 
@@ -104,7 +105,7 @@ Whoever starts a Lens is first asked to record the question and the story, what 
 <a id="fr-le-06"></a>
 ### FR-LE-06 · A Lens has a short description and tags
 
-**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-new-context](../../design/screens/lens-new-context.html), [query-new](../../design/screens/query-new.html)
+**Status:** Implemented · **Source:** Max, 2026-10-23 · [design](../../design/principles.md#query) · **Screens:** [lens](../../design/screens/lens.html), [lens-new](../../design/screens/lens-new.html), [lens-edit](../../design/screens/lens-edit.html), [lens-new-context](../../design/screens/lens-new-context.html), [query-new](../../design/screens/query-new.html)
 
 Every Lens has a description of a sentence or two on what it shows, in business language, and tags: a few words its maker chooses. Next to the description of its steps ([FR-LE-03](#fr-le-03)), they make a Lens findable: a new query matches its words against them ([FR-SR-48](04-stacks-and-resources.md#fr-sr-48)).
 
@@ -236,6 +237,13 @@ A Broken Lens cannot run, for anyone: Run is off, and a callout on top of its pa
 *Note of 2026-10-29: to start with, found when its Pre-flight or a run fails, and once a day ([DEC-LE-20](#dec-le-20)).*
 
 *Note of 2026-10-29, on building part 6b: found and shown as [TR-LE-06](../technical/09-lenses.md#tr-le-06), with since when it misses what it reads rather than the dbt run, until the check after a new Current Version comes; the red dot is in the panel and the Lenses of a Collection. The Message to its Owner Unit ([MSG-LEN-05](message-catalogue.md#msg-len-05)) comes with Messages, in part 7 of the [build order](../../design/build-order.md), and the Reports with Reports.*
+
+<a id="fr-le-18"></a>
+### FR-LE-18 · Its Owner Unit and the Data Team delete a Lens
+
+**Status:** Implemented · **Source:** [DEC-LE-21](#dec-le-21), [DEC-UX-185](../../design/principles.md#dec-ux-185) · **Screens:** [lens-edit](../../design/screens/lens-edit.html), [lens-deleted](../../design/screens/lens-deleted.html)
+
+Its Owner Unit and the Data Team delete a Lens in the Danger zone at the foot of its Edit, with an optional reason, once they have read what it does and confirmed it. From then on the Lens is in no list, search or suggestion, Claude does not find it, and it does not run, on its page or in Excel. Its address shows whoever saw it that it was deleted, by whom, when and why; anyone else finds nothing. Its runs, versions and Log are kept, and its Log says who deleted it and why (`LEN-003`). The Messages on it stay, with the Lens marked as deleted; a Request on it that still waits is withdrawn. Whoever ran it in the 30 days before, also from Excel, gets a Message ([MSG-LEN-06](message-catalogue.md#msg-len-06)); who deleted it does not.
 
 ## Open points
 

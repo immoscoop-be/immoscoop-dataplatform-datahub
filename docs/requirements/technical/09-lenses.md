@@ -80,6 +80,15 @@ Once a day, at 05:17 in Brussels, Cloud Scheduler calls `POST /internal/lenses/c
 
 Only a published Lens answers: a waiting, refused or stopped Lens answers 409 with why, and a Broken one as on its page ([TR-LE-06](#tr-le-06)). It runs with the defaults of its Parameters, as a run of the User in the Query Log ([TR-LE-03](#tr-le-03)), only within 100 MB: Excel cannot approve a run ([OP-CH-04](../functional/13-channels.md#op-ch-04)). Its result is CSV in UTF-8 with a BOM and CRLF, at most 10,000 rows, read from the same job page after page; the Query ID of the run is in the header `X-Datahub-Query-Id`.
 
+<a id="tr-le-09"></a>
+### TR-LE-09 · Deleting a Lens keeps its record
+
+**Status:** Implemented · **Realises:** [FR-LE-18](../functional/09-lenses.md#fr-le-18), [DEC-LE-21](../functional/09-lenses.md#dec-le-21)
+
+`DELETE /lenses/{id}` of query, with an optional `reason` of at most 500 characters, deletes a Lens for its Owner Unit and the Data Team: anyone else who sees it gets 403, and a Lens that is already deleted 404. query keeps the row of the Lens, with when, by whom and why it was deleted, and leaves it out of every list, search and suggestion, and of the daily check and what it tells catalogue at its start; its runs, versions and Log stay, and its Log gets `LEN-003`. `GET /lenses/{id}` answers 410 with its name, Collection and who deleted it when and why, to whoever saw it; the routes that run it and Excel answer 404, as for a Lens that does not exist. `GET /lenses/{id}` tells its Owner Unit and the Data Team how many Users ran it in the last 30 days, `usedBy`, for the Danger zone.
+
+query then tells catalogue, as itself (`POST /internal/lenses/{id}/deleted`), who deleted it, why, and the Users who ran it in the 30 days before, also from Excel, without who deleted it. catalogue keeps the Lens as deleted, so that the Messages on it still show for whoever saw it, marked as deleted; takes it out of its folder; withdraws a Request on it that waits (`withdrawn`); and writes [MSG-LEN-06](../functional/message-catalogue.md#msg-len-06) on it, which notifies those Users. query tells catalogue before it deletes the Lens itself: when catalogue does not answer, nothing is deleted, and the User is asked to try again (503).
+
 ## Open points
 
 None yet.

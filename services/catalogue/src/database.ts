@@ -300,7 +300,8 @@ export interface CatalogueDatabase {
     name: string;
     collectionId: string;
     resourceIds: string[];
-    state: 'published' | 'waiting' | 'stopped' | 'refused';
+    /** Deleted by its Owner Unit or the Data Team: its Messages stay, with it marked as deleted (FR-LE-18). */
+    state: 'published' | 'waiting' | 'stopped' | 'refused' | 'deleted';
     authorId: string;
     authorName: string;
     updatedAt: Timestamp;
