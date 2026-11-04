@@ -1,3 +1,4 @@
+import { DATE_TYPES, fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
@@ -125,6 +126,8 @@ export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'kno
 export interface KnownGap {
   id: string;
   text: string;
+  /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+  scope: GapScope | null;
   addedBy: string | null;
   addedAt: Date | null;
 }
@@ -254,9 +257,10 @@ export interface Resources {
   /** Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28). */
   edit(id: string, changes: CardChanges, viewer: Viewer): Promise<EditOutcome>;
   /** Adds a Known Gap, with who added it and when (FR-RC-21). */
-  addGap(id: string, text: string, viewer: Viewer): Promise<GapOutcome>;
+  addGap(id: string, text: string, scope: GapScope | null, viewer: Viewer): Promise<GapOutcome>;
   /** Changes the text of one Known Gap; who added it stays. */
-  changeGap(id: string, gapId: string, text: string, viewer: Viewer): Promise<GapOutcome>;
+  /** Changes its text and, when given, its scope; without one, its scope stays (FR-RC-24). */
+  changeGap(id: string, gapId: string, text: string, scope: GapScope | null | undefined, viewer: Viewer): Promise<GapOutcome>;
   /** Removes one Known Gap. */
   removeGap(id: string, gapId: string, viewer: Viewer): Promise<GapOutcome>;
   /** Writes, changes or removes the Business Descriptions of fields; an empty text removes one (FR-RC-16). */
@@ -319,12 +323,33 @@ function cardOf(row: Row, reliableSince: string | null, knownGaps: KnownGap[]): 
 
 /** The Known Gaps of a Resource, in the order they were added (FR-RC-21). */
 async function gapsOf(from: Database, resourceId: string): Promise<KnownGap[]> {
-  const rows = await from.selectFrom('knownGaps').select(['id', 'text', 'addedByName', 'addedAt']).where('resourceId', '=', resourceId).orderBy('id').execute();
+  const rows = await from.selectFrom('knownGaps').select(['id', 'text', 'scope', 'addedByName', 'addedAt']).where('resourceId', '=', resourceId).orderBy('id').execute();
   return rows.map(gapOf);
 }
 
-function gapOf(row: { id: string; text: string; addedByName: string | null; addedAt: Date | null }): KnownGap {
-  return { id: String(row.id), text: row.text, addedBy: row.addedByName, addedAt: row.addedAt };
+function gapOf(row: { id: string; text: string; scope: GapScope | null; addedByName: string | null; addedAt: Date | null }): KnownGap {
+  return { id: String(row.id), text: row.text, scope: row.scope, addedBy: row.addedByName, addedAt: row.addedAt };
+}
+
+/**
+ * Checks a scope against the fields of the Resource (FR-RC-24): every field it names is one of them, and a period lies
+ * on a date. A field the gap named already stays allowed when it left the Resource since, so that its text can still be
+ * changed (EC-RC-01). Returns the problem as a sentence when there is one.
+ */
+async function scopeProblem(from: Database, resourceId: string, scope: GapScope, before: GapScope | null): Promise<string | null> {
+  const fields = new Map((await from.selectFrom('resourceFields').select(['name', 'dataType']).where('resourceId', '=', resourceId).execute()).map((field) => [field.name, field.dataType]));
+  const kept = new Set(fieldsOf(before));
+  const unknown = fieldsOf(scope).find((name) => !fields.has(name) && !kept.has(name));
+  if (unknown !== undefined) {
+    return `${unknown} is no field of this Resource.`;
+  }
+  if (scope.period && fields.has(scope.period.field)) {
+    const type = (fields.get(scope.period.field) ?? '').toUpperCase();
+    if (!DATE_TYPES.includes(type) && !(kept.has(scope.period.field) && before?.period?.field === scope.period.field)) {
+      return `A period lies on a date: ${scope.period.field} is ${type || 'of no known type'}.`;
+    }
+  }
+  return null;
 }
 
 /** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */
@@ -990,7 +1015,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       });
     },
 
-    async addGap(id, text, viewer) {
+    async addGap(id, text, scope, viewer) {
       if (!UUID.test(id)) {
         return { outcome: 'not_found' };
       }
@@ -1003,10 +1028,15 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (Number(count) >= MAX_GAPS) {
           return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
         }
+        const narrowed = hasScope(scope) ? scope : null;
+        const problem = narrowed ? await scopeProblem(trx, id, narrowed, null) : null;
+        if (problem) {
+          return { outcome: 'invalid', message: problem };
+        }
         const added = await trx
           .insertInto('knownGaps')
-          .values({ resourceId: id, text, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() })
-          .returning(['id', 'text', 'addedByName', 'addedAt'])
+          .values({ resourceId: id, text, scope: narrowed, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() })
+          .returning(['id', 'text', 'scope', 'addedByName', 'addedAt'])
           .executeTakeFirstOrThrow();
         await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
         await write(trx, id, 'RES-011', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
@@ -1014,22 +1044,27 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       });
     },
 
-    async changeGap(id, gapId, text, viewer) {
+    async changeGap(id, gapId, text, scope, viewer) {
       if (!UUID.test(id) || !/^\d{1,18}$/.test(gapId)) {
         return { outcome: 'not_found' };
       }
       return db.transaction().execute(async (trx): Promise<GapOutcome> => {
-        const gap = await trx.selectFrom('knownGaps').select('text').where('id', '=', gapId).where('resourceId', '=', id).forUpdate().executeTakeFirst();
+        const gap = await trx.selectFrom('knownGaps').select(['text', 'scope']).where('id', '=', gapId).where('resourceId', '=', id).forUpdate().executeTakeFirst();
         if (!gap) {
           return { outcome: 'not_found' };
         }
+        const narrowed = scope === undefined ? gap.scope : hasScope(scope) ? scope : null;
+        const problem = narrowed && scope !== undefined ? await scopeProblem(trx, id, narrowed, gap.scope) : null;
+        if (problem) {
+          return { outcome: 'invalid', message: problem };
+        }
         const changed = await trx
           .updateTable('knownGaps')
-          .set({ text })
+          .set({ text, scope: narrowed })
           .where('id', '=', gapId)
-          .returning(['id', 'text', 'addedByName', 'addedAt'])
+          .returning(['id', 'text', 'scope', 'addedByName', 'addedAt'])
           .executeTakeFirstOrThrow();
-        if (gap.text !== text) {
+        if (gap.text !== text || JSON.stringify(gap.scope) !== JSON.stringify(narrowed)) {
           await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
           await write(trx, id, 'RES-012', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
         }

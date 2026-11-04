@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
   import StatusRow from '@datahub/ui/components/StatusRow.svelte';
@@ -203,8 +204,8 @@
     }
   }
   const gaps = {
-    add: (text: string) => gap(() => catalogue.addGap(resource.id, text)),
-    change: (known: KnownGap, text: string) => gap(() => catalogue.changeGap(resource.id, known.id, text)),
+    add: (text: string, scope: GapScope | null) => gap(() => catalogue.addGap(resource.id, text, scope)),
+    change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
     remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
   };
 
@@ -368,7 +369,17 @@
       bind:part
     />
   {:else if tab === 'columns'}
-    <ResourceColumns {resource} {canEdit} relate={dataTeam && resource.collectionId !== null} onsave={saveFields} onrelate={() => (relating = true)} />
+    <ResourceColumns
+      {resource}
+      {canEdit}
+      relate={dataTeam && resource.collectionId !== null}
+      onsave={saveFields}
+      onrelate={() => (relating = true)}
+      ongaps={() => {
+        tab = 'overview';
+        part = 'gaps';
+      }}
+    />
   {:else if tab === 'lineage'}
     <ResourceLineage {resource} {catalogue} />
   {:else if tab === 'history' && (dataTeam || canEdit)}

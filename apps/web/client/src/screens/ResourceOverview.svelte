@@ -4,6 +4,7 @@
 </script>
 
 <script lang="ts">
+  import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
@@ -72,8 +73,8 @@
     onsave: (changes: CardChanges) => Promise<boolean>;
     /** Adds, changes and removes one Known Gap; each answers whether it worked. */
     gaps: {
-      add: (text: string) => Promise<boolean>;
-      change: (gap: KnownGap, text: string) => Promise<boolean>;
+      add: (text: string, scope: GapScope | null) => Promise<boolean>;
+      change: (gap: KnownGap, text: string, scope: GapScope | null) => Promise<boolean>;
       remove: (gap: KnownGap) => Promise<boolean>;
     };
     /** Opens the tab Columns, from its Summary. */
@@ -348,7 +349,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} partition={details.partition?.field ?? null} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}

@@ -1,3 +1,4 @@
+import { type GapScope, hasScope, scopeText } from '@datahub/contracts/gaps';
 import { curate, SUMMARY, type SummaryPart, WEIGHT_MEANS, type Weight, WEIGHTS } from '@datahub/contracts/summary';
 
 /** What the Summary of a Resource is made of, as the MCP reads it from catalogue and query. */
@@ -14,7 +15,8 @@ export interface SummaryFacts {
     businessDescription: string;
     intendedUse: string;
     pitfalls: string;
-    knownGaps: { text: string }[];
+    /** Each with where it holds, when narrowed down (FR-RC-24). */
+    knownGaps: { text: string; scope?: GapScope | null }[];
     reliableSince: string | null;
     keyFields: string[];
     parameters: string[];
@@ -132,7 +134,7 @@ export function summaryText(given: SummaryFacts): string {
       ...(card.pitfalls ? ['Pitfalls, from the Owner, in Markdown:', card.pitfalls, ''] : []),
       ...(card.reliableSince ? [`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`] : []),
     ],
-    knownGaps: card.knownGaps.map((gap) => `- ${gap.text}`),
+    knownGaps: card.knownGaps.map((gap) => `- ${gap.text}${hasScope(gap.scope) ? ` ${scopeText(gap.scope)}` : ''}`),
     qa: qa.flatMap(threadLines),
     standing: [
       [

@@ -1608,3 +1608,30 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .danger-now b { font-weight: var(--weight-medium); color: var(--text-primary); }
 .danger-now a { color: var(--text-primary); text-underline-offset: 3px; }
 .danger-now .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Known Gaps narrowed down (a proposal): a scope per gap, each optional and combined, after its text */
+.gap-scope { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.scope { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: var(--radius-pill); background: var(--surface-solid); font-size: var(--text-meta); color: var(--text-secondary); }
+.scope > .ph { font-size: 13px; color: var(--text-muted); }
+.scope-k { color: var(--text-muted); }
+.scope .mono { color: var(--text-primary); }
+.gap-form { margin-top: 6px; padding: 14px 16px; border-radius: var(--radius-md); outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; display: flex; flex-direction: column; gap: 12px; }
+.gap-form .field { margin: 0; }
+.scope-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.scope-add .meta { margin-right: 4px; }
+.scope-add .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+.scope-edit { padding: 10px 12px 12px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.scope-edit-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: var(--text-small); }
+.scope-edit-head b { font-weight: var(--weight-medium); }
+.scope-edit-head .meta { flex: 1; }
+.scope-edit-head .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+.scope-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.value-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 8px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-solid); }
+.value-chips input { flex: 1; min-width: 80px; border: 0; background: none; padding: 2px 0; font: var(--text-small) var(--font-family); }
+.value-chips input:focus { outline: none; }
+.value-chips .code button { border: 0; background: none; color: var(--text-muted); cursor: pointer; padding: 0 0 0 4px; }
+.gap-form-foot { display: flex; align-items: center; gap: 8px; }
+.gap-form-foot .meta { flex: 1; }
+.sum-scope { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.gap-pill { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--text-secondary); }
+.gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }

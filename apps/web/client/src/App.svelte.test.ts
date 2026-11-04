@@ -12,6 +12,9 @@ const CONFIG: Config = {
   semgraphUrl: 'https://semgraph.test',
 };
 
+/** The why of a Known Gap, in its form (FR-RC-24). */
+const WHY = 'Wat ontbreekt of maar deels aanwezig is, en waarom · gewone tekst';
+
 const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[], roles: [] as string[] };
 
 /** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
@@ -496,12 +499,13 @@ function serve({
     }
     const gapOn = /^\/resources\/r2\/gaps(?:\/([^/]+))?$/.exec(path);
     if (gapOn) {
-      // Its Known Gaps, one by one, with who added them (FR-RC-21).
-      const card = resource.card as { knownGaps: { id: string; text: string; addedBy: string | null; addedAt: string | null }[] };
-      const body = init.body ? (JSON.parse(init.body as string) as { text: string }) : undefined;
-      const added = { id: `gap-${card.knownGaps.length + 1}`, text: body?.text ?? '', addedBy: 'Max Verstraete', addedAt: '2026-11-04T09:00:00Z' };
+      // Its Known Gaps, one by one, with who added them and where each holds (FR-RC-21, FR-RC-24).
+      const card = resource.card as { knownGaps: { id: string; text: string; scope: unknown; addedBy: string | null; addedAt: string | null }[] };
+      const body = init.body ? (JSON.parse(init.body as string) as { text: string; scope?: unknown }) : undefined;
+      const added = { id: `gap-${card.knownGaps.length + 1}`, text: body?.text ?? '', scope: body?.scope ?? null, addedBy: 'Max Verstraete', addedAt: '2026-11-04T09:00:00Z' };
+      const changed = (gap: (typeof card.knownGaps)[number]) => ({ ...gap, text: body?.text ?? '', ...(body && 'scope' in body ? { scope: body.scope ?? null } : {}) });
       const knownGaps =
-        method === 'POST' ? [...card.knownGaps, added] : method === 'PATCH' ? card.knownGaps.map((gap) => (gap.id === gapOn[1] ? { ...gap, text: body?.text ?? '' } : gap)) : card.knownGaps.filter((gap) => gap.id !== gapOn[1]);
+        method === 'POST' ? [...card.knownGaps, added] : method === 'PATCH' ? card.knownGaps.map((gap) => (gap.id === gapOn[1] ? changed(gap) : gap)) : card.knownGaps.filter((gap) => gap.id !== gapOn[1]);
       resource = { ...resource, card: { ...card, knownGaps } };
       return method === 'DELETE' ? new Response(null, { status: 204 }) : json({ gap: knownGaps.find((gap) => gap.id === (gapOn[1] ?? added.id)) }, method === 'POST' ? 201 : 200);
     }
@@ -1676,20 +1680,85 @@ describe('the page of a Resource', () => {
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
     expect(main.getByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
-    await fireEvent.input(main.getByRole('textbox', { name: 'Een nieuwe Known Gap' }), { target: { value: 'No partner leads before 2024.' } });
-    await fireEvent.click(main.getByRole('button', { name: 'Voeg toe' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before 2024.' } }));
+    // The line at the bottom opens the form; its why is plain text, and it holds everywhere until narrowed down.
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const adding = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    expect((adding.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(adding.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before 2024.' } });
+    await fireEvent.click(adding.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before 2024.', scope: null } }));
     expect(await main.findByText('No partner leads before 2024.')).toBeTruthy();
+    expect(main.queryByRole('form', { name: 'Een nieuwe Known Gap' })).toBeNull();
     expect(main.getByText('Toegevoegd door Max Verstraete · 4 nov 2026')).toBeTruthy();
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).textContent).toContain('1');
     await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
-    await fireEvent.input(main.getByRole('textbox', { name: 'Wijzig deze Known Gap' }), { target: { value: 'No partner leads before March 2024.' } });
-    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.' } }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    await fireEvent.input(changing.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: null } }));
     expect(await main.findByText('No partner leads before March 2024.')).toBeTruthy();
     await fireEvent.click(main.getByRole('button', { name: 'Verwijder deze Known Gap' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/gaps/gap-1' }));
     expect(await main.findByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
+  });
+
+  it('narrows a Known Gap down to a period, fields and rows, shown as chips, in the Summary and on its fields (FR-RC-24, FR-RC-25, FR-RC-26)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    // A period lies on its partition by default, and needs a start, an end or both.
+    await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
+    expect((form.getByRole('combobox', { name: 'Op het veld' }) as HTMLSelectElement).value).toBe('week_start');
+    expect(form.getByRole('status').textContent).toBe('Een periode heeft een begin, een einde of beide.');
+    expect((form.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByLabelText('Tot'), { target: { value: '2024-02-29' } });
+    // Fields, chosen from the Resource.
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    // Rows: a field with one of some values, typed.
+    await fireEvent.click(form.getByRole('button', { name: 'Rijen' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Veld' }), { target: { value: 'lead_source' } });
+    expect(form.getByRole('status').textContent).toBe('Voeg minstens één waarde toe, of kies leeg.');
+    await fireEvent.input(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { target: { value: 'partner' } });
+    await fireEvent.keyDown(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { key: 'Enter' });
+    expect(form.getByRole('button', { name: 'Verwijder partner' })).toBeTruthy();
+    // Each kind goes with its ×, and comes back with its button.
+    await fireEvent.click(form.getByRole('button', { name: 'Verwijder de velden' }));
+    expect(form.queryByRole('region', { name: 'Velden' })).toBeNull();
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    const scope = { period: { field: 'week_start', from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before March 2024.', scope } }));
+    // On its line, where it holds as chips.
+    const line = (await main.findByText('No partner leads before March 2024.')).closest('li')!;
+    expect(line.textContent).toContain('Periode tot 29 feb 2024 op week_start');
+    expect(line.textContent).toContain('Velden lead_source');
+    expect(line.textContent).toContain('Rijen lead_source is partner');
+    // Changing it keeps its scope, and can take a kind away.
+    await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    expect((changing.getByLabelText('Tot') as HTMLInputElement).value).toBe('2024-02-29');
+    await fireEvent.click(changing.getByRole('button', { name: 'Verwijder de rijen' }));
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    const narrower = { period: scope.period, fields: scope.fields };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: narrower } }));
+    // In the Summary, as a line under its text.
+    await fireEvent.click(main.getByRole('tab', { name: /^Samenvatting/ }));
+    const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
+    expect((await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent).toContain('tot 29 feb 2024 op week_start');
+    // On the field it names, under Columns, with the way back to it.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    const marker = main.getByRole('button', { name: 'Known Gap' });
+    expect(marker.closest('tr')?.textContent).toContain('lead_source');
+    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 op week_start · velden lead_source)');
+    await fireEvent.click(marker);
+    expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
