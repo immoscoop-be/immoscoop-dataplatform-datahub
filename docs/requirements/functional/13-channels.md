@@ -46,7 +46,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
 ## Requirements
 
-*The requirements below come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md). They are proposals, still to be validated, and therefore Proposed.*
+*The requirements [FR-CH-01](#fr-ch-01) to [FR-CH-05](#fr-ch-05) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md). They are proposals, still to be validated, and therefore Proposed.*
 
 <a id="fr-ch-01"></a>
 ### FR-CH-01 · No high-volume or frequent exports through Data Hub
@@ -94,6 +94,13 @@ The repository of Data Hub holds documentation that explains how everything work
 **Status:** Proposed · **Source:** [REQ-DH-DOCS](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-docs)
 
 Updating that documentation is part of every feature.
+
+<a id="fr-ch-06"></a>
+### FR-CH-06 · Charts, the gallery of semgraph
+
+**Status:** Specified · **Source:** [DEC-UX-182](../../design/principles.md#dec-ux-182) · **Screens:** [charts](../../design/screens/charts.html)
+
+The web app shows under Charts every chart semgraph draws, grouped by the question it answers, so that a User sees which chart answers theirs ([DEC-UX-89](../../design/principles.md#dec-ux-89), [DEC-DH-64](../../overview/data-hub.md#dec-dh-64)). A chart opened shows its icon, name and the question it answers; its examples, each drawn by semgraph in the theme of the page, with the warning or the caution semgraph gives, or why it refuses one; and the questions it is for, what to use instead, what it needs and where a User meets it. All of it comes from semgraph, in the language of the User; the web app draws no chart itself ([DEC-PF-23](../technical/00-platform.md#dec-pf-23)).
 
 ## Open points
 
