@@ -2772,23 +2772,27 @@ describe('Lenses', () => {
     expect(main.getByRole('link', { name: 'Meer bewerken' }).getAttribute('href')).toBe('/lenses/l1/edit');
   });
 
-  it('deletes a Lens in the Danger zone of its Edit, asking once more, and its address then says so (FR-LE-18, DEC-UX-185)', async () => {
+  it('deletes a Lens from its Edit: a small button under Save opens a sheet that says what it does (FR-LE-18, DEC-UX-185)', async () => {
     const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS, usedBy: 4 }] });
     open('/lenses/l1/edit');
     render(App, { config: CONFIG });
     const edit = within(await screen.findByRole('main'));
-    const zone = within(await edit.findByRole('region', { name: 'Deze lens verwijderen' }));
-    expect(zone.getByText('4 collega’s gebruikten hem de voorbije 30 dagen,')).toBeTruthy();
-    await fireEvent.input(zone.getByRole('textbox', { name: 'Waarom je hem verwijdert · optioneel' }), { target: { value: ' Replaced by the weekly lens. ' } });
-    await fireEvent.click(zone.getByRole('button', { name: 'Verwijderen…' }));
-    // It asks once more, in place; "Behouden" goes back without deleting.
-    expect(zone.getByText('4 collega’s krijgen bericht. Dit kan niet ongedaan gemaakt worden.', { exact: false })).toBeTruthy();
-    await fireEvent.click(zone.getByRole('button', { name: 'Behouden' }));
+    await fireEvent.click(await edit.findByRole('button', { name: 'Deze lens verwijderen…' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    expect(sheet.getByText('Leads per source, week by week')).toBeTruthy();
+    expect(sheet.getByText('4 collega’s gebruikten hem de voorbije 30 dagen,')).toBeTruthy();
+    // "Behouden" closes it without deleting.
+    await fireEvent.click(sheet.getByRole('button', { name: 'Behouden' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
     expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
-    await fireEvent.click(zone.getByRole('button', { name: 'Verwijderen…' }));
-    await fireEvent.click(zone.getByRole('button', { name: 'Voorgoed verwijderen' }));
+
+    await fireEvent.click(edit.getByRole('button', { name: 'Deze lens verwijderen…' }));
+    const again = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    await fireEvent.input(again.getByRole('textbox', { name: 'Waarom je hem verwijdert · optioneel' }), { target: { value: ' Replaced by the weekly lens. ' } });
+    await fireEvent.click(again.getByRole('button', { name: 'Voorgoed verwijderen' }));
     await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
     expect(calls).toContainEqual({ method: 'DELETE', path: '/lenses/l1', body: { reason: 'Replaced by the weekly lens.' } });
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('says at the address of a deleted Lens that it was deleted, by whom, when and why, and runs nothing (FR-LE-18)', async () => {

@@ -4,12 +4,11 @@
   Left: what it tells, as when it was made: its name, the question it answers, what it shows, what it does step by
   step, its tags and the names users see of its Parameters; it stays in its Collection. Right: what one run of its
   version reads, that its SQL changes through its query (DEC-UX-27, DEC-LE-04), and Save.
-  At the foot, apart: the Danger zone, as on a Resource (DEC-UX-176), with Delete (DEC-UX-185, DEC-LE-21): what
-  deleting does, explained before its form, with how many colleagues used it in the last 30 days, also from Excel;
-  why, optional; and "Delete…", which asks once more in place before it deletes for good. A deleted Lens: lens-deleted.html.
-  The switch at the bottom shows the zone and the question in place.
+  Under Save, small: "Delete this lens…" (DEC-UX-185, DEC-LE-21), which opens a sheet: what deleting does, explained
+  first, with how many colleagues used it in the last 30 days, also from Excel; why, optional; and "Keep it" or
+  "Delete for good". A deleted Lens: lens-deleted.html.
   Requirements: FR-LE-06, FR-LE-18
-  Decisions: DEC-UX-162, DEC-UX-176, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
+  Decisions: DEC-UX-162, DEC-UX-174, DEC-UX-185, DEC-UX-27, DEC-LE-04, DEC-LE-16, DEC-LE-21.
   Related screens: lens.html (Edit more), lens-new.html (Make it a lens), lens-deleted.html.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -146,32 +145,39 @@ Adds up the leads per source and puts the largest first.</textarea></label>
   <div class="gauge" aria-hidden="true"><span class="gauge-fill" style="width:20%;background:var(--text-secondary)"></span><span class="gauge-mark" style="left:25%"></span><span class="gauge-mark" style="left:75%"></span></div>
   <div class="size-state fine" style="margin-top:12px"><i class="ph-fill ph-info"></i><p>Its SQL is not changed here: open it in Query, change it there, and update the lens.</p></div>
   <a class="btn-primary" href="lens.html" style="width:100%;justify-content:center;margin-top:12px;text-decoration:none;box-sizing:border-box">Save</a>
+  <!-- Under Save, small: Delete, which opens its sheet (DEC-UX-185) -->
+  <button class="btn-quiet" type="button" data-sheet-open="delete" style="display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:6px;color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i>Delete this lens…</button>
  </aside>
 </div>
 
-<!-- ───────────── Danger zone, at the foot, for its Owner Unit and the Data Team (DEC-UX-185) ───────────── -->
-<section class="card danger" aria-labelledby="le-delete" style="margin-top:22px">
- <div class="danger-head"><i class="ph-fill ph-trash" aria-hidden="true"></i><div><h3 id="le-delete">Delete this lens</h3><p>When nobody needs it any more, or another Lens answers its question better. Deleting is for good: it cannot be undone.</p></div></div>
- <div class="danger-what">
-  <p class="line"><i class="ph-fill ph-eye-slash" aria-hidden="true"></i><span><b>It is gone for everyone:</b> from the panel, its Collection and its folder, from search, from Claude, and from Excel, which gets no data from it any more. Its address says it was deleted, by whom, when and why.</span></p>
-  <p class="line"><i class="ph-fill ph-users" aria-hidden="true"></i><span><b>4 colleagues used it in the last 30 days,</b> 1 of them from Excel. Data Hub tells them, with your reason.</span></p>
-  <p class="line"><i class="ph-fill ph-archive-box" aria-hidden="true"></i><span><b>Its record is kept:</b> its runs in the Query Log, its versions and its history, and the Messages on it, which still show, with the lens marked as deleted. The queries made from it stay; they are their owners' own. A request on it to the Data Team that still waits is withdrawn.</span></p>
+</main>
+</div>
+<!-- Delete this lens (DEC-UX-185, DEC-LE-21): what deleting does, explained first, then why, and "Delete for good". -->
+<div class="sheet-wrap" id="delete" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="delete-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph-fill ph-trash" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Leads per source name</div><h2 id="delete-title">Delete this lens</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
- <form class="danger-form" data-pane-group="del" data-pane="ask" onsubmit="return false">
-  <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="2" placeholder="Replaced by the lens Leads per source, week by week"></textarea></label>
-  <div class="danger-foot"><span class="meta">Goes into its history, with your name.</span><button class="btn-quiet outline" type="submit" data-go="del:sure" style="display:inline-flex;align-items:center;gap:6px;color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i>Delete…</button></div>
- </form>
- <div class="danger-now" data-pane-group="del" data-pane="sure" hidden role="alertdialog" aria-label="Delete for good?">
-  <p><b>Delete Leads per source name for good?</b> 4 colleagues are told. This cannot be undone.</p>
-  <button class="btn-quiet outline" type="button" data-go="del:ask">Keep it</button>
+ <div class="sheet-list">
+  <p class="meta" style="display:block;line-height:1.5;margin-top:4px">When nobody needs it any more, or another Lens answers its question better. Deleting is for good: it cannot be undone.</p>
+  <div class="danger-what">
+   <p class="line"><i class="ph-fill ph-eye-slash" aria-hidden="true"></i><span><b>It is gone for everyone:</b> from the panel, its Collection and its folder, from search, from Claude, and from Excel, which gets no data from it any more. Its address says it was deleted, by whom, when and why.</span></p>
+   <p class="line"><i class="ph-fill ph-users" aria-hidden="true"></i><span><b>4 colleagues used it in the last 30 days,</b> on its page or from Excel. Data Hub tells them, with your reason.</span></p>
+   <p class="line"><i class="ph-fill ph-archive-box" aria-hidden="true"></i><span><b>Its record is kept:</b> its runs in the Query Log, its versions and its history, and the Messages on it, which still show, with the lens marked as deleted. The queries made from it stay; they are their owners' own. A request on it to the Data Team that still waits is withdrawn.</span></p>
+  </div>
+  <form class="danger-form" onsubmit="return false">
+   <label class="field"><span class="field-label">Why you delete it · optional</span><textarea rows="3" placeholder="Replaced by the lens Leads per source, week by week"></textarea></label>
+  </form>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">Goes into its history, with your name.</p>
+  <button class="btn-quiet" data-sheet-close>Keep it</button>
   <a class="btn-primary danger" href="lens-deleted.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-trash"></i>Delete for good</a>
  </div>
 </section>
-</main>
-</div>
-<div class="proto-switch" data-group="del" role="tablist" aria-label="Prototype: deleting">Delete
- <button class="seg on" data-target="ask" role="tab" aria-selected="true">The zone</button>
- <button class="seg" data-target="sure" role="tab" aria-selected="false">Sure?</button>
 </div>
 <script src="app.js"></script>
 </body>

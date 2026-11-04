@@ -16,7 +16,7 @@
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, Parameter, Preflight, Query, QueryClient, QueryRequest, Storage } from '../lib/query.js';
-  import LensDanger from './LensDanger.svelte';
+  import LensDeleteSheet from './LensDeleteSheet.svelte';
   import { lensPath, queryPath } from '../lib/routes.js';
 
   /**
@@ -62,6 +62,8 @@
     ondeleted?: (lens: { id: string; name: string; collectionId: string }) => void;
   } = $props();
 
+  /** Whether the sheet that deletes the Lens being edited is open (DEC-UX-185). */
+  let deleting = $state(false);
   /** Deletes the Lens being edited, with why (FR-LE-18); false when it did not. */
   async function remove(reason: string): Promise<boolean> {
     if (!editing) return false;
@@ -395,6 +397,7 @@
         <Gauge bytes={editing.reads} approve={thresholds.approve} request={thresholds.request} />
         <Callout icon="info-fill">{t('lens.edit.sql')}</Callout>
         <Button wide disabled={busy || name.trim() === ''} onclick={save}>{t('lens.edit.save')}</Button>
+        <div class="delete"><Button variant="quiet" wide onclick={() => (deleting = true)}><Icon name="trash-fill" />{t('lens.delete.open')}</Button></div>
         {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       </aside>
     {:else}
@@ -474,13 +477,15 @@
     </aside>
     {/if}
   </div>
-  <!-- At the foot of Edit, apart: the Danger zone, with Delete (DEC-UX-185, FR-LE-18). -->
-  {#if editing}<LensDanger name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} />{/if}
+  <!-- "Delete this lens…" under Save opens its sheet (DEC-UX-185, FR-LE-18). -->
+  {#if editing && deleting}<LensDeleteSheet name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} onclose={() => (deleting = false)} />{/if}
 {:else}
   <Loading />
 {/if}
 
 <style>
+  .delete { margin-top: 6px; }
+  .delete :global(.button) { color: var(--signal-urgent); }
   .crumb { margin-top: 8px; }
   .crumb a { color: inherit; }
   .head { display: flex; align-items: center; gap: 12px; margin-top: 4px; }

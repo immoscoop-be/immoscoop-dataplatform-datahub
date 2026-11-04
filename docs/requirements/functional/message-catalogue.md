@@ -2254,7 +2254,7 @@ One item of `missing`, English, laid out:
 | Kind | Data Hub |
 | About | Lens |
 | From → to | Data Hub → who used the Lens lately |
-| When | Its Owner Unit or the Data Team deletes a Lens, in the Danger zone of its Edit ([FR-LE-18](09-lenses.md#fr-le-18)). |
+| When | Its Owner Unit or the Data Team deletes a Lens, with Delete on its Edit ([FR-LE-18](09-lenses.md#fr-le-18)). |
 | How many | One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it. |
 | Status | Implemented |
 | Comes from | [FR-LE-18](09-lenses.md#fr-le-18), [DEC-LE-21](09-lenses.md#dec-le-21) |

@@ -1199,7 +1199,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     subjects: ['lens'],
     from: 'dataHub',
     to: ['lensUsers'],
-    when: 'Its Owner Unit or the Data Team deletes a Lens, in the Danger zone of its Edit (FR-LE-18).',
+    when: 'Its Owner Unit or the Data Team deletes a Lens, with Delete on its Edit (FR-LE-18).',
     per: 'One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it.',
     status: 'Implemented',
     sources: ['FR-LE-18', 'DEC-LE-21'],
