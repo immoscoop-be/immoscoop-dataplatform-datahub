@@ -106,12 +106,12 @@
   const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canEdit));
 
   let editing: Editable | null = $state(null);
-  // Another Resource opens on its Summary.
-  let shownFor: string | undefined;
+  // Another Resource opens on its Summary: the page sets the part, and what was being edited goes.
+  // svelte-ignore state_referenced_locally
+  let shownFor = resource.id;
   $effect(() => {
     if (shownFor !== resource.id) {
       shownFor = resource.id;
-      part = 'summary';
       editing = null;
     }
   });

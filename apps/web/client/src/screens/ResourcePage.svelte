@@ -99,7 +99,7 @@
   let adding = $state(false);
   let failed = $state(false);
 
-  // Read again for another Resource: what it relates to, and the first tab.
+  // Read again for another Resource: what it relates to, and the first tab on its Summary.
   let readFor: string | undefined;
   $effect(() => {
     const id = resource.id;
@@ -108,6 +108,7 @@
     }
     readFor = id;
     tab = 'overview';
+    part = 'summary';
     related = undefined;
     storage = undefined;
     relating = false;
