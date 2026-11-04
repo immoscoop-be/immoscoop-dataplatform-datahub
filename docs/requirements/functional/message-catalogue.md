@@ -27,7 +27,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 
 | From ↓ to → | User | Owner | Data Team |
 | --- | --- | --- | --- |
-| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
+| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
 | Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
@@ -42,6 +42,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Implemented |
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
+| [MSG-CNV-07](#msg-cnv-07) | A Question or Signal closed | Collection, Resource, Lens, query or Learning Card | User → its writer | Nothing | By the writer | Implemented |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Implemented |
@@ -77,11 +78,11 @@ The words are theirs. The catalogue holds the frame of them wherever the Message
 | From → to | User → Owner and who wrote in the conversation |
 | When | A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource. |
 | Status | Implemented |
-| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06) |
+| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06), [FR-CV-16](14-conversations.md#fr-cv-16) |
 
 **What it asks:** An answer, of the Owner. Who answers for the object answers it in context, with the object in view. Any colleague who may see the object can answer too ([FR-CV-05](14-conversations.md#fr-cv-05)).
 
-**How it ends:** The first reply makes it answered and notifies its writer ([MSG-CNV-04](#msg-cnv-04)). It starts `open` and ends `answered`.
+**How it ends:** The first reply makes it answered and notifies its writer ([MSG-CNV-04](#msg-cnv-04)). Its writer, the Owner Unit and the Data Team can also close it, with an optional line why, which tells its writer when someone else closed it ([MSG-CNV-07](#msg-cnv-07)); the same people can reopen it. It starts `open` and ends `answered` or `closed`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -241,12 +242,12 @@ Template, English, laid out:
 | From → to | User → Owner and Data Team |
 | When | A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page. |
 | Status | Implemented |
-| Comes from | [FR-SR-30](04-stacks-and-resources.md#fr-sr-30), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07) |
+| Comes from | [FR-SR-30](04-stacks-and-resources.md#fr-sr-30), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-CV-16](14-conversations.md#fr-cv-16) |
 | Open points | [OP-SR-14](04-stacks-and-resources.md#op-sr-14) |
 
 **What it asks:** Something to do, of the Owner and Data Team. The Owner and the Data Team look into it. Either replies with what they found, or makes it an Anomaly on the Resource Card, which then holds it ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)).
 
-**How it ends:** A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. It starts `open` and ends `answered` or `anomaly`.
+**How it ends:** A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. Its writer, the Owner Unit and the Data Team can also close it, with an optional line why ([MSG-CNV-07](#msg-cnv-07)), and reopen it. It starts `open` and ends `answered`, `anomaly` or `closed`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -489,6 +490,92 @@ Template, English, laid out:
 > {text}
 
 {outcome, select, accepted {{subjectKind, select, lens {The lens is published.} other {The query may run.}}} other {{subjectKind, select, lens {The lens stays unpublished: change it and send it again.} other {The query does not run: make it read less and run it again.}}}}
+```
+
+</details>
+
+<a id="msg-cnv-07"></a>
+
+### MSG-CNV-07 · A Question or Signal closed
+
+| | |
+| --- | --- |
+| Kind | undefined |
+| About | Collection, Resource, Lens, query or Learning Card |
+| From → to | User → its writer |
+| When | Its writer, the Owner Unit of its object or the Data Team closes an open Question or Signal when nothing more is needed, even without an answer. It stands in the conversation as its closing, with who closed it, when, and an optional line why. |
+| Status | Implemented |
+| Comes from | [FR-CV-16](14-conversations.md#fr-cv-16), [DEC-CV-13](14-conversations.md#dec-cv-13) |
+
+**What it asks:** Nothing. It tells the writer of the Question or Signal that it was closed, and why; they, the Owner Unit and the Data Team can reopen it.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open in context · *Openen in context* | The page of its object as it is, with the Message in a floating window over it ([FR-CV-09](14-conversations.md#fr-cv-09)) | every recipient |
+
+**Learning Card:** By the writer. Whoever closes it can add the card that explains why nothing more is needed.
+
+**Dutch, laid out**, with the example:
+
+> **Maxime Passenier sloot het bericht over de lens Leads per source name**
+>
+> > Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.
+
+**Dutch, plain:**
+
+```text
+Maxime Passenier sloot het bericht over de lens Leads per source name.
+“Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.”
+```
+
+**English, laid out**, with the example:
+
+> **Maxime Passenier closed the message on the lens Leads per source name**
+>
+> > Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.
+
+**English, plain:**
+
+```text
+Maxime Passenier closed the message on the lens Leads per source name.
+“Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.”
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+Only the parameters every Message of its sender has.
+
+Template, Dutch, plain:
+
+```text
+{writer} sloot het bericht over de {subjectKind} {subject}.
+“{text}”
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{writer} sloot het bericht over de {subjectKind} {subject}**
+
+> {text}
+```
+
+Template, English, plain:
+
+```text
+{writer} closed the message on the {subjectKind} {subject}.
+“{text}”
+```
+
+Template, English, laid out:
+
+```markdown
+**{writer} closed the message on the {subjectKind} {subject}**
+
+> {text}
 ```
 
 </details>

@@ -124,7 +124,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner', 'participants'],
     when: 'A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource.',
     status: 'Implemented',
-    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06'],
+    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06', 'FR-CV-16'],
     parameters: [],
     text: {
       nl: {
@@ -142,8 +142,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['owner'],
       what: 'Who answers for the object answers it in context, with the object in view. Any colleague who may see the object can answer too (FR-CV-05).',
       buttons: [OPEN_IN_CONTEXT],
-      states: ['open', 'answered'],
-      done: 'The first reply makes it answered and notifies its writer (MSG-CNV-04).',
+      states: ['open', 'answered', 'closed'],
+      done: 'The first reply makes it answered and notifies its writer (MSG-CNV-04). Its writer, the Owner Unit and the Data Team can also close it, with an optional line why, which tells its writer when someone else closed it (MSG-CNV-07); the same people can reopen it.',
     },
     example: {
       writer: 'Karel Leys',
@@ -199,7 +199,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner', 'dataTeam'],
     when: 'A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page.',
     status: 'Implemented',
-    sources: ['FR-SR-30', 'FR-CV-03', 'FR-CV-07'],
+    sources: ['FR-SR-30', 'FR-CV-03', 'FR-CV-07', 'FR-CV-16'],
     openPoints: ['OP-SR-14'],
     parameters: [],
     text: {
@@ -228,8 +228,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
           for: ['owner', 'dataTeam'],
         },
       ],
-      states: ['open', 'answered', 'anomaly'],
-      done: 'A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer.',
+      states: ['open', 'answered', 'anomaly', 'closed'],
+      done: 'A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. Its writer, the Owner Unit and the Data Team can also close it, with an optional line why (MSG-CNV-07), and reopen it.',
     },
     example: {
       writer: 'Karel Leys',
@@ -363,6 +363,41 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'A new Request starts over; the lapsed one stays in the conversation.',
     },
     example: { subjectKind: 'lens', subject: 'Leads per source, all weeks', days: 5 },
+  },
+  {
+    id: 'MSG-CNV-07',
+    title: 'A Question or Signal closed',
+    kind: 'closing',
+    subjects: ANY_OBJECT,
+    from: 'user',
+    to: ['writer'],
+    when: 'Its writer, the Owner Unit of its object or the Data Team closes an open Question or Signal when nothing more is needed, even without an answer. It stands in the conversation as its closing, with who closed it, when, and an optional line why.',
+    status: 'Implemented',
+    sources: ['FR-CV-16', 'DEC-CV-13'],
+    parameters: [],
+    text: {
+      nl: {
+        plain: lines('{writer} sloot het bericht over de {subjectKind} {subject}.', '“{text}”'),
+        rich: lines('**{writer} sloot het bericht over de {subjectKind} {subject}**', '', '> {text}'),
+      },
+      en: {
+        plain: lines('{writer} closed the message on the {subjectKind} {subject}.', '“{text}”'),
+        rich: lines('**{writer} closed the message on the {subjectKind} {subject}**', '', '> {text}'),
+      },
+    },
+    learningCard: { fit: 'byWriter', why: 'Whoever closes it can add the card that explains why nothing more is needed.' },
+    action: {
+      asks: 'nothing',
+      what: 'It tells the writer of the Question or Signal that it was closed, and why; they, the Owner Unit and the Data Team can reopen it.',
+      buttons: [OPEN_IN_CONTEXT],
+      done: 'When it is read.',
+    },
+    example: {
+      writer: 'Maxime Passenier',
+      subjectKind: 'lens',
+      subject: 'Leads per source name',
+      text: 'Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.',
+    },
   },
 
   // Collections

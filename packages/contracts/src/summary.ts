@@ -58,15 +58,15 @@ export interface ThreadLike {
   kind: string;
   state: string | null;
   writer: { as: string | null } | null;
-  replies?: readonly { writer: { as: string | null } | null }[];
+  replies?: readonly { kind?: string; writer: { as: string | null } | null }[];
 }
 
 const SAID = new Set(['question', 'remark', 'signal']);
 const STAFF = new Set(['owner', 'dataTeam']);
 
-/** Whether the Owner Unit or the Data Team started the thread or answered in it. */
+/** Whether the Owner Unit or the Data Team started the thread or answered in it; closing it is no answer (FR-CV-16). */
 export const touched = (thread: ThreadLike): boolean =>
-  STAFF.has(thread.writer?.as ?? '') || (thread.replies ?? []).some((reply) => STAFF.has(reply.writer?.as ?? ''));
+  STAFF.has(thread.writer?.as ?? '') || (thread.replies ?? []).some((reply) => reply.kind !== 'closing' && STAFF.has(reply.writer?.as ?? ''));
 
 /**
  * Splits the threads on a Resource as its Summary takes them (DEC-RC-18): its curated Q&A, every thread its Owner Unit

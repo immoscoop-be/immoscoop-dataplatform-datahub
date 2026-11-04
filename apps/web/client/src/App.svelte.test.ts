@@ -850,6 +850,17 @@ function serve({
       message.state = message.state === 'open' ? 'answered' : message.state;
       return json({ message }, 201);
     }
+    // Closed with an optional line why, and reopened (FR-CV-16, MSG-CNV-07).
+    if (message && path === `/messages/${message.id as string}/close` && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { text: string };
+      message.state = 'closed';
+      (message.replies as unknown[]).push({ id: 'c-1', type: 'MSG-CNV-07', kind: 'closing', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { writer: 'Max Verstraete', ...(body.text ? { text: body.text } : {}) }, createdAt: '2026-10-29T11:00:00Z', mine: true });
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/reopen` && method === 'POST') {
+      message.state = 'open';
+      return json({ message });
+    }
     if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
       const body = JSON.parse(init.body as string) as { outcome: string; text: string };
       message.state = body.outcome;
@@ -2876,6 +2887,37 @@ describe('Messages', () => {
     await fireEvent.click(main.getByRole('button', { name: /Antwoorden/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/replies', body: { text: 'Yes, next week.' } }));
     expect(await main.findByText('Yes, next week.')).toBeTruthy();
+  });
+
+  it('lets whoever may close it close a Question with a line why, shows it closed, and reopens it (FR-CV-16, DEC-UX-179)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: true }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Sluiten/ }));
+    // Its writer hears it; the line why is not needed.
+    expect(main.getByText('Ruth Aerts krijgt een melding dat je het sloot. Ieder van jullie kan het heropenen.')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Deze Question sluiten' }), { target: { value: 'Published last week.' } });
+    const close = main.getAllByRole('button', { name: /Sluiten/ }).at(-1)!;
+    expect((close as HTMLButtonElement).disabled).toBe(false);
+    await fireEvent.click(close);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/close', body: { text: 'Published last week.' } }));
+    // Closed: who closed it and why, in the conversation, and Reopen in place of Close.
+    expect(await main.findByText('Published last week.')).toBeTruthy();
+    expect(main.getAllByText('Gesloten').length).toBeGreaterThan(0);
+    expect(main.queryByRole('button', { name: /^Sluiten$/ })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
+    expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {
+    serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: false }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Sluiten/ })).toBeNull();
   });
 
   it('says there is nothing to catch up on when nothing is unread, and only then (DEC-UX-136)', async () => {

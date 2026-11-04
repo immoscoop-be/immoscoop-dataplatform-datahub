@@ -1041,6 +1041,44 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('GET', `/messages/${remark.id}`)).statusCode).toBe(200);
     });
 
+    it('lets the writer, the Owner Unit and the Data Team close and reopen a Question or a Signal, with an optional line why (FR-CV-16, DEC-CV-13)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const els = await user('Eva', [AGENTS]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const asked = (await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'question', text: 'A test for the presentation?' })).json().message;
+      expect(asked).toMatchObject({ state: 'open', mayClose: true });
+      // Replied to only by its own writer, it stays open.
+      expect((await bert('POST', `/messages/${asked.id}/replies`, { text: 'Yes, my own answer.' })).json().message).toMatchObject({ state: 'open' });
+
+      // Someone who only sees it may not close it; its writer may, with a line why.
+      expect((await els('GET', `/messages/${asked.id}`)).json().message).toMatchObject({ mayClose: false });
+      expect((await els('POST', `/messages/${asked.id}/close`, {})).statusCode).toBe(403);
+      expect((await bert('POST', `/messages/${asked.id}/close`, { text: 42 })).statusCode).toBe(400);
+      const closed = await bert('POST', `/messages/${asked.id}/close`, { text: ' Only a test. ' });
+      expect(closed.statusCode).toBe(200);
+      expect(closed.json().message).toMatchObject({ state: 'closed', replies: [{ kind: 'reply' }, { type: 'MSG-CNV-07', kind: 'closing', writer: { name: 'Bert', as: null }, params: { text: 'Only a test.' } }] });
+      expect((await bert('POST', `/messages/${asked.id}/close`, {})).json().error).toBe('not_open');
+      // A reply leaves it closed; the Owner Unit reopens it, and the Data Team closes it again, without a line.
+      expect((await an('POST', `/messages/${asked.id}/replies`, { text: 'Fine by me.' })).json().message).toMatchObject({ state: 'closed' });
+      expect((await els('POST', `/messages/${asked.id}/reopen`)).statusCode).toBe(403);
+      expect((await an('POST', `/messages/${asked.id}/reopen`)).json().message).toMatchObject({ state: 'open', mayClose: true });
+      expect((await an('POST', `/messages/${asked.id}/reopen`)).json().error).toBe('not_closed');
+      const again = (await dirk('POST', `/messages/${asked.id}/close`)).json().message;
+      expect(again.state).toBe('closed');
+      expect(again.replies.at(-1)).toMatchObject({ kind: 'closing', writer: { name: 'Dirk', as: 'dataTeam' }, params: { writer: 'Dirk' } });
+      expect(again.replies.at(-1).params.text).toBeUndefined();
+      // The Message Centre counts it as moved, for whoever asked.
+      expect((await bert('GET', '/messages?view=unread')).json().messages.map((message: { id: string }) => message.id)).toContain(asked.id);
+
+      // A Remark asks nothing, so nothing closes it.
+      const remark = (await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'remark', text: 'Nice.' })).json().message;
+      expect(remark.mayClose).toBe(false);
+      expect((await bert('POST', `/messages/${remark.id}/close`, {})).json().error).toBe('not_closable');
+      expect((await bert('POST', `/messages/${'0'.repeat(8)}-0000-4000-8000-${'0'.repeat(12)}/close`, {})).statusCode).toBe(404);
+    });
+
     it('knows the Lenses from query, and shows the Messages on one only to who sees it (FR-CV-05, DEC-CO-16)', async () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);

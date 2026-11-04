@@ -105,6 +105,26 @@
               return false;
             }
           }}
+          onclose={async (text) => {
+            try {
+              await client.close(message.id, text);
+              onchanged();
+              return true;
+            } catch (error) {
+              console.error('The Message could not be closed', error);
+              return false;
+            }
+          }}
+          onreopen={async () => {
+            try {
+              await client.reopen(message.id);
+              onchanged();
+              return true;
+            } catch (error) {
+              console.error('The Message could not be reopened', error);
+              return false;
+            }
+          }}
         />
       {/each}
     {/if}

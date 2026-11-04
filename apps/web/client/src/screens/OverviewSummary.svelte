@@ -117,7 +117,7 @@
     <span class="kind" class:signal={thread.kind === 'signal'}>{KIND_NAMES[thread.kind]}</span>
     <span class="words">
       {#if thread.state && STATE_TEXTS[thread.state]}<b>{t(STATE_TEXTS[thread.state]!)}</b>,{' '}{/if}{thread.writer?.name}{#if thread.writer?.as}{' '}<span class="role">{STANDING_NAMES[thread.writer.as]}</span>{/if}, {ago(thread.createdAt, language)}: <span class="written">{thread.params.text}</span>
-      {#each thread.replies.filter((reply) => reply.writer?.as) as reply (reply.id)}
+      {#each thread.replies.filter((reply) => reply.writer?.as && reply.kind !== 'closing') as reply (reply.id)}
         <span class="answer"><span class="role">{STANDING_NAMES[reply.writer!.as!]}</span> {reply.writer?.name}: <span class="written">{reply.params.text}</span></span>
       {/each}
     </span>

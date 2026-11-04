@@ -87,7 +87,9 @@ function threadLines(thread: Thread): SummaryLine[] {
   const state = thread.state ? `, ${thread.state}` : '';
   const lines: SummaryLine[] = [{ kind: 'item', text: `${KIND[thread.kind] ?? thread.kind}${state}, ${thread.writer?.name ?? ''}${role(thread)}, ${day(thread.createdAt)}: ${thread.params.text ?? ''}` }];
   for (const reply of thread.replies) {
-    if (reply.writer?.as && ROLE[reply.writer.as]) lines.push({ kind: 'reply', text: `${reply.writer.name}${role(reply)}, ${day(reply.createdAt)}: ${reply.params.text ?? ''}` });
+    // Its closing says who closed it and why, whoever closed it (FR-CV-16); an answer only from the Owner Unit or the Data Team.
+    if (reply.kind === 'closing') lines.push({ kind: 'reply', text: `Closed by ${reply.writer?.name ?? ''}${role(reply)}, ${day(reply.createdAt)}${reply.params.text ? `: ${reply.params.text}` : '.'}` });
+    else if (reply.writer?.as && ROLE[reply.writer.as]) lines.push({ kind: 'reply', text: `${reply.writer.name}${role(reply)}, ${day(reply.createdAt)}: ${reply.params.text ?? ''}` });
   }
   return lines;
 }

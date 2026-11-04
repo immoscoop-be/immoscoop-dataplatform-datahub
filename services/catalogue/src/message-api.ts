@@ -168,6 +168,29 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return reply.code(201).send({ message: outcome });
   });
 
+  // Closing an open Question or Signal, with an optional line why, and reopening it (FR-CV-16, MSG-CNV-07).
+  const CLOSE_REFUSALS = {
+    not_found: [404, NO_MESSAGE],
+    not_closable: [409, { error: 'not_closable', message: 'Only a Question or a Signal is closed: a Remark asks nothing, and a Request ends with its decision.' }],
+    not_allowed: [403, { error: 'forbidden', message: 'Its writer, the Owner Unit of its object and the Data Team close and reopen it.' }],
+    not_open: [409, { error: 'not_open', message: 'It is not open: answered or closed already.' }],
+    not_closed: [409, { error: 'not_closed', message: 'It is not closed.' }],
+  } as const;
+  app.post<{ Params: { id: string }; Body: unknown }>('/messages/:id/close', async (request, reply) => {
+    const raw = ((request.body ?? {}) as { text?: unknown }).text;
+    if (raw !== undefined && raw !== null && typeof raw !== 'string') return reply.code(400).send({ error: 'invalid_request', message: 'Why it closes is text.' });
+    const text = (raw ?? '').trim();
+    if (text.length > TEXT) return reply.code(400).send({ error: 'invalid_request', message: `Why it closes has at most ${TEXT} characters.` });
+    const outcome = await messages.close(request.params.id, await sightOf(request), text);
+    if (typeof outcome === 'string') return reply.code(CLOSE_REFUSALS[outcome][0]).send(CLOSE_REFUSALS[outcome][1]);
+    return { message: outcome };
+  });
+  app.post<{ Params: { id: string } }>('/messages/:id/reopen', async (request, reply) => {
+    const outcome = await messages.reopen(request.params.id, await sightOf(request));
+    if (typeof outcome === 'string') return reply.code(CLOSE_REFUSALS[outcome][0]).send(CLOSE_REFUSALS[outcome][1]);
+    return { message: outcome };
+  });
+
   // The User read a conversation: unread again once someone else moves it.
   app.post<{ Params: { id: string } }>('/messages/:id/read', async (request, reply) =>
     (await messages.read(request.params.id, await sightOf(request))) ? reply.code(204).send() : reply.code(404).send(NO_MESSAGE),
