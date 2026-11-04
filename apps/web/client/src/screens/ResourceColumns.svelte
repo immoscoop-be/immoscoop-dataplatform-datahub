@@ -4,7 +4,8 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
-  import type { Field, ResourceDetail } from '../lib/catalogue.js';
+  import type { Field, KnownGap, ResourceDetail } from '../lib/catalogue.js';
+  import { scopeLine } from '../lib/gaps.js';
   import { nounOf } from '../lib/grain.js';
 
   /**
@@ -12,7 +13,8 @@
    * to its description from dbt, its Entity, and what it serves as, the partition, a cluster column with
    * its place, a Parameter. Its Owner Unit and the Data Team edit the Business Descriptions in place
    * (FR-RC-16), from 2 · Described on (DEC-MR-10); a Data Admin opens step 2 of adding with Edit relations
-   * (DEC-UX-107).
+   * (DEC-UX-107). A field a Known Gap names under Fields carries "Known Gap", with the gap on hover and the way to
+   * Known Gaps (FR-RC-26).
    */
   let {
     resource,
@@ -20,6 +22,7 @@
     relate,
     onsave,
     onrelate,
+    ongaps,
   }: {
     resource: ResourceDetail;
     canEdit: boolean;
@@ -27,6 +30,8 @@
     relate: boolean;
     onsave: (fields: { name: string; businessDescription: string }[]) => Promise<boolean>;
     onrelate: () => void;
+    /** Opens the Known Gaps of its Overview. */
+    ongaps: () => void;
   } = $props();
 
   const details = $derived(resource.details);
@@ -38,6 +43,15 @@
   const changedInDbt = $derived(new Map(resource.descriptionChanges.flatMap((change) => (change.field ? [[change.field, change]] : []))));
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short' }).format(new Date(value));
+  /** The Known Gaps that name a field under Fields, by field (FR-RC-26). */
+  const gapsOf = $derived.by(() => {
+    const by = new Map<string, KnownGap[]>();
+    for (const gap of resource.card.knownGaps) {
+      for (const name of gap.scope?.fields ?? []) by.set(name, [...(by.get(name) ?? []), gap]);
+    }
+    return by;
+  });
+  const gapTitle = (gaps: readonly KnownGap[]) => gaps.map((gap) => `${t('gaps.marker')}: ${gap.text}${gap.scope ? ` (${scopeLine(gap.scope)})` : ''}`).join('\n');
   let show = $state<'all' | 'changed'>('all');
   const listed = $derived(show === 'changed' ? resource.fields.filter((field) => changedInDbt.has(field.name)) : resource.fields);
 
@@ -82,6 +96,9 @@
 
 {#snippet pills(field: Field)}
   {#each roles(field) as role (role.label)}<span class="pill" class:strong={role.strong} class:warn={role.warn}>{role.label}</span>{/each}
+  {#if gapsOf.has(field.name)}
+    <button type="button" class="pill gap" title={gapTitle(gapsOf.get(field.name) ?? [])} onclick={ongaps}><Icon name="circle-dashed-fill" />{t('gaps.marker')}</button>
+  {/if}
 {/snippet}
 
 {#if editing}
@@ -174,6 +191,8 @@
   .none { color: var(--text-muted); }
   .code { display: inline-flex; font: var(--text-meta) var(--font-mono); color: var(--text-secondary); background: var(--surface-sub); padding: 3px 8px; border-radius: var(--radius-chip); }
   .roles { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+  .gap { display: inline-flex; align-items: center; gap: 4px; border: 0; font: inherit; cursor: pointer; }
+  .gap :global(.icon) { font-size: 12px; color: var(--text-muted); }
   .pill { font-size: 10px; color: var(--text-secondary); background: var(--tint-hover); padding: 2px 7px; border-radius: var(--radius-pill); white-space: nowrap; }
   .pill.strong { color: var(--text-primary); background: var(--tint-active); }
   .pill.warn { color: var(--signal-warn); }

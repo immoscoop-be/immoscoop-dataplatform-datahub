@@ -1,3 +1,4 @@
+import type { GapScope } from '@datahub/contracts/gaps';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -66,6 +67,8 @@ export interface Details {
 export interface KnownGap {
   id: string;
   text: string;
+  /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+  scope: GapScope | null;
   addedBy: string | null;
   addedAt: string | null;
 }
@@ -257,12 +260,12 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
       return ((await (await call(resource(id), { method: 'PATCH', body: changes })).json()) as { resource: ResourceDetail }).resource;
     },
     /** Adds a Known Gap, with who added it and when (FR-RC-21). */
-    async addGap(id: string, text: string): Promise<KnownGap> {
-      return ((await (await call(`${resource(id)}/gaps`, { method: 'POST', body: { text } })).json()) as { gap: KnownGap }).gap;
+    async addGap(id: string, text: string, scope: GapScope | null): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps`, { method: 'POST', body: { text, scope } })).json()) as { gap: KnownGap }).gap;
     },
     /** Changes the text of one Known Gap; who added it stays. */
-    async changeGap(id: string, gapId: string, text: string): Promise<KnownGap> {
-      return ((await (await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'PATCH', body: { text } })).json()) as { gap: KnownGap }).gap;
+    async changeGap(id: string, gapId: string, text: string, scope: GapScope | null): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'PATCH', body: { text, scope } })).json()) as { gap: KnownGap }).gap;
     },
     /** Removes one Known Gap. */
     async removeGap(id: string, gapId: string): Promise<void> {
