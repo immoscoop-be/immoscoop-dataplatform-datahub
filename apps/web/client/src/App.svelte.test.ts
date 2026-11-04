@@ -1824,9 +1824,10 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/deprecation', body: { reason: 'Replaced by the figures with partner leads', insteadOf: null } }));
     expect(await main.findAllByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toHaveLength(2);
     expect(main.getByText('Deprecated', { selector: '.chip' })).toBeTruthy();
-    // The line on top leads back to it.
-    await fireEvent.click(main.getByRole('tab', { name: /Samenvatting/ }));
+    // The line on top leads back to it, from any tab.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     await fireEvent.click(main.getByRole('button', { name: 'Gevarenzone' }));
+    expect(main.getByRole('tab', { name: 'Gevarenzone' }).getAttribute('aria-selected')).toBe('true');
     await fireEvent.click(within(main.getByRole('tabpanel', { name: 'Gevarenzone' })).getByRole('button', { name: /Wegnemen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/deprecation' }));
     await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
