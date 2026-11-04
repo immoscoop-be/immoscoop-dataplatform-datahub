@@ -434,7 +434,8 @@ Screen: [sign-in](screens/sign-in.html). Designed on 2026-10-24, to review ([DEC
 
 ## Sheets
 
-- A **sheet** slides in from the right over the page, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The page stays visible behind it, dimmed; a click beside it or "Close" closes it.
+- A **sheet** slides in from the right over the whole window, for a task that belongs to the page but is not the page, such as adding Resources to a Collection. The rail, the panel and the page stay visible behind it, deeply dimmed, and nothing behind it can be clicked or scrolled while it is open; a click beside it, "Close" or Escape closes it ([DEC-UX-174](#dec-ux-174)).
+- It takes half the width of the window, so that a task has room; a sheet with a table, such as the grain and relations, is wider where half is too narrow ([DEC-UX-174](#dec-ux-174)).
 
 ## Floating window
 
@@ -658,6 +659,7 @@ Decided on 2026-10-23, with the preview and the query of a Resource:
 - <a id="dec-ux-171"></a>**DEC-UX-171** · The communication on a Resource is part of its Summary, not a part of its own in the navigation: "Messages" in the header suffices, and replies are written in its slide-in, as before ([DEC-UX-67](#dec-ux-67)). The Summary takes the open Signals and the Q&A of the Owner and the Data Team, and what colleagues wrote that they have not touched yet, with the role of the Owner and the Data Team next to their names. *Decided on 2026-11-04, by Max: the communication on a Resource belongs in its Overview; the Messages in the header suffice to read them all.*
 - <a id="dec-ux-172"></a>**DEC-UX-172** · The theme always follows the system, also while Data Hub is open. The switch at the foot of the rail turns it for the session only and is not remembered: the next change of the system, or opening Data Hub again, follows the system. The switch shows where it goes: the sun by night, the moon by day. This replaces "the choice is remembered" of the themes. *Decided on 2026-11-04, by Max.*
 - <a id="dec-ux-173"></a>**DEC-UX-173** · Ski lift, Alpenglow, Spring snow, Fusilli, Fresh piste and Sunlit peaks leave the backgrounds of the day, and Lights on those of the night. The sign-in shows a background of the set of its theme, picked at random as in the app, in place of a photo with its story. *Decided on 2026-11-04, by Max.*
+- <a id="dec-ux-174"></a>**DEC-UX-174** · A sheet takes over the whole window: its backdrop covers the rail, the panel and the page, stays where it is, and dims them more deeply than before, so that nothing behind it can be clicked or scrolled. The sheet takes half the width of the window, more where its content needs it. *Decided on 2026-11-04, by Max, after a sheet over Webhooks left the page below it open.*
 
 ## Open points
 
