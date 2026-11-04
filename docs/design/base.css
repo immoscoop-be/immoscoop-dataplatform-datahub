@@ -1632,3 +1632,5 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .gap-form-foot { display: flex; align-items: center; gap: 8px; }
 .gap-form-foot .meta { flex: 1; }
 .sum-scope { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.gap-pill { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--text-secondary); }
+.gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }
