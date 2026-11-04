@@ -37,10 +37,22 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-13"></a>**DEC-RC-13** · The grain and the mappings of the fields of a Resource, its Entities and identifiers, are kept in Data Hub. A model outside Colleciónes does not carry them in the meta of its dbt project; for a Colleciónes model, Data Hub fills them in from the meta of its columns when the Resource is added ([FR-AR-17](01-artifact-registry.md#fr-ar-17), [FR-CO-33](03-collections.md#fr-co-33)). *Decided on 2026-10-28, by Max ([OP-RC-05](#op-rc-05)).*
 - <a id="dec-rc-14"></a>**DEC-RC-14** · The actor of an event maps as "performed by", a mapping of its own next to `is` and the relation types, read from who performs the action (`performedBy`) in the Domain Model. An event has one actor. *Decided on 2026-10-28, by Max ([OP-RC-22](#op-rc-22)).*
 - <a id="dec-rc-15"></a>**DEC-RC-15** · Data Hub does not check the grain of a Resource against its data when it is added: no query counts the rows that share the fields of the grain. *Decided on 2026-10-28, by Max ([OP-RC-23](#op-rc-23)).* *Note of 2026-11-03, from Max: the data takes responsibility for its own grain, for instance with a test in dbt.*
+- <a id="dec-rc-16"></a>**DEC-RC-16** · The Business Description of a Resource is written in Markdown: headings, bold, italic, lists and links, in the Markdown editor of Data Hub ([DEC-UX-158](../../design/principles.md#dec-ux-158)). Everything else Data Hub keeps about a Resource and its fields stays plain text: its intended use, pitfalls and Known Gaps, and the Business Descriptions of its fields. *Decided on 2026-11-04, by Max.*
+- <a id="dec-rc-17"></a>**DEC-RC-17** · The Summary of a Resource reads its parts in one order, the same for every Resource, each with one of four weights:
+
+  | Weight | What it asks of the reader | The parts, in this order |
+  | --- | --- | --- |
+  | Read first | Know this before anything else | Deprecated, when it is: why, and what to use instead; what it is: the Business Description and the description from dbt; one row is: the grain and the model type; use it for: the intended use |
+  | Before you query | It decides how the SQL is written | How to query it cheaply: partitions, clustering, size, key fields and Parameters; what it joins: its Entities; its fields |
+  | When interpreting results | It decides what a result may be taken to say | Watch out: the pitfalls and since when it is reliable; the Known Gaps; the Q&A of the Owner and the Data Team, with the open Signals ([DEC-RC-18](#dec-rc-18)) |
+  | Context | Background | Where it stands: its Level, Publication and what changed since its last Confirmation; what colleagues noted; what changed lately, from the Log |
+
+  Data Hub sets the order and the weights; the Owner writes what is in a part, not where it stands. A part with nothing in it is left out. *Decided on 2026-11-04, by Max.*
+- <a id="dec-rc-18"></a>**DEC-RC-18** · A thread on a Resource that its Owner Unit or the Data Team started, or answered in, belongs to its curated Q&A: it stays in its Summary for good, open or answered, and weighs as When interpreting results ([DEC-RC-17](#dec-rc-17)). An open Signal weighs the same, whoever raised it. A thread they have not touched yet is Context. *Decided on 2026-11-04, by Max: "all answered or confirmed by the Data Team or the Owner remains; this way it builds a curated Q&A."*
 
 ## Requirements
 
-*[FR-RC-01](#fr-rc-01) to [FR-RC-10](#fr-rc-10) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md); they are proposals, still to be validated, and therefore Proposed. [FR-RC-11](#fr-rc-11) to [FR-RC-15](#fr-rc-15) come from the review of the [detail page of a Resource](../../design/principles.md#detail-page-of-a-resource) on the same day. [FR-RC-16](#fr-rc-16) to [FR-RC-18](#fr-rc-18) come from the review of Max on 2026-10-26, which also made [FR-RC-01](#fr-rc-01) Specified.*
+*[FR-RC-01](#fr-rc-01) to [FR-RC-10](#fr-rc-10) come from the [workshop on data agents and governance of 2026-10-22](../../workshops/2026-10-22-data-agents-and-governance.md); they are proposals, still to be validated, and therefore Proposed. [FR-RC-11](#fr-rc-11) to [FR-RC-15](#fr-rc-15) come from the review of the [detail page of a Resource](../../design/principles.md#detail-page-of-a-resource) on the same day. [FR-RC-16](#fr-rc-16) to [FR-RC-18](#fr-rc-18) come from the review of Max on 2026-10-26, which also made [FR-RC-01](#fr-rc-01) Specified. [FR-RC-19](#fr-rc-19) to [FR-RC-22](#fr-rc-22) come from the redesign of the Overview with Max on 2026-11-04 ([DEC-UX-168](../../design/principles.md#dec-ux-168)).*
 
 <a id="fr-rc-01"></a>
 ### FR-RC-01 · A Business Description of the Resource
@@ -52,6 +64,8 @@ Every Resource can have a Business Description: what it is, in business language
 *Note of 2026-10-26: first proposed as a definition in business language, a text of its own; Max decided that it is the Business Description of the Resource, side by side with the description from dbt.*
 
 *Note of 2026-10-28: from Described on: a Resource the Data Team has not described in dbt has no Business Descriptions ([DEC-MR-10](06-maturity-and-release.md#dec-mr-10)).*
+
+*Note of 2026-11-04: it is written in Markdown ([FR-RC-20](#fr-rc-20)).*
 
 <a id="fr-rc-02"></a>
 ### FR-RC-02 · Open questions about the data
@@ -80,6 +94,8 @@ Every Resource shows the control figures that were run to confirm it, as metadat
 **Status:** Implemented · **Source:** [REQ-DH-META](../../workshops/2026-10-22-data-agents-and-governance.md#req-dh-meta) · **Screens:** [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html)
 
 Every Resource records its Known Gaps, as metadata of their own: structural gaps in its data, such as the visitorId that is missing for credit leads that come from MySQL rather than from website events.
+
+*Note of 2026-11-04: each gap becomes an item of its own, with who added it and when ([FR-RC-21](#fr-rc-21)).*
 
 <a id="fr-rc-05"></a>
 ### FR-RC-05 · A log of changes and Anomalies, for people and for Claude
@@ -204,6 +220,34 @@ When the description from dbt of a Resource or of one of its fields changes, Dat
 **Status:** Specified · **Source:** [Review of 2026-10-25](../../review/2026-10-25-functional-and-technical-review.md#resources-the-resource-card-and-the-levels) · **Screens:** [resource-columns-edit](../../design/screens/resource-columns-edit.html), [resource-detail](../../design/screens/resource-detail.html), [resource-edit](../../design/screens/resource-edit.html), [resource-publish](../../design/screens/resource-publish.html), [query](../../design/screens/query.html)
 
 Wherever Data Hub shows or hands over the description of a Resource or of a field, it uses the Business Description and the description from dbt together, each marked with where it comes from; without a Business Description, the description from dbt alone ([DEC-RC-02](#dec-rc-02)). That holds on the Resource Card and its Columns, in search, which covers both ([FR-SR-21](04-stacks-and-resources.md#fr-sr-21)), and for Claude.
+
+<a id="fr-rc-19"></a>
+### FR-RC-19 · The Summary of a Resource
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Overview of a Resource opens on its Summary: everything Data Hub knows about it on one page, in the order to read it, each part with its weight and a way to the part itself ([DEC-RC-17](#dec-rc-17)). A deprecation comes first; a part with nothing in it is left out. It is the general instruction on the Resource, for people and for Claude, who reads the same Summary ([FR-CL-25](17-claude.md#fr-cl-25)).
+
+<a id="fr-rc-20"></a>
+### FR-RC-20 · The Business Description in Markdown
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Owner and the Data Team write the Business Description of a Resource in Markdown, in the Markdown editor of Data Hub, next to the description from dbt ([DEC-RC-16](#dec-rc-16)). Data Hub shows it rendered, on the Overview and in the Summary, and hands it to Claude as Markdown. A Business Description written before is read as Markdown too; plain text stays plain text.
+
+<a id="fr-rc-21"></a>
+### FR-RC-21 · Known Gaps one by one, with who added them
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+Every Known Gap of a Resource ([FR-RC-04](#fr-rc-04)) is an item of its own, in plain text, with who added it and when. The Owner and the Data Team add one, change one or remove one at a time, without editing the others; each change goes into the Log. A Known Gap recorded before keeps its text, without anyone who added it.
+
+<a id="fr-rc-22"></a>
+### FR-RC-22 · A curated Q&A from the Messages on a Resource
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)) its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good, with its open Signals; and the threads they have not touched yet, as Context ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, whether it is open or answered, and the answer of the Owner or the Data Team. Reading the whole thread and replying stay in the Messages on the Resource.
 
 ## Open points
 

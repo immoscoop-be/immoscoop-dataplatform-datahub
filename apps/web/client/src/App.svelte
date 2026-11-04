@@ -845,6 +845,7 @@
         <ResourcePage
           {resource}
           messages={messagesButton}
+          threads={onObject?.key === `resource:${resource.id}` ? onObject.messages : undefined}
           log={opened.log}
           collection={collections?.find((collection) => collection.id === resource.collectionId)}
           {collections}

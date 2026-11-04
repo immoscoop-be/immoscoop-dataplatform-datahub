@@ -16,6 +16,7 @@ import * as learningProgress from './0014-learning-progress.js';
 import * as folders from './0015-folders.js';
 import * as excelKeyMessages from './0016-excel-key-messages.js';
 import * as folderDescriptions from './0017-folder-descriptions.js';
+import * as knownGaps from './0018-known-gaps.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -36,4 +37,5 @@ export const migrations: Record<string, Migration> = {
   '0015-folders': folders,
   '0016-excel-key-messages': excelKeyMessages,
   '0017-folder-descriptions': folderDescriptions,
+  '0018-known-gaps': knownGaps,
 };

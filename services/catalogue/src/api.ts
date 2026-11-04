@@ -16,10 +16,12 @@ import {
   type AddItem,
   type AddOutcome,
   CARD_KEYS,
-  type Card,
+  type CardChanges,
+  MAX_GAPS,
   type DeprecateOutcome,
   type Details,
   type EditOutcome,
+  type GapOutcome,
   type Mapping,
   type Resource,
   type Resources,
@@ -475,6 +477,51 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return editOutcome(reply, resource.id, await resources.edit(resource.id, changes, viewer(request)));
   });
 
+  /** What adding, changing or removing a Known Gap came to, as an answer. */
+  function gapOutcome(reply: FastifyReply, outcome: GapOutcome, created = false) {
+    switch (outcome.outcome) {
+      case 'done':
+        return outcome.gap ? reply.code(created ? 201 : 200).send({ gap: outcome.gap }) : reply.code(204).send();
+      case 'not_found':
+        return reply.code(404).send({ error: 'not_found', message: 'No such Resource or Known Gap.' });
+      case 'invalid':
+        return reply.code(400).send({ error: 'invalid_request', message: outcome.message });
+    }
+  }
+
+  // The Known Gaps one at a time, each with who added it and when, for the Owner and the Data Team (FR-RC-21).
+  app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/gaps', async (request, reply) => {
+    const gap = parseGap(request.body);
+    if (typeof gap === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: gap });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return gapOutcome(reply, await resources.addGap(resource.id, gap.text, viewer(request)), true);
+  });
+
+  app.patch<{ Params: { id: string; gapId: string }; Body: unknown }>('/resources/:id/gaps/:gapId', async (request, reply) => {
+    const gap = parseGap(request.body);
+    if (typeof gap === 'string') {
+      return reply.code(400).send({ error: 'invalid_request', message: gap });
+    }
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return gapOutcome(reply, await resources.changeGap(resource.id, request.params.gapId, gap.text, viewer(request)));
+  });
+
+  app.delete<{ Params: { id: string; gapId: string } }>('/resources/:id/gaps/:gapId', async (request, reply) => {
+    const resource = await editable(request, reply);
+    if (!resource) {
+      return reply;
+    }
+    return gapOutcome(reply, await resources.removeGap(resource.id, request.params.gapId, viewer(request)));
+  });
+
   // The Business Descriptions of the fields, next to their descriptions from dbt (FR-RC-16).
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/fields', async (request, reply) => {
     const descriptions = parseFieldDescriptions(request.body);
@@ -686,7 +733,7 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
  * as texts, its Known Gaps as a list of texts, since when it is reliable as a day or null, and its key
  * fields and Parameters as lists of fields. Returns the problem as a sentence when there is one.
  */
-export function parseCard(body: unknown): Partial<Card> | string {
+export function parseCard(body: unknown): CardChanges | string {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return 'Send what changes as a JSON object.';
   }
@@ -695,7 +742,7 @@ export function parseCard(body: unknown): Partial<Card> | string {
   if (unknown !== undefined) {
     return `A Resource has no ${unknown} to change.`;
   }
-  const card: Partial<Card> = {};
+  const card: CardChanges = {};
   for (const key of ['businessDescription', 'intendedUse', 'pitfalls'] as const) {
     const value = input[key];
     if (value === undefined) {
@@ -708,8 +755,8 @@ export function parseCard(body: unknown): Partial<Card> | string {
   }
   if (input.knownGaps !== undefined) {
     const gaps = input.knownGaps;
-    if (!Array.isArray(gaps) || gaps.length > 20 || !gaps.every((gap) => typeof gap === 'string' && gap.trim().length <= 1000)) {
-      return 'The Known Gaps are a list of at most 20 texts of at most 1000 characters.';
+    if (!Array.isArray(gaps) || gaps.length > MAX_GAPS || !gaps.every((gap) => typeof gap === 'string' && gap.trim().length <= 1000)) {
+      return `The Known Gaps are a list of at most ${MAX_GAPS} texts of at most 1000 characters.`;
     }
     card.knownGaps = (gaps as string[]).map((gap) => gap.trim()).filter(Boolean);
   }
@@ -734,6 +781,15 @@ export function parseCard(body: unknown): Partial<Card> | string {
     return 'Send at least one thing to change.';
   }
   return card;
+}
+
+/** Checks one Known Gap: plain text of 1 to 1000 characters (FR-RC-21). Returns the problem as a sentence when there is one. */
+export function parseGap(body: unknown): { text: string } | string {
+  const text = (body as { text?: unknown } | null)?.text;
+  if (typeof text !== 'string' || text.trim().length === 0 || text.trim().length > 1000) {
+    return 'A Known Gap is a text of 1 to 1000 characters.';
+  }
+  return { text: text.trim() };
 }
 
 /**

@@ -3,6 +3,7 @@ import { answer, attempt, firstSentence, levelName, plain, refusal } from './ans
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
+import { type SummaryFacts, summaryText } from './summary.js';
 
 /** A Resource as a Collection lists it. */
 interface Item {
@@ -183,14 +184,32 @@ export function resourceTools({ server, hub, user }: Context): void {
     {
       title: 'Read a Resource',
       description:
-        'The Resource Card: its Display Name and Key, Collection and Owner, Level and Publication, the description of the table and of every field (the Business Description and the one from dbt, each marked), its grain, partition and cluster columns, size, intended use, pitfalls, Known Gaps, key fields and Parameters, and the changes since its last Confirmation. Read it before you query the Resource.',
+        'The Summary of a Resource, the general instruction on it, first: everything Data Hub knows about it in the order to read it, each part with its weight (Read first, Before you query, When interpreting results, Context), among them the Q&A of its Owner and the Data Team. Then the Resource Card as data: the description of every field (the Business Description and the one from dbt, each marked), its grain, partition and cluster columns, size, Known Gaps, key fields and Parameters. Read it before you query the Resource, and follow its weights.',
       inputSchema: { id },
       annotations: READ,
     },
     ({ id: resourceId }) =>
       attempt(async () => {
         const resource = await readResource(resourceId);
-        return answer(resource, stateNote(resource));
+        // What the Summary takes besides the card: the threads, the Log and what it joins; each may be missing.
+        const [threads, log, related] = await Promise.all([
+          hub.get<{ messages: SummaryFacts['threads'] }>('catalogue', `/messages/on/resource/${enc(resourceId)}`).then((body) => body.messages).catch(() => []),
+          hub.get<{ entries: SummaryFacts['log'] }>('catalogue', `/resources/${enc(resourceId)}/log`).then((body) => body.entries).catch(() => []),
+          hub.get<{ related: SummaryFacts['related'] }>('catalogue', `/resources/${enc(resourceId)}/related`).then((body) => body.related).catch(() => []),
+        ]);
+        const summary = summaryText({
+          ...(resource as unknown as SummaryFacts),
+          levelName: resource.levelName,
+          page: resource.page,
+          collection: resource.collection ? { name: resource.collection.name, owner: resource.collection.owner } : null,
+          storage: resource.storage as SummaryFacts['storage'],
+          threads,
+          log,
+          related,
+        });
+        const data = { ...resource, summary };
+        // The Summary as Markdown, so that Claude reads it as written; the card as data under it (FR-CL-25).
+        return { content: [{ type: 'text', text: `${stateNote(resource)}\n\n${summary}` }, { type: 'text', text: JSON.stringify(resource) }], structuredContent: data };
       }),
   );
 
@@ -265,7 +284,7 @@ export function resourceTools({ server, hub, user }: Context): void {
     businessDescription: z.string().max(4000).optional().describe('The Business Description of the table, next to the one from dbt.'),
     intendedUse: z.string().max(2000).optional(),
     pitfalls: z.string().max(2000).optional(),
-    knownGaps: z.array(z.string().max(1000)).max(20).optional(),
+    knownGaps: z.array(z.string().max(1000)).max(50).optional().describe('Every Known Gap, the whole list as its texts: a gap whose text stays keeps who added it.'),
     reliableSince: z.string().nullable().optional().describe('Since when its data is reliable: YYYY-MM-DD, or null.'),
     keyFields: z.array(z.string()).max(50).optional(),
     parameters: z.array(z.string()).max(50).optional().describe('The fields a Preview offers to choose by.'),
@@ -290,10 +309,12 @@ export function resourceTools({ server, hub, user }: Context): void {
         if (Object.keys(given).length === 0) return refusal('Name at least one thing to change.');
         if (before) {
           const { resource } = await hub.get<{ resource: Detail }>('catalogue', `/resources/${enc(resourceId)}`);
-          const moved = Object.entries(before).filter(([key, value]) => JSON.stringify(resource.card[key] ?? null) !== JSON.stringify(value ?? null));
+          // The Known Gaps are items with who added them; Claude shows and sends their texts.
+          const now = (key: string) => (key === 'knownGaps' ? ((resource.card.knownGaps ?? []) as { text: string }[]).map((gap) => gap.text) : resource.card[key]);
+          const moved = Object.entries(before).filter(([key, value]) => JSON.stringify(now(key) ?? null) !== JSON.stringify(value ?? null));
           if (moved.length > 0) {
             return refusal(
-              `Changed since you showed it, by someone else: ${moved.map(([key]) => `${key} is now ${JSON.stringify(resource.card[key] ?? null)}`).join('; ')}. Show the User the new text, and ask again before you write.`,
+              `Changed since you showed it, by someone else: ${moved.map(([key]) => `${key} is now ${JSON.stringify(now(key) ?? null)}`).join('; ')}. Show the User the new text, and ask again before you write.`,
             );
           }
         }

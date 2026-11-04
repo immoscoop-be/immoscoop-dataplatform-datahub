@@ -188,6 +188,42 @@ describe('Resources through Claude', () => {
     expect(result.structuredContent).toMatchObject({ levelName: '4 · Explored', storage: { size: '6.2 GB' }, mayPublish: true, collection: { owner: 'Credit team' } });
   });
 
+  it('gives Claude the Summary first, in its order and with its weights, the Q&A of the Owner among them (FR-CL-25, DEC-RC-18)', async () => {
+    answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
+      200,
+      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: null, keyFields: [], parameters: [] } }),
+    ];
+    answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
+    const said = (kind: string, name: string, as: string | null, text: string, state: string | null, replies: object[] = []) => ({
+      kind,
+      state,
+      writer: { id: name, name, as },
+      params: { text },
+      createdAt: '2026-11-02T10:00:00Z',
+      replies,
+    });
+    answers[`GET ${CATALOGUE}/messages/on/resource/${RESOURCE_ID}`] = () => [
+      200,
+      {
+        messages: [
+          said('question', 'Jan', null, 'Per province?', 'open'),
+          said('question', 'Mia', null, 'Twice in a week?', 'answered', [{ kind: 'reply', writer: { id: 'an', name: 'An', as: 'owner' }, params: { text: 'Every request counts.' }, createdAt: '2026-11-03T10:00:00Z' }]),
+        ],
+      },
+    ];
+    const result = await tool('get_resource', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }));
+    const text = result.content[0]?.text ?? '';
+    expect(text).toContain('- When interpreting results: It decides what a result may be taken to say.');
+    const order = ['## 1. What it is (read first)', '## 2. Use it for (read first)', '## 3. Its fields (before you query)', '## 4. Watch out (when interpreting results)', '## 5. Known Gaps', '## 6. Q&A of the Owner and the Data Team', '## 7. Where it stands (context)', '## 8. What colleagues noted (context)'];
+    expect(order.map((heading) => text.indexOf(heading))).toEqual([...order.map((heading) => text.indexOf(heading))].sort((a, b) => a - b));
+    expect(order.filter((heading) => !text.includes(heading))).toEqual([]);
+    expect(text).toContain('Credit leads per **week**.');
+    expect(text).toContain('  - An, Owner, 2026-11-03: Every request counts.');
+    expect(text).toMatch(/What colleagues noted \(context\)\n- Question, open, Jan, 2026-11-02: Per province\?/);
+    // A part with nothing in it is left out.
+    expect(text).not.toContain('What it joins');
+  });
+
   it('gives the cards of one Collection the drawing of its icon, as the MCP App loads nothing from outside (DEC-UX-164)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [200, detail()];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, { ...collection, icon: 'coins' }];

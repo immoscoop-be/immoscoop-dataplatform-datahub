@@ -62,12 +62,24 @@ export interface Details {
   mappings: Mapping[];
 }
 
+/** A Known Gap, with who added it and when; neither for a gap of before (FR-RC-21). */
+export interface KnownGap {
+  id: string;
+  text: string;
+  addedBy: string | null;
+  addedAt: string | null;
+}
+
+/** What changes about a Resource at once; its Known Gaps change one at a time (FR-RC-21). */
+export type CardChanges = Partial<Omit<Card, 'knownGaps'>>;
+
 /** What the Owner and the Data Team keep about a Resource in Data Hub (FR-RC-15, TR-SR-10). */
 export interface Card {
   businessDescription: string;
   intendedUse: string;
   pitfalls: string;
-  knownGaps: string[];
+  /** One item each, in the order they were added (FR-RC-21). */
+  knownGaps: KnownGap[];
   /** A day, `YYYY-MM-DD`, or null. */
   reliableSince: string | null;
   keyFields: string[];
@@ -241,8 +253,20 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
       return ((await (await call(`${resource(id)}/log`)).json()) as { entries: LogEntry[] }).entries;
     },
     /** Changes what is sent of the Resource Card; catalogue logs every change (FR-RC-15). */
-    async editResource(id: string, changes: Partial<Card>): Promise<ResourceDetail> {
+    async editResource(id: string, changes: CardChanges): Promise<ResourceDetail> {
       return ((await (await call(resource(id), { method: 'PATCH', body: changes })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Adds a Known Gap, with who added it and when (FR-RC-21). */
+    async addGap(id: string, text: string): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps`, { method: 'POST', body: { text } })).json()) as { gap: KnownGap }).gap;
+    },
+    /** Changes the text of one Known Gap; who added it stays. */
+    async changeGap(id: string, gapId: string, text: string): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'PATCH', body: { text } })).json()) as { gap: KnownGap }).gap;
+    },
+    /** Removes one Known Gap. */
+    async removeGap(id: string, gapId: string): Promise<void> {
+      await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'DELETE' });
     },
     /** Writes the Business Descriptions of fields; an empty one removes it (FR-RC-16). */
     async describeFields(id: string, fields: readonly { name: string; businessDescription: string }[]): Promise<ResourceDetail> {

@@ -49,9 +49,15 @@ import aperture from '@phosphor-icons/core/assets/regular/aperture.svg?raw';
 import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg?raw';
 import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
 import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
+import circleDashed from '@phosphor-icons/core/assets/regular/circle-dashed.svg?raw';
+import clockCounterClockwise from '@phosphor-icons/core/assets/regular/clock-counter-clockwise.svg?raw';
 import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
 import fileXls from '@phosphor-icons/core/assets/regular/file-xls.svg?raw';
+import funnel from '@phosphor-icons/core/assets/regular/funnel.svg?raw';
 import link from '@phosphor-icons/core/assets/regular/link.svg?raw';
+import listNumbers from '@phosphor-icons/core/assets/regular/list-numbers.svg?raw';
+import sealCheck from '@phosphor-icons/core/assets/regular/seal-check.svg?raw';
+import textAlignLeft from '@phosphor-icons/core/assets/regular/text-align-left.svg?raw';
 import textB from '@phosphor-icons/core/assets/regular/text-b.svg?raw';
 import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
 import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
@@ -186,9 +192,15 @@ export const ICONS = {
   'book-open-text': bookOpenText,
   'chart-line': chartLine,
   'chart-scatter': chartScatter,
+  'circle-dashed': circleDashed,
+  'clock-counter-clockwise': clockCounterClockwise,
   compass,
   'file-xls': fileXls,
+  funnel,
   link,
+  'list-numbers': listNumbers,
+  'seal-check': sealCheck,
+  'text-align-left': textAlignLeft,
   'text-b': textB,
   'text-h': textH,
   'text-italic': textItalic,

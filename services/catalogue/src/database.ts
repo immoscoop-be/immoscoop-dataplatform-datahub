@@ -117,7 +117,6 @@ export interface CatalogueDatabase {
     businessDescription: ColumnType<string, string | undefined, string>;
     intendedUse: ColumnType<string, string | undefined, string>;
     pitfalls: ColumnType<string, string | undefined, string>;
-    knownGaps: ColumnType<string[], string[] | undefined, string[]>;
     /** A day, as `YYYY-MM-DD`. */
     reliableSince: ColumnType<Date | null, string | null | undefined, string | null>;
     keyFields: ColumnType<string[], string[] | undefined, string[]>;
@@ -130,6 +129,16 @@ export interface CatalogueDatabase {
     deprecatedBy: string | null;
     deprecationReason: string | null;
     insteadOf: string | null;
+  };
+  /** The Known Gaps of a Resource, one item each, in the order they were added (FR-RC-21). */
+  knownGaps: {
+    id: Generated<string>;
+    resourceId: string;
+    text: string;
+    /** The fixed Google ID and the name of whoever added it, and when; null for a gap of before. */
+    addedBy: string | null;
+    addedByName: string | null;
+    addedAt: Date | null;
   };
   /** Each Confirmation, with the Fingerprint and the fields of that moment (FR-MR-08). */
   resourceConfirmations: {
