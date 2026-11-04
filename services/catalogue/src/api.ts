@@ -1,6 +1,7 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
+import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
@@ -499,7 +500,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!resource) {
       return reply;
     }
-    return gapOutcome(reply, await resources.addGap(resource.id, gap.text, viewer(request)), true);
+    return gapOutcome(reply, await resources.addGap(resource.id, gap.text, gap.scope ?? null, viewer(request)), true);
   });
 
   app.patch<{ Params: { id: string; gapId: string }; Body: unknown }>('/resources/:id/gaps/:gapId', async (request, reply) => {
@@ -511,7 +512,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!resource) {
       return reply;
     }
-    return gapOutcome(reply, await resources.changeGap(resource.id, request.params.gapId, gap.text, viewer(request)));
+    return gapOutcome(reply, await resources.changeGap(resource.id, request.params.gapId, gap.text, gap.scope, viewer(request)));
   });
 
   app.delete<{ Params: { id: string; gapId: string } }>('/resources/:id/gaps/:gapId', async (request, reply) => {
@@ -783,13 +784,27 @@ export function parseCard(body: unknown): CardChanges | string {
   return card;
 }
 
-/** Checks one Known Gap: plain text of 1 to 1000 characters (FR-RC-21). Returns the problem as a sentence when there is one. */
-export function parseGap(body: unknown): { text: string } | string {
-  const text = (body as { text?: unknown } | null)?.text;
+/**
+ * Checks one Known Gap: plain text of 1 to 1000 characters (FR-RC-21), and its scope, a period, fields and rows, or
+ * null for none (FR-RC-24); left out, a change keeps the scope it had. Returns the problem as a sentence when there is one.
+ */
+export function parseGap(body: unknown): { text: string; scope?: GapScope | null } | string {
+  const input = (body as { text?: unknown; scope?: unknown } | null) ?? {};
+  const text = input.text;
   if (typeof text !== 'string' || text.trim().length === 0 || text.trim().length > 1000) {
     return 'A Known Gap is a text of 1 to 1000 characters.';
   }
-  return { text: text.trim() };
+  if (input.scope === undefined) {
+    return { text: text.trim() };
+  }
+  if (input.scope === null) {
+    return { text: text.trim(), scope: null };
+  }
+  const scope = gapScopeSchema.safeParse(input.scope);
+  if (!scope.success) {
+    return `The scope of a Known Gap is a period, fields and rows: ${scope.error.issues[0]?.message ?? 'it does not fit'}`;
+  }
+  return { text: text.trim(), scope: scope.data };
 }
 
 /**

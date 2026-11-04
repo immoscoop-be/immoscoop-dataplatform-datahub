@@ -544,6 +544,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
         columns: [
           { name: `${name}_id`, position: 1, dataType: 'STRING', description: description && 'The ID.' },
           { name: 'listing_id', position: 2, dataType: 'STRING', description: '' },
+          { name: 'week', position: 3, dataType: 'DATE', description: '' },
         ],
       });
       await fromRegistry({ ...update('6', []), tables: [described('cards', 'Cards per week.'), described('decks', 'Decks.'), described('drafts', '')] });
@@ -584,7 +585,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
         businessDescription: 'The cards we send each week.',
         intendedUse: 'Trends.',
         pitfalls: '',
-        knownGaps: [{ id: expect.any(String), text: 'No cards before March.', addedBy: 'An', addedAt: expect.any(String) }],
+        knownGaps: [{ id: expect.any(String), text: 'No cards before March.', scope: null, addedBy: 'An', addedAt: expect.any(String) }],
         reliableSince: '2025-01-01',
         keyFields: ['cards_id'],
         parameters: ['listing_id'],
@@ -604,7 +605,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // The Known Gaps one at a time, each with who added it; who added one stays when it changes (FR-RC-21).
       const newGap = await dirk('POST', `/resources/${cards}/gaps`, { text: '  visitorId is missing for MySQL leads. ' });
       expect(newGap.statusCode).toBe(201);
-      expect(newGap.json().gap).toEqual({ id: expect.any(String), text: 'visitorId is missing for MySQL leads.', addedBy: 'Dirk', addedAt: expect.any(String) });
+      expect(newGap.json().gap).toEqual({ id: expect.any(String), text: 'visitorId is missing for MySQL leads.', scope: null, addedBy: 'Dirk', addedAt: expect.any(String) });
       const gapId = newGap.json().gap.id as string;
       expect((await an('PATCH', `/resources/${cards}/gaps/${gapId}`, { text: 'visitorId is missing for leads from MySQL.' })).json().gap).toMatchObject({ text: 'visitorId is missing for leads from MySQL.', addedBy: 'Dirk' });
       expect((await an('POST', `/resources/${cards}/gaps`, { text: '  ' })).statusCode).toBe(400);
@@ -623,9 +624,36 @@ describe.skipIf(!url)('the routes of Collections', () => {
       // The whole list at once, as Claude sends it: a gap that stays keeps who added it.
       await an('PATCH', `/resources/${cards}`, { knownGaps: ['No cards before March.', 'No decks.'] });
       expect((await an('GET', `/resources/${cards}`)).json().resource.card.knownGaps).toEqual([
-        { id: expect.any(String), text: 'No cards before March.', addedBy: 'An', addedAt: expect.any(String) },
-        { id: expect.any(String), text: 'No decks.', addedBy: 'An', addedAt: expect.any(String) },
+        { id: expect.any(String), text: 'No cards before March.', scope: null, addedBy: 'An', addedAt: expect.any(String) },
+        { id: expect.any(String), text: 'No decks.', scope: null, addedBy: 'An', addedAt: expect.any(String) },
       ]);
+
+      // A gap narrowed down by a period, fields and rows, combined; checked against the fields of the Resource (FR-RC-24).
+      const scope = { period: { field: 'week', from: null, to: '2025-02-28' }, rows: { field: 'listing_id', is: 'oneOf', values: ['partner'] } };
+      const scoped = await an('POST', `/resources/${cards}/gaps`, { text: 'No partner cards before March 2025.', scope });
+      expect(scoped.statusCode).toBe(201);
+      expect(scoped.json().gap).toMatchObject({ text: 'No partner cards before March 2025.', scope });
+      const scopedId = scoped.json().gap.id as string;
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { fields: ['nope'] } })).json().message).toBe('nope is no field of this Resource.');
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { field: 'listing_id', from: '2025-01-01', to: null } } })).json().message).toBe(
+        'A period lies on a date: listing_id is STRING.',
+      );
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { field: 'week', from: null, to: null } } })).statusCode).toBe(400);
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { when: 'always' } })).statusCode).toBe(400);
+      // A change without a scope keeps it; one with a scope changes it, into its Log; null makes it free text again.
+      expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards before March 2025, at all.' })).json().gap.scope).toEqual(scope);
+      const widened = { ...scope, fields: ['cards_id'] };
+      expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards before March 2025, at all.', scope: widened })).json().gap.scope).toEqual(widened);
+      expect((await an('GET', `/resources/${cards}/log`)).json().entries[0].text).toBe('Known Gap changed by An: No partner cards before March 2025, at all.');
+      // A field it named that left the Resource since stays, so that its text can still change (EC-RC-01).
+      await database.db.deleteFrom('resourceFields').where('resourceId', '=', cards!).where('name', '=', 'cards_id').execute();
+      expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards before March 2025.', scope: widened })).statusCode).toBe(200);
+      expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards.', scope: { fields: ['cards_id', 'decks_id'] } })).json().message).toBe(
+        'decks_id is no field of this Resource.',
+      );
+      expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards.', scope: null })).json().gap.scope).toBeNull();
+      expect((await an('DELETE', `/resources/${cards}/gaps/${scopedId}`)).statusCode).toBe(204);
+      await database.db.insertInto('resourceFields').values({ resourceId: cards!, name: 'cards_id', position: 1, dataType: 'STRING', description: 'The ID.' }).execute();
       expect((await bert('PATCH', `/resources/${cards}`, { intendedUse: 'Mine.' })).statusCode).toBe(404);
       // A Business Description from 2 · Described on (DEC-MR-10); the rest of the card before that.
       expect((await an('PATCH', `/resources/${drafts}`, { businessDescription: 'Drafts.' })).json().error).toBe('not_described');
@@ -636,6 +664,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect(fields.json().resource.fields).toEqual([
         { name: 'cards_id', position: 1, dataType: 'STRING', description: 'The ID.', businessDescription: 'One card.' },
         { name: 'listing_id', position: 2, dataType: 'STRING', description: '', businessDescription: '' },
+        { name: 'week', position: 3, dataType: 'DATE', description: '', businessDescription: '' },
       ]);
       expect((await an('PUT', `/resources/${cards}/fields`, { fields: [{ name: 'cards_id', businessDescription: '' }] })).json().resource.fields[0].businessDescription).toBe('');
       expect((await an('PUT', `/resources/${drafts}/fields`, { fields: [{ name: 'drafts_id', businessDescription: 'A draft.' }] })).json().error).toBe('not_described');

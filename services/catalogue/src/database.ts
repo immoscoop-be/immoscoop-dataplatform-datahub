@@ -1,5 +1,6 @@
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import type { SubjectKind } from '@datahub/contracts/messages';
+import type { GapScope } from '@datahub/contracts/gaps';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
 
@@ -139,6 +140,8 @@ export interface CatalogueDatabase {
     addedBy: string | null;
     addedByName: string | null;
     addedAt: Date | null;
+    /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+    scope: ColumnType<GapScope | null, GapScope | null | undefined, GapScope | null>;
   };
   /** Each Confirmation, with the Fingerprint and the fields of that moment (FR-MR-08). */
   resourceConfirmations: {
