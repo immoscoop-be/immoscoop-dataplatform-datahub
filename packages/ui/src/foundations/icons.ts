@@ -37,6 +37,7 @@ import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
+import sunFill from '@phosphor-icons/core/assets/fill/sun-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
 import toolboxFill from '@phosphor-icons/core/assets/fill/toolbox-fill.svg?raw';
 import trashFill from '@phosphor-icons/core/assets/fill/trash-fill.svg?raw';
@@ -180,6 +181,7 @@ export const ICONS = {
   'quotes-fill': quotesFill,
   'plus-circle-fill': plusCircleFill,
   'stack-fill': stackFill,
+  'sun-fill': sunFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
   'trash-fill': trashFill,

@@ -12,7 +12,7 @@ describe('the settings of the User (DEC-UX-96)', () => {
 
   it('save nothing when the value stays the same', () => {
     const save = vi.fn(async () => {});
-    new Settings({ theme: 'dark' }, save).set('theme', 'dark');
+    new Settings({ 'query.layout': 'sideBySide' }, save).set('query.layout', 'sideBySide');
     expect(save).not.toHaveBeenCalled();
   });
 
@@ -29,9 +29,9 @@ describe('the settings of the User (DEC-UX-96)', () => {
 
   it('forget one, such as a dismissed intro shown again', () => {
     const remove = vi.fn(async () => {});
-    const settings = new Settings({ 'intro.collections': 1, theme: 'dark' }, async () => {}, remove);
+    const settings = new Settings({ 'intro.collections': 1, 'panel.open': false }, async () => {}, remove);
     settings.forget('intro.collections');
-    expect(settings.values).toEqual({ theme: 'dark' });
+    expect(settings.values).toEqual({ 'panel.open': false });
     expect(remove).toHaveBeenCalledWith('intro.collections');
     settings.forget('intro.collections');
     expect(remove).toHaveBeenCalledTimes(1);
