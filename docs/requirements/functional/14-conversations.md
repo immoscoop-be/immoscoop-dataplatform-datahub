@@ -41,6 +41,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-cv-10"></a>**DEC-CV-10** · A Registration gives one Message per Resource, never one for several Resources of the same run. *Decided on 2026-10-28, by Max ([OP-CV-06](#op-cv-06)).*
 - <a id="dec-cv-11"></a>**DEC-CV-11** · When the Data Team adds a Resource to a Collection, Data Hub tells the Owner of that Collection with a Message. *Decided on 2026-10-28, by Max ([OP-CV-07](#op-cv-07)).*
 - <a id="dec-cv-12"></a>**DEC-CV-12** · When a Resource is withdrawn, Data Hub tells its Owner with a Message. Its Consumers are not told. *Decided on 2026-10-28, by Max ([OP-CV-08](#op-cv-08)).*
+- <a id="dec-cv-13"></a>**DEC-CV-13** · An open Question or Signal can be closed when nothing more is needed, even without an answer, by its writer, the Owner Unit of its object and the Data Team, with an optional line why. Its writer is told when someone else closes it ([MSG-CNV-07](message-catalogue.md#msg-cnv-07)). The same people can reopen it; a reply leaves it closed. A Remark has nothing to close, a Request ends with the decision of the Data Team, and what Data Hub writes closes itself. *Decided on 2026-11-04, by Max: a Question replied to only by its own writer stays open, as in a test for a presentation.*
 
 ## Terms
 
@@ -180,6 +181,13 @@ The web app shows a Message from the catalogue: the first line of its plain text
 *Note of 2026-10-29, on building part 7a: the web app shows what Data Hub writes from the catalogue, its first line in a list and its laid-out text when opened; a Message a person wrote shows their words, with its kind, its writer and its object beside them, as the [design](../../design/screens/messages.html) does, so that the frame of the catalogue is for notifications ([TR-CV-03](../technical/14-conversations.md#tr-cv-03)).*
 
 *Note of 2026-10-29, on building part 7b: Slack shows the laid-out text in its own mark-up with the plain text as its fallback, and e-mail the first line of the plain text as its subject and the laid-out text as its body, as drawn in [notifications](../../design/screens/notifications.html) ([TR-LN-03](../technical/07-log-and-notifications.md#tr-ln-03), [TR-LN-04](../technical/07-log-and-notifications.md#tr-ln-04)); the MCP server follows in version 2.*
+
+<a id="fr-cv-16"></a>
+### FR-CV-16 · Closing and reopening a Question or a Signal
+
+**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-CV-13](#dec-cv-13)) · **Screens:** [messages](../../design/screens/messages.html)
+
+Its writer, the Owner Unit of its object and the Data Team can close an open Question or Signal, wherever it shows, with an optional line why of at most 2,000 characters. The conversation keeps the closing: who closed it, when and why ([MSG-CNV-07](message-catalogue.md#msg-cnv-07)), and the Question or Signal is closed. Its writer gets a notification when someone else closed it. The same people can reopen a closed one, which makes it open again. A reply to a closed one is possible and leaves it closed. Anyone else, and a Message that is not open, cannot be closed; one that is not closed cannot be reopened. The Message Centre filters on closed, besides open and answered.
 
 ## Edge cases
 

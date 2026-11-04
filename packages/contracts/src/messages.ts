@@ -22,7 +22,7 @@ export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report
  * `dataHub` for what Data Hub writes itself. A `notice` is a Message a person sends with a form
  * Data Hub fills in, such as the Owner telling the Consumers of a Resource about a Change.
  */
-export type MessageKind = 'question' | 'remark' | 'signal' | 'request' | 'reply' | 'decision' | 'notice' | 'dataHub';
+export type MessageKind = 'question' | 'remark' | 'signal' | 'request' | 'reply' | 'decision' | 'closing' | 'notice' | 'dataHub';
 
 /** Who writes a Message: any User who may see its object, its Owner, the Data Team, or Data Hub itself. */
 export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
@@ -179,8 +179,8 @@ export function implicitParameters(type: Pick<MessageType, 'from' | 'kind'>): re
   return [
     ...subject,
     { name: 'writer', type: 'person', about: 'Who wrote it' },
-    // A Request may go without a word of its writer: its facts say what it asks (FR-LE-09).
-    { name: 'text', type: 'text', about: 'What they wrote', ...(type.kind === 'request' ? { optional: true } : {}) },
+    // A Request may go without a word of its writer: its facts say what it asks (FR-LE-09); so may a closing (FR-CV-16).
+    { name: 'text', type: 'text', about: 'What they wrote', ...(type.kind === 'request' || type.kind === 'closing' ? { optional: true } : {}) },
   ];
 }
 
