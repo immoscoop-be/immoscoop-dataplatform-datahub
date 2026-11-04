@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 183 | 54 (10 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 184 | 54 (10 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
@@ -292,7 +292,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CH-03](functional/13-channels.md#fr-ch-03) | Claude works through the MCP of Data Hub only | Proposed | – | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-CH-04](functional/13-channels.md#fr-ch-04) | Documentation built into the interface and the MCP | Proposed | – | – | – | – |
 | [FR-CH-05](functional/13-channels.md#fr-ch-05) | Every feature updates the documentation | Proposed | – | – | – | – |
-| [FR-CH-06](functional/13-channels.md#fr-ch-06) | Charts, the gallery of semgraph | Implemented | – | [charts](../design/screens/charts.html) | [TR-PF-34](technical/00-platform.md#tr-pf-34) | [7bc2e5b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7bc2e5b7134a21596f8c22d11198f0d9b5665d64) refs, 2026-11-04<br>[a0857a5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0857a5bf8167336958df25328fe5c499112e52d) implements, 2026-11-04<br>[8ffa20f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8ffa20fa23d830d7828e0277f7da08bd0778d8a3) refs, 2026-11-04<br>[2d345c8](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2d345c8d56964c5118989972780b21d337ce46f4) refs, 2026-11-04 |
+| [FR-CH-06](functional/13-channels.md#fr-ch-06) | Charts, the gallery of semgraph | Implemented | – | [charts](../design/screens/charts.html) | [TR-PF-34](technical/00-platform.md#tr-pf-34) | [b8705b6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b8705b6fec1b0e8a9cf67f4fa7100f2ffd8e6932) implements, 2026-11-04<br>[7bc2e5b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7bc2e5b7134a21596f8c22d11198f0d9b5665d64) refs, 2026-11-04<br>[a0857a5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a0857a5bf8167336958df25328fe5c499112e52d) implements, 2026-11-04<br>[8ffa20f](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8ffa20fa23d830d7828e0277f7da08bd0778d8a3) refs, 2026-11-04<br>[2d345c8](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2d345c8d56964c5118989972780b21d337ce46f4) refs, 2026-11-04 |
 
 ### [Conversations](functional/14-conversations.md)
 
