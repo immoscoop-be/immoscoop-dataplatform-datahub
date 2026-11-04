@@ -185,7 +185,8 @@
   .seg:hover { color: var(--text-primary); }
   .seg.on { color: var(--text-primary); font-weight: var(--weight-medium); background: var(--card); }
   .chart-figure { margin: 0; }
-  .chart-figure img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); }
+  /* At the size semgraph draws it, centred: never stretched, only smaller on a narrower card (DEC-UX-183). */
+  .chart-figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: var(--radius-sm); }
   .chart-figure figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
   .chart-figure figcaption :global(.icon) { font-size: 13px; }
   .drawing { aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--tint-hover); display: flex; align-items: center; justify-content: center; }
