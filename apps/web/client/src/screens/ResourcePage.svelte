@@ -12,7 +12,8 @@
   import MessagesButton from './MessagesButton.svelte';
   import { cardsOf } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
-  import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import type { CardChanges, Catalogue, Collection, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import type { Conversation } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
@@ -54,6 +55,7 @@
     onchange,
     onrun,
     messages,
+    threads,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -72,6 +74,8 @@
     onrun?: () => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
     messages?: { count: number | null; href: string };
+    /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
+    threads?: readonly Conversation[];
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -175,7 +179,7 @@
     related = await catalogue.related(updated.id).catch(() => related);
   }
 
-  async function saveCard(changes: Partial<Card>): Promise<boolean> {
+  async function saveCard(changes: CardChanges): Promise<boolean> {
     try {
       await changed(await catalogue.editResource(resource.id, changes));
       return true;
@@ -184,6 +188,23 @@
       return false;
     }
   }
+
+  /** Adds, changes or removes one Known Gap, then shows the Resource as it is now; its Log follows (FR-RC-21). */
+  async function gap(step: () => Promise<unknown>): Promise<boolean> {
+    try {
+      await step();
+      void changed(await catalogue.resource(resource.id));
+      return true;
+    } catch (error) {
+      console.error(`A Known Gap of ${resource.displayName} could not be changed`, error);
+      return false;
+    }
+  }
+  const gaps = {
+    add: (text: string) => gap(() => catalogue.addGap(resource.id, text)),
+    change: (known: KnownGap, text: string) => gap(() => catalogue.changeGap(resource.id, known.id, text)),
+    remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
+  };
 
   async function saveFields(fields: { name: string; businessDescription: string }[]): Promise<boolean> {
     try {
@@ -314,7 +335,7 @@
 
 <Tabs label={resource.displayName} current={tab} tabs={tabs.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'overview'}
-    <ResourceOverview {resource} log={entries} {related} {storage} {canEdit} onsave={saveCard} />
+    <ResourceOverview {resource} log={entries} {related} {storage} {threads} messagesHref={messages?.href} {canEdit} onsave={saveCard} {gaps} oncolumns={() => (tab = 'columns')} />
   {:else if tab === 'columns'}
     <ResourceColumns {resource} {canEdit} relate={dataTeam && resource.collectionId !== null} onsave={saveFields} onrelate={() => (relating = true)} />
   {:else if tab === 'lineage'}
