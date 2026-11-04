@@ -325,7 +325,7 @@ The page loads nothing from another address: Poppins and the Phosphor icons are 
 <a id="tr-pf-34"></a>
 ### TR-PF-34 · Charts reads semgraph in the browser
 
-**Status:** Specified · **Realises:** [FR-CH-06](../functional/13-channels.md#fr-ch-06), [DEC-PF-23](#dec-pf-23), [DEC-PF-24](#dec-pf-24)
+**Status:** Implemented · **Realises:** [FR-CH-06](../functional/13-channels.md#fr-ch-06), [DEC-PF-23](#dec-pf-23), [DEC-PF-24](#dec-pf-24)
 
 The page of the web app calls semgraph itself, without Access Token, as any page may ([TR-PF-31](#tr-pf-31)): `GET /semgraphs` for the charts of the panel and those only planned, `GET /semgraphs/{id}` for the chart opened, both with `?locale=` in the language of the User, and `GET /semgraphs/{id}/examples/{name}?theme=` for the example shown, in the theme of the page. A drawing shows as a picture, and the icons are pictures too, so nothing of semgraph runs in the page. For this, semgraph:
 

@@ -1,3 +1,4 @@
+import { FIRST_CHART } from './charts.js';
 import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
@@ -39,6 +40,8 @@ export type Route =
   | { readonly kind: 'learningSee'; readonly id: string; readonly section: Section }
   /** A tool of Admin, for the Data Team (DEC-UX-130). */
   | { readonly kind: 'admin'; readonly tool: AdminTool; readonly section: Section }
+  /** A chart of semgraph, in Charts, its gallery (FR-CH-06). */
+  | { readonly kind: 'chart'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -66,6 +69,8 @@ export const learningPath = (number: string): string => `/learning/${encodeURICo
 /** See it of a Learning Card, on its own (FR-LR-29). */
 export const seePath = (number: string): string => `${learningPath(number)}/see`;
 export const MESSAGES = '/messages';
+/** A chart in Charts, by the id semgraph gives it (FR-CH-06). */
+export const chartPath = (id: string): string => `/charts/${encodeURIComponent(id)}`;
 /** A Message opened in the Message Centre. */
 export const messagePath = (id: string): string => `${MESSAGES}/${encodeURIComponent(id)}`;
 /** The page of an object a Message is on (FR-CV-02). */
@@ -105,6 +110,19 @@ export function route(path: string): Route {
   const tool = ADMIN_TOOLS.find((candidate) => candidate.path === clean);
   if (admin && tool) {
     return { kind: 'admin', tool: tool.id, section: admin };
+  }
+  // Charts opens on its first chart (DEC-UX-182).
+  const charts = SECTIONS.find((candidate) => candidate.id === 'charts');
+  if (charts && clean === charts.path) {
+    return { kind: 'redirect', to: chartPath(FIRST_CHART) };
+  }
+  const [, chart] = /^\/charts\/([^/]+)$/.exec(clean) ?? [];
+  if (charts && chart) {
+    try {
+      return { kind: 'chart', id: decodeURIComponent(chart), section: charts };
+    } catch {
+      return { kind: 'notFound' };
+    }
   }
   const section = SECTIONS.find((candidate) => candidate.path === clean);
   if (section) {
