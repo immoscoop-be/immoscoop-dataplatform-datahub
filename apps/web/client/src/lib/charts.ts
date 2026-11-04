@@ -41,9 +41,12 @@ export interface Chart extends ListedChart {
   examples: ExampleLink[];
 }
 
-/** An example as semgraph drew it: a picture, with its deviations and cautions; refused, with the code of why; or not at all. */
+/**
+ * An example as semgraph drew it: its SVG, to place in the page so that its hover and metadata panels work
+ * (DEC-UX-184), with its deviations and cautions; refused, with the code of why; or not at all.
+ */
 export type Drawing =
-  | { readonly kind: 'drawn'; readonly src: string; readonly deviations: readonly string[]; readonly cautions: readonly string[] }
+  | { readonly kind: 'drawn'; readonly svg: string; readonly deviations: readonly string[]; readonly cautions: readonly string[] }
   | { readonly kind: 'refused'; readonly code: string }
   | { readonly kind: 'failed' };
 
@@ -103,6 +106,40 @@ export function exampleLabel(name: string): string {
   return words.charAt(0).toUpperCase() + words.slice(1);
 }
 
+/** What could run in the page, which a drawing of semgraph never needs: it is left out. */
+const NOT_IN_A_DRAWING = 'script, foreignObject, iframe, object, embed, link, meta, base';
+
+/**
+ * The SVG semgraph drew, made fit to place in the page (DEC-UX-184, TR-PF-34): parsed in an inert template, so
+ * that nothing loads or runs and the policy of the page is not asked; without anything that could run, events or a
+ * link that is not a web address; its styles with the nonce of the page, which allows no other inline style; and its
+ * links, to a Learning Card, in a new tab. Its CSS holds only classes of semgraph and it has no ids, so it changes
+ * nothing else on the page (semgraph, notes for consumers). Undefined when it is no SVG.
+ */
+export function placeable(text: string, nonce: string | undefined, owner: Document = document): string | undefined {
+  const template = owner.createElement('template');
+  template.innerHTML = text;
+  const svg = [...template.content.children].find((child) => child.localName === 'svg');
+  if (!svg) return undefined;
+  for (const element of svg.querySelectorAll(NOT_IN_A_DRAWING)) element.remove();
+  for (const element of [svg, ...svg.querySelectorAll('*')]) {
+    for (const attribute of [...element.attributes]) {
+      const name = attribute.name.toLowerCase();
+      if (name.startsWith('on')) element.removeAttribute(attribute.name);
+      else if ((name === 'href' || name === 'xlink:href') && !/^(https?:|#)/i.test(attribute.value.trim())) element.removeAttribute(attribute.name);
+    }
+  }
+  for (const style of svg.querySelectorAll('style')) {
+    if (nonce) style.setAttribute('nonce', nonce);
+    else style.remove();
+  }
+  for (const link of svg.querySelectorAll('a')) {
+    link.setAttribute('target', '_blank');
+    link.setAttribute('rel', 'noopener noreferrer');
+  }
+  return svg.outerHTML;
+}
+
 /** The locale of semgraph for the language of the User. */
 function localeOf(language: Language): string {
   return language === 'nl' ? 'nl-BE' : 'en';
@@ -124,7 +161,7 @@ export interface Charts {
   iconUrl(id: string): string;
 }
 
-export function createCharts(config: Pick<Config, 'semgraphUrl'>, request: typeof fetch = (input, init) => fetch(input, init)): Charts {
+export function createCharts(config: Pick<Config, 'semgraphUrl' | 'styleNonce'>, request: typeof fetch = (input, init) => fetch(input, init)): Charts {
   const at = (path: string) => new URL(path, config.semgraphUrl).href;
   const read = async (path: string): Promise<Response> => {
     const response = await request(at(path));
@@ -171,13 +208,12 @@ export function createCharts(config: Pick<Config, 'semgraphUrl'>, request: typeo
           return { kind: 'failed' };
         }
         const codes = (header: string) => (response.headers.get(header) ?? '').split(',').map((code) => code.trim()).filter(Boolean);
-        // A picture: nothing of semgraph runs in the page.
-        return {
-          kind: 'drawn',
-          src: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(await response.text())}`,
-          deviations: codes('semgraph-deviations'),
-          cautions: codes('semgraph-cautions'),
-        };
+        const svg = placeable(await response.text(), config.styleNonce);
+        if (!svg) {
+          console.error(`semgraph drew ${id}/${example} as no SVG`);
+          return { kind: 'failed' };
+        }
+        return { kind: 'drawn', svg, deviations: codes('semgraph-deviations'), cautions: codes('semgraph-cautions') };
       } catch (error) {
         console.error('semgraph did not answer', error);
         return { kind: 'failed' };

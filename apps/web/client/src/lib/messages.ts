@@ -24,6 +24,8 @@ export const STATE_TEXTS: Readonly<Record<string, string>> = {
   broken: 'messages.state.broken',
   worksAgain: 'messages.state.worksAgain',
   closed: 'messages.state.closed',
+  // A Request on a Lens that was deleted (FR-LE-18).
+  withdrawn: 'messages.state.withdrawn',
 };
 /** The kinds it filters on: what a person writes, and what Data Hub tells. */
 export type FilterKind = 'question' | 'remark' | 'signal' | 'request' | 'dataHub';

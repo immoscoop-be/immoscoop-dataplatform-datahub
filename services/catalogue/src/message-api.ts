@@ -273,6 +273,26 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     return reply.code(204).send();
   });
 
+  // query deleted a Lens (FR-LE-18): who deleted it, why, and who ran it lately, to tell them (MSG-LEN-06).
+  app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/deleted', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const input = (request.body ?? {}) as { name?: unknown; actor?: { id?: unknown; name?: unknown }; reason?: unknown; users?: unknown };
+    const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+    if (!UUID.test(request.params.id) || !text(input.name, 200) || !text(input.actor?.id, 128) || !text(input.actor?.name, 200)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A deleted Lens by its ID, with its name and who deleted it, by ID and name.' });
+    }
+    if (typeof input.reason !== 'string' || input.reason.length > 500) return reply.code(400).send({ error: 'invalid_request', message: 'Why it was deleted is a text of at most 500 characters.' });
+    if (!Array.isArray(input.users) || input.users.length > 5000 || !input.users.every((id) => text(id, 128) && !String(id).includes(','))) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Who ran it lately are Users, by their IDs.' });
+    }
+    const told = await messages.lensDeleted(request.params.id.toLowerCase(), {
+      name: input.name as string,
+      actor: { id: input.actor?.id as string, name: input.actor?.name as string },
+      reason: input.reason,
+      users: [...new Set(input.users as string[])],
+    });
+    return reply.code(201).send({ message: told });
+  });
+
   // The Request Data Hub sends when a Lens grew into very large and stopped (MSG-LEN-03, DEC-LE-11).
   app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/requests', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
     const input = (request.body ?? {}) as Record<string, unknown>;

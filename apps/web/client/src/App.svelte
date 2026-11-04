@@ -18,9 +18,9 @@
   import { initialsOf } from './lib/initials.js';
   import { type OpenedFrom, provideLearning } from './lib/learning-context.js';
   import { type Card, cardsIn, createLearning, drawExample, LEVELS, type LevelId, type Progress, type Step, suggestedLevels, topicOf, writtenCards } from './lib/learning.js';
-  import { createQuery, type Lens, type LensItem, type Run } from './lib/query.js';
+  import { createQuery, type DeletedLens, type Lens, LensDeleted, type LensItem, type Run } from './lib/query.js';
   import { createRegistry } from './lib/registry.js';
-  import { lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
+  import { collectionPath, lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
   import { ADMIN_TOOLS, SECTIONS, sectionFor, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
@@ -41,6 +41,7 @@
   import LearningStart from './screens/LearningStart.svelte';
   import LearningWindow from './screens/LearningWindow.svelte';
   import LensNew from './screens/LensNew.svelte';
+  import LensGone from './screens/LensGone.svelte';
   import LensPage from './screens/LensPage.svelte';
   import MessageCentre from './screens/MessageCentre.svelte';
   import MessagesPanel from './screens/MessagesPanel.svelte';
@@ -92,7 +93,8 @@
   /** The Lenses the User sees, for the panel of Collections and the page of a Collection (FR-CO-28, FR-CO-36). */
   let lenses: readonly LensItem[] | undefined = $state();
   /** The Lens whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
-  let openedLens: { id: string; lens?: Lens | null } | undefined = $state();
+  /** The Lens whose page or Edit is open: undefined while it comes, null when there is none; a deleted one says how (FR-LE-18). */
+  let openedLens: { id: string; lens?: Lens | null; deleted?: DeletedLens } | undefined = $state();
   /** The Resource whose page is open: undefined while it comes, null when it does not exist or may not be seen. */
   let opened: { id: string; resource?: ResourceDetail | null; log?: readonly LogEntry[] } | undefined = $state();
   /** How many conversations for the User moved since they read them, on Messages in the rail (FR-CV-06). */
@@ -395,7 +397,8 @@
       (lens) => openedLens?.id === id && (openedLens = { id, lens }),
       (error: unknown) => {
         if (openedLens?.id !== id) return;
-        if (error instanceof Missing) openedLens = { id, lens: null };
+        if (error instanceof LensDeleted) openedLens = { id, lens: null, deleted: error.lens };
+        else if (error instanceof Missing) openedLens = { id, lens: null };
         else console.error(`The Lens ${id} could not be read`, error);
       },
     );
@@ -497,6 +500,13 @@
   /** "Messages" in the head of the page, with their number once they are read. */
   const messagesButton = $derived(talkedAbout ? { count: onObject?.messages?.length ?? null, href: messagesOnPath(talkedAbout) } : undefined);
 
+  /** After a Lens is deleted: the panels lose it, and its Collection opens (FR-LE-18). */
+  function deleted(lens: { id: string; collectionId: string }): void {
+    openedLens = undefined;
+    refresh();
+    refreshQueries();
+    router.go(collectionPath(lens.collectionId));
+  }
   /** After a Lens is made, edited or updated from its query: the panels show it, and its page opens. */
   async function made(lens: Lens): Promise<void> {
     openedLens = { id: lens.id, lens };
@@ -800,6 +810,9 @@
             router.go(queryPath(id));
           }}
         />
+      {:else if openedLens?.deleted}
+        {@const gone = openedLens.deleted}
+        <LensGone lens={gone} collection={collections?.find((collection) => collection.id === gone.collectionId)} messages={messagesButton} />
       {:else if openedLens?.lens === null}
         <NotFound />
       {:else}
@@ -818,6 +831,7 @@
             {dataTeam}
             loadGroups={() => identity.groups()}
             onmade={made}
+            ondeleted={deleted}
           />
         {/key}
       {:else if openedLens?.lens !== undefined}

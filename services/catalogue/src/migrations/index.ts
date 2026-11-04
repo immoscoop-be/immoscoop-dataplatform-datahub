@@ -19,6 +19,7 @@ import * as folderDescriptions from './0017-folder-descriptions.js';
 import * as knownGaps from './0018-known-gaps.js';
 import * as knownGapScope from './0019-known-gap-scope.js';
 import * as gapPeriodWithoutField from './0020-gap-period-without-field.js';
+import * as lensDeleted from './0021-lens-deleted.js';
 
 /** The migrations of catalogue, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -42,4 +43,5 @@ export const migrations: Record<string, Migration> = {
   '0018-known-gaps': knownGaps,
   '0019-known-gap-scope': knownGapScope,
   '0020-gap-period-without-field': gapPeriodWithoutField,
+  '0021-lens-deleted': lensDeleted,
 };

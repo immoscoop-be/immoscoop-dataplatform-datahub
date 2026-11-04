@@ -288,6 +288,11 @@ export const LOG_CATALOGUE = {
     parameters: ['actor', 'conversation', 'reason'],
     text: { en: 'Request refused by {actor}', nl: 'Aanvraag geweigerd door {actor}' },
   },
+  'LEN-003': {
+    about: 'output',
+    parameters: ['actor', 'reason'],
+    text: { en: 'Deleted by {actor}', nl: 'Verwijderd door {actor}' },
+  },
 } as const satisfies Record<string, LogType>;
 
 export type LogId = keyof typeof LOG_CATALOGUE;

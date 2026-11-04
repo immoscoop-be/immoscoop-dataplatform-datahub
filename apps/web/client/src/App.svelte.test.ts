@@ -625,7 +625,7 @@ function serve({
     }
     // query, as it keeps the Lenses: made from a query, seen and run as the User may (TR-LE-01).
     if (path === '/lenses' && method === 'GET') {
-      return json({ lenses: lenses.map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
+      return json({ lenses: lenses.filter((candidate) => !candidate.gone).map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
     }
     if (path === '/lenses' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; collectionId: string; steps: string[] };
@@ -676,6 +676,14 @@ function serve({
       return json({ exact: offered.filter((item) => item.exact), more: offered.filter((item) => !item.exact) });
     }
     const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
+    // Deleted, for good: its address says so to whoever saw it (FR-LE-18).
+    if (lens && path === `/lenses/${lens.id as string}` && method === 'DELETE') {
+      lens.gone = { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: (JSON.parse(init.body as string) as { reason: string }).reason };
+      return json({ lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId }, told: lens.usedBy ?? 0 });
+    }
+    if (lens?.gone && path === `/lenses/${lens.id as string}`) {
+      return json({ error: 'deleted', message: 'This Lens was deleted.', lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId, deleted: lens.gone } }, 410);
+    }
     if (lens && path === `/lenses/${lens.id as string}` && method === 'PATCH') {
       const { labels: _labels, ...changes } = JSON.parse(init.body as string) as Record<string, unknown>;
       Object.assign(lens, changes);
@@ -2764,6 +2772,44 @@ describe('Lenses', () => {
     expect(main.getByRole('link', { name: 'Meer bewerken' }).getAttribute('href')).toBe('/lenses/l1/edit');
   });
 
+  it('deletes a Lens from its Edit: a small button under Save opens a sheet that says what it does (FR-LE-18, DEC-UX-185)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS, usedBy: 4 }] });
+    open('/lenses/l1/edit');
+    render(App, { config: CONFIG });
+    const edit = within(await screen.findByRole('main'));
+    await fireEvent.click(await edit.findByRole('button', { name: 'Deze lens verwijderen…' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    expect(sheet.getByText('Leads per source, week by week')).toBeTruthy();
+    expect(sheet.getByText('4 collega’s gebruikten hem de voorbije 30 dagen,')).toBeTruthy();
+    // "Behouden" closes it without deleting.
+    await fireEvent.click(sheet.getByRole('button', { name: 'Behouden' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+
+    await fireEvent.click(edit.getByRole('button', { name: 'Deze lens verwijderen…' }));
+    const again = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    await fireEvent.input(again.getByRole('textbox', { name: 'Waarom je hem verwijdert · optioneel' }), { target: { value: ' Replaced by the weekly lens. ' } });
+    await fireEvent.click(again.getByRole('button', { name: 'Voorgoed verwijderen' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/lenses/l1', body: { reason: 'Replaced by the weekly lens.' } });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('says at the address of a deleted Lens that it was deleted, by whom, when and why, and runs nothing (FR-LE-18)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS, gone: { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: 'Replaced by the weekly lens' } }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const gone = within(await screen.findByRole('main'));
+    expect(await gone.findByText('Deze Lens werd verwijderd')).toBeTruthy();
+    expect(gone.getByRole('heading', { level: 1, name: /Leads per source, week by week$/ })).toBeTruthy();
+    expect(gone.getByText(/door Max Verstraete op 4 nov\.? 2026: Replaced by the weekly lens\. Hij draait niet meer, ook niet in Excel\./)).toBeTruthy();
+    // The breadcrumb and a button lead to its Collection.
+    expect(gone.getAllByRole('link', { name: 'Credit leads' }).map((link) => link.getAttribute('href'))).toEqual(['/collections/c1', '/collections/c1']);
+    expect(gone.queryByRole('button', { name: /Run/ })).toBeNull();
+    // It is listed nowhere.
+    expect(within(screen.getByRole('complementary', { name: /Collections/ })).queryByText('Leads per source, week by week')).toBeNull();
+  });
+
   it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {
     const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
     open('/lenses/l1');
@@ -3098,12 +3144,13 @@ describe('Charts, the gallery of semgraph', () => {
     expect(within(main).getByText('Grafieken · In de tijd')).toBeTruthy();
     expect(within(main).getByText('movingWindowAverage')).toBeTruthy();
     expect(within(main).getByText('Hoe evolueert dit, zonder dagelijkse ruis?')).toBeTruthy();
-    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, as a picture.
+    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, its SVG in the page (DEC-UX-184).
     const examples = within(main).getByRole('tablist', { name: 'Voorbeelden' });
     expect(within(examples).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Basic', 'Long horizon', 'Window 10', 'Unique without aggregation']);
     expect(within(examples).getByRole('tab', { name: 'Basic' }).getAttribute('aria-selected')).toBe('true');
-    const picture = await within(main).findByRole('img', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
-    expect(picture.getAttribute('src')).toMatch(/^data:image\/svg\+xml;charset=utf-8,.*basic/);
+    const drawing = await within(main).findByRole('group', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
+    expect(drawing.querySelector('svg > title')?.textContent).toBe('basic');
+    expect(drawing.querySelector('img')).toBeNull();
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=light');
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs?locale=nl-BE');
     // Beside it: the questions it is for, what to use instead, what it needs and where a User meets it.
@@ -3119,7 +3166,7 @@ describe('Charts, the gallery of semgraph', () => {
     open('/charts/movingWindowAverage');
     render(App, { config: CONFIG });
     const main = await screen.findByRole('main');
-    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
     expect(within(main).queryByText('Getekend, met een waarschuwing')).toBeNull();
     await fireEvent.click(within(main).getByRole('tab', { name: 'Window 10' }));
     expect(await within(main).findByText('Getekend, met een waarschuwing')).toBeTruthy();
@@ -3127,7 +3174,7 @@ describe('Charts, the gallery of semgraph', () => {
     expect(await within(main).findByText('semgraph weigert deze')).toBeTruthy();
     expect(within(main).getByText('uniqueAggregationRequired')).toBeTruthy();
     expect(within(main).getByText('Geweigerd')).toBeTruthy();
-    expect(within(main).queryByRole('img', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
+    expect(within(main).queryByRole('group', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
     // Another chart, from the panel: its first example, drawn with a caution in red; the one only in a size is not listed.
     await fireEvent.click(screen.getByRole('link', { name: 'KPI-tegel' }));
     expect(await within(main).findByText('Getekend, met een kanttekening in het rood')).toBeTruthy();
@@ -3141,7 +3188,7 @@ describe('Charts, the gallery of semgraph', () => {
     open('/charts/movingWindowAverage');
     render(App, { config: CONFIG });
     const main = await screen.findByRole('main');
-    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
     expect(within(main).getByText('Charts · Over time')).toBeTruthy();
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage?locale=en');
     await fireEvent.click(screen.getByRole('button', { name: 'Switch to dark' }));

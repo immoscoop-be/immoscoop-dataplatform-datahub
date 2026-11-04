@@ -58,6 +58,7 @@ const KIND_TYPES: Record<FilterKind, string[]> = {
 const TO_OWNER = idsWhere((type) => type.to.includes('owner'));
 const TO_DATA_TEAM = idsWhere((type) => type.to.includes('dataTeam'));
 const TO_AUTHOR = idsWhere((type) => type.to.includes('author'));
+const TO_LENS_USERS = idsWhere((type) => type.to.includes('lensUsers'));
 
 /** How a writer stands to the object of their Message, shown next to their name. */
 export type Standing = 'owner' | 'dataTeam' | null;
@@ -187,6 +188,11 @@ export interface Messages {
   worksAgain(subject: { kind: 'query' | 'lens'; id: string }): Promise<{ id: string } | null>;
   /** Keeps what query tells about a Lens. */
   keepLens(id: string, facts: LensFacts): Promise<void>;
+  /**
+   * A Lens query deleted (FR-LE-18): kept as deleted, so that the Messages on it still show; out of its folder; a
+   * Request on it that waits withdrawn; and MSG-LEN-06 on it, for the Users who ran it lately.
+   */
+  lensDeleted(lensId: string, fields: { name: string; actor: { id: string; name: string }; reason: string; users: string[] }): Promise<{ id: string }>;
   /** What identity tells about the Excel key of a User: it expires within a month, or the Data Team revoked it (FR-PL-03). */
   keyNotice(notice: KeyNotice): Promise<{ id: string }>;
 }
@@ -268,6 +274,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'lens' and m.subject_id = any(${list(sight.authoredLenses)}))
       or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'excelKey' and m.params->>'user' = ${me})
+      or (m.type = any(${list(TO_LENS_USERS)}) and ${me} = any(string_to_array(m.params->>'users', ',')))
     )`;
   }
 
@@ -304,7 +311,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     const lensIds = ids('lens').filter((id) => uuid.test(id));
     const [resources, lenses] = await Promise.all([
       resourceIds.length ? from.selectFrom('resources').select(['id', 'displayName', 'collectionId']).where('id', 'in', resourceIds).execute() : [],
-      lensIds.length ? from.selectFrom('lenses').select(['id', 'name', 'collectionId']).where('id', 'in', lensIds).execute() : [],
+      lensIds.length ? from.selectFrom('lenses').select(['id', 'name', 'collectionId', 'state']).where('id', 'in', lensIds).execute() : [],
     ]);
     const collectionIds = [
       ...new Set([...ids('collection').filter((id) => uuid.test(id)), ...resources.flatMap((row) => (row.collectionId ? [row.collectionId] : [])), ...lenses.map((row) => row.collectionId)]),
@@ -331,7 +338,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         }
         case 'lens': {
           const lens = lensMap.get(row.subjectId);
-          return { kind: 'lens', id: row.subjectId, name: lens?.name ?? fallback, collection: inCollection(lens?.collectionId ?? null), exists: !!lens };
+          // A deleted Lens keeps its Messages, marked as no longer there (FR-LE-18).
+          return { kind: 'lens', id: row.subjectId, name: lens?.name ?? fallback, collection: inCollection(lens?.collectionId ?? null), exists: !!lens && lens.state !== 'deleted' };
         }
         case 'learningCard': {
           // Named by its number and its title, as the plan has them; the Data Team writes it (FR-LR-06).
@@ -750,6 +758,25 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         .values({ type: notice.type, subjectKind: 'excelKey', subjectId: notice.keyId, writerId: null, params, state: null })
         .returning('id')
         .executeTakeFirstOrThrow();
+    },
+
+    async lensDeleted(lensId, { name, actor, reason, users }) {
+      return db.transaction().execute(async (trx) => {
+        const now = new Date();
+        await trx.updateTable('lenses').set({ state: 'deleted', updatedAt: now }).where('id', '=', lensId).execute();
+        await trx.deleteFrom('folderPlaces').where('kind', '=', 'lens').where('itemId', '=', lensId).execute();
+        // A Request on it that still waits has nothing left to decide (DEC-LE-21).
+        await trx
+          .updateTable('messages')
+          .set({ state: 'withdrawn', lastAt: now, updatedAt: now })
+          .where('subjectKind', '=', 'lens')
+          .where('subjectId', '=', lensId)
+          .where('type', 'in', ['MSG-LEN-01', 'MSG-LEN-03'])
+          .where('state', '=', 'waiting')
+          .execute();
+        const params: Record<string, string> = { subject: name, actor: actor.name, actorId: actor.id, reason, users: users.filter((id) => id !== actor.id).join(',') };
+        return trx.insertInto('messages').values({ type: 'MSG-LEN-06', subjectKind: 'lens', subjectId: lensId, writerId: null, params, state: null }).returning('id').executeTakeFirstOrThrow();
+      });
     },
 
     async keepLens(id, facts) {

@@ -75,7 +75,8 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
 
   // The page loads scripts, styles, fonts and pictures only from its own address, and charts from
   // semgraph; the grain over a flowing background is a small picture in its stylesheet. The editor of
-  // Query adds its own styles, allowed by a nonce new for every page. It talks only to its own server,
+  // Query adds its own styles, and so do the drawings of semgraph placed in Charts (DEC-UX-184), allowed by a
+  // nonce new for every page. It talks only to its own server,
   // identity, catalogue, registry, query and semgraph.
   const policy = (nonce: string) => [
     "default-src 'self'",

@@ -1107,6 +1107,43 @@ describe.skipIf(!url)('the routes of Collections', () => {
       expect((await dirk('GET', `/messages/on/lens/${lens}`)).json().messages[0].subject.name).toBe('Leads per source name');
     });
 
+    it('keeps a deleted Lens for its Messages, out of its folder, withdraws its Request and tells who used it lately (FR-LE-18, MSG-LEN-06)', async () => {
+      const an = await user('Ann', [CREDIT]);
+      const bert = await user('Bert', [BROKERS]);
+      const cas = await user('Cas', [BROKERS]);
+      const dirk = await user('Dirk', [], ['datateam']);
+      const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
+      const lens = '6c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      await fromQuery('PUT', `/internal/lenses/${lens}`, { name: 'Leads to delete', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Ann', authorName: 'Ann' });
+      const folder = (await an('POST', `/collections/${talk.id}/folders`, { name: 'Old lenses' })).json().id;
+      expect((await an('PUT', `/collections/${talk.id}/places/lens/${lens}`, { folderId: folder })).statusCode).toBe(204);
+      const signal = (await bert('POST', '/messages', { subjectKind: 'lens', subjectId: lens, kind: 'signal', text: 'Zero since Monday.' })).json().message;
+      const request = (await an('POST', '/requests', { type: 'MSG-LEN-01', subjectId: lens, subject: 'Leads to delete', reads: 6_200_000_000, threshold: 1_000_000_000, text: '' })).json().request;
+
+      const body = { name: 'Leads to delete', actor: { id: 'u-Ann', name: 'Ann' }, reason: 'Replaced by the weekly lens.', users: ['u-Bert', 'u-Ann', 'u-Bert'] };
+      expect((await an('POST', `/internal/lenses/${lens}/deleted`, body)).statusCode).toBe(401);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/deleted`, { ...body, users: ['a,b'] })).statusCode).toBe(400);
+      expect((await fromQuery('POST', `/internal/lenses/${lens}/deleted`, { ...body, reason: 'x'.repeat(501) })).statusCode).toBe(400);
+      const deleted = await fromQuery('POST', `/internal/lenses/${lens}/deleted`, body);
+      expect(deleted.statusCode).toBe(201);
+      const notice = deleted.json().message.id;
+
+      // Bert, who ran it lately, finds Data Hub's Message for him; who deleted it is never among those told.
+      const forBert = (await bert('GET', '/messages?view=forYou')).json().messages;
+      expect(forBert.find((message: { id: string }) => message.id === notice)).toMatchObject({
+        type: 'MSG-LEN-06',
+        writer: null,
+        params: { actor: 'Ann', reason: 'Replaced by the weekly lens.', users: 'u-Bert' },
+        subject: { kind: 'lens', name: 'Leads to delete', exists: false },
+      });
+      expect((await cas('GET', '/messages?view=forYou')).json().messages.map((message: { id: string }) => message.id)).not.toContain(notice);
+      // The Messages on it stay for whoever saw it, the Lens marked as no longer there.
+      expect((await cas('GET', `/messages/${signal.id}`)).json().message.subject).toMatchObject({ name: 'Leads to delete', exists: false });
+      // Its waiting Request is withdrawn; it is in no folder any more.
+      expect((await dirk('GET', `/messages/${request.id}`)).json().message.state).toBe('withdrawn');
+      expect((await an('GET', `/collections/${talk.id}`)).json().lensFolders).toEqual({});
+    });
+
     it('lets the Data Team decide on a Request: on a query here, on a Lens through query (FR-CV-08, MSG-CNV-05)', async () => {
       const karel = await user('Karel', [DIGIKOM]);
       const mia = await user('Mia', [DIGIKOM]);

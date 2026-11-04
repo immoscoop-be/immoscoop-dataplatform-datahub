@@ -994,8 +994,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen (DEC-LE-05).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused'],
-      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer. It waits until the Data Team decides (DEC-LE-15).',
+      states: ['waiting', 'accepted', 'refused', 'withdrawn'],
+      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer. It waits until the Data Team decides (DEC-LE-15), or until the Lens is deleted, which withdraws it (FR-LE-18).',
     },
     example: {
       writer: 'Mia Peeters',
@@ -1090,7 +1090,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'As for a Request by its author (MSG-LEN-01): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run (DEC-LE-11).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused'],
+      states: ['waiting', 'accepted', 'refused', 'withdrawn'],
       done: 'The decision is its reply (MSG-CNV-05), which notifies the author of the Lens.',
     },
     example: { subject: 'Leads per source name', reads: 1_400_000_000, threshold: 1_000_000_000, partitions: 104, partitionsTotal: 104 },
@@ -1190,6 +1190,53 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When the Lens runs again, because what was missing exists again or its query changed it, Data Hub closes the Message itself: it shows since when the Lens works, and that notifies its Owner Unit.',
     },
     example: { subject: 'Leads per source name', since: '2026-10-28', count: 1, missing: [{ kind: 'column', resource: 'Weekly lead volume', column: 'lead_channel' }] },
+  },
+
+  {
+    id: 'MSG-LEN-06',
+    title: 'A Lens was deleted',
+    kind: 'dataHub',
+    subjects: ['lens'],
+    from: 'dataHub',
+    to: ['lensUsers'],
+    when: 'Its Owner Unit or the Data Team deletes a Lens, with Delete on its Edit (FR-LE-18).',
+    per: 'One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it.',
+    status: 'Implemented',
+    sources: ['FR-LE-18', 'DEC-LE-21'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who deleted it' },
+      { name: 'reason', type: 'text', about: 'Why, as they wrote it', optional: true },
+    ],
+    text: {
+      nl: {
+        plain: lines('{actor} verwijderde de lens {subject}. Hij draait niet meer, ook niet in Excel.', '“{reason}”'),
+        rich: lines(
+          '**{actor} verwijderde de lens {subject}**',
+          '',
+          '> {reason}',
+          '',
+          'Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.',
+        ),
+      },
+      en: {
+        plain: lines('{actor} deleted the lens {subject}. It no longer runs, also not in Excel.', '“{reason}”'),
+        rich: lines(
+          '**{actor} deleted the lens {subject}**',
+          '',
+          '> {reason}',
+          '',
+          'It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'Finding a Lens that answers your question, and when to write your own query', nearest: { number: 'K5.1', title: 'What a resource is' }, why: 'Who used the Lens needs another way to their answer.' },
+    action: {
+      asks: 'nothing',
+      what: 'Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.',
+      buttons: [{ label: { nl: 'Collectie openen', en: 'Open the collection' }, opens: 'The Collection the Lens was in' }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Leads per source name', actor: 'Mia Peeters', reason: 'Replaced by the lens Leads per source, week by week.' },
   },
 
   // Queries

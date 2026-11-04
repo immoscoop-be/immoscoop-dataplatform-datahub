@@ -18,7 +18,7 @@
   /** How a writer stands to the object, by its name: Owner, Data Team. */
   export const STANDING_NAMES = { owner: 'Owner', dataTeam: 'Data Team' } as const;
 
-  /** The states a Message shows, with their icons: open, answered; waiting, accepted, refused; broken, works again. */
+  /** The states a Message shows, with their icons: open, answered; waiting, accepted, refused, withdrawn; broken, works again. */
   export const STATE_ICONS: Record<string, IconName> = {
     open: 'circle',
     answered: 'check-circle',
@@ -27,6 +27,7 @@
     refused: 'x-circle',
     broken: 'warning-circle-fill',
     worksAgain: 'check-circle',
+    withdrawn: 'prohibit-fill',
     closed: 'minus-circle',
   };
 </script>

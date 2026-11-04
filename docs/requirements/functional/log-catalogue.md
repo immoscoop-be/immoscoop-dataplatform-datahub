@@ -26,6 +26,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-31, while building the Changes downstream: `ART-014` and `ART-015` are new, for a model upstream that is removed or added ([EC-AR-04](01-artifact-registry.md#ec-ar-04)), and `ART-010` and `ART-012` name the model they happened in when it is upstream of the Resource ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).*
 
+*Changed on 2026-11-04: `LEN-003` is new: a Lens deleted by its Owner Unit or the Data Team, with why, in its Log ([FR-LE-18](09-lenses.md#fr-le-18)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -80,5 +82,6 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `BRK-002` | Works again: {restored} exists again | Werkt weer: {restored} bestaat weer | restored, run |
 | `LEN-001` | Request accepted by {actor} | Aanvraag aanvaard door {actor} | actor, conversation |
 | `LEN-002` | Request refused by {actor} | Aanvraag geweigerd door {actor} | actor, conversation, reason |
+| `LEN-003` | Deleted by {actor} | Verwijderd door {actor} | actor, reason |
 
 <!-- End of the generated table. -->

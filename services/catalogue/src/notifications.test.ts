@@ -301,6 +301,22 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mails[1]?.html).toContain('Je krijgt dit als auteur van deze Lens.');
   });
 
+  it('tells who ran a deleted Lens lately, each by their own address, never who deleted it (MSG-LEN-06, FR-LE-18)', async () => {
+    const lens = '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d';
+    await messages.keepLens(lens, { name: 'Leads per day', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
+    await messages.lensDeleted(lens, { name: 'Leads per day', actor: { id: 'u-an', name: 'An Claes' }, reason: 'Replaced by the weekly lens.', users: ['u-karel', 'u-dirk', 'u-an'] });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([
+      ['karel@immoscoop.be', 'An Claes verwijderde de lens Leads per day. Hij draait niet meer, ook niet in Excel.'],
+      ['dirk@immoscoop.be', 'An Claes verwijderde de lens Leads per day. Hij draait niet meer, ook niet in Excel.'],
+    ]);
+    expect(mails[0]?.html).toContain('Replaced by the weekly lens.');
+    expect(mails[0]?.html).toContain('Je krijgt dit omdat je deze lens de voorbije 30 dagen gebruikte.');
+    // Its link goes to the Message itself: the Lens is no longer there.
+    expect(mails[0]?.html).toContain('https://web.test/messages/');
+    expect(slacked.map((sent) => sent.email)).not.toContain('an@immoscoop.be');
+  });
+
   it('sends what a request wrote before it answers, and lets only the scheduler start a round', async () => {
     const issuer = await createTestIssuer();
     const scheduler: ServiceCallerVerifier = {

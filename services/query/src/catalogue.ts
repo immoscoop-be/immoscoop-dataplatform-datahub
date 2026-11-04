@@ -38,8 +38,8 @@ export interface QueryRequest {
   writerId: string;
   reads: number;
   text: string;
-  /** It waits until the Data Team answers it in the Message Centre (DEC-SR-36). */
-  state: 'waiting' | 'accepted' | 'refused';
+  /** It waits until the Data Team answers it in the Message Centre (DEC-SR-36), or its Lens is deleted (FR-LE-18). */
+  state: 'waiting' | 'accepted' | 'refused' | 'withdrawn';
   /** The decision of the Data Team, its reply (MSG-CNV-05). */
   decision: { outcome: 'accepted' | 'refused'; text: string; writerName: string; at: string } | null;
   createdAt: string;
@@ -80,6 +80,11 @@ export interface Catalogue {
   broken(subject: { kind: 'query'; id: string; name: string; ownerId: string } | { kind: 'lens'; id: string }, fields: BrokenMessage): Promise<void>;
   /** Tells them it works again, in the same Message (MSG-QRY-02, MSG-LEN-05). */
   worksAgain(subject: { kind: 'query' | 'lens'; id: string }): Promise<void>;
+  /**
+   * A Lens was deleted, as query itself (FR-LE-18): catalogue keeps it as deleted for the Messages on it, takes it out of
+   * its folder, withdraws a Request on it that waits, and tells the Users who ran it lately (MSG-LEN-06).
+   */
+  lensDeleted(lensId: string, fields: { name: string; actor: { id: string; name: string }; reason: string; users: string[] }): Promise<void>;
 }
 
 /** What a Message on a Broken query or Lens names: the day it was found and what no longer exists (FR-SR-52). */
@@ -185,6 +190,10 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
 
     async worksAgain(subject) {
       await asQuery('POST', `/internal/${subject.kind === 'query' ? 'queries' : 'lenses'}/${subject.id}/works`, {});
+    },
+
+    async lensDeleted(lensId, fields) {
+      await asQuery('POST', `/internal/lenses/${lensId}/deleted`, fields);
     },
 
     async requests(subjectId, authorization, subjectKind = 'query') {
