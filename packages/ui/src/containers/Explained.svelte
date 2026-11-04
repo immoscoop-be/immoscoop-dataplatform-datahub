@@ -1,6 +1,7 @@
 <script lang="ts">
   import { setContext, type Snippet } from 'svelte';
   import { EXPLAINED } from './explained.js';
+  import { portal } from '../foundations/portal.js';
 
   /**
    * A system text, chip or button that the Learning Centre explains, with its pop-out (Explain on rest, Pop-out,
@@ -85,12 +86,6 @@
     clearTimeout(resting);
     clearTimeout(leaving);
   });
-
-  /** The bubble hangs on the page itself, so that nothing around what it explains cuts it off. */
-  function portal(node: HTMLElement): () => void {
-    document.body.appendChild(node);
-    return () => node.remove();
-  }
 
   const keyboard = (target: EventTarget | null) => {
     try {
