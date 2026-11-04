@@ -100,9 +100,9 @@ The table `messages` in the schema of catalogue holds every Message: its type, a
 
 **Status:** Implemented · **Realises:** [FR-RC-15](../functional/05-resource-card.md#fr-rc-15), [FR-RC-01](../functional/05-resource-card.md#fr-rc-01), [FR-RC-16](../functional/05-resource-card.md#fr-rc-16), [FR-SR-28](../functional/04-stacks-and-resources.md#fr-sr-28), [DEC-MR-10](../functional/06-maturity-and-release.md#dec-mr-10)
 
-The table `resources` keeps what the Owner and the Data Team write about a Resource, next to what comes from dbt: its Business Description, intended use and pitfalls, its Known Gaps as a list, since when its data is reliable as a day, and its key fields and Parameters as lists of its fields. `field_descriptions` keeps the Business Description of each field by its name, apart from `resource_fields`, which every call of registry rewrites, so a field that comes back finds its text again.
+The table `resources` keeps what the Owner and the Data Team write about a Resource, next to what comes from dbt: its Business Description in Markdown, intended use and pitfalls, since when its data is reliable as a day, and its key fields and Parameters as lists of its fields. `field_descriptions` keeps the Business Description of each field by its name, apart from `resource_fields`, which every call of registry rewrites, so a field that comes back finds its text again.
 
-`GET /resources/{id}` gives them with the Resource: the card, and each field with its Business Description next to its description from dbt. `PATCH /resources/{id}` changes any of the card, and `PUT /resources/{id}/fields` the Business Descriptions of fields, an empty one removing it. Both are for the Owner Unit of its Collection and the Data Team, once the Resource is in a Collection (`409 no_collection` before); a key field or Parameter must be a field of the Resource. A Business Description is written from 2 · Described on (`409 not_described`, [DEC-MR-10](../functional/06-maturity-and-release.md#dec-mr-10)). Every change goes into the Log of the Resource by whoever made it: `RES-005` per part of the card that changed, `RES-010` per field.
+Its Known Gaps are kept one by one ([TR-SR-25](#tr-sr-25)). `GET /resources/{id}` gives them with the Resource: the card, and each field with its Business Description next to its description from dbt. `PATCH /resources/{id}` changes any of the card, and `PUT /resources/{id}/fields` the Business Descriptions of fields, an empty one removing it. Both are for the Owner Unit of its Collection and the Data Team, once the Resource is in a Collection (`409 no_collection` before); a key field or Parameter must be a field of the Resource. A Business Description is written from 2 · Described on (`409 not_described`, [DEC-MR-10](../functional/06-maturity-and-release.md#dec-mr-10)). Every change goes into the Log of the Resource by whoever made it: `RES-005` per part of the card that changed, `RES-010` per field.
 
 `PUT /resources/{id}/details`, for the Data Team, records the grain, storage and mappings again as adding does ([TR-CO-05](03-collections.md#tr-co-05)), for Edit relations ([DEC-UX-107](../../design/principles.md#dec-ux-107)), with `RES-009`. `GET /resources/{id}/related` gives each mapping of the Resource with the other Resources the User sees that carry the same identity, and the field that carries it ([FR-RC-09](../functional/05-resource-card.md#fr-rc-09)).
 
@@ -236,6 +236,24 @@ Each time one becomes Broken, query asks catalogue, as itself, to tell who made 
 **Status:** Implemented · **Realises:** [FR-CL-22](../functional/17-claude.md#fr-cl-22), [DEC-CL-11](../functional/17-claude.md#dec-cl-11), [DEC-CL-15](../functional/17-claude.md#dec-cl-15)
 
 identity gives an MCP client, and only Claude's callbacks may register one ([TR-PF-06](00-platform.md#tr-pf-06)), Access Tokens with the claim `client: "claude"`, at sign-in and at every renewal; the web app's have none. query reads it with the User: a query made with such a token keeps `through = 'claude'` (migration `0010-through-claude`), and so does each run made with one, in the Query Log. A query keeps its mark once its User goes on in Query; a run says how it ran. Previews and the queries of the runs of a Lens are kept per User, so only their runs are marked. `GET /queries`, `GET /queries/{id}`, its runs and `GET /resources/{id}/queries` give `through`, `null` for the web app.
+
+<a id="tr-sr-25"></a>
+### TR-SR-25 · Known Gaps are kept one by one, with who added them
+
+**Status:** Implemented · **Realises:** [FR-RC-21](../functional/05-resource-card.md#fr-rc-21), [FR-RC-04](../functional/05-resource-card.md#fr-rc-04)
+
+The table `known_gaps` keeps each Known Gap of a Resource as a row of its own: its text, of 1 to 1000 characters, who added it by ID and name, and when (migration `0018-known-gaps`, which moved the list that `resources` kept, each gap without who added it). A Resource has at most 50; they come in the order they were added. `GET /resources/{id}` gives them in its card as `knownGaps`, each with `id`, `text`, `addedBy` and `addedAt`.
+
+`POST /resources/{id}/gaps` adds one (`201`, with the gap), `PATCH /resources/{id}/gaps/{gapId}` changes its text and keeps who added it, and `DELETE /resources/{id}/gaps/{gapId}` removes it (`204`); each for the Owner Unit of its Collection and the Data Team, as the rest of the card ([TR-SR-10](#tr-sr-10)), and each in the Log by whoever did it: `RES-011` added, `RES-012` changed, `RES-013` removed, with the text of the gap. `PATCH /resources/{id}` still takes `knownGaps` as a list of texts, as the MCP sends it: catalogue compares it with the gaps it keeps, so a gap whose text stays keeps who added it, and logs each gap added or removed.
+
+<a id="tr-sr-26"></a>
+### TR-SR-26 · One Summary of a Resource, for the web app and for Claude
+
+**Status:** Implemented · **Realises:** [FR-RC-19](../functional/05-resource-card.md#fr-rc-19), [FR-RC-22](../functional/05-resource-card.md#fr-rc-22), [FR-CL-25](../functional/17-claude.md#fr-cl-25), [DEC-RC-17](../functional/05-resource-card.md#dec-rc-17), [DEC-RC-18](../functional/05-resource-card.md#dec-rc-18)
+
+`@datahub/contracts/summary` holds the Summary once: its parts in their order, each with its weight and the part of the Overview it comes from (`SUMMARY`), the four weights and what each asks of a reader (`WEIGHTS`, `WEIGHT_MEANS`), and `curate`, which splits the threads on a Resource into its curated Q&A and what colleagues noted. A thread is part of the Q&A once a writer whose `params.as` is `owner` or `dataTeam` started it or replied in it; an open Signal always is, and comes first. Messages of Data Hub itself and Requests are no part of it.
+
+The web app builds its Summary from the Resource, its Log, what it relates to, its size from query and the Messages on it, as the page already has them ([web](../../architecture/services/web.md)). The MCP builds the same parts, in the same order, as Markdown for `get_resource`: it reads the Resource, the Messages on it, its Log and what it relates to, and a piece that does not come leaves out its part, never the Summary ([mcp](../../architecture/services/mcp.md)).
 
 ## Open points
 

@@ -224,28 +224,28 @@ Wherever Data Hub shows or hands over the description of a Resource or of a fiel
 <a id="fr-rc-19"></a>
 ### FR-RC-19 · The Summary of a Resource
 
-**Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Overview of a Resource opens on its Summary: everything Data Hub knows about it on one page, in the order to read it, each part with its weight and a way to the part itself ([DEC-RC-17](#dec-rc-17)). A deprecation comes first; a part with nothing in it is left out. It is the general instruction on the Resource, for people and for Claude, who reads the same Summary ([FR-CL-25](17-claude.md#fr-cl-25)).
 
 <a id="fr-rc-20"></a>
 ### FR-RC-20 · The Business Description in Markdown
 
-**Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Owner and the Data Team write the Business Description of a Resource in Markdown, in the Markdown editor of Data Hub, next to the description from dbt ([DEC-RC-16](#dec-rc-16)). Data Hub shows it rendered, on the Overview and in the Summary, and hands it to Claude as Markdown. A Business Description written before is read as Markdown too; plain text stays plain text.
 
 <a id="fr-rc-21"></a>
 ### FR-RC-21 · Known Gaps one by one, with who added them
 
-**Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 Every Known Gap of a Resource ([FR-RC-04](#fr-rc-04)) is an item of its own, in plain text, with who added it and when. The Owner and the Data Team add one, change one or remove one at a time, without editing the others; each change goes into the Log. A Known Gap recorded before keeps its text, without anyone who added it.
 
 <a id="fr-rc-22"></a>
 ### FR-RC-22 · A curated Q&A from the Messages on a Resource
 
-**Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)) its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good, with its open Signals; and the threads they have not touched yet, as Context ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, whether it is open or answered, and the answer of the Owner or the Data Team. Reading the whole thread and replying stay in the Messages on the Resource.
 

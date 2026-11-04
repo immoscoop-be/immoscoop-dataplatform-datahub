@@ -384,7 +384,7 @@ A query made through Claude, and every run through Claude of a query or a Previe
 <a id="fr-cl-25"></a>
 ### FR-CL-25 · Claude reads the Summary of a Resource
 
-**Status:** Specified · **Source:** Max, 2026-11-04
+**Status:** Implemented · **Source:** Max, 2026-11-04
 
 `get_resource` gives Claude the Summary of the Resource ([FR-RC-19](05-resource-card.md#fr-rc-19)): its parts in the order of the Summary, each with its weight and what that weight asks of Claude ([DEC-RC-17](05-resource-card.md#dec-rc-17)). Read first holds in every answer about the Resource; Before you query decides how Claude writes its SQL; When interpreting results decides what Claude says a result means; Context is background. It holds the Business Description as Markdown and the curated Q&A of the Owner and the Data Team ([FR-RC-22](05-resource-card.md#fr-rc-22)), and leaves out a part with nothing in it, as the page does. The fields of every column stay as [FR-CL-07](#fr-cl-07) lists them.
 
