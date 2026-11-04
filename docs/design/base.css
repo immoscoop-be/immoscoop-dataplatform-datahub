@@ -1009,6 +1009,24 @@ button.lc-opt { width: 100%; border: 0; background: none; font: inherit; font-si
   .lc-pane:not([hidden]) .lc-cheer .pop { transform-box: fill-box; transform-origin: center; animation: lc-pop var(--motion-cheer) var(--delay-cheer) both; }
   @keyframes lc-pop { from { transform: scale(.2); opacity: 0; } }
 }
+/* See it with a picture of people (a proposal, OP-LR-35): the same small cast in every card, Phosphor's user icon,
+   the person who makes the point in magenta, everyone else in teal ink, an empty day as a dot; under it the sums as bars */
+.lc-see-left { display: grid; gap: 12px; min-width: 0; }
+.lc-picture svg { display: block; }
+.lc-sums { display: grid; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--tint-hover); }
+.lc-sum { display: grid; grid-template-columns: 190px minmax(0, 1fr) 80px; align-items: center; gap: 10px; font-size: var(--text-small); }
+.lc-sum-label { color: var(--text-secondary); }
+.lc-sum-bar { display: flex; height: 18px; }
+.lc-sum-bar > span { display: block; height: 100%; border-radius: 3px; }
+.lc-sum-again { box-sizing: border-box; border: 1.5px dashed var(--col-magenta); color: var(--col-magenta); font-size: 11px; line-height: 15px; padding-left: 6px; white-space: nowrap; overflow: hidden; }
+.lc-sum b { font-weight: var(--weight-medium); text-align: right; }
+.lc-scale { padding: 12px 16px 8px; }
+.lc-scale svg { max-height: 120px; }
+.lc-scale-title { color: var(--text-secondary); }
+/* See it drawn as on a whiteboard (a proposal): one ink, the point in magenta, a handwriting for what is written */
+.lc-board { background: var(--card); }
+.lc-board svg { display: block; }
+.wb-hand { font-family: 'Caveat', 'Comic Sans MS', cursive; font-weight: 600; }
 @media (max-width: 1100px) { .lc-see { grid-template-columns: minmax(0, 1fr); } }
 /* the same steps, smaller: in the floating window and in Claude */
 .lc-compact { --card: var(--surface-sub); }

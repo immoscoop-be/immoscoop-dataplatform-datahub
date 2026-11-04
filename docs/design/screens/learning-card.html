@@ -22,7 +22,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
 <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
 <link rel="stylesheet" href="../tokens.css">
@@ -251,7 +251,119 @@
 </div>
 </section>
 <section class="lc-pane" data-pane-group="step" data-pane="see" hidden aria-label="See it">
-<div class="lc-see">
+<!-- Proposals for See it: ?visual=people, a picture of people with Phosphor's icons; ?visual=both, that picture, then the chart at the scale of Data Hub; ?visual=board, the same picture drawn as on a whiteboard; ?visual=chart, as decided: the chart alone (DEC-LR-26). -->
+<div class="lc-see" data-pane-group="visual" data-pane="people both">
+ <div class="lc-see-left">
+ <figure class="lc-figure card lc-picture">
+  <svg viewBox="0 0 640 286" width="100%" role="img" aria-label="Four people visit in one week: Bob on Monday, Wednesday and Friday; Alice on Monday and Tuesday; Carl on Wednesday; Dana on Tuesday, Thursday and Sunday. The days added up count 9 visits; the week counts 4 people.">
+  <defs><symbol id="pp-user" viewBox="0 0 256 256"><path fill="currentColor" d="M230.93,220a8,8,0,0,1-6.93,4H32a8,8,0,0,1-6.92-12c15.23-26.33,38.7-45.21,66.09-54.16a72,72,0,1,1,73.66,0c27.39,8.95,50.86,27.83,66.09,54.16A8,8,0,0,1,230.93,220Z"/></symbol></defs>
+  <text x="0" y="18" font-size="13" fill="var(--text-secondary)">One week of visitors</text>
+  <text x="138" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Mon</text>
+  <text x="194" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Tue</text>
+  <text x="250" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Wed</text>
+  <text x="306" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Thu</text>
+  <text x="362" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Fri</text>
+  <text x="418" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Sat</text>
+  <text x="474" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">Sun</text>
+  <text x="585" y="50" font-size="12" fill="var(--text-muted)" text-anchor="middle">In the week</text>
+  <line x1="535" y1="36" x2="535" y2="262" stroke="var(--tint-active)" stroke-width="1"/>
+  <rect x="-4" y="63" width="535" height="38" rx="8" style="fill:color-mix(in srgb, var(--col-magenta) 9%, transparent)"/>
+  <use href="#pp-user" x="0" y="73" width="18" height="18" style="color:var(--col-magenta)"/>
+  <text x="26" y="87" font-size="13" fill="var(--text-primary)" font-weight="500">Bob</text>
+  <use href="#pp-user" x="126" y="70" width="24" height="24" style="color:var(--col-magenta)"/>
+  <circle cx="194" cy="82" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="238" y="70" width="24" height="24" style="color:var(--col-magenta)"/>
+  <circle cx="306" cy="82" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="350" y="70" width="24" height="24" style="color:var(--col-magenta)"/>
+  <circle cx="418" cy="82" r="3" fill="var(--tint-active)"/>
+  <circle cx="474" cy="82" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="573" y="70" width="24" height="24" style="color:var(--col-magenta)"/>
+  <text x="508" y="87" font-size="12" fill="var(--col-magenta)" text-anchor="end">3×</text>
+  <text x="605" y="87" font-size="12" fill="var(--col-magenta)">1×</text>
+  <use href="#pp-user" x="0" y="113" width="18" height="18" style="color:var(--col-teal-ink)"/>
+  <text x="26" y="127" font-size="13" fill="var(--text-primary)">Alice</text>
+  <use href="#pp-user" x="126" y="110" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <use href="#pp-user" x="182" y="110" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <circle cx="250" cy="122" r="3" fill="var(--tint-active)"/>
+  <circle cx="306" cy="122" r="3" fill="var(--tint-active)"/>
+  <circle cx="362" cy="122" r="3" fill="var(--tint-active)"/>
+  <circle cx="418" cy="122" r="3" fill="var(--tint-active)"/>
+  <circle cx="474" cy="122" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="573" y="110" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <use href="#pp-user" x="0" y="153" width="18" height="18" style="color:var(--col-teal-ink)"/>
+  <text x="26" y="167" font-size="13" fill="var(--text-primary)">Carl</text>
+  <circle cx="138" cy="162" r="3" fill="var(--tint-active)"/>
+  <circle cx="194" cy="162" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="238" y="150" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <circle cx="306" cy="162" r="3" fill="var(--tint-active)"/>
+  <circle cx="362" cy="162" r="3" fill="var(--tint-active)"/>
+  <circle cx="418" cy="162" r="3" fill="var(--tint-active)"/>
+  <circle cx="474" cy="162" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="573" y="150" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <use href="#pp-user" x="0" y="193" width="18" height="18" style="color:var(--col-teal-ink)"/>
+  <text x="26" y="207" font-size="13" fill="var(--text-primary)">Dana</text>
+  <circle cx="138" cy="202" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="182" y="190" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <circle cx="250" cy="202" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="294" y="190" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <circle cx="362" cy="202" r="3" fill="var(--tint-active)"/>
+  <circle cx="418" cy="202" r="3" fill="var(--tint-active)"/>
+  <use href="#pp-user" x="462" y="190" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <use href="#pp-user" x="573" y="190" width="24" height="24" style="color:var(--col-teal-ink)"/>
+  <line x1="0" y1="228" x2="640" y2="228" stroke="var(--tint-active)" stroke-width="1"/>
+  <text x="0" y="254" font-size="12.5" fill="var(--text-muted)">Visits per day</text>
+  <text x="138" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">2</text>
+  <text x="194" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">2</text>
+  <text x="250" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">2</text>
+  <text x="306" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">1</text>
+  <text x="362" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">1</text>
+  <text x="418" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">0</text>
+  <text x="474" y="254" font-size="14" fill="var(--text-primary)" text-anchor="middle">1</text>
+  <text x="585" y="254" font-size="14" font-weight="500" fill="var(--col-teal-ink)" text-anchor="middle">4 people</text>
+  </svg>
+  <div class="lc-sums" aria-hidden="true">
+   <div class="lc-sum"><span class="lc-sum-label">The seven days added up</span><span class="lc-sum-bar"><span style="width:44.4%;background:var(--tint-active)"></span><span class="lc-sum-again" style="width:55.6%">Bob and Dana again</span></span><b>9 visits</b></div>
+   <div class="lc-sum"><span class="lc-sum-label">Unique visitors in the week</span><span class="lc-sum-bar"><span style="width:44.4%;background:var(--col-teal)"></span></span><b>4 people</b></div>
+  </div>
+  <figcaption><span>Bob, Alice, Carl and Dana: the same four people in every card about counting people</span></figcaption>
+ </figure>
+ <div data-pane-group="visual" data-pane="both" hidden><figure class="lc-figure card lc-scale"><svg viewBox="0 0 640 170" width="100%" role="img" aria-label="The seven days of a week added up are 9,800; the unique visitors of that week are 6,100; the 3,700 between are visits of people who came back"><text x="0" y="18" font-size="13" fill="var(--text-secondary)">One week of visitors</text><text x="0" y="52" font-size="12.5" fill="var(--text-muted)">The seven days added up</text><rect x="0" y="60" width="520" height="26" rx="3" fill="var(--tint-active)"/><text x="530" y="78" font-size="13" fill="var(--text-muted)">9,800</text><text x="0" y="118" font-size="12.5" fill="var(--text-primary)">Unique visitors in the week</text><rect x="0" y="126" width="324" height="26" rx="3" fill="var(--col-teal-ink)"/><text x="334" y="144" font-size="13" font-weight="500" fill="var(--text-primary)">6,100</text><rect x="324" y="60" width="196" height="26" rx="3" fill="none" stroke="var(--col-magenta)" stroke-width="2" stroke-dasharray="4 3"/><text x="422" y="44" font-size="12" text-anchor="middle" fill="var(--col-magenta)" font-weight="500">3,700 counted again</text></svg><figcaption><span class="lc-scale-title">The same in Data Hub: Visitors per day, one week</span><span>Drawn by the Chart Server from the figures of this card</span><span>Placeholder figures</span></figcaption></figure></div>
+ </div>
+ <div class="lc-look">
+  <div class="lc-look-part"><div class="label"><i class="ph ph-eye" aria-hidden="true"></i>Look at</div><p>Bob's row: he came on three days, so each of those days counts him once.</p></div>
+  <div class="lc-look-part"><div class="label"><i class="ph ph-lightbulb" aria-hidden="true"></i>You see</div><p>Adding the days up counts Bob three times and Dana three times: 9 visits by only 4 people. The week counts each person once, so it is lower than the days together.</p></div>
+  <a class="text-link lc-video-link"><i class="ph ph-play-circle" aria-hidden="true"></i><span>Watch it in a video · 3:40</span></a>
+ </div>
+</div>
+<div class="lc-see" data-pane-group="visual" data-pane="board" hidden>
+ <figure class="lc-figure card lc-board">
+  <svg viewBox="0 0 640 380" width="100%" role="img" aria-label="Four people visit in one week: Bob on Monday, Wednesday and Friday; Alice on Monday and Tuesday; Carl on Wednesday; Dana on Tuesday, Thursday and Sunday. Added up over the days that is 9 visits; in the week it is 4 people.">
+  <defs><filter id="wb-rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="7"/><feDisplacementMap in="SourceGraphic" scale="2.4"/></filter></defs>
+  <text class="wb-hand" x="0" y="24" font-size="22" fill="var(--col-slate)">One week of visitors</text>
+  <text class="wb-hand" x="138" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Mon</text>
+  <text class="wb-hand" x="194" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Tue</text>
+  <text class="wb-hand" x="250" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Wed</text>
+  <text class="wb-hand" x="306" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Thu</text>
+  <text class="wb-hand" x="362" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Fri</text>
+  <text class="wb-hand" x="418" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Sat</text>
+  <text class="wb-hand" x="474" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">Sun</text>
+  <text class="wb-hand" x="590" y="56" font-size="17" fill="var(--col-slate)" text-anchor="middle">the week</text>
+  <g filter="url(#wb-rough)" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M542,40 C540,120 544,200 541,258" stroke="var(--col-slate)" stroke-width="1.4" opacity=".5"/><g transform="translate(14,86) scale(0.95)" stroke="var(--col-magenta)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="-2.6" cy="-6" r="2"/><circle cx="2.6" cy="-6" r="2"/><path d="M-0.6,-6 L0.6,-6"/></g><g transform="translate(138,86) scale(1.0)" stroke="var(--col-magenta)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="-2.6" cy="-6" r="2"/><circle cx="2.6" cy="-6" r="2"/><path d="M-0.6,-6 L0.6,-6"/></g><path d="M190,90 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(250,86) scale(1.0)" stroke="var(--col-magenta)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="-2.6" cy="-6" r="2"/><circle cx="2.6" cy="-6" r="2"/><path d="M-0.6,-6 L0.6,-6"/></g><path d="M302,90 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(362,86) scale(1.0)" stroke="var(--col-magenta)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="-2.6" cy="-6" r="2"/><circle cx="2.6" cy="-6" r="2"/><path d="M-0.6,-6 L0.6,-6"/></g><path d="M414,90 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M470,90 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(590,86) scale(1.0)" stroke="var(--col-magenta)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="-2.6" cy="-6" r="2"/><circle cx="2.6" cy="-6" r="2"/><path d="M-0.6,-6 L0.6,-6"/></g><g transform="translate(14,132) scale(0.95)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-6.8,-6 C-7,-15 7,-15 6.8,-6 M6.6,-7 C11,-3 10,4 6,5"/></g><g transform="translate(138,132) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-6.8,-6 C-7,-15 7,-15 6.8,-6 M6.6,-7 C11,-3 10,4 6,5"/></g><g transform="translate(194,132) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-6.8,-6 C-7,-15 7,-15 6.8,-6 M6.6,-7 C11,-3 10,4 6,5"/></g><path d="M246,136 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M302,136 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M358,136 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M414,136 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M470,136 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(590,132) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-6.8,-6 C-7,-15 7,-15 6.8,-6 M6.6,-7 C11,-3 10,4 6,5"/></g><g transform="translate(14,178) scale(0.95)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-7,-9 C-5,-15 5,-15 7,-9 Z M7,-9 L12,-8.5"/></g><path d="M134,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M190,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(250,178) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-7,-9 C-5,-15 5,-15 7,-9 Z M7,-9 L12,-8.5"/></g><path d="M302,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M358,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M414,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M470,182 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(590,178) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><path d="M-7,-9 C-5,-15 5,-15 7,-9 Z M7,-9 L12,-8.5"/></g><g transform="translate(14,224) scale(0.95)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="0" cy="-15" r="3"/></g><path d="M134,228 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(194,224) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="0" cy="-15" r="3"/></g><path d="M246,228 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(306,224) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="0" cy="-15" r="3"/></g><path d="M358,228 l8,-1" stroke="var(--col-slate)" opacity=".35"/><path d="M414,228 l8,-1" stroke="var(--col-slate)" opacity=".35"/><g transform="translate(474,224) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="0" cy="-15" r="3"/></g><g transform="translate(590,224) scale(1.0)" stroke="var(--col-slate)"><circle cx="0" cy="-6" r="6.5"/><path d="M-11,13 C-11,4 -6,1.5 0,1.5 C6,1.5 11,4 11,13"/><circle cx="0" cy="-15" r="3"/></g><path d="M118,62 C230,52 440,56 482,68 C502,80 490,108 410,110 C310,114 150,112 120,100 C106,90 112,66 140,60" stroke="var(--col-magenta)" stroke-width="1.6"/><path d="M568,64 C600,56 618,76 614,94 C610,112 572,114 566,94 C562,78 572,64 586,62" stroke="var(--col-magenta)" stroke-width="1.6"/><path d="M0,256 C150,252 400,258 640,254" stroke="var(--col-slate)" stroke-width="1.2" opacity=".5"/><path d="M250,288 l1.5,22" stroke="var(--col-magenta)"/><path d="M257,288 l1.5,22" stroke="var(--col-magenta)"/><path d="M264,288 l1.5,22" stroke="var(--col-magenta)"/><path d="M271,288 l1.5,22" stroke="var(--col-slate)"/><path d="M247,308 L281,290" stroke="var(--col-slate)"/><path d="M294,288 l1.5,22" stroke="var(--col-slate)"/><path d="M301,288 l1.5,22" stroke="var(--col-slate)"/><path d="M308,288 l1.5,22" stroke="var(--col-slate)"/><path d="M315,288 l1.5,22" stroke="var(--col-slate)"/><path d="M250,336 l1.5,22" stroke="var(--col-magenta)"/><path d="M257,336 l1.5,22" stroke="var(--col-slate)"/><path d="M264,336 l1.5,22" stroke="var(--col-slate)"/><path d="M271,336 l1.5,22" stroke="var(--col-slate)"/></g>
+  <text class="wb-hand" x="494" y="94" font-size="18" fill="var(--col-magenta)">3×</text>
+  <text class="wb-hand" x="620" y="94" font-size="18" fill="var(--col-magenta)">1×</text>
+  <text class="wb-hand" x="0" y="306" font-size="19" fill="var(--col-slate)">the 7 days added up</text>
+  <text class="wb-hand" x="390" y="306" font-size="22" fill="var(--col-slate)">= 9 visits</text>
+  <text class="wb-hand" x="0" y="354" font-size="19" fill="var(--col-slate)">the week</text>
+  <text class="wb-hand" x="390" y="354" font-size="22" fill="var(--col-slate)">= 4 people</text>
+  <text class="wb-hand" x="34" y="93" font-size="19" fill="var(--col-magenta)">Bob</text><text class="wb-hand" x="34" y="139" font-size="19" fill="var(--col-slate)">Alice</text><text class="wb-hand" x="34" y="185" font-size="19" fill="var(--col-slate)">Carl</text><text class="wb-hand" x="34" y="231" font-size="19" fill="var(--col-slate)">Dana</text></svg>
+  <figcaption><span>Bob, Alice, Carl and Dana: the same four people in every card about counting people. Placeholder doodles</span></figcaption>
+ </figure>
+ <div class="lc-look">
+  <div class="lc-look-part"><div class="label"><i class="ph ph-eye" aria-hidden="true"></i>Look at</div><p>Bob, circled: he came on three days, so the days count him three times.</p></div>
+  <div class="lc-look-part"><div class="label"><i class="ph ph-lightbulb" aria-hidden="true"></i>You see</div><p>Adding the days up counts Bob three times and Dana three times: 9 visits by only 4 people. The week counts each person once, so it is lower than the days together.</p></div>
+ </div>
+</div>
+<div class="lc-see" data-pane-group="visual" data-pane="chart" hidden>
  <figure class="lc-figure card"><svg viewBox="0 0 640 170" width="100%" role="img" aria-label="The seven days of a week added up are 9,800; the unique visitors of that week are 6,100; the 3,700 between are visits of people who came back"><text x="0" y="18" font-size="13" fill="var(--text-secondary)">One week of visitors</text><text x="0" y="52" font-size="12.5" fill="var(--text-muted)">The seven days added up</text><rect x="0" y="60" width="520" height="26" rx="3" fill="var(--tint-active)"/><text x="530" y="78" font-size="13" fill="var(--text-muted)">9,800</text><text x="0" y="118" font-size="12.5" fill="var(--text-primary)">Unique visitors in the week</text><rect x="0" y="126" width="324" height="26" rx="3" fill="var(--col-teal-ink)"/><text x="334" y="144" font-size="13" font-weight="500" fill="var(--text-primary)">6,100</text><rect x="324" y="60" width="196" height="26" rx="3" fill="none" stroke="var(--col-magenta)" stroke-width="2" stroke-dasharray="4 3"/><text x="422" y="44" font-size="12" text-anchor="middle" fill="var(--col-magenta)" font-weight="500">3,700 counted again</text></svg><figcaption><span>Drawn by the Chart Server from the figures of this card</span><span>Placeholder figures</span></figcaption></figure>
  <div class="lc-look">
   <div class="lc-look-part"><div class="label"><i class="ph ph-eye" aria-hidden="true"></i>Look at</div><p>the dashed part of the top bar: what the seven days count more than the week.</p></div>
@@ -319,6 +431,12 @@
 </div>
 <div class="sheet-foot"><p class="meta">Everyone who may see what it is about sees the Message, with the card.</p></div>
 </section>
+<div class="proto-switch" data-group="visual" role="tablist" aria-label="Prototype: the picture of See it" style="bottom:72px">See it
+ <button class="seg on" data-target="people" role="tab" aria-selected="true">Picture</button>
+ <button class="seg" data-target="both" role="tab" aria-selected="false">Picture and chart</button>
+ <button class="seg" data-target="board" role="tab" aria-selected="false">Whiteboard</button>
+ <button class="seg" data-target="chart" role="tab" aria-selected="false">Chart (today)</button>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
