@@ -1577,3 +1577,30 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .sum-warn { color: var(--signal-warn); }
 .sum-dep { background: color-mix(in srgb, var(--signal-warn) 9%, var(--surface-sub)); }
 .sum-dep .sum-n { font-size: 18px; color: var(--signal-warn); }
+
+/* Charts, the gallery of semgraph (a proposal): the charts in the panel by the question they answer, one opened on the
+   right with its examples and what it is for */
+.chart-list { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+.chart-icon { display: inline-flex; flex: none; color: var(--text-secondary); }
+.chart-item.on .chart-icon { color: var(--text-primary); }
+.chart-icon.big { width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--surface-sub); align-items: center; justify-content: center; }
+.chart-icon.big svg { width: 30px; height: 30px; }
+.chart-head { display: flex; align-items: center; gap: 14px; margin-top: 8px; }
+.chart-head .page-title { margin: 0; }
+.chart-answers { margin: 14px 0 18px; font-size: var(--text-section); line-height: 1.5; color: var(--text-secondary); }
+.chart-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(220px, 280px); gap: 16px; align-items: start; }
+.chart-stage { border-radius: var(--radius-lg); padding: 14px 16px 16px; }
+.chart-examples { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
+.chart-figure { margin: 0; }
+.chart-figure img { display: block; width: 100%; height: auto; border-radius: var(--radius-sm); }
+.chart-figure figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
+.chart-refused { display: flex; gap: 12px; align-items: flex-start; padding: 18px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
+.chart-refused > i { font-size: 20px; color: var(--text-muted); }
+.chart-refused p { margin: 4px 0 0; color: var(--text-secondary); }
+.chart-about { font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+.chart-about .label { margin: 0 0 6px; }
+.chart-about ul { margin: 0 0 16px; padding-left: 18px; }
+.chart-about p { margin: 0 0 16px; }
+.chart-about a { color: var(--text-primary); text-underline-offset: 3px; }
+html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .chart-figure .for-light { display: none; }
+@media (max-width: 1100px) { .chart-layout { grid-template-columns: minmax(0, 1fr); } }
