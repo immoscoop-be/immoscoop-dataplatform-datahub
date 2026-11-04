@@ -30,6 +30,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-12"></a>**DEC-CL-12** · The Data Team can list the queries of everyone through Claude, with who ran them and their SQL, as it can in Query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-13"></a>**DEC-CL-13** · The result of a query shows in an MCP App: the grid of Query, with "Open in Query". *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-15"></a>**DEC-CL-15** · A query made through Claude keeps the mark Claude, also once its User goes on with it in Query, and each run says how it ran: through Claude or in the web app. identity says so in the Access Tokens it gives Claude, so that every service can tell. *Decided on 2026-11-02, by Max ([OP-CL-10](#op-cl-10)), asking for the label Claude on the queries that come from Claude.*
+- <a id="dec-cl-16"></a>**DEC-CL-16** · Whenever Claude reads a Resource, with `get_resource` or `show_resource`, it gets the Summary of the Resource first, before the data of its card; and the MCP App of a Resource opens on that Summary, with Columns beside it, as the Overview opens on it in Data Hub. *Decided on 2026-11-04, by Max: "when I ask the MCP about a Resource, the MCP should receive the Summary of the Resource, as well as this Resource being made available in an MCP App".*
 
 ## Terms
 
@@ -225,7 +226,7 @@ Each tool that returns an object returns the address of its page in Data Hub, at
 
 `get_resource` gives Claude the Resource Card: its Display Name and Key, its Collection and Owner Unit, its Level and Publication; the description of the table and of every field, the Business Description and the one from dbt each marked with where it comes from ([FR-RC-18](05-resource-card.md#fr-rc-18)); the fields left out; its grain, its partition and cluster columns with a sentence on how to query it cheaply, and its size ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)); its intended use, pitfalls, Known Gaps and since when it is reliable; its key fields and Parameters; and the changes since its last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)). `show_resource` shows the same to the User as an MCP App, with its Overview and Columns.
 
-*Note of 2026-11-04: `get_resource` gives the Summary of the Resource, in its order and with its weights ([FR-CL-25](#fr-cl-25)).*
+*Note of 2026-11-04: `get_resource` gives the Summary of the Resource, in its order and with its weights ([FR-CL-25](#fr-cl-25)).* *Note of 2026-11-04: `show_resource` gives Claude the same Summary, and its MCP App opens on the Summary in place of the Overview ([FR-CL-26](#fr-cl-26)).*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -387,6 +388,20 @@ A query made through Claude, and every run through Claude of a query or a Previe
 **Status:** Implemented · **Source:** Max, 2026-11-04
 
 `get_resource` gives Claude the Summary of the Resource ([FR-RC-19](05-resource-card.md#fr-rc-19)): its parts in the order of the Summary, each with its weight and what that weight asks of Claude ([DEC-RC-17](05-resource-card.md#dec-rc-17)). Read first holds in every answer about the Resource; Before you query decides how Claude writes its SQL; When interpreting results decides what Claude says a result means; Context is background. It holds the Business Description as Markdown and the curated Q&A of the Owner and the Data Team ([FR-RC-22](05-resource-card.md#fr-rc-22)), and leaves out a part with nothing in it, as the page does. The fields of every column stay as [FR-CL-07](#fr-cl-07) lists them.
+
+<a id="fr-cl-26"></a>
+### FR-CL-26 · The Summary first, also when the Resource is shown
+
+**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-CL-16](#dec-cl-16)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html)
+
+`get_resource` and `show_resource` both give Claude the Summary of the Resource ([FR-CL-25](#fr-cl-25)) first: as the first text of the answer, and first in its data, before the card. The MCP App of `show_resource` opens on the Summary, every part in its order, numbered and with its weight, as the Overview of Data Hub shows it ([FR-RC-19](05-resource-card.md#fr-rc-19)), with Columns as its second tab; "Its fields" opens Columns, and "Open in Data Hub" stays at its foot ([FR-CL-06](#fr-cl-06)).
+
+<a id="fr-cl-27"></a>
+### FR-CL-27 · An MCP App fits a phone, and folds
+
+**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-UX-180](../../design/principles.md#dec-ux-180), [DEC-UX-181](../../design/principles.md#dec-ux-181)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
+
+Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it lays out its own width in one column, nothing in it is wider than its frame, a table of data scrolls in its own box, its tabs and buttons are at least 44 px high, and nothing is told only on hover. Every MCP App has a button at its top right that folds it to its head and unfolds it again.
 
 ## Edge cases
 
