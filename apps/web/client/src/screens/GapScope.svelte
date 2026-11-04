@@ -17,13 +17,13 @@
 
 {#if line}
   <span class="line">
-    {#if scope.period}<span>{spanOf(scope.period)} {t('gaps.on')} {@render name(scope.period.field)}</span>{/if}
+    {#if scope.period}<span>{spanOf(scope.period)}</span>{/if}
     {#if scope.fields?.length}<span>{t('gaps.fieldsWord')} {#each scope.fields as field, index (field)}{index > 0 ? ', ' : ''}{@render name(field)}{/each}</span>{/if}
     {#if scope.rows}<span>{@render name(scope.rows.field)} {scope.rows.is === 'empty' ? t('gaps.isEmpty') : `${t('gaps.is')} ${valuesOf(scope.rows.values)}`}</span>{/if}
   </span>
 {:else}
   <span class="chips">
-    {#if scope.period}<span class="chip"><Icon name="calendar-blank" /><span class="kind">{t('gaps.period')}</span> {spanOf(scope.period)} <span class="kind">{t('gaps.on')}</span> {@render name(scope.period.field)}</span>{/if}
+    {#if scope.period}<span class="chip"><Icon name="calendar-blank" /><span class="kind">{t('gaps.period')}</span> {spanOf(scope.period)}</span>{/if}
     {#if scope.fields?.length}<span class="chip"><Icon name="columns" /><span class="kind">{t('gaps.fields')}</span> {#each scope.fields as field, index (field)}{index > 0 ? ', ' : ''}{@render name(field)}{/each}</span>{/if}
     {#if scope.rows}<span class="chip"><Icon name="rows" /><span class="kind">{t('gaps.rows')}</span> {@render name(scope.rows.field)} <span class="kind">{scope.rows.is === 'empty' ? t('gaps.isEmpty') : t('gaps.is')}</span>{#if scope.rows.is === 'oneOf'}{' '}<span class="mono">{valuesOf(scope.rows.values)}</span>{/if}</span>{/if}
   </span>

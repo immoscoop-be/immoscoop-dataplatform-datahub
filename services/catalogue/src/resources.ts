@@ -1,4 +1,4 @@
-import { DATE_TYPES, fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
+import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
@@ -332,24 +332,15 @@ function gapOf(row: { id: string; text: string; scope: GapScope | null; addedByN
 }
 
 /**
- * Checks a scope against the fields of the Resource (FR-RC-24): every field it names is one of them, and a period lies
- * on a date. A field the gap named already stays allowed when it left the Resource since, so that its text can still be
- * changed (EC-RC-01). Returns the problem as a sentence when there is one.
+ * Checks a scope against the fields of the Resource (FR-RC-24): every field it names is one of them. A field the gap
+ * named already stays allowed when it left the Resource since, so that its text can still be changed (EC-RC-01). A
+ * period names no field (DEC-UX-178). Returns the problem as a sentence when there is one.
  */
 async function scopeProblem(from: Database, resourceId: string, scope: GapScope, before: GapScope | null): Promise<string | null> {
-  const fields = new Map((await from.selectFrom('resourceFields').select(['name', 'dataType']).where('resourceId', '=', resourceId).execute()).map((field) => [field.name, field.dataType]));
+  const fields = new Set((await from.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).execute()).map((field) => field.name));
   const kept = new Set(fieldsOf(before));
   const unknown = fieldsOf(scope).find((name) => !fields.has(name) && !kept.has(name));
-  if (unknown !== undefined) {
-    return `${unknown} is no field of this Resource.`;
-  }
-  if (scope.period && fields.has(scope.period.field)) {
-    const type = (fields.get(scope.period.field) ?? '').toUpperCase();
-    if (!DATE_TYPES.includes(type) && !(kept.has(scope.period.field) && before?.period?.field === scope.period.field)) {
-      return `A period lies on a date: ${scope.period.field} is ${type || 'of no known type'}.`;
-    }
-  }
-  return null;
+  return unknown === undefined ? null : `${unknown} is no field of this Resource.`;
 }
 
 /** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */

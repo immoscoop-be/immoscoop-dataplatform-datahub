@@ -17,7 +17,6 @@
   let {
     gaps,
     fields,
-    partition,
     canEdit,
     onadd,
     onchange,
@@ -26,8 +25,6 @@
     gaps: readonly KnownGap[];
     /** The fields of the Resource, to narrow a gap down by. */
     fields: readonly Field[];
-    /** Its partition field, for a period by default. */
-    partition: string | null;
     canEdit: boolean;
     /** Each answers whether it worked. */
     onadd: (text: string, scope: GapScope | null) => Promise<boolean>;
@@ -73,7 +70,6 @@
               text={gap.text}
               scope={gap.scope}
               {fields}
-              {partition}
               {busy}
               label={t('gaps.change')}
               saveLabel={t('collection.save')}
@@ -112,7 +108,7 @@
 {#if canEdit}
   {#if adding}
     <div class="adding">
-      <GapForm {fields} {partition} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={() => (adding = false)} />
+      <GapForm {fields} {busy} label={t('gaps.new')} saveLabel={t('gaps.add')} onsave={add} oncancel={() => (adding = false)} />
     </div>
   {:else}
     <button

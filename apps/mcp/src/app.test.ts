@@ -191,7 +191,7 @@ describe('Resources through Claude', () => {
   it('gives Claude the Summary first, in its order and with its weights, the Q&A of the Owner among them (FR-CL-25, DEC-RC-18)', async () => {
     answers[`GET ${CATALOGUE}/resources/${RESOURCE_ID}`] = () => [
       200,
-      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { field: 'week_start', from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: null, keyFields: [], parameters: [] } }),
+      detail({ card: { businessDescription: '### Leads\nCredit leads per **week**.', intendedUse: 'Weekly trends.', pitfalls: 'The current week is incomplete.', knownGaps: [{ id: '1', text: 'No partner leads before March.', scope: { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } }, addedBy: 'An', addedAt: '2026-11-01T10:00:00Z' }], reliableSince: null, keyFields: [], parameters: [] } }),
     ];
     answers[`GET ${CATALOGUE}/collections/c-1`] = () => [200, collection];
     const said = (kind: string, name: string, as: string | null, text: string, state: string | null, replies: object[] = []) => ({
@@ -219,7 +219,7 @@ describe('Resources through Claude', () => {
     expect(order.filter((heading) => !text.includes(heading))).toEqual([]);
     expect(text).toContain('Credit leads per **week**.');
     // A Known Gap with where it holds, as data (FR-RC-25).
-    expect(text).toContain('- No partner leads before March. [period: week_start until 2025-02-28; rows: lead_source = partner]');
+    expect(text).toContain('- No partner leads before March. [period: until 2025-02-28; rows: lead_source = partner]');
     expect(text).toContain('  - An, Owner, 2026-11-03: Every request counts.');
     expect(text).toMatch(/What colleagues noted \(context\)\n- Question, open, Jan, 2026-11-02: Per province\?/);
     // A part with nothing in it is left out.

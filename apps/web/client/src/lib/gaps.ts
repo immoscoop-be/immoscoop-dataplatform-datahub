@@ -21,10 +21,10 @@ export function valuesOf(values: readonly string[]): string {
   return new Intl.ListFormat(LOCALES[currentLanguage()], { type: 'disjunction' }).format(values);
 }
 
-/** The scope in one line of plain text, for a hover: "until 28 Feb 2025 on week_start · fields lead_channel · lead_source is app". */
+/** The scope in one line of plain text, for a hover: "until 28 Feb 2025 · fields lead_channel · lead_source is app". */
 export function scopeLine(scope: GapScope): string {
   const parts: string[] = [];
-  if (scope.period) parts.push(`${spanOf(scope.period)} ${t('gaps.on')} ${scope.period.field}`);
+  if (scope.period) parts.push(spanOf(scope.period));
   if (scope.fields && scope.fields.length > 0) parts.push(t('gaps.line.fields', { names: scope.fields.join(', ') }));
   if (scope.rows) parts.push(scope.rows.is === 'empty' ? t('gaps.line.empty', { field: scope.rows.field }) : t('gaps.line.rows', { field: scope.rows.field, values: valuesOf(scope.rows.values) }));
   return parts.join(' · ');

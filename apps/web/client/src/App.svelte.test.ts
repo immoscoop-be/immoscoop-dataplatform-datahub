@@ -1711,9 +1711,9 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
     const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
     await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
-    // A period lies on its partition by default, and needs a start, an end or both.
+    // A period is a from and a to, with no field of its own (DEC-UX-178); it needs a start, an end or both.
     await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
-    expect((form.getByRole('combobox', { name: 'Op het veld' }) as HTMLSelectElement).value).toBe('week_start');
+    expect(form.queryByRole('combobox', { name: 'Op het veld' })).toBeNull();
     expect(form.getByRole('status').textContent).toBe('Een periode heeft een begin, een einde of beide.');
     expect((form.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(form.getByLabelText('Tot'), { target: { value: '2024-02-29' } });
@@ -1733,11 +1733,12 @@ describe('the page of a Resource', () => {
     await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
     await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
     await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
-    const scope = { period: { field: 'week_start', from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    const scope = { period: { from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before March 2024.', scope } }));
     // On its line, where it holds as chips.
     const line = (await main.findByText('No partner leads before March 2024.')).closest('li')!;
-    expect(line.textContent).toContain('Periode tot 29 feb 2024 op week_start');
+    expect(line.textContent).toContain('Periode tot 29 feb 2024');
+    expect(line.textContent).not.toContain('week_start');
     expect(line.textContent).toContain('Velden lead_source');
     expect(line.textContent).toContain('Rijen lead_source is partner');
     // Changing it keeps its scope, and can take a kind away.
@@ -1751,12 +1752,14 @@ describe('the page of a Resource', () => {
     // In the Summary, as a line under its text.
     await fireEvent.click(main.getByRole('tab', { name: /^Samenvatting/ }));
     const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
-    expect((await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent).toContain('tot 29 feb 2024 op week_start');
+    const inSummary = (await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent;
+    expect(inSummary).toContain('tot 29 feb 2024');
+    expect(inSummary).not.toContain('week_start');
     // On the field it names, under Columns, with the way back to it.
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     const marker = main.getByRole('button', { name: 'Known Gap' });
     expect(marker.closest('tr')?.textContent).toContain('lead_source');
-    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 op week_start · velden lead_source)');
+    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 · velden lead_source)');
     await fireEvent.click(marker);
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });

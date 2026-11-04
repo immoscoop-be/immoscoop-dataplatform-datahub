@@ -629,16 +629,15 @@ describe.skipIf(!url)('the routes of Collections', () => {
       ]);
 
       // A gap narrowed down by a period, fields and rows, combined; checked against the fields of the Resource (FR-RC-24).
-      const scope = { period: { field: 'week', from: null, to: '2025-02-28' }, rows: { field: 'listing_id', is: 'oneOf', values: ['partner'] } };
+      const scope = { period: { from: null, to: '2025-02-28' }, rows: { field: 'listing_id', is: 'oneOf', values: ['partner'] } };
       const scoped = await an('POST', `/resources/${cards}/gaps`, { text: 'No partner cards before March 2025.', scope });
       expect(scoped.statusCode).toBe(201);
       expect(scoped.json().gap).toMatchObject({ text: 'No partner cards before March 2025.', scope });
       const scopedId = scoped.json().gap.id as string;
       expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { fields: ['nope'] } })).json().message).toBe('nope is no field of this Resource.');
-      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { field: 'listing_id', from: '2025-01-01', to: null } } })).json().message).toBe(
-        'A period lies on a date: listing_id is STRING.',
-      );
-      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { field: 'week', from: null, to: null } } })).statusCode).toBe(400);
+      // A period names no field of its own: Fields says which it concerns (DEC-UX-178).
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { field: 'week', from: '2025-01-01', to: null } } })).statusCode).toBe(400);
+      expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { period: { from: null, to: null } } })).statusCode).toBe(400);
       expect((await an('POST', `/resources/${cards}/gaps`, { text: 'X.', scope: { when: 'always' } })).statusCode).toBe(400);
       // A change without a scope keeps it; one with a scope changes it, into its Log; null makes it free text again.
       expect((await an('PATCH', `/resources/${cards}/gaps/${scopedId}`, { text: 'No partner cards before March 2025, at all.' })).json().gap.scope).toEqual(scope);
