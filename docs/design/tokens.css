@@ -125,8 +125,10 @@
   --glass-edge: rgba(255,255,255,.6);
   --glass-shadow: 0 30px 80px rgba(20,30,50,.14);
   --glass-story: rgba(255,255,255,.58);
-  /* A sheet over its page: the page dimmed behind it, the sheet lifted from it (Sheets) */
-  --sheet-backdrop: rgba(40,34,30,.28);
+  /* A sheet over the whole window: everything behind it dimmed deeply, the sheet lifted from it, up to half the
+     window wide (Sheets, DEC-UX-174) */
+  --sheet-backdrop: rgba(40,34,30,.5);
+  --sheet-width: 50vw;
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 
@@ -154,6 +156,6 @@
   --glass-edge: rgba(255,255,255,.12);
   --glass-shadow: 0 30px 80px rgba(0,0,0,.3);
   --glass-story: rgba(40,36,32,.6);
-  --sheet-backdrop: rgba(0,0,0,.4);
+  --sheet-backdrop: rgba(0,0,0,.62);
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.4);
 }
