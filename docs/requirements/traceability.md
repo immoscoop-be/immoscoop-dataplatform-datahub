@@ -9,14 +9,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 175 | 53 (9 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 176 | 53 (9 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
 | [User management](functional/02-user-management.md) | 11 (1 specified, 9 implemented, 1 withdrawn) | 4 (1 specified, 3 withdrawn) | 9 | 8 (2 open, 6 done) |
 | [Collections](functional/03-collections.md) | 42 (1 proposed, 37 implemented, 4 withdrawn) | 2 (2 specified) | 26 | 18 (1 open, 17 done) |
 | [Resources](functional/04-stacks-and-resources.md) | 54 (5 specified, 43 implemented, 6 withdrawn) | 4 (1 specified, 3 withdrawn) | 44 | 25 (4 open, 21 done) |
-| [Resource card](functional/05-resource-card.md) | 23 (3 proposed, 2 specified, 17 implemented, 1 withdrawn) | – | 19 | 27 (2 open, 25 done) |
+| [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 5 specified, 17 implemented, 1 withdrawn) | 1 (1 specified) | 20 | 27 (2 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 16 (4 specified, 7 implemented, 5 withdrawn) | – | 14 | 8 (3 open, 5 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (3 proposed, 3 implemented) | – | 7 | 7 (7 done) |
 | [Checks and monitoring](functional/08-checks-and-monitoring.md) | – | – | – | – |
@@ -216,6 +216,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-21](functional/05-resource-card.md#fr-rc-21) | Known Gaps one by one, with who added them | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | [TR-SR-25](technical/04-stacks-and-resources.md#tr-sr-25) | [a474dfd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a474dfd36a3cefb6575f2d384c0f5f8344c53459) implements, 2026-11-04<br>[18b9322](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/18b9322e86ddde41b9f274338bcfc7bcf99e274a) implements, 2026-11-04<br>[ae75a61](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ae75a61693fa141bc4130d517ee6bc082e285291) implements, 2026-11-04<br>[bc02476](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bc02476e4c1b8e53af47396e9c4a64f3704060cd) refs, 2026-11-04 |
 | [FR-RC-22](functional/05-resource-card.md#fr-rc-22) | A curated Q&A from the Messages on a Resource | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | [TR-SR-26](technical/04-stacks-and-resources.md#tr-sr-26) | [a474dfd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a474dfd36a3cefb6575f2d384c0f5f8344c53459) implements, 2026-11-04<br>[18b9322](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/18b9322e86ddde41b9f274338bcfc7bcf99e274a) implements, 2026-11-04<br>[85e0563](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/85e056302359f3df3e904f5de33ba9ec0f96e125) refs, 2026-11-04<br>[e92a7b9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e92a7b9d47e0f103b7ad886245379796764d19aa) refs, 2026-11-04<br>[bc02476](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bc02476e4c1b8e53af47396e9c4a64f3704060cd) refs, 2026-11-04 |
 | [FR-RC-23](functional/05-resource-card.md#fr-rc-23) | Intended use and pitfalls are written in Markdown | Implemented | – | [resource-overview](../design/screens/resource-overview.html) | – | [5f6ade1](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/5f6ade114ccb2067e6225ad7637ce93a7ae161af) implements, 2026-11-04<br>[58d1f94](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/58d1f9476abff62db312642188815e1de0f5e517) refs, 2026-11-04 |
+| [FR-RC-24](functional/05-resource-card.md#fr-rc-24) | A Known Gap may be narrowed down by a period, fields and rows | Specified | – | [resource-overview](../design/screens/resource-overview.html) | – | [c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
+| [FR-RC-25](functional/05-resource-card.md#fr-rc-25) | The Summary and Claude read the scope of a Known Gap | Specified | – | [resource-overview](../design/screens/resource-overview.html) | – | [c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
+| [FR-RC-26](functional/05-resource-card.md#fr-rc-26) | Columns marks a field a Known Gap names | Specified | – | [resource-detail](../design/screens/resource-detail.html) | – | [c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
+| [FR-RC-27](functional/05-resource-card.md#fr-rc-27) | A query that reads a Known Gap gets a warning | Proposed | – | – | – | [c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
 
 ### [Maturity and release](functional/06-maturity-and-release.md)
 
@@ -419,6 +423,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [EC-SR-03](functional/04-stacks-and-resources.md#ec-sr-03) | A view is renamed in BigQuery | Specified | – | – | – |
 | [EC-SR-04](functional/04-stacks-and-resources.md#ec-sr-04) | A second Stack is added | Withdrawn | – | [TR-PF-13](technical/00-platform.md#tr-pf-13) | – |
 
+### [Resource card](functional/05-resource-card.md)
+
+| ID | Title | Status | Screens | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [EC-RC-01](functional/05-resource-card.md#ec-rc-01) | A field that a Known Gap names leaves the Resource | Specified | – | – | [c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
+
 ### [Conversations](functional/14-conversations.md)
 
 | ID | Title | Status | Screens | Realised by | Commits |
@@ -473,7 +483,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-29](technical/00-platform.md#tr-pf-29) | The look and the page of the web app | Withdrawn | [DEC-PF-22](technical/00-platform.md#dec-pf-22), [DEC-PF-06](technical/00-platform.md#dec-pf-06) | [14bccf3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/14bccf35dc66c7b095ecf09cfe28b150b76f9147) refs, 2026-10-28<br>[8e6ff4e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e6ff4eb6383bdbe04664755a5ec81593cbc9cc5) refs, 2026-10-19<br>[c0860ce](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c0860cec0639f16038ecde8c9cb59e5f2e034031) refs, 2026-10-19<br>[528a385](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/528a385e3d5849ef6bc6bf08683a1ba77a95e275) refs, 2026-10-18<br>[fda53b2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/fda53b234dedc5c42ef5ff86a680b4c96caaaf6c) implements, 2026-10-18 |
 | [TR-PF-30](technical/00-platform.md#tr-pf-30) | semgraph is open, behind a rate limit | Specified | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | [ee8f184](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/ee8f1844ea522b05b4056631dbdf1d22c4b6383e) refs, 2026-10-18<br>[e2d7fee](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e2d7fee73ecb4555a9132dda16049619987ffa63) refs, 2026-10-18 |
 | [TR-PF-31](technical/00-platform.md#tr-pf-31) | Pages of every site may call semgraph | Implemented | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | [528a385](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/528a385e3d5849ef6bc6bf08683a1ba77a95e275) implements, 2026-10-18<br>[6457474](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6457474a7fb25cb75334cd6fb81b8f3e55cc25dc) implements, 2026-10-18 |
-| [TR-PF-32](technical/00-platform.md#tr-pf-32) | The settings of a User live in identity | Implemented | [DEC-UX-96](../design/principles.md#dec-ux-96), [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | [1bd6a2e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1bd6a2e55718b1b869476cc3e3ef99a33de03ae0) implements, 2026-10-28 |
+| [TR-PF-32](technical/00-platform.md#tr-pf-32) | The settings of a User live in identity | Implemented | [DEC-UX-96](../design/principles.md#dec-ux-96), [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | [bb82050](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bb820503d23dc515eff6c9b77250a82762fe3502) refs, 2026-11-04<br>[1bd6a2e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1bd6a2e55718b1b869476cc3e3ef99a33de03ae0) implements, 2026-10-28 |
 | [TR-PF-33](technical/00-platform.md#tr-pf-33) | The web app in Svelte, with the look of the design | Implemented | [DEC-PF-28](technical/00-platform.md#dec-pf-28), [DEC-PF-19](technical/00-platform.md#dec-pf-19), [DEC-UX-104](../design/principles.md#dec-ux-104) | [14bccf3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/14bccf35dc66c7b095ecf09cfe28b150b76f9147) implements, 2026-10-28 |
 
 ### [Artifact registry: technical requirements](technical/01-artifact-registry.md)
