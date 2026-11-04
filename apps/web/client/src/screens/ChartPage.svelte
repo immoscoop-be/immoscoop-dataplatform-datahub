@@ -14,7 +14,7 @@
 
   /**
    * A chart of semgraph opened in Charts (FR-CH-06, DEC-UX-182): its name and the question it answers; its examples
-   * to switch between, each as semgraph draws it in the theme of the page, with its warning or caution, or why it
+   * to switch between, each as semgraph draws it in the theme of the page, with its hover (DEC-UX-184), with its warning or caution, or why it
    * refuses it; and beside it the questions it is for, what to use instead, what it needs and where a User meets it.
    * What an example shows in words waits for semgraph (OP-UX-54).
    */
@@ -118,7 +118,8 @@
         <div role="tabpanel" aria-label={exampleLabel(example.name)}>
           <figure class="chart-figure">
             {#if drawing?.kind === 'drawn'}
-              <img src={drawing.src} alt={t('charts.example.alt', { chart: opened.title, example: example.title })} />
+              <!-- The SVG itself, in the page, so that its hover, metadata panels and links work (DEC-UX-184); lib/charts makes it placeable. -->
+              <div class="chart-svg" role="group" aria-label={t('charts.example.alt', { chart: opened.title, example: example.title })}>{@html drawing.svg}</div>
               {#if drawing.deviations.length > 0 || drawing.cautions.length > 0}
                 <figcaption>
                   {#if drawing.deviations.length > 0}<Chip variant="warn"><Icon name="warning-fill" />{t('charts.example.deviation')}</Chip>{/if}
@@ -186,7 +187,7 @@
   .seg.on { color: var(--text-primary); font-weight: var(--weight-medium); background: var(--card); }
   .chart-figure { margin: 0; }
   /* At the size semgraph draws it, centred: never stretched, only smaller on a narrower card (DEC-UX-183). */
-  .chart-figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: var(--radius-sm); }
+  .chart-svg :global(svg) { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: var(--radius-sm); }
   .chart-figure figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
   .chart-figure figcaption :global(.icon) { font-size: 13px; }
   .drawing { aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background: var(--tint-hover); display: flex; align-items: center; justify-content: center; }

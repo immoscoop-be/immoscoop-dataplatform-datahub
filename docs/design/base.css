@@ -1714,7 +1714,7 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .chart-stage { border-radius: var(--radius-lg); padding: 14px 16px 16px; }
 .chart-examples { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 12px; }
 .chart-figure { margin: 0; }
-.chart-figure img { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: var(--radius-sm); }
+.chart-figure object { display: block; max-width: 100%; height: auto; margin: 0 auto; border-radius: var(--radius-sm); }
 .chart-figure figcaption { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--text-small); line-height: 1.5; color: var(--text-secondary); }
 .chart-refused { display: flex; gap: 12px; align-items: flex-start; padding: 18px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
 .chart-refused > i { font-size: 20px; color: var(--text-muted); }

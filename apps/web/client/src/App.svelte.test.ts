@@ -3098,12 +3098,13 @@ describe('Charts, the gallery of semgraph', () => {
     expect(within(main).getByText('Grafieken · In de tijd')).toBeTruthy();
     expect(within(main).getByText('movingWindowAverage')).toBeTruthy();
     expect(within(main).getByText('Hoe evolueert dit, zonder dagelijkse ruis?')).toBeTruthy();
-    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, as a picture.
+    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, its SVG in the page (DEC-UX-184).
     const examples = within(main).getByRole('tablist', { name: 'Voorbeelden' });
     expect(within(examples).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Basic', 'Long horizon', 'Window 10', 'Unique without aggregation']);
     expect(within(examples).getByRole('tab', { name: 'Basic' }).getAttribute('aria-selected')).toBe('true');
-    const picture = await within(main).findByRole('img', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
-    expect(picture.getAttribute('src')).toMatch(/^data:image\/svg\+xml;charset=utf-8,.*basic/);
+    const drawing = await within(main).findByRole('group', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
+    expect(drawing.querySelector('svg > title')?.textContent).toBe('basic');
+    expect(drawing.querySelector('img')).toBeNull();
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=light');
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs?locale=nl-BE');
     // Beside it: the questions it is for, what to use instead, what it needs and where a User meets it.
@@ -3119,7 +3120,7 @@ describe('Charts, the gallery of semgraph', () => {
     open('/charts/movingWindowAverage');
     render(App, { config: CONFIG });
     const main = await screen.findByRole('main');
-    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
     expect(within(main).queryByText('Getekend, met een waarschuwing')).toBeNull();
     await fireEvent.click(within(main).getByRole('tab', { name: 'Window 10' }));
     expect(await within(main).findByText('Getekend, met een waarschuwing')).toBeTruthy();
@@ -3127,7 +3128,7 @@ describe('Charts, the gallery of semgraph', () => {
     expect(await within(main).findByText('semgraph weigert deze')).toBeTruthy();
     expect(within(main).getByText('uniqueAggregationRequired')).toBeTruthy();
     expect(within(main).getByText('Geweigerd')).toBeTruthy();
-    expect(within(main).queryByRole('img', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
+    expect(within(main).queryByRole('group', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
     // Another chart, from the panel: its first example, drawn with a caution in red; the one only in a size is not listed.
     await fireEvent.click(screen.getByRole('link', { name: 'KPI-tegel' }));
     expect(await within(main).findByText('Getekend, met een kanttekening in het rood')).toBeTruthy();
@@ -3141,7 +3142,7 @@ describe('Charts, the gallery of semgraph', () => {
     open('/charts/movingWindowAverage');
     render(App, { config: CONFIG });
     const main = await screen.findByRole('main');
-    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
     expect(within(main).getByText('Charts · Over time')).toBeTruthy();
     expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage?locale=en');
     await fireEvent.click(screen.getByRole('button', { name: 'Switch to dark' }));

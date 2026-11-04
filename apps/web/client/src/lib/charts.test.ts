@@ -1,10 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { CHART_GROUPS, ChartMissing, createCharts, exampleLabel, FIRST_CHART, grouped, INTENTS, shownExamples } from './charts.js';
+import { CHART_GROUPS, ChartMissing, createCharts, exampleLabel, FIRST_CHART, grouped, INTENTS, placeable, shownExamples } from './charts.js';
 
 const SEMGRAPHS = path.resolve(import.meta.dirname, '../../../../../services/semgraph/semgraphs');
-const config = { semgraphUrl: 'https://semgraph.test' };
+const config = { semgraphUrl: 'https://semgraph.test', styleNonce: 'n0nce' };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 
 describe('Charts, the gallery of semgraph (FR-CH-06)', () => {
@@ -70,7 +70,7 @@ describe('Charts, the gallery of semgraph (FR-CH-06)', () => {
     expect(charts.iconUrl('kpiTile')).toBe('https://semgraph.test/semgraphs/kpiTile/icon');
   });
 
-  it('draws an example in the theme of the page, as a picture, with what semgraph says of it', async () => {
+  it('draws an example in the theme of the page, as its SVG to place in the page, with what semgraph says of it (DEC-UX-184)', async () => {
     const answers: Record<string, () => Response> = {
       'https://semgraph.test/semgraphs/calendarAverage/examples/per-unit-few-observations?theme=dark': () =>
         new Response('<svg xmlns="http://www.w3.org/2000/svg"/>', { headers: { 'content-type': 'image/svg+xml', 'semgraph-cautions': 'fewObservations.mean' } }),
@@ -87,10 +87,39 @@ describe('Charts, the gallery of semgraph (FR-CH-06)', () => {
     }) as typeof fetch);
     const caution = await charts.draw('calendarAverage', 'per-unit-few-observations', 'dark');
     expect(caution).toMatchObject({ kind: 'drawn', deviations: [], cautions: ['fewObservations.mean'] });
-    expect(caution.kind === 'drawn' && caution.src.startsWith('data:image/svg+xml;charset=utf-8,')).toBe(true);
+    expect(caution.kind === 'drawn' && caution.svg).toBe('<svg xmlns="http://www.w3.org/2000/svg"></svg>');
     expect(await charts.draw('movingWindowAverage', 'window-10', 'light')).toMatchObject({ kind: 'drawn', deviations: ['windowNotMultipleOf7'], cautions: [] });
     expect(await charts.draw('movingWindowAverage', 'unique-without-aggregation', 'light')).toEqual({ kind: 'refused', code: 'uniqueAggregationRequired' });
     expect(await charts.draw('kpiTile', 'broken', 'light')).toEqual({ kind: 'failed' });
     expect(await charts.draw('kpiTile', 'offline', 'light')).toEqual({ kind: 'failed' });
+  });
+
+  it('places a drawing in the page without anything that could run, its styles with the nonce of the page (TR-PF-34)', () => {
+    const drawn = `<?xml version="1.0"?><svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)" data-semgraph="kpiTile">
+      <style>.semgraph-hover-detail { visibility: visible }</style>
+      <script>alert(2)</script>
+      <foreignObject><div>html</div></foreignObject>
+      <g class="semgraph-hover-column" tabindex="0" onmouseover="alert(3)"><rect width="10" height="10"/></g>
+      <a href="https://immoscoop.atlassian.net/wiki/x"><text>Reading card</text></a>
+      <a href="javascript:alert(4)"><text>no</text></a>
+    </svg>`;
+    const svg = placeable(drawn, 'n0nce') ?? '';
+    expect(svg).not.toMatch(/alert|script|foreignObject|onload|onmouseover|javascript/i);
+    expect(svg).toContain('<style nonce="n0nce">.semgraph-hover-detail { visibility: visible }</style>');
+    expect(svg).toContain('<a href="https://immoscoop.atlassian.net/wiki/x" target="_blank" rel="noopener noreferrer">');
+    expect(svg).toContain('class="semgraph-hover-column" tabindex="0"');
+    // Without a nonce the policy of the page refuses its styles anyway: they are left out.
+    expect(placeable(drawn, undefined)).not.toContain('<style');
+    expect(placeable('<html><body>no chart</body></html>', 'n0nce')).toBeUndefined();
+  });
+
+  it('places every drawing semgraph keeps as golden, its hover and styles kept', () => {
+    const golden = path.resolve(SEMGRAPHS, '../test/golden');
+    for (const file of readdirSync(golden).filter((name) => name.endsWith('.svg') && !name.endsWith('-icon.svg'))) {
+      const text = readFileSync(path.join(golden, file), 'utf8');
+      const svg = placeable(text, 'n0nce');
+      expect(svg, file).toMatch(/^<svg[^>]* data-semgraph=/);
+      expect((svg?.match(/<style nonce="n0nce">/g) ?? []).length, file).toBe((text.match(/<style>/g) ?? []).length);
+    }
   });
 });
