@@ -225,6 +225,8 @@ Each tool that returns an object returns the address of its page in Data Hub, at
 
 `get_resource` gives Claude the Resource Card: its Display Name and Key, its Collection and Owner Unit, its Level and Publication; the description of the table and of every field, the Business Description and the one from dbt each marked with where it comes from ([FR-RC-18](05-resource-card.md#fr-rc-18)); the fields left out; its grain, its partition and cluster columns with a sentence on how to query it cheaply, and its size ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)); its intended use, pitfalls, Known Gaps and since when it is reliable; its key fields and Parameters; and the changes since its last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)). `show_resource` shows the same to the User as an MCP App, with its Overview and Columns.
 
+*Note of 2026-11-04: `get_resource` gives the Summary of the Resource, in its order and with its weights ([FR-CL-25](#fr-cl-25)).*
+
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 <a id="fr-cl-08"></a>
@@ -378,6 +380,13 @@ A query made through Claude, and every run through Claude of a query or a Previe
 `list_queries` lists the queries of the User, newest first, narrowed by a period or by words, each with what it ran on, how many runs it has, and whether it went to the Data Team ([FR-SR-43](04-stacks-and-resources.md#fr-sr-43)). `get_query` gives one with its SQL, Resources, Parameters, last runs, Request, whether it is Broken and the Lens made of it. `update_query` changes its name, question, SQL or Parameters, for its author. For the Data Team, `list_queries` also lists the queries of everyone, with who ran them and their SQL, as in Query ([DEC-CL-12](#dec-cl-12)); nobody else sees the queries of others ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)).
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+
+<a id="fr-cl-25"></a>
+### FR-CL-25 · Claude reads the Summary of a Resource
+
+**Status:** Specified · **Source:** Max, 2026-11-04
+
+`get_resource` gives Claude the Summary of the Resource ([FR-RC-19](05-resource-card.md#fr-rc-19)): its parts in the order of the Summary, each with its weight and what that weight asks of Claude ([DEC-RC-17](05-resource-card.md#dec-rc-17)). Read first holds in every answer about the Resource; Before you query decides how Claude writes its SQL; When interpreting results decides what Claude says a result means; Context is background. It holds the Business Description as Markdown and the curated Q&A of the Owner and the Data Team ([FR-RC-22](05-resource-card.md#fr-rc-22)), and leaves out a part with nothing in it, as the page does. The fields of every column stay as [FR-CL-07](#fr-cl-07) lists them.
 
 ## Edge cases
 

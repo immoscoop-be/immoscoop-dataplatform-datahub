@@ -1575,3 +1575,5 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .sum-msgs b { color: var(--text-primary); font-weight: var(--weight-medium); }
 .sum-msgs .role-tag { margin: 0 2px; }
 .sum-warn { color: var(--signal-warn); }
+.sum-dep { background: color-mix(in srgb, var(--signal-warn) 9%, var(--surface-sub)); }
+.sum-dep .sum-n { font-size: 18px; color: var(--signal-warn); }
