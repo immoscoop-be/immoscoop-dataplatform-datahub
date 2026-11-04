@@ -15,12 +15,12 @@
     bottom, and change or remove one on its line. Plain text.
   - Querying: partitions and clustering, size, key fields and Parameters, with "Query".
   - Entities: the Entities and the Resources they join, also as a picture.
-  - Messages: the open Signals first; then the Q&A of the Owner and the Data Team, every thread they started or
-    answered, which stays for good as a curated Q&A; then what colleagues wrote that they have not touched yet.
-    "All Messages" and "Ask a question" open the slide-in of the Messages on the Resource.
+  The Messages are no part of their own: "Messages" in the header opens them, as before. The Summary takes the Q&A of the
+  Owner and the Data Team, every thread they started or answered in, which stays for good as a curated Q&A, with the
+  open Signals; and what colleagues wrote that they have not touched yet, as context. Its links open the Messages.
   - Maturity: the Level, Publication and monitoring. Changes: the recent log.
   The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=gaps, ?ov=querying,
-  ?ov=entities, ?ov=messages, ?ov=maturity, ?ov=changes; ?dep=on shows a deprecated Resource, its deprecation first
+  ?ov=entities, ?ov=maturity, ?ov=changes; ?dep=on shows a deprecated Resource, its deprecation first
   in the Summary; ?descedit=on edits the Business Description, ?descview=preview previews it.
   Requirements: FR-RC-19, FR-RC-20, FR-RC-21, FR-RC-22
   Decisions: DEC-RC-16, DEC-RC-17, DEC-RC-18, DEC-UX-168, DEC-UX-169, DEC-UX-170, DEC-UX-171.
@@ -157,7 +157,6 @@
     <button class="ov-item" data-target="gaps" role="tab" aria-selected="false"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span><span class="count">2</span></button>
     <button class="ov-item" data-target="querying" role="tab" aria-selected="false"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
     <button class="ov-item" data-target="entities" role="tab" aria-selected="false"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
-    <button class="ov-item" data-target="messages" role="tab" aria-selected="false"><i class="ph ph-chat-circle-text" aria-hidden="true"></i><span class="ov-name">Messages</span><span class="count">5</span><span class="ov-dot warn" title="1 open Signal" aria-label="1 open Signal"></span></button>
     <button class="ov-item" data-target="maturity" role="tab" aria-selected="false"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="ov-name">Maturity</span><span class="ov-dot warn" title="Changed since it was confirmed" aria-label="Changed since it was confirmed"></span></button>
     <button class="ov-item" data-target="changes" role="tab" aria-selected="false"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="ov-name">Changes</span></button>
    </nav>
@@ -305,65 +304,6 @@ The lead source is set by the form the visitor used: website, app, partner or ma
      </div>
     </section>
 
-    <!-- ───────────── Messages: what was asked and said about it, the Owner and the Data Team first ───────────── -->
-    <section class="ov-pane" data-pane-group="ov" data-pane="messages" hidden aria-label="Messages">
-     <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title">Messages</h2><p class="ov-lead">What colleagues asked and noted about it. A thread the Owner or the Data Team started or answered stays, as a curated Q&amp;A, and weighs more, here and in the Summary.</p></div>
-      <a class="btn-quiet outline sm" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-text"></i>All Messages</a>
-      <a class="btn-primary sm" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots"></i>Ask a question</a>
-     </div>
-
-     <div class="msg-group-head"><span class="label">Open Signals</span><span class="meta">The data seems wrong: read them before you trust a result</span></div>
-     <div class="sub-tile msg-group signal">
-      <div class="thread">
-       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
-       <div class="thread-body">
-        <div class="thread-head"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">3 days ago</span></div>
-        <p>The count for the source <span class="mono">partner</span> dropped to zero in the week of 13 Oct. We usually see about forty leads there.</p>
-        <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="role-tag">Owner</span><span class="meta">2 days ago</span></div><p>Looking into it with the Data Team. The partner feed was late that week.</p></div></div>
-       </div>
-      </div>
-     </div>
-
-     <div class="msg-group-head"><span class="label">Q&amp;A of the Owner and the Data Team</span><span class="meta">Started or answered by them, it stays: read it when you interpret a result</span></div>
-     <div class="sub-tile msg-group">
-      <div class="thread">
-       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
-       <div class="thread-body">
-        <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">Mia Peeters</span><span class="meta">1 week ago</span></div>
-        <p>Is a lead counted again when the same person applies twice in one week?</p>
-        <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="role-tag">Owner</span><span class="meta">6 days ago</span></div><p>Yes, every request counts. For unique people, use Credit lead funnel.</p></div></div>
-       </div>
-      </div>
-      <div class="thread">
-       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">DV</span>
-       <div class="thread-body">
-        <div class="thread-head"><span class="kind">Remark</span><span class="item-title">Dirk Vos</span><span class="role-tag">Data Team</span><span class="meta">10 days ago</span></div>
-        <p>From the week of 3 Nov, the source <span class="mono">partner</span> also holds the leads of the new comparison site. Earlier weeks stay as they were.</p>
-       </div>
-      </div>
-     </div>
-
-     <div class="msg-group-head"><span class="label">From colleagues</span><span class="meta">Not yet touched by the Owner or the Data Team: context</span></div>
-     <div class="sub-tile msg-group quiet">
-      <div class="thread">
-       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">RA</span>
-       <div class="thread-body">
-        <div class="thread-head"><span class="kind">Remark</span><span class="item-title">Ruth Aerts</span><span class="meta">2 weeks ago</span></div>
-        <p>Tip: <span class="mono">lead_channel</span> is only filled from 23 Oct. Earlier weeks are empty, not zero.</p>
-       </div>
-      </div>
-      <div class="thread">
-       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">JW</span>
-       <div class="thread-body">
-        <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Jan Wouters</span><span class="meta">3 weeks ago</span></div>
-        <p>Could this also be split per province?</p>
-       </div>
-      </div>
-     </div>
-     <p class="meta ov-help">Everyone who may see this Resource sees these Messages. Replying, and the rest of a thread, happen in the Messages of the Resource.</p>
-    </section>
-
     <!-- ───────────── Maturity: the Level, Publication, monitoring ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="maturity" hidden aria-label="Maturity">
      <div class="ov-head">
@@ -478,7 +418,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">9</span><span class="weight w3">When interpreting results</span></div>
        <div class="sum-main">
-        <div class="sum-title"><h3>Q&amp;A of the Owner and the Data Team</h3><a class="text-link" data-go="ov:messages"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
+        <div class="sum-title"><h3>Q&amp;A of the Owner and the Data Team</h3><a class="text-link" href="resource-messages.html"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
         <ul class="sum-msgs">
          <li><span class="kind signal">Signal</span><span><b>Open</b>, Karel Leys, 3 days ago: <span class="mono">partner</span> dropped to zero in the week of 13 Oct. <span class="role-tag">Owner</span> The partner feed was late that week; looking into it.</span></li>
          <li><span class="kind">Question</span><span>Is a lead counted again when the same person applies twice? <span class="role-tag">Owner</span> Yes, every request counts; for unique people, use Credit lead funnel.</span></li>
@@ -496,7 +436,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <li class="sum-part">
        <div class="sum-side"><span class="sum-n">11</span><span class="weight w4">Context</span></div>
        <div class="sum-main">
-        <div class="sum-title"><h3>What colleagues noted</h3><a class="text-link" data-go="ov:messages"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
+        <div class="sum-title"><h3>What colleagues noted</h3><a class="text-link" href="resource-messages.html"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
         <ul class="sum-msgs">
          <li><span class="kind">Remark</span><span>Ruth Aerts, 2 weeks ago: <span class="mono">lead_channel</span> is only filled from 23 Oct; earlier weeks are empty, not zero.</span></li>
          <li><span class="kind">Question</span><span><b>Open</b>, Jan Wouters, 3 weeks ago: could this also be split per province?</span></li>
@@ -596,7 +536,6 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="description" data-go="ov:description descedit:off" role="tab" aria-selected="false">Description</button>
  <button class="seg" data-target="edit" data-go="ov:description descedit:on" role="tab" aria-selected="false">Editing it</button>
  <button class="seg" data-target="gaps" data-go="ov:gaps" role="tab" aria-selected="false">Known Gaps</button>
- <button class="seg" data-target="messages" data-go="ov:messages" role="tab" aria-selected="false">Messages</button>
 </div>
 <div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: deprecated or not" style="bottom:72px">Deprecated
  <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>

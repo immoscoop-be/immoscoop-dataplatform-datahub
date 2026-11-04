@@ -247,7 +247,7 @@ Every Known Gap of a Resource ([FR-RC-04](#fr-rc-04)) is an item of its own, in 
 
 **Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
-The Overview of a Resource shows its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)): its open Signals first; then its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good; then the threads they have not touched yet ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, and whether it is open or answered. The Summary takes them with their weight. Replying and the rest of a thread stay in the Messages on the Resource.
+The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)) its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good, with its open Signals; and the threads they have not touched yet, as Context ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, whether it is open or answered, and the answer of the Owner or the Data Team. Reading the whole thread and replying stay in the Messages on the Resource.
 
 ## Open points
 
