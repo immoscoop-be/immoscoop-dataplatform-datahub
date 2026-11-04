@@ -36,6 +36,7 @@ import pencilSimpleFill from '@phosphor-icons/core/assets/fill/pencil-simple-fil
 import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
+import sealCheckFill from '@phosphor-icons/core/assets/fill/seal-check-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
 import toolboxFill from '@phosphor-icons/core/assets/fill/toolbox-fill.svg?raw';
@@ -57,6 +58,7 @@ import funnel from '@phosphor-icons/core/assets/regular/funnel.svg?raw';
 import link from '@phosphor-icons/core/assets/regular/link.svg?raw';
 import listNumbers from '@phosphor-icons/core/assets/regular/list-numbers.svg?raw';
 import sealCheck from '@phosphor-icons/core/assets/regular/seal-check.svg?raw';
+import warningOctagon from '@phosphor-icons/core/assets/regular/warning-octagon.svg?raw';
 import textAlignLeft from '@phosphor-icons/core/assets/regular/text-align-left.svg?raw';
 import textB from '@phosphor-icons/core/assets/regular/text-b.svg?raw';
 import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
@@ -179,6 +181,7 @@ export const ICONS = {
   'play-fill': playFill,
   'quotes-fill': quotesFill,
   'plus-circle-fill': plusCircleFill,
+  'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
@@ -200,6 +203,7 @@ export const ICONS = {
   link,
   'list-numbers': listNumbers,
   'seal-check': sealCheck,
+  'warning-octagon': warningOctagon,
   'text-align-left': textAlignLeft,
   'text-b': textB,
   'text-h': textH,

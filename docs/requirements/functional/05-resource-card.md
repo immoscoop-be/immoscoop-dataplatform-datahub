@@ -253,7 +253,7 @@ The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-S
 <a id="fr-rc-23"></a>
 ### FR-RC-23 · Intended use and pitfalls are written in Markdown
 
-**Status:** Specified · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Owner and the Data Team write the intended use and the pitfalls of a Resource in Markdown, in the Markdown editor of Data Hub, as its Business Description ([FR-RC-20](#fr-rc-20), [DEC-RC-19](#dec-rc-19)). Known behaviour and the Summary show them rendered; Claude reads them as written, in Markdown.
 
