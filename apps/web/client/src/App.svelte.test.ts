@@ -887,6 +887,17 @@ describe('the web app, signed out', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
+  it('shows the sign-in on a background of the set, picked at random, without a photo or its story (DEC-UX-173)', async () => {
+    serve({ signedIn: false });
+    // The last of the set by day: Concrete, a picture.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    render(App, { config: CONFIG });
+    await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    random.mockRestore();
+    expect(document.querySelector('.picture')?.getAttribute('style')).toContain('concrete');
+    expect(screen.queryByRole('figure')).toBeNull();
+  });
+
   it('names a refused account, and lets the User choose another (FR-UM-02)', async () => {
     serve({ signedIn: false });
     open('/collections#account=max%40gmail.com');
@@ -938,15 +949,35 @@ describe('the web app, signed in', () => {
     expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Grafieken' })).toBeTruthy();
   });
 
-  it('switches between light and dark, and remembers it', async () => {
+  it('follows the system; its switch shows where it goes and holds for the session only (DEC-UX-172)', async () => {
+    let systemChanged: ((event: { matches: boolean }) => void) | undefined;
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
+        if (query.includes('prefers-color-scheme')) systemChanged = listener;
+      },
+      removeEventListener() {},
+    }));
     const calls = serve();
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    // By day the moon, which goes to dark.
+    const toDark = await screen.findByRole('button', { name: 'Naar donker' });
+    const moon = toDark.innerHTML;
+    await fireEvent.click(toDark);
     expect(document.documentElement.dataset.theme).toBe('dark');
     // At once: every transition is off until the new colours are on screen (DEC-UX-149).
     expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
     await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
+    // By night the sun, which goes back to light; nothing is remembered.
+    expect(screen.getByRole('button', { name: 'Naar licht' }).innerHTML).not.toBe(moon);
+    expect(calls.some((call) => call.path.startsWith('/me/settings/theme'))).toBe(false);
+    // A change of the system wins over the switch.
+    systemChanged?.({ matches: true });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    systemChanged?.({ matches: false });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
   });
 
   it('opens My page behind the initials, where the language of Data Hub is chosen (DEC-UX-85)', async () => {
@@ -968,9 +999,9 @@ describe('the web app, signed in', () => {
     const calls = serve({ settings: { language: 'en' } });
     open('/me/background');
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('radio', { name: /Fresh piste/ }));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'piste' } });
-    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Fresh piste');
+    await fireEvent.click(await screen.findByRole('radio', { name: /Concrete/ }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'concrete' } });
+    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
   });
 
   it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {

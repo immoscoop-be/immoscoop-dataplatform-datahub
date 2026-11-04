@@ -309,7 +309,7 @@ semgraph answers every request with `Access-Control-Allow-Origin: *`, and the pr
 
 **Status:** Implemented · **Realises:** [DEC-UX-96](../../design/principles.md#dec-ux-96), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)
 
-identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the theme, the background by day and by night, whether the panel is open, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User.
+identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the background by day and by night, whether the panel is open, the layout of a query, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User. The theme is no setting since it always follows the system ([DEC-UX-172](../../design/principles.md#dec-ux-172)); migration `0006-forget-theme` forgot the themes kept before.
 
 <a id="tr-pf-33"></a>
 ### TR-PF-33 · The web app in Svelte, with the look of the design

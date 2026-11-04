@@ -1,5 +1,5 @@
-// The backgrounds of Data Hub and the photos of the sign-in, a set per theme (DEC-UX-36,
-// DEC-UX-109). The pictures are those of the design, in docs/design/backgrounds: the build takes them
+// The backgrounds of Data Hub, a set per theme, which the sign-in picks from too (DEC-UX-109,
+// DEC-UX-173). The pictures are those of the design, in docs/design/backgrounds: the build takes them
 // from there, so each lives once.
 
 export type Theme = 'light' | 'dark';
@@ -28,21 +28,7 @@ export interface Background {
 }
 
 // Each address is written out, so that the build finds the picture and takes it along.
-const PAINTED = {
-  ski: new URL('../../../../docs/design/backgrounds/painted/light/ski-lift.jpg', import.meta.url).href,
-  alpenglow: new URL('../../../../docs/design/backgrounds/painted/light/alpenglow.jpg', import.meta.url).href,
-  spring: new URL('../../../../docs/design/backgrounds/painted/light/spring-snow.jpg', import.meta.url).href,
-  fusilli: new URL('../../../../docs/design/backgrounds/painted/light/fusilli.jpg', import.meta.url).href,
-  piste: new URL('../../../../docs/design/backgrounds/painted/light/piste.jpg', import.meta.url).href,
-  concrete: new URL('../../../../docs/design/backgrounds/painted/light/concrete.jpg', import.meta.url).href,
-  village: new URL('../../../../docs/design/backgrounds/painted/dark/village-lights.jpg', import.meta.url).href,
-};
-const PHOTO = {
-  alpenglow: new URL('../../../../docs/design/backgrounds/photos/light/alpenglow.jpg', import.meta.url).href,
-  spring: new URL('../../../../docs/design/backgrounds/photos/light/spring-snow.jpg', import.meta.url).href,
-  village: new URL('../../../../docs/design/backgrounds/photos/dark/village-lights.jpg', import.meta.url).href,
-  peaks: new URL('../../../../docs/design/backgrounds/photos/light/peaks.jpg', import.meta.url).href,
-};
+const CONCRETE = new URL('../../../../docs/design/backgrounds/painted/light/concrete.jpg', import.meta.url).href;
 
 /** Every background, in the order My page offers them: the gradient, the flowing ones, then the pictures. */
 export const BACKGROUNDS: readonly Background[] = [
@@ -57,14 +43,7 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'ember', kind: 'lights', themes: ['dark'], name: 'Embers' },
   { id: 'dusk', kind: 'lights', themes: ['dark'], name: 'Dusk' },
   { id: 'horizon', kind: 'lights', themes: ['dark'], name: 'Horizon' },
-  { id: 'ski', kind: 'picture', themes: ['light'], name: 'Ski lift', picture: PAINTED.ski },
-  { id: 'alpenglow', kind: 'picture', themes: ['light'], name: 'Alpenglow', picture: PAINTED.alpenglow },
-  { id: 'spring', kind: 'picture', themes: ['light'], name: 'Spring snow', picture: PAINTED.spring },
-  { id: 'fusilli', kind: 'picture', themes: ['light'], name: 'Fusilli', picture: PAINTED.fusilli, cover: true },
-  { id: 'piste', kind: 'picture', themes: ['light'], name: 'Fresh piste', picture: PAINTED.piste, cover: true, previewPosition: '50% 35%' },
-  { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: PAINTED.concrete, cover: true },
-  { id: 'peaks', kind: 'picture', themes: ['light'], name: 'Sunlit peaks', picture: PHOTO.peaks, cover: true, previewPosition: '50% 40%' },
-  { id: 'village', kind: 'picture', themes: ['dark'], name: 'Lights on', picture: PAINTED.village },
+  { id: 'concrete', kind: 'picture', themes: ['light'], name: 'Concrete', picture: CONCRETE, cover: true },
 ];
 
 /** The choice that picks a background at random: the default (DEC-UX-108). */
@@ -82,25 +61,4 @@ export function chooseBackground(theme: Theme, choice: string | undefined, rando
   const set = backgroundsOf(theme);
   const chosen = choice && choice !== RANDOM ? set.find((background) => background.id === choice) : undefined;
   return chosen ?? (set[Math.floor(random() * set.length)] as Background);
-}
-
-/** A photo of the sign-in, as it is, placed on its focus point (DEC-UX-35, DEC-UX-36). */
-export interface Photo {
-  readonly id: string;
-  readonly theme: Theme;
-  readonly picture: string;
-  readonly position: string;
-}
-
-/** The photos of the sign-in: Alpenglow and Spring snow by day, Lights on by night. Their stories are in the translation files. */
-export const PHOTOS: readonly Photo[] = [
-  { id: 'alpenglow', theme: 'light', picture: PHOTO.alpenglow, position: '50% 82%' },
-  { id: 'spring', theme: 'light', picture: PHOTO.spring, position: '30% 22%' },
-  { id: 'village', theme: 'dark', picture: PHOTO.village, position: '50% 40%' },
-];
-
-/** A photo of the set of the theme, picked at random, as the backgrounds are (DEC-UX-94). */
-export function choosePhoto(theme: Theme, random: () => number = Math.random): Photo {
-  const set = PHOTOS.filter((candidate) => candidate.theme === theme);
-  return set[Math.floor(random() * set.length)] as Photo;
 }

@@ -4,6 +4,7 @@ import * as signIn from './0002-sign-in.js';
 import * as settings from './0003-settings.js';
 import * as groups from './0004-groups.js';
 import * as excelKeys from './0005-excel-keys.js';
+import * as forgetTheme from './0006-forget-theme.js';
 
 /** The migrations of identity, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -12,4 +13,5 @@ export const migrations: Record<string, Migration> = {
   '0003-settings': settings,
   '0004-groups': groups,
   '0005-excel-keys': excelKeys,
+  '0006-forget-theme': forgetTheme,
 };
