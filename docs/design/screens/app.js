@@ -127,6 +127,17 @@ document.querySelectorAll('[data-group]').forEach(group => {
   }));
 });
 
+// Every MCP App folds to its head with the button at its top right, and unfolds with it again (DEC-UX-181)
+document.querySelectorAll('.mcp-app').forEach(app => {
+  const head = app.querySelector('.mcp-app-head');
+  if (!head) return;
+  const fold = Object.assign(document.createElement('button'), { type: 'button', className: 'icon-btn mcp-fold', innerHTML: '<i class="ph ph-caret-up" aria-hidden="true"></i>' });
+  const set = folded => { app.classList.toggle('folded', folded); fold.setAttribute('aria-expanded', String(!folded)); fold.setAttribute('aria-label', folded ? 'Unfold' : 'Fold'); fold.title = folded ? 'Unfold' : 'Fold'; };
+  fold.addEventListener('click', () => set(!app.classList.contains('folded')));
+  head.append(fold);
+  set(new URLSearchParams(location.search).get('fold') === 'on');
+});
+
 // Prototype: the width an MCP App is seen at, Claude on a computer or on a phone (DEC-UX-180): ?width=phone
 document.querySelectorAll('[data-group="width"] [data-target]').forEach(b => b.addEventListener('click', () => { document.body.dataset.width = b.dataset.target; }));
 
