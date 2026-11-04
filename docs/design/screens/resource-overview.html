@@ -1,23 +1,26 @@
 <!DOCTYPE html>
 <!--
-  Screen: Resource overview, a proposal for discussion (2026-11-04, at the request of Max): the Overview of a Resource
-  split into parts, with a navigation on the left under the tabs, in place of one page of tiles (resource-detail.html).
-  The header, the status row, the warning and the tabs stay as they are; Columns, Lineage, History and Preview too.
-  The parts, in the order the Summary reads them:
-  - Summary: everything Data Hub knows about the Resource, on one page, in the order to read it, each part with its
-    weight: "Read first", "Before you query" or "Good to know", and a link to the part. "As Claude reads it" shows the
-    same Summary as the Markdown Claude gets from get_resource, in the same order and with the same weights.
-  - Description: the Business Description, written in Markdown and shown rendered, the description from dbt under it,
-    and the model type and grain. Edit opens the Markdown editor of the intro of a Collection, with the description
-    from dbt beside it, read-only.
-  - Known behaviour: intended use, pitfalls, Known Gaps, since when it is reliable.
+  Screen: Resource overview, a proposal for discussion (2026-11-04, reworked the same day to Max's remarks): the Overview
+  of a Resource split into parts, with a navigation on the left under the tabs, in place of one page of tiles
+  (resource-detail.html). The header, the status row, the warning and the tabs stay as they are; Columns, Lineage, History
+  and Preview too. The parts:
+  - Description, the first, which the Overview opens on: the Business Description, written in Markdown and shown
+    rendered, the description from dbt under it, and the model type and grain. Edit opens the Markdown editor of the app
+    (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
+  - Known behaviour: intended use, pitfalls, since when it is reliable; plain text.
+  - Known Gaps: a list, one gap per line, each with who added it and when; the Owner and the Data Team add one at the
+    bottom, and change or remove one on its line. Plain text.
   - Querying: partitions and clustering, size, key fields and Parameters, with "Query".
   - Entities: the Entities and the Resources they join, also as a picture.
-  - Maturity: the Level, Publication and monitoring.
-  - Changes: the recent log; the queries on it stay under History.
-  The switches at the bottom: ?ov=summary (the default), ?ov=description, ?ov=behaviour, ?ov=querying, ?ov=entities,
-  ?ov=maturity, ?ov=changes; ?sumview=claude shows the Summary as Claude reads it; ?descedit=on edits the Business
-  Description, and ?descview=preview previews it.
+  - Messages: the open Signals first, then what the Owner and the Data Team asked, answered and remarked, then what
+    colleagues wrote; "All Messages" and "Ask a question" open the slide-in of the Messages on the Resource.
+  - Maturity: the Level, Publication and monitoring. Changes: the recent log.
+  - Summary, last: every part on one page, in the order to read it, each with its weight: Read first, Before you
+    query, When interpreting results, or Context. What the Owner and the Data Team wrote weighs more than what
+    colleagues wrote. A part with nothing in it is left out. Claude reads the same.
+  The switches at the bottom: ?ov=description (the default), ?ov=behaviour, ?ov=gaps, ?ov=querying, ?ov=entities,
+  ?ov=messages, ?ov=maturity, ?ov=changes, ?ov=summary; ?descedit=on edits the Business Description, ?descview=preview
+  previews it.
   Requirements: none yet: they follow once the design is decided.
   Open points: see the conversation of 2026-11-04; nothing here is decided yet.
   Rules: ../principles.md  ·  Placeholder content only.
@@ -122,7 +125,7 @@
   <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="off" data-go="dep:on" type="button" style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-archive"></i>Deprecate</button>
   <button class="btn-quiet outline" data-for="owner datateam" data-pane-group="dep" data-pane="on" data-go="dep:off" type="button" hidden style="display:inline-flex;align-items:center;gap:6px"><i class="ph ph-arrow-counter-clockwise"></i>Take it away</button>
   <a class="btn-quiet outline" href="query-new.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph-fill ph-terminal-window"></i>Query</a>
-  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">3</span></a>
+  <a class="btn-quiet outline" href="resource-messages.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px" title="Messages on this, and start one"><i class="ph-fill ph-chat-circle-text"></i>Messages<span class="count">5</span></a>
   <a class="btn-primary" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots" style="font-size:15px"></i>Ask a question</a>
  </div>
  <div class="status-row">
@@ -144,168 +147,29 @@
  <div class="tab-content card">
   <div class="ov" data-pane-group="tabs" data-pane="overview">
 
-   <!-- The parts of the Overview, in the order the Summary reads them. -->
+   <!-- The parts of the Overview; Summary, last, gathers them in the order to read them. -->
    <nav class="ov-nav" data-group="ov" role="tablist" aria-label="Parts of the Overview" aria-orientation="vertical">
-    <button class="ov-item on" data-target="summary" role="tab" aria-selected="true"><i class="ph ph-list-numbers" aria-hidden="true"></i><span class="ov-name">Summary</span><span class="ov-note">Start here</span></button>
-    <div class="ov-sep" role="presentation"></div>
-    <button class="ov-item" data-target="description" role="tab" aria-selected="false"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
-    <button class="ov-item" data-target="behaviour" role="tab" aria-selected="false"><i class="ph ph-warning" aria-hidden="true"></i><span class="ov-name">Known behaviour</span><span class="count">2 gaps</span></button>
+    <button class="ov-item on" data-target="description" role="tab" aria-selected="true"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
+    <button class="ov-item" data-target="behaviour" role="tab" aria-selected="false"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known behaviour</span></button>
+    <button class="ov-item" data-target="gaps" role="tab" aria-selected="false"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span><span class="count">2</span></button>
     <button class="ov-item" data-target="querying" role="tab" aria-selected="false"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
     <button class="ov-item" data-target="entities" role="tab" aria-selected="false"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
+    <button class="ov-item" data-target="messages" role="tab" aria-selected="false"><i class="ph ph-chat-circle-text" aria-hidden="true"></i><span class="ov-name">Messages</span><span class="count">5</span><span class="ov-dot warn" title="1 open Signal" aria-label="1 open Signal"></span></button>
     <button class="ov-item" data-target="maturity" role="tab" aria-selected="false"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="ov-name">Maturity</span><span class="ov-dot warn" title="Changed since it was confirmed" aria-label="Changed since it was confirmed"></span></button>
     <button class="ov-item" data-target="changes" role="tab" aria-selected="false"><i class="ph ph-clock-counter-clockwise" aria-hidden="true"></i><span class="ov-name">Changes</span></button>
+    <div class="ov-sep" role="presentation"></div>
+    <button class="ov-item" data-target="summary" role="tab" aria-selected="false"><i class="ph ph-list-numbers" aria-hidden="true"></i><span class="ov-name">Summary</span><span class="ov-note">All on one page</span></button>
    </nav>
 
    <div class="ov-body">
 
-    <!-- ───────────── Summary: everything, in the order to read it, with its weight; what Claude reads ───────────── -->
-    <section class="ov-pane" data-pane-group="ov" data-pane="summary" aria-label="Summary">
-     <div class="ov-head">
-      <div style="flex:1;min-width:0">
-       <h2 class="ov-title">Summary</h2>
-       <p class="ov-lead">Everything Data Hub knows about Weekly lead volume, in the order to read it: what comes first weighs most. Claude reads exactly this before it uses the Resource.</p>
-      </div>
-      <span class="ov-switch" data-group="sumview" role="tablist" aria-label="Show the Summary as"><button class="seg on" data-target="page" role="tab" aria-selected="true">Page</button><button class="seg" data-target="claude" role="tab" aria-selected="false"><i class="ph ph-sparkle" aria-hidden="true"></i> As Claude reads it</button></span>
-     </div>
-
-     <div class="sum-legend meta"><span class="weight w1">Read first</span>what it is and what can go wrong<span class="weight w2">Before you query</span>how to read it cheaply and join it<span class="weight w3">Good to know</span>where it stands and what changed</div>
-
-     <ol class="sum" data-pane-group="sumview" data-pane="page">
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">1</span><span class="weight w1">Read first</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>What it is</h3><a class="text-link" data-go="ov:description"><span>Description</span><i class="ph ph-arrow-right"></i></a></div>
-        <div class="md">
-         <p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p>
-         <ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul>
-        </div>
-        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.</p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">2</span><span class="weight w1">Read first</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>One row is</h3><a class="text-link" data-go="ov:description"><span>Description</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line">One week × one lead source <span class="code-chip">week_start</span><span class="code-chip">lead_source</span> · an <b>aggregate</b>, counted per week.</p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">3</span><span class="weight w1">Read first</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>Use it for, and watch out</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
-        <dl class="facts sum-facts"><dt><i class="ph-fill ph-check-circle"></i>Intended use</dt><dd>Weekly trends and comparing lead sources.</dd><dt><i class="ph-fill ph-warning"></i>Pitfalls</dt><dd>The current week is incomplete. Don’t sum across sources for unique people.</dd></dl>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">4</span><span class="weight w1">Read first</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>What is missing</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
-        <ul class="sum-gaps"><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events.</li><li>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</li><li>Reliable since <b>1 Jan 2025</b>: don’t read earlier weeks.</li></ul>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>How to query it cheaply</h3><a class="text-link" data-go="ov:querying"><span>Querying</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
-        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span> · Parameters <span class="code-chip">lead_source</span><span class="code-chip">week_start</span></p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">6</span><span class="weight w2">Before you query</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>What it joins</h3><a class="text-link" data-go="ov:entities"><span>Entities</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line"><span class="code-chip">leadSource</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this grain: it joins nothing here.</p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">7</span><span class="weight w2">Before you query</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>Its fields</h3><a class="text-link" data-go="tabs:columns"><span>Columns</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line">4 fields, each with its type and descriptions; 2 have a Business Description of the Owner. <span class="mono">lead_channel</span> is new since the last Confirmation.</p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">8</span><span class="weight w3">Good to know</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>Where it stands</h3><a class="text-link" data-go="ov:maturity"><span>Maturity</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line"><span class="maturity" data-level="4" data-no-tooltip></span> 4 · Explored · published 2 Sep 2026 by An Claes, confirmed 14 Oct 2026. <span class="sum-warn"><i class="ph-fill ph-warning-circle"></i>Changed since it was confirmed: <span class="mono">lead_channel</span> added yesterday.</span> 1 open Signal.</p>
-       </div>
-      </li>
-      <li class="sum-part">
-       <div class="sum-side"><span class="sum-n">9</span><span class="weight w3">Good to know</span></div>
-       <div class="sum-main">
-        <div class="sum-title"><h3>What changed lately</h3><a class="text-link" data-go="ov:changes"><span>Changes</span><i class="ph ph-arrow-right"></i></a></div>
-        <p class="sum-text-line">Yesterday the field <span class="mono">lead_channel</span> was added (ART-010). Three days ago KL raised a Signal (CNV-050). No open Questions.</p>
-       </div>
-      </li>
-     </ol>
-
-     <!-- The same Summary as text, as Claude gets it through the MCP. -->
-     <div class="sum-claude" data-pane-group="sumview" data-pane="claude" hidden>
-      <div class="sum-claude-head"><span class="meta">What <span class="mono">get_resource</span> gives Claude, in Markdown. It follows the same order and says the weight of each part.</span><button class="btn-quiet outline sm" type="button"><i class="ph ph-copy"></i>Copy</button></div>
-<pre class="sum-pre"># Weekly lead volume
-Resource in Data Hub · Collection Credit leads · Owner Credit team
-Key: immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume
-Level 4 · Explored · Published
-
-Read the parts in this order. "Read first" parts are binding: follow
-them in every answer. "Before you query" parts decide how you write
-SQL. "Good to know" parts are context.
-
-## 1. What it is (read first)
-Business Description, from the Owner:
-The number of **credit leads** we send to KBC each week, per lead
-source. Use it to follow the trend and to compare sources.
-- It counts **leads, not people**: someone who applies twice counts twice.
-- A lead counts in the week it came in, not when KBC followed it up.
-
-Description, from dbt:
-One row per week and lead source with the number of credit leads
-sent to KBC. Test and duplicate requests are excluded.
-
-## 2. One row is (read first)
-One week × one lead source (week_start, lead_source). Model type: aggregate.
-
-## 3. Use it for, and watch out (read first)
-Intended use: Weekly trends and comparing lead sources.
-Pitfalls: The current week is incomplete. Don't sum across sources
-for unique people.
-
-## 4. What is missing (read first)
-- visitorId is missing for about 99% of the credit leads.
-- No leads from the source partner before 1 Mar 2025.
-- Reliable since 1 Jan 2025: don't read earlier weeks.
-
-## 5. How to query it cheaply (before you query)
-Partitioned by week_start, a partition per week. Always filter on it.
-Clustered by lead_source, then lead_channel. 6.2 GB in all.
-Key fields: week_start, lead_source, lead_count, lead_channel.
-
-## 6. What it joins (before you query)
-leadSource on lead_source: Lead sources, Credit lead funnel,
-Lead response time. creditLead: no identifier at this grain.
-
-## 7. Its fields (before you query)
-| field | type | Business Description | from dbt |
-| week_start | DATE | – | Monday of the week the lead was submitted |
-…
-
-## 8. Where it stands (good to know)
-Confirmed 14 Oct 2026 by An Claes. Changed since: lead_channel added
-on 3 Nov 2026. 1 open Signal.
-
-## 9. What changed lately (good to know)
-…</pre>
-     </div>
-    </section>
-
-    <!-- ───────────── Description: the Business Description in Markdown, the one from dbt, model type and grain ───────────── -->
-    <section class="ov-pane" data-pane-group="ov" data-pane="description" hidden aria-label="Description">
+    <!-- ───────────── Description, the first part: the Business Description in Markdown, the one from dbt, model type and grain ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="description" aria-label="Description">
      <div class="ov-head">
       <div style="flex:1;min-width:0"><h2 class="ov-title">Description</h2><p class="ov-lead">What Weekly lead volume is, in business language from its Owner and as dbt describes it.</p></div>
       <a class="edit-link" data-for="owner datateam" data-pane-group="descedit" data-pane="off" data-go="descedit:on"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
      </div>
+     <span data-group="descedit" hidden><button data-target="off" class="on" aria-selected="true"></button><button data-target="on" aria-selected="false"></button></span>
 
      <div data-pane-group="descedit" data-pane="off">
       <div class="ov-block">
@@ -315,18 +179,17 @@ on 3 Nov 2026. 1 open Signal.
         <p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p>
         <ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul>
         <h3>Where the sources come from</h3>
-        <p>The lead source is set by the form the visitor used: <code>website</code>, <code>app</code>, <code>partner</code> or <code>mailing</code>. See <a href="#">Lead sources</a> for what each one covers.</p>
+        <p>The lead source is set by the form the visitor used: website, app, partner or mailing. See <a href="#">Lead sources</a> for what each one covers.</p>
        </div>
       </div>
-      <div class="sub-tile ov-dbt">
+      <div class="sub-tile">
        <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
        <p class="prose">One row per week and lead source with the number of credit leads sent to KBC. A lead counts in the week it was first submitted, not when it was followed up. Test and duplicate requests are excluded.</p>
       </div>
       <div class="ov-chips"><span class="code-chip">model type: aggregate</span><span class="code-chip lc-ref" tabindex="0" aria-haspopup="dialog" aria-expanded="false" data-pop="pop-grain">grain: week × lead source<span class="lc-mark" aria-hidden="true">ⓘ</span><span class="sr-only"> (explained in the learning centre)</span></span><span class="origin">From the Data Team</span></div>
      </div>
 
-     <span data-group="descedit" hidden><button data-target="off" class="on" aria-selected="true"></button><button data-target="on" aria-selected="false"></button></span>
-     <!-- Editing: the same Markdown editor as the intro of a Collection, with the description from dbt beside it, read-only. -->
+     <!-- Editing: the Markdown editor of the app (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only. -->
      <div data-pane-group="descedit" data-pane="on" hidden>
       <div class="edit-bar"><i class="ph-fill ph-pencil-simple" style="color:var(--text-secondary)"></i><p>Editing the Business Description. Every change you save goes into the history, with your name.</p><button class="btn-quiet" type="button" data-go="descedit:off">Cancel</button><button class="btn-primary" type="button" data-go="descedit:off"><i class="ph-fill ph-check" style="font-size:15px"></i>Save</button></div>
       <div class="ov-edit">
@@ -338,7 +201,6 @@ on 3 Nov 2026. 1 open Signal.
           <button type="button" class="icon-btn" aria-label="Bold" title="Bold"><i class="ph ph-text-b"></i></button>
           <button type="button" class="icon-btn" aria-label="Italic" title="Italic"><i class="ph ph-text-italic"></i></button>
           <button type="button" class="icon-btn" aria-label="List" title="List"><i class="ph ph-list-bullets"></i></button>
-          <button type="button" class="icon-btn" aria-label="Code" title="Code"><i class="ph ph-code"></i></button>
           <button type="button" class="icon-btn" aria-label="Link" title="Link"><i class="ph ph-link"></i></button>
           <span class="grow"></span>
           <span data-group="descview" role="tablist" aria-label="Write or preview" style="display:inline-flex;gap:2px"><button type="button" class="seg on" data-target="write" role="tab" aria-selected="true">Write</button><button type="button" class="seg" data-target="preview" role="tab" aria-selected="false">Preview</button></span>
@@ -350,10 +212,10 @@ The number of **credit leads** we send to KBC each week, per lead source. Use it
 - A lead counts in the week it came in, not when KBC followed it up.
 
 ### Where the sources come from
-The lead source is set by the form the visitor used: `website`, `app`, `partner` or `mailing`. See [Lead sources](#) for what each one covers.</textarea>
-         <div class="md md-preview" data-pane-group="descview" data-pane="preview" hidden><h3>What it counts</h3><p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p><ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul><h3>Where the sources come from</h3><p>The lead source is set by the form the visitor used: <code>website</code>, <code>app</code>, <code>partner</code> or <code>mailing</code>. See <a href="#">Lead sources</a> for what each one covers.</p></div>
+The lead source is set by the form the visitor used: website, app, partner or mailing. See [Lead sources](#) for what each one covers.</textarea>
+         <div class="md md-preview" data-pane-group="descview" data-pane="preview" hidden><h3>What it counts</h3><p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p><ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul><h3>Where the sources come from</h3><p>The lead source is set by the form the visitor used: website, app, partner or mailing. See <a href="#">Lead sources</a> for what each one covers.</p></div>
         </div>
-        <p class="meta ov-help">Markdown: headings, lists, bold, italic, <span class="mono">code</span> and links. Left empty, Readers see the description from dbt alone.</p>
+        <p class="meta ov-help">Markdown: headings, bold, italic, lists and links. Shown on this page and in the Summary. Left empty, Readers see the description from dbt alone.</p>
        </div>
        <div class="sub-tile">
         <div class="desc-head"><span class="label">Description</span><span class="origin">From dbt</span></div>
@@ -364,19 +226,34 @@ The lead source is set by the form the visitor used: `website`, `app`, `partner`
      </div>
     </section>
 
-    <!-- ───────────── Known behaviour: intended use, pitfalls, Known Gaps, since when reliable ───────────── -->
+    <!-- ───────────── Known behaviour: intended use, pitfalls, since when reliable; plain text ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="behaviour" hidden aria-label="Known behaviour">
      <div class="ov-head">
-      <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, where it trips people up, and what the data lacks.</p></div>
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Known behaviour</h2><p class="ov-lead">What it is meant for, where it trips people up, and from when it can be trusted.</p></div>
       <a class="edit-link" data-for="owner datateam" href="resource-edit.html"><i class="ph-fill ph-pencil-simple"></i>Edit</a>
      </div>
      <div class="ov-grid">
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-check-circle"></i>Intended use</div><p class="prose">Weekly trends and comparing lead sources.</p></div>
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-warning"></i>Pitfalls</div><p class="prose">The current week is incomplete. Don’t sum across sources for unique people.</p></div>
-      <div class="sub-tile ov-wide"><div class="said"><i class="ph-fill ph-circle-dashed"></i>Known Gaps <span class="meta">2</span></div>
-       <ul class="sum-gaps"><li><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</li><li>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</li></ul></div>
       <div class="sub-tile"><div class="said"><i class="ph-fill ph-calendar-check"></i>Reliable since</div><p class="prose"><b style="font-weight:500;color:var(--text-primary)">1 Jan 2025</b>. Earlier weeks are incomplete.</p></div>
      </div>
+    </section>
+
+    <!-- ───────────── Known Gaps: a list, one gap per line, that the Owner and the Data Team add to ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="gaps" hidden aria-label="Known Gaps">
+     <div class="ov-head">
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Known Gaps</h2><p class="ov-lead">What the data never holds, or holds only in part: one gap per line. Read them before you trust a result.</p></div>
+     </div>
+     <ul class="gap-list">
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</p><span class="meta">Added by An Claes · 2 Sep 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</p><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+     </ul>
+     <form class="gap-add" data-for="owner datateam" onsubmit="return false">
+      <i class="ph ph-plus" aria-hidden="true"></i>
+      <input type="text" aria-label="A new Known Gap" placeholder="Add a gap, such as a field that is empty for part of the rows">
+      <button class="btn-quiet outline sm" type="submit">Add</button>
+     </form>
+     <p class="meta ov-help">Plain text, one gap at a time. Every gap added, changed or removed goes into the history, with your name.</p>
     </section>
 
     <!-- ───────────── Querying: partitions, clustering, size, key fields and Parameters ───────────── -->
@@ -427,6 +304,65 @@ The lead source is set by the form the visitor used: `website`, `app`, `partner`
      </div>
     </section>
 
+    <!-- ───────────── Messages: what was asked and said about it, the Owner and the Data Team first ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="messages" hidden aria-label="Messages">
+     <div class="ov-head">
+      <div style="flex:1;min-width:0"><h2 class="ov-title">Messages</h2><p class="ov-lead">What colleagues asked and noted about it. What the Owner and the Data Team wrote weighs more: it comes first here, and in the Summary.</p></div>
+      <a class="btn-quiet outline sm" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-text"></i>All Messages</a>
+      <a class="btn-primary sm" href="resource-messages.html" style="text-decoration:none"><i class="ph-fill ph-chat-circle-dots"></i>Ask a question</a>
+     </div>
+
+     <div class="msg-group-head"><span class="label">Open Signals</span><span class="meta">The data seems wrong: read them before you trust a result</span></div>
+     <div class="sub-tile msg-group signal">
+      <div class="thread">
+       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
+       <div class="thread-body">
+        <div class="thread-head"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">3 days ago</span></div>
+        <p>The count for the source <span class="mono">partner</span> dropped to zero in the week of 13 Oct. We usually see about forty leads there.</p>
+        <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="role-tag">Owner</span><span class="meta">2 days ago</span></div><p>Looking into it with the Data Team. The partner feed was late that week.</p></div></div>
+       </div>
+      </div>
+     </div>
+
+     <div class="msg-group-head"><span class="label">From the Owner and the Data Team</span><span class="meta">Their answers and remarks: read them when you interpret a result</span></div>
+     <div class="sub-tile msg-group">
+      <div class="thread">
+       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
+       <div class="thread-body">
+        <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-check-circle"></i>Answered</span><span class="item-title">Mia Peeters</span><span class="meta">1 week ago</span></div>
+        <p>Is a lead counted again when the same person applies twice in one week?</p>
+        <div class="reply"><span class="mini-avatar">AC</span><div><div class="thread-head"><span class="item-title" style="font-size:12px">An Claes</span><span class="role-tag">Owner</span><span class="meta">6 days ago</span></div><p>Yes, every request counts. For unique people, use Credit lead funnel.</p></div></div>
+       </div>
+      </div>
+      <div class="thread">
+       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">DV</span>
+       <div class="thread-body">
+        <div class="thread-head"><span class="kind">Remark</span><span class="item-title">Dirk Vos</span><span class="role-tag">Data Team</span><span class="meta">10 days ago</span></div>
+        <p>From the week of 3 Nov, the source <span class="mono">partner</span> also holds the leads of the new comparison site. Earlier weeks stay as they were.</p>
+       </div>
+      </div>
+     </div>
+
+     <div class="msg-group-head"><span class="label">From colleagues</span><span class="meta">Context</span></div>
+     <div class="sub-tile msg-group quiet">
+      <div class="thread">
+       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">RA</span>
+       <div class="thread-body">
+        <div class="thread-head"><span class="kind">Remark</span><span class="item-title">Ruth Aerts</span><span class="meta">2 weeks ago</span></div>
+        <p>Tip: <span class="mono">lead_channel</span> is only filled from 23 Oct. Earlier weeks are empty, not zero.</p>
+       </div>
+      </div>
+      <div class="thread">
+       <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">JW</span>
+       <div class="thread-body">
+        <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Jan Wouters</span><span class="meta">3 weeks ago</span></div>
+        <p>Could this also be split per province?</p>
+       </div>
+      </div>
+     </div>
+     <p class="meta ov-help">Everyone who may see this Resource sees these Messages. Replying, and the rest of a thread, happen in the Messages of the Resource.</p>
+    </section>
+
     <!-- ───────────── Maturity: the Level, Publication, monitoring ───────────── -->
     <section class="ov-pane" data-pane-group="ov" data-pane="maturity" hidden aria-label="Maturity">
      <div class="ov-head">
@@ -456,6 +392,117 @@ The lead source is set by the form the visitor used: `website`, `app`, `partner`
       <div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">RES-012</span><span style="flex:1">Confirmed by An Claes</span><span style="color:var(--text-muted)">14 Oct 2026</span></div>
       <div class="log-line"><span class="mono" style="color:var(--text-muted);width:62px">RES-010</span><span style="flex:1">Published by An Claes</span><span style="color:var(--text-muted)">2 Sep 2026</span></div>
      </div>
+    </section>
+
+    <!-- ───────────── Summary: every part on one page, in the order to read it, each with its weight ───────────── -->
+    <section class="ov-pane" data-pane-group="ov" data-pane="summary" hidden aria-label="Summary">
+     <div class="ov-head">
+      <div style="flex:1;min-width:0">
+       <h2 class="ov-title">Summary</h2>
+       <p class="ov-lead">Everything Data Hub knows about Weekly lead volume on one page, in the order to read it, each part with its weight. Claude reads the same before it uses the Resource. A part with nothing in it is left out.</p>
+      </div>
+     </div>
+
+     <div class="sum-legend meta"><span class="weight w1">Read first</span>what it is<span class="weight w2">Before you query</span>how to read and join it cheaply<span class="weight w3">When interpreting results</span>what can mislead you<span class="weight w4">Context</span>where it stands, what others noted</div>
+
+     <ol class="sum">
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">1</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>What it is</h3><a class="text-link" data-go="ov:description"><span>Description</span><i class="ph ph-arrow-right"></i></a></div>
+        <div class="md">
+         <p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p>
+         <ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li><li>A lead counts in the week it came in, not when KBC followed it up.</li></ul>
+        </div>
+        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">2</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>One row is</h3><a class="text-link" data-go="ov:description"><span>Description</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">One week × one lead source <span class="code-chip">week_start</span><span class="code-chip">lead_source</span> · an <b>aggregate</b>, counted per week.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">3</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>Use it for</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">Weekly trends and comparing lead sources.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">4</span><span class="weight w2">Before you query</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>How to query it cheaply</h3><a class="text-link" data-go="ov:querying"><span>Querying</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
+        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span><span class="code-chip">lead_channel</span> · Parameters <span class="code-chip">lead_source</span><span class="code-chip">week_start</span></p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>What it joins</h3><a class="text-link" data-go="ov:entities"><span>Entities</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line"><span class="code-chip">leadSource</span>on <span class="mono">lead_source</span> joins Lead sources, Credit lead funnel and Lead response time. <span class="code-chip">creditLead</span>has no identifier at this grain: it joins nothing here.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">6</span><span class="weight w2">Before you query</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>Its fields</h3><a class="text-link" data-go="tabs:columns"><span>Columns</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">4 fields, each with its type and descriptions; 2 have a Business Description of the Owner. <span class="mono">lead_channel</span> is new since the last Confirmation.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">7</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>Watch out</h3><a class="text-link" data-go="ov:behaviour"><span>Known behaviour</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people. Reliable since <b>1 Jan 2025</b>: don’t read earlier weeks.</p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">8</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>Known Gaps</h3><a class="text-link" data-go="ov:gaps"><span>Known Gaps</span><i class="ph ph-arrow-right"></i></a></div>
+        <ul class="sum-gaps"><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events.</li><li>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</li></ul>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">9</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>What the Owner and the Data Team said</h3><a class="text-link" data-go="ov:messages"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
+        <ul class="sum-msgs">
+         <li><span class="kind signal">Signal</span><span><b>Open</b>, Karel Leys, 3 days ago: <span class="mono">partner</span> dropped to zero in the week of 13 Oct. <span class="role-tag">Owner</span> The partner feed was late that week; looking into it.</span></li>
+         <li><span class="kind">Question</span><span>Is a lead counted again when the same person applies twice? <span class="role-tag">Owner</span> Yes, every request counts; for unique people, use Credit lead funnel.</span></li>
+         <li><span class="kind">Remark</span><span><span class="role-tag">Data Team</span> From the week of 3 Nov, <span class="mono">partner</span> also holds the leads of the new comparison site.</span></li>
+        </ul>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">10</span><span class="weight w4">Context</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>Where it stands</h3><a class="text-link" data-go="ov:maturity"><span>Maturity</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line"><span class="maturity" data-level="4" data-no-tooltip></span> 4 · Explored · published 2 Sep 2026 by An Claes, confirmed 14 Oct 2026. <span class="sum-warn">Changed since it was confirmed: <span class="mono">lead_channel</span> added yesterday.</span></p>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">11</span><span class="weight w4">Context</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>What colleagues noted</h3><a class="text-link" data-go="ov:messages"><span>Messages</span><i class="ph ph-arrow-right"></i></a></div>
+        <ul class="sum-msgs">
+         <li><span class="kind">Remark</span><span>Ruth Aerts, 2 weeks ago: <span class="mono">lead_channel</span> is only filled from 23 Oct; earlier weeks are empty, not zero.</span></li>
+         <li><span class="kind">Question</span><span><b>Open</b>, Jan Wouters, 3 weeks ago: could this also be split per province?</span></li>
+        </ul>
+       </div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">12</span><span class="weight w4">Context</span></div>
+       <div class="sum-main">
+        <div class="sum-title"><h3>What changed lately</h3><a class="text-link" data-go="ov:changes"><span>Changes</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">Yesterday the field <span class="mono">lead_channel</span> was added (ART-010). Three days ago Karel Leys raised a Signal (CNV-050).</p>
+       </div>
+      </li>
+     </ol>
     </section>
 
    </div>
@@ -537,10 +584,11 @@ The lead source is set by the form the visitor used: `website`, `app`, `partner`
  <div class="float-foot lc-compact"><div class="lc-next" role="navigation" aria-label="Next"><div data-pane-group="step" data-pane="why"><div class="lc-next-in"><div class="lc-next-text"><b>Next: Core idea</b>The rule behind the two reports, in one sentence.</div><a class="btn-primary lc-next-btn" data-go="step:core">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="core" hidden><div class="lc-next-in" data-pane-group="path" data-pane="full"><div class="lc-next-text"><b>Next: See it</b>The same rule in one picture, with the part that matters marked.</div><a class="btn-primary lc-next-btn" data-go="step:see">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-next-in" data-pane-group="path" data-pane="quick" hidden><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="see" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: Check your understanding</b>Predict first, then see why. As many questions as you like.</div><a class="btn-primary lc-next-btn" data-go="step:check">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="check" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><a class="text-link lc-open" href="learning-card.html"><span>Open in the Learning Centre</span><i class="ph ph-arrow-right"></i></a></div></div>
 </section>
 <div class="proto-switch" data-group="ovproto" role="tablist" aria-label="Prototype: the part of the Overview" style="bottom:120px">Part
- <button class="seg on" data-target="summary" data-go="ov:summary" role="tab" aria-selected="true">Summary</button>
- <button class="seg" data-target="claude" data-go="ov:summary sumview:claude" role="tab" aria-selected="false">As Claude reads it</button>
- <button class="seg" data-target="description" data-go="ov:description" role="tab" aria-selected="false">Description</button>
+ <button class="seg on" data-target="description" data-go="ov:description descedit:off" role="tab" aria-selected="true">Description</button>
  <button class="seg" data-target="edit" data-go="ov:description descedit:on" role="tab" aria-selected="false">Editing it</button>
+ <button class="seg" data-target="gaps" data-go="ov:gaps" role="tab" aria-selected="false">Known Gaps</button>
+ <button class="seg" data-target="messages" data-go="ov:messages" role="tab" aria-selected="false">Messages</button>
+ <button class="seg" data-target="summary" data-go="ov:summary" role="tab" aria-selected="false">Summary</button>
 </div>
 <div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: deprecated or not" style="bottom:72px">Deprecated
  <button class="seg on" data-target="off" role="tab" aria-selected="true">No</button>
