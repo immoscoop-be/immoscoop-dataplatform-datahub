@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/svelte';
+import { cleanup, fireEvent, render, screen } from '@testing-library/svelte';
 import type { ComponentProps } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import Rail, { type RailItem } from './Rail.svelte';
@@ -11,7 +11,7 @@ const ITEMS: readonly RailItem[] = [
 function rail(props: Partial<ComponentProps<typeof Rail>> = {}) {
   const onselect = vi.fn();
   const ontheme = vi.fn();
-  render(Rail, { items: ITEMS, active: 'collections', panelOpen: true, initials: 'MV', myPageHref: '/me', onselect, ontheme, ...props });
+  render(Rail, { items: ITEMS, active: 'collections', panelOpen: true, initials: 'MV', myPageHref: '/me', theme: 'light', onselect, ontheme, ...props });
   return { onselect, ontheme };
 }
 
@@ -45,12 +45,21 @@ describe('the rail', () => {
     expect(followed).toBe(true);
   });
 
-  it('switches the theme, and opens My page behind the initials with a ring while it is open (DEC-UX-84)', async () => {
+  it('switches the theme, showing where it goes (DEC-UX-172), and opens My page behind the initials with a ring while it is open (DEC-UX-84)', async () => {
     const { ontheme } = rail({ active: undefined, myPageActive: true });
-    await fireEvent.click(screen.getByRole('button', { name: 'Wissel tussen licht en donker' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Naar donker' }));
     expect(ontheme).toHaveBeenCalledOnce();
     const me = screen.getByRole('link', { name: 'Mijn pagina' });
     expect(me.getAttribute('href')).toBe('/me');
     expect(me.getAttribute('aria-current')).toBe('page');
+  });
+
+  it('shows the sun by night, which goes to light, and the moon by day (DEC-UX-172)', () => {
+    rail({ theme: 'light' });
+    const moon = screen.getByRole('button', { name: 'Naar donker' }).innerHTML;
+    cleanup();
+    rail({ theme: 'dark' });
+    expect(screen.queryByRole('button', { name: 'Naar donker' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Naar licht' }).innerHTML).not.toBe(moon);
   });
 });

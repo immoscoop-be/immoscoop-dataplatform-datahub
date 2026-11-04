@@ -6,14 +6,12 @@ const background = z.string().regex(/^[a-z][a-z-]{0,39}$/);
 /**
  * The settings of a User, kept in Data Hub as keys and values (DEC-UX-96), so that they follow the
  * User to another device and Data Hub knows the language to write to them in. A setting that is not
- * set has its default, which whoever reads it knows: Dutch, the theme of the system, a random
- * background, the panel open.
+ * set has its default, which whoever reads it knows: Dutch, a random background, the panel open. The
+ * theme is no setting: it always follows the system (DEC-UX-172).
  */
 export const USER_SETTINGS = {
   /** The language of the sentences of Data Hub (NFR-LOC-06); names stay English. */
   language: z.enum(['nl', 'en']),
-  /** Light or dark, once the User switched it; before that, the theme of the system. */
-  theme: z.enum(['light', 'dark']),
   /** The background by day, and by night: a background of the set of the theme, or `random`. */
   'background.light': background,
   'background.dark': background,

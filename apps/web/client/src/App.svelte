@@ -24,7 +24,7 @@
   import { ADMIN_TOOLS, SECTIONS, sectionFor, sectionLabel } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
   import { Settings } from './lib/settings.svelte.js';
-  import { SystemTheme, themeOf } from './lib/theme.svelte.js';
+  import { ThemeOnScreen } from './lib/theme.svelte.js';
   import AdminPanel from './screens/AdminPanel.svelte';
   import AdminExcelKeys from './screens/AdminExcelKeys.svelte';
   import AdminWebhooks from './screens/AdminWebhooks.svelte';
@@ -65,7 +65,7 @@
   const messages = $derived(createMessages(config, session));
   const learning = $derived(createLearning(config, session));
   const router = new Router();
-  const system = new SystemTheme();
+  const themeOnScreen = new ThemeOnScreen();
 
   type Status =
     | { readonly kind: 'starting' }
@@ -182,8 +182,8 @@
   });
 
   const settings = $derived(status.kind === 'signedIn' ? status.settings : undefined);
-  /** Light or dark: the User's choice, or the system's; the sign-in always follows the system (Themes). */
-  const theme = $derived(settings ? themeOf(settings, system) : system.current);
+  /** Light or dark: always the system's, unless switched in the rail for this session (DEC-UX-172). */
+  const theme = $derived(themeOnScreen.current);
   const page = $derived(route(router.path));
 
   let themed = false;
@@ -607,7 +607,7 @@
     initials={initialsOf(signedIn.me.name)}
     myPageActive={page.kind === 'me'}
     onselect={select}
-    ontheme={() => signedIn.settings.set('theme', theme === 'dark' ? 'light' : 'dark')}
+    ontheme={() => themeOnScreen.switch()}
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
     panelActions={section?.id === 'collections' ? newCollection : section?.id === 'query' ? newQuery : undefined}

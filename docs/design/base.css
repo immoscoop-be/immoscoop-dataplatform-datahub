@@ -12,28 +12,20 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
   background-size: var(--app-bg-size); animation: bg-drift var(--background-cycle) ease-in-out infinite alternate;
 }
 @keyframes bg-drift { 0% { background-position: 0% 20%; } 50% { background-position: 60% 80%; } 100% { background-position: 100% 40%; } }
-/* A picture in place of the gradient (DEC-UX-34): the painted counterpart of a photo of the set, a watercolour (DEC-UX-37),
-   drifting as slowly. The frames then blur it lightly, so that it never competes with the text. The dark theme takes a
-   picture of its own set (DEC-UX-36): for now its one painting, whatever the light theme shows */
-html[data-bg] .app { background: 50% 30% / 112% auto no-repeat var(--bg-1); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
-html[data-bg="ski"] .app { background-image: url(backgrounds/painted/light/ski-lift.jpg); }
-html[data-bg="alpenglow"] .app { background-image: url(backgrounds/painted/light/alpenglow.jpg); }
-html[data-bg="spring"] .app { background-image: url(backgrounds/painted/light/spring-snow.jpg); }
-html[data-bg="fusilli"] .app { background-image: url(backgrounds/painted/light/fusilli.jpg); background-size: cover; }
-html[data-bg="piste"] .app { background-image: url(backgrounds/painted/light/piste.jpg); background-size: cover; }
-html[data-bg="concrete"] .app { background-image: url(backgrounds/painted/light/concrete.jpg); background-size: cover; }
-html[data-bg="peaks"] .app { background-image: url(backgrounds/photos/light/peaks.jpg); background-size: cover; }
-html[data-bg][data-theme="dark"] .app { background-image: url(backgrounds/painted/dark/village-lights.jpg); }
+/* A picture in place of the gradient (DEC-UX-34), drifting as slowly: by day Concrete, the one picture left in the set
+   (DEC-UX-173). The frames then blur it lightly, so that it never competes with the text. The dark set has no picture:
+   a picture of the day is never shown by night (DEC-UX-36). The sign-in shows the background as the app does */
+html[data-bg="concrete"]:not([data-theme="dark"]) :is(.app, .signin) { background: 50% 30% / cover no-repeat var(--bg-1) url(backgrounds/painted/light/concrete.jpg); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
 html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
 /* ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app,
    with a still grain over it; the glass surfaces blur it as they blur a picture. The dark theme has a night of its own,
    as it has its own picture (DEC-UX-36) */
-html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"], [data-bg="horizon"], [data-bg="periwinkle"], [data-bg="sunrise"], [data-bg="apricot"], [data-bg="blush"], [data-bg="sky"])[data-theme] .app { background: none; animation: none; }
+html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"], [data-bg="horizon"], [data-bg="periwinkle"], [data-bg="sunrise"], [data-bg="apricot"], [data-bg="blush"], [data-bg="sky"])[data-theme] :is(.app, .signin) { background: none; animation: none; }
 .bg-flow { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; display: block; }
 .bg-grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .32; mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 @keyframes picture-drift { 0% { background-position: 40% 25%; } 100% { background-position: 60% 35%; } }
-@media (prefers-reduced-motion: reduce) { .app, html[data-bg] .app, .signin-photo { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .app, .signin, html[data-bg] :is(.app, .signin) { animation: none; } }
 
 /* Navigation rail: floating icons, no own background */
 .rail { width: var(--nav-rail-width); margin-right: calc(var(--nav-to-panel-gap) - var(--space-gap)); flex-shrink: 0;
@@ -851,13 +843,11 @@ a.tile { display: block; color: inherit; text-decoration: none; }
 .lens-tile-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lens-tile-foot .pill { display: inline-flex; align-items: center; gap: 4px; }
 
-/* Signing in (DEC-UX-35): a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it, and
-   the story of the photo in a corner. Each theme has photos of its own (DEC-UX-36); without one, the gradient shows */
+/* Signing in (DEC-UX-35): a background of the set of the theme, picked at random as in the app (DEC-UX-173), with the
+   sign-in on a glass card that blurs what lies behind it */
 .signin { margin: 0; min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); align-items: center;
-  padding: 40px 8vw; box-sizing: border-box; overflow: hidden; background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%); }
-.signin-photo { position: fixed; inset: 0; background-size: cover; background-repeat: no-repeat; animation: photo-drift var(--photo-cycle) ease-in-out infinite alternate; }
-@keyframes photo-drift { from { transform: scale(1); } to { transform: scale(1.04); } }
-html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-set="light"] { display: none; }
+  padding: 40px 8vw; box-sizing: border-box; overflow: hidden;
+  background: var(--app-bg); background-size: var(--app-bg-size); animation: bg-drift var(--background-cycle) ease-in-out infinite alternate; }
 .glass { position: relative; -webkit-backdrop-filter: var(--blur-glass); backdrop-filter: var(--blur-glass);
   background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); }
 @supports not (backdrop-filter: blur(1px)) { .glass { background: var(--glass-solid); } }
@@ -871,11 +861,7 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
   background: color-mix(in srgb, var(--signal-warn) 16%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
 .signin-refused > i { font-size: 20px; color: var(--signal-warn); }
 .signin-refused b { font-weight: var(--weight-medium); }
-.photo-story { position: fixed; left: 28px; bottom: 26px; max-width: 360px; margin: 0; padding: 14px 18px; border-radius: var(--radius-surface); background: var(--glass-story); }
-.photo-story b { display: block; font-size: var(--text-small); font-weight: var(--weight-medium); }
-.photo-story p { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
-.photo-story .meta { display: block; margin-top: 8px; color: var(--text-secondary); }
-@media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px 140px; } .signin-card { grid-column: 1; } .photo-story { right: 16px; left: 16px; max-width: none; } }
+@media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px; } .signin-card { grid-column: 1; } }
 
 /* Learning (DEC-UX-38 to DEC-UX-41): the icon of a Learning Level for its audience, never bars, which belong to maturity (DEC-UX-62);
    the panel by section, the page of a Learning Card */

@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { BACKGROUNDS, backgroundsOf, chooseBackground, choosePhoto, PHOTOS, RANDOM } from './backgrounds.js';
+import { BACKGROUNDS, backgroundsOf, chooseBackground, RANDOM } from './backgrounds.js';
 
-describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109)', () => {
-  it('holds by day the clouds, the flowing gradient, five lights and seven pictures; by night the gradient, the flow, four lights and the village', () => {
-    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'ski', 'alpenglow', 'spring', 'fusilli', 'piste', 'concrete', 'peaks']);
-    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon', 'village']);
+describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)', () => {
+  it('holds by day the clouds, the flowing gradient, five lights and Concrete; by night the gradient, the flow and four lights', () => {
+    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'concrete']);
+    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon']);
     expect(new Set(BACKGROUNDS.map((b) => b.id)).size).toBe(BACKGROUNDS.length);
   });
 
-  it('shows the photos of Fusilli, Fresh piste, Concrete and Sunlit peaks as they are, covering the window (DEC-UX-110, DEC-UX-112, DEC-UX-113, DEC-UX-153)', () => {
-    expect(BACKGROUNDS.filter((b) => b.cover).map((b) => b.id)).toEqual(['fusilli', 'piste', 'concrete', 'peaks']);
+  it('shows the photo of Concrete as it is, covering the window (DEC-UX-113)', () => {
+    expect(BACKGROUNDS.filter((b) => b.kind === 'picture').map((b) => [b.id, b.cover])).toEqual([['concrete', true]]);
   });
 
   it('takes the background the User chose for the theme', () => {
@@ -17,15 +17,11 @@ describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109)', () => {
     expect(chooseBackground('light', 'gradient').id).toBe('gradient');
   });
 
-  it('picks one of the set of the theme at random for Random, nothing, or a choice that is not in the set', () => {
+  it('picks one of the set of the theme at random for Random, nothing, or a choice that is not in the set (any more)', () => {
     expect(chooseBackground('light', RANDOM, () => 0).id).toBe('gradient');
-    expect(chooseBackground('light', undefined, () => 0.999).id).toBe('peaks');
-    expect(chooseBackground('dark', 'alpenglow', () => 0.999).id).toBe('village');
-  });
-
-  it('picks the photo of the sign-in from the set of the theme', () => {
-    expect(PHOTOS.filter((p) => p.theme === 'light').map((p) => p.id)).toEqual(['alpenglow', 'spring']);
-    expect(choosePhoto('dark').id).toBe('village');
-    expect(choosePhoto('light', () => 0.9).id).toBe('spring');
+    expect(chooseBackground('light', undefined, () => 0.999).id).toBe('concrete');
+    // A background that left the set, such as Fresh piste, gives way to one at random.
+    expect(chooseBackground('light', 'piste', () => 0).id).toBe('gradient');
+    expect(chooseBackground('dark', 'concrete', () => 0.999).id).toBe('horizon');
   });
 });

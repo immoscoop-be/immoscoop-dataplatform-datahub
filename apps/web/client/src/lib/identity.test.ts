@@ -24,13 +24,13 @@ describe('the calls of the page to identity', () => {
     expect(await identity.groups()).toEqual([{ id: 'g', email: 'sales@thenextimmoscoop.be', name: 'Sales' }]);
     expect(await identity.settings()).toEqual({ language: 'en' });
     await identity.saveSetting('background.dark', 'aurora');
-    await identity.removeSetting('theme');
+    await identity.removeSetting('panel.open');
     expect(asked).toEqual([
       { method: 'GET', url: 'https://identity.test/me', authorization: 'Bearer a-1', type: null },
       { method: 'GET', url: 'https://identity.test/me/groups', authorization: 'Bearer a-1', type: null },
       { method: 'GET', url: 'https://identity.test/me/settings', authorization: 'Bearer a-1', type: null },
       { method: 'PUT', url: 'https://identity.test/me/settings/background.dark', authorization: 'Bearer a-1', type: 'application/json', body: { value: 'aurora' } },
-      { method: 'DELETE', url: 'https://identity.test/me/settings/theme', authorization: 'Bearer a-1', type: null },
+      { method: 'DELETE', url: 'https://identity.test/me/settings/panel.open', authorization: 'Bearer a-1', type: null },
     ]);
   });
 

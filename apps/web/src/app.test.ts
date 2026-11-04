@@ -66,7 +66,7 @@ async function builtClient(): Promise<string> {
     '<!doctype html>\n<html lang="nl">\n  <head>\n    <script type="module" crossorigin src="/assets/index-a1b2.js"></script>\n  </head>\n  <body><div id="app"></div></body>\n</html>\n',
   );
   await writeFile(join(dir, 'assets', 'index-a1b2.js'), 'console.log("Data Hub");');
-  await writeFile(join(dir, 'assets', 'alpenglow-c3d4.jpg'), 'jpg');
+  await writeFile(join(dir, 'assets', 'concrete-c3d4.jpg'), 'jpg');
   await writeFile(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg"/>');
   return dir;
 }
@@ -140,7 +140,7 @@ describe('the server of the web app', () => {
     expect(script.headers['cache-control']).toContain('immutable');
     expect(script.headers['x-content-type-options']).toBe('nosniff');
     expect(script.body).toBe('console.log("Data Hub");');
-    const picture = await app.inject({ url: '/assets/alpenglow-c3d4.jpg' });
+    const picture = await app.inject({ url: '/assets/concrete-c3d4.jpg' });
     expect(picture.headers['content-type']).toBe('image/jpeg');
     const icon = await app.inject({ url: '/favicon.svg' });
     expect(icon.headers['content-type']).toBe('image/svg+xml');
