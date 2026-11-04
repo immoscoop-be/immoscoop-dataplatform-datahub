@@ -349,7 +349,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} partition={details.partition?.field ?? null} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}

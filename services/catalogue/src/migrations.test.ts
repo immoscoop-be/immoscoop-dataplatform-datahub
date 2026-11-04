@@ -97,7 +97,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
   it('moves the Known Gaps of before into items of their own, in their order, without anyone who added them (FR-RC-21)', async () => {
     await sql`update resources set known_gaps = array['No partner leads before March.', '  ', ' visitorId is missing. ']`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0020'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([
       ['0018-known-gaps', 'Success'],
       ['0019-known-gap-scope', 'Success'],
@@ -117,6 +117,21 @@ describe.skipIf(!url)('catalogue migrations', () => {
     // A gap of before is free text: without a scope; a scope is a JSON object (FR-RC-24).
     expect((await sql<{ scope: unknown }>`select scope from known_gaps`.execute(admin.db)).rows.every((row) => row.scope === null)).toBe(true);
     await expect(sql`update known_gaps set scope = '[1]'::jsonb`.execute(admin.db)).rejects.toThrow(/known_gaps_scope_object/);
+  });
+
+  it('takes the field out of the period of every Known Gap kept so far, and keeps the rest of its scope (DEC-UX-178)', async () => {
+    const period = { period: { field: 'week_start', from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    await sql`update known_gaps set scope = ${JSON.stringify(period)}::jsonb where text like 'No partner%'`.execute(admin.db);
+    await sql`update known_gaps set scope = ${JSON.stringify({ fields: ['visitorId'] })}::jsonb where text like 'visitorId%'`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0020-gap-period-without-field', 'Success']]);
+
+    const scopes = await sql<{ scope: unknown }>`select scope from known_gaps order by id`.execute(admin.db);
+    expect(scopes.rows.map((row) => row.scope)).toEqual([
+      { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } },
+      { fields: ['visitorId'] },
+    ]);
     await sql`delete from resources`.execute(admin.db);
     expect(await count('known_gaps')).toBe(0);
   });

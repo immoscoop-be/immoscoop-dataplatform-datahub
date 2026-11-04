@@ -261,11 +261,11 @@ The Owner and the Data Team write the intended use and the pitfalls of a Resourc
 <a id="fr-rc-24"></a>
 ### FR-RC-24 · A Known Gap may be narrowed down by a period, fields and rows
 
-**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20), [DEC-UX-178](../../design/principles.md#dec-ux-178)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Owner Unit and the Data Team can narrow a Known Gap down ([FR-RC-21](#fr-rc-21)), with any of these, combined:
 
-- **Period:** the time it holds for, from and to, inclusive, on a field of the Resource of type DATE, DATETIME or TIMESTAMP, its partition field by default. One side may be left open, for from the start or until now; not both.
+- **Period:** the time it holds for, from and to, inclusive: the time the data covers. One side may be left open, for from the start or until now; not both. A period names no field of its own; which fields the gap concerns is said by Fields, combined with it.
 - **Fields:** one or more fields of the Resource that are empty or unreliable where the gap holds.
 - **Rows:** the rows it holds for: a field of the Resource and one or more values, typed as they are in the data, or that the field is empty.
 
@@ -276,14 +276,14 @@ Without any of them a gap is free text, as every gap before. Adding or changing 
 
 **Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
-The Summary of a Resource ([FR-RC-19](#fr-rc-19)) writes the scope of each Known Gap on a line under it: the period with its field, the fields, and the rows. Claude reads it in the Summary as data, such as `[period: week_start until 2025-02-28; rows: lead_source = partner]`, and in the card with the gap ([FR-CL-25](17-claude.md#fr-cl-25)).
+The Summary of a Resource ([FR-RC-19](#fr-rc-19)) writes the scope of each Known Gap on a line under it: the period, the fields, and the rows. Claude reads it in the Summary as data, such as `[period: until 2025-02-28; rows: lead_source = partner]`, and in the card with the gap ([FR-CL-25](17-claude.md#fr-cl-25)).
 
 <a id="fr-rc-26"></a>
 ### FR-RC-26 · Columns marks a field a Known Gap names
 
 **Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-177](../../design/principles.md#dec-ux-177)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
 
-On the tab Columns, a field that a Known Gap names under Fields ([FR-RC-24](#fr-rc-24)) carries "Known Gap", with the text and scope of the gap on hover and a way to Known Gaps. A field named only by its period or its rows is not marked: those say where the gap holds, not that the field is wanting.
+On the tab Columns, a field that a Known Gap names under Fields ([FR-RC-24](#fr-rc-24)) carries "Known Gap", with the text and scope of the gap on hover and a way to Known Gaps. A field named only by its rows is not marked: they say where the gap holds, not that the field is wanting.
 
 <a id="fr-rc-27"></a>
 ### FR-RC-27 · A query that reads a Known Gap gets a warning
@@ -301,7 +301,7 @@ When a query, a Lens or a Preview reads the period or the rows of a Known Gap of
 
 **Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20))
 
-When a field that the scope of a Known Gap names is removed or renamed in dbt, or a field of its period is no longer a date, the gap keeps its scope as it was: the field is shown as no longer in the Resource, and the Owner Unit and the Data Team can change or remove the gap. Nothing is changed or removed by itself.
+When a field that the scope of a Known Gap names is removed or renamed in dbt, the gap keeps its scope as it was: the field is shown as no longer in the Resource, and the Owner Unit and the Data Team can change or remove the gap. Nothing is changed or removed by itself.
 
 ## Open points
 
