@@ -1,14 +1,25 @@
 // Shared prototype behaviour. Prototype only: no data, no routing.
 const app = document.querySelector('.app');
 
-// Theme toggle (light / dark), remembered per viewer
+// The theme always follows the system, also while the page is open (DEC-UX-172). The switch at the foot of the rail
+// turns it for this page only, nothing is remembered; it shows where it goes: the sun by night, the moon by day
 const themeBtn = document.getElementById('theme');
-try { const t = localStorage.getItem('dh-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); document.documentElement.dataset.theme = t; } catch (e) {}
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const showThemeBtn = () => {
+  const dark = document.documentElement.dataset.theme === 'dark', icon = themeBtn?.querySelector('i');
+  if (icon) icon.className = 'ph-fill ' + (dark ? 'ph-sun' : 'ph-moon');
+  themeBtn?.setAttribute('aria-label', dark ? 'Switch to light' : 'Switch to dark');
+  if (themeBtn) themeBtn.dataset.label = dark ? 'Light' : 'Dark';
+};
+document.documentElement.dataset.theme = systemDark.matches ? 'dark' : 'light';
+showThemeBtn();
 
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'ski', 'alpenglow', 'spring', 'fusilli', 'piste', 'concrete', 'peaks', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'village', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
+const BACKGROUNDS = { light: ['', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'], dark: ['', 'flow', 'aurora', 'ember', 'dusk', 'horizon'] };
+// The sign-in does not know the User yet: it always picks one of the set at random (DEC-UX-173)
+const signingIn = document.body.classList.contains('signin');
 // The backgrounds drawn live with WebGL: the flowing gradient, and the flowing lights (DEC-UX-109)
 const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
@@ -17,7 +28,7 @@ const pickBg = theme => {
   try { sessionStorage.setItem('dh-bg', bg); } catch (e) {}
   return bg;
 };
-const bgChoice = theme => { let c = null; try { c = localStorage.getItem('dh-bg-' + theme); } catch (e) {} return c === null ? 'random' : c; };
+const bgChoice = theme => { let c = null; if (!signingIn) try { c = localStorage.getItem('dh-bg-' + theme); } catch (e) {} return c === null ? 'random' : c; };
 const saveBgChoice = (theme, c) => { try { localStorage.setItem('dh-bg-' + theme, c); } catch (e) {} };
 // The background for a theme: the one chosen for it, otherwise one at random
 const bgFor = (theme, keepSession) => {
@@ -45,16 +56,19 @@ document.querySelectorAll('.bg-opt').forEach(o => o.addEventListener('click', ()
   showBg(bgFor(document.documentElement.dataset.theme || 'light', false));
 }));
 
-themeBtn?.addEventListener('click', () => {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+const switchTheme = next => {
+  if (document.documentElement.dataset.theme === next) return;
   // Day and night switch at once, with every transition off for that moment (DEC-UX-149).
   document.documentElement.classList.add('theme-switching');
   document.documentElement.dataset.theme = next;
   void document.documentElement.offsetHeight;
   requestAnimationFrame(() => requestAnimationFrame(() => document.documentElement.classList.remove('theme-switching')));
-  try { localStorage.setItem('dh-theme', next); } catch (e) {}
+  showThemeBtn();
   const bg = bgFor(next, false); syncBgOpts(); showBg(bg);
-});
+};
+themeBtn?.addEventListener('click', () => switchTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
+// A change of the system wins over the switch (DEC-UX-172)
+systemDark.addEventListener('change', event => switchTheme(event.matches ? 'dark' : 'light'));
 
 // Panel: clicking the active section toggles it, the collapse button closes it, state remembered per viewer
 try { if (localStorage.getItem('dh-panel') === 'closed') app.classList.remove('panel-open'); } catch (e) {}
@@ -264,7 +278,7 @@ document.querySelectorAll('.maturity').forEach(m => {
 });
 
 // Prototype only: the address picks what a switch shows, so a link opens a screen as the right role or outcome:
-// ?role=owner, ?size=large; ?bg=ski shows the picture as the background (DEC-UX-34), ?bg=flow a flowing gradient
+// ?role=owner, ?size=large; ?bg=concrete shows the picture as the background (DEC-UX-34), ?bg=flow a flowing gradient
 new URLSearchParams(location.search).forEach((value, key) => {
   if (key === 'role') document.documentElement.dataset.role = value;
   if (key === 'bg') document.documentElement.dataset.bg = value;
