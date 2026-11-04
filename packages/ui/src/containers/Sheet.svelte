@@ -1,12 +1,15 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
   import Icon from '../foundations/Icon.svelte';
+  import { portal } from '../foundations/portal.js';
   import { t } from '../foundations/texts.svelte.js';
 
   /**
-   * A task over its page, from the right (Sheet): the page stays visible behind it, dimmed. "Close",
-   * a click beside it or Escape closes it (Lay over). Its head names the task; its foot holds what
-   * the task comes to.
+   * A task over its page, from the right (Sheet), taking over the whole window: the rail, the panel and
+   * the page stay visible behind it, deeply dimmed, and cannot be clicked or scrolled (DEC-UX-174). It
+   * hangs on the page itself, so that no frame around where it is written holds it. It takes half the
+   * window. "Close", a click beside it or Escape closes it (Lay over). Its head names the task; its foot
+   * holds what the task comes to.
    */
   let {
     title,
@@ -42,6 +45,7 @@
 
 <svelte:window onkeydown={(event) => event.key === 'Escape' && onclose()} />
 
+<div class="over" {@attach portal}>
 <div class="backdrop" aria-hidden="true" onclick={onclose}></div>
 <div class="sheet" class:wide class:roomy role="dialog" aria-modal="true" aria-label={title} tabindex="-1" bind:this={sheet}>
   {@render top?.()}
@@ -55,13 +59,15 @@
   <div class="body">{@render children()}</div>
   <div class="foot">{@render foot()}</div>
 </div>
+</div>
 
 <style>
   .backdrop { position: fixed; inset: 0; z-index: 30; background: var(--sheet-backdrop); }
-  .sheet { position: fixed; z-index: 31; top: 20px; right: 20px; bottom: 20px; width: 460px; max-width: calc(100vw - 40px); display: flex; flex-direction: column;
+  /* On the page itself, it holds its own surface for what sits on it, as a floating window does */
+  .sheet { --card: var(--surface-solid); position: fixed; z-index: 31; top: 20px; right: 20px; bottom: 20px; width: max(460px, var(--sheet-width)); max-width: calc(100vw - 40px); display: flex; flex-direction: column;
     border-radius: var(--radius-xl); background: var(--surface-solid); box-shadow: var(--sheet-shadow); padding: 22px 22px 18px; outline: none; }
-  .wide { width: 840px; }
-  .roomy { width: 560px; }
+  .wide { width: max(840px, var(--sheet-width)); }
+  .roomy { width: max(560px, var(--sheet-width)); }
   .head { display: flex; align-items: flex-start; gap: 8px; }
   .titles { flex: 1; min-width: 0; }
   h2 { font-size: 19px; font-weight: var(--weight-medium); margin: 0; }

@@ -16,6 +16,10 @@
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
     },
+    "./gaps": {
+      "types": "./dist/gaps.d.ts",
+      "default": "./dist/gaps.js"
+    },
     "./log": {
       "types": "./dist/log.d.ts",
       "default": "./dist/log.js"

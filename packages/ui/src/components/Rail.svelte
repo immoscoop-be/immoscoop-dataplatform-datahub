@@ -15,6 +15,7 @@
 </script>
 
 <script lang="ts">
+  import type { Theme } from '../foundations/backgrounds.js';
   import Icon from '../foundations/Icon.svelte';
   import { t } from '../foundations/texts.svelte.js';
   import Avatar from '../primitives/Avatar.svelte';
@@ -33,6 +34,7 @@
     initials,
     myPageHref,
     myPageActive = false,
+    theme,
     onselect,
     ontheme,
     onmypage,
@@ -46,6 +48,8 @@
     initials: string;
     myPageHref: string;
     myPageActive?: boolean;
+    /** The theme on screen: its switch shows where it goes, the sun by night and the moon by day (DEC-UX-172). */
+    theme: Theme;
     onselect: (id: string) => void;
     ontheme: () => void;
     onmypage?: () => void;
@@ -82,7 +86,7 @@
     </a>
   {/each}
   <div class="spacer"></div>
-  <button type="button" class="nav-btn" data-label={t('rail.theme')} aria-label={t('rail.themeSwitch')} onclick={ontheme}><Icon name="moon-fill" /></button>
+  <button type="button" class="nav-btn" data-label={t(theme === 'dark' ? 'rail.toLight' : 'rail.toDark')} aria-label={t(theme === 'dark' ? 'rail.toLight' : 'rail.toDark')} onclick={ontheme}><Icon name={theme === 'dark' ? 'sun-fill' : 'moon-fill'} /></button>
   <Avatar
     {initials}
     href={myPageHref}

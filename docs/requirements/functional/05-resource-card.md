@@ -37,7 +37,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-13"></a>**DEC-RC-13** · The grain and the mappings of the fields of a Resource, its Entities and identifiers, are kept in Data Hub. A model outside Colleciónes does not carry them in the meta of its dbt project; for a Colleciónes model, Data Hub fills them in from the meta of its columns when the Resource is added ([FR-AR-17](01-artifact-registry.md#fr-ar-17), [FR-CO-33](03-collections.md#fr-co-33)). *Decided on 2026-10-28, by Max ([OP-RC-05](#op-rc-05)).*
 - <a id="dec-rc-14"></a>**DEC-RC-14** · The actor of an event maps as "performed by", a mapping of its own next to `is` and the relation types, read from who performs the action (`performedBy`) in the Domain Model. An event has one actor. *Decided on 2026-10-28, by Max ([OP-RC-22](#op-rc-22)).*
 - <a id="dec-rc-15"></a>**DEC-RC-15** · Data Hub does not check the grain of a Resource against its data when it is added: no query counts the rows that share the fields of the grain. *Decided on 2026-10-28, by Max ([OP-RC-23](#op-rc-23)).* *Note of 2026-11-03, from Max: the data takes responsibility for its own grain, for instance with a test in dbt.*
-- <a id="dec-rc-16"></a>**DEC-RC-16** · The Business Description of a Resource is written in Markdown: headings, bold, italic, lists and links, in the Markdown editor of Data Hub ([DEC-UX-158](../../design/principles.md#dec-ux-158)). Everything else Data Hub keeps about a Resource and its fields stays plain text: its intended use, pitfalls and Known Gaps, and the Business Descriptions of its fields. *Decided on 2026-11-04, by Max.*
+- <a id="dec-rc-16"></a>**DEC-RC-16** · The Business Description of a Resource is written in Markdown: headings, bold, italic, lists and links, in the Markdown editor of Data Hub ([DEC-UX-158](../../design/principles.md#dec-ux-158)). Everything else Data Hub keeps about a Resource and its fields stays plain text: its intended use, pitfalls and Known Gaps, and the Business Descriptions of its fields. *Decided on 2026-11-04, by Max.* *Note of 2026-11-04: intended use and pitfalls are Markdown too ([DEC-RC-19](#dec-rc-19)).*
 - <a id="dec-rc-17"></a>**DEC-RC-17** · The Summary of a Resource reads its parts in one order, the same for every Resource, each with one of four weights:
 
   | Weight | What it asks of the reader | The parts, in this order |
@@ -49,6 +49,8 @@ Pointers to material this domain will build on, collected during the migration. 
 
   Data Hub sets the order and the weights; the Owner writes what is in a part, not where it stands. A part with nothing in it is left out. *Decided on 2026-11-04, by Max.*
 - <a id="dec-rc-18"></a>**DEC-RC-18** · A thread on a Resource that its Owner Unit or the Data Team started, or answered in, belongs to its curated Q&A: it stays in its Summary for good, open or answered, and weighs as When interpreting results ([DEC-RC-17](#dec-rc-17)). An open Signal weighs the same, whoever raised it. A thread they have not touched yet is Context. *Decided on 2026-11-04, by Max: "all answered or confirmed by the Data Team or the Owner remains; this way it builds a curated Q&A."*
+- <a id="dec-rc-19"></a>**DEC-RC-19** · The intended use and the pitfalls of a Resource are written in Markdown, as its Business Description, in the same editor ([DEC-RC-16](#dec-rc-16)). Its Known Gaps and the Business Descriptions of its fields stay plain text. *Decided on 2026-11-04, by Max.* *Note of 2026-11-04: a Known Gap may also be narrowed down by a scope ([DEC-RC-20](#dec-rc-20)).*
+- <a id="dec-rc-20"></a>**DEC-RC-20** · A Known Gap keeps its why in plain text and may be narrowed down by a scope of up to three kinds, each optional and combined as they apply: a period, fields and rows. A gap without one is free text, as every gap before. The scope lets Data Hub and Claude read where a gap holds; a warning on a query that reads it comes later ([FR-RC-27](#fr-rc-27)). *Decided on 2026-11-04, by Max: "combinable scope is ok, the warning on queries later".*
 
 ## Requirements
 
@@ -248,6 +250,58 @@ Every Known Gap of a Resource ([FR-RC-04](#fr-rc-04)) is an item of its own, in 
 **Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)) its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good, with its open Signals; and the threads they have not touched yet, as Context ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, whether it is open or answered, and the answer of the Owner or the Data Team. Reading the whole thread and replying stay in the Messages on the Resource.
+
+<a id="fr-rc-23"></a>
+### FR-RC-23 · Intended use and pitfalls are written in Markdown
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Owner and the Data Team write the intended use and the pitfalls of a Resource in Markdown, in the Markdown editor of Data Hub, as its Business Description ([FR-RC-20](#fr-rc-20), [DEC-RC-19](#dec-rc-19)). Known behaviour and the Summary show them rendered; Claude reads them as written, in Markdown.
+
+<a id="fr-rc-24"></a>
+### FR-RC-24 · A Known Gap may be narrowed down by a period, fields and rows
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Owner Unit and the Data Team can narrow a Known Gap down ([FR-RC-21](#fr-rc-21)), with any of these, combined:
+
+- **Period:** the time it holds for, from and to, inclusive, on a field of the Resource of type DATE, DATETIME or TIMESTAMP, its partition field by default. One side may be left open, for from the start or until now; not both.
+- **Fields:** one or more fields of the Resource that are empty or unreliable where the gap holds.
+- **Rows:** the rows it holds for: a field of the Resource and one or more values, typed as they are in the data, or that the field is empty.
+
+Without any of them a gap is free text, as every gap before. Adding or changing the scope of a gap goes into its Log, as a change of the gap ([TR-SR-25](../technical/04-stacks-and-resources.md#tr-sr-25)).
+
+<a id="fr-rc-25"></a>
+### FR-RC-25 · The Summary and Claude read the scope of a Known Gap
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Summary of a Resource ([FR-RC-19](#fr-rc-19)) writes the scope of each Known Gap on a line under it: the period with its field, the fields, and the rows. Claude reads it in the Summary as data, such as `[period: week_start until 2025-02-28; rows: lead_source = partner]`, and in the card with the gap ([FR-CL-25](17-claude.md#fr-cl-25)).
+
+<a id="fr-rc-26"></a>
+### FR-RC-26 · Columns marks a field a Known Gap names
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-177](../../design/principles.md#dec-ux-177)) · **Screens:** [resource-detail](../../design/screens/resource-detail.html)
+
+On the tab Columns, a field that a Known Gap names under Fields ([FR-RC-24](#fr-rc-24)) carries "Known Gap", with the text and scope of the gap on hover and a way to Known Gaps. A field named only by its period or its rows is not marked: those say where the gap holds, not that the field is wanting.
+
+<a id="fr-rc-27"></a>
+### FR-RC-27 · A query that reads a Known Gap gets a warning
+
+**Status:** Proposed · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20))
+
+When a query, a Lens or a Preview reads the period or the rows of a Known Gap of one of its Resources, its Pre-flight says so, with the gap.
+
+*Could, not in v1: set on 2026-11-04, by Max ([DEC-RC-20](#dec-rc-20)).*
+
+## Edge cases
+
+<a id="ec-rc-01"></a>
+### EC-RC-01 · A field that a Known Gap names leaves the Resource
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-RC-20](#dec-rc-20))
+
+When a field that the scope of a Known Gap names is removed or renamed in dbt, or a field of its period is no longer a date, the gap keeps its scope as it was: the field is shown as no longer in the Resource, and the Owner Unit and the Data Team can change or remove the gap. Nothing is changed or removed by itself.
 
 ## Open points
 

@@ -1,10 +1,15 @@
+<script lang="ts" module>
+  /** The parts of the Overview, each a page of its own (DEC-UX-168). */
+  export type OverviewPart = 'summary' | 'description' | 'behaviour' | 'gaps' | 'querying' | 'entities' | 'maturity' | 'changes' | 'danger';
+</script>
+
 <script lang="ts">
+  import type { GapScope } from '@datahub/contracts/gaps';
   import type { SummarySource } from '@datahub/contracts/summary';
   import FactsList from '@datahub/ui/components/FactsList.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
   import MarkdownEditor from '@datahub/ui/components/MarkdownEditor.svelte';
   import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
-  import MaturityLadder from '@datahub/ui/components/MaturityLadder.svelte';
   import EditBar from '@datahub/ui/containers/EditBar.svelte';
   import Grid from '@datahub/ui/containers/Grid.svelte';
   import SubTile from '@datahub/ui/containers/SubTile.svelte';
@@ -22,7 +27,9 @@
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
   import LearningRef from './LearningRef.svelte';
+  import OverviewDanger from './OverviewDanger.svelte';
   import OverviewGaps from './OverviewGaps.svelte';
+  import OverviewMaturity from './OverviewMaturity.svelte';
   import OverviewSummary from './OverviewSummary.svelte';
 
   /**
@@ -33,6 +40,8 @@
    * Publication; and its recent history. Its Owner Unit and the Data Team edit each part in place, on its own page
    * (FR-RC-15); what comes from dbt, and what the Data Team gave when adding it, stands next to it, read-only.
    * The Messages are no part of their own: "Messages" in the header opens them, and the Summary takes them (FR-RC-22).
+   * Maturity explains every Level, passed or what it takes (FR-MR-16). Apart at the end, for its Owner Unit and the
+   * Data Team, the Danger zone, where it is deprecated (DEC-UX-176). Intended use and pitfalls are Markdown (FR-RC-23).
    */
   let {
     resource,
@@ -45,6 +54,11 @@
     onsave,
     gaps,
     oncolumns,
+    onpublish,
+    others,
+    ondeprecate,
+    onundeprecate,
+    part = $bindable('summary'),
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -59,15 +73,23 @@
     onsave: (changes: CardChanges) => Promise<boolean>;
     /** Adds, changes and removes one Known Gap; each answers whether it worked. */
     gaps: {
-      add: (text: string) => Promise<boolean>;
-      change: (gap: KnownGap, text: string) => Promise<boolean>;
+      add: (text: string, scope: GapScope | null) => Promise<boolean>;
+      change: (gap: KnownGap, text: string, scope: GapScope | null) => Promise<boolean>;
       remove: (gap: KnownGap) => Promise<boolean>;
     };
     /** Opens the tab Columns, from its Summary. */
     oncolumns: () => void;
+    /** Opens its publication, for its Owner while it is not published; from Maturity. */
+    onpublish: (() => void) | undefined;
+    /** The published Resources the User sees, to use instead of this one once deprecated. */
+    others: readonly { id: string; displayName: string; collection: string }[];
+    ondeprecate: (reason: string, insteadOf: string | null) => Promise<boolean>;
+    onundeprecate: () => Promise<boolean>;
+    /** The part on screen, which the page can open, such as the Danger zone from a deprecation. */
+    part?: Part;
   } = $props();
 
-  type Part = 'summary' | 'description' | 'behaviour' | 'gaps' | 'querying' | 'entities' | 'maturity' | 'changes';
+  type Part = OverviewPart;
   type Editable = 'description' | 'behaviour' | 'querying';
 
   const PARTS: readonly { id: Part; icon: IconName; label: string }[] = [
@@ -79,16 +101,18 @@
     { id: 'entities', icon: 'graph', label: 'overview.entities' },
     { id: 'maturity', icon: 'seal-check', label: 'resource.maturity' },
     { id: 'changes', icon: 'clock-counter-clockwise', label: 'overview.changes' },
+    { id: 'danger', icon: 'warning-octagon', label: 'overview.danger' },
   ];
+  /** The Danger zone is for its Owner Unit and the Data Team only. */
+  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canEdit));
 
-  let part: Part = $state('summary');
   let editing: Editable | null = $state(null);
-  // Another Resource opens on its Summary.
-  let shownFor: string | undefined;
+  // Another Resource opens on its Summary: the page sets the part, and what was being edited goes.
+  // svelte-ignore state_referenced_locally
+  let shownFor = resource.id;
   $effect(() => {
     if (shownFor !== resource.id) {
       shownFor = resource.id;
-      part = 'summary';
       editing = null;
     }
   });
@@ -105,19 +129,16 @@
 
   function navKeys(event: KeyboardEvent) {
     const index = moveFocus(event, '[role="tab"]');
-    if (index !== undefined) open(PARTS[index]!.id);
+    if (index !== undefined) open(shown[index]!.id);
   }
 
   const card = $derived(resource.card);
   const details = $derived(resource.details);
   /** A Business Description is written from 2 · Described on (DEC-MR-10). */
   const described = $derived(resource.level >= 2);
-  const undescribed = $derived(resource.fields.filter((field) => field.description.trim() === '').length);
   /** The description of the table from dbt, when it changed in the last 30 days (FR-RC-17). */
   const tableChanged = $derived(resource.descriptionChanges.find((change) => change.field === null));
-  const LEVEL_KEYS: Record<number, string> = { 2: 'resource.level.2', 3: 'resource.level.3', 4: 'resource.level.4' };
   const UNIT_KEYS = { hour: 'grain.unit.hour', day: 'grain.unit.day', month: 'grain.unit.month', year: 'grain.unit.year' } as const;
-  const CHANGE_KEYS = { added: 'resource.change.added', removed: 'resource.change.removed', retyped: 'resource.change.retyped' } as const;
   const LOCALES = { nl: 'nl-BE', en: 'en-GB' } as const;
   const list = (names: readonly string[]) => new Intl.ListFormat(LOCALES[currentLanguage()], { type: 'conjunction' }).format(names);
   const day = (value: string) => new Intl.DateTimeFormat(LOCALES[currentLanguage()], { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(value));
@@ -256,7 +277,8 @@
 
 <div class="overview">
   <div class="nav" role="tablist" aria-label={t('overview.parts')} aria-orientation="vertical" tabindex="-1" onkeydown={navKeys}>
-    {#each PARTS as { id, icon, label } (id)}
+    {#each shown as { id, icon, label } (id)}
+      {#if id === 'danger'}<div class="separator" role="presentation"></div>{/if}
       <button type="button" role="tab" class="item" class:on={part === id} aria-selected={part === id} tabindex={part === id ? 0 : -1} onclick={() => open(id)}>
         <Icon name={icon} /><span class="name">{t(label)}</span>
         {#if id === 'summary'}<span class="note">{t('overview.startHere')}</span>{/if}
@@ -267,7 +289,7 @@
     {/each}
   </div>
 
-  <div class="body" role="tabpanel" aria-label={t(PARTS.find((one) => one.id === part)!.label)}>
+  <div class="body" role="tabpanel" aria-label={t((shown.find((one) => one.id === part) ?? PARTS[0]!).label)}>
     {#if part === 'summary'}
       {@render head(t('overview.summary'), t('overview.summary.lead', { name: resource.displayName }))}
       <OverviewSummary {resource} {related} {threads} {log} {size} {messagesHref} ongo={go} />
@@ -303,21 +325,21 @@
       {#if editing === 'behaviour'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
-          <Grid min="var(--tile-min)" tight>
-            <SubTile><Field label={t('resource.intendedUse')}><textarea bind:value={draft.intendedUse} rows="4" maxlength="2000"></textarea></Field></SubTile>
-            <SubTile><Field label={t('resource.pitfalls')}><textarea bind:value={draft.pitfalls} rows="4" maxlength="2000"></textarea></Field></SubTile>
-            <SubTile><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></SubTile>
-          </Grid>
+          <div class="pair">
+            <div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>
+            <div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>
+          </div>
+          <div class="reliable"><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></div>
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>
           <SubTile>
             <div class="said"><Icon name="check-circle-fill" />{t('resource.intendedUse')}</div>
-            <p class="text">{card.intendedUse || t('resource.nothingYet')}</p>
+            {#if card.intendedUse}<div class="markdown"><MarkdownText source={card.intendedUse} /></div>{:else}<p class="text">{t('resource.nothingYet')}</p>{/if}
           </SubTile>
           <SubTile>
             <div class="said"><Icon name="warning-fill" />{t('resource.pitfalls')}</div>
-            <p class="text">{card.pitfalls || t('resource.nothingYet')}</p>
+            {#if card.pitfalls}<div class="markdown"><MarkdownText source={card.pitfalls} /></div>{:else}<p class="text">{t('resource.nothingYet')}</p>{/if}
           </SubTile>
           <SubTile>
             <div class="said"><Icon name="calendar-blank-fill" />{t('resource.reliableSince')}</div>
@@ -327,7 +349,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} partition={details.partition?.field ?? null} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}
@@ -422,33 +444,15 @@
       </SubTile>
     {:else if part === 'maturity'}
       {@render head(t('resource.maturity'), t('overview.maturity.lead'))}
-      <Grid min="var(--tile-min)" tight>
-        <SubTile label={t('overview.level')}>
-          <div class="ladder"><MaturityLadder level={resource.level} /></div>
-          <div class="level">{levelName(resource.level)}</div>
-          <div class="meta">
-            {#if LEVEL_KEYS[resource.level]}{t(LEVEL_KEYS[resource.level]!)}{:else}{t('resource.undescribed', { undescribed, count: resource.fields.length })}{/if}
-          </div>
-        </SubTile>
-        <SubTile label={t('resource.publication')}>
-          <FactsList>
-            <!-- Who published it and when, and who confirmed it last and when (FR-RC-12). -->
-            <dt>{t('resource.published')}</dt>
-            <dd>{resource.publication ? t('resource.published.by', { date: day(resource.publication.publishedAt), name: resource.publication.publishedBy }) : t('resource.notYet')}</dd>
-            <dt>{t('resource.confirmed')}</dt>
-            <dd>{resource.publication ? t('resource.published.by', { date: day(resource.publication.confirmedAt), name: resource.publication.confirmedBy }) : t('resource.notYet')}</dd>
-            {#if resource.changes.length > 0}
-              <dt>{t('overview.changed')}</dt>
-              <dd class="warn">{resource.changes.map((change) => t(CHANGE_KEYS[change.change], { field: change.field, old: change.old ?? '', new: change.new ?? '', date: day(change.at) })).join('; ')}</dd>
-            {/if}
-          </FactsList>
-        </SubTile>
-      </Grid>
+      <OverviewMaturity {resource} {onpublish} />
     {:else if part === 'changes'}
       {@render head(t('overview.changes'), t('overview.changes.lead'))}
       <SubTile>
         {#if log}{#if log.length > 0}<LogList entries={log.slice(0, 20)} />{:else}<p class="empty">{t('resource.nothingYet')}</p>{/if}{:else}<Loading />{/if}
       </SubTile>
+    {:else if part === 'danger' && canEdit}
+      {@render head(t('overview.danger'), t('overview.danger.lead', { name: resource.displayName }))}
+      <OverviewDanger {resource} {others} {ondeprecate} {onundeprecate} />
     {/if}
   </div>
 </div>
@@ -466,7 +470,6 @@
   .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--signal-warn); flex: none; }
   .separator { height: 1px; background: var(--tint-active); margin: 6px 10px; }
   .body { min-width: 0; }
-  .ladder { max-width: 240px; }
   .head { display: flex; align-items: flex-start; gap: 10px; margin: 2px 0 14px; }
   .what { flex: 1; min-width: 0; }
   .head h2 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
@@ -482,6 +485,9 @@
   .markdown { font-size: var(--text-body); max-width: 72ch; }
   .prose { margin: 0; line-height: 1.65; color: var(--text-secondary); white-space: pre-line; }
   .side-by-side { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
+  .pair .label { margin-bottom: 6px; }
+  .pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+  .reliable { max-width: 240px; margin-top: 14px; }
   .model { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
   .code { display: inline-flex; align-items: center; gap: 4px; font: var(--text-meta) var(--font-mono); color: var(--text-secondary); background: var(--surface-solid); padding: 3px 8px; border-radius: var(--radius-chip); }
   .code button { all: unset; cursor: pointer; color: var(--text-muted); }
@@ -489,8 +495,6 @@
   .chosen { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
   .second { margin-top: 12px; margin-bottom: 8px; }
   .add { font: var(--text-meta) var(--font-family); color: var(--text-secondary); background: transparent; border: 1px dashed var(--tint-active); border-radius: var(--radius-chip); padding: 3px 6px; }
-  .level { font-size: 14px; font-weight: var(--weight-medium); margin-top: 6px; }
-  .meta { display: block; font-size: var(--text-meta); color: var(--text-muted); }
   .said { display: flex; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-medium); margin-bottom: 6px; }
   .said :global(.icon) { color: var(--text-secondary); }
   .text { margin: 0; font-size: var(--text-small); color: var(--text-secondary); line-height: 1.6; white-space: pre-line; }
@@ -498,7 +502,6 @@
   .cheap { margin: 10px 0 0; font-size: var(--text-meta); color: var(--text-secondary); line-height: 1.6; }
   /* The name of the table beneath stays on one line, cut off rather than wrapped or spilling over. */
   .beneath { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
-  .warn { color: var(--signal-warn); }
   .entities { display: grid; gap: 14px; align-items: center; }
   .entities.drawn { grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); }
   .entities svg { max-width: 440px; justify-self: center; }
@@ -511,8 +514,8 @@
   .identity-name { fill: var(--text-secondary); font-size: 8.5px; }
   .other { fill: var(--surface-solid); }
   .other-name { fill: var(--text-primary); font-size: 10px; }
-  textarea, input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
-  textarea:focus, input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
+  input { width: 100%; box-sizing: border-box; font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; resize: vertical; }
+  input:focus { outline: 2px solid var(--text-secondary); outline-offset: 1px; }
   .hint { margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); line-height: 1.5; }
   .failed { margin: 8px 0; font-size: var(--text-small); color: var(--signal-urgent); }
   form { display: block; }

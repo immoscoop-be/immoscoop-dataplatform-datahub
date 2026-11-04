@@ -50,7 +50,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Behaviour | Owned by | What it does | Today in the prototypes | Rules |
 | --- | --- | --- | --- | --- |
 | **Fold** | Fold box | Opens and shuts by its head; folded it shows a summary; remembers its state where the rule says so | Five times over: a Collection in the panel, the Parameters, the SQL, the Parameters of a Lens, the inline Learning Card | [DEC-UX-71](principles.md#dec-ux-71), [DEC-UX-76](principles.md#dec-ux-76), [DEC-UX-79](principles.md#dec-ux-79) |
-| **Lay over** | Layer (sheet, floating window, pop-out, menu) | Opens from what was clicked; closes on Close, Cancel, a click beside it or Escape; a sheet dims the page, a floating window does not | Sheets, three floating windows (Message, Learning Card, Parameter), two pop-outs, menus and SQL suggestions | [Sheets](principles.md#sheets), [DEC-UX-30](principles.md#dec-ux-30), [DEC-UX-57](principles.md#dec-ux-57) |
+| **Lay over** | Layer (sheet, floating window, pop-out, menu) | Opens from what was clicked; closes on Close, Cancel, a click beside it or Escape; a sheet dims the whole window, a floating window does not | Sheets, three floating windows (Message, Learning Card, Parameter), two pop-outs, menus and SQL suggestions | [Sheets](principles.md#sheets), [DEC-UX-30](principles.md#dec-ux-30), [DEC-UX-57](principles.md#dec-ux-57) |
 | **Switch a pane** | Tabs, segmented control | Shows one pane of several; may bring the pane to the top | Generic in `app.js` (`data-group`, `data-pane`) | [Tabs](principles.md#tabs) |
 | **Edit in place** | Loading | Three dots going back and forth where something will show, while it is read; after a moment only, still with Reduce motion; small in a line, such as a count | – | – | every page, panel, tab and sheet that reads what it shows | [DEC-UX-165](principles.md#dec-ux-165) |
 | In-place head | A click on the text turns it into fields where it stands, with Save and Cancel; Escape cancels; only what changed is saved | The name and question of a query, the name and description of a Collection and a folder, the name of a Lens | [DEC-UX-119](principles.md#dec-ux-119), [DEC-UX-162](principles.md#dec-ux-162) |
@@ -110,7 +110,7 @@ These are the behaviours the prototypes repeat across screens. Each belongs to o
 | Component | What it is | Behaviour | Depends on | Used on | Rules |
 | --- | --- | --- | --- | --- | --- |
 | Card | A solid surface with rounded corners | Focus follows the mouse | surfaces | every screen | – |
-| Glass card | A card that blurs what lies behind it, over a photo or the background | – | surfaces | sign-in, the message on a narrow window | [DEC-UX-35](principles.md#dec-ux-35) |
+| Glass card | A card that blurs what lies behind it, over the background | – | surfaces | sign-in, the message on a narrow window | [DEC-UX-35](principles.md#dec-ux-35) |
 | Grid | Always 100% wide; its tiles have a minimum width and grow until a column fits | – | – | start screens, My page | [Grid](principles.md#grid) |
 | Tile | A card in a grid that grows to fill the width | Hover outline when it opens something | card, grid | start screens, Collection page | [Grid](principles.md#grid) |
 | Sub-tile | A tile inside a reading surface, tinted, with a label and an Edit link | Turns into fields when editing | card | Resource Overview | [DEC-UX-09](principles.md#dec-ux-09) |
@@ -216,7 +216,7 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Template | What it holds | Components |
 | --- | --- | --- |
 | App shell | Rail, panel and main, over the background; below the narrowest window it shows one message instead ([DEC-UX-91](principles.md#dec-ux-91)) | rail, panel, background, surfaces, glass card |
-| Sign-in | A photo of the set, the glass card with the way in, and the story of the photo; no rail and no panel | background, glass card, button |
+| Sign-in | A background of the set, picked at random, and the glass card with the way in; no rail and no panel | background, glass card, button |
 | Start screen | Intro, a search, then sections of tiles | intro, search, tile, segmented |
 | Object page | Breadcrumb, object header, status row, a callout when needed, tabs and their content | object header, status row, callout, tabs |
 | Message Centre | Filters, the list and the one opened | list, Message item, Message, composer |

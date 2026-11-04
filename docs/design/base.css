@@ -12,28 +12,20 @@ body { font-family: var(--font-family); color: var(--text-primary); font-size: v
   background-size: var(--app-bg-size); animation: bg-drift var(--background-cycle) ease-in-out infinite alternate;
 }
 @keyframes bg-drift { 0% { background-position: 0% 20%; } 50% { background-position: 60% 80%; } 100% { background-position: 100% 40%; } }
-/* A picture in place of the gradient (DEC-UX-34): the painted counterpart of a photo of the set, a watercolour (DEC-UX-37),
-   drifting as slowly. The frames then blur it lightly, so that it never competes with the text. The dark theme takes a
-   picture of its own set (DEC-UX-36): for now its one painting, whatever the light theme shows */
-html[data-bg] .app { background: 50% 30% / 112% auto no-repeat var(--bg-1); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
-html[data-bg="ski"] .app { background-image: url(backgrounds/painted/light/ski-lift.jpg); }
-html[data-bg="alpenglow"] .app { background-image: url(backgrounds/painted/light/alpenglow.jpg); }
-html[data-bg="spring"] .app { background-image: url(backgrounds/painted/light/spring-snow.jpg); }
-html[data-bg="fusilli"] .app { background-image: url(backgrounds/painted/light/fusilli.jpg); background-size: cover; }
-html[data-bg="piste"] .app { background-image: url(backgrounds/painted/light/piste.jpg); background-size: cover; }
-html[data-bg="concrete"] .app { background-image: url(backgrounds/painted/light/concrete.jpg); background-size: cover; }
-html[data-bg="peaks"] .app { background-image: url(backgrounds/photos/light/peaks.jpg); background-size: cover; }
-html[data-bg][data-theme="dark"] .app { background-image: url(backgrounds/painted/dark/village-lights.jpg); }
+/* A picture in place of the gradient (DEC-UX-34), drifting as slowly: by day Concrete, the one picture left in the set
+   (DEC-UX-173). The frames then blur it lightly, so that it never competes with the text. The dark set has no picture:
+   a picture of the day is never shown by night (DEC-UX-36). The sign-in shows the background as the app does */
+html[data-bg="concrete"]:not([data-theme="dark"]) :is(.app, .signin) { background: 50% 30% / cover no-repeat var(--bg-1) url(backgrounds/painted/light/concrete.jpg); animation: picture-drift var(--background-cycle) ease-in-out infinite alternate; }
 html[data-bg] .panel, html[data-bg] .main, html[data-bg] .nav-btn.active { -webkit-backdrop-filter: var(--blur-frame); backdrop-filter: var(--blur-frame); }
 /* ?bg=flow (DEC-UX-80): a flowing gradient in place of the picture, drawn live with WebGL on a canvas fixed behind the app,
    with a still grain over it; the glass surfaces blur it as they blur a picture. The dark theme has a night of its own,
    as it has its own picture (DEC-UX-36) */
-html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"], [data-bg="horizon"], [data-bg="periwinkle"], [data-bg="sunrise"], [data-bg="apricot"], [data-bg="blush"], [data-bg="sky"])[data-theme] .app { background: none; animation: none; }
+html:is([data-bg="flow"], [data-bg="aurora"], [data-bg="ember"], [data-bg="dusk"], [data-bg="horizon"], [data-bg="periwinkle"], [data-bg="sunrise"], [data-bg="apricot"], [data-bg="blush"], [data-bg="sky"])[data-theme] :is(.app, .signin) { background: none; animation: none; }
 .bg-flow { position: fixed; inset: 0; z-index: -2; width: 100%; height: 100%; display: block; }
 .bg-grain { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .32; mix-blend-mode: soft-light;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
 @keyframes picture-drift { 0% { background-position: 40% 25%; } 100% { background-position: 60% 35%; } }
-@media (prefers-reduced-motion: reduce) { .app, html[data-bg] .app, .signin-photo { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .app, .signin, html[data-bg] :is(.app, .signin) { animation: none; } }
 
 /* Navigation rail: floating icons, no own background */
 .rail { width: var(--nav-rail-width); margin-right: calc(var(--nav-to-panel-gap) - var(--space-gap)); flex-shrink: 0;
@@ -293,10 +285,11 @@ html[data-role="colleague"] [data-for]:not([data-for~="colleague"]) { display: n
 .warn { color: var(--signal-warn); }
 .lens-icon { font-size: 15px; color: var(--text-muted); flex: none; }
 
-/* A sheet slides in from the right over the page, for a task that belongs to the page, such as adding Resources */
-.sheet-backdrop { position: fixed; inset: 0; z-index: 30; background: rgba(40,34,30,.28); }
-.sheet { position: fixed; z-index: 31; top: 20px; right: 20px; bottom: 20px; width: 460px; display: flex; flex-direction: column; border-radius: var(--radius-xl);
-  background: var(--surface-solid); box-shadow: 0 20px 60px rgba(0,0,0,.18); padding: 22px 22px 18px; }
+/* A sheet slides in from the right over the whole window, for a task that belongs to the page, such as adding Resources:
+   everything behind it deeply dimmed, half the window wide (DEC-UX-174) */
+.sheet-backdrop { position: fixed; inset: 0; z-index: 30; background: var(--sheet-backdrop); }
+.sheet { position: fixed; z-index: 31; top: 20px; right: 20px; bottom: 20px; width: max(460px, var(--sheet-width)); max-width: calc(100vw - 40px); display: flex; flex-direction: column; border-radius: var(--radius-xl);
+  background: var(--surface-solid); box-shadow: var(--sheet-shadow); padding: 22px 22px 18px; }
 .sheet h2 { font-size: 19px; font-weight: var(--weight-medium); margin: 0; }
 .sheet-list { flex: 1; overflow: auto; margin: 12px -6px 0; }
 .pick { display: flex; gap: 12px; padding: 12px 10px; border-radius: var(--radius-md); cursor: pointer; }
@@ -568,8 +561,8 @@ button.ln-fold i { transition: transform 200ms ease; }
 .empty-run { display: flex; align-items: center; gap: 8px; margin: 4px 2px; padding: 22px 16px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); color: var(--text-secondary); }
 .empty-run i { font-size: 18px; color: var(--text-muted); }
 /* A new query, with another set of Resources: a sheet */
-.lens-sheet { width: 560px; }
-.newq-sheet { width: 480px; }
+.lens-sheet { width: max(560px, var(--sheet-width)); }
+.newq-sheet { width: max(480px, var(--sheet-width)); }
 .newq-body { padding: 0 6px; }
 .newq-why { font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); margin: 4px 0 14px; }
 .newq-body .label { margin-bottom: 6px; }
@@ -782,7 +775,7 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 .mc-filter.on { background: var(--card); color: var(--text-primary); font-weight: var(--weight-medium); }
 .mc-filter .count { margin-left: auto; }
 /* The Messages on one object, in a slide-in over its page */
-.msg-sheet { width: 500px; }
+.msg-sheet { width: max(500px, var(--sheet-width)); }
 .msg-sheet .composer { margin-top: 16px; }
 .msg-sheet .mc-chips { margin: 14px 0 0; }
 /* One Message in a floating window over the page of its object (DEC-UX-30): the page stays usable and is not dimmed */
@@ -807,7 +800,7 @@ a.nav-btn { display: inline-flex; align-items: center; justify-content: center; 
 
 /* Publishing and confirming a Resource, in a sheet over its page (DEC-UX-31) */
 .alert .alert-btn { font: var(--weight-medium) var(--text-small) var(--font-family); padding: 7px 14px; border-radius: var(--radius-pill); background: var(--surface-solid); color: var(--text-primary); text-decoration: none; }
-.pub-sheet { width: 560px; }
+.pub-sheet { width: max(560px, var(--sheet-width)); }
 .pub-sheet .sheet-list { margin: 8px -4px 0; padding: 0 4px; }
 .pub-block { padding: 14px 0; border-top: 1px solid var(--tint-active); }
 .pub-block:first-child { border-top: 0; padding-top: 4px; }
@@ -851,13 +844,11 @@ a.tile { display: block; color: inherit; text-decoration: none; }
 .lens-tile-foot { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .lens-tile-foot .pill { display: inline-flex; align-items: center; gap: 4px; }
 
-/* Signing in (DEC-UX-35): a photo of the set as it is, with the sign-in on a glass card that blurs what lies behind it, and
-   the story of the photo in a corner. Each theme has photos of its own (DEC-UX-36); without one, the gradient shows */
+/* Signing in (DEC-UX-35): a background of the set of the theme, picked at random as in the app (DEC-UX-173), with the
+   sign-in on a glass card that blurs what lies behind it */
 .signin { margin: 0; min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); align-items: center;
-  padding: 40px 8vw; box-sizing: border-box; overflow: hidden; background: linear-gradient(120deg, var(--bg-1) 0%, var(--bg-2) 50%, var(--bg-3) 100%); }
-.signin-photo { position: fixed; inset: 0; background-size: cover; background-repeat: no-repeat; animation: photo-drift var(--photo-cycle) ease-in-out infinite alternate; }
-@keyframes photo-drift { from { transform: scale(1); } to { transform: scale(1.04); } }
-html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-set="light"] { display: none; }
+  padding: 40px 8vw; box-sizing: border-box; overflow: hidden;
+  background: var(--app-bg); background-size: var(--app-bg-size); animation: bg-drift var(--background-cycle) ease-in-out infinite alternate; }
 .glass { position: relative; -webkit-backdrop-filter: var(--blur-glass); backdrop-filter: var(--blur-glass);
   background: var(--glass); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); }
 @supports not (backdrop-filter: blur(1px)) { .glass { background: var(--glass-solid); } }
@@ -871,11 +862,7 @@ html:not([data-theme="dark"]) [data-set="dark"], html[data-theme="dark"] [data-s
   background: color-mix(in srgb, var(--signal-warn) 16%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
 .signin-refused > i { font-size: 20px; color: var(--signal-warn); }
 .signin-refused b { font-weight: var(--weight-medium); }
-.photo-story { position: fixed; left: 28px; bottom: 26px; max-width: 360px; margin: 0; padding: 14px 18px; border-radius: var(--radius-surface); background: var(--glass-story); }
-.photo-story b { display: block; font-size: var(--text-small); font-weight: var(--weight-medium); }
-.photo-story p { margin: 4px 0 0; font-size: 12px; line-height: 1.55; color: var(--text-secondary); }
-.photo-story .meta { display: block; margin-top: 8px; color: var(--text-secondary); }
-@media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px 140px; } .signin-card { grid-column: 1; } .photo-story { right: 16px; left: 16px; max-width: none; } }
+@media (max-width: 760px) { .signin { grid-template-columns: minmax(0, 1fr); padding: 24px 16px; } .signin-card { grid-column: 1; } }
 
 /* Learning (DEC-UX-38 to DEC-UX-41): the icon of a Learning Level for its audience, never bars, which belong to maturity (DEC-UX-62);
    the panel by section, the page of a Learning Card */
@@ -1120,7 +1107,7 @@ body.mcp-demo { background: var(--surface-sub); overflow: auto; }
 .sheet-steps .on { color: var(--text-primary); font-weight: var(--weight-medium); }
 .sheet-steps .on b { background: var(--text-primary); border-color: var(--text-primary); color: var(--surface-solid); }
 .sheet-steps .done b { color: var(--text-secondary); }
-.rel-sheet { width: 840px; }
+.rel-sheet { width: max(840px, var(--sheet-width)); }
 .rel-sheet .sheet-list { margin: 6px -4px 0; padding: 0 4px; }
 .rel-filter { display: inline-flex; align-self: flex-start; align-items: center; gap: 2px; margin-top: 12px; padding: 3px; border-radius: var(--radius-pill); background: var(--tint-hover); }
 .rel-filter .meta { padding: 0 6px 0 8px; }
@@ -1577,6 +1564,77 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .sum-warn { color: var(--signal-warn); }
 .sum-dep { background: color-mix(in srgb, var(--signal-warn) 9%, var(--surface-sub)); }
 .sum-dep .sum-n { font-size: 18px; color: var(--signal-warn); }
+
+/* Maturity in the Overview: the ladder, and beside it every Level, passed or what it takes (DEC-UX-175) */
+.lvl-layout { display: grid; grid-template-columns: minmax(200px, 260px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.lvl-ladder svg { max-width: 240px; }
+.lvl-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.lvl { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.lvl > .ph, .lvl > .ph-fill { font-size: 18px; margin-top: 1px; flex: none; color: var(--text-secondary); }
+.lvl.now { outline: 1.5px solid var(--text-primary); outline-offset: -1.5px; }
+.lvl.now > .ph-fill { color: var(--text-primary); }
+.lvl.next > .ph, .lvl.later > .ph { color: var(--text-muted); }
+.lvl.later { background: none; outline: 1px dashed var(--tint-active); outline-offset: -1px; }
+.lvl > div { flex: 1; min-width: 0; }
+.lvl-name { display: flex; align-items: baseline; gap: 8px; }
+.lvl-name b { font-size: var(--text-small); font-weight: var(--weight-medium); }
+.lvl-tag { font-size: 10px; font-weight: var(--weight-medium); color: var(--text-muted); text-transform: none; }
+.lvl.now .lvl-tag { color: var(--text-primary); }
+.lvl p { margin: 4px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+.lvl.later p, .lvl.next p { color: var(--text-muted); }
+.lvl p a { color: var(--text-primary); text-underline-offset: 3px; }
+.lvl .lvl-warn { display: flex; align-items: center; gap: 6px; color: var(--signal-warn); }
+.lvl-act { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; text-decoration: none; }
+@media (max-width: 1100px) { .lvl-layout { grid-template-columns: minmax(0, 1fr); } }
+
+/* The Danger zone of the Overview: what changes how everyone may rely on a Resource, explained, with its form (DEC-UX-176) */
+.danger { border-radius: var(--radius-lg); outline: 1px solid var(--tint-active); outline-offset: -1px; padding: 18px 20px; }
+.danger-head { display: flex; gap: 12px; align-items: flex-start; }
+.danger-head > .ph-fill { font-size: 22px; color: var(--text-secondary); margin-top: 2px; }
+.danger-head h3 { margin: 0; font-size: var(--text-section); font-weight: var(--weight-medium); }
+.danger-head p { margin: 4px 0 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); max-width: 720px; }
+.danger-what { margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--tint-hover); }
+.danger-what .line { display: flex; gap: 10px; align-items: flex-start; margin: 0; padding: 4px 0; font-size: var(--text-small); line-height: 1.55; color: var(--text-secondary); }
+.danger-what .line > i { font-size: 16px; margin-top: 2px; flex: none; }
+.danger-what b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.danger-form { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); max-width: 720px; }
+.danger-form .field { display: flex; flex-direction: column; gap: 6px; }
+.danger-form .field-label { font-size: var(--text-meta); color: var(--text-muted); }
+.danger-form textarea, .danger-form select { font: var(--text-small) var(--font-family); line-height: 1.5; color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-field); padding: 8px 10px; }
+.danger-foot { display: flex; align-items: center; gap: 12px; }
+.danger-foot .meta { flex: 1; }
+.danger-now { display: flex; align-items: center; gap: 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--tint-hover); font-size: var(--text-small); line-height: 1.55; }
+.danger-now p { flex: 1; margin: 0; color: var(--text-secondary); }
+.danger-now b { font-weight: var(--weight-medium); color: var(--text-primary); }
+.danger-now a { color: var(--text-primary); text-underline-offset: 3px; }
+.danger-now .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Known Gaps narrowed down (a proposal): a scope per gap, each optional and combined, after its text */
+.gap-scope { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 6px; }
+.scope { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 7px; border-radius: var(--radius-pill); background: var(--surface-solid); font-size: var(--text-meta); color: var(--text-secondary); }
+.scope > .ph { font-size: 13px; color: var(--text-muted); }
+.scope-k { color: var(--text-muted); }
+.scope .mono { color: var(--text-primary); }
+.gap-form { margin-top: 6px; padding: 14px 16px; border-radius: var(--radius-md); outline: 1.5px solid var(--text-secondary); outline-offset: -1.5px; display: flex; flex-direction: column; gap: 12px; }
+.gap-form .field { margin: 0; }
+.scope-add { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.scope-add .meta { margin-right: 4px; }
+.scope-add .btn-quiet { display: inline-flex; align-items: center; gap: 6px; }
+.scope-edit { padding: 10px 12px 12px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.scope-edit-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: var(--text-small); }
+.scope-edit-head b { font-weight: var(--weight-medium); }
+.scope-edit-head .meta { flex: 1; }
+.scope-edit-head .icon-btn { width: 26px; height: 26px; font-size: 13px; }
+.scope-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.value-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 5px 8px; border-radius: var(--radius-field); border: 1px solid var(--tint-active); background: var(--surface-solid); }
+.value-chips input { flex: 1; min-width: 80px; border: 0; background: none; padding: 2px 0; font: var(--text-small) var(--font-family); }
+.value-chips input:focus { outline: none; }
+.value-chips .code button { border: 0; background: none; color: var(--text-muted); cursor: pointer; padding: 0 0 0 4px; }
+.gap-form-foot { display: flex; align-items: center; gap: 8px; }
+.gap-form-foot .meta { flex: 1; }
+.sum-scope { display: block; margin-top: 2px; font-size: var(--text-meta); color: var(--text-muted); }
+.gap-pill { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; color: var(--text-secondary); }
+.gap-pill > .ph-fill { font-size: 12px; color: var(--text-muted); }
 
 /* Charts, the gallery of semgraph (a proposal): the charts in the panel by the question they answer, one opened on the
    right with its examples and what it is for */

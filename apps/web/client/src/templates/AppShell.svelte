@@ -86,7 +86,7 @@
   </div>
 {:else}
   <div class="app" data-focus={tapped}>
-    <Rail {items} active={section} panelOpen={Boolean(section && panel && panelOpen)} {blur} {initials} myPageHref="/me" {myPageActive} {onselect} {ontheme} />
+    <Rail {items} active={section} panelOpen={Boolean(section && panel && panelOpen)} {blur} {initials} myPageHref="/me" {myPageActive} {theme} {onselect} {ontheme} />
     {#if section && panel}
       <Panel open={panelOpen} title={panelTitle} focused={tapped === 'panel'} {blur} {oncollapse} actions={panelActions}>{@render panel()}</Panel>
     {/if}

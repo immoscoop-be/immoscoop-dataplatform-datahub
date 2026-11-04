@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
   import StatusRow from '@datahub/ui/components/StatusRow.svelte';
@@ -20,7 +21,6 @@
   import { Refused } from '../lib/api.js';
   import type { requestOf } from '../lib/grain.js';
   import AddResources from './AddResources.svelte';
-  import DeprecateSheet from './DeprecateSheet.svelte';
   import LearningPop from './LearningPop.svelte';
   import LearningRef from './LearningRef.svelte';
   import PublishSheet from './PublishSheet.svelte';
@@ -28,7 +28,7 @@
   import ResourceColumns from './ResourceColumns.svelte';
   import ResourceHistory from './ResourceHistory.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
-  import ResourceOverview from './ResourceOverview.svelte';
+  import ResourceOverview, { type OverviewPart } from './ResourceOverview.svelte';
   import ResourcePreview from './ResourcePreview.svelte';
 
   /**
@@ -93,12 +93,14 @@
   /** Its size and partitions from BigQuery (FR-SR-39); null where BigQuery does not tell them. */
   let storage: Storage | null | undefined = $state();
   let relating = $state(false);
-  let sheet: 'publish' | 'deprecate' | undefined = $state();
+  let sheet: 'publish' | undefined = $state();
+  /** The part of the Overview on screen, which a deprecation opens on its Danger zone (DEC-UX-176). */
+  let part: OverviewPart = $state('summary');
   /** The sheet that adds it to a Collection, while it waits (DEC-UX-131). */
   let adding = $state(false);
   let failed = $state(false);
 
-  // Read again for another Resource: what it relates to, and the first tab.
+  // Read again for another Resource: what it relates to, and the first tab on its Summary.
   let readFor: string | undefined;
   $effect(() => {
     const id = resource.id;
@@ -107,6 +109,7 @@
     }
     readFor = id;
     tab = 'overview';
+    part = 'summary';
     related = undefined;
     storage = undefined;
     relating = false;
@@ -201,8 +204,8 @@
     }
   }
   const gaps = {
-    add: (text: string) => gap(() => catalogue.addGap(resource.id, text)),
-    change: (known: KnownGap, text: string) => gap(() => catalogue.changeGap(resource.id, known.id, text)),
+    add: (text: string, scope: GapScope | null) => gap(() => catalogue.addGap(resource.id, text, scope)),
+    change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
     remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
   };
 
@@ -226,6 +229,17 @@
     } catch (error) {
       console.error(`${resource.displayName} could not be changed`, error);
       failed = true;
+      return false;
+    }
+  }
+
+  /** Deprecates it, or takes that away, from the Danger zone of its Overview, which says when it fails (DEC-UX-176). */
+  async function mark(step: () => Promise<ResourceDetail>): Promise<boolean> {
+    try {
+      await changed(await step());
+      return true;
+    } catch (error) {
+      console.error(`${resource.displayName} could not be changed`, error);
       return false;
     }
   }
@@ -258,13 +272,6 @@
     <ObjectHeader name={resource.displayName} key={resource.fullName ?? resource.key} copyLabel={t('resource.copyKey')} />
   </div>
   <div class="actions">
-    {#if resource.published && canEdit}
-      {#if resource.deprecation}
-        <Button variant="outline" onclick={() => act(() => catalogue.undeprecate(resource.id))}><Icon name="arrow-counter-clockwise" />{t('resource.takeAway')}</Button>
-      {:else}
-        <Button variant="outline" onclick={() => (sheet = 'deprecate')}><Icon name="archive-fill" />{t('resource.deprecate')}</Button>
-      {/if}
-    {/if}
     <Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if !resource.published && isOwner}
@@ -315,6 +322,15 @@
       {#if resource.deprecation?.insteadOf}
         <Button variant="outline" href={resourcePath(resource.deprecation.insteadOf.id)}>{t('resource.deprecated.use', { name: resource.deprecation.insteadOf.displayName })}</Button>
       {/if}
+      {#if canEdit}
+        <!-- Taken away in the Danger zone of its Overview (DEC-UX-176). -->
+        <Button
+          variant="quiet"
+          onclick={() => {
+            tab = 'overview';
+            part = 'danger';
+          }}><Icon name="warning-octagon" />{t('overview.danger')}</Button>
+      {/if}
     {/snippet}
   </Callout>
 {/if}
@@ -335,9 +351,35 @@
 
 <Tabs label={resource.displayName} current={tab} tabs={tabs.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'overview'}
-    <ResourceOverview {resource} log={entries} {related} {storage} {threads} messagesHref={messages?.href} {canEdit} onsave={saveCard} {gaps} oncolumns={() => (tab = 'columns')} />
+    <ResourceOverview
+      {resource}
+      log={entries}
+      {related}
+      {storage}
+      {threads}
+      messagesHref={messages?.href}
+      {canEdit}
+      onsave={saveCard}
+      {gaps}
+      oncolumns={() => (tab = 'columns')}
+      onpublish={!resource.published && isOwner && collection ? () => (sheet = 'publish') : undefined}
+      {others}
+      ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
+      onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
+      bind:part
+    />
   {:else if tab === 'columns'}
-    <ResourceColumns {resource} {canEdit} relate={dataTeam && resource.collectionId !== null} onsave={saveFields} onrelate={() => (relating = true)} />
+    <ResourceColumns
+      {resource}
+      {canEdit}
+      relate={dataTeam && resource.collectionId !== null}
+      onsave={saveFields}
+      onrelate={() => (relating = true)}
+      ongaps={() => {
+        tab = 'overview';
+        part = 'gaps';
+      }}
+    />
   {:else if tab === 'lineage'}
     <ResourceLineage {resource} {catalogue} />
   {:else if tab === 'history' && (dataTeam || canEdit)}
@@ -362,14 +404,6 @@
       sheet = undefined;
       tab = 'columns';
     }}
-    onclose={() => (sheet = undefined)}
-  />
-{:else if sheet === 'deprecate' && collection}
-  <DeprecateSheet
-    {resource}
-    {collection}
-    {others}
-    ondeprecate={(why, instead) => act(() => catalogue.deprecate(resource.id, why, instead))}
     onclose={() => (sheet = undefined)}
   />
 {/if}

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { renderLog } from '@datahub/contracts/log';
+  import { hasScope } from '@datahub/contracts/gaps';
   import { curate, SUMMARY, type SummaryPart, type SummarySource, type Weight, WEIGHTS } from '@datahub/contracts/summary';
   import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
   import { levelName } from '@datahub/ui/foundations/levels.js';
@@ -13,6 +14,7 @@
   import type { Conversation } from '../lib/messages.js';
   import { STATE_TEXTS } from '../lib/messages.js';
   import { resourcePath } from '../lib/routes.js';
+  import GapScopeView from './GapScope.svelte';
   import { KIND_NAMES, STANDING_NAMES } from './MessageThread.svelte';
 
   /**
@@ -73,6 +75,7 @@
   const CHANGE_KEYS = { added: 'resource.change.added', removed: 'resource.change.removed', retyped: 'resource.change.retyped' } as const;
 
   const curated = $derived(curate(threads ?? []));
+  const fieldNames = $derived(new Set(resource.fields.map((field) => field.name)));
   const joins = $derived((related ?? []).filter((mapping) => mapping.resources.length > 0));
   const described = $derived(resource.fields.filter((field) => field.businessDescription.trim() !== '').length);
 
@@ -156,7 +159,7 @@
             {#if details.modelType}{details.grain.length > 0 ? ' · ' : ''}{t('resource.modelType', { type: details.modelType })}{/if}
           </p>
         {:else if part === 'useFor'}
-          <p class="line written">{card.intendedUse}</p>
+          <div class="md"><MarkdownText source={card.intendedUse} /></div>
         {:else if part === 'queryCheaply'}
           {#if details.partition || details.clusterBy[0]}
             <p class="line">
@@ -179,10 +182,12 @@
         {:else if part === 'fields'}
           <p class="line">{t('summary.fields', { count: resource.fields.length, described })}</p>
         {:else if part === 'watchOut'}
-          {#if card.pitfalls}<p class="line written">{card.pitfalls}</p>{/if}
+          {#if card.pitfalls}<div class="md"><MarkdownText source={card.pitfalls} /></div>{/if}
           {#if card.reliableSince}<p class="line">{t('summary.reliable', { date: day(card.reliableSince) })}</p>{/if}
         {:else if part === 'knownGaps'}
-          <ul class="gaps">{#each card.knownGaps as gap (gap.id)}<li>{gap.text}</li>{/each}</ul>
+          <ul class="gaps">
+            {#each card.knownGaps as gap (gap.id)}<li>{gap.text}{#if hasScope(gap.scope)}<GapScopeView scope={gap.scope} known={fieldNames} line />{/if}</li>{/each}
+          </ul>
         {:else if part === 'qa'}
           <ul class="threads">{#each curated.qa as thread (thread.id)}{@render said(thread)}{/each}</ul>
         {:else if part === 'standing'}
@@ -228,6 +233,7 @@
   .go:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }
   .line { margin: 0 0 6px; font-size: var(--text-small); line-height: 1.7; color: var(--text-secondary); }
   .written { white-space: pre-line; }
+  .md { margin: 0 0 6px; font-size: var(--text-small); color: var(--text-secondary); }
   .line:last-child { margin-bottom: 0; }
   .line a { color: var(--text-primary); text-underline-offset: 3px; }
   .warn { color: var(--signal-warn); }

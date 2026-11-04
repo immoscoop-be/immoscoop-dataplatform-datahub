@@ -12,6 +12,9 @@ const CONFIG: Config = {
   semgraphUrl: 'https://semgraph.test',
 };
 
+/** The why of a Known Gap, in its form (FR-RC-24). */
+const WHY = 'Wat ontbreekt of maar deels aanwezig is, en waarom · gewone tekst';
+
 const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[], roles: [] as string[] };
 
 /** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
@@ -496,12 +499,13 @@ function serve({
     }
     const gapOn = /^\/resources\/r2\/gaps(?:\/([^/]+))?$/.exec(path);
     if (gapOn) {
-      // Its Known Gaps, one by one, with who added them (FR-RC-21).
-      const card = resource.card as { knownGaps: { id: string; text: string; addedBy: string | null; addedAt: string | null }[] };
-      const body = init.body ? (JSON.parse(init.body as string) as { text: string }) : undefined;
-      const added = { id: `gap-${card.knownGaps.length + 1}`, text: body?.text ?? '', addedBy: 'Max Verstraete', addedAt: '2026-11-04T09:00:00Z' };
+      // Its Known Gaps, one by one, with who added them and where each holds (FR-RC-21, FR-RC-24).
+      const card = resource.card as { knownGaps: { id: string; text: string; scope: unknown; addedBy: string | null; addedAt: string | null }[] };
+      const body = init.body ? (JSON.parse(init.body as string) as { text: string; scope?: unknown }) : undefined;
+      const added = { id: `gap-${card.knownGaps.length + 1}`, text: body?.text ?? '', scope: body?.scope ?? null, addedBy: 'Max Verstraete', addedAt: '2026-11-04T09:00:00Z' };
+      const changed = (gap: (typeof card.knownGaps)[number]) => ({ ...gap, text: body?.text ?? '', ...(body && 'scope' in body ? { scope: body.scope ?? null } : {}) });
       const knownGaps =
-        method === 'POST' ? [...card.knownGaps, added] : method === 'PATCH' ? card.knownGaps.map((gap) => (gap.id === gapOn[1] ? { ...gap, text: body?.text ?? '' } : gap)) : card.knownGaps.filter((gap) => gap.id !== gapOn[1]);
+        method === 'POST' ? [...card.knownGaps, added] : method === 'PATCH' ? card.knownGaps.map((gap) => (gap.id === gapOn[1] ? changed(gap) : gap)) : card.knownGaps.filter((gap) => gap.id !== gapOn[1]);
       resource = { ...resource, card: { ...card, knownGaps } };
       return method === 'DELETE' ? new Response(null, { status: 204 }) : json({ gap: knownGaps.find((gap) => gap.id === (gapOn[1] ?? added.id)) }, method === 'POST' ? 201 : 200);
     }
@@ -887,6 +891,17 @@ describe('the web app, signed out', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
+  it('shows the sign-in on a background of the set, picked at random, without a photo or its story (DEC-UX-173)', async () => {
+    serve({ signedIn: false });
+    // The last of the set by day: Concrete, a picture.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    render(App, { config: CONFIG });
+    await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    random.mockRestore();
+    expect(document.querySelector('.picture')?.getAttribute('style')).toContain('concrete');
+    expect(screen.queryByRole('figure')).toBeNull();
+  });
+
   it('names a refused account, and lets the User choose another (FR-UM-02)', async () => {
     serve({ signedIn: false });
     open('/collections#account=max%40gmail.com');
@@ -938,15 +953,35 @@ describe('the web app, signed in', () => {
     expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Grafieken' })).toBeTruthy();
   });
 
-  it('switches between light and dark, and remembers it', async () => {
+  it('follows the system; its switch shows where it goes and holds for the session only (DEC-UX-172)', async () => {
+    let systemChanged: ((event: { matches: boolean }) => void) | undefined;
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
+        if (query.includes('prefers-color-scheme')) systemChanged = listener;
+      },
+      removeEventListener() {},
+    }));
     const calls = serve();
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    // By day the moon, which goes to dark.
+    const toDark = await screen.findByRole('button', { name: 'Naar donker' });
+    const moon = toDark.innerHTML;
+    await fireEvent.click(toDark);
     expect(document.documentElement.dataset.theme).toBe('dark');
     // At once: every transition is off until the new colours are on screen (DEC-UX-149).
     expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
     await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
+    // By night the sun, which goes back to light; nothing is remembered.
+    expect(screen.getByRole('button', { name: 'Naar licht' }).innerHTML).not.toBe(moon);
+    expect(calls.some((call) => call.path.startsWith('/me/settings/theme'))).toBe(false);
+    // A change of the system wins over the switch.
+    systemChanged?.({ matches: true });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    systemChanged?.({ matches: false });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
   });
 
   it('opens My page behind the initials, where the language of Data Hub is chosen (DEC-UX-85)', async () => {
@@ -968,9 +1003,9 @@ describe('the web app, signed in', () => {
     const calls = serve({ settings: { language: 'en' } });
     open('/me/background');
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('radio', { name: /Fresh piste/ }));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'piste' } });
-    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Fresh piste');
+    await fireEvent.click(await screen.findByRole('radio', { name: /Concrete/ }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'concrete' } });
+    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
   });
 
   it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {
@@ -1073,7 +1108,9 @@ describe('the web app, for the Data Team', () => {
     expect(main.getByText('One row per saved search.')).toBeTruthy();
     expect(await main.findByText('Geregistreerd via de exposure datahub_savedSearches')).toBeTruthy();
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('2 van de 2 kolommen hebben nog geen beschrijving')).toBeTruthy();
+    // Every Level explained: where it stands, and what the next one takes (FR-MR-16).
+    expect(main.getByText(/Geregistreerd op 21 okt 2026, via de exposure datahub_savedSearches/)).toBeTruthy();
+    expect(main.getByText(/Vraagt een beschrijving in dbt van de tabel en van minstens één veld.*Nu heeft de tabel er een, en 0 van zijn 2 velden/)).toBeTruthy();
     expect(document.title).toBe('Data Hub — Saved searches');
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
@@ -1560,10 +1597,13 @@ describe('the page of a Resource', () => {
     expect((await main.findByText('we send')).tagName).toBe('STRONG');
     await fireEvent.click(main.getByRole('tab', { name: 'Known Behaviour' }));
     await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
-    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly trends.' } });
+    // Intended use and pitfalls are Markdown too, each in the Markdown editor (FR-RC-23).
+    expect(main.getByRole('toolbar', { name: /Beoogd gebruik/ })).toBeTruthy();
+    expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly trends.', pitfalls: '', reliableSince: null } }));
-    expect(await main.findByText('Weekly trends.')).toBeTruthy();
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '', reliableSince: null } }));
+    expect((await main.findByText('trends')).tagName).toBe('STRONG');
 
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('The website, the app or a partner.')).toBeTruthy();
@@ -1607,7 +1647,7 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const parts = within(await main.findByRole('tablist', { name: 'Delen van het Overzicht' }));
-    expect(parts.getAllByRole('tab').map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
+    expect(parts.getAllByRole('tab').map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
     // Its parts in the order to read them, each with its weight; a part with nothing in it is left out.
     const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
     await summary.findByText('Zero app leads last week.', { exact: false });
@@ -1640,20 +1680,85 @@ describe('the page of a Resource', () => {
     const main = within(await screen.findByRole('main'));
     await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
     expect(main.getByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
-    await fireEvent.input(main.getByRole('textbox', { name: 'Een nieuwe Known Gap' }), { target: { value: 'No partner leads before 2024.' } });
-    await fireEvent.click(main.getByRole('button', { name: 'Voeg toe' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before 2024.' } }));
+    // The line at the bottom opens the form; its why is plain text, and it holds everywhere until narrowed down.
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const adding = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    expect((adding.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(adding.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before 2024.' } });
+    await fireEvent.click(adding.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before 2024.', scope: null } }));
     expect(await main.findByText('No partner leads before 2024.')).toBeTruthy();
+    expect(main.queryByRole('form', { name: 'Een nieuwe Known Gap' })).toBeNull();
     expect(main.getByText('Toegevoegd door Max Verstraete · 4 nov 2026')).toBeTruthy();
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).textContent).toContain('1');
     await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
-    await fireEvent.input(main.getByRole('textbox', { name: 'Wijzig deze Known Gap' }), { target: { value: 'No partner leads before March 2024.' } });
-    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.' } }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    await fireEvent.input(changing.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: null } }));
     expect(await main.findByText('No partner leads before March 2024.')).toBeTruthy();
     await fireEvent.click(main.getByRole('button', { name: 'Verwijder deze Known Gap' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/gaps/gap-1' }));
     expect(await main.findByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
+  });
+
+  it('narrows a Known Gap down to a period, fields and rows, shown as chips, in the Summary and on its fields (FR-RC-24, FR-RC-25, FR-RC-26)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    // A period lies on its partition by default, and needs a start, an end or both.
+    await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
+    expect((form.getByRole('combobox', { name: 'Op het veld' }) as HTMLSelectElement).value).toBe('week_start');
+    expect(form.getByRole('status').textContent).toBe('Een periode heeft een begin, een einde of beide.');
+    expect((form.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByLabelText('Tot'), { target: { value: '2024-02-29' } });
+    // Fields, chosen from the Resource.
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    // Rows: a field with one of some values, typed.
+    await fireEvent.click(form.getByRole('button', { name: 'Rijen' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Veld' }), { target: { value: 'lead_source' } });
+    expect(form.getByRole('status').textContent).toBe('Voeg minstens één waarde toe, of kies leeg.');
+    await fireEvent.input(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { target: { value: 'partner' } });
+    await fireEvent.keyDown(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { key: 'Enter' });
+    expect(form.getByRole('button', { name: 'Verwijder partner' })).toBeTruthy();
+    // Each kind goes with its ×, and comes back with its button.
+    await fireEvent.click(form.getByRole('button', { name: 'Verwijder de velden' }));
+    expect(form.queryByRole('region', { name: 'Velden' })).toBeNull();
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    const scope = { period: { field: 'week_start', from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before March 2024.', scope } }));
+    // On its line, where it holds as chips.
+    const line = (await main.findByText('No partner leads before March 2024.')).closest('li')!;
+    expect(line.textContent).toContain('Periode tot 29 feb 2024 op week_start');
+    expect(line.textContent).toContain('Velden lead_source');
+    expect(line.textContent).toContain('Rijen lead_source is partner');
+    // Changing it keeps its scope, and can take a kind away.
+    await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    expect((changing.getByLabelText('Tot') as HTMLInputElement).value).toBe('2024-02-29');
+    await fireEvent.click(changing.getByRole('button', { name: 'Verwijder de rijen' }));
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    const narrower = { period: scope.period, fields: scope.fields };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: narrower } }));
+    // In the Summary, as a line under its text.
+    await fireEvent.click(main.getByRole('tab', { name: /^Samenvatting/ }));
+    const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
+    expect((await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent).toContain('tot 29 feb 2024 op week_start');
+    // On the field it names, under Columns, with the way back to it.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    const marker = main.getByRole('button', { name: 'Known Gap' });
+    expect(marker.closest('tr')?.textContent).toContain('lead_source');
+    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 op week_start · velden lead_source)');
+    await fireEvent.click(marker);
+    expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
@@ -1677,7 +1782,8 @@ describe('the page of a Resource', () => {
     expect(main.queryByText('Nog niet gepubliceerd.')).toBeNull();
     expect(main.getByText(/gepubliceerd op 28 okt 2026 door Max Verstraete/)).toBeTruthy();
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getAllByText('28 okt 2026 door Max Verstraete')).toHaveLength(2);
+    expect(main.getByText('Gepubliceerd op 28 okt 2026 door Max Verstraete, zijn eerste Confirmation; laatst bevestigd op 28 okt 2026 door Max Verstraete.')).toBeTruthy();
+    expect(main.queryByText('Publicatie')).toBeNull();
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
@@ -1700,24 +1806,40 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(main.queryAllByText(/het veld week_start werd toegevoegd/)).toHaveLength(0));
   });
 
-  it('lets its Owner Unit deprecate it once published, with why, and take that away (FR-SR-50, DEC-UX-101)', async () => {
+  it('lets its Owner Unit deprecate it once published in the Danger zone, which explains it first, and take that away (FR-SR-50, DEC-UX-176)', async () => {
     const calls = serve({ groups: ['g1'], weekly: { published: true, level: 3 } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
-    await fireEvent.click(main.getByRole('button', { name: /Als deprecated markeren/ }));
-    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    const button = sheet.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
+    // No longer in the header: in the Danger zone, the last part of its Overview.
+    expect(main.queryByRole('button', { name: /Als deprecated markeren/ })).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Gevarenzone' }));
+    const danger = within(main.getByRole('tabpanel', { name: 'Gevarenzone' }));
+    expect(danger.getByText(/Niets wordt verborgen of geblokkeerd/)).toBeTruthy();
+    const button = danger.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    await fireEvent.input(sheet.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
+    await fireEvent.input(danger.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
     await fireEvent.click(button);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/deprecation', body: { reason: 'Replaced by the figures with partner leads', insteadOf: null } }));
-    expect(await main.findByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toBeTruthy();
+    expect(await main.findAllByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toHaveLength(2);
     expect(main.getByText('Deprecated', { selector: '.chip' })).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: /Wegnemen/ }));
+    // The line on top leads back to it, from any tab.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    await fireEvent.click(main.getByRole('button', { name: 'Gevarenzone' }));
+    expect(main.getByRole('tab', { name: 'Gevarenzone' }).getAttribute('aria-selected')).toBe('true');
+    await fireEvent.click(within(main.getByRole('tabpanel', { name: 'Gevarenzone' })).getByRole('button', { name: /Wegnemen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/deprecation' }));
     await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
+  });
+
+  it('keeps its Danger zone from who is not in its Owner Unit or the Data Team (DEC-UX-176)', async () => {
+    serve({ groups: [], weekly: { published: true, level: 3, collectionId: 'c2' } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
   });
 
   it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {
