@@ -15,6 +15,8 @@
   Decisions: DEC-UX-164, DEC-UX-169, DEC-CL-02, DEC-CL-16, DEC-MR-06, DEC-DH-15, DEC-LR-08, DEC-UX-101, DEC-RC-17.
   Open points: OP-CL-01.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-detail.html.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -106,11 +108,11 @@
     </div>
     <div data-pane-group="tabs" data-pane="columns" hidden>
      <p class="meta" style="margin:0 6px 6px">Every field with its Business Description, from the Owner, next to its description from dbt.</p>
-     <table><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th></th></tr></thead><tbody>
-      <tr><td class="mono">week_start</td><td style="color:var(--text-muted)">DATE</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
-      <tr><td class="mono">lead_source</td><td style="color:var(--text-muted)">STRING</td><td>Where the lead came in: the website, the app, a partner or a mailing.</td><td style="color:var(--text-secondary)">Where the lead came from</td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
-      <tr><td class="mono">lead_count</td><td style="color:var(--text-muted)">INT64</td><td>How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td></tr>
-      <tr><td class="mono">lead_channel</td><td style="color:var(--text-muted)">STRING</td><td class="none" aria-label="No Business Description">–</td><td style="color:var(--text-secondary)">Channel of the first visit</td><td><span class="pill pill-strong">Cluster 2</span></td></tr>
+     <table class="stack"><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th></th></tr></thead><tbody>
+      <tr><td class="mono stack-name">week_start</td><td class="stack-type" style="color:var(--text-muted)">DATE</td><td data-label="Business Description, from the Owner" class="none" aria-label="No Business Description">–</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono stack-name">lead_source</td><td class="stack-type" style="color:var(--text-muted)">STRING</td><td data-label="Business Description, from the Owner">Where the lead came in: the website, the app, a partner or a mailing.</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Where the lead came from</td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono stack-name">lead_count</td><td class="stack-type" style="color:var(--text-muted)">INT64</td><td data-label="Business Description, from the Owner">How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td></tr>
+      <tr><td class="mono stack-name">lead_channel</td><td class="stack-type" style="color:var(--text-muted)">STRING</td><td data-label="Business Description, from the Owner" class="none" aria-label="No Business Description">–</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Channel of the first visit</td><td><span class="pill pill-strong">Cluster 2</span></td></tr>
      </tbody></table>
     </div>
    </div>
@@ -132,6 +134,10 @@
 <div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: state of the Resource">Resource
  <button class="seg on" data-target="off" role="tab" aria-selected="true">Published</button>
  <button class="seg" data-target="on" role="tab" aria-selected="false">Deprecated</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>

@@ -16,6 +16,8 @@
   Open points: OP-CL-01, OP-CL-04.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-preview.html and
   the Run button of query.html.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -118,6 +120,10 @@
  <button class="seg on" data-target="free" role="tab" aria-selected="true">Up to 100 MB</button>
  <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
  <button class="seg" data-target="request" role="tab" aria-selected="false">Above 1 GB</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>
