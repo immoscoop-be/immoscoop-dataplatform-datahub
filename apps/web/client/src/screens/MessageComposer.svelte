@@ -20,6 +20,7 @@
     icon = 'paper-plane-tilt-fill',
     autofocus = false,
     oncancel,
+    optional = false,
     onsend,
   }: {
     /** Above the field, such as "New Message" or "Your reply". */
@@ -34,6 +35,8 @@
     icon?: IconName;
     autofocus?: boolean;
     oncancel?: () => void;
+    /** Sends without words too, such as the line why a Message closes (FR-CV-16). */
+    optional?: boolean;
     /** Sends the words; true when they were posted, which empties the field. */
     onsend: (text: string) => Promise<boolean>;
   } = $props();
@@ -48,7 +51,7 @@
   });
 
   async function send(): Promise<void> {
-    if (!text.trim() || busy) return;
+    if ((!optional && !text.trim()) || busy) return;
     busy = true;
     failed = false;
     const posted = await onsend(text.trim()).catch(() => false);
@@ -82,7 +85,7 @@
       {#if failed}{t('messages.failed.post')}{:else}<Icon name="bell-simple-fill" />{notify}{/if}
     </p>
     {#if oncancel}<Button variant="quiet" onclick={oncancel}>{t('collection.cancel')}</Button>{/if}
-    <Button disabled={busy || !text.trim()} onclick={send}><Icon name={icon} />{button}</Button>
+    <Button disabled={busy || (!optional && !text.trim())} onclick={send}><Icon name={icon} />{button}</Button>
   </div>
 </div>
 

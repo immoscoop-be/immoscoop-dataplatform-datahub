@@ -13,6 +13,7 @@
     type Counts,
     type Filter,
     isAnswered,
+    isClosed,
     isOpen,
     type Message,
     type MessagesClient,
@@ -53,9 +54,9 @@
   } = $props();
 
   const language = $derived(currentLanguage());
-  let chip = $state<'all' | 'open' | 'answered'>('all');
+  let chip = $state<'all' | 'open' | 'answered' | 'closed'>('all');
   const messages = $derived(found?.messages ?? []);
-  const shown = $derived(messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : isAnswered(message))));
+  const shown = $derived(messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : chip === 'closed' ? isClosed(message) : isAnswered(message))));
   /** Nothing unread at all, not just nothing that matches a filter (DEC-UX-136). */
   const caughtUp = $derived(filter.view === 'unread' && !filter.kind && !filter.on && !filter.search && chip === 'all');
   const about = $derived(filter.view === 'forYou' && dataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about));
@@ -88,6 +89,7 @@
           { value: 'all' as const, label: `${t('messages.all')} ${messages.length}` },
           { value: 'open' as const, label: `${t('messages.open')} ${messages.filter(isOpen).length}` },
           { value: 'answered' as const, label: `${t('messages.answered')} ${messages.filter(isAnswered).length}` },
+          { value: 'closed' as const, label: `${t('messages.closed')} ${messages.filter(isClosed).length}` },
         ]}
         bind:value={chip}
         label={t('messages.kind')}

@@ -185,9 +185,9 @@ The web app shows a Message from the catalogue: the first line of its plain text
 <a id="fr-cv-16"></a>
 ### FR-CV-16 · Closing and reopening a Question or a Signal
 
-**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-CV-13](#dec-cv-13)) · **Screens:** [messages](../../design/screens/messages.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-CV-13](#dec-cv-13)) · **Screens:** [messages](../../design/screens/messages.html)
 
-Its writer, the Owner Unit of its object and the Data Team can close an open Question or Signal, wherever it shows, with an optional line why of at most 2,000 characters. The conversation keeps the closing: who closed it, when and why ([MSG-CNV-07](message-catalogue.md#msg-cnv-07)), and the Question or Signal is closed. Its writer gets a notification when someone else closed it. The same people can reopen a closed one, which makes it open again. A reply to a closed one is possible and leaves it closed. Anyone else, and a Message that is not open, cannot be closed; one that is not closed cannot be reopened. The Message Centre filters on closed, besides open and answered.
+Its writer, the Owner Unit of its object and the Data Team can close an open Question or Signal, wherever it shows, with an optional line why of at most 4,000 characters, as any Message. The conversation keeps the closing: who closed it, when and why ([MSG-CNV-07](message-catalogue.md#msg-cnv-07)), and the Question or Signal is closed. Its writer gets a notification when someone else closed it. The same people can reopen a closed one, which makes it open again. A reply to a closed one is possible and leaves it closed. Anyone else, and a Message that is not open, cannot be closed; one that is not closed cannot be reopened. The Message Centre filters on closed, besides open and answered.
 
 ## Edge cases
 

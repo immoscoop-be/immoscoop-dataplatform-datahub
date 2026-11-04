@@ -10,6 +10,7 @@
     request: 'Request',
     reply: 'Reply',
     decision: 'Decision',
+    closing: 'Closing',
     notice: 'Notice',
     dataHub: 'Data Hub',
   };
@@ -26,6 +27,7 @@
     refused: 'x-circle',
     broken: 'warning-circle-fill',
     worksAgain: 'check-circle',
+    closed: 'minus-circle',
   };
 </script>
 
@@ -35,6 +37,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import Avatar from '@datahub/ui/primitives/Avatar.svelte';
+  import Button from '@datahub/ui/primitives/Button.svelte';
   import { initialsOf } from '../lib/initials.js';
   import { cardOfType, type Conversation, messageText, STATE_TEXTS, SUBJECT_TITLES } from '../lib/messages.js';
   import MessageComposer from './MessageComposer.svelte';
@@ -50,11 +53,17 @@
   let {
     message,
     onreply,
+    onclose,
+    onreopen,
     notify = '',
   }: {
     message: Conversation;
     /** Offers "Reply" under a Question, Remark or Signal; true when the reply was posted. */
     onreply?: (text: string) => Promise<boolean>;
+    /** Offers "Close" on an open Question or Signal to whoever may close it, with an optional line why (FR-CV-16). */
+    onclose?: (text: string) => Promise<boolean>;
+    /** Offers "Reopen" on a closed one to the same people. */
+    onreopen?: () => Promise<boolean>;
     /** Who a reply notifies, under its field. */
     notify?: string;
   } = $props();
@@ -67,6 +76,18 @@
   const isRequest = $derived(message.kind === 'request');
   const repliable = $derived(onreply !== undefined && ['question', 'remark', 'signal'].includes(message.kind));
   let replying = $state(false);
+  let closing = $state(false);
+  let reopening = $state(false);
+  let reopenFailed = $state(false);
+  const closable = $derived(message.mayClose && message.state === 'open' && onclose !== undefined);
+  const reopenable = $derived(message.mayClose && message.state === 'closed' && onreopen !== undefined);
+
+  async function reopen(): Promise<void> {
+    if (!onreopen) return;
+    reopening = true;
+    reopenFailed = !(await onreopen().catch(() => false));
+    reopening = false;
+  }
 
   const name = (writer: Conversation['writer']) => writer?.name ?? 'Data Hub';
   const reads = $derived(Number(message.params.reads ?? 0));
@@ -82,7 +103,10 @@
       <span class="who">{name(message.writer)}</span>
       {#if message.writer?.as}<span class="meta">{STANDING_NAMES[message.writer.as]}</span>{/if}
       <span class="meta">{ago(message.createdAt, language)}</span>
+      {#if closable && !closing}<span class="end"><Button variant="outline" title={t('messages.close.who')} onclick={() => (closing = true)}><Icon name="minus-circle" />{t('messages.close')}</Button></span>{/if}
+      {#if reopenable}<span class="end"><Button variant="outline" disabled={reopening} onclick={reopen}><Icon name="arrow-counter-clockwise" />{t('messages.reopen')}</Button></span>{/if}
     </div>
+    {#if reopenFailed}<p class="meta failed" role="alert">{t('messages.failed.close')}</p>{/if}
     {#if person && message.params.text}
       <p class="words">{message.params.text}</p>
     {:else if rich}
@@ -104,11 +128,31 @@
             <span class="who small">{name(reply.writer)}</span>
             <span class="meta">{#if reply.writer?.as}{STANDING_NAMES[reply.writer.as]} · {/if}{ago(reply.createdAt, language)}</span>
             {#if reply.kind === 'decision' && reply.params.outcome && STATE_TEXTS[reply.params.outcome]}<span class="state"><Icon name={STATE_ICONS[reply.params.outcome] ?? 'check-circle'} />{t(STATE_TEXTS[reply.params.outcome]!)}</span>{/if}
+            {#if reply.kind === 'closing'}<span class="state"><Icon name="minus-circle" />{t('messages.state.closed')}</span>{/if}
           </div>
           {#if reply.params.text}<p class="words">{reply.params.text}</p>{/if}
         </div>
       </div>
     {/each}
+    {#if closing && onclose}
+      <div class="inline">
+        <MessageComposer
+          label={t('messages.close.title', { kind: KIND_NAMES[message.kind] })}
+          placeholder={t('messages.close.placeholder', { kind: SUBJECT_TITLES[message.subject.kind] })}
+          notify={message.mine ? t('messages.notify.closeOwn') : t('messages.notify.close', { writer: message.writer?.name ?? '' })}
+          button={t('messages.close')}
+          icon="minus-circle"
+          optional
+          autofocus
+          oncancel={() => (closing = false)}
+          onsend={async (text) => {
+            const done = await onclose(text);
+            if (done) closing = false;
+            return done;
+          }}
+        />
+      </div>
+    {/if}
     {#if repliable && !replying}
       <div class="actions"><button type="button" class="link" onclick={() => (replying = true)}><Icon name="arrow-bend-up-left-fill" />{t('messages.reply')}</button></div>
     {:else if repliable && onreply}
@@ -159,4 +203,6 @@
   .link:hover { color: var(--text-primary); }
   .link:focus-visible { outline: 2px solid var(--text-secondary); border-radius: var(--radius-sm); }
   .inline { margin-top: 10px; }
+  .end { margin-left: auto; }
+  .failed { margin: 6px 0 0; color: var(--signal-urgent); }
 </style>
