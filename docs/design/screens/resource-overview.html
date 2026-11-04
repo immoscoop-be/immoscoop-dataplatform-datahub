@@ -12,7 +12,13 @@
     (MarkdownEditor, DEC-UX-158), as for the intro of a Collection, with the description from dbt beside it, read-only.
   - Known behaviour: intended use and pitfalls, in Markdown, and since when it is reliable (DEC-RC-19).
   - Known Gaps: a list, one gap per line, each with who added it and when; the Owner and the Data Team add one at the
-    bottom, and change or remove one on its line. Plain text.
+    bottom, and change or remove one on its line. A proposal, to approve: every gap keeps its why in plain text and may
+    be narrowed down with a scope, each optional and combined as they apply: a period (from and to, a side left open
+    for from the start or until now, on a date field, its partition by default), fields (empty or unreliable), and
+    rows (a field with one of some values, or empty). A gap without one stays free text, as every gap so far. The
+    Summary shows each scope compactly after its gap; Claude reads it as data, such as
+    "[period: week_start until 2025-02-28; rows: lead_source = partner]". A warning on a query that reads a gap's
+    period or rows comes later. ?gapform=open opens the form of a new gap.
   - Querying: partitions and clustering, size, key fields and Parameters, with "Query".
   - Entities: the Entities and the Resources they join, also as a picture.
   The Messages are no part of their own: "Messages" in the header opens them, as before. The Summary takes the Q&A of the
@@ -156,7 +162,7 @@
     <div class="ov-sep" role="presentation"></div>
     <button class="ov-item" data-target="description" role="tab" aria-selected="false"><i class="ph ph-text-align-left" aria-hidden="true"></i><span class="ov-name">Description</span></button>
     <button class="ov-item" data-target="behaviour" role="tab" aria-selected="false"><i class="ph ph-compass" aria-hidden="true"></i><span class="ov-name">Known behaviour</span></button>
-    <button class="ov-item" data-target="gaps" role="tab" aria-selected="false"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span><span class="count">2</span></button>
+    <button class="ov-item" data-target="gaps" role="tab" aria-selected="false"><i class="ph ph-circle-dashed" aria-hidden="true"></i><span class="ov-name">Known Gaps</span><span class="count">4</span></button>
     <button class="ov-item" data-target="querying" role="tab" aria-selected="false"><i class="ph ph-funnel" aria-hidden="true"></i><span class="ov-name">Querying</span></button>
     <button class="ov-item" data-target="entities" role="tab" aria-selected="false"><i class="ph ph-graph" aria-hidden="true"></i><span class="ov-name">Entities</span></button>
     <button class="ov-item" data-target="maturity" role="tab" aria-selected="false"><i class="ph ph-seal-check" aria-hidden="true"></i><span class="ov-name">Maturity</span><span class="ov-dot warn" title="Changed since it was confirmed" aria-label="Changed since it was confirmed"></span></button>
@@ -249,15 +255,38 @@ The lead source is set by the form the visitor used: website, app, partner or ma
       <div style="flex:1;min-width:0"><h2 class="ov-title">Known Gaps</h2><p class="ov-lead">What the data never holds, or holds only in part: one gap per line. Read them before you trust a result.</p></div>
      </div>
      <ul class="gap-list">
-      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</p><span class="meta">Added by An Claes · 2 Sep 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
-      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</p><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>until 28 Feb 2025 <span class="meta">on</span> <span class="mono">week_start</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">partner</span></span></div><span class="meta">Added by Dirk Vos, Data Team · 14 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p><span class="mono">visitorId</span> is missing for credit leads that come from MySQL rather than from website events, about 99% of them.</p><div class="gap-scope"><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">visitorId</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></div><span class="meta">Added by An Claes · 2 Sep 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>App leads of iOS miss their campaign for one week, after a broken release.</p><div class="gap-scope"><span class="scope"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span class="scope-k">Period</span>2 Sep 2025 – 8 Sep 2025 <span class="meta">on</span> <span class="mono">week_start</span></span><span class="scope"><i class="ph ph-columns" aria-hidden="true"></i><span class="scope-k">Fields</span><span class="mono">campaign</span></span><span class="scope"><i class="ph ph-rows" aria-hidden="true"></i><span class="scope-k">Rows</span><span class="mono">lead_source</span> is <span class="mono">app</span></span></div><span class="meta">Added by Maxime Passenier · 20 Oct 2026</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
+      <li class="gap"><i class="ph-fill ph-circle-dashed" aria-hidden="true"></i><div class="gap-body"><p>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</p><span class="meta">Added by An Claes · 3 Nov 2026 · free text</span></div><span class="gap-actions" data-for="owner datateam"><button class="icon-btn" type="button" aria-label="Change this gap" title="Change"><i class="ph ph-pencil-simple-line"></i></button><button class="icon-btn" type="button" aria-label="Remove this gap" title="Remove"><i class="ph ph-trash"></i></button></span></li>
      </ul>
-     <form class="gap-add" data-for="owner datateam" onsubmit="return false">
+     <form class="gap-add" data-for="owner datateam" data-pane-group="gapform" data-pane="closed" onsubmit="return false">
       <i class="ph ph-plus" aria-hidden="true"></i>
-      <input type="text" aria-label="A new Known Gap" placeholder="Add a gap, such as a field that is empty for part of the rows">
-      <button class="btn-quiet outline sm" type="submit">Add</button>
+      <input type="text" aria-label="A new Known Gap" placeholder="Add a gap, such as a field that is empty for part of the rows" data-go="gapform:open">
+      <button class="btn-quiet outline sm" type="button" data-go="gapform:open">Add</button>
      </form>
-     <p class="meta ov-help">Plain text, one gap at a time. Every gap added, changed or removed goes into the history, with your name.</p>
+     <form class="gap-form" data-for="owner datateam" data-pane-group="gapform" data-pane="open" hidden onsubmit="return false" aria-label="A new Known Gap">
+      <label class="field"><span>What is missing, or holds only in part, and why · plain text</span><textarea rows="2">No leads from the source partner before March 2025: the partner feed started then.</textarea></label>
+      <div class="scope-add"><span class="meta">Narrow it down · optional, combine what applies</span><button class="btn-quiet outline sm" type="button" disabled><i class="ph ph-calendar-blank"></i>Period</button><button class="btn-quiet outline sm" type="button"><i class="ph ph-columns"></i>Fields</button><button class="btn-quiet outline sm" type="button" disabled><i class="ph ph-rows"></i>Rows</button></div>
+      <div class="scope-edit">
+       <div class="scope-edit-head"><i class="ph ph-calendar-blank" aria-hidden="true"></i><b>Period</b><span class="meta">The time it holds for; leave a side empty for from the start, or until now</span><button class="icon-btn" type="button" aria-label="Remove the period"><i class="ph ph-x"></i></button></div>
+       <div class="scope-row">
+        <label class="field"><span>From</span><input type="date" placeholder="From the start"></label>
+        <label class="field"><span>To</span><input type="date" value="2025-02-28"></label>
+        <label class="field"><span>On the field</span><select><option>week_start · its partition</option><option>created_at</option></select></label>
+       </div>
+      </div>
+      <div class="scope-edit">
+       <div class="scope-edit-head"><i class="ph ph-rows" aria-hidden="true"></i><b>Rows</b><span class="meta">The rows it holds for: where a field has these values, or is empty</span><button class="icon-btn" type="button" aria-label="Remove the rows"><i class="ph ph-x"></i></button></div>
+       <div class="scope-row">
+        <label class="field"><span>Field</span><select><option>lead_source</option><option>lead_origin</option></select></label>
+        <label class="field"><span>Is</span><select><option>one of</option><option>empty</option></select></label>
+        <div class="field"><span>Values</span><div class="value-chips"><span class="code">partner<button type="button" aria-label="Remove partner">×</button></span><input type="text" aria-label="Add a value" placeholder="Add a value"></div></div>
+       </div>
+      </div>
+      <div class="gap-form-foot"><span class="meta">Goes into the history, with your name.</span><button class="btn-quiet" type="button" data-go="gapform:closed">Cancel</button><button class="btn-primary sm" type="submit" data-go="gapform:closed">Add</button></div>
+     </form>
+     <p class="meta ov-help">One gap at a time, its why in plain text. Narrow it down with a period, fields or rows where they apply; without them it stays free text. Every gap added, changed or removed goes into the history, with your name.</p>
     </section>
 
     <!-- ───────────── Querying: partitions, clustering, size, key fields and Parameters ───────────── -->
@@ -450,7 +479,7 @@ The lead source is set by the form the visitor used: website, app, partner or ma
        <div class="sum-side"><span class="sum-n">8</span><span class="weight w3">When interpreting results</span></div>
        <div class="sum-main">
         <div class="sum-title"><h3>Known Gaps</h3><a class="text-link" data-go="ov:gaps"><span>Known Gaps</span><i class="ph ph-arrow-right"></i></a></div>
-        <ul class="sum-gaps"><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events.</li><li>No leads from the source <span class="mono">partner</span> before 1 Mar 2025.</li></ul>
+        <ul class="sum-gaps"><li>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then. <span class="sum-scope">until 28 Feb 2025 on <span class="mono">week_start</span> · <span class="mono">lead_source</span> is <span class="mono">partner</span></span></li><li><span class="mono">visitorId</span> is missing for about 99% of the credit leads: those from MySQL rather than from website events. <span class="sum-scope">fields <span class="mono">visitorId</span> · <span class="mono">lead_origin</span> is <span class="mono">mysql</span></span></li><li>App leads of iOS miss their campaign for one week, after a broken release. <span class="sum-scope">2 Sep 2025 – 8 Sep 2025 on <span class="mono">week_start</span> · fields <span class="mono">campaign</span> · <span class="mono">lead_source</span> is <span class="mono">app</span></span></li><li>Leads from the fair in Kortrijk were entered by hand, a week late; they count in the week they were entered.</li></ul>
        </div>
       </li>
       <li class="sum-part">
@@ -574,8 +603,13 @@ The lead source is set by the form the visitor used: website, app, partner or ma
  <button class="seg" data-target="description" data-go="ov:description descedit:off" role="tab" aria-selected="false">Description</button>
  <button class="seg" data-target="edit" data-go="ov:description descedit:on" role="tab" aria-selected="false">Editing it</button>
  <button class="seg" data-target="gaps" data-go="ov:gaps" role="tab" aria-selected="false">Known Gaps</button>
+ <button class="seg" data-target="gapadd" data-go="ov:gaps gapform:open" role="tab" aria-selected="false">Adding a gap</button>
  <button class="seg" data-target="maturity" data-go="ov:maturity" role="tab" aria-selected="false">Maturity</button>
  <button class="seg" data-target="danger" data-go="ov:danger" role="tab" aria-selected="false">Danger zone</button>
+</div>
+<div class="proto-switch" data-group="gapform" role="tablist" aria-label="Prototype: the form of a new gap" style="bottom:216px">New gap
+ <button class="seg on" data-target="closed" role="tab" aria-selected="true">Closed</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">Open</button>
 </div>
 <div class="proto-switch" data-group="lvl" role="tablist" aria-label="Prototype: the Level on Maturity" style="bottom:168px">Level
  <button class="seg on" data-target="four" role="tab" aria-selected="true">4 · Explored</button>
