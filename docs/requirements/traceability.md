@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 178 | 53 (9 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 180 | 53 (9 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
@@ -28,7 +28,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Conversations](functional/14-conversations.md) | 15 (15 implemented) | 2 (2 implemented) | 12 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (10 proposed, 13 implemented, 16 withdrawn) | – | 30 | 35 (4 open, 31 done) |
-| [Claude](functional/17-claude.md) | 24 (24 implemented) | 5 (5 implemented) | 14 | 10 (6 open, 4 done) |
+| [Claude](functional/17-claude.md) | 26 (26 implemented) | 5 (5 implemented) | 15 | 10 (6 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 33 (3 specified, 29 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
@@ -385,6 +385,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-22](functional/17-claude.md#fr-cl-22) | A query through Claude is marked so | Implemented | – | [mcp-query](../design/screens/mcp-query.html) | [TR-SR-24](technical/04-stacks-and-resources.md#tr-sr-24) | [be43c2c](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/be43c2cb0b4163bbba6874f54b23d69795e78ff8) implements, 2026-11-02<br>[473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) refs, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 | [FR-CL-23](functional/17-claude.md#fr-cl-23) | Finding a query again, and everyone's for the Data Team | Implemented | – | – | – | [473cefc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/473cefc578094c0819a33cd47737a1746f230003) implements, 2026-11-01<br>[74540a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/74540a9b4527ac0d61d6df408e5d7132785e9983) refs, 2026-11-01 |
 | [FR-CL-25](functional/17-claude.md#fr-cl-25) | Claude reads the Summary of a Resource | Implemented | – | – | [TR-SR-26](technical/04-stacks-and-resources.md#tr-sr-26) | [a474dfd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a474dfd36a3cefb6575f2d384c0f5f8344c53459) implements, 2026-11-04<br>[85e0563](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/85e056302359f3df3e904f5de33ba9ec0f96e125) implements, 2026-11-04<br>[bc02476](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bc02476e4c1b8e53af47396e9c4a64f3704060cd) refs, 2026-11-04 |
+| [FR-CL-26](functional/17-claude.md#fr-cl-26) | The Summary first, also when the Resource is shown | Implemented | – | [mcp-resource](../design/screens/mcp-resource.html) | – | – |
+| [FR-CL-27](functional/17-claude.md#fr-cl-27) | An MCP App fits a phone, and folds | Implemented | – | [mcp-resource](../design/screens/mcp-resource.html), [mcp-resource-preview](../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../design/screens/mcp-resource-publish.html), [mcp-query](../design/screens/mcp-query.html) | – | – |
 
 ## Edge cases
 

@@ -12,11 +12,14 @@
   · up to 100 MB: it runs at once, and Claude answers from the rows (DEC-CL-06), names the Levels, and offers a Signal;
   · from 100 MB to 1 GB: only the button of the User runs it (DEC-CL-07);
   · above 1 GB: only the User sends the Request to the Data Team (MSG-QRY-01).
-  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-17, FR-CL-18, FR-CL-19, FR-CL-20, FR-CL-21, FR-CL-22
+  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-17, FR-CL-18, FR-CL-19, FR-CL-20, FR-CL-21, FR-CL-22, FR-CL-27
   Decisions: DEC-UX-164, DEC-CL-06, DEC-CL-07, DEC-CL-10, DEC-CL-11, DEC-CL-13, DEC-SR-29, DEC-SR-43, DEC-UX-73, DEC-DH-15.
   Open points: OP-CL-01, OP-CL-09, OP-CL-10.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of query.html and
   mcp-resource-preview.html.
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -148,6 +151,10 @@ order by w.week_start desc</pre></div>
  <button class="seg" data-target="free" role="tab" aria-selected="false">Up to 100 MB</button>
  <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
  <button class="seg" data-target="request" role="tab" aria-selected="false">Above 1 GB</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>

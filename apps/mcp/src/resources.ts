@@ -3,7 +3,7 @@ import { answer, attempt, firstSentence, levelName, plain, refusal } from './ans
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
-import { type SummaryFacts, summaryText } from './summary.js';
+import { type SummaryFacts, summaryParts, summaryText } from './summary.js';
 
 /** A Resource as a Collection lists it. */
 interface Item {
@@ -179,6 +179,29 @@ export function resourceTools({ server, hub, user }: Context): void {
     return parts.join(' ');
   }
 
+  /**
+   * The Summary of a Resource, as text for Claude and as its parts for the MCP App (FR-CL-25, FR-CL-26): from the card
+   * and what it takes besides, the threads, the Log and what it joins, each of which may be missing.
+   */
+  async function summaryOf(resource: Awaited<ReturnType<typeof readResource>>) {
+    const [threads, log, related] = await Promise.all([
+      hub.get<{ messages: SummaryFacts['threads'] }>('catalogue', `/messages/on/resource/${enc(resource.id)}`).then((body) => body.messages).catch(() => []),
+      hub.get<{ entries: SummaryFacts['log'] }>('catalogue', `/resources/${enc(resource.id)}/log`).then((body) => body.entries).catch(() => []),
+      hub.get<{ related: SummaryFacts['related'] }>('catalogue', `/resources/${enc(resource.id)}/related`).then((body) => body.related).catch(() => []),
+    ]);
+    const facts: SummaryFacts = {
+      ...(resource as unknown as SummaryFacts),
+      levelName: resource.levelName,
+      page: resource.page,
+      collection: resource.collection ? { name: resource.collection.name, owner: resource.collection.owner } : null,
+      storage: resource.storage as SummaryFacts['storage'],
+      threads,
+      log,
+      related,
+    };
+    return { text: summaryText(facts), parts: summaryParts(facts) };
+  }
+
   server.registerTool(
     'get_resource',
     {
@@ -191,25 +214,12 @@ export function resourceTools({ server, hub, user }: Context): void {
     ({ id: resourceId }) =>
       attempt(async () => {
         const resource = await readResource(resourceId);
-        // What the Summary takes besides the card: the threads, the Log and what it joins; each may be missing.
-        const [threads, log, related] = await Promise.all([
-          hub.get<{ messages: SummaryFacts['threads'] }>('catalogue', `/messages/on/resource/${enc(resourceId)}`).then((body) => body.messages).catch(() => []),
-          hub.get<{ entries: SummaryFacts['log'] }>('catalogue', `/resources/${enc(resourceId)}/log`).then((body) => body.entries).catch(() => []),
-          hub.get<{ related: SummaryFacts['related'] }>('catalogue', `/resources/${enc(resourceId)}/related`).then((body) => body.related).catch(() => []),
-        ]);
-        const summary = summaryText({
-          ...(resource as unknown as SummaryFacts),
-          levelName: resource.levelName,
-          page: resource.page,
-          collection: resource.collection ? { name: resource.collection.name, owner: resource.collection.owner } : null,
-          storage: resource.storage as SummaryFacts['storage'],
-          threads,
-          log,
-          related,
-        });
-        const data = { ...resource, summary };
-        // The Summary as Markdown, so that Claude reads it as written; the card as data under it (FR-CL-25).
-        return { content: [{ type: 'text', text: `${stateNote(resource)}\n\n${summary}` }, { type: 'text', text: JSON.stringify(resource) }], structuredContent: data };
+        const summary = await summaryOf(resource);
+        // The Summary first, as Markdown, so that Claude reads it as written; the card as data after it (FR-CL-25, DEC-CL-16).
+        return {
+          content: [{ type: 'text', text: `${stateNote(resource)}\n\n${summary.text}` }, { type: 'text', text: JSON.stringify(resource) }],
+          structuredContent: { summary: summary.text, ...resource },
+        };
       }),
   );
 
@@ -218,7 +228,7 @@ export function resourceTools({ server, hub, user }: Context): void {
     {
       title: 'Show a Resource',
       description:
-        'Shows the Resource Card to the User in the conversation, with its Overview and Columns, when they ask to see it. You get the same data as get_resource.',
+        'Shows the Resource to the User in the conversation, as a window that opens on its Summary, with its Columns, when they ask to see it. You get the same as from get_resource: the Summary first, read it and follow its weights, then the Resource Card as data.',
       inputSchema: { id },
       annotations: READ,
       _meta: SHOWS,
@@ -226,7 +236,15 @@ export function resourceTools({ server, hub, user }: Context): void {
     ({ id: resourceId }) =>
       attempt(async () => {
         const resource = await readResource(resourceId);
-        return answer({ view: 'resource', resource }, `${stateNote(resource)} The Resource Card is shown to the User in the conversation.`);
+        const summary = await summaryOf(resource);
+        // Claude reads the Summary first, as from get_resource; the MCP App draws its parts (FR-CL-26, DEC-CL-16).
+        return {
+          content: [
+            { type: 'text', text: `${stateNote(resource)} The Resource is shown to the User in the conversation, on its Summary.\n\n${summary.text}` },
+            { type: 'text', text: JSON.stringify(resource) },
+          ],
+          structuredContent: { summary: summary.text, view: 'resource', parts: summary.parts, resource },
+        };
       }),
   );
 
