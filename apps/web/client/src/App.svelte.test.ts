@@ -1104,7 +1104,9 @@ describe('the web app, for the Data Team', () => {
     expect(main.getByText('One row per saved search.')).toBeTruthy();
     expect(await main.findByText('Geregistreerd via de exposure datahub_savedSearches')).toBeTruthy();
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getByText('2 van de 2 kolommen hebben nog geen beschrijving')).toBeTruthy();
+    // Every Level explained: where it stands, and what the next one takes (FR-MR-16).
+    expect(main.getByText(/Geregistreerd op 21 okt 2026, via de exposure datahub_savedSearches/)).toBeTruthy();
+    expect(main.getByText(/Vraagt een beschrijving in dbt van de tabel en van minstens één veld.*Nu heeft de tabel er een, en 0 van zijn 2 velden/)).toBeTruthy();
     expect(document.title).toBe('Data Hub — Saved searches');
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
@@ -1591,10 +1593,13 @@ describe('the page of a Resource', () => {
     expect((await main.findByText('we send')).tagName).toBe('STRONG');
     await fireEvent.click(main.getByRole('tab', { name: 'Known Behaviour' }));
     await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
-    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly trends.' } });
+    // Intended use and pitfalls are Markdown too, each in the Markdown editor (FR-RC-23).
+    expect(main.getByRole('toolbar', { name: /Beoogd gebruik/ })).toBeTruthy();
+    expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly trends.', pitfalls: '', reliableSince: null } }));
-    expect(await main.findByText('Weekly trends.')).toBeTruthy();
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '', reliableSince: null } }));
+    expect((await main.findByText('trends')).tagName).toBe('STRONG');
 
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('The website, the app or a partner.')).toBeTruthy();
@@ -1638,7 +1643,7 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     const parts = within(await main.findByRole('tablist', { name: 'Delen van het Overzicht' }));
-    expect(parts.getAllByRole('tab').map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
+    expect(parts.getAllByRole('tab').map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
     // Its parts in the order to read them, each with its weight; a part with nothing in it is left out.
     const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
     await summary.findByText('Zero app leads last week.', { exact: false });
@@ -1708,7 +1713,8 @@ describe('the page of a Resource', () => {
     expect(main.queryByText('Nog niet gepubliceerd.')).toBeNull();
     expect(main.getByText(/gepubliceerd op 28 okt 2026 door Max Verstraete/)).toBeTruthy();
     await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
-    expect(main.getAllByText('28 okt 2026 door Max Verstraete')).toHaveLength(2);
+    expect(main.getByText('Gepubliceerd op 28 okt 2026 door Max Verstraete, zijn eerste Confirmation; laatst bevestigd op 28 okt 2026 door Max Verstraete.')).toBeTruthy();
+    expect(main.queryByText('Publicatie')).toBeNull();
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
@@ -1731,24 +1737,40 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(main.queryAllByText(/het veld week_start werd toegevoegd/)).toHaveLength(0));
   });
 
-  it('lets its Owner Unit deprecate it once published, with why, and take that away (FR-SR-50, DEC-UX-101)', async () => {
+  it('lets its Owner Unit deprecate it once published in the Danger zone, which explains it first, and take that away (FR-SR-50, DEC-UX-176)', async () => {
     const calls = serve({ groups: ['g1'], weekly: { published: true, level: 3 } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
-    await fireEvent.click(main.getByRole('button', { name: /Als deprecated markeren/ }));
-    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    const button = sheet.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
+    // No longer in the header: in the Danger zone, the last part of its Overview.
+    expect(main.queryByRole('button', { name: /Als deprecated markeren/ })).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Gevarenzone' }));
+    const danger = within(main.getByRole('tabpanel', { name: 'Gevarenzone' }));
+    expect(danger.getByText(/Niets wordt verborgen of geblokkeerd/)).toBeTruthy();
+    const button = danger.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    await fireEvent.input(sheet.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
+    await fireEvent.input(danger.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
     await fireEvent.click(button);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/deprecation', body: { reason: 'Replaced by the figures with partner leads', insteadOf: null } }));
-    expect(await main.findByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toBeTruthy();
+    expect(await main.findAllByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toHaveLength(2);
     expect(main.getByText('Deprecated', { selector: '.chip' })).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: /Wegnemen/ }));
+    // The line on top leads back to it, from any tab.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    await fireEvent.click(main.getByRole('button', { name: 'Gevarenzone' }));
+    expect(main.getByRole('tab', { name: 'Gevarenzone' }).getAttribute('aria-selected')).toBe('true');
+    await fireEvent.click(within(main.getByRole('tabpanel', { name: 'Gevarenzone' })).getByRole('button', { name: /Wegnemen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/deprecation' }));
     await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
+  });
+
+  it('keeps its Danger zone from who is not in its Owner Unit or the Data Team (DEC-UX-176)', async () => {
+    serve({ groups: [], weekly: { published: true, level: 3, collectionId: 'c2' } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
   });
 
   it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {

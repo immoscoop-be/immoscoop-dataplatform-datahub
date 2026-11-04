@@ -116,7 +116,7 @@ export function summaryText(given: SummaryFacts): string {
               .join('. ') + '.',
           ]
         : [],
-    useFor: card.intendedUse ? [card.intendedUse] : [],
+    useFor: card.intendedUse ? ['Intended use, from the Owner, in Markdown:', card.intendedUse] : [],
     queryCheaply: [
       ...(details.partition ? [`Partitioned by ${details.partition.field}${details.partition.unit ? `, a partition per ${details.partition.unit}` : ''}${storage?.partitions ? `, ${storage.partitions} partitions` : ''}: always filter on it.`] : []),
       ...(details.clusterBy.length ? [`Clustered by ${details.clusterBy.join(', then ')}.`] : []),
@@ -128,7 +128,10 @@ export function summaryText(given: SummaryFacts): string {
       .filter((entry) => entry.resources.length > 0)
       .map((entry) => `- ${entry.identity} on ${entry.field}: ${entry.resources.map((resource) => resource.displayName).join(', ')}`),
     fields: facts.fields.length ? [`${facts.fields.length} fields, each in \`fields\` with its type, its Business Description and its description from dbt.`] : [],
-    watchOut: [...(card.pitfalls ? [`Pitfalls: ${card.pitfalls}`] : []), ...(card.reliableSince ? [`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`] : [])],
+    watchOut: [
+      ...(card.pitfalls ? ['Pitfalls, from the Owner, in Markdown:', card.pitfalls, ''] : []),
+      ...(card.reliableSince ? [`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`] : []),
+    ],
     knownGaps: card.knownGaps.map((gap) => `- ${gap.text}`),
     qa: qa.flatMap(threadLines),
     standing: [

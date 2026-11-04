@@ -281,9 +281,9 @@ export function resourceTools({ server, hub, user }: Context): void {
   // What changes about a Resource is shown to the User first and written once they agree; `before` is what
   // Claude showed, so a change by a colleague meanwhile is not overwritten unseen (FR-CL-10, EC-CL-03).
   const card = {
-    businessDescription: z.string().max(4000).optional().describe('The Business Description of the table, next to the one from dbt.'),
-    intendedUse: z.string().max(2000).optional(),
-    pitfalls: z.string().max(2000).optional(),
+    businessDescription: z.string().max(4000).optional().describe('The Business Description of the table, next to the one from dbt, in Markdown.'),
+    intendedUse: z.string().max(2000).optional().describe('What it is meant for, in Markdown (FR-RC-23).'),
+    pitfalls: z.string().max(2000).optional().describe('Where it trips people up, in Markdown (FR-RC-23).'),
     knownGaps: z.array(z.string().max(1000)).max(50).optional().describe('Every Known Gap, the whole list as its texts: a gap whose text stays keeps who added it.'),
     reliableSince: z.string().nullable().optional().describe('Since when its data is reliable: YYYY-MM-DD, or null.'),
     keyFields: z.array(z.string()).max(50).optional(),

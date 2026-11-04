@@ -37,7 +37,7 @@ Pointers to material this domain will build on, collected during the migration. 
 - <a id="dec-rc-13"></a>**DEC-RC-13** · The grain and the mappings of the fields of a Resource, its Entities and identifiers, are kept in Data Hub. A model outside Colleciónes does not carry them in the meta of its dbt project; for a Colleciónes model, Data Hub fills them in from the meta of its columns when the Resource is added ([FR-AR-17](01-artifact-registry.md#fr-ar-17), [FR-CO-33](03-collections.md#fr-co-33)). *Decided on 2026-10-28, by Max ([OP-RC-05](#op-rc-05)).*
 - <a id="dec-rc-14"></a>**DEC-RC-14** · The actor of an event maps as "performed by", a mapping of its own next to `is` and the relation types, read from who performs the action (`performedBy`) in the Domain Model. An event has one actor. *Decided on 2026-10-28, by Max ([OP-RC-22](#op-rc-22)).*
 - <a id="dec-rc-15"></a>**DEC-RC-15** · Data Hub does not check the grain of a Resource against its data when it is added: no query counts the rows that share the fields of the grain. *Decided on 2026-10-28, by Max ([OP-RC-23](#op-rc-23)).* *Note of 2026-11-03, from Max: the data takes responsibility for its own grain, for instance with a test in dbt.*
-- <a id="dec-rc-16"></a>**DEC-RC-16** · The Business Description of a Resource is written in Markdown: headings, bold, italic, lists and links, in the Markdown editor of Data Hub ([DEC-UX-158](../../design/principles.md#dec-ux-158)). Everything else Data Hub keeps about a Resource and its fields stays plain text: its intended use, pitfalls and Known Gaps, and the Business Descriptions of its fields. *Decided on 2026-11-04, by Max.*
+- <a id="dec-rc-16"></a>**DEC-RC-16** · The Business Description of a Resource is written in Markdown: headings, bold, italic, lists and links, in the Markdown editor of Data Hub ([DEC-UX-158](../../design/principles.md#dec-ux-158)). Everything else Data Hub keeps about a Resource and its fields stays plain text: its intended use, pitfalls and Known Gaps, and the Business Descriptions of its fields. *Decided on 2026-11-04, by Max.* *Note of 2026-11-04: intended use and pitfalls are Markdown too ([DEC-RC-19](#dec-rc-19)).*
 - <a id="dec-rc-17"></a>**DEC-RC-17** · The Summary of a Resource reads its parts in one order, the same for every Resource, each with one of four weights:
 
   | Weight | What it asks of the reader | The parts, in this order |
@@ -49,6 +49,7 @@ Pointers to material this domain will build on, collected during the migration. 
 
   Data Hub sets the order and the weights; the Owner writes what is in a part, not where it stands. A part with nothing in it is left out. *Decided on 2026-11-04, by Max.*
 - <a id="dec-rc-18"></a>**DEC-RC-18** · A thread on a Resource that its Owner Unit or the Data Team started, or answered in, belongs to its curated Q&A: it stays in its Summary for good, open or answered, and weighs as When interpreting results ([DEC-RC-17](#dec-rc-17)). An open Signal weighs the same, whoever raised it. A thread they have not touched yet is Context. *Decided on 2026-11-04, by Max: "all answered or confirmed by the Data Team or the Owner remains; this way it builds a curated Q&A."*
+- <a id="dec-rc-19"></a>**DEC-RC-19** · The intended use and the pitfalls of a Resource are written in Markdown, as its Business Description, in the same editor ([DEC-RC-16](#dec-rc-16)). Its Known Gaps and the Business Descriptions of its fields stay plain text. *Decided on 2026-11-04, by Max.*
 
 ## Requirements
 
@@ -248,6 +249,13 @@ Every Known Gap of a Resource ([FR-RC-04](#fr-rc-04)) is an item of its own, in 
 **Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The Summary of a Resource ([FR-RC-19](#fr-rc-19)) takes from its Messages ([FR-SR-29](04-stacks-and-resources.md#fr-sr-29)) its curated Q&A, every thread its Owner Unit or the Data Team started or answered in, which stays for good, with its open Signals; and the threads they have not touched yet, as Context ([DEC-RC-18](#dec-rc-18)). Each shows its kind, who wrote it, with the role of the Owner and the Data Team, when, whether it is open or answered, and the answer of the Owner or the Data Team. Reading the whole thread and replying stay in the Messages on the Resource.
+
+<a id="fr-rc-23"></a>
+### FR-RC-23 · Intended use and pitfalls are written in Markdown
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
+
+The Owner and the Data Team write the intended use and the pitfalls of a Resource in Markdown, in the Markdown editor of Data Hub, as its Business Description ([FR-RC-20](#fr-rc-20), [DEC-RC-19](#dec-rc-19)). Known behaviour and the Summary show them rendered; Claude reads them as written, in Markdown.
 
 ## Open points
 
