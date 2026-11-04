@@ -9,7 +9,7 @@ export function corsRoutes(app: FastifyInstance): void {
   app.addHook('onRequest', async (request, reply) => {
     reply
       .header('access-control-allow-origin', '*')
-      .header('access-control-expose-headers', 'Semgraph-Language-Version, Semgraph-Tokens-Version, Semgraph-Deviations');
+      .header('access-control-expose-headers', 'Semgraph-Language-Version, Semgraph-Tokens-Version, Semgraph-Deviations, Semgraph-Cautions');
     if (request.method === 'OPTIONS' && request.headers['access-control-request-method']) {
       return reply
         .code(204)

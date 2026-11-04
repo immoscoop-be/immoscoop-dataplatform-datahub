@@ -25,9 +25,11 @@ The full list, with the contract of every chart, is in its [README](../../../ser
 
 | Endpoint | Purpose |
 | --- | --- |
-| `GET /semgraphs`, `GET /semgraphs/{id}` | The charts there are, the question each answers, its contract and examples |
+| `GET /semgraphs`, `GET /semgraphs/{id}` | The charts there are, the question each answers, its contract and examples, each example with the theme or size it sets |
+| `GET /semgraphs/{id}/examples/{name}` | Draws one of its examples, in a theme and a size when asked |
+| `GET /semgraphs/{id}/icon` | The icon of a chart, as a picture in `currentColor` |
 | `POST /validate` | Checks a request without drawing |
-| `POST /render` | Draws the chart as SVG, or refuses it (422) |
+| `POST /render` | Draws the chart as SVG, naming its deviations and cautions in the headers `Semgraph-Deviations` and `Semgraph-Cautions`, or refuses it (422) |
 | `GET /openapi.json` | The API in OpenAPI |
 | `POST /mcp` | Its MCP server for Claude, with an MCP App that shows the chart in the conversation |
 | `GET /health` | The health check, as on every service; also on `/healthz`, its name before the move |
@@ -38,7 +40,7 @@ Nothing: the data comes in the request.
 
 ## Who may call it
 
-Everyone, worldwide, without login: the web app, Claude, dashboards and documents ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)). That is safe because semgraph holds no data and has access to none. Pages of every site may call it from the browser ([TR-PF-31](../../requirements/technical/00-platform.md#tr-pf-31)); the web app shows its charts that way. A load balancer with Cloud Armor in front of it limits the requests per address, and Cloud Run only accepts traffic through that load balancer ([TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)).
+Everyone, worldwide, without login: the web app, Claude, dashboards and documents ([DEC-PF-24](../../requirements/technical/00-platform.md#dec-pf-24)). That is safe because semgraph holds no data and has access to none. Pages of every site may call it from the browser ([TR-PF-31](../../requirements/technical/00-platform.md#tr-pf-31)); the web app shows its charts that way, and its gallery under Charts ([TR-PF-34](../../requirements/technical/00-platform.md#tr-pf-34)). A load balancer with Cloud Armor in front of it limits the requests per address, and Cloud Run only accepts traffic through that load balancer ([TR-PF-30](../../requirements/technical/00-platform.md#tr-pf-30)).
 
 ## What exists today
 

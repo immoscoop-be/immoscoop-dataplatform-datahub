@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 181 | 53 (9 open, 44 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 182 | 54 (10 open, 44 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
@@ -24,14 +24,14 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
 | [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 implemented) | – | – | 1 (1 open) |
-| [Channels](functional/13-channels.md) | 5 (5 proposed) | – | 6 | 4 (2 open, 2 done) |
+| [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (10 proposed, 13 implemented, 16 withdrawn) | – | 30 | 35 (4 open, 31 done) |
 | [Claude](functional/17-claude.md) | 26 (26 implemented) | 5 (5 implemented) | 15 | 10 (6 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
-| [Platform: technical requirements](technical/00-platform.md) | 33 (3 specified, 29 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
+| [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
 | [Artifact registry: technical requirements](technical/01-artifact-registry.md) | 14 (14 implemented) | – | – | – |
 | [Collections: technical requirements](technical/03-collections.md) | 8 (8 implemented) | – | – | 2 (2 done) |
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 26 (26 implemented) | – | – | – |
@@ -292,6 +292,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CH-03](functional/13-channels.md#fr-ch-03) | Claude works through the MCP of Data Hub only | Proposed | – | – | – | [acd861a](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/acd861a9383253af6e5a2f1017866aaae95037f0) refs, 2026-10-23 |
 | [FR-CH-04](functional/13-channels.md#fr-ch-04) | Documentation built into the interface and the MCP | Proposed | – | – | – | – |
 | [FR-CH-05](functional/13-channels.md#fr-ch-05) | Every feature updates the documentation | Proposed | – | – | – | – |
+| [FR-CH-06](functional/13-channels.md#fr-ch-06) | Charts, the gallery of semgraph | Implemented | – | [charts](../design/screens/charts.html) | [TR-PF-34](technical/00-platform.md#tr-pf-34) | – |
 
 ### [Conversations](functional/14-conversations.md)
 
@@ -312,7 +313,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CV-13](functional/14-conversations.md#fr-cv-13) | Every type of Message says what it asks of whoever receives it | Implemented | – | – | – | – |
 | [FR-CV-14](functional/14-conversations.md#fr-cv-14) | Every type of Message from Data Hub has its Learning Card | Implemented | – | – | – | – |
 | [FR-CV-15](functional/14-conversations.md#fr-cv-15) | A Message reaches every channel from the same texts | Implemented | – | [messages](../design/screens/messages.html), [notifications](../design/screens/notifications.html) | [TR-LN-03](technical/07-log-and-notifications.md#tr-ln-03), [TR-LN-04](technical/07-log-and-notifications.md#tr-ln-04) | [7ac425d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/7ac425df72259094edf4e3a4ffb0d8cd629ca936) implements, 2026-10-29<br>[45f391e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/45f391e5b6e2788846ee66b5e197ecaab046337f) refs, 2026-10-29<br>[c92b276](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c92b2768f0cf5debc75c2ef904884298fd11b42c) refs, 2026-10-29 |
-| [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | – |
+| [FR-CV-16](functional/14-conversations.md#fr-cv-16) | Closing and reopening a Question or a Signal | Implemented | – | [messages](../design/screens/messages.html) | – | [3ce424e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/3ce424e4caabec26ac9434aab937189b95f2a710) implements, 2026-11-04<br>[dfe92a9](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/dfe92a9994b3d9bde2c9bdff63b32589d991a921) refs, 2026-11-04 |
 
 ### [Learning](functional/16-learning.md)
 
@@ -488,6 +489,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [TR-PF-31](technical/00-platform.md#tr-pf-31) | Pages of every site may call semgraph | Implemented | [DEC-PF-24](technical/00-platform.md#dec-pf-24), [DEC-PF-23](technical/00-platform.md#dec-pf-23) | [528a385](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/528a385e3d5849ef6bc6bf08683a1ba77a95e275) implements, 2026-10-18<br>[6457474](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/6457474a7fb25cb75334cd6fb81b8f3e55cc25dc) implements, 2026-10-18 |
 | [TR-PF-32](technical/00-platform.md#tr-pf-32) | The settings of a User live in identity | Implemented | [DEC-UX-96](../design/principles.md#dec-ux-96), [NFR-LOC-06](non-functional/localisation.md#nfr-loc-06) | [bb82050](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bb820503d23dc515eff6c9b77250a82762fe3502) refs, 2026-11-04<br>[1bd6a2e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/1bd6a2e55718b1b869476cc3e3ef99a33de03ae0) implements, 2026-10-28 |
 | [TR-PF-33](technical/00-platform.md#tr-pf-33) | The web app in Svelte, with the look of the design | Implemented | [DEC-PF-28](technical/00-platform.md#dec-pf-28), [DEC-PF-19](technical/00-platform.md#dec-pf-19), [DEC-UX-104](../design/principles.md#dec-ux-104) | [14bccf3](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/14bccf35dc66c7b095ecf09cfe28b150b76f9147) implements, 2026-10-28 |
+| [TR-PF-34](technical/00-platform.md#tr-pf-34) | Charts reads semgraph in the browser | Implemented | [FR-CH-06](functional/13-channels.md#fr-ch-06), [DEC-PF-23](technical/00-platform.md#dec-pf-23), [DEC-PF-24](technical/00-platform.md#dec-pf-24) | – |
 
 ### [Artifact registry: technical requirements](technical/01-artifact-registry.md)
 

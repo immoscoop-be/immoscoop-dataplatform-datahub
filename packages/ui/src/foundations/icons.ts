@@ -36,6 +36,7 @@ import pencilSimpleFill from '@phosphor-icons/core/assets/fill/pencil-simple-fil
 import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
+import prohibitFill from '@phosphor-icons/core/assets/fill/prohibit-fill.svg?raw';
 import sealCheckFill from '@phosphor-icons/core/assets/fill/seal-check-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
 import sunFill from '@phosphor-icons/core/assets/fill/sun-fill.svg?raw';
@@ -182,6 +183,7 @@ export const ICONS = {
   'play-fill': playFill,
   'quotes-fill': quotesFill,
   'plus-circle-fill': plusCircleFill,
+  'prohibit-fill': prohibitFill,
   'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
   'sun-fill': sunFill,

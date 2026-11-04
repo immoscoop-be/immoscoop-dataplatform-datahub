@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route, seePath } from './routes.js';
+import { chartPath, contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route, seePath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -7,12 +7,21 @@ describe('the addresses of the web app', () => {
   });
 
   it('has a start screen per section, with or without a slash at the end', () => {
-    for (const id of ['collections', 'query', 'charts', 'learning']) {
+    for (const id of ['collections', 'query', 'learning']) {
       expect(route(`/${id}`)).toMatchObject({ kind: 'start', section: { id } });
       expect(route(`/${id}/`)).toMatchObject({ kind: 'start', section: { id } });
     }
     // Messages starts on the Message Centre (FR-CV-06).
     expect(route('/messages/')).toMatchObject({ kind: 'messages', id: null, section: { id: 'messages' } });
+  });
+
+  it('opens Charts on its first chart, and has a page per chart of semgraph (FR-CH-06, DEC-UX-182)', () => {
+    expect(route('/charts')).toEqual({ kind: 'redirect', to: '/charts/movingWindowAverage' });
+    expect(route('/charts/')).toEqual({ kind: 'redirect', to: '/charts/movingWindowAverage' });
+    expect(route('/charts/kpiTile')).toMatchObject({ kind: 'chart', id: 'kpiTile', section: { id: 'charts' } });
+    expect(route(chartPath('kpiStatus'))).toMatchObject({ kind: 'chart', id: 'kpiStatus' });
+    expect(route('/charts/%E0%A4%A')).toEqual({ kind: 'notFound' });
+    expect(route('/charts/kpiTile/examples')).toEqual({ kind: 'notFound' });
   });
 
   it('has a page per Resource, in the section Collections', () => {

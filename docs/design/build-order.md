@@ -24,7 +24,7 @@ Before the first deploy to uat: the one-time bootstrap ([OP-PF-10](../requiremen
 | 8 | Learning: the cards as files, the Learning Centre, markers in context | `learning-start`, `learning-card`, `learning-see`, `learning-float`, `learning-hover`, `learning-message` |
 | 9 | Excel keys and Excel: the result of a Lens in Power Query | `my-page` (Excel keys) |
 
-Not in this order: Charts, the gallery of semgraph, waits for its open points ([OP-PF-16](../requirements/technical/00-platform.md#op-pf-16) to [OP-PF-18](../requirements/technical/00-platform.md#op-pf-18)); Claude through the MCP server is version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)), and with it `learning-mcp`.
+Not in this order: Charts, the gallery of semgraph, was built on 2026-11-04, once Max had approved its design ([DEC-UX-182](principles.md#dec-ux-182)); Claude through the MCP server is version 2 ([DEC-CH-02](../requirements/functional/13-channels.md#dec-ch-02)), and with it `learning-mcp`.
 
 ## The prompts
 

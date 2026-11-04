@@ -46,6 +46,7 @@ export function openApiDocument(registry: Registry): Record<string, unknown> {
       'Semgraph-Language-Version': { description: 'The version of the chart language the chart follows.', schema: { type: 'string' } },
       'Semgraph-Tokens-Version': { description: 'The version of the design tokens.', schema: { type: 'string' } },
       'Semgraph-Deviations': { description: 'The codes of the tolerated deviations, comma separated; absent when there are none.', schema: { type: 'string' } },
+      'Semgraph-Cautions': { description: 'The codes of the cautions, drawn with the same red alert, comma separated; absent when there are none.', schema: { type: 'string' } },
     },
     content: { 'image/svg+xml': { schema: { type: 'string' } } },
   };
@@ -156,6 +157,18 @@ export function openApiDocument(registry: Registry): Record<string, unknown> {
           },
         },
       },
+      '/semgraphs/{id}/icon': {
+        get: {
+          tags: ['semgraphs'],
+          operationId: 'getIcon',
+          summary: 'The icon of a semgraph, as a picture (REQ-060)',
+          parameters: [{ name: 'id', in: 'path', required: true, schema: { enum: ids } }],
+          responses: {
+            200: { description: 'The icon, 44 by 44, in currentColor: as a mask it takes the colour of the text around it.', content: { 'image/svg+xml': { schema: { type: 'string' } } } },
+            404: report('Unknown, or only planned.'),
+          },
+        },
+      },
       '/healthz': {
         get: {
           tags: ['service'],
@@ -220,7 +233,13 @@ export function openApiDocument(registry: Registry): Record<string, unknown> {
         ExampleLink: {
           type: 'object',
           required: ['name', 'title', 'href'],
-          properties: { name: { type: 'string' }, title: { type: 'string' }, href: { description: 'Where the example is drawn.', type: 'string' } },
+          properties: {
+            name: { type: 'string' },
+            title: { type: 'string' },
+            href: { description: 'Where the example is drawn.', type: 'string' },
+            theme: { description: 'The theme the example sets, when it shows a mode (REQ-107).', enum: [...THEMES] },
+            size: { description: 'The size the example sets, when it shows a size (REQ-107).', enum: [...SIZE_NAMES] },
+          },
         },
         Links: {
           type: 'object',

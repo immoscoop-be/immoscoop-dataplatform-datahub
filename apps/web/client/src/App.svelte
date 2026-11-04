@@ -10,6 +10,7 @@
   import { NotFound as Missing } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
+  import { type ChartsOverview, createCharts } from './lib/charts.js';
   import { dragging, type Mover } from './lib/dragging.svelte.js';
   import type { Config } from './lib/config.js';
   import { createIdentity, SignedOut, type Group, type Me } from './lib/identity.js';
@@ -28,6 +29,8 @@
   import AdminPanel from './screens/AdminPanel.svelte';
   import AdminExcelKeys from './screens/AdminExcelKeys.svelte';
   import AdminWebhooks from './screens/AdminWebhooks.svelte';
+  import ChartPage from './screens/ChartPage.svelte';
+  import ChartsPanel from './screens/ChartsPanel.svelte';
   import CollectionPage from './screens/CollectionPage.svelte';
   import CollectionsPanel from './screens/CollectionsPanel.svelte';
   import CollectionsStart from './screens/CollectionsStart.svelte';
@@ -45,11 +48,9 @@
   import MessageWindow from './screens/MessageWindow.svelte';
   import MyPage from './screens/MyPage.svelte';
   import NotFound from './screens/NotFound.svelte';
-  import PanelSoon from './screens/PanelSoon.svelte';
   import QueryNew from './screens/QueryNew.svelte';
   import QueryPanel from './screens/QueryPanel.svelte';
   import ResourcePage from './screens/ResourcePage.svelte';
-  import SectionStart from './screens/SectionStart.svelte';
   import AppShell from './templates/AppShell.svelte';
   import SignIn from './templates/SignIn.svelte';
   import { TEXTS } from './texts/index.js';
@@ -64,6 +65,8 @@
   const queries = $derived(createQuery(config, session));
   const messages = $derived(createMessages(config, session));
   const learning = $derived(createLearning(config, session));
+  /** semgraph, whose gallery Charts shows; open to everyone, so without Access Token (TR-PF-34). */
+  const charts = $derived(createCharts(config));
   const router = new Router();
   const themeOnScreen = new ThemeOnScreen();
 
@@ -111,6 +114,10 @@
   /** The same cards in a language, once its translations are read; in English until then. */
   let translated: { language: Language; cards: ReadonlyMap<string, Card> } | undefined = $state();
   const localCards = $derived(translated?.language === currentLanguage() ? translated.cards : shownCards);
+  /** What semgraph offers, for Charts, in the language it was read in: null when semgraph did not answer (FR-CH-06). */
+  let chartsOverview: { language: Language; overview: ChartsOverview | null } | undefined = $state();
+  /** The language the overview of semgraph was last asked in, so that it is asked once per language. */
+  let chartsAsked: Language | undefined;
   /** What the User did with the Learning Cards, read when the Learning Centre opens (FR-LR-32): null when it could not be read. */
   let progress: readonly Progress[] | null | undefined = $state();
   /** A Learning Level the start screen of the Learning Centre unfolds in its panel. */
@@ -291,6 +298,21 @@
     if ((section?.id !== 'learning' && !learningWanted) || translated?.language === language) return;
     cardsIn(language, shownCards).then((cards) => (translated = { language, cards }));
   });
+  // Charts reads what semgraph offers when it opens, and again in another language.
+  $effect(() => {
+    const language = currentLanguage();
+    if (status.kind !== 'signedIn' || section?.id !== 'charts' || chartsAsked === language) return;
+    chartsAsked = language;
+    charts.overview(language).then(
+      (overview) => (chartsOverview = { language, overview }),
+      (error: unknown) => {
+        console.error('semgraph did not give its charts', error);
+        chartsOverview = { language, overview: null };
+        chartsAsked = undefined;
+      },
+    );
+  });
+  const chartsShown = $derived(chartsOverview?.language === currentLanguage() ? chartsOverview.overview : undefined);
   $effect(() => {
     if (status.kind === 'signedIn' && (section?.id === 'learning' || learningWanted) && progress === undefined) {
       learning.progress().then(
@@ -510,7 +532,9 @@
                           ? t('lens.edit.title')
                           : page.kind === 'learningCard' || page.kind === 'learningSee'
                             ? cardTitle(page.id)
-                            : undefined;
+                            : page.kind === 'chart'
+                              ? (chartsShown?.charts.find((chart) => chart.id === page.id)?.title ?? sectionLabel(page.section))
+                              : undefined;
     document.title = title ? `Data Hub — ${title}` : 'Data Hub';
   });
 
@@ -539,7 +563,8 @@
       page.kind === 'editLens' ||
       page.kind === 'learningCard' ||
       page.kind === 'learningSee' ||
-      page.kind === 'admin'
+      page.kind === 'admin' ||
+      page.kind === 'chart'
       ? page.section
       : undefined,
   );
@@ -684,8 +709,8 @@
       {:else}
         <NotFound />
       {/if}
-    {:else if page.kind === 'start' && page.section.id !== 'query'}
-      <SectionStart title={sectionLabel(page.section)} />
+    {:else if page.kind === 'chart'}
+      <ChartPage id={page.id} overview={chartsShown} {charts} language={currentLanguage()} {theme} />
     {:else if page.kind === 'newQuery'}
       {#key page.resource}
         <QueryNew
@@ -997,8 +1022,8 @@
       version={queriesVersion}
       onhidden={(id, hidden) => (queryHidden = { id, hidden })}
     />
-  {:else}
-    <PanelSoon />
+  {:else if section?.id === 'charts' && status.kind === 'signedIn'}
+    <ChartsPanel overview={chartsShown} current={page.kind === 'chart' ? page.id : undefined} iconUrl={(id) => charts.iconUrl(id)} />
   {/if}
 {/snippet}
 
