@@ -392,14 +392,14 @@ A query made through Claude, and every run through Claude of a query or a Previe
 <a id="fr-cl-26"></a>
 ### FR-CL-26 · The Summary first, also when the Resource is shown
 
-**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-CL-16](#dec-cl-16)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-CL-16](#dec-cl-16)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html)
 
 `get_resource` and `show_resource` both give Claude the Summary of the Resource ([FR-CL-25](#fr-cl-25)) first: as the first text of the answer, and first in its data, before the card. The MCP App of `show_resource` opens on the Summary, every part in its order, numbered and with its weight, as the Overview of Data Hub shows it ([FR-RC-19](05-resource-card.md#fr-rc-19)), with Columns as its second tab; "Its fields" opens Columns, and "Open in Data Hub" stays at its foot ([FR-CL-06](#fr-cl-06)).
 
 <a id="fr-cl-27"></a>
 ### FR-CL-27 · An MCP App fits a phone, and folds
 
-**Status:** Specified · **Source:** Max, 2026-11-04 ([DEC-UX-180](../../design/principles.md#dec-ux-180), [DEC-UX-181](../../design/principles.md#dec-ux-181)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-180](../../design/principles.md#dec-ux-180), [DEC-UX-181](../../design/principles.md#dec-ux-181)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
 
 Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it lays out its own width in one column, nothing in it is wider than its frame, a table of data scrolls in its own box, its tabs and buttons are at least 44 px high, and nothing is told only on hover. Every MCP App has a button at its top right that folds it to its head and unfolds it again.
 

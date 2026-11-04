@@ -224,6 +224,33 @@ describe('Resources through Claude', () => {
     expect(text).toMatch(/What colleagues noted \(context\)\n- Question, open, Jan, 2026-11-02: Per province\?/);
     // A part with nothing in it is left out.
     expect(text).not.toContain('What it joins');
+    // First in its data too, before the card (DEC-CL-16).
+    expect(Object.keys(result.structuredContent ?? {})[0]).toBe('summary');
+
+    // Shown to the User, Claude reads the same Summary first, and the window gets its parts to draw (FR-CL-26).
+    const shown = await tool('show_resource', { id: RESOURCE_ID }, await issuer.sign({ groups: ['g-credit'] }));
+    const reads = shown.content[0]?.text ?? '';
+    expect(reads).toMatch(/^Weekly lead volume is at 4 · Explored\..*on its Summary\.\n\n# Weekly lead volume/s);
+    expect(reads).toContain('## 6. Q&A of the Owner and the Data Team (when interpreting results)');
+    const data = shown.structuredContent as { summary: string; view: string; parts: { part: string; number: number | null; weightName: string; rank: number; title: string; lines: { text: string; kind?: string; shown?: string }[] }[] };
+    expect(Object.keys(data)[0]).toBe('summary');
+    expect(data.view).toBe('resource');
+    expect(data.parts.map((part) => [part.number, part.title, part.weightName, part.rank])).toEqual([
+      [1, 'What it is', 'Read first', 1],
+      [2, 'Use it for', 'Read first', 1],
+      [3, 'Its fields', 'Before you query', 2],
+      [4, 'Watch out', 'When interpreting results', 3],
+      [5, 'Known Gaps', 'When interpreting results', 3],
+      [6, 'Q&A of the Owner and the Data Team', 'When interpreting results', 3],
+      [7, 'Where it stands', 'Context', 4],
+      [8, 'What colleagues noted', 'Context', 4],
+    ]);
+    expect(data.parts[0]?.lines).toContainEqual({ kind: 'markdown', text: '### Leads\nCredit leads per **week**.' });
+    expect(data.parts[0]?.lines).toContainEqual({ kind: 'label', text: 'Business Description, from the Owner, in Markdown:', shown: 'From the Owner' });
+    expect(data.parts[5]?.lines).toEqual([
+      { kind: 'item', text: 'Question, answered, Mia, 2026-11-02: Twice in a week?' },
+      { kind: 'reply', text: 'An, Owner, 2026-11-03: Every request counts.' },
+    ]);
   });
 
   it('gives the cards of one Collection the drawing of its icon, as the MCP App loads nothing from outside (DEC-UX-164)', async () => {
@@ -338,6 +365,20 @@ describe('concepts through Claude', () => {
 });
 
 describe('the MCP App', () => {
+  it('opens a Resource on its Summary, fits a phone and folds (FR-CL-26, FR-CL-27, DEC-UX-180, DEC-UX-181)', () => {
+    expect(VIEW_PAGE).toContain('data-tab="summary">Summary</button>');
+    expect(VIEW_PAGE).toContain("let tab = 'summary';");
+    // On a phone: one column, the fields as cards, buttons and tabs at least 44 px.
+    const phone = VIEW_PAGE.slice(VIEW_PAGE.indexOf('@media (max-width: 520px)'));
+    expect(phone).toContain('.sum-part { grid-template-columns: minmax(0, 1fr);');
+    expect(phone).toContain('table.stack thead { display: none; }');
+    expect(phone).toMatch(/button\.primary, button\.quiet \{ width: 100%; min-height: 44px; \}/);
+    expect(phone).toContain('.tab { min-height: 44px; }');
+    // Every window has the button that folds it to its head.
+    expect(VIEW_PAGE).toContain('data-fold aria-label="Fold"');
+    expect(VIEW_PAGE).toContain('#root.folded > :not(.head) { display: none; }');
+  });
+
   it('takes its values from docs/design/tokens.css (DEC-PF-28)', () => {
     const tokens = readFileSync(new URL('../../../docs/design/tokens.css', import.meta.url), 'utf8');
     const block = (css: string, selector: string) => {
