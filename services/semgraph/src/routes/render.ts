@@ -48,6 +48,7 @@ export function renderRoutes(app: FastifyInstance, { registry, now }: Dependenci
       'semgraph-language-version': registry.tokens.languageVersion,
       'semgraph-tokens-version': registry.tokens.version,
       ...(result.deviations.length > 0 ? { 'semgraph-deviations': result.deviations.join(', ') } : {}),
+      ...(result.cautions.length > 0 ? { 'semgraph-cautions': result.cautions.join(', ') } : {}),
     });
     return reply.code(status).send(result.svg);
   }

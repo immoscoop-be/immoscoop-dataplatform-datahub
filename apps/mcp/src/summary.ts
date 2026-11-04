@@ -57,13 +57,39 @@ const upper = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const ROLE: Record<string, string> = { owner: 'Owner', dataTeam: 'Data Team' };
 const KIND: Record<string, string> = { question: 'Question', remark: 'Remark', signal: 'Signal' };
 
-/** A thread in a line, with what the Owner and the Data Team answered under it. */
-function threadLines(thread: Thread): string[] {
+/**
+ * A line of a part of the Summary. Claude reads its text; the MCP App draws it by its kind: a label of where what
+ * follows comes from (shown as a chip, when it has one to show), Markdown, an item of a list, or a reply under an item.
+ */
+export interface SummaryLine {
+  text: string;
+  kind?: 'label' | 'markdown' | 'item' | 'reply';
+  /** What the MCP App shows of a label, such as "From dbt"; nothing when left out. */
+  shown?: string;
+}
+
+/** A part of the Summary with something in it, as Claude and the MCP App read it (FR-CL-25, FR-CL-26). */
+export interface SummaryBlock {
+  part: SummaryPart;
+  weight: Weight;
+  /** The name of its weight, such as "Read first", and its rank among the four, 1 to 4, for the MCP App to draw. */
+  weightName: string;
+  rank: number;
+  /** Its number in the order to read; a deprecation, which comes first, has none. */
+  number: number | null;
+  title: string;
+  lines: SummaryLine[];
+}
+
+/** A thread as an item, with what the Owner and the Data Team answered under it as replies. */
+function threadLines(thread: Thread): SummaryLine[] {
   const role = (said: Said) => (said.writer?.as && ROLE[said.writer.as] ? `, ${ROLE[said.writer.as]}` : '');
   const state = thread.state ? `, ${thread.state}` : '';
-  const lines = [`- ${KIND[thread.kind] ?? thread.kind}${state}, ${thread.writer?.name ?? ''}${role(thread)}, ${day(thread.createdAt)}: ${thread.params.text ?? ''}`];
+  const lines: SummaryLine[] = [{ kind: 'item', text: `${KIND[thread.kind] ?? thread.kind}${state}, ${thread.writer?.name ?? ''}${role(thread)}, ${day(thread.createdAt)}: ${thread.params.text ?? ''}` }];
   for (const reply of thread.replies) {
-    if (reply.writer?.as && ROLE[reply.writer.as]) lines.push(`  - ${reply.writer.name}${role(reply)}, ${day(reply.createdAt)}: ${reply.params.text ?? ''}`);
+    // Its closing says who closed it and why, whoever closed it (FR-CV-16); an answer only from the Owner Unit or the Data Team.
+    if (reply.kind === 'closing') lines.push({ kind: 'reply', text: `Closed by ${reply.writer?.name ?? ''}${role(reply)}, ${day(reply.createdAt)}${reply.params.text ? `: ${reply.params.text}` : '.'}` });
+    else if (reply.writer?.as && ROLE[reply.writer.as]) lines.push({ kind: 'reply', text: `${reply.writer.name}${role(reply)}, ${day(reply.createdAt)}: ${reply.params.text ?? ''}` });
   }
   return lines;
 }
@@ -86,10 +112,10 @@ const TITLE: Record<SummaryPart, string> = {
 };
 
 /**
- * The Summary of a Resource as Claude reads it (FR-CL-25): its parts in the order of the Summary, each with its weight,
- * and what that weight asks of Claude (DEC-RC-17); a part with nothing in it is left out, as on the page.
+ * The parts of the Summary of a Resource (FR-CL-25): in the order of the Summary, each with its weight (DEC-RC-17); a part
+ * with nothing in it is left out, as on the page. Claude reads them as text, the MCP App draws them (FR-CL-26).
  */
-export function summaryText(given: SummaryFacts): string {
+export function summaryParts(given: SummaryFacts): SummaryBlock[] {
   // A piece that catalogue or query did not give leaves its part out, never the Summary.
   const facts: SummaryFacts = {
     ...given,
@@ -101,67 +127,90 @@ export function summaryText(given: SummaryFacts): string {
   };
   const { card, details, storage } = facts;
   const { qa, colleagues } = curate(facts.threads);
-  const body: Record<SummaryPart, string[]> = {
-    deprecated: facts.deprecation ? [`${facts.deprecation.reason}${facts.deprecation.insteadOf ? ` Use ${facts.deprecation.insteadOf.displayName} instead.` : ''} It still works.`] : [],
+  const plain = (text: string): SummaryLine => ({ text });
+  const item = (text: string): SummaryLine => ({ kind: 'item', text });
+  const gap: SummaryLine = { text: '' };
+  const body: Record<SummaryPart, SummaryLine[]> = {
+    deprecated: facts.deprecation ? [plain(`${facts.deprecation.reason}${facts.deprecation.insteadOf ? ` Use ${facts.deprecation.insteadOf.displayName} instead.` : ''} It still works.`)] : [],
     whatItIs: [
-      ...(card.businessDescription ? ['Business Description, from the Owner, in Markdown:', card.businessDescription, ''] : []),
-      ...(facts.description ? ['Description, from dbt:', facts.description] : []),
+      ...(card.businessDescription ? [{ kind: 'label', text: 'Business Description, from the Owner, in Markdown:', shown: 'From the Owner' } as SummaryLine, { kind: 'markdown', text: card.businessDescription } as SummaryLine, gap] : []),
+      ...(facts.description ? [{ kind: 'label', text: 'Description, from dbt:', shown: 'From dbt' } as SummaryLine, plain(facts.description)] : []),
     ],
     oneRow:
       details.grain.length || details.modelType
         ? [
-            [
-              details.grain.length ? `${upper(details.grainSentence || details.grain.join(' × '))} (${details.grain.join(', ')})` : '',
-              details.modelType ? `Model type: ${details.modelType}` : '',
-            ]
-              .filter(Boolean)
-              .join('. ') + '.',
+            plain(
+              [
+                details.grain.length ? `${upper(details.grainSentence || details.grain.join(' × '))} (${details.grain.join(', ')})` : '',
+                details.modelType ? `Model type: ${details.modelType}` : '',
+              ]
+                .filter(Boolean)
+                .join('. ') + '.',
+            ),
           ]
         : [],
-    useFor: card.intendedUse ? ['Intended use, from the Owner, in Markdown:', card.intendedUse] : [],
+    useFor: card.intendedUse ? [{ kind: 'label', text: 'Intended use, from the Owner, in Markdown:' }, { kind: 'markdown', text: card.intendedUse }] : [],
     queryCheaply: [
-      ...(details.partition ? [`Partitioned by ${details.partition.field}${details.partition.unit ? `, a partition per ${details.partition.unit}` : ''}${storage?.partitions ? `, ${storage.partitions} partitions` : ''}: always filter on it.`] : []),
-      ...(details.clusterBy.length ? [`Clustered by ${details.clusterBy.join(', then ')}.`] : []),
-      ...(storage?.size ? [`Size: ${storage.size}.`] : []),
-      ...(card.keyFields.length ? [`Key fields: ${card.keyFields.join(', ')}.`] : []),
-      ...(card.parameters.length ? [`Parameters: ${card.parameters.join(', ')}.`] : []),
+      ...(details.partition ? [plain(`Partitioned by ${details.partition.field}${details.partition.unit ? `, a partition per ${details.partition.unit}` : ''}${storage?.partitions ? `, ${storage.partitions} partitions` : ''}: always filter on it.`)] : []),
+      ...(details.clusterBy.length ? [plain(`Clustered by ${details.clusterBy.join(', then ')}.`)] : []),
+      ...(storage?.size ? [plain(`Size: ${storage.size}.`)] : []),
+      ...(card.keyFields.length ? [plain(`Key fields: ${card.keyFields.join(', ')}.`)] : []),
+      ...(card.parameters.length ? [plain(`Parameters: ${card.parameters.join(', ')}.`)] : []),
     ],
     joins: facts.related
       .filter((entry) => entry.resources.length > 0)
-      .map((entry) => `- ${entry.identity} on ${entry.field}: ${entry.resources.map((resource) => resource.displayName).join(', ')}`),
-    fields: facts.fields.length ? [`${facts.fields.length} fields, each in \`fields\` with its type, its Business Description and its description from dbt.`] : [],
+      .map((entry) => item(`${entry.identity} on ${entry.field}: ${entry.resources.map((resource) => resource.displayName).join(', ')}`)),
+    fields: facts.fields.length ? [plain(`${facts.fields.length} fields, each in \`fields\` with its type, its Business Description and its description from dbt.`)] : [],
     watchOut: [
-      ...(card.pitfalls ? ['Pitfalls, from the Owner, in Markdown:', card.pitfalls, ''] : []),
-      ...(card.reliableSince ? [`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`] : []),
+      ...(card.pitfalls ? [{ kind: 'label', text: 'Pitfalls, from the Owner, in Markdown:' } as SummaryLine, { kind: 'markdown', text: card.pitfalls } as SummaryLine, gap] : []),
+      ...(card.reliableSince ? [plain(`Reliable since ${card.reliableSince}: do not read earlier data as reliable.`)] : []),
     ],
-    knownGaps: card.knownGaps.map((gap) => `- ${gap.text}${hasScope(gap.scope) ? ` ${scopeText(gap.scope)}` : ''}`),
+    knownGaps: card.knownGaps.map((known) => item(`${known.text}${hasScope(known.scope) ? ` ${scopeText(known.scope)}` : ''}`)),
     qa: qa.flatMap(threadLines),
     standing: [
-      [
-        facts.levelName,
-        facts.publication ? `published ${day(facts.publication.publishedAt)} by ${facts.publication.publishedBy}, confirmed ${day(facts.publication.confirmedAt)} by ${facts.publication.confirmedBy}` : 'not published',
-      ].join(', ') + '.',
-      ...(facts.changes.length ? [`Changed since its last Confirmation: ${facts.changes.map((change) => `${change.field} ${change.change}`).join(', ')}.`] : []),
+      plain(
+        [
+          facts.levelName,
+          facts.publication ? `published ${day(facts.publication.publishedAt)} by ${facts.publication.publishedBy}, confirmed ${day(facts.publication.confirmedAt)} by ${facts.publication.confirmedBy}` : 'not published',
+        ].join(', ') + '.',
+      ),
+      ...(facts.changes.length ? [plain(`Changed since its last Confirmation: ${facts.changes.map((change) => `${change.field} ${change.change}`).join(', ')}.`)] : []),
     ],
     colleagues: colleagues.flatMap(threadLines),
-    changes: facts.log.slice(0, 5).map((entry) => `- ${day(entry.at)}: ${entry.text}`),
+    changes: facts.log.slice(0, 5).map((entry) => item(`${day(entry.at)}: ${entry.text}`)),
   };
+  let number = 0;
+  return SUMMARY.filter(({ part }) => body[part].length > 0).map(({ part, weight }) => ({
+    part,
+    weight,
+    weightName: WEIGHT_MEANS[weight].name,
+    rank: WEIGHTS.indexOf(weight) + 1,
+    number: part === 'deprecated' ? null : ++number,
+    title: TITLE[part],
+    lines: body[part],
+  }));
+}
 
+/** A line as Claude reads it: an item and a reply under it as a list in Markdown. */
+const asText = (line: SummaryLine) => (line.kind === 'item' ? `- ${line.text}` : line.kind === 'reply' ? `  - ${line.text}` : line.text);
+
+/**
+ * The Summary of a Resource as Claude reads it (FR-CL-25): its parts in the order of the Summary, each with its weight,
+ * and what that weight asks of Claude (DEC-RC-17); a part with nothing in it is left out, as on the page.
+ */
+export function summaryText(given: SummaryFacts): string {
   const lines = [
-    `# ${facts.displayName}`,
-    `Resource in Data Hub${facts.collection ? ` · Collection ${facts.collection.name} · Owner ${facts.collection.owner}` : ''} · ${facts.levelName} · ${facts.published ? 'Published' : 'Not published'}`,
-    `Key: ${facts.key}`,
-    `Page: ${facts.page}`,
+    `# ${given.displayName}`,
+    `Resource in Data Hub${given.collection ? ` · Collection ${given.collection.name} · Owner ${given.collection.owner}` : ''} · ${given.levelName} · ${given.published ? 'Published' : 'Not published'}`,
+    `Key: ${given.key}`,
+    `Page: ${given.page}`,
     '',
     'The Summary of this Resource: read its parts in this order. Each part says its weight:',
     ...WEIGHTS.map((weight: Weight) => `- ${WEIGHT_MEANS[weight].name}: ${WEIGHT_MEANS[weight].asks}`),
   ];
-  let number = 0;
-  for (const { part, weight } of SUMMARY) {
-    const text = body[part];
-    if (text.length === 0) continue;
-    const heading = part === 'deprecated' ? TITLE[part] : `${++number}. ${TITLE[part]}`;
-    lines.push('', `## ${heading} (${WEIGHT_MEANS[weight].name.toLowerCase()})`, ...text);
+  for (const block of summaryParts(given)) {
+    const heading = block.number === null ? block.title : `${block.number}. ${block.title}`;
+    lines.push('', `## ${heading} (${WEIGHT_MEANS[block.weight].name.toLowerCase()})`, ...block.lines.map(asText));
   }
   return lines.join('\n');
 }

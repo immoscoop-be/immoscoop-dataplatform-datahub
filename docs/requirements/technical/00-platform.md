@@ -322,6 +322,19 @@ Every value of the look has one place: `docs/design/tokens.css`. The stylesheet 
 
 The page loads nothing from another address: Poppins and the Phosphor icons are part of the build, and the grain over a flowing background is a small picture in its stylesheet. The Content-Security-Policy allows scripts, styles and fonts only from its own address; Svelte puts every style in the stylesheet, so no style needs a nonce. *Note of 2026-10-29, on building part 5: the editor of Query, CodeMirror, adds `<style>` elements of its own; the server gives every page a nonce that is new each time, the policy allows styles with it, and the editor puts it on its styles.* *Note of 2026-10-30: the Lineage draws with Svelte Flow, whose stylesheet is part of the build and which adds no `<style>` of its own ([DEC-UX-152](../../design/principles.md#dec-ux-152)).* Sentences come from translation files, one per language ([NFR-LOC-02](../non-functional/localisation.md#nfr-loc-02)), and the settings of the User from identity ([TR-PF-32](#tr-pf-32)).
 
+<a id="tr-pf-34"></a>
+### TR-PF-34 · Charts reads semgraph in the browser
+
+**Status:** Implemented · **Realises:** [FR-CH-06](../functional/13-channels.md#fr-ch-06), [DEC-PF-23](#dec-pf-23), [DEC-PF-24](#dec-pf-24)
+
+The page of the web app calls semgraph itself, without Access Token, as any page may ([TR-PF-31](#tr-pf-31)): `GET /semgraphs` for the charts of the panel and those only planned, `GET /semgraphs/{id}` for the chart opened, both with `?locale=` in the language of the User, and `GET /semgraphs/{id}/examples/{name}?theme=` for the example shown, in the theme of the page. A drawing shows as a picture, and the icons are pictures too, so nothing of semgraph runs in the page. For this, semgraph:
+
+- gives the icon of every chart as a picture of its own, at `GET /semgraphs/{id}/icon`, in `currentColor`; the page uses it as a mask, so that it takes the colour of the text around it;
+- names, with every example it lists, the `theme` or the `size` the example sets, so that an example that only shows a mode or a size can be told apart;
+- names the cautions of a chart it draws in the header `Semgraph-Cautions`, as it names its deviations in `Semgraph-Deviations`, and lets the browser read both.
+
+The groups of Charts and the sentences around what semgraph says are those of the web app. A test of the web app fails when semgraph offers a chart that is in no group, or gives a reason not to use a chart for which the web app has no sentence.
+
 ## Open points
 
 - [x] <a id="op-pf-01"></a>**OP-PF-01** · Decide how the processing of an Artifact Set runs: inside the registry service through Cloud Tasks, or as a Cloud Run job built from the same code ([DEC-DH-23](../../overview/data-hub.md#dec-dh-23)). *Decided on 2026-10-18: a Cloud Run job ([DEC-PF-20](#dec-pf-20)).*

@@ -13,10 +13,13 @@
   · not the Owner: the User is in the Data Team but not in the Owner Unit, which alone publishes (FR-SR-16); no frame is
     opened, and Claude says who publishes and offers to ask them (FR-CL-03).
   The button is the User's alone: Claude cannot use it (DEC-CL-07). The Log says it was published through Claude (DEC-CL-08).
-  Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12
+  Requirements: FR-CL-01, FR-CL-03, FR-CL-05, FR-CL-06, FR-CL-12, FR-CL-27
   Decisions: DEC-UX-164, DEC-CL-01, DEC-CL-02, DEC-CL-07, DEC-CL-08, DEC-SR-28, DEC-MR-07, DEC-MR-10, DEC-UX-31, DEC-UX-63, DEC-DH-15.
   Open points: OP-CL-01.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-publish.html.
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -103,6 +106,10 @@
  <button class="seg" data-target="done" role="tab" aria-selected="false">Published</button>
  <button class="seg" data-target="notready" role="tab" aria-selected="false">Not ready</button>
  <button class="seg" data-target="notowner" role="tab" aria-selected="false">Not the Owner</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>

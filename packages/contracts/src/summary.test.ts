@@ -32,4 +32,11 @@ describe('the Summary of a Resource (FR-RC-19, DEC-RC-17)', () => {
     expect(qa.map((one) => one.id)).toEqual(['d', 'b', 'c']);
     expect(colleagues.map((one) => one.id)).toEqual(['a', 'e', 'f']);
   });
+
+  it('takes closing a thread for no answer: closed by its Owner Unit alone, it stays with what colleagues noted (FR-CV-16)', () => {
+    const closed = { id: 'i', kind: 'question', state: 'closed', writer: { as: null }, replies: [{ kind: 'closing', writer: { as: 'owner' } }] };
+    const { qa, colleagues } = curate([closed]);
+    expect(qa).toEqual([]);
+    expect(colleagues.map((one) => one.id)).toEqual(['i']);
+  });
 });

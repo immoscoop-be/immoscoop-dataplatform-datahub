@@ -11,11 +11,14 @@
   Only the User approves and sends, with buttons Claude cannot use (DEC-CL-07); Claude gets the rows for every Resource the
   User sees (DEC-CL-06). No export (DEC-UX-120). "Open in Data Hub"
   opens the Preview tab of the Resource (FR-CL-06); Claude names the Level of the Resource in its answer (FR-CL-05).
-  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-09
+  Requirements: FR-CL-01, FR-CL-05, FR-CL-06, FR-CL-09, FR-CL-27
   Decisions: DEC-UX-164, DEC-CL-02, DEC-CL-06, DEC-CL-07, DEC-SR-29, DEC-SR-30, DEC-SR-39, DEC-UX-120, DEC-DH-15.
   Open points: OP-CL-01, OP-CL-04.
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-preview.html and
   the Run button of query.html.
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -118,6 +121,10 @@
  <button class="seg on" data-target="free" role="tab" aria-selected="true">Up to 100 MB</button>
  <button class="seg" data-target="approve" role="tab" aria-selected="false">100 MB to 1 GB</button>
  <button class="seg" data-target="request" role="tab" aria-selected="false">Above 1 GB</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>

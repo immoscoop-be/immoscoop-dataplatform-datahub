@@ -98,6 +98,52 @@ const SAVED_SEARCHES = {
   descriptionChanges: [],
 };
 
+/** What semgraph offers, as its overview gives it in Dutch: four charts, and two it only plans (FR-CH-06). */
+const SEMGRAPH_CHARTS = {
+  locale: 'nl-BE',
+  semgraphs: [
+    { id: 'distribution', title: 'Verdeling', answers: 'Hoe liggen de waarden verspreid?' },
+    { id: 'kpiTile', title: 'KPI-tegel', answers: 'Hoeveel is het nu, en is dat meer of minder dan ervoor?' },
+    { id: 'periodComparison', title: 'Vergelijking met de vorige periode', answers: 'Doen we het beter of slechter dan in de periode ervoor?' },
+    { id: 'movingWindowAverage', title: 'Voortschrijdend gemiddelde', answers: 'Hoe evolueert dit, zonder dagelijkse ruis?' },
+  ].map((chart) => ({ ...chart, href: `/semgraphs/${chart.id}`, examples: [] })),
+  planned: ['cumulative', 'funnel'],
+};
+
+/** Two charts as semgraph describes them, each with examples that it draws, with a warning or a caution, or refuses. */
+const SEMGRAPH_DESCRIBED: Record<string, Record<string, unknown>> = {
+  movingWindowAverage: {
+    id: 'movingWindowAverage',
+    title: 'Voortschrijdend gemiddelde',
+    answers: 'Hoe evolueert dit, zonder dagelijkse ruis?',
+    exampleQuestions: ['Hoe evolueerden de kredietleads de voorbije vier weken?'],
+    doNotUseWhen: [
+      { intent: 'compareWithLastYear', use: 'periodComparison' },
+      { intent: 'showTotalSoFar', use: 'cumulative' },
+    ],
+    data: { minimumPoints: 28 },
+    examples: [
+      { name: 'basic', title: 'Kredietleads per dag (voorbeelddata)' },
+      { name: 'long-horizon', title: 'Kredietleads per dag, laatste anderhalf jaar (voorbeelddata)' },
+      { name: 'long-horizon-dark', title: 'Kredietleads per dag, laatste anderhalf jaar (voorbeelddata)', theme: 'dark' },
+      { name: 'window-10', title: 'Kredietleads per dag (voorbeelddata)' },
+      { name: 'unique-without-aggregation', title: 'Unieke bezoekers per dag (voorbeelddata)' },
+    ],
+  },
+  kpiTile: {
+    id: 'kpiTile',
+    title: 'KPI-tegel',
+    answers: 'Hoeveel is het nu, en is dat meer of minder dan ervoor?',
+    exampleQuestions: [],
+    doNotUseWhen: [],
+    data: { minimumPoints: 14 },
+    examples: [
+      { name: 'few-leads', title: 'Leads' },
+      { name: 'rolling-28d-card', title: 'Leads', size: 'card' },
+    ],
+  },
+};
+
 const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
 const SALES = { id: 'g2', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
 
@@ -778,6 +824,25 @@ function serve({
     if (path === `${CONFIG.semgraphUrl}/render`) {
       return new Response('<svg xmlns="http://www.w3.org/2000/svg"><title>Example</title></svg>', { headers: { 'content-type': 'image/svg+xml' } });
     }
+    // semgraph, as Charts reads it: its charts, one described, and its examples as it draws them (TR-PF-34).
+    if (path.startsWith(`${CONFIG.semgraphUrl}/semgraphs?locale=`)) {
+      return json(SEMGRAPH_CHARTS);
+    }
+    const [, described] = /^https:\/\/semgraph\.test\/semgraphs\/([^/?]+)\?locale=/.exec(path) ?? [];
+    if (described) {
+      const chart = SEMGRAPH_DESCRIBED[described];
+      return chart ? json(chart) : json({ outcome: 'invalid', issues: [{ level: 'inputError', code: 'unknownSemgraph' }] }, 404);
+    }
+    const [, exampleName] = /^https:\/\/semgraph\.test\/semgraphs\/[^/]+\/examples\/([^/?]+)\?theme=/.exec(path) ?? [];
+    if (exampleName === 'unique-without-aggregation') {
+      return json({ outcome: 'refused', issues: [{ level: 'refusal', code: 'uniqueAggregationRequired', message: 'Zeg hoe ze geteld zijn.' }] }, 422);
+    }
+    if (exampleName) {
+      const headers: Record<string, string> = { 'content-type': 'image/svg+xml' };
+      if (exampleName === 'window-10') headers['semgraph-deviations'] = 'windowNotMultipleOf7';
+      if (exampleName === 'few-leads') headers['semgraph-cautions'] = 'fewObservations.mean';
+      return new Response(`<svg xmlns="http://www.w3.org/2000/svg"><title>${exampleName}</title></svg>`, { headers });
+    }
     // identity, as it keeps the Excel keys of the User (FR-PL-01, FR-PL-02).
     if (path === '/me/excel-keys' && method === 'GET') {
       return json({ keys: excelKeys });
@@ -849,6 +914,17 @@ function serve({
       (message.replies as unknown[]).push({ id: 'r-1', type: 'MSG-CNV-04', kind: 'reply', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { text: body.text }, createdAt: '2026-10-29T10:00:00Z', mine: true });
       message.state = message.state === 'open' ? 'answered' : message.state;
       return json({ message }, 201);
+    }
+    // Closed with an optional line why, and reopened (FR-CV-16, MSG-CNV-07).
+    if (message && path === `/messages/${message.id as string}/close` && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { text: string };
+      message.state = 'closed';
+      (message.replies as unknown[]).push({ id: 'c-1', type: 'MSG-CNV-07', kind: 'closing', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { writer: 'Max Verstraete', ...(body.text ? { text: body.text } : {}) }, createdAt: '2026-10-29T11:00:00Z', mine: true });
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/reopen` && method === 'POST') {
+      message.state = 'open';
+      return json({ message });
     }
     if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
       const body = JSON.parse(init.body as string) as { outcome: string; text: string };
@@ -948,9 +1024,10 @@ describe('the web app, signed in', () => {
     open('/collections');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('link', { name: 'Grafieken' }));
-    expect(location.pathname).toBe('/charts');
+    // Charts opens on its first chart (DEC-UX-182).
+    await vi.waitFor(() => expect(location.pathname).toBe('/charts/movingWindowAverage'));
     expect(screen.getByRole('complementary', { name: 'Grafieken' }).inert).toBe(false);
-    expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Grafieken' })).toBeTruthy();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Voortschrijdend gemiddelde' })).toBeTruthy();
   });
 
   it('follows the system; its switch shows where it goes and holds for the session only (DEC-UX-172)', async () => {
@@ -1711,9 +1788,9 @@ describe('the page of a Resource', () => {
     await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
     const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
     await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
-    // A period lies on its partition by default, and needs a start, an end or both.
+    // A period is a from and a to, with no field of its own (DEC-UX-178); it needs a start, an end or both.
     await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
-    expect((form.getByRole('combobox', { name: 'Op het veld' }) as HTMLSelectElement).value).toBe('week_start');
+    expect(form.queryByRole('combobox', { name: 'Op het veld' })).toBeNull();
     expect(form.getByRole('status').textContent).toBe('Een periode heeft een begin, een einde of beide.');
     expect((form.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(form.getByLabelText('Tot'), { target: { value: '2024-02-29' } });
@@ -1733,11 +1810,12 @@ describe('the page of a Resource', () => {
     await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
     await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
     await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
-    const scope = { period: { field: 'week_start', from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    const scope = { period: { from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before March 2024.', scope } }));
     // On its line, where it holds as chips.
     const line = (await main.findByText('No partner leads before March 2024.')).closest('li')!;
-    expect(line.textContent).toContain('Periode tot 29 feb 2024 op week_start');
+    expect(line.textContent).toContain('Periode tot 29 feb 2024');
+    expect(line.textContent).not.toContain('week_start');
     expect(line.textContent).toContain('Velden lead_source');
     expect(line.textContent).toContain('Rijen lead_source is partner');
     // Changing it keeps its scope, and can take a kind away.
@@ -1751,12 +1829,14 @@ describe('the page of a Resource', () => {
     // In the Summary, as a line under its text.
     await fireEvent.click(main.getByRole('tab', { name: /^Samenvatting/ }));
     const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
-    expect((await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent).toContain('tot 29 feb 2024 op week_start');
+    const inSummary = (await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent;
+    expect(inSummary).toContain('tot 29 feb 2024');
+    expect(inSummary).not.toContain('week_start');
     // On the field it names, under Columns, with the way back to it.
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     const marker = main.getByRole('button', { name: 'Known Gap' });
     expect(marker.closest('tr')?.textContent).toContain('lead_source');
-    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 op week_start · velden lead_source)');
+    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 · velden lead_source)');
     await fireEvent.click(marker);
     expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
@@ -2875,6 +2955,37 @@ describe('Messages', () => {
     expect(await main.findByText('Yes, next week.')).toBeTruthy();
   });
 
+  it('lets whoever may close it close a Question with a line why, shows it closed, and reopens it (FR-CV-16, DEC-UX-179)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: true }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Sluiten/ }));
+    // Its writer hears it; the line why is not needed.
+    expect(main.getByText('Ruth Aerts krijgt een melding dat je het sloot. Ieder van jullie kan het heropenen.')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Deze Question sluiten' }), { target: { value: 'Published last week.' } });
+    const close = main.getAllByRole('button', { name: /Sluiten/ }).at(-1)!;
+    expect((close as HTMLButtonElement).disabled).toBe(false);
+    await fireEvent.click(close);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/close', body: { text: 'Published last week.' } }));
+    // Closed: who closed it and why, in the conversation, and Reopen in place of Close.
+    expect(await main.findByText('Published last week.')).toBeTruthy();
+    expect(main.getAllByText('Gesloten').length).toBeGreaterThan(0);
+    expect(main.queryByRole('button', { name: /^Sluiten$/ })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
+    expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {
+    serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: false }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Sluiten/ })).toBeNull();
+  });
+
   it('says there is nothing to catch up on when nothing is unread, and only then (DEC-UX-136)', async () => {
     serve({ groups: ['g1'], conversations: [DESCRIBED] });
     open('/messages');
@@ -2955,6 +3066,93 @@ describe('Messages', () => {
     expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
     // The page stays behind it, usable.
     expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+  });
+});
+
+describe('Charts, the gallery of semgraph', () => {
+  it('opens on its first chart, with the charts semgraph offers in the panel by the question they answer (FR-CH-06, DEC-UX-182)', async () => {
+    const calls = serve();
+    open('/charts');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    expect(await within(main).findByRole('heading', { level: 1, name: 'Voortschrijdend gemiddelde' })).toBeTruthy();
+    expect(location.pathname).toBe('/charts/movingWindowAverage');
+    expect(document.title).toBe('Data Hub — Voortschrijdend gemiddelde');
+    // The panel: one line on the charts, then the groups of the design with what semgraph offers in each, in their order.
+    const panel = screen.getByRole('complementary', { name: 'Grafieken' });
+    expect(within(panel).getByText('De grafieken die semgraph tekent, elk voor één soort vraag, en niets wat zou misleiden.')).toBeTruthy();
+    const index = await within(panel).findByRole('navigation', { name: 'Grafieken' });
+    expect([...index.children].map((child) => child.textContent?.trim())).toEqual([
+      'In de tijd',
+      'Voortschrijdend gemiddelde',
+      'Vergelijken',
+      'Vergelijking met de vorige periode',
+      'Nu en het doel',
+      'KPI-tegel',
+      'Spreiding',
+      'Verdeling',
+    ]);
+    expect(within(index).getByRole('link', { name: 'Voortschrijdend gemiddelde' }).getAttribute('aria-current')).toBe('page');
+    expect(within(index).getByRole('link', { name: 'KPI-tegel' }).getAttribute('href')).toBe('/charts/kpiTile');
+    // The head: the group, the name and id, and the question it answers.
+    expect(within(main).getByText('Grafieken · In de tijd')).toBeTruthy();
+    expect(within(main).getByText('movingWindowAverage')).toBeTruthy();
+    expect(within(main).getByText('Hoe evolueert dit, zonder dagelijkse ruis?')).toBeTruthy();
+    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, as a picture.
+    const examples = within(main).getByRole('tablist', { name: 'Voorbeelden' });
+    expect(within(examples).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Basic', 'Long horizon', 'Window 10', 'Unique without aggregation']);
+    expect(within(examples).getByRole('tab', { name: 'Basic' }).getAttribute('aria-selected')).toBe('true');
+    const picture = await within(main).findByRole('img', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
+    expect(picture.getAttribute('src')).toMatch(/^data:image\/svg\+xml;charset=utf-8,.*basic/);
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=light');
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs?locale=nl-BE');
+    // Beside it: the questions it is for, what to use instead, what it needs and where a User meets it.
+    expect(within(main).getByText('Hoe evolueerden de kredietleads de voorbije vier weken?')).toBeTruthy();
+    expect(within(main).getByRole('link', { name: 'Vergelijking met de vorige periode' }).getAttribute('href')).toBe('/charts/periodComparison');
+    expect(within(main).getByText(/^Het totaal tot nu:/).textContent?.replace(/\s+/g, ' ').trim()).toBe('Het totaal tot nu: cumulative (nog niet in semgraph)');
+    expect(within(main).getByText('De blokken, berekend in BigQuery, minstens 28; semgraph tekent, het rekent nooit over rijen.')).toBeTruthy();
+    expect(within(main).getByText('"semgraph": "movingWindowAverage"')).toBeTruthy();
+  });
+
+  it('says how semgraph drew an example: with a warning, with a caution, or why it refuses it', async () => {
+    serve();
+    open('/charts/movingWindowAverage');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    expect(within(main).queryByText('Getekend, met een waarschuwing')).toBeNull();
+    await fireEvent.click(within(main).getByRole('tab', { name: 'Window 10' }));
+    expect(await within(main).findByText('Getekend, met een waarschuwing')).toBeTruthy();
+    await fireEvent.click(within(main).getByRole('tab', { name: 'Unique without aggregation' }));
+    expect(await within(main).findByText('semgraph weigert deze')).toBeTruthy();
+    expect(within(main).getByText('uniqueAggregationRequired')).toBeTruthy();
+    expect(within(main).getByText('Geweigerd')).toBeTruthy();
+    expect(within(main).queryByRole('img', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
+    // Another chart, from the panel: its first example, drawn with a caution in red; the one only in a size is not listed.
+    await fireEvent.click(screen.getByRole('link', { name: 'KPI-tegel' }));
+    expect(await within(main).findByText('Getekend, met een kanttekening in het rood')).toBeTruthy();
+    expect(within(main).getByText('Grafieken · Nu en het doel')).toBeTruthy();
+    expect(within(main).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Few leads']);
+    expect(location.pathname).toBe('/charts/kpiTile');
+  });
+
+  it('asks semgraph for the theme of the page, and its words in the language of the User', async () => {
+    const calls = serve({ settings: { language: 'en' } });
+    open('/charts/movingWindowAverage');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    await within(main).findByRole('img', { name: /^Voortschrijdend gemiddelde:/ });
+    expect(within(main).getByText('Charts · Over time')).toBeTruthy();
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage?locale=en');
+    await fireEvent.click(screen.getByRole('button', { name: 'Switch to dark' }));
+    await vi.waitFor(() => expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=dark'));
+  });
+
+  it('shows a chart semgraph does not offer as a page there is nothing at', async () => {
+    serve();
+    open('/charts/nothing');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
   });
 });
 

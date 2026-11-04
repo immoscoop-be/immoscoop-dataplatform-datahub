@@ -4,18 +4,16 @@ import { z } from 'zod';
  * The scope of a Known Gap (FR-RC-24, DEC-RC-20): where it holds, of up to three kinds, each optional and combined as
  * they apply. A gap without one is free text, as every gap before.
  *
- * - `period`: the time it holds for, from and to, inclusive, on a date field of the Resource; one side may be open
+ * - `period`: the time it holds for, from and to, inclusive, as days; one side may be open. It names no field of its
+ *   own: which fields a gap concerns, `fields` says (DEC-UX-178)
  * - `fields`: the fields that are empty or unreliable where it holds
  * - `rows`: the rows it holds for: a field with one of some values, typed as they are in the data, or empty
  */
 export interface GapScope {
-  period?: { field: string; from: string | null; to: string | null };
+  period?: { from: string | null; to: string | null };
   fields?: string[];
   rows?: { field: string; is: 'oneOf'; values: string[] } | { field: string; is: 'empty' };
 }
-
-/** The types of a field a period may lie on (FR-RC-24). */
-export const DATE_TYPES: readonly string[] = ['DATE', 'DATETIME', 'TIMESTAMP'];
 
 const field = z.string().trim().min(1).max(300);
 const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'A day is written as YYYY-MM-DD.');
@@ -24,7 +22,7 @@ const day = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'A day is written as YYYY-MM
 export const gapScopeSchema: z.ZodType<GapScope> = z
   .object({
     period: z
-      .object({ field, from: day.nullable(), to: day.nullable() })
+      .object({ from: day.nullable(), to: day.nullable() })
       .strict()
       .refine((period) => period.from !== null || period.to !== null, 'A period has a start, an end, or both.')
       .refine((period) => period.from === null || period.to === null || period.from <= period.to, 'A period starts before it ends.')
@@ -44,21 +42,21 @@ export function hasScope(scope: GapScope | null | undefined): scope is GapScope 
   return Boolean(scope && (scope.period || (scope.fields && scope.fields.length > 0) || scope.rows));
 }
 
-/** Every field a scope names, once each, in the order of period, fields and rows. */
+/** Every field a scope names, once each, in the order of fields and rows. */
 export function fieldsOf(scope: GapScope | null | undefined): string[] {
   if (!scope) return [];
-  return [...new Set([...(scope.period ? [scope.period.field] : []), ...(scope.fields ?? []), ...(scope.rows ? [scope.rows.field] : [])])];
+  return [...new Set([...(scope.fields ?? []), ...(scope.rows ? [scope.rows.field] : [])])];
 }
 
 /**
  * The scope as Claude reads it, as data after the gap (FR-RC-25), such as
- * `[period: week_start until 2025-02-28; rows: lead_source = partner]`.
+ * `[period: until 2025-02-28; rows: lead_source = partner]`.
  */
 export function scopeText(scope: GapScope): string {
   const parts: string[] = [];
   if (scope.period) {
-    const { field: on, from, to } = scope.period;
-    parts.push(`period: ${on} ${from && to ? `from ${from} until ${to}` : from ? `from ${from}` : `until ${to}`}`);
+    const { from, to } = scope.period;
+    parts.push(`period: ${from && to ? `from ${from} until ${to}` : from ? `from ${from}` : `until ${to}`}`);
   }
   if (scope.fields && scope.fields.length > 0) {
     parts.push(`fields: ${scope.fields.join(', ')}`);

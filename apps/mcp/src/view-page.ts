@@ -108,6 +108,73 @@ button:disabled { opacity: .4; cursor: default; }
 pre { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-solid); font: 12px/1.6 var(--font-mono); white-space: pre-wrap; }
 summary { cursor: pointer; font-size: var(--text-meta); color: var(--text-muted); }
 .error { color: var(--signal-urgent); font-size: var(--text-small); }
+/* The Summary of a Resource, as the Overview of Data Hub shows it (FR-CL-26) */
+.legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: var(--text-meta); color: var(--text-muted); }
+.legend .weight { margin-left: 8px; }
+.legend .weight:first-child { margin-left: 0; }
+.weight { font-size: 10px; font-weight: var(--weight-medium); padding: 2px 8px; border-radius: var(--radius-pill); white-space: nowrap; }
+.weight.w1 { color: var(--surface-solid); background: var(--text-primary); }
+.weight.w2 { color: var(--text-primary); background: var(--tint-active); }
+.weight.w3 { color: var(--text-primary); outline: 1px solid var(--text-muted); outline-offset: -1px; }
+.weight.w4 { color: var(--text-muted); background: var(--tint-hover); }
+.sum { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sum-part { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 12px; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.sum-side { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.sum-n { font-size: 18px; font-weight: var(--weight-medium); line-height: 1; }
+.sum-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+.sum-title h3 { flex: 1; margin: 0; font-size: var(--text-body); font-weight: var(--weight-medium); }
+.sum-main { font-size: var(--text-small); color: var(--text-secondary); line-height: 1.6; min-width: 0; overflow-wrap: anywhere; }
+.sum-main p { margin: 0 0 6px; }
+.sum-main p:last-child { margin-bottom: 0; }
+.sum-main ul { margin: 0 0 6px; padding-left: 18px; }
+.sum-main ul ul { margin: 2px 0 0; }
+.sum-main .md { color: var(--text-primary); }
+.sum-main .md strong { font-weight: var(--weight-medium); }
+.sum-main code { font: 11px var(--font-mono); }
+.sum-main .origin { margin: 0 6px 0 0; background: var(--surface-solid); }
+.link { font: inherit; background: none; border: 0; padding: 0; color: var(--text-secondary); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+/* Fold: every MCP App folds to its head with the button at its top right (FR-CL-27, DEC-UX-181) */
+#root > .head, #root > .head-row { position: relative; }
+.fold { flex: none; width: 28px; height: 28px; margin: -4px -6px 0 0; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: var(--radius-sm); background: none; color: var(--text-muted); cursor: pointer; }
+.fold:hover { background: var(--surface-sub); color: var(--text-primary); }
+.fold svg { width: 14px; height: 14px; transition: transform .2s ease; }
+#root.folded .fold svg { transform: rotate(180deg); }
+#root.folded > :not(.head) { display: none; }
+/* On a phone (FR-CL-27, DEC-UX-180): the frame takes the width of the screen, 360 px or less */
+#root, #root > * { min-width: 0; }
+.mono { overflow-wrap: anywhere; }
+@media (max-width: 520px) {
+  #root { padding: 12px; gap: 10px; }
+  .head { flex-wrap: wrap; }
+  .head > div { flex: 1 1 180px; }
+  .fold { width: 44px; height: 44px; margin: -10px -10px 0 0; }
+  .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+  .tab { min-height: 44px; }
+  .sum-part { grid-template-columns: minmax(0, 1fr); gap: 6px; padding: 12px; }
+  .sum-side { flex-direction: row; align-items: center; gap: 8px; }
+  .sum-n { font-size: 16px; }
+  .legend .weight { margin-left: 0; }
+  dl { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  dt { margin-top: 6px; }
+  dt:first-child { margin-top: 0; }
+  table.stack thead { display: none; }
+  table.stack, table.stack tbody, table.stack tr, table.stack td { display: block; }
+  table.stack tr { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 10px; align-items: baseline; padding: 10px 2px; border-bottom: 1px solid var(--tint-hover); }
+  table.stack td { grid-column: 1 / -1; padding: 2px 0; border: 0; }
+  table.stack td.name { grid-column: 1; font-size: var(--text-body); }
+  table.stack td.type { grid-column: 2; }
+  table.stack td[data-label]::before { content: attr(data-label); display: block; font-size: var(--text-meta); color: var(--text-muted); margin-top: 6px; }
+  .params { flex-direction: column; align-items: stretch; }
+  .params label { display: grid; grid-template-columns: auto minmax(0, 1fr); }
+  .params select, .params input { min-height: 40px; }
+  .preflight { margin-left: 0; align-self: flex-start; }
+  .pager { margin-left: 0; width: 100%; justify-content: space-between; }
+  .pager button { min-width: 40px; min-height: 40px; }
+  .declare { flex-direction: column; align-items: stretch; padding: 12px; }
+  button.primary, button.quiet { width: 100%; min-height: 44px; }
+  .foot { flex-direction: column; align-items: stretch; }
+  .foot a { margin-left: 0; text-align: center; padding: 12px; border-radius: var(--radius-pill); outline: 1px solid var(--tint-active); }
+}
 </style>
 </head>
 <body>
@@ -118,7 +185,8 @@ const { App } = McpApps;
 const app = new App({ name: 'Data Hub', version: '1' }, { availableDisplayModes: ['inline', 'fullscreen'] });
 const root = document.getElementById('root');
 let view = null;
-let tab = 'overview';
+let tab = 'summary';
+let folded = false;
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const day = (value) => (value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
@@ -130,8 +198,46 @@ const foot = (note, url, label = 'Open in Data Hub') => '<div class="foot"><span
 // The Collection of a card, with its icon: a drawing of Phosphor that mcp read itself, never text of a User (DEC-UX-164).
 const icon = (svg) => (typeof svg === 'string' && svg.startsWith('<svg') ? '<span class="ci" aria-hidden="true">' + svg + '</span>' : '');
 const of = (collection) => (collection ? ' · ' + icon(collection.icon) + esc(collection.name) : '');
+// The button at the top right of every MCP App: it folds the frame to its head, and unfolds it again (DEC-UX-181).
+const FOLD = '<button class="fold" data-fold aria-label="Fold" title="Fold" aria-expanded="true"><svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M213.66,165.66a8,8,0,0,1-11.32,0L128,91.31,53.66,165.66a8,8,0,0,1-11.32-11.32l80-80a8,8,0,0,1,11.32,0l80,80A8,8,0,0,1,213.66,165.66Z"/></svg></button>';
 const head = (kind, title, sub, right = '', collection = null) =>
-  '<div class="head"><div><span class="meta">' + esc(kind) + of(collection) + '</span><div class="title">' + esc(title) + '</div>' + (sub ? '<span class="meta">' + esc(sub) + '</span>' : '') + '</div>' + right + '</div>';
+  '<div class="head"><div><span class="meta">' + esc(kind) + of(collection) + '</span><div class="title">' + esc(title) + '</div>' + (sub ? '<span class="meta">' + esc(sub) + '</span>' : '') + '</div>' + right + FOLD + '</div>';
+const setFold = () => {
+  root.classList.toggle('folded', folded);
+  const button = root.querySelector('[data-fold]');
+  if (button) { button.setAttribute('aria-expanded', String(!folded)); button.setAttribute('aria-label', folded ? 'Unfold' : 'Fold'); button.title = folded ? 'Unfold' : 'Fold'; }
+};
+// A little Markdown, as the Owner writes it: paragraphs, lists, bold, italic and code; everything escaped first.
+const inline = (text) => esc(text).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\*([^*]+)\*/g, '<em>$1</em>').replace(/\`([^\`]+)\`/g, '<code>$1</code>');
+function markdown(text) {
+  const out = [];
+  let list = null;
+  for (const raw of String(text ?? '').split('\n')) {
+    const line = raw.trim();
+    const bullet = /^[-*] +(.*)$/.exec(line);
+    if (bullet) { list = list ?? []; list.push('<li>' + inline(bullet[1]) + '</li>'); continue; }
+    if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; }
+    if (line) out.push('<p>' + inline(line.replace(/^#+ +/, '')) + '</p>');
+  }
+  if (list) out.push('<ul>' + list.join('') + '</ul>');
+  return '<div class="md">' + out.join('') + '</div>';
+}
+/** The lines of a part of the Summary: labels as chips, Markdown rendered, items and their replies as lists. */
+function partLines(lines) {
+  const out = [];
+  let items = null;
+  const close = () => { if (items) { out.push('<ul>' + items.map((item) => '<li>' + item.text + (item.replies.length ? '<ul>' + item.replies.map((reply) => '<li>' + reply + '</li>').join('') + '</ul>' : '') + '</li>').join('') + '</ul>'); items = null; } };
+  for (const line of lines ?? []) {
+    if (line.kind === 'item') { items = items ?? []; items.push({ text: inline(line.text), replies: [] }); continue; }
+    if (line.kind === 'reply' && items?.length) { items[items.length - 1].replies.push(inline(line.text)); continue; }
+    close();
+    if (line.kind === 'label') { if (line.shown) out.push('<span class="origin">' + esc(line.shown) + '</span>'); }
+    else if (line.kind === 'markdown') out.push(markdown(line.text));
+    else if (line.text) out.push('<p>' + inline(line.text) + '</p>');
+  }
+  close();
+  return out.join('');
+}
 
 /** The rows of a run: 100 a page, read from the same run (FR-SR-51). */
 function grid(page, ref) {
@@ -160,7 +266,7 @@ function requestPanel(reads, request) {
     '<label class="meta">A word for the Data Team (optional)<textarea id="word" rows="2"></textarea></label><button class="primary" data-act="request" style="margin-top:8px">Send to the Data Team</button></div>';
 }
 
-function renderResource(r) {
+function renderResource(r, parts) {
   const card = r.card ?? {};
   const details = r.details ?? {};
   const kind = r.collection ? 'Resource' : 'Resource · without a Collection';
@@ -168,24 +274,18 @@ function renderResource(r) {
     (r.collection ? '<span class="status">Owner: ' + esc(r.collection.owner) + '</span>' : '') + (r.deprecated ? '<span class="status warn">Deprecated</span>' : '') + (r.withdrawn ? '<span class="status warn">Withdrawn</span>' : '') + '</div>';
   const dep = r.deprecation ? '<div class="alert"><span><b>Deprecated</b> by ' + esc(r.deprecation.by) + ' on ' + esc(day(r.deprecation.at)) + ': ' + esc(r.deprecation.reason) + (r.deprecation.insteadOf ? ' Use ' + esc(r.deprecation.insteadOf.displayName) + ' instead.' : '') + '</span></div>' : '';
   const changes = (r.changes ?? []).length ? '<div class="alert"><span><b>Changed since it was confirmed:</b> ' + r.changes.map((c) => esc(c.field) + ' ' + esc(c.change)).join(', ') + '. Its Level stays.</span></div>' : '';
-  const partition = details.partition ? 'by <span class="mono">' + esc(details.partition.field) + '</span>' + (details.partition.unit ? ', a partition per ' + esc(details.partition.unit) : '') + (r.storage?.partitions ? ' · ' + esc(r.storage.partitions) + ' partitions' : '') : 'not partitioned';
-  const overview = '<div class="grid">' +
-    '<div class="tile wide"><div class="label">Description</div><div class="pair">' +
-    (card.businessDescription ? '<div><span class="label">Business Description</span><span class="origin">From the Owner</span><p>' + esc(card.businessDescription) + '</p></div>' : '') +
-    '<div><span class="label">Description</span><span class="origin">From dbt</span><p>' + (esc(r.description) || '<span class="meta">None yet</span>') + '</p></div></div>' +
-    ((details.grain ?? []).length ? '<div style="margin-top:10px">' + (details.modelType ? '<span class="chip">model type: ' + esc(details.modelType) + '</span>' : '') + '<span class="chip">grain: ' + details.grain.map(esc).join(' × ') + '</span>' + (details.grainSentence ? '<span class="meta">' + esc(details.grainSentence) + '</span>' : '') + '</div>' : '') + '</div>' +
-    (card.intendedUse || card.pitfalls ? '<div class="tile"><div class="label">Known behaviour</div>' + (card.intendedUse ? '<b>Intended use</b><p style="margin:2px 0 8px">' + esc(card.intendedUse) + '</p>' : '') + (card.pitfalls ? '<b>Pitfalls</b><p style="margin:2px 0 0">' + esc(card.pitfalls) + '</p>' : '') + '</div>' : '') +
-    ((card.knownGaps ?? []).length ? '<div class="tile"><div class="label">Known gaps</div>' + card.knownGaps.map((gap) => '<p style="margin:0 0 6px">' + esc(typeof gap === 'string' ? gap : gap.text) + '</p>').join('') + '</div>' : '') +
-    '<div class="tile"><div class="label">Publication</div><dl>' + (r.publication ? '<dt>Published</dt><dd>' + esc(day(r.publication.publishedAt)) + ' by ' + esc(r.publication.publishedBy) + '</dd><dt>Confirmed</dt><dd>' + esc(day(r.publication.confirmedAt)) + ' by ' + esc(r.publication.confirmedBy) + '</dd>' : '<dt>Published</dt><dd>Not yet</dd>') + (card.reliableSince ? '<dt>Reliable since</dt><dd>' + esc(day(card.reliableSince)) + '</dd>' : '') + '</dl></div>' +
-    ((card.keyFields ?? []).length || (card.parameters ?? []).length ? '<div class="tile"><div class="label">Key fields</div>' + (card.keyFields ?? []).map((f) => '<span class="chip">' + esc(f) + '</span>').join('') + '<div class="label" style="margin-top:8px">Parameters</div>' + (card.parameters ?? []).map((f) => '<span class="chip">' + esc(f) + '</span>').join('') + '</div>' : '') +
-    '<div class="tile wide"><div class="label">Partitions and clustering</div><dl><dt>Partitioned</dt><dd>' + partition + '</dd>' + ((details.clusterBy ?? []).length ? '<dt>Clustered</dt><dd>by ' + details.clusterBy.map((f) => '<span class="mono">' + esc(f) + '</span>').join(', then ') + '</dd>' : '') + (r.storage?.size ? '<dt>Size</dt><dd>' + esc(r.storage.size) + '</dd>' : '') + '</dl></div>' +
-    '</div>';
+  const weights = [...new Map((parts ?? []).map((part) => [part.rank, part.weightName])).entries()].sort((a, b) => a[0] - b[0]);
+  const summary = (parts ?? []).length
+    ? '<div class="legend">' + weights.map(([rank, name]) => '<span class="weight w' + rank + '">' + esc(name) + '</span>').join('') + '</div>' +
+      '<ol class="sum">' + parts.map((part) => '<li class="sum-part"><div class="sum-side"><span class="sum-n">' + (part.number ?? '!') + '</span><span class="weight w' + part.rank + '">' + esc(part.weightName) + '</span></div>' +
+        '<div class="sum-main"><div class="sum-title"><h3>' + esc(part.title) + '</h3>' + (part.part === 'fields' ? '<button class="link" data-tab="columns">Columns</button>' : '') + '</div>' + partLines(part.lines) + '</div></li>').join('') + '</ol>'
+    : '<p class="meta">Data Hub has nothing to summarise about it yet.</p>';
   const role = (name) => [details.partition?.field === name ? '<span class="pill">Partition</span>' : '', (details.clusterBy ?? []).includes(name) ? '<span class="pill">Cluster ' + ((details.clusterBy ?? []).indexOf(name) + 1) + '</span>' : '', (card.parameters ?? []).includes(name) ? '<span class="pill">Parameter</span>' : ''].join('');
-  const columns = '<div class="scroll"><table><thead><tr><th>Column</th><th>Type</th><th>Business Description</th><th>Description, from dbt</th><th></th></tr></thead><tbody>' +
-    (r.fields ?? []).map((f) => '<tr><td class="mono">' + esc(f.name) + '</td><td class="meta">' + esc(f.dataType) + '</td><td>' + (esc(f.businessDescription) || '–') + '</td><td>' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table></div>';
+  const columns = '<table class="stack"><thead><tr><th>Column</th><th>Type</th><th>Business Description</th><th>Description, from dbt</th><th></th></tr></thead><tbody>' +
+    (r.fields ?? []).map((f) => '<tr><td class="mono name">' + esc(f.name) + '</td><td class="meta type">' + esc(f.dataType) + '</td><td data-label="Business Description, from the Owner">' + (esc(f.businessDescription) || '–') + '</td><td data-label="Description, from dbt">' + (esc(f.description) || '–') + '</td><td>' + role(f.name) + '</td></tr>').join('') + '</tbody></table>';
   root.innerHTML = head(kind, r.displayName, r.key, '', r.collection) + state + dep + changes +
-    '<div class="tabs"><button class="tab' + (tab === 'overview' ? ' on' : '') + '" data-tab="overview">Overview</button><button class="tab' + (tab === 'columns' ? ' on' : '') + '" data-tab="columns">Columns</button></div>' +
-    (tab === 'overview' ? overview : columns) + foot('As you see it in Data Hub', r.page);
+    '<div class="tabs"><button class="tab' + (tab === 'columns' ? '' : ' on') + '" data-tab="summary">Summary</button><button class="tab' + (tab === 'columns' ? ' on' : '') + '" data-tab="columns">Columns</button></div>' +
+    (tab === 'columns' ? columns : summary) + foot('As you see it in Data Hub', r.page);
 }
 
 function renderPreview(v) {
@@ -241,11 +341,12 @@ function renderQuery(v) {
 
 function render() {
   if (!view) return;
-  if (view.view === 'resource') renderResource(view.resource);
+  if (view.view === 'resource') renderResource(view.resource, view.parts);
   else if (view.view === 'preview') renderPreview(view);
   else if (view.view === 'publish') renderPublish(view);
   else if (view.view === 'query') renderQuery(view);
   else if (view.view === 'sent') root.innerHTML = '<div>Sent to the Data Team. Their answer comes in your Message Centre.</div>';
+  setFold();
 }
 
 /** Shows what a tool answered, and tells Claude what the User did, without a turn of its own. */
@@ -282,8 +383,9 @@ const previewArgs = () => {
 const queryArgs = () => ({ id: view.query.id, sql: view.sql, parameters: view.parameters });
 
 root.addEventListener('click', (event) => {
-  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page]');
+  const target = event.target.closest('[data-open],[data-tab],[data-act],[data-page],[data-fold]');
   if (!target || target.disabled) return;
+  if (target.dataset.fold !== undefined) { folded = !folded; setFold(); return; }
   if (target.dataset.open) { event.preventDefault(); app.openLink({ url: target.dataset.open }); return; }
   if (target.dataset.tab) { tab = target.dataset.tab; render(); return; }
   if (target.dataset.page) {

@@ -30,7 +30,7 @@ describe('API', () => {
   it('answers pages of every site, without credentials, as it is open to everyone', async () => {
     const response = await app.inject({ url: '/semgraphs', headers: { origin: 'https://datahub-web.example' } });
     assert.equal(response.headers['access-control-allow-origin'], '*');
-    assert.match(String(response.headers['access-control-expose-headers']), /Semgraph-Deviations/);
+    assert.match(String(response.headers['access-control-expose-headers']), /Semgraph-Deviations, Semgraph-Cautions/);
     assert.equal(response.headers['access-control-allow-credentials'], undefined);
 
     const preflight = await app.inject({
@@ -77,6 +77,16 @@ describe('API', () => {
     assert.ok(body.examples.some((entry: { name: string }) => entry.name === 'basic'));
   });
 
+  it('names the theme or size an example sets, so a page can tell the examples that only show a mode or a size', async () => {
+    const examples = (await app.inject('/semgraphs/calendarAverage')).json().examples as { name: string; theme?: string; size?: string }[];
+    const byName = (name: string) => examples.find((entry) => entry.name === name);
+    assert.equal(byName('weeks-dark')?.theme, 'dark');
+    assert.equal(byName('weeks-card')?.size, 'card');
+    assert.deepEqual(Object.keys(byName('weeks') ?? {}), ['name', 'title', 'href']);
+    const listed = (await app.inject('/semgraphs')).json().semgraphs.find((semgraph: { id: string }) => semgraph.id === 'distribution');
+    assert.equal(listed.examples.find((entry: { name: string }) => entry.name === 'asking-price-xl').size, 'xl');
+  });
+
   it('GET /semgraphs/{id} for a planned semgraph says it is planned', async () => {
     const response = await app.inject('/semgraphs/funnel');
     assert.equal(response.statusCode, 404);
@@ -99,6 +109,29 @@ describe('API', () => {
     const response = await post('/render', await example('window-10'));
     assert.equal(response.statusCode, 200);
     assert.equal(response.headers['semgraph-deviations'], 'windowNotMultipleOf7');
+    assert.equal(response.headers['semgraph-cautions'], undefined);
+  });
+
+  it('names cautions in a header too, so a page that shows the chart can say so (TR-PF-34 of Data Hub)', async () => {
+    const response = await app.inject('/semgraphs/calendarAverage/examples/per-unit-few-observations');
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['semgraph-cautions'], 'fewObservations.mean');
+    assert.equal(response.headers['semgraph-deviations'], undefined);
+    assert.equal((await app.inject('/semgraphs/movingWindowAverage/examples/basic')).headers['semgraph-cautions'], undefined);
+  });
+
+  it('REQ-060: GET /semgraphs/{id}/icon is the icon as a picture, in currentColor', async () => {
+    const registry = await testRegistry();
+    const response = await app.inject('/semgraphs/distribution/icon');
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['content-type'], 'image/svg+xml; charset=utf-8');
+    assert.equal(response.headers['x-content-type-options'], 'nosniff');
+    assert.equal(response.headers['content-security-policy'], "default-src 'none'");
+    assert.equal(response.headers['access-control-allow-origin'], '*');
+    assert.equal(response.body, `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 44 44" fill="none">${registry.semgraphs.get('distribution')!.icon}</svg>`);
+    assert.match(response.body, /currentColor/);
+    assert.equal((await app.inject('/semgraphs/funnel/icon')).json().issues[0].code, 'plannedSemgraph');
+    assert.equal((await app.inject('/semgraphs/nothing/icon')).statusCode, 404);
   });
 
   it('POST /render refuses a misleading chart with 422 and an explanation', async () => {
@@ -243,7 +276,7 @@ describe('API', () => {
     const document = response.json();
     assert.equal(document.openapi, '3.1.0');
     assert.equal(document.info.version, registry.version);
-    assert.deepEqual(Object.keys(document.paths).sort(), ['/gallery', '/healthz', '/openapi.json', '/render', '/semgraphs', '/semgraphs/{id}', '/semgraphs/{id}/examples/{name}', '/validate']);
+    assert.deepEqual(Object.keys(document.paths).sort(), ['/gallery', '/healthz', '/openapi.json', '/render', '/semgraphs', '/semgraphs/{id}', '/semgraphs/{id}/examples/{name}', '/semgraphs/{id}/icon', '/validate']);
     // One source: the request of a semgraph is its own contract, its examples are its own files.
     const { schemas, examples } = document.components;
     for (const [id, loaded] of registry.semgraphs) {

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { DATE_TYPES, fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
+  import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
@@ -8,15 +8,14 @@
 
   /**
    * Adding or changing a Known Gap (FR-RC-24, DEC-UX-177): its why in plain text, then what narrows it down, each
-   * optional and combined: a period, from and to, on a date field, its partition by default; fields, empty or
-   * unreliable; and rows, a field with one of some values, typed, or empty. Each kind is a block of its own, taken
+   * optional and combined: a period, from and to, with no field of its own, as Fields says which it concerns
+   * (DEC-UX-178); fields, empty or unreliable; and rows, a field with one of some values, typed, or empty. Each kind is a block of its own, taken
    * away with its ×. A field the gap named that left the Resource since stays to choose, marked so (EC-RC-01).
    */
   let {
     text: given = '',
     scope: before = null,
     fields,
-    partition,
     busy,
     label,
     saveLabel,
@@ -26,8 +25,6 @@
     text?: string;
     scope?: GapScope | null;
     fields: readonly Field[];
-    /** The partition field, for a period by default. */
-    partition: string | null;
     busy: boolean;
     /** What the form is called, such as "A new Known Gap". */
     label: string;
@@ -41,7 +38,7 @@
   // svelte-ignore state_referenced_locally
   let text = $state(given);
   // svelte-ignore state_referenced_locally
-  let period = $state(before?.period ? { ...before.period, from: before.period.from ?? '', to: before.period.to ?? '' } : null);
+  let period = $state(before?.period ? { from: before.period.from ?? '', to: before.period.to ?? '' } : null);
   // svelte-ignore state_referenced_locally
   let chosen: string[] | null = $state(before?.fields ? [...before.fields] : null);
   // svelte-ignore state_referenced_locally
@@ -53,14 +50,10 @@
   // svelte-ignore state_referenced_locally
   const gone = fieldsOf(before).filter((name) => !fields.some((field) => field.name === name));
   const names = $derived([...fields.map((field) => field.name), ...gone]);
-  const dates = $derived([
-    ...fields.filter((field) => DATE_TYPES.includes((field.dataType ?? '').toUpperCase())).map((field) => field.name),
-    ...(before?.period && !known.has(before.period.field) ? [before.period.field] : []),
-  ]);
-  const nameOf = (name: string) => (known.has(name) ? (name === partition ? t('gaps.partition', { name }) : name) : t('gaps.gone', { name }));
+  const nameOf = (name: string) => (known.has(name) ? name : t('gaps.gone', { name }));
 
   function addPeriod() {
-    period = { field: partition && dates.includes(partition) ? partition : (dates[0] ?? ''), from: '', to: '' };
+    period = { from: '', to: '' };
   }
   function addRows() {
     rows = { field: names[0] ?? '', is: 'oneOf', values: [] };
@@ -76,7 +69,7 @@
   /** The scope as it would be saved, or why it cannot be yet. */
   const scope = $derived.by((): GapScope | null => {
     const made: GapScope = {};
-    if (period) made.period = { field: period.field, from: period.from || null, to: period.to || null };
+    if (period) made.period = { from: period.from || null, to: period.to || null };
     if (chosen && chosen.length > 0) made.fields = [...chosen];
     if (rows) made.rows = rows.is === 'empty' ? { field: rows.field, is: 'empty' } : { field: rows.field, is: 'oneOf', values: [...rows.values] };
     return hasScope(made) ? made : null;
@@ -104,7 +97,7 @@
   </label>
   <div class="add">
     <span class="meta">{t('gaps.narrow')}</span>
-    <Button variant="outline" disabled={period !== null || dates.length === 0} title={dates.length === 0 ? t('gaps.noDates') : undefined} onclick={addPeriod}><Icon name="calendar-blank" />{t('gaps.period')}</Button>
+    <Button variant="outline" disabled={period !== null} onclick={addPeriod}><Icon name="calendar-blank" />{t('gaps.period')}</Button>
     <Button variant="outline" disabled={chosen !== null} onclick={() => (chosen = [])}><Icon name="columns" />{t('gaps.fields')}</Button>
     <Button variant="outline" disabled={rows !== null} onclick={addRows}><Icon name="rows" />{t('gaps.rows')}</Button>
   </div>
@@ -114,7 +107,6 @@
       <div class="grid">
         <label class="field"><span>{t('gaps.from')}</span><input type="date" bind:value={period.from} /></label>
         <label class="field"><span>{t('gaps.to')}</span><input type="date" bind:value={period.to} /></label>
-        <label class="field"><span>{t('gaps.on.field')}</span><select bind:value={period.field}>{#each dates as name (name)}<option value={name}>{nameOf(name)}</option>{/each}</select></label>
       </div>
     </section>
   {/if}

@@ -33,6 +33,10 @@ export type WrittenOn = keyof typeof WRITTEN_ON;
 
 const REPLY = 'MSG-CNV-04';
 const DECISION = 'MSG-CNV-05';
+/** The closing of a Question or a Signal, under it in its conversation (FR-CV-16). */
+const CLOSING = 'MSG-CNV-07';
+/** What can be closed and reopened: a Question and a Signal (DEC-CV-13). */
+const CLOSABLE: readonly string[] = [WRITTEN.question, WRITTEN.signal];
 
 /** The Message Centre filters on these kinds and kinds of object (FR-CV-06). */
 export const FILTER_KINDS = ['question', 'remark', 'signal', 'request', 'dataHub'] as const;
@@ -86,9 +90,11 @@ export interface MessageView {
   replyCount: number;
   unread: boolean;
   mine: boolean;
+  /** Whether the viewer may close it, or reopen it once closed: its writer, the Owner Unit and the Data Team (FR-CV-16). */
+  mayClose: boolean;
 }
 
-/** A reply, or the decision on a Request, under the Message it answers. */
+/** A reply, the decision on a Request, or the closing of a Question or a Signal, under the Message it is about. */
 export interface ReplyView {
   id: string;
   type: string;
@@ -159,6 +165,13 @@ export interface Messages {
   /** A reply in a conversation of a Question, Remark or Signal; undefined when that is not one. */
   reply(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'no_replies'>;
   read(id: string, sight: Sight): Promise<boolean>;
+  /**
+   * Closes an open Question or Signal, by its writer, the Owner Unit of its object or the Data Team, with an optional
+   * line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
+   */
+  close(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_open'>;
+  /** Opens a closed Question or Signal again, by the same people; its closing stays in the conversation (FR-CV-16). */
+  reopen(id: string, sight: Sight): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_closed'>;
   /** The decision of the Data Team on a waiting Request: its reply, which ends it (FR-CV-08, MSG-CNV-05). */
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
@@ -348,7 +361,14 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       replyCount: Number(row.replyCount ?? 0),
       unread: row.unread ?? false,
       mine: row.writerId === sight.viewer.id,
+      mayClose: mayClose(row, sight),
     };
+  }
+
+  /** Whether the viewer may close or reopen a Question or a Signal: its writer, the Owner Unit and the Data Team (DEC-CV-13). */
+  function mayClose(row: Pick<Row, 'type' | 'writerId' | 'subjectKind' | 'subjectId'>, sight: Sight): boolean {
+    if (!CLOSABLE.includes(row.type)) return false;
+    return row.writerId === sight.viewer.id || standing(sight, row.subjectKind, row.subjectId) !== null;
   }
 
   const replyOf = (row: Row, sight: Sight): ReplyView => ({
@@ -565,6 +585,61 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       if (!row || !seesRow(sight, row)) return false;
       await markRead(db, row.id, sight.viewer.id);
       return true;
+    },
+
+    async close(id, sight, text) {
+      if (!UUID.test(id)) return 'not_found';
+      const viewer = sight.viewer;
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('messages').selectAll().where('id', '=', id).where('parentId', 'is', null).forUpdate().executeTakeFirst();
+        if (!row || !seesRow(sight, row)) return 'not_found' as const;
+        if (!CLOSABLE.includes(row.type)) return 'not_closable' as const;
+        if (!mayClose(row, sight)) return 'not_allowed' as const;
+        if (row.state !== 'open') return 'not_open' as const;
+        const as = standing(sight, row.subjectKind, row.subjectId);
+        const now = new Date();
+        await trx
+          .insertInto('messages')
+          .values({
+            type: CLOSING,
+            subjectKind: row.subjectKind,
+            subjectId: row.subjectId,
+            writerId: viewer.id,
+            params: { writer: viewer.name, ...(text ? { text } : {}), ...(as ? { as } : {}) },
+            state: null,
+            parentId: row.id,
+            lastWriterId: viewer.id,
+          })
+          .execute();
+        const updated = await trx
+          .updateTable('messages')
+          .set({ state: 'closed', lastAt: now, lastWriterId: viewer.id, updatedAt: now })
+          .where('id', '=', row.id)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await markRead(trx, row.id, viewer.id);
+        return (await conversations([updated], sight, trx))[0]!;
+      });
+    },
+
+    async reopen(id, sight) {
+      if (!UUID.test(id)) return 'not_found';
+      return db.transaction().execute(async (trx) => {
+        const row = await trx.selectFrom('messages').selectAll().where('id', '=', id).where('parentId', 'is', null).forUpdate().executeTakeFirst();
+        if (!row || !seesRow(sight, row)) return 'not_found' as const;
+        if (!CLOSABLE.includes(row.type)) return 'not_closable' as const;
+        if (!mayClose(row, sight)) return 'not_allowed' as const;
+        if (row.state !== 'closed') return 'not_closed' as const;
+        const now = new Date();
+        const updated = await trx
+          .updateTable('messages')
+          .set({ state: 'open', lastAt: now, lastWriterId: sight.viewer.id, updatedAt: now })
+          .where('id', '=', row.id)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await markRead(trx, row.id, sight.viewer.id);
+        return (await conversations([updated], sight, trx))[0]!;
+      });
     },
 
     async decide(id, outcome, text, decider, sight) {

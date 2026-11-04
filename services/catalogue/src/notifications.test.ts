@@ -229,6 +229,32 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
   });
 
+  it('tells the writer of a Question that someone else closed it, and nobody when they close it themselves (FR-CV-16, MSG-CNV-07)', async () => {
+    const lens = '3e4f5a6b-7c8d-4e9f-8a0b-2c3d4e5f6a7b';
+    await messages.keepLens(lens, { name: 'Leads per region', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
+    const question = await messages.write(await sightOf(karel), { kind: 'lens', id: lens }, 'question', 'Why is Limburg empty?');
+    await notifications.deliver();
+    mails = [];
+    slacked = [];
+
+    // Closed by An of its Owner Unit, with a line why: Karel hears it, by his own address.
+    const closed = await messages.close(question.id, await sightOf(an), 'Limburg comes in next week.');
+    expect(closed).toMatchObject({ state: 'closed' });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['karel@immoscoop.be', 'An Claes sloot het bericht over de lens Leads per region.']]);
+    expect(mails[0]?.text).toContain('“Limburg comes in next week.”');
+    expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+    mails = [];
+    slacked = [];
+
+    // Reopened, then closed by Karel himself, without a line: nobody hears it.
+    await messages.reopen(question.id, await sightOf(karel));
+    await messages.close(question.id, await sightOf(karel), '');
+    await notifications.deliver();
+    expect(mails).toEqual([]);
+    expect(slacked).toEqual([]);
+  });
+
   it('tries again what failed, later, without sending again what went out, and gives up after the last try', async () => {
     const lens = '3e4f5a6b-7c8d-4e9f-0a1b-2c3d4e5f6a7b';
     await messages.keepLens(lens, { name: 'Leads by agency', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });

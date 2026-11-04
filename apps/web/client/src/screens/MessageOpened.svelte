@@ -70,7 +70,27 @@
   );
 </script>
 
-<MessageThread {message} />
+<MessageThread
+  {message}
+  onclose={async (text) => {
+    try {
+      onchanged(await client.close(message.id, text));
+      return true;
+    } catch (error) {
+      console.error('The Message could not be closed', error);
+      return false;
+    }
+  }}
+  onreopen={async () => {
+    try {
+      onchanged(await client.reopen(message.id));
+      return true;
+    } catch (error) {
+      console.error('The Message could not be reopened', error);
+      return false;
+    }
+  }}
+/>
 {#if repliable}
   <MessageComposer
     label={t('messages.yourReply')}

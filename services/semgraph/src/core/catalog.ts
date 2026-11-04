@@ -60,10 +60,20 @@ export function unknownSemgraph(registry: Registry, id: string, t: Translator): 
   });
 }
 
-/** The examples of a semgraph: their name, their title as the chart shows it, and where to see them drawn. */
-export function exampleLinks({ id, examples }: LoadedSemgraph): { name: string; title: string; href: string }[] {
+/**
+ * The examples of a semgraph: their name, their title as the chart shows it, and where to see them drawn; and the
+ * theme or size an example sets, as the examples that show a mode or a size do (REQ-107), so that a page that draws
+ * every example in its own theme, such as Charts in Data Hub, can tell them apart.
+ */
+export function exampleLinks({ id, examples }: LoadedSemgraph): { name: string; title: string; href: string; theme?: string; size?: string }[] {
   return [...examples].map(([name, request]) => {
-    const title = (request as { title?: unknown }).title;
-    return { name, title: typeof title === 'string' ? title : name, href: `/semgraphs/${id}/examples/${name}` };
+    const { title, theme, size } = request as { title?: unknown; theme?: unknown; size?: unknown };
+    return {
+      name,
+      title: typeof title === 'string' ? title : name,
+      href: `/semgraphs/${id}/examples/${name}`,
+      ...(typeof theme === 'string' ? { theme } : {}),
+      ...(typeof size === 'string' ? { size } : {}),
+    };
   });
 }
