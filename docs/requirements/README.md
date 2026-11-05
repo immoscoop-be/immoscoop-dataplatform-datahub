@@ -21,7 +21,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 | `TR` | Technical requirement | `technical/` | Same as `FR` |
 | `NFR` | Non-functional requirement | `non-functional/` | Same as `FR` |
 | `DEC` | Decision | Where it applies: a domain file, or the [overview](../overview/data-hub.md) for decisions that span domains | Decided (implicit) |
-| `OP` | Open point: a question or task still to resolve | A domain file, or [open themes](../overview/open-themes.md) | Open `[ ]` or done `[x]` |
+| `OP` | Open point: a question or task still to resolve | A domain file, [open themes](../overview/open-themes.md) or the [backlog](../overview/backlog.md) | Open `[ ]` or done `[x]` |
 
 `CODE` is the domain code for `FR`, `EC`, `TR`, `DEC` and `OP`, and a quality category for `NFR`. Technical requirements reuse the code of the functional domain they realise, so `TR-AR-03` is about the artifact registry. `NN` is a two-digit sequence number within one type and code.
 
@@ -29,7 +29,7 @@ Every item has an ID of the form `<TYPE>-<CODE>-<NN>`.
 
 | Code | Domain | File |
 | --- | --- | --- |
-| `DH` | Data Hub as a whole: overarching decisions and open themes | [overview](../overview/data-hub.md), [open themes](../overview/open-themes.md) |
+| `DH` | Data Hub as a whole: overarching decisions, open themes and the backlog | [overview](../overview/data-hub.md), [open themes](../overview/open-themes.md), [backlog](../overview/backlog.md) |
 | `AR` | Artifact registry | [01-artifact-registry.md](functional/01-artifact-registry.md) |
 | `UM` | User management | [02-user-management.md](functional/02-user-management.md) |
 | `CO` | Collections | [03-collections.md](functional/03-collections.md) |
