@@ -1446,6 +1446,10 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .wh-stop-row { display: flex; gap: 10px; font-size: var(--text-small); line-height: 1.5; }
 .wh-stop-row > i { color: var(--signal-urgent); font-size: 18px; flex: none; }
 
+/* In a card only: the result of Claude says that Claude does not read its rows (FR-CL-28, DEC-UX-193) */
+.result-private { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); }
+.result-private i { font-size: 14px; }
+
 /* Admin: Users and Permission groups, a proposal of 2026-11-06 (OP-UX-55 to OP-UX-61). A User has one permission group;
    a permission group holds its permissions by part of Data Hub, each with its values, of the kinds a Parameter has */
 .us-table tbody tr { cursor: pointer; }

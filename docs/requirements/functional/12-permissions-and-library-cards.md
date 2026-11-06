@@ -240,9 +240,9 @@ When `catalogue.see` of a User narrows, what they no longer see answers as anyth
 <a id="ec-pl-03"></a>
 ### EC-PL-03 · Admin has no User who can still sign in
 
-**Status:** Proposed · **Source:** proposed on 2026-11-06, with [FR-PL-08](#fr-pl-08)
+**Status:** Specified · **Source:** Max, 2026-11-06, as proposed with [FR-PL-08](#fr-pl-08)
 
-When every User of Admin can no longer sign in, for example after leaving, nobody can manage Data Hub. Proposal: then, and only then, a member of `datahub-datateam@` who signs in gets Admin, so that the Role Group stays a way back in, and the Data Team gets a Message that it happened.
+When every User of Admin can no longer sign in, for example after leaving, nobody can manage Data Hub. Then, and only then, a member of `datahub-datateam@` who signs in gets Admin, so that the Role Group stays a way back in, and the Data Team gets a Message that it happened.
 
 <a id="ec-pl-04"></a>
 ### EC-PL-04 · A User has more Excel keys than their Permission group now allows

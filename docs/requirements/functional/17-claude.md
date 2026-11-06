@@ -406,9 +406,9 @@ Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it
 <a id="fr-cl-28"></a>
 ### FR-CL-28 · A result reaches Claude as the Permission group of the User says
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05))
+**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [DEC-UX-193](../../design/principles.md#dec-ux-193)) · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
 
-The result of a query, a Preview or a Lens reaches Claude as `claude.results` of the Permission group of the User says. **In Claude:** Claude reads the rows and works on them, as [DEC-CL-06](#dec-cl-06) says. **In a card only:** the User sees the rows in the MCP App; Claude reads the shape of the result, its columns and their types, the number of rows, what it read, the Levels and the link, without any value, the values of the choices of a Preview included; the MCP App says that Claude does not read the rows. **Not in Claude:** Claude offers "Open in Data Hub". In a card only, the rows stay out of the conversation as long as Claude hides the tools only the MCP App calls; the User can still paste them in, and they still pass through Anthropic on their way to the MCP App. *How the MCP App says it is still to be drawn ([OP-UX-62](../../design/principles.md#op-ux-62)).*
+The result of a query, a Preview or a Lens reaches Claude as `claude.results` of the Permission group of the User says. **In Claude:** Claude reads the rows and works on them, as [DEC-CL-06](#dec-cl-06) says. **In a card only:** the User sees the rows in the MCP App; Claude reads the shape of the result, its columns and their types, the number of rows, what it read, the Levels and the link, without any value, the values of the choices of a Preview included; the MCP App says that Claude does not read the rows. **Not in Claude:** Claude offers "Open in Data Hub". In a card only, the rows stay out of the conversation as long as Claude hides the tools only the MCP App calls; the User can still paste them in, and they still pass through Anthropic on their way to the MCP App. The MCP App says it in one line under the grid ([DEC-UX-193](../../design/principles.md#dec-ux-193)).
 
 ## Edge cases
 
