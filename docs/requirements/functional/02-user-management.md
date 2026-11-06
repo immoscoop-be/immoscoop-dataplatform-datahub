@@ -138,6 +138,8 @@ Whoever disappears from Workspace or is suspended can no longer log in, and disa
 
 Every group of the own Workspace domain that the User is in, nested groups included, is pulled in, with its fixed Google ID, its address and its name. The User can choose any of them as Owner Unit. Only the Role Groups of the [Naming Convention](#naming-convention) give a role.
 
+*Note of 2026-11-06: once Permission groups are built, a Role Group gives no role: what a User may do comes from their Permission group ([FR-PL-15](12-permissions-and-library-cards.md#fr-pl-15)).*
+
 ## Edge cases
 
 <a id="ec-um-01"></a>

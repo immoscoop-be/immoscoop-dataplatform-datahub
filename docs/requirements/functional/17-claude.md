@@ -21,7 +21,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-03"></a>**DEC-CL-03** · Claude can list everything a User sees, not only find what shares words with a question. *Decided on 2026-10-30, by Max.*
 - <a id="dec-cl-04"></a>**DEC-CL-04** · The MCP server comes with a how-to-use: what Claude can do in Data Hub for this User, and how to ask for it. *Decided on 2026-10-30, by Max.*
 - <a id="dec-cl-05"></a>**DEC-CL-05** · Claude through the MCP is a domain of its own, this file, because it touches every asset; [Channels](13-channels.md) keeps the overview of which asset reaches which channel. *Decided on 2026-10-30: Max left the place to the analysis.*
-- <a id="dec-cl-06"></a>**DEC-CL-06** · The rows of a Preview, and later of a query, go into the conversation with Claude, for every Resource the User sees: no Collection and no Level is kept from Claude. What the User may see, Claude may read for them. *Decided on 2026-10-31, by Max ([OP-CL-06](#op-cl-06)).*
+- <a id="dec-cl-06"></a>**DEC-CL-06** · The rows of a Preview, and later of a query, go into the conversation with Claude, for every Resource the User sees: no Collection and no Level is kept from Claude. What the User may see, Claude may read for them. *Decided on 2026-10-31, by Max ([OP-CL-06](#op-cl-06)).* *Note of 2026-11-06: this holds for the Users whose Permission group says "in Claude"; others see a result in a card only, or not in Claude ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](#fr-cl-28)).*
 - <a id="dec-cl-07"></a>**DEC-CL-07** · What the User approves, sends or publishes in Claude, they do with a button in the MCP App that only the MCP App can use, never Claude: "Approve and run" between 100 MB and 1 GB, the Request above 1 GB, and "Publish and confirm". Where the client cannot show an MCP App, Claude offers "Open in Data Hub" instead. *Decided on 2026-10-31, by Max ([OP-CL-02](#op-cl-02)).*
 - <a id="dec-cl-08"></a>**DEC-CL-08** · The Log says when a change was made through Claude: "through Claude" next to the name of the User, for a Business Description, a deprecation, changes marked seen, a Message and a Publication in an MCP App, so that the Owner knows the words were drafted by Claude for that User. *Decided on 2026-10-31, by Max ([OP-CL-05](#op-cl-05)).*
 - <a id="dec-cl-09"></a>**DEC-CL-09** · The how-to-use lives in Claude only; the web app gets none of its own for Claude. *Decided on 2026-10-31, by Max.*
@@ -402,6 +402,13 @@ A query made through Claude, and every run through Claude of a query or a Previe
 **Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-180](../../design/principles.md#dec-ux-180), [DEC-UX-181](../../design/principles.md#dec-ux-181)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
 
 Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it lays out its own width in one column, nothing in it is wider than its frame, a table of data scrolls in its own box, its tabs and buttons are at least 44 px high, and nothing is told only on hover. Every MCP App has a button at its top right that folds it to its head and unfolds it again.
+
+<a id="fr-cl-28"></a>
+### FR-CL-28 · A result reaches Claude as the Permission group of the User says
+
+**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05))
+
+The result of a query, a Preview or a Lens reaches Claude as `claude.results` of the Permission group of the User says. **In Claude:** Claude reads the rows and works on them, as [DEC-CL-06](#dec-cl-06) says. **In a card only:** the User sees the rows in the MCP App; Claude reads the shape of the result, its columns and their types, the number of rows, what it read, the Levels and the link, without any value, the values of the choices of a Preview included; the MCP App says that Claude does not read the rows. **Not in Claude:** Claude offers "Open in Data Hub". In a card only, the rows stay out of the conversation as long as Claude hides the tools only the MCP App calls; the User can still paste them in, and they still pass through Anthropic on their way to the MCP App. *How the MCP App says it is still to be drawn ([OP-UX-62](../../design/principles.md#op-ux-62)).*
 
 ## Edge cases
 

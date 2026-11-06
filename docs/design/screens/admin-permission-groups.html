@@ -1,22 +1,20 @@
 <!DOCTYPE html>
 <!--
-  Screen: Permission groups, a tool of Admin, the section of the Data Team. A proposal of 2026-11-06, for review with Max.
-  The permission groups of this environment of Data Hub, each with its number of Users; one is the default, which a new
-  User gets at their first sign-in. One opened shows its permissions by part of Data Hub: Collections and Resources,
-  Query, Lenses, Claude, Excel and Admin. A permission is yes or no, and may have values that say how far it goes, of
+  Screen: Permission groups, a tool of Admin, the section of the Data Team. Designed on 2026-11-06, with Max.
+  The Permission groups of this environment of Data Hub, each with its number of Users; one is the default, which a new
+  User gets at their first sign-in. One opened shows its Permissions by part of Data Hub: Collections and Resources,
+  Query, Lenses, Claude, Excel and Admin. A Permission is yes or no, and may have values that say how far it goes, of
   the same kinds a Parameter has: a whole number with its unit, a choice, several choices, a text. Its values show only
   while it is yes. A change is marked, and an edit bar counts the changes until they are saved or discarded; saved, they
-  take effect within 15 minutes for every User in the group (OP-UX-58).
-  The Data Team can do everything and keeps it: its permissions cannot be changed, it cannot be deleted, and it keeps at
-  least one User (OP-UX-57). Deleting another group asks where its Users go; when it is the default, the group they go
+  take effect within 15 minutes for every User in the group (DEC-UX-189).
+  Admin can do everything and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at
+  least one User (DEC-UX-188). Deleting another group asks where its Users go; when it is the default, the group they go
   to becomes the default.
-  The permissions shown are examples, to show each kind of value; which permissions Data Hub has, and their values, is
-  the next step, in the requirements.
-  The switch at the bottom shows Business, Business with two changes, deleting Business, the Data Team, and a new group:
+  The Permissions shown are a part of those of FR-PL-05, to show each kind of value; the groups are examples.
+  The switch at the bottom shows Business, Business with two changes, deleting Business, Admin, and a new group:
   ?pg=business, ?pg=changed, ?pg=delete, ?pg=datateam, ?pg=new. ?kinds=on shows the kind of each value.
-  Requirements: none yet; they follow once this design and the list of permissions are final.
-  Open points: OP-UX-55, OP-UX-56, OP-UX-57, OP-UX-58, OP-UX-59, OP-UX-60, OP-UX-61, OP-PL-02.
-  Decisions: DEC-UX-130, DEC-UX-71, DEC-DH-78.
+  Requirements: FR-PL-05, FR-PL-08, FR-PL-09, FR-PL-10, FR-PL-11
+  Decisions: DEC-UX-186, DEC-UX-187, DEC-UX-188, DEC-UX-189, DEC-UX-190, DEC-PL-01, DEC-PL-07, DEC-UX-130, DEC-UX-71, DEC-DH-78.
   Related screens: admin-users.html, admin-keys.html, query.html (the kinds of a Parameter).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -62,7 +60,7 @@
 <div class="breadcrumb">Admin</div>
 <div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
  <div style="flex:1;min-width:280px"><h1 class="page-title">Permission groups</h1>
- <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">What a User may do, here, in Claude and in Excel. Each User is in one permission group, and a new User gets the default at their first sign-in. A change takes effect within 15 minutes for every User in the group.</p></div>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">What a User may do, here, in Claude and in Excel. Each User is in one Permission group, and a new User gets the default at their first sign-in. A change takes effect within 15 minutes for every User in the group.</p></div>
  <div style="display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 10px;border-radius:var(--radius-pill);border:1px dashed var(--tint-active)" data-group="kinds" role="tablist" aria-label="Prototype: the kind of each value"><span class="meta">Prototype: kinds</span><button class="seg on" data-target="off" role="tab" aria-selected="true">Hide</button><button class="seg" data-target="on" role="tab" aria-selected="false">Show</button></div>
  <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
 </div>
@@ -70,11 +68,11 @@
 <div class="mc pg-layout">
  <section class="card mc-list" aria-label="Permission groups">
   <div style="display:flex;justify-content:flex-end;padding:2px 4px 10px">
-   <button class="btn-quiet outline" data-go="pg:new"><i class="ph ph-plus"></i>New permission group</button>
+   <button class="btn-quiet outline" data-go="pg:new"><i class="ph ph-plus"></i>New Permission group</button>
   </div>
   <a class="wh-item" href="#" data-go="pg:datateam" data-item="datateam">
    <i class="ph-fill ph-shield-check wh-outcome done" aria-hidden="true"></i>
-   <span><b>Data Team</b> <i class="ph-fill ph-lock-simple" style="color:var(--text-muted);font-size:12px" title="Can do everything; cannot be changed"></i><span class="meta" style="display:block">Everything, Admin included</span><span class="pg-item-sub"><span class="meta">4 Users</span></span></span>
+   <span><b>Admin</b> <i class="ph-fill ph-lock-simple" style="color:var(--text-muted);font-size:12px" title="Can do everything; cannot be changed"></i><span class="meta" style="display:block">Everything, Admin included</span><span class="pg-item-sub"><span class="meta">4 Users</span></span></span>
   </a>
   <a class="wh-item" href="#" data-item="analysts">
    <i class="ph-fill ph-shield-check wh-outcome" aria-hidden="true"></i>
@@ -90,8 +88,8 @@
   </a>
  </section>
 
- <!-- Business opened: its permissions, by part of Data Hub -->
- <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="business changed delete new" aria-label="The permission group opened">
+ <!-- Business opened: its Permissions, by part of Data Hub -->
+ <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="business changed delete new" aria-label="The Permission group opened">
   <div class="mc-detail-head">
    <i class="ph-fill ph-shield-check wh-big" aria-hidden="true"></i>
    <div style="flex:1;min-width:0"><h2 class="wh-h2" style="display:flex;align-items:center;gap:2px">Business <button class="icon-btn" aria-label="Rename"><i class="ph ph-pencil-simple"></i></button></h2><div class="meta">Lenses and Previews; Claude reads the shape, not the rows</div></div>
@@ -208,25 +206,25 @@
   </div>
 
   <div class="pg-foot" data-pane-group="pg" data-pane="business changed new">
-   <p class="meta">To delete Business, its 31 Users go to another permission group, which then becomes the default.</p>
+   <p class="meta">To delete Business, its 31 Users go to another Permission group, which then becomes the default.</p>
    <button class="btn-quiet" data-go="pg:delete" style="color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i> Delete Business…</button>
   </div>
   <div class="pg-delete" data-pane-group="pg" data-pane="delete" hidden>
-   <div class="wh-stop-row"><i class="ph-fill ph-warning"></i><span><b>Delete Business?</b> Its 31 Users go to the permission group you choose, and it becomes the default for new Users, as Business is now. Each of them gets a Message that says what changed for them. This cannot be undone.</span></div>
+   <div class="wh-stop-row"><i class="ph-fill ph-warning"></i><span><b>Delete Business?</b> Its 31 Users go to the Permission group you choose, and it becomes the default for new Users, as Business is now. Each of them gets a Message that says what changed for them. This cannot be undone.</span></div>
    <div class="pe-opts">
     <label><input type="radio" name="p-move" checked>Analysts, 9 Users: queries and Lenses; Claude reads the rows</label>
     <label><input type="radio" name="p-move">Read only, 3 Users: sees and runs Lenses; no queries, no Claude</label>
-    <label style="color:var(--text-muted);cursor:default"><input type="radio" name="p-move" disabled>Data Team: Users join it one by one, on Users</label>
+    <label style="color:var(--text-muted);cursor:default"><input type="radio" name="p-move" disabled>Admin: Users join it one by one, on Users</label>
    </div>
    <div class="pg-delete-foot"><button class="btn-quiet" data-go="pg:business">Keep it</button><button class="btn-primary danger" data-go="pg:business">Delete and move 31 Users</button></div>
   </div>
  </section>
 
- <!-- The Data Team opened: everything, and locked -->
- <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="datateam" hidden aria-label="The permission group opened">
+ <!-- Admin opened: everything, and locked -->
+ <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="datateam" hidden aria-label="The Permission group opened">
   <div class="mc-detail-head">
    <i class="ph-fill ph-shield-check wh-big" aria-hidden="true"></i>
-   <div style="flex:1;min-width:0"><h2 class="wh-h2">Data Team</h2><div class="meta">Everything, Admin included</div></div>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Admin</h2><div class="meta">Everything, Admin included</div></div>
    <button class="btn-quiet outline"><i class="ph ph-copy"></i>Duplicate</button>
   </div>
   <dl class="wh-facts">
@@ -234,7 +232,7 @@
    <dt>Default for new Users</dt><dd>No</dd>
    <dt>Since</dt><dd>6 Nov 2026, with the Users of the Role Group datahub-datateam@</dd>
   </dl>
-  <div class="notice"><i class="ph-fill ph-lock-simple"></i><p>The Data Team can do everything, and keeps it: its permissions cannot be changed, it cannot be deleted, and it keeps at least one User, so that someone can always manage Data Hub. Duplicate it to start a group that does almost everything.</p></div>
+  <div class="notice"><i class="ph-fill ph-lock-simple"></i><p>Admin can do everything, and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at least one User, so that someone can always manage Data Hub. Duplicate it to start a group that does almost everything.</p></div>
   <div class="pg-section">
    <div class="pg-section-head"><i class="ph-fill ph-stack"></i>Collections and Resources</div>
    <div class="pg-perm"><div><div class="pg-name">What they see</div><p class="pg-desc">All: also the private Collections of other Owner Units, and the Resources without a Collection</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>All</span></div>
@@ -269,13 +267,13 @@
 </main>
 </div>
 
-<!-- A new permission group: a name, a sentence, and the group it starts as a copy of -->
+<!-- A new Permission group: a name, a sentence, and the group it starts as a copy of -->
 <div class="sheet-wrap" data-pane-group="pg" data-pane="new" hidden>
 <div class="sheet-backdrop" data-go="pg:business"></div>
 <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="new-title" style="width:max(460px, 34vw)">
  <div style="display:flex;align-items:flex-start;gap:10px">
   <i class="ph-fill ph-shield-check" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
-  <div style="flex:1;min-width:0"><h2 id="new-title">New permission group</h2></div>
+  <div style="flex:1;min-width:0"><h2 id="new-title">New Permission group</h2></div>
   <button class="icon-btn" data-go="pg:business" aria-label="Close"><i class="ph ph-x"></i></button>
  </div>
  <div class="sheet-list" style="padding:0 6px">
@@ -283,11 +281,11 @@
   <label class="field"><span>In one sentence, what it allows</span><input value="Lenses and queries on leads; Claude reads the shape, not the rows"></label>
   <div class="label" style="margin-top:6px">Start as a copy of</div>
   <div class="us-groups" role="radiogroup" aria-label="Start as a copy of">
-   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Data Team</span><span class="meta" style="display:block">Everything, Admin included</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Admin</span><span class="meta" style="display:block">Everything, Admin included</span></span></label>
    <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Analysts</span><span class="meta" style="display:block">Queries and Lenses; Claude reads the rows</span></span></label>
    <label class="wh-opt"><input type="radio" name="p-from" checked><span><span class="item-title">Business</span><span class="meta" style="display:block">Lenses and Previews; Claude reads the shape, not the rows</span></span></label>
    <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Read only</span><span class="meta" style="display:block">Sees and runs Lenses; no queries, no Claude</span></span></label>
-   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Nothing</span><span class="meta" style="display:block">Every permission no, to set one by one</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Nothing</span><span class="meta" style="display:block">Every Permission no, to set one by one</span></span></label>
   </div>
  </div>
  <div class="sheet-foot">
@@ -298,16 +296,16 @@
 </section>
 </div>
 
-<div class="proto-switch" data-group="pg" role="tablist" aria-label="Prototype: permission groups">Permission groups
+<div class="proto-switch" data-group="pg" role="tablist" aria-label="Prototype: Permission groups">Permission groups
  <button class="seg on" data-target="business" role="tab" aria-selected="true">Business</button>
  <button class="seg" data-target="changed" role="tab" aria-selected="false">Two changes</button>
  <button class="seg" data-target="delete" role="tab" aria-selected="false">Deleting it</button>
- <button class="seg" data-target="datateam" role="tab" aria-selected="false">Data Team</button>
+ <button class="seg" data-target="datateam" role="tab" aria-selected="false">Admin</button>
  <button class="seg" data-target="new" role="tab" aria-selected="false">New group</button>
 </div>
 <script src="app.js"></script>
 <script>
-// Prototype only: the list marks the group opened; yes or no shows or hides the values of a permission
+// Prototype only: the list marks the group opened; yes or no shows or hides the values of a Permission
 const markItem = target => document.querySelectorAll('[data-item]').forEach(i => i.classList.toggle('on', i.dataset.item === (target === 'datateam' ? 'datateam' : 'business')));
 document.querySelectorAll('[data-group="pg"] [data-target]').forEach(b => b.addEventListener('click', () => markItem(b.dataset.target)));
 markItem(document.querySelector('[data-group="pg"] .seg.on')?.dataset.target);
