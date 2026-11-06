@@ -34,6 +34,16 @@ export interface Lens {
   stoppedReads: number | null;
   /** What it misses while it is Broken (FR-LE-17). */
   broken: Missing | null;
+  /** When, by whom and why it was deleted; null while it is not (FR-LE-18). */
+  deleted: LensDeletion | null;
+}
+
+/** How a Lens was deleted: by its Owner Unit or the Data Team, with why when they said (DEC-LE-21). */
+export interface LensDeletion {
+  at: Date;
+  byId: string;
+  byName: string;
+  reason: string;
 }
 
 /** A version of a Lens: who made it from which query, measured in which range (FR-LE-16, DEC-LE-18). */
@@ -102,11 +112,14 @@ export interface SharedWords {
 export interface Lenses {
   /** Makes a Lens with its first version: published, or waiting for the Data Team above 1 GB (FR-LE-08). */
   create(fields: NewLens): Promise<Lens>;
+  /** The Lens, also once it is deleted: whoever asks says what a deleted one gets (FR-LE-18). */
   get(id: string): Promise<Lens | undefined>;
-  /** The Lens a query is used as, if it is (DEC-LE-03). */
+  /** The Lens a query is used as, if it is and is not deleted (DEC-LE-03). */
   ofQuery(queryId: string): Promise<Lens | undefined>;
-  /** Every Lens, by name; who sees which is for the caller to decide (DEC-LE-09, DEC-CO-16). */
+  /** Every Lens that is not deleted, by name; who sees which is for the caller to decide (DEC-LE-09, DEC-CO-16). */
   list(): Promise<Lens[]>;
+  /** Deletes it for good, keeping its row, runs, versions and Log; its Log says who and why (`LEN-003`, FR-LE-18). */
+  delete(id: string, by: Viewer, reason: string): Promise<Lens>;
   edit(id: string, changes: LensEdit): Promise<Lens>;
   /**
    * Its next version, from a query used as it: published, or waiting above 1 GB (FR-LE-16). A stopped or
@@ -135,10 +148,11 @@ export interface Lenses {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-const lensOf = (row: Selectable<QueryDatabase['lenses']>): Lens => ({
+const lensOf = ({ deletedAt, deletedById, deletedByName, deletedReason, ...row }: Selectable<QueryDatabase['lenses']>): Lens => ({
   ...row,
   reads: Number(row.reads),
   stoppedReads: row.stoppedReads === null ? null : Number(row.stoppedReads),
+  deleted: deletedAt ? { at: deletedAt, byId: deletedById ?? '', byName: deletedByName ?? '', reason: deletedReason ?? '' } : null,
 });
 
 /** How BigQuery names what is missing, as the Log says it: a column, or a table. */
@@ -197,13 +211,27 @@ export function createLenses(db: Kysely<QueryDatabase>): Lenses {
     },
 
     async ofQuery(queryId) {
-      const row = await db.selectFrom('lenses').selectAll().where('queryId', '=', queryId).executeTakeFirst();
+      const row = await db.selectFrom('lenses').selectAll().where('queryId', '=', queryId).where('deletedAt', 'is', null).executeTakeFirst();
       return row && lensOf(row);
     },
 
     async list() {
-      const rows = await db.selectFrom('lenses').selectAll().orderBy('name').limit(2000).execute();
+      const rows = await db.selectFrom('lenses').selectAll().where('deletedAt', 'is', null).orderBy('name').limit(2000).execute();
       return rows.map(lensOf);
+    },
+
+    async delete(id, by, reason) {
+      return db.transaction().execute(async (trx) => {
+        const row = await trx
+          .updateTable('lenses')
+          .set({ deletedAt: new Date(), deletedById: by.id, deletedByName: by.name, deletedReason: reason, updatedAt: new Date() })
+          .where('id', '=', id)
+          .where('deletedAt', 'is', null)
+          .returningAll()
+          .executeTakeFirstOrThrow();
+        await trx.insertInto('lensLog').values({ lensId: id, logId: 'LEN-003', params: JSON.stringify({ actor: by.name, reason }) }).execute();
+        return lensOf(row);
+      });
     },
 
     async edit(id, { labels, steps, tags, ...fields }) {

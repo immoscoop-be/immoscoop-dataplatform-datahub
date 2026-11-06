@@ -1,6 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/svelte';
 import { setLanguage } from '@datahub/ui/foundations/texts.svelte.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { NO_PERMISSIONS, STARTING_GROUPS, type Permissions, type StartingGroup } from '@datahub/contracts/permissions';
 import App from './App.svelte';
 import type { Config } from './lib/config.js';
 
@@ -12,7 +13,10 @@ const CONFIG: Config = {
   semgraphUrl: 'https://semgraph.test',
 };
 
-const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[], roles: [] as string[] };
+/** The why of a Known Gap, in its form (FR-RC-24). */
+const WHY = 'Wat ontbreekt of maar deels aanwezig is, en waarom · gewone tekst';
+
+const ME = { sub: '1', email: 'max@thenextimmoscoop.be', name: 'Max Verstraete', groups: [] as string[] };
 
 /** A Question on Credit leads, unread for its Owner Unit (MSG-CNV-01). */
 const QUESTION = {
@@ -95,6 +99,52 @@ const SAVED_SEARCHES = {
   descriptionChanges: [],
 };
 
+/** What semgraph offers, as its overview gives it in Dutch: four charts, and two it only plans (FR-CH-06). */
+const SEMGRAPH_CHARTS = {
+  locale: 'nl-BE',
+  semgraphs: [
+    { id: 'distribution', title: 'Verdeling', answers: 'Hoe liggen de waarden verspreid?' },
+    { id: 'kpiTile', title: 'KPI-tegel', answers: 'Hoeveel is het nu, en is dat meer of minder dan ervoor?' },
+    { id: 'periodComparison', title: 'Vergelijking met de vorige periode', answers: 'Doen we het beter of slechter dan in de periode ervoor?' },
+    { id: 'movingWindowAverage', title: 'Voortschrijdend gemiddelde', answers: 'Hoe evolueert dit, zonder dagelijkse ruis?' },
+  ].map((chart) => ({ ...chart, href: `/semgraphs/${chart.id}`, examples: [] })),
+  planned: ['cumulative', 'funnel'],
+};
+
+/** Two charts as semgraph describes them, each with examples that it draws, with a warning or a caution, or refuses. */
+const SEMGRAPH_DESCRIBED: Record<string, Record<string, unknown>> = {
+  movingWindowAverage: {
+    id: 'movingWindowAverage',
+    title: 'Voortschrijdend gemiddelde',
+    answers: 'Hoe evolueert dit, zonder dagelijkse ruis?',
+    exampleQuestions: ['Hoe evolueerden de kredietleads de voorbije vier weken?'],
+    doNotUseWhen: [
+      { intent: 'compareWithLastYear', use: 'periodComparison' },
+      { intent: 'showTotalSoFar', use: 'cumulative' },
+    ],
+    data: { minimumPoints: 28 },
+    examples: [
+      { name: 'basic', title: 'Kredietleads per dag (voorbeelddata)' },
+      { name: 'long-horizon', title: 'Kredietleads per dag, laatste anderhalf jaar (voorbeelddata)' },
+      { name: 'long-horizon-dark', title: 'Kredietleads per dag, laatste anderhalf jaar (voorbeelddata)', theme: 'dark' },
+      { name: 'window-10', title: 'Kredietleads per dag (voorbeelddata)' },
+      { name: 'unique-without-aggregation', title: 'Unieke bezoekers per dag (voorbeelddata)' },
+    ],
+  },
+  kpiTile: {
+    id: 'kpiTile',
+    title: 'KPI-tegel',
+    answers: 'Hoeveel is het nu, en is dat meer of minder dan ervoor?',
+    exampleQuestions: [],
+    doNotUseWhen: [],
+    data: { minimumPoints: 14 },
+    examples: [
+      { name: 'few-leads', title: 'Leads' },
+      { name: 'rolling-28d-card', title: 'Leads', size: 'card' },
+    ],
+  },
+};
+
 const DATA = { id: 'g1', email: 'data@thenextimmoscoop.be', name: 'Data' };
 const SALES = { id: 'g2', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
 
@@ -157,6 +207,7 @@ const DBT_JOBS = [
   { id: '322951', name: 'daily UAT build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'scheduled', generatesDocs: true, lastRun: { at: '2026-10-31T06:00:00Z', status: 'Success' }, current: true, notChoosable: null },
   { id: '352118', name: 'UAT - Deploy - Merge build', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: { at: '2026-10-31T09:50:00Z', status: 'Success' }, current: false, notChoosable: null },
   { id: '324451', name: 'CI/CD - UAT - triggered by Github Pipelines', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'ci', generatesDocs: false, lastRun: null, current: false, notChoosable: 'ci' },
+  { id: '351870', name: 'UAT - Hourly freshness', projectId: '9367', environmentId: '1', environmentName: 'UAT', kind: 'scheduled', generatesDocs: false, lastRun: null, current: false, notChoosable: 'noDocs' },
   { id: '324502', name: 'CI/CD - prod - triggered by Github Pipelines', projectId: '9367', environmentId: '2', environmentName: 'Production', kind: 'merge', generatesDocs: true, lastRun: null, current: false, notChoosable: 'otherEnvironment' },
 ];
 
@@ -325,10 +376,74 @@ function preflightOf(sql: string, parameters: { name: string }[] = []) {
   return sql.includes('-- all weeks') ? { ...base, runnable: true, bytes: 840_000_000, range: 'approve' } : { ...base, runnable: true, bytes: 80_000_000, range: 'free' };
 }
 
+/** The Users of the environment, as identity lists them to Admin (FR-PL-06). */
+const HOUR = 3_600_000;
+const MAX_USER = {
+  googleId: '1',
+  email: 'max@thenextimmoscoop.be',
+  name: 'Max Verstraete',
+  permissionGroup: { id: 'pg-admin', name: 'Admin' },
+  groups: ['g1'],
+  createdAt: '2026-10-17T08:00:00Z',
+  lastLoginAt: new Date(Date.now() - HOUR).toISOString(),
+  uses: { web: true, claude: true, excel: false },
+  active: true,
+};
+const AN_USER = {
+  googleId: '2',
+  email: 'an.claes@immoscoop.be',
+  name: 'An Claes',
+  permissionGroup: { id: 'pg-lensUser', name: 'Lens user' },
+  groups: ['g2', 'g9'],
+  createdAt: '2026-09-02T08:00:00Z',
+  lastLoginAt: new Date(Date.now() - 2 * HOUR).toISOString(),
+  uses: { web: true, claude: true, excel: true },
+  active: true,
+};
+const ELIF_USER = {
+  googleId: '3',
+  email: 'elif.yilmaz@immoscoop.be',
+  name: 'Elif Yilmaz',
+  permissionGroup: { id: 'pg-lensUser', name: 'Lens user' },
+  groups: [],
+  createdAt: new Date(Date.now() - 20 * HOUR).toISOString(),
+  lastLoginAt: new Date(Date.now() - 20 * HOUR).toISOString(),
+  uses: { web: true, claude: false, excel: false },
+  active: true,
+};
+const BRAM_USER = {
+  googleId: '4',
+  email: 'bram.desmet@immoscoop.be',
+  name: 'Bram De Smet',
+  permissionGroup: { id: 'pg-businessAnalyst', name: 'Business analyst' },
+  groups: [],
+  createdAt: '2026-06-01T08:00:00Z',
+  lastLoginAt: '2026-09-14T08:00:00Z',
+  uses: { web: false, claude: false, excel: false },
+  active: false,
+};
+const USERS = [MAX_USER, AN_USER, ELIF_USER, BRAM_USER];
+
+/** The Permission groups to start with, as identity keeps them (DEC-PL-07): Lens user the default. */
+function startingGroups() {
+  return (['admin', 'businessAnalyst', 'lensUser'] as const).map((id) => ({
+    id: `pg-${id}`,
+    name: STARTING_GROUPS[id].name,
+    sentence: STARTING_GROUPS[id].sentence,
+    permissions: structuredClone(STARTING_GROUPS[id].permissions),
+    isDefault: id === 'lensUser',
+    locked: id === 'admin',
+    users: 0,
+    updatedAt: '2026-11-06T08:00:00Z',
+    updatedBy: id === 'admin' ? null : 'Ruth Aerts',
+  }));
+}
+
 function serve({
   signedIn = true,
   settings = {} as Record<string, unknown>,
-  roles = [] as string[],
+  as = 'businessAnalyst' as StartingGroup,
+  permissions = undefined as Permissions | undefined,
   groups = [] as string[],
   weekly = {} as Record<string, unknown>,
   queries = [] as Record<string, unknown>[],
@@ -339,8 +454,18 @@ function serve({
   creditWith = {} as Partial<typeof CREDIT>,
   excelKeys = [] as Record<string, unknown>[],
   everyKey = [] as Record<string, unknown>[],
+  users = USERS as Record<string, unknown>[],
+  writable = undefined as string[] | undefined,
+  /** The path at which the session ends while the User works: it answers 401, and so does every renewal after it. */
+  sessionEndsAt = undefined as string | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
+  // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
+  const people = structuredClone(users) as (typeof MAX_USER)[];
+  let permissionGroups = startingGroups() as (ReturnType<typeof startingGroups>[number] & { permissions: Permissions })[];
+  const counted = () => permissionGroups.map((group) => ({ ...group, users: people.filter((user) => user.permissionGroup.id === group.id).length }));
+  const tools = (permissions ?? STARTING_GROUPS[as].permissions)['admin.open'];
+  const mayAdmin = (tool: string) => tools.on && (tools.values.tools as string[]).includes(tool);
   // Credit leads as catalogue keeps it, with its folders, changed by what the page asks (FR-CO-38 to FR-CO-41).
   let credit = { ...CREDIT, ...creditWith };
   /** The queries the User hid from their panel (DEC-UX-138). */
@@ -360,23 +485,28 @@ function serve({
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
     }
     calls.push({ method, path, ...(init.body ? { body: JSON.parse(init.body as string) } : {}) });
-    if (path === '/me') {
-      return json({ ...ME, roles, groups });
+    if (sessionEndsAt !== undefined && path === sessionEndsAt) {
+      signedIn = false;
+      return json({ error: 'unauthorized' }, 401);
     }
-    const dataTeam = roles.includes('datateam');
+    if (path === '/me') {
+      return json({ ...ME, groups, permissionGroup: { id: `pg-${as}`, name: STARTING_GROUPS[as].name }, permissions: permissions ?? STARTING_GROUPS[as].permissions });
+    }
+    // What the services allowed the Data Team, they allow Admin now (FR-PL-15).
+    const dataTeam = as === 'admin';
     if (path === '/collections' && method === 'GET') {
       return json({ collections: [credit, LISTINGS] });
     }
     if (path === '/collections/c1/folders' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; parentId: string | null };
-      const made = { id: 'f-new', name: body.name, parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
+      const made = { id: 'f-new', name: body.name, description: '', parentId: body.parentId, createdBy: 'Max Verstraete', createdAt: '2026-10-31T08:00:00Z' };
       credit = { ...credit, folders: [...credit.folders, made] };
       return json(made, 201);
     }
     const [, folderId] = /^\/collections\/c1\/folders\/([^/]+)$/.exec(path) ?? [];
     if (folderId && method === 'PATCH') {
-      const { name } = JSON.parse(init.body as string) as { name: string };
-      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, name } : folder)) };
+      const changes = JSON.parse(init.body as string) as { name?: string; description?: string };
+      credit = { ...credit, folders: credit.folders.map((folder) => (folder.id === folderId ? { ...folder, ...changes } : folder)) };
       return json(credit.folders.find((folder) => folder.id === folderId));
     }
     if (folderId && method === 'DELETE') {
@@ -426,6 +556,26 @@ function serve({
     if (path === '/admin/source-jobs/9367/jobs') {
       return json({ environment: { id: '1', name: 'UAT' }, jobs: DBT_JOBS });
     }
+    // A dbt project not followed yet: its jobs of every environment, but no CI job and none without the docs (DEC-AR-10).
+    if (path === '/admin/source-jobs/15890/jobs') {
+      return json({
+        environment: null,
+        jobs: [
+          { id: '802114', name: 'UAT - Deploy - Merge build', projectId: '15890', environmentId: '5', environmentName: 'UAT', kind: 'merge', generatesDocs: true, lastRun: null, current: false, notChoosable: null },
+          { id: '802131', name: 'PROD - Daily export', projectId: '15890', environmentId: '6', environmentName: 'Production', kind: 'scheduled', generatesDocs: false, lastRun: null, current: false, notChoosable: 'noDocs' },
+        ],
+      });
+    }
+    if (path === '/admin/dbt-projects') {
+      return json({ projects: [{ id: '9367', name: 'dbt-prod', following: true }, { id: '15890', name: 'dbt-marketing', following: false }] });
+    }
+    if (path === '/admin/source-jobs' && method === 'POST') {
+      const { projectId, jobId } = JSON.parse(init.body as string) as { projectId: string; jobId: string };
+      return json({ ...SOURCE_JOB_TILE, projectId, projectName: 'dbt-marketing', job: { id: jobId, name: 'UAT - Deploy - Merge build', environmentName: 'UAT', kind: 'merge', generatesDocs: true }, setBy: 'Max Verstraete', setAt: new Date().toISOString(), lastSet: null }, 201);
+    }
+    if (path === '/admin/source-jobs/9367' && method === 'DELETE') {
+      return new Response(null, { status: 204 });
+    }
     if (path === '/admin/source-jobs/9367' && method === 'PUT') {
       const { jobId } = JSON.parse(init.body as string) as { jobId: string };
       const job = DBT_JOBS.find((candidate) => candidate.id === jobId)!;
@@ -472,6 +622,18 @@ function serve({
       const changes = method === 'PATCH' ? (JSON.parse(init.body as string) as Record<string, unknown>) : {};
       resource = { ...resource, card: { ...(resource.card as object), ...changes } };
       return json({ resource });
+    }
+    const gapOn = /^\/resources\/r2\/gaps(?:\/([^/]+))?$/.exec(path);
+    if (gapOn) {
+      // Its Known Gaps, one by one, with who added them and where each holds (FR-RC-21, FR-RC-24).
+      const card = resource.card as { knownGaps: { id: string; text: string; scope: unknown; addedBy: string | null; addedAt: string | null }[] };
+      const body = init.body ? (JSON.parse(init.body as string) as { text: string; scope?: unknown }) : undefined;
+      const added = { id: `gap-${card.knownGaps.length + 1}`, text: body?.text ?? '', scope: body?.scope ?? null, addedBy: 'Max Verstraete', addedAt: '2026-11-04T09:00:00Z' };
+      const changed = (gap: (typeof card.knownGaps)[number]) => ({ ...gap, text: body?.text ?? '', ...(body && 'scope' in body ? { scope: body.scope ?? null } : {}) });
+      const knownGaps =
+        method === 'POST' ? [...card.knownGaps, added] : method === 'PATCH' ? card.knownGaps.map((gap) => (gap.id === gapOn[1] ? changed(gap) : gap)) : card.knownGaps.filter((gap) => gap.id !== gapOn[1]);
+      resource = { ...resource, card: { ...card, knownGaps } };
+      return method === 'DELETE' ? new Response(null, { status: 204 }) : json({ gap: knownGaps.find((gap) => gap.id === (gapOn[1] ?? added.id)) }, method === 'POST' ? 201 : 200);
     }
     if (path === '/resources/r2/publication' && method === 'POST') {
       resource = { ...resource, published: true, level: 3, publication: PUBLICATION };
@@ -543,7 +705,7 @@ function serve({
     }
     // query, as it keeps the Lenses: made from a query, seen and run as the User may (TR-LE-01).
     if (path === '/lenses' && method === 'GET') {
-      return json({ lenses: lenses.map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
+      return json({ lenses: lenses.filter((candidate) => !candidate.gone).map(({ steps: _steps, parameters: _parameters, ...item }) => item) });
     }
     if (path === '/lenses' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { name: string; collectionId: string; steps: string[] };
@@ -594,6 +756,14 @@ function serve({
       return json({ exact: offered.filter((item) => item.exact), more: offered.filter((item) => !item.exact) });
     }
     const lens = lenses.find((candidate) => path.startsWith(`/lenses/${candidate.id as string}`));
+    // Deleted, for good: its address says so to whoever saw it (FR-LE-18).
+    if (lens && path === `/lenses/${lens.id as string}` && method === 'DELETE') {
+      lens.gone = { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: (JSON.parse(init.body as string) as { reason: string }).reason };
+      return json({ lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId }, told: lens.usedBy ?? 0 });
+    }
+    if (lens?.gone && path === `/lenses/${lens.id as string}`) {
+      return json({ error: 'deleted', message: 'This Lens was deleted.', lens: { id: lens.id, name: lens.name, collectionId: lens.collectionId, deleted: lens.gone } }, 410);
+    }
     if (lens && path === `/lenses/${lens.id as string}` && method === 'PATCH') {
       const { labels: _labels, ...changes } = JSON.parse(init.body as string) as Record<string, unknown>;
       Object.assign(lens, changes);
@@ -625,7 +795,7 @@ function serve({
     }
     // query, as it keeps the queries of the User and checks and runs their SQL (TR-SR-15 to TR-SR-17).
     const listed = () =>
-      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken }) => ({
+      queries.map(({ id, name, kind, ownerName, resources: on, lastRunAt, createdAt, request, broken, through }) => ({
         id: id as string,
         name: name as string,
         kind: (kind as string | undefined) ?? 'query',
@@ -637,6 +807,7 @@ function serve({
         request: request ?? null,
         hidden: hiddenQueries.has(id as string),
         broken: (broken as Record<string, string> | null | undefined) ?? null,
+        through: (through as string | null | undefined) ?? null,
       }));
     // What the panel shows a query as, until a chip adds the rest (DEC-UX-137).
     const shownAs = (item: ReturnType<typeof listed>[number]) => (item.hidden ? 'hidden' : item.kind === 'preview' ? 'previews' : item.kind === 'lens' ? 'lenses' : 'queries');
@@ -741,6 +912,25 @@ function serve({
     if (path === `${CONFIG.semgraphUrl}/render`) {
       return new Response('<svg xmlns="http://www.w3.org/2000/svg"><title>Example</title></svg>', { headers: { 'content-type': 'image/svg+xml' } });
     }
+    // semgraph, as Charts reads it: its charts, one described, and its examples as it draws them (TR-PF-34).
+    if (path.startsWith(`${CONFIG.semgraphUrl}/semgraphs?locale=`)) {
+      return json(SEMGRAPH_CHARTS);
+    }
+    const [, described] = /^https:\/\/semgraph\.test\/semgraphs\/([^/?]+)\?locale=/.exec(path) ?? [];
+    if (described) {
+      const chart = SEMGRAPH_DESCRIBED[described];
+      return chart ? json(chart) : json({ outcome: 'invalid', issues: [{ level: 'inputError', code: 'unknownSemgraph' }] }, 404);
+    }
+    const [, exampleName] = /^https:\/\/semgraph\.test\/semgraphs\/[^/]+\/examples\/([^/?]+)\?theme=/.exec(path) ?? [];
+    if (exampleName === 'unique-without-aggregation') {
+      return json({ outcome: 'refused', issues: [{ level: 'refusal', code: 'uniqueAggregationRequired', message: 'Zeg hoe ze geteld zijn.' }] }, 422);
+    }
+    if (exampleName) {
+      const headers: Record<string, string> = { 'content-type': 'image/svg+xml' };
+      if (exampleName === 'window-10') headers['semgraph-deviations'] = 'windowNotMultipleOf7';
+      if (exampleName === 'few-leads') headers['semgraph-cautions'] = 'fewObservations.mean';
+      return new Response(`<svg xmlns="http://www.w3.org/2000/svg"><title>${exampleName}</title></svg>`, { headers });
+    }
     // identity, as it keeps the Excel keys of the User (FR-PL-01, FR-PL-02).
     if (path === '/me/excel-keys' && method === 'GET') {
       return json({ keys: excelKeys });
@@ -760,7 +950,56 @@ function serve({
     }
     // identity, as the Data Team sees every Excel key and revokes any (FR-PL-03).
     if (path === '/excel-keys' && method === 'GET') {
-      return roles.includes('datateam') ? json({ keys: everyKey }) : json({ error: 'forbidden' }, 403);
+      return dataTeam ? json({ keys: everyKey }) : json({ error: 'forbidden' }, 403);
+    }
+    // identity, as Admin sees the Users and their Permission groups (TR-PL-07).
+    if (path === '/users' && method === 'GET') {
+      return mayAdmin('users') ? json({ users: people }) : json({ error: 'forbidden', permission: 'admin.open' }, 403);
+    }
+    const [, userId, moving] = /^\/users\/([^/]+)(\/permission-group)?$/.exec(path) ?? [];
+    if (userId && !moving && method === 'GET') {
+      const user = people.find((one) => one.googleId === userId);
+      const history = userId === '2' ? [{ at: '2026-10-14T09:00:00Z', from: 'pg-businessAnalyst', to: 'pg-lensUser', by: 'Ruth Aerts' }, { at: '2026-09-02T08:00:00Z', from: null, to: 'pg-businessAnalyst', by: null }] : [];
+      return user ? json({ user, history }) : json({ error: 'not_found' }, 404);
+    }
+    if (userId && moving && method === 'PUT') {
+      const user = people.find((one) => one.googleId === userId);
+      const to = permissionGroups.find((group) => group.id === (JSON.parse(init.body as string) as { groupId: string }).groupId);
+      if (!user || !to) return json({ error: 'not_found' }, 404);
+      if (userId === ME.sub) return json({ error: 'own_group' }, 403);
+      if (user.permissionGroup.id === 'pg-admin' && people.filter((one) => one.permissionGroup.id === 'pg-admin').length === 1) return json({ error: 'last_admin' }, 409);
+      user.permissionGroup = { id: to.id, name: to.name };
+      return json({ user });
+    }
+    if (path === '/permission-groups' && method === 'GET') {
+      return mayAdmin('permissionGroups') || mayAdmin('users') ? json({ groups: counted() }) : json({ error: 'forbidden', permission: 'admin.open' }, 403);
+    }
+    if (path === '/permission-groups' && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { name: string; sentence: string; from: string | null };
+      const from = permissionGroups.find((group) => group.id === body.from);
+      const made = { ...startingGroups()[2]!, id: 'pg-new', name: body.name, sentence: body.sentence, isDefault: false, locked: false, updatedBy: 'Max Verstraete', permissions: structuredClone(from ? from.permissions : NO_PERMISSIONS) };
+      permissionGroups = [...permissionGroups, made];
+      return json({ group: made }, 201);
+    }
+    const [, groupId, makesDefault] = /^\/permission-groups\/([^/]+)(\/default)?$/.exec(path) ?? [];
+    const group = permissionGroups.find((one) => one.id === groupId);
+    if (group && !makesDefault && method === 'PATCH') {
+      if (group.locked) return json({ error: 'locked' }, 409);
+      Object.assign(group, JSON.parse(init.body as string), { updatedAt: '2026-11-06T10:00:00Z', updatedBy: 'Max Verstraete' });
+      return json({ group: counted().find((one) => one.id === group.id) });
+    }
+    if (group && makesDefault && method === 'PUT') {
+      permissionGroups.forEach((one) => (one.isDefault = one.id === group.id));
+      return json({ group });
+    }
+    if (group && method === 'DELETE') {
+      const moveTo = permissionGroups.find((one) => one.id === (JSON.parse(init.body as string) as { moveTo: string }).moveTo);
+      if (group.locked) return json({ error: 'locked' }, 409);
+      if (!moveTo || moveTo.locked || moveTo.id === group.id) return json({ error: 'invalid_request' }, 400);
+      people.filter((user) => user.permissionGroup.id === group.id).forEach((user) => (user.permissionGroup = { id: moveTo.id, name: moveTo.name }));
+      if (group.isDefault) moveTo.isDefault = true;
+      permissionGroups = permissionGroups.filter((one) => one.id !== group.id);
+      return new Response(null, { status: 204 });
     }
     const anyKey = /^\/excel-keys\/([^/]+)$/.exec(path);
     if (anyKey && method === 'DELETE') {
@@ -791,7 +1030,8 @@ function serve({
     }
     const onObject = /^\/messages\/on\/(\w+)\/([^/]+)$/.exec(path);
     if (onObject) {
-      return json({ messages: talk.filter((message) => (message.subject as { kind: string; id: string }).kind === onObject[1] && (message.subject as { id: string }).id === onObject[2]) });
+      const messages = talk.filter((message) => (message.subject as { kind: string; id: string }).kind === onObject[1] && (message.subject as { id: string }).id === onObject[2]);
+      return json({ messages, ...(writable ? { kinds: writable } : {}) });
     }
     if (path === '/messages' && method === 'POST') {
       const body = JSON.parse(init.body as string) as { subjectKind: string; subjectId: string; kind: string; text: string };
@@ -812,6 +1052,17 @@ function serve({
       (message.replies as unknown[]).push({ id: 'r-1', type: 'MSG-CNV-04', kind: 'reply', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { text: body.text }, createdAt: '2026-10-29T10:00:00Z', mine: true });
       message.state = message.state === 'open' ? 'answered' : message.state;
       return json({ message }, 201);
+    }
+    // Closed with an optional line why, and reopened (FR-CV-16, MSG-CNV-07).
+    if (message && path === `/messages/${message.id as string}/close` && method === 'POST') {
+      const body = JSON.parse(init.body as string) as { text: string };
+      message.state = 'closed';
+      (message.replies as unknown[]).push({ id: 'c-1', type: 'MSG-CNV-07', kind: 'closing', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { writer: 'Max Verstraete', ...(body.text ? { text: body.text } : {}) }, createdAt: '2026-10-29T11:00:00Z', mine: true });
+      return json({ message });
+    }
+    if (message && path === `/messages/${message.id as string}/reopen` && method === 'POST') {
+      message.state = 'open';
+      return json({ message });
     }
     if (message && path === `/messages/${message.id as string}/decision` && method === 'POST') {
       const body = JSON.parse(init.body as string) as { outcome: string; text: string };
@@ -854,6 +1105,17 @@ describe('the web app, signed out', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
+  it('shows the sign-in on a background of the set, picked at random, without a photo or its story (DEC-UX-173)', async () => {
+    serve({ signedIn: false });
+    // The last of the set by day: Concrete, a picture.
+    const random = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    render(App, { config: CONFIG });
+    await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    random.mockRestore();
+    expect(document.querySelector('.picture')?.getAttribute('style')).toContain('concrete');
+    expect(screen.queryByRole('figure')).toBeNull();
+  });
+
   it('names a refused account, and lets the User choose another (FR-UM-02)', async () => {
     serve({ signedIn: false });
     open('/collections#account=max%40gmail.com');
@@ -874,6 +1136,15 @@ describe('the web app, signed out', () => {
 });
 
 describe('the web app, signed in', () => {
+  it('shows the sign-in, not a loader, when the session ends while the User works, and returns to the page after', async () => {
+    serve({ sessionEndsAt: '/collections' });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const signIn = await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    expect(signIn.getAttribute('href')).toBe('/auth/login?next=%2Fcollections');
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
   it('opens on Collections, with the rail and its panel', async () => {
     serve();
     open('/');
@@ -900,20 +1171,41 @@ describe('the web app, signed in', () => {
     open('/collections');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('link', { name: 'Grafieken' }));
-    expect(location.pathname).toBe('/charts');
+    // Charts opens on its first chart (DEC-UX-182).
+    await vi.waitFor(() => expect(location.pathname).toBe('/charts/movingWindowAverage'));
     expect(screen.getByRole('complementary', { name: 'Grafieken' }).inert).toBe(false);
-    expect(within(screen.getByRole('main')).getByRole('heading', { level: 1, name: 'Grafieken' })).toBeTruthy();
+    expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Voortschrijdend gemiddelde' })).toBeTruthy();
   });
 
-  it('switches between light and dark, and remembers it', async () => {
+  it('follows the system; its switch shows where it goes and holds for the session only (DEC-UX-172)', async () => {
+    let systemChanged: ((event: { matches: boolean }) => void) | undefined;
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: false,
+      media: query,
+      addEventListener: (_type: string, listener: (event: { matches: boolean }) => void) => {
+        if (query.includes('prefers-color-scheme')) systemChanged = listener;
+      },
+      removeEventListener() {},
+    }));
     const calls = serve();
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('button', { name: 'Wissel tussen licht en donker' }));
+    expect(document.documentElement.dataset.theme).toBe('light');
+    // By day the moon, which goes to dark.
+    const toDark = await screen.findByRole('button', { name: 'Naar donker' });
+    const moon = toDark.innerHTML;
+    await fireEvent.click(toDark);
     expect(document.documentElement.dataset.theme).toBe('dark');
     // At once: every transition is off until the new colours are on screen (DEC-UX-149).
     expect(document.documentElement.classList.contains('theme-switching')).toBe(true);
     await vi.waitFor(() => expect(document.documentElement.classList.contains('theme-switching')).toBe(false));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/theme', body: { value: 'dark' } });
+    // By night the sun, which goes back to light; nothing is remembered.
+    expect(screen.getByRole('button', { name: 'Naar licht' }).innerHTML).not.toBe(moon);
+    expect(calls.some((call) => call.path.startsWith('/me/settings/theme'))).toBe(false);
+    // A change of the system wins over the switch.
+    systemChanged?.({ matches: true });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('dark'));
+    systemChanged?.({ matches: false });
+    await vi.waitFor(() => expect(document.documentElement.dataset.theme).toBe('light'));
   });
 
   it('opens My page behind the initials, where the language of Data Hub is chosen (DEC-UX-85)', async () => {
@@ -935,9 +1227,9 @@ describe('the web app, signed in', () => {
     const calls = serve({ settings: { language: 'en' } });
     open('/me/background');
     render(App, { config: CONFIG });
-    await fireEvent.click(await screen.findByRole('radio', { name: /Fresh piste/ }));
-    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'piste' } });
-    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Fresh piste');
+    await fireEvent.click(await screen.findByRole('radio', { name: /Concrete/ }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/me/settings/background.light', body: { value: 'concrete' } });
+    expect(screen.getByRole('radio', { checked: true }).textContent).toContain('Concrete');
   });
 
   it('lists the Excel keys of the User on My page, makes one shown only once, and revokes one after asking (FR-PL-01, FR-PL-02)', async () => {
@@ -981,6 +1273,18 @@ describe('the web app, signed in', () => {
     expect(within(revoked).queryByRole('button', { name: 'Revoke' })).toBeNull();
   });
 
+  it('shows three dots where a page will show, while it is read (DEC-UX-165)', async () => {
+    serve();
+    // catalogue takes its time with the Resource: it does not answer during the test.
+    const answer = globalThis.fetch;
+    vi.stubGlobal('fetch', (input: string, init?: RequestInit) => (input === `${CONFIG.catalogueUrl}/resources/r2` ? new Promise(() => {}) : answer(input, init)));
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('progressbar', { name: 'Laden…' })).toBeTruthy();
+    expect(main.queryByRole('heading', { level: 1 })).toBeNull();
+  });
+
   it('shows one page for what does not exist or may not be seen (DEC-UX-32)', async () => {
     serve();
     open('/collections/secret');
@@ -991,7 +1295,7 @@ describe('the web app, signed in', () => {
 
 describe('the web app, for the Data Team', () => {
   it('shows the Resources without a Collection on top of the panel of Collections, folded until unfolded (FR-SR-35, DEC-UX-16, DEC-UX-133)', async () => {
-    serve({ roles: ['datateam'] });
+    serve({ as: 'admin' });
     open('/collections');
     render(App, { config: CONFIG });
     const toggle = await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' });
@@ -1004,7 +1308,7 @@ describe('the web app, for the Data Team', () => {
   });
 
   it('unfolds Without a Collection when one of its Resources is open (DEC-UX-133)', async () => {
-    serve({ roles: ['datateam'] });
+    serve({ as: 'admin' });
     open('/resources/r1');
     render(App, { config: CONFIG });
     expect((await screen.findByRole('link', { name: /Saved searches/ })).getAttribute('aria-current')).toBe('page');
@@ -1012,7 +1316,7 @@ describe('the web app, for the Data Team', () => {
   });
 
   it('opens the page of a waiting Resource: where it came from, its description and its maturity (FR-SR-07, FR-SR-09)', async () => {
-    serve({ roles: ['datateam'] });
+    serve({ as: 'admin' });
     open('/collections');
     render(App, { config: CONFIG });
     await fireEvent.click(await screen.findByRole('button', { name: 'Toon wat Zonder Collection bevat' }));
@@ -1024,15 +1328,19 @@ describe('the web app, for the Data Team', () => {
     const notice = screen.getByRole('status');
     expect(notice.textContent).toContain('Nog in geen Collection.');
     expect(notice.textContent).toContain('Hij kwam binnen op 21 okt via de exposure datahub_savedSearches in immoscoop_dataplatform_sql.');
+    // Its Overview opens on its Summary (FR-RC-19).
     expect(main.getByText('One row per saved search.')).toBeTruthy();
-    expect(main.getByText('2 van de 2 kolommen hebben nog geen beschrijving')).toBeTruthy();
     expect(await main.findByText('Geregistreerd via de exposure datahub_savedSearches')).toBeTruthy();
+    await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
+    // Every Level explained: where it stands, and what the next one takes (FR-MR-16).
+    expect(main.getByText(/Geregistreerd op 21 okt 2026, via de exposure datahub_savedSearches/)).toBeTruthy();
+    expect(main.getByText(/Vraagt een beschrijving in dbt van de tabel en van minstens één veld.*Nu heeft de tabel er een, en 0 van zijn 2 velden/)).toBeTruthy();
     expect(document.title).toBe('Data Hub — Saved searches');
     expect(screen.getByRole('link', { name: /Saved searches/ }).getAttribute('aria-current')).toBe('page');
   });
 
   it('adds a waiting Resource to a Collection from its own page: the Collection first, then its grain (FR-CO-31, DEC-UX-131)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+    const calls = serve({ as: 'admin' });
     open('/resources/r1');
     render(App, { config: CONFIG });
     const notice = within(await screen.findByRole('status'));
@@ -1078,7 +1386,7 @@ describe('Admin, for the Data Team', () => {
   });
 
   it('sits in the rail after the Learning Centre, a little apart, and opens on Webhooks (DEC-UX-130, OP-UX-51, OP-UX-52)', async () => {
-    serve({ roles: ['datateam'] });
+    serve({ as: 'admin' });
     open('/admin');
     render(App, { config: UAT });
     const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
@@ -1089,7 +1397,7 @@ describe('Admin, for the Data Team', () => {
     const links = rail.getAllByRole('link').map((link) => link.getAttribute('aria-label'));
     expect(links.indexOf('Admin')).toBe(links.indexOf('Learning Centre') + 1);
     const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
-    expect(panel.getByText('Voor het Data Team: wat Data Hub uat voedt, en wie er van buiten bij kan.')).toBeTruthy();
+    expect(panel.getByText('Voor het Data Team: wat Data Hub uat voedt, wie er bij kan, en wat elke User mag.')).toBeTruthy();
     const tool = panel.getByRole('link', { name: /Webhooks/ });
     expect(tool.getAttribute('aria-current')).toBe('page');
     // The deliveries to look at: one refused, one failed.
@@ -1099,7 +1407,7 @@ describe('Admin, for the Data Team', () => {
   });
 
   it('shows the Source Job of each dbt project, and changes it to a job of this environment in a sheet (FR-AR-18)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+    const calls = serve({ as: 'admin' });
     open('/admin/webhooks');
     render(App, { config: UAT });
     const tile = within(await screen.findByRole('region', { name: 'immoscoop_dataplatform_sql' }));
@@ -1108,7 +1416,7 @@ describe('Admin, for the Data Team', () => {
     expect(tile.getByText('Gepland')).toBeTruthy();
     expect(tile.getByText('Maakt de docs')).toBeTruthy();
     expect(tile.getByText(/Laatste set: run 58101536, .*, verwerkt/)).toBeTruthy();
-    expect(tile.getByText('Uit de configuratie van Data Hub uat')).toBeTruthy();
+    expect(tile.getByText('Overgenomen uit de configuratie van Data Hub uat')).toBeTruthy();
     expect(screen.getByText('https://registry.test/webhooks/dbt-cloud')).toBeTruthy();
 
     await fireEvent.click(tile.getByRole('button', { name: 'Wijzig' }));
@@ -1121,6 +1429,9 @@ describe('Admin, for the Data Team', () => {
     expect(sheet.getByText(/Een CI-job: hij bouwt pull requests/)).toBeTruthy();
     expect((sheet.getByRole('radio', { name: /^CI\/CD - prod/ }) as HTMLInputElement).disabled).toBe(true);
     expect(sheet.getByText('Een job van een andere omgeving, die een andere Data Hub leest.')).toBeTruthy();
+    // Nor can a job that does not generate the docs (DEC-UX-166).
+    expect((sheet.getByRole('radio', { name: /^UAT - Hourly freshness/ }) as HTMLInputElement).disabled).toBe(true);
+    expect(sheet.getByText('Hij maakt geen docs: zijn runs hebben geen catalog.')).toBeTruthy();
     await fireEvent.input(sheet.getByRole('searchbox', { name: 'Zoek een job op naam of ID' }), { target: { value: '352118' } });
     expect(sheet.queryByRole('radio', { name: /^daily UAT build/ })).toBeNull();
     await fireEvent.click(sheet.getByRole('radio', { name: /^UAT - Deploy - Merge build/ }));
@@ -1134,8 +1445,45 @@ describe('Admin, for the Data Team', () => {
     expect(changed.getByText(/^Ingesteld door Max Verstraete/)).toBeTruthy();
   });
 
+  it('follows a dbt project of the account with one of its jobs, and stops following one after asking (DEC-AR-10, DEC-UX-166)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    await screen.findByRole('region', { name: 'immoscoop_dataplatform_sql' });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Volg een dbt project' }));
+    const sheet = within(screen.getByRole('dialog', { name: 'Volg een dbt project' }));
+    // Only the dbt projects Data Hub does not follow yet.
+    const projects = within(await sheet.findByRole('radiogroup', { name: 'dbt projecten' }));
+    expect(projects.queryByRole('radio', { name: /dbt-prod/ })).toBeNull();
+    const follow = sheet.getByRole('button', { name: 'Volg het' }) as HTMLButtonElement;
+    expect(follow.disabled).toBe(true);
+    await fireEvent.click(projects.getByRole('radio', { name: /^dbt-marketing/ }));
+    expect(await sheet.findByText('De jobs van dbt-marketing')).toBeTruthy();
+    expect(((await sheet.findByRole('radio', { name: /^PROD - Daily export/ })) as HTMLInputElement).disabled).toBe(true);
+    await fireEvent.click(sheet.getByRole('radio', { name: /^UAT - Deploy - Merge build/ }));
+    await fireEvent.click(follow);
+    await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(calls).toContainEqual({ method: 'POST', path: '/admin/source-jobs', body: { projectId: '15890', jobId: '802114' } });
+    const added = within(screen.getByRole('region', { name: 'dbt-marketing' }));
+    expect(added.getByText(/^Ingesteld door Max Verstraete/)).toBeTruthy();
+
+    // Stopping asks first, in the place of the tile, and says the Resources stay.
+    const tile = within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql' }));
+    await fireEvent.click(tile.getByRole('button', { name: 'Niet meer volgen' }));
+    const asking = within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql niet meer volgen?' }));
+    expect(asking.getByText(/Zijn Resources blijven zoals ze zijn, op zijn laatste versie/)).toBeTruthy();
+    await fireEvent.click(asking.getByRole('button', { name: 'Annuleer' }));
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+    await fireEvent.click(within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql' })).getByRole('button', { name: 'Niet meer volgen' }));
+    await fireEvent.click(within(screen.getByRole('region', { name: 'immoscoop_dataplatform_sql niet meer volgen?' })).getByRole('button', { name: 'Niet meer volgen' }));
+    await vi.waitFor(() => expect(screen.queryByRole('region', { name: /^immoscoop_dataplatform_sql/ })).toBeNull());
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/admin/source-jobs/9367' });
+    expect(screen.getByRole('region', { name: 'dbt-marketing' })).toBeTruthy();
+  });
+
   it('lists every delivery with what Data Hub did, and processes a failed set again (FR-AR-19, FR-AR-14)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+    const calls = serve({ as: 'admin' });
     open('/admin/webhooks');
     render(App, { config: UAT });
     const list = within(await screen.findByRole('region', { name: 'Leveringen' }));
@@ -1172,7 +1520,7 @@ describe('Admin, for the Data Team', () => {
     const soon = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString();
     const later = new Date(Date.now() + 200 * 24 * 60 * 60 * 1000).toISOString();
     const calls = serve({
-      roles: ['datateam'],
+      as: 'admin',
       settings: { language: 'en' },
       everyKey: [
         { id: 'k-1', name: 'Monthly KBC report', createdAt: '2026-09-02T08:00:00Z', lastUsedAt: '2026-10-31T08:12:00Z', expiresAt: later, revokedAt: null, revokedBy: null, revokedById: null, user: { id: 'an', name: 'An Claes', email: 'an.claes@immoscoop.be' } },
@@ -1211,6 +1559,339 @@ describe('Admin, for the Data Team', () => {
     expect(table.getByText('revoked today by you')).toBeTruthy();
     await vi.waitFor(() => expect(panel.getByRole('link', { name: /Excel keys/ }).textContent).toContain('1'));
   });
+});
+
+describe('the Permissions of the User (FR-PL-14)', () => {
+  const UAT: Config = { ...CONFIG, environment: 'uat' };
+
+  it('shows Admin to a User with admin.open, with only the tools chosen, and opens on the first of them', async () => {
+    const permissions = structuredClone(STARTING_GROUPS.businessAnalyst.permissions);
+    permissions['admin.open'] = { on: true, values: { tools: ['users'] } };
+    serve({ permissions });
+    open('/admin');
+    render(App, { config: UAT });
+    const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
+    expect(await rail.findByRole('link', { name: 'Admin' })).toBeTruthy();
+    await vi.waitFor(() => expect(location.pathname).toBe('/admin/users'));
+    const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
+    expect(panel.getByRole('link', { name: /Users/ }).getAttribute('aria-current')).toBe('page');
+    expect(panel.queryByRole('link', { name: /Webhooks/ })).toBeNull();
+    expect(panel.queryByRole('link', { name: /Excel keys/ })).toBeNull();
+    expect(panel.queryByRole('link', { name: /Permission groups/ })).toBeNull();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Users' })).toBeTruthy();
+  });
+
+  it('shows a tool of Admin that was not chosen as what may not be seen', async () => {
+    const permissions = structuredClone(STARTING_GROUPS.businessAnalyst.permissions);
+    permissions['admin.open'] = { on: true, values: { tools: ['users'] } };
+    const calls = serve({ permissions });
+    open('/admin/webhooks');
+    render(App, { config: UAT });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+    expect(calls.some((call) => call.path.startsWith('/admin/'))).toBe(false);
+  });
+
+  it('gives a Business analyst Query, and no Admin', async () => {
+    serve();
+    open('/collections');
+    render(App, { config: CONFIG });
+    const rail = within(await screen.findByRole('navigation', { name: 'Hoofdnavigatie' }));
+    expect(rail.getByRole('link', { name: 'Query' })).toBeTruthy();
+    expect(rail.queryByRole('link', { name: 'Admin' })).toBeNull();
+  });
+
+  it('gives a Lens user no Query: not in the rail, not at its address, not on the page of a Resource (DEC-PL-07)', async () => {
+    serve({ as: 'lensUser' });
+    open('/query');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
+    const rail = within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' }));
+    expect(rail.queryByRole('link', { name: 'Query' })).toBeNull();
+    expect(rail.queryByRole('link', { name: 'Admin' })).toBeNull();
+    expect(rail.getByRole('link', { name: 'Collections' })).toBeTruthy();
+  });
+
+  it('shows a Lens user a Resource without Query, Preview or a new Collection', async () => {
+    serve({ as: 'lensUser' });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' })).toBeTruthy();
+    expect(main.queryByRole('link', { name: /^Query$/ })).toBeNull();
+    expect(main.queryByRole('tab', { name: 'Voorbeeld' })).toBeNull();
+    expect(main.queryByRole('tab', { name: 'Geschiedenis' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Nieuwe Collection' })).toBeNull();
+  });
+
+  it('reads the Permissions again when a service refuses for one the User no longer has (EC-PL-01)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    const before = calls.filter((call) => call.path === '/me').length;
+    // Another Admin took Users away meanwhile: identity refuses, with the Permission it takes.
+    vi.stubGlobal('fetch', async (input: string, init: RequestInit = {}) => {
+      const path = input.replace(CONFIG.identityUrl, '');
+      calls.push({ method: init.method ?? 'GET', path });
+      const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+      if (path === '/auth/token') return json({ access_token: 'renewed', expires_in: 3600 });
+      if (path === '/me') return json({ ...ME, permissionGroup: { id: 'pg-businessAnalyst', name: 'Business analyst' }, permissions: STARTING_GROUPS.businessAnalyst.permissions });
+      return json({ error: 'forbidden', message: 'admin.open', permission: 'admin.open' }, 403);
+    });
+    await fireEvent.click(screen.getByRole('table', { name: 'Users' }).querySelector('tr[aria-label="An Claes"]')!);
+    const sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Business analyst/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.path === '/me').length).toBe(before + 1));
+    expect(await screen.findByText(/Data Hub weigerde dit: het vraagt de Permission “Admin openen”/)).toBeTruthy();
+    const rail = within(screen.getByRole('navigation', { name: 'Hoofdnavigatie' }));
+    await vi.waitFor(() => expect(rail.queryByRole('link', { name: 'Admin' })).toBeNull());
+  });
+});
+
+describe('the flags the services send per object (FR-PL-14, DEC-PL-03)', () => {
+  const ONLY_GAPS = { description: false, behaviour: false, pitfalls: false, availableSince: false, gaps: true, keyFields: false, entityMapping: false };
+
+  it('lets a User describe a Resource only where catalogue says, and publish or deprecate it only as it says', async () => {
+    serve({ groups: ['g1'], weekly: { canEdit: true, canDescribe: ONLY_GAPS, canPublish: false, canDeprecate: false, canAssign: false } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    // Of its Owner Unit, yet not to publish: catalogue says so.
+    expect(main.queryByRole('button', { name: /Publiceren/ })).toBeNull();
+    expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Beschrijving' }));
+    expect(main.queryByRole('button', { name: 'Bewerken' })).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Known Behaviour' }));
+    expect(main.queryByRole('button', { name: 'Bewerken' })).toBeNull();
+  });
+
+  it('offers only the kinds of Message the User may write, and no reply where they may not (DEC-PL-04)', async () => {
+    serve({ as: 'lensUser', writable: ['question', 'signal'], conversations: [{ ...QUESTION, subject: { kind: 'resource', id: 'r2', name: 'Weekly lead volume', collection: null, exists: true }, mayReply: false }] });
+    open('/resources/r2/messages');
+    render(App, { config: CONFIG });
+    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
+    await vi.waitFor(() => expect(sheet.getAllByRole('radio').map((radio) => radio.textContent?.trim()).slice(0, 2)).toEqual(['Question', 'Signal']));
+    expect(sheet.queryByRole('radio', { name: 'Remark' })).toBeNull();
+    expect(await sheet.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(sheet.queryByRole('button', { name: /Antwoorden/ })).toBeNull();
+  });
+});
+
+describe('Users, in Admin', () => {
+  const UAT: Config = { ...CONFIG, environment: 'uat' };
+  const rowsOf = () => [...screen.getByRole('table', { name: 'Users' }).querySelectorAll('tbody tr')] as HTMLElement[];
+  const row = (name: string) => screen.getByRole('table', { name: 'Users' }).querySelector(`tr[aria-label="${name}"]`) as HTMLElement;
+
+  it('lists every User with their Permission group, Owner Units and use, found by a search and a filter (FR-PL-06)', async () => {
+    serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    expect(screen.getByText(/Een nieuwe User krijgt/).textContent).toContain('Lens user, de standaard');
+    // The last signed in on top; who can no longer sign in greyed.
+    expect(rowsOf().map((one) => one.getAttribute('aria-label'))).toEqual(['Max Verstraete', 'An Claes', 'Elif Yilmaz', 'Bram De Smet']);
+    expect(row('Max Verstraete').textContent).toContain('jij');
+    expect(row('Max Verstraete').textContent).toContain('Admin');
+    // The Owner Units, named by the Collections the Admin sees.
+    await vi.waitFor(() => expect(row('An Claes').textContent).toContain('Sales'));
+    expect(row('Elif Yilmaz').textContent).toContain('nieuw');
+    expect(row('Elif Yilmaz').textContent).toContain('de standaard');
+    expect(row('Bram De Smet').classList.contains('gone')).toBe(true);
+    expect(row('Bram De Smet').textContent).toContain('kan niet aanmelden');
+    expect(within(row('Elif Yilmaz')).getByRole('img', { name: 'Niet in Claude' })).toBeTruthy();
+
+    await fireEvent.click(screen.getByRole('radio', { name: 'Lens user 2' }));
+    expect(rowsOf().map((one) => one.getAttribute('aria-label'))).toEqual(['An Claes', 'Elif Yilmaz']);
+    await fireEvent.click(screen.getByRole('radio', { name: 'Alle 4' }));
+    await fireEvent.input(screen.getByRole('searchbox', { name: 'Zoek een User op naam of adres' }), { target: { value: 'bram.desmet' } });
+    expect(rowsOf().map((one) => one.getAttribute('aria-label'))).toEqual(['Bram De Smet']);
+    const panel = within(screen.getByRole('complementary', { name: 'Admin' }));
+    await vi.waitFor(() => expect(panel.getByRole('link', { name: /Users/ }).textContent).toContain('4'));
+  });
+
+  it('changes the Permission group of a User after showing what they gain and lose (FR-PL-07, FR-PL-11)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    await fireEvent.click(row('An Claes'));
+    let sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
+    expect(sheet.getByText('an.claes@immoscoop.be')).toBeTruthy();
+    expect(sheet.getByText(/uit Google Workspace/).closest('dd')?.textContent).toContain('Sales');
+    expect(await sheet.findByText('Van Business analyst naar Lens user, door Ruth Aerts')).toBeTruthy();
+    expect(sheet.getByText('Business analyst, de standaard, bij hun eerste aanmelding')).toBeTruthy();
+    expect(sheet.getByText('A change takes effect within 15 minutes, in the web app, in Claude and in Excel.'.length ? 'Een wijziging werkt binnen 15 minuten, in de webapp, in Claude en in Excel.' : '')).toBeTruthy();
+    expect((sheet.getByRole('button', { name: 'Bewaren' }) as HTMLButtonElement).disabled).toBe(true);
+    expect(sheet.getByRole('radio', { name: /Lens user/ }).closest('label')?.textContent).toContain('nu');
+
+    // Another group: what changes shows before it is saved.
+    await fireEvent.click(sheet.getByRole('radio', { name: /Business analyst/ }));
+    expect(sheet.getByText('Wat er verandert voor An Claes')).toBeTruthy();
+    const gains = [...document.querySelectorAll('.changes li.gain')].map((line) => line.textContent ?? '');
+    expect(gains.some((line) => line.includes('Queries maken en uitvoeren'))).toBe(true);
+    expect(gains.find((line) => line.includes('Hoe een resultaat Claude bereikt'))).toContain('In Claude: Claude leest de rijen en werkt ermee');
+    expect(document.querySelectorAll('.changes li.loss')).toHaveLength(0);
+    expect(document.querySelector('.changes li.stays')?.textContent).toContain('Hun Owner Units, en dus de Collections die ze bezitten, veranderen niet.');
+
+    await fireEvent.click(sheet.getByRole('button', { name: 'Bewaren' }));
+    expect(calls).toContainEqual({ method: 'PUT', path: '/users/2/permission-group', body: { groupId: 'pg-businessAnalyst' } });
+    expect(await screen.findByText('An Claes zit nu in Business analyst. Het werkt binnen 15 minuten.')).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'An Claes' })).toBeNull();
+    expect(row('An Claes').textContent).toContain('Business analyst');
+    expect(row('An Claes').textContent).toContain('door jou gewijzigd');
+
+    // Back to Lens user: now they lose what they gained.
+    await fireEvent.click(row('An Claes'));
+    sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Lens user/ }));
+    const losses = [...document.querySelectorAll('.changes li.loss')].map((line) => line.textContent ?? '');
+    expect(losses.some((line) => line.includes('Queries maken en uitvoeren'))).toBe(true);
+    const claude = losses.find((line) => line.includes('Hoe een resultaat Claude bereikt'));
+    expect(claude).toContain('Enkel in een kaart');
+    expect(document.querySelector('.changes li.loss del')).toBeTruthy();
+  });
+
+  it('keeps the own Permission group locked, with why (FR-PL-08)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    await fireEvent.click(row('Max Verstraete'));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Max Verstraete' }));
+    expect(sheet.getByText(/Je kan je eigen Permission group niet wijzigen, zodat niemand zichzelf per vergissing Admin afneemt/)).toBeTruthy();
+    expect(sheet.getAllByRole('radio').every((radio) => (radio as HTMLInputElement).disabled)).toBe(true);
+    expect(sheet.queryByRole('button', { name: 'Bewaren' })).toBeNull();
+    await fireEvent.click(sheet.getAllByRole('button', { name: 'Sluiten' }).at(-1)!);
+    expect(calls.some((call) => call.method === 'PUT')).toBe(false);
+  });
+
+  it('says so when the last User of Admin would leave it (FR-PL-08)', async () => {
+    serve({ as: 'admin', users: [{ ...MAX_USER, permissionGroup: { id: 'pg-businessAnalyst', name: 'Business analyst' } }, { ...AN_USER, permissionGroup: { id: 'pg-admin', name: 'Admin' } }] });
+    open('/admin/users');
+    render(App, { config: UAT });
+    await screen.findByRole('table', { name: 'Users' });
+    await fireEvent.click(row('An Claes'));
+    const sheet = within(await screen.findByRole('dialog', { name: 'An Claes' }));
+    await fireEvent.click(sheet.getByRole('radio', { name: /Lens user/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Bewaren' }));
+    expect((await sheet.findByRole('alert')).textContent).toBe('Admin houdt minstens één User, zodat iemand Data Hub altijd kan beheren, en dit is de laatste. Geef eerst een andere User Admin.');
+    expect(screen.getByRole('dialog', { name: 'An Claes' })).toBeTruthy();
+  });
+});
+
+describe('Permission groups, in Admin', () => {
+  const UAT: Config = { ...CONFIG, environment: 'uat' };
+  const opened = () => within(screen.getByRole('region', { name: 'De geopende Permission group' }));
+
+  it('shows a group with its Permissions by part, its values while yes, and saves every change at once (FR-PL-05, FR-PL-09)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    const list = within(await screen.findByRole('region', { name: 'Permission groups' }));
+    expect(list.getByRole('button', { name: /^Lens user/ }).textContent).toContain('Standaard voor nieuwe Users');
+    await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
+    expect(opened().getByRole('heading', { level: 2, name: 'Lens user' })).toBeTruthy();
+    expect(opened().getAllByRole('region').map((part) => part.getAttribute('aria-label'))).toEqual(['Collections en Resources', 'Query', 'Lenses', 'Berichten', 'Claude, via de MCP', 'Excel', 'Admin']);
+    expect(screen.queryByText(/nog niet bewaard/)).toBeNull();
+
+    // Yes shows its values; the change is marked and counted.
+    const manage = opened().getByRole('radiogroup', { name: 'Collections beheren' });
+    expect(opened().queryByRole('radiogroup', { name: 'Welke Collections' })).toBeNull();
+    await fireEvent.click(within(manage).getByRole('radio', { name: 'Ja' }));
+    expect(within(opened().getByRole('radiogroup', { name: 'Welke Collections' })).getAllByRole('radio')).toHaveLength(2);
+    expect(manage.closest('.permission')?.textContent).toContain('gewijzigd');
+    expect(screen.getByText(/1 wijziging, nog niet bewaard\. Bewaard werkt ze binnen 15 minuten voor de 2 Users van Lens user\./)).toBeTruthy();
+    await fireEvent.input(opened().getByRole('spinbutton', { name: 'Hoogstens zoveel keys' }), { target: { value: '5' } });
+    expect(screen.getByText(/2 wijzigingen, nog niet bewaard/)).toBeTruthy();
+    expect(opened().getByText('was geen grens')).toBeTruthy();
+    expect(list.getByRole('button', { name: /^Lens user/ }).textContent).toContain('2 wijzigingen');
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Bewaren' }));
+    const patch = calls.find((call) => call.method === 'PATCH' && call.path === '/permission-groups/pg-lensUser');
+    const sent = (patch?.body as { permissions: Permissions }).permissions;
+    expect(sent['collections.manage']).toEqual({ on: true, values: { reach: 'theirs' } });
+    expect(sent['excel.keys'].values.most).toBe(5);
+    expect(sent['queries.make'].on).toBe(false);
+    await vi.waitFor(() => expect(screen.queryByText(/nog niet bewaard/)).toBeNull());
+  });
+
+  it('discards the changes not saved', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    await screen.findByRole('region', { name: 'De geopende Permission group' });
+    await fireEvent.click(within(opened().getByRole('radiogroup', { name: 'Over aanvragen beslissen' })).getByRole('radio', { name: 'Ja' }));
+    expect(screen.getByText(/1 wijziging, nog niet bewaard/)).toBeTruthy();
+    await fireEvent.click(screen.getByRole('button', { name: 'Verwerpen' }));
+    expect(screen.queryByText(/nog niet bewaard/)).toBeNull();
+    expect(calls.some((call) => call.method === 'PATCH')).toBe(false);
+  });
+
+  it('shows Admin locked: every Permission at its widest, never changed, never deleted (FR-PL-08)', async () => {
+    serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    const list = within(await screen.findByRole('region', { name: 'Permission groups' }));
+    await fireEvent.click(list.getByRole('button', { name: /^Admin/ }));
+    expect(opened().getByText(/Admin kan alles, en houdt dat/)).toBeTruthy();
+    expect(opened().queryAllByRole('radio')).toHaveLength(0);
+    expect(opened().queryByRole('button', { name: 'Admin' })).toBeNull();
+    expect(opened().getAllByText('Ja').length).toBeGreaterThan(10);
+    expect(opened().queryByRole('button', { name: /verwijderen/ })).toBeNull();
+    expect(opened().getByRole('button', { name: /Dupliceren/ })).toBeTruthy();
+  });
+
+  it('deletes a group, its Users going to the group chosen, which becomes the default (FR-PL-10)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    const list = within(await screen.findByRole('region', { name: 'Permission groups' }));
+    await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
+    await fireEvent.click(opened().getByRole('button', { name: 'Lens user verwijderen…' }));
+    expect(opened().getByText('Lens user verwijderen?')).toBeTruthy();
+    const where = within(opened().getByRole('radiogroup', { name: 'Waar zijn Users naartoe gaan' }));
+    expect((where.getByRole('radio', { name: /Admin: Users komen er één voor één bij/ }) as HTMLInputElement).disabled).toBe(true);
+    expect((where.getByRole('radio', { name: /^Business analyst/ }) as HTMLInputElement).checked).toBe(true);
+    await fireEvent.click(opened().getByRole('button', { name: 'Verwijder en verplaats 2 Users' }));
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/permission-groups/pg-lensUser', body: { moveTo: 'pg-businessAnalyst' } });
+    await vi.waitFor(() => expect(list.queryByRole('button', { name: /^Lens user/ })).toBeNull());
+    expect(list.getByRole('button', { name: /^Business analyst/ }).textContent).toContain('Standaard voor nieuwe Users');
+    expect(opened().getByRole('heading', { level: 2, name: 'Business analyst' })).toBeTruthy();
+  });
+
+  it('makes a new group as a copy of another, without Users (FR-PL-10)', async () => {
+    const calls = serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    await screen.findByRole('region', { name: 'De geopende Permission group' });
+    await fireEvent.click(screen.getByRole('button', { name: 'Nieuwe Permission group' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Nieuwe Permission group' }));
+    expect(sheet.getByText('Ze begint zonder Users. Voeg ze toe op Users, één voor één.')).toBeTruthy();
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Sales leads' } });
+    await fireEvent.input(sheet.getByRole('textbox', { name: 'In één zin, wat ze toelaat' }), { target: { value: 'Lenses on leads' } });
+    await fireEvent.click(sheet.getByRole('radio', { name: /^Lens user/ }));
+    await fireEvent.click(sheet.getByRole('button', { name: 'Maak ze' }));
+    expect(calls).toContainEqual({ method: 'POST', path: '/permission-groups', body: { name: 'Sales leads', sentence: 'Lenses on leads', from: 'pg-lensUser' } });
+    expect(await screen.findByRole('heading', { level: 2, name: 'Sales leads' })).toBeTruthy();
+    expect(screen.queryByRole('dialog', { name: 'Nieuwe Permission group' })).toBeNull();
+  });
+
+  it('leads from a group to its Users, filtered on it', async () => {
+    serve({ as: 'admin' });
+    open('/admin/permission-groups');
+    render(App, { config: UAT });
+    const list = within(await screen.findByRole('region', { name: 'Permission groups' }));
+    await fireEvent.click(list.getByRole('button', { name: /^Lens user/ }));
+    await fireEvent.click(opened().getByRole('link', { name: 'bekijk ze op Users' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/admin/users'));
+    await screen.findByRole('table', { name: 'Users' });
+    expect((screen.getByRole('radio', { name: 'Lens user 2' }) as HTMLElement).getAttribute('aria-checked')).toBe('true');
+    expect(rowsOf().map((one) => one.getAttribute('aria-label'))).toEqual(['An Claes', 'Elif Yilmaz']);
+  });
+
+  const rowsOf = () => [...screen.getByRole('table', { name: 'Users' }).querySelectorAll('tbody tr')] as HTMLElement[];
 });
 
 describe('the web app, with Collections', () => {
@@ -1343,13 +2024,43 @@ describe('the web app, with Collections', () => {
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
     expect(main.getByText('Enkel groepen waar je zelf in zit. De Owner Unit staat in voor de Resources van de Collection.')).toBeTruthy();
     // It still holds a Resource, so it cannot be dissolved (FR-CO-10).
     expect((main.getByRole('button', { name: 'Opheffen' }) as HTMLButtonElement).disabled).toBe(true);
     await fireEvent.input(main.getByRole('textbox', { name: /Beschrijving/ }), { target: { value: 'Every credit lead.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { description: 'Every credit lead.' } }));
+  });
+
+  it('changes the name or description of a Collection with a click on it, as a query does, and only for who may (DEC-UX-162)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: 'Credit leads' });
+    await fireEvent.click(within(heading).getByRole('button'));
+    // Both turn into fields; only what changed is sent.
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Credit leads in' } });
+    expect(main.getByRole('textbox', { name: 'Beschrijving' })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1', body: { name: 'Credit leads in' } }));
+    expect(await main.findByRole('heading', { level: 1, name: 'Credit leads in' })).toBeTruthy();
+    // An empty description is not saved: a Collection keeps one.
+    await fireEvent.click(within(main.getByRole('heading', { level: 1, name: 'Credit leads in' })).getByRole('button'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving' }), { target: { value: ' ' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    expect(await main.findByRole('alert')).toBeTruthy();
+    expect(calls.filter((call) => call.method === 'PATCH')).toHaveLength(1);
+  });
+
+  it('shows a colleague the name and description of a Collection as plain text (DEC-UX-162)', async () => {
+    serve({ creditWith: { canManage: false } });
+    open('/collections/c1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: 'Credit leads' });
+    expect(within(heading).queryByRole('button')).toBeNull();
   });
 });
 
@@ -1367,15 +2078,18 @@ describe('the page of a Resource', () => {
     expect(main.queryByRole('button', { name: /Stel een vraag/ })).toBeNull();
     expect((main.getByRole('button', { name: /Publiceren/ }) as HTMLButtonElement).disabled).toBe(false);
     expect(screen.getByRole('status').textContent).toContain('Enkel Data en het Data Team zien hem. Eens gepubliceerd ziet iedereen die Credit leads ziet hem.');
+    // Its Summary says what it is and how to query it cheaply (FR-RC-19).
     expect(main.getByText('One row per week and lead source.')).toBeTruthy();
-    expect(main.getByText(/op week_start, een partitie per dag/)).toBeTruthy();
     expect(main.getByText(/Filter eerst op week_start/)).toBeTruthy();
-    // Its size and partitions, from BigQuery (FR-SR-39).
+    // Querying, a part of its own: its size and partitions, from BigQuery (FR-SR-39).
+    await fireEvent.click(main.getByRole('tab', { name: 'Bevragen' }));
+    expect(main.getByText(/op week_start, een partitie per dag/)).toBeTruthy();
     expect(await main.findByText(/312 partities/)).toBeTruthy();
     expect(main.getByText('6,2 GB in totaal, ongeveer 20 MB per dag')).toBeTruthy();
-    // Its tile is two columns wide, as drawn.
-    expect(main.getByText('Partities en clustering').closest('section')?.getAttribute('style')).toContain('grid-column: span 2');
-    expect(main.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
+    // Its tile takes the width of the part.
+    expect(main.getByText('Partities en clustering').closest('section')?.getAttribute('style')).toContain('grid-column: 1 / -1');
+    const tabs = within(main.getByRole('tablist', { name: 'Weekly lead volume' }));
+    expect(tabs.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Geschiedenis', 'Voorbeeld']);
   });
 
   it('previews its newest partitions, chosen by its cluster column, as a query that runs by itself up to 100 MB (FR-SR-38, DEC-SR-39)', async () => {
@@ -1420,7 +2134,8 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const other = within(await screen.findByRole('main'));
     await other.findByRole('tab', { name: 'Voorbeeld' });
-    expect(other.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Voorbeeld']);
+    const tabs = within(other.getByRole('tablist', { name: 'Weekly lead volume' }));
+    expect(tabs.getAllByRole('tab').map((tab) => tab.textContent?.trim())).toEqual(['Overzicht', 'Kolommen', 'Lineage', 'Voorbeeld']);
   });
 
   it('lets its Owner edit what Data Hub keeps about it in place, and the fields (FR-RC-15, FR-RC-16)', async () => {
@@ -1429,19 +2144,23 @@ describe('the page of a Resource', () => {
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    // Each part is edited on its own page: the Business Description in Markdown (FR-RC-20).
+    await fireEvent.click(main.getByRole('tab', { name: 'Beschrijving' }));
     await fireEvent.click(main.getByRole('button', { name: 'Voeg een Business Description toe' }));
-    await fireEvent.input(main.getByRole('textbox', { name: 'Business Description' }), { target: { value: 'The credit leads we send to KBC.' } });
-    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly trends.' } });
+    expect(main.getByRole('toolbar', { name: /Business Description/ })).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Business Description' }), { target: { value: 'The credit leads **we send** to KBC.' } });
     await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
-    await vi.waitFor(() =>
-      expect(calls).toContainEqual({
-        method: 'PATCH',
-        path: '/resources/r2',
-        body: { businessDescription: 'The credit leads we send to KBC.', intendedUse: 'Weekly trends.', pitfalls: '', knownGaps: [''], reliableSince: null, keyFields: [], parameters: [] },
-      }),
-    );
-    expect(await main.findByText('The credit leads we send to KBC.')).toBeTruthy();
-    expect(main.getByText('Weekly trends.')).toBeTruthy();
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { businessDescription: 'The credit leads **we send** to KBC.' } }));
+    expect((await main.findByText('we send')).tagName).toBe('STRONG');
+    await fireEvent.click(main.getByRole('tab', { name: 'Known Behaviour' }));
+    await fireEvent.click(main.getByRole('button', { name: /Bewerken/ }));
+    // Intended use and pitfalls are Markdown too, each in the Markdown editor (FR-RC-23).
+    expect(main.getByRole('toolbar', { name: /Beoogd gebruik/ })).toBeTruthy();
+    expect(main.getByRole('toolbar', { name: /Valkuilen/ })).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beoogd gebruik' }), { target: { value: 'Weekly **trends**.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2', body: { intendedUse: 'Weekly **trends**.', pitfalls: '', reliableSince: null } }));
+    expect((await main.findByText('trends')).tagName).toBe('STRONG');
 
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('The website, the app or a partner.')).toBeTruthy();
@@ -1455,6 +2174,151 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() =>
       expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/fields', body: { fields: [{ name: 'week_start', businessDescription: 'The Monday of the week.' }] } }),
     );
+  });
+
+  it('opens its Overview on the Summary: every part in the order to read it, with its weight and the curated Q&A (FR-RC-19, FR-RC-22, DEC-RC-17, DEC-RC-18)', async () => {
+    const on = { kind: 'resource', id: 'r2', name: 'Weekly lead volume', collection: { id: 'c1', name: 'Credit leads' }, exists: true };
+    const said = (id: string, kind: string, name: string, as: string | null, text: string, state: string | null, replies: unknown[] = []) => ({
+      id,
+      type: 'MSG-CNV-01',
+      kind,
+      subject: on,
+      writer: { id, name, as },
+      params: { text, writer: name },
+      state,
+      createdAt: '2026-10-28T10:00:00Z',
+      lastAt: '2026-10-28T10:00:00Z',
+      replies,
+      replyCount: replies.length,
+    });
+    const answer = { id: 'a1', type: 'MSG-CNV-02', kind: 'reply', writer: { id: '1', name: 'Max Verstraete', as: 'owner' }, params: { text: 'Partner leads come in from 2024.' }, createdAt: '2026-10-29T08:00:00Z', mine: true };
+    serve({
+      groups: ['g1'],
+      conversations: [
+        said('m10', 'remark', 'Karel Peeters', null, 'Handy for the weekly review.', null),
+        said('m11', 'question', 'Ruth Aerts', null, 'Why no partner leads in 2023?', 'answered', [answer]),
+        said('m12', 'signal', 'Ines Claes', null, 'Zero app leads last week.', 'open'),
+      ],
+    });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const parts = within(await main.findByRole('tablist', { name: 'Delen van het Overzicht' }));
+    expect(parts.getAllByRole('tab').map((tab) => tab.getAttribute('aria-selected'))).toEqual(['true', 'false', 'false', 'false', 'false', 'false', 'false', 'false', 'false']);
+    // Its parts in the order to read them, each with its weight; a part with nothing in it is left out.
+    const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
+    await summary.findByText('Zero app leads last week.', { exact: false });
+    const read = summary.getAllByRole('listitem').filter((item) => item.querySelector('h3'));
+    expect(read.map((item) => [item.querySelector('.number')?.textContent, item.querySelector('h3')?.textContent, item.querySelector('.side .weight')?.textContent])).toEqual([
+      ['1', 'Wat het is', 'Eerst lezen'],
+      ['2', 'Hoe je het goedkoop bevraagt', 'Voor je bevraagt'],
+      ['3', 'De velden', 'Voor je bevraagt'],
+      ['4', 'Q&A van de Owner en het Data Team', 'Bij het interpreteren'],
+      ['5', 'Waar het staat', 'Context'],
+      ['6', 'Wat collega’s opmerkten', 'Context'],
+    ]);
+    // The Q&A: the open Signal first, then what the Owner answered; what no one answered yet is Context.
+    const qa = within(read[3]!).getAllByRole('listitem').map((item) => item.textContent ?? '');
+    expect(qa).toHaveLength(2);
+    expect(qa[0]).toContain('Zero app leads last week.');
+    expect(qa[1]).toContain('Why no partner leads in 2023?');
+    expect(qa[1]).toContain('Partner leads come in from 2024.');
+    expect(within(read[5]!).getByText(/Handy for the weekly review\./)).toBeTruthy();
+    expect(within(read[3]!).getByRole('link', { name: /Berichten/ }).getAttribute('href')).toBe('/resources/r2/messages');
+    // Each part leads to where it comes from.
+    await fireEvent.click(within(read[1]!).getByRole('button', { name: /Bevragen/ }));
+    expect(parts.getByRole('tab', { name: 'Bevragen' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('lets its Owner Unit add, change and remove a Known Gap one at a time, with who added it (FR-RC-21)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    expect(main.getByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
+    // The line at the bottom opens the form; its why is plain text, and it holds everywhere until narrowed down.
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const adding = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    expect((adding.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(adding.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before 2024.' } });
+    await fireEvent.click(adding.getByRole('button', { name: 'Voeg toe' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before 2024.', scope: null } }));
+    expect(await main.findByText('No partner leads before 2024.')).toBeTruthy();
+    expect(main.queryByRole('form', { name: 'Een nieuwe Known Gap' })).toBeNull();
+    expect(main.getByText('Toegevoegd door Max Verstraete · 4 nov 2026')).toBeTruthy();
+    expect(main.getByRole('tab', { name: /^Known Gaps/ }).textContent).toContain('1');
+    await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    await fireEvent.input(changing.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: null } }));
+    expect(await main.findByText('No partner leads before March 2024.')).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Verwijder deze Known Gap' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/gaps/gap-1' }));
+    expect(await main.findByText('Geen Known Gaps vastgelegd.')).toBeTruthy();
+  });
+
+  it('narrows a Known Gap down to a period, fields and rows, shown as chips, in the Summary and on its fields (FR-RC-24, FR-RC-25, FR-RC-26)', async () => {
+    const calls = serve({ groups: ['g1'] });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('tab', { name: /^Known Gaps/ }));
+    await fireEvent.click(main.getByRole('button', { name: /^Voeg een Known Gap toe/ }));
+    const form = within(main.getByRole('form', { name: 'Een nieuwe Known Gap' }));
+    await fireEvent.input(form.getByRole('textbox', { name: WHY }), { target: { value: 'No partner leads before March 2024.' } });
+    // A period is a from and a to, with no field of its own (DEC-UX-178); it needs a start, an end or both.
+    await fireEvent.click(form.getByRole('button', { name: 'Periode' }));
+    expect(form.queryByRole('combobox', { name: 'Op het veld' })).toBeNull();
+    expect(form.getByRole('status').textContent).toBe('Een periode heeft een begin, een einde of beide.');
+    expect((form.getByRole('button', { name: 'Voeg toe' }) as HTMLButtonElement).disabled).toBe(true);
+    await fireEvent.input(form.getByLabelText('Tot'), { target: { value: '2024-02-29' } });
+    // Fields, chosen from the Resource.
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    // Rows: a field with one of some values, typed.
+    await fireEvent.click(form.getByRole('button', { name: 'Rijen' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Veld' }), { target: { value: 'lead_source' } });
+    expect(form.getByRole('status').textContent).toBe('Voeg minstens één waarde toe, of kies leeg.');
+    await fireEvent.input(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { target: { value: 'partner' } });
+    await fireEvent.keyDown(form.getByRole('textbox', { name: 'Voeg een waarde toe' }), { key: 'Enter' });
+    expect(form.getByRole('button', { name: 'Verwijder partner' })).toBeTruthy();
+    // Each kind goes with its ×, and comes back with its button.
+    await fireEvent.click(form.getByRole('button', { name: 'Verwijder de velden' }));
+    expect(form.queryByRole('region', { name: 'Velden' })).toBeNull();
+    await fireEvent.click(form.getByRole('button', { name: 'Velden' }));
+    await fireEvent.change(form.getByRole('combobox', { name: 'Voeg een veld toe' }), { target: { value: 'lead_source' } });
+    await fireEvent.click(form.getByRole('button', { name: 'Voeg toe' }));
+    const scope = { period: { from: null, to: '2024-02-29' }, fields: ['lead_source'], rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/gaps', body: { text: 'No partner leads before March 2024.', scope } }));
+    // On its line, where it holds as chips.
+    const line = (await main.findByText('No partner leads before March 2024.')).closest('li')!;
+    expect(line.textContent).toContain('Periode tot 29 feb 2024');
+    expect(line.textContent).not.toContain('week_start');
+    expect(line.textContent).toContain('Velden lead_source');
+    expect(line.textContent).toContain('Rijen lead_source is partner');
+    // Changing it keeps its scope, and can take a kind away.
+    await fireEvent.click(main.getByRole('button', { name: 'Wijzig deze Known Gap' }));
+    const changing = within(main.getByRole('form', { name: 'Wijzig deze Known Gap' }));
+    expect((changing.getByLabelText('Tot') as HTMLInputElement).value).toBe('2024-02-29');
+    await fireEvent.click(changing.getByRole('button', { name: 'Verwijder de rijen' }));
+    await fireEvent.click(changing.getByRole('button', { name: 'Bewaren' }));
+    const narrower = { period: scope.period, fields: scope.fields };
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/resources/r2/gaps/gap-1', body: { text: 'No partner leads before March 2024.', scope: narrower } }));
+    // In the Summary, as a line under its text.
+    await fireEvent.click(main.getByRole('tab', { name: /^Samenvatting/ }));
+    const summary = within(main.getByRole('tabpanel', { name: 'Samenvatting' }));
+    const inSummary = (await summary.findByText('No partner leads before March 2024.', { exact: false })).textContent;
+    expect(inSummary).toContain('tot 29 feb 2024');
+    expect(inSummary).not.toContain('week_start');
+    // On the field it names, under Columns, with the way back to it.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    const marker = main.getByRole('button', { name: 'Known Gap' });
+    expect(marker.closest('tr')?.textContent).toContain('lead_source');
+    expect(marker.getAttribute('title')).toBe('Known Gap: No partner leads before March 2024. (tot 29 feb 2024 · velden lead_source)');
+    await fireEvent.click(marker);
+    expect(main.getByRole('tab', { name: /^Known Gaps/ }).getAttribute('aria-selected')).toBe('true');
   });
 
   it('lets its Owner publish it, its first Confirmation, once the declaration is ticked (FR-SR-49, DEC-UX-63)', async () => {
@@ -1476,7 +2340,10 @@ describe('the page of a Resource', () => {
     await vi.waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(main.getByText('Gepubliceerd', { selector: '.chip' })).toBeTruthy();
     expect(main.queryByText('Nog niet gepubliceerd.')).toBeNull();
-    expect(main.getAllByText('28 okt 2026 door Max Verstraete')).toHaveLength(2);
+    expect(main.getByText(/gepubliceerd op 28 okt 2026 door Max Verstraete/)).toBeTruthy();
+    await fireEvent.click(main.getByRole('tab', { name: 'Maturiteit' }));
+    expect(main.getByText('Gepubliceerd op 28 okt 2026 door Max Verstraete, zijn eerste Confirmation; laatst bevestigd op 28 okt 2026 door Max Verstraete.')).toBeTruthy();
+    expect(main.queryByText('Publicatie')).toBeNull();
   });
 
   it('warns everyone of a change since its last Confirmation, until its Owner Unit marks it seen (FR-MR-12, DEC-UX-64)', async () => {
@@ -1487,37 +2354,56 @@ describe('the page of a Resource', () => {
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    const warning = await main.findByText(/het veld week_start werd toegevoegd op 27 okt 2026/);
-    expect(warning.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
+    // The warning on top, and its Summary, under where it stands.
+    const [warning, ...summary] = await main.findAllByText(/het veld week_start werd toegevoegd op 27 okt 2026/);
+    expect(warning?.textContent).toContain('Het Level blijft 3 · Confirmed; de Owner is verwittigd.');
+    expect(summary).toHaveLength(1);
+    expect(main.getByRole('img', { name: 'Gewijzigd sinds de laatste Confirmation' })).toBeTruthy();
     await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
     expect(main.getByText('Nieuw')).toBeTruthy();
     await fireEvent.click(main.getByRole('button', { name: /^Markeer als gezien/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/resources/r2/changes/seen' }));
-    await vi.waitFor(() => expect(main.queryByText(/het veld week_start werd toegevoegd/)).toBeNull());
+    await vi.waitFor(() => expect(main.queryAllByText(/het veld week_start werd toegevoegd/)).toHaveLength(0));
   });
 
-  it('lets its Owner Unit deprecate it once published, with why, and take that away (FR-SR-50, DEC-UX-101)', async () => {
+  it('lets its Owner Unit deprecate it once published in the Danger zone, which explains it first, and take that away (FR-SR-50, DEC-UX-176)', async () => {
     const calls = serve({ groups: ['g1'], weekly: { published: true, level: 3 } });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
     await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
-    await fireEvent.click(main.getByRole('button', { name: /Als deprecated markeren/ }));
-    const sheet = within(await screen.findByRole('dialog', { name: 'Weekly lead volume' }));
-    const button = sheet.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
+    // No longer in the header: in the Danger zone, the last part of its Overview.
+    expect(main.queryByRole('button', { name: /Als deprecated markeren/ })).toBeNull();
+    await fireEvent.click(main.getByRole('tab', { name: 'Gevarenzone' }));
+    const danger = within(main.getByRole('tabpanel', { name: 'Gevarenzone' }));
+    expect(danger.getByText(/Niets wordt verborgen of geblokkeerd/)).toBeTruthy();
+    const button = danger.getByRole('button', { name: /Als deprecated markeren/ }) as HTMLButtonElement;
     expect(button.disabled).toBe(true);
-    await fireEvent.input(sheet.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
+    await fireEvent.input(danger.getByRole('textbox', { name: 'Waarom hij deprecated is' }), { target: { value: 'Replaced by the figures with partner leads' } });
     await fireEvent.click(button);
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PUT', path: '/resources/r2/deprecation', body: { reason: 'Replaced by the figures with partner leads', insteadOf: null } }));
-    expect(await main.findByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toBeTruthy();
+    expect(await main.findAllByText(/door Max Verstraete op 28 okt 2026: Replaced by the figures with partner leads\./)).toHaveLength(2);
     expect(main.getByText('Deprecated', { selector: '.chip' })).toBeTruthy();
-    await fireEvent.click(main.getByRole('button', { name: /Wegnemen/ }));
+    // The line on top leads back to it, from any tab.
+    await fireEvent.click(main.getByRole('tab', { name: 'Kolommen' }));
+    await fireEvent.click(main.getByRole('button', { name: 'Gevarenzone' }));
+    expect(main.getByRole('tab', { name: 'Gevarenzone' }).getAttribute('aria-selected')).toBe('true');
+    await fireEvent.click(within(main.getByRole('tabpanel', { name: 'Gevarenzone' })).getByRole('button', { name: /Wegnemen/ }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'DELETE', path: '/resources/r2/deprecation' }));
     await vi.waitFor(() => expect(main.queryByText(/Replaced by the figures/)).toBeNull());
   });
 
+  it('keeps its Danger zone from who is not in its Owner Unit or the Data Team (DEC-UX-176)', async () => {
+    serve({ groups: [], weekly: { published: true, level: 3, collectionId: 'c2' } });
+    open('/resources/r2');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await main.findByRole('heading', { level: 1, name: 'Weekly lead volume' });
+    expect(main.queryByRole('tab', { name: 'Gevarenzone' })).toBeNull();
+  });
+
   it('lets a Data Admin change its grain and relations with Edit relations (DEC-UX-107)', async () => {
-    const calls = serve({ roles: ['datateam'] });
+    const calls = serve({ as: 'admin' });
     open('/resources/r2');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -1564,11 +2450,11 @@ describe('the page of a Resource', () => {
 
 describe('the web app, for the Data Team, with Collections', () => {
   it('hands a Collection to any group of the domain (FR-CO-35)', async () => {
-    serve({ roles: ['datateam'] });
+    serve({ as: 'admin' });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('button', { name: /Bewerken/ }));
+    await fireEvent.click(await main.findByRole('button', { name: /Alles bewerken/ }));
     const owner = main.getByRole('combobox', { name: /Owner Unit/ }) as HTMLSelectElement;
     await vi.waitFor(() => expect([...owner.options].map((option) => option.value)).toEqual(['g1', 'g2']));
     expect(main.getByText(/Elke groep van het domein/)).toBeTruthy();
@@ -1576,7 +2462,7 @@ describe('the web app, for the Data Team, with Collections', () => {
 
   it('adds a Resource without a Collection from the page of a Collection, one at a time, in a sheet of two steps (FR-CO-31, FR-CO-33, FR-CO-34, DEC-UX-132)', async () => {
     const reviews = { ...SAVED_SEARCHES, id: 'r9', displayName: 'Agency reviews', name: 'agency_reviews', exposures: ['datahub_agencyReviews'] };
-    const calls = serve({ roles: ['datateam'], waiting: [SAVED_SEARCHES, reviews] });
+    const calls = serve({ as: 'admin', waiting: [SAVED_SEARCHES, reviews] });
     open('/collections/c1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -1639,6 +2525,25 @@ describe('the web app, for the Data Team, with Collections', () => {
 });
 
 describe('Query', () => {
+  it('labels a query made through Claude in the panel (DEC-CL-11, FR-CL-22)', async () => {
+    serve({ queries: [{ ...QUERY, through: 'claude', lastRunAt: new Date().toISOString() }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    const item = (await panel.findByRole('link', { name: /Leads per source name/ }, { timeout: 3000 })).closest('.item')!;
+    expect(within(item as HTMLElement).getByText('Claude').getAttribute('title')).toBe('Gemaakt via Claude');
+  });
+
+  it('reads the queries again with Refresh, such as those Claude made meanwhile (DEC-UX-163)', async () => {
+    const calls = serve({ queries: [{ ...QUERY }] });
+    open('/query/q1');
+    render(App, { config: CONFIG });
+    const panel = within(await screen.findByRole('complementary', { name: 'Query' }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(1));
+    await fireEvent.click(panel.getByRole('button', { name: 'De lijst van queries vernieuwen' }));
+    await vi.waitFor(() => expect(calls.filter((call) => call.path.startsWith('/queries/days?'))).toHaveLength(2));
+  });
+
   it('opens the last query of the User, listed in the panel by the day of its last run (FR-SR-43, DEC-UX-74)', async () => {
     serve({ queries: [{ ...QUERY, lastRunAt: new Date().toISOString() }] });
     open('/query');
@@ -1867,7 +2772,7 @@ describe('Query', () => {
   });
 
   it('shows the Data Team the query of a colleague to read, not to run, with everyone’s queries under All (DEC-LN-01)', async () => {
-    const calls = serve({ roles: ['datateam'], queries: [{ ...QUERY, mine: false, ownerName: 'An Claes', lastRun: RUN, lastRunAt: RUN.startedAt }] });
+    const calls = serve({ as: 'admin', queries: [{ ...QUERY, mine: false, ownerName: 'An Claes', lastRun: RUN, lastRunAt: RUN.startedAt }] });
     open('/query/q1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -2013,9 +2918,9 @@ describe('Query', () => {
 /** Credit leads with folders: Leads in at its top holds By source and Weekly lead volume; By source holds the Lens; Response is empty. */
 const FOLDERED = {
   folders: [
-    { id: 'f1', name: 'Leads in', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
-    { id: 'f2', name: 'By source', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
-    { id: 'f3', name: 'Response', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
+    { id: 'f1', name: 'Leads in', description: '', parentId: null, createdBy: 'An Claes', createdAt: '2026-10-20T08:00:00Z' },
+    { id: 'f2', name: 'By source', description: 'Leads by where they came from.', parentId: 'f1', createdBy: 'An Claes', createdAt: '2026-10-21T08:00:00Z' },
+    { id: 'f3', name: 'Response', description: '', parentId: null, createdBy: 'Dirk Vos', createdAt: '2026-10-22T08:00:00Z' },
   ],
   resources: [{ ...CREDIT.resources[0]!, folderId: 'f1' }],
   lensFolders: { l1: 'f2' },
@@ -2079,12 +2984,21 @@ describe('Folders', () => {
     expect(main.getByText(/Ze bevat nog 2 mappen · 1 Resource/)).toBeTruthy();
     expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
 
-    await fireEvent.click(main.getByRole('button', { name: /Hernoemen/ }));
-    const rename = main.getByRole('textbox', { name: 'Nieuwe naam van de map' });
-    await fireEvent.input(rename, { target: { value: 'Leads coming in' } });
-    await fireEvent.keyDown(rename, { key: 'Enter' });
+    // Its name and description change in place, as those of a query do (DEC-UX-162, FR-CO-42): only what changed is sent.
+    await fireEvent.click(within(main.getByRole('heading', { name: 'Leads in', level: 1 })).getByRole('button'));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Leads coming in' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
     await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { name: 'Leads coming in' } }));
     expect(await main.findByRole('heading', { name: 'Leads coming in', level: 1 })).toBeTruthy();
+    await fireEvent.click(main.getByRole('button', { name: 'Een beschrijving toevoegen' }));
+    await fireEvent.input(main.getByRole('textbox', { name: 'Beschrijving' }), { target: { value: 'Every lead as it comes in.' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/collections/c1/folders/f1', body: { description: 'Every lead as it comes in.' } }));
+    expect(await main.findByText('Every lead as it comes in.')).toBeTruthy();
+    // Escape puts it back without saving.
+    await fireEvent.click(main.getByRole('button', { name: 'Every lead as it comes in.' }));
+    await fireEvent.keyDown(main.getByRole('textbox', { name: 'Beschrijving' }), { key: 'Escape' });
+    expect(main.queryByRole('textbox', { name: 'Beschrijving' })).toBeNull();
 
     // An empty folder goes, and its Collection opens.
     await fireEvent.click(within(screen.getByRole('complementary', { name: 'Collections' })).getByRole('link', { name: 'Response' }));
@@ -2314,12 +3228,66 @@ describe('Lenses', () => {
     expect(main.getByText('Gestopt: één run met zijn standaardwaarden las 1,4 GB')).toBeTruthy();
   });
 
+  it('changes the name of a Lens with a click on it, its other parts with Edit more (DEC-UX-162)', async () => {
+    const calls = serve({ groups: ['g1'], lenses: [{ ...LENS }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    const heading = await main.findByRole('heading', { level: 1, name: /Leads per source, week by week/ });
+    await fireEvent.click(within(heading).getByRole('button'));
+    // Its name alone: what it shows and its steps stay for Edit more.
+    expect(main.queryByRole('textbox', { name: 'Beschrijving' })).toBeNull();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Naam' }), { target: { value: 'Leads per source, per week' } });
+    await fireEvent.click(main.getByRole('button', { name: 'Bewaren' }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'PATCH', path: '/lenses/l1', body: { name: 'Leads per source, per week' } }));
+    expect(await main.findByRole('heading', { level: 1, name: /Leads per source, per week/ })).toBeTruthy();
+    expect(main.getByRole('link', { name: 'Meer bewerken' }).getAttribute('href')).toBe('/lenses/l1/edit');
+  });
+
+  it('deletes a Lens from its Edit: a small button under Save opens a sheet that says what it does (FR-LE-18, DEC-UX-185)', async () => {
+    const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS, usedBy: 4 }] });
+    open('/lenses/l1/edit');
+    render(App, { config: CONFIG });
+    const edit = within(await screen.findByRole('main'));
+    await fireEvent.click(await edit.findByRole('button', { name: 'Deze lens verwijderen…' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    expect(sheet.getByText('Leads per source, week by week')).toBeTruthy();
+    expect(sheet.getByText('4 collega’s gebruikten hem de voorbije 30 dagen,')).toBeTruthy();
+    // "Behouden" closes it without deleting.
+    await fireEvent.click(sheet.getByRole('button', { name: 'Behouden' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(calls.some((call) => call.method === 'DELETE')).toBe(false);
+
+    await fireEvent.click(edit.getByRole('button', { name: 'Deze lens verwijderen…' }));
+    const again = within(await screen.findByRole('dialog', { name: 'Deze lens verwijderen' }));
+    await fireEvent.input(again.getByRole('textbox', { name: 'Waarom je hem verwijdert · optioneel' }), { target: { value: ' Replaced by the weekly lens. ' } });
+    await fireEvent.click(again.getByRole('button', { name: 'Voorgoed verwijderen' }));
+    await vi.waitFor(() => expect(location.pathname).toBe('/collections/c1'));
+    expect(calls).toContainEqual({ method: 'DELETE', path: '/lenses/l1', body: { reason: 'Replaced by the weekly lens.' } });
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('says at the address of a deleted Lens that it was deleted, by whom, when and why, and runs nothing (FR-LE-18)', async () => {
+    serve({ groups: ['g1'], lenses: [{ ...LENS, gone: { at: '2026-11-04T10:00:00Z', byName: 'Max Verstraete', reason: 'Replaced by the weekly lens' } }] });
+    open('/lenses/l1');
+    render(App, { config: CONFIG });
+    const gone = within(await screen.findByRole('main'));
+    expect(await gone.findByText('Deze Lens werd verwijderd')).toBeTruthy();
+    expect(gone.getByRole('heading', { level: 1, name: /Leads per source, week by week$/ })).toBeTruthy();
+    expect(gone.getByText(/door Max Verstraete op 4 nov\.? 2026: Replaced by the weekly lens\. Hij draait niet meer, ook niet in Excel\./)).toBeTruthy();
+    // The breadcrumb and a button lead to its Collection.
+    expect(gone.getAllByRole('link', { name: 'Credit leads' }).map((link) => link.getAttribute('href'))).toEqual(['/collections/c1', '/collections/c1']);
+    expect(gone.queryByRole('button', { name: /Run/ })).toBeNull();
+    // It is listed nowhere.
+    expect(within(screen.getByRole('complementary', { name: /Collections/ })).queryByText('Leads per source, week by week')).toBeNull();
+  });
+
   it('opens the query of a Lens for its Owner Unit, and edits what it tells, never its SQL (DEC-LE-18, FR-LE-06)', async () => {
     const calls = serve({ groups: ['g1'], queries: [{ ...QUERY }], lenses: [{ ...LENS }] });
     open('/lenses/l1');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
-    await fireEvent.click(await main.findByRole('link', { name: 'Bewerken' }));
+    await fireEvent.click(await main.findByRole('link', { name: 'Meer bewerken' }));
     const edit = within(await screen.findByRole('main'));
     expect(await edit.findByRole('heading', { level: 1, name: 'De Lens bewerken' })).toBeTruthy();
     const shows = (await edit.findByRole('textbox', { name: 'Wat hij toont' })) as HTMLTextAreaElement;
@@ -2505,6 +3473,37 @@ describe('Messages', () => {
     expect(await main.findByText('Yes, next week.')).toBeTruthy();
   });
 
+  it('lets whoever may close it close a Question with a line why, shows it closed, and reopens it (FR-CV-16, DEC-UX-179)', async () => {
+    const calls = serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: true }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    await fireEvent.click(await main.findByRole('button', { name: /Sluiten/ }));
+    // Its writer hears it; the line why is not needed.
+    expect(main.getByText('Ruth Aerts krijgt een melding dat je het sloot. Ieder van jullie kan het heropenen.')).toBeTruthy();
+    await fireEvent.input(main.getByRole('textbox', { name: 'Deze Question sluiten' }), { target: { value: 'Published last week.' } });
+    const close = main.getAllByRole('button', { name: /Sluiten/ }).at(-1)!;
+    expect((close as HTMLButtonElement).disabled).toBe(false);
+    await fireEvent.click(close);
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/close', body: { text: 'Published last week.' } }));
+    // Closed: who closed it and why, in the conversation, and Reopen in place of Close.
+    expect(await main.findByText('Published last week.')).toBeTruthy();
+    expect(main.getAllByText('Gesloten').length).toBeGreaterThan(0);
+    expect(main.queryByRole('button', { name: /^Sluiten$/ })).toBeNull();
+    await fireEvent.click(main.getByRole('button', { name: /Heropenen/ }));
+    await vi.waitFor(() => expect(calls).toContainEqual({ method: 'POST', path: '/messages/m1/reopen' }));
+    expect(await main.findByRole('button', { name: /Sluiten/ })).toBeTruthy();
+  });
+
+  it('offers no Close to whoever may not close a Question (FR-CV-16)', async () => {
+    serve({ groups: ['g1'], conversations: [{ ...QUESTION, mayClose: false }] });
+    open('/messages/m1');
+    render(App, { config: CONFIG });
+    const main = within(await screen.findByRole('main'));
+    expect(await main.findByText('Will KBC follow-up be published this month?')).toBeTruthy();
+    expect(main.queryByRole('button', { name: /Sluiten/ })).toBeNull();
+  });
+
   it('says there is nothing to catch up on when nothing is unread, and only then (DEC-UX-136)', async () => {
     serve({ groups: ['g1'], conversations: [DESCRIBED] });
     open('/messages');
@@ -2547,7 +3546,7 @@ describe('Messages', () => {
   });
 
   it('lets the Data Team decide on a Request, a refusal with a reason (FR-CV-08)', async () => {
-    const calls = serve({ roles: ['datateam'], conversations: [REQUEST] });
+    const calls = serve({ as: 'admin', conversations: [REQUEST] });
     open('/messages/m3');
     render(App, { config: CONFIG });
     const main = within(await screen.findByRole('main'));
@@ -2585,6 +3584,94 @@ describe('Messages', () => {
     expect(window.getByRole('link', { name: /Het bericht op deze Collection/ }).getAttribute('href')).toBe('/collections/c1/messages');
     // The page stays behind it, usable.
     expect(await within(screen.getByRole('main')).findByRole('heading', { level: 1, name: 'Credit leads' })).toBeTruthy();
+  });
+});
+
+describe('Charts, the gallery of semgraph', () => {
+  it('opens on its first chart, with the charts semgraph offers in the panel by the question they answer (FR-CH-06, DEC-UX-182)', async () => {
+    const calls = serve();
+    open('/charts');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    expect(await within(main).findByRole('heading', { level: 1, name: 'Voortschrijdend gemiddelde' })).toBeTruthy();
+    expect(location.pathname).toBe('/charts/movingWindowAverage');
+    expect(document.title).toBe('Data Hub — Voortschrijdend gemiddelde');
+    // The panel: one line on the charts, then the groups of the design with what semgraph offers in each, in their order.
+    const panel = screen.getByRole('complementary', { name: 'Grafieken' });
+    expect(within(panel).getByText('De grafieken die semgraph tekent, elk voor één soort vraag, en niets wat zou misleiden.')).toBeTruthy();
+    const index = await within(panel).findByRole('navigation', { name: 'Grafieken' });
+    expect([...index.children].map((child) => child.textContent?.trim())).toEqual([
+      'In de tijd',
+      'Voortschrijdend gemiddelde',
+      'Vergelijken',
+      'Vergelijking met de vorige periode',
+      'Nu en het doel',
+      'KPI-tegel',
+      'Spreiding',
+      'Verdeling',
+    ]);
+    expect(within(index).getByRole('link', { name: 'Voortschrijdend gemiddelde' }).getAttribute('aria-current')).toBe('page');
+    expect(within(index).getByRole('link', { name: 'KPI-tegel' }).getAttribute('href')).toBe('/charts/kpiTile');
+    // The head: the group, the name and id, and the question it answers.
+    expect(within(main).getByText('Grafieken · In de tijd')).toBeTruthy();
+    expect(within(main).getByText('movingWindowAverage')).toBeTruthy();
+    expect(within(main).getByText('Hoe evolueert dit, zonder dagelijkse ruis?')).toBeTruthy();
+    // Its examples, without the one that only shows the dark theme, the first drawn in the theme of the page, its SVG in the page (DEC-UX-184).
+    const examples = within(main).getByRole('tablist', { name: 'Voorbeelden' });
+    expect(within(examples).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Basic', 'Long horizon', 'Window 10', 'Unique without aggregation']);
+    expect(within(examples).getByRole('tab', { name: 'Basic' }).getAttribute('aria-selected')).toBe('true');
+    const drawing = await within(main).findByRole('group', { name: 'Voortschrijdend gemiddelde: Kredietleads per dag (voorbeelddata)' });
+    expect(drawing.querySelector('svg > title')?.textContent).toBe('basic');
+    expect(drawing.querySelector('img')).toBeNull();
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=light');
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs?locale=nl-BE');
+    // Beside it: the questions it is for, what to use instead, what it needs and where a User meets it.
+    expect(within(main).getByText('Hoe evolueerden de kredietleads de voorbije vier weken?')).toBeTruthy();
+    expect(within(main).getByRole('link', { name: 'Vergelijking met de vorige periode' }).getAttribute('href')).toBe('/charts/periodComparison');
+    expect(within(main).getByText(/^Het totaal tot nu:/).textContent?.replace(/\s+/g, ' ').trim()).toBe('Het totaal tot nu: cumulative (nog niet in semgraph)');
+    expect(within(main).getByText('De blokken, berekend in BigQuery, minstens 28; semgraph tekent, het rekent nooit over rijen.')).toBeTruthy();
+    expect(within(main).getByText('"semgraph": "movingWindowAverage"')).toBeTruthy();
+  });
+
+  it('says how semgraph drew an example: with a warning, with a caution, or why it refuses it', async () => {
+    serve();
+    open('/charts/movingWindowAverage');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
+    expect(within(main).queryByText('Getekend, met een waarschuwing')).toBeNull();
+    await fireEvent.click(within(main).getByRole('tab', { name: 'Window 10' }));
+    expect(await within(main).findByText('Getekend, met een waarschuwing')).toBeTruthy();
+    await fireEvent.click(within(main).getByRole('tab', { name: 'Unique without aggregation' }));
+    expect(await within(main).findByText('semgraph weigert deze')).toBeTruthy();
+    expect(within(main).getByText('uniqueAggregationRequired')).toBeTruthy();
+    expect(within(main).getByText('Geweigerd')).toBeTruthy();
+    expect(within(main).queryByRole('group', { name: /^Voortschrijdend gemiddelde:/ })).toBeNull();
+    // Another chart, from the panel: its first example, drawn with a caution in red; the one only in a size is not listed.
+    await fireEvent.click(screen.getByRole('link', { name: 'KPI-tegel' }));
+    expect(await within(main).findByText('Getekend, met een kanttekening in het rood')).toBeTruthy();
+    expect(within(main).getByText('Grafieken · Nu en het doel')).toBeTruthy();
+    expect(within(main).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Few leads']);
+    expect(location.pathname).toBe('/charts/kpiTile');
+  });
+
+  it('asks semgraph for the theme of the page, and its words in the language of the User', async () => {
+    const calls = serve({ settings: { language: 'en' } });
+    open('/charts/movingWindowAverage');
+    render(App, { config: CONFIG });
+    const main = await screen.findByRole('main');
+    await within(main).findByRole('group', { name: /^Voortschrijdend gemiddelde:/ });
+    expect(within(main).getByText('Charts · Over time')).toBeTruthy();
+    expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage?locale=en');
+    await fireEvent.click(screen.getByRole('button', { name: 'Switch to dark' }));
+    await vi.waitFor(() => expect(calls.map((call) => call.path)).toContain('https://semgraph.test/semgraphs/movingWindowAverage/examples/basic?theme=dark'));
+  });
+
+  it('shows a chart semgraph does not offer as a page there is nothing at', async () => {
+    serve();
+    open('/charts/nothing');
+    render(App, { config: CONFIG });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Hier is niets voor jou' })).toBeTruthy();
   });
 });
 
@@ -2687,6 +3774,7 @@ describe('the markers of the Learning Centre', () => {
     const calls = serve({ weekly: { details }, learned: [{ card: '1.2.2', seenAt: '2026-10-26T09:00:00Z', lastAt: '2026-10-26T09:00:00Z', step: 'see', understoodAt: null }] });
     open('/resources/r2');
     render(App, { config: CONFIG });
+    await fireEvent.click(await screen.findByRole('tab', { name: 'Beschrijving' }));
     const grain = await screen.findByRole('button', { name: /^grain: week_start × lead_source/ });
     expect(grain.textContent).toContain('ⓘ');
     expect(grain.getAttribute('aria-haspopup')).toBe('dialog');
@@ -2714,6 +3802,7 @@ describe('the markers of the Learning Centre', () => {
     const items = within(screen.getByRole('dialog', { name: 'Uitgelegd in 2 Learning Cards' })).getAllByRole('button');
     expect(items.map((item) => item.textContent)).toEqual([expect.stringMatching(/^K5\.2Het Level van een Resource/), expect.stringMatching(/^3\.3\.3/)]);
     await fireEvent.keyDown(screen.getByRole('button', { name: /2 · Described.*uitgelegd/ }), { key: 'Escape' });
+    await fireEvent.click(screen.getByRole('tab', { name: 'Beschrijving' }));
     await fireEvent.keyDown(screen.getByRole('button', { name: /^modeltype: aggregate/ }), { key: 'Enter' });
     expect(within(screen.getByRole('dialog', { name: 'Uitgelegd in 1 Learning Card' })).getByRole('button', { name: /^2\.3\.6/ })).toBeTruthy();
   });

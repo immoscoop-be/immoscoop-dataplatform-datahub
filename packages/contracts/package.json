@@ -16,6 +16,14 @@
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
     },
+    "./permissions": {
+      "types": "./dist/permissions.d.ts",
+      "default": "./dist/permissions.js"
+    },
+    "./gaps": {
+      "types": "./dist/gaps.d.ts",
+      "default": "./dist/gaps.js"
+    },
     "./log": {
       "types": "./dist/log.d.ts",
       "default": "./dist/log.js"
@@ -35,6 +43,10 @@
     "./notifications": {
       "types": "./dist/notifications.d.ts",
       "default": "./dist/notifications.js"
+    },
+    "./summary": {
+      "types": "./dist/summary.d.ts",
+      "default": "./dist/summary.js"
     },
     "./settings": {
       "types": "./dist/settings.d.ts",

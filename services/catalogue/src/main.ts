@@ -37,7 +37,8 @@ const notifications = createNotifications(database.db, {
     ),
   ),
   webUrl: required('DATAHUB_WEB_URL'),
-  dataTeam: { email: required('DATAHUB_DATA_TEAM_EMAIL'), role: 'datateam' },
+  // The Data Team by its address, and in Slack the Users who get the Messages for the Data Team (TR-PL-08).
+  dataTeam: { email: required('DATAHUB_DATA_TEAM_EMAIL'), permission: 'messages.dataTeam' },
 });
 
 const app = await buildApp({

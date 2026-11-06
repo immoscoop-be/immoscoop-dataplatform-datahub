@@ -84,6 +84,30 @@ export const LOG_CATALOGUE = {
       nl: 'Business Description van het veld {field} bijgewerkt door {actor}',
     },
   },
+  'RES-011': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap added by {actor}: {gap}',
+      nl: 'Known Gap toegevoegd door {actor}: {gap}',
+    },
+  },
+  'RES-012': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap changed by {actor}: {gap}',
+      nl: 'Known Gap gewijzigd door {actor}: {gap}',
+    },
+  },
+  'RES-013': {
+    about: 'resource',
+    parameters: ['actor', 'gap'],
+    text: {
+      en: 'Known Gap removed by {actor}: {gap}',
+      nl: 'Known Gap verwijderd door {actor}: {gap}',
+    },
+  },
   'COL-001': {
     about: 'collection',
     parameters: ['actor', 'name', 'ownerUnit', 'visibility'],
@@ -159,6 +183,11 @@ export const LOG_CATALOGUE = {
     about: 'collection',
     parameters: ['actor'],
     text: { en: 'Intro changed by {actor}', nl: 'Intro gewijzigd door {actor}' },
+  },
+  'COL-015': {
+    about: 'collection',
+    parameters: ['folder', 'actor'],
+    text: { en: 'Description of folder {folder} changed by {actor}', nl: 'Beschrijving van map {folder} gewijzigd door {actor}' },
   },
   'COL-030': {
     about: 'resource',
@@ -258,6 +287,11 @@ export const LOG_CATALOGUE = {
     about: 'output',
     parameters: ['actor', 'conversation', 'reason'],
     text: { en: 'Request refused by {actor}', nl: 'Aanvraag geweigerd door {actor}' },
+  },
+  'LEN-003': {
+    about: 'output',
+    parameters: ['actor', 'reason'],
+    text: { en: 'Deleted by {actor}', nl: 'Verwijderd door {actor}' },
   },
 } as const satisfies Record<string, LogType>;
 

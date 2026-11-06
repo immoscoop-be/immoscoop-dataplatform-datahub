@@ -10,11 +10,13 @@
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Catalogue, Collection } from '../lib/catalogue.js';
   import type { Group } from '../lib/identity.js';
   import { clock, when } from '../lib/moment.js';
   import { describe, isFunction, kindOf, suggestedOf } from '../lib/parameters.js';
   import type { Lens, LensParameter, Parameter, Preflight, Query, QueryClient, QueryRequest, Storage } from '../lib/query.js';
+  import LensDeleteSheet from './LensDeleteSheet.svelte';
   import { lensPath, queryPath } from '../lib/routes.js';
 
   /**
@@ -37,9 +39,11 @@
     catalogue,
     collections,
     me,
-    dataTeam,
+    everyLens,
+    canMake = true,
     loadGroups,
     onmade,
+    ondeleted,
   }: {
     /** The query it is made from. */
     queryId?: string;
@@ -51,11 +55,31 @@
     catalogue: Pick<Catalogue, 'createCollection'>;
     collections: readonly Collection[] | undefined;
     me: { name: string; groups: readonly string[] };
-    dataTeam: boolean;
+    /** The User manages every Lens (`lenses.manage`, every): a Lens may go into any Collection they manage. */
+    everyLens: boolean;
+    /** The User may make a query a Lens, and send its Request again (`lenses.make`). */
+    canMake?: boolean;
     /** The groups of the User, to own a new Collection (DEC-CO-24). */
     loadGroups: () => Promise<Group[]>;
     onmade: (lens: Lens) => void;
+    /** After its Owner Unit or the Data Team deleted the Lens being edited (FR-LE-18). */
+    ondeleted?: (lens: { id: string; name: string; collectionId: string }) => void;
   } = $props();
+
+  /** Whether the sheet that deletes the Lens being edited is open (DEC-UX-185). */
+  let deleting = $state(false);
+  /** Deletes the Lens being edited, with why (FR-LE-18); false when it did not. */
+  async function remove(reason: string): Promise<boolean> {
+    if (!editing) return false;
+    try {
+      const { lens: gone } = await client.deleteLens(editing.id, reason);
+      ondeleted?.(gone);
+      return true;
+    } catch (error) {
+      console.error('The Lens could not be deleted', error);
+      return false;
+    }
+  }
 
   let query = $state<Query | null | undefined>();
   let preflight = $state<Preflight | null>(null);
@@ -85,7 +109,7 @@
   const existing = $derived(lens ?? editing);
   const owned = $derived(
     (collections ?? [])
-      .filter((collection) => collection.canManage && (dataTeam || me.groups.includes(collection.ownerUnit.id)))
+      .filter((collection) => collection.canManage && (everyLens || me.groups.includes(collection.ownerUnit.id)))
       .toSorted((a, b) => Number(me.groups.includes(b.ownerUnit.id)) - Number(me.groups.includes(a.ownerUnit.id))),
   );
   /** A label as people read a name: dateFrom becomes "Date from". */
@@ -377,6 +401,7 @@
         <Gauge bytes={editing.reads} approve={thresholds.approve} request={thresholds.request} />
         <Callout icon="info-fill">{t('lens.edit.sql')}</Callout>
         <Button wide disabled={busy || name.trim() === ''} onclick={save}>{t('lens.edit.save')}</Button>
+        <div class="delete"><Button variant="quiet" wide onclick={() => (deleting = true)}><Icon name="trash-fill" />{t('lens.delete.open')}</Button></div>
         {#if failed}<p class="failed" role="alert">{failed}</p>{/if}
       </aside>
     {:else}
@@ -440,7 +465,8 @@
               <b>{t('lens.size.sent', { name: lens.authorName, time: since(request.sentAt) })}</b>
               {lens.mine ? t('lens.size.sent.you') : t('lens.size.sent.other', { name: lens.authorName })}
             </Callout>
-          {:else if lens.mine}
+          {:else if lens.mine && canMake}
+            <!-- Sending it again takes `lenses.make` (FR-PL-14). -->
             <p class="meta failed" role="alert">{t('lens.size.notSent')}</p>
             <Field label={t('lens.size.word')}><textarea rows="2" maxlength="500" bind:value={text}></textarea></Field>
             <Button disabled={busy} onclick={sendAgain}><Icon name="paper-plane-tilt" />{t('lens.size.sendAgain')}</Button>
@@ -456,9 +482,15 @@
     </aside>
     {/if}
   </div>
+  <!-- "Delete this lens…" under Save opens its sheet (DEC-UX-185, FR-LE-18). -->
+  {#if editing && deleting}<LensDeleteSheet name={editing.name} usedBy={editing.usedBy ?? 0} ondelete={remove} onclose={() => (deleting = false)} />{/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>
+  .delete { margin-top: 6px; }
+  .delete :global(.button) { color: var(--signal-urgent); }
   .crumb { margin-top: 8px; }
   .crumb a { color: inherit; }
   .head { display: flex; align-items: center; gap: 12px; margin-top: 4px; }

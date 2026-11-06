@@ -221,18 +221,19 @@ are in `semgraphs/{id}/examples/{name}.json`. All are in nl-BE unless marked en.
 | `GET /healthz` | `{status, version, languageVersion, tokensVersion, mcp}`; `mcp` is `off`, `open` or `oauth` (REQ-091) |
 | `GET /gallery` | a page with every semgraph and all of its examples, each a picture that links to the chart itself, and under it in every size, light and dark (REQ-107); `?locale=` (REQ-083) |
 | `GET /` | leads to `/gallery` |
-| `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link) and the planned ones; `?locale=` (REQ-083) |
+| `GET /semgraphs` | the overview as JSON: every available semgraph (title, the question it answers, links to Figma and the reading card, its examples with their title and link, and the `theme` or `size` an example sets) and the planned ones; `?locale=` (REQ-083) |
 | `GET /semgraphs/{id}` | metadata, JSON Schema, links to Figma and learning material, examples |
 | `POST /validate` | checks a request without drawing; always 200 with `{outcome, issues}` |
 | `POST /render` | draws the chart: 200 SVG, 422 refusal, 400 invalid request |
 | `GET /semgraphs/{id}/examples/{name}` | renders one of the example requests, for a demo in the browser; `?theme=light\|dark` and `?size=card\|default\|large\|xl` (REQ-107) |
+| `GET /semgraphs/{id}/icon` | the icon of the semgraph as an SVG of its own, 44 by 44 in `currentColor` (REQ-060); Charts in Data Hub uses it as a mask, in the colour of its text |
 | `GET /openapi.json` | the API in OpenAPI 3.1: every call, and the contract and examples of every semgraph, built from the same files (REQ-084) |
 | `GET /docs` | the same document in Swagger UI, to read it and try it out (REQ-084) |
 | `POST /mcp` | the MCP server for Claude (REQ-090); see [MCP: charts in Claude](#mcp-charts-in-claude) |
 | `GET /.well-known/oauth-protected-resource/mcp` | where Claude signs in for `/mcp`, only when OAuth is configured (REQ-091) |
 
-Every answer allows pages of every site (CORS: `Access-Control-Allow-Origin: *`, without credentials), as semgraph is open
-to everyone ([TR-PF-31](../../docs/requirements/technical/00-platform.md#tr-pf-31)); the web app of Data Hub shows its
+Every answer allows pages of every site (CORS: `Access-Control-Allow-Origin: *`, without credentials, and the headers
+`Semgraph-Deviations` and `Semgraph-Cautions` readable), as semgraph is open to everyone ([TR-PF-31](../../docs/requirements/technical/00-platform.md#tr-pf-31)); the web app of Data Hub shows its
 charts that way.
 
 Data Hub runs it on Cloud Run as `datahub-semgraph`, in uat and prod; the Terraform output `semgraph_url` is its
@@ -254,7 +255,8 @@ Every request ends in one of four outcomes:
 | `invalid` | 400 JSON | The request itself is not valid. |
 
 Few observations (REQ-047) is not a deviation: the chart is `ok`, keeps its version label and still gets the red
-block, as an issue of level `caution`.
+block, as an issue of level `caution`. Its codes are in the `Semgraph-Cautions` header, so that a page that shows the
+chart, such as Charts in Data Hub, can say so.
 
 Issues always have the same shape, in the language of `locale`:
 

@@ -39,6 +39,7 @@ const RECIPIENTS: Record<MessageRecipient, string> = {
   participants: 'who wrote in the conversation',
   author: 'its author',
   consumers: 'Consumers',
+  lensUsers: 'who used the Lens lately',
 };
 /** The four actors of the overview: whoever receives a Message is one of them. */
 const ACTOR_OF: Record<MessageRecipient, MessageSender> = {
@@ -49,6 +50,7 @@ const ACTOR_OF: Record<MessageRecipient, MessageSender> = {
   participants: 'user',
   author: 'user',
   consumers: 'user',
+  lensUsers: 'user',
 };
 const SUBJECTS: Record<string, string> = {
   collection: 'Collection',
@@ -58,6 +60,7 @@ const SUBJECTS: Record<string, string> = {
   report: 'Report',
   learningCard: 'Learning Card',
   excelKey: 'Excel key',
+  user: 'User',
 };
 const KINDS: Record<string, string> = {
   question: 'Question',

@@ -7,6 +7,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { clock, when } from '../lib/moment.js';
   import { formatDay } from '../lib/parameters.js';
@@ -26,10 +27,13 @@
     client,
     storage,
     onrun,
+    canQuery = true,
   }: {
     resource: ResourceDetail;
     client: QueryClient;
     storage: Storage | null | undefined;
+    /** The User may make queries (`queries.make`): the way to their own query on it. */
+    canQuery?: boolean;
     /** After a run, for the panel of Query, where the preview is a query of the User. */
     onrun?: () => void;
   } = $props();
@@ -165,7 +169,18 @@
     return [t('preview.scans', { bytes: bytes(preflight.bytes) }), counted].filter(Boolean).join(' · ');
   });
   /** What keeps it from running, each once: the SQL of a Preview is not the User's to change. */
-  const notes = $derived([...new Set((preflight?.problems ?? []).map((problem) => (problem.kind === 'invalid' ? t('query.problem.invalid', { message: problem.message }) : t('query.cannotRun'))))]);
+  const notes = $derived([
+    ...new Set(
+      (preflight?.problems ?? []).map((problem) =>
+        problem.kind === 'invalid'
+          ? t('query.problem.invalid', { message: problem.message })
+          : // Larger than the Permission group of the User runs at all: no Request (`runs.ranges`).
+            problem.kind === 'tooLarge'
+            ? t('query.problem.tooLarge', { bytes: bytes(problem.bytes), limit: bytes(problem.limit) })
+            : t('query.cannotRun'),
+      ),
+    ),
+  ]);
   const shown = $derived(shownKey === key && run !== null);
 </script>
 
@@ -193,7 +208,7 @@
     {/each}
     <span class="grow"></span>
     <span class="scans meta" aria-busy={checking}>
-      {#if scanned}<Icon name="gauge-fill" />{scanned}{:else if checking || !offered}{t('query.checking')}{/if}
+      {#if scanned}<Icon name="gauge-fill" />{scanned}{:else if checking || !offered}{t('query.checking')} <Loading inline />{/if}
     </span>
     {#if preflight && preflight.runnable && preflight.range === 'request' && current?.request?.state === 'waiting'}
       <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(current.request.sentAt) })}</span>
@@ -215,7 +230,7 @@
   {#if notes.length > 0}<p class="notes" role="alert"><Icon name="warning-fill" />{notes.join(' ')}</p>{/if}
 
   {#if running}
-    <p class="empty"><Icon name="play-fill" /><span>{t('preview.running')}</span></p>
+    <p class="empty"><Icon name="play-fill" /><span>{t('preview.running')}</span><Loading inline /></p>
   {:else if failure}
     <p class="empty failed" role="alert"><Icon name="warning-fill" /><span><b>{t('query.failed')}</b> {failure}</span></p>
   {:else if shown && run && page && page.totalRows === 0}
@@ -232,11 +247,13 @@
     </div>
   {/if}
 
-  <div class="tile">
-    <Icon name="terminal-window-fill" />
-    <div class="text"><b>{t('preview.own')}</b><p>{t('preview.own.text')}</p></div>
-    <Button variant="outline" href={newQueryPath(resource.id)}>{t('preview.query')}</Button>
-  </div>
+  {#if canQuery}
+    <div class="tile">
+      <Icon name="terminal-window-fill" />
+      <div class="text"><b>{t('preview.own')}</b><p>{t('preview.own.text')}</p></div>
+      <Button variant="outline" href={newQueryPath(resource.id)}>{t('preview.query')}</Button>
+    </div>
+  {/if}
 </div>
 
 <style>

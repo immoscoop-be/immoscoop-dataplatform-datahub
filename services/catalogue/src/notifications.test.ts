@@ -1,12 +1,14 @@
 import { randomBytes } from 'node:crypto';
 import { type ServiceCallerVerifier, TokenError } from '@datahub/auth';
 import { createTestIssuer } from '@datahub/auth/testing';
+import { startingPermissions } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { type Collection, createCollections, type Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
+import { createPeople } from './identity.js';
 import { migrations } from './migrations/index.js';
 import { createMessages, type Messages } from './messages.js';
 import { createNotifications, type Email, htmlOf, type Notifications, type Person, slackOf, type SlackMessage, subjectLine } from './notifications.js';
@@ -37,6 +39,29 @@ describe('the text of a notification (FR-CV-15)', () => {
 
   it('lays the text out in the mark-up of Slack', () => {
     expect(slackOf('**Karel** asked\n\n> Why <now>?\n\n- ~~old~~\n- `x`')).toBe('*Karel* asked\n\n> Why &lt;now&gt;?\n\n• ~old~\n• `x`');
+  });
+});
+
+describe('who to notify, as identity knows them (DEC-LN-07, TR-PL-08)', () => {
+  it('asks identity for the Users, the members of Groups and who has a Permission on, and nothing when nobody is asked', async () => {
+    const sent: { url: string; body: unknown; authorization: string | null }[] = [];
+    const dirk = { id: 'u-dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos', language: 'nl', groups: [], permissions: ['messages.dataTeam'] };
+    const identity = (async (url: string | URL | Request, init?: RequestInit) => {
+      sent.push({ url: String(url), body: JSON.parse(String(init?.body)), authorization: new Headers(init?.headers).get('authorization') });
+      return new Response(JSON.stringify({ people: [dirk] }), { status: 200, headers: { 'content-type': 'application/json' } });
+    }) as typeof fetch;
+    const people = createPeople('https://identity.test', async () => 'catalogue-id-token', identity);
+
+    expect(await people.find({ users: [], groups: [], permissions: [] })).toEqual([]);
+    expect(sent).toEqual([]);
+    expect(await people.find({ users: ['u-karel'], groups: ['g-credit'], permissions: ['messages.dataTeam'] })).toEqual([dirk]);
+    expect(sent).toEqual([
+      {
+        url: 'https://identity.test/internal/people',
+        body: { users: ['u-karel'], groups: ['g-credit'], permissions: ['messages.dataTeam'] },
+        authorization: 'Bearer catalogue-id-token',
+      },
+    ]);
   });
 });
 
@@ -102,16 +127,19 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
   let clock = new Date(Date.now() + 60_000);
 
   const CREDIT = { id: 'g-credit', email: 'credit-team@immoscoop.be', name: 'credit-team' };
-  // Known to Data Hub from their last sign-in: An and Jan in the Owner Unit, Dirk in the Data Team, Karel elsewhere.
+  // Known to Data Hub from their last sign-in: An and Jan in the Owner Unit, Dirk in Admin, which gets the Messages
+  // for the Data Team, Karel elsewhere.
   const known: Person[] = [
-    { id: 'u-an', email: 'an@immoscoop.be', name: 'An Claes', language: 'en', groups: ['g-credit'], roles: [] },
-    { id: 'u-jan', email: 'jan@immoscoop.be', name: 'Jan Peeters', language: 'nl', groups: ['g-credit'], roles: [] },
-    { id: 'u-dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos', language: 'nl', groups: [], roles: ['datateam'] },
-    { id: 'u-karel', email: 'karel@immoscoop.be', name: 'Karel Leys', language: 'nl', groups: [], roles: [] },
+    { id: 'u-an', email: 'an@immoscoop.be', name: 'An Claes', language: 'en', groups: ['g-credit'], permissions: [] },
+    { id: 'u-jan', email: 'jan@immoscoop.be', name: 'Jan Peeters', language: 'nl', groups: ['g-credit'], permissions: [] },
+    { id: 'u-dirk', email: 'dirk@immoscoop.be', name: 'Dirk Vos', language: 'nl', groups: [], permissions: ['messages.dataTeam'] },
+    { id: 'u-karel', email: 'karel@immoscoop.be', name: 'Karel Leys', language: 'nl', groups: [], permissions: [] },
   ];
-  const an: Viewer = { id: 'u-an', name: 'An Claes', groups: ['g-credit'], dataTeam: false };
-  const karel: Viewer = { id: 'u-karel', name: 'Karel Leys', groups: [], dataTeam: false };
-  const dirk: Viewer = { id: 'u-dirk', name: 'Dirk Vos', groups: [], dataTeam: true };
+  const an: Viewer = { id: 'u-an', name: 'An Claes', groups: ['g-credit'], permissions: startingPermissions('businessAnalyst') };
+  const karel: Viewer = { id: 'u-karel', name: 'Karel Leys', groups: [], permissions: startingPermissions('businessAnalyst') };
+  const dirk: Viewer = { id: 'u-dirk', name: 'Dirk Vos', groups: [], permissions: startingPermissions('admin') };
+  /** What catalogue asked identity, each time it looked for whom to notify. */
+  let asked: { users: string[]; groups: string[]; permissions: string[] }[] = [];
 
   let mails: Email[] = [];
   let slacked: { email: string; message: SlackMessage }[] = [];
@@ -124,11 +152,19 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     messages = createMessages(database.db);
     credit = await collections.create({ name: 'Credit leads', description: 'Leads for credit.', icon: 'coins', ownerUnit: CREDIT, visibility: 'public' }, an);
     notifications = createNotifications(database.db, {
+      // identity answers who it knows: the Users asked for, the members of the Groups, and who has a Permission on,
+      // each with which of those Groups and Permissions they have (TR-PL-08).
       people: {
-        async find({ users, groups, roles }) {
+        async find(question) {
+          const { users, groups, permissions } = question;
+          asked.push(question);
           return known
-            .filter((person) => users.includes(person.id) || person.groups.some((group) => groups.includes(group)) || person.roles.some((role) => roles.includes(role)))
-            .map((person) => ({ ...person, groups: person.groups.filter((group) => groups.includes(group)), roles: person.roles.filter((role) => roles.includes(role)) }));
+            .filter((person) => users.includes(person.id) || person.groups.some((group) => groups.includes(group)) || person.permissions.some((key) => permissions.includes(key)))
+            .map((person) => ({
+              ...person,
+              groups: person.groups.filter((group) => groups.includes(group)),
+              permissions: person.permissions.filter((key) => permissions.includes(key)),
+            }));
         },
       },
       mail: {
@@ -145,7 +181,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
         },
       },
       webUrl: 'https://web.test',
-      dataTeam: { email: 'datahub-datateam@immoscoop.be', role: 'datateam' },
+      dataTeam: { email: 'datahub-datateam@immoscoop.be', permission: 'messages.dataTeam' },
       now: () => clock,
     });
   });
@@ -155,6 +191,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     await notifications.deliver();
     mails = [];
     slacked = [];
+    asked = [];
     mailDown = false;
   });
 
@@ -206,6 +243,39 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     // An wrote it: the group still gets its e-mail, but An no direct message.
     expect(mails.map((mail) => mail.to)).toEqual(['credit-team@immoscoop.be', 'datahub-datateam@immoscoop.be']);
     expect(slacked.map((sent) => sent.email)).toEqual(['dirk@immoscoop.be']);
+    // The Data Team in Slack: the Users who get the Messages for the Data Team, asked of identity by that Permission (TR-PL-08).
+    expect(asked).toEqual([{ users: [], groups: ['g-credit'], permissions: ['messages.dataTeam'] }]);
+  });
+
+  it('tells a User alone that they were moved to another Permission group, and the Data Team that someone got Admin back (FR-PL-12, EC-PL-03)', async () => {
+    await messages.userNotice({
+      type: 'MSG-USR-01',
+      userId: 'u-karel',
+      actor: 'Dirk Vos',
+      from: 'Lens user',
+      to: 'Business analyst',
+      gains: ['Make and run queries'],
+      losses: [],
+      deleted: false,
+    });
+    await notifications.deliver();
+    // Karel by his own address, in his language, because it is about him; nobody else, and not the Data Team.
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['karel@immoscoop.be', 'Dirk Vos van het Data Team zette je in de Permission group Business analyst; je zat in Lens user.']]);
+    expect(mails[0]?.text).toContain('Je kan nu ook: Make and run queries.');
+    expect(mails[0]?.html).toContain('Je krijgt dit omdat het over jou gaat.');
+    expect(mails[0]?.html).toContain('href="https://web.test/messages/');
+    expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+    expect(asked).toEqual([{ users: ['u-karel'], groups: [], permissions: [] }]);
+    mails = [];
+    slacked = [];
+    asked = [];
+
+    await messages.userNotice({ type: 'MSG-USR-02', userId: 'u-dirk', name: 'Dirk Vos' });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['datahub-datateam@immoscoop.be', 'Dirk Vos kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.']]);
+    expect(mails[0]?.html).toContain('Je krijgt dit als lid van het Data Team.');
+    expect(slacked.map((sent) => sent.email)).toEqual(['dirk@immoscoop.be']);
+    expect(asked).toEqual([{ users: [], groups: [], permissions: ['messages.dataTeam'] }]);
   });
 
   it('tells the writer of a Request the decision, by their own address, and the author of its Lens', async () => {
@@ -227,6 +297,32 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['karel@immoscoop.be', 'Dirk Vos heeft de aanvraag voor de lens Leads per source, all weeks geweigerd.']]);
     expect(mails[0]?.html).toContain('Je krijgt dit omdat je de aanvraag stuurde.');
     expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+  });
+
+  it('tells the writer of a Question that someone else closed it, and nobody when they close it themselves (FR-CV-16, MSG-CNV-07)', async () => {
+    const lens = '3e4f5a6b-7c8d-4e9f-8a0b-2c3d4e5f6a7b';
+    await messages.keepLens(lens, { name: 'Leads per region', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
+    const question = await messages.write(await sightOf(karel), { kind: 'lens', id: lens }, 'question', 'Why is Limburg empty?');
+    await notifications.deliver();
+    mails = [];
+    slacked = [];
+
+    // Closed by An of its Owner Unit, with a line why: Karel hears it, by his own address.
+    const closed = await messages.close(question.id, await sightOf(an), 'Limburg comes in next week.');
+    expect(closed).toMatchObject({ state: 'closed' });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([['karel@immoscoop.be', 'An Claes sloot het bericht over de lens Leads per region.']]);
+    expect(mails[0]?.text).toContain('“Limburg comes in next week.”');
+    expect(slacked.map((sent) => sent.email)).toEqual(['karel@immoscoop.be']);
+    mails = [];
+    slacked = [];
+
+    // Reopened, then closed by Karel himself, without a line: nobody hears it.
+    await messages.reopen(question.id, await sightOf(karel));
+    await messages.close(question.id, await sightOf(karel), '');
+    await notifications.deliver();
+    expect(mails).toEqual([]);
+    expect(slacked).toEqual([]);
   });
 
   it('tries again what failed, later, without sending again what went out, and gives up after the last try', async () => {
@@ -275,6 +371,22 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
     expect(mails[1]?.html).toContain('Je krijgt dit als auteur van deze Lens.');
   });
 
+  it('tells who ran a deleted Lens lately, each by their own address, never who deleted it (MSG-LEN-06, FR-LE-18)', async () => {
+    const lens = '5a6b7c8d-9e0f-4a1b-8c2d-3e4f5a6b7c8d';
+    await messages.keepLens(lens, { name: 'Leads per day', collectionId: credit.id, resourceIds: [], state: 'published', authorId: 'u-an', authorName: 'An Claes' });
+    await messages.lensDeleted(lens, { name: 'Leads per day', actor: { id: 'u-an', name: 'An Claes' }, reason: 'Replaced by the weekly lens.', users: ['u-karel', 'u-dirk', 'u-an'] });
+    await notifications.deliver();
+    expect(mails.map((mail) => [mail.to, mail.subject])).toEqual([
+      ['karel@immoscoop.be', 'An Claes verwijderde de lens Leads per day. Hij draait niet meer, ook niet in Excel.'],
+      ['dirk@immoscoop.be', 'An Claes verwijderde de lens Leads per day. Hij draait niet meer, ook niet in Excel.'],
+    ]);
+    expect(mails[0]?.html).toContain('Replaced by the weekly lens.');
+    expect(mails[0]?.html).toContain('Je krijgt dit omdat je deze lens de voorbije 30 dagen gebruikte.');
+    // Its link goes to the Message itself: the Lens is no longer there.
+    expect(mails[0]?.html).toContain('https://web.test/messages/');
+    expect(slacked.map((sent) => sent.email)).not.toContain('an@immoscoop.be');
+  });
+
   it('sends what a request wrote before it answers, and lets only the scheduler start a round', async () => {
     const issuer = await createTestIssuer();
     const scheduler: ServiceCallerVerifier = {
@@ -288,7 +400,7 @@ describe.skipIf(!url)('notifications by e-mail and in Slack (DEC-LN-02, DEC-LN-0
       await database.db.insertInto('messages').values({ type: 'MSG-RES-06', subjectKind: 'resource', subjectId: 'gone', writerId: null, params: { run: '2026-10-28', subject: 'Old reviews' }, state: null }).execute();
       return { written: true };
     });
-    const token = await issuer.sign({ sub: 'u-dirk', roles: ['datateam'] });
+    const token = await issuer.sign({ sub: 'u-dirk', as: 'admin' });
     expect((await app.inject({ method: 'POST', url: '/write', headers: { authorization: `Bearer ${token}` } })).statusCode).toBe(200);
     // A Resource without a Collection answers to the Data Team.
     expect(mails.map((mail) => mail.to)).toEqual(['datahub-datateam@immoscoop.be']);

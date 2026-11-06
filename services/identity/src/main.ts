@@ -3,12 +3,13 @@ import { cloudSqlOptionsFromEnv, connectCloudSql } from '@datahub/db';
 import { metadataAccessToken, metadataIdToken } from '@datahub/google';
 import { start } from '@datahub/server';
 import { buildApp } from './app.js';
-import { createCatalogueNotices } from './catalogue.js';
+import { createCatalogueNotices, createCatalogueUserNotices } from './catalogue.js';
 import { createExcelKeys } from './excel-keys.js';
 import type { IdentityDatabase } from './database.js';
 import { signInSettingsFromEnv, tokenIssuerFromEnv } from './env.js';
 import { readGoogleClient } from './google-client.js';
 import { createGoogleSignIn, type GoogleSignIn } from './google-sign-in.js';
+import { createPermissionGroups } from './permission-groups.js';
 import { createKmsKeyService } from './signing-keys.js';
 import { createStore } from './store.js';
 import { createWorkspace } from './workspace.js';
@@ -46,6 +47,10 @@ const app = await buildApp({
     domains: settings.domains,
     webClient: settings.webClient,
     mcpRedirectUris: settings.mcpRedirectUris,
+    // What each User may do: their Permission group, in every Access Token (TR-PL-05); catalogue is told
+    // when one changes for a User, or when Admin is given back through datahub-datateam@ (FR-PL-12, EC-PL-03).
+    groups: createPermissionGroups(database.db),
+    userNotices: createCatalogueUserNotices(required('DATAHUB_CATALOGUE_URL'), fetch, metadataIdToken()),
   },
   // catalogue asks who to notify with a Google ID token for identity's own address (DEC-LN-07).
   peopleCallers: createServiceCallerVerifier({ audience: settings.issuer, serviceAccounts: [required('DATAHUB_CATALOGUE_SERVICE_ACCOUNT')] }),

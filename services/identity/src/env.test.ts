@@ -1,3 +1,4 @@
+import { claimsAs } from '@datahub/auth/testing';
 import { createVerifier } from '@datahub/auth';
 import { createLocalJWKSet } from 'jose';
 import { describe, expect, it } from 'vitest';
@@ -19,7 +20,7 @@ describe('tokenIssuerFromEnv', () => {
 
     expect(jwks.keys).toHaveLength(2);
     await expect(
-      verifier.verify(await tokens.issue({ sub: '1', email: 'jan@immoscoop.be', name: 'Jan', groups: [], roles: [] })),
+      verifier.verify(await tokens.issue({ sub: '1', email: 'jan@immoscoop.be', name: 'Jan', groups: [], ...claimsAs('lensUser') })),
     ).resolves.toMatchObject({ sub: '1' });
   });
 

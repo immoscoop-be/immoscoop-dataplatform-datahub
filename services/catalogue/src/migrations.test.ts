@@ -57,7 +57,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
       insert into messages (type, subject_kind, subject_id, state)
       values ('MSG-RES-01', 'resource', '0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', 'inCollection')`.execute(admin.db);
 
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0018'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([
       ['0005-collections-afresh', 'Success'],
       ['0006-grain-and-mappings', 'Success'],
@@ -71,6 +71,7 @@ describe.skipIf(!url)('catalogue migrations', () => {
       ['0014-learning-progress', 'Success'],
       ['0015-folders', 'Success'],
       ['0016-excel-key-messages', 'Success'],
+      ['0017-folder-descriptions', 'Success'],
     ]);
 
     expect(await count('collections')).toBe(0);
@@ -91,5 +92,65 @@ describe.skipIf(!url)('catalogue migrations', () => {
     expect(await count('notifications')).toBe(0);
     await sql`insert into messages (type, subject_kind, subject_id, state) values ('MSG-RES-01', 'resource', 'r-2', 'waiting')`.execute(admin.db);
     expect(await count('notifications')).toBe(1);
+  });
+
+  it('moves the Known Gaps of before into items of their own, in their order, without anyone who added them (FR-RC-21)', async () => {
+    await sql`update resources set known_gaps = array['No partner leads before March.', '  ', ' visitorId is missing. ']`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations: before('0020'), serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([
+      ['0018-known-gaps', 'Success'],
+      ['0019-known-gap-scope', 'Success'],
+    ]);
+
+    const gaps = await sql<{ text: string; addedBy: string | null; addedAt: Date | null }>`
+      select text, added_by as "addedBy", added_at as "addedAt" from known_gaps order by id`.execute(admin.db);
+    expect(gaps.rows).toEqual([
+      { text: 'No partner leads before March.', addedBy: null, addedAt: null },
+      { text: 'visitorId is missing.', addedBy: null, addedAt: null },
+    ]);
+    const columns = (await sql<{ columnName: string }>`
+      select column_name from information_schema.columns where table_schema = ${schema} and table_name = 'resources'`.execute(admin.db)).rows.map((row) => row.columnName);
+    expect(columns).not.toContain('known_gaps');
+    // A gap is never empty, and goes with its Resource.
+    await expect(sql`insert into known_gaps (resource_id, text) values ('0d4b1f0e-2a8e-4d5e-9b62-9a1e0c3f7b21', '')`.execute(admin.db)).rejects.toThrow(/check/);
+    // A gap of before is free text: without a scope; a scope is a JSON object (FR-RC-24).
+    expect((await sql<{ scope: unknown }>`select scope from known_gaps`.execute(admin.db)).rows.every((row) => row.scope === null)).toBe(true);
+    await expect(sql`update known_gaps set scope = '[1]'::jsonb`.execute(admin.db)).rejects.toThrow(/known_gaps_scope_object/);
+  });
+
+  it('takes the field out of the period of every Known Gap kept so far, and keeps the rest of its scope (DEC-UX-178)', async () => {
+    const period = { period: { field: 'week_start', from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } };
+    await sql`update known_gaps set scope = ${JSON.stringify(period)}::jsonb where text like 'No partner%'`.execute(admin.db);
+    await sql`update known_gaps set scope = ${JSON.stringify({ fields: ['visitorId'] })}::jsonb where text like 'visitorId%'`.execute(admin.db);
+
+    const results = await migrate({ db: admin.db, schema, migrations: before('0021'), serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0020-gap-period-without-field', 'Success']]);
+
+    const scopes = await sql<{ scope: unknown }>`select scope from known_gaps order by id`.execute(admin.db);
+    expect(scopes.rows.map((row) => row.scope)).toEqual([
+      { period: { from: null, to: '2025-02-28' }, rows: { field: 'lead_source', is: 'oneOf', values: ['partner'] } },
+      { fields: ['visitorId'] },
+    ]);
+    await sql`delete from resources`.execute(admin.db);
+    expect(await count('known_gaps')).toBe(0);
+  });
+
+  it('keeps a Lens that query deleted, for the Messages on it (FR-LE-18)', async () => {
+    const results = await migrate({ db: admin.db, schema, migrations: before('0022'), serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0021-lens-deleted', 'Success']]);
+    const lens = (state: string) => sql`insert into lenses (id, name, collection_id, resource_ids, state, author_id, author_name)
+      values (gen_random_uuid(), 'Leads', gen_random_uuid(), '{}', ${state}, 'u-an', 'An')`;
+    await lens('deleted').execute(admin.db);
+    await expect(lens('gone').execute(admin.db)).rejects.toThrow(/lenses_state_check/);
+  });
+
+  it('keeps a Message about a User, such as their move to another Permission group (FR-PL-12, EC-PL-03)', async () => {
+    const message = sql`insert into messages (type, subject_kind, subject_id, params) values ('MSG-USR-01', 'user', 'u-an', '{"user": "u-an"}')`;
+    await expect(message.execute(admin.db)).rejects.toThrow(/messages_subject_kind_check/);
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0022-user-messages', 'Success']]);
+    await message.execute(admin.db);
+    await expect(sql`insert into messages (type, subject_kind, subject_id) values ('MSG-USR-01', 'person', 'u-an')`.execute(admin.db)).rejects.toThrow(/messages_subject_kind_check/);
   });
 });

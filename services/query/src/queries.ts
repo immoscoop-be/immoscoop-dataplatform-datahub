@@ -3,17 +3,20 @@ import { type Kysely, sql } from 'kysely';
 import type { Missing, NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
 import type { Parameter } from './parameters.js';
 
-/** Who asks: the fixed Google ID and name from the Access Token, and whether they are in the Data Team. */
+/** Who asks: the fixed Google ID and name from the Access Token; what they may do is in its Permissions (TR-PL-06). */
 export interface Viewer {
   id: string;
   name: string;
-  dataTeam: boolean;
+  /** Through Claude, as its Access Token says; the web app otherwise (DEC-CL-11). */
+  through?: 'claude' | null;
 }
 
 export interface Query {
   id: string;
   ownerId: string;
   ownerName: string;
+  /** Made through Claude (DEC-CL-11); null for the web app. */
+  through: 'claude' | null;
   name: string;
   question: string;
   resources: NamedResource[];
@@ -42,7 +45,7 @@ export interface Query {
 }
 
 /** A query in the panel of Query: one item per query, with how many runs (DEC-UX-74). */
-export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt' | 'broken'> {
+export interface QueryItem extends Pick<Query, 'id' | 'name' | 'ownerName' | 'kind' | 'lensOf' | 'createdAt' | 'lastRunAt' | 'broken' | 'through'> {
   resources: Pick<NamedResource, 'id' | 'displayName'>[];
   runs: number;
   /** Whether the User who asks hid it from their panel (DEC-UX-138). */
@@ -73,7 +76,7 @@ export interface QueryDay {
 }
 
 /** A query on a Resource, as its tab History lists it (FR-SR-44): its last run and what that read. */
-export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt' | 'broken'> {
+export interface QueryOnResource extends Pick<Query, 'id' | 'name' | 'ownerId' | 'ownerName' | 'kind' | 'lensOf' | 'lastRunAt' | 'broken' | 'through'> {
   runs: number;
   lastRead: number | null;
   lastEstimate: number;
@@ -88,6 +91,8 @@ export interface Run {
   queryRef: string;
   userId: string;
   userName: string;
+  /** Run through Claude (DEC-CL-11); null for the web app. */
+  through: 'claude' | null;
   sql: string;
   parameters: Parameter[];
   /** A run the User asked for, or the read of the values of the choices of a Preview (DEC-SR-40). */
@@ -152,6 +157,8 @@ export interface Queries {
    */
   /** When the User last ran each Lens, by the queries of the kind lens that hold their runs (FR-CO-37). */
   lensRuns(ownerId: string): Promise<Map<string, Date>>;
+  /** Who ran a Lens since then, on its page or from Excel, by their IDs (FR-LE-18). */
+  lensUsers(lensId: string, since: Date): Promise<string[]>;
   forLens(owner: Viewer, lens: { id: string; name: string; question: string; resources: NamedResource[]; sql: string; parameters: Parameter[] }): Promise<{ query: Query; created: boolean }>;
   /** The runs of a Lens by this User, a query made the first time they run it (FR-LE-12). */
   lensFor(owner: Viewer, lens: { id: string; name: string; resources: NamedResource[]; sql: string }): Promise<Query>;
@@ -222,6 +229,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         .values({
           ownerId: owner.id,
           ownerName: owner.name,
+          through: owner.through ?? null,
           name,
           question,
           resources: JSON.stringify(resources),
@@ -240,7 +248,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
       const words = search?.trim().toLowerCase();
       const rows = await db
         .selectFrom('queries as q')
-        .select(['q.id', 'q.name', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
+        .select(['q.id', 'q.name', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.resources', 'q.createdAt', 'q.lastRunAt', 'q.broken'])
         .select((eb) => eb.selectFrom('runs').whereRef('runs.queryId', '=', 'q.id').where('runs.purpose', '=', 'run').select(sql<string>`count(*)`.as('count')).as('runs'))
         .select(hidden.as('hidden'))
         .$if(!all, (query) => query.where('q.ownerId', '=', viewer.id))
@@ -263,6 +271,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         id: row.id,
         name: row.name,
         ownerName: row.ownerName,
+        through: row.through,
         kind: row.kind,
         lensOf: row.lensOf,
         createdAt: row.createdAt,
@@ -338,6 +347,19 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
       return new Map(rows.flatMap((row) => (row.lensOf && row.lastRunAt ? [[row.lensOf, row.lastRunAt] as const] : [])));
     },
 
+    async lensUsers(lensId, since) {
+      const rows = await db
+        .selectFrom('runs')
+        .innerJoin('queries', 'queries.id', 'runs.queryId')
+        .select('runs.userId')
+        .distinct()
+        .where('queries.kind', '=', 'lens')
+        .where('queries.lensOf', '=', lensId)
+        .where('runs.startedAt', '>=', since)
+        .execute();
+      return rows.map((row) => row.userId);
+    },
+
     async forLens(owner, lens) {
       const find = () => db.selectFrom('queries').selectAll().where('ownerId', '=', owner.id).where('forLens', '=', lens.id).executeTakeFirst();
       const found = await find();
@@ -397,7 +419,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
           (join) => join.onRef('counted.queryId', '=', 'q.id'),
         )
         .innerJoin('runs as last', (join) => join.onRef('last.queryId', '=', 'q.id').onRef('last.number', '=', 'counted.last').on('last.purpose', '=', 'run'))
-        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
+        .select(['q.id', 'q.name', 'q.ownerId', 'q.ownerName', 'q.through', 'q.kind', 'q.lensOf', 'q.lastRunAt', 'q.broken', 'counted.runs', 'last.processedBytes', 'last.estimatedBytes', 'last.state'])
         .where(sql<boolean>`q.resources @> ${JSON.stringify([{ id: resourceId }])}::jsonb`)
         .orderBy('q.lastRunAt', 'desc')
         .limit(200)
@@ -407,6 +429,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
         name: row.name,
         ownerId: row.ownerId,
         ownerName: row.ownerName,
+        through: row.through,
         kind: row.kind,
         lensOf: row.lensOf,
         lastRunAt: row.lastRunAt,
@@ -438,6 +461,7 @@ export function createQueries(db: Kysely<QueryDatabase>): Queries {
                 queryRef: queryRefOf(new Date()),
                 userId: user.id,
                 userName: user.name,
+                through: user.through ?? null,
                 sql: text,
                 parameters: JSON.stringify(parameters),
                 purpose,

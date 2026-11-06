@@ -2,6 +2,7 @@
   import FloatingWindow from '@datahub/ui/containers/FloatingWindow.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { type Conversation, type MessagesClient, SUBJECT_TITLES } from '../lib/messages.js';
   import { messagePath, messagesOnPath } from '../lib/routes.js';
   import MessageOpened from './MessageOpened.svelte';
@@ -18,7 +19,7 @@
     message,
     count,
     client,
-    dataTeam,
+    decides,
     decideLens,
     onchanged,
     onclose,
@@ -29,7 +30,8 @@
     /** How many Messages are on its object, for the way to all of them; null where it has no slide-in. */
     count: number | null;
     client: MessagesClient;
-    dataTeam: boolean;
+    /** The User may decide on a Request (`requests.decide`). */
+    decides: boolean;
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     onchanged: (message: Conversation) => void;
     onclose: () => void;
@@ -46,12 +48,12 @@
 >
   {#if message}
     {#key message.id}
-      <MessageOpened {message} {client} {dataTeam} {decideLens} {onchanged} />
+      <MessageOpened {message} {client} {decides} {decideLens} {onchanged} />
     {/key}
   {:else if message === null}
     <p class="meta" role="alert">{t('messages.failed.read')}</p>
   {:else}
-    <p class="meta">…</p>
+    <Loading />
   {/if}
   {#snippet foot()}
     {#if message && count !== null && message.kind !== 'request'}

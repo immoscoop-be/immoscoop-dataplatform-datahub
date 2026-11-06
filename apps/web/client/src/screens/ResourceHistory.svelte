@@ -5,6 +5,7 @@
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { ResourceDetail } from '../lib/catalogue.js';
   import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
@@ -15,9 +16,10 @@
    * The tab History of a Resource (resource-history, DEC-UX-90): every query that used it, one row per
    * query, a Lens, a query or the previews of a User, with who made it, how many runs, its last run and what
    * that read; a row opens it, with its SQL. On top, the numbers of the last 30 days and "Query this
-   * resource". Only its Owner Unit and the Data Team see it (DEC-SR-41, FR-SR-44).
+   * resource" for who may make queries. Only who may see the queries of others on it sees it (DEC-SR-41, FR-SR-44,
+   * `queries.seeOthers`).
    */
-  let { resource, client }: { resource: ResourceDetail; client: QueryClient } = $props();
+  let { resource, client, canQuery = true }: { resource: ResourceDetail; client: QueryClient; canQuery?: boolean } = $props();
 
   let found = $state<{ summary: { queries: number; lenses: number; colleagues: number }; queries: QueryOnResource[] } | undefined>();
   let failed = $state(false);
@@ -47,7 +49,7 @@
     <span class="number">{t('resource.history.lenses', { count: found.summary.lenses })}</span>
     <span class="number">{t('resource.history.colleagues', { count: found.summary.colleagues })}</span>
     <span class="grow"></span>
-    <Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('preview.query')}</Button>
+    {#if canQuery}<Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('preview.query')}</Button>{/if}
   </div>
   {#if found.queries.length === 0}
     <p class="none">{t('resource.history.none')}</p>
@@ -68,7 +70,7 @@
           <td>
             <a class="name" href={query.kind === 'lens' ? lensPath(query.id) : queryPath(query.id)}><KindIcon kind={query.kind === 'lens' ? 'lens' : 'resource'} broken={brokenText(query.broken ?? null)} />{query.name}</a>
           </td>
-          <td>{t(KINDS[query.kind])}</td>
+          <td>{t(KINDS[query.kind])}{#if query.through === 'claude'} <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>{/if}</td>
           <td>{query.mine ? t('resource.history.you') : query.ownerName}</td>
           <td class="number-cell">{query.runs}</td>
           <td>{query.lastRunAt ? when(query.lastRunAt, language) : ''}</td>
@@ -78,10 +80,13 @@
     </Table>
   {/if}
   <p class="meta intro">{t('resource.history.intro')}</p>
+{:else}
+  <Loading />
 {/if}
 
 <style>
   .numbers { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .pill { font-size: var(--text-meta); color: var(--text-secondary); background: var(--surface-sub); padding: 2px 8px; border-radius: var(--radius-pill); margin-left: 4px; }
   .number { font-size: var(--text-small); color: var(--text-secondary); background: var(--surface-sub); padding: 6px 12px; border-radius: var(--radius-pill); }
   .grow { flex: 1; }
   .name { display: inline-flex; align-items: center; gap: 7px; color: var(--text-primary); text-decoration: none; font-weight: var(--weight-medium); }

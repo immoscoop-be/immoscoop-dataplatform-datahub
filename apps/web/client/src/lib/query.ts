@@ -71,6 +71,8 @@ export interface QueryItem {
   request: QueryRequest | null;
   /** Whether the User hid it from their panel (DEC-UX-138). */
   hidden?: boolean;
+  /** Made through Claude, which it keeps once its User goes on in Query (DEC-CL-11). */
+  through?: 'claude' | null;
   /** What it misses while it is Broken, for the red dot in the panel (FR-SR-53, DEC-UX-81). */
   broken?: Missing | null;
 }
@@ -107,6 +109,8 @@ export interface Run {
   /** Its Query ID, such as q-20261029-4c2e1a (FR-LN-06). */
   ref: string;
   number: number;
+  /** Run through Claude, or in the web app (DEC-CL-11). */
+  through?: 'claude' | null;
   /** The SQL and values it ran with: a variation of its query (DEC-UX-74). */
   sql: string;
   parameters: Parameter[];
@@ -238,6 +242,23 @@ export interface Lens extends Omit<LensItem, 'resources'> {
   /** Every version, newest first, with who made it from which query (FR-LE-16, DEC-LE-18). */
   versions: { version: number; madeByName: string; madeAt: string; fromQuery: string }[];
   log: LensLogEntry[];
+  /** How many Users ran it in the last 30 days, for the Danger zone of its Edit; only for who may delete it (FR-LE-18). */
+  usedBy?: number;
+}
+
+/** What the address of a deleted Lens tells whoever saw it: its name, and by whom, when and why (FR-LE-18). */
+export interface DeletedLens {
+  id: string;
+  name: string;
+  collectionId: string;
+  deleted: { at: string; byName: string; reason: string };
+}
+
+/** The Lens was deleted: its address says so (FR-LE-18). */
+export class LensDeleted extends Error {
+  constructor(readonly lens: DeletedLens) {
+    super(`The Lens ${lens.id} was deleted`);
+  }
 }
 
 /** What its Owner Unit changes about a Lens: what it tells, never its SQL (FR-LE-06, DEC-UX-27). */
@@ -278,7 +299,9 @@ export type Problem =
   | { kind: 'notSelect'; statementType: string }
   /** With the SQL that adds the filter, where Data Hub can tell where it goes (DEC-SR-35). */
   | { kind: 'filterRequired'; resource: { id: string; displayName: string }; column: string; fix: string | null }
-  | { kind: 'invalid'; message: string };
+  | { kind: 'invalid'; message: string }
+  /** It reads more than the Permission group of the User lets one run read, and theirs sends no Request (`runs.ranges`). */
+  | { kind: 'tooLarge'; bytes: number; limit: number };
 
 export interface Warning {
   kind: 'noPartitionFilter';
@@ -297,7 +320,8 @@ export interface Preflight {
   partitions: number | null;
   problems: Problem[];
   warnings: Warning[];
-  thresholds: { approve: number; request: number };
+  /** The ranges of the User, from their Permission group (`runs.ranges`): above `request`, a Request or no run at all. */
+  thresholds: { approve: number; request: number; above?: 'request' | 'refuse' };
   /** The Parameters that are not in the SQL: they are not sent. */
   unused: string[];
 }
@@ -340,6 +364,8 @@ export interface QueryOnResource {
   name: string;
   kind: QueryKind;
   ownerName: string;
+  /** Made through Claude (DEC-CL-11). */
+  through?: 'claude' | null;
   mine: boolean;
   runs: number;
   lastRunAt: string | null;
@@ -497,8 +523,18 @@ export function createQuery(config: Config, session: Pick<Session, 'accessToken'
     async searchLenses(question: string): Promise<LensSuggestion[]> {
       return ((await (await call(`/lenses/search?${new URLSearchParams({ question })}`)).json()) as { lenses: LensSuggestion[] }).lenses;
     },
+    /** The Lens; LensDeleted when it was deleted, for whoever saw it (FR-LE-18). */
     async lens(id: string): Promise<Lens> {
-      return ((await (await call(`/lenses/${encodeURIComponent(id)}`)).json()) as { lens: Lens }).lens;
+      try {
+        return ((await (await call(`/lenses/${encodeURIComponent(id)}`)).json()) as { lens: Lens }).lens;
+      } catch (error) {
+        if (error instanceof Refused && error.status === 410 && error.body?.lens) throw new LensDeleted(error.body.lens as DeletedLens);
+        throw error;
+      }
+    },
+    /** Deletes a Lens for good, for its Owner Unit and the Data Team, with why (FR-LE-18): how many Users are told. */
+    async deleteLens(id: string, reason: string): Promise<{ lens: { id: string; name: string; collectionId: string }; told: number }> {
+      return (await (await call(`/lenses/${encodeURIComponent(id)}`, { method: 'DELETE', body: { reason } })).json()) as { lens: { id: string; name: string; collectionId: string }; told: number };
     },
     /**
      * Makes a Lens of a query (FR-LE-07): made, published or waiting for the Data Team; or the size check,

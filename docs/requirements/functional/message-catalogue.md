@@ -27,10 +27,10 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 
 | From ↓ to → | User | Owner | Data Team |
 | --- | --- | --- | --- |
-| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
+| User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02) |
 
 ## Overview
 
@@ -42,6 +42,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-CNV-04](#msg-cnv-04) | Reply | Collection, Resource, Lens, query or Learning Card | User → its writer and who wrote in the conversation | Nothing | By the writer | Implemented |
 | [MSG-CNV-05](#msg-cnv-05) | Decision on a Request | Lens or query | Data Team → its writer and its author | Nothing | By the writer | Implemented |
 | [MSG-CNV-06](#msg-cnv-06) | A Request lapsed | Lens or query | Data Hub → its writer and its author | Something to do | To write | Withdrawn |
+| [MSG-CNV-07](#msg-cnv-07) | A Question or Signal closed | Collection, Resource, Lens, query or Learning Card | User → its writer | Nothing | By the writer | Implemented |
 | [MSG-COL-01](#msg-col-01) | A Collection has no Owner any more | Collection | Data Hub → Data Team | Something to do | Proposed: K3.2 | Withdrawn |
 | [MSG-RES-01](#msg-res-01) | A new Resource waits for a Collection | Resource | Data Hub → Data Team | Something to do | Named: K5.1 | Implemented |
 | [MSG-RES-02](#msg-res-02) | Descriptions changed in dbt | Resource | Data Hub → Owner | Nothing | Named: K3.4 | Implemented |
@@ -56,8 +57,11 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-03](#msg-len-03) | A Lens grew into very large | Lens | Data Hub → Data Team and Owner | A decision | To write | Implemented |
 | [MSG-LEN-04](#msg-len-04) | A Lens on your Resource became public | Lens | Data Hub → Owners of its Resources | Nothing | Proposed: 4.5.1 | Proposed |
 | [MSG-LEN-05](#msg-len-05) | A Lens is Broken | Lens | Data Hub → Owner | Something to do | To write | Implemented |
+| [MSG-LEN-06](#msg-len-06) | A Lens was deleted | Lens | Data Hub → who used the Lens lately | Nothing | To write | Implemented |
 | [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-USR-01](#msg-usr-01) | A User was moved to another Permission group | User | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-USR-02](#msg-usr-02) | A member of the Data Team got Admin back | User | Data Hub → Data Team | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
@@ -77,11 +81,11 @@ The words are theirs. The catalogue holds the frame of them wherever the Message
 | From → to | User → Owner and who wrote in the conversation |
 | When | A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource. |
 | Status | Implemented |
-| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06) |
+| Comes from | [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-SR-29](04-stacks-and-resources.md#fr-sr-29), [FR-LR-06](16-learning.md#fr-lr-06), [FR-CV-16](14-conversations.md#fr-cv-16) |
 
 **What it asks:** An answer, of the Owner. Who answers for the object answers it in context, with the object in view. Any colleague who may see the object can answer too ([FR-CV-05](14-conversations.md#fr-cv-05)).
 
-**How it ends:** The first reply makes it answered and notifies its writer ([MSG-CNV-04](#msg-cnv-04)). It starts `open` and ends `answered`.
+**How it ends:** The first reply makes it answered and notifies its writer ([MSG-CNV-04](#msg-cnv-04)). Its writer, the Owner Unit and the Data Team can also close it, with an optional line why, which tells its writer when someone else closed it ([MSG-CNV-07](#msg-cnv-07)); the same people can reopen it. It starts `open` and ends `answered` or `closed`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -241,12 +245,12 @@ Template, English, laid out:
 | From → to | User → Owner and Data Team |
 | When | A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page. |
 | Status | Implemented |
-| Comes from | [FR-SR-30](04-stacks-and-resources.md#fr-sr-30), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07) |
+| Comes from | [FR-SR-30](04-stacks-and-resources.md#fr-sr-30), [FR-CV-03](14-conversations.md#fr-cv-03), [FR-CV-07](14-conversations.md#fr-cv-07), [FR-CV-16](14-conversations.md#fr-cv-16) |
 | Open points | [OP-SR-14](04-stacks-and-resources.md#op-sr-14) |
 
 **What it asks:** Something to do, of the Owner and Data Team. The Owner and the Data Team look into it. Either replies with what they found, or makes it an Anomaly on the Resource Card, which then holds it ([FR-SR-30](04-stacks-and-resources.md#fr-sr-30)).
 
-**How it ends:** A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. It starts `open` and ends `answered` or `anomaly`.
+**How it ends:** A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. Its writer, the Owner Unit and the Data Team can also close it, with an optional line why ([MSG-CNV-07](#msg-cnv-07)), and reopen it. It starts `open` and ends `answered`, `anomaly` or `closed`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -493,6 +497,92 @@ Template, English, laid out:
 
 </details>
 
+<a id="msg-cnv-07"></a>
+
+### MSG-CNV-07 · A Question or Signal closed
+
+| | |
+| --- | --- |
+| Kind | undefined |
+| About | Collection, Resource, Lens, query or Learning Card |
+| From → to | User → its writer |
+| When | Its writer, the Owner Unit of its object or the Data Team closes an open Question or Signal when nothing more is needed, even without an answer. It stands in the conversation as its closing, with who closed it, when, and an optional line why. |
+| Status | Implemented |
+| Comes from | [FR-CV-16](14-conversations.md#fr-cv-16), [DEC-CV-13](14-conversations.md#dec-cv-13) |
+
+**What it asks:** Nothing. It tells the writer of the Question or Signal that it was closed, and why; they, the Owner Unit and the Data Team can reopen it.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open in context · *Openen in context* | The page of its object as it is, with the Message in a floating window over it ([FR-CV-09](14-conversations.md#fr-cv-09)) | every recipient |
+
+**Learning Card:** By the writer. Whoever closes it can add the card that explains why nothing more is needed.
+
+**Dutch, laid out**, with the example:
+
+> **Maxime Passenier sloot het bericht over de lens Leads per source name**
+>
+> > Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.
+
+**Dutch, plain:**
+
+```text
+Maxime Passenier sloot het bericht over de lens Leads per source name.
+“Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.”
+```
+
+**English, laid out**, with the example:
+
+> **Maxime Passenier closed the message on the lens Leads per source name**
+>
+> > Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.
+
+**English, plain:**
+
+```text
+Maxime Passenier closed the message on the lens Leads per source name.
+“Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.”
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+Only the parameters every Message of its sender has.
+
+Template, Dutch, plain:
+
+```text
+{writer} sloot het bericht over de {subjectKind} {subject}.
+“{text}”
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{writer} sloot het bericht over de {subjectKind} {subject}**
+
+> {text}
+```
+
+Template, English, plain:
+
+```text
+{writer} closed the message on the {subjectKind} {subject}.
+“{text}”
+```
+
+Template, English, laid out:
+
+```markdown
+**{writer} closed the message on the {subjectKind} {subject}**
+
+> {text}
+```
+
+</details>
+
 <a id="msg-res-07"></a>
 
 ### MSG-RES-07 · The Owner tells the Consumers about a change
@@ -641,7 +731,7 @@ One item of `changes`, English, laid out:
 
 **What it asks:** A decision, of the Data Team. A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen ([DEC-LE-05](09-lenses.md#dec-le-05)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It waits until the Data Team decides ([DEC-LE-15](09-lenses.md#dec-le-15)). It starts `waiting` and ends `accepted` or `refused`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies its writer. It waits until the Data Team decides ([DEC-LE-15](09-lenses.md#dec-le-15)), or until the Lens is deleted, which withdraws it ([FR-LE-18](09-lenses.md#fr-le-18)). It starts `waiting` and ends `accepted`, `refused` or `withdrawn`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -1859,7 +1949,7 @@ A filter on `{column}`, the partition column, would make it read less.
 
 **What it asks:** A decision, of the Data Team. As for a Request by its author ([MSG-LEN-01](#msg-len-01)): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run ([DEC-LE-11](09-lenses.md#dec-le-11)).
 
-**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted` or `refused`.
+**How it ends:** The decision is its reply ([MSG-CNV-05](#msg-cnv-05)), which notifies the author of the Lens. It starts `waiting` and ends `accepted`, `refused` or `withdrawn`.
 
 | Button | Opens | For |
 | --- | --- | --- |
@@ -2157,6 +2247,104 @@ One item of `missing`, English, laid out:
 
 </details>
 
+<a id="msg-len-06"></a>
+
+### MSG-LEN-06 · A Lens was deleted
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | Lens |
+| From → to | Data Hub → who used the Lens lately |
+| When | Its Owner Unit or the Data Team deletes a Lens, with Delete on its Edit ([FR-LE-18](09-lenses.md#fr-le-18)). |
+| How many | One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it. |
+| Status | Implemented |
+| Comes from | [FR-LE-18](09-lenses.md#fr-le-18), [DEC-LE-21](09-lenses.md#dec-le-21) |
+
+**What it asks:** Nothing. Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open the collection · *Collectie openen* | The Collection the Lens was in | every recipient |
+
+**Learning Card:** To write: *Finding a Lens that answers your question, and when to write your own query*. Who used the Lens needs another way to their answer. The nearest card today is K5.1 What a resource is.
+
+**Dutch, laid out**, with the example:
+
+> **Mia Peeters verwijderde de lens Leads per source name**
+>
+> > Replaced by the lens Leads per source, week by week.
+>
+> Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.
+
+**Dutch, plain:**
+
+```text
+Mia Peeters verwijderde de lens Leads per source name. Hij draait niet meer, ook niet in Excel.
+“Replaced by the lens Leads per source, week by week.”
+```
+
+**English, laid out**, with the example:
+
+> **Mia Peeters deleted the lens Leads per source name**
+>
+> > Replaced by the lens Leads per source, week by week.
+>
+> It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.
+
+**English, plain:**
+
+```text
+Mia Peeters deleted the lens Leads per source name. It no longer runs, also not in Excel.
+“Replaced by the lens Leads per source, week by week.”
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who deleted it |
+| `reason` | text, optional | Why, as they wrote it |
+
+Template, Dutch, plain:
+
+```text
+{actor} verwijderde de lens {subject}. Hij draait niet meer, ook niet in Excel.
+“{reason}”
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{actor} verwijderde de lens {subject}**
+
+> {reason}
+
+Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.
+```
+
+Template, English, plain:
+
+```text
+{actor} deleted the lens {subject}. It no longer runs, also not in Excel.
+“{reason}”
+```
+
+Template, English, laid out:
+
+```markdown
+**{actor} deleted the lens {subject}**
+
+> {reason}
+
+It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.
+```
+
+</details>
+
 <a id="msg-key-01"></a>
 
 ### MSG-KEY-01 · An Excel key expires within a month
@@ -2323,6 +2511,257 @@ Template, English, laid out:
 **{actor} of the Data Team revoked your Excel key {subject}**
 
 From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.
+```
+
+</details>
+
+<a id="msg-usr-01"></a>
+
+### MSG-USR-01 · A User was moved to another Permission group
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → its author |
+| When | The Data Team moves a User to another Permission group on Users, in Admin, or deletes their Permission group, whose Users go to the group chosen. A change of the Permissions of their whole group sends none: the Data Team announces it itself. |
+| How many | One per User and move; only that User sees it. |
+| Status | Implemented |
+| Comes from | [FR-PL-12](12-permissions-and-library-cards.md#fr-pl-12), [DEC-UX-192](../../design/principles.md#dec-ux-192), [TR-PL-07](../technical/12-permissions-and-library-cards.md#tr-pl-07) |
+
+**What it asks:** Nothing. The User reads what changed for them; whoever needs another Permission group asks the Data Team.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page | every recipient |
+
+**Learning Card:** To write: *Permission groups: what a User may do in Data Hub, and why something is not there for them*. The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.
+
+**Dutch, laid out**, with the example:
+
+> **Je zit nu in de Permission group Business analyst**
+>
+> Dirk Vos van het Data Team zette je erin; je zat in Lens user. Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.
+>
+> Deze 2 dingen kan je nu ook:
+> - Make and run queries, in Query and through Claude
+> - Make a query a Lens, in a Collection of your Owner Units
+
+**Dutch, plain:**
+
+```text
+Dirk Vos van het Data Team zette je in de Permission group Business analyst; je zat in Lens user.
+Je kan nu ook: Make and run queries, in Query and through Claude; Make a query a Lens, in a Collection of your Owner Units.
+```
+
+**English, laid out**, with the example:
+
+> **You are now in the Permission group Business analyst**
+>
+> Dirk Vos of the Data Team put you in it; you were in Lens user. Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.
+>
+> You can now also do these 2 things:
+> - Make and run queries, in Query and through Claude
+> - Make a query a Lens, in a Collection of your Owner Units
+
+**English, plain:**
+
+```text
+Dirk Vos of the Data Team put you in the Permission group Business analyst; you were in Lens user.
+You can now also: Make and run queries, in Query and through Claude; Make a query a Lens, in a Collection of your Owner Units.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who of the Data Team moved them, or deleted their Permission group |
+| `from` | name | The Permission group they were in |
+| `to` | name | The Permission group they are in now |
+| `deleted` | choice: `yes`, `no` | Whether their Permission group was deleted |
+| `gained` | count, optional | How many things they can do now that they could not before |
+| `gains` | list, optional | What they can do now that they could not before, a line each as identity writes it |
+| `gains[].line` | text | One thing, as identity writes it |
+| `lost` | count, optional | How many things they can no longer do |
+| `losses` | list, optional | What they can no longer do, a line each as identity writes it |
+| `losses[].line` | text | One thing, as identity writes it |
+
+Template, Dutch, plain:
+
+```text
+{deleted, select, yes {Je Permission group {from} werd verwijderd: {actor} van het Data Team zette je in {to}.} other {{actor} van het Data Team zette je in de Permission group {to}; je zat in {from}.}}
+Je kan nu ook: {gains}.
+Je kan niet meer: {losses}.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{deleted, select, yes {Je Permission group {from} werd verwijderd} other {Je zit nu in de Permission group {to}}}**
+
+{deleted, select, yes {{actor} van het Data Team verwijderde {from} en zette je in {to}.} other {{actor} van het Data Team zette je erin; je zat in {from}.}} Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.
+
+{gained, plural, one {Dit kan je nu ook:} other {Deze # dingen kan je nu ook:}}
+{gains}
+
+{lost, plural, one {Dit kan je niet meer:} other {Deze # dingen kan je niet meer:}}
+{losses}
+```
+
+Template, English, plain:
+
+```text
+{deleted, select, yes {Your Permission group {from} was deleted: {actor} of the Data Team put you in {to}.} other {{actor} of the Data Team put you in the Permission group {to}; you were in {from}.}}
+You can now also: {gains}.
+You can no longer: {losses}.
+```
+
+Template, English, laid out:
+
+```markdown
+**{deleted, select, yes {Your Permission group {from} was deleted} other {You are now in the Permission group {to}}}**
+
+{deleted, select, yes {{actor} of the Data Team deleted {from} and put you in {to}.} other {{actor} of the Data Team put you in it; you were in {from}.}} Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.
+
+{gained, plural, one {You can now also do this:} other {You can now also do these # things:}}
+{gains}
+
+{lost, plural, one {You can no longer do this:} other {You can no longer do these # things:}}
+{losses}
+```
+
+One item of `gains`, Dutch, plain:
+
+```text
+{line}
+```
+
+One item of `gains`, Dutch, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `gains`, English, plain:
+
+```text
+{line}
+```
+
+One item of `gains`, English, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `losses`, Dutch, plain:
+
+```text
+{line}
+```
+
+One item of `losses`, Dutch, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `losses`, English, plain:
+
+```text
+{line}
+```
+
+One item of `losses`, English, laid out:
+
+```markdown
+- {line}
+```
+
+</details>
+
+<a id="msg-usr-02"></a>
+
+### MSG-USR-02 · A member of the Data Team got Admin back
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → Data Team |
+| When | No User of Admin can still sign in, for example after leaving, and a member of `datahub-datateam@` signs in: they get Admin, so that the Role Group stays a way back in. |
+| How many | One per User who gets Admin back this way. |
+| Status | Implemented |
+| Comes from | [EC-PL-03](12-permissions-and-library-cards.md#ec-pl-03), [FR-PL-08](12-permissions-and-library-cards.md#fr-pl-08) |
+
+**What it asks:** Nothing. The Data Team checks on Users, in Admin, who should have Admin; the User keeps it until someone moves them.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open Users · *Users openen* | Users, in Admin, with the User opened | Data Team |
+
+**Learning Card:** To write: *Permission groups: what a User may do in Data Hub, and why something is not there for them*. The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.
+
+**Dutch, laid out**, with the example:
+
+> **Dirk Vos kreeg de Permission group Admin terug**
+>
+> Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen Dirk Vos, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.
+
+**Dutch, plain:**
+
+```text
+Dirk Vos kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.
+```
+
+**English, laid out**, with the example:
+
+> **Dirk Vos got the Permission group Admin back**
+>
+> No User of Admin could still sign in, for example after leaving. When Dirk Vos, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.
+
+**English, plain:**
+
+```text
+Dirk Vos got the Permission group Admin back: no User of Admin could still sign in.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+Only the parameters every Message of its sender has.
+
+Template, Dutch, plain:
+
+```text
+{subject} kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{subject} kreeg de Permission group Admin terug**
+
+Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen {subject}, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.
+```
+
+Template, English, plain:
+
+```text
+{subject} got the Permission group Admin back: no User of Admin could still sign in.
+```
+
+Template, English, laid out:
+
+```markdown
+**{subject} got the Permission group Admin back**
+
+No User of Admin could still sign in, for example after leaving. When {subject}, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.
 ```
 
 </details>

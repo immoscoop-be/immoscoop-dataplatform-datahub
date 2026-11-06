@@ -40,9 +40,8 @@ export interface Missing {
   since: string;
 }
 
-/** The Log IDs of a Lens so far: Broken, and works again (FR-SR-52). */
-/** Broken and works again (FR-SR-52); a Request on it accepted or refused by the Data Team (FR-LE-09). */
-export type LensLogId = 'BRK-001' | 'BRK-002' | 'LEN-001' | 'LEN-002';
+/** Broken and works again (FR-SR-52); a Request on it accepted or refused by the Data Team (FR-LE-09); deleted (FR-LE-18). */
+export type LensLogId = 'BRK-001' | 'BRK-002' | 'LEN-001' | 'LEN-002' | 'LEN-003';
 
 /** The range one run of a Lens was measured in (FR-LE-08, DEC-SR-29). */
 export type LensRange = 'free' | 'approve' | 'request';
@@ -58,6 +57,8 @@ export interface QueryDatabase {
     /** The fixed Google ID of who made it, and their name at that moment. */
     ownerId: string;
     ownerName: string;
+    /** Made through Claude, which it keeps also when its User goes on in Query; null for the web app (DEC-CL-11). */
+    through: Generated<'claude' | null>;
     name: string;
     question: Generated<string>;
     resources: ColumnType<NamedResource[], string, string>;
@@ -116,6 +117,11 @@ export interface QueryDatabase {
     stoppedAt: Date | null;
     stoppedReads: ColumnType<string | null, number | null, number | null>;
     broken: ColumnType<Missing | null, string | null, string | null>;
+    /** When, by whom and why it was deleted; null while it is not (FR-LE-18). */
+    deletedAt: ColumnType<Date | null, Date | null | undefined, Date | null>;
+    deletedById: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedByName: ColumnType<string | null, string | null | undefined, string | null>;
+    deletedReason: ColumnType<string | null, string | null | undefined, string | null>;
   };
   /** The Log of a Lens (FR-SR-52). */
   lensLog: {
@@ -157,6 +163,8 @@ export interface QueryDatabase {
     queryRef: string;
     userId: string;
     userName: string;
+    /** Run through Claude; null for the web app (DEC-CL-11). */
+    through: Generated<'claude' | null>;
     sql: string;
     /** The Parameters and the values it ran with. */
     parameters: ColumnType<Parameter[], string | undefined, string>;

@@ -7,7 +7,7 @@ import type { LearningCardFit, MessageButton, MessageItem, MessageParameter, Mes
  *
  * A Message ID is fixed: never renumbered or reused. `MSG-CNV` is a Message on any object, the other
  * prefixes name the kind of its object: `COL` a Collection, `RES` a Resource, `LEN` a Lens, `QRY` a
- * query, `RPT` a Report. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
+ * query, `RPT` a Report, `KEY` an Excel key, `USR` a User. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
  * `{name, plural, …}`; a choice stays on one line.
  */
 
@@ -77,6 +77,19 @@ const FIELD_CHANGES: MessageItem = {
   },
 };
 
+/** One thing a User gains or loses with another Permission group, a line as identity writes it (FR-PL-12). */
+const CHANGE_LINE: MessageItem = {
+  fields: [{ name: 'line', type: 'text', about: 'One thing, as identity writes it' }],
+  text: { nl: { plain: '{line}', rich: '- {line}' }, en: { plain: '{line}', rich: '- {line}' } },
+};
+
+/** What a Permission group allows has no card of its own yet: Permission groups are new (DEC-PL-01). */
+const PERMISSIONS_CARD: LearningCardFit = {
+  fit: 'toWrite',
+  topic: 'Permission groups: what a User may do in Data Hub, and why something is not there for them',
+  why: 'The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.',
+};
+
 /** What a Broken Lens or query reads that no longer exists: a Resource, or a column of one (DEC-DH-67). */
 const MISSING: MessageItem = {
   fields: [
@@ -124,7 +137,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner', 'participants'],
     when: 'A User asks something about an object, from "Messages" on its page, or with "Ask a question" on a Resource.',
     status: 'Implemented',
-    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06'],
+    sources: ['FR-CV-03', 'FR-CV-07', 'FR-SR-29', 'FR-LR-06', 'FR-CV-16'],
     parameters: [],
     text: {
       nl: {
@@ -142,8 +155,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['owner'],
       what: 'Who answers for the object answers it in context, with the object in view. Any colleague who may see the object can answer too (FR-CV-05).',
       buttons: [OPEN_IN_CONTEXT],
-      states: ['open', 'answered'],
-      done: 'The first reply makes it answered and notifies its writer (MSG-CNV-04).',
+      states: ['open', 'answered', 'closed'],
+      done: 'The first reply makes it answered and notifies its writer (MSG-CNV-04). Its writer, the Owner Unit and the Data Team can also close it, with an optional line why, which tells its writer when someone else closed it (MSG-CNV-07); the same people can reopen it.',
     },
     example: {
       writer: 'Karel Leys',
@@ -199,7 +212,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     to: ['owner', 'dataTeam'],
     when: 'A User reports that something seems odd about the data of a Resource or a Lens, from "Messages" on its page.',
     status: 'Implemented',
-    sources: ['FR-SR-30', 'FR-CV-03', 'FR-CV-07'],
+    sources: ['FR-SR-30', 'FR-CV-03', 'FR-CV-07', 'FR-CV-16'],
     openPoints: ['OP-SR-14'],
     parameters: [],
     text: {
@@ -228,8 +241,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
           for: ['owner', 'dataTeam'],
         },
       ],
-      states: ['open', 'answered', 'anomaly'],
-      done: 'A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer.',
+      states: ['open', 'answered', 'anomaly', 'closed'],
+      done: 'A reply answers it; made an Anomaly, it links to the Anomaly. Either notifies its writer. Its writer, the Owner Unit and the Data Team can also close it, with an optional line why (MSG-CNV-07), and reopen it.',
     },
     example: {
       writer: 'Karel Leys',
@@ -363,6 +376,41 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'A new Request starts over; the lapsed one stays in the conversation.',
     },
     example: { subjectKind: 'lens', subject: 'Leads per source, all weeks', days: 5 },
+  },
+  {
+    id: 'MSG-CNV-07',
+    title: 'A Question or Signal closed',
+    kind: 'closing',
+    subjects: ANY_OBJECT,
+    from: 'user',
+    to: ['writer'],
+    when: 'Its writer, the Owner Unit of its object or the Data Team closes an open Question or Signal when nothing more is needed, even without an answer. It stands in the conversation as its closing, with who closed it, when, and an optional line why.',
+    status: 'Implemented',
+    sources: ['FR-CV-16', 'DEC-CV-13'],
+    parameters: [],
+    text: {
+      nl: {
+        plain: lines('{writer} sloot het bericht over de {subjectKind} {subject}.', '“{text}”'),
+        rich: lines('**{writer} sloot het bericht over de {subjectKind} {subject}**', '', '> {text}'),
+      },
+      en: {
+        plain: lines('{writer} closed the message on the {subjectKind} {subject}.', '“{text}”'),
+        rich: lines('**{writer} closed the message on the {subjectKind} {subject}**', '', '> {text}'),
+      },
+    },
+    learningCard: { fit: 'byWriter', why: 'Whoever closes it can add the card that explains why nothing more is needed.' },
+    action: {
+      asks: 'nothing',
+      what: 'It tells the writer of the Question or Signal that it was closed, and why; they, the Owner Unit and the Data Team can reopen it.',
+      buttons: [OPEN_IN_CONTEXT],
+      done: 'When it is read.',
+    },
+    example: {
+      writer: 'Maxime Passenier',
+      subjectKind: 'lens',
+      subject: 'Leads per source name',
+      text: 'Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.',
+    },
   },
 
   // Collections
@@ -959,8 +1007,8 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'A member of the Data Team decides in context, with the size check of the Lens in view: Accept publishes it, Refuse needs a reason. Until then the Lens is frozen (DEC-LE-05).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused'],
-      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer. It waits until the Data Team decides (DEC-LE-15).',
+      states: ['waiting', 'accepted', 'refused', 'withdrawn'],
+      done: 'The decision is its reply (MSG-CNV-05), which notifies its writer. It waits until the Data Team decides (DEC-LE-15), or until the Lens is deleted, which withdraws it (FR-LE-18).',
     },
     example: {
       writer: 'Mia Peeters',
@@ -1055,7 +1103,7 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       of: ['dataTeam'],
       what: 'As for a Request by its author (MSG-LEN-01): the Data Team accepts or refuses it in context. Meanwhile the Lens does not run (DEC-LE-11).',
       buttons: [OPEN_IN_CONTEXT, ACCEPT, REFUSE],
-      states: ['waiting', 'accepted', 'refused'],
+      states: ['waiting', 'accepted', 'refused', 'withdrawn'],
       done: 'The decision is its reply (MSG-CNV-05), which notifies the author of the Lens.',
     },
     example: { subject: 'Leads per source name', reads: 1_400_000_000, threshold: 1_000_000_000, partitions: 104, partitionsTotal: 104 },
@@ -1157,6 +1205,53 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
     example: { subject: 'Leads per source name', since: '2026-10-28', count: 1, missing: [{ kind: 'column', resource: 'Weekly lead volume', column: 'lead_channel' }] },
   },
 
+  {
+    id: 'MSG-LEN-06',
+    title: 'A Lens was deleted',
+    kind: 'dataHub',
+    subjects: ['lens'],
+    from: 'dataHub',
+    to: ['lensUsers'],
+    when: 'Its Owner Unit or the Data Team deletes a Lens, with Delete on its Edit (FR-LE-18).',
+    per: 'One per Lens, for everyone who ran it in the 30 days before, also from Excel; never who deleted it.',
+    status: 'Implemented',
+    sources: ['FR-LE-18', 'DEC-LE-21'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who deleted it' },
+      { name: 'reason', type: 'text', about: 'Why, as they wrote it', optional: true },
+    ],
+    text: {
+      nl: {
+        plain: lines('{actor} verwijderde de lens {subject}. Hij draait niet meer, ook niet in Excel.', '“{reason}”'),
+        rich: lines(
+          '**{actor} verwijderde de lens {subject}**',
+          '',
+          '> {reason}',
+          '',
+          'Hij draait niet meer, ook niet in Excel, en staat nergens meer. Zijn runs en de berichten erop blijven bewaard. Zoek een andere lens die je vraag beantwoordt, of schrijf je eigen query.',
+        ),
+      },
+      en: {
+        plain: lines('{actor} deleted the lens {subject}. It no longer runs, also not in Excel.', '“{reason}”'),
+        rich: lines(
+          '**{actor} deleted the lens {subject}**',
+          '',
+          '> {reason}',
+          '',
+          'It no longer runs, also not in Excel, and is listed nowhere. Its runs and the messages on it are kept. Look for another lens that answers your question, or write your own query.',
+        ),
+      },
+    },
+    learningCard: { fit: 'toWrite', topic: 'Finding a Lens that answers your question, and when to write your own query', nearest: { number: 'K5.1', title: 'What a resource is' }, why: 'Who used the Lens needs another way to their answer.' },
+    action: {
+      asks: 'nothing',
+      what: 'Who used it looks for another Lens that answers their question, or writes their own query; an Excel that read it gets no data from it any more.',
+      buttons: [{ label: { nl: 'Collectie openen', en: 'Open the collection' }, opens: 'The Collection the Lens was in' }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Leads per source name', actor: 'Mia Peeters', reason: 'Replaced by the lens Leads per source, week by week.' },
+  },
+
   // Queries
   // An Excel key, made on My page: only its User sees the Messages about it (FR-PL-03, DEC-DH-79).
   {
@@ -1236,6 +1331,122 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When it is read.',
     },
     example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
+  },
+  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03).
+  {
+    id: 'MSG-USR-01',
+    title: 'A User was moved to another Permission group',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'The Data Team moves a User to another Permission group on Users, in Admin, or deletes their Permission group, whose Users go to the group chosen. A change of the Permissions of their whole group sends none: the Data Team announces it itself.',
+    per: 'One per User and move; only that User sees it.',
+    status: 'Implemented',
+    sources: ['FR-PL-12', 'DEC-UX-192', 'TR-PL-07'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who of the Data Team moved them, or deleted their Permission group' },
+      { name: 'from', type: 'name', about: 'The Permission group they were in' },
+      { name: 'to', type: 'name', about: 'The Permission group they are in now' },
+      { name: 'deleted', type: 'choice', about: 'Whether their Permission group was deleted', values: ['yes', 'no'] },
+      { name: 'gained', type: 'count', about: 'How many things they can do now that they could not before', optional: true },
+      { name: 'gains', type: 'list', about: 'What they can do now that they could not before, a line each as identity writes it', optional: true, item: CHANGE_LINE },
+      { name: 'lost', type: 'count', about: 'How many things they can no longer do', optional: true },
+      { name: 'losses', type: 'list', about: 'What they can no longer do, a line each as identity writes it', optional: true, item: CHANGE_LINE },
+    ],
+    text: {
+      nl: {
+        plain: lines(
+          '{deleted, select, yes {Je Permission group {from} werd verwijderd: {actor} van het Data Team zette je in {to}.} other {{actor} van het Data Team zette je in de Permission group {to}; je zat in {from}.}}',
+          'Je kan nu ook: {gains}.',
+          'Je kan niet meer: {losses}.',
+        ),
+        rich: lines(
+          '**{deleted, select, yes {Je Permission group {from} werd verwijderd} other {Je zit nu in de Permission group {to}}}**',
+          '',
+          '{deleted, select, yes {{actor} van het Data Team verwijderde {from} en zette je in {to}.} other {{actor} van het Data Team zette je erin; je zat in {from}.}} Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.',
+          '',
+          '{gained, plural, one {Dit kan je nu ook:} other {Deze # dingen kan je nu ook:}}',
+          '{gains}',
+          '',
+          '{lost, plural, one {Dit kan je niet meer:} other {Deze # dingen kan je niet meer:}}',
+          '{losses}',
+        ),
+      },
+      en: {
+        plain: lines(
+          '{deleted, select, yes {Your Permission group {from} was deleted: {actor} of the Data Team put you in {to}.} other {{actor} of the Data Team put you in the Permission group {to}; you were in {from}.}}',
+          'You can now also: {gains}.',
+          'You can no longer: {losses}.',
+        ),
+        rich: lines(
+          '**{deleted, select, yes {Your Permission group {from} was deleted} other {You are now in the Permission group {to}}}**',
+          '',
+          '{deleted, select, yes {{actor} of the Data Team deleted {from} and put you in {to}.} other {{actor} of the Data Team put you in it; you were in {from}.}} Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.',
+          '',
+          '{gained, plural, one {You can now also do this:} other {You can now also do these # things:}}',
+          '{gains}',
+          '',
+          '{lost, plural, one {You can no longer do this:} other {You can no longer do these # things:}}',
+          '{losses}',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The User reads what changed for them; whoever needs another Permission group asks the Data Team.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page' }],
+      done: 'When it is read.',
+    },
+    example: {
+      subject: 'An Claes',
+      actor: 'Dirk Vos',
+      from: 'Lens user',
+      to: 'Business analyst',
+      deleted: 'no',
+      gained: 2,
+      gains: [{ line: 'Make and run queries, in Query and through Claude' }, { line: 'Make a query a Lens, in a Collection of your Owner Units' }],
+    },
+  },
+  {
+    id: 'MSG-USR-02',
+    title: 'A member of the Data Team got Admin back',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['dataTeam'],
+    when: 'No User of Admin can still sign in, for example after leaving, and a member of `datahub-datateam@` signs in: they get Admin, so that the Role Group stays a way back in.',
+    per: 'One per User who gets Admin back this way.',
+    status: 'Implemented',
+    sources: ['EC-PL-03', 'FR-PL-08'],
+    parameters: [],
+    text: {
+      nl: {
+        plain: '{subject} kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.',
+        rich: lines(
+          '**{subject} kreeg de Permission group Admin terug**',
+          '',
+          'Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen {subject}, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.',
+        ),
+      },
+      en: {
+        plain: '{subject} got the Permission group Admin back: no User of Admin could still sign in.',
+        rich: lines(
+          '**{subject} got the Permission group Admin back**',
+          '',
+          'No User of Admin could still sign in, for example after leaving. When {subject}, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The Data Team checks on Users, in Admin, who should have Admin; the User keeps it until someone moves them.',
+      buttons: [{ label: { nl: 'Users openen', en: 'Open Users' }, opens: 'Users, in Admin, with the User opened', for: ['dataTeam'] }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Dirk Vos' },
   },
   {
     id: 'MSG-QRY-01',

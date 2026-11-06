@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { GapScope } from '@datahub/contracts/gaps';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import ObjectHeader from '@datahub/ui/components/ObjectHeader.svelte';
   import StatusRow from '@datahub/ui/components/StatusRow.svelte';
@@ -12,14 +13,15 @@
   import MessagesButton from './MessagesButton.svelte';
   import { cardsOf } from '../lib/learning.js';
   import { useLearning } from '../lib/learning-context.js';
-  import type { Card, Catalogue, Collection, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import type { CardChanges, Catalogue, Collection, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import { can, canWith, reach, type Permissions } from '../lib/permissions.js';
+  import type { Conversation } from '../lib/messages.js';
   import type { QueryClient, Storage } from '../lib/query.js';
   import type { Registry } from '../lib/registry.js';
   import { collectionPath, newQueryPath, resourcePath } from '../lib/routes.js';
   import { Refused } from '../lib/api.js';
   import type { requestOf } from '../lib/grain.js';
   import AddResources from './AddResources.svelte';
-  import DeprecateSheet from './DeprecateSheet.svelte';
   import LearningPop from './LearningPop.svelte';
   import LearningRef from './LearningRef.svelte';
   import PublishSheet from './PublishSheet.svelte';
@@ -27,7 +29,7 @@
   import ResourceColumns from './ResourceColumns.svelte';
   import ResourceHistory from './ResourceHistory.svelte';
   import ResourceLineage from './ResourceLineage.svelte';
-  import ResourceOverview from './ResourceOverview.svelte';
+  import ResourceOverview, { type OverviewPart } from './ResourceOverview.svelte';
   import ResourcePreview from './ResourcePreview.svelte';
 
   /**
@@ -37,8 +39,9 @@
    * (DEC-UX-107). A Resource without a Collection says so, and only the Data Team sees it. Its Owner
    * publishes it, the first Confirmation (FR-SR-49); once published, its Owner Unit and the Data Team
    * deprecate it (FR-SR-50), and mark seen what changed since its last Confirmation (FR-MR-12). Its
-   * Preview shows its first rows (FR-SR-38); its History, the queries that used it, only for its Owner
-   * Unit and the Data Team (DEC-SR-41). "Messages" and "Ask a question" are there and still empty: they
+   * Preview shows its first rows (FR-SR-38); its History, the queries that used it, only for who sees the queries
+   * of others on it (DEC-SR-41). What it offers follows the Permissions of the User and the flags catalogue sends
+   * (FR-PL-14). "Messages" and "Ask a question" are there and still empty: they
    * come with the Messages.
    */
   let {
@@ -49,11 +52,12 @@
     catalogue,
     registry,
     queries,
-    dataTeam,
+    permissions,
     groups,
     onchange,
     onrun,
     messages,
+    threads,
   }: {
     resource: ResourceDetail;
     log: readonly LogEntry[] | undefined;
@@ -63,7 +67,8 @@
     catalogue: Catalogue;
     registry: Registry;
     queries: QueryClient;
-    dataTeam: boolean;
+    /** The Permissions of the User (FR-PL-14). */
+    permissions: Permissions;
     /** The groups of the User: its Owner publishes it (FR-SR-16). */
     groups: readonly string[];
     /** The Resource as it is after a change, for the rest of the app. */
@@ -72,6 +77,8 @@
     onrun?: () => void;
     /** "Messages" with their number, which opens the slide-in (FR-CV-07); left out while they are read. */
     messages?: { count: number | null; href: string };
+    /** The Questions, Remarks and Signals on it, the newest first, for its Summary; undefined while they are read. */
+    threads?: readonly Conversation[];
   } = $props();
 
   // The tabs of a Resource (DEC-UX-90).
@@ -89,12 +96,14 @@
   /** Its size and partitions from BigQuery (FR-SR-39); null where BigQuery does not tell them. */
   let storage: Storage | null | undefined = $state();
   let relating = $state(false);
-  let sheet: 'publish' | 'deprecate' | undefined = $state();
+  let sheet: 'publish' | undefined = $state();
+  /** The part of the Overview on screen, which a deprecation opens on its Danger zone (DEC-UX-176). */
+  let part: OverviewPart = $state('summary');
   /** The sheet that adds it to a Collection, while it waits (DEC-UX-131). */
   let adding = $state(false);
   let failed = $state(false);
 
-  // Read again for another Resource: what it relates to, and the first tab.
+  // Read again for another Resource: what it relates to, and the first tab on its Summary.
   let readFor: string | undefined;
   $effect(() => {
     const id = resource.id;
@@ -103,6 +112,7 @@
     }
     readFor = id;
     tab = 'overview';
+    part = 'summary';
     related = undefined;
     storage = undefined;
     relating = false;
@@ -122,12 +132,24 @@
     );
   });
 
-  /** Its Owner Unit and the Data Team edit it, once it is in a Collection and has an Owner (FR-RC-15). */
+  /** Who manages its Collection, once it is in one and has an Owner (FR-RC-15). */
   const canEdit = $derived(resource.collectionId !== null && collection?.canManage === true);
-  /** Only its Owner Unit and the Data Team see the queries on it (DEC-SR-41). */
-  const tabs = $derived(TABS.filter(({ id }) => id !== 'history' || dataTeam || canEdit));
-  /** Only its Owner publishes it: a member of the Owner Unit of its Collection (FR-SR-16). */
-  const isOwner = $derived(collection !== undefined && groups.includes(collection.ownerUnit.id));
+  /**
+   * What the User may describe of it, attribute by attribute (DEC-PL-03): as catalogue says, or else what their
+   * Permission group allows where they manage its Collection.
+   */
+  const describes = (attribute: DescribeAttribute): boolean =>
+    resource.canDescribe ? resource.canDescribe[attribute] === true : canEdit && canWith(permissions, 'resources.describe', 'attributes', attribute);
+  /** Deprecating it, and undoing that (`resources.deprecate`): as catalogue says, or where they manage its Collection. */
+  const canDeprecate = $derived(resource.canDeprecate ?? (canEdit && can(permissions, 'resources.deprecate')));
+  /** The queries on it: for who sees every query, or the queries on the Resources of their Owner Units (DEC-SR-41, `queries.seeOthers`). */
+  const seesQueries = $derived(reach(permissions, 'queries.seeOthers') === 'every' || (reach(permissions, 'queries.seeOthers') === 'theirs' && canEdit));
+  const tabs = $derived(TABS.filter(({ id }) => (id !== 'history' || seesQueries) && (id !== 'preview' || can(permissions, 'resources.preview'))));
+  /** Only its Owner publishes it: a member of the Owner Unit of its Collection, who may publish (FR-SR-16, DEC-PL-06). */
+  const isOwner = $derived(collection !== undefined && (collection.owned ?? groups.includes(collection.ownerUnit.id)));
+  const mayPublish = $derived(resource.canPublish ?? (isOwner && can(permissions, 'resources.publish')));
+  /** Adding it to a Collection, and its grain and model type, are the work of a Data Admin (`resources.assign`). */
+  const assigns = $derived(resource.canAssign ?? can(permissions, 'resources.assign'));
   /** The published Resources the User sees, to use instead of this one. */
   const others = $derived(
     (collections ?? []).flatMap((one) => one.resources.filter((item) => item.published && item.id !== resource.id).map((item) => ({ ...item, collection: one.name }))),
@@ -175,7 +197,7 @@
     related = await catalogue.related(updated.id).catch(() => related);
   }
 
-  async function saveCard(changes: Partial<Card>): Promise<boolean> {
+  async function saveCard(changes: CardChanges): Promise<boolean> {
     try {
       await changed(await catalogue.editResource(resource.id, changes));
       return true;
@@ -184,6 +206,23 @@
       return false;
     }
   }
+
+  /** Adds, changes or removes one Known Gap, then shows the Resource as it is now; its Log follows (FR-RC-21). */
+  async function gap(step: () => Promise<unknown>): Promise<boolean> {
+    try {
+      await step();
+      void changed(await catalogue.resource(resource.id));
+      return true;
+    } catch (error) {
+      console.error(`A Known Gap of ${resource.displayName} could not be changed`, error);
+      return false;
+    }
+  }
+  const gaps = {
+    add: (text: string, scope: GapScope | null) => gap(() => catalogue.addGap(resource.id, text, scope)),
+    change: (known: KnownGap, text: string, scope: GapScope | null) => gap(() => catalogue.changeGap(resource.id, known.id, text, scope)),
+    remove: (known: KnownGap) => gap(() => catalogue.removeGap(resource.id, known.id)),
+  };
 
   async function saveFields(fields: { name: string; businessDescription: string }[]): Promise<boolean> {
     try {
@@ -205,6 +244,17 @@
     } catch (error) {
       console.error(`${resource.displayName} could not be changed`, error);
       failed = true;
+      return false;
+    }
+  }
+
+  /** Deprecates it, or takes that away, from the Danger zone of its Overview, which says when it fails (DEC-UX-176). */
+  async function mark(step: () => Promise<ResourceDetail>): Promise<boolean> {
+    try {
+      await changed(await step());
+      return true;
+    } catch (error) {
+      console.error(`${resource.displayName} could not be changed`, error);
       return false;
     }
   }
@@ -237,16 +287,9 @@
     <ObjectHeader name={resource.displayName} key={resource.fullName ?? resource.key} copyLabel={t('resource.copyKey')} />
   </div>
   <div class="actions">
-    {#if resource.published && canEdit}
-      {#if resource.deprecation}
-        <Button variant="outline" onclick={() => act(() => catalogue.undeprecate(resource.id))}><Icon name="arrow-counter-clockwise" />{t('resource.takeAway')}</Button>
-      {:else}
-        <Button variant="outline" onclick={() => (sheet = 'deprecate')}><Icon name="archive-fill" />{t('resource.deprecate')}</Button>
-      {/if}
-    {/if}
-    <Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>
+    {#if can(permissions, 'queries.make')}<Button variant="outline" href={newQueryPath(resource.id)}><Icon name="terminal-window-fill" />{t('resource.query')}</Button>{/if}
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
-    {#if !resource.published && isOwner}
+    {#if !resource.published && mayPublish}
       <!-- For its Owner, while it is not published, "Publish" takes the place of "Ask a question" (DEC-UX-31). -->
       <Button onclick={() => (sheet = 'publish')}><Icon name="globe-simple-fill" />{t('resource.publish')}</Button>
     {:else}
@@ -275,7 +318,7 @@
     />
     {#snippet action()}
       <!-- The Data Team adds it to a Collection from here too (DEC-UX-131). -->
-      {#if dataTeam && collections}<Button onclick={() => (adding = true)}><Icon name="folder-plus-fill" />{t('resource.waiting.add')}</Button>{/if}
+      {#if assigns && collections}<Button onclick={() => (adding = true)}><Icon name="folder-plus-fill" />{t('resource.waiting.add')}</Button>{/if}
     {/snippet}
   </Callout>
 {:else if collection && !resource.published}
@@ -294,6 +337,15 @@
       {#if resource.deprecation?.insteadOf}
         <Button variant="outline" href={resourcePath(resource.deprecation.insteadOf.id)}>{t('resource.deprecated.use', { name: resource.deprecation.insteadOf.displayName })}</Button>
       {/if}
+      {#if canDeprecate}
+        <!-- Taken away in the Danger zone of its Overview (DEC-UX-176). -->
+        <Button
+          variant="quiet"
+          onclick={() => {
+            tab = 'overview';
+            part = 'danger';
+          }}><Icon name="warning-octagon" />{t('overview.danger')}</Button>
+      {/if}
     {/snippet}
   </Callout>
 {/if}
@@ -303,7 +355,7 @@
     <b>{t('resource.changed.title')}</b>
     {t('resource.changed.text', { changes: changedText, level: levelName(resource.level) })}
     {#snippet action()}
-      {#if canEdit}
+      {#if describes('description')}
         <LearningRef place="changesSeen" shape="pill" focusable={false}>
           {#snippet children(mark)}<Button variant="outline" onclick={() => act(() => catalogue.markSeen(resource.id))}>{t('resource.changed.seen')}{@render mark?.()}</Button>{/snippet}
         </LearningRef>
@@ -314,15 +366,42 @@
 
 <Tabs label={resource.displayName} current={tab} tabs={tabs.map(({ id, label }) => ({ id, label: t(label) }))} onselect={(id) => (tab = id)}>
   {#if tab === 'overview'}
-    <ResourceOverview {resource} log={entries} {related} {storage} {canEdit} onsave={saveCard} />
+    <ResourceOverview
+      {resource}
+      log={entries}
+      {related}
+      {storage}
+      {threads}
+      messagesHref={messages?.href}
+      {describes}
+      {canDeprecate}
+      onsave={saveCard}
+      {gaps}
+      oncolumns={() => (tab = 'columns')}
+      onpublish={!resource.published && mayPublish && collection ? () => (sheet = 'publish') : undefined}
+      {others}
+      ondeprecate={(why, instead) => mark(() => catalogue.deprecate(resource.id, why, instead))}
+      onundeprecate={() => mark(() => catalogue.undeprecate(resource.id))}
+      bind:part
+    />
   {:else if tab === 'columns'}
-    <ResourceColumns {resource} {canEdit} relate={dataTeam && resource.collectionId !== null} onsave={saveFields} onrelate={() => (relating = true)} />
+    <ResourceColumns
+      {resource}
+      canEdit={describes('description')}
+      relate={(assigns || describes('entityMapping')) && resource.collectionId !== null}
+      onsave={saveFields}
+      onrelate={() => (relating = true)}
+      ongaps={() => {
+        tab = 'overview';
+        part = 'gaps';
+      }}
+    />
   {:else if tab === 'lineage'}
     <ResourceLineage {resource} {catalogue} />
-  {:else if tab === 'history' && (dataTeam || canEdit)}
-    <ResourceHistory {resource} client={queries} />
-  {:else if tab === 'preview'}
-    <ResourcePreview {resource} client={queries} {storage} {onrun} />
+  {:else if tab === 'history' && seesQueries}
+    <ResourceHistory {resource} client={queries} canQuery={can(permissions, 'queries.make')} />
+  {:else if tab === 'preview' && can(permissions, 'resources.preview')}
+    <ResourcePreview {resource} client={queries} {storage} {onrun} canQuery={can(permissions, 'queries.make')} />
   {/if}
 </Tabs>
 
@@ -341,14 +420,6 @@
       sheet = undefined;
       tab = 'columns';
     }}
-    onclose={() => (sheet = undefined)}
-  />
-{:else if sheet === 'deprecate' && collection}
-  <DeprecateSheet
-    {resource}
-    {collection}
-    {others}
-    ondeprecate={(why, instead) => act(() => catalogue.deprecate(resource.id, why, instead))}
     onclose={() => (sheet = undefined)}
   />
 {/if}

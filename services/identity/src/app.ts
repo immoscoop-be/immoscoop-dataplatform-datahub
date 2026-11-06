@@ -2,7 +2,9 @@ import type { ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
 import { createServer, type ServerOptions } from '@datahub/server';
 import type { FastifyInstance } from 'fastify';
 import { type ExcelKeys, excelKeyRoutes, type Notices } from './excel-keys.js';
+import { can, permissionValue } from '@datahub/contracts';
 import { ownDomainGroups } from './naming-convention.js';
+import { permissionGroupRoutes } from './permission-groups.js';
 import { peopleRoutes } from './people.js';
 import { settingsRoutes } from './settings.js';
 import { signInRoutes, type SignInOptions } from './sign-in.js';
@@ -30,10 +32,11 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
     return options.tokens.jwks();
   });
 
-  // The current User, as the Access Token says; the web app shows it.
+  // The current User, as the Access Token says, with their Permission group and Permissions; the web
+  // app shows what they may do from them (FR-PL-14).
   app.get('/me', async (request) => {
-    const { sub, email, name, groups, roles } = request.user ?? {};
-    return { sub, email, name, groups, roles };
+    const { sub, email, name, groups, permissionGroup, permissions } = request.user ?? {};
+    return { sub, email, name, groups, permissionGroup, permissions };
   });
 
   if (options.signIn) {
@@ -49,15 +52,16 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
         return { error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' };
       }
     });
-    // Every group of the own domains, for the Data Team to hand a Collection to any of them
-    // (FR-CO-35). catalogue asks it to check the group the Data Team chose.
+    // Every group of the own domains, for who may give a Collection to any of them (FR-CO-35,
+    // `collections.make` with any group). catalogue asks it to check the group chosen.
     app.get('/groups', async (request, reply) => {
-      if (!request.user?.roles.includes('datateam')) {
+      const permissions = request.user?.permissions;
+      if (!permissions || !can(permissions, 'collections.make') || permissionValue(permissions, 'collections.make', 'ownerUnit') !== 'any') {
         reply.code(403);
-        return { error: 'forbidden', message: 'Only the Data Team sees every group of the domain.' };
+        return { error: 'forbidden', message: 'Only who may give a Collection to any group sees every group of the domain.', permission: 'collections.make' };
       }
       try {
-        return { groups: ownDomainGroups(await workspace.domainGroups(request.user.sub), domains) };
+        return { groups: ownDomainGroups(await workspace.domainGroups(request.user!.sub), domains) };
       } catch (error) {
         request.log.error({ err: error }, 'Workspace did not list the groups of the domain');
         reply.code(503).header('retry-after', '30');
@@ -65,9 +69,14 @@ export async function buildApp(options: AppOptions): Promise<FastifyInstance> {
       }
     });
     await app.register(signInRoutes, options.signIn);
+    await app.register(permissionGroupRoutes, {
+      groups: options.signIn.groups,
+      ...(options.signIn.userNotices ? { notices: options.signIn.userNotices } : {}),
+      ...(options.signIn.webClient ? { webClientId: options.signIn.webClient.clientId } : {}),
+    });
     await app.register(settingsRoutes, { store: options.signIn.store });
     if (options.peopleCallers) await app.register(peopleRoutes, { store: options.signIn.store, callers: options.peopleCallers });
-    if (options.excelKeys) await app.register(excelKeyRoutes, { ...options.excelKeys, workspace, tokens: options.tokens, domains });
+    if (options.excelKeys) await app.register(excelKeyRoutes, { ...options.excelKeys, workspace, tokens: options.tokens, domains, groups: options.signIn.groups });
   }
 
   return app;

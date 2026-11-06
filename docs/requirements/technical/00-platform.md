@@ -115,7 +115,7 @@ Each service that stores data owns exactly one schema in the shared Cloud SQL Po
 
 **Status:** Implemented · **Realises:** [DEC-DH-59](../../overview/data-hub.md#dec-dh-59)
 
-Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
+Each service keeps its database migrations in its own folder, `services/<name>/src/migrations`. They run as a separate step at deploy, before the new revision of the service gets traffic: a Cloud Run job per service, `datahub-<name>-migrate`, with the new image of the service, which Terraform runs and waits for before it changes the service. A failed migration stops the deploy, and the running revision keeps serving. The job knows the environment it runs in (`DATAHUB_ENVIRONMENT`), for a migration that starts a table with what an environment held before, such as the Source Jobs ([TR-AR-12](01-artifact-registry.md#tr-ar-12)). Running them again is safe: migrations that already ran are skipped, and two runs at once wait for each other.
 
 <a id="tr-pf-10"></a>
 ### TR-PF-10 · API contracts from zod schemas
@@ -309,7 +309,7 @@ semgraph answers every request with `Access-Control-Allow-Origin: *`, and the pr
 
 **Status:** Implemented · **Realises:** [DEC-UX-96](../../design/principles.md#dec-ux-96), [NFR-LOC-06](../non-functional/localisation.md#nfr-loc-06)
 
-identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the theme, the background by day and by night, whether the panel is open, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User.
+identity keeps the settings of every User in its schema, as keys and values, and gives a User only their own: `GET /me/settings` reads them all, `PUT /me/settings/{key}` sets one and `DELETE /me/settings/{key}` forgets one, so that its default applies again. The keys and their values are fixed in `@datahub/contracts` (`settings.ts`): the language, the background by day and by night, whether the panel is open, the layout of a query, and the version of every intro dismissed; any other key or value is refused. A setting goes with its User. The theme is no setting since it always follows the system ([DEC-UX-172](../../design/principles.md#dec-ux-172)); migration `0006-forget-theme` forgot the themes kept before.
 
 <a id="tr-pf-33"></a>
 ### TR-PF-33 · The web app in Svelte, with the look of the design
@@ -321,6 +321,19 @@ The page of the web app is Svelte 5, built by Vite into `apps/web/dist/client`; 
 Every value of the look has one place: `docs/design/tokens.css`. The stylesheet of `packages/ui` imports that file as it is, as the prototypes do, and the components only refer to its tokens; where code needs a value, such as the narrowest window, it reads the token from the page. A test fails on any colour, font, radius or duration written in a component instead of a token, and on a token that `tokens.css` does not have. The pictures of the backgrounds and of the sign-in are those of `docs/design/backgrounds`, taken along by the build.
 
 The page loads nothing from another address: Poppins and the Phosphor icons are part of the build, and the grain over a flowing background is a small picture in its stylesheet. The Content-Security-Policy allows scripts, styles and fonts only from its own address; Svelte puts every style in the stylesheet, so no style needs a nonce. *Note of 2026-10-29, on building part 5: the editor of Query, CodeMirror, adds `<style>` elements of its own; the server gives every page a nonce that is new each time, the policy allows styles with it, and the editor puts it on its styles.* *Note of 2026-10-30: the Lineage draws with Svelte Flow, whose stylesheet is part of the build and which adds no `<style>` of its own ([DEC-UX-152](../../design/principles.md#dec-ux-152)).* Sentences come from translation files, one per language ([NFR-LOC-02](../non-functional/localisation.md#nfr-loc-02)), and the settings of the User from identity ([TR-PF-32](#tr-pf-32)).
+
+<a id="tr-pf-34"></a>
+### TR-PF-34 · Charts reads semgraph in the browser
+
+**Status:** Implemented · **Realises:** [FR-CH-06](../functional/13-channels.md#fr-ch-06), [DEC-PF-23](#dec-pf-23), [DEC-PF-24](#dec-pf-24)
+
+The page of the web app calls semgraph itself, without Access Token, as any page may ([TR-PF-31](#tr-pf-31)): `GET /semgraphs` for the charts of the panel and those only planned, `GET /semgraphs/{id}` for the chart opened, both with `?locale=` in the language of the User, and `GET /semgraphs/{id}/examples/{name}?theme=` for the example shown, in the theme of the page. A drawing is placed in the page as the SVG semgraph drew, so that its hover, its metadata panels and its links work, which they do not in a picture ([DEC-UX-184](../../design/principles.md#dec-ux-184)). The page parses it in an inert template, so that nothing in it loads, runs or meets the policy of the page yet; leaves out anything that could run: scripts, foreign objects, event attributes and links that are not web addresses; gives its styles the nonce of the page, the only inline styles the policy allows ([TR-PF-33](#tr-pf-33)); and opens its links in a new tab. Its CSS names only classes of semgraph and it has no ids, so it changes nothing else on the page. The icons stay pictures. For this, semgraph:
+
+- gives the icon of every chart as a picture of its own, at `GET /semgraphs/{id}/icon`, in `currentColor`; the page uses it as a mask, so that it takes the colour of the text around it;
+- names, with every example it lists, the `theme` or the `size` the example sets, so that an example that only shows a mode or a size can be told apart;
+- names the cautions of a chart it draws in the header `Semgraph-Cautions`, as it names its deviations in `Semgraph-Deviations`, and lets the browser read both.
+
+The groups of Charts and the sentences around what semgraph says are those of the web app. A test of the web app fails when semgraph offers a chart that is in no group, or gives a reason not to use a chart for which the web app has no sentence.
 
 ## Open points
 

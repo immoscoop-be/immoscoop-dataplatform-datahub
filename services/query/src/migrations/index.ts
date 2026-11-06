@@ -8,6 +8,8 @@ import * as lensWords from './0006-lens-words.js';
 import * as lensDecisions from './0007-lens-decisions.js';
 import * as hiddenQueries from './0008-hidden-queries.js';
 import * as brokenQueries from './0009-broken-queries.js';
+import * as throughClaude from './0010-through-claude.js';
+import * as lensDeletion from './0011-lens-deletion.js';
 
 /** The migrations of query, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -20,4 +22,6 @@ export const migrations: Record<string, Migration> = {
   '0007-lens-decisions': lensDecisions,
   '0008-hidden-queries': hiddenQueries,
   '0009-broken-queries': brokenQueries,
+  '0010-through-claude': throughClaude,
+  '0011-lens-deletion': lensDeletion,
 };

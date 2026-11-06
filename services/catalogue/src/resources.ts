@@ -1,8 +1,10 @@
+import { fieldsOf, type GapScope, hasScope } from '@datahub/contracts/gaps';
 import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
 import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
+import { seesAll, seesPublic, theirs } from './viewer.js';
 
 /** A table under an exposure tagged `datahub`, as registry tells it (TR-AR-08). */
 export interface ExposedTable {
@@ -110,7 +112,8 @@ export interface Card {
   /** The Known Behaviour (DEC-DH-18): intended use and pitfalls, and the Known Gaps (DEC-RC-12). */
   intendedUse: string;
   pitfalls: string;
-  knownGaps: string[];
+  /** One item each, in the order they were added (FR-RC-21). */
+  knownGaps: KnownGap[];
   /** Since when its data is reliable (FR-RC-13): a day, `YYYY-MM-DD`, or null. */
   reliableSince: string | null;
   /** Fields of the Resource, by name, in the order chosen. */
@@ -119,6 +122,26 @@ export interface Card {
 }
 
 export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+export type CardKey = (typeof CARD_KEYS)[number];
+
+/** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
+export interface KnownGap {
+  id: string;
+  text: string;
+  /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+  scope: GapScope | null;
+  addedBy: string | null;
+  addedAt: Date | null;
+}
+
+/**
+ * What changes about a Resource at once (FR-RC-15): its Known Gaps as their texts, the whole list, which Data Hub
+ * turns into the gaps added and removed; one gap at a time goes through addGap, changeGap and removeGap.
+ */
+export type CardChanges = Partial<Omit<Card, 'knownGaps'> & { knownGaps: string[] }>;
+
+/** At most this many Known Gaps per Resource. */
+export const MAX_GAPS = 50;
 
 /** A field with its Business Description next to its description from dbt (FR-RC-16). */
 export interface Field extends Column {
@@ -168,7 +191,12 @@ export type EditOutcome =
   | { outcome: 'not_found' }
   /** A Business Description is written from Described on (DEC-MR-10). */
   | { outcome: 'not_described' }
-  | { outcome: 'invalid'; message: string };
+  | { outcome: 'invalid'; message: string }
+  /** A field that changes is one the User may not describe (DEC-PL-03); nothing changed. */
+  | { outcome: 'forbidden'; field: CardKey };
+
+/** What adding, changing or removing a Known Gap came to: the gap, or why not. */
+export type GapOutcome = { outcome: 'done'; gap: KnownGap | null } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
 
 /** A Resource to add, with what the Data Admin recorded for it, if anything. */
 export interface AddItem {
@@ -230,8 +258,18 @@ export interface Resources {
   /** Takes a Resource out of its Collection; false when it was in none. */
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
-  /** Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28). */
-  edit(id: string, changes: Partial<Card>, viewer: Viewer): Promise<EditOutcome>;
+  /**
+   * Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28): nothing when a field that
+   * changes is not allowed, as the Permissions of the User say (DEC-PL-03); one sent as it is changes nothing.
+   */
+  edit(id: string, changes: CardChanges, viewer: Viewer, allowed?: (field: CardKey) => boolean): Promise<EditOutcome>;
+  /** Adds a Known Gap, with who added it and when (FR-RC-21). */
+  addGap(id: string, text: string, scope: GapScope | null, viewer: Viewer): Promise<GapOutcome>;
+  /** Changes the text of one Known Gap; who added it stays. */
+  /** Changes its text and, when given, its scope; without one, its scope stays (FR-RC-24). */
+  changeGap(id: string, gapId: string, text: string, scope: GapScope | null | undefined, viewer: Viewer): Promise<GapOutcome>;
+  /** Removes one Known Gap. */
+  removeGap(id: string, gapId: string, viewer: Viewer): Promise<GapOutcome>;
   /** Writes, changes or removes the Business Descriptions of fields; an empty text removes one (FR-RC-16). */
   describeFields(id: string, descriptions: readonly { field: string; text: string }[], viewer: Viewer): Promise<EditOutcome>;
   /** Records the grain, storage and mappings of a Resource again, from Edit relations (DEC-UX-107). */
@@ -277,18 +315,43 @@ function present(row: Row): Resource {
   };
 }
 
-/** What Data Hub keeps about a Resource, from its row, with its reliable day read as text. */
-function cardOf(row: Row, reliableSince: string | null): Card {
+/** What Data Hub keeps about a Resource, from its row and its Known Gaps, with its reliable day read as text. */
+function cardOf(row: Row, reliableSince: string | null, knownGaps: KnownGap[]): Card {
   return {
     businessDescription: row.businessDescription,
     intendedUse: row.intendedUse,
     pitfalls: row.pitfalls,
-    knownGaps: row.knownGaps,
+    knownGaps,
     reliableSince,
     keyFields: row.keyFields,
     parameters: row.parameters,
   };
 }
+
+/** The Known Gaps of a Resource, in the order they were added (FR-RC-21). */
+async function gapsOf(from: Database, resourceId: string): Promise<KnownGap[]> {
+  const rows = await from.selectFrom('knownGaps').select(['id', 'text', 'scope', 'addedByName', 'addedAt']).where('resourceId', '=', resourceId).orderBy('id').execute();
+  return rows.map(gapOf);
+}
+
+function gapOf(row: { id: string; text: string; scope: GapScope | null; addedByName: string | null; addedAt: Date | null }): KnownGap {
+  return { id: String(row.id), text: row.text, scope: row.scope, addedBy: row.addedByName, addedAt: row.addedAt };
+}
+
+/**
+ * Checks a scope against the fields of the Resource (FR-RC-24): every field it names is one of them. A field the gap
+ * named already stays allowed when it left the Resource since, so that its text can still be changed (EC-RC-01). A
+ * period names no field (DEC-UX-178). Returns the problem as a sentence when there is one.
+ */
+async function scopeProblem(from: Database, resourceId: string, scope: GapScope, before: GapScope | null): Promise<string | null> {
+  const fields = new Set((await from.selectFrom('resourceFields').select('name').where('resourceId', '=', resourceId).execute()).map((field) => field.name));
+  const kept = new Set(fieldsOf(before));
+  const unknown = fieldsOf(scope).find((name) => !fields.has(name) && !kept.has(name));
+  return unknown === undefined ? null : `${unknown} is no field of this Resource.`;
+}
+
+/** The words of a Known Gap as its Log Entry keeps them: the first 200 characters. */
+const gapWords = (text: string) => (text.length > 200 ? `${text.slice(0, 199)}…` : text);
 
 /** A Business Description is written from 2 · Described on (DEC-MR-10). */
 const DESCRIBED = 2;
@@ -300,19 +363,21 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     await trx.insertInto('resourceLog').values({ resourceId, logId, params, actorId }).execute();
   }
 
-  /** The fields of a Resource and the columns left out of it, as its table has them now (FR-SR-06). */
   /**
-   * Which Resources the viewer sees (FR-SR-31), or null for every one: the Data Team sees all; others
-   * see every Resource in a Collection of their Owner Unit, and the published ones in every Collection
-   * they see, a public one or one of their Owner Unit.
+   * Which Resources the viewer sees (FR-SR-31, DEC-PL-02), or null for every one: who sees all sees every one; others
+   * every Resource in a Collection of their Owner Units, and the published ones in every other Collection they see,
+   * a public one when `catalogue.see` says public.
    */
   async function seenScope(viewer: Viewer): Promise<{ managed: string[]; visible: string[] } | null> {
-    if (viewer.dataTeam) {
+    if (seesAll(viewer)) {
       return null;
     }
     const rows = await db.selectFrom('collections').select(['id', 'ownerUnitId', 'visibility']).where('dissolvedAt', 'is', null).execute();
-    const managed = rows.filter((row) => viewer.groups.includes(row.ownerUnitId));
-    return { managed: managed.map((row) => row.id), visible: rows.filter((row) => row.visibility === 'public' || managed.includes(row)).map((row) => row.id) };
+    const managed = rows.filter((row) => theirs(viewer, row.ownerUnitId));
+    return {
+      managed: managed.map((row) => row.id),
+      visible: rows.filter((row) => (row.visibility === 'public' && seesPublic(viewer)) || managed.includes(row)).map((row) => row.id),
+    };
   }
 
   /** A condition on `resources` (as `r`) that keeps those in a scope. */
@@ -776,7 +841,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         fields,
         leftOut,
         details,
-        card: cardOf(row, row.reliableDay),
+        card: cardOf(row, row.reliableDay, await gapsOf(db, id)),
         publication:
           row.publishedAt && confirmation
             ? { publishedAt: row.publishedAt, publishedBy: row.publishedBy ?? '', confirmedAt: confirmation.confirmedAt, confirmedBy: confirmation.ownerName }
@@ -885,7 +950,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       return rows.map((row) => ({ logId: row.logId, text: logText(row.logId, row.params), params: row.params, at: row.at }));
     },
 
-    async edit(id, changes, viewer) {
+    async edit(id, changes, viewer, allowed = () => true) {
       if (!UUID.test(id)) {
         return { outcome: 'not_found' };
       }
@@ -900,8 +965,13 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (!row) {
           return { outcome: 'not_found' };
         }
-        const current = cardOf(row, row.reliableDay);
+        const gaps = await gapsOf(trx, id);
+        const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text) };
         const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
+        const refused = changed.find((key) => !allowed(key));
+        if (refused !== undefined) {
+          return { outcome: 'forbidden', field: refused };
+        }
         if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
           return { outcome: 'not_described' };
         }
@@ -913,15 +983,111 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         if (changed.length === 0) {
           return { outcome: 'edited', changed };
         }
+        if (changes.knownGaps && changes.knownGaps.length > MAX_GAPS) {
+          return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
+        }
+        const onRow = changed.filter((key) => key !== 'knownGaps');
         await trx
           .updateTable('resources')
-          .set({ ...Object.fromEntries(changed.map((key) => [key, changes[key]])), updatedAt: new Date() })
+          .set({ ...Object.fromEntries(onRow.map((key) => [key, changes[key]])), updatedAt: new Date() })
           .where('id', '=', id)
           .execute();
-        for (const key of changed) {
+        for (const key of onRow) {
           await write(trx, id, 'RES-005', { field: key, actor: viewer.name }, viewer.id);
         }
+        if (changes.knownGaps && changed.includes('knownGaps')) {
+          // The whole list, as its texts: a gap whose text stays keeps who added it; the others go, and the new come.
+          const wanted = [...changes.knownGaps];
+          const kept = new Set<string>();
+          for (const gap of gaps) {
+            const place = wanted.indexOf(gap.text);
+            if (place >= 0) {
+              wanted.splice(place, 1);
+              kept.add(gap.id);
+            }
+          }
+          for (const gap of gaps.filter((one) => !kept.has(one.id))) {
+            await trx.deleteFrom('knownGaps').where('id', '=', gap.id).execute();
+            await write(trx, id, 'RES-013', { actor: viewer.name, gap: gapWords(gap.text) }, viewer.id);
+          }
+          for (const text of wanted) {
+            await trx.insertInto('knownGaps').values({ resourceId: id, text, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() }).execute();
+            await write(trx, id, 'RES-011', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+          }
+        }
         return { outcome: 'edited', changed };
+      });
+    },
+
+    async addGap(id, text, scope, viewer) {
+      if (!UUID.test(id)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const row = await trx.selectFrom('resources').select('id').where('id', '=', id).forUpdate().executeTakeFirst();
+        if (!row) {
+          return { outcome: 'not_found' };
+        }
+        const { count } = await trx.selectFrom('knownGaps').select((eb) => eb.fn.countAll<string>().as('count')).where('resourceId', '=', id).executeTakeFirstOrThrow();
+        if (Number(count) >= MAX_GAPS) {
+          return { outcome: 'invalid', message: `A Resource has at most ${MAX_GAPS} Known Gaps.` };
+        }
+        const narrowed = hasScope(scope) ? scope : null;
+        const problem = narrowed ? await scopeProblem(trx, id, narrowed, null) : null;
+        if (problem) {
+          return { outcome: 'invalid', message: problem };
+        }
+        const added = await trx
+          .insertInto('knownGaps')
+          .values({ resourceId: id, text, scope: narrowed, addedBy: viewer.id, addedByName: viewer.name, addedAt: new Date() })
+          .returning(['id', 'text', 'scope', 'addedByName', 'addedAt'])
+          .executeTakeFirstOrThrow();
+        await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-011', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+        return { outcome: 'done', gap: gapOf(added) };
+      });
+    },
+
+    async changeGap(id, gapId, text, scope, viewer) {
+      if (!UUID.test(id) || !/^\d{1,18}$/.test(gapId)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const gap = await trx.selectFrom('knownGaps').select(['text', 'scope']).where('id', '=', gapId).where('resourceId', '=', id).forUpdate().executeTakeFirst();
+        if (!gap) {
+          return { outcome: 'not_found' };
+        }
+        const narrowed = scope === undefined ? gap.scope : hasScope(scope) ? scope : null;
+        const problem = narrowed && scope !== undefined ? await scopeProblem(trx, id, narrowed, gap.scope) : null;
+        if (problem) {
+          return { outcome: 'invalid', message: problem };
+        }
+        const changed = await trx
+          .updateTable('knownGaps')
+          .set({ text, scope: narrowed })
+          .where('id', '=', gapId)
+          .returning(['id', 'text', 'scope', 'addedByName', 'addedAt'])
+          .executeTakeFirstOrThrow();
+        if (gap.text !== text || JSON.stringify(gap.scope) !== JSON.stringify(narrowed)) {
+          await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+          await write(trx, id, 'RES-012', { actor: viewer.name, gap: gapWords(text) }, viewer.id);
+        }
+        return { outcome: 'done', gap: gapOf(changed) };
+      });
+    },
+
+    async removeGap(id, gapId, viewer) {
+      if (!UUID.test(id) || !/^\d{1,18}$/.test(gapId)) {
+        return { outcome: 'not_found' };
+      }
+      return db.transaction().execute(async (trx): Promise<GapOutcome> => {
+        const gone = await trx.deleteFrom('knownGaps').where('id', '=', gapId).where('resourceId', '=', id).returning('text').executeTakeFirst();
+        if (!gone) {
+          return { outcome: 'not_found' };
+        }
+        await trx.updateTable('resources').set({ updatedAt: new Date() }).where('id', '=', id).execute();
+        await write(trx, id, 'RES-013', { actor: viewer.name, gap: gapWords(gone.text) }, viewer.id);
+        return { outcome: 'done', gap: null };
       });
     },
 
@@ -1123,6 +1289,33 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         return 'done';
       });
     },
+  };
+}
+
+/**
+ * What a change of the details of a Resource changes (DEC-PL-03): how it is stored, its grain and model type, the work
+ * of a Data Admin (`assigned`); and its mappings with the release of the Domain Model they were made with, its Entity
+ * mapping (`mapped`). Each needs its own Permission; what is sent as it is changes nothing.
+ */
+export function whatDetailsChange(before: Details, after: Details): { assigned: boolean; mapped: boolean } {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const sorted = (origins: Origins) => Object.entries(origins).sort(([a], [b]) => a.localeCompare(b));
+  // A partition filter is kept only with a partition (record).
+  const filter = (details: Details) => (details.partition ? details.partitionFilter : 'none');
+  const mappings = (details: Details) =>
+    details.mappings
+      .map(({ field, kind, relationType, identity, subject, origin, inDomainModel }) => ({ field, kind, relationType, identity, subject, origin, inDomainModel }))
+      .sort((a, b) => a.field.localeCompare(b.field));
+  return {
+    assigned:
+      !same(before.partition, after.partition) ||
+      !same(before.clusterBy, after.clusterBy) ||
+      filter(before) !== filter(after) ||
+      !same(before.grain, after.grain) ||
+      before.grainSentence !== after.grainSentence ||
+      before.modelType !== after.modelType ||
+      !same(sorted(before.origins), sorted(after.origins)),
+    mapped: before.release !== after.release || !same(mappings(before), mappings(after)),
   };
 }
 

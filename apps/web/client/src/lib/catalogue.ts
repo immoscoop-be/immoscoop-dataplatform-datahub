@@ -1,3 +1,4 @@
+import type { GapScope } from '@datahub/contracts/gaps';
 import { createCall } from './api.js';
 import type { Config } from './config.js';
 import type { Session } from './session.js';
@@ -62,12 +63,26 @@ export interface Details {
   mappings: Mapping[];
 }
 
+/** A Known Gap, with who added it and when; neither for a gap of before (FR-RC-21). */
+export interface KnownGap {
+  id: string;
+  text: string;
+  /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+  scope: GapScope | null;
+  addedBy: string | null;
+  addedAt: string | null;
+}
+
+/** What changes about a Resource at once; its Known Gaps change one at a time (FR-RC-21). */
+export type CardChanges = Partial<Omit<Card, 'knownGaps'>>;
+
 /** What the Owner and the Data Team keep about a Resource in Data Hub (FR-RC-15, TR-SR-10). */
 export interface Card {
   businessDescription: string;
   intendedUse: string;
   pitfalls: string;
-  knownGaps: string[];
+  /** One item each, in the order they were added (FR-RC-21). */
+  knownGaps: KnownGap[];
   /** A day, `YYYY-MM-DD`, or null. */
   reliableSince: string | null;
   keyFields: string[];
@@ -88,7 +103,20 @@ export interface ResourceDetail extends Resource {
   changes: { field: string; change: 'added' | 'removed' | 'retyped'; old: string | null; new: string | null; at: string }[];
   /** The descriptions from dbt that changed in the last 30 days, with the text before; no field for the table (FR-RC-17). */
   descriptionChanges: { field: string | null; before: string; at: string }[];
+  /**
+   * What the User may do with it, as catalogue says from their Permissions and its Owner Unit (TR-PL-06): describe
+   * any attribute, each attribute (DEC-PL-03), publish it as its Owner (DEC-PL-06), deprecate it, and the work of a
+   * Data Admin. Left out by an older catalogue, when the page falls back on whether the User manages its Collection.
+   */
+  canEdit?: boolean;
+  canDescribe?: Readonly<Record<DescribeAttribute, boolean>>;
+  canPublish?: boolean;
+  canDeprecate?: boolean;
+  canAssign?: boolean;
 }
+
+/** The attributes of a Resource that are described one by one (DEC-PL-03). */
+export type DescribeAttribute = 'description' | 'behaviour' | 'pitfalls' | 'availableSince' | 'gaps' | 'keyFields' | 'entityMapping';
 
 /** A mapping of a Resource with the other Resources the User sees that carry the same identity (FR-RC-09). */
 export interface Related extends Pick<Mapping, 'field' | 'kind' | 'relationType' | 'identity' | 'inDomainModel'> {
@@ -152,6 +180,8 @@ export interface CollectionItem {
 export interface Folder {
   id: string;
   name: string;
+  /** Plain text under its name, empty when it has none (FR-CO-42). */
+  description: string;
   /** The folder it sits in, or null at the top of its Collection. */
   parentId: string | null;
   /** The name of whoever made it, and when. */
@@ -174,7 +204,10 @@ export interface Collection {
   visibility: 'private' | 'public';
   createdAt: string;
   createdBy: string;
+  /** The User may change it (`collections.manage`, within its reach). */
   canManage: boolean;
+  /** Its Owner Unit is one of the groups of the User; left out by an older catalogue. */
+  owned?: boolean;
   resources: CollectionItem[];
   /** Its folders, by name (FR-CO-38). */
   folders: Folder[];
@@ -239,8 +272,20 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
       return ((await (await call(`${resource(id)}/log`)).json()) as { entries: LogEntry[] }).entries;
     },
     /** Changes what is sent of the Resource Card; catalogue logs every change (FR-RC-15). */
-    async editResource(id: string, changes: Partial<Card>): Promise<ResourceDetail> {
+    async editResource(id: string, changes: CardChanges): Promise<ResourceDetail> {
       return ((await (await call(resource(id), { method: 'PATCH', body: changes })).json()) as { resource: ResourceDetail }).resource;
+    },
+    /** Adds a Known Gap, with who added it and when (FR-RC-21). */
+    async addGap(id: string, text: string, scope: GapScope | null): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps`, { method: 'POST', body: { text, scope } })).json()) as { gap: KnownGap }).gap;
+    },
+    /** Changes the text of one Known Gap; who added it stays. */
+    async changeGap(id: string, gapId: string, text: string, scope: GapScope | null): Promise<KnownGap> {
+      return ((await (await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'PATCH', body: { text, scope } })).json()) as { gap: KnownGap }).gap;
+    },
+    /** Removes one Known Gap. */
+    async removeGap(id: string, gapId: string): Promise<void> {
+      await call(`${resource(id)}/gaps/${encodeURIComponent(gapId)}`, { method: 'DELETE' });
     },
     /** Writes the Business Descriptions of fields; an empty one removes it (FR-RC-16). */
     async describeFields(id: string, fields: readonly { name: string; businessDescription: string }[]): Promise<ResourceDetail> {
@@ -310,8 +355,9 @@ export function createCatalogue(config: Config, session: Pick<Session, 'accessTo
     async makeFolder(id: string, name: string, parentId: string | null): Promise<Folder> {
       return (await call(`${collection(id)}/folders`, { method: 'POST', body: { name, parentId } })).json() as Promise<Folder>;
     },
-    async renameFolder(id: string, folderId: string, name: string): Promise<Folder> {
-      return (await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'PATCH', body: { name } })).json() as Promise<Folder>;
+    /** Its name, its description or both (FR-CO-39, FR-CO-42). */
+    async changeFolder(id: string, folderId: string, changes: { name?: string; description?: string }): Promise<Folder> {
+      return (await call(`${collection(id)}/folders/${encodeURIComponent(folderId)}`, { method: 'PATCH', body: changes })).json() as Promise<Folder>;
     },
     /** Deletes an empty folder; one that holds something is refused with not_empty (FR-CO-39). */
     async deleteFolder(id: string, folderId: string): Promise<void> {

@@ -8,6 +8,9 @@
   Requirements: none
   Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02): FR-LR-26, OP-LR-16. Its steps are those of
   learning-card.html, the same blocks (DEC-UX-47, DEC-LR-08).
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="colleague">
@@ -76,6 +79,10 @@
 </section>
   <div class="lc-next" role="navigation" aria-label="Next"><div data-pane-group="step" data-pane="why" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: Core idea</b>The rule behind the two reports, in one sentence.</div><a class="btn-primary lc-next-btn" data-go="step:core">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="core" hidden><div class="lc-next-in" data-pane-group="path" data-pane="full"><div class="lc-next-text"><b>Next: See it</b>The same rule in one picture, with the part that matters marked.</div><a class="btn-primary lc-next-btn" data-go="step:see">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div><div class="lc-next-in" data-pane-group="path" data-pane="quick" hidden><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="see" hidden><div class="lc-next-in"><div class="lc-next-text"><b>Next: Check your understanding</b>Predict first, then see why. As many questions as you like.</div><a class="btn-primary lc-next-btn" data-go="step:check">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><div data-pane-group="step" data-pane="check"><div class="lc-next-in"><div class="lc-next-text"><b>Next: You can now</b>What you can do now, and where you could go from here.</div><a class="btn-primary lc-next-btn" data-go="step:can">Next<i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div><a class="text-link lc-open"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
  </section>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
 </div>
 <script src="app.js"></script>
 </body>

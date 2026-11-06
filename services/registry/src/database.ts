@@ -19,13 +19,16 @@ export type DeliveryReason = 'notARun' | 'otherAccount' | 'notSucceeded' | 'notS
 
 /** The tables of registry, in camelCase (the columns are snake_case in Postgres). */
 export interface RegistryDatabase {
-  /** The Source Job a Data Admin set per dbt project, in place of the configuration (FR-AR-18). */
+  /**
+   * The dbt projects Data Hub follows and the Source Job of each, as a Data Admin set them (FR-AR-18, DEC-AR-10).
+   * One taken over from the configuration of before names neither the job nor who set it.
+   */
   sourceJobs: {
     projectId: DbtId;
     jobId: DbtId;
-    jobName: string;
-    setBy: string;
-    setByName: string;
+    jobName: string | null;
+    setBy: string | null;
+    setByName: string | null;
     setAt: Timestamp;
   };
   /** Every delivery of the webhook of the last 30 days, and what Data Hub did with it (FR-AR-19). */

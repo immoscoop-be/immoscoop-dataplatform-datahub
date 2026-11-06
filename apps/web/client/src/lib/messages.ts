@@ -23,6 +23,9 @@ export const STATE_TEXTS: Readonly<Record<string, string>> = {
   refused: 'messages.state.refused',
   broken: 'messages.state.broken',
   worksAgain: 'messages.state.worksAgain',
+  closed: 'messages.state.closed',
+  // A Request on a Lens that was deleted (FR-LE-18).
+  withdrawn: 'messages.state.withdrawn',
 };
 /** The kinds it filters on: what a person writes, and what Data Hub tells. */
 export type FilterKind = 'question' | 'remark' | 'signal' | 'request' | 'dataHub';
@@ -78,6 +81,10 @@ export interface Message {
   replyCount: number;
   unread: boolean;
   mine: boolean;
+  /** Whether the User may close it, or reopen it once closed: its writer, the Owner Unit and the Data Team (FR-CV-16). */
+  mayClose: boolean;
+  /** Whether the User may reply in it (`messages.reply`, DEC-PL-04); left out by an older catalogue. */
+  mayReply?: boolean;
 }
 
 export interface Reply {
@@ -130,8 +137,9 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
       return conversation(await call(one(id)));
     },
     /** The conversations on a Collection, a Resource or a Lens (FR-CV-07). */
-    async on(kind: WrittenOn, id: string): Promise<Conversation[]> {
-      return ((await (await call(`/messages/on/${kind}/${encodeURIComponent(id)}`)).json()) as { messages: Conversation[] }).messages;
+    /** What is written on an object, and the kinds of Message the User may write on it (`messages.write`, DEC-PL-04). */
+    async on(kind: WrittenOn, id: string): Promise<{ messages: Conversation[]; kinds?: WrittenKind[] }> {
+      return (await (await call(`/messages/on/${kind}/${encodeURIComponent(id)}`)).json()) as { messages: Conversation[]; kinds?: WrittenKind[] };
     },
     async write(subject: { kind: WrittenOn; id: string }, kind: WrittenKind, text: string): Promise<Conversation> {
       return conversation(await call('/messages', { method: 'POST', body: { subjectKind: subject.kind, subjectId: subject.id, kind, text } }));
@@ -141,6 +149,14 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
     },
     async read(id: string): Promise<void> {
       await call(`${one(id)}/read`, { method: 'POST' });
+    },
+    /** Closes an open Question or Signal, with an optional line why (FR-CV-16, MSG-CNV-07). */
+    async close(id: string, text: string): Promise<Conversation> {
+      return conversation(await call(`${one(id)}/close`, { method: 'POST', body: { text } }));
+    },
+    /** Opens a closed Question or Signal again (FR-CV-16). */
+    async reopen(id: string): Promise<Conversation> {
+      return conversation(await call(`${one(id)}/reopen`, { method: 'POST' }));
     },
     /** The decision of the Data Team on a Request to run a query (FR-CV-08); one on a Lens is decided on the Lens. */
     async decide(id: string, outcome: 'accepted' | 'refused', text: string): Promise<Conversation> {
@@ -196,3 +212,4 @@ export function messageText(message: Pick<Message, 'type' | 'params' | 'subject'
 export const isOpen = (message: Pick<Message, 'state'>) => message.state === 'open' || message.state === 'waiting';
 /** Whether it was answered or decided. */
 export const isAnswered = (message: Pick<Message, 'state'>) => message.state === 'answered' || message.state === 'accepted' || message.state === 'refused';
+export const isClosed = (message: Pick<Message, 'state'>) => message.state === 'closed';

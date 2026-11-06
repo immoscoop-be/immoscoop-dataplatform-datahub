@@ -611,11 +611,13 @@ The Owner publishes a Resource from its page. Before they do, Data Hub shows who
 <a id="fr-sr-50"></a>
 ### FR-SR-50 · A Resource can be marked deprecated
 
-**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
+**Status:** Implemented · **Source:** Max, 2026-10-26 ([OP-SR-05](#op-sr-05)) · **Screens:** [resource-overview](../../design/screens/resource-overview.html), [resource-deprecate](../../design/screens/resource-deprecate.html), [resource-detail](../../design/screens/resource-detail.html)
 
 The Owner and the Data Team can mark a published Resource deprecated: its use is discouraged. The mark shows wherever the Resource appears, on the Lenses and Reports built on it and for Claude. It hides nothing and blocks nothing, and it can be taken away again. Every mark and its removal go into the Log.
 
 *Note of 2026-10-28, on building it: the mark shows on the page of the Resource, in the panel and on the page of its Collection; the Lenses, Reports and Claude show it when they are built ([TR-SR-14](../technical/04-stacks-and-resources.md#tr-sr-14)).*
+
+*Note of 2026-11-04: the Owner Unit and the Data Team mark it, and take the mark away, in the Danger zone of its Overview, which explains what it does first ([DEC-UX-176](../../design/principles.md#dec-ux-176)).*
 
 <a id="fr-sr-51"></a>
 ### FR-SR-51 · A result shows 100 rows a page

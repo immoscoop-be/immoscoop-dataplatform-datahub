@@ -1,3 +1,4 @@
+import type { PermissionKey } from '@datahub/contracts';
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import {
   contextPath,
@@ -20,9 +21,10 @@ import type { CatalogueDatabase } from './database.js';
  * Notifications (DEC-LN-02, DEC-UX-129): every Message notifies at once, outside Data Hub by e-mail and as
  * a direct message in Slack, with its texts from the Message Catalogue (FR-CV-15). Who it reaches follows
  * the recipients of its type (FR-CV-03): an Owner Unit by the address of its Google group and, in Slack,
- * each member Data Hub knows (DEC-LN-03, DEC-LN-07); the Data Team the same way; a person by their own
- * address. Whoever wrote the Message is not notified of it. The outbox holds every Message from the moment
- * it is written; what went out is kept, so that trying again never sends twice.
+ * each member Data Hub knows (DEC-LN-03, DEC-LN-07); the Data Team by its address, and in Slack each User
+ * whose Permission group gets the Messages for the Data Team (`messages.dataTeam`, TR-PL-08); a person by
+ * their own address. Whoever wrote the Message is not notified of it. The outbox holds every Message from
+ * the moment it is written; what went out is kept, so that trying again never sends twice.
  */
 
 const TYPES = new Map<string, MessageType>(MESSAGE_CATALOGUE.map((type) => [type.id, type]));
@@ -33,14 +35,15 @@ export interface Person {
   email: string;
   name: string;
   language: Language;
-  /** Which of the Groups and roles asked for they hold. */
+  /** Which of the Groups asked for they are in. */
   groups: string[];
-  roles: string[];
+  /** Which of the Permissions asked for their Permission group has on (TR-PL-08). */
+  permissions: string[];
 }
 
-/** identity: the Users asked for, and the members of Groups and holders of roles it knows. */
+/** identity: the Users asked for, and the members of Groups and the holders of Permissions it knows. */
 export interface People {
-  find(asked: { users: string[]; groups: string[]; roles: string[] }): Promise<Person[]>;
+  find(asked: { users: string[]; groups: string[]; permissions: string[] }): Promise<Person[]>;
 }
 
 export interface Email {
@@ -72,8 +75,11 @@ export interface NotificationOptions {
   slack: Slack;
   /** The address of the web app, which "Open in context" leads to. */
   webUrl: string;
-  /** The address of the Google group of the Data Team, and the role its members hold. */
-  dataTeam: { email: string; role: string };
+  /**
+   * The address of the Google group of the Data Team, and the Permission of the Users who get the Messages for the Data
+   * Team in Slack (TR-PL-08).
+   */
+  dataTeam: { email: string; permission: PermissionKey };
   now?: () => Date;
 }
 
@@ -223,6 +229,9 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
   /** The object of a Message with its Owner Unit, as it is now, or as the Message named it once it is gone. */
   async function subjectOf(row: MessageRow): Promise<Subject> {
     const named = { kind: row.subjectKind, id: row.subjectId, name: row.params.subject ?? '', collection: null, exists: false, owner: null, authorId: null };
+    // The User of an Excel key gets the Messages about it, as the one who made it (MSG-KEY-01, MSG-KEY-02); a User, the
+    // Messages about them, named by their Google ID (MSG-USR-01).
+    if (row.subjectKind === 'excelKey' || row.subjectKind === 'user') return { ...named, exists: true, authorId: row.params.user ?? null };
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.subjectId);
     if (!uuid) return { ...named, exists: true };
     const collection = async (id: string | null) =>
@@ -241,18 +250,16 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         return { ...named, name: resource.displayName, collection: found?.name ?? null, exists: true, owner: ownerOf(found) };
       }
       case 'lens': {
-        const lens = await db.selectFrom('lenses').select(['name', 'collectionId', 'authorId']).where('id', '=', row.subjectId).executeTakeFirst();
+        const lens = await db.selectFrom('lenses').select(['name', 'collectionId', 'authorId', 'state']).where('id', '=', row.subjectId).executeTakeFirst();
         if (!lens) return named;
         const found = await collection(lens.collectionId);
-        return { ...named, name: lens.name, collection: found?.name ?? null, exists: true, owner: ownerOf(found), authorId: lens.authorId };
+        // A deleted Lens: its notification links to the Message itself (FR-LE-18).
+        return { ...named, name: lens.name, collection: found?.name ?? null, exists: lens.state !== 'deleted', owner: ownerOf(found), authorId: lens.authorId };
       }
       case 'learningCard': {
         const topic = topicOf(row.subjectId);
         return topic ? { ...named, name: `${topic.number} ${topic.title.en}`, exists: true } : named;
       }
-      // The User of an Excel key gets the Messages about it, as the one who made it (MSG-KEY-01, MSG-KEY-02).
-      case 'excelKey':
-        return { ...named, exists: true, authorId: row.params.user ?? null };
       default:
         return { ...named, exists: true };
     }
@@ -293,11 +300,18 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
         addUser(root.writerId, 'started');
         for (const reply of earlier) addUser(reply.writerId, 'participant');
       }
-      if (recipient === 'author') addUser(subject.authorId, 'author');
+      // The User a Message is about gets it because it is about them, not as its author (MSG-USR-01).
+      if (recipient === 'author') addUser(subject.authorId, subject.kind === 'user' ? 'self' : 'author');
+      // Who ran a deleted Lens lately, named in its Message by query, never who deleted it (MSG-LEN-06, FR-LE-18).
+      if (recipient === 'lensUsers') for (const id of (row.params.users ?? '').split(',').filter(Boolean)) addUser(id, 'lensUser');
       // The Owners of the Resources under a Lens, and the Consumers of a Resource, come with the Messages that need them.
     }
 
-    const known = await people.find({ users: [...new Set(users.map((user) => user.id))], groups: groups.map((group) => group.id), roles: team ? [dataTeam.role] : [] });
+    const known = await people.find({
+      users: [...new Set(users.map((user) => user.id))],
+      groups: groups.map((group) => group.id),
+      permissions: team ? [dataTeam.permission] : [],
+    });
     const byId = new Map(known.map((person) => [person.id, person]));
     const writer = row.writerId;
     const out: Delivery[] = [];
@@ -316,20 +330,21 @@ export function createNotifications(db: Kysely<CatalogueDatabase>, options: Noti
     };
 
     // An Owner Unit and the Data Team by the address of their group, in Dutch, which reaches every member,
-    // also who never signed in (DEC-LN-03); in Slack each member Data Hub knows (DEC-LN-07).
+    // also who never signed in (DEC-LN-03); in Slack each member Data Hub knows (DEC-LN-07), for the Data Team
+    // each User whose Permission group gets its Messages (TR-PL-08).
     for (const group of groups) {
       email(group.email, 'nl', 'owner');
       for (const person of known) if (person.groups.includes(group.id)) direct(person, 'owner');
     }
     if (team) {
       email(dataTeam.email, 'nl', 'dataTeam');
-      for (const person of known) if (person.roles.includes(dataTeam.role)) direct(person, 'dataTeam');
+      for (const person of known) if (person.permissions.includes(dataTeam.permission)) direct(person, 'dataTeam');
     }
     // A person by their own address, unless a group they are known to be in has it already.
     for (const user of users) {
       const person = byId.get(user.id);
       if (!person || person.id === writer) continue;
-      const inGroup = person.groups.some((group) => groups.some((owner) => owner.id === group)) || (team && person.roles.includes(dataTeam.role));
+      const inGroup = person.groups.some((group) => groups.some((owner) => owner.id === group)) || (team && person.permissions.includes(dataTeam.permission));
       if (!inGroup) email(person.email, person.language, user.reason);
       direct(person, user.reason);
     }

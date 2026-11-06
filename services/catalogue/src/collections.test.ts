@@ -1,4 +1,5 @@
 import { randomBytes } from 'node:crypto';
+import { startingPermissions } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -15,9 +16,10 @@ if (!url && process.env.CI) {
 const DIGIKOM = { id: 'g-digikom', email: 'digikom@thenextimmoscoop.be', name: 'DigiKom' };
 const SALES = { id: 'g-sales', email: 'sales@thenextimmoscoop.be', name: 'Sales' };
 
-const an: Viewer = { id: 'u-an', name: 'An', groups: [DIGIKOM.id], dataTeam: false };
-const bert: Viewer = { id: 'u-bert', name: 'Bert', groups: [SALES.id], dataTeam: false };
-const dataTeam: Viewer = { id: 'u-dt', name: 'Dirk', groups: [], dataTeam: true };
+// Business analysts, in their own Owner Units, and an Admin, in none (DEC-PL-07).
+const an: Viewer = { id: 'u-an', name: 'An', groups: [DIGIKOM.id], permissions: startingPermissions('businessAnalyst') };
+const bert: Viewer = { id: 'u-bert', name: 'Bert', groups: [SALES.id], permissions: startingPermissions('businessAnalyst') };
+const dataTeam: Viewer = { id: 'u-dt', name: 'Dirk', groups: [], permissions: startingPermissions('admin') };
 
 describe.skipIf(!url)('Collections in Postgres', () => {
   const schema = `catalogue_collections_${randomBytes(4).toString('hex')}`;
@@ -57,6 +59,31 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect(await collections.get('not-a-uuid', an)).toBeUndefined();
   });
 
+  it('shows only theirs, also every public one, or all, as catalogue.see says; managing is a Permission of its own (DEC-PL-02)', async () => {
+    const see = (viewer: Viewer, value: 'theirs' | 'public' | 'all'): Viewer => ({
+      ...viewer,
+      permissions: { ...viewer.permissions, 'catalogue.see': { on: true, values: { see: value } } },
+    });
+    const names = async (viewer: Viewer) => (await collections.list(viewer)).map((collection) => collection.name).filter((name) => name.startsWith('Seen '));
+    const own = await collections.create({ name: 'Seen own', description: 'Theirs.', icon: 'coins', ownerUnit: DIGIKOM, visibility: 'private' }, an);
+    await collections.create({ name: 'Seen public', description: 'Public.', icon: 'globe', ownerUnit: SALES, visibility: 'public' }, bert);
+    const hidden = await collections.create({ name: 'Seen private', description: 'Private.', icon: 'lock', ownerUnit: SALES, visibility: 'private' }, bert);
+
+    expect(await names(see(an, 'theirs'))).toEqual(['Seen own']);
+    expect(await names(see(an, 'public'))).toEqual(['Seen own', 'Seen public']);
+    expect(await names(see(an, 'all'))).toEqual(['Seen own', 'Seen private', 'Seen public']);
+    expect(await collections.get(hidden.id, see(an, 'public'))).toBeUndefined();
+    // Only theirs, without an Owner Unit, is nothing.
+    expect(await names(see({ ...an, groups: [] }, 'theirs'))).toEqual([]);
+    // Seeing all is not managing: collections.manage says which, theirs or every one (FR-CO-13).
+    expect(await collections.get(hidden.id, see(an, 'all'))).toMatchObject({ canManage: false, owned: false });
+    expect(await collections.get(own.id, see(an, 'theirs'))).toMatchObject({ canManage: true, owned: true });
+    const manager: Viewer = { ...an, permissions: { ...an.permissions, 'collections.manage': { on: true, values: { reach: 'every' } } } };
+    expect(await collections.get(hidden.id, see(manager, 'all'))).toMatchObject({ canManage: true, owned: false });
+    const lensUser: Viewer = { ...an, permissions: startingPermissions('lensUser') };
+    expect(await collections.get(own.id, lensUser)).toMatchObject({ canManage: false, owned: true });
+  });
+
   it('keeps names unique whatever their case, until a Collection is dissolved (FR-CO-02)', async () => {
     const agencies = await collections.create(
       { name: 'Agencies', description: 'The agencies.', icon: 'handshake', ownerUnit: DIGIKOM, visibility: 'private' },
@@ -87,7 +114,7 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     // Nothing differs: no Log Entry.
     await collections.change(created.id, { icon: 'buildings' }, an);
 
-    const log = await collections.log({ id: created.id, canManage: true }, 50);
+    const log = await collections.log(created, dataTeam, 50);
     expect(log.map((entry) => [entry.logId, entry.text])).toEqual([
       ['COL-004', 'Made public by Dirk'],
       ['COL-003', 'Owner Unit changed from DigiKom to Sales by Dirk'],
@@ -131,8 +158,12 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect((await collections.get(credit.id, an))?.lastChange?.text).toBe('Weekly leads added by Dirk');
     const colleague = await collections.get(credit.id, bert);
     expect(colleague).toMatchObject({ resources: [], lastChange: null, canManage: false });
-    expect((await collections.log(colleague!, 10)).map((entry) => entry.logId)).toEqual(['COL-001']);
-    expect((await collections.log({ id: credit.id, canManage: true }, 10)).map((entry) => entry.logId)).toEqual(['COL-006', 'COL-001']);
+    expect((await collections.log(colleague!, bert, 10)).map((entry) => entry.logId)).toEqual(['COL-001']);
+    expect((await collections.log(credit, an, 10)).map((entry) => entry.logId)).toEqual(['COL-006', 'COL-001']);
+    // Who sees all sees what is in it, also what is not published, without managing it (DEC-PL-02).
+    const seesAll: Viewer = { ...bert, permissions: { ...bert.permissions, 'catalogue.see': { on: true, values: { see: 'all' } } } };
+    expect(await collections.get(credit.id, seesAll)).toMatchObject({ canManage: false, owned: false, resources: [{ displayName: 'Weekly leads', published: false }] });
+    expect((await collections.log(credit, seesAll, 10)).map((entry) => entry.logId)).toEqual(['COL-006', 'COL-001']);
   });
 
   it('keeps folders as deep as needed, and moves Resources, Lenses and folders between them (FR-CO-38 to FR-CO-40)', async () => {
@@ -180,12 +211,19 @@ describe.skipIf(!url)('Collections in Postgres', () => {
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_empty', holds: 2 });
     expect(await collections.move(homes.id, { kind: 'resource', id: resource }, null, an)).toMatchObject({ outcome: 'done' });
     expect(await collections.move(homes.id, { kind: 'folder', id: oldTown }, null, an)).toMatchObject({ outcome: 'done' });
-    expect(await collections.renameFolder(homes.id, antwerp, 'Antwerpen', an)).toMatchObject({ outcome: 'done', value: { name: 'Antwerpen' } });
+    expect(await collections.changeFolder(homes.id, antwerp, { name: 'Antwerpen' }, an)).toMatchObject({ outcome: 'done', value: { name: 'Antwerpen', description: '' } });
+    // A description of its own, plain text under its name, in the Log as well (FR-CO-42).
+    expect(await collections.changeFolder(homes.id, antwerp, { description: 'Homes in the city of Antwerp.' }, an)).toMatchObject({
+      outcome: 'done',
+      value: { name: 'Antwerpen', description: 'Homes in the city of Antwerp.' },
+    });
+    expect((await collections.list(an)).find((one) => one.id === homes.id)?.folders.find((one) => one.id === antwerp)?.description).toBe('Homes in the city of Antwerp.');
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'done', value: undefined });
     expect(await collections.deleteFolder(homes.id, antwerp, an)).toEqual({ outcome: 'not_found' });
 
-    expect((await collections.log({ id: homes.id, canManage: true }, 20)).map((entry) => entry.text)).toEqual([
+    expect((await collections.log(homes, an, 20)).map((entry) => entry.text)).toEqual([
       'Folder Antwerpen deleted by An',
+      'Description of folder Antwerpen changed by An',
       'Folder Antwerp renamed to Antwerpen by An',
       'Folder Old town moved to Homes by An',
       'Homes per week moved to Homes by An',

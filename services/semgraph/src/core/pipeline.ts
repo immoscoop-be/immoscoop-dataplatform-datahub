@@ -23,6 +23,8 @@ export interface PipelineResult {
   report: Report;
   /** Codes of the tolerated deviations, also sent in the Semgraph-Deviations header. */
   deviations: string[];
+  /** Codes of the cautions, also sent in the Semgraph-Cautions header, so a page that shows the chart can say so. */
+  cautions: string[];
   /** Only for render, and only when the outcome is ok or deviation. */
   svg?: string;
   /** Warnings from Vega-Lite or Vega while drawing. */
@@ -58,6 +60,7 @@ export async function runPipeline(registry: Registry, body: unknown, options: Pi
       issues: issues.map((issue) => localizeIssue(t, issue)),
     },
     deviations: issues.filter((issue) => issue.level === 'deviation').map((issue) => issue.code),
+    cautions: issues.filter((issue) => issue.level === 'caution').map((issue) => issue.code),
     warnings: [],
     ...extra,
   });

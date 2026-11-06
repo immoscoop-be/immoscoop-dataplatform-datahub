@@ -1,5 +1,6 @@
 import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
 import type { SubjectKind } from '@datahub/contracts/messages';
+import type { GapScope } from '@datahub/contracts/gaps';
 import type { ColumnType, Generated } from 'kysely';
 import type { LeftOutReason } from './fields.js';
 
@@ -59,6 +60,8 @@ export interface CatalogueDatabase {
     collectionId: string;
     parentId: string | null;
     name: string;
+    /** Plain text under its name, at most 500 characters; empty when it has none (FR-CO-42). */
+    description: Generated<string>;
     createdBy: string;
     createdByName: string;
     createdAt: Timestamp;
@@ -115,7 +118,6 @@ export interface CatalogueDatabase {
     businessDescription: ColumnType<string, string | undefined, string>;
     intendedUse: ColumnType<string, string | undefined, string>;
     pitfalls: ColumnType<string, string | undefined, string>;
-    knownGaps: ColumnType<string[], string[] | undefined, string[]>;
     /** A day, as `YYYY-MM-DD`. */
     reliableSince: ColumnType<Date | null, string | null | undefined, string | null>;
     keyFields: ColumnType<string[], string[] | undefined, string[]>;
@@ -128,6 +130,18 @@ export interface CatalogueDatabase {
     deprecatedBy: string | null;
     deprecationReason: string | null;
     insteadOf: string | null;
+  };
+  /** The Known Gaps of a Resource, one item each, in the order they were added (FR-RC-21). */
+  knownGaps: {
+    id: Generated<string>;
+    resourceId: string;
+    text: string;
+    /** The fixed Google ID and the name of whoever added it, and when; null for a gap of before. */
+    addedBy: string | null;
+    addedByName: string | null;
+    addedAt: Date | null;
+    /** Where it holds: a period, fields and rows; null for a gap of free text (FR-RC-24). */
+    scope: ColumnType<GapScope | null, GapScope | null | undefined, GapScope | null>;
   };
   /** Each Confirmation, with the Fingerprint and the fields of that moment (FR-MR-08). */
   resourceConfirmations: {
@@ -286,7 +300,8 @@ export interface CatalogueDatabase {
     name: string;
     collectionId: string;
     resourceIds: string[];
-    state: 'published' | 'waiting' | 'stopped' | 'refused';
+    /** Deleted by its Owner Unit or the Data Team: its Messages stay, with it marked as deleted (FR-LE-18). */
+    state: 'published' | 'waiting' | 'stopped' | 'refused' | 'deleted';
     authorId: string;
     authorName: string;
     updatedAt: Timestamp;

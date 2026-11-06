@@ -3,8 +3,8 @@ import type nl from './nl.js';
 // The sentences of the shared components, in English: the same keys as in Dutch.
 export default {
   'rail.label': 'Main navigation',
-  'rail.theme': 'Light or dark',
-  'rail.themeSwitch': 'Switch light or dark',
+  'rail.toLight': 'Switch to light',
+  'rail.toDark': 'Switch to dark',
   'rail.myPage': 'My page',
   'rail.unread': '{label}, {count} unread',
   'panel.collapse': 'Collapse panel',
@@ -97,4 +97,10 @@ export default {
   'editor.template': 'Template',
   'editor.partition': 'Partition',
   'editor.cluster': 'Cluster {place}',
+  'loading': 'Loading…',
+  'inPlace.hint': 'Click to change',
+  'inPlace.addDescription': 'Add a description',
+  'inPlace.save': 'Save',
+  'inPlace.cancel': 'Cancel',
+  'inPlace.failed': 'It could not be saved. Try again in a moment.',
 } as const satisfies Record<keyof typeof nl, string>;

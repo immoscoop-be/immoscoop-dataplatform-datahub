@@ -13,6 +13,7 @@
   import CopyButton from '@datahub/ui/primitives/CopyButton.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Gauge from '@datahub/ui/primitives/Gauge.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import Callout from '@datahub/ui/containers/Callout.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
@@ -589,6 +590,8 @@
         return t('query.problem.filterRequired', { name: problem.resource.displayName, column: problem.column });
       case 'invalid':
         return t('query.problem.invalid', { message: problem.message });
+      case 'tooLarge':
+        return t('query.problem.tooLarge', { bytes: bytes(problem.bytes), limit: bytes(problem.limit) });
       case 'noPartitionFilter':
         return problem.bytesWithFilter === null
           ? t('query.warning.noFilter', { name: problem.resource.displayName, column: problem.column })
@@ -897,7 +900,7 @@
         </div>
         {#if current?.range === 'request' && query.request?.state === 'waiting'}
           <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(query.request.sentAt) })}</span>
-        {:else if current?.range === 'request' && query.request?.state !== 'accepted'}
+        {:else if current?.range === 'request' && !current.problems.some((problem) => problem.kind === 'tooLarge') && query.request?.state !== 'accepted'}
           <RunButton
             bytes={current.bytes}
             approve
@@ -1000,7 +1003,7 @@
         <p class="empty"><Icon name="info" /><span>{t('query.notYours', { name: shown.run.userName, ref: shown.run.ref })}</span></p>
       {/if}
     {:else if running}
-      <p class="empty"><Icon name="play-fill" /><span>{t('query.running')}</span></p>
+      <p class="empty"><Icon name="play-fill" /><span>{t('query.running')}</span><Loading inline /></p>
     {:else if failure}
       <p class="empty failed" role="alert"><Icon name="warning-fill" /><span><b>{t('query.failed')}</b> {failure}</span></p>
     {:else if expired && run}
@@ -1072,6 +1075,8 @@
       }}
     />
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 {#snippet grid(of: Run, rows: Page)}

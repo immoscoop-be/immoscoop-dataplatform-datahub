@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { createVerifier } from '@datahub/auth';
 import { createTestIssuer } from '@datahub/auth/testing';
+import type { StartingGroup } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { createLocalJWKSet } from 'jose';
@@ -11,6 +12,7 @@ import type { IdentityDatabase } from './database.js';
 import { SignInError, type GoogleIdentity, type GoogleSignIn } from './google-sign-in.js';
 import { migrations } from './migrations/index.js';
 import { challengeOf } from './sign-in.js';
+import { createPermissionGroups, type UserNotice } from './permission-groups.js';
 import { createStore, randomToken } from './store.js';
 import { createLocalKeyService } from './testing.js';
 import { createTokenIssuer } from './tokens.js';
@@ -100,6 +102,7 @@ describe.skipIf(!url)('signing in', () => {
   let app: FastifyInstance;
   let google: ReturnType<typeof fakeGoogle>;
   let workspace: ReturnType<typeof fakeWorkspace>;
+  let told: UserNotice[] = [];
   let clock = Date.now();
   let caller: Awaited<ReturnType<typeof createTestIssuer>>;
   const tokens = createTokenIssuer({
@@ -116,6 +119,7 @@ describe.skipIf(!url)('signing in', () => {
   });
 
   beforeEach(async () => {
+    told = [];
     clock = Date.now();
     google = fakeGoogle();
     workspace = fakeWorkspace();
@@ -133,6 +137,8 @@ describe.skipIf(!url)('signing in', () => {
         domains: [DOMAIN],
         webClient: WEB,
         mcpRedirectUris: [CLAUDE],
+        groups: createPermissionGroups(database.db, () => new Date(clock)),
+        userNotices: { tellUser: async (notice) => void told.push(notice) },
       },
     });
   });
@@ -220,9 +226,16 @@ describe.skipIf(!url)('signing in', () => {
     const verifier = createVerifier({ issuer: ISSUER, audience: 'datahub', keys: createLocalJWKSet(await tokens.jwks()) });
     const claims = await verifier.verify(pair.access_token);
     expect(claims).toMatchObject({ sub: JAN.sub, email: JAN.email, name: JAN.name });
-    // Every group of the own domain (FR-UM-11); only the Role Group gives a role.
+    // Only Claude registers as a client: its tokens say so, for what the services mark (DEC-CL-11).
+    expect(claims.client).toBe('claude');
+    // Every group of the own domain (FR-UM-11); what Jan may do comes from their Permission group (TR-PL-05).
     expect(claims.groups).toEqual(['g-datateam', 'g-digikom', 'g-sales']);
-    expect(claims.roles).toEqual(['datateam']);
+    expect(claims).not.toHaveProperty('roles');
+    // Nobody of Admin could sign in yet, and Jan is of datahub-datateam@: Jan gets Admin back, and the
+    // Data Team hears of it (EC-PL-03).
+    expect(claims.permissionGroup.name).toBe('Admin');
+    expect(claims.permissions['admin.open'].on).toBe(true);
+    expect(told).toEqual([{ type: 'MSG-USR-02', userId: JAN.sub, name: JAN.name }]);
 
     const user = await database.db.selectFrom('users').selectAll().where('googleId', '=', JAN.sub).executeTakeFirst();
     expect(user?.email).toBe(JAN.email);
@@ -351,6 +364,8 @@ describe.skipIf(!url)('signing in', () => {
       (await database.db.selectFrom('sessions').select(['clientId', 'expiresAt']).orderBy('createdAt', 'desc').executeTakeFirstOrThrow()).expiresAt.getTime();
 
     const web = await signIn(WEB.clientId, WEB.redirectUri);
+    const verifier = createVerifier({ issuer: ISSUER, audience: 'datahub', keys: createLocalJWKSet(await tokens.jwks()) });
+    expect((await verifier.verify(web.access_token)).client).toBeUndefined();
     const webExpiry = await expiry();
     expect(webExpiry - clock).toBeCloseTo(12 * 3600 * 1000, -4);
     clock += 3600 * 1000;
@@ -361,26 +376,29 @@ describe.skipIf(!url)('signing in', () => {
     const claude = await signIn(clientId, CLAUDE);
     const claudeExpiry = await expiry();
     clock += 24 * 3600 * 1000;
-    expect((await renew(clientId, claude.refresh_token)).statusCode).toBe(200);
+    const renewed = await renew(clientId, claude.refresh_token);
+    expect(renewed.statusCode).toBe(200);
+    // A renewal for Claude still says so.
+    expect((await verifier.verify(renewed.json().access_token)).client).toBe('claude');
     expect((await expiry()) - claudeExpiry).toBeCloseTo(24 * 3600 * 1000, -4);
   });
 
-  it('lets the Data Team, and no one else, end every session of a User', async () => {
+  it('lets who may open Users in Admin, and no one else, end every session of a User', async () => {
     const clientId = await registerClaude();
     const pair = await signIn(clientId, CLAUDE);
-    const end = async (roles: string[]) =>
+    const end = async (group: StartingGroup) =>
       app.inject({
         method: 'DELETE',
         url: `/users/${JAN.sub}/sessions`,
-        headers: { authorization: `Bearer ${await caller.sign({ roles })}` },
+        headers: { authorization: `Bearer ${await caller.sign({ as: group })}` },
       });
 
     expect((await app.inject({ method: 'DELETE', url: `/users/${JAN.sub}/sessions` })).statusCode).toBe(401);
-    expect((await end([])).statusCode).toBe(403);
+    expect((await end('businessAnalyst')).statusCode).toBe(403);
     expect((await renew(clientId, pair.refresh_token)).statusCode).toBe(200);
 
     const second = await signIn(clientId, CLAUDE);
-    expect((await end(['datateam'])).statusCode).toBe(204);
+    expect((await end('admin')).statusCode).toBe(204);
     expect((await renew(clientId, second.refresh_token)).statusCode).toBe(400);
   });
 
@@ -410,8 +428,8 @@ describe.skipIf(!url)('signing in', () => {
     expect(down.json().error).toBe('temporarily_unavailable');
   });
 
-  it('lists every group of the own domains to the Data Team, by name, to hand a Collection to (FR-CO-35)', async () => {
-    const dataTeam = await caller.sign({ sub: JAN.sub, email: JAN.email, roles: ['datateam'] });
+  it('lists every group of the own domains to who may give a Collection to any group, by name (FR-CO-35)', async () => {
+    const dataTeam = await caller.sign({ sub: JAN.sub, email: JAN.email, as: 'admin' });
     const response = await app.inject({ url: '/groups', headers: { authorization: `Bearer ${dataTeam}` } });
     expect(response.json()).toEqual({
       groups: [
@@ -421,7 +439,7 @@ describe.skipIf(!url)('signing in', () => {
     });
     // The Workspace it lists is that of whoever asks.
     expect(workspace.askedBy).toBe(JAN.sub);
-    const someone = await caller.sign({ sub: JAN.sub, email: JAN.email, roles: [] });
+    const someone = await caller.sign({ sub: JAN.sub, email: JAN.email });
     expect((await app.inject({ url: '/groups', headers: { authorization: `Bearer ${someone}` } })).statusCode).toBe(403);
 
     workspace.down = true;
@@ -440,5 +458,22 @@ describe.skipIf(!url)('signing in', () => {
     workspace.down = false;
     clock += 60_000;
     expect((await renew(clientId, pair.refresh_token)).statusCode).toBe(200);
+  });
+
+  it('gives Admin back to a member of datahub-datateam@ only when no User of Admin can still sign in (EC-PL-03)', async () => {
+    const groups = createPermissionGroups(database.db, () => new Date(clock));
+    const store = createStore(database.db, () => new Date(clock));
+    await store.saveUser({ sub: 'piet', email: `piet@${DOMAIN}`, name: 'Piet' });
+    await store.saveUser({ sub: 'dirk', email: `dirk@${DOMAIN}`, name: 'Dirk' });
+    const admin = (await groups.list()).find((group) => group.locked)!;
+    await database.db.updateTable('users').set({ permissionGroupId: admin.id }).where('googleId', 'in', ['dirk', JAN.sub]).execute();
+    await database.db.updateTable('sessions').set({ endedAt: new Date(clock), endReason: 'test' }).where('endedAt', 'is', null).execute();
+    const signedIn = { isActive: async (googleId: string) => googleId === 'dirk' };
+    // Dirk of Admin can still sign in: Piet stays where he is.
+    expect(await groups.restoreAdminIfNoneLeft('piet', signedIn)).toBe(false);
+    // Nobody of Admin can: Piet gets Admin, and it is in his history.
+    expect(await groups.restoreAdminIfNoneLeft('piet', { isActive: async () => false })).toBe(true);
+    expect((await groups.claimsOf('piet')).permissionGroup.name).toBe('Admin');
+    expect((await groups.history('piet'))[0]).toMatchObject({ to: 'Admin', by: null });
   });
 });

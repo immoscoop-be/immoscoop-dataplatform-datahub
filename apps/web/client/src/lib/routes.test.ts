@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, queryRunsPath, route, seePath } from './routes.js';
+import { chartPath, contextPath, editLensPath, learningPath, messagePath, messagesOnPath, newLensForPath, objectPath, queryRunsPath, route, seePath, usersPath } from './routes.js';
 
 describe('the addresses of the web app', () => {
   it('opens on the start screen of Collections', () => {
@@ -7,12 +7,21 @@ describe('the addresses of the web app', () => {
   });
 
   it('has a start screen per section, with or without a slash at the end', () => {
-    for (const id of ['collections', 'query', 'charts', 'learning']) {
+    for (const id of ['collections', 'query', 'learning']) {
       expect(route(`/${id}`)).toMatchObject({ kind: 'start', section: { id } });
       expect(route(`/${id}/`)).toMatchObject({ kind: 'start', section: { id } });
     }
     // Messages starts on the Message Centre (FR-CV-06).
     expect(route('/messages/')).toMatchObject({ kind: 'messages', id: null, section: { id: 'messages' } });
+  });
+
+  it('opens Charts on its first chart, and has a page per chart of semgraph (FR-CH-06, DEC-UX-182)', () => {
+    expect(route('/charts')).toEqual({ kind: 'redirect', to: '/charts/movingWindowAverage' });
+    expect(route('/charts/')).toEqual({ kind: 'redirect', to: '/charts/movingWindowAverage' });
+    expect(route('/charts/kpiTile')).toMatchObject({ kind: 'chart', id: 'kpiTile', section: { id: 'charts' } });
+    expect(route(chartPath('kpiStatus'))).toMatchObject({ kind: 'chart', id: 'kpiStatus' });
+    expect(route('/charts/%E0%A4%A')).toEqual({ kind: 'notFound' });
+    expect(route('/charts/kpiTile/examples')).toEqual({ kind: 'notFound' });
   });
 
   it('has a page per Resource, in the section Collections', () => {
@@ -88,6 +97,19 @@ describe('the addresses of the web app', () => {
     expect(route('/admin/webhooks/')).toMatchObject({ kind: 'admin', tool: 'webhooks', section: { id: 'admin' } });
     expect(route('/admin/keys')).toMatchObject({ kind: 'admin', tool: 'keys', section: { id: 'admin' } });
     expect(route('/admin/tokens')).toEqual({ kind: 'notFound' });
+  });
+
+  it('has Users and Permission groups in Admin, Users also with one User opened, and opens on the first tool the User may (FR-PL-06, FR-PL-09)', () => {
+    expect(route('/admin/users')).toMatchObject({ kind: 'admin', tool: 'users' });
+    expect(route('/admin/users/1234%205')).toMatchObject({ kind: 'admin', tool: 'users', user: '1234 5' });
+    expect(route('/admin/permission-groups')).toMatchObject({ kind: 'admin', tool: 'permissionGroups' });
+    expect(route('/admin', ['users', 'permissionGroups'])).toEqual({ kind: 'redirect', to: '/admin/users' });
+    expect(usersPath('42')).toBe('/admin/users/42');
+  });
+
+  it('leads a Message about a User to My page, and one to the Data Team to that User on Users (FR-PL-12)', () => {
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-01')).toBe('/me');
+    expect(objectPath({ kind: 'user', id: '42' }, 'MSG-USR-02')).toBe('/admin/users/42');
   });
 
   it('shows the one page for what does not exist, or may not be seen, at every other address (DEC-UX-32)', () => {

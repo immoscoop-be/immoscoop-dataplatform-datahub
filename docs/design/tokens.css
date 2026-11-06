@@ -58,9 +58,11 @@
   --motion-tooltip: 350ms ease;
   --delay-tooltip: 150ms;
   --delay-focus: 120ms;             /* a passing mouse must not trigger focus */
+  --motion-loading: 1s ease-in-out;  /* the three dots going back and forth while something is read (DEC-UX-165) */
+  --delay-loading: 300ms;           /* before the dots show: a quick answer shows none */
+  --delay-loading-step: 160ms;      /* each dot a little after the one before it */
   --opacity-out-of-focus: .68;      /* the window out of focus, its text and all, softer (DEC-UX-146) */
   --background-cycle: 36s;
-  --photo-cycle: 60s;               /* the photo of the sign-in, very slowly closer */
   --blur-frame: blur(8px) saturate(1.05);   /* the frames over a picture (DEC-UX-34) */
   --blur-glass: blur(22px) saturate(1.3);   /* a glass card over a photo (DEC-UX-35) */
 
@@ -121,9 +123,10 @@
   --glass-solid: rgba(255,255,255,.88);    /* where a browser cannot blur */
   --glass-edge: rgba(255,255,255,.6);
   --glass-shadow: 0 30px 80px rgba(20,30,50,.14);
-  --glass-story: rgba(255,255,255,.58);
-  /* A sheet over its page: the page dimmed behind it, the sheet lifted from it (Sheets) */
-  --sheet-backdrop: rgba(40,34,30,.28);
+  /* A sheet over the whole window: everything behind it dimmed deeply, the sheet lifted from it, up to half the
+     window wide (Sheets, DEC-UX-174) */
+  --sheet-backdrop: rgba(40,34,30,.5);
+  --sheet-width: 50vw;
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.18);
 }
 
@@ -150,7 +153,6 @@
   --glass-solid: rgba(40,36,32,.92);
   --glass-edge: rgba(255,255,255,.12);
   --glass-shadow: 0 30px 80px rgba(0,0,0,.3);
-  --glass-story: rgba(40,36,32,.6);
-  --sheet-backdrop: rgba(0,0,0,.4);
+  --sheet-backdrop: rgba(0,0,0,.62);
   --sheet-shadow: 0 20px 60px rgba(0,0,0,.4);
 }

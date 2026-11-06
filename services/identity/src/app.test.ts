@@ -1,4 +1,4 @@
-import { createTestIssuer } from '@datahub/auth/testing';
+import { claimsAs, createTestIssuer } from '@datahub/auth/testing';
 import { describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import { createLocalKeyService } from './testing.js';
@@ -42,9 +42,9 @@ describe('identity', () => {
   it('tells the signed-in User who they are', async () => {
     const issuer = await createTestIssuer();
     const identity = await app(issuer);
-    const token = await issuer.sign({ sub: 'g-1', name: 'Jan Peeters', email: 'jan@thenextimmoscoop.be', groups: ['g'], roles: ['datateam'] });
+    const token = await issuer.sign({ sub: 'g-1', name: 'Jan Peeters', email: 'jan@thenextimmoscoop.be', groups: ['g'], as: 'admin' });
     const response = await identity.inject({ url: '/me', headers: { authorization: `Bearer ${token}` } });
-    expect(response.json()).toEqual({ sub: 'g-1', email: 'jan@thenextimmoscoop.be', name: 'Jan Peeters', groups: ['g'], roles: ['datateam'] });
+    expect(response.json()).toEqual({ sub: 'g-1', email: 'jan@thenextimmoscoop.be', name: 'Jan Peeters', groups: ['g'], ...claimsAs('admin') });
     expect((await identity.inject({ url: '/me' })).statusCode).toBe(401);
     await identity.close();
   });

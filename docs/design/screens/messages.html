@@ -12,9 +12,14 @@
   Also for the Owner: what Data Hub tells them when descriptions changed in dbt (FR-RC-17, DEC-RC-03): before and after, with their
   Business Description next to it; it asks for nothing. Right under its text, "Understand what is happening here" holds
   the Learning Card K3.4, which opens inline in the Message (FR-LR-38, DEC-UX-79). ?msg=described opens it.
-  Requirements: FR-SR-10, FR-RC-17, FR-MR-12, FR-LE-09, FR-CV-01, FR-CV-02, FR-CV-03, FR-CV-05, FR-CV-06, FR-CV-08, FR-CV-09, FR-CV-15, FR-LR-05, FR-LR-38
-  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-RC-03, DEC-LR-11.
-  Messages of the catalogue: MSG-CNV-01, MSG-CNV-03, MSG-CNV-04, MSG-CNV-05, MSG-LEN-01, MSG-RES-01, MSG-RES-02, MSG-RES-03.
+  A Question or a Signal that is open can be closed by its writer, the Owner Unit of its object and the Data Team, when
+  nothing more is needed, even without an answer: "Close" asks for an optional line why, which shows in the thread with who
+  closed it and when; its writer is told when someone else closes it (MSG-CNV-07). "Reopen", for the same people, makes it
+  open again; replying stays possible and leaves it closed. The list has the state Closed and a chip for it (DEC-CV-13,
+  DEC-UX-179). ?close=closing and ?close=closed show the Question while closing it and closed.
+  Requirements: FR-SR-10, FR-RC-17, FR-MR-12, FR-LE-09, FR-CV-01, FR-CV-02, FR-CV-03, FR-CV-05, FR-CV-06, FR-CV-08, FR-CV-09, FR-CV-15, FR-CV-16, FR-LR-05, FR-LR-38
+  Decisions: DEC-UX-29, DEC-UX-30, DEC-UX-79, DEC-UX-179, DEC-CV-02, DEC-CV-06, DEC-CV-10, DEC-CV-13, DEC-RC-03, DEC-LR-11.
+  Messages of the catalogue: MSG-CNV-01, MSG-CNV-03, MSG-CNV-04, MSG-CNV-05, MSG-CNV-07, MSG-LEN-01, MSG-RES-01, MSG-RES-02, MSG-RES-03.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
 <html lang="en" data-role="owner">
@@ -78,7 +83,7 @@
 </div>
 <div class="mc">
  <section class="card mc-list" aria-label="Messages" data-group="msg">
-  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">5</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button></div>
+  <div class="mc-chips" role="tablist" aria-label="Kind"><button class="seg on" role="tab" aria-selected="true">All<span class="count">5</span></button><button class="seg" role="tab" aria-selected="false">Open<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Answered<span class="count">2</span></button><button class="seg" role="tab" aria-selected="false">Closed<span class="count">1</span></button></div>
   <a class="mc-item on unread" href="#" data-target="request" role="tab" aria-selected="true">
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
@@ -99,7 +104,7 @@
     <span class="mc-dot" aria-label="Unread"></span>
     <span style="min-width:0">
      <span class="mc-row"><span class="mc-subject" data-href="lens-messages.html"><i class="ph ph-aperture" aria-hidden="true"></i><span class="mc-kind">Lens</span><b>Leads per source name</b><span class="meta">· Credit leads</span></span></span>
-     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">1 hour ago</span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind">Question</span><span class="mc-status" data-pane-group="close" data-pane="open closing"><i class="ph ph-circle"></i>Open</span><span class="mc-status" data-pane-group="close" data-pane="closed" hidden><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Karel Leys</span><span class="meta" style="margin-left:auto">1 hour ago</span></span>
      <span class="mc-excerpt">Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</span>
      
     </span>
@@ -142,6 +147,13 @@
      <span class="mc-row" style="margin-top:6px"><span class="kind">Data Hub</span><span class="item-title">Data Hub</span><span class="meta" style="margin-left:auto">2 days ago</span></span>
      <span class="mc-excerpt">A field was added to Weekly lead volume since you confirmed it: lead_channel. Its Level stays 4 · Explored; mark it as seen on its page.</span>
      
+    </span>
+   </a><a class="mc-item" href="#">
+    <span class="mc-dot" aria-label=""></span>
+    <span style="min-width:0">
+     <span class="mc-row"><span class="mc-subject" data-href="resource-messages.html"><i class="ph ph-table" aria-hidden="true"></i><span class="mc-kind">Resource</span><b>Weekly lead volume</b><span class="meta">· Credit leads</span></span></span>
+     <span class="mc-row" style="margin-top:6px"><span class="kind signal">Signal</span><span class="mc-status"><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Ines Claes</span><span class="meta" style="margin-left:auto">4 days ago</span></span>
+     <span class="mc-excerpt">Closed by Dirk Vos: the leads of the fair in Kortrijk are counted once again since the fix of 30 Oct.</span>
     </span>
    </a><a class="mc-item" href="#" data-for="owner">
     <span class="mc-dot" aria-label=""></span>
@@ -200,16 +212,31 @@
   <div class="thread">
     <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">KL</span>
     <div class="thread-body">
-     <div class="thread-head"><span class="kind">Question</span><span class="mc-status"><i class="ph ph-circle"></i>Open</span><span class="item-title">Karel Leys</span><span class="meta">today 14:10</span></div>
+     <div class="thread-head"><span class="kind">Question</span><span class="mc-status" data-pane-group="close" data-pane="open closing"><i class="ph ph-circle"></i>Open</span><span class="mc-status" data-pane-group="close" data-pane="closed" hidden><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Karel Leys</span><span class="meta">today 14:10</span>
+      <button class="btn-quiet outline sm" type="button" style="margin-left:auto" data-pane-group="close" data-pane="open" data-go="close:closing" title="For its writer, its Owner Unit and the Data Team: when nothing more is needed, even without an answer"><i class="ph ph-minus-circle"></i>Close</button>
+      <button class="btn-quiet outline sm" type="button" style="margin-left:auto" data-pane-group="close" data-pane="closed" data-go="close:open" hidden><i class="ph ph-arrow-counter-clockwise"></i>Reopen</button></div>
      <p>Mailing brings only 3.8% of the leads this year; last year it was close to 10%. Did something change in how mailing leads are tagged?</p>
-     
      <div class="thread-actions"></div>
     </div>
    </div>
-  <div class="composer" style="margin-top:6px">
+  <div class="thread" data-pane-group="close" data-pane="closed" hidden>
+    <span class="mini-avatar" style="width:28px;height:28px;font-size:10px">MP</span>
+    <div class="thread-body">
+     <div class="thread-head"><span class="mc-status"><i class="ph ph-minus-circle"></i>Closed</span><span class="item-title">Maxime Passenier</span><span class="meta">Owner · today 16:20</span></div>
+     <p>Mailing leads are tagged per campaign since September; see the new Lens Leads per campaign.</p>
+    </div>
+  </div>
+  <form class="composer" style="margin-top:6px" data-pane-group="close" data-pane="closing" hidden onsubmit="return false" aria-label="Close this Question">
+   <span class="label" style="margin:0">Close this Question</span>
+   <textarea placeholder="Why it can close, if you like: everyone who may see the Lens can read it. Optional."></textarea>
+   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification that you closed it. Anyone of you can reopen it.</p>
+    <button class="btn-quiet" type="button" data-go="close:open">Cancel</button>
+    <button class="btn-primary" type="submit" data-go="close:closed"><i class="ph ph-minus-circle" style="font-size:15px"></i>Close</button></div>
+  </form>
+  <div class="composer" style="margin-top:6px" data-pane-group="close" data-pane="open closed">
    <span class="label" style="margin:0">Your reply</span>
    <textarea placeholder="Everyone who may see the Lens can read it."></textarea>
-   <div class="composer-foot"><p class="meta"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification; the question shows as answered.</p>
+   <div class="composer-foot"><p class="meta" data-pane-group="close" data-pane="open"><i class="ph-fill ph-bell-simple"></i>Karel gets a notification; the question shows as answered.</p><p class="meta" data-pane-group="close" data-pane="closed" hidden><i class="ph-fill ph-bell-simple"></i>Karel gets a notification. It stays closed; reopen it if it needs an answer again.</p>
     <button class="btn-primary"><i class="ph-fill ph-arrow-bend-up-left" style="font-size:15px"></i>Reply</button></div>
   </div>
  </section>
@@ -260,6 +287,11 @@
  </section>
 </div>
 </main>
+</div>
+<div class="proto-switch" data-group="close" role="tablist" aria-label="Prototype: closing the Question" style="bottom:72px">The Question
+ <button class="seg on" data-target="open" data-go="msg:question" role="tab" aria-selected="true">Open</button>
+ <button class="seg" data-target="closing" data-go="msg:question" role="tab" aria-selected="false">Closing</button>
+ <button class="seg" data-target="closed" data-go="msg:question" role="tab" aria-selected="false">Closed</button>
 </div>
 <div class="role-switch" data-group="role" role="tablist" aria-label="Prototype: seen as">Seen as
  <button class="seg on" data-target="owner" role="tab" aria-selected="true">Owner, who sent it</button>

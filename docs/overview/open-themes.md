@@ -5,7 +5,7 @@
 | Source of truth | This file |
 | Migrated from | The sections "Uit te diepen" and "Verder te verduidelijken in de analyse" of [ptditt - Tooling - Data Hub](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1362428000) (Confluence, Dutch), last modified 2026-10-17, migrated 2026-10-17 |
 
-What still needs its own elaboration for Data Hub as a whole. Open points that touch only one domain are in that domain's file under [functional requirements](../requirements/functional/README.md).
+What still needs its own elaboration for Data Hub as a whole. Open points that touch only one domain are in that domain's file under [functional requirements](../requirements/functional/README.md). What to pick up next is on the [backlog](backlog.md).
 
 ## To be worked out
 

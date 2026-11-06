@@ -37,9 +37,9 @@ export interface Person {
   email: string;
   name: string;
   language: 'nl' | 'en';
-  /** Which of the Groups and roles asked for they hold. */
+  /** Which of the Groups and Permissions asked for they hold (TR-PL-08). */
   groups: string[];
-  roles: string[];
+  permissions: string[];
 }
 
 /** Why a Refresh Token gives no new Access Token. */
@@ -79,15 +79,25 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
       return request;
     },
 
-    /** Creates the User at the first login and recognises them after that (FR-UM-03). */
-    async saveUser(identity: GoogleIdentity): Promise<void> {
+    /**
+     * Creates the User at the first login, in the default Permission group (FR-PL-04), and recognises them
+     * after that (FR-UM-03); says whether they are new.
+     */
+    async saveUser(identity: GoogleIdentity): Promise<{ created: boolean }> {
+      const known = await db.selectFrom('users').select('googleId').where('googleId', '=', identity.sub).executeTakeFirst();
       await db
         .insertInto('users')
-        .values({ googleId: identity.sub, email: identity.email, name: identity.name })
+        .values({
+          googleId: identity.sub,
+          email: identity.email,
+          name: identity.name,
+          permissionGroupId: sql<string>`(select id from permission_groups where is_default)`,
+        })
         .onConflict((conflict) =>
           conflict.column('googleId').doUpdateSet({ email: identity.email, name: identity.name, lastLoginAt: now() }),
         )
         .execute();
+      return { created: !known };
     },
 
     /**
@@ -99,33 +109,41 @@ export function createStore(db: Kysely<IdentityDatabase>, now: () => Date = () =
     },
 
     /**
-     * The Users Data Hub knows among those asked: by their fixed Google ID, as members of a Group, or with
-     * a role; each with their address, their name, the language they read Data Hub in, Dutch unless they
-     * chose another (DEC-UX-96), and which of the Groups and roles asked they hold.
+     * The Users Data Hub knows among those asked: by their fixed Google ID, as members of a Group, or by a
+     * Permission their Permission group has on, such as `messages.dataTeam` (TR-PL-08); each with their
+     * address, their name, the language they read Data Hub in, Dutch unless they chose another (DEC-UX-96),
+     * and which of the Groups and Permissions asked they hold. A User whose account is no longer active
+     * has no Groups kept, and is found only by their ID.
      */
-    async people(asked: { users: string[]; groups: string[]; roles: string[] }): Promise<Person[]> {
-      if (asked.users.length + asked.groups.length + asked.roles.length === 0) return [];
+    async people(asked: { users: string[]; groups: string[]; permissions: string[] }): Promise<Person[]> {
+      if (asked.users.length + asked.groups.length + asked.permissions.length === 0) return [];
+      const held = (key: string) => sql<SqlBool>`(permission_groups.permissions -> ${key} ->> 'on') = 'true'`;
       const rows = await db
         .selectFrom('users')
+        .innerJoin('permissionGroups', 'permissionGroups.id', 'users.permissionGroupId')
         .leftJoin('settings', (join) => join.onRef('settings.googleId', '=', 'users.googleId').on('settings.key', '=', 'language'))
-        .select(['users.googleId', 'users.email', 'users.name', 'users.groups', 'users.roles', 'settings.value as language'])
+        .select(['users.googleId', 'users.email', 'users.name', 'users.groups', 'permissionGroups.permissions', 'settings.value as language'])
         .where((where) =>
           where.or([
             ...(asked.users.length ? [where('users.googleId', 'in', asked.users)] : []),
             ...(asked.groups.length ? [sql<SqlBool>`users.groups && ${asked.groups}::text[]`] : []),
-            ...(asked.roles.length ? [sql<SqlBool>`users.roles && ${asked.roles}::text[]`] : []),
+            // Only Users who still sign in hold a Permission for others to reach them by: their Groups say so.
+            ...asked.permissions.map((key) => sql<SqlBool>`(${held(key)} and cardinality(users.groups) > 0)`),
           ]),
         )
         .orderBy('users.googleId')
         .execute();
-      return rows.map((row) => ({
-        id: row.googleId,
-        email: row.email,
-        name: row.name,
-        language: row.language === 'en' ? 'en' : 'nl',
-        groups: row.groups.filter((group) => asked.groups.includes(group)),
-        roles: row.roles.filter((role) => asked.roles.includes(role)),
-      }));
+      return rows.map((row) => {
+        const permissions = row.permissions as unknown as Record<string, { on?: unknown } | undefined>;
+        return {
+          id: row.googleId,
+          email: row.email,
+          name: row.name,
+          language: row.language === 'en' ? 'en' : 'nl',
+          groups: row.groups.filter((group) => asked.groups.includes(group)),
+          permissions: row.groups.length > 0 ? asked.permissions.filter((key) => permissions[key]?.on === true) : [],
+        };
+      });
     },
 
     async user(googleId: string): Promise<{ googleId: string; email: string; name: string } | undefined> {

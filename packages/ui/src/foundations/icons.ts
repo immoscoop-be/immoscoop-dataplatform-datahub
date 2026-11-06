@@ -36,7 +36,10 @@ import pencilSimpleFill from '@phosphor-icons/core/assets/fill/pencil-simple-fil
 import playFill from '@phosphor-icons/core/assets/fill/play-fill.svg?raw';
 import quotesFill from '@phosphor-icons/core/assets/fill/quotes-fill.svg?raw';
 import plusCircleFill from '@phosphor-icons/core/assets/fill/plus-circle-fill.svg?raw';
+import prohibitFill from '@phosphor-icons/core/assets/fill/prohibit-fill.svg?raw';
+import sealCheckFill from '@phosphor-icons/core/assets/fill/seal-check-fill.svg?raw';
 import stackFill from '@phosphor-icons/core/assets/fill/stack-fill.svg?raw';
+import sunFill from '@phosphor-icons/core/assets/fill/sun-fill.svg?raw';
 import terminalWindowFill from '@phosphor-icons/core/assets/fill/terminal-window-fill.svg?raw';
 import toolboxFill from '@phosphor-icons/core/assets/fill/toolbox-fill.svg?raw';
 import trashFill from '@phosphor-icons/core/assets/fill/trash-fill.svg?raw';
@@ -49,9 +52,16 @@ import aperture from '@phosphor-icons/core/assets/regular/aperture.svg?raw';
 import bookOpenText from '@phosphor-icons/core/assets/regular/book-open-text.svg?raw';
 import chartLine from '@phosphor-icons/core/assets/regular/chart-line.svg?raw';
 import chartScatter from '@phosphor-icons/core/assets/regular/chart-scatter.svg?raw';
+import circleDashed from '@phosphor-icons/core/assets/regular/circle-dashed.svg?raw';
+import clockCounterClockwise from '@phosphor-icons/core/assets/regular/clock-counter-clockwise.svg?raw';
 import compass from '@phosphor-icons/core/assets/regular/compass.svg?raw';
 import fileXls from '@phosphor-icons/core/assets/regular/file-xls.svg?raw';
+import funnel from '@phosphor-icons/core/assets/regular/funnel.svg?raw';
 import link from '@phosphor-icons/core/assets/regular/link.svg?raw';
+import listNumbers from '@phosphor-icons/core/assets/regular/list-numbers.svg?raw';
+import sealCheck from '@phosphor-icons/core/assets/regular/seal-check.svg?raw';
+import warningOctagon from '@phosphor-icons/core/assets/regular/warning-octagon.svg?raw';
+import textAlignLeft from '@phosphor-icons/core/assets/regular/text-align-left.svg?raw';
 import textB from '@phosphor-icons/core/assets/regular/text-b.svg?raw';
 import textH from '@phosphor-icons/core/assets/regular/text-h.svg?raw';
 import textItalic from '@phosphor-icons/core/assets/regular/text-italic.svg?raw';
@@ -136,6 +146,19 @@ import warningDiamond from '@phosphor-icons/core/assets/regular/warning-diamond.
 import webhooksLogo from '@phosphor-icons/core/assets/regular/webhooks-logo.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 import xCircle from '@phosphor-icons/core/assets/regular/x-circle.svg?raw';
+// Admin: Users and Permission groups (DEC-UX-186).
+import apertureFill from '@phosphor-icons/core/assets/fill/aperture-fill.svg?raw';
+import equalsFill from '@phosphor-icons/core/assets/fill/equals-fill.svg?raw';
+import minusCircleFill from '@phosphor-icons/core/assets/fill/minus-circle-fill.svg?raw';
+import plugsConnectedFill from '@phosphor-icons/core/assets/fill/plugs-connected-fill.svg?raw';
+import shieldCheckFill from '@phosphor-icons/core/assets/fill/shield-check-fill.svg?raw';
+import browser from '@phosphor-icons/core/assets/regular/browser.svg?raw';
+import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
+import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
+import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
+import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
+import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
@@ -173,7 +196,10 @@ export const ICONS = {
   'play-fill': playFill,
   'quotes-fill': quotesFill,
   'plus-circle-fill': plusCircleFill,
+  'prohibit-fill': prohibitFill,
+  'seal-check-fill': sealCheckFill,
   'stack-fill': stackFill,
+  'sun-fill': sunFill,
   'terminal-window-fill': terminalWindowFill,
   'toolbox-fill': toolboxFill,
   'trash-fill': trashFill,
@@ -186,9 +212,16 @@ export const ICONS = {
   'book-open-text': bookOpenText,
   'chart-line': chartLine,
   'chart-scatter': chartScatter,
+  'circle-dashed': circleDashed,
+  'clock-counter-clockwise': clockCounterClockwise,
   compass,
   'file-xls': fileXls,
+  funnel,
   link,
+  'list-numbers': listNumbers,
+  'seal-check': sealCheck,
+  'warning-octagon': warningOctagon,
+  'text-align-left': textAlignLeft,
   'text-b': textB,
   'text-h': textH,
   'text-italic': textItalic,
@@ -273,6 +306,18 @@ export const ICONS = {
   'webhooks-logo': webhooksLogo,
   x,
   'x-circle': xCircle,
+  'aperture-fill': apertureFill,
+  'equals-fill': equalsFill,
+  'minus-circle-fill': minusCircleFill,
+  'plugs-connected-fill': plugsConnectedFill,
+  'shield-check-fill': shieldCheckFill,
+  browser: browser,
+  copy: copy,
+  'pencil-simple': pencilSimple,
+  'plugs-connected': plugsConnected,
+  'shield-check': shieldCheck,
+  'user-plus': userPlus,
+  users: users,
 } as const;
 
 export type IconName = keyof typeof ICONS;

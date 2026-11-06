@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { IdentityDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
+import { createPermissionGroups } from './permission-groups.js';
 import { createStore } from './store.js';
 import { createLocalKeyService } from './testing.js';
 import { createTokenIssuer } from './tokens.js';
@@ -56,6 +57,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
         issuer: 'https://identity.test',
         domains: ['thenextimmoscoop.be', 'immoscoop.be'],
         mcpRedirectUris: [],
+        groups: createPermissionGroups(database.db),
       },
     });
   });
@@ -72,7 +74,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
     const jan = await as('jan');
     expect((await app.inject({ url: '/me/settings', headers: jan })).json()).toEqual({ settings: {} });
 
-    for (const [key, value] of [['language', 'en'], ['theme', 'dark'], ['background.dark', 'aurora'], ['panel.open', false], ['intro.collections', 2]] as const) {
+    for (const [key, value] of [['language', 'en'], ['query.layout', 'sideBySide'], ['background.dark', 'aurora'], ['panel.open', false], ['intro.collections', 2]] as const) {
       const saved = await app.inject({ method: 'PUT', url: `/me/settings/${key}`, headers: jan, payload: { value } });
       expect(saved.statusCode).toBe(204);
     }
@@ -80,7 +82,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
 
     expect((await app.inject({ url: '/me/settings', headers: jan })).json().settings).toEqual({
       language: 'nl',
-      theme: 'dark',
+      'query.layout': 'sideBySide',
       'background.dark': 'aurora',
       'panel.open': false,
       'intro.collections': 2,
@@ -91,8 +93,8 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
 
   it('forgets a setting, so that its default applies again', async () => {
     const an = await as('an');
-    await app.inject({ method: 'PUT', url: '/me/settings/theme', headers: an, payload: { value: 'light' } });
-    expect((await app.inject({ method: 'DELETE', url: '/me/settings/theme', headers: an })).statusCode).toBe(204);
+    await app.inject({ method: 'PUT', url: '/me/settings/language', headers: an, payload: { value: 'en' } });
+    expect((await app.inject({ method: 'DELETE', url: '/me/settings/language', headers: an })).statusCode).toBe(204);
     expect((await app.inject({ url: '/me/settings', headers: an })).json()).toEqual({ settings: {} });
   });
 

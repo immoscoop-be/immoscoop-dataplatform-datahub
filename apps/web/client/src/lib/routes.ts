@@ -1,3 +1,4 @@
+import { FIRST_CHART } from './charts.js';
 import { ADMIN_TOOLS, type AdminTool, SECTIONS, type Section } from './sections.js';
 
 /** The tabs of My page that part 1 builds; Excel keys come with part 9 (DEC-UX-85, DEC-UX-108). */
@@ -37,8 +38,10 @@ export type Route =
   | ({ readonly kind: 'learningCard'; readonly id: string; readonly section: Section } & Talk)
   /** See it of a Learning Card, on a page of its own (FR-LR-29). */
   | { readonly kind: 'learningSee'; readonly id: string; readonly section: Section }
-  /** A tool of Admin, for the Data Team (DEC-UX-130). */
-  | { readonly kind: 'admin'; readonly tool: AdminTool; readonly section: Section }
+  /** A tool of Admin, for the Data Team (DEC-UX-130); on Users, with one User opened (FR-PL-07). */
+  | { readonly kind: 'admin'; readonly tool: AdminTool; readonly section: Section; readonly user?: string }
+  /** A chart of semgraph, in Charts, its gallery (FR-CH-06). */
+  | { readonly kind: 'chart'; readonly id: string; readonly section: Section }
   | { readonly kind: 'redirect'; readonly to: string }
   | { readonly kind: 'notFound' };
 
@@ -66,10 +69,20 @@ export const learningPath = (number: string): string => `/learning/${encodeURICo
 /** See it of a Learning Card, on its own (FR-LR-29). */
 export const seePath = (number: string): string => `${learningPath(number)}/see`;
 export const MESSAGES = '/messages';
+/** A chart in Charts, by the id semgraph gives it (FR-CH-06). */
+export const chartPath = (id: string): string => `/charts/${encodeURIComponent(id)}`;
 /** A Message opened in the Message Centre. */
 export const messagePath = (id: string): string => `${MESSAGES}/${encodeURIComponent(id)}`;
-/** The page of an object a Message is on (FR-CV-02). */
-export function objectPath(subject: { kind: string; id: string }): string {
+/** Users in Admin, with one User opened (FR-PL-07). */
+export const usersPath = (googleId?: string): string => (googleId ? `/admin/users/${encodeURIComponent(googleId)}` : '/admin/users');
+/**
+ * The page of an object a Message is on (FR-CV-02). A Message about a User, of their Permission group (FR-PL-12),
+ * leads that User to My page, and the Data Team to that User on Users when Admin was given back (MSG-USR-02).
+ */
+export function objectPath(subject: { kind: string; id: string }, type?: string): string {
+  if (subject.kind === 'user') {
+    return type === 'MSG-USR-02' ? usersPath(subject.id) : myPagePath('profile');
+  }
   return subject.kind === 'resource'
     ? resourcePath(subject.id)
     : subject.kind === 'collection'
@@ -90,21 +103,43 @@ export { contextPath } from '@datahub/contracts/messages';
 
 /**
  * What an address shows. Every address that is no page of Data Hub shows the one page for what does
- * not exist or may not be seen, which does not say which of the two it is (DEC-UX-32, FR-CO-32).
+ * not exist or may not be seen, which does not say which of the two it is (DEC-UX-32, FR-CO-32). Admin opens on
+ * the first of the tools the User may open, every tool when they are not given.
  */
-export function route(path: string): Route {
+export function route(path: string, adminTools: readonly AdminTool[] = ADMIN_TOOLS.map((tool) => tool.id)): Route {
   const clean = path.length > 1 ? path.replace(/\/+$/, '') : path;
   if (clean === '/') {
     return { kind: 'redirect', to: HOME };
   }
-  // Admin opens on its first tool (OP-UX-52).
+  // Admin opens on its first tool the User may open (OP-UX-52, FR-PL-14).
   const admin = SECTIONS.find((candidate) => candidate.id === 'admin');
   if (admin && clean === admin.path) {
-    return { kind: 'redirect', to: ADMIN_TOOLS[0].path };
+    return { kind: 'redirect', to: (ADMIN_TOOLS.find((tool) => adminTools.includes(tool.id)) ?? ADMIN_TOOLS[0]).path };
   }
   const tool = ADMIN_TOOLS.find((candidate) => candidate.path === clean);
   if (admin && tool) {
     return { kind: 'admin', tool: tool.id, section: admin };
+  }
+  const [, user] = /^\/admin\/users\/([^/]+)$/.exec(clean) ?? [];
+  if (admin && user) {
+    try {
+      return { kind: 'admin', tool: 'users', section: admin, user: decodeURIComponent(user) };
+    } catch {
+      return { kind: 'notFound' };
+    }
+  }
+  // Charts opens on its first chart (DEC-UX-182).
+  const charts = SECTIONS.find((candidate) => candidate.id === 'charts');
+  if (charts && clean === charts.path) {
+    return { kind: 'redirect', to: chartPath(FIRST_CHART) };
+  }
+  const [, chart] = /^\/charts\/([^/]+)$/.exec(clean) ?? [];
+  if (charts && chart) {
+    try {
+      return { kind: 'chart', id: decodeURIComponent(chart), section: charts };
+    } catch {
+      return { kind: 'notFound' };
+    }
   }
   const section = SECTIONS.find((candidate) => candidate.path === clean);
   if (section) {

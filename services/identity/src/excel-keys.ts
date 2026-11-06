@@ -1,9 +1,11 @@
 import { randomBytes } from 'node:crypto';
 import type { ServiceCallerVerifier } from '@datahub/auth';
+import { can, canWith, permissionValue } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Kysely, Selectable } from 'kysely';
 import type { IdentityDatabase } from './database.js';
 import { applyNamingConvention } from './naming-convention.js';
+import type { PermissionGroups } from './permission-groups.js';
 import { hash } from './store.js';
 import type { TokenIssuer } from './tokens.js';
 import type { Workspace } from './workspace.js';
@@ -87,12 +89,24 @@ export function createExcelKeys(db: Kysely<IdentityDatabase>, now: () => Date = 
     },
 
     /** Makes a key for a User: the key itself is returned once, and only its hash is kept (FR-PL-01). */
-    async make(googleId: string, name: string): Promise<{ key: ExcelKey; secret: string }> {
+    /** How many keys of a User are neither revoked nor expired. */
+    async activeCount(googleId: string): Promise<number> {
+      const row = await db
+        .selectFrom('excelKeys')
+        .select((eb) => eb.fn.countAll<number>().as('count'))
+        .where('googleId', '=', googleId)
+        .where('revokedAt', 'is', null)
+        .where('expiresAt', '>', now())
+        .executeTakeFirstOrThrow();
+      return Number(row.count);
+    },
+
+    async make(googleId: string, name: string, lifetimeDays = LIFETIME_DAYS): Promise<{ key: ExcelKey; secret: string }> {
       const secret = `${KEY_PREFIX}${randomBytes(24).toString('base64url')}`;
       const made = now();
       const row = await db
         .insertInto('excelKeys')
-        .values({ googleId, name, keyHash: hash(secret), createdAt: made, expiresAt: new Date(made.getTime() + LIFETIME_DAYS * DAY) })
+        .values({ googleId, name, keyHash: hash(secret), createdAt: made, expiresAt: new Date(made.getTime() + lifetimeDays * DAY) })
         .returningAll()
         .executeTakeFirstOrThrow();
       return { key: view(row), secret };
@@ -165,6 +179,8 @@ export interface ExcelKeyOptions {
   schedulers?: ServiceCallerVerifier;
   /** catalogue, told to put a Message to the User of a key. */
   notices: Notices;
+  /** The Permission groups, for excel.keys and the Permissions in the Access Token of a key (TR-PL-05). */
+  groups: PermissionGroups;
 }
 
 /**
@@ -174,8 +190,9 @@ export interface ExcelKeyOptions {
  * when its User can no longer sign in.
  */
 export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOptions): Promise<void> {
-  const { keys, workspace, tokens, domains, exchangers, schedulers, notices } = options;
-  const dataTeam = (request: FastifyRequest) => request.user?.roles.includes('datateam') ?? false;
+  const { keys, workspace, tokens, domains, exchangers, schedulers, notices, groups } = options;
+  // Every Excel key in Admin, with the tool Excel keys (admin.open, FR-PL-03).
+  const admin = (request: FastifyRequest) => (request.user ? canWith(request.user.permissions, 'admin.open', 'tools', 'excelKeys') : false);
 
   function onlyFrom(callers: ServiceCallerVerifier, who: string) {
     return async (request: FastifyRequest, reply: FastifyReply) => {
@@ -197,7 +214,17 @@ export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOpti
     if (trimmed.length < 1 || trimmed.length > 80) {
       return reply.code(400).send({ error: 'invalid_request', message: 'The name of a key has 1 to 80 characters.' });
     }
-    const made = await keys.make(request.user?.sub ?? '', trimmed);
+    // Only with excel.keys, below the number of keys and for the life the Permission group gives (EC-PL-04).
+    const permissions = request.user!.permissions;
+    if (!can(permissions, 'excel.keys')) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Your Permission group does not use Excel keys.', permission: 'excel.keys' });
+    }
+    const most = permissionValue(permissions, 'excel.keys', 'most');
+    if (typeof most === 'number' && (await keys.activeCount(request.user!.sub)) >= most) {
+      return reply.code(409).send({ error: 'too_many', message: `Your Permission group allows at most ${most} Excel keys: revoke one first.` });
+    }
+    const days = Number(permissionValue(permissions, 'excel.keys', 'lifetimeDays') ?? 365);
+    const made = await keys.make(request.user?.sub ?? '', trimmed, days);
     reply.header('cache-control', 'no-store');
     return reply.code(201).send(made);
   });
@@ -209,13 +236,13 @@ export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOpti
   });
 
   app.get('/excel-keys', async (request, reply) => {
-    if (!dataTeam(request)) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team sees every Excel key.' });
+    if (!admin(request)) return reply.code(403).send({ error: 'forbidden', message: 'Only who may open Excel keys in Admin sees every key.', permission: 'admin.open' });
     return { keys: await keys.all() };
   });
 
   // The Data Team revokes any key, and its User gets a Message that says so (FR-PL-03, MSG-KEY-02).
   app.delete<{ Params: { id: string } }>('/excel-keys/:id', async (request, reply) => {
-    if (!dataTeam(request)) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team revokes the key of someone else.' });
+    if (!admin(request)) return reply.code(403).send({ error: 'forbidden', message: 'Only who may open Excel keys in Admin revokes the key of someone else.', permission: 'admin.open' });
     const user = request.user!;
     const actor = user.name || user.email;
     const revoked = await keys.revoke(request.params.id, { id: user.sub, name: actor });
@@ -242,8 +269,13 @@ export async function excelKeyRoutes(app: FastifyInstance, options: ExcelKeyOpti
       if (!(await workspace.isActive(found.user.googleId))) {
         return reply.code(401).send({ error: 'invalid_key', message: 'The User of this Excel key can no longer sign in.' });
       }
-      const { groups, roles } = applyNamingConvention(await workspace.groups(found.user.email), domains);
-      claims = { sub: found.user.googleId, email: found.user.email, name: found.user.name, groups, roles };
+      const { groups: own } = applyNamingConvention(await workspace.groups(found.user.email), domains);
+      const granted = await groups.claimsOf(found.user.googleId);
+      // Without excel.keys, Excel gets nothing with the keys of its User until they have it again (EC-PL-04).
+      if (!can(granted.permissions, 'excel.keys')) {
+        return reply.code(401).send({ error: 'invalid_key', message: 'The Permission group of the User of this Excel key does not use Excel keys.' });
+      }
+      claims = { sub: found.user.googleId, email: found.user.email, name: found.user.name, groups: own, ...granted };
     } catch (error) {
       request.log.error({ err: error }, 'Workspace did not answer for an Excel key');
       return reply.code(503).header('retry-after', '30').send({ error: 'temporarily_unavailable', message: 'Workspace did not answer; try again later.' });

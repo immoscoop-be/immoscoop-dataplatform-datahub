@@ -26,6 +26,8 @@ The prefix of a Log ID says which domain the entry comes from. Every template ha
 
 *Changed on 2026-10-31, while building the Changes downstream: `ART-014` and `ART-015` are new, for a model upstream that is removed or added ([EC-AR-04](01-artifact-registry.md#ec-ar-04)), and `ART-010` and `ART-012` name the model they happened in when it is upstream of the Resource ([FR-AR-12](01-artifact-registry.md#fr-ar-12)).*
 
+*Changed on 2026-11-04: `LEN-003` is new: a Lens deleted by its Owner Unit or the Data Team, with why, in its Log ([FR-LE-18](09-lenses.md#fr-le-18)).*
+
 Most Log Entries are about a Resource. The entries with a Log ID from `COL-001` to `COL-029` are about a Collection itself, and appear in the Log of that Collection.
 
 Log IDs are not requirement IDs: they are codes in the app itself. Requirement IDs are described in the [requirements conventions](../README.md).
@@ -44,6 +46,9 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `RES-008` | Deprecation taken away by {actor} | Deprecated weggenomen door {actor} | actor |
 | `RES-009` | Grain and mappings recorded by {actor}: {mapped} of {fields} fields mapped | Grain en mappings vastgelegd door {actor}: {mapped} van de {fields} velden gemapt | mapped, fields, grain, modelType, release, actor |
 | `RES-010` | Business Description of the field {field} updated by {actor} | Business Description van het veld {field} bijgewerkt door {actor} | field, actor |
+| `RES-011` | Known Gap added by {actor}: {gap} | Known Gap toegevoegd door {actor}: {gap} | actor, gap |
+| `RES-012` | Known Gap changed by {actor}: {gap} | Known Gap gewijzigd door {actor}: {gap} | actor, gap |
+| `RES-013` | Known Gap removed by {actor}: {gap} | Known Gap verwijderd door {actor}: {gap} | actor, gap |
 | `COL-001` | Collection created by {actor} | Collection aangemaakt door {actor} | actor, name, ownerUnit, visibility |
 | `COL-002` | {field, select, name {Name} description {Description} icon {Icon} other {{field}}} changed by {actor} | {field, select, name {Naam} description {Beschrijving} icon {Icoon} other {{field}}} gewijzigd door {actor} | field, old, new, actor |
 | `COL-003` | Owner Unit changed from {old} to {new} by {actor} | Owner Unit gewijzigd van {old} naar {new} door {actor} | old, new, actor |
@@ -58,6 +63,7 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `COL-012` | {lens} moved to {to} by {actor} | {lens} verplaatst naar {to} door {actor} | lens, to, actor |
 | `COL-013` | Folder {folder} moved to {to} by {actor} | Map {folder} verplaatst naar {to} door {actor} | folder, to, actor |
 | `COL-014` | Intro changed by {actor} | Intro gewijzigd door {actor} | actor |
+| `COL-015` | Description of folder {folder} changed by {actor} | Beschrijving van map {folder} gewijzigd door {actor} | folder, actor |
 | `COL-030` | Added to the Collection {collection} by {actor} | Toegevoegd aan de Collection {collection} door {actor} | collection, actor |
 | `COL-031` | Removed from the Collection {collection} by {actor} | Verwijderd uit de Collection {collection} door {actor} | collection, actor |
 | `ART-010` | Structural change: field {field} {direction, select, added {added} removed {removed} other {changed}}{distance, select, 0 {} other { in {sourceNode}}} | Structurele wijziging: veld {field} {direction, select, added {toegevoegd} removed {verwijderd} other {gewijzigd}}{distance, select, 0 {} other { in {sourceNode}}} | field, direction, sourceNode, distance |
@@ -76,5 +82,6 @@ Log IDs are not requirement IDs: they are codes in the app itself. Requirement I
 | `BRK-002` | Works again: {restored} exists again | Werkt weer: {restored} bestaat weer | restored, run |
 | `LEN-001` | Request accepted by {actor} | Aanvraag aanvaard door {actor} | actor, conversation |
 | `LEN-002` | Request refused by {actor} | Aanvraag geweigerd door {actor} | actor, conversation, reason |
+| `LEN-003` | Deleted by {actor} | Verwijderd door {actor} | actor, reason |
 
 <!-- End of the generated table. -->

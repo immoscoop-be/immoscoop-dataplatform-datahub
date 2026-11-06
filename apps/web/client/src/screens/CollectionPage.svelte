@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
+  import InPlaceHead from '@datahub/ui/components/InPlaceHead.svelte';
   import LogList from '@datahub/ui/components/LogList.svelte';
   import MarkdownText from '@datahub/ui/components/MarkdownText.svelte';
   import Table from '@datahub/ui/containers/Table.svelte';
@@ -16,6 +17,7 @@
   import MessagesButton from './MessagesButton.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { NotFound as Missing, Refused } from '../lib/api.js';
   import type { Catalogue, Collection, CollectionFields, CollectionResource, LogEntry, OwnerUnit, Resource } from '../lib/catalogue.js';
   import type { requestOf } from '../lib/grain.js';
@@ -35,8 +37,8 @@
   /**
    * The page of a Collection (Page of a Collection, FR-CO-25 to FR-CO-31): what it is, what needs
    * attention, its Resources, the Lenses its Owner Unit added to it (FR-CO-28) and its recent history.
-   * Its Owner Unit and the Data Team edit it in place; the Data Team adds Resources in a sheet and
-   * removes them. Without an ID, it is an empty Collection being made (FR-CO-12). Under its head stands
+   * Its Owner Unit and the Data Team edit it in place; a Data Admin, with `resources.assign`, adds Resources in a
+   * sheet and removes them (FR-PL-14). Without an ID, it is an empty Collection being made (FR-CO-12). Under its head stands
    * its intro (FR-CO-41); it shows only what sits at its top, its folders first (FR-CO-38), and a whole row
    * opens with a click and, for its Owner Unit and the Data Team, moves with a drag onto a folder (FR-CO-40).
    */
@@ -46,7 +48,8 @@
     catalogue,
     identity,
     registry,
-    dataTeam,
+    assigns,
+    anyOwnerUnit,
     own,
     waiting,
     go,
@@ -61,7 +64,10 @@
     catalogue: Catalogue;
     identity: Identity;
     registry: Registry;
-    dataTeam: boolean;
+    /** The User may add Resources to it and remove them (`resources.assign`). */
+    assigns: boolean;
+    /** The User may give it to any group of the domain (`collections.make`, any group, FR-CO-35). */
+    anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User. */
     own: readonly string[];
     waiting: readonly Resource[] | undefined;
@@ -113,7 +119,7 @@
   // The groups to choose an Owner Unit from, read when editing starts (TR-CO-03, FR-CO-35).
   $effect(() => {
     if (editing && groups === undefined) {
-      (dataTeam ? identity.domainGroups() : identity.groups()).then(
+      (anyOwnerUnit ? identity.domainGroups() : identity.groups()).then(
         (found) => (groups = found),
         () => (groups = null),
       );
@@ -145,6 +151,19 @@
       console.error('The Collection could not be saved', error);
       return 'failed';
     }
+  }
+
+  /** Its name or description, changed in place (DEC-UX-162); a sentence when it is refused. */
+  async function saveInPlace(shown: Collection, changes: { name?: string; description?: string }): Promise<string | undefined> {
+    if (changes.description !== undefined && changes.description.length < 1) return t('collection.problem.description');
+    try {
+      await catalogue.changeCollection(shown.id, changes);
+    } catch (error) {
+      if (error instanceof Refused && error.code === 'name_taken') return t('collection.problem.nameTaken', { name: changes.name ?? '' });
+      throw error;
+    }
+    await Promise.all([load(shown.id), onchanged()]);
+    return undefined;
   }
 
   /** "Edit the intro": the head turns into fields, at the intro (DEC-UX-158). */
@@ -231,7 +250,7 @@
 
 {#if id === undefined}
   <Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, { label: t('collections.new') }]} />
-  <CollectionForm {groups} {dataTeam} {own} onsave={save} oncancel={() => go('/collections')} />
+  <CollectionForm {groups} {anyOwnerUnit} {own} onsave={save} oncancel={() => go('/collections')} />
 {:else if collection === null}
   <NotFound />
 {:else if collection}
@@ -243,7 +262,7 @@
       <CollectionForm
         collection={shown}
         {groups}
-        {dataTeam}
+        {anyOwnerUnit}
         held={shown.resources.length}
         onsave={save}
         oncancel={() => (editing = false)}
@@ -254,13 +273,20 @@
     <div class="head">
       <CollectionIcon name={shown.icon} large />
       <div class="what">
-        <h1 class="page-title">{shown.name}</h1>
-        <p class="prose">{shown.description}</p>
+        <!-- Its name and description, edited in place by its Owner Unit and the Data Team; "Edit all" for the rest (DEC-UX-162). -->
+        <InPlaceHead
+          name={shown.name}
+          description={shown.description}
+          canEdit={shown.canManage}
+          nameLabel={t('collection.field.name')}
+          descriptionLabel={t('collection.field.description')}
+          onsave={(changes) => saveInPlace(shown, changes)}
+        />
       </div>
       <div class="actions">
         {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
-        {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.edit')}</Button>{/if}
-        {#if dataTeam}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
+        {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.editAll')}</Button>{/if}
+        {#if assigns}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
       </div>
     </div>
     <div class="status-row">
@@ -331,7 +357,7 @@
 
   <div class="section-head">
     <h2>Resources</h2>
-    {#if dataTeam && !editing}
+    {#if assigns && !editing}
       <button type="button" class="text-link" onclick={() => (adding = true)}><Icon name="plus-circle-fill" /><span>{t('collection.addResources')}</span></button>
     {/if}
   </div>
@@ -348,7 +374,7 @@
           <th>{t('collection.column.publication')}</th>
           <th>Signals</th>
           <th>{t('collection.column.change')}</th>
-          {#if dataTeam}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
+          {#if assigns}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
       {#each topResources as resource (resource.id)}
@@ -372,7 +398,7 @@
               <span class="change"><span class="change-text" title={text}>{text}</span><span class="when">&nbsp;· {ago(resource.lastChange.at, currentLanguage())}</span></span>
             {/if}
           </td>
-          {#if dataTeam}
+          {#if assigns}
             <td class="remove">
               <IconButton icon="minus-circle" label={t('collection.remove', { name: resource.displayName })} onclick={() => remove(resource)} />
             </td>
@@ -381,6 +407,8 @@
       {/each}
       {#snippet after()}{#if here.folders.length > 0}<p class="meta foot">{t('collection.resources.top')}</p>{/if}{/snippet}
     </Table>
+  {:else}
+    <Loading />
   {/if}
 
   {#if lenses && top}
@@ -422,16 +450,22 @@
       </Table>
       <p class="meta note">{t('collection.lenses.note', { owner: shown.ownerUnit.name })}</p>
     {/if}
+  {:else if lenses === undefined}
+    <Loading />
   {/if}
 
   <div class="section-head"><h2>{t('collection.history')}</h2></div>
   {#if log}
     <div class="history card"><LogList entries={log.slice(0, 8)} /></div>
+  {:else}
+    <Loading />
   {/if}
 
   {#if adding && waiting}
     <AddResources collection={shown.name} {waiting} {catalogue} {registry} onadd={add} onclose={() => (adding = false)} />
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>

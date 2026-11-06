@@ -4,6 +4,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
   import KindIcon from '@datahub/ui/marks/KindIcon.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import { brokenText } from '../lib/broken.js';
   import { when } from '../lib/moment.js';
   import { isToday, isYesterday, type Period, periodOf, periodsOf } from '../lib/periods.js';
@@ -18,12 +19,12 @@
    * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
    * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
-   * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All, chosen first in the filter (DEC-UX-161): everyone's
+   * that unfolds its last runs, folded at first (DEC-UX-140). A User who sees every query (`queries.seeOthers`, every) also has All in the filter (DEC-UX-161): everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
    */
   let {
     client,
-    dataTeam,
+    everyone,
     current,
     runs,
     draft,
@@ -31,7 +32,8 @@
     onhidden,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
-    dataTeam: boolean;
+    /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
+    everyone: boolean;
     /** The query that is open. */
     current: string | undefined;
     /** The last runs of the query that is open, newest first. */
@@ -206,6 +208,9 @@
         <span class="pill">{t('query.label.accepted')}</span>
       {:else if item.kind === 'preview'}
         <span class="pill">{t('query.label.preview')}</span>
+      {:else if item.through === 'claude'}
+        <!-- Made through Claude, as it stays once its User goes on in Query (DEC-CL-11, FR-CL-22). -->
+        <span class="pill" title={t('query.label.claude.hint')}>{t('query.label.claude')}</span>
       {/if}
     </a>
     <span class="buttons">
@@ -235,7 +240,7 @@
   kinds={SHOWN.map((kind) => ({ value: kind, name: t(KINDS[kind].name), detail: t(KINDS[kind].detail), count: days ? totals[kind] : undefined }))}
   bind:chosen={show}
   defaults={[]}
-  choice={dataTeam
+  choice={everyone
     ? {
         legend: t('query.filter'),
         options: [
@@ -265,6 +270,8 @@
     <p class="meta empty" role="alert">{t('query.failed.list')}</p>
   {:else if found?.words === words && foundGroups.length === 0}
     <p class="meta empty">{t('query.noMatch')}</p>
+  {:else if found?.words !== words}
+    <Loading />
   {/if}
   {#each foundGroups as group (group.period.key)}
     <p class="period found"><span>{label(group.period)}</span><span class="count">{group.period.count}</span></p>
@@ -285,13 +292,15 @@
       {:else if items && items.length > 0}
         {#each items as item (item.id)}{@render entry(item)}{/each}
       {:else}
-        <p class="meta empty">…</p>
+        <Loading />
       {/if}
     {/if}
   {/each}
   {#if periods.length === 0 && draft === null}
     <p class="meta empty">{t(all ? 'query.noneAll' : 'query.none')}</p>
   {/if}
+{:else}
+  <Loading />
 {/if}
 
 <style>

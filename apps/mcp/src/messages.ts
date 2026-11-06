@@ -31,8 +31,8 @@ function textOf(message: Shown): string {
   return message.params.text ?? '';
 }
 
-/** The Messages on a Resource, and writing one, through Claude (FR-CL-13). */
-export function messageTools({ server, hub }: Context): void {
+/** The Messages on a Resource, and writing one, through Claude (FR-CL-13), as far as the Permissions of the User go (TR-PL-09). */
+export function messageTools({ server, hub, permits }: Context): void {
   const enc = encodeURIComponent;
   const shown = (message: Shown): Record<string, unknown> => ({
     id: message.id,
@@ -65,41 +65,54 @@ export function messageTools({ server, hub }: Context): void {
       }),
   );
 
-  server.registerTool(
-    'write_message',
-    {
-      title: 'Write a Message on a Resource',
-      description:
-        'Places a Question, Remark or Signal on a Resource, under the name of the User: never private, it reaches the Owner, and a Signal the Data Team too. Show the User the kind and the exact text first, and call this only once they agree.',
-      inputSchema: {
-        resource: z.string().describe('The ID of the Resource.'),
-        kind: z.enum(['question', 'remark', 'signal']).describe('A Question; a Remark, a tip for others; or a Signal, that something seems wrong in the data.'),
-        text: z.string().min(1).max(4000).describe('The text, as the User agreed to it.'),
+  // Only the kinds of Message the Permission group lets Claude place for the User (claude.use, messages.write).
+  const [first, ...rest] = permits.messageKinds.filter((kind): kind is Kind => kind in KINDS);
+  if (first) {
+    server.registerTool(
+      'write_message',
+      {
+        title: 'Write a Message on a Resource',
+        description: `Places ${[first, ...rest].map((kind) => KINDS[kind].name).join(', ')} on a Resource, under the name of the User: never private, it reaches the Owner, and a Signal the Data Team too. Show the User the kind and the exact text first, and call this only once they agree.`,
+        inputSchema: {
+          resource: z.string().describe('The ID of the Resource.'),
+          kind: z.enum([first, ...rest]).describe([first, ...rest].map((kind) => KINDS[kind].means).join('; ')),
+          text: z.string().min(1).max(4000).describe('The text, as the User agreed to it.'),
+        },
+        annotations: SHARE,
       },
-      annotations: SHARE,
-    },
-    ({ resource, kind, text }) =>
-      attempt(async () => {
-        const { message } = await hub.send<{ message: Shown }>('catalogue', 'POST', '/messages', { subjectKind: 'resource', subjectId: resource, kind, text });
-        return answer({ message: shown(message) }, 'Posted under the name of the User.');
-      }),
-  );
+      ({ resource, kind, text }) =>
+        attempt(async () => {
+          const { message } = await hub.send<{ message: Shown }>('catalogue', 'POST', '/messages', { subjectKind: 'resource', subjectId: resource, kind, text });
+          return answer({ message: shown(message) }, 'Posted under the name of the User.');
+        }),
+    );
+  }
 
-  server.registerTool(
-    'reply_to_message',
-    {
-      title: 'Reply to a Message',
-      description: 'Replies in the conversation of a Question, Remark or Signal, under the name of the User. Show the User the exact text first, and call this only once they agree.',
-      inputSchema: {
-        message: z.string().describe('The ID of the Message to reply to.'),
-        text: z.string().min(1).max(4000).describe('The reply, as the User agreed to it.'),
+  // A User always replies in their own Questions and Signals; in those of others only with messages.reply.
+  if (permits.reply) {
+    server.registerTool(
+      'reply_to_message',
+      {
+        title: 'Reply to a Message',
+        description: `Replies in the conversation of ${permits.replyToOthers ? 'a Question, Remark or Signal' : 'a Question or Signal of the User themselves; their Permission group does not let them reply to those of others'}, under the name of the User. Show the User the exact text first, and call this only once they agree.`,
+        inputSchema: {
+          message: z.string().describe('The ID of the Message to reply to.'),
+          text: z.string().min(1).max(4000).describe('The reply, as the User agreed to it.'),
+        },
+        annotations: SHARE,
       },
-      annotations: SHARE,
-    },
-    ({ message, text }) =>
-      attempt(async () => {
-        const replied = await hub.send<{ message: Shown }>('catalogue', 'POST', `/messages/${enc(message)}/replies`, { text });
-        return answer({ message: shown(replied.message) }, 'Replied under the name of the User.');
-      }),
-  );
+      ({ message, text }) =>
+        attempt(async () => {
+          const replied = await hub.send<{ message: Shown }>('catalogue', 'POST', `/messages/${enc(message)}/replies`, { text });
+          return answer({ message: shown(replied.message) }, 'Replied under the name of the User.');
+        }),
+    );
+  }
 }
+
+type Kind = 'question' | 'remark' | 'signal';
+const KINDS: Record<Kind, { name: string; means: string }> = {
+  question: { name: 'a Question', means: 'A Question' },
+  remark: { name: 'a Remark', means: 'a Remark, a tip for others' },
+  signal: { name: 'a Signal', means: 'a Signal, that something seems wrong in the data' },
+};

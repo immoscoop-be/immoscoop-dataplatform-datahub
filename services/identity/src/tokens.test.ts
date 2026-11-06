@@ -1,3 +1,4 @@
+import { claimsAs } from '@datahub/auth/testing';
 import { generateKeyPairSync, sign, verify } from 'node:crypto';
 import { createVerifier, TokenError } from '@datahub/auth';
 import { createLocalJWKSet, decodeProtectedHeader, type JWK } from 'jose';
@@ -12,7 +13,7 @@ const SUBJECT = {
   email: 'jan@immoscoop.be',
   name: 'Jan Peeters',
   groups: ['03x8tuzt1abc'],
-  roles: ['datateam'],
+  ...claimsAs('admin'),
 };
 
 function issuer(options: Partial<TokenIssuerOptions> & Pick<TokenIssuerOptions, 'keys'>) {

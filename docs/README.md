@@ -14,6 +14,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | How requirements are numbered, linked and tied to commits | [Requirements conventions](requirements/README.md) |
 | Which requirements exist, their status, and the commits that implement them | [Traceability matrix](requirements/traceability.md) |
 | What is still open for Data Hub as a whole | [Open themes](overview/open-themes.md) |
+| What to pick up next | [Backlog](overview/backlog.md) |
 | Everything in one read: each part with its screens and what is behind it, and every open point as a checklist | [Review of 2026-10-25](review/2026-10-25-functional-and-technical-review.md) |
 | What a workshop asked of Data Hub, and where each request was recorded | [Workshop of 2026-10-22](workshops/2026-10-22-data-agents-and-governance.md) |
 | How the web app must look and behave: design rules, style values and prototype screens | [Design](design/README.md) |
@@ -39,7 +40,8 @@ docs/
 │   └── screens/               the screens as working prototypes in HTML and CSS
 ├── overview/
 │   ├── data-hub.md            vision, the library metaphor, overarching decisions (DEC-DH)
-│   └── open-themes.md         themes still to be worked out (OP-DH)
+│   ├── open-themes.md         themes still to be worked out (OP-DH)
+│   └── backlog.md             what to pick up next (OP-DH)
 ├── requirements/
 │   ├── README.md              ID scheme, format, statuses, commit trailers, tooling
 │   ├── traceability.md        generated: requirement → status → realised by → commits

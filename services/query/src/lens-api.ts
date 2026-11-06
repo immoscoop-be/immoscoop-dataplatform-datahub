@@ -1,5 +1,7 @@
 import { excelKeyFrom, type ExcelKeyExchanger, type ServiceCallerVerifier, type TokenVerifier } from '@datahub/auth';
+import { can, type Permissions, reach, sees } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
 import type { Catalogue, QueryRequest, SeenCollection } from './catalogue.js';
@@ -15,6 +17,7 @@ export interface LensContext {
   lenses: Lenses;
   queries: Queries;
   catalogue: Catalogue;
+  /** The ranges of a Lens itself: its size check, its growth and its daily check, about no one User (DEC-SR-29, DEC-LE-11). */
   thresholds: Thresholds;
   bigquery: BigQuery;
   /** Who may start a check: the scheduler once a day (DEC-LE-20), catalogue after a new Current Version (FR-SR-52), by a Google ID token. */
@@ -23,8 +26,10 @@ export interface LensContext {
   upkeep: Upkeep;
   viewer(request: FastifyRequest): Viewer;
   authorization(request: FastifyRequest): string;
+  /** Whether the User may read the query: their own, or one of others they see (`queries.seeOthers`). */
+  readable(request: FastifyRequest, query: Query): Promise<boolean>;
   resourcesOf(request: FastifyRequest, of: { resources: NamedResource[] }): Promise<ResourceOfQuery[]>;
-  check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[]): Promise<Preflight>;
+  check(sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds): Promise<Preflight>;
   /** The SQL with each Resource by its full name in its own case, as BigQuery gets it (DEC-SR-44). */
   ownCase(sql: string, resources: ResourceOfQuery[]): string;
   unavailable(error: unknown, reply: FastifyReply, request: FastifyRequest): FastifyReply | undefined;
@@ -36,6 +41,9 @@ export interface LensContext {
 export const EXCEL_ROWS = 10_000;
 
 const NO_LENS = { error: 'not_found', message: 'There is no such Lens, or you may not see it.' };
+const DAY = 24 * 60 * 60 * 1000;
+/** Who ran a Lens within these many days is told when it is deleted (DEC-LE-21). */
+export const RECENT_DAYS = 30;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TAG = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,29}$/u;
 const LIMITS = { name: 120, question: 500, shows: 500, steps: 20, step: 300, tags: 10, label: 60, text: 500 };
@@ -152,9 +160,14 @@ export function valuesFor(lens: Pick<Lens, 'parameters'>, values: unknown): Para
   return parseParameters(merged);
 }
 
-/** What a User may see of Lenses: the Collections they see, the Resources they may use and their Level (DEC-CO-16). */
+/**
+ * What a User may see of Lenses: the Collections they see, the Resources they may use and their Level (DEC-CO-16);
+ * and what they may do with them, by their Permissions and their Owner Units (TR-PL-06).
+ */
 interface Sight {
   who: Viewer;
+  permissions: Permissions;
+  ownerUnits: readonly string[];
   collections: Map<string, SeenCollection>;
   resources: Map<string, { level: number; collectionId: string; displayName: string }>;
 }
@@ -169,25 +182,31 @@ const requestView = (request: QueryRequest | undefined) =>
  * one with its Parameters, every run a query in the Query Log (FR-LE-12).
  */
 export async function lensRoutes(app: FastifyInstance, context: LensContext): Promise<void> {
-  const { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep: broken, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel } = context;
+  const { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep: broken, viewer, authorization, readable, resourcesOf, check, ownCase, unavailable, execute, excel } = context;
 
   async function sightOf(request: FastifyRequest): Promise<Sight> {
     const collections = await catalogue.collections(authorization(request));
     const resources = new Map<string, { level: number; collectionId: string; displayName: string }>();
     for (const collection of collections) for (const resource of collection.resources) resources.set(resource.id, { ...resource, collectionId: collection.id });
-    return { who: viewer(request), collections: new Map(collections.map((collection) => [collection.id, collection])), resources };
+    return {
+      who: viewer(request),
+      permissions: permissionsOf(request),
+      ownerUnits: ownerUnitsOf(request),
+      collections: new Map(collections.map((collection) => [collection.id, collection])),
+      resources,
+    };
   }
 
   /**
    * Whether the User sees the Lens: in a Collection they see, on Resources they may all use (DEC-CO-16);
-   * while it waits for the Data Team or once they refused it, only its author and the Data Team (FR-LE-09,
-   * DEC-UX-128). catalogue decides the same for the Messages on it.
+   * while it waits for the Data Team or once they refused it, only its author and who decides on Requests
+   * (FR-LE-09, DEC-UX-128, `requests.decide`). catalogue decides the same for the Messages on it.
    */
-  function sees(sight: Sight, lens: Lens): boolean {
+  function seesLens(sight: Sight, lens: Lens): boolean {
     if (!sight.collections.has(lens.collectionId)) return false;
-    if ((lens.state === 'waiting' || lens.state === 'refused') && lens.authorId !== sight.who.id && !sight.who.dataTeam) return false;
-    // The Data Team may use every Resource, those without a Collection too.
-    return sight.who.dataTeam || lens.resources.every((resource) => sight.resources.has(resource.id));
+    if ((lens.state === 'waiting' || lens.state === 'refused') && lens.authorId !== sight.who.id && !can(sight.permissions, 'requests.decide')) return false;
+    // Who sees all may use every Resource, those without a Collection too (DEC-PL-02).
+    return sees(sight.permissions) === 'all' || lens.resources.every((resource) => sight.resources.has(resource.id));
   }
 
   /** The Level of a Lens: the lowest of those it is built on (DEC-DH-10). */
@@ -213,8 +232,15 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     };
   }
 
-  /** Whether the User may change the Lens: its Owner Unit and the Data Team (DEC-CO-15, DEC-CO-18). */
-  const managesLens = (sight: Sight, lens: Lens) => sight.who.dataTeam || sight.collections.get(lens.collectionId)?.canManage === true;
+  /**
+   * Whether the User may change, update and delete the Lens (DEC-LE-21, `lenses.manage`): every Lens, or those in the
+   * Collections of their Owner Units.
+   */
+  const managesLens = (sight: Sight, lens: Lens) => {
+    const manage = reach(sight.permissions, 'lenses.manage');
+    const ownerUnit = sight.collections.get(lens.collectionId)?.ownerUnitId;
+    return manage === 'every' || (manage === 'theirs' && ownerUnit !== undefined && sight.ownerUnits.includes(ownerUnit));
+  };
 
   /** Tells catalogue what decides who sees the Messages on a Lens (DEC-PF-30); the daily check tells it again. */
   async function told(lens: Lens, log: FastifyRequest['log']): Promise<Lens> {
@@ -274,6 +300,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
         return { id, displayName: seen?.displayName ?? displayName, collectionId: seen?.collectionId ?? null, level: seen?.level ?? 0 };
       }),
       canManage: managesLens(sight, lens),
+      // How many Users ran it in the last 30 days, for the Danger zone of its Edit (FR-LE-18); only for who may delete it.
+      ...(managesLens(sight, lens) ? { usedBy: (await queries.lensUsers(lens.id, new Date(Date.now() - RECENT_DAYS * DAY))).length } : {}),
       version: lens.version,
       range: lens.range,
       reads: lens.reads,
@@ -289,7 +317,8 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   /** The Lens, if the User may see it, with what they may see; otherwise answered as not found. */
   async function seenLens(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<{ lens: Lens; sight: Sight } | undefined> {
     const lens = await lenses.get(request.params.id);
-    if (!lens) {
+    // A deleted Lens runs for nobody and changes no more: only its page says it was deleted (FR-LE-18).
+    if (!lens || lens.deleted) {
       void reply.code(404).send(NO_LENS);
       return undefined;
     }
@@ -300,33 +329,39 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       unavailable(error, reply, request);
       return undefined;
     }
-    if (!sees(sight, lens)) {
+    if (!seesLens(sight, lens)) {
       void reply.code(404).send(NO_LENS);
       return undefined;
     }
     return { lens, sight };
   }
 
-  // A query becomes a Lens (FR-LE-07): its SQL, Parameters and Resources, measured now (FR-LE-08). Within
+  // A query becomes a Lens (FR-LE-07, `lenses.make`): its SQL, Parameters and Resources, measured now (FR-LE-08). Within
   // range or approved it is published; above 1 GB it waits for the Data Team, frozen (FR-LE-09, DEC-LE-05).
   app.post<{ Body: unknown }>('/lenses', async (request, reply) => {
+    const permissions = permissionsOf(request);
+    if (!can(permissions, 'lenses.make')) return forbidden(reply, 'lenses.make', 'Only who may make Lenses makes a query a Lens.');
     const fields = parseLens(request.body);
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
     const who = viewer(request);
     const query = await queries.get(fields.queryId);
-    if (!query || query.kind !== 'query' || (query.ownerId !== who.id && !who.dataTeam)) return reply.code(404).send({ error: 'not_found', message: 'There is no such query, or it is not yours.' });
-    if (query.ownerId !== who.id) return reply.code(403).send({ error: 'forbidden', message: 'Only who made a query makes it a Lens.' });
-    const already = (await lenses.ofQuery(query.id)) ?? (query.forLens ? await lenses.get(query.forLens) : undefined);
-    if (already) return reply.code(409).send({ error: 'already_a_lens', message: 'This query is used as a Lens already.', lens: { id: already.id, name: already.name } });
     let checked: Preflight;
     let resources: ResourceOfQuery[];
     try {
-      // A Lens always goes into a Collection its author owns (DEC-CO-20).
-      if ((await catalogue.manages(fields.collectionId, authorization(request))) !== true) {
+      if (!query || query.kind !== 'query' || (query.ownerId !== who.id && !(await readable(request, query)))) {
+        return reply.code(404).send({ error: 'not_found', message: 'There is no such query, or it is not yours.' });
+      }
+      if (query.ownerId !== who.id) return reply.code(403).send({ error: 'forbidden', message: 'Only who made a query makes it a Lens.' });
+      const already = (await lenses.ofQuery(query.id)) ?? (query.forLens ? await lenses.get(query.forLens) : undefined);
+      if (already && !already.deleted) return reply.code(409).send({ error: 'already_a_lens', message: 'This query is used as a Lens already.', lens: { id: already.id, name: already.name } });
+      // A Lens goes into a Collection of an Owner Unit of its author (DEC-CO-20); with every Lens to manage, into any they see.
+      const ownerUnit = await catalogue.ownerUnit(fields.collectionId, authorization(request));
+      if (ownerUnit === null || (reach(permissions, 'lenses.manage') !== 'every' && !ownerUnitsOf(request).includes(ownerUnit))) {
         return reply.code(400).send({ error: 'invalid_request', message: 'A Lens goes into a Collection you own.' });
       }
       resources = await resourcesOf(request, query);
-      checked = await check(query.sql, query.parameters, resources);
+      // The size of a Lens is measured with the ranges of Data Hub: it is about the Lens, not its author.
+      checked = await check(query.sql, query.parameters, resources, thresholds);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -377,7 +412,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     try {
       const sight = await sightOf(request);
       const ran = await queries.lensRuns(sight.who.id);
-      return { lenses: (await lenses.list()).filter((lens) => sees(sight, lens)).map((lens) => ({ ...itemOf(sight, lens), lastRunAt: ran.get(lens.id) ?? null })) };
+      return { lenses: (await lenses.list()).filter((lens) => seesLens(sight, lens)).map((lens) => ({ ...itemOf(sight, lens), lastRunAt: ran.get(lens.id) ?? null })) };
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -394,7 +429,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     } catch (error) {
       return unavailable(error, reply, request);
     }
-    const seen = (await lenses.list()).filter((lens) => sees(sight, lens));
+    const seen = (await lenses.list()).filter((lens) => seesLens(sight, lens));
     const words = await lenses.words(question, seen.map((lens) => lens.id));
     const found = seen
       .flatMap((lens) => {
@@ -425,7 +460,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       return unavailable(error, reply, request);
     }
     const usable = (await lenses.list()).filter(
-      (lens) => lens.state === 'published' && lens.broken === null && sees(sight, lens) && ids.every((id) => lens.resources.some((resource) => resource.id === id)),
+      (lens) => lens.state === 'published' && lens.broken === null && seesLens(sight, lens) && ids.every((id) => lens.resources.some((resource) => resource.id === id)),
     );
     const words = await lenses.words(question, usable.map((lens) => lens.id));
     const ranked = usable
@@ -439,6 +474,19 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   });
 
   app.get<{ Params: { id: string } }>('/lenses/:id', async (request, reply) => {
+    const gone = await lenses.get(request.params.id);
+    // Its address tells whoever saw it that it was deleted, by whom, when and why; anyone else finds nothing (FR-LE-18).
+    if (gone?.deleted) {
+      let sight: Sight;
+      try {
+        sight = await sightOf(request);
+      } catch (error) {
+        return unavailable(error, reply, request);
+      }
+      if (!seesLens(sight, gone)) return reply.code(404).send(NO_LENS);
+      const { at, byName, reason } = gone.deleted;
+      return reply.code(410).send({ error: 'deleted', message: 'This Lens was deleted.', lens: { id: gone.id, name: gone.name, collectionId: gone.collectionId, deleted: { at, byName, reason } } });
+    }
     const seen = await seenLens(request, reply);
     if (!seen) return reply;
     return { lens: await viewOf(request, seen.sight, seen.lens) };
@@ -496,7 +544,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const run = await runnable(request, reply);
     if (!run) return reply;
     try {
-      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
+      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens), thresholds);
       if (!(await upkeep(request, reply, run.lens, checked, run.defaults))) return reply;
       return { preflight: checked };
     } catch (error) {
@@ -509,7 +557,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     const run = await runnable(request, reply);
     if (!run) return reply;
     try {
-      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens));
+      const checked = await check(run.lens.sql, run.parameters, await resourcesOf(request, run.lens), thresholds);
       if (!(await upkeep(request, reply, run.lens, checked, run.defaults))) return reply;
     } catch (error) {
       return unavailable(error, reply, request);
@@ -549,7 +597,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
       const parameters = valuesFor(lens, undefined);
       if (typeof parameters === 'string') return reply.code(400).send({ error: 'invalid_request', message: parameters });
       try {
-        const checked = await check(lens.sql, parameters, await resourcesOf(request, lens));
+        const checked = await check(lens.sql, parameters, await resourcesOf(request, lens), thresholds);
         if (!(await upkeep(request, reply, lens, checked, true))) return reply;
       } catch (error) {
         return unavailable(error, reply, request);
@@ -559,11 +607,11 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     });
   }
 
-  /** The Lens, if the User sees it and may change it; while it waits for the Data Team, nobody changes it (DEC-LE-05). */
+  /** The Lens, if the User sees it and may change it (`lenses.manage`); while it waits for the Data Team, nobody changes it (DEC-LE-05). */
   async function managed(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     const seen = await seenLens(request, reply);
     if (!seen) return undefined;
-    if (!managesLens(seen.sight, seen.lens)) return void reply.code(403).send({ error: 'forbidden', message: 'Only its Owner Unit and the Data Team change a Lens.' });
+    if (!managesLens(seen.sight, seen.lens)) return void forbidden(reply, 'lenses.manage', 'Only who manages the Lenses of its Collection changes a Lens.');
     return seen;
   }
 
@@ -578,8 +626,29 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     return { lens: await viewOf(request, seen.sight, lens) };
   });
 
-  // "Open in Query" (DEC-LE-18): its query for its author; a query of their own, used as the Lens, for anyone else.
+  // Who manages it deletes a Lens (FR-LE-18, DEC-LE-21, `lenses.manage`): catalogue hears first, and tells who ran it in
+  // the last 30 days, without who deletes it; when catalogue does not answer, nothing is deleted. Its row, runs,
+  // versions and Log stay.
+  app.delete<{ Params: { id: string }; Body: unknown }>('/lenses/:id', async (request, reply) => {
+    const { reason = '' } = (request.body ?? {}) as { reason?: unknown };
+    if (typeof reason !== 'string' || reason.trim().length > LIMITS.text) return reply.code(400).send({ error: 'invalid_request', message: `Why it is deleted has at most ${LIMITS.text} characters.` });
+    const seen = await managed(request, reply);
+    if (!seen) return reply;
+    const who = viewer(request);
+    const users = (await queries.lensUsers(seen.lens.id, new Date(Date.now() - RECENT_DAYS * DAY))).filter((id) => id !== who.id);
+    try {
+      await catalogue.lensDeleted(seen.lens.id, { name: seen.lens.name, actor: { id: who.id, name: who.name }, reason: reason.trim(), users });
+    } catch (error) {
+      return unavailable(error, reply, request);
+    }
+    const deleted = await lenses.delete(seen.lens.id, who, reason.trim());
+    return { lens: { id: deleted.id, name: deleted.name, collectionId: deleted.collectionId }, told: users.length };
+  });
+
+  // "Open in Query" (DEC-LE-18): its query for its author; a query of their own, used as the Lens, for anyone else
+  // who manages it. It is a query, so only for who may make queries (`queries.make`).
   app.post<{ Params: { id: string } }>('/lenses/:id/query', async (request, reply) => {
+    if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', 'Only who may make queries opens a Lens in Query.');
     const seen = await managed(request, reply);
     if (!seen) return reply;
     const who = viewer(request);
@@ -610,7 +679,7 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     let resources: ResourceOfQuery[];
     try {
       resources = await resourcesOf(request, query);
-      checked = await check(query.sql, query.parameters, resources);
+      checked = await check(query.sql, query.parameters, resources, thresholds);
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -697,7 +766,9 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
   });
 
   // Its author sends the Request on a waiting Lens again, when it could not be sent; one that waits is given back.
+  // Sending a large Lens to the Data Team is part of making Lenses (`lenses.make`).
   app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/requests', async (request, reply) => {
+    if (!can(permissionsOf(request), 'lenses.make')) return forbidden(reply, 'lenses.make', 'Only who may make Lenses sends one to the Data Team.');
     const { text = '' } = (request.body ?? {}) as { text?: unknown };
     if (typeof text !== 'string' || text.trim().length > LIMITS.text) return reply.code(400).send({ error: 'invalid_request', message: `A word for the Data Team has at most ${LIMITS.text} characters.` });
     const seen = await seenLens(request, reply);
@@ -715,11 +786,11 @@ export async function lensRoutes(app: FastifyInstance, context: LensContext): Pr
     }
   });
 
-  // A member of the Data Team accepts or refuses the Request on a Lens, in the Message Centre or in context
-  // (FR-LE-09, FR-CV-08): catalogue records the decision as its reply, and the Lens changes with it.
+  // Who decides on Requests accepts or refuses the Request on a Lens, in the Message Centre or in context
+  // (FR-LE-09, FR-CV-08, `requests.decide`): catalogue records the decision as its reply, and the Lens changes with it.
   app.post<{ Params: { id: string }; Body: unknown }>('/lenses/:id/decision', async (request, reply) => {
     const who = viewer(request);
-    if (!who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team decides on a Request.' });
+    if (!can(permissionsOf(request), 'requests.decide')) return forbidden(reply, 'requests.decide', 'Only who decides on Requests decides on a Lens.');
     const { outcome, text = '' } = (request.body ?? {}) as { outcome?: unknown; text?: unknown };
     if (outcome !== 'accepted' && outcome !== 'refused') return reply.code(400).send({ error: 'invalid_request', message: 'The decision is accepted or refused.' });
     if (typeof text !== 'string' || text.trim().length > 1000) return reply.code(400).send({ error: 'invalid_request', message: 'The reason is a text of at most 1000 characters.' });

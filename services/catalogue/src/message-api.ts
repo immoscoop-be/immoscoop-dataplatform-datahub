@@ -1,4 +1,5 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
+import { canWith } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Collections, Viewer } from './collections.js';
 import {
@@ -10,19 +11,24 @@ import {
   type LensFacts,
   type Messages,
   type Sight,
+  type UserNotice,
   VIEWS,
   type View,
   WRITTEN_ON,
   type WrittenKind,
   type WrittenOn,
 } from './messages.js';
+import { forbidden, may } from './viewer.js';
 
 export interface MessageRouteOptions {
   collections: Collections;
   messages: Messages;
   /** query, which tells about its Lenses and decides on a Request on one (DEC-PF-30). */
   lensCallers: ServiceCallerVerifier;
-  /** identity, which tells about an Excel key: it expires within a month, or the Data Team revoked it (FR-PL-03). */
+  /**
+   * identity, which tells about an Excel key: it expires within a month, or the Data Team revoked it (FR-PL-03); and
+   * about a User: moved to another Permission group, or given Admin back (FR-PL-12, EC-PL-03).
+   */
   keyCallers?: ServiceCallerVerifier;
   viewer: (request: FastifyRequest) => Viewer;
 }
@@ -83,11 +89,46 @@ export function parseLensFacts(body: unknown): LensFacts | string {
   };
 }
 
+/** What identity tells about a User (MSG-USR-01, MSG-USR-02), checked; the problem as a sentence when there is one. */
+export function parseUserNotice(body: unknown): UserNotice | string {
+  const input = (body ?? {}) as Record<string, unknown>;
+  const text = (value: unknown, max: number) => typeof value === 'string' && value.trim().length > 0 && value.length <= max;
+  const lines = (value: unknown) => Array.isArray(value) && value.length <= 100 && value.every((line) => text(line, 500));
+  if ((input.type !== 'MSG-USR-01' && input.type !== 'MSG-USR-02') || !text(input.userId, 200)) {
+    return 'A notice about a User names its type, MSG-USR-01 or MSG-USR-02, and the User.';
+  }
+  if (input.type === 'MSG-USR-02') {
+    if (!text(input.name, 200)) return 'A User who got Admin back comes with their name.';
+    return { type: 'MSG-USR-02', userId: input.userId as string, name: (input.name as string).trim() };
+  }
+  if (!text(input.actor, 200) || !text(input.from, 200) || !text(input.to, 200) || typeof input.deleted !== 'boolean') {
+    return 'A User moved to another Permission group comes with who moved them, from which group to which, and whether their group was deleted.';
+  }
+  if (!lines(input.gains) || !lines(input.losses)) {
+    return 'What the User gains and loses are lists of at most 100 lines, of at most 500 characters each.';
+  }
+  if (input.name !== undefined && !text(input.name, 200)) {
+    return 'The name of the User, when given, is a text of at most 200 characters.';
+  }
+  return {
+    type: 'MSG-USR-01',
+    userId: input.userId as string,
+    actor: (input.actor as string).trim(),
+    from: (input.from as string).trim(),
+    to: (input.to as string).trim(),
+    gains: (input.gains as string[]).map((line) => line.trim()),
+    losses: (input.losses as string[]).map((line) => line.trim()),
+    deleted: input.deleted,
+    ...(input.name === undefined ? {} : { name: (input.name as string).trim() }),
+  };
+}
+
 /**
  * The routes of Messages (TR-CV-01): the Message Centre and its counts, the Messages on an object, one
- * conversation, writing, replying, reading, and the decision on a Request on a query. query tells about its
- * Lenses, sends the Request of Data Hub on a Lens that grew, and records the decision on a Request on a
- * Lens, with its Google ID token: the Lens itself changes in query.
+ * conversation, writing, replying, reading, and the decision on a Request on a query. What a User may write,
+ * and whether they reply to and close the Messages of others, follows their Permissions (DEC-PL-04). query
+ * tells about its Lenses, sends the Request of Data Hub on a Lens that grew, and records the decision on a
+ * Request on a Lens, with its Google ID token: the Lens itself changes in query.
  */
 export async function messageRoutes(app: FastifyInstance, options: MessageRouteOptions): Promise<void> {
   const { collections, messages, lensCallers, keyCallers, viewer } = options;
@@ -124,14 +165,19 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
   // The number on Messages in the rail (FR-CV-06).
   app.get('/messages/unread', async (request) => ({ unread: await messages.unread(await sightOf(request)) }));
 
-  // The Messages on a Collection, a Resource, a Lens or a Learning Card, for its slide-in and its number (FR-CV-04, FR-CV-07).
+  /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
+  const writes = (who: Viewer, kind: string) => canWith(who.permissions, 'messages.write', 'kinds', kind);
+
+  // The Messages on a Collection, a Resource, a Lens or a Learning Card, for its slide-in and its number (FR-CV-04, FR-CV-07),
+  // with the kinds of Message the object takes that the User may write (DEC-PL-04).
   app.get<{ Params: { kind: string; id: string } }>('/messages/on/:kind/:id', async (request, reply) => {
     const { kind } = request.params;
     const id = objectId(kind, request.params.id);
     if (!(kind in WRITTEN_ON) || !id) return reply.code(404).send(NO_MESSAGE);
     const sight = await sightOf(request);
     if (!messages.sees(sight, kind as WrittenOn, id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
-    return { messages: await messages.on(kind as WrittenOn, id, sight), kinds: WRITTEN_ON[kind as WrittenOn] };
+    const kinds = WRITTEN_ON[kind as WrittenOn].filter((written) => writes(sight.viewer, written));
+    return { messages: await messages.on(kind as WrittenOn, id, sight), kinds };
   });
 
   // One conversation, opened in the Message Centre or in context (FR-CV-09).
@@ -152,20 +198,49 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     if (!kinds.includes(body.kind as string)) return reply.code(400).send({ error: 'invalid_request', message: `A Message on a ${on} is a ${kinds.join(', a ')}.` });
     const text = parseText(body);
     if (text === null) return reply.code(400).send({ error: 'invalid_request', message: `A Message has 1 to ${TEXT} characters.` });
+    if (!writes(viewer(request), body.kind as string)) {
+      return reply.code(403).send(forbidden('messages.write', `You may not write a ${body.kind as string}.`));
+    }
     const sight = await sightOf(request);
     const subject = { kind: on as WrittenOn, id };
     if (!messages.sees(sight, subject.kind, subject.id)) return reply.code(404).send({ error: 'not_found', message: 'No such object, or not one you see.' });
     return reply.code(201).send({ message: await messages.write(sight, subject, body.kind as WrittenKind, text) });
   });
 
-  // A reply in a conversation of a Question, Remark or Signal (MSG-CNV-04).
+  // A reply in a conversation of a Question, Remark or Signal (MSG-CNV-04): in their own always, in those of others with
+  // `messages.reply` on its object (DEC-PL-04).
   app.post<{ Params: { id: string }; Body: unknown }>('/messages/:id/replies', async (request, reply) => {
     const text = parseText(request.body);
     if (text === null) return reply.code(400).send({ error: 'invalid_request', message: `A reply has 1 to ${TEXT} characters.` });
     const outcome = await messages.reply(request.params.id, await sightOf(request), text);
     if (outcome === 'not_found') return reply.code(404).send(NO_MESSAGE);
     if (outcome === 'no_replies') return reply.code(409).send({ error: 'no_replies', message: 'A Request is answered by its decision, and what Data Hub writes takes no reply.' });
+    if (outcome === 'not_allowed') return reply.code(403).send(forbidden('messages.reply', 'You may not reply to the Messages of others on this object.'));
     return reply.code(201).send({ message: outcome });
+  });
+
+  // Closing an open Question or Signal, with an optional line why, and reopening it (FR-CV-16, MSG-CNV-07): their own
+  // always, those of others with `messages.close` on its object (DEC-PL-04).
+  const CLOSE_REFUSALS = {
+    not_found: [404, NO_MESSAGE],
+    not_closable: [409, { error: 'not_closable', message: 'Only a Question or a Signal is closed: a Remark asks nothing, and a Request ends with its decision.' }],
+    not_allowed: [403, forbidden('messages.close', 'You may not close or reopen the Questions and Signals of others on this object.')],
+    not_open: [409, { error: 'not_open', message: 'It is not open: answered or closed already.' }],
+    not_closed: [409, { error: 'not_closed', message: 'It is not closed.' }],
+  } as const;
+  app.post<{ Params: { id: string }; Body: unknown }>('/messages/:id/close', async (request, reply) => {
+    const raw = ((request.body ?? {}) as { text?: unknown }).text;
+    if (raw !== undefined && raw !== null && typeof raw !== 'string') return reply.code(400).send({ error: 'invalid_request', message: 'Why it closes is text.' });
+    const text = (raw ?? '').trim();
+    if (text.length > TEXT) return reply.code(400).send({ error: 'invalid_request', message: `Why it closes has at most ${TEXT} characters.` });
+    const outcome = await messages.close(request.params.id, await sightOf(request), text);
+    if (typeof outcome === 'string') return reply.code(CLOSE_REFUSALS[outcome][0]).send(CLOSE_REFUSALS[outcome][1]);
+    return { message: outcome };
+  });
+  app.post<{ Params: { id: string } }>('/messages/:id/reopen', async (request, reply) => {
+    const outcome = await messages.reopen(request.params.id, await sightOf(request));
+    if (typeof outcome === 'string') return reply.code(CLOSE_REFUSALS[outcome][0]).send(CLOSE_REFUSALS[outcome][1]);
+    return { message: outcome };
   });
 
   // The User read a conversation: unread again once someone else moves it.
@@ -173,11 +248,11 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     (await messages.read(request.params.id, await sightOf(request))) ? reply.code(204).send() : reply.code(404).send(NO_MESSAGE),
   );
 
-  // The Data Team decides on a Request to run a query above 1 GB (FR-CV-08, DEC-SR-36). A Request on a Lens is
-  // decided on the Lens, in query, which publishes it (FR-LE-09).
+  // Who has `requests.decide` decides on a Request to run a query above 1 GB (FR-CV-08, DEC-SR-36, FR-PL-15). A Request
+  // on a Lens is decided on the Lens, in query, which publishes it (FR-LE-09).
   app.post<{ Params: { id: string }; Body: unknown }>('/messages/:id/decision', async (request, reply) => {
     const who = viewer(request);
-    if (!who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team decides on a Request.' });
+    if (!may(who, 'requests.decide')) return reply.code(403).send(forbidden('requests.decide', 'You may not decide on a Request.'));
     const decision = parseDecision(request.body);
     if (typeof decision === 'string') return reply.code(400).send({ error: 'invalid_request', message: decision });
     const sight = await sightOf(request);
@@ -202,20 +277,20 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
 
   // identity tells about the Excel key of a User (MSG-KEY-01, MSG-KEY-02); the Message is for that User alone.
   if (keyCallers) {
+    /** Only identity, with its Google ID token for catalogue's address, tells about Excel keys and Users. */
+    const onlyIdentity = (about: string) => async (request: FastifyRequest, reply: FastifyReply) => {
+      const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
+      try {
+        await keyCallers.verify(token);
+      } catch (error) {
+        request.log.warn({ err: error }, `a notice about ${about} was refused`);
+        return reply.code(401).send({ error: 'unauthorized', message: `Only identity tells about ${about}.` });
+      }
+    };
+
     app.post<{ Body: unknown }>(
       '/internal/excel-keys/notices',
-      {
-        config: { public: true },
-        onRequest: async (request, reply) => {
-          const token = /^Bearer (\S+)$/.exec(request.headers.authorization ?? '')?.[1] ?? '';
-          try {
-            await keyCallers.verify(token);
-          } catch (error) {
-            request.log.warn({ err: error }, 'a notice about an Excel key was refused');
-            return reply.code(401).send({ error: 'unauthorized', message: 'Only identity tells about Excel keys.' });
-          }
-        },
-      },
+      { config: { public: true }, onRequest: onlyIdentity('Excel keys') },
       async (request, reply) => {
         const body = (request.body ?? {}) as Record<string, unknown>;
         const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
@@ -239,6 +314,15 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
         return reply.code(201).send(made);
       },
     );
+
+    // identity tells about a User (FR-PL-12, EC-PL-03): moved to another Permission group, or their group deleted, a
+    // Message only they see (MSG-USR-01); or given Admin back as no User of Admin could still sign in, a Message for
+    // the Data Team (MSG-USR-02).
+    app.post<{ Body: unknown }>('/internal/users/notices', { config: { public: true }, onRequest: onlyIdentity('Users') }, async (request, reply) => {
+      const notice = parseUserNotice(request.body);
+      if (typeof notice === 'string') return reply.code(400).send({ error: 'invalid_request', message: notice });
+      return reply.code(201).send(await messages.userNotice(notice));
+    });
   }
 
   // query tells what it keeps about a Lens whenever it changes, and all of them once a day (DEC-PF-30).
@@ -248,6 +332,26 @@ export async function messageRoutes(app: FastifyInstance, options: MessageRouteO
     if (typeof facts === 'string') return reply.code(400).send({ error: 'invalid_request', message: facts });
     await messages.keepLens(request.params.id.toLowerCase(), facts);
     return reply.code(204).send();
+  });
+
+  // query deleted a Lens (FR-LE-18): who deleted it, why, and who ran it lately, to tell them (MSG-LEN-06).
+  app.post<{ Params: { id: string }; Body: unknown }>('/internal/lenses/:id/deleted', { config: { public: true }, onRequest: onlyQuery }, async (request, reply) => {
+    const input = (request.body ?? {}) as { name?: unknown; actor?: { id?: unknown; name?: unknown }; reason?: unknown; users?: unknown };
+    const text = (value: unknown, max: number) => typeof value === 'string' && value.length > 0 && value.length <= max;
+    if (!UUID.test(request.params.id) || !text(input.name, 200) || !text(input.actor?.id, 128) || !text(input.actor?.name, 200)) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'A deleted Lens by its ID, with its name and who deleted it, by ID and name.' });
+    }
+    if (typeof input.reason !== 'string' || input.reason.length > 500) return reply.code(400).send({ error: 'invalid_request', message: 'Why it was deleted is a text of at most 500 characters.' });
+    if (!Array.isArray(input.users) || input.users.length > 5000 || !input.users.every((id) => text(id, 128) && !String(id).includes(','))) {
+      return reply.code(400).send({ error: 'invalid_request', message: 'Who ran it lately are Users, by their IDs.' });
+    }
+    const told = await messages.lensDeleted(request.params.id.toLowerCase(), {
+      name: input.name as string,
+      actor: { id: input.actor?.id as string, name: input.actor?.name as string },
+      reason: input.reason,
+      users: [...new Set(input.users as string[])],
+    });
+    return reply.code(201).send({ message: told });
   });
 
   // The Request Data Hub sends when a Lens grew into very large and stopped (MSG-LEN-03, DEC-LE-11).

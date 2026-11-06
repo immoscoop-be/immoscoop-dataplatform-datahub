@@ -21,7 +21,7 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-03"></a>**DEC-CL-03** · Claude can list everything a User sees, not only find what shares words with a question. *Decided on 2026-10-30, by Max.*
 - <a id="dec-cl-04"></a>**DEC-CL-04** · The MCP server comes with a how-to-use: what Claude can do in Data Hub for this User, and how to ask for it. *Decided on 2026-10-30, by Max.*
 - <a id="dec-cl-05"></a>**DEC-CL-05** · Claude through the MCP is a domain of its own, this file, because it touches every asset; [Channels](13-channels.md) keeps the overview of which asset reaches which channel. *Decided on 2026-10-30: Max left the place to the analysis.*
-- <a id="dec-cl-06"></a>**DEC-CL-06** · The rows of a Preview, and later of a query, go into the conversation with Claude, for every Resource the User sees: no Collection and no Level is kept from Claude. What the User may see, Claude may read for them. *Decided on 2026-10-31, by Max ([OP-CL-06](#op-cl-06)).*
+- <a id="dec-cl-06"></a>**DEC-CL-06** · The rows of a Preview, and later of a query, go into the conversation with Claude, for every Resource the User sees: no Collection and no Level is kept from Claude. What the User may see, Claude may read for them. *Decided on 2026-10-31, by Max ([OP-CL-06](#op-cl-06)).* *Note of 2026-11-06: this holds for the Users whose Permission group says "in Claude"; others see a result in a card only, or not in Claude ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](#fr-cl-28)).*
 - <a id="dec-cl-07"></a>**DEC-CL-07** · What the User approves, sends or publishes in Claude, they do with a button in the MCP App that only the MCP App can use, never Claude: "Approve and run" between 100 MB and 1 GB, the Request above 1 GB, and "Publish and confirm". Where the client cannot show an MCP App, Claude offers "Open in Data Hub" instead. *Decided on 2026-10-31, by Max ([OP-CL-02](#op-cl-02)).*
 - <a id="dec-cl-08"></a>**DEC-CL-08** · The Log says when a change was made through Claude: "through Claude" next to the name of the User, for a Business Description, a deprecation, changes marked seen, a Message and a Publication in an MCP App, so that the Owner knows the words were drafted by Claude for that User. *Decided on 2026-10-31, by Max ([OP-CL-05](#op-cl-05)).*
 - <a id="dec-cl-09"></a>**DEC-CL-09** · The how-to-use lives in Claude only; the web app gets none of its own for Claude. *Decided on 2026-10-31, by Max.*
@@ -29,7 +29,9 @@ In library terms: Claude is an assistant in the reading room who carries the lib
 - <a id="dec-cl-11"></a>**DEC-CL-11** · A query made through Claude, and a run of a query or a Preview through Claude, is marked so: the panel of Query labels it Claude, and the Query Log keeps where it came from. *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-12"></a>**DEC-CL-12** · The Data Team can list the queries of everyone through Claude, with who ran them and their SQL, as it can in Query ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Decided on 2026-11-01, by Max.*
 - <a id="dec-cl-13"></a>**DEC-CL-13** · The result of a query shows in an MCP App: the grid of Query, with "Open in Query". *Decided on 2026-11-01, by Max.*
-- <a id="dec-cl-14"></a>**DEC-CL-14** · Claude analyses the rows it gets for the User ([DEC-CL-06](#dec-cl-06)), and does the work in SQL: it groups, counts and computes in the query, so that BigQuery does the work and Claude reads a small result, rather than paging through raw rows. That Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)) limits what leaves Data Hub to be kept elsewhere, not what Claude may read to answer. *Decided on 2026-11-02, by Max, while trying the MCP: the rules in the server instructions had Claude hold back from analysing the data.*
+- <a id="dec-cl-14"></a>**DEC-CL-14** · Claude analyses the rows it gets for the User ([DEC-CL-06](#dec-cl-06)), and does the work in SQL: it groups, counts and computes in the query, so that BigQuery does the work and Claude reads a small result, rather than paging through raw rows. That Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)) limits what leaves Data Hub to be kept elsewhere, not what Claude may read to answer. *Decided on 2026-11-02, by Max, while trying the MCP: the rules in the server instructions had Claude hold back from analysing the data.* *Note of 2026-11-06: for a User whose Permission group shows results in Claude; in a card only or not in Claude, Claude gets no rows, and analyses only the shape of a result ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](#fr-cl-28)).*
+- <a id="dec-cl-15"></a>**DEC-CL-15** · A query made through Claude keeps the mark Claude, also once its User goes on with it in Query, and each run says how it ran: through Claude or in the web app. identity says so in the Access Tokens it gives Claude, so that every service can tell. *Decided on 2026-11-02, by Max ([OP-CL-10](#op-cl-10)), asking for the label Claude on the queries that come from Claude.*
+- <a id="dec-cl-16"></a>**DEC-CL-16** · Whenever Claude reads a Resource, with `get_resource` or `show_resource`, it gets the Summary of the Resource first, before the data of its card; and the MCP App of a Resource opens on that Summary, with Columns beside it, as the Overview opens on it in Data Hub. *Decided on 2026-11-04, by Max: "when I ask the MCP about a Resource, the MCP should receive the Summary of the Resource, as well as this Resource being made available in an MCP App".*
 
 ## Terms
 
@@ -108,7 +110,7 @@ Every endpoint around Resources, with the tool that answers it. Who may use a to
 | --- | --- | --- | --- | --- |
 | "What is a Lens?" | `explain` | The Learning Cards in `packages/learning` ([TR-LR-01](../technical/16-learning.md#tr-lr-01)) | Every User | Text, with the card ([FR-CL-15](#fr-cl-15)) |
 | "Show me that card" | `show_learning_card` | The same | Every User | MCP App: the steps of the card ([FR-LR-26](16-learning.md#fr-lr-26)) |
-| "What can you do in Data Hub?" | `how_to_use` | None: the MCP server itself, with the roles of the User | Every User | Text; also a prompt in the menu of Claude ([FR-CL-16](#fr-cl-16)) |
+| "What can you do in Data Hub?" | `how_to_use` | None: the MCP server itself, with the Permission group and Permissions of the User | Every User | Text; also a prompt in the menu of Claude ([FR-CL-16](#fr-cl-16)) |
 | "Who am I in Data Hub?" | `who_am_i` | The Access Token | Every User | Text; built |
 
 ### Not through the MCP
@@ -224,6 +226,8 @@ Each tool that returns an object returns the address of its page in Data Hub, at
 **Status:** Implemented · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html)
 
 `get_resource` gives Claude the Resource Card: its Display Name and Key, its Collection and Owner Unit, its Level and Publication; the description of the table and of every field, the Business Description and the one from dbt each marked with where it comes from ([FR-RC-18](05-resource-card.md#fr-rc-18)); the fields left out; its grain, its partition and cluster columns with a sentence on how to query it cheaply, and its size ([FR-SR-39](04-stacks-and-resources.md#fr-sr-39)); its intended use, pitfalls, Known Gaps and since when it is reliable; its key fields and Parameters; and the changes since its last Confirmation ([FR-MR-12](06-maturity-and-release.md#fr-mr-12)). `show_resource` shows the same to the User as an MCP App, with its Overview and Columns.
+
+*Note of 2026-11-04: `get_resource` gives the Summary of the Resource, in its order and with its weights ([FR-CL-25](#fr-cl-25)).* *Note of 2026-11-04: `show_resource` gives Claude the same Summary, and its MCP App opens on the Summary in place of the Overview ([FR-CL-26](#fr-cl-26)).*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -362,11 +366,13 @@ Before Claude writes a new query, `suggest_lenses` gives the Lenses that use its
 <a id="fr-cl-22"></a>
 ### FR-CL-22 · A query through Claude is marked so
 
-**Status:** Proposed · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+**Status:** Implemented · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
 
 A query made through Claude, and every run through Claude of a query or a Preview, is marked so ([DEC-CL-11](#dec-cl-11)): the panel of Query labels it Claude ([FR-SR-43](04-stacks-and-resources.md#fr-sr-43), [DEC-UX-74](../../design/principles.md#dec-ux-74)), so does the tab History of the Resources it reads ([FR-SR-44](04-stacks-and-resources.md#fr-sr-44)), and the Query Log keeps it. query keeps no such mark yet ([OP-CL-10](#op-cl-10)).
 
 *Note of 2026-11-01: not built with the other tools; it needs the client in the Access Token, a mark in query and a label in the panel of Query ([OP-CL-10](#op-cl-10)).*
+
+*Note of 2026-11-02, on building it: built as [TR-SR-24](../technical/04-stacks-and-resources.md#tr-sr-24) ([DEC-CL-15](#dec-cl-15)). The panel of Query and the tab History of a Resource label a query made through Claude "Claude"; the history of a query says "through Claude" of each run that ran so. A Preview and the runs of a Lens are no query of their own, so only their runs carry the mark.*
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
@@ -384,9 +390,36 @@ A query made through Claude, and every run through Claude of a query or a Previe
 
 **Status:** Implemented
 
-The server instructions tell Claude to analyse the rows it gets, and to do the work in SQL: to group, count, sum and compute rates in the query, so that BigQuery does it within the ranges of the Pre-flight ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) and Claude reads a small result, reading further pages with `get_result_page` only when the answer needs them. What Claude shows the User is what answers the question, never whole tables to copy elsewhere: Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)). This works out [DEC-CL-14](#dec-cl-14).
+The server instructions tell Claude to analyse the rows it gets, and to do the work in SQL: to group, count, sum and compute rates in the query, so that BigQuery does it within the ranges of the Pre-flight ([DEC-SR-29](04-stacks-and-resources.md#dec-sr-29)) and Claude reads a small result, reading further pages with `get_result_page` only when the answer needs them. What Claude shows the User is what answers the question, never whole tables to copy elsewhere: Data Hub has no exports ([FR-CH-01](13-channels.md#fr-ch-01)). This works out [DEC-CL-14](#dec-cl-14). It holds where the Permission group of the User shows results in Claude; where it shows them in a card only, or not in Claude, the instructions say that Claude reads no rows, and Claude helps from the shape of the result ([FR-CL-28](#fr-cl-28)).
 
 *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+<a id="fr-cl-25"></a>
+### FR-CL-25 · Claude reads the Summary of a Resource
+
+**Status:** Implemented · **Source:** Max, 2026-11-04
+
+`get_resource` gives Claude the Summary of the Resource ([FR-RC-19](05-resource-card.md#fr-rc-19)): its parts in the order of the Summary, each with its weight and what that weight asks of Claude ([DEC-RC-17](05-resource-card.md#dec-rc-17)). Read first holds in every answer about the Resource; Before you query decides how Claude writes its SQL; When interpreting results decides what Claude says a result means; Context is background. It holds the Business Description as Markdown and the curated Q&A of the Owner and the Data Team ([FR-RC-22](05-resource-card.md#fr-rc-22)), and leaves out a part with nothing in it, as the page does. The fields of every column stay as [FR-CL-07](#fr-cl-07) lists them.
+
+<a id="fr-cl-26"></a>
+### FR-CL-26 · The Summary first, also when the Resource is shown
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-CL-16](#dec-cl-16)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html)
+
+`get_resource` and `show_resource` both give Claude the Summary of the Resource ([FR-CL-25](#fr-cl-25)) first: as the first text of the answer, and first in its data, before the card. The MCP App of `show_resource` opens on the Summary, every part in its order, numbered and with its weight, as the Overview of Data Hub shows it ([FR-RC-19](05-resource-card.md#fr-rc-19)), with Columns as its second tab; "Its fields" opens Columns, and "Open in Data Hub" stays at its foot ([FR-CL-06](#fr-cl-06)).
+
+<a id="fr-cl-27"></a>
+### FR-CL-27 · An MCP App fits a phone, and folds
+
+**Status:** Implemented · **Source:** Max, 2026-11-04 ([DEC-UX-180](../../design/principles.md#dec-ux-180), [DEC-UX-181](../../design/principles.md#dec-ux-181)) · **Screens:** [mcp-resource](../../design/screens/mcp-resource.html), [mcp-resource-preview](../../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../../design/screens/mcp-resource-publish.html), [mcp-query](../../design/screens/mcp-query.html)
+
+Every MCP App of Data Hub reads well at the width of a phone, 360 px or less: it lays out its own width in one column, nothing in it is wider than its frame, a table of data scrolls in its own box, its tabs and buttons are at least 44 px high, and nothing is told only on hover. Every MCP App has a button at its top right that folds it to its head and unfolds it again.
+
+<a id="fr-cl-28"></a>
+### FR-CL-28 · A result reaches Claude as the Permission group of the User says
+
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-PL-05](12-permissions-and-library-cards.md#dec-pl-05), [DEC-UX-193](../../design/principles.md#dec-ux-193)) · **Screens:** [mcp-query](../../design/screens/mcp-query.html)
+
+The result of a query, a Preview or a Lens reaches Claude as `claude.results` of the Permission group of the User says. **In Claude:** Claude reads the rows and works on them, as [DEC-CL-06](#dec-cl-06) says. **In a card only:** the User sees the rows in the MCP App; Claude reads the shape of the result, its columns and their types, the number of rows, what it read, the Levels and the link, without any value, the values of the choices of a Preview included; the MCP App says that Claude does not read the rows. **Not in Claude:** Claude offers "Open in Data Hub". In a card only, the rows stay out of the conversation as long as Claude hides the tools only the MCP App calls; the User can still paste them in, and they still pass through Anthropic on their way to the MCP App. The MCP App says it in one line under the grid ([DEC-UX-193](../../design/principles.md#dec-ux-193)).
 
 ## Edge cases
 
@@ -442,7 +475,7 @@ BigQuery keeps a result for a limited time; a page asked after that answers that
 - [ ] <a id="op-cl-07"></a>**OP-CL-07** · The Learning Centre has no service yet. Decide where `explain` and the concepts in the server instructions read from until it has one, and which Compass cards the Data Team writes for the concepts of [FR-CL-14](#fr-cl-14). Proposal: the server instructions are built from the core ideas of those cards; until they exist, from the Defined Terms. *Raised on 2026-10-30.* *Note of 2026-10-31: the Learning Centre is built. Its cards are files in `packages/learning` ([TR-LR-01](../technical/16-learning.md#tr-lr-01)), and the section K5 Data Hub of the Compass holds K5.1 What a resource is and K5.2 The Level of a Resource ([DEC-LR-30](16-learning.md#dec-lr-30)); the MCP server reads them from there. What stays open is which cards the Data Team writes for the other concepts.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-08"></a>**OP-CL-08** · Confirm that Claude gets the concepts of Data Hub in its server instructions ([FR-CL-14](#fr-cl-14)) and explains them with the Learning Cards ([FR-CL-15](#fr-cl-15)). *Raised on 2026-10-30, by Max: "shouldn't the MCP add what the concepts are: Collection, Resource, Lens, the Learning Centre with its cards linked?"* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-09"></a>**OP-CL-09** · Decide whether the MCP App of a result lets the User change the values of the Parameters and run again, as on the page of a Lens, or only shows the result ([FR-CL-21](#fr-cl-21)). Proposal: it only shows the result; a change goes through Claude or Query, so that the MCP App stays a window and does not become a second editor. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
-- [ ] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
+- [x] <a id="op-cl-10"></a>**OP-CL-10** · query keeps no mark of where a query or a run came from: a query is a query, a preview or a Lens ([FR-CL-22](#fr-cl-22)). Decide where the mark lives: on the query, where it was made, and on each run, how it ran. Proposal: both; a query made through Claude and continued in Query keeps the label Claude, and each run says how it ran. *Raised on 2026-11-01.* *Decided on 2026-11-02, by Max: both, as proposed ([DEC-CL-15](#dec-cl-15)).* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 - [ ] <a id="op-cl-11"></a>**OP-CL-11** · Decide whether Claude can run the steps of an analysis without showing their result. Today every run through Claude opens the grid in the conversation ([FR-CL-21](#fr-cl-21)), so an analysis in five queries shows five grids. Proposal: `run_query` gets a choice not to show, for a step Claude reads itself; the result the User asks to see, and every run that needs their approval or a Request, still opens the MCP App ([DEC-CL-07](#dec-cl-07)). Each run stays a run of the User in the Query Log, with its Query ID ([DEC-LN-01](07-log-and-notifications.md#dec-ln-01)). *Raised on 2026-11-02, by Max, while trying the MCP: Claude gets the rows ([DEC-CL-06](#dec-cl-06)), but an analysis in several steps fills the conversation with grids.* *Could, not in v1: Claude comes in version 2 ([DEC-CH-02](13-channels.md#dec-ch-02)).*
 
 ## Builds on

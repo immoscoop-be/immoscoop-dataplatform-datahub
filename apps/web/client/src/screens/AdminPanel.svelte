@@ -4,29 +4,38 @@
   import { ADMIN_TOOLS, type AdminTool } from '../lib/sections.js';
 
   /**
-   * The panel of Admin, the section of the Data Team (DEC-UX-130): a line on what it is for, then its tools,
-   * each with the number of things in it to look at, such as the deliveries of the webhook that were refused
-   * or failed, or the Excel keys that are active. Its tools are the list in sections.ts.
+   * The panel of Admin, the section of the Data Team (DEC-UX-130): a line on what it is for, then the tools the User
+   * may open (`admin.open`, FR-PL-14), each with the number of things in it to look at, such as the deliveries of the
+   * webhook that were refused or failed, the Excel keys that are active, the Users or the Permission groups. Its tools
+   * are the list in sections.ts.
    */
   let {
     current,
+    tools,
     environment,
     counts,
   }: {
     /** The tool whose page is open. */
     current: AdminTool | undefined;
+    /** The tools the User may open. */
+    tools: readonly AdminTool[];
     /** The environment of Data Hub, such as uat. */
     environment: string;
     /** Per tool, how many things to look at; left out while they come. */
     counts: Partial<Record<AdminTool, number>>;
   } = $props();
 
-  const TITLES: Record<AdminTool, string> = { webhooks: 'admin.webhooks.count', keys: 'admin.keys.count' };
+  const TITLES: Record<AdminTool, string> = {
+    webhooks: 'admin.webhooks.count',
+    keys: 'admin.keys.count',
+    users: 'admin.users.count',
+    permissionGroups: 'admin.groups.count',
+  };
 </script>
 
 <p class="about">{t('admin.about', { environment })}</p>
 <nav aria-label="Admin">
-  {#each ADMIN_TOOLS as tool (tool.id)}
+  {#each ADMIN_TOOLS.filter((tool) => tools.includes(tool.id)) as tool (tool.id)}
     <a class="tool" class:on={tool.id === current} href={tool.path} aria-current={tool.id === current ? 'page' : undefined}>
       <Icon name={tool.icon} /><span>{tool.name}</span>
       {#if counts[tool.id] !== undefined}<span class="count" title={t(TITLES[tool.id])}>{counts[tool.id]}</span>{/if}

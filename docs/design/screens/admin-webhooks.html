@@ -7,15 +7,20 @@
   Source Jobs (FR-AR-18): per dbt project the job whose runs this environment reads, by its name and its ID, its kind and
   environment in dbt Cloud, whether it generates the docs, the last run that delivered an Artifact Set, and who set it.
   "Change" opens a sheet with the jobs of that dbt project as dbt Cloud names them, by environment: a job of another
-  environment, or a CI job that builds pull requests in schemas of their own, cannot be chosen. Under the tiles, the
-  webhook in dbt Cloud that names the same jobs, and its address.
+  environment, a CI job that builds pull requests in schemas of their own, or a job that does not generate the docs,
+  cannot be chosen. The page is the only place where the dbt projects and their Source Jobs are set (DEC-AR-10):
+  "Follow a dbt project" opens a sheet with the dbt projects of the account not followed yet and, once one is chosen,
+  its jobs; "Stop following" asks to confirm in the place of the tile, and the Resources of that dbt project stay as
+  they are (DEC-UX-166). Under the tiles, the webhook in dbt Cloud that names the same jobs, and its address.
   Deliveries (FR-AR-19): every delivery of the last 30 days, the newest first, with what Data Hub did with it: recorded,
-  ignored and why, or refused. One opened shows on the right, as a Message does in the Message Centre: the job, the run,
+  ignored and why, or refused; the list keeps to the height of the screen and scrolls within itself (DEC-UX-167). One
+  opened shows on the right, as a Message does in the Message Centre: the job, the run,
   the event, what Data Hub did step by step, and what the Data Admin can do. A run without a catalog.json fails (EC-AR-02);
   processing it again is FR-AR-14. The switch at the bottom opens each kind: ?opened=recorded, ?opened=ignored,
-  ?opened=refused, ?opened=failed, ?opened=test, and ?opened=none for no deliveries yet; ?pick=open opens the sheet.
+  ?opened=refused, ?opened=failed, ?opened=test, and ?opened=none for no deliveries yet; ?pick=open opens the sheet that
+  changes a Source Job, ?pick=follow the one that follows a dbt project, and ?stop=open asks to stop following dbt-prod.
   Requirements: FR-AR-18, FR-AR-19
-  Decisions: DEC-AR-02, DEC-AR-09, DEC-UX-130.
+  Decisions: DEC-AR-02, DEC-AR-09, DEC-AR-10, DEC-UX-130, DEC-UX-166, DEC-UX-167.
   Decided with it: OP-UX-50, OP-UX-51, OP-UX-52.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -62,22 +67,27 @@
  <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
 </div>
 
-<div class="section-head"><h2>Source Jobs</h2></div>
+<div class="section-head"><h2>Source Jobs</h2><button class="btn-quiet outline" data-sheet-open="follow" data-go="pick:follow"><i class="ph ph-plus"></i>Follow a dbt project</button></div>
 <p class="meta" style="display:block;line-height:1.5;max-width:760px;margin:-4px 0 12px">Per dbt project, the job whose runs Data Hub uat reads: the merge build of uat, which builds the project after a merge and generates the docs. A change counts from the next run.</p>
 <div class="wh-jobs">
- <section class="card wh-job">
+ <section class="card wh-job wh-stop" data-pane-group="stop" data-pane="open" hidden aria-label="Stop following dbt-prod">
+  <div class="label">dbt-prod <span class="mono">· immoscoop_dataplatform_sql · 9367</span></div>
+  <div class="wh-stop-row"><i class="ph-fill ph-warning" aria-hidden="true"></i><span><b style="font-weight:500">Stop following dbt-prod?</b> Data Hub uat ignores its runs from now on. Its Resources stay as they are, at its last version, run <span class="mono">58209931</span>; following it again brings them up to date. Take its job out of the webhook <b style="font-weight:500">Data Hub uat</b> in dbt Cloud too.</span></div>
+  <div class="wh-job-foot"><span class="meta"></span><button class="btn-quiet outline" data-go="stop:none">Cancel</button><button class="btn-primary danger" data-go="stop:none">Stop following</button></div>
+ </section>
+ <section class="card wh-job" data-pane-group="stop" data-pane="none">
   <div class="label">dbt-prod <span class="mono">· immoscoop_dataplatform_sql · 9367</span></div>
   <div class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build</span><span class="mono wh-id">352118</span></div>
   <div class="wh-tags"><span class="wh-tag">Merge</span><span class="wh-tag">UAT</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span></div>
   <div class="wh-last"><i class="ph-fill ph-check-circle"></i><span>Last set: run <span class="mono">58209931</span>, today 11:52, processed</span></div>
-  <div class="wh-job-foot"><span class="meta">Set by Maxime Passenier, today 11:40</span><button class="btn-quiet outline" data-sheet-open="pick" data-go="pick:open">Change</button></div>
+  <div class="wh-job-foot"><span class="meta">Set by Maxime Passenier, today 11:40</span><button class="btn-quiet" data-go="stop:open">Stop following</button><button class="btn-quiet outline" data-sheet-open="pick" data-go="pick:open">Change</button></div>
  </section>
  <section class="card wh-job">
   <div class="label">Colleciónes <span class="mono">· compilacion-colleciones-dbt · 17121</span></div>
   <div class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build (triggerd by git ci)</span><span class="mono wh-id">748279</span></div>
   <div class="wh-tags"><span class="wh-tag">Merge</span><span class="wh-tag">UAT</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span></div>
   <div class="wh-last"><i class="ph-fill ph-check-circle"></i><span>Last set: run <span class="mono">58214470</span>, today 12:45, processed</span></div>
-  <div class="wh-job-foot"><span class="meta">Set by Maxime Passenier, today 12:38</span><button class="btn-quiet outline">Change</button></div>
+  <div class="wh-job-foot"><span class="meta">Taken over from the configuration of Data Hub uat</span><button class="btn-quiet">Stop following</button><button class="btn-quiet outline">Change</button></div>
  </section>
 </div>
 <div class="card wh-hook">
@@ -89,7 +99,7 @@
 
 <div class="section-head"><h2>Deliveries</h2><span class="meta">The last 30 days</span></div>
 <div class="mc" style="margin-top:0" data-pane-group="wh" data-pane="recorded ignored refused failed test">
- <section class="card mc-list" aria-label="Deliveries" data-group="wh">
+ <section class="card mc-list wh-list" aria-label="Deliveries" data-group="wh">
   <div class="mc-chips" role="tablist" aria-label="What Data Hub did"><button class="seg on" role="tab" aria-selected="true">All<span class="count">8</span></button><button class="seg" role="tab" aria-selected="false">Recorded<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Ignored<span class="count">4</span></button><button class="seg" role="tab" aria-selected="false">Refused<span class="count">1</span></button></div>
   <a class="wh-item on" href="#" data-target="recorded" role="tab" aria-selected="true">
    <i class="ph-fill ph-check-circle wh-outcome done" aria-hidden="true"></i>
@@ -278,6 +288,9 @@
   <label class="wh-opt off"><input type="radio" name="job" disabled>
    <span><span class="wh-job-name"><span class="item-title">CI/CD - UAT - triggered by Github Pipelines</span><span class="mono wh-id">324451</span></span>
    <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">CI</span><span class="meta">builds pull requests in schemas of their own: cannot be one</span></span></span></label>
+  <label class="wh-opt off"><input type="radio" name="job" disabled>
+   <span><span class="wh-job-name"><span class="item-title">UAT - Hourly freshness</span><span class="mono wh-id">351870</span></span>
+   <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Scheduled</span><span class="meta">does not generate the docs: its runs have no catalog</span></span></span></label>
   <div class="panel-label">Production</div>
   <label class="wh-opt off"><input type="radio" name="job" disabled>
    <span><span class="wh-job-name"><span class="item-title">CI/CD - prod - triggered by Github Pipelines</span><span class="mono wh-id">324502</span></span>
@@ -294,7 +307,48 @@
 </section>
 </div>
 
-<div hidden data-group="pick"><button data-target="open"></button></div>
+<div class="sheet-wrap" id="follow" data-pane-group="pick" data-pane="follow" hidden>
+<div class="sheet-backdrop" data-sheet-close></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="follow-title">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph ph-webhooks-logo" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><div class="meta">Webhooks · Data Hub uat</div><h2 id="follow-title">Follow a dbt project</h2></div>
+  <button class="icon-btn" data-sheet-close aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <p class="meta" style="display:block;line-height:1.5;margin:10px 0 0">The dbt projects of account <span class="mono">576</span> that Data Hub uat does not follow yet, as dbt Cloud names them. Choose one, then the job whose runs Data Hub uat reads: one that builds after a merge and generates the docs.</p>
+ <div class="sheet-list">
+  <div role="radiogroup" aria-label="dbt projects">
+   <label class="wh-opt"><input type="radio" name="project" checked><span><span class="wh-job-name"><span class="item-title">dbt-marketing</span><span class="mono wh-id">15890</span></span></span></label>
+   <label class="wh-opt"><input type="radio" name="project"><span><span class="wh-job-name"><span class="item-title">Sandbox</span><span class="mono wh-id">12034</span></span></span></label>
+  </div>
+  <div class="panel-label" style="margin-top:16px">The jobs of dbt-marketing</div>
+  <div role="radiogroup" aria-label="Jobs">
+   <div class="panel-label">UAT</div>
+   <label class="wh-opt"><input type="radio" name="follow-job" checked>
+    <span><span class="wh-job-name"><span class="item-title">UAT - Deploy - Merge build</span><span class="mono wh-id">802114</span></span>
+    <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Merge</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span><span class="meta">last run yesterday 17:03, succeeded</span></span></span></label>
+   <label class="wh-opt off"><input type="radio" name="follow-job" disabled>
+    <span><span class="wh-job-name"><span class="item-title">UAT - Pull requests</span><span class="mono wh-id">802115</span></span>
+    <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">CI</span><span class="meta">builds pull requests in schemas of their own: cannot be one</span></span></span></label>
+   <div class="panel-label">Production</div>
+   <label class="wh-opt"><input type="radio" name="follow-job">
+    <span><span class="wh-job-name"><span class="item-title">PROD - Deploy - Merge build</span><span class="mono wh-id">802120</span></span>
+    <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Merge</span><span class="wh-tag"><i class="ph ph-file-text"></i>Generates docs</span><span class="meta">last run yesterday 17:20, succeeded</span></span></span></label>
+   <label class="wh-opt off"><input type="radio" name="follow-job" disabled>
+    <span><span class="wh-job-name"><span class="item-title">PROD - Daily export</span><span class="mono wh-id">802131</span></span>
+    <span class="wh-tags" style="margin-top:6px"><span class="wh-tag">Scheduled</span><span class="meta">does not generate the docs: its runs have no catalog</span></span></span></label>
+  </div>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta" style="display:block;line-height:1.5">It counts from its next run. Name the job in the webhook <b style="font-weight:500">Data Hub uat</b> in dbt Cloud too.</p>
+  <button class="btn-quiet outline" data-sheet-close>Cancel</button>
+  <button class="btn-primary" data-sheet-close>Follow it</button>
+ </div>
+</section>
+</div>
+
+<div hidden data-group="pick"><button data-target="open"></button><button data-target="follow"></button></div>
+<div hidden data-group="stop"><button class="on" data-target="none"></button><button data-target="open"></button></div>
 <div class="proto-switch" data-group="opened" role="tablist" aria-label="Prototype: the delivery opened">Opened
  <button class="seg on" data-target="recorded" data-go="wh:recorded" role="tab" aria-selected="true">Recorded</button>
  <button class="seg" data-target="ignored" data-go="wh:ignored" role="tab" aria-selected="false">Ignored</button>

@@ -2,6 +2,7 @@
   import Icon from '@datahub/ui/foundations/Icon.svelte';
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
+  import Loading from '@datahub/ui/primitives/Loading.svelte';
   import type { Run } from '../lib/query.js';
 
   /**
@@ -54,7 +55,7 @@
     {#each runs as run (run.number)}
       <div class="run" class:flash={flash === run.number} data-run={run.number}>
         <span class="number">{t('history.run', { number: run.number })}</span>
-        <span class="meta">{when(run.startedAt)}{#if run.state === 'failed'} · {t('history.failed')}{/if}</span>
+        <span class="meta">{when(run.startedAt)}{#if run.through === 'claude'} · {t('history.throughClaude')}{/if}{#if run.state === 'failed'} · {t('history.failed')}{/if}</span>
         <span class="acts">
           {#if shown === run.number}
             <span class="pill">{t('history.shown')}</span>
@@ -71,6 +72,8 @@
       <div class="start"><Icon name="flag" />{start}</div>
     {/if}
   </div>
+{:else}
+  <Loading />
 {/if}
 
 <style>

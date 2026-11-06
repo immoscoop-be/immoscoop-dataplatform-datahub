@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import Icon from '../foundations/Icon.svelte';
   import type { IconName } from '../foundations/icons.js';
+  import { portal } from '../foundations/portal.js';
   import { t } from '../foundations/texts.svelte.js';
 
   /**
@@ -38,15 +39,6 @@
     const before = document.activeElement as HTMLElement | null;
     return () => before?.focus?.();
   });
-
-  /**
-   * It hangs on the page itself, as a pop-out does: in a frame with a backdrop filter, as the main area has
-   * over a picture, a fixed window would be placed from that frame, and moving it would jump aside.
-   */
-  function portal(node: HTMLElement): () => void {
-    document.body.appendChild(node);
-    return () => node.remove();
-  }
 
   /** Moves it by its head, kept within the window of the browser. */
   function grab(event: PointerEvent): void {

@@ -14,15 +14,15 @@ export const LANGUAGES: readonly Language[] = ['nl', 'en'];
 /** How each language writes numbers and dates: as in Flanders, and in British English. */
 const LOCALES: Readonly<Record<Language, string>> = { nl: 'nl-BE', en: 'en-GB' };
 
-/** The kinds of object a Message can be about (DEC-CV-03). */
-export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard' | 'excelKey';
+/** The kinds of object a Message can be about (DEC-CV-03); a User, for what Data Hub tells about their Permission group (FR-PL-12). */
+export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard' | 'excelKey' | 'user';
 
 /**
  * The kind of a Message, what the Message Centre filters on (FR-CV-06): what a person writes, or
  * `dataHub` for what Data Hub writes itself. A `notice` is a Message a person sends with a form
  * Data Hub fills in, such as the Owner telling the Consumers of a Resource about a Change.
  */
-export type MessageKind = 'question' | 'remark' | 'signal' | 'request' | 'reply' | 'decision' | 'notice' | 'dataHub';
+export type MessageKind = 'question' | 'remark' | 'signal' | 'request' | 'reply' | 'decision' | 'closing' | 'notice' | 'dataHub';
 
 /** Who writes a Message: any User who may see its object, its Owner, the Data Team, or Data Hub itself. */
 export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
@@ -36,10 +36,11 @@ export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
  * - `resourceOwners`: the Owners of the Resources a Lens builds on
  * - `writer`: who wrote the Message this one answers or decides
  * - `participants`: who already wrote in the conversation
- * - `author`: who made the Lens or the query
+ * - `author`: who made the Lens or the query; the User of an Excel key, or the User a Message is about
  * - `consumers`: the Consumers of a Resource (FR-LN-03)
+ * - `lensUsers`: who ran a Lens in the 30 days before it was deleted, also from Excel, named in the Message (FR-LE-18)
  */
-export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers';
+export type MessageRecipient = 'owner' | 'resourceOwners' | 'dataTeam' | 'writer' | 'participants' | 'author' | 'consumers' | 'lensUsers';
 
 /** The status of a type of Message: that of the requirement it comes from (docs/requirements/README.md). */
 export type MessageStatus = 'Proposed' | 'Specified' | 'Implemented' | 'Verified' | 'Withdrawn';
@@ -179,8 +180,8 @@ export function implicitParameters(type: Pick<MessageType, 'from' | 'kind'>): re
   return [
     ...subject,
     { name: 'writer', type: 'person', about: 'Who wrote it' },
-    // A Request may go without a word of its writer: its facts say what it asks (FR-LE-09).
-    { name: 'text', type: 'text', about: 'What they wrote', ...(type.kind === 'request' ? { optional: true } : {}) },
+    // A Request may go without a word of its writer: its facts say what it asks (FR-LE-09); so may a closing (FR-CV-16).
+    { name: 'text', type: 'text', about: 'What they wrote', ...(type.kind === 'request' || type.kind === 'closing' ? { optional: true } : {}) },
   ];
 }
 
@@ -512,6 +513,7 @@ export const SUBJECT_NAMES: Readonly<Record<SubjectKind, string>> = {
   report: 'report',
   learningCard: 'learning card',
   excelKey: 'Excel key',
+  user: 'user',
 };
 
 /** The kind of an object as a sentence of the interface names it: a Defined Term, never translated (NFR-LOC-01). */
@@ -523,6 +525,7 @@ export const SUBJECT_TITLES: Readonly<Record<SubjectKind, string>> = {
   report: 'Report',
   learningCard: 'Learning Card',
   excelKey: 'Excel key',
+  user: 'User',
 };
 
 /**

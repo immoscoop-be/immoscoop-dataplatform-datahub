@@ -102,16 +102,6 @@ variable "dbt_account_id" {
   default     = "576"
 }
 
-variable "dbt_source_jobs" {
-  description = "The Source Job of each dbt project for this environment, dbt project ID => job ID (DEC-AR-01)."
-  type        = map(string)
-
-  validation {
-    condition     = alltrue([for project, job in var.dbt_source_jobs : can(regex("^[0-9]+$", project)) && can(regex("^[0-9]+$", job))])
-    error_message = "dbt projects and jobs are named by their numeric IDs."
-  }
-}
-
 variable "mail_from" {
   description = "Who the e-mail of Data Hub comes from: an address of a Workspace domain whose replies are not read (DEC-PF-31)."
   type        = string
