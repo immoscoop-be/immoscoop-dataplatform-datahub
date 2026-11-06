@@ -1,15 +1,19 @@
+import { NO_PERMISSIONS, type Permissions, reach } from '@datahub/contracts';
 import { MESSAGE_CATALOGUE } from '@datahub/contracts/message-catalogue';
 import type { MessageKind, MessageType, SubjectKind } from '@datahub/contracts/messages';
 import { topicOf } from '@datahub/learning';
 import { type Kysely, type RawBuilder, type Selectable, sql, type SqlBool, type Transaction } from 'kysely';
 import type { Collection, Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
+import { may, seesAll } from './viewer.js';
 
 /**
  * Conversations (FR-CV-01 to FR-CV-09): every Message is placed on its object and kept once, by its
  * Subject (DEC-CV-02); the Message Centre, the Messages on an object and a Message opened in context all
- * read from here. Who sees a Message follows who sees its object (FR-CV-05); a Message keeps its Message
- * ID and parameters, and the words of whoever wrote it (DEC-CV-07).
+ * read from here. Who sees a Message follows who sees its object (FR-CV-05), as `catalogue.see` says
+ * (DEC-PL-02); a Message keeps its Message ID and parameters, and the words of whoever wrote it (DEC-CV-07).
+ * Who replies to the Messages of others, and closes them, follows their Permissions (DEC-PL-04); what was
+ * for the Data Team is for whoever gets the Messages for the Data Team (`messages.dataTeam`, FR-PL-15).
  */
 
 const TYPES = new Map<string, MessageType>(MESSAGE_CATALOGUE.map((type) => [type.id, type]));
@@ -59,6 +63,8 @@ const TO_OWNER = idsWhere((type) => type.to.includes('owner'));
 const TO_DATA_TEAM = idsWhere((type) => type.to.includes('dataTeam'));
 const TO_AUTHOR = idsWhere((type) => type.to.includes('author'));
 const TO_LENS_USERS = idsWhere((type) => type.to.includes('lensUsers'));
+/** The Requests, which who decides on Requests sees and decides (`requests.decide`, FR-CV-08). */
+const REQUESTS = idsWhere((type) => type.kind === 'request');
 
 /** How a writer stands to the object of their Message, shown next to their name. */
 export type Standing = 'owner' | 'dataTeam' | null;
@@ -91,8 +97,13 @@ export interface MessageView {
   replyCount: number;
   unread: boolean;
   mine: boolean;
-  /** Whether the viewer may close it, or reopen it once closed: its writer, the Owner Unit and the Data Team (FR-CV-16). */
+  /**
+   * Whether the viewer may close it, or reopen it once closed: its writer always, others with `messages.close` on the
+   * assets in their control or on every asset (FR-CV-16, DEC-PL-04).
+   */
   mayClose: boolean;
+  /** Whether the viewer may reply in it: its writer always, others with `messages.reply`, likewise (DEC-PL-04). */
+  mayReply: boolean;
 }
 
 /** A reply, the decision on a Request, or the closing of a Question or a Signal, under the Message it is about. */
@@ -163,17 +174,20 @@ export interface Messages {
   sees(sight: Sight, kind: SubjectKind, id: string): boolean;
   /** A Question, Remark or Signal on an object the viewer sees; a Signal on a Resource enters its Log (CNV-050). */
   write(sight: Sight, subject: { kind: WrittenOn; id: string }, kind: WrittenKind, text: string): Promise<Conversation>;
-  /** A reply in a conversation of a Question, Remark or Signal; undefined when that is not one. */
-  reply(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'no_replies'>;
+  /**
+   * A reply in a conversation of a Question, Remark or Signal, by its writer, or by someone else with `messages.reply`
+   * on its object (DEC-PL-04).
+   */
+  reply(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'no_replies' | 'not_allowed'>;
   read(id: string, sight: Sight): Promise<boolean>;
   /**
-   * Closes an open Question or Signal, by its writer, the Owner Unit of its object or the Data Team, with an optional
-   * line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
+   * Closes an open Question or Signal, by its writer, or by someone else with `messages.close` on its object (DEC-PL-04),
+   * with an optional line why: the closing stands under it in its conversation, and tells its writer (FR-CV-16, MSG-CNV-07).
    */
   close(id: string, sight: Sight, text: string): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_open'>;
   /** Opens a closed Question or Signal again, by the same people; its closing stays in the conversation (FR-CV-16). */
   reopen(id: string, sight: Sight): Promise<Conversation | 'not_found' | 'not_closable' | 'not_allowed' | 'not_closed'>;
-  /** The decision of the Data Team on a waiting Request: its reply, which ends it (FR-CV-08, MSG-CNV-05). */
+  /** The decision on a waiting Request, by someone with `requests.decide`: its reply, which ends it (FR-CV-08, MSG-CNV-05). */
   decide(id: string, outcome: 'accepted' | 'refused', text: string, decider: Decider, sight?: Sight): Promise<Decided>;
   /** The Request Data Hub sends when a Lens grew into very large; one that waits is given back (MSG-LEN-03). */
   grew(lensId: string, fields: { reads: number; threshold: number; partitions?: number }): Promise<{ id: string; sent: boolean }>;
@@ -195,6 +209,12 @@ export interface Messages {
   lensDeleted(lensId: string, fields: { name: string; actor: { id: string; name: string }; reason: string; users: string[] }): Promise<{ id: string }>;
   /** What identity tells about the Excel key of a User: it expires within a month, or the Data Team revoked it (FR-PL-03). */
   keyNotice(notice: KeyNotice): Promise<{ id: string }>;
+  /**
+   * What identity tells about a User (FR-PL-12, EC-PL-03): they were moved to another Permission group, or theirs was
+   * deleted, a Message only they see; or they got Admin back as no User of Admin could still sign in, a Message for the
+   * Data Team.
+   */
+  userNotice(notice: UserNotice): Promise<{ id: string }>;
 }
 
 /** What identity tells about an Excel key (MSG-KEY-01, MSG-KEY-02): only its User sees the Message. */
@@ -206,6 +226,21 @@ export interface KeyNotice {
   expires?: string;
   actor?: string;
 }
+
+/**
+ * What identity tells about a User (MSG-USR-01, MSG-USR-02). A move to another Permission group says who moved them, from
+ * which group to which, what they gain and lose, as lines identity writes, and whether their group was deleted; the
+ * name of the User, when identity gives it, names the Message's object.
+ */
+export type UserNotice =
+  | { type: 'MSG-USR-01'; userId: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean; name?: string }
+  | { type: 'MSG-USR-02'; userId: string; name: string };
+
+/**
+ * Who decides on a Request through query, as their decision is shown back to query (FR-LE-09): someone who decides on
+ * Requests and answers as the Data Team.
+ */
+const DECIDING: Permissions = { ...NO_PERMISSIONS, 'requests.decide': { on: true, values: {} }, 'messages.dataTeam': { on: true, values: {} } };
 
 type Row = Selectable<CatalogueDatabase['messages']>;
 type Database = Kysely<CatalogueDatabase> | Transaction<CatalogueDatabase>;
@@ -222,43 +257,69 @@ export interface BrokenFields {
 }
 
 export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
-  /** Whether the viewer sees the object of a Message: a query only by whoever wrote on it, and the Data Team. */
-  function seesRow(sight: Sight, row: Pick<Row, 'subjectKind' | 'subjectId' | 'writerId' | 'params'>): boolean {
+  /** Whether the viewer gets the Messages for the Data Team and answers as the Data Team (FR-PL-15). */
+  const answersAsDataTeam = (sight: Sight) => may(sight.viewer, 'messages.dataTeam');
+  /** Whether the viewer sees the Messages on the queries of others: with `queries.seeOthers` for every query (DEC-CL-12). */
+  const othersQueries = (sight: Sight) => reach(sight.viewer.permissions, 'queries.seeOthers') === 'every';
+
+  /** Whether the viewer sees the object of a Message (FR-CV-05, DEC-PL-02). */
+  function seesRow(sight: Sight, row: Pick<Row, 'type' | 'subjectKind' | 'subjectId' | 'writerId' | 'params'>): boolean {
+    const me = sight.viewer.id;
     // An Excel key is personal: the Messages about it are for its User alone (FR-PL-03).
-    if (row.subjectKind === 'excelKey') return row.params.user === sight.viewer.id;
-    if (sight.viewer.dataTeam) return true;
-    // A query: who wrote on it, and who made it, to whom Data Hub writes about it (MSG-QRY-02).
-    if (row.subjectKind === 'query') return row.writerId === sight.viewer.id || row.params.owner === sight.viewer.id;
+    if (row.subjectKind === 'excelKey') return row.params.user === me;
+    // A User: the Messages about them are theirs; one for the Data Team, also for who gets those (FR-PL-12, EC-PL-03).
+    if (row.subjectKind === 'user') return row.params.user === me || (TO_DATA_TEAM.includes(row.type) && answersAsDataTeam(sight));
+    // A query: who wrote on it, and who made it, to whom Data Hub writes about it (MSG-QRY-02); who sees the queries
+    // of others; and a Request on it, for who decides on Requests and who gets the Messages for the Data Team.
+    if (row.subjectKind === 'query') {
+      return (
+        row.writerId === me ||
+        row.params.owner === me ||
+        othersQueries(sight) ||
+        (REQUESTS.includes(row.type) && may(sight.viewer, 'requests.decide')) ||
+        (TO_DATA_TEAM.includes(row.type) && answersAsDataTeam(sight))
+      );
+    }
     return sees(sight, row.subjectKind, row.subjectId);
   }
 
   function sees(sight: Sight, kind: SubjectKind, id: string): boolean {
     // Every User may open every Learning Card, and so sees the Messages on it (DEC-LR-03, FR-LR-06).
     if (kind === 'learningCard') return topicOf(id) !== undefined;
-    if (sight.viewer.dataTeam) return true;
+    // Who sees all sees every Collection, Resource and Lens, also a Resource without a Collection (DEC-PL-02).
+    if (seesAll(sight.viewer) && (kind === 'collection' || kind === 'resource' || kind === 'lens' || kind === 'report')) return true;
     if (kind === 'collection') return sight.collections.has(id);
     if (kind === 'resource') return sight.resources.has(id);
     if (kind === 'lens') return sight.lenses.has(id);
     return false;
   }
 
-  /** The first Messages of conversations on objects the viewer sees (FR-CV-05). */
+  /** The first Messages of conversations on objects the viewer sees (FR-CV-05, DEC-PL-02). */
   function visible(sight: Sight): RawBuilder<SqlBool> {
-    if (sight.viewer.dataTeam) return sql<SqlBool>`(m.subject_kind <> 'excelKey' or m.params->>'user' = ${sight.viewer.id})`;
+    const me = sight.viewer.id;
+    const onCatalogue = seesAll(sight.viewer)
+      ? sql<SqlBool>`m.subject_kind in ('collection', 'resource', 'lens', 'report')`
+      : sql<SqlBool>`((m.subject_kind = 'collection' and m.subject_id = any(${list(sight.collections)}))
+        or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.resources)}))
+        or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.lenses)})))`;
     return sql<SqlBool>`(
-      (m.subject_kind = 'excelKey' and m.params->>'user' = ${sight.viewer.id})
-      or
-      (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.collections)}))
-      or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.resources)}))
-      or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.lenses)}))
-      or (m.subject_kind = 'query' and (m.writer_id = ${sight.viewer.id} or m.params->>'owner' = ${sight.viewer.id}))
+      (m.subject_kind = 'excelKey' and m.params->>'user' = ${me})
+      or (m.subject_kind = 'user' and (m.params->>'user' = ${me} or (${answersAsDataTeam(sight)} and m.type = any(${list(TO_DATA_TEAM)}))))
+      or ${onCatalogue}
+      or (m.subject_kind = 'query' and (
+        m.writer_id = ${me}
+        or m.params->>'owner' = ${me}
+        or ${othersQueries(sight)}
+        or (${may(sight.viewer, 'requests.decide')} and m.type = any(${list(REQUESTS)}))
+        or (${answersAsDataTeam(sight)} and m.type = any(${list(TO_DATA_TEAM)}))))
       or m.subject_kind = 'learningCard'
     )`;
   }
 
   /**
    * The conversations for the viewer (FR-CV-06): those they started or replied in, those whose first
-   * Message notifies them, as Owner, as the Data Team or as the author of its Lens.
+   * Message notifies them, as Owner, as the Data Team (`messages.dataTeam`), as the author of its Lens,
+   * or as the User it is about.
    */
   function forYou(sight: Sight): RawBuilder<SqlBool> {
     const me = sight.viewer.id;
@@ -269,11 +330,11 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         (m.subject_kind = 'collection' and m.subject_id = any(${list(sight.ownedCollections)}))
         or (m.subject_kind = 'resource' and m.subject_id = any(${list(sight.ownedResources)}))
         or (m.subject_kind = 'lens' and m.subject_id = any(${list(sight.ownedLenses)}))))
-      or (${sight.viewer.dataTeam} and m.type = any(${list(TO_DATA_TEAM)}))
-      or (${sight.viewer.dataTeam} and m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'learningCard')
+      or (${answersAsDataTeam(sight)} and m.type = any(${list(TO_DATA_TEAM)}))
+      or (${answersAsDataTeam(sight)} and m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'learningCard')
       or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'lens' and m.subject_id = any(${list(sight.authoredLenses)}))
       or (m.type = any(${list(TO_OWNER)}) and m.subject_kind = 'query' and m.params->>'owner' = ${me})
-      or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind = 'excelKey' and m.params->>'user' = ${me})
+      or (m.type = any(${list(TO_AUTHOR)}) and m.subject_kind in ('excelKey', 'user') and m.params->>'user' = ${me})
       or (m.type = any(${list(TO_LENS_USERS)}) and ${me} = any(string_to_array(m.params->>'users', ',')))
     )`;
   }
@@ -370,13 +431,42 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       unread: row.unread ?? false,
       mine: row.writerId === sight.viewer.id,
       mayClose: mayClose(row, sight),
+      mayReply: mayReply(row, sight),
     };
   }
 
-  /** Whether the viewer may close or reopen a Question or a Signal: its writer, the Owner Unit and the Data Team (DEC-CV-13). */
+  /**
+   * Whether an object is in the control of the viewer (DEC-PL-04): a Collection of their Owner Units and the Resources
+   * and Lenses in it; a Learning Card for who answers as the Data Team, which writes the cards (FR-LR-06).
+   */
+  function controls(sight: Sight, kind: SubjectKind, id: string): boolean {
+    if (kind === 'learningCard') return answersAsDataTeam(sight);
+    const owned = kind === 'collection' ? sight.ownedCollections : kind === 'resource' ? sight.ownedResources : kind === 'lens' ? sight.ownedLenses : undefined;
+    return owned?.has(id) === true;
+  }
+
+  /** Whether a Permission on the Messages of others reaches an object the viewer sees: on every asset, or on theirs (DEC-PL-04). */
+  function reachesObject(sight: Sight, key: 'messages.reply' | 'messages.close', kind: SubjectKind, id: string): boolean {
+    const how = reach(sight.viewer.permissions, key);
+    return how === 'every' || (how === 'theirs' && controls(sight, kind, id));
+  }
+
+  /**
+   * Whether the viewer may close or reopen a Question or a Signal (DEC-CV-13, DEC-PL-04): its writer always, someone else
+   * with `messages.close` on its object.
+   */
   function mayClose(row: Pick<Row, 'type' | 'writerId' | 'subjectKind' | 'subjectId'>, sight: Sight): boolean {
     if (!CLOSABLE.includes(row.type)) return false;
-    return row.writerId === sight.viewer.id || standing(sight, row.subjectKind, row.subjectId) !== null;
+    return row.writerId === sight.viewer.id || reachesObject(sight, 'messages.close', row.subjectKind, row.subjectId);
+  }
+
+  /**
+   * Whether the viewer may reply in a conversation of a Question, Remark or Signal (DEC-PL-04): its writer always,
+   * someone else with `messages.reply` on its object. A Request and what Data Hub writes take no reply (FR-CV-08).
+   */
+  function mayReply(row: Pick<Row, 'type' | 'writerId' | 'subjectKind' | 'subjectId'>, sight: Sight): boolean {
+    if (!(Object.values(WRITTEN) as string[]).includes(row.type)) return false;
+    return row.writerId === sight.viewer.id || reachesObject(sight, 'messages.reply', row.subjectKind, row.subjectId);
   }
 
   const replyOf = (row: Row, sight: Sight): ReplyView => ({
@@ -407,11 +497,11 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
     });
   }
 
-  /** How the viewer stands to an object: in its Owner Unit, the Data Team, or neither. */
+  /** How the viewer stands to an object: in its Owner Unit, as the Data Team (`messages.dataTeam`), or neither. */
   function standing(sight: Sight, kind: SubjectKind, id: string): Standing {
     const owned = kind === 'collection' ? sight.ownedCollections : kind === 'resource' ? sight.ownedResources : kind === 'lens' ? sight.ownedLenses : new Set<string>();
     if (owned.has(id)) return 'owner';
-    return sight.viewer.dataTeam ? 'dataTeam' : null;
+    return answersAsDataTeam(sight) ? 'dataTeam' : null;
   }
 
   async function markRead(from: Database, messageId: string, userId: string) {
@@ -440,10 +530,10 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       const ownedCollections = new Set(owned.map((collection) => collection.id));
       const lenses = await db.selectFrom('lenses').select(['id', 'collectionId', 'resourceIds', 'state', 'authorId']).execute();
       // A Lens as query shows it (DEC-CO-16): in a Collection the viewer sees, on Resources they may all use;
-      // while it waits for the Data Team or was refused, only its author and the Data Team (FR-LE-09, DEC-UX-128).
+      // while it waits for the Data Team or was refused, only its author; who sees all sees every one (FR-LE-09, DEC-PL-02).
       const visibleLenses = lenses.filter(
         (lens) =>
-          viewer.dataTeam ||
+          seesAll(viewer) ||
           (collections.has(lens.collectionId) &&
             ((lens.state !== 'waiting' && lens.state !== 'refused') || lens.authorId === viewer.id) &&
             lens.resourceIds.every((id) => resources.has(id))),
@@ -558,6 +648,8 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
         if (!row || !seesRow(sight, row)) return 'not_found' as const;
         // A Request is answered by its decision, and what Data Hub writes takes no reply (FR-CV-08).
         if (!(Object.values(WRITTEN) as string[]).includes(row.type)) return 'no_replies' as const;
+        // The Messages of others, with `messages.reply` on its object; their own, always (DEC-PL-04).
+        if (!mayReply(row, sight)) return 'not_allowed' as const;
         const parent = await trx.selectFrom('messages').selectAll().where('id', '=', row.id).forUpdate().executeTakeFirstOrThrow();
         const as = standing(sight, parent.subjectKind, parent.subjectId);
         const now = new Date();
@@ -679,7 +771,7 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
           .executeTakeFirstOrThrow();
         await markRead(trx, row.id, decider.id);
         const who: Sight = sight ?? {
-          viewer: { id: decider.id, name: decider.name, groups: [], dataTeam: true },
+          viewer: { id: decider.id, name: decider.name, groups: [], permissions: DECIDING },
           collections: new Set(),
           resources: new Set(),
           lenses: new Set(),
@@ -756,6 +848,31 @@ export function createMessages(db: Kysely<CatalogueDatabase>): Messages {
       return db
         .insertInto('messages')
         .values({ type: notice.type, subjectKind: 'excelKey', subjectId: notice.keyId, writerId: null, params, state: null })
+        .returning('id')
+        .executeTakeFirstOrThrow();
+    },
+
+    async userNotice(notice) {
+      // Only the User sees the Messages about them; one for the Data Team, also who gets those (FR-PL-12, EC-PL-03).
+      const params: Record<string, string> =
+        notice.type === 'MSG-USR-01'
+          ? {
+              subject: notice.name ?? '',
+              user: notice.userId,
+              actor: notice.actor,
+              from: notice.from,
+              to: notice.to,
+              deleted: notice.deleted ? 'yes' : 'no',
+              // Lists are kept as JSON, each line as identity wrote it; a count only when there is something to count.
+              gains: JSON.stringify(notice.gains.map((line) => ({ line }))),
+              losses: JSON.stringify(notice.losses.map((line) => ({ line }))),
+              ...(notice.gains.length > 0 ? { gained: String(notice.gains.length) } : {}),
+              ...(notice.losses.length > 0 ? { lost: String(notice.losses.length) } : {}),
+            }
+          : { subject: notice.name, user: notice.userId };
+      return db
+        .insertInto('messages')
+        .values({ type: notice.type, subjectKind: 'user', subjectId: notice.userId, writerId: null, params, state: null })
         .returning('id')
         .executeTakeFirstOrThrow();
     },

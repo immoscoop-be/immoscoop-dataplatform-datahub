@@ -60,6 +60,7 @@ const SUBJECTS: Record<string, string> = {
   report: 'Report',
   learningCard: 'Learning Card',
   excelKey: 'Excel key',
+  user: 'User',
 };
 const KINDS: Record<string, string> = {
   question: 'Question',

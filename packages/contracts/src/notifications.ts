@@ -9,9 +9,9 @@ import type { Language } from './messages.js';
 /**
  * Why a notification reaches whoever gets it (FR-CV-03): as a member of the Owner Unit of its object or of
  * the Data Team (DEC-LN-03, DEC-LN-07), as the writer of the Request it decides, as who started the
- * conversation it answers or wrote in it, or as the author of its Lens.
+ * conversation it answers or wrote in it, as the author of its Lens, or as the User it is about (FR-PL-12).
  */
-export type NotificationReason = 'owner' | 'dataTeam' | 'request' | 'started' | 'participant' | 'author' | 'lensUser';
+export type NotificationReason = 'owner' | 'dataTeam' | 'request' | 'started' | 'participant' | 'author' | 'lensUser' | 'self';
 
 export interface NotificationTexts {
   /** Why it came: `{group}` is the Owner Unit, by name, and `{kind}` the kind of the object, as a Defined Term. */
@@ -32,6 +32,7 @@ export const NOTIFICATION_TEXTS: Readonly<Record<Language, NotificationTexts>> =
       participant: 'Je krijgt dit omdat je in dit gesprek schreef.',
       author: 'Je krijgt dit als auteur van deze {kind}.',
       lensUser: 'Je krijgt dit omdat je deze lens de voorbije 30 dagen gebruikte.',
+      self: 'Je krijgt dit omdat het over jou gaat.',
     },
     centre: 'Elk bericht staat in je Message Centre.',
     noReplies: 'Antwoorden op deze e-mail worden niet gelezen: antwoord in Data Hub.',
@@ -45,6 +46,7 @@ export const NOTIFICATION_TEXTS: Readonly<Record<Language, NotificationTexts>> =
       participant: 'You get this because you wrote in this conversation.',
       author: 'You get this as the author of this {kind}.',
       lensUser: 'You get this because you used this lens in the last 30 days.',
+      self: 'You get this because it is about you.',
     },
     centre: 'Every Message is in your Message Centre.',
     noReplies: 'Replies to this e-mail are not read: answer in Data Hub.',
