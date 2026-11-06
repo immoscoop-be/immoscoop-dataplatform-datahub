@@ -57,7 +57,7 @@ export interface Actor {
 
 /** What identity tells catalogue, to write a Message (FR-PL-12, EC-PL-03). */
 export type UserNotice =
-  | { type: 'MSG-USR-01'; userId: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean }
+  | { type: 'MSG-USR-01'; userId: string; name: string; actor: string; from: string; to: string; gains: string[]; losses: string[]; deleted: boolean }
   | { type: 'MSG-USR-02'; userId: string; name: string };
 
 export interface UserNotices {
@@ -230,7 +230,7 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
     },
 
     /** Deletes a group and moves its Users to another, which becomes the default when it was (FR-PL-10). */
-    async remove(id: string, moveTo: string, by: Actor): Promise<{ moved: { googleId: string; from: Permissions; to: Permissions }[]; from: string; to: string }> {
+    async remove(id: string, moveTo: string, by: Actor): Promise<{ moved: { googleId: string; name: string; from: Permissions; to: Permissions }[]; from: string; to: string }> {
       const group = await one(id);
       if (group.locked) throw new PermissionGroupError('locked');
       if (moveTo === id) throw new PermissionGroupError('invalid_move');
@@ -238,7 +238,7 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
         throw new PermissionGroupError('invalid_move');
       });
       if (target.locked) throw new PermissionGroupError('invalid_move');
-      const users = await db.selectFrom('users').select('googleId').where('permissionGroupId', '=', id).execute();
+      const users = await db.selectFrom('users').select(['googleId', 'name']).where('permissionGroupId', '=', id).execute();
       await db.transaction().execute(async (trx) => {
         await trx.updateTable('users').set({ permissionGroupId: moveTo }).where('permissionGroupId', '=', id).execute();
         // The group goes first, so that there is never more than one default (FR-PL-10).
@@ -247,16 +247,16 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
       });
       for (const user of users) await log({ kind: 'moved', googleId: user.googleId, groupId: moveTo, fromName: group.name, toName: target.name, by, detail: { deleted: true } });
       await log({ kind: 'deleted', groupId: id, fromName: group.name, toName: target.name, by, detail: { users: users.length } });
-      return { moved: users.map((user) => ({ googleId: user.googleId, from: group.permissions, to: target.permissions })), from: group.name, to: target.name };
+      return { moved: users.map((user) => ({ googleId: user.googleId, name: user.name, from: group.permissions, to: target.permissions })), from: group.name, to: target.name };
     },
 
     /**
      * Moves a User to another Permission group (FR-PL-07): never the one who asks, and never the last User
      * of Admin (FR-PL-08).
      */
-    async move(googleId: string, groupId: string, by: Actor): Promise<{ from: PermissionGroupView; to: PermissionGroupView } | null> {
+    async move(googleId: string, groupId: string, by: Actor): Promise<{ name: string; from: PermissionGroupView; to: PermissionGroupView } | null> {
       if (googleId === by.id) throw new PermissionGroupError('own_group');
-      const user = await db.selectFrom('users').select(['googleId', 'permissionGroupId']).where('googleId', '=', googleId).executeTakeFirst();
+      const user = await db.selectFrom('users').select(['googleId', 'name', 'permissionGroupId']).where('googleId', '=', googleId).executeTakeFirst();
       if (!user) throw new PermissionGroupError('not_found');
       const to = await one(groupId).catch(() => {
         throw new PermissionGroupError('invalid_move');
@@ -266,7 +266,7 @@ export function createPermissionGroups(db: Kysely<IdentityDatabase>, now: () => 
       if (from.locked && from.users <= 1) throw new PermissionGroupError('last_admin');
       await db.updateTable('users').set({ permissionGroupId: groupId }).where('googleId', '=', googleId).execute();
       await log({ kind: 'moved', googleId, groupId, fromName: from.name, toName: to.name, by });
-      return { from, to };
+      return { name: user.name, from, to };
     },
 
     /**
@@ -425,7 +425,7 @@ export async function permissionGroupRoutes(
       const moved = await groups.move(request.params.googleId, groupId, actor(request));
       if (moved) {
         const { gains, losses } = changesBetween(moved.from.permissions, moved.to.permissions);
-        await tell(request, { type: 'MSG-USR-01', userId: request.params.googleId, actor: actor(request).name, from: moved.from.name, to: moved.to.name, gains, losses, deleted: false });
+        await tell(request, { type: 'MSG-USR-01', userId: request.params.googleId, name: moved.name, actor: actor(request).name, from: moved.from.name, to: moved.to.name, gains, losses, deleted: false });
       }
       const user = (await groups.users(options.webClientId)).find((one) => one.googleId === request.params.googleId);
       return { user };
@@ -496,7 +496,7 @@ export async function permissionGroupRoutes(
       const removed = await groups.remove(request.params.id, moveTo, actor(request));
       for (const user of removed.moved) {
         const { gains, losses } = changesBetween(user.from, user.to);
-        await tell(request, { type: 'MSG-USR-01', userId: user.googleId, actor: actor(request).name, from: removed.from, to: removed.to, gains, losses, deleted: true });
+        await tell(request, { type: 'MSG-USR-01', userId: user.googleId, name: user.name, actor: actor(request).name, from: removed.from, to: removed.to, gains, losses, deleted: true });
       }
       return reply.code(204).send();
     } catch (error) {
