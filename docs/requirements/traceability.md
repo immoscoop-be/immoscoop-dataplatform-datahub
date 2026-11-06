@@ -9,8 +9,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 192 | 61 (10 open, 51 done) |
-| [Backlog](../overview/backlog.md) | – | – | – | 7 (7 open) |
+| [Data Hub design principles](../design/principles.md) | – | – | 192 | 62 (11 open, 51 done) |
+| [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
 | [Artifact registry](functional/01-artifact-registry.md) | 19 (19 implemented) | 5 (1 specified, 4 implemented) | 10 | 10 (1 open, 9 done) |
@@ -24,12 +24,12 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Lenses](functional/09-lenses.md) | 18 (15 implemented, 3 withdrawn) | – | 21 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
-| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 3 (3 implemented) | – | – | 2 (2 open) |
+| [Permissions and Excel keys](functional/12-permissions-and-library-cards.md) | 15 (1 proposed, 11 specified, 3 implemented) | 4 (1 proposed, 3 specified) | 7 | 2 (1 open, 1 done) |
 | [Channels](functional/13-channels.md) | 6 (5 proposed, 1 implemented) | – | 6 | 4 (2 open, 2 done) |
 | [Conversations](functional/14-conversations.md) | 16 (16 implemented) | 2 (2 implemented) | 13 | 9 (9 done) |
 | [EDA](functional/15-eda.md) | – | – | – | – |
 | [Learning](functional/16-learning.md) | 39 (10 proposed, 13 implemented, 16 withdrawn) | – | 30 | 35 (4 open, 31 done) |
-| [Claude](functional/17-claude.md) | 26 (26 implemented) | 5 (5 implemented) | 15 | 10 (6 open, 4 done) |
+| [Claude](functional/17-claude.md) | 27 (1 specified, 26 implemented) | 5 (5 implemented) | 15 | 10 (6 open, 4 done) |
 | [Localisation](non-functional/localisation.md) | 12 (8 specified, 3 implemented, 1 withdrawn) | – | – | – |
 | [Security](non-functional/security.md) | 4 (4 implemented) | – | – | – |
 | [Platform: technical requirements](technical/00-platform.md) | 34 (3 specified, 30 implemented, 1 withdrawn) | – | 31 | 20 (6 open, 14 done) |
@@ -38,7 +38,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resources: technical requirements](technical/04-stacks-and-resources.md) | 26 (26 implemented) | – | – | – |
 | [Log and notifications: technical requirements](technical/07-log-and-notifications.md) | 4 (4 implemented) | – | – | – |
 | [Lenses: technical requirements](technical/09-lenses.md) | 9 (9 implemented) | – | – | – |
-| [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 2 (2 implemented) | – | – | – |
+| [Permissions and Excel keys: technical requirements](technical/12-permissions-and-library-cards.md) | 9 (7 proposed, 2 implemented) | – | – | – |
 | [Conversations: technical requirements](technical/14-conversations.md) | 3 (3 implemented) | – | – | – |
 | [Learning: technical requirements](technical/16-learning.md) | 8 (8 implemented) | – | – | – |
 
@@ -284,6 +284,18 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01) | A User makes an Excel key on My page, and sees it once | Implemented | – | [my-page](../design/screens/my-page.html) | [TR-PL-01](technical/12-permissions-and-library-cards.md#tr-pl-01) | [2fcf4e2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fcf4e2b61333157f284d7fe21ed7d4b4a4a8062) implements, 2026-10-31<br>[b87951e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b87951e0b0a0a77ed93b51d207fd16e021a54b2f) refs, 2026-10-31<br>[04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
 | [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02) | My page lists the Excel keys of its User, and revokes one | Implemented | – | [my-page](../design/screens/my-page.html) | [TR-PL-01](technical/12-permissions-and-library-cards.md#tr-pl-01) | [2fcf4e2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fcf4e2b61333157f284d7fe21ed7d4b4a4a8062) implements, 2026-10-31<br>[b87951e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b87951e0b0a0a77ed93b51d207fd16e021a54b2f) refs, 2026-10-31<br>[04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
 | [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | An Excel key lasts a year, and stops with its User | Implemented | – | [admin-keys](../design/screens/admin-keys.html), [my-page](../design/screens/my-page.html) | [TR-PL-01](technical/12-permissions-and-library-cards.md#tr-pl-01), [TR-PL-02](technical/12-permissions-and-library-cards.md#tr-pl-02) | [91f51fc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91f51fcbfc95156906f65d74c1a33cee91bd46fd) implements, 2026-10-31<br>[2fcf4e2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fcf4e2b61333157f284d7fe21ed7d4b4a4a8062) implements, 2026-10-31<br>[b87951e](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/b87951e0b0a0a77ed93b51d207fd16e021a54b2f) refs, 2026-10-31<br>[04b2460](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/04b2460a2d4cc53300bd4b9642f26e9ab504ca05) refs, 2026-10-31 |
+| [FR-PL-04](functional/12-permissions-and-library-cards.md#fr-pl-04) | A User is in one Permission group, and a new User gets the default | Specified | – | [admin-users](../design/screens/admin-users.html) | [TR-PL-04](technical/12-permissions-and-library-cards.md#tr-pl-04) | – |
+| [FR-PL-05](functional/12-permissions-and-library-cards.md#fr-pl-05) | A Permission group holds every Permission, each with its values | Specified | – | [admin-permission-groups](../design/screens/admin-permission-groups.html) | [TR-PL-03](technical/12-permissions-and-library-cards.md#tr-pl-03), [TR-PL-04](technical/12-permissions-and-library-cards.md#tr-pl-04) | – |
+| [FR-PL-06](functional/12-permissions-and-library-cards.md#fr-pl-06) | Users lists every User, with their Permission group | Specified | – | [admin-users](../design/screens/admin-users.html) | [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | – |
+| [FR-PL-07](functional/12-permissions-and-library-cards.md#fr-pl-07) | The Permission group of a User is changed after seeing what it changes | Specified | – | [admin-users](../design/screens/admin-users.html) | [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | – |
+| [FR-PL-08](functional/12-permissions-and-library-cards.md#fr-pl-08) | Nobody locks Data Hub out | Specified | – | [admin-users](../design/screens/admin-users.html), [admin-permission-groups](../design/screens/admin-permission-groups.html) | [TR-PL-04](technical/12-permissions-and-library-cards.md#tr-pl-04) | – |
+| [FR-PL-09](functional/12-permissions-and-library-cards.md#fr-pl-09) | Permission groups shows each group with its Permissions, and changes them all at once | Specified | – | [admin-permission-groups](../design/screens/admin-permission-groups.html) | [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | – |
+| [FR-PL-10](functional/12-permissions-and-library-cards.md#fr-pl-10) | A Permission group is made, renamed, made the default and deleted | Specified | – | [admin-permission-groups](../design/screens/admin-permission-groups.html) | [TR-PL-04](technical/12-permissions-and-library-cards.md#tr-pl-04), [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | – |
+| [FR-PL-11](functional/12-permissions-and-library-cards.md#fr-pl-11) | A change takes effect within 15 minutes, everywhere | Specified | – | [admin-users](../design/screens/admin-users.html), [admin-permission-groups](../design/screens/admin-permission-groups.html) | [TR-PL-05](technical/12-permissions-and-library-cards.md#tr-pl-05) | – |
+| [FR-PL-12](functional/12-permissions-and-library-cards.md#fr-pl-12) | A User is told when their Permission group changes for them | Specified | – | – | [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | – |
+| [FR-PL-13](functional/12-permissions-and-library-cards.md#fr-pl-13) | My page shows a User their own Permission group | Proposed | – | – | – | – |
+| [FR-PL-14](functional/12-permissions-and-library-cards.md#fr-pl-14) | Every channel applies the Permissions of the User from their sign-in | Specified | – | – | [TR-PL-05](technical/12-permissions-and-library-cards.md#tr-pl-05), [TR-PL-06](technical/12-permissions-and-library-cards.md#tr-pl-06), [TR-PL-09](technical/12-permissions-and-library-cards.md#tr-pl-09) | – |
+| [FR-PL-15](functional/12-permissions-and-library-cards.md#fr-pl-15) | Permission groups replace the Role Groups | Specified | – | – | [TR-PL-08](technical/12-permissions-and-library-cards.md#tr-pl-08) | – |
 
 ### [Channels](functional/13-channels.md)
 
@@ -391,6 +403,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CL-25](functional/17-claude.md#fr-cl-25) | Claude reads the Summary of a Resource | Implemented | – | – | [TR-SR-26](technical/04-stacks-and-resources.md#tr-sr-26) | [8e7687d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e7687d1b2ad234d4363e4df917207ee9b71dfa2) refs, 2026-11-04<br>[4a856d0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4a856d016068b1cb07ae8903bc21c16e512aaa38) refs, 2026-11-04<br>[a474dfd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a474dfd36a3cefb6575f2d384c0f5f8344c53459) implements, 2026-11-04<br>[85e0563](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/85e056302359f3df3e904f5de33ba9ec0f96e125) implements, 2026-11-04<br>[bc02476](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/bc02476e4c1b8e53af47396e9c4a64f3704060cd) refs, 2026-11-04 |
 | [FR-CL-26](functional/17-claude.md#fr-cl-26) | The Summary first, also when the Resource is shown | Implemented | – | [mcp-resource](../design/screens/mcp-resource.html) | – | [8e7687d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e7687d1b2ad234d4363e4df917207ee9b71dfa2) implements, 2026-11-04<br>[e4738cd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e4738cd8a3b65e4025eafea3f15f4fad4731c9cb) refs, 2026-11-04<br>[4a856d0](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/4a856d016068b1cb07ae8903bc21c16e512aaa38) refs, 2026-11-04 |
 | [FR-CL-27](functional/17-claude.md#fr-cl-27) | An MCP App fits a phone, and folds | Implemented | – | [mcp-resource](../design/screens/mcp-resource.html), [mcp-resource-preview](../design/screens/mcp-resource-preview.html), [mcp-resource-publish](../design/screens/mcp-resource-publish.html), [mcp-query](../design/screens/mcp-query.html) | – | [8e7687d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8e7687d1b2ad234d4363e4df917207ee9b71dfa2) implements, 2026-11-04<br>[e4738cd](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/e4738cd8a3b65e4025eafea3f15f4fad4731c9cb) refs, 2026-11-04 |
+| [FR-CL-28](functional/17-claude.md#fr-cl-28) | A result reaches Claude as the Permission group of the User says | Specified | – | – | [TR-PL-09](technical/12-permissions-and-library-cards.md#tr-pl-09) | – |
 
 ## Edge cases
 
@@ -434,6 +447,15 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
 | [EC-RC-01](functional/05-resource-card.md#ec-rc-01) | A field that a Known Gap names leaves the Resource | Implemented | – | [TR-SR-25](technical/04-stacks-and-resources.md#tr-sr-25) | [a408c18](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a408c1806eb795e89115e270d393ee53a06440f0) refs, 2026-11-04<br>[8f64169](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/8f641695801f9a945eee53cb3731294ae970315f) implements, 2026-11-04<br>[30a611d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/30a611db91a340e5cb014586e5d331bfd1c444d5) implements, 2026-11-04<br>[c699596](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c69959667107795a3ba02551632baab7866b8654) refs, 2026-11-04 |
+
+### [Permissions and Excel keys](functional/12-permissions-and-library-cards.md)
+
+| ID | Title | Status | Screens | Realised by | Commits |
+| --- | --- | --- | --- | --- | --- |
+| [EC-PL-01](functional/12-permissions-and-library-cards.md#ec-pl-01) | A User loses a Permission while a page offers it | Specified | – | – | – |
+| [EC-PL-02](functional/12-permissions-and-library-cards.md#ec-pl-02) | A User sees less than before | Specified | – | – | – |
+| [EC-PL-03](functional/12-permissions-and-library-cards.md#ec-pl-03) | Admin has no User who can still sign in | Proposed | – | – | – |
+| [EC-PL-04](functional/12-permissions-and-library-cards.md#ec-pl-04) | A User has more Excel keys than their Permission group now allows | Specified | – | – | – |
 
 ### [Conversations](functional/14-conversations.md)
 
@@ -585,6 +607,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | --- | --- | --- | --- | --- |
 | [TR-PL-01](technical/12-permissions-and-library-cards.md#tr-pl-01) | identity keeps Excel keys as hashes, each for a year | Implemented | [FR-PL-01](functional/12-permissions-and-library-cards.md#fr-pl-01), [FR-PL-02](functional/12-permissions-and-library-cards.md#fr-pl-02), [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03), [DEC-DH-47](../overview/data-hub.md#dec-dh-47) | [91f51fc](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/91f51fcbfc95156906f65d74c1a33cee91bd46fd) refs, 2026-10-31<br>[2fcf4e2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fcf4e2b61333157f284d7fe21ed7d4b4a4a8062) implements, 2026-10-31 |
 | [TR-PL-02](technical/12-permissions-and-library-cards.md#tr-pl-02) | The User of a key hears that it expires, or that the Data Team revoked it | Implemented | [FR-PL-03](functional/12-permissions-and-library-cards.md#fr-pl-03) | [2fcf4e2](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/2fcf4e2b61333157f284d7fe21ed7d4b4a4a8062) implements, 2026-10-31 |
+| [TR-PL-03](technical/12-permissions-and-library-cards.md#tr-pl-03) | One catalogue of Permissions, in contracts | Proposed | [FR-PL-05](functional/12-permissions-and-library-cards.md#fr-pl-05), [DEC-PL-01](functional/12-permissions-and-library-cards.md#dec-pl-01) | – |
+| [TR-PL-04](technical/12-permissions-and-library-cards.md#tr-pl-04) | identity keeps the Permission groups and the group of every User | Proposed | [FR-PL-04](functional/12-permissions-and-library-cards.md#fr-pl-04), [FR-PL-05](functional/12-permissions-and-library-cards.md#fr-pl-05), [FR-PL-08](functional/12-permissions-and-library-cards.md#fr-pl-08), [FR-PL-10](functional/12-permissions-and-library-cards.md#fr-pl-10) | – |
+| [TR-PL-05](technical/12-permissions-and-library-cards.md#tr-pl-05) | The Access Token carries the Permissions of the User | Proposed | [FR-PL-11](functional/12-permissions-and-library-cards.md#fr-pl-11), [FR-PL-14](functional/12-permissions-and-library-cards.md#fr-pl-14) | – |
+| [TR-PL-06](technical/12-permissions-and-library-cards.md#tr-pl-06) | Every service checks a Permission, never a role | Proposed | [FR-PL-14](functional/12-permissions-and-library-cards.md#fr-pl-14), [DEC-PL-01](functional/12-permissions-and-library-cards.md#dec-pl-01) | – |
+| [TR-PL-07](technical/12-permissions-and-library-cards.md#tr-pl-07) | identity serves Users and Permission groups to Admin | Proposed | [FR-PL-06](functional/12-permissions-and-library-cards.md#fr-pl-06), [FR-PL-07](functional/12-permissions-and-library-cards.md#fr-pl-07), [FR-PL-09](functional/12-permissions-and-library-cards.md#fr-pl-09), [FR-PL-10](functional/12-permissions-and-library-cards.md#fr-pl-10), [FR-PL-12](functional/12-permissions-and-library-cards.md#fr-pl-12) | – |
+| [TR-PL-08](technical/12-permissions-and-library-cards.md#tr-pl-08) | The switch from Role Groups | Proposed | [FR-PL-15](functional/12-permissions-and-library-cards.md#fr-pl-15), [DEC-PL-07](functional/12-permissions-and-library-cards.md#dec-pl-07) | – |
+| [TR-PL-09](technical/12-permissions-and-library-cards.md#tr-pl-09) | The MCP server follows the Permissions of the User | Proposed | [FR-PL-14](functional/12-permissions-and-library-cards.md#fr-pl-14), [DEC-PL-05](functional/12-permissions-and-library-cards.md#dec-pl-05), [FR-CL-28](functional/17-claude.md#fr-cl-28) | – |
 
 ### [Conversations: technical requirements](technical/14-conversations.md)
 
