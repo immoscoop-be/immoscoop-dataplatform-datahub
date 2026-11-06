@@ -2,7 +2,7 @@
   import Breadcrumb from '@datahub/ui/components/Breadcrumb.svelte';
   import Sheet from '@datahub/ui/containers/Sheet.svelte';
   import Icon from '@datahub/ui/foundations/Icon.svelte';
-  import { currentLanguage, t } from '@datahub/ui/foundations/texts.svelte.js';
+  import { currentLanguage, t, tParts } from '@datahub/ui/foundations/texts.svelte.js';
   import { ago } from '@datahub/ui/foundations/when.js';
   import Button from '@datahub/ui/primitives/Button.svelte';
   import Chip from '@datahub/ui/primitives/Chip.svelte';
@@ -11,6 +11,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import { Refused } from '../lib/api.js';
   import type { DbtJob, DbtProject, Delivery, DeliveryReason, JobKind, NotChoosable, Registry, SetStatus, SourceJobTile } from '../lib/registry.js';
+  import { resourcePath } from '../lib/routes.js';
 
   /**
    * Webhooks, the first tool of Admin (FR-AR-18, FR-AR-19, DEC-UX-130): per dbt project Data Hub follows its
@@ -41,7 +42,8 @@
   let tiles: SourceJobTile[] | null | undefined = $state();
   let webhookUrl = $state('');
   let deliveries: Delivery[] | null | undefined = $state();
-  let shown: Shown = $state('all');
+  /** The deliveries open on Recorded: the runs Data Hub took in (DEC-UX-194). */
+  let shown: Shown = $state('recorded');
   let openedId: string | undefined = $state();
   let again: { runId: string; state: 'busy' | 'queued' | 'failed' } | undefined = $state();
 
@@ -207,11 +209,30 @@
   }
 
   /** The line of a delivery in the list: its dbt project, and why it was ignored or refused, or how its set fares. */
+  /** What catalogue did with the set of a delivery, once it was told; null before, or when not known. */
+  const toldOf = (delivery: Delivery) => {
+    const answer = delivery.set?.catalogue;
+    return answer && !('error' in answer) ? answer : null;
+  };
+  /** How many new Resources the run of a delivery registered, which wait without a Collection. */
+  const waitingOf = (delivery: Delivery) => toldOf(delivery)?.registered ?? 0;
+  /** The rest of what catalogue did: Resources renamed, withdrawn or back, as one sentence; empty for none. */
+  function besides(delivery: Delivery): string {
+    const told = toldOf(delivery);
+    if (!told) return '';
+    const parts = [
+      told.renamed > 0 && t('admin.did.renamed', { count: told.renamed }),
+      told.withdrawn > 0 && t('admin.did.withdrawn', { count: told.withdrawn }),
+      told.back > 0 && t('admin.did.back', { count: told.back }),
+    ].filter((part): part is string => typeof part === 'string');
+    return parts.join(', ');
+  }
+
   function excerpt(delivery: Delivery): string {
     if (delivery.outcome === 'refused') return t('admin.why.signature', { environment });
     const what = delivery.reason
       ? t(WHY[delivery.reason], { environment, status: delivery.runStatus ?? '' })
-      : `${t('admin.deliveries.run', { run: delivery.runId ?? '' })} ${t(SET_TEXT[delivery.set?.status ?? 'pending'])}`;
+      : `${t('admin.deliveries.run', { run: delivery.runId ?? '' })} ${t(SET_TEXT[delivery.set?.status ?? 'pending'])}${waitingOf(delivery) > 0 ? ` · ${t(waitingOf(delivery) === 1 ? 'admin.deliveries.waitingOne' : 'admin.deliveries.waiting', { count: waitingOf(delivery) })}` : ''}`;
     const project = delivery.projectId ? projectOf(delivery.projectId) : '';
     return project ? `${project} · ${what}` : what;
   }
@@ -390,8 +411,39 @@
             <ol class="steps">
               <li><span>{t('admin.did.recorded')}</span><span class="meta">{when(opened.receivedAt)}</span></li>
               {#if opened.set?.status === 'processed'}
-                <li><span>{t('admin.did.processed')}</span>{#if opened.set.processedAt}<span class="meta">{when(opened.set.processedAt)}</span>{/if}</li>
-                <li><span>{t(opened.set.current ? 'admin.did.current' : 'admin.did.notCurrent', { project: projectOf(opened.projectId) })}</span></li>
+                {@const set = opened.set}
+                {@const told = toldOf(opened)}
+                {#if typeof set.nodes === 'number'}
+                  <!-- As drawn: what it fetched, then what it held (FR-AR-19). -->
+                  <li><span>{t('admin.did.fetched')}</span></li>
+                  <li>
+                    <span>{t(set.exposures === 1 ? 'admin.did.nodesOne' : 'admin.did.nodes', { nodes: set.nodes.toLocaleString(currentLanguage() === 'nl' ? 'nl-BE' : 'en-GB'), exposures: set.exposures ?? 0 })}</span>
+                    {#if set.processedAt}<span class="meta">{when(set.processedAt)}</span>{/if}
+                  </li>
+                {:else}
+                  <li><span>{t('admin.did.processed')}</span>{#if set.processedAt}<span class="meta">{when(set.processedAt)}</span>{/if}</li>
+                {/if}
+                <!-- A run catalogue was told about was the Current Version then: what it brought stays with it after a later run. -->
+                <li><span>{t(set.current || set.catalogue ? 'admin.did.current' : 'admin.did.notCurrent', { project: projectOf(opened.projectId) })}</span></li>
+                {#if set.catalogue && 'error' in set.catalogue}
+                  <li class="fail"><span>{t('admin.did.notTold', { error: set.catalogue.error })}</span></li>
+                {:else if told && !told.applied}
+                  <li class="kept"><span>{t('admin.did.later')}</span></li>
+                {:else if told}
+                  {@const first = told.registeredIds[0]}
+                  <li>
+                    <span>
+                      {#if told.registered === 0}
+                        {t('admin.did.noRegistration')}
+                      {:else}
+                        {#each tParts(told.registered === 1 ? 'admin.did.registeredOne' : 'admin.did.registered', { count: told.registered }, { without: t('admin.did.withoutCollection') }) as part, index (index)}{#if 'name' in part}{#if first}<a class="text-link" href={resourcePath(first)}>{part.name}</a>{:else}{part.name}{/if}{:else}{part.text}{/if}{/each}
+                      {/if}{#if besides(opened)}{`; ${besides(opened)}`}{/if}
+                    </span>
+                  </li>
+                {/if}
+                {#if !set.current && set.catalogue}
+                  <li class="kept"><span>{t('admin.did.notCurrent', { project: projectOf(opened.projectId) })}</span></li>
+                {/if}
               {:else if opened.set?.status === 'failed'}
                 <li class="fail"><span>{t('admin.did.failed', { error: opened.set.error ?? '' })}</span></li>
                 <li class="kept"><span>{t('admin.did.kept', { project: projectOf(opened.projectId) })}</span></li>
@@ -577,6 +629,7 @@
   .steps li span.meta { margin-left: 8px; }
   .steps .fail { color: var(--signal-warn); }
   .steps .kept { color: var(--text-secondary); }
+  .text-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
   .why { margin-top: 16px; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); line-height: 1.5; }
   .why b { font-weight: var(--weight-medium); }
   .why.attention { background: color-mix(in srgb, var(--signal-warn) 11%, var(--surface-solid)); }

@@ -136,6 +136,24 @@ describe.skipIf(!url)('the Artifact Sets', () => {
     expect(orders.description).toBe('Changed.');
   });
 
+  it('keeps how many Nodes and exposures tagged datahub a set held, and what catalogue did with it (FR-AR-19)', async () => {
+    const exposed = normalise(sampleManifest({ datahub: true }), sampleCatalog());
+    const set = await claimed('100');
+    await sets.save(set, exposed);
+    const facts = () => db.selectFrom('artifactSets').select(['nodes', 'exposures', 'catalogue']).where('id', '=', set.id).executeTakeFirstOrThrow();
+    // Three exposures carry the tag: datahub_orders, datahub_marts and datahub_lines.
+    expect(await facts()).toEqual({ nodes: exposed.nodes.length, exposures: 3, catalogue: null });
+    const answer = { applied: true, registered: 2, registeredIds: ['r-1', 'r-2'], renamed: 0, withdrawn: 1, back: 0 };
+    await sets.noteCatalogue(set.id, answer);
+    expect((await facts()).catalogue).toEqual(answer);
+    // Processed again, it is told again: what catalogue did the first time no longer holds.
+    await sets.reprocess('100');
+    await sets.save((await sets.claimNext()) as ClaimedSet, exposed);
+    expect((await facts()).catalogue).toBeNull();
+    await sets.noteCatalogue(set.id, { error: 'catalogue answered 503' });
+    expect((await facts()).catalogue).toEqual({ error: 'catalogue answered 503' });
+  });
+
   it('puts a processed or failed set back in the queue, but not one in progress (FR-AR-14)', async () => {
     const done = await claimed('100');
     await sets.save(done, sample);

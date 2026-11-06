@@ -431,7 +431,8 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
       const answer = await fromRegistry(update('1', ['visits', 'leads']));
       expect(answer.statusCode).toBe(200);
-      expect(answer.json()).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
+      expect(answer.json()).toMatchObject({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
+      expect(answer.json().registeredIds).toHaveLength(2);
       expect(checkedByQuery).toEqual([]);
     });
 

@@ -1,4 +1,5 @@
 import { type Kysely, sql } from 'kysely';
+import type { CatalogueAnswer } from './catalogue.js';
 import type { DeliveryOutcome, DeliveryReason, RegistryDatabase, SetStatus } from './database.js';
 
 /** What a delivery of the webhook said, as far as Data Hub read it. */
@@ -27,8 +28,19 @@ export interface Delivery extends Required<DeliveryFacts> {
   receivedAt: Date;
   outcome: DeliveryOutcome;
   reason: DeliveryReason | null;
-  /** The Artifact Set of a recorded delivery as it stands now: pending, processed, or failed and why. */
-  set: { status: SetStatus; error: string | null; processedAt: Date | null; current: boolean } | null;
+  /**
+   * The Artifact Set of a recorded delivery as it stands now: pending, processed, or failed and why; once processed,
+   * how many Nodes and exposures tagged `datahub` it held and, once current, what catalogue did with it (FR-AR-19).
+   */
+  set: {
+    status: SetStatus;
+    error: string | null;
+    processedAt: Date | null;
+    current: boolean;
+    nodes: number | null;
+    exposures: number | null;
+    catalogue: CatalogueAnswer | null;
+  } | null;
 }
 
 export interface Deliveries {
@@ -76,7 +88,7 @@ export function createDeliveries(db: Kysely<RegistryDatabase>, now: () => Date =
         .leftJoin('artifactSets as s', (join) => join.on(sql`s.run_id::text`, '=', sql.ref('d.runId')).on('d.outcome', '=', 'recorded'))
         .leftJoin('projects as p', 'p.currentSetId', 's.id')
         .selectAll('d')
-        .select(['s.status as setStatus', 's.error as setError', 's.processedAt as setProcessedAt', 'p.projectId as currentOf'])
+        .select(['s.status as setStatus', 's.error as setError', 's.processedAt as setProcessedAt', 's.nodes as setNodes', 's.exposures as setExposures', 's.catalogue as setCatalogue', 'p.projectId as currentOf'])
         .where('d.receivedAt', '>=', since())
         .orderBy('d.receivedAt', 'desc')
         .orderBy('d.id', 'desc')
@@ -87,7 +99,17 @@ export function createDeliveries(db: Kysely<RegistryDatabase>, now: () => Date =
         outcome: row.outcome,
         reason: row.reason,
         ...Object.fromEntries(FACTS.map((key) => [key, row[key]])),
-        set: row.setStatus ? { status: row.setStatus, error: row.setError ?? null, processedAt: row.setProcessedAt ?? null, current: row.currentOf !== null } : null,
+        set: row.setStatus
+          ? {
+              status: row.setStatus,
+              error: row.setError ?? null,
+              processedAt: row.setProcessedAt ?? null,
+              current: row.currentOf !== null,
+              nodes: row.setNodes ?? null,
+              exposures: row.setExposures ?? null,
+              catalogue: row.setCatalogue ?? null,
+            }
+          : null,
       })) as Delivery[];
     },
 

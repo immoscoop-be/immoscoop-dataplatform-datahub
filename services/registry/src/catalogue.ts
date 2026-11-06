@@ -15,8 +15,37 @@ export interface ResourcesUpdate {
   changes: UpstreamChange[];
 }
 
+/** What catalogue did with the exposed tables of one run, as its delivery on Webhooks shows it (FR-AR-19). */
+export interface CatalogueOutcome {
+  /** False when catalogue had already applied a later run of the project, and left this one. */
+  applied: boolean;
+  registered: number;
+  /** The Resources it registered, which wait without a Collection: the way to them. */
+  registeredIds: string[];
+  renamed: number;
+  withdrawn: number;
+  back: number;
+}
+
+/** What an Artifact Set keeps of telling catalogue: what catalogue did, or why it was not told. */
+export type CatalogueAnswer = CatalogueOutcome | { error: string };
+
 export interface Catalogue {
-  resources(update: ResourcesUpdate): Promise<void>;
+  resources(update: ResourcesUpdate): Promise<CatalogueOutcome>;
+}
+
+/** The answer of catalogue, read safely: a catalogue that does not send the IDs yet sends none. */
+export function readOutcome(body: unknown): CatalogueOutcome {
+  const answer = (body !== null && typeof body === 'object' ? body : {}) as Record<string, unknown>;
+  const count = (value: unknown) => (typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : 0);
+  return {
+    applied: answer.applied !== false,
+    registered: count(answer.registered),
+    registeredIds: Array.isArray(answer.registeredIds) ? answer.registeredIds.filter((id): id is string => typeof id === 'string') : [],
+    renamed: count(answer.renamed),
+    withdrawn: count(answer.withdrawn),
+    back: count(answer.back),
+  };
 }
 
 /** Calls catalogue as the service account of registry, with a Google ID token for its address (DEC-PF-26). */
@@ -33,6 +62,7 @@ export function createCatalogue(url: string, idToken: IdTokenSource, request: ty
         const body = (await response.json().catch(() => ({}))) as { message?: string };
         throw new Error(`catalogue answered ${response.status}${body.message ? `: ${body.message}` : ''}`);
       }
+      return readOutcome(await response.json().catch(() => ({})));
     },
   };
 }

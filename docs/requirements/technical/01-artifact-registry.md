@@ -97,6 +97,8 @@ When the ingest job has made an Artifact Set the Current Version of its dbt proj
 
 It sends them, all at once for the project, to catalogue's `POST /internal/resources`, with a Google ID token of the service account of registry for catalogue's address as audience. A set that is processed but does not become current is not sent. A call that fails is logged and does not fail the set: the next run of the project sends the whole state again, and processing a run again ([TR-AR-07](#tr-ar-07)) sends it at once.
 
+catalogue answers what it did: how many Resources it registered, with their IDs, and how many it renamed, withdrew or brought back, or that it had already applied a later run. registry keeps that answer with the set, or the reason the call failed, beside how many Nodes the set held and how many of them are exposures with the tag `datahub`, so that the delivery of the run on Webhooks shows them ([FR-AR-19](../functional/01-artifact-registry.md#fr-ar-19)). Processing a run again clears the answer until catalogue is told again.
+
 <a id="tr-ar-09"></a>
 ### TR-AR-09 · registry reads the Domain Model from the collector, every time
 

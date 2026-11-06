@@ -99,7 +99,15 @@ describe.skipIf(!url)('the Source Jobs and the deliveries of the webhook (FR-AR-
       ['ignored', 'notSourceJob', '58212208'],
       ['recorded', null, '58209931'],
     ]);
-    expect(list[2]?.set).toEqual({ status: 'failed', error: 'dbt Cloud has no catalog.json for this run', processedAt: null, current: false });
+    expect(list[2]?.set).toEqual({
+      status: 'failed',
+      error: 'dbt Cloud has no catalog.json for this run',
+      processedAt: null,
+      current: false,
+      nodes: null,
+      exposures: null,
+      catalogue: null,
+    });
     expect(list[1]?.set).toBeNull();
     // Refused, and recorded but failed, call for a look.
     expect(await deliveries.toLookAt()).toBe(2);
@@ -109,6 +117,18 @@ describe.skipIf(!url)('the Source Jobs and the deliveries of the webhook (FR-AR-
     expect(await deliveries.list()).toEqual([]);
     await deliveries.record({ outcome: 'refused', reason: 'signature' });
     expect((await db.selectFrom('deliveries').select('id').execute()).length).toBe(1);
+  });
+
+  it('tells with a recorded delivery how many Nodes and exposures its set held and what catalogue did with it (FR-AR-19)', async () => {
+    const deliveries = createDeliveries(db, () => new Date('2026-11-06T15:10:00Z'));
+    const answer = { applied: true, registered: 5, registeredIds: ['r-1', 'r-2', 'r-3', 'r-4', 'r-5'], renamed: 0, withdrawn: 0, back: 0 };
+    await db
+      .insertInto('artifactSets')
+      .values({ projectId: '17121', jobId: '748279', runId: '59084918', status: 'processed', processedAt: new Date('2026-11-06T15:09:50Z'), nodes: 4812, exposures: 18, catalogue: answer })
+      .execute();
+    await deliveries.record({ outcome: 'recorded', jobId: '748279', projectId: '17121', runId: '59084918', runStatus: 'Success' });
+    const [recorded] = await deliveries.list();
+    expect(recorded?.set).toMatchObject({ status: 'processed', nodes: 4812, exposures: 18, catalogue: answer });
   });
 
   it('keeps at most a hundred refused deliveries an hour, so that trying the address fills nothing', async () => {

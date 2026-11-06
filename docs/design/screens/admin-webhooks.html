@@ -100,7 +100,8 @@
 <div class="section-head"><h2>Deliveries</h2><span class="meta">The last 30 days</span></div>
 <div class="mc" style="margin-top:0" data-pane-group="wh" data-pane="recorded ignored refused failed test">
  <section class="card mc-list wh-list" aria-label="Deliveries" data-group="wh">
-  <div class="mc-chips" role="tablist" aria-label="What Data Hub did"><button class="seg on" role="tab" aria-selected="true">All<span class="count">8</span></button><button class="seg" role="tab" aria-selected="false">Recorded<span class="count">3</span></button><button class="seg" role="tab" aria-selected="false">Ignored<span class="count">4</span></button><button class="seg" role="tab" aria-selected="false">Refused<span class="count">1</span></button></div>
+  <div class="mc-chips" role="tablist" aria-label="What Data Hub did"><button class="seg" role="tab" aria-selected="false">All<span class="count">8</span></button><button class="seg on" role="tab" aria-selected="true">Recorded<span class="count">2</span></button><button class="seg" role="tab" aria-selected="false">Ignored<span class="count">4</span></button><button class="seg" role="tab" aria-selected="false">Refused<span class="count">1</span></button><button class="seg" role="tab" aria-selected="false">Failed<span class="count">1</span></button></div>
+  <!-- The list opens on Recorded (DEC-UX-194): the deliveries of the other kinds show under their own chip, or under All. -->
   <a class="wh-item on" href="#" data-target="recorded" role="tab" aria-selected="true">
    <i class="ph-fill ph-check-circle wh-outcome done" aria-hidden="true"></i>
    <span style="min-width:0">
@@ -109,7 +110,7 @@
     <span class="mc-excerpt">Colleciónes · run 58214470 succeeded. Processed: 9 new Resources wait without a Collection.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" data-target="ignored" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" data-target="ignored" role="tab" aria-selected="false">
    <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 12:31</span></span>
@@ -117,7 +118,7 @@
     <span class="mc-excerpt">dbt-prod · no Source Job of uat: a CI job, it builds pull requests.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" role="tab" aria-selected="false">
    <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 12:19</span></span>
@@ -133,7 +134,7 @@
     <span class="mc-excerpt">dbt-prod · run 58209931 succeeded. Processed: 3 changes, none to a Resource.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" data-target="test" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" data-target="test" role="tab" aria-selected="false">
    <i class="ph-fill ph-flask wh-outcome" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">today 10:12</span></span>
@@ -141,7 +142,7 @@
     <span class="mc-excerpt">Sent with Test endpoint. The signature is right.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" data-target="refused" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" data-target="refused" role="tab" aria-selected="false">
    <i class="ph-fill ph-prohibit wh-outcome warn" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind signal">Refused</span><span class="meta" style="margin-left:auto">today 09:58</span></span>
@@ -149,7 +150,7 @@
     <span class="mc-excerpt">The signature does not match the secret of Data Hub uat.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" data-target="failed" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" data-target="failed" role="tab" aria-selected="false">
    <i class="ph-fill ph-warning-circle wh-outcome warn" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind signal">Recorded, failed</span><span class="meta" style="margin-left:auto">yesterday 16:20</span></span>
@@ -157,7 +158,7 @@
     <span class="mc-excerpt">Colleciónes · run 58141207 has no catalog.json: the job does not generate the docs.</span>
    </span>
   </a>
-  <a class="wh-item" href="#" role="tab" aria-selected="false">
+  <a hidden class="wh-item" href="#" role="tab" aria-selected="false">
    <i class="ph-fill ph-minus-circle wh-outcome" aria-hidden="true"></i>
    <span style="min-width:0">
     <span class="mc-row"><span class="kind">Ignored</span><span class="meta" style="margin-left:auto">yesterday 06:05</span></span>

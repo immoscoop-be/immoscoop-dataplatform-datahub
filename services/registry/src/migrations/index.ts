@@ -6,6 +6,7 @@ import * as domainModel from './0004-domain-model.js';
 import * as storage from './0005-storage.js';
 import * as webhooks from './0006-webhooks.js';
 import * as sourceJobs from './0007-source-jobs.js';
+import * as setOutcome from './0008-set-outcome.js';
 
 /** The migrations of registry, by name; they run in the order of their names (TR-PF-09). */
 export const migrations: Record<string, Migration> = {
@@ -16,4 +17,5 @@ export const migrations: Record<string, Migration> = {
   '0005-storage': storage,
   '0006-webhooks': webhooks,
   '0007-source-jobs': sourceJobs,
+  '0008-set-outcome': setOutcome,
 };

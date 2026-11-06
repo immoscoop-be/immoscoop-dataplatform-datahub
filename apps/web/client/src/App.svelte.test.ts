@@ -227,7 +227,8 @@ const DELIVERIES = [
   { ...DELIVERY, id: '4', receivedAt: '2026-10-31T09:20:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58141207', runStatus: 'Success', set: { status: 'failed', error: 'The run has no catalog.json.', processedAt: null, current: false }, sourceJob: true },
   { ...DELIVERY, id: '3', receivedAt: '2026-10-31T09:10:00Z', outcome: 'ignored', reason: 'notSourceJob', jobId: '324451', jobName: 'CI/CD - UAT - triggered by Github Pipelines', runId: '58212208', runStatus: 'Success', set: null, sourceJob: false },
   { ...DELIVERY, id: '2', receivedAt: '2026-10-31T08:58:00Z', outcome: 'refused', reason: 'signature', eventType: null, webhookName: null, accountId: null, projectId: null, environmentName: null, jobId: null, jobName: null, runId: null, runStatus: null, set: null, sourceJob: false },
-  { ...DELIVERY, id: '1', receivedAt: '2026-10-31T06:05:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58101536', runStatus: 'Success', set: { status: 'processed', error: null, processedAt: '2026-10-31T06:07:00Z', current: true }, sourceJob: true },
+  { ...DELIVERY, id: '1', receivedAt: '2026-10-31T06:05:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58101536', runStatus: 'Success', set: { status: 'processed', error: null, processedAt: '2026-10-31T06:07:00Z', current: true, nodes: 4812, exposures: 18, catalogue: { applied: true, registered: 5, registeredIds: ['r-1', 'r-2', 'r-3', 'r-4', 'r-5'], renamed: 0, withdrawn: 1, back: 0 } }, sourceJob: true },
+  { ...DELIVERY, id: '0', receivedAt: '2026-10-30T06:05:00Z', outcome: 'recorded', reason: null, jobId: '322951', jobName: 'daily UAT build', runId: '58001122', runStatus: 'Success', set: { status: 'processed', error: null, processedAt: '2026-10-30T06:07:00Z', current: false, nodes: 4790, exposures: 17, catalogue: { error: 'catalogue answered 503' } }, sourceJob: true },
 ];
 
 const WEEKLY_DETAIL = {
@@ -1487,9 +1488,31 @@ describe('Admin, for the Data Team', () => {
     open('/admin/webhooks');
     render(App, { config: UAT });
     const list = within(await screen.findByRole('region', { name: 'Leveringen' }));
+    // The deliveries open on Recorded: the runs Data Hub took in (DEC-UX-194).
+    expect((await list.findByRole('radio', { name: 'Opgenomen 2' })).getAttribute('aria-checked')).toBe('true');
+    expect(list.getAllByRole('button')).toHaveLength(2);
+    expect(list.getByText(/run 58101536 verwerkt · 5 nieuwe Resources wachten$/)).toBeTruthy();
+    // What the run held, and what it brought: the new Resources, with the way to them (FR-AR-19).
+    const recorded = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(recorded.getByRole('heading', { name: 'Opgenomen' })).toBeTruthy();
+    expect(recorded.getByText('Haalde manifest.json en catalog.json op uit dbt Cloud')).toBeTruthy();
+    expect(recorded.getByText('Verwerkte 4.812 Nodes, met 18 exposures met de tag datahub')).toBeTruthy();
+    expect(recorded.getByText('Maakte er de Current Version van immoscoop_dataplatform_sql van')).toBeTruthy();
+    const step = recorded.getByRole('link', { name: 'zonder Collection' });
+    expect(step.getAttribute('href')).toBe('/resources/r-1');
+    expect(step.closest('li')?.textContent?.replace(/\s+/g, ' ').trim()).toBe('5 Registrations: 5 nieuwe Resources wachten zonder Collection; 1 Withdrawn');
+    // An older run keeps what it brought, or that catalogue was not told, once a later run is current.
+    await fireEvent.click(list.getAllByRole('button')[1]!);
+    const older = within(screen.getByRole('region', { name: 'De geopende levering' }));
+    expect(older.getByText('Maakte er de Current Version van immoscoop_dataplatform_sql van')).toBeTruthy();
+    expect(older.getByText('catalogue kreeg de tabellen van de exposures niet door: catalogue answered 503. De volgende run geeft ze opnieuw door.')).toBeTruthy();
+    expect(older.getByText('Een latere run is nu de Current Version van immoscoop_dataplatform_sql')).toBeTruthy();
+
+    await fireEvent.click(list.getByRole('radio', { name: 'Alle 5' }));
+    await fireEvent.click(list.getAllByRole('button')[0]!);
     const items = await list.findAllByRole('button', { pressed: false });
-    expect(items).toHaveLength(3);
-    // The newest opens first: recorded, but its set failed.
+    expect(items).toHaveLength(4);
+    // The newest: recorded, but its set failed.
     const opened = within(screen.getByRole('region', { name: 'De geopende levering' }));
     expect(opened.getByRole('heading', { name: 'Opgenomen, mislukt' })).toBeTruthy();
     expect(opened.getByText('De verwerking mislukte: The run has no catalog.json.')).toBeTruthy();

@@ -1,5 +1,7 @@
 import type { Kysely, Transaction } from 'kysely';
+import type { CatalogueAnswer } from './catalogue.js';
 import type { RegistryDatabase, SetStatus } from './database.js';
+import { DATAHUB_TAG } from './exposed.js';
 import type { NormalisedSet } from './normalise.js';
 
 /** A run of a Source Job, as dbt Cloud reports it (TR-AR-01). */
@@ -80,6 +82,11 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
       return (await db.selectFrom('artifactSets').select('status').where('runId', '=', runId).executeTakeFirst())?.status;
     },
 
+    /** What catalogue did with the exposed tables of the set once it became current, or why it was not told (FR-AR-19). */
+    async noteCatalogue(id: number, answer: CatalogueAnswer): Promise<void> {
+      await db.updateTable('artifactSets').set({ catalogue: answer }).where('id', '=', id).execute();
+    },
+
     /** The set could not be processed: the reason stays with it, the Current Version stays as it was. */
     async fail(id: number, error: string): Promise<void> {
       await db.updateTable('artifactSets').set({ status: 'failed', error, processedAt: now() }).where('id', '=', id).execute();
@@ -128,7 +135,17 @@ export function createArtifactSets(db: Kysely<RegistryDatabase>, now: () => Date
 
         await trx
           .updateTable('artifactSets')
-          .set({ status: 'processed', error: null, processedAt: now(), dbtVersion: normalised.dbtVersion, generatedAt: normalised.generatedAt })
+          .set({
+            status: 'processed',
+            error: null,
+            processedAt: now(),
+            dbtVersion: normalised.dbtVersion,
+            generatedAt: normalised.generatedAt,
+            nodes: normalised.nodes.length,
+            exposures: normalised.nodes.filter((node) => node.resourceType === 'exposure' && node.tags.includes(DATAHUB_TAG)).length,
+            // Told again, if it becomes current: what catalogue did before no longer holds.
+            catalogue: null,
+          })
           .where('id', '=', set.id)
           .execute();
 

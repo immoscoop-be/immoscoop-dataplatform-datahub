@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ClaimedSet } from './artifact-sets.js';
 import type { Bucket } from './bucket.js';
-import type { ResourcesUpdate } from './catalogue.js';
+import type { CatalogueAnswer, ResourcesUpdate } from './catalogue.js';
 import type { DbtCloud } from './dbt-cloud.js';
 import { sampleCatalog, sampleManifest } from './fixtures.js';
 import type { NormalisedSet } from './normalise.js';
@@ -23,6 +23,7 @@ function harness(
   const asked: { runId: string; file: string; wait: boolean }[] = [];
   const logged: string[] = [];
   const told: ResourcesUpdate[] = [];
+  const noted: { id: number; answer: CatalogueAnswer }[] = [];
 
   const bucket: Bucket = {
     read: async (path) => objects.get(path),
@@ -50,6 +51,9 @@ function harness(
       fail: async (id, error) => {
         failed.push({ id, error });
       },
+      noteCatalogue: async (id, answer) => {
+        noted.push({ id, answer });
+      },
     },
     bucket,
     dbtCloud,
@@ -59,6 +63,7 @@ function harness(
           throw new Error('catalogue answered 503');
         }
         told.push(update);
+        return { applied: true, registered: update.tables.length, registeredIds: update.tables.map((table) => `r-${table.name}`), renamed: 0, withdrawn: 0, back: 0 };
       },
     },
     changes: {
@@ -69,7 +74,7 @@ function harness(
     },
     log,
   });
-  return { processing, saved, failed, objects, asked, logged, told };
+  return { processing, saved, failed, objects, asked, logged, told, noted };
 }
 
 const run100 = { '100/manifest.json': bytes(sampleManifest()), '100/catalog.json': bytes(sampleCatalog()) };
@@ -123,8 +128,13 @@ describe('the ingest job', () => {
 
   it('tells catalogue the exposed tables of every new Current Version, the whole state of the project (TR-AR-08)', async () => {
     const withExposures = { '100/manifest.json': bytes(sampleManifest({ datahub: true })), '100/catalog.json': bytes(sampleCatalog()) };
-    const { processing, told, logged } = harness({ dbtFiles: { ...withExposures, ...run101 } });
+    const { processing, told, logged, noted } = harness({ dbtFiles: { ...withExposures, ...run101 } });
     await processing.runPending();
+    // What catalogue did stays with each set, for its delivery on Webhooks (FR-AR-19).
+    expect(noted.map((entry) => [entry.id, entry.answer])).toEqual([
+      [1, { applied: true, registered: 3, registeredIds: ['r-countries', 'r-customers', 'r-orders'], renamed: 0, withdrawn: 0, back: 0 }],
+      [2, { applied: true, registered: 0, registeredIds: [], renamed: 0, withdrawn: 0, back: 0 }],
+    ]);
     expect(told.map((update) => [update.projectId, update.runId, update.projectName, update.tables.map((table) => table.name)])).toEqual([
       ['9367', '100', 'immoscoop_dataplatform_sql', ['countries', 'customers', 'orders']],
       // A project without exposures for Data Hub is told too: none of its tables are Resources any more.
@@ -143,6 +153,10 @@ describe('the ingest job', () => {
     const down = harness({ dbtFiles: { ...run100, ...run101 }, catalogueFails: true });
     expect(await down.processing.runPending()).toEqual({ processed: 2, failed: 0 });
     expect(down.logged).toContain('catalogue was not told the exposed tables: catalogue answered 503');
+    // Kept with the set, so that its delivery on Webhooks says so.
+    expect(down.noted[0]).toEqual({ id: 1, answer: { error: 'catalogue answered 503' } });
+    // A set that does not become current is told nothing, and keeps nothing.
+    expect(older.noted).toEqual([]);
   });
 
   it('tells catalogue what changed since the version that was current before, and goes on without it when that fails (FR-AR-11, FR-AR-12)', async () => {
