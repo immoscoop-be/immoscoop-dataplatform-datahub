@@ -201,6 +201,11 @@ Grouped by the object or task they serve. Each is built from the layers above; i
 | Job picker | The jobs of a dbt project as dbt Cloud names them, by environment; one that cannot be a Source Job says why | **Lay over** | sheet, radio, chip | Webhooks | [FR-AR-18](../requirements/functional/01-artifact-registry.md#fr-ar-18) |
 | Delivery item | A delivery of the webhook in a list: what Data Hub did, when, the job by name and ID, the dbt project and the run | Opens it | chip, kind icon | Webhooks | [FR-AR-19](../requirements/functional/01-artifact-registry.md#fr-ar-19) |
 | Delivery | One delivery opened: its job, run and event, what Data Hub did step by step, and what the Data Admin can do | – | facts list, callout, button | Webhooks | [Admin](principles.md#admin) |
+| User row | A User in the list of Users: name and address, permission group, Owner Units, what they use (web app, Claude, Excel), last sign-in; greyed when they can no longer sign in | Opens the User sheet | avatar, tag, icon | Users | [Admin](principles.md#admin), [OP-UX-55](principles.md#op-ux-55) |
+| User sheet | One User: who they are, how they use Data Hub, their Owner Units read-only, their permission group to choose, what a change does for them before it is saved, and its history | **Lay over** | sheet, facts list, radio, change list | Users | [OP-UX-57](principles.md#op-ux-57), [OP-UX-58](principles.md#op-ux-58) |
+| Change list | What a change does for one User: what they gain, what they lose, what stays, the old value struck through | – | list, icon | User sheet | [Admin](principles.md#admin) |
+| Permission group item | A permission group in the list: name, sentence, number of Users, "Default for new Users", changes not saved, a lock for the Data Team | Opens it | tag, chip | Permission groups | [Admin](principles.md#admin) |
+| Permission | One permission of a group: name, what it allows, yes or no; while yes, its values under it, each with a field of its kind (whole number with unit, choice, several choices, yes or no, text); marked "changed" until saved; locked for the Data Team | **Switch a pane** (its values) | segmented control, field, radio, chip | Permission groups | [DEC-UX-71](principles.md#dec-ux-71), [OP-UX-57](principles.md#op-ux-57) |
 
 ### Learning
 
