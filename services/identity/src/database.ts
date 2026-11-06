@@ -1,3 +1,4 @@
+import type { Permissions } from '@datahub/contracts';
 import type { ColumnType, Generated } from 'kysely';
 import type { TokenSubject } from './tokens.js';
 
@@ -15,6 +16,36 @@ export interface IdentityDatabase {
     /** The fixed IDs of their Groups of the own domains, and their roles, as last read (DEC-LN-07). */
     groups: ColumnType<string[], string[] | undefined, string[]>;
     roles: ColumnType<string[], string[] | undefined, string[]>;
+    /** Their Permission group (FR-PL-04): the default at their first sign-in. */
+    permissionGroupId: string;
+  };
+  /** The Permission groups (TR-PL-04): one is the default, Admin is locked. */
+  permissionGroups: {
+    id: Generated<string>;
+    name: string;
+    sentence: ColumnType<string, string | undefined, string>;
+    permissions: ColumnType<Permissions, string, string>;
+    isDefault: ColumnType<boolean, boolean | undefined, boolean>;
+    locked: ColumnType<boolean, boolean | undefined, boolean>;
+    /** The starting group it was made as, if any: admin, businessAnalyst or lensUser. */
+    starting: ColumnType<string | null, string | null | undefined, string | null>;
+    createdAt: Timestamp;
+    updatedAt: Timestamp;
+    updatedById: ColumnType<string | null, string | null | undefined, string | null>;
+    updatedByName: ColumnType<string | null, string | null | undefined, string | null>;
+  };
+  /** Every move of a User and every change of a Permission group (FR-PL-07). */
+  permissionGroupLog: {
+    id: Generated<string>;
+    at: Timestamp;
+    kind: string;
+    googleId: string | null;
+    groupId: string | null;
+    fromName: string | null;
+    toName: string | null;
+    byId: string | null;
+    byName: string | null;
+    detail: ColumnType<Record<string, unknown>, string | undefined, string>;
   };
   clients: {
     clientId: string;

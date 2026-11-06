@@ -7,6 +7,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
 import type { IdentityDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
+import { createPermissionGroups } from './permission-groups.js';
 import { createStore } from './store.js';
 import { createLocalKeyService } from './testing.js';
 import { createTokenIssuer } from './tokens.js';
@@ -56,6 +57,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
         issuer: 'https://identity.test',
         domains: ['thenextimmoscoop.be', 'immoscoop.be'],
         mcpRedirectUris: [],
+        groups: createPermissionGroups(database.db),
       },
     });
   });

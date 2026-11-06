@@ -18,6 +18,8 @@ export type ValueSpec =
   | { kind: 'text'; max: number };
 
 interface PermissionSpec {
+  /** Its name, in English: names are never translated (DEC-DH-65). */
+  name: string;
   part: PermissionPart;
   /** Always on: it has no yes or no, only its values. */
   always?: true;
@@ -27,22 +29,24 @@ interface PermissionSpec {
 const REACH = { kind: 'choice', options: ['theirs', 'every'] } as const;
 
 export const PERMISSIONS = {
-  'catalogue.see': { part: 'collections', always: true, values: { see: { kind: 'choice', options: ['theirs', 'public', 'all'] } } },
-  'collections.make': { part: 'collections', values: { ownerUnit: { kind: 'choice', options: ['theirs', 'any'] } } },
-  'collections.manage': { part: 'collections', values: { reach: REACH } },
-  'resources.assign': { part: 'collections', values: {} },
+  'catalogue.see': { name: 'What they see', part: 'collections', always: true, values: { see: { kind: 'choice', options: ['theirs', 'public', 'all'] } } },
+  'collections.make': { name: 'Make a Collection', part: 'collections', values: { ownerUnit: { kind: 'choice', options: ['theirs', 'any'] } } },
+  'collections.manage': { name: 'Manage Collections', part: 'collections', values: { reach: REACH } },
+  'resources.assign': { name: 'Manage Resources', part: 'collections', values: {} },
   'resources.describe': {
+    name: 'Describe Resources',
     part: 'collections',
     values: {
       reach: REACH,
       attributes: { kind: 'several', options: ['description', 'behaviour', 'pitfalls', 'availableSince', 'gaps', 'keyFields', 'entityMapping'] },
     },
   },
-  'resources.publish': { part: 'collections', values: {} },
-  'resources.deprecate': { part: 'collections', values: { reach: REACH } },
-  'resources.preview': { part: 'query', values: {} },
-  'queries.make': { part: 'query', values: {} },
+  'resources.publish': { name: 'Publish Resources', part: 'collections', values: {} },
+  'resources.deprecate': { name: 'Deprecate Resources', part: 'collections', values: { reach: REACH } },
+  'resources.preview': { name: 'Preview a Resource', part: 'query', values: {} },
+  'queries.make': { name: 'Make and run queries', part: 'query', values: {} },
   'runs.ranges': {
+    name: 'How much a run may read',
     part: 'query',
     always: true,
     values: {
@@ -51,27 +55,29 @@ export const PERMISSIONS = {
       above: { kind: 'choice', options: ['request', 'refuse'] },
     },
   },
-  'queries.seeOthers': { part: 'query', values: { reach: REACH } },
-  'requests.decide': { part: 'query', values: {} },
-  'lenses.make': { part: 'lenses', values: {} },
-  'lenses.manage': { part: 'lenses', values: { reach: REACH } },
-  'messages.write': { part: 'messages', values: { kinds: { kind: 'several', options: ['question', 'remark', 'signal'] } } },
-  'messages.reply': { part: 'messages', values: { reach: REACH } },
-  'messages.close': { part: 'messages', values: { reach: REACH } },
-  'messages.dataTeam': { part: 'messages', values: {} },
+  'queries.seeOthers': { name: 'See the queries of others', part: 'query', values: { reach: REACH } },
+  'requests.decide': { name: 'Decide on Requests', part: 'query', values: {} },
+  'lenses.make': { name: 'Make Lenses', part: 'lenses', values: {} },
+  'lenses.manage': { name: 'Manage Lenses', part: 'lenses', values: { reach: REACH } },
+  'messages.write': { name: 'Write Messages', part: 'messages', values: { kinds: { kind: 'several', options: ['question', 'remark', 'signal'] } } },
+  'messages.reply': { name: 'Reply to the Messages of others', part: 'messages', values: { reach: REACH } },
+  'messages.close': { name: 'Close and reopen the Messages of others', part: 'messages', values: { reach: REACH } },
+  'messages.dataTeam': { name: 'Get the Messages for the Data Team', part: 'messages', values: {} },
   'claude.use': {
+    name: 'Work with Data Hub in Claude',
     part: 'claude',
     values: {
       writes: { kind: 'several', options: ['descriptions', 'messages', 'deprecations', 'changesSeen'] },
       note: { kind: 'text', max: 1000 },
     },
   },
-  'claude.results': { part: 'claude', always: true, values: { show: { kind: 'choice', options: ['claude', 'card', 'none'] } } },
+  'claude.results': { name: 'How a result reaches Claude', part: 'claude', always: true, values: { show: { kind: 'choice', options: ['claude', 'card', 'none'] } } },
   'excel.keys': {
+    name: 'Use Excel keys',
     part: 'excel',
     values: { most: { kind: 'number', unit: 'keys', min: 1, max: 100, empty: true }, lifetimeDays: { kind: 'number', unit: 'days', min: 1, max: 3650 } },
   },
-  'admin.open': { part: 'admin', values: { tools: { kind: 'several', options: ['webhooks', 'excelKeys', 'users', 'permissionGroups'] } } },
+  'admin.open': { name: 'Open Admin', part: 'admin', values: { tools: { kind: 'several', options: ['webhooks', 'excelKeys', 'users', 'permissionGroups'] } } },
 } as const satisfies Record<string, PermissionSpec>;
 
 export type PermissionKey = keyof typeof PERMISSIONS;
