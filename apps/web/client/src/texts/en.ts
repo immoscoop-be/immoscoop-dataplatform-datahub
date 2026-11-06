@@ -76,6 +76,7 @@ export default {
   'collections.yours': 'Yours',
   'collections.yours.meta': 'Your Collections, and the Lenses of you and your groups',
   'collections.yours.none': 'Your groups have no Collection yet. Make one with New Collection.',
+  'collections.yours.noneToMake': 'Your groups have no Collection yet.',
   'collections.ownedBy': 'Owned by {owner}',
   'collections.recently': 'Recently',
   'collections.recently.label': 'Recently updated or added',

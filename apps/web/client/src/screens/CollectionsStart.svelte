@@ -249,7 +249,7 @@
 {#if !collections}
   <Loading />
 {:else if yours.length === 0 && yourLenses.length === 0}
-  <p class="meta empty">{t('collections.yours.none')}</p>
+  <p class="meta empty">{t(makes ? 'collections.yours.none' : 'collections.yours.noneToMake')}</p>
 {:else}
   <Grid fill>
     {#each yours as collection (collection.id)}

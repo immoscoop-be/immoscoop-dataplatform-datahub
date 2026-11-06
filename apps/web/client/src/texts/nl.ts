@@ -75,6 +75,7 @@ export default {
   'collections.yours': 'Van jou',
   'collections.yours.meta': 'Je Collections, en de Lenses van jou en je groepen',
   'collections.yours.none': 'Je groepen hebben nog geen Collection. Maak er een met Nieuwe Collection.',
+  'collections.yours.noneToMake': 'Je groepen hebben nog geen Collection.',
   'collections.ownedBy': 'Van {owner}',
   'collections.recently': 'Recent',
   'collections.recently.label': 'Recent bijgewerkt of toegevoegd',

@@ -18,7 +18,7 @@
   {#each lines as line (`${line.key}:${line.detail}`)}
     <li class={line.kind}>
       <Icon name={ICONS[line.kind]} />
-      <span><span class="hidden">{t(SAID[line.kind])}</span><b>{line.name}</b>{#if line.detail}<span class="detail"> · {line.detail}</span>{/if}{#if line.was} <del>{line.was}</del>{/if}</span>
+      <span><span class="hidden">{t(SAID[line.kind])}</span><b>{line.name}</b>{#if line.detail}<span class="detail">{' · '}{line.detail}</span>{/if}{#if line.was}{' '}<del>{line.was}</del>{/if}</span>
     </li>
   {/each}
   <li class="stays"><Icon name="equals-fill" /><span>{t(lines.length > 0 ? 'users.changes.stays' : 'users.changes.same')}</span></li>
