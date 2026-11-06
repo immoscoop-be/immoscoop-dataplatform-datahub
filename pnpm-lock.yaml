@@ -275,6 +275,9 @@ importers:
       '@datahub/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@datahub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -296,6 +299,9 @@ importers:
       '@datahub/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@datahub/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@datahub/db':
         specifier: workspace:*
         version: link:../../packages/db

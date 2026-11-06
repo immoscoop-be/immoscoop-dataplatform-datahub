@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { TokenError } from '@datahub/auth';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
+import { type Permissions, type StartingGroup, startingPermissions } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { sql } from 'kysely';
@@ -23,9 +24,11 @@ if (!url && process.env.CI) {
 }
 
 const PROJECT = 'immoscoop-dataplatform';
-/** Credit leads, a public Collection of Mia's unit, and a private one of An. */
+/** Credit leads, a public Collection of Mia's unit, and a private one of An's; each Owner Unit by the Google ID of its group. */
 const CREDIT = '5d0c1b2a-3e4f-4a5b-8c6d-7e8f9a0b1c2d';
 const AN_WORK = 'a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d';
+const CREDIT_UNIT = '03credit0000001';
+const AN_UNIT = '03anwork0000001';
 const WEEKLY: QueryResource = {
   id: '6f1c2b4e-8a1d-4c3e-9f20-1b2c3d4e5f60',
   key: `${PROJECT}.dbt_prod_stacks.weekly_lead_volume`,
@@ -213,8 +216,9 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
   const fake = fakeBigQuery();
   /** Which Resources each token may see, as catalogue would answer; null: catalogue does not answer. */
   const visible = new Map<string, string[] | null>();
-  /** The Google ID of each token, and the Requests catalogue keeps, newest first. */
+  /** The Google ID of each token, the tokens of who decides on Requests, and the Requests catalogue keeps, newest first. */
   const writers = new Map<string, string>();
+  const deciders = new Set<string>();
   const requests: QueryRequest[] = [];
   /** What query told catalogue about each Lens, and the decisions it recorded (DEC-PF-30). */
   const told = new Map<string, { state: string; name: string }>();
@@ -245,8 +249,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     },
     async requests(queryId, authorization, subjectKind = 'query') {
       if (visible.get(authorization) === null) throw new CatalogueUnavailable('down');
-      // The Data Team sees everyone's Requests on one Lens, Data Hub's own among them.
-      const everyone = writers.get(authorization) === '103' && queryId !== null && subjectKind === 'lens';
+      // Who decides on Requests sees everyone's Requests on one Lens, Data Hub's own among them.
+      const everyone = deciders.has(authorization) && queryId !== null && subjectKind === 'lens';
       return requests.filter((sent) => (everyone || sent.writerId === writers.get(authorization)) && (queryId === null || sent.subjectId === queryId));
     },
     async keepLens(lens) {
@@ -270,18 +274,19 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
         sent.decision = { outcome: decision.outcome, text: decision.text, writerName: decision.decider.name, at: new Date().toISOString() };
       }
     },
-    async manages(collectionId, authorization) {
-      // Mia is in the Owner Unit of Credit leads, An owns a private Collection; the Data Team manages every Collection.
+    async ownerUnit(collectionId, authorization) {
+      // Credit leads is public; An's private Collection only An and the Data Team see.
       const who = writers.get(authorization);
-      return (collectionId === CREDIT && (who === '104' || who === '103')) || (collectionId === AN_WORK && (who === '101' || who === '103'));
+      if (collectionId === CREDIT) return CREDIT_UNIT;
+      return collectionId === AN_WORK && (who === '101' || who === '103') ? AN_UNIT : null;
     },
     async collections(authorization) {
       const ids = visible.get(authorization);
       if (ids === null) throw new CatalogueUnavailable('down');
       const who = writers.get(authorization);
       const resources = [WEEKLY, SOURCES].filter((resource) => ids?.includes(resource.id)).map(({ id, displayName, level }) => ({ id, displayName, level }));
-      const seen: SeenCollection[] = [{ id: CREDIT, name: 'Credit leads', canManage: who === '104' || who === '103', visibility: 'public', resources }];
-      if (who === '101' || who === '103') seen.push({ id: AN_WORK, name: 'An’s lenses', canManage: true, visibility: 'private', resources: [] });
+      const seen: SeenCollection[] = [{ id: CREDIT, name: 'Credit leads', ownerUnitId: CREDIT_UNIT, visibility: 'public', resources }];
+      if (who === '101' || who === '103') seen.push({ id: AN_WORK, name: 'An’s lenses', ownerUnitId: AN_UNIT, visibility: 'private', resources: [] });
       return seen;
     },
     async sendLensRequest({ lensId, reads, text }, authorization) {
@@ -318,14 +323,16 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
     database = createDatabase<QueryDatabase>({ connectionString: url }, schema);
     issuer = await createTestIssuer();
-    an = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes' })}`;
+    // Business analysts, An and Mia each in an Owner Unit; Dirk of the Data Team in Admin (DEC-PL-07).
+    an = `Bearer ${await issuer.sign({ sub: '101', name: 'An Claes', groups: [AN_UNIT] })}`;
     karel = `Bearer ${await issuer.sign({ sub: '102', name: 'Karel Leys' })}`;
-    dataTeam = `Bearer ${await issuer.sign({ sub: '103', name: 'Dirk Vos', roles: ['datateam'] })}`;
-    mia = `Bearer ${await issuer.sign({ sub: '104', name: 'Mia Peeters' })}`;
+    dataTeam = `Bearer ${await issuer.sign({ sub: '103', name: 'Dirk Vos', as: 'admin' })}`;
+    mia = `Bearer ${await issuer.sign({ sub: '104', name: 'Mia Peeters', groups: [CREDIT_UNIT] })}`;
     writers.set(an, '101');
     writers.set(karel, '102');
     writers.set(dataTeam, '103');
     writers.set(mia, '104');
+    deciders.add(dataTeam);
     visible.set(mia, [WEEKLY.id, SOURCES.id]);
     visible.set(an, [WEEKLY.id, SOURCES.id]);
     visible.set(karel, [WEEKLY.id]);
@@ -390,17 +397,19 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(an, 'POST', '/queries', { name: '', resources: [WEEKLY.id] })).statusCode).toBe(400);
   });
 
-  it('lists the queries of the User, and everyone’s for the Data Team only (DEC-LN-01)', async () => {
+  it('lists the queries of the User, and everyone’s only for who sees every query (DEC-LN-01, queries.seeOthers)', async () => {
     await call(karel, 'POST', '/queries', { name: 'Weekly only', resources: [WEEKLY.id] });
     const mine = (await call(an, 'GET', '/queries')).json().queries;
     expect(mine.map((query: { name: string }) => query.name)).toEqual(['Leads per source name']);
     expect(mine[0]).toMatchObject({ runs: 0, lastRunAt: null, resources: [{ id: WEEKLY.id, displayName: 'Weekly lead volume' }, { id: SOURCES.id, displayName: 'Lead sources' }] });
-    expect((await call(an, 'GET', '/queries?all=true')).statusCode).toBe(403);
+    const refused = await call(an, 'GET', '/queries?all=true');
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'queries.seeOthers' });
     const all = (await call(dataTeam, 'GET', '/queries?all=true')).json().queries;
     expect(all.map((query: { ownerName: string }) => query.ownerName).sort()).toEqual(['An Claes', 'Karel Leys']);
   });
 
-  it('shows a query to who made it and to the Data Team; only who made it writes it', async () => {
+  it('shows a query to who made it and to who sees every query; only who made it writes it', async () => {
     expect((await call(an, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: true });
     expect((await call(dataTeam, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: false, sql: expect.stringContaining('select') });
     expect((await call(karel, 'GET', `/queries/${id}`)).statusCode).toBe(404);
@@ -587,7 +596,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(karel, 'POST', `/resources/${SOURCES.id}/preview/runs`, { window: 4 })).statusCode).toBe(404);
   });
 
-  it('lists the queries on a Resource to its Owner Unit and the Data Team only, who read them (DEC-SR-41, FR-SR-44)', async () => {
+  it('lists the queries on a Resource to who sees the queries of others on it, its Owner Unit and Admin, who read them (DEC-SR-41, FR-SR-44)', async () => {
     const history = (await call(mia, 'GET', `/resources/${WEEKLY.id}/queries`)).json();
     // Only queries that ran: a query started from another and not run yet did not use it.
     expect(history.summary).toEqual({ queries: 2, lenses: 0, colleagues: 1 });
@@ -597,7 +606,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     ]);
     expect(history.queries[1]).toMatchObject({ runs: 6, lastRead: 79_000_000 });
     expect((await call(dataTeam, 'GET', `/resources/${WEEKLY.id}/queries`)).statusCode).toBe(200);
-    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/queries`)).statusCode).toBe(403);
+    expect((await call(an, 'GET', `/resources/${WEEKLY.id}/queries`)).json()).toMatchObject({ error: 'forbidden', permission: 'queries.seeOthers' });
     // The Owner Unit reads a query on what it owns, with its SQL, and does not run it (DEC-SR-31).
     expect((await call(mia, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: false, sql: expect.stringContaining('select') });
     expect((await call(mia, 'GET', `/queries/${id}/runs?limit=1`)).statusCode).toBe(200);
@@ -752,7 +761,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(an, 'PATCH', `/lenses/${lensId}`, { sql: weekly })).statusCode).toBe(400);
     expect((await call(an, 'PATCH', `/lenses/${lensId}`, {})).statusCode).toBe(400);
     // Karel sees Mia's Lens in Credit leads, but is not of its Owner Unit.
-    expect((await call(karel, 'PATCH', `/lenses/${largeLens}`, { name: 'Mine now' })).statusCode).toBe(403);
+    expect((await call(karel, 'PATCH', `/lenses/${largeLens}`, { name: 'Mine now' })).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.manage' });
     expect((await call(karel, 'PATCH', `/lenses/${lensId}`, { name: 'Mine now' })).statusCode).toBe(404);
   });
 
@@ -1009,8 +1018,8 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await call(down, 'GET', '/queries')).json().queries[0]).toMatchObject({ request: null });
   });
 
-  it('lets the Data Team accept or refuse a Lens that waits, or one that stopped (FR-LE-09, DEC-UX-128)', async () => {
-    expect((await call(karel, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'accepted' })).statusCode).toBe(403);
+  it('lets who decides on Requests accept or refuse a Lens that waits, or one that stopped (FR-LE-09, DEC-UX-128)', async () => {
+    expect((await call(karel, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ error: 'forbidden', permission: 'requests.decide' });
     expect((await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'refused' })).json()).toMatchObject({ message: 'A refusal needs a reason.' });
     expect((await call(dataTeam, 'POST', `/lenses/${hugeLens}/decision`, { outcome: 'maybe' })).statusCode).toBe(400);
     expect((await call(dataTeam, 'POST', `/lenses/${largeLens}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ error: 'not_waiting' });
@@ -1125,7 +1134,7 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect(onWeekly.find((item: { id: string }) => item.id === made.id)).toMatchObject({ through: 'claude' });
   });
 
-  it('lets its Owner Unit and the Data Team delete a Lens, keeping its record and telling who used it lately (FR-LE-18, DEC-LE-21)', async () => {
+  it('lets who manages it delete a Lens, keeping its record and telling who used it lately (FR-LE-18, DEC-LE-21)', async () => {
     const made = (await call(mia, 'POST', '/queries', { name: 'Weekly leads to delete', resources: [WEEKLY.id], sql: weekly })).json().query.id as string;
     const lens = (await call(mia, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Weekly leads to delete' })).json().lens.id as string;
     // Karel and the Data Team ran it; Mia, who deletes it, ran it too, and is never told.
@@ -1164,5 +1173,153 @@ describe.skipIf(!url)('the routes of query (TR-SR-15, TR-SR-16)', () => {
     expect((await database.db.selectFrom('queries').select('id').where('lensOf', '=', lens).execute()).length).toBe(3);
     // Its query is a query again, and may become a new Lens.
     expect((await call(mia, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Weekly leads, again' })).statusCode).toBe(201);
+  });
+
+  /**
+   * A token of a User in a starting Permission group, changed so (TR-PL-06); catalogue answers it as the User
+   * of that Google ID, with these Resources to see.
+   */
+  async function userOf(sub: string, name: string, group: StartingGroup, change: (permissions: Permissions) => void = () => {}, groups: string[] = [], resources = [WEEKLY.id]) {
+    const permissions = startingPermissions(group);
+    change(permissions);
+    const token = `Bearer ${await issuer.sign({ sub, name, groups, permissions })}`;
+    writers.set(token, sub);
+    visible.set(token, resources);
+    if (permissions['requests.decide'].on) deciders.add(token);
+    return token;
+  }
+
+  it('lets a Lens user find and run Lenses, and make no query, Preview or Lens (DEC-PL-07, FR-PL-14)', async () => {
+    const lena = await userOf('107', 'Lena Maes', 'lensUser', undefined, [CREDIT_UNIT], [WEEKLY.id, SOURCES.id]);
+    const refused = async (method: 'POST' | 'PATCH', path: string, payload: unknown, permission: string) => {
+      const answer = await call(lena, method, path, payload);
+      expect(answer.statusCode).toBe(403);
+      expect(answer.json()).toMatchObject({ error: 'forbidden', permission });
+    };
+    await refused('POST', '/queries', { name: 'Mine', resources: [WEEKLY.id] }, 'queries.make');
+    await refused('POST', `/resources/${WEEKLY.id}/preview/choices`, { window: 4 }, 'resources.preview');
+    await refused('POST', `/resources/${WEEKLY.id}/preview/preflight`, { window: 4 }, 'resources.preview');
+    await refused('POST', `/resources/${WEEKLY.id}/preview/runs`, { window: 4 }, 'resources.preview');
+    await refused('POST', `/resources/${WEEKLY.id}/preview/requests`, { window: 4 }, 'resources.preview');
+    await refused('POST', '/lenses', { queryId: id, collectionId: CREDIT, name: 'Mine' }, 'lenses.make');
+    // A query of another stays theirs; even in the Owner Unit of its Resource, a Lens user does not see it.
+    expect((await call(lena, 'GET', `/queries/${id}`)).statusCode).toBe(404);
+    expect((await call(lena, 'GET', `/resources/${WEEKLY.id}/queries`)).json()).toMatchObject({ permission: 'queries.seeOthers' });
+    // Of its Owner Unit, still no Lens to change, and none to open in Query.
+    await refused('PATCH', `/lenses/${largeLens}`, { name: 'Mine now' }, 'lenses.manage');
+    await refused('POST', `/lenses/${largeLens}/query`, undefined, 'queries.make');
+
+    // Who sees a Lens runs it: that needs no Permission.
+    expect((await call(lena, 'GET', '/lenses')).json().lenses.map((lens: { id: string }) => lens.id)).toContain(largeLens);
+    const lens = (await call(lena, 'GET', `/lenses/${largeLens}`)).json().lens;
+    expect(lens).toMatchObject({ id: largeLens, canManage: false });
+    const ran = await call(lena, 'POST', `/lenses/${largeLens}/runs`, { approve: true });
+    expect(ran.statusCode).toBe(201);
+    // Its own runs of a Lens are in its list, as the Lens; their SQL it does not read.
+    const item = (await call(lena, 'GET', '/queries')).json().queries.find((query: { lensOf: string }) => query.lensOf === largeLens);
+    expect(item).toMatchObject({ kind: 'lens', runs: 1 });
+    expect((await call(lena, 'GET', `/queries/${item.id}`)).statusCode).toBe(404);
+  });
+
+  it('measures a query and a Preview by the ranges of their User, and keeps those of Data Hub for a Lens (DEC-SR-29, runs.ranges)', async () => {
+    // Free up to 10 MB: 50 MB is for their approval.
+    const lies = await userOf('108', 'Lies Wouters', 'businessAnalyst', (permissions) => {
+      permissions['runs.ranges'].values = { freeMb: 10, approveGb: 1, above: 'request' };
+    });
+    const made = (await call(lies, 'POST', '/queries', { name: 'Leads per week, 50 MB', resources: [WEEKLY.id] })).json().query.id as string;
+    const medium = `${weekly} -- reads 50000000`;
+    const checked = (await call(lies, 'POST', `/queries/${made}/preflight`, { sql: medium })).json().preflight;
+    expect(checked).toMatchObject({ runnable: true, range: 'approve', thresholds: { approve: 10_000_000, request: 1_000_000_000, above: 'request' } });
+    expect((await call(lies, 'POST', `/queries/${made}/runs`, { sql: medium })).json()).toMatchObject({ error: 'approval_needed' });
+    expect((await call(lies, 'POST', `/queries/${made}/runs`, { sql: medium, approve: true })).json().run).toMatchObject({ approved: true });
+    // The same for An is free, within the ranges of Business analyst.
+    expect((await call(an, 'POST', `/queries/${id}/preflight`, { sql: medium })).json().preflight).toMatchObject({ range: 'free', thresholds: { approve: 100_000_000 } });
+    // A Preview too: what its choices read is free only within 10 MB, so it offers none.
+    expect((await call(lies, 'POST', `/resources/${WEEKLY.id}/preview/preflight`, { window: 4 })).json().preflight.thresholds).toMatchObject({ approve: 10_000_000 });
+    const before = fake.runs.length;
+    expect((await call(lies, 'POST', `/resources/${WEEKLY.id}/preview/choices`, { window: 4 })).json().choices[0]).toMatchObject({ values: null });
+    expect(fake.runs).toHaveLength(before);
+    // A Lens is measured by the ranges of Data Hub, whoever runs it.
+    expect((await call(lies, 'POST', `/lenses/${largeLens}/preflight`, {})).json().preflight).toMatchObject({ range: 'approve', thresholds: { approve: 100_000_000, request: 1_000_000_000 } });
+  });
+
+  it('runs nothing above the ranges of a User whose Permission group sends nothing to the Data Team (runs.ranges, above: refuse)', async () => {
+    const jef = await userOf('109', 'Jef Peeters', 'businessAnalyst', (permissions) => {
+      permissions['runs.ranges'].values = { freeMb: 100, approveGb: 1, above: 'refuse' };
+    });
+    const made = (await call(jef, 'POST', '/queries', { name: 'Every lead, ever', resources: [WEEKLY.id] })).json().query.id as string;
+    const huge = `${weekly} -- reads 4800000000`;
+    // The Pre-flight says it cannot run, and why.
+    const checked = (await call(jef, 'POST', `/queries/${made}/preflight`, { sql: huge })).json().preflight;
+    expect(checked).toMatchObject({ runnable: false, range: 'request', thresholds: { above: 'refuse' }, problems: [{ kind: 'tooLarge', bytes: 4_800_000_000, limit: 1_000_000_000 }] });
+    expect((await call(jef, 'POST', `/queries/${made}/runs`, { sql: huge, approve: true })).json()).toMatchObject({ error: 'not_runnable', preflight: { problems: [{ kind: 'tooLarge' }] } });
+    // No Request can be sent, for a query or a Preview.
+    const sent = await call(jef, 'POST', `/queries/${made}/requests`, { sql: huge, text: 'Please' });
+    expect(sent.statusCode).toBe(403);
+    expect(sent.json()).toMatchObject({ error: 'forbidden', permission: 'runs.ranges' });
+    expect((await call(jef, 'POST', `/resources/${WEEKLY.id}/preview/requests`, { window: 4 })).json()).toMatchObject({ permission: 'runs.ranges' });
+    expect(requests.some((request) => request.subjectId === made)).toBe(false);
+    // Within its ranges it runs as for anyone, and the SQL that was too large is kept, as SQL that runs.
+    expect((await call(jef, 'POST', `/queries/${made}/runs`, { sql: weekly })).statusCode).toBe(201);
+    expect((await call(jef, 'POST', `/queries/${made}/preflight`, { sql: huge })).json().broken).toBeNull();
+    expect((await database.db.selectFrom('queries').select('checkSql').where('id', '=', made).executeTakeFirstOrThrow()).checkSql).toBe(huge);
+  });
+
+  it('shows the queries of others by the reach of queries.seeOthers: on the Resources of their Owner Units, or every query', async () => {
+    // Mia's group without it: not even the queries on her own Resources.
+    const miaAlone = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['queries.seeOthers'].on = false), [CREDIT_UNIT]);
+    expect((await call(miaAlone, 'GET', `/queries/${id}`)).statusCode).toBe(404);
+    expect((await call(miaAlone, 'GET', `/resources/${WEEKLY.id}/queries`)).json()).toMatchObject({ error: 'forbidden', permission: 'queries.seeOthers' });
+    expect((await call(miaAlone, 'POST', '/queries', { name: 'From An', resources: [WEEKLY.id], startedFrom: id })).statusCode).toBe(400);
+    // With their Owner Units: on what Mia owns, she reads it and starts from it; Karel owns nothing.
+    expect((await call(mia, 'GET', `/queries/${id}`)).statusCode).toBe(200);
+    expect((await call(mia, 'POST', '/queries', { name: 'From An', resources: [WEEKLY.id], startedFrom: id })).statusCode).toBe(201);
+    expect((await call(karel, 'GET', `/queries/${id}`)).statusCode).toBe(404);
+    expect((await call(mia, 'GET', '/queries?all=true')).statusCode).toBe(403);
+    // Every query: Karel's group reaching every query reads any, lists everyone's and the History of every Resource.
+    const karelAll = await userOf('102', 'Karel Leys', 'businessAnalyst', (permissions) => (permissions['queries.seeOthers'].values.reach = 'every'));
+    expect((await call(karelAll, 'GET', `/queries/${id}`)).json().query).toMatchObject({ mine: false });
+    expect((await call(karelAll, 'GET', '/queries?all=true')).json().queries.map((query: { ownerName: string }) => query.ownerName)).toContain('An Claes');
+    expect((await call(karelAll, 'GET', '/queries/days?all=true')).statusCode).toBe(200);
+    expect((await call(karelAll, 'GET', `/resources/${WEEKLY.id}/queries`)).statusCode).toBe(200);
+    // Reading is not writing: only who made a query writes and runs it.
+    expect((await call(karelAll, 'PATCH', `/queries/${id}`, { name: 'Taken' })).statusCode).toBe(403);
+  });
+
+  it('lets change a Lens by the reach of lenses.manage: in the Collections of their Owner Units, or every Lens', async () => {
+    // Mia's group without it: not the Lens in her own Collection.
+    const miaAlone = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['lenses.manage'].on = false), [CREDIT_UNIT]);
+    expect((await call(miaAlone, 'GET', `/lenses/${largeLens}`)).json().lens).toMatchObject({ canManage: false });
+    expect((await call(miaAlone, 'PATCH', `/lenses/${largeLens}`, { question: 'Which?' })).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.manage' });
+    expect((await call(miaAlone, 'DELETE', `/lenses/${largeLens}`, {})).json()).toMatchObject({ permission: 'lenses.manage' });
+    // With their Owner Units: Mia in Credit leads, not Karel.
+    expect((await call(mia, 'GET', `/lenses/${largeLens}`)).json().lens).toMatchObject({ canManage: true });
+    expect((await call(karel, 'GET', `/lenses/${largeLens}`)).json().lens).toMatchObject({ canManage: false });
+    // Every Lens: Karel changes Mia's, and makes his own query a Lens in a Collection of another Owner Unit.
+    const karelAll = await userOf('102', 'Karel Leys', 'businessAnalyst', (permissions) => (permissions['lenses.manage'].values.reach = 'every'));
+    expect((await call(karelAll, 'GET', `/lenses/${largeLens}`)).json().lens).toMatchObject({ canManage: true });
+    expect((await call(karelAll, 'PATCH', `/lenses/${largeLens}`, { question: 'Which sources bring leads, week by week?' })).statusCode).toBe(200);
+    const made = (await call(karelAll, 'POST', '/queries', { name: 'Karel’s weekly leads', resources: [WEEKLY.id], sql: weekly })).json().query.id as string;
+    expect((await call(karel, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Karel’s weekly leads' })).json()).toMatchObject({ error: 'invalid_request' });
+    expect((await call(karelAll, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'Karel’s weekly leads' })).statusCode).toBe(201);
+  });
+
+  it('lets who decides on Requests see a Lens that waits and decide on it; anyone else neither (requests.decide)', async () => {
+    const made = (await call(mia, 'POST', '/queries', { name: 'All leads since 2015', resources: [WEEKLY.id], sql: `${weekly} -- reads 7300000000` })).json().query.id as string;
+    const waiting = (await call(mia, 'POST', '/lenses', { queryId: made, collectionId: CREDIT, name: 'All leads since 2015' })).json().lens;
+    expect(waiting).toMatchObject({ state: 'waiting' });
+    // Karel, a Business analyst, neither sees it nor decides on it.
+    expect((await call(karel, 'GET', `/lenses/${waiting.id}`)).statusCode).toBe(404);
+    expect((await call(karel, 'POST', `/lenses/${waiting.id}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ error: 'forbidden', permission: 'requests.decide' });
+    // His group with requests.decide: he sees it, and accepts it.
+    const karelDecides = await userOf('102', 'Karel Leys', 'businessAnalyst', (permissions) => (permissions['requests.decide'].on = true));
+    expect((await call(karelDecides, 'GET', `/lenses/${waiting.id}`)).json().lens).toMatchObject({ state: 'waiting', request: { state: 'waiting' } });
+    const accepted = await call(karelDecides, 'POST', `/lenses/${waiting.id}/decision`, { outcome: 'accepted', text: 'For the yearly review.' });
+    expect(accepted.statusCode).toBe(200);
+    expect(accepted.json().lens).toMatchObject({ state: 'published', log: [{ logId: 'LEN-001', params: { actor: 'Karel Leys' } }] });
+    expect(decisions.at(-1)).toMatchObject({ outcome: 'accepted', decider: { id: '102', name: 'Karel Leys' } });
+    // Its author without lenses.make sends no Request on a Lens again.
+    const miaNoLenses = await userOf('104', 'Mia Peeters', 'businessAnalyst', (permissions) => (permissions['lenses.make'].on = false), [CREDIT_UNIT]);
+    expect((await call(miaNoLenses, 'POST', `/lenses/${waiting.id}/requests`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'lenses.make' });
   });
 });

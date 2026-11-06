@@ -49,8 +49,8 @@ export interface QueryRequest {
 export interface SeenCollection {
   id: string;
   name: string;
-  /** Whether the User manages it, as its Owner Unit or the Data Team (DEC-CO-15, DEC-CO-18). */
-  canManage: boolean;
+  /** Its Owner Unit, by the fixed Google ID of the group: theirs when it is one of the groups of the User (FR-PL-05). */
+  ownerUnitId: string;
   visibility: 'private' | 'public';
   resources: { id: string; displayName: string; level: number }[];
 }
@@ -58,9 +58,9 @@ export interface SeenCollection {
 export interface Catalogue {
   /** The Resource, if the User may see it; null when they may not, which catalogue answers as not found. */
   resource(id: string, authorization: string): Promise<QueryResource | null>;
-  /** Whether the User manages the Collection, as its Owner Unit or the Data Team; null when they may not see it. */
-  manages(collectionId: string, authorization: string): Promise<boolean | null>;
-  /** The Requests of the User on queries or Lenses, newest first: on one, or on all; the Data Team sees everyone's on one. */
+  /** The Owner Unit of the Collection, by the fixed Google ID of the group; null when the User may not see it. */
+  ownerUnit(collectionId: string, authorization: string): Promise<string | null>;
+  /** The Requests of the User on queries or Lenses, newest first: on one, or on all; who decides on Requests sees everyone's on one. */
   requests(subjectId: string | null, authorization: string, subjectKind?: 'query' | 'lens'): Promise<QueryRequest[]>;
   /** Sends a Request for the User; one that still waits is given back instead. */
   sendRequest(fields: { queryId: string; name: string; reads: number; threshold: number; text: string }, authorization: string): Promise<QueryRequest>;
@@ -74,7 +74,7 @@ export interface Catalogue {
   lensGrew(fields: { lensId: string; reads: number; threshold: number }): Promise<{ id: string }>;
   /** Tells the author of a Lens that grew into large, past 100 MB a run, as query itself; it keeps running (MSG-LEN-02). */
   lensGrewLarge(fields: { lensId: string; reads: number; threshold: number }): Promise<void>;
-  /** Records the decision of a member of the Data Team on a Request on a Lens, as query itself (FR-LE-09). */
+  /** Records the decision of a User who decides on Requests (`requests.decide`) on a Request on a Lens, as query itself (FR-LE-09). */
   decideLensRequest(requestId: string, decision: { outcome: 'accepted' | 'refused'; text: string; decider: { id: string; name: string } }): Promise<void>;
   /** Tells who made a query, or the Owner Unit of a Lens, that it became Broken, as query itself (MSG-QRY-02, MSG-LEN-05). */
   broken(subject: { kind: 'query'; id: string; name: string; ownerId: string } | { kind: 'lens'; id: string }, fields: BrokenMessage): Promise<void>;
@@ -214,12 +214,12 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
 
     async collections(authorization) {
       const { collections } = (await (await call('/collections', authorization)).json()) as {
-        collections: (Omit<SeenCollection, 'resources'> & { resources: (SeenCollection['resources'][number] & { withdrawn?: boolean })[] })[];
+        collections: (Omit<SeenCollection, 'resources' | 'ownerUnitId'> & { ownerUnit: { id: string }; resources: (SeenCollection['resources'][number] & { withdrawn?: boolean })[] })[];
       };
-      return collections.map(({ id, name, canManage, visibility, resources }) => ({
+      return collections.map(({ id, name, ownerUnit, visibility, resources }) => ({
         id,
         name,
-        canManage: canManage === true,
+        ownerUnitId: ownerUnit.id,
         visibility,
         resources: resources.filter((resource) => resource.withdrawn !== true).map(({ id: resourceId, displayName, level }) => ({ id: resourceId, displayName, level })),
       }));
@@ -251,7 +251,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       };
     },
 
-    async manages(collectionId, authorization) {
+    async ownerUnit(collectionId, authorization) {
       let response: Response;
       try {
         response = await request(new URL(`/collections/${encodeURIComponent(collectionId)}`, baseUrl), { headers: { authorization }, signal: AbortSignal.timeout(10_000) });
@@ -260,7 +260,7 @@ export function createCatalogue(baseUrl: string, request: typeof fetch = fetch, 
       }
       if (response.status === 404 || response.status === 400) return null;
       if (!response.ok) throw new CatalogueUnavailable(`catalogue answered ${response.status} for a Collection`);
-      return ((await response.json()) as { canManage?: boolean }).canManage === true;
+      return ((await response.json()) as { ownerUnit: { id: string } }).ownerUnit.id;
     },
   };
 }

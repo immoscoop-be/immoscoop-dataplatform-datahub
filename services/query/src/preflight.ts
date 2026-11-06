@@ -4,13 +4,18 @@ import type { NamedResource } from './database.js';
 import { bind, kindFor, type Parameter, type ParameterKind } from './parameters.js';
 import { comparedWith, filtersOn, inOwnCase, names, recent, tablesOf, withFilter } from './sql.js';
 
-/** The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides (DEC-SR-29). */
+/**
+ * The two thresholds, in bytes: above the first the User approves, above the second the Data Team decides
+ * (DEC-SR-29); or, for a User whose Permission group says so, it cannot run at all (`runs.ranges`).
+ */
 export interface Thresholds {
   approve: number;
   request: number;
+  /** Above the second: a Request to the Data Team, or it cannot run; a Request when not said, as for a Lens. */
+  above?: 'request' | 'refuse';
 }
 
-/** Up to 100 MB a query runs; up to 1 GB its author approves it; above, it goes to the Data Team (DEC-SR-29). */
+/** Up to the first threshold a query runs; up to the second its author approves it; above, it goes to the Data Team (DEC-SR-29). */
 export type Range = 'free' | 'approve' | 'request';
 
 /** What keeps a query from running. */
@@ -27,7 +32,9 @@ export type Problem =
   /** No filter on the partition column of a Resource that requires one (DEC-SR-35), with the SQL that adds one where Data Hub can tell where. */
   | { kind: 'filterRequired'; resource: Pick<NamedResource, 'id' | 'displayName'>; column: string; fix: string | null }
   /** BigQuery refused it, in its own words. */
-  | { kind: 'invalid'; message: string };
+  | { kind: 'invalid'; message: string }
+  /** It reads more than one run of this User may, and their Permission group sends nothing to the Data Team (`runs.ranges`). */
+  | { kind: 'tooLarge'; bytes: number; limit: number };
 
 /** No filter on the partition column of a Resource that does not require one: it runs, warned (FR-SR-40). */
 export interface Warning {
@@ -49,7 +56,7 @@ export interface Preflight {
   partitions: number | null;
   problems: Problem[];
   warnings: Warning[];
-  thresholds: Thresholds;
+  thresholds: Required<Thresholds>;
   /** The Parameters that are not in the SQL: they are not sent (DEC-UX-71). */
   unused: string[];
 }
@@ -61,6 +68,9 @@ export interface ResourceOfQuery {
 }
 
 export const rangeOf = (bytes: number, thresholds: Thresholds): Range => (bytes > thresholds.request ? 'request' : bytes > thresholds.approve ? 'approve' : 'free');
+
+/** Whether its SQL itself can run: nothing keeps it from running but, for this User, its size (FR-SR-52). */
+export const sound = (checked: Preflight): boolean => checked.range !== null && checked.problems.every((problem) => problem.kind === 'tooLarge');
 
 /** BigQuery's own words for a table that requires a filter on its partition column. */
 const REQUIRES_FILTER = /without a filter over column\(s\) '([^']+)'/i;
@@ -121,7 +131,7 @@ export async function preflight(
       warnings: [],
       ...fields,
       problems,
-      thresholds,
+      thresholds: { approve: thresholds.approve, request: thresholds.request, above: thresholds.above ?? 'request' },
       unused: bound.unused,
       runnable: problems.length === 0 && fields.range !== undefined && fields.range !== null,
     };
@@ -190,5 +200,8 @@ export async function preflight(
     }
     else problems.push({ kind: 'filterRequired', resource: named, column: resource.partition.field, fix });
   }
-  return done({ bytes: dry.bytes, range: rangeOf(dry.bytes, thresholds), partitions: dry.partitions, problems, warnings });
+  const range = rangeOf(dry.bytes, thresholds);
+  // Above its ranges it goes to the Data Team, unless the Permission group of the User says it cannot run (runs.ranges).
+  if (range === 'request' && thresholds.above === 'refuse') problems.push({ kind: 'tooLarge', bytes: dry.bytes, limit: thresholds.request });
+  return done({ bytes: dry.bytes, range, partitions: dry.partitions, problems, warnings });
 }

@@ -30,7 +30,8 @@ const app = await buildApp({
     project,
     // The size and partitions of a Resource, from BigQuery without reading it (FR-SR-39).
     storage: createStorage(bigquery, beneath),
-    // The two thresholds, 100 MB and 1 GB as start values (DEC-SR-29).
+    // The two thresholds of a Lens itself, its size check, growth and daily check: 100 MB and 1 GB as start values
+    // (DEC-SR-29). A query and a Preview run within the ranges of their User instead (runs.ranges).
     thresholds: {
       approve: Number(process.env.DATAHUB_QUERY_APPROVE_BYTES ?? 100_000_000),
       request: Number(process.env.DATAHUB_QUERY_REQUEST_BYTES ?? 1_000_000_000),

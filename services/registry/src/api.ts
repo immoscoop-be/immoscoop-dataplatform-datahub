@@ -1,4 +1,6 @@
+import { can, sees } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
+import { forbidden, opensWebhooks, permissionsOf } from './access.js';
 import type { ArtifactSets } from './artifact-sets.js';
 import type { DbtCloud } from './dbt-cloud.js';
 import { type DomainModel, DomainModelUnavailable, identitiesOf, offeredTypes } from './domain-model.js';
@@ -19,22 +21,22 @@ export interface ApiOptions {
   proposals: Proposals;
 }
 
-/** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
-const DATA_TEAM = 'datateam';
-
 const NODE_TYPES = new Set(['model', 'seed', 'snapshot', 'source', 'exposure']);
 
 type Query = Record<string, string | undefined>;
 
 /**
  * What registry tells about the dbt projects (TR-AR-05 to TR-AR-07). Every route needs an Access
- * Token, and for now the role of the Data Team: who else may read the registry is open (OP-AR-05).
+ * Token, and a Permission that needs the registry (DEC-AR-06, TR-PL-06); the lineage around a Resource
+ * everyone who sees it reads through catalogue.
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
   // Runs after the token check of @datahub/auth, which has set request.user.
   app.addHook('onRequest', async (request, reply) => {
-    if (!request.user?.roles.includes(DATA_TEAM)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team may read the registry for now.' });
+    const permissions = permissionsOf(request);
+    // It holds every Node of every dbt project: for adding Resources (Add Resources, Edit relations), the Webhooks of Admin, and who sees all.
+    if (!can(permissions, 'resources.assign') && !opensWebhooks(request) && sees(permissions) !== 'all') {
+      return forbidden(reply, 'resources.assign', 'Only who adds Resources to Collections, opens the Webhooks of Admin or sees all of Data Hub reads the registry.');
     }
   });
 
@@ -105,6 +107,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   // Fetches and processes a run again (FR-AR-14): a set registry knows goes back in the queue; a run
   // whose webhook never arrived is first checked with dbt Cloud (DEC-AR-02).
   app.post<{ Params: { runId: string } }>('/runs/:runId/reprocess', async (request, reply) => {
+    if (!opensWebhooks(request)) {
+      return forbidden(reply, 'admin.open', 'Only who opens the Webhooks of Admin processes a run again.');
+    }
     const { runId } = request.params;
     if (!/^\d+$/.test(runId)) {
       return reply.code(400).send({ error: 'invalid_request', message: 'A run is named by its numeric ID.' });
