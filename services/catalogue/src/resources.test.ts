@@ -1,18 +1,19 @@
 import { randomBytes } from 'node:crypto';
+import { startingPermissions } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import { type Kysely, sql } from 'kysely';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { type Collections, createCollections, NotEmpty, type Viewer } from './collections.js';
 import type { CatalogueDatabase } from './database.js';
 import { migrations } from './migrations/index.js';
-import { checkDetails, createResources, type Details, type ExposedTable, type Resources, type ResourcesUpdate } from './resources.js';
+import { checkDetails, createResources, type Details, type ExposedTable, type Resources, type ResourcesUpdate, whatDetailsChange } from './resources.js';
 
 const url = process.env.DATAHUB_TEST_DATABASE_URL;
 if (!url && process.env.CI) {
   throw new Error('DATAHUB_TEST_DATABASE_URL must be set in CI');
 }
 
-const dirk: Viewer = { id: 'u-dt', name: 'Dirk', groups: [], dataTeam: true };
+const dirk: Viewer = { id: 'u-dt', name: 'Dirk', groups: [], permissions: startingPermissions('admin') };
 const DIGIKOM = { id: 'g-digikom', email: 'digikom@thenextimmoscoop.be', name: 'DigiKom' };
 
 function table(name: string, extra: Partial<ExposedTable> = {}): ExposedTable {
@@ -228,7 +229,7 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect(await collections.dissolve(leads.id, dirk)).toBe(true);
     expect(await resources.add([{ id: order.id }], leads, dirk)).toEqual({ outcome: 'collection_gone' });
 
-    expect((await collections.log({ id: leads.id, canManage: true }, 50)).map((entry) => entry.text).slice(0, 3)).toEqual([
+    expect((await collections.log(leads, dirk, 50)).map((entry) => entry.text).slice(0, 3)).toEqual([
       'Collection dissolved by Dirk',
       'Orders removed by Dirk',
       'Orders added by Dirk',
@@ -277,6 +278,20 @@ describe.skipIf(!url)('Resources in Postgres', () => {
     expect(
       checkDetails({ ...base, mappings: [{ field: 'b', kind: 'relation', relationType: 'basedOn', identity: 'y.b', subject: 'a', origin: 'here', inDomainModel: true }] }, ['a', 'b']),
     ).toBe('the relation of b starts from a, which is not mapped as is.');
+  });
+
+  it('tells apart what changes of the grain and storage, and what of the Entity mapping (DEC-PL-03)', () => {
+    const base: Details = { partition: null, clusterBy: [], partitionFilter: 'none', grain: [], grainSentence: '', modelType: null, origins: { grain: 'here', modelType: 'dbt' }, release: null, mappings: [] };
+    const is = { kind: 'is' as const, relationType: null, subject: null, origin: 'here' as const, inDomainModel: true };
+    const mapped: Details = { ...base, release: '0.0.70', mappings: [{ field: 'b', identity: 'x.b', ...is }, { field: 'a', identity: 'x.a', ...is }] };
+    expect(whatDetailsChange(base, { ...base, origins: { modelType: 'dbt', grain: 'here' } })).toEqual({ assigned: false, mapped: false });
+    expect(whatDetailsChange(base, { ...base, grain: ['a'] })).toEqual({ assigned: true, mapped: false });
+    // A partition filter counts only with a partition.
+    expect(whatDetailsChange(base, { ...base, partitionFilter: 'dataHub' })).toEqual({ assigned: false, mapped: false });
+    expect(whatDetailsChange(base, mapped)).toEqual({ assigned: false, mapped: true });
+    // The same mappings in another order are the same.
+    expect(whatDetailsChange(mapped, { ...mapped, mappings: [...mapped.mappings].reverse() })).toEqual({ assigned: false, mapped: false });
+    expect(whatDetailsChange(mapped, { ...base, modelType: 'fact' })).toEqual({ assigned: true, mapped: true });
   });
 
   it('logs every Change upstream in each Resource it reaches, with its distance, and tells the Owner of new code once (FR-AR-12, EC-AR-04, MSG-RES-04)', async () => {

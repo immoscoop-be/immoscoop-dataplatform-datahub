@@ -12,7 +12,7 @@ export interface Group {
 export interface Identity {
   /** The groups the User is in right now, from `GET /me/groups`. */
   groups(authorization: string): Promise<Group[]>;
-  /** Every group of the Workspace domain, from `GET /groups`, which only the Data Team may ask (FR-CO-35). */
+  /** Every group of the Workspace domain, from `GET /groups`, for who makes Collections for any group (FR-CO-35). */
   domainGroups(authorization: string): Promise<Group[]>;
 }
 
@@ -41,13 +41,14 @@ export function createIdentity(baseUrl: string, request: typeof fetch = fetch): 
 }
 
 /**
- * Who catalogue notifies, as identity knows them from their last sign-in (DEC-LN-07): asked as catalogue,
- * with a Google ID token for identity's address.
+ * Who catalogue notifies, as identity knows them from their last sign-in (DEC-LN-07): the Users asked for, the
+ * members of the Groups asked for, and the Users whose Permission group has the Permissions asked for on, each with
+ * which of those they have (TR-PL-08). Asked as catalogue, with a Google ID token for identity's address.
  */
 export function createPeople(baseUrl: string, idToken: IdTokenSource, request: typeof fetch = fetch): People {
   return {
     async find(asked) {
-      if (asked.users.length + asked.groups.length + asked.roles.length === 0) return [];
+      if (asked.users.length + asked.groups.length + asked.permissions.length === 0) return [];
       let response: Response;
       try {
         response = await request(new URL('/internal/people', baseUrl), {

@@ -5,17 +5,9 @@ import { type Kysely, type Selectable, sql, type Transaction } from 'kysely';
 import type { CatalogueDatabase } from './database.js';
 import type { Group } from './identity.js';
 import { type CollectionLogId, logText } from './log.js';
+import { reaches, seesAll, seesInside, seesPublic, theirs, type Viewer } from './viewer.js';
 
-/** Who asks, as their Access Token says. */
-export interface Viewer {
-  /** The fixed Google ID of the User. */
-  id: string;
-  name: string;
-  /** The fixed IDs of every group the User is in (TR-PF-02). */
-  groups: readonly string[];
-  /** Whether the User has the role of the Data Team. */
-  dataTeam: boolean;
-}
+export type { Viewer } from './viewer.js';
 
 /** A Resource as a Collection lists it, in the panel and on its page. */
 export interface CollectionItem {
@@ -24,7 +16,7 @@ export interface CollectionItem {
   key: string;
   displayName: string;
   level: number;
-  /** Not published, only its Owner Unit and the Data Team see it (FR-SR-31). */
+  /** Not published, only its Owner Unit and who sees all see it (FR-SR-31, DEC-PL-02). */
   published: boolean;
   /** Its use is discouraged (FR-SR-50). */
   deprecated: boolean;
@@ -65,8 +57,10 @@ export interface Collection {
   createdAt: Date;
   /** The name of whoever created it. */
   createdBy: string;
-  /** Whether the viewer may change and dissolve it: its Owner Unit and the Data Team (FR-CO-13). */
+  /** Whether the viewer may change and dissolve it, and keep its folders: `collections.manage`, for theirs or every one (FR-CO-13). */
   canManage: boolean;
+  /** Whether its Owner Unit is one of the viewer's groups: it is theirs, with everything in it (DEC-PL-01). */
+  owned: boolean;
   /** The Resources in it that the viewer sees, by name (FR-CO-18, FR-SR-31). */
   resources: CollectionItem[];
   /** Its folders, by name (FR-CO-38). */
@@ -166,8 +160,8 @@ export interface Collections {
   deleteFolder(collectionId: string, folderId: string, viewer: Viewer): Promise<FolderOutcome>;
   /** Puts a Resource, Lens or folder of a Collection in one of its folders, or at its top with null (FR-CO-40). */
   move(collectionId: string, item: Movable, to: string | null, viewer: Viewer): Promise<FolderOutcome>;
-  /** The Log of a Collection that the viewer sees, newest first. */
-  log(collection: Pick<Collection, 'id' | 'canManage'>, limit: number): Promise<LogEntry[]>;
+  /** The Log of a Collection that the viewer sees, newest first: about its Resources only for who sees everything in it. */
+  log(collection: Pick<Collection, 'id' | 'ownerUnit'>, viewer: Viewer, limit: number): Promise<LogEntry[]>;
   /**
    * The Collections and Resources the viewer sees that share words with a question, those that share
    * most first, in the full-text search of Postgres in English without accents (FR-CO-37, DEC-UX-127).
@@ -182,7 +176,7 @@ const FIELDS = ['name', 'description', 'icon'] as const;
 
 /**
  * The entries about a Resource in the Log of a Collection. Only who sees the Resource sees them: while
- * no Resource is published, its Owner Unit and the Data Team (DEC-CO-12).
+ * no Resource is published, its Owner Unit and who sees all (DEC-CO-12, DEC-PL-02).
  */
 const ABOUT_RESOURCES: readonly CollectionLogId[] = ['COL-006', 'COL-007', 'COL-011'];
 
@@ -190,17 +184,19 @@ type Row = Selectable<CatalogueDatabase['collections']>;
 type Database = Kysely<CatalogueDatabase> | Transaction<CatalogueDatabase>;
 
 export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
-  const canManage = (row: Row, viewer: Viewer) => viewer.dataTeam || viewer.groups.includes(row.ownerUnitId);
+  /** Who changes a Collection: `collections.manage`, on those of their Owner Units or on every one (FR-CO-13). */
+  const canManage = (row: Row, viewer: Viewer) => reaches(viewer, 'collections.manage', row.ownerUnitId);
 
   /** The Collections as the viewer sees them, with their Resources and their last change, in a few queries. */
   async function present(rows: Row[], viewer: Viewer, from: Database = db): Promise<Collection[]> {
-    const managed = rows.filter((row) => canManage(row, viewer)).map((row) => row.id);
+    // Who sees everything in a Collection, not only what is published: its Owner Unit, and who sees all (FR-SR-31).
+    const inside = rows.filter((row) => seesInside(viewer, row.ownerUnitId)).map((row) => row.id);
     const items = new Map<string, CollectionItem[]>();
     const folders = new Map<string, Folder[]>();
     const places = new Map<string, string>();
     const lensPlaces = new Map<string, string>();
     if (rows.length > 0) {
-      // Its Owner Unit and the Data Team see every Resource in it; others only the published ones (FR-SR-31).
+      // Its Owner Unit and who sees all see every Resource in it; others only the published ones (FR-SR-31).
       const resources = await from
         .selectFrom('resources')
         .select(['id', 'key', 'collectionId', 'displayName', 'level', 'withdrawnAt', 'publishedAt', 'deprecatedAt'])
@@ -227,7 +223,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         folders.set(folder.collectionId, [...(folders.get(folder.collectionId) ?? []), shown]);
       }
       for (const resource of resources) {
-        if (!managed.includes(resource.collectionId!) && (resource.publishedAt === null || resource.withdrawnAt !== null)) {
+        if (!inside.includes(resource.collectionId!) && (resource.publishedAt === null || resource.withdrawnAt !== null)) {
           continue;
         }
         const list = items.get(resource.collectionId!) ?? [];
@@ -252,7 +248,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         .distinctOn('collectionId')
         .where('collectionId', 'in', rows.map((row) => row.id))
         .where('logId', '<>', 'COL-001')
-        .where((eb) => eb.or([eb('logId', 'not in', ABOUT_RESOURCES), ...(managed.length > 0 ? [eb('collectionId', 'in', managed)] : [])]))
+        .where((eb) => eb.or([eb('logId', 'not in', ABOUT_RESOURCES), ...(inside.length > 0 ? [eb('collectionId', 'in', inside)] : [])]))
         .orderBy('collectionId')
         .orderBy('id', 'desc')
         .execute();
@@ -272,6 +268,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       createdAt: row.createdAt,
       createdBy: row.createdByName,
       canManage: canManage(row, viewer),
+      owned: theirs(viewer, row.ownerUnitId),
       resources: items.get(row.id) ?? [],
       folders: folders.get(row.id) ?? [],
       lensFolders: Object.fromEntries(
@@ -286,16 +283,21 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
     return collection!;
   }
 
-  /** The Collections that are not dissolved and that the viewer sees (FR-CO-17, DEC-CO-11). */
+  /**
+   * The Collections that are not dissolved and that the viewer sees (FR-CO-17, DEC-PL-02): with `catalogue.see` only
+   * theirs, those of their Owner Units, private and public; public, those and every public one; all, every one.
+   */
   function visible(viewer: Viewer, from: Database = db) {
     return from
       .selectFrom('collections')
       .selectAll()
       .where('dissolvedAt', 'is', null)
-      .$if(!viewer.dataTeam, (query) =>
-        query.where((eb) =>
-          eb.or([eb('visibility', '=', 'public'), ...(viewer.groups.length > 0 ? [eb('ownerUnitId', 'in', viewer.groups)] : [])]),
-        ),
+      .$if(!seesAll(viewer), (query) =>
+        query.where((eb) => {
+          const seen = [...(seesPublic(viewer) ? [eb('visibility', '=', 'public')] : []), ...(viewer.groups.length > 0 ? [eb('ownerUnitId', 'in', viewer.groups)] : [])];
+          // Only theirs, without an Owner Unit: none.
+          return seen.length > 0 ? eb.or(seen) : eb.val(false);
+        }),
       );
   }
 
@@ -641,7 +643,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
       });
     },
 
-    async log(collection, limit) {
+    async log(collection, viewer, limit) {
       if (!UUID.test(collection.id)) {
         return [];
       }
@@ -649,7 +651,7 @@ export function createCollections(db: Kysely<CatalogueDatabase>): Collections {
         .selectFrom('collectionLog')
         .select(['logId', 'params', 'at'])
         .where('collectionId', '=', collection.id)
-        .$if(!collection.canManage, (query) => query.where('logId', 'not in', ABOUT_RESOURCES))
+        .$if(!seesInside(viewer, collection.ownerUnit.id), (query) => query.where('logId', 'not in', ABOUT_RESOURCES))
         .orderBy('id', 'desc')
         .limit(limit)
         .execute();

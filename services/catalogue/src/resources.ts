@@ -4,6 +4,7 @@ import type { Viewer } from './collections.js';
 import type { CatalogueDatabase, MappingKind, MappingOrigin, ModelType, Origins, PartitionFilter, PartitionUnit, SchemaChange } from './database.js';
 import { type Column, fingerprint, type LeftOut, levelAtRegistration, splitColumns } from './fields.js';
 import { logText, type ResourceLogId } from './log.js';
+import { seesAll, seesPublic, theirs } from './viewer.js';
 
 /** A table under an exposure tagged `datahub`, as registry tells it (TR-AR-08). */
 export interface ExposedTable {
@@ -121,6 +122,7 @@ export interface Card {
 }
 
 export const CARD_KEYS = ['businessDescription', 'intendedUse', 'pitfalls', 'knownGaps', 'reliableSince', 'keyFields', 'parameters'] as const;
+export type CardKey = (typeof CARD_KEYS)[number];
 
 /** A Known Gap of a Resource, with who added it and when; neither for a gap of before (FR-RC-21). */
 export interface KnownGap {
@@ -189,7 +191,9 @@ export type EditOutcome =
   | { outcome: 'not_found' }
   /** A Business Description is written from Described on (DEC-MR-10). */
   | { outcome: 'not_described' }
-  | { outcome: 'invalid'; message: string };
+  | { outcome: 'invalid'; message: string }
+  /** A field that changes is one the User may not describe (DEC-PL-03); nothing changed. */
+  | { outcome: 'forbidden'; field: CardKey };
 
 /** What adding, changing or removing a Known Gap came to: the gap, or why not. */
 export type GapOutcome = { outcome: 'done'; gap: KnownGap | null } | { outcome: 'not_found' } | { outcome: 'invalid'; message: string };
@@ -254,8 +258,11 @@ export interface Resources {
   /** Takes a Resource out of its Collection; false when it was in none. */
   remove(id: string, viewer: Viewer): Promise<boolean>;
   log(id: string, limit: number): Promise<LogEntry[]>;
-  /** Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28). */
-  edit(id: string, changes: CardChanges, viewer: Viewer): Promise<EditOutcome>;
+  /**
+   * Changes what Data Hub keeps about a Resource, each change in its Log (FR-RC-15, FR-SR-28): nothing when a field that
+   * changes is not allowed, as the Permissions of the User say (DEC-PL-03); one sent as it is changes nothing.
+   */
+  edit(id: string, changes: CardChanges, viewer: Viewer, allowed?: (field: CardKey) => boolean): Promise<EditOutcome>;
   /** Adds a Known Gap, with who added it and when (FR-RC-21). */
   addGap(id: string, text: string, scope: GapScope | null, viewer: Viewer): Promise<GapOutcome>;
   /** Changes the text of one Known Gap; who added it stays. */
@@ -356,19 +363,21 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
     await trx.insertInto('resourceLog').values({ resourceId, logId, params, actorId }).execute();
   }
 
-  /** The fields of a Resource and the columns left out of it, as its table has them now (FR-SR-06). */
   /**
-   * Which Resources the viewer sees (FR-SR-31), or null for every one: the Data Team sees all; others
-   * see every Resource in a Collection of their Owner Unit, and the published ones in every Collection
-   * they see, a public one or one of their Owner Unit.
+   * Which Resources the viewer sees (FR-SR-31, DEC-PL-02), or null for every one: who sees all sees every one; others
+   * every Resource in a Collection of their Owner Units, and the published ones in every other Collection they see,
+   * a public one when `catalogue.see` says public.
    */
   async function seenScope(viewer: Viewer): Promise<{ managed: string[]; visible: string[] } | null> {
-    if (viewer.dataTeam) {
+    if (seesAll(viewer)) {
       return null;
     }
     const rows = await db.selectFrom('collections').select(['id', 'ownerUnitId', 'visibility']).where('dissolvedAt', 'is', null).execute();
-    const managed = rows.filter((row) => viewer.groups.includes(row.ownerUnitId));
-    return { managed: managed.map((row) => row.id), visible: rows.filter((row) => row.visibility === 'public' || managed.includes(row)).map((row) => row.id) };
+    const managed = rows.filter((row) => theirs(viewer, row.ownerUnitId));
+    return {
+      managed: managed.map((row) => row.id),
+      visible: rows.filter((row) => (row.visibility === 'public' && seesPublic(viewer)) || managed.includes(row)).map((row) => row.id),
+    };
   }
 
   /** A condition on `resources` (as `r`) that keeps those in a scope. */
@@ -941,7 +950,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
       return rows.map((row) => ({ logId: row.logId, text: logText(row.logId, row.params), params: row.params, at: row.at }));
     },
 
-    async edit(id, changes, viewer) {
+    async edit(id, changes, viewer, allowed = () => true) {
       if (!UUID.test(id)) {
         return { outcome: 'not_found' };
       }
@@ -959,6 +968,10 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         const gaps = await gapsOf(trx, id);
         const current = { ...cardOf(row, row.reliableDay, gaps), knownGaps: gaps.map((gap) => gap.text) };
         const changed = CARD_KEYS.filter((key) => changes[key] !== undefined && JSON.stringify(changes[key]) !== JSON.stringify(current[key]));
+        const refused = changed.find((key) => !allowed(key));
+        if (refused !== undefined) {
+          return { outcome: 'forbidden', field: refused };
+        }
         if (changed.includes('businessDescription') && changes.businessDescription && row.level < DESCRIBED) {
           return { outcome: 'not_described' };
         }
@@ -1276,6 +1289,33 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
         return 'done';
       });
     },
+  };
+}
+
+/**
+ * What a change of the details of a Resource changes (DEC-PL-03): how it is stored, its grain and model type, the work
+ * of a Data Admin (`assigned`); and its mappings with the release of the Domain Model they were made with, its Entity
+ * mapping (`mapped`). Each needs its own Permission; what is sent as it is changes nothing.
+ */
+export function whatDetailsChange(before: Details, after: Details): { assigned: boolean; mapped: boolean } {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const sorted = (origins: Origins) => Object.entries(origins).sort(([a], [b]) => a.localeCompare(b));
+  // A partition filter is kept only with a partition (record).
+  const filter = (details: Details) => (details.partition ? details.partitionFilter : 'none');
+  const mappings = (details: Details) =>
+    details.mappings
+      .map(({ field, kind, relationType, identity, subject, origin, inDomainModel }) => ({ field, kind, relationType, identity, subject, origin, inDomainModel }))
+      .sort((a, b) => a.field.localeCompare(b.field));
+  return {
+    assigned:
+      !same(before.partition, after.partition) ||
+      !same(before.clusterBy, after.clusterBy) ||
+      filter(before) !== filter(after) ||
+      !same(before.grain, after.grain) ||
+      before.grainSentence !== after.grainSentence ||
+      before.modelType !== after.modelType ||
+      !same(sorted(before.origins), sorted(after.origins)),
+    mapped: before.release !== after.release || !same(mappings(before), mappings(after)),
   };
 }
 

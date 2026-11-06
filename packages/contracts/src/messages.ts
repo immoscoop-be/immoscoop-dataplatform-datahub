@@ -14,8 +14,8 @@ export const LANGUAGES: readonly Language[] = ['nl', 'en'];
 /** How each language writes numbers and dates: as in Flanders, and in British English. */
 const LOCALES: Readonly<Record<Language, string>> = { nl: 'nl-BE', en: 'en-GB' };
 
-/** The kinds of object a Message can be about (DEC-CV-03). */
-export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard' | 'excelKey';
+/** The kinds of object a Message can be about (DEC-CV-03); a User, for what Data Hub tells about their Permission group (FR-PL-12). */
+export type SubjectKind = 'collection' | 'resource' | 'lens' | 'query' | 'report' | 'learningCard' | 'excelKey' | 'user';
 
 /**
  * The kind of a Message, what the Message Centre filters on (FR-CV-06): what a person writes, or
@@ -36,7 +36,7 @@ export type MessageSender = 'user' | 'owner' | 'dataTeam' | 'dataHub';
  * - `resourceOwners`: the Owners of the Resources a Lens builds on
  * - `writer`: who wrote the Message this one answers or decides
  * - `participants`: who already wrote in the conversation
- * - `author`: who made the Lens or the query
+ * - `author`: who made the Lens or the query; the User of an Excel key, or the User a Message is about
  * - `consumers`: the Consumers of a Resource (FR-LN-03)
  * - `lensUsers`: who ran a Lens in the 30 days before it was deleted, also from Excel, named in the Message (FR-LE-18)
  */
@@ -513,6 +513,7 @@ export const SUBJECT_NAMES: Readonly<Record<SubjectKind, string>> = {
   report: 'report',
   learningCard: 'learning card',
   excelKey: 'Excel key',
+  user: 'user',
 };
 
 /** The kind of an object as a sentence of the interface names it: a Defined Term, never translated (NFR-LOC-01). */
@@ -524,6 +525,7 @@ export const SUBJECT_TITLES: Readonly<Record<SubjectKind, string>> = {
   report: 'Report',
   learningCard: 'Learning Card',
   excelKey: 'Excel key',
+  user: 'User',
 };
 
 /**

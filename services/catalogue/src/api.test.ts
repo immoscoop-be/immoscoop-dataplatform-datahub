@@ -1,6 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { TokenError } from '@datahub/auth';
 import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
+import { type Permissions, type StartingGroup, startingPermissions } from '@datahub/contracts';
 import { createDatabase, migrate, type Database } from '@datahub/db';
 import type { FastifyInstance } from 'fastify';
 import { type Kysely, sql } from 'kysely';
@@ -248,9 +249,13 @@ describe.skipIf(!url)('the routes of Collections', () => {
     await database.close();
   });
 
-  /** A User in the given groups, with or without the role of the Data Team. */
-  async function user(name: string, groups: Group[], roles: string[] = []) {
-    const authorization = `Bearer ${await issuer.sign({ sub: `u-${name}`, name, groups: groups.map((group) => group.id), roles })}`;
+  /**
+   * A User in the given groups, in a Permission group to start with (Business analyst unless said otherwise), with the
+   * Permissions changed as given.
+   */
+  async function user(name: string, groups: Group[], as: StartingGroup = 'businessAnalyst', changed: Partial<Permissions> = {}) {
+    const permissions = { ...startingPermissions(as), ...changed };
+    const authorization = `Bearer ${await issuer.sign({ sub: `u-${name}`, name, groups: groups.map((group) => group.id), as, permissions })}`;
     groupsOf.set(authorization, groups);
     return (method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE', path: string, payload?: object) =>
       app.inject({ method, url: path, headers: { authorization }, ...(payload ? { payload } : {}) });
@@ -277,7 +282,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   it('hides a private Collection from everyone but its Owner Unit and the Data Team (FR-CO-17, DEC-CO-11)', async () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);
-    const dirk = await user('Dirk', [], ['datateam']);
+    const dirk = await user('Dirk', [], 'admin');
     const id = (await an('POST', '/collections', { name: 'Agencies', description: 'The agencies.', icon: 'handshake', ownerUnit: DIGIKOM.id })).json().id;
 
     expect((await bert('GET', `/collections/${id}`)).statusCode).toBe(404);
@@ -291,7 +296,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   it('lets the Owner Unit and the Data Team manage a public Collection, and no one else (FR-CO-13)', async () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);
-    const dirk = await user('Dirk', [], ['datateam']);
+    const dirk = await user('Dirk', [], 'admin');
     const id = (
       await an('POST', '/collections', { name: 'Web visits', description: 'Visits.', icon: 'globe', ownerUnit: DIGIKOM.id, visibility: 'public' })
     ).json().id;
@@ -326,7 +331,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   });
 
   it('lets the Data Team hand a Collection to any group of the domain, also one it is not in (FR-CO-35)', async () => {
-    const dirk = await user('Dirk', [], ['datateam']);
+    const dirk = await user('Dirk', [], 'admin');
     const created = await dirk('POST', '/collections', { name: 'Sales leads', description: 'Leads of sales.', icon: 'storefront', ownerUnit: SALES.id });
     expect(created.json()).toMatchObject({ ownerUnit: SALES, createdBy: 'Dirk', canManage: true });
     const handed = await dirk('PATCH', `/collections/${created.json().id}`, { ownerUnit: DIGIKOM.id });
@@ -336,7 +341,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   it('lets the Owner Unit and the Data Team keep folders, and shows them to everyone who sees the Collection (FR-CO-38 to FR-CO-40)', async () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);
-    const dirk = await user('Dirk', [], ['datateam']);
+    const dirk = await user('Dirk', [], 'admin');
     const id = (await an('POST', '/collections', { name: 'Folders', description: 'Kept in folders.', icon: 'folder', ownerUnit: DIGIKOM.id, visibility: 'public' })).json().id;
 
     const made = await an('POST', `/collections/${id}/folders`, { name: ' By source ' });
@@ -448,7 +453,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('lets only the Data Team see the Resources without Collection and add them to one (TR-SR-04)', async () => {
       const an = await user('An', [DIGIKOM]);
       const bert = await user('Bert', [SALES]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       await fromRegistry(update('2', ['visits', 'leads', 'agencies']));
       const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[];
       expect(waiting.map((resource) => resource.name)).toEqual(['agencies', 'leads', 'visits']);
@@ -515,7 +520,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
     it('shows a Resource with its fields to whoever sees it, and the columns left out of it (FR-SR-06, DEC-SR-33)', async () => {
       const an = await user('An', [DIGIKOM]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       await fromRegistry(update('4', ['searches']));
       const waiting = (await dirk('GET', '/resources?collection=none')).json().resources as { id: string; name: string; level: number }[];
       const searches = waiting.find((resource) => resource.name === 'searches')!;
@@ -537,7 +542,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('lets the Owner Unit and the Data Team keep the Resource Card, and shows what it relates to (FR-RC-15, FR-RC-09, FR-SR-54)', async () => {
       const an = await user('An', [DIGIKOM]);
       const bert = await user('Bert', [SALES]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const described = (name: string, description: string) => ({
         ...update('6', [name]).tables[0]!,
         description,
@@ -706,7 +711,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('publishes a Resource as its first Confirmation, warns of what changes after, and deprecates it (FR-SR-49, FR-MR-12, FR-SR-50)', async () => {
       const an = await user('An', [DIGIKOM]);
       const bert = await user('Bert', [SALES]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       // The Collection of the previous test, public, with cards, decks and drafts in it.
       const run = (runId: string, cards: { description?: string; columns?: { name: string; dataType: string; description: string }[] } = {}) =>
         fromRegistry({
@@ -811,7 +816,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('finds the Collections and Resources the User sees by the words of a question (FR-CO-37, DEC-UX-127)', async () => {
       const ruth = await user('Ruth', [SALES]);
       const an = await user('An', [DIGIKOM]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const tables = update('20', ['broker_reviews']);
       tables.tables[0]!.description = 'How agencies rate their brokers, per review.';
       await fromRegistry(tables);
@@ -856,7 +861,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   it('keeps a Request to run a very large query, one waiting per query and writer (MSG-QRY-01)', async () => {
     const karel = await user('Karel', [DIGIKOM]);
     const els = await user('Els', [SALES]);
-    const team = await user('Toon', [], ['datateam']);
+    const team = await user('Toon', [], 'admin');
     const query = '2b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
     const body = { type: 'MSG-QRY-01', subjectId: query, subject: 'Partner leads since 2019', reads: 4_800_000_000, threshold: 1_000_000_000, text: 'For the five-year review.' };
 
@@ -887,7 +892,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
 
   it('keeps a Request to accept a very large Lens apart from those on queries (MSG-LEN-01, FR-LE-09)', async () => {
     const mia = await user('Mia', [DIGIKOM]);
-    const team = await user('Toon', [], ['datateam']);
+    const team = await user('Toon', [], 'admin');
     const lens = '7c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
     const body = { type: 'MSG-LEN-01', subjectId: lens, subject: 'Leads per source, all weeks', reads: 6_200_000_000, threshold: 1_000_000_000, text: 'For the yearly review.', partitions: 312 };
 
@@ -931,7 +936,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('takes a Question or a Remark on a Learning Card, which everyone sees and the Data Team gets (FR-LR-06)', async () => {
       const lies = await user('Lies', [SALES]);
       const tom = await user('Tom', [DIGIKOM]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const asked = await lies('POST', '/messages', { subjectKind: 'learningCard', subjectId: 'K3.4', kind: 'question', text: 'Where is the glossary?' });
       expect(asked.statusCode).toBe(201);
       expect(asked.json().message).toMatchObject({ subject: { kind: 'learningCard', id: 'K3.4', name: 'K3.4 Where definitions live', exists: true, collection: null } });
@@ -950,7 +955,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
   it('puts what identity tells about an Excel key to its User alone (FR-PL-03, MSG-KEY-01, MSG-KEY-02)', async () => {
     const an = await user('An', [DIGIKOM]);
     const bert = await user('Bert', [SALES]);
-    const dirk = await user('Dirk', [], ['datateam']);
+    const dirk = await user('Dirk', [], 'admin');
     const keyId = '5a6b7c8d-0000-4000-8000-00000000ab01';
     const notice = (payload: object, token = 'identity-token') =>
       app.inject({ method: 'POST', url: '/internal/excel-keys/notices', headers: { authorization: `Bearer ${token}` }, payload });
@@ -982,7 +987,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);
       const els = await user('Eva', [AGENTS]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const talk = (await an('POST', '/collections', { name: 'Talk', description: 'To talk about.', icon: 'chat-circle', ownerUnit: CREDIT.id, visibility: 'public' })).json();
       const secret = (await els('POST', '/collections', { name: 'Secret', description: 'Not for all.', icon: 'lock', ownerUnit: AGENTS.id })).json();
 
@@ -1045,7 +1050,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);
       const els = await user('Eva', [AGENTS]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
       const asked = (await bert('POST', '/messages', { subjectKind: 'collection', subjectId: talk.id, kind: 'question', text: 'A test for the presentation?' })).json().message;
       expect(asked).toMatchObject({ state: 'open', mayClose: true });
@@ -1082,7 +1087,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
     it('knows the Lenses from query, and shows the Messages on one only to who sees it (FR-CV-05, DEC-CO-16)', async () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
       const lens = '3d1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
       const facts = { name: 'Leads per source', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Mia', authorName: 'Mia' };
@@ -1111,7 +1116,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const an = await user('Ann', [CREDIT]);
       const bert = await user('Bert', [BROKERS]);
       const cas = await user('Cas', [BROKERS]);
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const talk = (await an('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Talk');
       const lens = '6c1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
       await fromQuery('PUT', `/internal/lenses/${lens}`, { name: 'Leads to delete', collectionId: talk.id, resourceIds: [], state: 'published', authorId: 'u-Ann', authorName: 'Ann' });
@@ -1148,7 +1153,7 @@ describe.skipIf(!url)('the routes of Collections', () => {
       const karel = await user('Karel', [DIGIKOM]);
       const mia = await user('Mia', [DIGIKOM]);
       const an = await user('An', [DIGIKOM]);
-      const team = await user('Toon', [], ['datateam']);
+      const team = await user('Toon', [], 'admin');
       const query = '4b1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
       const sent = (await karel('POST', '/requests', { type: 'MSG-QRY-01', subjectId: query, subject: 'Partner leads', reads: 4_800_000_000, threshold: 1_000_000_000, text: '' })).json().request;
       // Sent, it is read by its writer, and waits in the Message Centre of the Data Team.
@@ -1249,13 +1254,293 @@ describe.skipIf(!url)('the routes of Collections', () => {
     });
 
     it('enters a Signal on a Resource in its Log (CNV-050)', async () => {
-      const dirk = await user('Dirk', [], ['datateam']);
+      const dirk = await user('Dirk', [], 'admin');
       const cards = (await dirk('GET', '/collections')).json().collections.find((one: { name: string }) => one.name === 'Cards');
       const resource = cards.resources[0].id;
       const signal = (await dirk('POST', '/messages', { subjectKind: 'resource', subjectId: resource, kind: 'signal', text: 'Zero last week.' })).json().message;
       expect(signal.writer.as).toBe('dataTeam');
       const log = (await dirk('GET', `/resources/${resource}/log`)).json().entries;
       expect(log[0]).toMatchObject({ logId: 'CNV-050', text: 'Signal raised by Dirk', params: { conversation: signal.id } });
+    });
+  });
+
+  describe('Permission groups (TR-PL-06, DEC-PL-02 to DEC-PL-06)', () => {
+    // Groups of their own, so that what earlier tests made does not count here.
+    const PLANNING: Group = { id: 'g-pl-planning', email: 'planning@thenextimmoscoop.be', name: 'Planning' };
+    const PARTNERS: Group = { id: 'g-pl-partners', email: 'partners@thenextimmoscoop.be', name: 'Partners' };
+    const see = (value: 'theirs' | 'public' | 'all'): Partial<Permissions> => ({ 'catalogue.see': { on: true, values: { see: value } } });
+    const every = { on: true, values: { reach: 'every' } };
+    const theirs = { on: true, values: { reach: 'theirs' } };
+    /** The Resources of this block by name, and its Collections: Planning's private one, a public and a private one of Partners. */
+    const ids: Record<string, string> = {};
+    let plans = '';
+    let deals = '';
+    let secrets = '';
+
+    beforeAll(async () => {
+      // A dbt project of its own, so that the runs of other tests withdraw nothing here; described, so 2 · Described.
+      const tables = ['pl_plans', 'pl_drafts', 'pl_deals', 'pl_offers', 'pl_waiting'].map((name) => ({
+        key: `immoscoop-dataplatform.dbt_pl.${name}`,
+        nodeId: `model.pl.${name}`,
+        name,
+        resourceType: 'model',
+        description: `About ${name}.`,
+        exposures: [`datahub_${name}`],
+        label: null,
+        checksum: `sum-${name}`,
+        columns: [
+          { name: `${name}_id`, position: 1, dataType: 'STRING', description: `The ${name}.` },
+          { name: 'week', position: 2, dataType: 'DATE', description: '' },
+        ],
+      }));
+      const run = await app.inject({
+        method: 'POST',
+        url: '/internal/resources',
+        headers: { authorization: 'Bearer registry-id-token' },
+        payload: { projectId: '9500', projectName: 'permissions', runId: '1', generatedAt: '2026-11-06T06:00:00Z', tables },
+      });
+      expect(run.json()).toMatchObject({ registered: 5 });
+      const admin = await user('Ada', [], 'admin');
+      for (const resource of (await admin('GET', '/resources?collection=none')).json().resources as { id: string; name: string }[]) ids[resource.name] = resource.id;
+      const pia = await user('Pia', [PLANNING]);
+      const piet = await user('Piet', [PARTNERS]);
+      plans = (await pia('POST', '/collections', { name: 'PL Plans', description: 'Plans.', icon: 'folder', ownerUnit: PLANNING.id })).json().id;
+      deals = (await piet('POST', '/collections', { name: 'PL Deals', description: 'Deals of the partners.', icon: 'handshake', ownerUnit: PARTNERS.id, visibility: 'public' })).json().id;
+      secrets = (await piet('POST', '/collections', { name: 'PL Secrets', description: 'Secrets.', icon: 'lock', ownerUnit: PARTNERS.id })).json().id;
+      expect((await admin('POST', `/collections/${plans}/resources`, { resources: [ids.pl_plans, ids.pl_drafts] })).statusCode).toBe(200);
+      expect((await admin('POST', `/collections/${deals}/resources`, { resources: [ids.pl_deals, ids.pl_offers] })).statusCode).toBe(200);
+      expect((await piet('POST', `/resources/${ids.pl_deals}/publication`)).statusCode).toBe(200);
+    });
+
+    it('shows a User only theirs, every public Collection too, or all of the catalogue (catalogue.see, DEC-PL-02, EC-PL-02)', async () => {
+      const tess = await user('Tess', [PLANNING], 'businessAnalyst', see('theirs'));
+      const paul = await user('Paul', [PLANNING]);
+      const alma = await user('Alma', [], 'businessAnalyst', see('all'));
+      const piet = await user('Piet', [PARTNERS]);
+      const named = async (as: typeof paul) => ((await as('GET', '/collections')).json().collections as { name: string }[]).map((one) => one.name).filter((name) => name.startsWith('PL '));
+      expect(await named(tess)).toEqual(['PL Plans']);
+      expect(await named(paul)).toEqual(['PL Deals', 'PL Plans']);
+      expect(await named(alma)).toEqual(['PL Deals', 'PL Plans', 'PL Secrets']);
+      expect((await tess('GET', `/collections/${deals}`)).statusCode).toBe(404);
+
+      // Published in a public Collection: not for who sees only theirs.
+      expect((await tess('GET', `/resources/${ids.pl_deals}`)).statusCode).toBe(404);
+      expect((await paul('GET', `/resources/${ids.pl_deals}`)).statusCode).toBe(200);
+      // Not published, or without a Collection: for who sees all, which is neither managing nor describing it.
+      expect((await paul('GET', `/resources/${ids.pl_offers}`)).statusCode).toBe(404);
+      expect((await alma('GET', `/resources/${ids.pl_offers}`)).json().resource).toMatchObject({ name: 'pl_offers', canEdit: false, canPublish: false, canDeprecate: false });
+      expect((await alma('GET', `/collections/${deals}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['pl_deals', 'pl_offers']);
+      expect((await paul('GET', `/collections/${deals}/resources`)).json().resources.map((resource: { name: string }) => resource.name)).toEqual(['pl_deals']);
+      expect((await alma('GET', `/resources/${ids.pl_waiting}`)).statusCode).toBe(200);
+      expect((await alma('GET', '/resources?collection=none')).json().resources.map((resource: { name: string }) => resource.name)).toContain('pl_waiting');
+      const refused = await paul('GET', '/resources?collection=none');
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'catalogue.see' });
+
+      // The search of Collections finds only what they see.
+      const found = async (as: typeof paul) => ((await as('GET', '/search?question=partners')).json().collections as { id: string }[]).map((one) => one.id);
+      expect(await found(tess)).not.toContain(deals);
+      expect(await found(paul)).toContain(deals);
+
+      // The Messages on what they do not see are not found, as the object itself (FR-CV-05, EC-PL-02).
+      const asked = (await piet('POST', '/messages', { subjectKind: 'collection', subjectId: deals, kind: 'question', text: 'Who uses the deals?' })).json().message;
+      expect((await tess('GET', `/messages/${asked.id}`)).statusCode).toBe(404);
+      expect((await tess('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(asked.id);
+      expect((await paul('GET', `/messages/${asked.id}`)).statusCode).toBe(200);
+      const secret = (await piet('POST', '/messages', { subjectKind: 'collection', subjectId: secrets, kind: 'remark', text: 'Only ours.' })).json().message;
+      expect((await paul('GET', `/messages/${secret.id}`)).statusCode).toBe(404);
+      expect((await alma('GET', `/messages/${secret.id}`)).statusCode).toBe(200);
+    });
+
+    it('lets a User make a Collection for their own group or any, and manage theirs or every one (collections.make, collections.manage)', async () => {
+      const lena = await user('Lena', [PLANNING], 'lensUser');
+      const made = await lena('POST', '/collections', { name: 'PL Lenses', description: 'No.', icon: 'coins', ownerUnit: PLANNING.id });
+      expect(made.statusCode).toBe(403);
+      expect(made.json()).toMatchObject({ error: 'forbidden', permission: 'collections.make' });
+      expect((await lena('GET', `/collections/${plans}`)).json()).toMatchObject({ canManage: false, owned: true });
+      expect((await lena('PATCH', `/collections/${plans}`, { description: 'Mine.' })).json()).toMatchObject({ permission: 'collections.manage' });
+      expect((await lena('POST', `/collections/${plans}/folders`, { name: 'Mine' })).json()).toMatchObject({ permission: 'collections.manage' });
+
+      const gus = await user('Gus', [PLANNING], 'businessAnalyst', { 'collections.make': { on: true, values: { ownerUnit: 'any' } } });
+      const forSales = await gus('POST', '/collections', { name: 'PL For sales', description: 'For sales.', icon: 'storefront', ownerUnit: SALES.id, visibility: 'public' });
+      expect(forSales.json()).toMatchObject({ ownerUnit: SALES, canManage: false, owned: false });
+      const eve = await user('Eve', [], 'businessAnalyst', { 'collections.manage': every });
+      expect((await eve('PATCH', `/collections/${forSales.json().id}`, { description: 'Every lead of sales.' })).json()).toMatchObject({ description: 'Every lead of sales.', canManage: true });
+    });
+
+    it('lets a User describe a Resource attribute by attribute, on theirs or on every one (resources.describe, DEC-PL-03)', async () => {
+      const pia = await user('Pia', [PLANNING], 'businessAnalyst', { 'resources.describe': { on: true, values: { reach: 'theirs', attributes: ['pitfalls'] } } });
+      expect((await pia('GET', `/resources/${ids.pl_plans}`)).json().resource).toMatchObject({
+        canEdit: true,
+        canDescribe: { description: false, behaviour: false, pitfalls: true, availableSince: false, gaps: false, keyFields: false, entityMapping: false },
+        canPublish: true,
+        canDeprecate: true,
+        canAssign: false,
+      });
+      expect((await pia('PATCH', `/resources/${ids.pl_plans}`, { pitfalls: 'Weeks overlap.' })).json().resource.card.pitfalls).toBe('Weeks overlap.');
+      const refused = await pia('PATCH', `/resources/${ids.pl_plans}`, { businessDescription: 'Plans per week.' });
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'resources.describe', attribute: 'description' });
+      // Another attribute sent as it is changes nothing and needs nothing; changed, it stops the whole change.
+      expect((await pia('PATCH', `/resources/${ids.pl_plans}`, { intendedUse: '', pitfalls: 'Weeks overlap, in March.' })).statusCode).toBe(200);
+      expect((await pia('PATCH', `/resources/${ids.pl_plans}`, { intendedUse: 'Planning.', pitfalls: 'Gone.' })).json()).toMatchObject({ attribute: 'behaviour' });
+      expect((await pia('GET', `/resources/${ids.pl_plans}`)).json().resource.card).toMatchObject({ intendedUse: '', pitfalls: 'Weeks overlap, in March.' });
+      // The Business Descriptions of the fields and marking changes seen are the description; the Known Gaps their own.
+      expect((await pia('PUT', `/resources/${ids.pl_plans}/fields`, { fields: [{ name: 'pl_plans_id', businessDescription: 'One plan.' }] })).json()).toMatchObject({ attribute: 'description' });
+      expect((await pia('POST', `/resources/${ids.pl_plans}/changes/seen`)).json()).toMatchObject({ attribute: 'description' });
+      expect((await pia('POST', `/resources/${ids.pl_plans}/gaps`, { text: 'No plans before 2025.' })).json()).toMatchObject({ attribute: 'gaps' });
+
+      // A Business analyst describes every attribute of theirs but the Entity mapping, and nothing of others.
+      const paul = await user('Paul', [PLANNING]);
+      expect((await paul('GET', `/resources/${ids.pl_plans}`)).json().resource.canDescribe).toEqual({
+        description: true,
+        behaviour: true,
+        pitfalls: true,
+        availableSince: true,
+        gaps: true,
+        keyFields: true,
+        entityMapping: false,
+      });
+      expect((await paul('PATCH', `/resources/${ids.pl_plans}`, { businessDescription: 'Plans per week.' })).statusCode).toBe(200);
+      expect((await paul('PATCH', `/resources/${ids.pl_deals}`, { pitfalls: 'Mine.' })).json()).toMatchObject({ permission: 'resources.describe' });
+      expect((await paul('GET', `/resources/${ids.pl_deals}`)).json().resource).toMatchObject({ canEdit: false, canPublish: false, canDeprecate: false });
+      // With every Resource in reach, also those of other Owner Units.
+      const ines = await user('Ines', [], 'businessAnalyst', { 'resources.describe': { on: true, values: { reach: 'every', attributes: ['gaps'] } } });
+      expect((await ines('POST', `/resources/${ids.pl_deals}/gaps`, { text: 'No deals in August.' })).statusCode).toBe(201);
+      expect((await ines('PATCH', `/resources/${ids.pl_deals}`, { pitfalls: 'Hers.' })).json()).toMatchObject({ attribute: 'pitfalls' });
+    });
+
+    it('splits Edit relations: the grain is the work of a Data Admin, the mappings the Entity mapping (resources.assign, DEC-PL-03)', async () => {
+      const admin = await user('Ada', [], 'admin');
+      const mona = await user('Mona', [PLANNING], 'businessAnalyst', { 'resources.describe': { on: true, values: { reach: 'theirs', attributes: ['entityMapping'] } } });
+      const current = (await admin('GET', `/resources/${ids.pl_plans}`)).json().resource.details;
+      const mapping = { field: 'pl_plans_id', kind: 'is', relationType: null, identity: 'plan.planId', subject: null, origin: 'here', inDomainModel: false };
+      const mapped = await mona('PUT', `/resources/${ids.pl_plans}/details`, { ...current, mappings: [mapping] });
+      expect(mapped.statusCode).toBe(200);
+      expect(mapped.json().resource.details.mappings).toEqual([mapping]);
+      const regrained = await mona('PUT', `/resources/${ids.pl_plans}/details`, { ...current, mappings: [mapping], grain: ['pl_plans_id'] });
+      expect(regrained.statusCode).toBe(403);
+      expect(regrained.json()).toMatchObject({ error: 'forbidden', permission: 'resources.assign' });
+      // A Business analyst does neither; an Admin both, and adds, moves and removes Resources, which others may not.
+      const paul = await user('Paul', [PLANNING]);
+      expect((await paul('PUT', `/resources/${ids.pl_plans}/details`, current)).json()).toMatchObject({ permission: 'resources.assign' });
+      expect((await paul('PUT', `/resources/${ids.pl_waiting}/collection`, { collectionId: plans })).json()).toMatchObject({ permission: 'resources.assign' });
+      const regrouped = await admin('PUT', `/resources/${ids.pl_plans}/details`, { ...current, grain: ['pl_plans_id'], grainSentence: 'one plan' });
+      expect(regrouped.json().resource.details).toMatchObject({ grain: ['pl_plans_id'], grainSentence: 'one plan', mappings: [] });
+    });
+
+    it('lets only the Owner publish, with resources.publish, also in Admin; and deprecate as far as it reaches (DEC-PL-06)', async () => {
+      const admin = await user('Ada', [], 'admin');
+      expect((await admin('GET', `/resources/${ids.pl_drafts}`)).json().resource).toMatchObject({ canPublish: false, canEdit: true, canDeprecate: true, canAssign: true });
+      const refused = await admin('POST', `/resources/${ids.pl_drafts}/publication`);
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'resources.publish' });
+      const wim = await user('Wim', [PLANNING], 'businessAnalyst', { 'resources.publish': { on: false, values: {} } });
+      expect((await wim('POST', `/resources/${ids.pl_drafts}/publication`)).json()).toMatchObject({ permission: 'resources.publish' });
+      // An Admin of the Owner Unit publishes it, in their own name.
+      const olaf = await user('Olaf', [PLANNING], 'admin');
+      expect((await olaf('POST', `/resources/${ids.pl_drafts}/publication`)).json().resource).toMatchObject({ published: true, publication: { publishedBy: 'Olaf' }, canPublish: true });
+
+      // Deprecating: theirs for a Business analyst, every one with every in reach.
+      const paul = await user('Paul', [PLANNING]);
+      expect((await paul('PUT', `/resources/${ids.pl_deals}/deprecation`, { reason: 'Old.' })).json()).toMatchObject({ permission: 'resources.deprecate' });
+      const dora = await user('Dora', [], 'businessAnalyst', { 'resources.deprecate': every });
+      expect((await dora('PUT', `/resources/${ids.pl_deals}/deprecation`, { reason: 'Use the offers.' })).json().resource).toMatchObject({ deprecated: true, canDeprecate: true });
+      expect((await dora('DELETE', `/resources/${ids.pl_deals}/deprecation`)).json().resource.deprecated).toBe(false);
+    });
+
+    it('lets a User write the kinds their group allows, reply to and close others as far as it reaches, and always handle their own (DEC-PL-04)', async () => {
+      const lena = await user('Lena', [PLANNING], 'lensUser');
+      const paul = await user('Paul', [PLANNING]);
+      const piet = await user('Piet', [PARTNERS]);
+      // A Lens user asks and signals, but writes no Remark.
+      expect((await lena('GET', `/messages/on/collection/${deals}`)).json().kinds).toEqual(['question']);
+      expect((await paul('GET', `/messages/on/collection/${deals}`)).json().kinds).toEqual(['question', 'remark']);
+      const remark = await lena('POST', '/messages', { subjectKind: 'collection', subjectId: deals, kind: 'remark', text: 'Nice.' });
+      expect(remark.statusCode).toBe(403);
+      expect(remark.json()).toMatchObject({ error: 'forbidden', permission: 'messages.write' });
+      const own = (await lena('POST', '/messages', { subjectKind: 'collection', subjectId: deals, kind: 'question', text: 'Since when?' })).json().message;
+      expect(own).toMatchObject({ state: 'open', mayReply: true, mayClose: true });
+
+      // The Messages of others they neither answer nor close; their own, always.
+      const others = (await paul('POST', '/messages', { subjectKind: 'collection', subjectId: deals, kind: 'question', text: 'Who owns this?' })).json().message;
+      expect((await lena('GET', `/messages/${others.id}`)).json().message).toMatchObject({ mayReply: false, mayClose: false });
+      expect((await lena('POST', `/messages/${others.id}/replies`, { text: 'Me too.' })).json()).toMatchObject({ error: 'forbidden', permission: 'messages.reply' });
+      expect((await lena('POST', `/messages/${others.id}/close`, {})).json()).toMatchObject({ error: 'forbidden', permission: 'messages.close' });
+      expect((await lena('POST', `/messages/${own.id}/replies`, { text: 'For the plan.' })).statusCode).toBe(201);
+      expect((await lena('POST', `/messages/${own.id}/close`, {})).json().message.state).toBe('closed');
+
+      // A Business analyst replies on every asset, and closes only on those in their control: here, Partners'.
+      expect((await paul('GET', `/messages/${own.id}`)).json().message).toMatchObject({ mayReply: true, mayClose: false });
+      expect((await paul('POST', `/messages/${own.id}/replies`, { text: 'Since March.' })).statusCode).toBe(201);
+      expect((await paul('POST', `/messages/${own.id}/reopen`)).json()).toMatchObject({ permission: 'messages.close' });
+      expect((await piet('POST', `/messages/${own.id}/reopen`)).json().message.state).toBe('open');
+      // Close with every asset in reach; reply only on the assets in their control.
+      const cleo = await user('Cleo', [], 'businessAnalyst', { 'messages.close': every });
+      expect((await cleo('POST', `/messages/${others.id}/close`, {})).json().message.state).toBe('closed');
+      const nora = await user('Nora', [PLANNING], 'businessAnalyst', { 'messages.reply': theirs });
+      expect((await nora('POST', `/messages/${others.id}/replies`, { text: 'Not mine.' })).json()).toMatchObject({ permission: 'messages.reply' });
+      const onPlans = (await paul('POST', '/messages', { subjectKind: 'collection', subjectId: plans, kind: 'remark', text: 'Plans move weekly.' })).json().message;
+      expect((await nora('POST', `/messages/${onPlans.id}/replies`, { text: 'Indeed.' })).statusCode).toBe(201);
+    });
+
+    it('lets who has requests.decide decide on a Request and see everyone\'s, and nobody else (FR-PL-15)', async () => {
+      const karl = await user('Karl', [PLANNING]);
+      const dana = await user('Dana', [PLANNING], 'businessAnalyst', { 'requests.decide': { on: true, values: {} } });
+      const abe = await user('Abe', [], 'admin', { 'requests.decide': { on: false, values: {} } });
+      const query = '8e1f3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d';
+      const sent = (await karl('POST', '/requests', { type: 'MSG-QRY-01', subjectId: query, subject: 'All plans', reads: 4_800_000_000, threshold: 1_000_000_000, text: '' })).json().request;
+      expect((await dana('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests).toHaveLength(1);
+      expect((await abe('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests).toEqual([]);
+      expect((await karl('GET', `/requests?subjectKind=query&subjectId=${query}`)).json().requests).toHaveLength(1);
+      const refused = await abe('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted' });
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'requests.decide' });
+      expect((await karl('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted' })).json()).toMatchObject({ permission: 'requests.decide' });
+      const decided = await dana('POST', `/messages/${sent.id}/decision`, { outcome: 'accepted', text: 'Once.' });
+      expect(decided.json().message).toMatchObject({ state: 'accepted', replies: [{ kind: 'decision', writer: { name: 'Dana' } }] });
+    });
+
+    it('puts what identity tells about a User to that User alone, and to the Data Team (FR-PL-12, EC-PL-03, MSG-USR-01, MSG-USR-02)', async () => {
+      const notice = (payload: object, token = 'identity-token') =>
+        app.inject({ method: 'POST', url: '/internal/users/notices', headers: { authorization: `Bearer ${token}` }, payload });
+      const mo = await user('Mo', [PLANNING]);
+      const admin = await user('Ada', [], 'admin');
+      const moved = { type: 'MSG-USR-01', userId: 'u-Mo', actor: 'Ada', from: 'Lens user', to: 'Business analyst', gains: ['Make and run queries'], losses: [], deleted: false };
+      expect((await notice(moved, 'query-token')).statusCode).toBe(401);
+      expect((await mo('POST', '/internal/users/notices', moved)).statusCode).toBe(401);
+      expect((await notice({ ...moved, gains: 'everything' })).statusCode).toBe(400);
+      expect((await notice({ ...moved, deleted: 'no' })).statusCode).toBe(400);
+      expect((await notice({ ...moved, to: '' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-02', userId: 'u-Mo' })).statusCode).toBe(400);
+      expect((await notice({ type: 'MSG-USR-03', userId: 'u-Mo', name: 'Mo' })).statusCode).toBe(400);
+
+      const told = await notice(moved);
+      expect(told.statusCode).toBe(201);
+      const id = told.json().id as string;
+      const forMo = (await mo('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === id);
+      expect(forMo).toMatchObject({
+        type: 'MSG-USR-01',
+        kind: 'dataHub',
+        writer: null,
+        subject: { kind: 'user', id: 'u-Mo', exists: true },
+        params: { actor: 'Ada', from: 'Lens user', to: 'Business analyst', deleted: 'no', gained: '1' },
+        mayReply: false,
+        mayClose: false,
+      });
+      expect(JSON.parse(forMo.params.gains)).toEqual([{ line: 'Make and run queries' }]);
+      expect(JSON.parse(forMo.params.losses)).toEqual([]);
+      // Nobody else sees it, an Admin neither; nobody replies to what Data Hub tells.
+      expect((await admin('GET', `/messages/${id}`)).statusCode).toBe(404);
+      expect((await admin('GET', '/messages?view=everything')).json().messages.map((message: { id: string }) => message.id)).not.toContain(id);
+      expect((await mo('POST', `/messages/${id}/replies`, { text: 'Thanks.' })).statusCode).toBe(409);
+
+      const back = await notice({ type: 'MSG-USR-02', userId: 'u-Mo', name: 'Mo' });
+      expect(back.statusCode).toBe(201);
+      const forTeam = (await admin('GET', '/messages?view=forYou')).json().messages.find((message: { id: string }) => message.id === back.json().id);
+      expect(forTeam).toMatchObject({ type: 'MSG-USR-02', subject: { kind: 'user', id: 'u-Mo', name: 'Mo' } });
+      expect((await (await user('Paul', [PLANNING]))('GET', `/messages/${back.json().id}`)).statusCode).toBe(404);
+      expect((await mo('GET', `/messages/${back.json().id}`)).statusCode).toBe(200);
     });
   });
 
