@@ -1,12 +1,17 @@
 import type { AccessTokenClaims } from '@datahub/contracts';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { DataHub } from './datahub.js';
+import type { Permits } from './permits.js';
 
-/** What every group of tools works with: the MCP server of this request, Data Hub as the User, and the User. */
+/**
+ * What every group of tools works with: the MCP server of this request, Data Hub as the User, the User, and what
+ * their Permissions let Claude offer them (TR-PL-09).
+ */
 export interface Context {
   server: McpServer;
   hub: DataHub;
   user: AccessTokenClaims;
+  permits: Permits;
 }
 
 /** The MCP App of Data Hub, one page that shows a Resource, a Preview, a publication or the result of a query (FR-CL-01). */
@@ -17,7 +22,7 @@ export const SHOWS = { ui: { resourceUri: VIEW_URI } };
 
 /**
  * A tool only the MCP App calls, never Claude: the buttons of the User to approve a run, send a Request and
- * publish (DEC-CL-07).
+ * publish (DEC-CL-07), and the rows of a result shown in a card only (FR-CL-28).
  */
 export const APP_ONLY = { ui: { resourceUri: VIEW_URI, visibility: ['app'] } };
 
@@ -36,5 +41,5 @@ export function bytes(value: number | null | undefined): string | null {
     size /= 1000;
     unit += 1;
   }
-  return `${size >= 10 || unit === 0 ? Math.round(size) : size.toFixed(1)} ${units[unit]}`;
+  return `${size >= 10 || unit === 0 ? Math.round(size) : size.toFixed(1).replace(/\.0$/, '')} ${units[unit]}`;
 }
