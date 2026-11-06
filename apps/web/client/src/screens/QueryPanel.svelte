@@ -19,12 +19,12 @@
    * Previews, the queries of Lenses and hidden queries are left out until the User ticks them in the
    * filter that folds open next to the search; folded, one line says what it adds (DEC-UX-137,
    * DEC-UX-150). The eye on a query hides it for this User alone (DEC-UX-138). The query that is open has an arrow
-   * that unfolds its last runs, folded at first (DEC-UX-140). The Data Team also has All, chosen first in the filter (DEC-UX-161): everyone's
+   * that unfolds its last runs, folded at first (DEC-UX-140). A User who sees every query (`queries.seeOthers`, every) also has All in the filter (DEC-UX-161): everyone's
    * queries, with who ran them (DEC-LN-01). A new query is in it at once, as not run yet.
    */
   let {
     client,
-    dataTeam,
+    everyone,
     current,
     runs,
     draft,
@@ -32,7 +32,8 @@
     onhidden,
   }: {
     client: Pick<QueryClient, 'list' | 'days' | 'hide'>;
-    dataTeam: boolean;
+    /** The User sees the queries of everyone (`queries.seeOthers`, every, FR-PL-14). */
+    everyone: boolean;
     /** The query that is open. */
     current: string | undefined;
     /** The last runs of the query that is open, newest first. */
@@ -239,7 +240,7 @@
   kinds={SHOWN.map((kind) => ({ value: kind, name: t(KINDS[kind].name), detail: t(KINDS[kind].detail), count: days ? totals[kind] : undefined }))}
   bind:chosen={show}
   defaults={[]}
-  choice={dataTeam
+  choice={everyone
     ? {
         legend: t('query.filter'),
         options: [

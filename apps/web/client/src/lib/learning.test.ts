@@ -21,15 +21,15 @@ describe('the Learning Centre in the web app', () => {
     expect(await cardIn('9.9.9', 'nl', shown)).toBeNull();
   });
 
-  it('suggests the Compass and Learning Level 1 to everyone, 4 to an owner, 3 and 4 to the Data Team (DEC-LR-27)', () => {
-    expect(suggestedLevels({ dataTeam: false, owner: false })).toEqual(['compass', '1']);
-    expect(suggestedLevels({ dataTeam: false, owner: true })).toEqual(['compass', '1', '4']);
-    expect(suggestedLevels({ dataTeam: true, owner: false })).toEqual(['compass', '1', '3', '4']);
+  it('suggests the Compass and Learning Level 1 to everyone, 4 to an owner, 3 and 4 to a Data Admin (DEC-LR-27)', () => {
+    expect(suggestedLevels({ dataAdmin: false, owner: false })).toEqual(['compass', '1']);
+    expect(suggestedLevels({ dataAdmin: false, owner: true })).toEqual(['compass', '1', '4']);
+    expect(suggestedLevels({ dataAdmin: true, owner: false })).toEqual(['compass', '1', '3', '4']);
   });
 
   it('suggests the written cards of those Levels that are required, or of the Compass, until the User understands them', () => {
     const shown = writtenCards('uat');
-    const levels = suggestedLevels({ dataTeam: false, owner: false });
+    const levels = suggestedLevels({ dataAdmin: false, owner: false });
     expect(suggestedCards(levels, shown, []).map((topic) => topic.number)).toEqual(['K3.4', 'K5.1', 'K5.2', '1.2.1', '1.2.2']);
     expect(suggestedCards(levels, shown, [seen('K3.4', '2026-10-29T08:00:00Z', '2026-10-29T08:05:00Z')]).map((topic) => topic.number)).toEqual(['K5.1', 'K5.2', '1.2.1', '1.2.2']);
   });

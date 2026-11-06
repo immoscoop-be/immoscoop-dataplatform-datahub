@@ -37,8 +37,8 @@
   /**
    * The page of a Collection (Page of a Collection, FR-CO-25 to FR-CO-31): what it is, what needs
    * attention, its Resources, the Lenses its Owner Unit added to it (FR-CO-28) and its recent history.
-   * Its Owner Unit and the Data Team edit it in place; the Data Team adds Resources in a sheet and
-   * removes them. Without an ID, it is an empty Collection being made (FR-CO-12). Under its head stands
+   * Its Owner Unit and the Data Team edit it in place; a Data Admin, with `resources.assign`, adds Resources in a
+   * sheet and removes them (FR-PL-14). Without an ID, it is an empty Collection being made (FR-CO-12). Under its head stands
    * its intro (FR-CO-41); it shows only what sits at its top, its folders first (FR-CO-38), and a whole row
    * opens with a click and, for its Owner Unit and the Data Team, moves with a drag onto a folder (FR-CO-40).
    */
@@ -48,7 +48,8 @@
     catalogue,
     identity,
     registry,
-    dataTeam,
+    assigns,
+    anyOwnerUnit,
     own,
     waiting,
     go,
@@ -63,7 +64,10 @@
     catalogue: Catalogue;
     identity: Identity;
     registry: Registry;
-    dataTeam: boolean;
+    /** The User may add Resources to it and remove them (`resources.assign`). */
+    assigns: boolean;
+    /** The User may give it to any group of the domain (`collections.make`, any group, FR-CO-35). */
+    anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User. */
     own: readonly string[];
     waiting: readonly Resource[] | undefined;
@@ -115,7 +119,7 @@
   // The groups to choose an Owner Unit from, read when editing starts (TR-CO-03, FR-CO-35).
   $effect(() => {
     if (editing && groups === undefined) {
-      (dataTeam ? identity.domainGroups() : identity.groups()).then(
+      (anyOwnerUnit ? identity.domainGroups() : identity.groups()).then(
         (found) => (groups = found),
         () => (groups = null),
       );
@@ -246,7 +250,7 @@
 
 {#if id === undefined}
   <Breadcrumb steps={[{ label: 'Collections', href: '/collections' }, { label: t('collections.new') }]} />
-  <CollectionForm {groups} {dataTeam} {own} onsave={save} oncancel={() => go('/collections')} />
+  <CollectionForm {groups} {anyOwnerUnit} {own} onsave={save} oncancel={() => go('/collections')} />
 {:else if collection === null}
   <NotFound />
 {:else if collection}
@@ -258,7 +262,7 @@
       <CollectionForm
         collection={shown}
         {groups}
-        {dataTeam}
+        {anyOwnerUnit}
         held={shown.resources.length}
         onsave={save}
         oncancel={() => (editing = false)}
@@ -282,7 +286,7 @@
       <div class="actions">
         {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
         {#if shown.canManage}<Button variant="outline" onclick={() => (editing = true)}><Icon name="pencil-simple-fill" />{t('collection.editAll')}</Button>{/if}
-        {#if dataTeam}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
+        {#if assigns}<Button variant="outline" onclick={() => (adding = true)}><Icon name="plus-circle-fill" />{t('collection.addResources')}</Button>{/if}
       </div>
     </div>
     <div class="status-row">
@@ -353,7 +357,7 @@
 
   <div class="section-head">
     <h2>Resources</h2>
-    {#if dataTeam && !editing}
+    {#if assigns && !editing}
       <button type="button" class="text-link" onclick={() => (adding = true)}><Icon name="plus-circle-fill" /><span>{t('collection.addResources')}</span></button>
     {/if}
   </div>
@@ -370,7 +374,7 @@
           <th>{t('collection.column.publication')}</th>
           <th>Signals</th>
           <th>{t('collection.column.change')}</th>
-          {#if dataTeam}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
+          {#if assigns}<th><span class="hidden">{t('collection.column.remove')}</span></th>{/if}
         </tr>
       {/snippet}
       {#each topResources as resource (resource.id)}
@@ -394,7 +398,7 @@
               <span class="change"><span class="change-text" title={text}>{text}</span><span class="when">&nbsp;· {ago(resource.lastChange.at, currentLanguage())}</span></span>
             {/if}
           </td>
-          {#if dataTeam}
+          {#if assigns}
             <td class="remove">
               <IconButton icon="minus-circle" label={t('collection.remove', { name: resource.displayName })} onclick={() => remove(resource)} />
             </td>

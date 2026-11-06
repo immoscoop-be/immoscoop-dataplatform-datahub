@@ -51,6 +51,11 @@ export function createSession(options: SessionOptions = {}) {
       return null;
     },
 
+    /** Forgets the Access Token kept, so that the next call renews it, with the Permissions as they are now (EC-PL-01). */
+    renew(): void {
+      cached = undefined;
+    },
+
     /** Ends the session at identity too, through the server of the web app. */
     async signOut(): Promise<void> {
       cached = undefined;

@@ -17,7 +17,14 @@
    * stays, struck through. New Excel key is a sheet: a name, then the key, shown once, with Copy, and the
    * three steps in Excel, signing in with Basic (DEC-CH-06).
    */
-  let { identity }: { identity: Pick<Identity, 'excelKeys' | 'makeExcelKey' | 'revokeExcelKey'> } = $props();
+  let {
+    identity,
+    canMake = true,
+  }: {
+    identity: Pick<Identity, 'excelKeys' | 'makeExcelKey' | 'revokeExcelKey'>;
+    /** The User may make Excel keys (`excel.keys`); their keys stay theirs to revoke either way (EC-PL-04). */
+    canMake?: boolean;
+  } = $props();
 
   const MONTH = 30 * 24 * 60 * 60 * 1000;
   let keys: ExcelKey[] | null | undefined = $state();
@@ -79,7 +86,7 @@
 
 <div class="section-head">
   <h2>{t('keys.title')}</h2>
-  <Button onclick={open}><Icon name="key-fill" />{t('keys.new')}</Button>
+  {#if canMake}<Button onclick={open}><Icon name="key-fill" />{t('keys.new')}</Button>{/if}
 </div>
 <p class="meta intro">{t('keys.intro')}</p>
 

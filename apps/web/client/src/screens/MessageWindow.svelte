@@ -19,7 +19,7 @@
     message,
     count,
     client,
-    dataTeam,
+    decides,
     decideLens,
     onchanged,
     onclose,
@@ -30,7 +30,8 @@
     /** How many Messages are on its object, for the way to all of them; null where it has no slide-in. */
     count: number | null;
     client: MessagesClient;
-    dataTeam: boolean;
+    /** The User may decide on a Request (`requests.decide`). */
+    decides: boolean;
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     onchanged: (message: Conversation) => void;
     onclose: () => void;
@@ -47,7 +48,7 @@
 >
   {#if message}
     {#key message.id}
-      <MessageOpened {message} {client} {dataTeam} {decideLens} {onchanged} />
+      <MessageOpened {message} {client} {decides} {decideLens} {onchanged} />
     {/key}
   {:else if message === null}
     <p class="meta" role="alert">{t('messages.failed.read')}</p>

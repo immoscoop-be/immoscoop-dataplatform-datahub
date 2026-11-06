@@ -590,6 +590,8 @@
         return t('query.problem.filterRequired', { name: problem.resource.displayName, column: problem.column });
       case 'invalid':
         return t('query.problem.invalid', { message: problem.message });
+      case 'tooLarge':
+        return t('query.problem.tooLarge', { bytes: bytes(problem.bytes), limit: bytes(problem.limit) });
       case 'noPartitionFilter':
         return problem.bytesWithFilter === null
           ? t('query.warning.noFilter', { name: problem.resource.displayName, column: problem.column })
@@ -898,7 +900,7 @@
         </div>
         {#if current?.range === 'request' && query.request?.state === 'waiting'}
           <span class="waiting"><Icon name="hourglass-medium-fill" />{t('query.request.waiting', { time: since(query.request.sentAt) })}</span>
-        {:else if current?.range === 'request' && query.request?.state !== 'accepted'}
+        {:else if current?.range === 'request' && !current.problems.some((problem) => problem.kind === 'tooLarge') && query.request?.state !== 'accepted'}
           <RunButton
             bytes={current.bytes}
             approve

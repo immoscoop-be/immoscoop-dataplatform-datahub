@@ -12,6 +12,7 @@
   import Segmented from '@datahub/ui/primitives/Segmented.svelte';
   import type { Group, Identity, Me } from '../lib/identity.js';
   import { myPagePath, type MyPageTab } from '../lib/routes.js';
+  import { can } from '../lib/permissions.js';
   import ExcelKeys from './ExcelKeys.svelte';
 
   /**
@@ -103,7 +104,7 @@
       </SubTile>
     </Grid>
   {:else if tab === 'keys'}
-    <ExcelKeys {identity} />
+    <ExcelKeys {identity} canMake={can(me.permissions, 'excel.keys')} />
   {:else}
     <p class="meta text line">{t('me.background.text', { theme })}</p>
     <BackgroundPicker {theme} choice={backgroundChoice} onchoose={onbackground} />
