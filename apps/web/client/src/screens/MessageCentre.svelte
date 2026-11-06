@@ -22,7 +22,7 @@
     SUBJECT_TITLES,
     VIEW_TEXTS,
   } from '../lib/messages.js';
-  import { contextPath, messagePath } from '../lib/routes.js';
+  import { contextPath, messagePath, objectPath } from '../lib/routes.js';
   import MessageOpened from './MessageOpened.svelte';
   import { KIND_NAMES, STATE_ICONS } from './MessageThread.svelte';
 
@@ -30,14 +30,15 @@
    * The Message Centre (FR-CV-06, DEC-UX-29): the view chosen in the panel, its Messages newest first, each
    * with its object, kind, state, who and when and its first lines, a dot when it is unread; chips for all,
    * open and answered. The Message opened shows on the right with its replies and "Open in context"
-   * (FR-CV-09), and what it asks of the User: a reply, or for the Data Team the decision on a Request.
+   * (FR-CV-09), and what it asks of the User: a reply, or the decision on a Request for who may decide on it.
    */
   let {
     filter,
     found,
     opened,
     client,
-    dataTeam,
+    forDataTeam,
+    decides,
     decideLens,
     onchanged,
   }: {
@@ -47,7 +48,10 @@
     /** The Message opened: undefined while it comes or when none is, null when it could not be read. */
     opened: { id: string; message?: Conversation | null } | undefined;
     client: MessagesClient;
-    dataTeam: boolean;
+    /** The User gets the Messages for the Data Team (`messages.dataTeam`). */
+    forDataTeam: boolean;
+    /** The User may decide on a Request (`requests.decide`). */
+    decides: boolean;
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     /** After a reply or a decision: the Message as it is now. */
     onchanged: (message: Conversation) => void;
@@ -59,7 +63,7 @@
   const shown = $derived(messages.filter((message) => chip === 'all' || (chip === 'open' ? isOpen(message) : chip === 'closed' ? isClosed(message) : isAnswered(message))));
   /** Nothing unread at all, not just nothing that matches a filter (DEC-UX-136). */
   const caughtUp = $derived(filter.view === 'unread' && !filter.kind && !filter.on && !filter.search && chip === 'all');
-  const about = $derived(filter.view === 'forYou' && dataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about));
+  const about = $derived(filter.view === 'forYou' && forDataTeam ? t('messages.about.forYou.dataTeam') : t(VIEW_TEXTS[filter.view].about));
 
   /** The icon of the kind of an object, as the panel shows it. */
   const SUBJECT_ICONS: Record<string, IconName> = { collection: 'stack', query: 'terminal-window', report: 'file-text', learningCard: 'graduation-cap-fill' };
@@ -73,7 +77,9 @@
   /** "Open in context", which every Message has, with its label from the Message Catalogue (FR-CV-09, FR-CV-13). */
   function opener(message: Conversation): { label: string; href: string } {
     const context = CONTEXT_BUTTON;
-    return { label: context?.label[language] ?? message.subject.name, href: contextPath(message.subject, message.id) };
+    // A Message about a User has no page to open over: it leads to My page, or to the User on Users (FR-PL-12).
+    const href = message.subject.kind === 'user' ? objectPath(message.subject, message.type) : contextPath(message.subject, message.id);
+    return { label: context?.label[language] ?? message.subject.name, href };
   }
 </script>
 
@@ -140,7 +146,7 @@
       </div>
       {#if !message.subject.exists}<p class="meta gone">{t('messages.gone', { kind: SUBJECT_TITLES[message.subject.kind] })}</p>{/if}
       {#key message.id}
-        <MessageOpened {message} {client} {dataTeam} {decideLens} {onchanged} />
+        <MessageOpened {message} {client} {decides} {decideLens} {onchanged} />
       {/key}
     {:else if opened?.message === null}
       <p class="meta empty" role="alert">{t('messages.failed.read')}</p>

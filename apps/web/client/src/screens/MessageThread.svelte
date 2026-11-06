@@ -75,7 +75,7 @@
   /** What Data Hub writes carries the card that explains it (FR-LR-38). */
   const learningCard = $derived(person ? null : cardOfType(message.type));
   const isRequest = $derived(message.kind === 'request');
-  const repliable = $derived(onreply !== undefined && ['question', 'remark', 'signal'].includes(message.kind));
+  const repliable = $derived(onreply !== undefined && ['question', 'remark', 'signal'].includes(message.kind) && message.mayReply !== false);
   let replying = $state(false);
   let closing = $state(false);
   let reopening = $state(false);

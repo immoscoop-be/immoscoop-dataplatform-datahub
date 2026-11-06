@@ -22,7 +22,10 @@
     client,
     onchanged,
     onclose,
+    writes = ['question', 'remark', 'signal'],
   }: {
+    /** The kinds of Message the User may write (`messages.write`, DEC-PL-04); none hides the new Message. */
+    writes?: readonly string[];
     subject: { kind: WrittenOn; id: string; name: string };
     /** Under its name, such as its kind and its Collection. */
     meta: string;
@@ -39,7 +42,12 @@
   const kinds = $derived(WRITTEN_ON[subject.kind]);
   const PLACEHOLDERS: Record<WrittenKind, string> = { question: 'messages.placeholder.question', remark: 'messages.placeholder.remark', signal: 'messages.placeholder.signal' };
   const kindName = $derived(SUBJECT_TITLES[subject.kind]);
+  /** The kinds the User may write here. */
+  const writable = $derived(kinds.filter((value) => writes.includes(value)));
   let kind = $state<WrittenKind>('question');
+  $effect(() => {
+    if (writable.length > 0 && !writable.includes(kind)) kind = writable[0]!;
+  });
   type Chip = 'all' | WrittenKind;
   let chip = $state<Chip>('all');
   const shown = $derived((messages ?? []).filter((message) => chip === 'all' || message.kind === chip));
@@ -60,9 +68,10 @@
 <Sheet title={subject.name} {onclose}>
   {#snippet top()}<p class="meta over">{t('messages.sheet.title', { kind: kindName })}</p>{/snippet}
   {#snippet head()}<p class="meta">{meta}</p>{/snippet}
+  {#if writable.length > 0}
   <MessageComposer
     label={t('messages.new')}
-    kinds={kinds.map((value) => ({ value, label: KIND_NAMES[value] }))}
+    kinds={writable.map((value) => ({ value, label: KIND_NAMES[value] }))}
     bind:kind
     placeholder={t(PLACEHOLDERS[kind], { kind: kindName })}
     {notify}
@@ -78,6 +87,7 @@
       }
     }}
   />
+  {/if}
   <div class="chips">
     <Segmented
       options={(['all', ...kinds] as Chip[]).map((value) => ({ value, label: `${value === 'all' ? t('messages.all') : `${KIND_NAMES[value]}s`} ${count(value)}` }))}

@@ -22,7 +22,7 @@
   import OriginTag from '@datahub/ui/marks/OriginTag.svelte';
   import Field from '@datahub/ui/primitives/Field.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import type { CardChanges, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
+  import type { CardChanges, DescribeAttribute, KnownGap, LogEntry, Related, ResourceDetail } from '../lib/catalogue.js';
   import { nounOf } from '../lib/grain.js';
   import type { Conversation } from '../lib/messages.js';
   import type { Storage } from '../lib/query.js';
@@ -37,11 +37,11 @@
    * (DEC-UX-168): the Summary first, which it opens on (FR-RC-19); then its Description, with the Business Description
    * in Markdown (FR-RC-20); its Known behaviour; its Known Gaps, one by one (FR-RC-21); how to query it, with its size
    * and partitions from BigQuery (FR-SR-39), key fields and Parameters; the Entities it relates to; its maturity and
-   * Publication; and its recent history. Its Owner Unit and the Data Team edit each part in place, on its own page
-   * (FR-RC-15); what comes from dbt, and what the Data Team gave when adding it, stands next to it, read-only.
+   * Publication; and its recent history. Who may describe it edits each part in place, on its own page, attribute by
+   * attribute as their Permission group allows (FR-RC-15, DEC-PL-03); what comes from dbt, and what the Data Team gave when adding it, stands next to it, read-only.
    * The Messages are no part of their own: "Messages" in the header opens them, and the Summary takes them (FR-RC-22).
-   * Maturity explains every Level, passed or what it takes (FR-MR-16). Apart at the end, for its Owner Unit and the
-   * Data Team, the Danger zone, where it is deprecated (DEC-UX-176). Intended use and pitfalls are Markdown (FR-RC-23).
+   * Maturity explains every Level, passed or what it takes (FR-MR-16). Apart at the end, for who may deprecate it,
+   * the Danger zone, where it is deprecated (DEC-UX-176). Intended use and pitfalls are Markdown (FR-RC-23).
    */
   let {
     resource,
@@ -50,7 +50,8 @@
     storage,
     threads,
     messagesHref,
-    canEdit,
+    describes,
+    canDeprecate,
     onsave,
     gaps,
     oncolumns,
@@ -69,7 +70,10 @@
     threads: readonly Conversation[] | undefined;
     /** Where "Messages" opens them. */
     messagesHref: string | undefined;
-    canEdit: boolean;
+    /** Whether the User may describe an attribute of it (`resources.describe`, DEC-PL-03). */
+    describes: (attribute: DescribeAttribute) => boolean;
+    /** Whether the User may deprecate it, and undo that (`resources.deprecate`). */
+    canDeprecate: boolean;
     onsave: (changes: CardChanges) => Promise<boolean>;
     /** Adds, changes and removes one Known Gap; each answers whether it worked. */
     gaps: {
@@ -103,8 +107,11 @@
     { id: 'changes', icon: 'clock-counter-clockwise', label: 'overview.changes' },
     { id: 'danger', icon: 'warning-octagon', label: 'overview.danger' },
   ];
-  /** The Danger zone is for its Owner Unit and the Data Team only. */
-  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canEdit));
+  /** The Danger zone is for who may deprecate it only. */
+  const shown = $derived(PARTS.filter((one) => one.id !== 'danger' || canDeprecate));
+  /** Which attributes each part edits: Known Behaviour holds the intended use, the pitfalls and since when it is reliable. */
+  const EDITS: Record<Editable, readonly DescribeAttribute[]> = { description: ['description'], behaviour: ['behaviour', 'pitfalls', 'availableSince'], querying: ['keyFields'] };
+  const mayEdit = (which: Editable) => EDITS[which].some((attribute) => describes(attribute));
 
   let editing: Editable | null = $state(null);
   // Another Resource opens on its Summary: the page sets the part, and what was being edited goes.
@@ -175,7 +182,11 @@
       editing === 'description'
         ? { businessDescription: draft.businessDescription }
         : editing === 'behaviour'
-          ? { intendedUse: draft.intendedUse, pitfalls: draft.pitfalls, reliableSince: draft.reliableSince || null }
+          ? {
+              ...(describes('behaviour') ? { intendedUse: draft.intendedUse } : {}),
+              ...(describes('pitfalls') ? { pitfalls: draft.pitfalls } : {}),
+              ...(describes('availableSince') ? { reliableSince: draft.reliableSince || null } : {}),
+            }
           : { keyFields: draft.keyFields, parameters: draft.parameters };
     saving = true;
     const ok = await onsave(changes);
@@ -213,7 +224,7 @@
       <h2>{title}</h2>
       <p class="lead">{lead}</p>
     </div>
-    {#if which && canEdit && editing !== which}<button type="button" class="edit" onclick={() => start(which)}><Icon name="pencil-simple-fill" />{t('resource.edit')}</button>{/if}
+    {#if which && mayEdit(which) && editing !== which}<button type="button" class="edit" onclick={() => start(which)}><Icon name="pencil-simple-fill" />{t('resource.edit')}</button>{/if}
   </div>
 {/snippet}
 
@@ -312,9 +323,9 @@
             <div class="tag-line"><span class="label">{t('description.business')}</span><OriginTag origin="owner" /></div>
             <div class="markdown"><MarkdownText source={card.businessDescription} /></div>
           </section>
-        {:else if canEdit && described}
+        {:else if describes('description') && described}
           <button type="button" class="text-link" onclick={() => start('description')}>{t('resource.addBusiness')}</button>
-        {:else if canEdit}
+        {:else if describes('description')}
           <p class="hint">{t('resource.business.notYet')}</p>
         {/if}
         {@render dbtDescription(false)}
@@ -325,11 +336,12 @@
       {#if editing === 'behaviour'}
         <form onsubmit={save} novalidate>
           {@render editBar()}
+          <!-- Only what the User may describe is a field (DEC-PL-03). -->
           <div class="pair">
-            <div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>
-            <div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>
+            {#if describes('behaviour')}<div><div class="label">{t('resource.intendedUse')}</div><MarkdownEditor id="intended-use" bind:value={draft.intendedUse} label={t('resource.intendedUse')} maxlength={2000} /></div>{/if}
+            {#if describes('pitfalls')}<div><div class="label">{t('resource.pitfalls')}</div><MarkdownEditor id="pitfalls" bind:value={draft.pitfalls} label={t('resource.pitfalls')} maxlength={2000} /></div>{/if}
           </div>
-          <div class="reliable"><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></div>
+          {#if describes('availableSince')}<div class="reliable"><Field label={t('resource.reliableSince')}><input type="date" bind:value={draft.reliableSince} /></Field></div>{/if}
         </form>
       {:else}
         <Grid min="var(--tile-min)" tight>
@@ -349,7 +361,7 @@
       {/if}
     {:else if part === 'gaps'}
       {@render head(t('resource.gaps'), t('overview.gaps.lead'))}
-      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} {canEdit} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
+      <OverviewGaps gaps={card.knownGaps} fields={resource.fields} canEdit={describes('gaps')} onadd={gaps.add} onchange={gaps.change} onremove={gaps.remove} />
     {:else if part === 'querying'}
       {@render head(t('overview.querying'), t('overview.querying.lead'), 'querying')}
       {#if editing === 'querying'}
@@ -450,7 +462,7 @@
       <SubTile>
         {#if log}{#if log.length > 0}<LogList entries={log.slice(0, 20)} />{:else}<p class="empty">{t('resource.nothingYet')}</p>{/if}{:else}<Loading />{/if}
       </SubTile>
-    {:else if part === 'danger' && canEdit}
+    {:else if part === 'danger' && canDeprecate}
       {@render head(t('overview.danger'), t('overview.danger.lead', { name: resource.displayName }))}
       <OverviewDanger {resource} {others} {ondeprecate} {onundeprecate} />
     {/if}

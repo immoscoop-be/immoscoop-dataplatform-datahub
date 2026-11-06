@@ -19,6 +19,7 @@
     nameMax = 80,
     descriptionMax = 500,
     onsave,
+    level = 1,
     lead,
     trail,
   }: {
@@ -32,6 +33,8 @@
     descriptionMax?: number;
     /** Saves only what changed; answers a sentence to show when it was refused, such as a name already taken. */
     onsave: (changes: { name?: string; description?: string }) => Promise<string | undefined>;
+    /** The head of the page, or of a part of it opened beside a list, such as a Permission group (DEC-UX-186). */
+    level?: 1 | 2;
     /** Marks in the heading before and after the name, such as the kind and Level of a Lens; never part of what is edited. */
     lead?: Snippet;
     trail?: Snippet;
@@ -98,9 +101,9 @@
     </span>
   </form>
 {:else if canEdit}
-  <h1 class="page-title" class:marks={lead || trail}>{@render lead?.()}<button type="button" class="in-place" title={t('inPlace.hint')} onclick={() => start('name')}>{name}</button>{@render trail?.()}</h1>
+  <svelte:element this={`h${level}`} class={level === 1 ? 'page-title' : 'part-title'} class:marks={lead || trail}>{@render lead?.()}<button type="button" class="in-place" title={t('inPlace.hint')} onclick={() => start('name')}>{name}</button>{@render trail?.()}</svelte:element>
   {#if description !== undefined}
-    <p class="description">
+    <p class="description" class:small={level === 2}>
       {#if description}
         <button type="button" class="in-place" title={t('inPlace.hint')} onclick={() => start('description')}>{description}</button>
       {:else}
@@ -109,13 +112,15 @@
     </p>
   {/if}
 {:else}
-  <h1 class="page-title" class:marks={lead || trail}>{@render lead?.()}{name}{@render trail?.()}</h1>
-  {#if description}<p class="description">{description}</p>{/if}
+  <svelte:element this={`h${level}`} class={level === 1 ? 'page-title' : 'part-title'} class:marks={lead || trail}>{@render lead?.()}{name}{@render trail?.()}</svelte:element>
+  {#if description}<p class="description" class:small={level === 2}>{description}</p>{/if}
 {/if}
 
 <style>
   .marks { display: flex; align-items: center; gap: 10px; }
   .description { margin: 6px 0 0; max-width: 68ch; line-height: 1.65; color: var(--text-secondary); }
+  .part-title { margin: 0; font-size: 19px; font-weight: var(--weight-medium); }
+  .description.small { margin-top: 2px; font-size: var(--text-meta); line-height: 1.5; color: var(--text-muted); }
   .in-place { all: unset; cursor: text; border-radius: var(--radius-sm); white-space: pre-line; }
   .in-place:hover { background: var(--tint-hover); }
   .in-place:focus-visible { outline: 2px solid var(--text-secondary); outline-offset: 2px; }

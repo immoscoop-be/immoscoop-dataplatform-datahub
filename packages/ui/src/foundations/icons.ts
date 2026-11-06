@@ -146,6 +146,19 @@ import warningDiamond from '@phosphor-icons/core/assets/regular/warning-diamond.
 import webhooksLogo from '@phosphor-icons/core/assets/regular/webhooks-logo.svg?raw';
 import x from '@phosphor-icons/core/assets/regular/x.svg?raw';
 import xCircle from '@phosphor-icons/core/assets/regular/x-circle.svg?raw';
+// Admin: Users and Permission groups (DEC-UX-186).
+import apertureFill from '@phosphor-icons/core/assets/fill/aperture-fill.svg?raw';
+import equalsFill from '@phosphor-icons/core/assets/fill/equals-fill.svg?raw';
+import minusCircleFill from '@phosphor-icons/core/assets/fill/minus-circle-fill.svg?raw';
+import plugsConnectedFill from '@phosphor-icons/core/assets/fill/plugs-connected-fill.svg?raw';
+import shieldCheckFill from '@phosphor-icons/core/assets/fill/shield-check-fill.svg?raw';
+import browser from '@phosphor-icons/core/assets/regular/browser.svg?raw';
+import copy from '@phosphor-icons/core/assets/regular/copy.svg?raw';
+import pencilSimple from '@phosphor-icons/core/assets/regular/pencil-simple.svg?raw';
+import plugsConnected from '@phosphor-icons/core/assets/regular/plugs-connected.svg?raw';
+import shieldCheck from '@phosphor-icons/core/assets/regular/shield-check.svg?raw';
+import userPlus from '@phosphor-icons/core/assets/regular/user-plus.svg?raw';
+import users from '@phosphor-icons/core/assets/regular/users.svg?raw';
 
 export const ICONS = {
   'archive-fill': archiveFill,
@@ -293,6 +306,18 @@ export const ICONS = {
   'webhooks-logo': webhooksLogo,
   x,
   'x-circle': xCircle,
+  'aperture-fill': apertureFill,
+  'equals-fill': equalsFill,
+  'minus-circle-fill': minusCircleFill,
+  'plugs-connected-fill': plugsConnectedFill,
+  'shield-check-fill': shieldCheckFill,
+  browser: browser,
+  copy: copy,
+  'pencil-simple': pencilSimple,
+  'plugs-connected': plugsConnected,
+  'shield-check': shieldCheck,
+  'user-plus': userPlus,
+  users: users,
 } as const;
 
 export type IconName = keyof typeof ICONS;

@@ -7,7 +7,7 @@
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import { NotFound as Missing } from './lib/api.js';
+  import { NotFound as Missing, onPermissionRefused } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
@@ -22,12 +22,15 @@
   import { createRegistry } from './lib/registry.js';
   import { collectionPath, lensPath, messagePath, messagesOnPath, NEW_COLLECTION, NEW_QUERY, objectPath, queryPath, route } from './lib/routes.js';
   import { Router } from './lib/router.svelte.js';
-  import { ADMIN_TOOLS, SECTIONS, sectionFor, sectionLabel } from './lib/sections.js';
+  import { can, mayQuery, NO_PERMISSIONS, PERMISSION_KEYS, PERMISSION_TEXTS, reach, sees } from './lib/permissions.js';
+  import { ADMIN_TOOLS, type AdminTool, SECTIONS, sectionFor, sectionLabel, toolsFor } from './lib/sections.js';
   import { createSession, SignInProblem } from './lib/session.js';
   import { Settings } from './lib/settings.svelte.js';
   import { ThemeOnScreen } from './lib/theme.svelte.js';
   import AdminPanel from './screens/AdminPanel.svelte';
   import AdminExcelKeys from './screens/AdminExcelKeys.svelte';
+  import AdminPermissionGroups from './screens/AdminPermissionGroups.svelte';
+  import AdminUsers from './screens/AdminUsers.svelte';
   import AdminWebhooks from './screens/AdminWebhooks.svelte';
   import ChartPage from './screens/ChartPage.svelte';
   import ChartsPanel from './screens/ChartsPanel.svelte';
@@ -103,6 +106,11 @@
   let webhooksToLookAt: number | undefined = $state();
   /** How many Excel keys are active, for the panel of Admin, once its page told (FR-PL-03). */
   let activeKeys: number | undefined = $state();
+  /** How many Users and Permission groups there are, for the panel of Admin, once their pages told (FR-PL-06, FR-PL-09). */
+  let userCount: number | undefined = $state();
+  let groupCount: number | undefined = $state();
+  /** The Permission group Users shows, as "see them on Users" of a group asks (FR-PL-09). */
+  let usersOf: string | null = $state(null);
   /** The view of the Message Centre chosen in its panel, and what it holds: null when it could not be read. */
   // It opens on what moved since the User last looked (DEC-UX-136).
   let messageFilter = $state<Filter>({ view: 'unread' });
@@ -110,7 +118,7 @@
   /** The Message opened in the Message Centre or in context: undefined while it comes, null when it could not be read. */
   let openedMessage: { id: string; message?: Conversation | null } | undefined = $state();
   /** What a person wrote on the object whose page is open, for "Messages" and its slide-in (FR-CV-07). */
-  let onObject: { key: string; messages?: Conversation[] } | undefined = $state();
+  let onObject: { key: string; messages?: Conversation[]; kinds?: readonly string[] } | undefined = $state();
   /** The written Learning Cards this page shows: a draft only outside prod (DEC-LR-25). */
   const shownCards = $derived(writtenCards(config.environment));
   /** The same cards in a language, once its translations are read; in English until then. */
@@ -193,7 +201,18 @@
   const settings = $derived(status.kind === 'signedIn' ? status.settings : undefined);
   /** Light or dark: always the system's, unless switched in the rail for this session (DEC-UX-172). */
   const theme = $derived(themeOnScreen.current);
-  const page = $derived(route(router.path));
+  /**
+   * The Permissions of the User, from `GET /me` (FR-PL-14): what the rail, the pages and their actions show, never a
+   * role. Before the sign-in, every Permission is no.
+   */
+  const permissions = $derived(status.kind === 'signedIn' ? status.me.permissions : NO_PERMISSIONS);
+  /** The tools of Admin the User may open, chosen in `admin.open`. */
+  const adminTools: AdminTool[] = $derived(toolsFor(permissions));
+  const page = $derived(route(router.path, adminTools));
+  // The filter a group asked of Users holds while Users is open, not on a later visit.
+  $effect(() => {
+    if (!(page.kind === 'admin' && page.tool === 'users')) usersOf = null;
+  });
 
   let themed = false;
   $effect(() => {
@@ -214,8 +233,9 @@
       setLanguage(settings.values.language ?? 'nl');
     }
   });
+  // Once it is known who signs in: Admin opens on the first tool the User may open.
   $effect(() => {
-    if (page.kind === 'redirect') {
+    if (page.kind === 'redirect' && status.kind !== 'starting') {
       router.go(page.to, { replace: true });
     }
   });
@@ -227,8 +247,27 @@
       );
     }
   });
-  /** The Data Team, from its Role Group: it sees the Resources without a Collection (Naming Convention). */
-  const dataTeam = $derived(status.kind === 'signedIn' && status.me.roles.includes('datateam'));
+  /** Who sees all of the catalogue sees the Resources without a Collection too (DEC-PL-02, FR-SR-35). */
+  const seesAll = $derived(sees(permissions) === 'all');
+
+  /** The Permission a service last refused for, by its name, for the line on screen (EC-PL-01); a new key shows it again. */
+  let lost = $state({ key: 0, name: '' });
+  /**
+   * A service refused for a Permission the User lacks (EC-PL-01): what they may do changed since their Access Token
+   * was made. It is renewed, their Permissions read again, and the page shows what they may do now.
+   */
+  async function permissionLost(permission: string): Promise<void> {
+    session.renew();
+    try {
+      const me = await identity.me();
+      if (status.kind === 'signedIn') status = { ...status, me };
+    } catch (error) {
+      console.error('The Permissions could not be read again', error);
+    }
+    const known = PERMISSION_KEYS.find((key) => key === permission);
+    lost = { key: lost.key + 1, name: known ? t(PERMISSION_TEXTS[known].name) : permission };
+  }
+  $effect(() => onPermissionRefused((permission) => void permissionLost(permission)));
 
   /** What was moved last, and where to, for the line on screen (DEC-UX-157); a new key shows it again. */
   let moved = $state({ key: 0, name: '', to: '', failed: false });
@@ -244,11 +283,11 @@
     }
   };
 
-  /** Reads again what the panel shows: the Collections, and for the Data Team the Resources that wait. */
+  /** Reads again what the panel shows: the Collections, and for who sees all the Resources that wait. */
   async function refresh(): Promise<void> {
     const read = [
       catalogue.collections().then((found) => (collections = found)),
-      ...(dataTeam ? [catalogue.waiting().then((found) => (waiting = found))] : []),
+      ...(seesAll ? [catalogue.waiting().then((found) => (waiting = found))] : []),
     ];
     // The panel shows the Collections even when query does not tell the Lenses.
     queries.lenses().then(
@@ -279,7 +318,7 @@
   }
   // Query opens on the last query of the User, or on a new one when they have none; previews, Lenses and hidden queries do not count (DEC-UX-137).
   $effect(() => {
-    if (status.kind !== 'signedIn' || page.kind !== 'start' || page.section.id !== 'query') return;
+    if (status.kind !== 'signedIn' || page.kind !== 'start' || page.section.id !== 'query' || !mayQuery(permissions)) return;
     queries.list(false, { show: [], limit: 1 }).then(
       ([last]) => page.kind === 'start' && page.section.id === 'query' && router.go(last ? queryPath(last.id) : NEW_QUERY, { replace: true }),
       (error: unknown) => console.error('The last query could not be read', error),
@@ -448,7 +487,8 @@
     if (onObject?.key !== key) onObject = { key };
     messages.on(subject.kind, subject.id).then(
       // What a person writes on it: Questions, Remarks and Signals (FR-CV-07).
-      (found) => onObject?.key === key && (onObject = { key, messages: found.filter((message) => ['question', 'remark', 'signal'].includes(message.kind)) }),
+      (found) =>
+        onObject?.key === key && (onObject = { key, messages: found.messages.filter((message) => ['question', 'remark', 'signal'].includes(message.kind)), kinds: found.kinds }),
       (error: unknown) => {
         if (!(error instanceof Missing)) console.error('The Messages on this page could not be read', error);
         if (onObject?.key === key) onObject = { key, messages: [] };
@@ -549,7 +589,7 @@
   });
 
   const items: readonly RailItem[] = $derived(
-    SECTIONS.filter((section) => sectionFor(section, dataTeam)).map((section) => ({
+    SECTIONS.filter((section) => sectionFor(section, permissions)).map((section) => ({
       id: section.id,
       label: sectionLabel(section),
       icon: section.icon,
@@ -602,9 +642,21 @@
   /** The Learning Levels Data Hub suggests to the User: Learning Level 4 also to a member of an Owner Unit that owns a Collection (DEC-LR-27). */
   const levels = $derived(
     status.kind === 'signedIn'
-      ? suggestedLevels({ dataTeam, owner: (collections ?? []).some((collection) => status.kind === 'signedIn' && status.me.groups.includes(collection.ownerUnit.id)) })
-      : suggestedLevels({ dataTeam: false, owner: false }),
+      ? suggestedLevels({
+          dataAdmin: can(permissions, 'resources.assign'),
+          owner: (collections ?? []).some((collection) => status.kind === 'signedIn' && status.me.groups.includes(collection.ownerUnit.id)),
+        })
+      : suggestedLevels({ dataAdmin: false, owner: false }),
   );
+  /** The Owner Units the User sees, by the id of their group, to name the Owner Units of a User on Users. */
+  const ownerUnits = $derived(new Map((collections ?? []).map((collection) => [collection.ownerUnit.id, collection.ownerUnit.name])));
+  /** A page of Query, which a User who may neither make queries nor Preview does not have (FR-PL-14). */
+  const queryPage = $derived(page.kind === 'newQuery' || page.kind === 'query' || page.kind === 'newLens' || (page.kind === 'start' && page.section.id === 'query'));
+  /** The kinds of Message the User may write (`messages.write`, DEC-PL-04). */
+  const writes = $derived.by(() => {
+    const kinds = permissions['messages.write'].values.kinds;
+    return can(permissions, 'messages.write') && Array.isArray(kinds) ? kinds : [];
+  });
   /** The panel is open unless the User shut it; that is remembered (navigation rule 5). */
   const panelOpen = $derived(settings?.values['panel.open'] ?? true);
 
@@ -645,7 +697,7 @@
     ontheme={() => themeOnScreen.switch()}
     oncollapse={() => signedIn.settings.set('panel.open', false)}
     panel={section ? panel : undefined}
-    panelActions={section?.id === 'collections' ? newCollection : section?.id === 'query' ? newQuery : undefined}
+    panelActions={section?.id === 'collections' && can(permissions, 'collections.make') ? newCollection : section?.id === 'query' && can(permissions, 'queries.make') ? newQuery : undefined}
   >
     {#if page.kind === 'start' && page.section.id === 'collections'}
       <CollectionsStart
@@ -656,6 +708,8 @@
           return { lenses: lensesFound, ...found };
         }}
         groups={signedIn.me.groups}
+        makes={can(permissions, 'collections.make')}
+        queries={can(permissions, 'queries.make')}
         intro={signedIn.settings.values['intro.collections'] !== INTRO_VERSION}
         ondismiss={() => signedIn.settings.set('intro.collections', INTRO_VERSION)}
         onshow={() => signedIn.settings.forget('intro.collections')}
@@ -666,10 +720,13 @@
         found={centre}
         opened={page.id ? openedMessage : undefined}
         client={messages}
-        {dataTeam}
+        forDataTeam={can(permissions, 'messages.dataTeam')}
+        decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
       />
+    {:else if queryPage && !mayQuery(permissions)}
+      <NotFound />
     {:else if page.kind === 'start' && page.section.id === 'learning'}
       <LearningStart
         shown={shownCards}
@@ -775,7 +832,8 @@
           {catalogue}
           {collections}
           me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
-          {dataTeam}
+          everyLens={reach(permissions, 'lenses.manage') === 'every'}
+          canMake={can(permissions, 'lenses.make')}
           loadGroups={() => identity.groups()}
           onmade={made}
         />
@@ -789,7 +847,8 @@
           {catalogue}
           {collections}
           me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
-          {dataTeam}
+          everyLens={reach(permissions, 'lenses.manage') === 'every'}
+          canMake={can(permissions, 'lenses.make')}
           loadGroups={() => identity.groups()}
           onmade={made}
         />
@@ -798,7 +857,8 @@
         <LensPage
           {lens}
           messages={messagesButton}
-          excelAddress={`${config.queryUrl}/excel/lenses/${encodeURIComponent(lens.id)}`}
+          excelAddress={can(permissions, 'excel.keys') ? `${config.queryUrl}/excel/lenses/${encodeURIComponent(lens.id)}` : undefined}
+          canQuery={can(permissions, 'queries.make')}
           client={queries}
           collection={collections?.find((collection) => collection.id === lens.collectionId)}
           onchanged={() => {
@@ -828,7 +888,8 @@
             {catalogue}
             {collections}
             me={{ name: signedIn.me.name, groups: signedIn.me.groups }}
-            {dataTeam}
+            everyLens={reach(permissions, 'lenses.manage') === 'every'}
+            canMake={can(permissions, 'lenses.make')}
             loadGroups={() => identity.groups()}
             onmade={made}
             ondeleted={deleted}
@@ -846,7 +907,8 @@
         {catalogue}
         {identity}
         {registry}
-        {dataTeam}
+        assigns={can(permissions, 'resources.assign')}
+        anyOwnerUnit={can(permissions, 'collections.make') && permissions['collections.make'].values.ownerUnit === 'any'}
         own={signedIn.me.groups}
         {waiting}
         go={(path) => router.go(path)}
@@ -891,7 +953,7 @@
           {catalogue}
           {registry}
           {queries}
-          {dataTeam}
+          {permissions}
           groups={status.kind === 'signedIn' ? status.me.groups : []}
           onchange={(updated) => {
             if (opened?.id === updated.id) {
@@ -908,15 +970,32 @@
         <Loading />
       {/if}
     {:else if page.kind === 'admin'}
-      <!-- Admin is for the Data Team only; registry refuses the others too (DEC-UX-130). -->
-      {#if dataTeam}
-        {#if page.tool === 'keys' && status.kind === 'signedIn'}
-          <AdminExcelKeys {identity} environment={config.environment ?? 'local'} me={status.me.sub} onactive={(count) => (activeKeys = count)} />
-        {:else}
-          <AdminWebhooks {registry} environment={config.environment ?? 'local'} ontolookat={(count) => (webhooksToLookAt = count)} />
-        {/if}
-      {:else}
+      <!-- Admin shows only the tools of `admin.open`; the services refuse the others too (DEC-UX-130, FR-PL-14). -->
+      {#if !adminTools.includes(page.tool)}
         <NotFound />
+      {:else if page.tool === 'keys'}
+        <AdminExcelKeys {identity} environment={config.environment ?? 'local'} me={signedIn.me.sub} onactive={(count) => (activeKeys = count)} />
+      {:else if page.tool === 'users'}
+        <AdminUsers
+          {identity}
+          environment={config.environment ?? 'local'}
+          me={signedIn.me.sub}
+          {ownerUnits}
+          filter={usersOf}
+          user={page.user}
+          groupsHref={adminTools.includes('permissionGroups') ? ADMIN_TOOLS.find((tool) => tool.id === 'permissionGroups')?.path : undefined}
+          oncount={(count) => (userCount = count)}
+        />
+      {:else if page.tool === 'permissionGroups'}
+        <AdminPermissionGroups
+          {identity}
+          environment={config.environment ?? 'local'}
+          usersHref={adminTools.includes('users') ? ADMIN_TOOLS.find((tool) => tool.id === 'users')?.path : undefined}
+          onusers={(group) => (usersOf = group)}
+          oncount={(count) => (groupCount = count)}
+        />
+      {:else}
+        <AdminWebhooks {registry} environment={config.environment ?? 'local'} ontolookat={(count) => (webhooksToLookAt = count)} />
       {/if}
     {:else if page.kind === 'notFound'}
       <NotFound />
@@ -930,6 +1009,7 @@
       {@const name = page.kind === 'collection' ? collection?.name : page.kind === 'resource' ? opened?.resource?.displayName : openedLens?.lens?.name}
       {#if name}
         <MessagesSheet
+          writes={onObject?.kinds ?? writes}
           subject={{ ...about, name }}
           meta={page.kind === 'collection' ? `Collection · ${collection?.ownerUnit.name ?? ''}` : `${SUBJECT_TITLES[about.kind]}${collection ? ` · ${collection.name}` : ''}`}
           owner={collection?.ownerUnit.name ?? null}
@@ -948,6 +1028,7 @@
       {@const name = cardTitle(page.id)}
       {#if name && localCards.has(page.id)}
         <MessagesSheet
+          writes={onObject?.kinds ?? writes}
           subject={{ ...about, name }}
           meta={t('learning.messages.meta', { level: LEVELS.find((level) => level.id === topicOf(page.id)?.level)?.name ?? '' })}
           owner={null}
@@ -989,7 +1070,7 @@
         message={openedMessage?.id === id ? openedMessage.message : undefined}
         count={talkedAbout ? (onObject?.messages?.length ?? 0) : null}
         client={messages}
-        {dataTeam}
+        decides={can(permissions, 'requests.decide')}
         {decideLens}
         onchanged={changedMessage}
         onclose={() => router.go(messagePath(id))}
@@ -1001,6 +1082,8 @@
   <Toast key={moved.key} tone={moved.failed ? 'failed' : 'done'}>
     {#if moved.failed}{t('folder.moveFailed', { name: moved.name })}{:else}{t('folder.moved', { name: moved.name })} <b>{moved.to}</b>{/if}
   </Toast>
+  <!-- A service refused for a Permission the User no longer has: the page follows what they may do now (EC-PL-01). -->
+  <Toast key={lost.key} tone="failed">{t('permissions.changed', { permission: lost.name })}</Toast>
 {/if}
 
 {#snippet panel()}
@@ -1018,18 +1101,24 @@
     />
   {:else if section?.id === 'learning' && status.kind === 'signedIn'}
     <LearningPanel shown={shownCards} progress={progress ?? []} current={page.kind === 'learningCard' || page.kind === 'learningSee' ? page.id : undefined} unfold={unfoldLevel} />
-  {:else if section?.id === 'admin' && dataTeam}
+  {:else if section?.id === 'admin' && adminTools.length > 0}
     <AdminPanel
       current={page.kind === 'admin' ? page.tool : undefined}
+      tools={adminTools}
       environment={config.environment ?? 'local'}
-      counts={{ ...(webhooksToLookAt === undefined ? {} : { webhooks: webhooksToLookAt }), ...(activeKeys === undefined ? {} : { keys: activeKeys }) }}
+      counts={{
+        ...(webhooksToLookAt === undefined ? {} : { webhooks: webhooksToLookAt }),
+        ...(activeKeys === undefined ? {} : { keys: activeKeys }),
+        ...(userCount === undefined ? {} : { users: userCount }),
+        ...(groupCount === undefined ? {} : { permissionGroups: groupCount }),
+      }}
     />
   {:else if section?.id === 'messages' && status.kind === 'signedIn'}
     <MessagesPanel filter={messageFilter} counts={centre?.counts} onfilter={(filter) => (messageFilter = filter)} />
-  {:else if section?.id === 'query' && status.kind === 'signedIn'}
+  {:else if section?.id === 'query' && status.kind === 'signedIn' && mayQuery(permissions)}
     <QueryPanel
       client={queries}
-      {dataTeam}
+      everyone={reach(permissions, 'queries.seeOthers') === 'every'}
       current={openQuery}
       runs={currentRuns}
       draft={page.kind === 'newQuery' ? draft : null}

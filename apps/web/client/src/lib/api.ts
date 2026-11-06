@@ -31,6 +31,17 @@ export class Refused extends Error {
 
 export type Call = (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
 
+const refusals = new Set<(permission: string) => void>();
+
+/**
+ * Hears every refusal of a service for a Permission the User lacks, a 403 with the key it needs (EC-PL-01): the
+ * page then reads the Permissions of the User again. Answers how to stop hearing them.
+ */
+export function onPermissionRefused(listener: (permission: string) => void): () => void {
+  refusals.add(listener);
+  return () => refusals.delete(listener);
+}
+
 /** Calls a service of Data Hub, named for its errors, with the Access Token of the User. */
 export function createCall(
   service: string,
@@ -60,6 +71,10 @@ export function createCall(
     }
     if (!response.ok) {
       const body = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+      if (response.status === 403 && typeof body.permission === 'string') {
+        const permission = body.permission;
+        refusals.forEach((listener) => listener(permission));
+      }
       throw new Refused(
         `${service} answered ${response.status} to ${init.method ?? 'GET'} ${path}`,
         response.status,

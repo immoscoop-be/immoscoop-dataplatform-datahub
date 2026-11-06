@@ -39,7 +39,8 @@
     catalogue,
     collections,
     me,
-    dataTeam,
+    everyLens,
+    canMake = true,
     loadGroups,
     onmade,
     ondeleted,
@@ -54,7 +55,10 @@
     catalogue: Pick<Catalogue, 'createCollection'>;
     collections: readonly Collection[] | undefined;
     me: { name: string; groups: readonly string[] };
-    dataTeam: boolean;
+    /** The User manages every Lens (`lenses.manage`, every): a Lens may go into any Collection they manage. */
+    everyLens: boolean;
+    /** The User may make a query a Lens, and send its Request again (`lenses.make`). */
+    canMake?: boolean;
     /** The groups of the User, to own a new Collection (DEC-CO-24). */
     loadGroups: () => Promise<Group[]>;
     onmade: (lens: Lens) => void;
@@ -105,7 +109,7 @@
   const existing = $derived(lens ?? editing);
   const owned = $derived(
     (collections ?? [])
-      .filter((collection) => collection.canManage && (dataTeam || me.groups.includes(collection.ownerUnit.id)))
+      .filter((collection) => collection.canManage && (everyLens || me.groups.includes(collection.ownerUnit.id)))
       .toSorted((a, b) => Number(me.groups.includes(b.ownerUnit.id)) - Number(me.groups.includes(a.ownerUnit.id))),
   );
   /** A label as people read a name: dateFrom becomes "Date from". */
@@ -461,7 +465,8 @@
               <b>{t('lens.size.sent', { name: lens.authorName, time: since(request.sentAt) })}</b>
               {lens.mine ? t('lens.size.sent.you') : t('lens.size.sent.other', { name: lens.authorName })}
             </Callout>
-          {:else if lens.mine}
+          {:else if lens.mine && canMake}
+            <!-- Sending it again takes `lenses.make` (FR-PL-14). -->
             <p class="meta failed" role="alert">{t('lens.size.notSent')}</p>
             <Field label={t('lens.size.word')}><textarea rows="2" maxlength="500" bind:value={text}></textarea></Field>
             <Button disabled={busy} onclick={sendAgain}><Icon name="paper-plane-tilt" />{t('lens.size.sendAgain')}</Button>
