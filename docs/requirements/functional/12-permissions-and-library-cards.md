@@ -3,7 +3,7 @@
 | | |
 | --- | --- |
 | Domain | 12 of Data Hub · code `PL` |
-| Status | Excel keys implemented; Permission groups specified, to build |
+| Status | Excel keys and Permission groups implemented; My page showing a User their own Permission group is still to draw ([FR-PL-13](#fr-pl-13)) |
 | Source of truth | This file |
 | Origin | Listed in the domain overview on Confluence; no page of its own yet (Confluence name: Rechten en lezerskaarten) |
 
@@ -60,63 +60,63 @@ An Excel key expires a year after it was made; a month before, its User gets a n
 <a id="fr-pl-04"></a>
 ### FR-PL-04 · A User is in one Permission group, and a new User gets the default
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
 
 Every User is in one Permission group. One Permission group is the default: a User who signs in for the first time gets it. A User keeps their Permission group while they cannot sign in, and has it again when they sign in again.
 
 <a id="fr-pl-05"></a>
 ### FR-PL-05 · A Permission group holds every Permission, each with its values
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01), [DEC-UX-186](../../design/principles.md#dec-ux-186)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01), [DEC-UX-186](../../design/principles.md#dec-ux-186)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 A Permission group has a name, a sentence that says what it allows, and a value for every Permission under [The Permissions](#the-permissions). A Permission is yes or no, or always on; while it is yes, its values say how far it goes, each of a kind a Parameter has: a whole number with its unit, a choice, several choices, yes or no, or a text. Where a Permission reaches "their Owner Units" or "the assets in their control", the Owner Units of the User say which. The same Permissions hold in the web app, in Claude and in Excel.
 
 <a id="fr-pl-06"></a>
 ### FR-PL-06 · Users lists every User, with their Permission group
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
 
 With `admin.open` for Users, Admin has Users: everyone who signed in to the environment, with their Permission group, their Owner Units, what they use (the web app, Claude, Excel) and when they last signed in. A search finds a User by name or address; a filter shows one Permission group, each with its count. A User who can no longer sign in stays listed, greyed, with their Permission group.
 
 <a id="fr-pl-07"></a>
 ### FR-PL-07 · The Permission group of a User is changed after seeing what it changes
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-189](../../design/principles.md#dec-ux-189)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-189](../../design/principles.md#dec-ux-189)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html)
 
 A User opened on Users shows in a sheet who they are, since when, what they use, their Owner Units read-only as they come from Workspace, their Permission group as a choice of every group, and the history of their Permission group: who changed it, from what to what, and when. Choosing another group shows, before it is saved, what the User gains and loses, and that their Owner Units stay.
 
 <a id="fr-pl-08"></a>
 ### FR-PL-08 · Nobody locks Data Hub out
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-188](../../design/principles.md#dec-ux-188), [DEC-PL-07](#dec-pl-07)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-188](../../design/principles.md#dec-ux-188), [DEC-PL-07](#dec-pl-07)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 Nobody changes their own Permission group. The Permission group Admin has every Permission at its widest; its Permissions cannot be changed, it cannot be deleted, and it keeps at least one User: the last User of Admin cannot be moved to another group.
 
 <a id="fr-pl-09"></a>
 ### FR-PL-09 · Permission groups shows each group with its Permissions, and changes them all at once
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01), [DEC-UX-186](../../design/principles.md#dec-ux-186)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01), [DEC-UX-186](../../design/principles.md#dec-ux-186)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 With `admin.open` for Permission groups, Admin has Permission groups: every group with its sentence, its number of Users and which is the default. One opened shows its Permissions by part of Data Hub, in the order of the rail, each with its values while it is yes; Admin shows its own locked. A change is marked until it is saved; an edit bar counts the changes, says for how many Users they take effect, and saves or discards them all at once.
 
 <a id="fr-pl-10"></a>
 ### FR-PL-10 · A Permission group is made, renamed, made the default and deleted
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-186](../../design/principles.md#dec-ux-186), [DEC-UX-190](../../design/principles.md#dec-ux-190)) · [design](../../design/principles.md#admin) · **Screens:** [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 A new Permission group starts as a copy of another, or with every Permission no, and without Users; "Duplicate" copies one. Its name and sentence change in place. One Permission group is the default at a time: making another the default takes it from the first. Deleting a Permission group asks which group its Users go to, Admin excepted; when it was the default, that group becomes the default.
 
 <a id="fr-pl-11"></a>
 ### FR-PL-11 · A change takes effect within 15 minutes, everywhere
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-189](../../design/principles.md#dec-ux-189)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-189](../../design/principles.md#dec-ux-189)) · [design](../../design/principles.md#admin) · **Screens:** [admin-users](../../design/screens/admin-users.html), [admin-permission-groups](../../design/screens/admin-permission-groups.html)
 
 Another Permission group for a User, or a change of the Permissions of a group, takes effect for each User concerned when their Access Token is renewed, within 15 minutes, in the web app, in Claude and in Excel. The sheet of a User and the edit bar of a group say so.
 
 <a id="fr-pl-12"></a>
 ### FR-PL-12 · A User is told when their Permission group changes for them
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-192](../../design/principles.md#dec-ux-192)) · [design](../../design/principles.md#admin)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-192](../../design/principles.md#dec-ux-192)) · [design](../../design/principles.md#admin)
 
 A User gets a Message when the Data Team moves them to another Permission group, and when their Permission group is deleted, with what changed for them. A change of the Permissions of their whole group sends none: the Data Team announces it itself.
 
@@ -130,14 +130,14 @@ My page shows a User the name of their Permission group and what it allows, read
 <a id="fr-pl-14"></a>
 ### FR-PL-14 · Every channel applies the Permissions of the User from their sign-in
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01)) · [design](../../design/principles.md#admin)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-PL-01](#dec-pl-01)) · [design](../../design/principles.md#admin)
 
 From the moment a User signs in, every service knows their Permissions. Every service refuses what the User may not do, whatever the channel: the web app, Claude or Excel. The web app shows a section of the rail, a page or an action only when the User may use it, from what the services say, never from a role: Query, for example, only to a User who may make queries or Preview a Resource, and Admin only to a User with `admin.open`. No service decides by a role any more.
 
 <a id="fr-pl-15"></a>
 ### FR-PL-15 · Permission groups replace the Role Groups
 
-**Status:** Specified · **Source:** Max, 2026-11-06 ([DEC-UX-187](../../design/principles.md#dec-ux-187), [DEC-PL-07](#dec-pl-07)) · [design](../../design/principles.md#admin)
+**Status:** Implemented · **Source:** Max, 2026-11-06 ([DEC-UX-187](../../design/principles.md#dec-ux-187), [DEC-PL-07](#dec-pl-07)) · [design](../../design/principles.md#admin)
 
 At the start, Data Hub makes the three Permission groups of [DEC-PL-07](#dec-pl-07): the members of `datahub-datateam@` get Admin, every other User Business analyst, and Lens user is the default for new Users. From then on no Group gives a role: a Role Group gives nothing, and what was done for the Data Team is done for the Users whose Permission group allows it, such as the Messages for the Data Team (`messages.dataTeam`) and the decisions on Requests (`requests.decide`).
 
@@ -226,28 +226,28 @@ Within what `catalogue.see` allows, who sees what still follows from Collections
 <a id="ec-pl-01"></a>
 ### EC-PL-01 · A User loses a Permission while a page offers it
 
-**Status:** Specified · **Source:** proposed on 2026-11-06, with the requirements of Permission groups
+**Status:** Implemented · **Source:** proposed on 2026-11-06, with the requirements of Permission groups
 
 The service refuses the action, and says which Permission it needs; the page says that what the User may do changed, and shows what they may do now. At the latest when their Access Token is renewed, the web app, Claude and Excel follow the new Permissions ([FR-PL-11](#fr-pl-11)).
 
 <a id="ec-pl-02"></a>
 ### EC-PL-02 · A User sees less than before
 
-**Status:** Specified · **Source:** proposed on 2026-11-06, with [DEC-PL-02](#dec-pl-02)
+**Status:** Implemented · **Source:** proposed on 2026-11-06, with [DEC-PL-02](#dec-pl-02)
 
 When `catalogue.see` of a User narrows, what they no longer see answers as anything they may not see ([FR-CO-32](03-collections.md#fr-co-32)): a Lens on it is not found, also from Excel; their own queries on such Resources stay theirs but cannot run until they see them again.
 
 <a id="ec-pl-03"></a>
 ### EC-PL-03 · Admin has no User who can still sign in
 
-**Status:** Specified · **Source:** Max, 2026-11-06, as proposed with [FR-PL-08](#fr-pl-08)
+**Status:** Implemented · **Source:** Max, 2026-11-06, as proposed with [FR-PL-08](#fr-pl-08)
 
 When every User of Admin can no longer sign in, for example after leaving, nobody can manage Data Hub. Then, and only then, a member of `datahub-datateam@` who signs in gets Admin, so that the Role Group stays a way back in, and the Data Team gets a Message that it happened.
 
 <a id="ec-pl-04"></a>
 ### EC-PL-04 · A User has more Excel keys than their Permission group now allows
 
-**Status:** Specified · **Source:** proposed on 2026-11-06, with `excel.keys`
+**Status:** Implemented · **Source:** proposed on 2026-11-06, with `excel.keys`
 
 Lowering the number of keys stops none: a User keeps their keys until they expire or are revoked, and makes a new one only below the number. A shorter life counts for keys made from then on. Without `excel.keys`, Excel gets nothing with their keys until they have it again.
 

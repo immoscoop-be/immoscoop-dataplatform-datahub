@@ -49,7 +49,7 @@ In the proposal this service was called ingest, as a Cloud Run job. It became a 
 | `DELETE /admin/source-jobs/{project}` | Stops following a dbt project; its Resources stay as they are ([TR-AR-12](../../requirements/technical/01-artifact-registry.md#tr-ar-12)) |
 | `GET /admin/deliveries` | The deliveries of the webhook of the last 30 days, with what registry did, and how many call for a look ([TR-AR-13](../../requirements/technical/01-artifact-registry.md#tr-ar-13)) |
 
-Every route but the webhook needs an Access Token with the role of the Data Team, for now ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)), through catalogue, which checks who may see it and asks registry as itself ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)).*
+Every route but the webhook needs an Access Token whose Permissions allow it: reading with `resources.assign`, the Webhooks tool of Admin or seeing all; Webhooks and reprocessing a run with the Webhooks tool of Admin ([TR-PL-06](../../requirements/technical/12-permissions-and-library-cards.md#tr-pl-06)); before, the role of the Data Team ([OP-AR-05](../../requirements/functional/01-artifact-registry.md#op-ar-05)). *Note of 2026-10-28: the lineage around a Resource is readable for everyone who may see that Resource ([DEC-AR-06](../../requirements/functional/01-artifact-registry.md#dec-ar-06)), through catalogue, which checks who may see it and asks registry as itself ([TR-AR-11](../../requirements/technical/01-artifact-registry.md#tr-ar-11)).*
 
 ## Data
 

@@ -30,7 +30,7 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | User | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-04](#msg-cnv-04), [MSG-CNV-07](#msg-cnv-07) | [MSG-CNV-01](#msg-cnv-01), [MSG-CNV-02](#msg-cnv-02), [MSG-CNV-03](#msg-cnv-03) | [MSG-CNV-03](#msg-cnv-03), [MSG-LEN-01](#msg-len-01), [MSG-QRY-01](#msg-qry-01) |
 | Owner | [MSG-RES-07](#msg-res-07) | – | – |
 | Data Team | [MSG-CNV-05](#msg-cnv-05) | – | – |
-| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03) |
+| Data Hub | [MSG-CNV-06](#msg-cnv-06), [MSG-LEN-02](#msg-len-02), [MSG-LEN-06](#msg-len-06), [MSG-KEY-01](#msg-key-01), [MSG-KEY-02](#msg-key-02), [MSG-USR-01](#msg-usr-01) | [MSG-RES-02](#msg-res-02), [MSG-RES-03](#msg-res-03), [MSG-RES-04](#msg-res-04), [MSG-RES-05](#msg-res-05), [MSG-RES-06](#msg-res-06), [MSG-RES-08](#msg-res-08), [MSG-LEN-03](#msg-len-03), [MSG-LEN-04](#msg-len-04), [MSG-LEN-05](#msg-len-05), [MSG-QRY-02](#msg-qry-02), [MSG-RPT-01](#msg-rpt-01) | [MSG-COL-01](#msg-col-01), [MSG-RES-01](#msg-res-01), [MSG-LEN-03](#msg-len-03), [MSG-USR-02](#msg-usr-02) |
 
 ## Overview
 
@@ -60,6 +60,8 @@ Every type of Message, by who sends it and which of the actors receive it. Data 
 | [MSG-LEN-06](#msg-len-06) | A Lens was deleted | Lens | Data Hub → who used the Lens lately | Nothing | To write | Implemented |
 | [MSG-KEY-01](#msg-key-01) | An Excel key expires within a month | Excel key | Data Hub → its author | Nothing | To write | Implemented |
 | [MSG-KEY-02](#msg-key-02) | The Data Team revoked an Excel key | Excel key | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-USR-01](#msg-usr-01) | A User was moved to another Permission group | User | Data Hub → its author | Nothing | To write | Implemented |
+| [MSG-USR-02](#msg-usr-02) | A member of the Data Team got Admin back | User | Data Hub → Data Team | Nothing | To write | Implemented |
 | [MSG-QRY-01](#msg-qry-01) | Request to run a very large query | query | User → Data Team | A decision | By the writer | Implemented |
 | [MSG-QRY-02](#msg-qry-02) | A query is Broken | query | Data Hub → Owner | Something to do | To write | Implemented |
 | [MSG-RPT-01](#msg-rpt-01) | A Report is Broken | Report | Data Hub → Owner | Something to do | To write | Proposed |
@@ -2509,6 +2511,257 @@ Template, English, laid out:
 **{actor} of the Data Team revoked your Excel key {subject}**
 
 From now on, Excel gets no data with it. If you still need it, make a new one on My page, or ask {actor} why.
+```
+
+</details>
+
+<a id="msg-usr-01"></a>
+
+### MSG-USR-01 · A User was moved to another Permission group
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → its author |
+| When | The Data Team moves a User to another Permission group on Users, in Admin, or deletes their Permission group, whose Users go to the group chosen. A change of the Permissions of their whole group sends none: the Data Team announces it itself. |
+| How many | One per User and move; only that User sees it. |
+| Status | Implemented |
+| Comes from | [FR-PL-12](12-permissions-and-library-cards.md#fr-pl-12), [DEC-UX-192](../../design/principles.md#dec-ux-192), [TR-PL-07](../technical/12-permissions-and-library-cards.md#tr-pl-07) |
+
+**What it asks:** Nothing. The User reads what changed for them; whoever needs another Permission group asks the Data Team.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open My page · *My page openen* | My page | every recipient |
+
+**Learning Card:** To write: *Permission groups: what a User may do in Data Hub, and why something is not there for them*. The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.
+
+**Dutch, laid out**, with the example:
+
+> **Je zit nu in de Permission group Business analyst**
+>
+> Dirk Vos van het Data Team zette je erin; je zat in Lens user. Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.
+>
+> Deze 2 dingen kan je nu ook:
+> - Make and run queries, in Query and through Claude
+> - Make a query a Lens, in a Collection of your Owner Units
+
+**Dutch, plain:**
+
+```text
+Dirk Vos van het Data Team zette je in de Permission group Business analyst; je zat in Lens user.
+Je kan nu ook: Make and run queries, in Query and through Claude; Make a query a Lens, in a Collection of your Owner Units.
+```
+
+**English, laid out**, with the example:
+
+> **You are now in the Permission group Business analyst**
+>
+> Dirk Vos of the Data Team put you in it; you were in Lens user. Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.
+>
+> You can now also do these 2 things:
+> - Make and run queries, in Query and through Claude
+> - Make a query a Lens, in a Collection of your Owner Units
+
+**English, plain:**
+
+```text
+Dirk Vos of the Data Team put you in the Permission group Business analyst; you were in Lens user.
+You can now also: Make and run queries, in Query and through Claude; Make a query a Lens, in a Collection of your Owner Units.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+| Parameter | Type | Holds |
+| --- | --- | --- |
+| `actor` | person | Who of the Data Team moved them, or deleted their Permission group |
+| `from` | name | The Permission group they were in |
+| `to` | name | The Permission group they are in now |
+| `deleted` | choice: `yes`, `no` | Whether their Permission group was deleted |
+| `gained` | count, optional | How many things they can do now that they could not before |
+| `gains` | list, optional | What they can do now that they could not before, a line each as identity writes it |
+| `gains[].line` | text | One thing, as identity writes it |
+| `lost` | count, optional | How many things they can no longer do |
+| `losses` | list, optional | What they can no longer do, a line each as identity writes it |
+| `losses[].line` | text | One thing, as identity writes it |
+
+Template, Dutch, plain:
+
+```text
+{deleted, select, yes {Je Permission group {from} werd verwijderd: {actor} van het Data Team zette je in {to}.} other {{actor} van het Data Team zette je in de Permission group {to}; je zat in {from}.}}
+Je kan nu ook: {gains}.
+Je kan niet meer: {losses}.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{deleted, select, yes {Je Permission group {from} werd verwijderd} other {Je zit nu in de Permission group {to}}}**
+
+{deleted, select, yes {{actor} van het Data Team verwijderde {from} en zette je in {to}.} other {{actor} van het Data Team zette je erin; je zat in {from}.}} Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.
+
+{gained, plural, one {Dit kan je nu ook:} other {Deze # dingen kan je nu ook:}}
+{gains}
+
+{lost, plural, one {Dit kan je niet meer:} other {Deze # dingen kan je niet meer:}}
+{losses}
+```
+
+Template, English, plain:
+
+```text
+{deleted, select, yes {Your Permission group {from} was deleted: {actor} of the Data Team put you in {to}.} other {{actor} of the Data Team put you in the Permission group {to}; you were in {from}.}}
+You can now also: {gains}.
+You can no longer: {losses}.
+```
+
+Template, English, laid out:
+
+```markdown
+**{deleted, select, yes {Your Permission group {from} was deleted} other {You are now in the Permission group {to}}}**
+
+{deleted, select, yes {{actor} of the Data Team deleted {from} and put you in {to}.} other {{actor} of the Data Team put you in it; you were in {from}.}} Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.
+
+{gained, plural, one {You can now also do this:} other {You can now also do these # things:}}
+{gains}
+
+{lost, plural, one {You can no longer do this:} other {You can no longer do these # things:}}
+{losses}
+```
+
+One item of `gains`, Dutch, plain:
+
+```text
+{line}
+```
+
+One item of `gains`, Dutch, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `gains`, English, plain:
+
+```text
+{line}
+```
+
+One item of `gains`, English, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `losses`, Dutch, plain:
+
+```text
+{line}
+```
+
+One item of `losses`, Dutch, laid out:
+
+```markdown
+- {line}
+```
+
+One item of `losses`, English, plain:
+
+```text
+{line}
+```
+
+One item of `losses`, English, laid out:
+
+```markdown
+- {line}
+```
+
+</details>
+
+<a id="msg-usr-02"></a>
+
+### MSG-USR-02 · A member of the Data Team got Admin back
+
+| | |
+| --- | --- |
+| Kind | Data Hub |
+| About | User |
+| From → to | Data Hub → Data Team |
+| When | No User of Admin can still sign in, for example after leaving, and a member of `datahub-datateam@` signs in: they get Admin, so that the Role Group stays a way back in. |
+| How many | One per User who gets Admin back this way. |
+| Status | Implemented |
+| Comes from | [EC-PL-03](12-permissions-and-library-cards.md#ec-pl-03), [FR-PL-08](12-permissions-and-library-cards.md#fr-pl-08) |
+
+**What it asks:** Nothing. The Data Team checks on Users, in Admin, who should have Admin; the User keeps it until someone moves them.
+
+**How it ends:** When it is read.
+
+| Button | Opens | For |
+| --- | --- | --- |
+| Open Users · *Users openen* | Users, in Admin, with the User opened | Data Team |
+
+**Learning Card:** To write: *Permission groups: what a User may do in Data Hub, and why something is not there for them*. The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.
+
+**Dutch, laid out**, with the example:
+
+> **Dirk Vos kreeg de Permission group Admin terug**
+>
+> Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen Dirk Vos, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.
+
+**Dutch, plain:**
+
+```text
+Dirk Vos kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.
+```
+
+**English, laid out**, with the example:
+
+> **Dirk Vos got the Permission group Admin back**
+>
+> No User of Admin could still sign in, for example after leaving. When Dirk Vos, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.
+
+**English, plain:**
+
+```text
+Dirk Vos got the Permission group Admin back: no User of Admin could still sign in.
+```
+
+<details>
+<summary>Parameters and templates</summary>
+
+Only the parameters every Message of its sender has.
+
+Template, Dutch, plain:
+
+```text
+{subject} kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.
+```
+
+Template, Dutch, laid out:
+
+```markdown
+**{subject} kreeg de Permission group Admin terug**
+
+Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen {subject}, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.
+```
+
+Template, English, plain:
+
+```text
+{subject} got the Permission group Admin back: no User of Admin could still sign in.
+```
+
+Template, English, laid out:
+
+```markdown
+**{subject} got the Permission group Admin back**
+
+No User of Admin could still sign in, for example after leaving. When {subject}, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.
 ```
 
 </details>
