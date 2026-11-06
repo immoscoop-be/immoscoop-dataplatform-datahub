@@ -3,11 +3,10 @@ import { type Kysely, sql } from 'kysely';
 import type { Missing, NamedResource, QueryDatabase, QueryKind, ResultColumn, RunPurpose, RunState } from './database.js';
 import type { Parameter } from './parameters.js';
 
-/** Who asks: the fixed Google ID and name from the Access Token, and whether they are in the Data Team. */
+/** Who asks: the fixed Google ID and name from the Access Token; what they may do is in its Permissions (TR-PL-06). */
 export interface Viewer {
   id: string;
   name: string;
-  dataTeam: boolean;
   /** Through Claude, as its Access Token says; the web app otherwise (DEC-CL-11). */
   through?: 'claude' | null;
 }

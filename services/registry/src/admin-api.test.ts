@@ -1,4 +1,5 @@
-import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
+import { createTestIssuer, type TestClaims, type TestIssuer } from '@datahub/auth/testing';
+import { type Permissions, startingPermissions } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
@@ -83,17 +84,30 @@ describe('the page Webhooks in registry (FR-AR-18, FR-AR-19)', () => {
 
   afterEach(() => app.close());
 
-  async function call(method: 'GET' | 'PUT' | 'POST' | 'DELETE', url: string, payload?: object, roles = ['datateam']) {
-    const token = await issuer.sign({ roles, sub: 'u-max', name: 'Maxime Passenier', email: 'maxime@thenextimmoscoop.be' });
+  async function call(method: 'GET' | 'PUT' | 'POST' | 'DELETE', url: string, payload?: object, claims: TestClaims = { as: 'admin' }) {
+    const token = await issuer.sign({ ...claims, sub: 'u-max', name: 'Maxime Passenier', email: 'maxime@thenextimmoscoop.be' });
     return app.inject({ method, url, headers: { authorization: `Bearer ${token}` }, ...(payload ? { payload } : {}) });
   }
 
-  it('is for the Data Team only', async () => {
-    expect((await call('GET', '/admin/source-jobs', undefined, [])).statusCode).toBe(403);
-    expect((await call('POST', '/admin/source-jobs', { projectId: '15890', jobId: '352118' }, [])).statusCode).toBe(403);
-    expect((await call('DELETE', '/admin/source-jobs/9367', undefined, [])).statusCode).toBe(403);
-    expect((await call('GET', '/admin/deliveries', undefined, [])).statusCode).toBe(403);
+  /** A Business analyst whose group opens these tools of Admin, and no other. */
+  const opening = (tools: string[]): TestClaims => {
+    const permissions: Permissions = startingPermissions('businessAnalyst');
+    permissions['admin.open'] = { on: true, values: { tools } };
+    return { permissions };
+  };
+
+  it('is for who opens the Webhooks of Admin only (admin.open, TR-PL-06)', async () => {
+    const analyst: TestClaims = { as: 'businessAnalyst' };
+    const refused = await call('GET', '/admin/source-jobs', undefined, analyst);
+    expect(refused.statusCode).toBe(403);
+    expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'admin.open' });
+    expect((await call('POST', '/admin/source-jobs', { projectId: '15890', jobId: '352118' }, analyst)).statusCode).toBe(403);
+    expect((await call('DELETE', '/admin/source-jobs/9367', undefined, analyst)).statusCode).toBe(403);
+    expect((await call('GET', '/admin/deliveries', undefined, { as: 'lensUser' })).statusCode).toBe(403);
     expect((await app.inject({ method: 'GET', url: '/admin/deliveries' })).statusCode).toBe(401);
+    // Admin with the other tools, not Webhooks, does not; Webhooks alone does.
+    expect((await call('GET', '/admin/deliveries', undefined, opening(['excelKeys', 'users', 'permissionGroups']))).statusCode).toBe(403);
+    expect((await call('GET', '/admin/deliveries', undefined, opening(['webhooks']))).statusCode).toBe(200);
   });
 
   it('shows the Source Job of each dbt project by name, with its last set and the address of the webhook', async () => {

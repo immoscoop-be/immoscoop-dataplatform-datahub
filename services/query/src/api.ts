@@ -1,14 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import type { ExcelKeyExchanger, ServiceCallerVerifier, TokenVerifier } from '@datahub/auth';
+import { can, rangesOf, reach } from '@datahub/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { forbidden, ownerUnitsOf, permissionsOf } from './access.js';
 import { type BigQuery, BigQueryRefused, BigQueryUnavailable, type Finished, type Page, ResultExpired } from './bigquery.js';
 import { missingIn, missingOf } from './broken.js';
 import { type Catalogue, CatalogueUnavailable, type QueryRequest, type QueryResource } from './catalogue.js';
-import type { NamedResource } from './database.js';
+import type { NamedResource, QueryKind } from './database.js';
 import { lensRoutes } from './lens-api.js';
 import type { Lenses } from './lenses.js';
 import { bind, type Parameter, parseParameters } from './parameters.js';
-import { type Preflight, preflight, type ResourceOfQuery, type Thresholds } from './preflight.js';
+import { type Preflight, preflight, type ResourceOfQuery, sound, type Thresholds } from './preflight.js';
 import { type Choice, choicesOf, chosenParameters, previewSql, type StorageReader, valuesSql, type Window, WINDOWS, windowFilter } from './preview.js';
 import { type ListOptions, type Queries, type Query, type QueryOnResource, type Run, SHOWN, type Shown, type Viewer } from './queries.js';
 import { inOwnCase, template } from './sql.js';
@@ -26,6 +28,10 @@ export interface ApiOptions {
   beneath: (resource: QueryResource) => Promise<string[]>;
   /** The project the jobs run in: a Key in it may be written without its project. */
   project: string;
+  /**
+   * The ranges of one run of a Lens, for its size check, its growth and its daily check (DEC-SR-29, DEC-LE-11): about
+   * the Lens, not one User. A query and a Preview run within the ranges of their User (`runs.ranges`).
+   */
   thresholds: Thresholds;
   /** The size and partitions of a Resource, and its newest partitions (FR-SR-39, DEC-SR-39). */
   storage: StorageReader;
@@ -33,8 +39,6 @@ export interface ApiOptions {
   excel?: { exchanger: ExcelKeyExchanger; verifier: TokenVerifier };
 }
 
-/** The role of the Data Team in the Access Token (TR-PF-03). */
-const DATA_TEAM = 'datateam';
 /** A page of a result has 100 rows (FR-SR-51). */
 export const PAGE_SIZE = 100;
 /** How many runs of its history a page holds at most (DEC-UX-74). */
@@ -46,13 +50,14 @@ const NO_RESOURCE = { error: 'not_found', message: 'There is no such Resource, o
 /** The numbers on top of the tab History count the last 30 days (FR-SR-44). */
 const MONTH = 30 * 86_400_000;
 const NOT_YOURS = { error: 'forbidden', message: 'Only who made a query writes and runs it.' };
+const ALL_QUERIES = 'Only who sees every query lists the queries of everyone.';
 
 /** A query as the web app gets it: without the SQL Data Hub keeps for its own checks (DEC-SR-44). */
 const shown = ({ checkSql: _checkSql, checkParameters: _checkParameters, ...query }: Query) => query;
 
 /**
  * A run as the web app shows it: its SQL and values, what it read, its result's columns and how many rows.
- * Only who made the query and the Data Team see it (DEC-SR-31).
+ * Only who may read the query sees it (DEC-SR-31, `queries.seeOthers`).
  */
 function runView(run: Run) {
   return {
@@ -156,8 +161,9 @@ const same = (a: readonly Parameter[], b: readonly Parameter[]) => JSON.stringif
 
 /**
  * The routes of query (TR-SR-15, TR-SR-16): queries, their Pre-flight, their runs and the pages of a result.
- * Every route has the Access Token of the User; a query is written and run only by who made it, and seen by
- * them and the Data Team (DEC-LN-01).
+ * Every route has the Access Token of the User, and refuses what their Permissions do not allow (TR-PL-06): a
+ * query is written and run only by who made it, with `queries.make`, and seen by them and by who sees the queries
+ * of others (DEC-LN-01, `queries.seeOthers`).
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
   const { queries, lenses, catalogue, bigquery, beneath, project, thresholds, storage, checkers, excel } = options;
@@ -166,51 +172,57 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
-    return { id: user?.sub ?? '', name: user?.name || user?.email || '', dataTeam: user?.roles.includes(DATA_TEAM) ?? false, through: user?.client ?? null };
+    return { id: user?.sub ?? '', name: user?.name || user?.email || '', through: user?.client ?? null };
   }
 
   const authorization = (request: FastifyRequest) => request.headers.authorization ?? '';
 
-  /** Whether the User manages a Resource: the Owner Unit of its Collection, or the Data Team. */
-  async function manages(request: FastifyRequest, resource: QueryResource): Promise<boolean> {
-    if (viewer(request).dataTeam) return true;
-    return resource.collectionId !== null && (await catalogue.manages(resource.collectionId, authorization(request))) === true;
+  /** Whether a Resource is of an Owner Unit of the User: the Owner Unit of its Collection is one of their groups (FR-PL-05). */
+  async function owns(request: FastifyRequest, resource: QueryResource): Promise<boolean> {
+    if (resource.collectionId === null) return false;
+    const ownerUnit = await catalogue.ownerUnit(resource.collectionId, authorization(request));
+    return ownerUnit !== null && ownerUnitsOf(request).includes(ownerUnit);
   }
 
   /**
-   * The query, if the User may read it: theirs, anyone's for the Data Team, and for the Owner Unit of one of
-   * its Resources, every query on what it owns (DEC-SR-31, DEC-SR-41).
+   * Whether the User may read the query (DEC-SR-31, DEC-SR-41): their own; with `queries.seeOthers`, every query, or
+   * those on the Resources of their Owner Units, as the History of a Resource shows them. The runs of a Lens carry
+   * its SQL, which only who sees every query reads here; a User runs it on its page (FR-LE-14).
    */
+  async function readable(request: FastifyRequest, query: Query): Promise<boolean> {
+    const others = reach(permissionsOf(request), 'queries.seeOthers');
+    if (others === 'every') return true;
+    if (query.kind === 'lens') return false;
+    if (query.ownerId === viewer(request).id) return true;
+    if (others !== 'theirs') return false;
+    for (const named of query.resources) {
+      const resource = await catalogue.resource(named.id, authorization(request));
+      if (resource && (await owns(request, resource))) return true;
+    }
+    return false;
+  }
+
+  /** The query, if the User may read it; otherwise answered as not found. */
   async function seen(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
     const query = await queries.get(request.params.id);
-    const who = viewer(request);
-    // The runs of a Lens carry its SQL, which only the Data Team reads here; a User runs it on its page (FR-LE-14).
-    if (query?.kind === 'lens' && !who.dataTeam) {
-      void reply.code(404).send(NO_QUERY);
-      return undefined;
-    }
-    let readable = !!query && (query.ownerId === who.id || who.dataTeam);
-    if (query && !readable) {
-      try {
-        for (const named of query.resources) {
-          const resource = await catalogue.resource(named.id, authorization(request));
-          if (resource && (await manages(request, resource))) readable = true;
-          if (readable) break;
-        }
-      } catch (error) {
-        unavailable(error, reply, request);
+    try {
+      if (!query || !(await readable(request, query))) {
+        void reply.code(404).send(NO_QUERY);
         return undefined;
       }
-    }
-    if (!query || !readable) {
-      void reply.code(404).send(NO_QUERY);
+    } catch (error) {
+      unavailable(error, reply, request);
       return undefined;
     }
     return query;
   }
 
-  /** The query, if it is the User's own, to write or run. */
+  /** The query, if it is the User's own, to write or run, and they may make queries (`queries.make`). */
   async function own(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply): Promise<Query | undefined> {
+    if (!can(permissionsOf(request), 'queries.make')) {
+      void forbidden(reply, 'queries.make', 'Only who may make queries writes and runs one.');
+      return undefined;
+    }
     const query = await seen(request, reply);
     if (query && query.ownerId !== viewer(request).id) {
       void reply.code(403).send(NOT_YOURS);
@@ -228,8 +240,15 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return Promise.all(query.resources.map(async (named) => ({ named, resource: await catalogue.resource(named.id, authorization(request)) })));
   }
 
-  const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[]): Promise<Preflight> =>
-    preflight(sql, resources, { bigquery, beneath, project, thresholds }, parameters);
+  const check = (sql: string, parameters: Parameter[], resources: ResourceOfQuery[], ranges: Thresholds): Promise<Preflight> =>
+    preflight(sql, resources, { bigquery, beneath, project, thresholds: ranges }, parameters);
+
+  /**
+   * The ranges of one run (DEC-SR-29): those of the User for a query and a Preview (`runs.ranges`); for a run of a
+   * Lens those of Data Hub, which measured the Lens itself (FR-LE-08).
+   */
+  const rangesFor = (request: FastifyRequest, kind: QueryKind): Required<Thresholds> =>
+    kind === 'lens' ? { approve: thresholds.approve, request: thresholds.request, above: 'request' } : rangesOf(permissionsOf(request));
 
   /** The SQL as BigQuery gets it: each Resource the User sees by its full name in its own case (DEC-SR-44). */
   const ownCase = (sql: string, resources: ResourceOfQuery[]): string =>
@@ -290,7 +309,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   app.get<{ Querystring: { all?: string; from?: string; to?: string; show?: string; q?: string; limit?: string } }>('/queries', async (request, reply) => {
     const who = viewer(request);
     const all = request.query.all === 'true';
-    if (all && !who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team lists the queries of everyone.' });
+    if (all && reach(permissionsOf(request), 'queries.seeOthers') !== 'every') return forbidden(reply, 'queries.seeOthers', ALL_QUERIES);
     const options = listOptions(request.query);
     if (typeof options === 'string') return reply.code(400).send({ error: 'invalid_request', message: options });
     const list = await queries.list(who, all, options);
@@ -309,7 +328,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   app.get<{ Querystring: { all?: string; tz?: string } }>('/queries/days', async (request, reply) => {
     const who = viewer(request);
     const all = request.query.all === 'true';
-    if (all && !who.dataTeam) return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team lists the queries of everyone.' });
+    if (all && reach(permissionsOf(request), 'queries.seeOthers') !== 'every') return forbidden(reply, 'queries.seeOthers', ALL_QUERIES);
     const timeZone = request.query.tz ?? 'UTC';
     if (!isTimeZone(timeZone)) return reply.code(400).send({ error: 'invalid_request', message: 'tz is a time zone, such as Europe/Brussels.' });
     return { days: await queries.days(who, all, timeZone) };
@@ -330,17 +349,18 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   }
 
   app.post<{ Body: unknown }>('/queries', async (request, reply) => {
+    if (!can(permissionsOf(request), 'queries.make')) return forbidden(reply, 'queries.make', 'Only who may make queries makes one.');
     const fields = parseQuery(request.body, true);
     if (typeof fields === 'string') return reply.code(400).send({ error: 'invalid_request', message: fields });
     const who = viewer(request);
-    // Another set of Resources is a new query, started from one the User sees, after its last run (DEC-UX-73).
-    let startedFrom: { id: string; afterRun: number | null } | undefined;
-    if (fields.startedFrom) {
-      const from = await queries.get(fields.startedFrom);
-      if (!from || (from.ownerId !== who.id && !who.dataTeam)) return reply.code(400).send({ error: 'invalid_request', message: 'A query is started from one you may see.' });
-      startedFrom = { id: from.id, afterRun: (await queries.lastRun(from.id))?.number ?? null };
-    }
     try {
+      // Another set of Resources is a new query, started from one the User may read, after its last run (DEC-UX-73).
+      let startedFrom: { id: string; afterRun: number | null } | undefined;
+      if (fields.startedFrom) {
+        const from = await queries.get(fields.startedFrom);
+        if (!from || !(await readable(request, from))) return reply.code(400).send({ error: 'invalid_request', message: 'A query is started from one you may see.' });
+        startedFrom = { id: from.id, afterRun: (await queries.lastRun(from.id))?.number ?? null };
+      }
       const found = await Promise.all((fields.resources ?? []).map((id) => catalogue.resource(id, authorization(request))));
       const resources = found.filter((resource): resource is QueryResource => resource !== null);
       if (resources.length !== found.length) return reply.code(400).send({ error: 'invalid_request', message: 'A query reads only Resources you may see.' });
@@ -399,7 +419,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
    */
   async function kept(request: FastifyRequest, query: Query, run: { sql: string; parameters: Parameter[] }, resources: ResourceOfQuery[], checked: Preflight): Promise<Query> {
     if (query.kind === 'lens') return query;
-    if (checked.runnable) {
+    // SQL that reads more than one run of this User may is still SQL that runs: it is kept, and works (runs.ranges).
+    if (sound(checked)) {
       if (query.kind !== 'query') return query;
       await queries.keepCheck(query.id, ownCase(run.sql, resources), run.parameters);
       return query.broken ? upkeep.query(query, null, request.log) : query;
@@ -432,7 +453,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       const changed = body.sql !== query.sql || !same(body.parameters, query.parameters);
       const current = changed ? ((await queries.update(query.id, { sql: body.sql, parameters: body.parameters })) ?? query) : query;
       const resources = await resourcesOf(request, current);
-      const checked = await check(body.sql, body.parameters, resources);
+      const checked = await check(body.sql, body.parameters, resources, rangesFor(request, current.kind));
       // Whether it is Broken now, for the callout on top of it and Run (FR-SR-53, DEC-UX-160).
       const after = await kept(request, current, body, resources, checked);
       return { preflight: checked, broken: after.broken };
@@ -459,18 +480,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     let resources: ResourceOfQuery[];
     let accepted = false;
     let now: Query;
+    const ranges = rangesFor(request, query.kind);
     try {
       resources = await resourcesOf(request, query);
-      checked = await check(body.sql, body.parameters, resources);
+      checked = await check(body.sql, body.parameters, resources, ranges);
       now = await kept(request, query, body, resources, checked);
-      // Above 1 GB it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
+      // Above its ranges it runs once the Data Team accepted a Request of its author: every run after, also with other SQL (DEC-SR-36).
       if (checked.runnable && checked.range === 'request') accepted = (await requestsOf(request, query)).some((sent) => sent.state === 'accepted');
     } catch (error) {
       return unavailable(error, reply, request);
     }
     if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked, broken: now.broken });
     if (checked.range === 'request' && !accepted) {
-      return reply.code(409).send({ error: 'request_needed', message: 'This query reads more than 1 GB: the Data Team accepts it first.', preflight: checked });
+      return reply.code(409).send({ error: 'request_needed', message: 'This query reads more than one run may without the Data Team: they accept it first.', preflight: checked });
     }
     if (checked.range !== 'free' && !body.approve) {
       return reply.code(409).send({ error: 'approval_needed', message: 'This query reads enough to need your approval.', preflight: checked });
@@ -483,7 +505,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     try {
       const finished = await bigquery.run(ownCase(bound.sql, resources), {
         // Never more than the second threshold without an accepted Request (DEC-SR-29); with one, a little above the Pre-flight.
-        maximumBytesBilled: accepted ? Math.max(thresholds.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : thresholds.request,
+        maximumBytesBilled: accepted ? Math.max(ranges.request, Math.ceil(estimated * ACCEPTED_MARGIN)) : ranges.request,
         labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef },
         requestId: randomUUID(),
         pageSize: excel ? excel.rows : PAGE_SIZE,
@@ -535,7 +557,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       .send(`\ufeff${lines.join('\r\n')}\r\n`);
   }
 
-  // A Request to the Data Team to run it above 1 GB (MSG-QRY-01, DEC-UX-116): sent for its author, with the
+  // A Request to the Data Team to run it above its ranges (MSG-QRY-01, DEC-UX-116): sent for its author, with the
   // Pre-flight of Data Hub rather than any number of the web app, and kept by catalogue until answered.
   app.post<{ Params: { id: string }; Body: unknown }>('/queries/:id/requests', async (request, reply) => {
     const body = parseRun(request.body);
@@ -545,14 +567,16 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return sendRequest(request, reply, query, body);
   });
 
-  /** Sends a query of the User to the Data Team, above 1 GB only. */
+  /** Sends a query of the User to the Data Team, above their ranges only, unless their Permission group sends none (`runs.ranges`). */
   async function sendRequest(request: FastifyRequest, reply: FastifyReply, query: Query, body: { sql: string; parameters: Parameter[]; text: string }) {
+    const ranges = rangesFor(request, query.kind);
+    if (ranges.above === 'refuse') return forbidden(reply, 'runs.ranges', 'Your Permission group sends no query to the Data Team: above its ranges, a query does not run.');
     try {
-      const checked = await check(body.sql, body.parameters, await resourcesOf(request, query));
+      const checked = await check(body.sql, body.parameters, await resourcesOf(request, query), ranges);
       if (!checked.runnable) return reply.code(409).send({ error: 'not_runnable', message: 'This query cannot run as it is.', preflight: checked });
       if (checked.range !== 'request') return reply.code(409).send({ error: 'not_needed', message: 'This query runs without the Data Team.', preflight: checked });
       if (body.sql !== query.sql || !same(body.parameters, query.parameters)) await queries.update(query.id, { sql: body.sql, parameters: body.parameters });
-      const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: thresholds.request, text: body.text }, authorization(request));
+      const sent = await catalogue.sendRequest({ queryId: query.id, name: query.name, reads: checked.bytes ?? 0, threshold: ranges.request, text: body.text }, authorization(request));
       return reply.code(201).send({ request: requestView(sent), preflight: checked, queryId: query.id });
     } catch (error) {
       return unavailable(error, reply, request);
@@ -602,6 +626,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   // The choices of a Preview, for its window: at most 100 values each, read in one small query that passes
   // the Pre-flight and is kept in the Query Log, not in the history of the previews (DEC-SR-37, DEC-SR-40).
   app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/choices', async (request, reply) => {
+    if (!previews(request, reply)) return reply;
     const window = windowOf((request.body as { window?: unknown } | undefined)?.window ?? 4);
     if (!window) return reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
     const resource = await resourceOf(request, reply);
@@ -621,13 +646,14 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   /** The values of the choices, when reading them passes the Pre-flight and costs nothing to approve. */
   async function valuesOf(request: FastifyRequest, resource: QueryResource, filter: string | null, choices: Choice[]): Promise<Map<string, string[]>> {
     const sql = valuesSql(resource, filter, choices);
-    const checked = await check(sql, [], [{ named: named(resource), resource }]);
+    const ranges = rangesFor(request, 'preview');
+    const checked = await check(sql, [], [{ named: named(resource), resource }], ranges);
     if (!checked.runnable || checked.range !== 'free') return new Map();
     const who = viewer(request);
     const query = await queries.previewFor(who, named(resource), previewName(resource));
     const run = await queries.startRun({ query, user: who, sql, parameters: [], estimatedBytes: checked.bytes ?? 0, approved: false, purpose: 'values' });
     try {
-      const finished = await bigquery.run(sql, { maximumBytesBilled: thresholds.approve, labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef }, requestId: randomUUID(), pageSize: 1 });
+      const finished = await bigquery.run(sql, { maximumBytesBilled: ranges.approve, labels: { 'datahub-user': label(who.id), 'datahub-query': run.queryRef }, requestId: randomUUID(), pageSize: 1 });
       await queries.finishRun(run.id, {
         jobId: finished.jobId,
         jobLocation: finished.location,
@@ -646,8 +672,16 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   }
 
-  /** The SQL and Parameters of a Preview, from what the User chose; a string says what does not fit. */
+  /** Whether the User may Preview a Resource (`resources.preview`); otherwise answered. */
+  function previews(request: FastifyRequest, reply: FastifyReply): boolean {
+    if (can(permissionsOf(request), 'resources.preview')) return true;
+    void forbidden(reply, 'resources.preview', 'Only who may Preview a Resource does.');
+    return false;
+  }
+
+  /** The SQL and Parameters of a Preview, from what the User chose, if they may Preview it; otherwise answered. */
   async function previewRun(request: FastifyRequest<{ Params: { id: string }; Body: unknown }>, reply: FastifyReply) {
+    if (!previews(request, reply)) return undefined;
     const body = (request.body ?? {}) as { window?: unknown; values?: unknown; approve?: unknown; text?: unknown };
     const window = windowOf(body.window ?? 4);
     if (!window) return void reply.code(400).send({ error: 'invalid_request', message: `The window is ${WINDOWS.join(', ')} partitions.` });
@@ -671,12 +705,12 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       if (!preview) return reply;
       const known = await queries.previewOf(viewer(request), preview.resource.id);
       const [checked, requests] = await Promise.all([
-        check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }]),
+        check(preview.sql, preview.parameters, [{ named: named(preview.resource), resource: preview.resource }], rangesFor(request, 'preview')),
         known ? requestsOf(request, known) : Promise.resolve([]),
       ]);
       // A Preview that does not find its table or a column has Data Hub check what reads the Resource (FR-SR-52).
       if (missingIn(checked)) await upkeep.lost([preview.resource.id], request.log);
-      // Above 1 GB its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
+      // Above its ranges its bar says whether a Request of the User waits, or was accepted (DEC-UX-116).
       return { preflight: checked, queryId: known?.id ?? null, request: requestView(requests[0]) };
     } catch (error) {
       return unavailable(error, reply, request);
@@ -695,7 +729,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   });
 
-  // Above 1 GB a Preview goes to the Data Team too (DEC-SR-29, MSG-QRY-01).
+  // Above its ranges a Preview goes to the Data Team too (DEC-SR-29, MSG-QRY-01).
   app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/preview/requests', async (request, reply) => {
     try {
       const preview = await previewRun(request, reply);
@@ -707,12 +741,16 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   });
 
-  // The queries on a Resource, for its tab History: only its Owner Unit and the Data Team (DEC-SR-41, FR-SR-44).
+  // The queries on a Resource, for its tab History: for who sees every query, and on the Resources of their Owner Units
+  // for who sees those (DEC-SR-41, FR-SR-44, `queries.seeOthers`).
   app.get<{ Params: { id: string } }>('/resources/:id/queries', async (request, reply) => {
     const resource = await resourceOf(request, reply);
     if (!resource) return reply;
+    const others = reach(permissionsOf(request), 'queries.seeOthers');
     try {
-      if (!(await manages(request, resource))) return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner of a Resource and the Data Team see the queries on it.' });
+      if (others !== 'every' && !(others === 'theirs' && (await owns(request, resource)))) {
+        return forbidden(reply, 'queries.seeOthers', 'Only who sees the queries of others on this Resource sees the queries on it.');
+      }
     } catch (error) {
       return unavailable(error, reply, request);
     }
@@ -767,7 +805,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   // Lenses: made from a query, run on their own page (DEC-PF-30).
-  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, resourcesOf, check, ownCase, unavailable, execute, excel });
+  await lensRoutes(app, { lenses, queries, catalogue, thresholds, bigquery, checkers, upkeep, viewer, authorization, readable, resourcesOf, check, ownCase, unavailable, execute, excel });
 }
 
 function pageView(page: Page, number: number) {
