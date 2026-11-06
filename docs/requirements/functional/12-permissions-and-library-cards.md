@@ -49,7 +49,7 @@ An Excel key expires a year after it was made; a month before, its User gets a n
 
 ## The permissions, proposed
 
-*Proposed on 2026-11-06, for review with Max ([OP-PL-02](#op-pl-02)); not requirements yet. Once the list is agreed, each part becomes requirements of this domain, and the permission groups to start with are decided.*
+*Proposed on 2026-11-06, for review with Max ([OP-PL-02](#op-pl-02)); not requirements yet. Changed the same day at the request of Max: what a User sees is a choice of three, only theirs, public or all, in the place of seeing everything or not (`catalogue.see`). Once the list is agreed, each part becomes requirements of this domain, and the permission groups to start with are decided.*
 
 A permission group holds every permission below. A permission is yes or no; while it is yes, its values say how far it goes, of the kinds a Parameter has ([DEC-UX-71](../../design/principles.md#dec-ux-71)): a whole number with its unit, a choice, several choices, yes or no, a text ([DEC-UX-186](../../design/principles.md#dec-ux-186)). Where a permission reaches "those of their Owner Units", the Owner Units of the User, still Workspace groups, say which ([DEC-UX-187](../../design/principles.md#dec-ux-187)). The Data Team has every permission, at its widest ([DEC-UX-188](../../design/principles.md#dec-ux-188)).
 
@@ -59,7 +59,7 @@ Each permission has a key, the name the services use; the columns Today and Defa
 
 | Key | Permission: what it allows | Values | Today | Data Team | Default |
 | --- | --- | --- | --- | --- | --- |
-| `catalogue.seeAll` | See everything: every Collection, the private ones of other Owner Units included, the Resources without a Collection, and those withdrawn | – | Data Team ([DEC-CO-11](03-collections.md#dec-co-11)) | yes | no |
+| `catalogue.see` | What they see of the catalogue, and so of everything built on it: always on, only its value changes. A Lens shows only to who sees every Resource beneath it ([DEC-CO-16](03-collections.md#dec-co-16)), and a query reads only Resources its maker sees, so this reaches search, Lenses, queries, Claude and Excel alike | What they see (choice): **only theirs**, the Collections of their Owner Units, private and public, with what is in them; **public**, those and every public Collection; **all**, everything, the private Collections of other Owner Units, the Resources without a Collection and those withdrawn included | Public for every User ([DEC-DH-77](../../overview/data-hub.md#dec-dh-77)); all for the Data Team ([DEC-CO-11](03-collections.md#dec-co-11)) | all | public |
 | `collections.make` | Make a Collection | Its Owner Unit (choice): a group they are in, or any group of the domain | Every User, with a group they are in; the Data Team, any group ([FR-CO-35](03-collections.md#fr-co-35)) | yes, any group | yes, a group they are in |
 | `collections.manage` | Change a Collection: its details, who sees it, its folders and what they hold; dissolve it | Which (choice): those of their Owner Units, or every Collection | Its Owner Unit and the Data Team | every | their Owner Units |
 | `resources.assign` | Add Resources to a Collection, move and remove them, and set their grain and relations: the work of a Data Admin | – | Data Team | yes | no |
@@ -111,7 +111,7 @@ Each permission has a key, the name the services use; the columns Today and Defa
 
 ### What stays without a permission
 
-Who sees what stays with Collections and Owner Units ([DEC-DH-77](../../overview/data-hub.md#dec-dh-77)), and what is a User's own stays theirs, whatever their permission group: who sees a Lens runs it; a query is its maker's own; everyone reads the Learning Cards and Charts; a User revokes their own Excel keys and closes their own Question. A Data Admin, in the words of the requirements, becomes a User whose permission group has `resources.assign`.
+Within what `catalogue.see` allows, who sees what still follows from Collections and Owner Units: a private Collection only to its Owner Unit, a public one to whoever sees public Collections. That changes [DEC-DH-77](../../overview/data-hub.md#dec-dh-77), where it follows from Collections and Owner Units alone, once this list becomes requirements. What is a User's own stays theirs, whatever their permission group: who sees a Lens runs it; a query is its maker's own; everyone reads the Learning Cards and Charts; a User revokes their own Excel keys and closes their own Question. A Data Admin, in the words of the requirements, becomes a User whose permission group has `resources.assign`.
 
 ## Open points
 
