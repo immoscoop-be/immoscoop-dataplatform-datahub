@@ -7,7 +7,7 @@
   import { t } from '@datahub/ui/foundations/texts.svelte.js';
   import IconButton from '@datahub/ui/primitives/IconButton.svelte';
   import Loading from '@datahub/ui/primitives/Loading.svelte';
-  import { NotFound as Missing, onPermissionRefused } from './lib/api.js';
+  import { NotFound as Missing, onPermissionRefused, onSignedOut } from './lib/api.js';
   import { Backgrounds } from './lib/background.svelte.js';
   import { createCatalogue, type Collection, type LogEntry, type Resource, type ResourceDetail } from './lib/catalogue.js';
   import { type ChartsOverview, createCharts } from './lib/charts.js';
@@ -268,6 +268,12 @@
     lost = { key: lost.key + 1, name: known ? t(PERMISSION_TEXTS[known].name) : permission };
   }
   $effect(() => onPermissionRefused((permission) => void permissionLost(permission)));
+  // The session ended while the User worked: the sign-in, which brings them back to this page, not a loader.
+  $effect(() =>
+    onSignedOut(() => {
+      if (status.kind === 'signedIn') signedOut();
+    }),
+  );
 
   /** What was moved last, and where to, for the line on screen (DEC-UX-157); a new key shows it again. */
   let moved = $state({ key: 0, name: '', to: '', failed: false });

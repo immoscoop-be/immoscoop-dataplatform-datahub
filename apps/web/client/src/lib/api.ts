@@ -32,6 +32,23 @@ export class Refused extends Error {
 export type Call = (path: string, init?: { method?: string; body?: unknown }) => Promise<Response>;
 
 const refusals = new Set<(permission: string) => void>();
+const endings = new Set<() => void>();
+
+/**
+ * Hears that the session ended while the User works, a 401 or a renewal that identity refused, such as after the
+ * working day of the web app, sessions ended in Admin or an account no longer active: the page then shows the
+ * sign-in, instead of a loader that never ends. Answers how to stop hearing it.
+ */
+export function onSignedOut(listener: () => void): () => void {
+  endings.add(listener);
+  return () => endings.delete(listener);
+}
+
+/** The session ended: every page that listens hears it, and the call fails. */
+function signedOut(): SignedOut {
+  endings.forEach((listener) => listener());
+  return new SignedOut();
+}
 
 /**
  * Hears every refusal of a service for a Permission the User lacks, a 403 with the key it needs (EC-PL-01): the
@@ -52,7 +69,7 @@ export function createCall(
   return async (path, init = {}) => {
     const token = await session.accessToken();
     if (!token) {
-      throw new SignedOut();
+      throw signedOut();
     }
     const headers: Record<string, string> = { authorization: `Bearer ${token}` };
     if (init.body !== undefined) {
@@ -64,7 +81,7 @@ export function createCall(
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
     if (response.status === 401) {
-      throw new SignedOut();
+      throw signedOut();
     }
     if (response.status === 404) {
       throw new NotFound(path);

@@ -275,14 +275,26 @@ const privately = (v) => (v.results === 'card' ? PRIVATE : '');
 const problems = (preflight, problem) =>
   '<div class="error">' + esc(problem || (preflight?.problems ?? []).map((p) => p.message || p.kind + (p.name ? ' ' + p.name : '') + (p.column ? ' (' + p.column + ')' : '')).join('; ') || 'It cannot run as it is.') + '</div>';
 
-function approvePanel(reads, request) {
-  if (request?.state === 'accepted') return '<div class="tile"><div class="row"><span>Accepted by the Data Team: it runs for you above 1 GB.</span><button class="primary" data-act="approve" style="margin-left:auto">Run · ' + esc(reads) + '</button></div></div>';
-  return '<div class="tile"><div class="row"><span style="flex:1"><b>' + esc(reads) + ' at most, above 100 MB:</b> you approve this yourself; Claude cannot do it for you.</span><button class="primary high" data-act="approve">Approve and run · ' + esc(reads) + '</button></div></div>';
+// The ranges of the User, as the Pre-flight gives them (runs.ranges); the start values when it does not.
+const sizeOf = (value, fallback) => {
+  if (typeof value !== 'number' || !isFinite(value)) return fallback;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = value;
+  let unit = 0;
+  while (size >= 1000 && unit < units.length - 1) { size /= 1000; unit += 1; }
+  return (size >= 10 || unit === 0 || Number.isInteger(size) ? Math.round(size) : size.toFixed(1)) + ' ' + units[unit];
+};
+const freeOf = (preflight) => sizeOf(preflight?.thresholds?.approve, '100 MB');
+const largeOf = (preflight) => sizeOf(preflight?.thresholds?.request, '1 GB');
+
+function approvePanel(reads, request, preflight) {
+  if (request?.state === 'accepted') return '<div class="tile"><div class="row"><span>Accepted by the Data Team: it runs for you above ' + esc(largeOf(preflight)) + '.</span><button class="primary" data-act="approve" style="margin-left:auto">Run · ' + esc(reads) + '</button></div></div>';
+  return '<div class="tile"><div class="row"><span style="flex:1"><b>' + esc(reads) + ' at most, above ' + esc(freeOf(preflight)) + ':</b> you approve this yourself; Claude cannot do it for you.</span><button class="primary high" data-act="approve">Approve and run · ' + esc(reads) + '</button></div></div>';
 }
 
-function requestPanel(reads, request) {
+function requestPanel(reads, request, preflight) {
   if (request?.state === 'waiting') return '<div class="tile">Waiting for the Data Team since ' + esc(day(request.sentAt || request.createdAt)) + '. Their answer comes in your Message Centre.</div>';
-  return '<div class="tile"><b>Very large: one run reads ' + esc(reads) + ', more than 1 GB.</b><p class="meta" style="margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes in your Message Centre.</p>' +
+  return '<div class="tile"><b>Very large: one run reads ' + esc(reads) + ', more than ' + esc(largeOf(preflight)) + '.</b><p class="meta" style="margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes in your Message Centre.</p>' +
     '<label class="meta">A word for the Data Team (optional)<textarea id="word" rows="2"></textarea></label><button class="primary" data-act="request" style="margin-top:8px">Send to the Data Team</button></div>';
 }
 
@@ -319,7 +331,7 @@ function renderPreview(v) {
     return '<label>' + esc(c.field) + ' ' + input + '</label>';
   }).join('');
   const pf = v.preflight ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads ') + esc(v.reads ?? '?') + (v.preflight.partitions !== null && v.preflight.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';
-  const body = v.outcome === 'ran' ? rowsOf(v) + privately(v) : v.outcome === 'approve' ? approvePanel(v.reads, v.request) : v.outcome === 'request' ? requestPanel(v.reads, v.request) : problems(v.preflight, v.problem);
+  const body = v.outcome === 'ran' ? rowsOf(v) + privately(v) : v.outcome === 'approve' ? approvePanel(v.reads, v.request, v.preflight) : v.outcome === 'request' ? requestPanel(v.reads, v.request, v.preflight) : problems(v.preflight, v.problem);
   root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName), v.collection) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page);
 }
 
@@ -350,8 +362,8 @@ function renderQuery(v) {
   const q = v.query;
   const reads = '<div class="row"><span class="meta" style="display:inline">Reads only</span>' + (v.resources ?? []).map((r) => '<span class="status">' + (r.levelName ? bars(levelOf(r.levelName)) : '') + esc(r.displayName) + (r.levelName ? ' · ' + esc(r.levelName) : '') + (r.deprecated ? ' · deprecated' : '') + '</span>').join('') + '</div>';
   const body = v.outcome === 'ran' ? rowsOf(v) + (v.reads ? '<span class="meta">Scanned ' + esc(v.reads) + '</span>' : '') + privately(v)
-    : v.outcome === 'approve' ? approvePanel(v.reads, v.request)
-    : v.outcome === 'request' ? requestPanel(v.reads, v.request)
+    : v.outcome === 'approve' ? approvePanel(v.reads, v.request, v.preflight)
+    : v.outcome === 'request' ? requestPanel(v.reads, v.request, v.preflight)
     : v.outcome === 'notRun' ? '<p class="meta">Not run yet.</p>'
     : v.outcome === 'expired' ? '<p class="meta">BigQuery no longer keeps the result of its last run.</p>'
     : problems(v.preflight, v.problem);

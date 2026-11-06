@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { answer, attempt, levelName, refusal } from './answers.js';
+import { rangesOf } from '@datahub/contracts';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
@@ -47,7 +48,10 @@ interface Run {
  * Queries through Claude (see docs/requirements/functional/17-claude.md, Queries through the MCP), for a User whose
  * Permission group lets them make queries; their results reach Claude as it says (FR-CL-28, TR-PL-09).
  */
-export function queryTools({ server, hub, permits }: Context): void {
+export function queryTools({ server, hub, user, permits }: Context): void {
+  // The ranges of one run of this User, from their Permission group (runs.ranges, DEC-SR-29).
+  const free = bytes(rangesOf(user.permissions).approve);
+  const large = bytes(rangesOf(user.permissions).request);
   const enc = encodeURIComponent;
   const card = permits.results === 'card';
   const none = permits.results === 'none';
@@ -158,7 +162,7 @@ export function queryTools({ server, hub, permits }: Context): void {
             ? 'It cannot run as it is: fix what problems names, and check again.'
             : preflight.range === 'free'
               ? `It can run: it reads ${bytes(preflight.bytes)}.`
-              : `It can run, but reads ${bytes(preflight.bytes)}: ${preflight.range === 'request' ? 'above 1 GB, the Data Team accepts it first' : 'above 100 MB, the User approves it'}. A filter on the partition column reads less.`;
+              : `It can run, but reads ${bytes(preflight.bytes)}: ${preflight.range === 'request' ? `above ${large}, the Data Team accepts it first` : `above ${free}, the User approves it`}. A filter on the partition column reads less.`;
           return answer({ ...checked, reads: bytes(preflight.bytes) }, note);
         }),
     );
@@ -193,9 +197,9 @@ export function queryTools({ server, hub, permits }: Context): void {
         case 'ran':
           return `The query ran and its result is shown to the User; its first rows are below. Answer from them, and name the Levels: ${levelsOf(shown)}.`;
         case 'approve':
-          return `The query reads ${shown.reads}, more than the 100 MB Data Hub runs freely. Only the User approves it, in the window; you cannot. A filter on the partition column reads less.`;
+          return `The query reads ${shown.reads}, more than the ${free} Data Hub runs freely. Only the User approves it, in the window; you cannot. A filter on the partition column reads less.`;
         case 'request':
-          return `The query reads ${shown.reads}, more than 1 GB: the Data Team accepts it first. Only the User sends that Request, in the window; you cannot.${shown.request?.state === 'waiting' ? ' A Request of theirs is waiting already; do not send another.' : ''}`;
+          return `The query reads ${shown.reads}, more than ${large}: the Data Team accepts it first. Only the User sends that Request, in the window; you cannot.${shown.request?.state === 'waiting' ? ' A Request of theirs is waiting already; do not send another.' : ''}`;
         case 'blocked': {
           const big = tooLarge(shown.preflight, NARROWER);
           if (big) return `The query cannot run: ${big.forClaude}`;
@@ -235,8 +239,8 @@ export function queryTools({ server, hub, permits }: Context): void {
         {
           title: 'Run a query',
           description: card
-            ? 'Runs a query of the User and shows its result to them in the conversation, in a card only, within the ranges of Query: up to 100 MB it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above 1 GB, in the window. Without SQL, it runs the SQL the query keeps.'
-            : 'Runs a query of the User and shows its result in the conversation, within the ranges of Query: up to 100 MB it runs and you get the first 100 rows; above, only the User approves it, or sends a Request to the Data Team above 1 GB, in the window. Without SQL, it runs the SQL the query keeps.',
+            ? `Runs a query of the User and shows its result to them in the conversation, in a card only, within the ranges of Query: up to ${free} it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window. Without SQL, it runs the SQL the query keeps.`
+            : `Runs a query of the User and shows its result in the conversation, within the ranges of Query: up to ${free} it runs and you get the first 100 rows; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window. Without SQL, it runs the SQL the query keeps.`,
           inputSchema: { id, sql: z.string().max(100_000).optional(), parameters },
           annotations: { ...WRITE, idempotentHint: false },
           _meta: SHOWS,
@@ -248,7 +252,7 @@ export function queryTools({ server, hub, permits }: Context): void {
         'run_query_approved',
         {
           title: 'Approve and run a query',
-          description: 'The button of the User: runs a query that reads more than 100 MB, as they approved it. Only the MCP App calls this.',
+          description: `The button of the User: runs a query that reads more than ${free}, as they approved it. Only the MCP App calls this.`,
           inputSchema: { id, sql: z.string().max(100_000).optional(), parameters },
           annotations: { ...WRITE, idempotentHint: false },
           _meta: APP_ONLY,
@@ -260,7 +264,7 @@ export function queryTools({ server, hub, permits }: Context): void {
         'send_query_request',
         {
           title: 'Send a query to the Data Team',
-          description: 'The button of the User: sends a Request to the Data Team to run a query above 1 GB. Only the MCP App calls this.',
+          description: `The button of the User: sends a Request to the Data Team to run a query above ${large}. Only the MCP App calls this.`,
           inputSchema: { id, sql: z.string().max(100_000), parameters, text: z.string().max(500).optional() },
           annotations: SHARE,
           _meta: APP_ONLY,

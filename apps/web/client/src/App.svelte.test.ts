@@ -456,6 +456,8 @@ function serve({
   everyKey = [] as Record<string, unknown>[],
   users = USERS as Record<string, unknown>[],
   writable = undefined as string[] | undefined,
+  /** The path at which the session ends while the User works: it answers 401, and so does every renewal after it. */
+  sessionEndsAt = undefined as string | undefined,
 } = {}): Saved[] {
   const calls: Saved[] = [];
   // The Users and Permission groups as identity keeps them, changed by what the page asks (TR-PL-07).
@@ -483,6 +485,10 @@ function serve({
       return signedIn ? json({ access_token: 'token', expires_in: 3600 }) : json({ error: 'no_session' }, 401);
     }
     calls.push({ method, path, ...(init.body ? { body: JSON.parse(init.body as string) } : {}) });
+    if (sessionEndsAt !== undefined && path === sessionEndsAt) {
+      signedIn = false;
+      return json({ error: 'unauthorized' }, 401);
+    }
     if (path === '/me') {
       return json({ ...ME, groups, permissionGroup: { id: `pg-${as}`, name: STARTING_GROUPS[as].name }, permissions: permissions ?? STARTING_GROUPS[as].permissions });
     }
@@ -1130,6 +1136,15 @@ describe('the web app, signed out', () => {
 });
 
 describe('the web app, signed in', () => {
+  it('shows the sign-in, not a loader, when the session ends while the User works, and returns to the page after', async () => {
+    serve({ sessionEndsAt: '/collections' });
+    open('/collections');
+    render(App, { config: CONFIG });
+    const signIn = await screen.findByRole('link', { name: /Aanmelden met Google/ });
+    expect(signIn.getAttribute('href')).toBe('/auth/login?next=%2Fcollections');
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
   it('opens on Collections, with the rail and its panel', async () => {
     serve();
     open('/');

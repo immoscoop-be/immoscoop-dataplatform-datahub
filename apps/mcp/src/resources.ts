@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { answer, attempt, firstSentence, levelName, plain, refusal } from './answers.js';
+import { rangesOf } from '@datahub/contracts';
 import { APP_ONLY, bytes, type Context, READ, SHARE, SHOWS, WRITE } from './context.js';
 import { pages, Refused } from './datahub.js';
 import { collectionIcon } from './icons.js';
@@ -61,6 +62,9 @@ const values = z
  * write, Preview or publish only when the Permissions of the User allow it (TR-PL-09).
  */
 export function resourceTools({ server, hub, user, permits }: Context): void {
+  // The ranges of one run of this User, from their Permission group (runs.ranges, DEC-SR-29).
+  const free = bytes(rangesOf(user.permissions).approve);
+  const large = bytes(rangesOf(user.permissions).request);
   const enc = encodeURIComponent;
 
   /** The state of a Resource in one line, for a list (FR-CL-05). */
@@ -569,9 +573,9 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
         case 'ran':
           return `The Preview of ${name} ran and is shown to the User; its first rows are below. Answer from them, and name the Level.`;
         case 'approve':
-          return `The Preview of ${name} reads ${shown.reads}, more than the 100 MB Data Hub runs freely. Only the User approves it, in the window; you cannot. A narrower window or a Parameter reads less.`;
+          return `The Preview of ${name} reads ${shown.reads}, more than the ${free} Data Hub runs freely. Only the User approves it, in the window; you cannot. A narrower window or a Parameter reads less.`;
         case 'request':
-          return `The Preview of ${name} reads ${shown.reads}, more than 1 GB: the Data Team accepts it first. Only the User sends that Request, in the window; you cannot.${shown.request?.state === 'waiting' ? ' A Request of theirs is waiting already.' : ''}`;
+          return `The Preview of ${name} reads ${shown.reads}, more than ${large}: the Data Team accepts it first. Only the User sends that Request, in the window; you cannot.${shown.request?.state === 'waiting' ? ' A Request of theirs is waiting already.' : ''}`;
         case 'blocked': {
           const big = tooLarge(shown.preflight, NARROWER);
           if (big) return `The Preview of ${name} cannot run: ${big.forClaude}`;
@@ -598,8 +602,8 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       {
         title: 'Preview a Resource',
         description: card
-          ? 'Shows the first rows of a Resource to the User in the conversation, in a card only, filtered by its Parameters, through the Pre-flight: up to 100 MB it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above 1 GB, in the window.'
-          : 'Shows the first rows of a Resource to the User in the conversation, filtered by its Parameters, through the Pre-flight: up to 100 MB it runs and you get the rows too; above, only the User approves it, or sends a Request to the Data Team above 1 GB, in the window.',
+          ? `Shows the first rows of a Resource to the User in the conversation, in a card only, filtered by its Parameters, through the Pre-flight: up to ${free} it runs, and you get its shape (its columns, how many rows, what it read), never its values; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`
+          : `Shows the first rows of a Resource to the User in the conversation, filtered by its Parameters, through the Pre-flight: up to ${free} it runs and you get the rows too; above, only the User approves it, or sends a Request to the Data Team above ${large}, in the window.`,
         inputSchema: { id, window, values },
         annotations: READ,
         _meta: SHOWS,
@@ -611,7 +615,7 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       'run_preview_approved',
       {
         title: 'Approve and run a Preview',
-        description: 'The button of the User: runs a Preview that reads more than 100 MB, as they approved it. Only the MCP App calls this.',
+        description: `The button of the User: runs a Preview that reads more than ${free}, as they approved it. Only the MCP App calls this.`,
         inputSchema: { id, window, values },
         annotations: READ,
         _meta: APP_ONLY,
@@ -623,7 +627,7 @@ export function resourceTools({ server, hub, user, permits }: Context): void {
       'send_preview_request',
       {
         title: 'Send a Preview to the Data Team',
-        description: 'The button of the User: sends a Request to the Data Team to run a Preview above 1 GB. Only the MCP App calls this.',
+        description: `The button of the User: sends a Request to the Data Team to run a Preview above ${large}. Only the MCP App calls this.`,
         inputSchema: { id, window, values, text: z.string().max(500).optional().describe('A word for the Data Team.') },
         annotations: SHARE,
         _meta: APP_ONLY,
