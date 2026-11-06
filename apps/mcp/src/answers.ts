@@ -31,7 +31,12 @@ export async function attempt(work: () => Promise<CallToolResult>): Promise<Call
     return await work();
   } catch (error) {
     if (error instanceof Refused) {
-      return refusal(error.status === 404 ? NOT_FOUND : `Data Hub refused (${error.code}): ${error.message}`);
+      if (error.status === 404) return refusal(NOT_FOUND);
+      // A refusal by a Permission names its key (TR-PL-06): the Permission group of the User does not allow it.
+      if (error.status === 403 && typeof error.body.permission === 'string') {
+        return refusal(`Data Hub refused: ${error.message} The Permission group of the User does not allow it (${error.body.permission}). Say so, and do not try another way around it.`);
+      }
+      return refusal(`Data Hub refused (${error.code}): ${error.message}`);
     }
     if (error instanceof Unavailable) return refusal(UNAVAILABLE);
     throw error;
