@@ -19,7 +19,15 @@ describe('catalogue', () => {
         return Response.json({ registered: 0 });
       },
     );
-    await catalogue.resources({ projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [], changes: [] });
+    // What catalogue did comes back, read safely: a catalogue that sends no IDs yet sends none (FR-AR-19).
+    expect(await catalogue.resources({ projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [], changes: [] })).toEqual({
+      applied: true,
+      registered: 0,
+      registeredIds: [],
+      renamed: 0,
+      withdrawn: 0,
+      back: 0,
+    });
     expect(audiences).toEqual(['https://catalogue.test']);
     expect(calls).toEqual([{ url: 'https://catalogue.test/internal/resources', authorization: 'Bearer id-token', body: { projectId: '9367', projectName: 'p', runId: '100', generatedAt: null, tables: [], changes: [] } }]);
 

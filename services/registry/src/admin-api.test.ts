@@ -74,7 +74,7 @@ describe('the page Webhooks in registry (FR-AR-18, FR-AR-19)', () => {
         deliveries: {
           list: async () => [
             { id: '2', receivedAt: new Date(), outcome: 'ignored', reason: 'notSourceJob', eventType: 'job.run.completed', webhookName: null, accountId: '576', projectId: '9367', jobId: '324451', jobName: 'CI/CD', environmentName: null, runId: '1', runStatus: 'Success', runStartedAt: null, runFinishedAt: null, set: null },
-            { id: '1', receivedAt: new Date(), outcome: 'recorded', reason: null, eventType: 'job.run.completed', webhookName: null, accountId: '576', projectId: '9367', jobId: '322951', jobName: 'daily', environmentName: null, runId: '2', runStatus: 'Success', runStartedAt: null, runFinishedAt: null, set: { status: 'processed', error: null, processedAt: new Date(), current: true } },
+            { id: '1', receivedAt: new Date(), outcome: 'recorded', reason: null, eventType: 'job.run.completed', webhookName: null, accountId: '576', projectId: '9367', jobId: '322951', jobName: 'daily', environmentName: null, runId: '2', runStatus: 'Success', runStartedAt: null, runFinishedAt: null, set: { status: 'processed', error: null, processedAt: new Date(), current: true, nodes: 4812, exposures: 18, catalogue: { applied: true, registered: 5, registeredIds: ['r-1', 'r-2', 'r-3', 'r-4', 'r-5'], renamed: 0, withdrawn: 0, back: 0 } } },
           ],
           toLookAt: async () => 0,
         },
@@ -218,5 +218,7 @@ describe('the page Webhooks in registry (FR-AR-18, FR-AR-19)', () => {
       ['2', false],
       ['1', true],
     ]);
+    // A recorded run says what it held and what catalogue did with it (FR-AR-19).
+    expect(answer.deliveries[1].set).toMatchObject({ nodes: 4812, exposures: 18, catalogue: { registered: 5 } });
   });
 });

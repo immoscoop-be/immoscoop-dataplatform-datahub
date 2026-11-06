@@ -1,6 +1,6 @@
 import type { ArtifactSets, ClaimedSet } from './artifact-sets.js';
 import type { Bucket } from './bucket.js';
-import type { Catalogue } from './catalogue.js';
+import type { Catalogue, CatalogueAnswer } from './catalogue.js';
 import type { Changes, UpstreamChange } from './changes.js';
 import type { DbtCloud } from './dbt-cloud.js';
 import { exposedTables } from './exposed.js';
@@ -13,7 +13,7 @@ export interface Log {
 }
 
 export interface ProcessingOptions {
-  sets: Pick<ArtifactSets, 'claimNext' | 'save' | 'fail'>;
+  sets: Pick<ArtifactSets, 'claimNext' | 'save' | 'fail' | 'noteCatalogue'>;
   bucket: Bucket;
   dbtCloud: Pick<DbtCloud, 'artifact'>;
   /** Told the exposed tables of every new Current Version (TR-AR-08); left out in tests that do not need it. */
@@ -30,8 +30,9 @@ export interface ProcessingOptions {
  */
 export function createProcessing({ sets, bucket, dbtCloud, catalogue, changes, log }: ProcessingOptions) {
   /**
-   * Tells catalogue every table the exposures tagged `datahub` of the project depend on. A failure is
-   * logged and does not fail the set: the next run of the project tells the whole state again.
+   * Tells catalogue every table the exposures tagged `datahub` of the project depend on, and keeps with the set
+   * what catalogue did, for its delivery on Webhooks (FR-AR-19). A failure is logged and kept, and does not fail
+   * the set: the next run of the project tells the whole state again.
    */
   async function tellCatalogue(set: ClaimedSet, normalised: NormalisedSet, upstream: UpstreamChange[]): Promise<void> {
     if (!catalogue) {
@@ -43,7 +44,7 @@ export function createProcessing({ sets, bucket, dbtCloud, catalogue, changes, l
       log.info({ ...about, exposures: empty }, `Exposures tagged datahub that depend on no table: ${empty.join(', ')}`);
     }
     try {
-      await catalogue.resources({
+      const outcome = await catalogue.resources({
         projectId: set.projectId,
         projectName: normalised.projectName,
         runId: set.runId,
@@ -52,9 +53,20 @@ export function createProcessing({ sets, bucket, dbtCloud, catalogue, changes, l
         changes: upstream,
       });
       log.info({ ...about, tables: tables.length, changes: upstream.length }, `catalogue told the ${tables.length} exposed tables and ${upstream.length} changes`);
+      await note(set, outcome);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       log.error({ ...about, err: error }, `catalogue was not told the exposed tables: ${reason}`);
+      await note(set, { error: reason });
+    }
+  }
+
+  /** Keeps what catalogue did with the set; failing to keep it is logged, and the set stays processed. */
+  async function note(set: ClaimedSet, answer: CatalogueAnswer): Promise<void> {
+    try {
+      await sets.noteCatalogue(set.id, answer);
+    } catch (error) {
+      log.error({ runId: set.runId, projectId: set.projectId, err: error }, 'what catalogue did with the set could not be kept');
     }
   }
 

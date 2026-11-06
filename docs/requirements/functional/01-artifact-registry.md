@@ -251,11 +251,11 @@ A Data Admin sets on a page of Data Hub which dbt projects Data Hub follows and 
 
 On the page of the Source Jobs ([FR-AR-18](#fr-ar-18)), a Data Admin sees every delivery dbt Cloud sent to the webhook of that environment in the last 30 days, the newest first: when it came, the job by its name and its ID, the dbt project, the run and its status in dbt Cloud, and what Data Hub did with it. That is one of:
 
-- recorded as an Artifact Set, with the status of that set: pending, processed, or failed and why ([EC-AR-02](#ec-ar-02));
+- recorded as an Artifact Set, with the status of that set: pending, processed, or failed and why ([EC-AR-02](#ec-ar-02)). Once processed, how many Nodes it held and how many exposures tagged `datahub`; once it became the Current Version, what it brought in Data Hub: the Registrations, with the way to the Resources that wait without a Collection, and the Resources renamed, Withdrawn or back, or that catalogue was not told and why;
 - ignored, and why: the job is no Source Job of this environment, its dbt project does not match, the run did not succeed, it comes from another dbt Cloud account, or it is a test from dbt Cloud;
 - refused, because its signature does not match the secret.
 
-So whoever sets up a webhook or a Source Job sees at once whether its runs arrive and are taken, without the logs of Google Cloud, and a job in the webhook that is no Source Job stands out.
+So whoever sets up a webhook or a Source Job sees at once whether its runs arrive and are taken, and what a change to the exposures brought, without the logs of Google Cloud, and a job in the webhook that is no Source Job stands out.
 
 *Moved into v1 on 2026-10-31, at the request of Max, with the page of the Source Jobs ([FR-AR-18](#fr-ar-18)); on 2026-10-30 it had been left out of v1, with the deliveries in the logs of registry.*
 

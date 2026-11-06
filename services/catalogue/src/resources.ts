@@ -208,6 +208,8 @@ export interface UpdateOutcome {
   /** False for a call about an older run than the last one applied. */
   applied: boolean;
   registered: number;
+  /** The Resources registered by this call, which now wait without a Collection: the way to them on Webhooks (FR-AR-19). */
+  registeredIds: string[];
   renamed: number;
   withdrawn: number;
   back: number;
@@ -630,7 +632,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
   return {
     async apply(update) {
       return db.transaction().execute(async (trx) => {
-        const outcome: UpdateOutcome = { applied: true, registered: 0, renamed: 0, withdrawn: 0, back: 0, changed: [] };
+        const outcome: UpdateOutcome = { applied: true, registered: 0, registeredIds: [], renamed: 0, withdrawn: 0, back: 0, changed: [] };
         // One call per dbt project at a time, and never one about an older run (TR-SR-02).
         await trx.insertInto('resourceSyncs').values({ projectId: update.projectId, runId: update.runId }).onConflict((conflict) => conflict.doNothing()).execute();
         const last = await trx.selectFrom('resourceSyncs').select('runId').where('projectId', '=', update.projectId).forUpdate().executeTakeFirstOrThrow();
@@ -707,6 +709,7 @@ export function createResources(db: Kysely<CatalogueDatabase>): Resources {
               .onConflict((conflict) => conflict.doNothing())
               .execute();
             outcome.registered++;
+            outcome.registeredIds.push(id);
             continue;
           }
           const back = row.withdrawnAt !== null;

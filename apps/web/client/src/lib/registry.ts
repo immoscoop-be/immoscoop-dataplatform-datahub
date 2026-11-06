@@ -77,6 +77,11 @@ export type SetStatus = 'pending' | 'processing' | 'processed' | 'failed';
 export type DeliveryReason = 'notARun' | 'otherAccount' | 'notSucceeded' | 'notSourceJob' | 'otherProject' | 'signature';
 
 /** A delivery of the webhook of dbt Cloud, and what Data Hub did with it (FR-AR-19). */
+/** What catalogue did with the exposed tables of a run: the Resources it registered and those that changed, or why it was not told. */
+export type CatalogueAnswer =
+  | { applied: boolean; registered: number; registeredIds: string[]; renamed: number; withdrawn: number; back: number }
+  | { error: string };
+
 export interface Delivery {
   id: string;
   receivedAt: string;
@@ -93,8 +98,20 @@ export interface Delivery {
   runStatus: string | null;
   runStartedAt: string | null;
   runFinishedAt: string | null;
-  /** Its Artifact Set when it was recorded: pending, processed, or failed and why. */
-  set: { status: SetStatus; error: string | null; processedAt: string | null; current: boolean } | null;
+  /**
+   * Its Artifact Set when it was recorded: pending, processed, or failed and why; once processed, how many Nodes and
+   * exposures tagged `datahub` it held and, once current, what catalogue did with it (FR-AR-19). Null where not known,
+   * as for a set processed before Data Hub kept it.
+   */
+  set: {
+    status: SetStatus;
+    error: string | null;
+    processedAt: string | null;
+    current: boolean;
+    nodes?: number | null;
+    exposures?: number | null;
+    catalogue?: CatalogueAnswer | null;
+  } | null;
   /** It came from a Source Job of this environment. */
   sourceJob: boolean;
 }

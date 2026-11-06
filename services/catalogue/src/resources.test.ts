@@ -68,8 +68,10 @@ describe.skipIf(!url)('Resources in Postgres', () => {
 
   it('registers every exposed table once, named by its label or its Node, and waits for a Collection (FR-SR-32, FR-SR-35)', async () => {
     const outcome = await resources.apply(prod('100', [orders, table('customers')]));
-    expect(outcome).toEqual({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
+    expect(outcome).toMatchObject({ applied: true, registered: 2, renamed: 0, withdrawn: 0, back: 0, changed: [] });
     const known = await byKey();
+    // The Resources it registered, by ID: the way to them from the delivery on Webhooks (FR-AR-19).
+    expect(outcome.registeredIds.toSorted()).toEqual([known.orders?.id, known.customers?.id].toSorted());
     expect(known.orders).toMatchObject({ displayName: 'Orders', key: 'immoscoop-dataplatform.dbt_marts.orders', description: 'About orders.', collectionId: null, withdrawn: false });
     expect(known.customers?.displayName).toBe('customers');
     // The first entries of its Log: the Registration and the Level (FR-SR-09).

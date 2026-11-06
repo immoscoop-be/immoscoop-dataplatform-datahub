@@ -1,4 +1,5 @@
 import type { ColumnType, Generated } from 'kysely';
+import type { CatalogueAnswer } from './catalogue.js';
 
 /** A timestamp: read as a Date, written as a Date or left to the database. */
 type Timestamp = ColumnType<Date, Date | undefined, Date>;
@@ -61,6 +62,11 @@ export interface RegistryDatabase {
     receivedAt: Timestamp;
     claimedAt: Date | null;
     processedAt: Date | null;
+    /** How many Nodes it held, and how many of them are exposures tagged `datahub`; null before it was processed. */
+    nodes: number | null;
+    exposures: number | null;
+    /** What catalogue did with its exposed tables when it became the Current Version, or why it was not told (FR-AR-19). */
+    catalogue: ColumnType<CatalogueAnswer | null, CatalogueAnswer | null | undefined, CatalogueAnswer | null>;
   };
   projects: {
     projectId: DbtId;
