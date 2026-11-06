@@ -102,7 +102,7 @@ sequenceDiagram
 
 1. **Login** happens in identity, with Google ([FR-UM-01](../requirements/functional/02-user-management.md#fr-um-01), [FR-UM-02](../requirements/functional/02-user-management.md#fr-um-02)).
 2. **The Access Token** is short-lived and carries the Groups ([TR-PF-02](../requirements/technical/00-platform.md#tr-pf-02)).
-3. **Every service validates** the token itself with the shared package `@datahub/auth` ([TR-PF-03](../requirements/technical/00-platform.md#tr-pf-03)), and **authorises** with its own data ([TR-PF-04](../requirements/technical/00-platform.md#tr-pf-04)).
+3. **Every service validates** the token itself with the shared package `@datahub/auth` ([TR-PF-03](../requirements/technical/00-platform.md#tr-pf-03)), and **authorises** with the Permissions in it and its own data, such as who owns a Collection ([TR-PF-04](../requirements/technical/00-platform.md#tr-pf-04), [TR-PL-06](../requirements/technical/12-permissions-and-library-cards.md#tr-pl-06)).
 4. **Between services**, the token of the User is passed on and validated again; background work uses the identity of the service ([TR-PF-05](../requirements/technical/00-platform.md#tr-pf-05)).
 5. **Staying signed in**: the server of the web app and Claude get a Refresh Token with the Access Token. Every 15 minutes they exchange it at identity for a new pair, and identity checks the Groups and the account again ([TR-PF-25](../requirements/technical/00-platform.md#tr-pf-25), [TR-PF-26](../requirements/technical/00-platform.md#tr-pf-26)).
 
@@ -113,7 +113,8 @@ sequenceDiagram
 | `sub` | The fixed Google ID of the User |
 | `email`, `name` | From Google |
 | `groups` | The Groups of the User, by fixed Google ID ([FR-UM-05](../requirements/functional/02-user-management.md#fr-um-05), [FR-UM-08](../requirements/functional/02-user-management.md#fr-um-08)) |
-| `roles` | Derived from the Role Groups, such as the Data Team ([Permissions and Excel keys](../requirements/functional/12-permissions-and-library-cards.md)) |
+| `permissionGroup` | The Permission group of the User, by id and name ([FR-PL-04](../requirements/functional/12-permissions-and-library-cards.md#fr-pl-04)) |
+| `permissions` | The Permissions of that group, every key of the catalogue in contracts, completed with no where one is missing; every service checks them with `can`, `reach` and `canWith`, never a role ([TR-PL-05](../requirements/technical/12-permissions-and-library-cards.md#tr-pl-05), [TR-PL-06](../requirements/technical/12-permissions-and-library-cards.md#tr-pl-06)) |
 | `iss`, `aud`, `exp` | identity, the Data Hub services, 15 minutes after issue |
 
 ## One set of APIs, several interfaces

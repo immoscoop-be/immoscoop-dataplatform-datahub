@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { type BigQuery, BigQueryRefused, type DryRun, type QueryParameter } from './bigquery.js';
 import type { QueryResource } from './catalogue.js';
 import type { Parameter } from './parameters.js';
-import { createBeneath, preflight, rangeOf, type ResourceOfQuery } from './preflight.js';
+import { createBeneath, preflight, rangeOf, type ResourceOfQuery, sound } from './preflight.js';
 
 const PROJECT = 'immoscoop-dataplatform';
 const thresholds = { approve: 100_000_000, request: 1_000_000_000 };
@@ -60,6 +60,16 @@ describe('the range of a query (DEC-SR-29)', () => {
     expect(rangeOf(100_000_001, thresholds)).toBe('approve');
     expect(rangeOf(1_000_000_000, thresholds)).toBe('approve');
     expect(rangeOf(1_000_000_001, thresholds)).toBe('request');
+  });
+
+  it('above the second, cannot run for a User whose Permission group sends nothing to the Data Team, though its SQL is sound (runs.ranges)', async () => {
+    const sql = `select * from \`${weekly.key}\` where week_start >= '2026-10-01'`;
+    const bigquery = fakeBigQuery(() => dry(4_800_000_000, [weekly.key]));
+    const refuse = await preflight(sql, of(weekly), { bigquery, beneath: createBeneath(bigquery), project: PROJECT, thresholds: { ...thresholds, above: 'refuse' } });
+    expect(refuse).toMatchObject({ runnable: false, range: 'request', thresholds: { above: 'refuse' }, problems: [{ kind: 'tooLarge', bytes: 4_800_000_000, limit: 1_000_000_000 }] });
+    expect(sound(refuse)).toBe(true);
+    const request = await check(sql, of(weekly), bigquery);
+    expect(request).toMatchObject({ runnable: true, range: 'request', thresholds: { above: 'request' }, problems: [] });
   });
 });
 

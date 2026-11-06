@@ -142,13 +142,14 @@ export type LearningClient = ReturnType<typeof createLearning>;
 
 /**
  * The Learning Levels Data Hub suggests (DEC-LR-27): to everyone the Compass and Learning Level 1; to a member of
- * an Owner Unit that owns a Collection also Learning Level 4; to the Data Team also 3 and 4. A suggestion closes
- * nothing: every card stays open to everyone (DEC-LR-03).
+ * an Owner Unit that owns a Collection also Learning Level 4; to the Data Team also 3 and 4. The Data Team is no
+ * role any more: it is a Data Admin, a User whose Permission group has `resources.assign` (FR-PL-14). A suggestion
+ * closes nothing: every card stays open to everyone (DEC-LR-03).
  */
-export function suggestedLevels(who: { dataTeam: boolean; owner: boolean }): LevelId[] {
+export function suggestedLevels(who: { dataAdmin: boolean; owner: boolean }): LevelId[] {
   const levels: LevelId[] = ['compass', '1'];
-  if (who.dataTeam) levels.push('3');
-  if (who.dataTeam || who.owner) levels.push('4');
+  if (who.dataAdmin) levels.push('3');
+  if (who.dataAdmin || who.owner) levels.push('4');
   return levels;
 }
 

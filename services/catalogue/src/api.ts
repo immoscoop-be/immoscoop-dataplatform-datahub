@@ -1,9 +1,9 @@
 import type { ServiceCallerVerifier } from '@datahub/auth';
-import type { CollectionIcon, CollectionVisibility } from '@datahub/contracts';
+import { type CollectionIcon, type CollectionVisibility, NO_PERMISSIONS, permissionValue } from '@datahub/contracts';
 import { isCollectionIcon } from '@datahub/contracts/collection-icons';
 import { type GapScope, gapScopeSchema } from '@datahub/contracts/gaps';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
+import { type Collection, type CollectionChanges, type Collections, type FolderOutcome, type Movable, NameTaken, NotEmpty, type Viewer } from './collections.js';
 import { type Group, type Identity, IdentityUnavailable } from './identity.js';
 import { learningRoutes } from './learning-api.js';
 import type { Learning } from './learning.js';
@@ -17,6 +17,7 @@ import {
   type AddItem,
   type AddOutcome,
   CARD_KEYS,
+  type CardKey,
   type CardChanges,
   MAX_GAPS,
   type DeprecateOutcome,
@@ -27,7 +28,9 @@ import {
   type Resource,
   type Resources,
   type ResourcesUpdate,
+  whatDetailsChange,
 } from './resources.js';
+import { type Attribute, describable, describes, forbidden, may, reaches, seesAll, seesInside, theirs } from './viewer.js';
 
 export interface ApiOptions {
   collections: Collections;
@@ -51,9 +54,6 @@ export interface ApiOptions {
   query?: QueryService;
 }
 
-/** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
-const DATA_TEAM = 'datateam';
-
 /** The fields a request may send for a Collection. */
 interface Fields {
   name?: string;
@@ -76,15 +76,48 @@ const ADD_LIMIT = 200;
 const NOT_FOUND = { error: 'not_found', message: 'No such Collection.' };
 const NO_RESOURCE = { error: 'not_found', message: 'No such Resource.' };
 const NO_FOLDER = { error: 'not_found', message: 'No such folder, Resource or Lens in this Collection.' };
-const DATA_TEAM_ONLY = { error: 'forbidden', message: 'Only the Data Team adds Resources to Collections and removes them.' };
+const ASSIGN_ONLY = forbidden('resources.assign', 'Only a Data Admin adds Resources to Collections, moves and removes them.');
+
+/** A refusal for want of a Permission, as a route answers it (TR-PL-06): for an attribute of a Resource, with that attribute. */
+type Refusal = ReturnType<typeof forbidden> & { attribute?: Attribute };
+
+/** How the refusal of an attribute names it (DEC-PL-03). */
+const ATTRIBUTE_NAMES: Record<Attribute, string> = {
+  description: 'Business Description',
+  behaviour: 'intended use',
+  pitfalls: 'pitfalls',
+  availableSince: 'available since',
+  gaps: 'Known Gaps',
+  keyFields: 'key fields and Parameters',
+  entityMapping: 'Entity mapping',
+};
+
+/** The refusal to describe an attribute of a Resource, with the attribute it names (DEC-PL-03). */
+const notDescribed = (attribute: Attribute): Refusal => ({
+  ...forbidden('resources.describe', `You may not change the ${ATTRIBUTE_NAMES[attribute]} of this Resource.`),
+  attribute,
+});
+
+/** The attribute each field of the Resource Card belongs to (DEC-PL-03). */
+const CARD_ATTRIBUTES: Record<CardKey, Attribute> = {
+  businessDescription: 'description',
+  intendedUse: 'behaviour',
+  pitfalls: 'pitfalls',
+  knownGaps: 'gaps',
+  reliableSince: 'availableSince',
+  keyFields: 'keyFields',
+  parameters: 'keyFields',
+};
 
 /** A project with thousands of exposed tables, with their descriptions, fits well within this. */
 const UPDATE_LIMIT_BYTES = 32 * 1024 * 1024;
 
 /**
- * The routes of Collections (TR-CO-02). Everyone may create one; whoever sees a Collection may read
- * it and its Log; its Owner Unit and the Data Team may change and dissolve it. A Collection someone
- * does not see answers 404, as one that does not exist (FR-CO-17).
+ * The routes of Collections (TR-CO-02). Who may do what follows their Permissions (TR-PL-06): with
+ * `collections.make` a User creates one; whoever sees a Collection reads it and its Log; with
+ * `collections.manage` they change and dissolve theirs, or every one. A Collection someone does not
+ * see answers 404, as one that does not exist (FR-CO-17); what they may not do, 403 with the
+ * Permission it needs.
  */
 export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Promise<void> {
   const { collections, identity, resources, serviceCallers, registry, requests, messages, lensCallers, keyCallers, learning } = options;
@@ -97,7 +130,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(409).send({ error: 'not_empty', message: error.message });
     }
     if (error instanceof NotYourGroup) {
-      return reply.code(400).send({ error: 'not_your_group', message: 'Choose a group you are in yourself as Owner Unit; the Data Team chooses any group of the domain.' });
+      return reply.code(400).send({ error: 'not_your_group', message: 'Choose a group you are in yourself as Owner Unit, or any group of the domain when your Permission group allows it.' });
     }
     if (error instanceof RegistryUnavailable) {
       request.log.error({ err: error }, 'registry did not give the lineage');
@@ -112,17 +145,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   function viewer(request: FastifyRequest): Viewer {
     const user = request.user;
-    return { id: user?.sub ?? '', name: user?.name || user?.email || '', groups: user?.groups ?? [], dataTeam: user?.roles.includes(DATA_TEAM) ?? false };
+    return { id: user?.sub ?? '', name: user?.name || user?.email || '', groups: user?.groups ?? [], permissions: user?.permissions ?? NO_PERMISSIONS };
   }
 
   /**
    * The Owner Unit chosen by the User, read from identity with their own token (TR-CO-03): one of
-   * their own groups, or for the Data Team any group of the domain (FR-CO-35). Reading it again also
-   * brings its name and address up to date.
+   * their own groups, or any group of the domain when `collections.make` says any (FR-CO-35). Reading
+   * it again also brings its name and address up to date.
    */
   async function ownGroup(request: FastifyRequest, id: string): Promise<Group> {
     const authorization = request.headers.authorization ?? '';
-    const groups = viewer(request).dataTeam ? await identity.domainGroups(authorization) : await identity.groups(authorization);
+    const who = viewer(request);
+    const anyGroup = may(who, 'collections.make') && permissionValue(who.permissions, 'collections.make', 'ownerUnit') === 'any';
+    const groups = anyGroup ? await identity.domainGroups(authorization) : await identity.groups(authorization);
     const group = groups.find((candidate) => candidate.id === id);
     if (!group) {
       throw new NotYourGroup();
@@ -162,6 +197,9 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
   });
 
   app.post<{ Body: unknown }>('/collections', async (request, reply) => {
+    if (!may(viewer(request), 'collections.make')) {
+      return reply.code(403).send(forbidden('collections.make', 'You may not make a Collection.'));
+    }
     const fields = parse(request.body, true);
     if (typeof fields === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: fields });
@@ -187,7 +225,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(404).send(NOT_FOUND);
     }
     if (!current.canManage) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit and the Data Team may change this Collection.' });
+      return reply.code(403).send(forbidden('collections.manage', 'You may not change this Collection.'));
     }
     const { ownerUnit, ...rest } = fields;
     const changes: CollectionChanges = { ...rest };
@@ -204,13 +242,13 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(404).send(NOT_FOUND);
     }
     if (!current.canManage) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit and the Data Team may dissolve this Collection.' });
+      return reply.code(403).send(forbidden('collections.manage', 'You may not dissolve this Collection.'));
     }
     return (await collections.dissolve(current.id, who)) ? reply.code(204).send() : reply.code(404).send(NOT_FOUND);
   });
 
-  // The folders of a Collection (FR-CO-38 to FR-CO-40): its Owner Unit and the Data Team make, rename, delete
-  // and move them, and move its Resources and Lenses between them; who sees the Collection sees them.
+  // The folders of a Collection (FR-CO-38 to FR-CO-40): with `collections.manage` a User makes, renames, deletes
+  // and moves them, and moves its Resources and Lenses between them; who sees the Collection sees them.
   /** The Collection, when the User may manage its folders; else the answer has been sent. */
   async function manageable(request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) {
     const current = await collections.get(request.params.id, viewer(request));
@@ -219,7 +257,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return undefined;
     }
     if (!current.canManage) {
-      await reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit and the Data Team manage the folders of this Collection.' });
+      await reply.code(403).send(forbidden('collections.manage', 'You may not manage the folders of this Collection.'));
       return undefined;
     }
     return current;
@@ -287,19 +325,19 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (!current) {
       return reply.code(404).send(NOT_FOUND);
     }
-    return { entries: await collections.log(current, 200) };
+    return { entries: await collections.log(current, viewer(request), 200) };
   });
 
-  // The Resources of a Collection: all of them for its Owner Unit and the Data Team, and for anyone
-  // else who sees the Collection only the published ones, which do not exist yet (TR-SR-05).
+  // The Resources of a Collection: all of them for its Owner Unit and whoever sees all, and for anyone
+  // else who sees the Collection only the published ones (TR-SR-05, FR-SR-31, DEC-PL-02).
   app.get<{ Params: { id: string } }>('/collections/:id/resources', async (request, reply) => {
-    const current = await collections.get(request.params.id, viewer(request));
+    const who = viewer(request);
+    const current = await collections.get(request.params.id, who);
     if (!current) {
       return reply.code(404).send(NOT_FOUND);
     }
-    // Its Owner Unit and the Data Team see every Resource in it; others the published ones (FR-SR-31).
     const all = await resources.inCollection(current.id);
-    return { resources: current.canManage ? all : all.filter((resource) => resource.published && !resource.withdrawn) };
+    return { resources: seesInside(who, current.ownerUnit.id) ? all : all.filter((resource) => resource.published && !resource.withdrawn) };
   });
 
   // registry hands over every exposed table of one dbt project (TR-SR-01, TR-SR-03). No User starts
@@ -344,17 +382,18 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (request.query.collection !== 'none') {
       return reply.code(400).send({ error: 'invalid_request', message: 'Ask for the Resources without Collection, with collection=none.' });
     }
-    if (!viewer(request).dataTeam) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team sees the Resources without Collection.' });
+    // Only who sees all of the catalogue sees the Resources without a Collection (DEC-PL-02).
+    if (!seesAll(viewer(request))) {
+      return reply.code(403).send(forbidden('catalogue.see', 'Only who sees all of the catalogue sees the Resources without a Collection.'));
     }
     return { resources: await resources.withoutCollection() };
   });
 
-  // The Data Team adds Resources without a Collection to a Collection, all of them or none (FR-CO-31).
+  // A Data Admin, with `resources.assign`, adds Resources without a Collection to a Collection, all of them or none (FR-CO-31).
   app.post<{ Params: { id: string }; Body: unknown }>('/collections/:id/resources', async (request, reply) => {
     const who = viewer(request);
-    if (!who.dataTeam) {
-      return reply.code(403).send(DATA_TEAM_ONLY);
+    if (!may(who, 'resources.assign')) {
+      return reply.code(403).send(ASSIGN_ONLY);
     }
     const items = parseAdd(request.body);
     if (typeof items === 'string') {
@@ -369,8 +408,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/collection', async (request, reply) => {
     const who = viewer(request);
-    if (!who.dataTeam) {
-      return reply.code(403).send(DATA_TEAM_ONLY);
+    if (!may(who, 'resources.assign')) {
+      return reply.code(403).send(ASSIGN_ONLY);
     }
     const resource = await resources.get(request.params.id);
     if (!resource) {
@@ -386,8 +425,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   app.delete<{ Params: { id: string } }>('/resources/:id/collection', async (request, reply) => {
     const who = viewer(request);
-    if (!who.dataTeam) {
-      return reply.code(403).send(DATA_TEAM_ONLY);
+    if (!may(who, 'resources.assign')) {
+      return reply.code(403).send(ASSIGN_ONLY);
     }
     const resource = await resources.get(request.params.id);
     if (!resource) {
@@ -398,62 +437,114 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       : reply.code(409).send({ error: 'not_in_a_collection', message: 'The Resource is in no Collection.' });
   });
 
-  // The Log of a Resource, for whoever sees it: the Data Team, and the Owner Unit of its Collection.
+  /** A Resource the User sees, with its Collection as they see it: none for a Resource without one. */
+  interface Seen {
+    resource: Resource;
+    collection: Collection | undefined;
+  }
+
   /**
-   * Who sees a Resource (FR-SR-31): the Data Team and the members of the Owner Unit of its Collection,
-   * and, once it is published, everyone who sees its Collection. Anyone else gets 404, as for one that
-   * does not exist.
+   * Who sees a Resource (FR-SR-31, DEC-PL-02): the members of the Owner Unit of its Collection, and once it is
+   * published, everyone who sees its Collection; who sees all sees every one, also without a Collection and
+   * withdrawn. Anyone else gets 404, as for one that does not exist.
    */
-  async function seen(request: FastifyRequest, resource: Resource | undefined): Promise<boolean> {
+  async function seenResource(request: FastifyRequest, id: string): Promise<Seen | undefined> {
+    const resource = await resources.get(id);
+    if (!resource) {
+      return undefined;
+    }
     const who = viewer(request);
-    const collection = resource?.collectionId ? await collections.get(resource.collectionId, who) : undefined;
-    return resource !== undefined && (who.dataTeam || collection?.canManage === true || (collection !== undefined && resource.published && !resource.withdrawn));
+    const collection = resource.collectionId ? await collections.get(resource.collectionId, who) : undefined;
+    const sees = seesAll(who) || (collection !== undefined && (collection.owned || (resource.published && !resource.withdrawn)));
+    return sees ? { resource, collection } : undefined;
+  }
+
+  /**
+   * What the User may do with a Resource, from their Permissions and the Owner Unit of its Collection, as the web app
+   * shows it (TR-PL-06): each attribute they may describe (DEC-PL-03), any of them as `canEdit`, publishing as its Owner
+   * (DEC-PL-06), deprecating, and the work of a Data Admin. Without a Collection, a Resource has nothing to describe yet.
+   */
+  function abilities(who: Viewer, collection: Collection | undefined) {
+    const ownerUnit = collection?.ownerUnit.id ?? null;
+    const canDescribe = describable(who, ownerUnit);
+    return {
+      canEdit: ownerUnit !== null && Object.values(canDescribe).some(Boolean),
+      canDescribe,
+      canPublish: ownerUnit !== null && may(who, 'resources.publish') && theirs(who, ownerUnit),
+      canDeprecate: ownerUnit !== null && reaches(who, 'resources.deprecate', ownerUnit),
+      canAssign: may(who, 'resources.assign'),
+    };
+  }
+
+  /**
+   * The Resource as it is now, with its fields and what the User may do with it, as an answer; 404 when it is gone
+   * meanwhile. Its Collection, as the User saw it a moment ago, still says whose it is.
+   */
+  async function resourceAnswer(request: FastifyRequest, reply: FastifyReply, found: Seen) {
+    const detail = await resources.detail(found.resource.id);
+    if (!detail) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    const who = viewer(request);
+    const collection = detail.collectionId === found.resource.collectionId ? found.collection : detail.collectionId ? await collections.get(detail.collectionId, who) : undefined;
+    return { resource: { ...detail, ...abilities(who, collection) } };
   }
 
   app.get<{ Params: { id: string } }>('/resources/:id', async (request, reply) => {
-    const resource = await resources.detail(request.params.id);
-    if (!(await seen(request, resource))) {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
       return reply.code(404).send(NO_RESOURCE);
     }
-    return { resource };
+    return resourceAnswer(request, reply, found);
   });
 
+  // The Log of a Resource, for whoever sees it.
   app.get<{ Params: { id: string } }>('/resources/:id/log', async (request, reply) => {
-    const resource = await resources.get(request.params.id);
-    if (!resource || !(await seen(request, resource))) {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
       return reply.code(404).send(NO_RESOURCE);
     }
-    return { entries: await resources.log(resource.id, 200) };
+    return { entries: await resources.log(found.resource.id, 200) };
   });
 
   /**
-   * Who may change what Data Hub keeps about a Resource (FR-RC-15): its Owner Unit and the Data Team,
-   * once it is in a Collection; before that it has no Owner, and the rest follows once it has one.
+   * A Resource the User may change as asked (FR-RC-15, TR-PL-06): one they see, in a Collection, and a check of the
+   * Permission that covers the change, with the Owner Unit of its Collection; else the answer is sent. Before it is in
+   * a Collection it has no Owner, and the rest follows once it has one. Seeing a published Resource is not changing it.
    */
-  async function editable(request: FastifyRequest, reply: FastifyReply): Promise<Resource | undefined> {
-    const resource = await resources.get((request.params as { id: string }).id);
-    if (!resource || !(await seen(request, resource))) {
+  async function changeable(
+    request: FastifyRequest,
+    reply: FastifyReply,
+    refusal: (who: Viewer, ownerUnit: string) => Refusal | null,
+  ): Promise<(Seen & { collection: Collection }) | undefined> {
+    const found = await seenResource(request, (request.params as { id: string }).id);
+    if (!found) {
       reply.code(404).send(NO_RESOURCE);
       return undefined;
     }
-    if (resource.collectionId === null) {
+    if (!found.collection) {
       reply.code(409).send({ error: 'no_collection', message: 'A Resource gets what Data Hub keeps about it once it is in a Collection.' });
       return undefined;
     }
-    // Seeing a published Resource is not changing it.
-    const collection = await collections.get(resource.collectionId, viewer(request));
-    if (!collection?.canManage) {
-      reply.code(403).send({ error: 'forbidden', message: 'Only the Owner Unit of its Collection and the Data Team change a Resource.' });
+    const refused = refusal(viewer(request), found.collection.ownerUnit.id);
+    if (refused) {
+      reply.code(403).send(refused);
       return undefined;
     }
-    return resource;
+    return { resource: found.resource, collection: found.collection };
   }
 
+  /** The check that the User may describe an attribute of the Resource (DEC-PL-03). */
+  const describing =
+    (attribute: Attribute) =>
+    (who: Viewer, ownerUnit: string): Refusal | null =>
+      describes(who, ownerUnit, attribute) ? null : notDescribed(attribute);
+
   /** The answer to a change to a Resource: the Resource as it is now, else why it was not changed. */
-  async function editOutcome(reply: FastifyReply, id: string, outcome: EditOutcome) {
+  async function editOutcome(request: FastifyRequest, reply: FastifyReply, found: Seen, outcome: EditOutcome) {
     switch (outcome.outcome) {
       case 'edited':
-        return { resource: await resources.detail(id) };
+        return resourceAnswer(request, reply, found);
       case 'not_found':
         return reply.code(404).send(NO_RESOURCE);
       case 'not_described':
@@ -462,20 +553,30 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
           .send({ error: 'not_described', message: 'A Business Description is written once dbt describes the Resource, from 2 · Described on.' });
       case 'invalid':
         return reply.code(400).send({ error: 'invalid_request', message: outcome.message });
+      case 'forbidden':
+        return reply.code(403).send(notDescribed(CARD_ATTRIBUTES[outcome.field]));
     }
   }
 
-  // The Owner and the Data Team edit what Data Hub keeps about a Resource in place (FR-RC-15, FR-SR-28).
+  // Who may describe a Resource edits what Data Hub keeps about it in place, attribute by attribute (FR-RC-15,
+  // FR-SR-28, DEC-PL-03): each field that changes needs its attribute; one sent as it is changes nothing.
   app.patch<{ Params: { id: string }; Body: unknown }>('/resources/:id', async (request, reply) => {
     const changes = parseCard(request.body);
     if (typeof changes === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: changes });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    // Who may describe none of what is sent may change nothing of it.
+    const sent = [...new Set((Object.keys(changes) as (keyof typeof changes)[]).map((key) => CARD_ATTRIBUTES[key]))];
+    const found = await changeable(request, reply, (who, ownerUnit) => {
+      const refused = sent.find((attribute) => !describes(who, ownerUnit, attribute));
+      return refused && !sent.some((attribute) => describes(who, ownerUnit, attribute)) ? notDescribed(refused) : null;
+    });
+    if (!found) {
       return reply;
     }
-    return editOutcome(reply, resource.id, await resources.edit(resource.id, changes, viewer(request)));
+    const who = viewer(request);
+    const ownerUnit = found.collection.ownerUnit.id;
+    return editOutcome(request, reply, found, await resources.edit(found.resource.id, changes, who, (key) => describes(who, ownerUnit, CARD_ATTRIBUTES[key])));
   });
 
   /** What adding, changing or removing a Known Gap came to, as an answer. */
@@ -490,17 +591,17 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   }
 
-  // The Known Gaps one at a time, each with who added it and when, for the Owner and the Data Team (FR-RC-21).
+  // The Known Gaps one at a time, each with who added it and when, for who may describe them (FR-RC-21, DEC-PL-03).
   app.post<{ Params: { id: string }; Body: unknown }>('/resources/:id/gaps', async (request, reply) => {
     const gap = parseGap(request.body);
     if (typeof gap === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: gap });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, describing('gaps'));
+    if (!found) {
       return reply;
     }
-    return gapOutcome(reply, await resources.addGap(resource.id, gap.text, gap.scope ?? null, viewer(request)), true);
+    return gapOutcome(reply, await resources.addGap(found.resource.id, gap.text, gap.scope ?? null, viewer(request)), true);
   });
 
   app.patch<{ Params: { id: string; gapId: string }; Body: unknown }>('/resources/:id/gaps/:gapId', async (request, reply) => {
@@ -508,67 +609,80 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     if (typeof gap === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: gap });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, describing('gaps'));
+    if (!found) {
       return reply;
     }
-    return gapOutcome(reply, await resources.changeGap(resource.id, request.params.gapId, gap.text, gap.scope, viewer(request)));
+    return gapOutcome(reply, await resources.changeGap(found.resource.id, request.params.gapId, gap.text, gap.scope, viewer(request)));
   });
 
   app.delete<{ Params: { id: string; gapId: string } }>('/resources/:id/gaps/:gapId', async (request, reply) => {
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, describing('gaps'));
+    if (!found) {
       return reply;
     }
-    return gapOutcome(reply, await resources.removeGap(resource.id, request.params.gapId, viewer(request)));
+    return gapOutcome(reply, await resources.removeGap(found.resource.id, request.params.gapId, viewer(request)));
   });
 
-  // The Business Descriptions of the fields, next to their descriptions from dbt (FR-RC-16).
+  // The Business Descriptions of the fields, next to their descriptions from dbt (FR-RC-16): the attribute description.
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/fields', async (request, reply) => {
     const descriptions = parseFieldDescriptions(request.body);
     if (typeof descriptions === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: descriptions });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, describing('description'));
+    if (!found) {
       return reply;
     }
-    return editOutcome(reply, resource.id, await resources.describeFields(resource.id, descriptions, viewer(request)));
+    return editOutcome(request, reply, found, await resources.describeFields(found.resource.id, descriptions, viewer(request)));
   });
 
-  // A Data Admin changes the grain and mappings with Edit relations, as at step 2 of adding (DEC-UX-107).
+  // Edit relations, as at step 2 of adding (DEC-UX-107): the grain, storage and model type are the work of a Data Admin
+  // (`resources.assign`); the mappings are the Entity mapping, an attribute to describe (DEC-PL-03). Each part that
+  // changes needs its own Permission.
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/details', async (request, reply) => {
-    if (!viewer(request).dataTeam) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only a Data Admin changes the grain and the mappings of a Resource.' });
-    }
     const input = request.body;
     const details = input !== null && typeof input === 'object' && !Array.isArray(input) ? parseDetails(input as Record<string, unknown>) : 'Send the details as a JSON object.';
     if (typeof details === 'string') {
       return reply.code(400).send({ error: 'invalid_request', message: details });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const assigning = forbidden('resources.assign', 'Only a Data Admin changes the grain, storage and model type of a Resource.');
+    const found = await changeable(request, reply, (who, ownerUnit) => (may(who, 'resources.assign') || describes(who, ownerUnit, 'entityMapping') ? null : assigning));
+    if (!found) {
       return reply;
     }
-    return editOutcome(reply, resource.id, await resources.relate(resource.id, details, viewer(request)));
+    const before = await resources.detail(found.resource.id);
+    if (!before) {
+      return reply.code(404).send(NO_RESOURCE);
+    }
+    const who = viewer(request);
+    const { assigned, mapped } = whatDetailsChange(before.details, details);
+    if (assigned && !may(who, 'resources.assign')) {
+      return reply.code(403).send(assigning);
+    }
+    if (mapped && !describes(who, found.collection.ownerUnit.id, 'entityMapping')) {
+      return reply.code(403).send(notDescribed('entityMapping'));
+    }
+    return editOutcome(request, reply, found, await resources.relate(found.resource.id, details, who));
   });
 
   // Each mapping with the Resources that carry the same identity, as far as the User sees them (FR-RC-09).
   app.get<{ Params: { id: string } }>('/resources/:id/related', async (request, reply) => {
-    const resource = await resources.get(request.params.id);
-    if (!resource || !(await seen(request, resource))) {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
       return reply.code(404).send(NO_RESOURCE);
     }
-    return { related: await resources.related(resource.id, viewer(request)) };
+    return { related: await resources.related(found.resource.id, viewer(request)) };
   });
 
   // The lineage around a Resource, for everyone who sees it (DEC-AR-06, FR-SR-54): the models up- and
   // downstream with their names, layers and projects, and which of them are Resources the User sees.
   app.get<{ Params: { id: string } }>('/resources/:id/lineage', async (request, reply) => {
-    const resource = await resources.get(request.params.id);
-    if (!resource || !(await seen(request, resource))) {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
       return reply.code(404).send(NO_RESOURCE);
     }
+    const { resource } = found;
     const [upstream, downstream] = await Promise.all([registry.lineage(resource.nodeId, 'upstream'), registry.lineage(resource.nodeId, 'downstream')]);
     const nodeIds = [...new Set([...(upstream?.nodes ?? []), ...(downstream?.nodes ?? [])].map((node) => node.uniqueId))];
     return {
@@ -579,21 +693,21 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     };
   });
 
-  // Only the Owner publishes (FR-SR-16): a member of the Owner Unit of its Collection, from Described on
-  // (FR-SR-17). Publishing is the first Confirmation (FR-SR-49).
+  // Only the Owner publishes (FR-SR-16, DEC-PL-06): a member of the Owner Unit of its Collection, with `resources.publish`,
+  // in their own name, also in the Permission group Admin; from Described on (FR-SR-17). Publishing is the first
+  // Confirmation (FR-SR-49).
   app.post<{ Params: { id: string } }>('/resources/:id/publication', async (request, reply) => {
-    const resource = await resources.get(request.params.id);
-    if (!resource || !(await seen(request, resource))) {
+    const found = await seenResource(request, request.params.id);
+    if (!found) {
       return reply.code(404).send(NO_RESOURCE);
     }
     const who = viewer(request);
-    const collection = resource.collectionId ? await collections.get(resource.collectionId, who) : undefined;
-    if (!collection || !who.groups.includes(collection.ownerUnit.id)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Owner of a Resource publishes it: a member of the Owner Unit of its Collection.' });
+    if (!found.collection || !may(who, 'resources.publish') || !theirs(who, found.collection.ownerUnit.id)) {
+      return reply.code(403).send(forbidden('resources.publish', 'Only the Owner of a Resource publishes it: a member of the Owner Unit of its Collection, with resources.publish.'));
     }
-    switch (await resources.publish(resource.id, who)) {
+    switch (await resources.publish(found.resource.id, who)) {
       case 'published':
-        return { resource: await resources.detail(resource.id) };
+        return resourceAnswer(request, reply, found);
       case 'not_found':
         return reply.code(404).send(NO_RESOURCE);
       case 'no_collection':
@@ -605,42 +719,47 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     }
   });
 
-  // The Owner Unit and the Data Team mark the changes since the last Confirmation seen (FR-MR-12).
+  // Who may describe a Resource marks the changes since the last Confirmation seen (FR-MR-12): part of the attribute
+  // description, with its Business Descriptions (DEC-PL-03).
   app.post<{ Params: { id: string } }>('/resources/:id/changes/seen', async (request, reply) => {
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, describing('description'));
+    if (!found) {
       return reply;
     }
-    await resources.markSeen(resource.id, viewer(request));
-    return { resource: await resources.detail(resource.id) };
+    await resources.markSeen(found.resource.id, viewer(request));
+    return resourceAnswer(request, reply, found);
   });
 
-  // The Owner Unit and the Data Team deprecate a published Resource, and take it away again (FR-SR-50).
+  /** The check that the User may deprecate a Resource of this Owner Unit: `resources.deprecate`, on theirs or every one. */
+  const deprecating = (who: Viewer, ownerUnit: string): Refusal | null =>
+    reaches(who, 'resources.deprecate', ownerUnit) ? null : forbidden('resources.deprecate', 'You may not deprecate this Resource, nor take its deprecation away.');
+
+  // With `resources.deprecate`, a User deprecates a published Resource, and takes it away again (FR-SR-50).
   app.put<{ Params: { id: string }; Body: unknown }>('/resources/:id/deprecation', async (request, reply) => {
     const body = (request.body ?? {}) as { reason?: unknown; insteadOf?: unknown };
     const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
     if (reason.length < 1 || reason.length > 500 || (body.insteadOf !== undefined && body.insteadOf !== null && typeof body.insteadOf !== 'string')) {
       return reply.code(400).send({ error: 'invalid_request', message: 'Say why it is deprecated, in at most 500 characters, and what to use instead, or nothing.' });
     }
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, deprecating);
+    if (!found) {
       return reply;
     }
-    return deprecationOutcome(reply, resource.id, await resources.deprecate(resource.id, reason, (body.insteadOf as string | null | undefined) ?? null, viewer(request)));
+    return deprecationOutcome(request, reply, found, await resources.deprecate(found.resource.id, reason, (body.insteadOf as string | null | undefined) ?? null, viewer(request)));
   });
 
   app.delete<{ Params: { id: string } }>('/resources/:id/deprecation', async (request, reply) => {
-    const resource = await editable(request, reply);
-    if (!resource) {
+    const found = await changeable(request, reply, deprecating);
+    if (!found) {
       return reply;
     }
-    return deprecationOutcome(reply, resource.id, await resources.undeprecate(resource.id, viewer(request)));
+    return deprecationOutcome(request, reply, found, await resources.undeprecate(found.resource.id, viewer(request)));
   });
 
-  async function deprecationOutcome(reply: FastifyReply, id: string, outcome: DeprecateOutcome) {
+  async function deprecationOutcome(request: FastifyRequest, reply: FastifyReply, found: Seen, outcome: DeprecateOutcome) {
     switch (outcome) {
       case 'done':
-        return { resource: await resources.detail(id) };
+        return resourceAnswer(request, reply, found);
       case 'not_found':
         return reply.code(404).send(NO_RESOURCE);
       case 'not_published':
@@ -654,8 +773,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
 
   // A Request to the Data Team (FR-CV-08), sent by query for its User with their own token: a query that
   // reads more than 1 GB (MSG-QRY-01, DEC-SR-29), or a very large Lens (MSG-LEN-01, FR-LE-09). It waits
-  // until the Data Team answers, in the Message Centre; one of the same writer on the same object that still
-  // waits is given back instead.
+  // until someone with `requests.decide` answers, in the Message Centre; one of the same writer on the same
+  // object that still waits is given back instead.
   app.post<{ Body: unknown }>('/requests', async (request, reply) => {
     const fields = parseRequest(request.body);
     if (typeof fields === 'string') {
@@ -665,7 +784,8 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
     return reply.code(isNew ? 201 : 200).send({ request: sent });
   });
 
-  // The Requests of the User on queries or Lenses, on one or on all; the Data Team sees everyone's on one.
+  // The Requests of the User on queries or Lenses, on one or on all; who decides on Requests (`requests.decide`)
+  // sees everyone's on one.
   app.get<{ Querystring: { subjectKind?: string; subjectId?: string } }>('/requests', async (request, reply) => {
     const { subjectKind, subjectId } = request.query;
     if (subjectKind !== 'query' && subjectKind !== 'lens') {
@@ -675,7 +795,7 @@ export async function apiRoutes(app: FastifyInstance, options: ApiOptions): Prom
       return reply.code(400).send({ error: 'invalid_request', message: 'A query or a Lens is named by its ID.' });
     }
     const who = viewer(request);
-    const everyone = who.dataTeam && subjectId !== undefined;
+    const everyone = may(who, 'requests.decide') && subjectId !== undefined;
     return { requests: await requests.list({ subjectKind, subjectId, writerId: everyone ? undefined : who.id }) };
   });
 }

@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { SignInError, type GoogleIdentity, type GoogleSignIn } from './google-sign-in.js';
+import { canWith } from '@datahub/contracts';
 import { applyNamingConvention } from './naming-convention.js';
+import type { PermissionGroups, UserNotices } from './permission-groups.js';
 import { randomToken, type Store } from './store.js';
 import type { TokenIssuer, TokenSubject } from './tokens.js';
 import type { Workspace } from './workspace.js';
@@ -26,6 +28,10 @@ export interface SignInOptions {
   webClient?: { clientId: string; redirectUri: string };
   /** The only addresses an MCP client may register as its callback, such as Claude's. */
   mcpRedirectUris: string[];
+  /** The Permission groups, whose Permissions go into every Access Token (TR-PL-05). */
+  groups: PermissionGroups;
+  /** catalogue, told when a member of datahub-datateam@ gets Admin back (EC-PL-03). */
+  userNotices?: UserNotices;
 }
 
 interface Client {
@@ -59,10 +65,23 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
     return registered && { clientId, redirectUris: registered.redirectUris, web: false };
   }
 
-  /** Reads the Groups and roles of a User again, as at every login and renewal (FR-UM-04, TR-PF-26). */
+  /**
+   * Reads the Groups of a User again from Workspace, as at every login and renewal (FR-UM-04, TR-PF-26),
+   * and their Permissions from their Permission group (TR-PL-05). The Role Groups give no role any more;
+   * only `datahub-datateam@` still counts, as the way back into Admin when no User of Admin can still
+   * sign in (EC-PL-03). Keeps the Groups and Role Groups read, for catalogue to notify by (DEC-LN-07).
+   */
   async function subject(user: { googleId: string; email: string; name: string }): Promise<TokenSubject> {
     const { groups, roles } = applyNamingConvention(await workspace.groups(user.email), options.domains);
-    return { sub: user.googleId, email: user.email, name: user.name, groups, roles };
+    await store.saveGroups(user.googleId, groups, roles);
+    if (roles.includes('datateam') && (await options.groups.restoreAdminIfNoneLeft(user.googleId, workspace))) {
+      try {
+        await options.userNotices?.tellUser({ type: 'MSG-USR-02', userId: user.googleId, name: user.name || user.email });
+      } catch (error) {
+        app.log.error({ err: error }, 'catalogue was not told that Admin was given back');
+      }
+    }
+    return { sub: user.googleId, email: user.email, name: user.name, groups, ...(await options.groups.claimsOf(user.googleId)) };
   }
 
   /**
@@ -203,6 +222,9 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       if (!(await workspace.isActive(identity.sub))) {
         return deny('The account is suspended or removed in Workspace');
       }
+      // A new User is made first, in the default Permission group, so that their first token carries it (FR-PL-04).
+      const saved = await store.saveUser(identity);
+      if (saved.created) await options.groups.noteFirstSignIn(identity.sub);
       claims = await subject({ googleId: identity.sub, email: identity.email, name: identity.name });
     } catch (error) {
       if (error instanceof SignInError) {
@@ -213,8 +235,6 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       back.searchParams.set('error', 'server_error');
       return reply.redirect(back.toString());
     }
-    await store.saveUser(identity);
-    await store.saveGroups(identity.sub, claims.groups, claims.roles);
     const code = await store.createCode({
       clientId: pending.clientId,
       redirectUri: pending.redirectUri,
@@ -286,18 +306,17 @@ export async function signInRoutes(app: FastifyInstance, options: SignInOptions)
       if (!client.web) {
         await store.extendSession(session.id, MCP_SESSION_SECONDS);
       }
-      await store.saveGroups(session.googleId, claims.groups, claims.roles);
       return issuePair(reply, client, claims, await store.addRefreshToken(session.id));
     }
 
     return refuse(reply, 'unsupported_grant_type', 'Use authorization_code or refresh_token');
   });
 
-  // The Data Team ends every session of a User at once (TR-PF-25), such as after a lost laptop.
-  // Not public: it needs an Access Token with the role of the Data Team.
+  // Admin ends every session of a User at once (TR-PF-25), such as after a lost laptop.
+  // Not public: it needs Users in Admin (admin.open).
   app.delete<{ Params: { googleId: string } }>('/users/:googleId/sessions', async (request, reply) => {
-    if (!request.user?.roles.includes('datateam')) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team may end the sessions of a User.' });
+    if (!request.user || !canWith(request.user.permissions, 'admin.open', 'tools', 'users')) {
+      return reply.code(403).send({ error: 'forbidden', message: 'Only who may open Users in Admin ends the sessions of a User.', permission: 'admin.open' });
     }
     await store.endSessionsOf(request.params.googleId, 'ended-by-data-team');
     request.log.info({ googleId: request.params.googleId, by: request.user.sub }, 'all sessions of a User ended');

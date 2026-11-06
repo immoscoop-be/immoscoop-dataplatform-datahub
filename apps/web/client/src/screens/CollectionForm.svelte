@@ -17,14 +17,14 @@
   /**
    * The head of the page of a Collection turned into fields, in place, with the edit bar on top
    * (FR-CO-30): its name, description, intro in Markdown (FR-CO-41), Owner Unit, who sees it and its icon. Empty, it makes a new
-   * Collection (FR-CO-12). The Owner Unit is one of the groups of whoever edits; the Data Team chooses
-   * from every group of the domain (FR-CO-15, FR-CO-35). Dissolving is at the bottom, only for an
+   * Collection (FR-CO-12). The Owner Unit is one of the groups of whoever edits; a User who may make a Collection
+   * for any group chooses from every group of the domain (FR-CO-15, FR-CO-35, `collections.make`). Dissolving is at the bottom, only for an
    * empty Collection (FR-CO-10).
    */
   let {
     collection,
     groups,
-    dataTeam,
+    anyOwnerUnit,
     own = [],
     held = 0,
     onsave,
@@ -34,7 +34,8 @@
     collection?: Collection;
     /** The groups to choose the Owner Unit from: undefined while they come, null when they did not. */
     groups: readonly OwnerUnit[] | null | undefined;
-    dataTeam: boolean;
+    /** The groups are those of the whole domain (`collections.make`, any group). */
+    anyOwnerUnit: boolean;
     /** The fixed IDs of the groups of the User: a new Collection takes the first of them by default. */
     own?: readonly string[];
     /** How many Resources it holds, withdrawn ones included. */
@@ -122,7 +123,7 @@
           ? t('collection.field.owner.failed')
           : groups && options.length === 0
             ? t('collection.field.owner.none')
-            : t(dataTeam ? 'collection.field.owner.hintDataTeam' : 'collection.field.owner.hint')}
+            : t(anyOwnerUnit ? 'collection.field.owner.hintDataTeam' : 'collection.field.owner.hint')}
         problem={tried && groups && options.length > 0 ? problems.owner : undefined}
       >
         <select bind:value={ownerUnit} disabled={!groups || options.length === 0}>

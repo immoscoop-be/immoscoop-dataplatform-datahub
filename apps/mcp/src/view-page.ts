@@ -2,7 +2,9 @@
  * The page of the MCP App of Data Hub (FR-CL-01): one page that shows a Resource (FR-CL-07), a Preview
  * (FR-CL-09), a publication (FR-CL-12) or the result of a query (FR-CL-21), by the `view` of the tool result.
  * It stands on its own, without the navigation of Data Hub, and carries "Open in Data Hub" (FR-CL-06). The
- * buttons that approve, send a Request or publish call tools only the MCP App may call (DEC-CL-07).
+ * buttons that approve, send a Request or publish call tools only the MCP App may call (DEC-CL-07). For a User
+ * whose results show in a card only, it reads the rows itself, through tools only it may call, says under the grid
+ * that Claude does not read them, and tells Claude no value of them (FR-CL-28, DEC-UX-193).
  *
  * The sandbox in Claude loads nothing from outside, so the MCP Apps SDK is inlined at `BUNDLE` (view.ts),
  * and the values below are those of docs/design/tokens.css, which a test keeps in step (DEC-PF-28).
@@ -108,6 +110,9 @@ button:disabled { opacity: .4; cursor: default; }
 pre { margin: 8px 0 0; padding: 10px 12px; border-radius: var(--radius-md); background: var(--surface-solid); font: 12px/1.6 var(--font-mono); white-space: pre-wrap; }
 summary { cursor: pointer; font-size: var(--text-meta); color: var(--text-muted); }
 .error { color: var(--signal-urgent); font-size: var(--text-small); }
+/* In a card only: one line under the foot of the grid, that Claude does not read its rows (FR-CL-28, DEC-UX-193) */
+.result-private { display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--text-meta); color: var(--text-muted); }
+.result-private svg { flex: none; width: 14px; height: 14px; }
 /* The Summary of a Resource, as the Overview of Data Hub shows it (FR-CL-26) */
 .legend { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; font-size: var(--text-meta); color: var(--text-muted); }
 .legend .weight { margin-left: 8px; }
@@ -187,6 +192,9 @@ const root = document.getElementById('root');
 let view = null;
 let tab = 'summary';
 let folded = false;
+// In a card only (FR-CL-28): set once a result says so; and the choices of a Preview the MCP App read itself, by Resource and window.
+let cardOnly = false;
+let keptChoices = { key: null, choices: null };
 
 const esc = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 const day = (value) => (value ? new Date(value).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
@@ -252,17 +260,41 @@ function grid(page, ref) {
     (pages > 1 && ref ? '<span class="pager">' + esc(first) + ' – ' + esc(Math.min(first + (page.size || 100) - 1, page.totalRows)) + ' <button class="quiet" data-page="' + (page.number - 1) + '"' + (page.number <= 1 ? ' disabled' : '') + '>‹</button><button class="quiet" data-page="' + (page.number + 1) + '"' + (page.number >= pages ? ' disabled' : '') + '>›</button></span>' : '') + '</div>';
 }
 
+// The crossed eye of Phosphor, and the line under the grid of a result in a card only (DEC-UX-193).
+const EYE_SLASH = '<svg viewBox="0 0 256 256" fill="currentColor" aria-hidden="true"><path d="M53.92,34.62A8,8,0,1,0,42.08,45.38L61.32,66.55C25,88.84,9.38,123.2,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208a127.11,127.11,0,0,0,52.07-10.83l22,24.21a8,8,0,1,0,11.84-10.76Zm47.33,75.84,41.67,45.85a32,32,0,0,1-41.67-45.85ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.16,133.16,0,0,1,25,128c4.69-8.79,19.66-33.39,47.35-49.38l18,19.75a48,48,0,0,0,63.66,70l14.73,16.2A112,112,0,0,1,128,192Zm6-95.43a8,8,0,0,1,3-15.72,48.16,48.16,0,0,1,38.77,42.64,8,8,0,0,1-7.22,8.71,6.39,6.39,0,0,1-.75,0,8,8,0,0,1-8-7.26A32.09,32.09,0,0,0,134,96.57Zm113.28,34.69c-.42.94-10.55,23.37-33.36,43.8a8,8,0,1,1-10.67-11.92A132.77,132.77,0,0,0,231.05,128a133.15,133.15,0,0,0-23.12-30.77C185.67,75.19,158.78,64,128,64a118.37,118.37,0,0,0-19.36,1.57A8,8,0,1,1,106,49.79,134,134,0,0,1,128,48c34.88,0,66.57,13.26,91.66,38.35,18.83,18.83,27.3,37.62,27.65,38.41A8,8,0,0,1,247.31,131.26Z"/></svg>';
+const PRIVATE = '<p class="result-private">' + EYE_SLASH + 'Claude does not read these rows.</p>';
+
+/** The rows of a result that ran: in a card only read by the MCP App itself, until then a word that they come (FR-CL-28). */
+function rowsOf(v) {
+  if (v.page) return grid(v.page, v.run?.ref);
+  if (v.rowsError) return '<div class="error">' + esc(v.rowsError) + '</div>';
+  return '<p class="meta">Reading the rows…</p>';
+}
+const privately = (v) => (v.results === 'card' ? PRIVATE : '');
+
 const problems = (preflight, problem) =>
   '<div class="error">' + esc(problem || (preflight?.problems ?? []).map((p) => p.message || p.kind + (p.name ? ' ' + p.name : '') + (p.column ? ' (' + p.column + ')' : '')).join('; ') || 'It cannot run as it is.') + '</div>';
 
-function approvePanel(reads, request) {
-  if (request?.state === 'accepted') return '<div class="tile"><div class="row"><span>Accepted by the Data Team: it runs for you above 1 GB.</span><button class="primary" data-act="approve" style="margin-left:auto">Run · ' + esc(reads) + '</button></div></div>';
-  return '<div class="tile"><div class="row"><span style="flex:1"><b>' + esc(reads) + ' at most, above 100 MB:</b> you approve this yourself; Claude cannot do it for you.</span><button class="primary high" data-act="approve">Approve and run · ' + esc(reads) + '</button></div></div>';
+// The ranges of the User, as the Pre-flight gives them (runs.ranges); the start values when it does not.
+const sizeOf = (value, fallback) => {
+  if (typeof value !== 'number' || !isFinite(value)) return fallback;
+  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  let size = value;
+  let unit = 0;
+  while (size >= 1000 && unit < units.length - 1) { size /= 1000; unit += 1; }
+  return (size >= 10 || unit === 0 || Number.isInteger(size) ? Math.round(size) : size.toFixed(1)) + ' ' + units[unit];
+};
+const freeOf = (preflight) => sizeOf(preflight?.thresholds?.approve, '100 MB');
+const largeOf = (preflight) => sizeOf(preflight?.thresholds?.request, '1 GB');
+
+function approvePanel(reads, request, preflight) {
+  if (request?.state === 'accepted') return '<div class="tile"><div class="row"><span>Accepted by the Data Team: it runs for you above ' + esc(largeOf(preflight)) + '.</span><button class="primary" data-act="approve" style="margin-left:auto">Run · ' + esc(reads) + '</button></div></div>';
+  return '<div class="tile"><div class="row"><span style="flex:1"><b>' + esc(reads) + ' at most, above ' + esc(freeOf(preflight)) + ':</b> you approve this yourself; Claude cannot do it for you.</span><button class="primary high" data-act="approve">Approve and run · ' + esc(reads) + '</button></div></div>';
 }
 
-function requestPanel(reads, request) {
+function requestPanel(reads, request, preflight) {
   if (request?.state === 'waiting') return '<div class="tile">Waiting for the Data Team since ' + esc(day(request.sentAt || request.createdAt)) + '. Their answer comes in your Message Centre.</div>';
-  return '<div class="tile"><b>Very large: one run reads ' + esc(reads) + ', more than 1 GB.</b><p class="meta" style="margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes in your Message Centre.</p>' +
+  return '<div class="tile"><b>Very large: one run reads ' + esc(reads) + ', more than ' + esc(largeOf(preflight)) + '.</b><p class="meta" style="margin:4px 0 10px">Someone of the Data Team accepts it first; you send the Request yourself, Claude does not. Their answer comes in your Message Centre.</p>' +
     '<label class="meta">A word for the Data Team (optional)<textarea id="word" rows="2"></textarea></label><button class="primary" data-act="request" style="margin-top:8px">Send to the Data Team</button></div>';
 }
 
@@ -299,7 +331,7 @@ function renderPreview(v) {
     return '<label>' + esc(c.field) + ' ' + input + '</label>';
   }).join('');
   const pf = v.preflight ? '<span class="preflight">' + (v.outcome === 'ran' ? 'Scanned ' : 'Reads ') + esc(v.reads ?? '?') + (v.preflight.partitions !== null && v.preflight.partitions !== undefined ? ' · ' + esc(v.preflight.partitions) + ' partitions' : '') + '</span>' : '';
-  const body = v.outcome === 'ran' ? grid(v.page, v.run?.ref) : v.outcome === 'approve' ? approvePanel(v.reads, v.request) : v.outcome === 'request' ? requestPanel(v.reads, v.request) : problems(v.preflight, v.problem);
+  const body = v.outcome === 'ran' ? rowsOf(v) + privately(v) : v.outcome === 'approve' ? approvePanel(v.reads, v.request, v.preflight) : v.outcome === 'request' ? requestPanel(v.reads, v.request, v.preflight) : problems(v.preflight, v.problem);
   root.innerHTML = head('Preview', v.resource.displayName, null, level(v.resource.levelName), v.collection) + '<div class="params">' + windowSelect + choices + pf + '</div>' + body + foot('Kept in your Query Log, as a preview', v.resource.page);
 }
 
@@ -329,9 +361,9 @@ function renderPublish(v) {
 function renderQuery(v) {
   const q = v.query;
   const reads = '<div class="row"><span class="meta" style="display:inline">Reads only</span>' + (v.resources ?? []).map((r) => '<span class="status">' + (r.levelName ? bars(levelOf(r.levelName)) : '') + esc(r.displayName) + (r.levelName ? ' · ' + esc(r.levelName) : '') + (r.deprecated ? ' · deprecated' : '') + '</span>').join('') + '</div>';
-  const body = v.outcome === 'ran' ? grid(v.page, v.run?.ref) + (v.reads ? '<span class="meta">Scanned ' + esc(v.reads) + '</span>' : '')
-    : v.outcome === 'approve' ? approvePanel(v.reads, v.request)
-    : v.outcome === 'request' ? requestPanel(v.reads, v.request)
+  const body = v.outcome === 'ran' ? rowsOf(v) + (v.reads ? '<span class="meta">Scanned ' + esc(v.reads) + '</span>' : '') + privately(v)
+    : v.outcome === 'approve' ? approvePanel(v.reads, v.request, v.preflight)
+    : v.outcome === 'request' ? requestPanel(v.reads, v.request, v.preflight)
     : v.outcome === 'notRun' ? '<p class="meta">Not run yet.</p>'
     : v.outcome === 'expired' ? '<p class="meta">BigQuery no longer keeps the result of its last run.</p>'
     : problems(v.preflight, v.problem);
@@ -349,6 +381,49 @@ function render() {
   setFold();
 }
 
+/**
+ * What the MCP App tells Claude after a button of the User: what they did, and the words Data Hub put first for
+ * Claude. In a card only those words hold no value of the result, and of a result that carries rows or the values
+ * of choices only what the User did is told (FR-CL-28).
+ */
+function toldClaude(result, told, card) {
+  const text = result?.content?.[0]?.text;
+  const values = result?.structuredContent?.page || result?.structuredContent?.choices;
+  if (card && values) return told;
+  return told + (text ? '\n' + text : '');
+}
+// end toldClaude
+
+/** A result to show: in a card only, with the choices of its Preview the MCP App read already for this window. */
+function kept(next) {
+  if (next.results === 'card') cardOnly = true;
+  if (next.results === 'card' && next.view === 'preview' && !next.choices && keptChoices.key === next.resource.id + '/' + next.window) return { ...next, choices: keptChoices.choices };
+  return next;
+}
+
+/** In a card only, the MCP App reads the rows, and the choices of a Preview, through tools only it calls: they stay out of the conversation (FR-CL-28). */
+async function fill() {
+  const shown = view;
+  if (shown?.results !== 'card') return;
+  const read = (name, args) => app.callServerTool({ name, arguments: args }).catch(() => null);
+  const [rows, choices] = await Promise.all([
+    shown.outcome === 'ran' && shown.run?.ref && !shown.page ? read('read_result_rows', { run: shown.run.ref, page: 1 }) : null,
+    shown.view === 'preview' && !shown.choices ? read('read_preview_choices', { id: shown.resource.id, window: shown.window }) : null,
+  ]);
+  const more = {};
+  if (rows) {
+    if (rows.structuredContent?.page) more.page = rows.structuredContent.page;
+    else more.rowsError = rows.content?.[0]?.text || 'Data Hub could not read the rows just now; try again in a moment.';
+  } else if (shown.outcome === 'ran' && !shown.page) more.rowsError = 'Data Hub could not read the rows just now; try again in a moment.';
+  if (choices?.structuredContent?.choices) {
+    keptChoices = { key: shown.resource.id + '/' + shown.window, choices: choices.structuredContent.choices };
+    more.choices = keptChoices.choices;
+  }
+  if (view !== shown || Object.keys(more).length === 0) return;
+  view = { ...shown, ...more };
+  render();
+}
+
 /** Shows what a tool answered, and tells Claude what the User did, without a turn of its own. */
 async function show(result, told) {
   if (result?.isError) {
@@ -356,12 +431,12 @@ async function show(result, told) {
     return;
   }
   if (result?.structuredContent?.view) {
-    view = result.structuredContent;
+    view = kept(result.structuredContent);
     render();
+    void fill();
   }
   if (told) {
-    const text = result?.content?.[0]?.text;
-    await app.updateModelContext({ content: [{ type: 'text', text: told + (text ? '\n' + text : '') }] }).catch(() => undefined);
+    await app.updateModelContext({ content: [{ type: 'text', text: toldClaude(result, told, cardOnly) }] }).catch(() => undefined);
   }
 }
 
@@ -389,7 +464,9 @@ root.addEventListener('click', (event) => {
   if (target.dataset.open) { event.preventDefault(); app.openLink({ url: target.dataset.open }); return; }
   if (target.dataset.tab) { tab = target.dataset.tab; render(); return; }
   if (target.dataset.page) {
-    app.callServerTool({ name: 'get_result_page', arguments: { run: view.run.ref, page: Number(target.dataset.page) } }).then((result) => {
+    // In a card only, the next page comes through the tool only the MCP App calls, as the first did (FR-CL-28).
+    const name = view.results === 'card' ? 'read_result_rows' : 'get_result_page';
+    app.callServerTool({ name, arguments: { run: view.run.ref, page: Number(target.dataset.page) } }).then((result) => {
       if (result?.structuredContent?.page) { view = { ...view, page: result.structuredContent.page }; render(); }
     });
     return;

@@ -15,7 +15,7 @@ export interface AppOptions {
   api?: ApiOptions;
   /** What other services ask as themselves; left out in tests that do not need it. */
   internal?: InternalOptions;
-  /** The page Webhooks of Admin, for the Data Team (FR-AR-18, FR-AR-19); left out in tests that do not need it. */
+  /** The page Webhooks of Admin, for who opens it (`admin.open`, FR-AR-18, FR-AR-19); left out in tests that do not need it. */
   admin?: AdminOptions;
 }
 

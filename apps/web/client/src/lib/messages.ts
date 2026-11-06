@@ -83,6 +83,8 @@ export interface Message {
   mine: boolean;
   /** Whether the User may close it, or reopen it once closed: its writer, the Owner Unit and the Data Team (FR-CV-16). */
   mayClose: boolean;
+  /** Whether the User may reply in it (`messages.reply`, DEC-PL-04); left out by an older catalogue. */
+  mayReply?: boolean;
 }
 
 export interface Reply {
@@ -135,8 +137,9 @@ export function createMessages(config: Config, session: Pick<Session, 'accessTok
       return conversation(await call(one(id)));
     },
     /** The conversations on a Collection, a Resource or a Lens (FR-CV-07). */
-    async on(kind: WrittenOn, id: string): Promise<Conversation[]> {
-      return ((await (await call(`/messages/on/${kind}/${encodeURIComponent(id)}`)).json()) as { messages: Conversation[] }).messages;
+    /** What is written on an object, and the kinds of Message the User may write on it (`messages.write`, DEC-PL-04). */
+    async on(kind: WrittenOn, id: string): Promise<{ messages: Conversation[]; kinds?: WrittenKind[] }> {
+      return (await (await call(`/messages/on/${kind}/${encodeURIComponent(id)}`)).json()) as { messages: Conversation[]; kinds?: WrittenKind[] };
     },
     async write(subject: { kind: WrittenOn; id: string }, kind: WrittenKind, text: string): Promise<Conversation> {
       return conversation(await call('/messages', { method: 'POST', body: { subjectKind: subject.kind, subjectId: subject.id, kind, text } }));

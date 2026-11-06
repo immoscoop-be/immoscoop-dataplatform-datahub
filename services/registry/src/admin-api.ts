@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
+import { forbidden, opensWebhooks } from './access.js';
 import type { DbtCloud, DbtJob, DbtProject } from './dbt-cloud.js';
 import type { Deliveries } from './deliveries.js';
 import type { Reading } from './reading.js';
@@ -13,9 +14,6 @@ export interface AdminOptions {
   webhookUrl: string;
 }
 
-/** The role of the Data Team, from its Role Group `datahub-datateam@` (Naming Convention). */
-const DATA_TEAM = 'datateam';
-
 /** Why a job cannot be a Source Job of this environment. */
 type NotChoosable = 'ci' | 'otherEnvironment' | 'noDocs';
 
@@ -28,7 +26,7 @@ const REFUSED: Record<NotChoosable, string> = {
 type Log = { warn: (object: unknown, message: string) => void };
 
 /**
- * The page Webhooks of Admin (FR-AR-18, FR-AR-19), for the Data Team only: the dbt projects Data Hub follows and
+ * The page Webhooks of Admin (FR-AR-18, FR-AR-19), for who opens it (`admin.open`): the dbt projects Data Hub follows and
  * the Source Job of each, which a Data Admin sets here and nowhere else (DEC-AR-10): following a dbt project of the
  * account, changing its Source Job, or no longer following it. And every delivery of the webhook of the last 30
  * days, with what Data Hub did with it.
@@ -38,8 +36,8 @@ export async function adminRoutes(app: FastifyInstance, options: AdminOptions): 
 
   // Runs after the token check of @datahub/auth, which has set request.user.
   app.addHook('onRequest', async (request, reply) => {
-    if (!request.user?.roles.includes(DATA_TEAM)) {
-      return reply.code(403).send({ error: 'forbidden', message: 'Only the Data Team manages the webhooks of Data Hub.' });
+    if (!opensWebhooks(request)) {
+      return forbidden(reply, 'admin.open', 'Only who opens the Webhooks of Admin manages the webhooks of Data Hub.');
     }
   });
 

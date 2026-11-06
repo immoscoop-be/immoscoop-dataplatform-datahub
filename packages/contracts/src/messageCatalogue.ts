@@ -7,7 +7,7 @@ import type { LearningCardFit, MessageButton, MessageItem, MessageParameter, Mes
  *
  * A Message ID is fixed: never renumbered or reused. `MSG-CNV` is a Message on any object, the other
  * prefixes name the kind of its object: `COL` a Collection, `RES` a Resource, `LEN` a Lens, `QRY` a
- * query, `RPT` a Report. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
+ * query, `RPT` a Report, `KEY` an Excel key, `USR` a User. Templates use `{name}` for a value and the ICU forms `{name, select, …}` and
  * `{name, plural, …}`; a choice stays on one line.
  */
 
@@ -75,6 +75,19 @@ const FIELD_CHANGES: MessageItem = {
       rich: '- `{field}`: {change, select, added {added} removed {removed} renamed {renamed; it was `{old}`} other {its type changed from `{old}` to `{new}`}}',
     },
   },
+};
+
+/** One thing a User gains or loses with another Permission group, a line as identity writes it (FR-PL-12). */
+const CHANGE_LINE: MessageItem = {
+  fields: [{ name: 'line', type: 'text', about: 'One thing, as identity writes it' }],
+  text: { nl: { plain: '{line}', rich: '- {line}' }, en: { plain: '{line}', rich: '- {line}' } },
+};
+
+/** What a Permission group allows has no card of its own yet: Permission groups are new (DEC-PL-01). */
+const PERMISSIONS_CARD: LearningCardFit = {
+  fit: 'toWrite',
+  topic: 'Permission groups: what a User may do in Data Hub, and why something is not there for them',
+  why: 'The Message is about the Permission group of a User; no card of the master learning plan explains Permission groups yet.',
 };
 
 /** What a Broken Lens or query reads that no longer exists: a Resource, or a column of one (DEC-DH-67). */
@@ -1318,6 +1331,122 @@ export const MESSAGE_CATALOGUE: readonly MessageType[] = [
       done: 'When it is read.',
     },
     example: { subject: 'Sales dashboard, shared drive', actor: 'Dirk Vos' },
+  },
+  // A User: what Data Hub tells about their Permission group (FR-PL-12, EC-PL-03).
+  {
+    id: 'MSG-USR-01',
+    title: 'A User was moved to another Permission group',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['author'],
+    when: 'The Data Team moves a User to another Permission group on Users, in Admin, or deletes their Permission group, whose Users go to the group chosen. A change of the Permissions of their whole group sends none: the Data Team announces it itself.',
+    per: 'One per User and move; only that User sees it.',
+    status: 'Implemented',
+    sources: ['FR-PL-12', 'DEC-UX-192', 'TR-PL-07'],
+    parameters: [
+      { name: 'actor', type: 'person', about: 'Who of the Data Team moved them, or deleted their Permission group' },
+      { name: 'from', type: 'name', about: 'The Permission group they were in' },
+      { name: 'to', type: 'name', about: 'The Permission group they are in now' },
+      { name: 'deleted', type: 'choice', about: 'Whether their Permission group was deleted', values: ['yes', 'no'] },
+      { name: 'gained', type: 'count', about: 'How many things they can do now that they could not before', optional: true },
+      { name: 'gains', type: 'list', about: 'What they can do now that they could not before, a line each as identity writes it', optional: true, item: CHANGE_LINE },
+      { name: 'lost', type: 'count', about: 'How many things they can no longer do', optional: true },
+      { name: 'losses', type: 'list', about: 'What they can no longer do, a line each as identity writes it', optional: true, item: CHANGE_LINE },
+    ],
+    text: {
+      nl: {
+        plain: lines(
+          '{deleted, select, yes {Je Permission group {from} werd verwijderd: {actor} van het Data Team zette je in {to}.} other {{actor} van het Data Team zette je in de Permission group {to}; je zat in {from}.}}',
+          'Je kan nu ook: {gains}.',
+          'Je kan niet meer: {losses}.',
+        ),
+        rich: lines(
+          '**{deleted, select, yes {Je Permission group {from} werd verwijderd} other {Je zit nu in de Permission group {to}}}**',
+          '',
+          '{deleted, select, yes {{actor} van het Data Team verwijderde {from} en zette je in {to}.} other {{actor} van het Data Team zette je erin; je zat in {from}.}} Je Owner Units blijven dezelfde. Het geldt binnen 15 minuten, in de webapp, in Claude en in Excel.',
+          '',
+          '{gained, plural, one {Dit kan je nu ook:} other {Deze # dingen kan je nu ook:}}',
+          '{gains}',
+          '',
+          '{lost, plural, one {Dit kan je niet meer:} other {Deze # dingen kan je niet meer:}}',
+          '{losses}',
+        ),
+      },
+      en: {
+        plain: lines(
+          '{deleted, select, yes {Your Permission group {from} was deleted: {actor} of the Data Team put you in {to}.} other {{actor} of the Data Team put you in the Permission group {to}; you were in {from}.}}',
+          'You can now also: {gains}.',
+          'You can no longer: {losses}.',
+        ),
+        rich: lines(
+          '**{deleted, select, yes {Your Permission group {from} was deleted} other {You are now in the Permission group {to}}}**',
+          '',
+          '{deleted, select, yes {{actor} of the Data Team deleted {from} and put you in {to}.} other {{actor} of the Data Team put you in it; you were in {from}.}} Your Owner Units stay the same. It takes effect within 15 minutes, in the web app, in Claude and in Excel.',
+          '',
+          '{gained, plural, one {You can now also do this:} other {You can now also do these # things:}}',
+          '{gains}',
+          '',
+          '{lost, plural, one {You can no longer do this:} other {You can no longer do these # things:}}',
+          '{losses}',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The User reads what changed for them; whoever needs another Permission group asks the Data Team.',
+      buttons: [{ label: { nl: 'My page openen', en: 'Open My page' }, opens: 'My page' }],
+      done: 'When it is read.',
+    },
+    example: {
+      subject: 'An Claes',
+      actor: 'Dirk Vos',
+      from: 'Lens user',
+      to: 'Business analyst',
+      deleted: 'no',
+      gained: 2,
+      gains: [{ line: 'Make and run queries, in Query and through Claude' }, { line: 'Make a query a Lens, in a Collection of your Owner Units' }],
+    },
+  },
+  {
+    id: 'MSG-USR-02',
+    title: 'A member of the Data Team got Admin back',
+    kind: 'dataHub',
+    subjects: ['user'],
+    from: 'dataHub',
+    to: ['dataTeam'],
+    when: 'No User of Admin can still sign in, for example after leaving, and a member of `datahub-datateam@` signs in: they get Admin, so that the Role Group stays a way back in.',
+    per: 'One per User who gets Admin back this way.',
+    status: 'Implemented',
+    sources: ['EC-PL-03', 'FR-PL-08'],
+    parameters: [],
+    text: {
+      nl: {
+        plain: '{subject} kreeg de Permission group Admin terug: geen enkele User van Admin kon nog aanmelden.',
+        rich: lines(
+          '**{subject} kreeg de Permission group Admin terug**',
+          '',
+          'Geen enkele User van Admin kon nog aanmelden, bijvoorbeeld na een vertrek. Toen {subject}, lid van `datahub-datateam@`, aanmeldde, kreeg die Admin, zodat iemand Data Hub kan beheren. Kijk op Users, in Admin, wie Admin hoort te hebben.',
+        ),
+      },
+      en: {
+        plain: '{subject} got the Permission group Admin back: no User of Admin could still sign in.',
+        rich: lines(
+          '**{subject} got the Permission group Admin back**',
+          '',
+          'No User of Admin could still sign in, for example after leaving. When {subject}, a member of `datahub-datateam@`, signed in, they got Admin, so that someone can manage Data Hub. Check on Users, in Admin, who should have Admin.',
+        ),
+      },
+    },
+    learningCard: PERMISSIONS_CARD,
+    action: {
+      asks: 'nothing',
+      what: 'The Data Team checks on Users, in Admin, who should have Admin; the User keeps it until someone moves them.',
+      buttons: [{ label: { nl: 'Users openen', en: 'Open Users' }, opens: 'Users, in Admin, with the User opened', for: ['dataTeam'] }],
+      done: 'When it is read.',
+    },
+    example: { subject: 'Dirk Vos' },
   },
   {
     id: 'MSG-QRY-01',

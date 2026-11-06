@@ -17,6 +17,7 @@
     roomy = false,
     onclose,
     top,
+    lead,
     head,
     children,
     foot,
@@ -29,6 +30,8 @@
     onclose: () => void;
     /** What stands above its title, such as its steps. */
     top?: Snippet;
+    /** What stands before its title, such as the initials of a User or the icon of what it makes. */
+    lead?: Snippet;
     head?: Snippet;
     children: Snippet;
     foot: Snippet;
@@ -49,7 +52,8 @@
 <div class="backdrop" aria-hidden="true" onclick={onclose}></div>
 <div class="sheet" class:wide class:roomy role="dialog" aria-modal="true" aria-label={title} tabindex="-1" bind:this={sheet}>
   {@render top?.()}
-  <div class="head">
+  <div class="head" class:led={lead}>
+    {@render lead?.()}
     <div class="titles">
       <h2>{title}</h2>
       {@render head?.()}
@@ -69,6 +73,7 @@
   .wide { width: max(840px, var(--sheet-width)); }
   .roomy { width: max(560px, var(--sheet-width)); }
   .head { display: flex; align-items: flex-start; gap: 8px; }
+  .head.led { align-items: center; gap: 12px; }
   .titles { flex: 1; min-width: 0; }
   h2 { font-size: 19px; font-weight: var(--weight-medium); margin: 0; }
   .close { width: 32px; height: 32px; border-radius: var(--radius-sm); border: 0; background: none; display: flex; align-items: center; justify-content: center;

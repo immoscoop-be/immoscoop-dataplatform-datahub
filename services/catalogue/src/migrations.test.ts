@@ -137,11 +137,20 @@ describe.skipIf(!url)('catalogue migrations', () => {
   });
 
   it('keeps a Lens that query deleted, for the Messages on it (FR-LE-18)', async () => {
-    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    const results = await migrate({ db: admin.db, schema, migrations: before('0022'), serviceUser: 'postgres' });
     expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0021-lens-deleted', 'Success']]);
     const lens = (state: string) => sql`insert into lenses (id, name, collection_id, resource_ids, state, author_id, author_name)
       values (gen_random_uuid(), 'Leads', gen_random_uuid(), '{}', ${state}, 'u-an', 'An')`;
     await lens('deleted').execute(admin.db);
     await expect(lens('gone').execute(admin.db)).rejects.toThrow(/lenses_state_check/);
+  });
+
+  it('keeps a Message about a User, such as their move to another Permission group (FR-PL-12, EC-PL-03)', async () => {
+    const message = sql`insert into messages (type, subject_kind, subject_id, params) values ('MSG-USR-01', 'user', 'u-an', '{"user": "u-an"}')`;
+    await expect(message.execute(admin.db)).rejects.toThrow(/messages_subject_kind_check/);
+    const results = await migrate({ db: admin.db, schema, migrations, serviceUser: 'postgres' });
+    expect(results.map((result) => [result.migrationName, result.status])).toEqual([['0022-user-messages', 'Success']]);
+    await message.execute(admin.db);
+    await expect(sql`insert into messages (type, subject_kind, subject_id) values ('MSG-USR-01', 'person', 'u-an')`.execute(admin.db)).rejects.toThrow(/messages_subject_kind_check/);
   });
 });

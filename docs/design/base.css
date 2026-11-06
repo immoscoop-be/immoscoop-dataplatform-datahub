@@ -1446,6 +1446,67 @@ button.lin-node:hover { box-shadow: 0 0 0 1.5px var(--tint-active); }
 .wh-stop-row { display: flex; gap: 10px; font-size: var(--text-small); line-height: 1.5; }
 .wh-stop-row > i { color: var(--signal-urgent); font-size: 18px; flex: none; }
 
+/* In a card only: the result of Claude says that Claude does not read its rows (FR-CL-28, DEC-UX-193) */
+.result-private { display: flex; align-items: center; gap: 6px; margin: 8px 0 0; font-size: var(--text-meta); color: var(--text-muted); }
+.result-private i { font-size: 14px; }
+
+/* Admin: Users and Permission groups, a proposal of 2026-11-06 (OP-UX-55 to OP-UX-61). A User has one permission group;
+   a permission group holds its permissions by part of Data Hub, each with its values, of the kinds a Parameter has */
+.us-table tbody tr { cursor: pointer; }
+.us-table tbody tr:hover { background: var(--tint-hover); }
+.us-table tbody tr.on { background: var(--surface-sub); }
+.us-table tr.us-gone td { color: var(--text-muted); }
+.us-uses { display: inline-flex; gap: 8px; font-size: 15px; color: var(--text-secondary); }
+.us-uses .off { color: var(--tint-active); }
+.us-head { display: flex; align-items: center; gap: 12px; }
+.us-head .avatar { width: 42px; height: 42px; flex: none; background: var(--surface-sub); }
+.us-groups { display: grid; gap: 4px; }
+.us-groups .wh-opt { align-items: start; }
+.us-groups .now { margin-left: 6px; }
+.us-log { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: var(--text-small); }
+.us-log li { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; line-height: 1.45; }
+.us-log li > span:first-child { color: var(--text-muted); font-size: var(--text-meta); }
+.pg-changes { display: grid; gap: 6px; margin: 8px 0 0; padding: 10px 12px; list-style: none; border-radius: var(--radius-md); background: var(--surface-sub); font-size: var(--text-small); }
+.pg-changes li { display: flex; align-items: flex-start; gap: 8px; line-height: 1.45; }
+.pg-changes li > i { flex: none; margin-top: 2px; font-size: 15px; color: var(--text-secondary); }
+.pg-changes li.gain > i { color: var(--col-teal-ink); }
+.pg-changes li.loss > i { color: var(--signal-warn); }
+.pg-changes del { color: var(--text-muted); }
+.pg-layout { grid-template-columns: minmax(230px, 300px) minmax(0, 1fr); }
+.pg-param .pe-opts > label { flex-wrap: nowrap; align-items: flex-start; line-height: 1.45; }
+.pg-param .pe-opts input[type="radio"] { margin-top: 3px; }
+.pg-item-sub { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin-top: 3px; }
+.pg-detail { min-width: 0; }
+.pg-detail .edit-bar { position: sticky; top: 8px; z-index: 2; margin: 12px 0 0; box-shadow: 0 0 0 1px var(--tint-active); }
+.pg-section { margin-top: 20px; }
+.pg-section-head { display: flex; align-items: center; gap: 8px; padding: 0 4px 8px; border-bottom: 1px solid var(--tint-active); font-size: var(--text-small); font-weight: var(--weight-medium); color: var(--text-secondary); }
+.pg-section-head i { font-size: 16px; }
+.pg-perm { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; align-items: start; padding: 12px 8px; border-radius: var(--radius-md); }
+.pg-perm + .pg-perm { border-top: 1px solid var(--tint-hover); }
+.pg-perm.changed { background: color-mix(in srgb, var(--surface-sub) 70%, transparent); }
+.pg-name { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-small); font-weight: var(--weight-medium); }
+.pg-desc { margin: 3px 0 0; font-size: var(--text-meta); line-height: 1.45; color: var(--text-muted); }
+.pg-yn { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--radius-pill); background: var(--surface-sub); }
+.pg-yn .seg { padding: 3px 12px; }
+.pg-yn .seg.on { background: var(--surface-solid); box-shadow: 0 0 0 1px var(--tint-active); }
+.pg-params { grid-column: 1 / -1; display: grid; gap: 10px; margin: 8px 0 0; padding: 12px 14px; border-radius: var(--radius-md); background: var(--surface-sub); }
+.pg-param { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 12px; align-items: start; font-size: var(--text-small); }
+.pg-param > .pe-label { padding-top: 5px; line-height: 1.4; }
+.pg-param .pe-opts { gap: 6px; }
+.pg-num { display: inline-flex; align-items: center; gap: 8px; color: var(--text-secondary); }
+.pg-num input, .pg-param select, .pg-param textarea { font: var(--text-small) var(--font-family); color: var(--text-primary); background: var(--surface-solid); border: 1px solid var(--tint-active); border-radius: var(--radius-sm); padding: 5px 8px; }
+.pg-num input { width: 84px; }
+.pg-param textarea { width: 100%; max-width: 460px; box-sizing: border-box; resize: vertical; line-height: 1.5; }
+.pg-param .use-chips { padding-top: 2px; }
+.pg-kind { font-size: 10px; font-weight: var(--weight-regular, 400); color: var(--text-muted); background: var(--tint-hover); padding: 1px 6px; border-radius: var(--radius-pill); }
+.pg-lock { display: inline-flex; align-items: center; gap: 4px; font-size: var(--text-meta); font-weight: var(--weight-regular, 400); color: var(--text-muted); }
+.pg-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--tint-active); }
+.pg-foot .meta { flex: 1; min-width: 200px; }
+.pg-delete { display: grid; gap: 10px; margin-top: 20px; padding: 14px 16px; border-radius: var(--radius-md); background: color-mix(in srgb, var(--signal-urgent) 8%, var(--surface-solid)); font-size: var(--text-small); line-height: 1.5; }
+.pg-delete .pe-opts { margin: 2px 0 0; }
+.pg-delete-foot { display: flex; justify-content: flex-end; gap: 10px; }
+@media (max-width: 900px) { .pg-param { grid-template-columns: minmax(0, 1fr); gap: 6px; } .pg-perm { grid-template-columns: minmax(0, 1fr); } }
+
 /* The page of a query fills the height of the screen: the query and its result split it, each scrolling on
    its own, the divider between them dragged; or the query next to its result (DEC-UX-143, DEC-UX-144). */
 .q-work { display: grid; grid-template-rows: minmax(0, 55%) 14px minmax(0, 1fr); height: calc(100vh - 200px); min-height: 360px; margin-top: 14px; }

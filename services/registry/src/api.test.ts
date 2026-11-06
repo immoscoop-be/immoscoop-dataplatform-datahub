@@ -1,4 +1,5 @@
-import { createTestIssuer, type TestIssuer } from '@datahub/auth/testing';
+import { createTestIssuer, type TestClaims, type TestIssuer } from '@datahub/auth/testing';
+import { type Permissions, startingPermissions } from '@datahub/contracts';
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { buildApp } from './app.js';
@@ -87,17 +88,29 @@ describe('the registry API', () => {
 
   afterEach(() => app.close());
 
-  async function call(method: 'GET' | 'POST', url: string, roles = ['datateam']) {
-    const token = await issuer.sign({ roles, email: 'jan@thenextimmoscoop.be' });
+  async function call(method: 'GET' | 'POST', url: string, claims: TestClaims = { as: 'admin' }) {
+    const token = await issuer.sign({ ...claims, email: 'jan@thenextimmoscoop.be' });
     return app.inject({ method, url, headers: { authorization: `Bearer ${token}` } });
   }
 
-  it('is for the Data Team only, for now', async () => {
+  /** A Business analyst whose group is changed so. */
+  const analystWith = (change: (permissions: Permissions) => void): TestClaims => {
+    const permissions = startingPermissions('businessAnalyst');
+    change(permissions);
+    return { permissions };
+  };
+
+  it('is for who adds Resources, opens the Webhooks of Admin or sees all (DEC-AR-06, TR-PL-06)', async () => {
     expect((await app.inject({ url: '/projects' })).statusCode).toBe(401);
-    const other = await call('GET', '/nodes?q=orders', []);
+    const other = await call('GET', '/nodes?q=orders', { as: 'businessAnalyst' });
     expect(other.statusCode).toBe(403);
-    expect(other.json().error).toBe('forbidden');
+    expect(other.json()).toMatchObject({ error: 'forbidden', permission: 'resources.assign' });
+    expect((await call('GET', '/domain-model', { as: 'lensUser' })).statusCode).toBe(403);
     expect((await call('GET', '/projects')).json()).toEqual({ projects: [] });
+    // Each of the three is enough on its own.
+    expect((await call('GET', '/domain-model', analystWith((permissions) => (permissions['resources.assign'].on = true)))).statusCode).toBe(200);
+    expect((await call('GET', '/projects', analystWith((permissions) => (permissions['admin.open'] = { on: true, values: { tools: ['webhooks'] } })))).statusCode).toBe(200);
+    expect((await call('GET', '/projects', analystWith((permissions) => (permissions['catalogue.see'].values.see = 'all')))).statusCode).toBe(200);
   });
 
   it('searches with a text, a kind of Node, a dbt project and a limit within bounds', async () => {
@@ -177,9 +190,15 @@ describe('the registry API', () => {
       expect(recorded).toHaveLength(1);
     });
 
-    it('is for the Data Team only', async () => {
-      expect((await call('POST', '/runs/100/reprocess', ['admins'])).statusCode).toBe(403);
+    it('is for who opens the Webhooks of Admin only (admin.open)', async () => {
+      expect((await call('POST', '/runs/100/reprocess', { as: 'businessAnalyst' })).statusCode).toBe(403);
+      // Adding Resources reads the registry, but does not process a run again.
+      const refused = await call('POST', '/runs/100/reprocess', analystWith((permissions) => (permissions['resources.assign'].on = true)));
+      expect(refused.statusCode).toBe(403);
+      expect(refused.json()).toMatchObject({ error: 'forbidden', permission: 'admin.open' });
       expect(started).toBe(0);
+      expect((await call('POST', '/runs/100/reprocess', analystWith((permissions) => (permissions['admin.open'] = { on: true, values: { tools: ['webhooks'] } })))).statusCode).toBe(202);
+      expect(started).toBe(1);
     });
   });
 });

@@ -49,7 +49,10 @@
     onopened,
     messages,
     excelAddress,
+    canQuery = true,
   }: {
+    /** The User may make queries (`queries.make`): "Open in Query" and "Open its query" (FR-PL-14). */
+    canQuery?: boolean;
     lens: Lens;
     client: QueryClient;
     collection: Collection | undefined;
@@ -274,20 +277,20 @@
     {#if excelAddress}<Button variant="outline" title={t('excel.hint')} onclick={() => (excel = true)}><Icon name="file-xls" />{t('excel.title')}</Button>{/if}
     {#if messages}<MessagesButton href={messages.href} count={messages.count} />{/if}
     {#if lens.canManage}
-      <Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>
+      {#if canQuery}<Button variant="outline" disabled={opening} title={t('lens.openInQuery.hint')} onclick={openQuery}><Icon name="terminal-window-fill" />{t('lens.openInQuery')}</Button>{/if}
       <Button variant="outline" href={editLensPath(lens.id)}><Icon name="pencil-simple-fill" />{t('lens.editMore')}</Button>
     {/if}
   </div>
 </div>
 {#if openFailed}<p class="failed" role="alert">{t('lens.openInQuery.failed')}</p>{/if}
 {#if lens.broken}
-  <Callout icon="link-break-fill" tone="urgent" action={lens.canManage ? openAction : undefined}>
+  <Callout icon="link-break-fill" tone="urgent" action={lens.canManage && canQuery ? openAction : undefined}>
     <b>{t('lens.broken.title')}</b>
     {t('lens.broken.text', { missing, date: day(lens.broken.since) })}
     {lens.canManage ? t('lens.broken.owner') : ''}
   </Callout>
 {:else if lens.state === 'stopped'}
-  <Callout icon="hourglass-medium-fill" tone="warning" action={lens.canManage ? openAction : undefined}>
+  <Callout icon="hourglass-medium-fill" tone="warning" action={lens.canManage && canQuery ? openAction : undefined}>
     <b>{t('lens.stopped.title')}</b>
     {t('lens.stopped.text', { bytes: bytes(lens.stoppedReads ?? lens.reads), date: day(lens.stoppedAt ?? lens.createdAt) })}
     {lens.canManage ? t('lens.stopped.owner') : ''}
@@ -340,7 +343,7 @@
         </div>
       </FoldBox>
       <div class="run">
-        {#if preflight && preflight.range === 'request'}
+        {#if preflight && (preflight.range === 'request' || preflight.problems.some((problem) => problem.kind === 'tooLarge'))}
           <span class="meta too">{t('lens.run.tooLarge', { request: bytes(preflight.thresholds.request) })}</span>
         {/if}
         <RunButton

@@ -16,6 +16,10 @@
       "types": "./dist/collectionIcons.d.ts",
       "default": "./dist/collectionIcons.js"
     },
+    "./permissions": {
+      "types": "./dist/permissions.d.ts",
+      "default": "./dist/permissions.js"
+    },
     "./gaps": {
       "types": "./dist/gaps.d.ts",
       "default": "./dist/gaps.js"

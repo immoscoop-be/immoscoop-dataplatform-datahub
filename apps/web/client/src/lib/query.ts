@@ -299,7 +299,9 @@ export type Problem =
   | { kind: 'notSelect'; statementType: string }
   /** With the SQL that adds the filter, where Data Hub can tell where it goes (DEC-SR-35). */
   | { kind: 'filterRequired'; resource: { id: string; displayName: string }; column: string; fix: string | null }
-  | { kind: 'invalid'; message: string };
+  | { kind: 'invalid'; message: string }
+  /** It reads more than the Permission group of the User lets one run read, and theirs sends no Request (`runs.ranges`). */
+  | { kind: 'tooLarge'; bytes: number; limit: number };
 
 export interface Warning {
   kind: 'noPartitionFilter';
@@ -318,7 +320,8 @@ export interface Preflight {
   partitions: number | null;
   problems: Problem[];
   warnings: Warning[];
-  thresholds: { approve: number; request: number };
+  /** The ranges of the User, from their Permission group (`runs.ranges`): above `request`, a Request or no run at all. */
+  thresholds: { approve: number; request: number; above?: 'request' | 'refuse' };
   /** The Parameters that are not in the SQL: they are not sent. */
   unused: string[];
 }

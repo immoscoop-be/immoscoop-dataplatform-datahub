@@ -41,7 +41,13 @@
     ondismiss,
     onshow,
     onsearch,
+    makes = true,
+    queries = true,
   }: {
+    /** The User may make a Collection (`collections.make`). */
+    makes?: boolean;
+    /** The User may make queries (`queries.make`). */
+    queries?: boolean;
     collections: readonly Collection[] | undefined;
     /** The Lenses the User sees; undefined while query has not told them. */
     lenses: readonly LensItem[] | undefined;
@@ -137,15 +143,15 @@
     {/snippet}
     {t('collections.intro.text')}
     {#snippet actions()}
-      <Button href={NEW_COLLECTION}><Icon name="plus-circle-fill" />{t('collections.new')}</Button>
-      <Button variant="outline" href="/query"><Icon name="terminal-window-fill" />{t('collections.intro.lens')}</Button>
+      {#if makes}<Button href={NEW_COLLECTION}><Icon name="plus-circle-fill" />{t('collections.new')}</Button>{/if}
+      {#if queries}<Button variant="outline" href="/query"><Icon name="terminal-window-fill" />{t('collections.intro.lens')}</Button>{/if}
     {/snippet}
   </Intro>
 {:else}
   <div class="bar">
     <h1 class="page-title">Collections</h1>
     <button type="button" class="show" onclick={onshow}><Icon name="info-fill" /><span>{t('collections.intro.show')}</span></button>
-    <Button href={NEW_COLLECTION}><Icon name="plus-circle-fill" />{t('collections.new')}</Button>
+    {#if makes}<Button href={NEW_COLLECTION}><Icon name="plus-circle-fill" />{t('collections.new')}</Button>{/if}
   </div>
 {/if}
 
@@ -167,7 +173,7 @@
     <div class="nothing">
       <Icon name="magnifying-glass" />
       <p><b>{t('collections.search.none')}</b> {t('collections.search.none.text')}</p>
-      <Button variant="outline" href={NEW_QUERY}><Icon name="terminal-window-fill" />{t('query.new')}</Button>
+      {#if queries}<Button variant="outline" href={NEW_QUERY}><Icon name="terminal-window-fill" />{t('query.new')}</Button>{/if}
     </div>
   {:else}
     {#if found.lenses.length}
@@ -243,7 +249,7 @@
 {#if !collections}
   <Loading />
 {:else if yours.length === 0 && yourLenses.length === 0}
-  <p class="meta empty">{t('collections.yours.none')}</p>
+  <p class="meta empty">{t(makes ? 'collections.yours.none' : 'collections.yours.noneToMake')}</p>
 {:else}
   <Grid fill>
     {#each yours as collection (collection.id)}

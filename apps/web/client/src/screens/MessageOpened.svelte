@@ -9,18 +9,20 @@
   /**
    * A Message opened, in the Message Centre or in context (FR-CV-09): the Message with its replies, and what
    * it asks of the User. A Question, Remark or Signal takes a reply; a Request that waits takes the decision
-   * of the Data Team, Refuse needing a reason, while its author sees that it waits (FR-CV-08, Request decision).
+   * of the Data Team, from a User who may decide on Requests (`requests.decide`), Refuse needing a reason, while its
+   * author sees that it waits (FR-CV-08, Request decision, FR-PL-14).
    */
   let {
     message,
     client,
-    dataTeam,
+    decides,
     decideLens,
     onchanged,
   }: {
     message: Conversation;
     client: MessagesClient;
-    dataTeam: boolean;
+    /** The User may decide on a Request (`requests.decide`). */
+    decides: boolean;
     /** Decides on a Request on a Lens, in query, which changes the Lens with it (FR-LE-09). */
     decideLens: (lensId: string, outcome: 'accepted' | 'refused', text: string) => Promise<void>;
     /** The Message as it is after a reply or a decision. */
@@ -29,7 +31,8 @@
 
   const language = $derived(currentLanguage());
   const kindName = $derived(SUBJECT_TITLES[message.subject.kind]);
-  const repliable = $derived(['question', 'remark', 'signal'].includes(message.kind));
+  /** A reply, where the User may reply (`messages.reply`, DEC-PL-04). */
+  const repliable = $derived(['question', 'remark', 'signal'].includes(message.kind) && message.mayReply !== false);
   const waiting = $derived(message.kind === 'request' && message.state === 'waiting');
   /** The labels of Accept and Refuse, from the Message Catalogue (FR-CV-13). */
   const label = (english: string) => buttonsOf(message.type).find((button) => button.label.en === english)?.label[language] ?? english;
@@ -108,7 +111,7 @@
       }
     }}
   />
-{:else if waiting && dataTeam}
+{:else if waiting && decides}
   <div class="decision">
     <label class="label" for="reason-{message.id}">{t('messages.decision')}</label>
     <textarea

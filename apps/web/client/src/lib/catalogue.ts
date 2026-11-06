@@ -103,7 +103,20 @@ export interface ResourceDetail extends Resource {
   changes: { field: string; change: 'added' | 'removed' | 'retyped'; old: string | null; new: string | null; at: string }[];
   /** The descriptions from dbt that changed in the last 30 days, with the text before; no field for the table (FR-RC-17). */
   descriptionChanges: { field: string | null; before: string; at: string }[];
+  /**
+   * What the User may do with it, as catalogue says from their Permissions and its Owner Unit (TR-PL-06): describe
+   * any attribute, each attribute (DEC-PL-03), publish it as its Owner (DEC-PL-06), deprecate it, and the work of a
+   * Data Admin. Left out by an older catalogue, when the page falls back on whether the User manages its Collection.
+   */
+  canEdit?: boolean;
+  canDescribe?: Readonly<Record<DescribeAttribute, boolean>>;
+  canPublish?: boolean;
+  canDeprecate?: boolean;
+  canAssign?: boolean;
 }
+
+/** The attributes of a Resource that are described one by one (DEC-PL-03). */
+export type DescribeAttribute = 'description' | 'behaviour' | 'pitfalls' | 'availableSince' | 'gaps' | 'keyFields' | 'entityMapping';
 
 /** A mapping of a Resource with the other Resources the User sees that carry the same identity (FR-RC-09). */
 export interface Related extends Pick<Mapping, 'field' | 'kind' | 'relationType' | 'identity' | 'inDomainModel'> {
@@ -191,7 +204,10 @@ export interface Collection {
   visibility: 'private' | 'public';
   createdAt: string;
   createdBy: string;
+  /** The User may change it (`collections.manage`, within its reach). */
   canManage: boolean;
+  /** Its Owner Unit is one of the groups of the User; left out by an older catalogue. */
+  owned?: boolean;
   resources: CollectionItem[];
   /** Its folders, by name (FR-CO-38). */
   folders: Folder[];
