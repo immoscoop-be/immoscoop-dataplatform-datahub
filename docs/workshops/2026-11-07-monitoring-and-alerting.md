@@ -12,7 +12,7 @@
 
 *It builds on the requirements of the [workshop of 2026-10-22](2026-10-22-data-agents-and-governance.md) (REQ-DH-META, REQ-DH-OWNERS, REQ-DH-NOTIFY-\*, REQ-DH-SQLLOG, REQ-DH-DOCS). Each item is translated faithfully, followed by the requirements it became. Where the review of 2026-11-07 changed an item, that is said under it; nothing is silently fixed.*
 
-*Two words of the brainstorm became other terms, because Data Hub already uses them ([definitions](../definitions.md)): "signaal", for a rule that fires, became **Finding**, as a Signal is a Message from a User that data seems wrong ([DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08)); "bereik", who hears it, became **Escalation**, as "bereik" is the range of a Pre-flight in the Dutch texts of the app ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)). The translation below keeps "signal" and "reach" in lower case, as the brainstorm wrote them.*
+*Two words of the brainstorm became other terms, because Data Hub already uses them ([definitions](../definitions.md)): "signaal", for a rule that fires, became **Finding**, as a Signal is a Message from a User that data seems wrong ([DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08)); "bereik", who hears it, became the **Actions** of a Rule, as "bereik" is the range of a Pre-flight in the Dutch texts of the app ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)). The review of the screens, the same day, changed the chain of the brainstorm: what it called the segments became a **Breakdown**, of which a Monitor can have several, each with its own Metrics, Rules and Actions ([DEC-CM-03](../requirements/functional/08-checks-and-monitoring.md#dec-cm-03)). The translation below keeps "signal" and "reach" in lower case, as the brainstorm wrote them.*
 
 Context: on the maturity ladder, Explored (EDA) comes before Monitored. Monitoring therefore always assumes an EDA on the Resource. These requirements describe what "Monitored" concretely asks of Data Hub.
 
@@ -32,7 +32,7 @@ Context: on the maturity ladder, Explored (EDA) comes before Monitored. Monitori
 12. **A signal is not negative by definition.** Monitoring is "tell me when this happens"; whether that is good or bad news, the owner decides through a tone on the rule. Only quarantine is a problem in itself. In the glossary: *signal* for the general case, *alert* only for the tone "attention".
 13. Monitoring serves two aims at once: **guarding the data** and **following the running business** through the data (for example "which estate agents grow strongly"). A strong owner does both with the same machinery.
 
-**Recorded as:** [DEC-CM-01](../requirements/functional/08-checks-and-monitoring.md#dec-cm-01) (1), [DEC-CM-02](../requirements/functional/08-checks-and-monitoring.md#dec-cm-02) (2), [DEC-CM-03](../requirements/functional/08-checks-and-monitoring.md#dec-cm-03) (3), [DEC-CM-04](../requirements/functional/08-checks-and-monitoring.md#dec-cm-04) (4), [DEC-CM-05](../requirements/functional/08-checks-and-monitoring.md#dec-cm-05) (5, 7), [DEC-CM-06](../requirements/functional/08-checks-and-monitoring.md#dec-cm-06) (6), [DEC-CM-07](../requirements/functional/08-checks-and-monitoring.md#dec-cm-07) (8, 11), [DEC-CM-21](../requirements/functional/08-checks-and-monitoring.md#dec-cm-21) (9), [DEC-CM-20](../requirements/functional/08-checks-and-monitoring.md#dec-cm-20) (10), [DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08) (12, with the term Finding instead of signal), [DEC-CM-22](../requirements/functional/08-checks-and-monitoring.md#dec-cm-22) (13).
+**Recorded as:** [DEC-CM-01](../requirements/functional/08-checks-and-monitoring.md#dec-cm-01) (1), [DEC-CM-02](../requirements/functional/08-checks-and-monitoring.md#dec-cm-02) (2), [DEC-CM-03](../requirements/functional/08-checks-and-monitoring.md#dec-cm-03) (3, changed in the review of the screens), [DEC-CM-04](../requirements/functional/08-checks-and-monitoring.md#dec-cm-04) (4, one query per Breakdown), [DEC-CM-05](../requirements/functional/08-checks-and-monitoring.md#dec-cm-05) (5, 7), [DEC-CM-06](../requirements/functional/08-checks-and-monitoring.md#dec-cm-06) (6), [DEC-CM-07](../requirements/functional/08-checks-and-monitoring.md#dec-cm-07) (8, 11), [DEC-CM-21](../requirements/functional/08-checks-and-monitoring.md#dec-cm-21) (9), [DEC-CM-20](../requirements/functional/08-checks-and-monitoring.md#dec-cm-20) (10), [DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08) (12, with the term Finding instead of signal), [DEC-CM-22](../requirements/functional/08-checks-and-monitoring.md#dec-cm-22) (13).
 
 ## 1. Pipeline freshness and run status
 
@@ -62,7 +62,7 @@ A monitor is built in this order:
 3. **Metrics**: per field, the aggregates that are computed (see REQ-DH-MON-METRIC).
 4. **Rules**: conditions on metrics that give a warning or an alert (see REQ-DH-MON-RULE).
 
-**Recorded as:** [FR-CM-03](../requirements/functional/08-checks-and-monitoring.md#fr-cm-03). "Later also a Lens" was decided against in the review: there are never monitors on Lenses ([DEC-CM-02](../requirements/functional/08-checks-and-monitoring.md#dec-cm-02)).
+**Recorded as:** [FR-CM-03](../requirements/functional/08-checks-and-monitoring.md#fr-cm-03). Changed in the review of the screens, by Max: a Monitor has one or more Breakdowns, each a time column, a bucket and its segments; a Breakdown has one or more Metrics, a Metric one or more Rules, and a Rule one or more Actions ([DEC-CM-03](../requirements/functional/08-checks-and-monitoring.md#dec-cm-03)). "Later also a Lens" was decided against in the review: there are never monitors on Lenses ([DEC-CM-02](../requirements/functional/08-checks-and-monitoring.md#dec-cm-02)).
 
 <a id="req-dh-mon-agg"></a>
 ### REQ-DH-MON-AGG · One aggregation query per monitor
@@ -71,7 +71,7 @@ The monitor runs one aggregation query on the Resource, grouped by the segment d
 
 Consequence: one monitor feeds several business follow-ups at once (for example the average asking price, the average price per m² and the volume from the same listings monitor). The aggregate table is itself a legitimate asset that can be shown as a Lens or a semgraph.
 
-**Recorded as:** [FR-CM-04](../requirements/functional/08-checks-and-monitoring.md#fr-cm-04); its cost is kept in the free range ([FR-CM-33](../requirements/functional/08-checks-and-monitoring.md#fr-cm-33)), and the aggregate table becomes a Resource of its own ([FR-CM-37](../requirements/functional/08-checks-and-monitoring.md#fr-cm-37)), both decided in the review.
+**Recorded as:** [FR-CM-04](../requirements/functional/08-checks-and-monitoring.md#fr-cm-04), one query per Breakdown since the review of the screens; a run reads only what is new, after one backfill ([FR-CM-39](../requirements/functional/08-checks-and-monitoring.md#fr-cm-39)); its cost is kept in the free range ([FR-CM-33](../requirements/functional/08-checks-and-monitoring.md#fr-cm-33)), and the aggregate table becomes a Resource of its own ([FR-CM-37](../requirements/functional/08-checks-and-monitoring.md#fr-cm-37)), both decided in the review.
 
 <a id="req-dh-mon-metric"></a>
 ### REQ-DH-MON-METRIC · Metrics in layers
@@ -100,7 +100,7 @@ The classic data quality checks are not built as types of their own but as a met
 - reconciliation → the difference between two totals (for example credit leads in BigQuery compared with the KBC export);
 - custom SQL assertion → a number the Data Team defines, then evaluated like any other metric.
 
-**Recorded as:** [FR-CM-06](../requirements/functional/08-checks-and-monitoring.md#fr-cm-06), without referential integrity and reconciliation: both read a second Resource, so they cannot come from the one aggregation query. They compare Metrics of two Monitors and come after the first version ([DEC-CM-17](../requirements/functional/08-checks-and-monitoring.md#dec-cm-17), [FR-CM-35](../requirements/functional/08-checks-and-monitoring.md#fr-cm-35), [FR-CM-36](../requirements/functional/08-checks-and-monitoring.md#fr-cm-36)). Raised in the review: REQ-DH-MON-RECON names reconciliation as the only check that needs a second monitor, while referential integrity needs one too.
+**Recorded as:** [FR-CM-06](../requirements/functional/08-checks-and-monitoring.md#fr-cm-06), without referential integrity and reconciliation: both read a second Resource, so they cannot come from the aggregation query of a Breakdown. They compare Metrics of two Monitors and come after the first version ([DEC-CM-17](../requirements/functional/08-checks-and-monitoring.md#dec-cm-17), [FR-CM-35](../requirements/functional/08-checks-and-monitoring.md#fr-cm-35), [FR-CM-36](../requirements/functional/08-checks-and-monitoring.md#fr-cm-36)). Raised in the review: REQ-DH-MON-RECON names reconciliation as the only check that needs a second monitor, while referential integrity needs one too.
 
 <a id="req-dh-mon-segment"></a>
 ### REQ-DH-MON-SEGMENT · Segmentation as a general feature, rules hold per segment value
@@ -144,7 +144,7 @@ Shared settings per rule: scope (all or specific segment values), reach, tone, a
 
 Later: changepoint detection (a sudden shift in level) and seasonal baselines.
 
-**Recorded as:** [FR-CM-12](../requirements/functional/08-checks-and-monitoring.md#fr-cm-12), with reach as Escalation; the first version has three of the comparisons ([DEC-CM-14](../requirements/functional/08-checks-and-monitoring.md#dec-cm-14)); changepoint and seasonal baselines are [FR-CM-38](../requirements/functional/08-checks-and-monitoring.md#fr-cm-38).
+**Recorded as:** [FR-CM-12](../requirements/functional/08-checks-and-monitoring.md#fr-cm-12), with reach as the Actions of a Rule; the first version has three of the comparisons ([DEC-CM-14](../requirements/functional/08-checks-and-monitoring.md#dec-cm-14)); changepoint and seasonal baselines are [FR-CM-38](../requirements/functional/08-checks-and-monitoring.md#fr-cm-38).
 
 <a id="req-dh-mon-tone"></a>
 ### REQ-DH-MON-TONE · Reach and tone are two separate settings
@@ -156,7 +156,7 @@ What was called "severity" before splits in two:
 
 The same rule (estate agents growing more than 20%) can be labelled an opportunity by a sales owner and attention by a capacity owner; the machinery is the same, the meaning lies with the person.
 
-**Recorded as:** [FR-CM-13](../requirements/functional/08-checks-and-monitoring.md#fr-cm-13), with reach as Escalation ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)) and the Tone ([DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08)).
+**Recorded as:** [FR-CM-13](../requirements/functional/08-checks-and-monitoring.md#fr-cm-13), with reach as the Actions of a Rule ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)) and the Tone ([DEC-CM-08](../requirements/functional/08-checks-and-monitoring.md#dec-cm-08)).
 
 <a id="req-dh-mon-list"></a>
 ### REQ-DH-MON-LIST · A rule can give a list, not only a signal
@@ -249,7 +249,7 @@ On a metric, an owner draws three thresholds that bound four zones of **reach**,
 
 The first three zones carry the tone of the rule (REQ-DH-MON-TONE) and can have a scope (all or specific segment values). Quarantine has no scope and is always a problem.
 
-**Recorded as:** [FR-CM-24](../requirements/functional/08-checks-and-monitoring.md#fr-cm-24), as the Escalation of a Rule ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)).
+**Recorded as:** [FR-CM-24](../requirements/functional/08-checks-and-monitoring.md#fr-cm-24): since the review of the screens, the levels of the ladder are several Rules on one Metric, each with Actions that reach further ([DEC-CM-09](../requirements/functional/08-checks-and-monitoring.md#dec-cm-09)).
 
 <a id="req-dh-mon-quarantine"></a>
 ### REQ-DH-MON-QUARANTINE · Quarantine is always the whole Resource

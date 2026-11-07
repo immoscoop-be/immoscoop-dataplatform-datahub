@@ -1892,3 +1892,27 @@ html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .
 @media (max-width: 1100px) { .rule-layout { grid-template-columns: minmax(0, 1fr); } }
 .mon-nav .mc-filter > span:not(.count):not(.tone-dot) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mon-nav .mc-filter .count i { font-size: 13px; }
+/* Monitoring: the chain Breakdown, Metric, Rule, Action (OP-UX-68) */
+.rule-group { font-size: var(--text-meta); color: var(--text-muted); padding: 10px 12px 2px; }
+.rule-group:first-child { padding-top: 0; }
+.rule-item.sub { margin-left: 10px; }
+.ladder-row.this { background: var(--surface-solid); outline: 1.5px solid var(--text-muted); outline-offset: -1.5px; }
+.ladder-row .acts { color: var(--text-secondary); }
+.act-list { display: grid; gap: 4px; margin-top: 4px; }
+.act-list .pick { padding: 9px 10px; align-items: flex-start; font-size: var(--text-small); }
+.act-list .pick:has(input:checked) { background: var(--surface-sub); }
+.act-list .pick.later { color: var(--text-muted); cursor: default; }
+.act-list .pick .meta { display: block; margin-top: 2px; line-height: 1.45; }
+.bd-block { border-radius: var(--radius-lg); padding: 14px 16px 6px; background: var(--surface-sub); }
+.bd-block + .bd-block { margin-top: 12px; }
+.bd-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 6px; }
+.bd-head h3 { margin: 0; font-size: var(--text-body); font-weight: var(--weight-medium); }
+.bd-facts { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--text-meta); color: var(--text-muted); flex: 1; }
+.bd-facts span { display: inline-flex; align-items: center; gap: 4px; }
+.metric-table tr.rule-row td { padding-top: 6px; padding-bottom: 6px; border-bottom: 0; }
+.metric-table tr.rule-row.last td { padding-bottom: 10px; border-bottom: 1px solid var(--tint-hover); }
+.metric-table tr.rule-row td:first-child { padding-left: 30px; position: relative; }
+.metric-table tr.rule-row td:first-child::before { content: ''; position: absolute; left: 14px; top: 0; bottom: 50%; width: 9px; border-left: 1px solid var(--tint-active); border-bottom: 1px solid var(--tint-active); border-bottom-left-radius: 4px; }
+.metric-table tr.has-rules td { border-bottom: 0; }
+.rule-item .meta { display: flex; flex-wrap: wrap; align-items: center; row-gap: 4px; }
+.rule-item .meta > span { white-space: nowrap; }

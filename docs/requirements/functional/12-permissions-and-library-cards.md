@@ -191,7 +191,7 @@ Who sees a Lens runs it, with its Parameters, on its page, in Claude and in Exce
 
 | Key | Permission: what it allows | Values | Today | Admin | Business analyst | Lens user |
 | --- | --- | --- | --- | --- | --- | --- |
-| `monitors.manage` | Build and change the Monitor of a Resource: its Segments, Metrics from the templates, Rules and schedule; mark its Findings useful or noise | Which (choice): those of their Owner Units, or every Resource | Nobody: Monitors are new | every | their Owner Units | no |
+| `monitors.manage` | Build and change the Monitor of a Resource: its Breakdowns and their schedule, Metrics from the templates, Rules and Actions; mark its Findings useful or noise | Which (choice): those of their Owner Units, or every Resource | Nobody: Monitors are new | every | their Owner Units | no |
 | `monitors.sql` | Add a SQL Metric to a Monitor ([FR-CM-05](08-checks-and-monitoring.md#fr-cm-05)) | – | Nobody: Monitors are new | yes | no | no |
 
 ### Messages

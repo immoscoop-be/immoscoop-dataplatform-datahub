@@ -21,11 +21,13 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | Defined Term | Meaning | Defined in |
 | --- | --- | --- |
 | <a id="access-token"></a>**Access Token** | The short-lived signed token that identity issues to a User after login, carrying the identity, Groups and roles of the User. Every service validates it itself. | [TR-PF-02](requirements/technical/00-platform.md#tr-pf-02), [TR-PF-03](requirements/technical/00-platform.md#tr-pf-03) |
-| <a id="aggregate-table"></a>**Aggregate Table** | The result of the one aggregation query of a Monitor: one row per Segment value per bucket, with the level above and the total. Every Metric and Rule of the Monitor works on it, and it is a Resource of its own. | [FR-CM-04](requirements/functional/08-checks-and-monitoring.md#fr-cm-04), [DEC-CM-18](requirements/functional/08-checks-and-monitoring.md#dec-cm-18) |
+| <a id="action"></a>**Action** | What happens when a Rule fires, besides its Finding in the Log: tell the Owner, tell the Consumers, gather it in a digest, or Quarantine. A Rule has one or more, and all of them happen; who hears a Finding and how far it goes. | [DEC-CM-09](requirements/functional/08-checks-and-monitoring.md#dec-cm-09), [FR-CM-13](requirements/functional/08-checks-and-monitoring.md#fr-cm-13) |
+| <a id="aggregate-table"></a>**Aggregate Table** | The result of the aggregation query of a Breakdown: one row per Segment value per bucket, with the level above and the total. Every Metric and Rule of the Breakdown works on it, and it is a Resource of its own. | [FR-CM-04](requirements/functional/08-checks-and-monitoring.md#fr-cm-04), [DEC-CM-18](requirements/functional/08-checks-and-monitoring.md#dec-cm-18) |
 | <a id="anomaly"></a>**Anomaly** | A recorded deviation in the data of a Resource, with a period, a description of what happened, the impact on the figures and who recorded it. Part of the Known Behaviour; a Signal can become one. | [DEC-DH-18](overview/data-hub.md#dec-dh-18), [FR-SR-30](requirements/functional/04-stacks-and-resources.md#fr-sr-30) |
 | <a id="artifact-set"></a>**Artifact Set** | The Artifacts of one successful run of a Source Job, with run ID, git SHA and timestamp. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="artifacts"></a>**Artifacts** | `manifest.json` and `catalog.json`, the files dbt produces about a dbt project. Not to be confused with GCP's Artifact Registry, which holds the Docker images. | [The dbt Artifacts](overview/data-hub.md#the-dbt-artifacts) |
 | <a id="beta-concept"></a>**Beta Concept** | A concept that business defines itself, such as buy session. It lives only in its own context in Data Hub and is at Level 0, Beta; whatever is built on it is Beta too. In Data Hub it is a Lens or a query, shared as one ([DEC-DH-70](overview/open-themes.md#dec-dh-70)). | [DEC-DH-61](overview/open-themes.md#dec-dh-61) |
+| <a id="breakdown"></a>**Breakdown** | One way a Monitor cuts its Resource: a time column, the size of a bucket and up to three Segments, such as daily by partner. It is one aggregation query on a schedule, with its own Aggregate Table, and holds Metrics. A Monitor has one or more. | [DEC-CM-03](requirements/functional/08-checks-and-monitoring.md#dec-cm-03), [FR-CM-03](requirements/functional/08-checks-and-monitoring.md#fr-cm-03) |
 | <a id="broken"></a>**Broken** | The state of a Lens, Report, feed or query that reads a Resource or a column that no longer exists. It cannot run, it carries a red dot wherever it is listed, and its Owner gets a Message; it works again by itself once everything it reads exists again. | [DEC-DH-67](overview/data-hub.md#dec-dh-67) |
 | <a id="business-description"></a>**Business Description** | The description of a Resource, or of one of its fields, that its Owner or the Data Team writes in Data Hub. It stands next to the description from dbt and never replaces it; where there is none, the description from dbt stands alone. | [DEC-RC-01](requirements/functional/05-resource-card.md#dec-rc-01) |
 | <a id="catalogue"></a>**Catalogue** | Everything Data Hub offers to find and browse, layered from Resources through Lenses to Reports. Not to be confused with the catalogue service or with dbt's catalog. | [1. Catalogue management](overview/open-themes.md#1-catalogue-management) |
@@ -43,7 +45,6 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="eda"></a>**EDA** | Exploratory data analysis: the exploration of a Resource by its Owner. A linked EDA document makes a Resource Explored. | [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03), [EDA](requirements/functional/15-eda.md) |
 | <a id="edge"></a>**Edge** | A link in the lineage: one Node depends on another. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="entity"></a>**Entity** | An entity of the Domain Model, such as an agency or an office. A Resource is linked to the Entities found in its lineage. | [FR-SR-23](requirements/functional/04-stacks-and-resources.md#fr-sr-23) |
-| <a id="escalation"></a>**Escalation** | Who hears a Finding, and how far it goes: within bounds, Owner, Owner and Consumers, or Quarantine; drawn as three thresholds on one Metric. Apart from its Tone. Not the range of a Pre-flight. | [DEC-CM-09](requirements/functional/08-checks-and-monitoring.md#dec-cm-09), [FR-CM-24](requirements/functional/08-checks-and-monitoring.md#fr-cm-24) |
 | <a id="excel-key"></a>**Excel key** | The personal key with which Excel signs in to Data Hub through Power Query, in the name of its User. A User makes one on My page and sees it once; it lasts a year and can be revoked. Formerly called Library Card. | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
 | <a id="finding"></a>**Finding** | What a Rule gives when it fires: for one Segment value, or a list of them, in the Tone of the Rule. Not bad news by definition; not a Signal, which a User raises. | [DEC-CM-08](requirements/functional/08-checks-and-monitoring.md#dec-cm-08) |
 | <a id="fingerprint"></a>**Fingerprint** | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment, plus the checksum of its code. | [FR-SR-08](requirements/functional/04-stacks-and-resources.md#fr-sr-08) |
@@ -66,8 +67,8 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="message-catalogue"></a>**Message Catalogue** | The list of every type of Message, part of the source code: who sends it to whom and when, its texts, plain and laid out, in Dutch and English, the Learning Card that explains it and what it asks of whoever receives it. Its page in docs is generated from it. | [DEC-CV-07](requirements/functional/14-conversations.md#dec-cv-07), [Message catalogue](requirements/functional/message-catalogue.md) |
 | <a id="message-id"></a>**Message ID** | The fixed code of a type of Message in the Message Catalogue, such as `MSG-RES-02`. Not a requirement ID or a Log ID. | [FR-CV-10](requirements/functional/14-conversations.md#fr-cv-10) |
 | <a id="message-centre"></a>**Message Centre** | Where a User finds the Messages that concern them and what Data Hub tells them, for example the Data Admins on every Registration. | [FR-SR-10](requirements/functional/04-stacks-and-resources.md#fr-sr-10) |
-| <a id="metric"></a>**Metric** | A number a Monitor computes per Segment value per bucket: a base Metric from its aggregation query, such as a count or a null rate, or a derived Metric computed from those, such as a ratio or a z-score. | [FR-CM-05](requirements/functional/08-checks-and-monitoring.md#fr-cm-05) |
-| <a id="monitor"></a>**Monitor** | What Data Hub watches on one Resource, set up by its Owner: its Segments, Metrics and Rules, its schedule and its Aggregate Table. A Resource has one Monitor; a Lens has none. | [DEC-CM-02](requirements/functional/08-checks-and-monitoring.md#dec-cm-02), [FR-CM-03](requirements/functional/08-checks-and-monitoring.md#fr-cm-03) |
+| <a id="metric"></a>**Metric** | A number a Breakdown computes per Segment value per bucket: a base Metric from its aggregation query, such as a count or a null rate, or a derived Metric computed from those, such as a ratio or a z-score. It holds the Rules on it, or none, to look at. | [FR-CM-05](requirements/functional/08-checks-and-monitoring.md#fr-cm-05) |
+| <a id="monitor"></a>**Monitor** | What Data Hub watches on one Resource, set up by its Owner: its Breakdowns, with their Metrics, Rules and Actions. A Resource has one Monitor; a Lens has none. | [DEC-CM-02](requirements/functional/08-checks-and-monitoring.md#dec-cm-02), [DEC-CM-03](requirements/functional/08-checks-and-monitoring.md#dec-cm-03) |
 | <a id="naming-convention"></a>**Naming Convention** | The rule for the names of Role Groups: `datahub-<role>@<domain>`. An Owner Unit needs no convention. | [User management](requirements/functional/02-user-management.md#naming-convention) |
 | <a id="node"></a>**Node** | A model, seed, snapshot, source or exposure in the manifest of a dbt project, with its columns. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="operational-status"></a>**Operational Status** | Whether a Monitored Resource can be trusted now: healthy, a Finding in its Tone, or Quarantine. An axis of its own, next to the Level, which it never lowers. | [DEC-CM-11](requirements/functional/08-checks-and-monitoring.md#dec-cm-11), [FR-CM-26](requirements/functional/08-checks-and-monitoring.md#fr-cm-26) |
@@ -79,7 +80,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="pre-flight"></a>**Pre-flight** | What Data Hub shows before a query runs: the volume it will process, against the thresholds for approval and for a block. | [FR-SR-36](requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](requirements/functional/04-stacks-and-resources.md#fr-sr-37) |
 | <a id="promotion-loop"></a>**Promotion Loop** | Hardening a Beta Concept into a Resource, with the beta query as its specification. | [The promotion loop](overview/open-themes.md#3-the-promotion-loop) |
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
-| <a id="quarantine"></a>**Quarantine** | The highest Escalation: the whole Resource is no longer served until its Owner lifts it. | [DEC-CM-10](requirements/functional/08-checks-and-monitoring.md#dec-cm-10), [FR-CM-25](requirements/functional/08-checks-and-monitoring.md#fr-cm-25) |
+| <a id="quarantine"></a>**Quarantine** | The Action that reaches furthest: the whole Resource is no longer served until its Owner lifts it. | [DEC-CM-10](requirements/functional/08-checks-and-monitoring.md#dec-cm-10), [FR-CM-25](requirements/functional/08-checks-and-monitoring.md#fr-cm-25) |
 | <a id="query-id"></a>**Query ID**, <a id="query-log"></a>**Query Log** | The Query Log keeps every query Data Hub executes, with a unique Query ID, the SQL, who ran it, when, the bytes processed and the Resources beneath it. Every output carries the Query ID of its query. Not the Log of a Resource. | [FR-LN-05](requirements/functional/07-log-and-notifications.md#fr-ln-05), [FR-LN-06](requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | <a id="reaction"></a>**Reaction** | A Question, Remark or Signal that someone who may see a Resource leaves on it. | [DEC-SR-20](requirements/functional/04-stacks-and-resources.md#dec-sr-20) |
 | <a id="reading-card"></a>**Reading Card** | A Learning Card that explains how to read one standard chart of the chart language, and the trap it avoids. Every standard chart links to its Reading Card. | [FR-LR-10](requirements/functional/16-learning.md#fr-lr-10) |
@@ -93,9 +94,9 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="resource"></a>**Resource** | A registered table of a dbt project: one book on the shelves. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="resource-card"></a>**Resource Card** | Everything Data Hub knows about one Resource, partly derived and partly kept by Data Hub itself. | [The Resource Card](overview/data-hub.md#the-resource-card) |
 | <a id="role-group"></a>**Role Group** | A Group that gives its members a role in Data Hub, such as `datahub-datateam@` for the Data Team. Once Permission groups are built, it gives none ([FR-PL-15](requirements/functional/12-permissions-and-library-cards.md#fr-pl-15)). | [User management](requirements/functional/02-user-management.md#naming-convention) |
-| <a id="rule"></a>**Rule** | A condition on a Metric that gives a Finding: a comparison, a threshold, an Escalation and a Tone, written once and evaluated for every Segment value. A Resource is Monitored with at least one active Rule. | [FR-CM-12](requirements/functional/08-checks-and-monitoring.md#fr-cm-12), [DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12) |
+| <a id="rule"></a>**Rule** | A condition on one Metric that gives a Finding: a comparison and a threshold, with a Tone and one or more Actions, written once and evaluated for every Segment value. A Resource is Monitored with at least one active Rule. | [FR-CM-12](requirements/functional/08-checks-and-monitoring.md#fr-cm-12), [DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12) |
 | <a id="run-status"></a>**Run Status** | Whether the last run of a job that builds a Resource succeeded, failed or skipped it, as dbt Cloud reports it, with the model that broke. | [FR-CM-01](requirements/functional/08-checks-and-monitoring.md#fr-cm-01) |
-| <a id="segment"></a>**Segment** | A dimension a Monitor cuts its Resource along, such as partner or region; every Metric and Rule of the Monitor holds per value of it. | [FR-CM-07](requirements/functional/08-checks-and-monitoring.md#fr-cm-07) |
+| <a id="segment"></a>**Segment** | A dimension a Breakdown cuts its Resource along, such as partner or region; every Metric and Rule of the Breakdown holds per value of it. | [FR-CM-07](requirements/functional/08-checks-and-monitoring.md#fr-cm-07) |
 | <a id="signal"></a>**Signal** | A Reaction reporting that something seems odd about the data of a Resource. It goes to the Owner and the Data Team, and can become an Anomaly. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="source-job"></a>**Source Job** | The one job in dbt Cloud, per dbt project and environment, whose Artifacts Data Hub uses: the merge build, which builds the project after a merge and also runs `dbt docs generate`. uat of Data Hub reads the merge builds of uat ([DEC-AR-09](requirements/functional/01-artifact-registry.md#dec-ar-09)). | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="stability"></a>**Stability** | Whether the data of a Resource is still settling or can change by nature, and from when it is final, for example "stable = D-3". The final term is still open. | [FR-RC-06](requirements/functional/05-resource-card.md#fr-rc-06), [OP-RC-04](requirements/functional/05-resource-card.md#op-rc-04) |
@@ -137,12 +138,13 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | aanwinstenregister | accession register |
 | access-as | access axis |
 | afgeleide metriek, basismetriek | derived Metric, base Metric |
+| actie (van een regel) | Action |
 | aggregaattabel | Aggregate Table |
 | begrip, beta-begrip | concept, Beta Concept |
 | bekend gedrag | Known Behaviour |
 | bekende hiaten | Known Gaps |
 | bekrachtigen, bekrachtiging | confirm, Confirmation |
-| bereik (van een regel), escalatie, escalatieladder | Escalation |
+| bereik (van een regel), escalatie | the Actions of a Rule |
 | Beschikbaar, Beschreven, Bekrachtigd, Verkend, Bewaakt | Available, Described, Confirmed, Explored, Monitored |
 | bericht | Message |
 | berichtencentrum | Message Centre |
@@ -164,6 +166,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | denkniveau: herkennen, toepassen, beoordelen | thinking level: recognise, apply, judge |
 | doe-opdracht, doe-vraag | try-it task, try-it question |
 | domeinmodel | Domain Model |
+| escalatieladder | ladder (several Rules on one Metric) |
 | fiche, catalogusfiche | Resource Card, catalogue card |
 | functionele regel | functional requirement |
 | Gebruikersbeheer | User management |
@@ -237,6 +240,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | toon | Tone |
 | uit te diepen | to be worked out |
 | uitschuifpaneel | slide-out panel |
+| uitsplitsing | Breakdown |
 | vergrootglas | magnifying glass |
 | verhaal | story |
 | verharden | harden |
