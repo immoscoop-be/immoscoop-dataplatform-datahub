@@ -1112,3 +1112,15 @@ document.querySelectorAll('.q-filter-toggle').forEach((toggle) => {
   if (new URLSearchParams(location.search).get('filter') === 'open') fold(true);
   toggle.addEventListener('click', () => fold(form.hidden));
 });
+
+// Monitoring (a proposal): a Finding is marked useful or noise, one of the two (FR-CM-17); a second click takes it back
+document.querySelectorAll('.finding-acts, .fb-pair').forEach(pair => {
+  const marks = pair.querySelectorAll('.fb');
+  marks.forEach(b => b.addEventListener('click', () => {
+    const on = !b.classList.contains('on');
+    marks.forEach(x => { x.classList.remove('on'); x.setAttribute('aria-pressed', 'false'); });
+    if (on) { b.classList.add('on'); b.setAttribute('aria-pressed', 'true'); }
+  }));
+});
+// Building a Monitor: a template of a Metric or a window is ticked on or off (FR-CM-05)
+document.querySelectorAll('.metric-table .agg').forEach(a => { a.setAttribute('role', 'button'); a.tabIndex = 0; a.addEventListener('click', () => a.classList.toggle('on')); });

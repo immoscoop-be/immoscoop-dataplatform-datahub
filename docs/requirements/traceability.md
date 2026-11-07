@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 193 | 62 (10 open, 52 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 193 | 67 (15 open, 52 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -199,7 +199,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-03](functional/05-resource-card.md#fr-rc-03) | The control figures behind a Confirmation | Withdrawn | – | – | – | – |
 | [FR-RC-04](functional/05-resource-card.md#fr-rc-04) | Known Gaps | Implemented | – | [resource-detail](../design/screens/resource-detail.html), [resource-edit](../design/screens/resource-edit.html) | [TR-SR-25](technical/04-stacks-and-resources.md#tr-sr-25) | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-05](functional/05-resource-card.md#fr-rc-05) | A log of changes and Anomalies, for people and for Claude | Proposed | – | [resource-detail](../design/screens/resource-detail.html) | – | – |
-| [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
+| [FR-RC-06](functional/05-resource-card.md#fr-rc-06) | Stability | Proposed | – | – | – | [85c95c7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/85c95c718cd0c1b6961e7ecc54e797609c76f266) refs, 2026-11-07<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-07](functional/05-resource-card.md#fr-rc-07) | The Level on the Resource Card | Implemented | – | [resource-detail](../design/screens/resource-detail.html) | – | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28 |
 | [FR-RC-08](functional/05-resource-card.md#fr-rc-08) | Relationships through an Entity and an identifier | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html), [resource-detail](../design/screens/resource-detail.html) | – | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-09](functional/05-resource-card.md#fr-rc-09) | A new Resource is linked through its Entity | Implemented | – | [collection-add-relations](../design/screens/collection-add-relations.html), [resource-detail](../design/screens/resource-detail.html) | – | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28 |
@@ -207,7 +207,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-RC-11](functional/05-resource-card.md#fr-rc-11) | Model type and grain | Implemented | – | [resource-detail](../design/screens/resource-detail.html), [resource-edit](../design/screens/resource-edit.html) | – | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-12](functional/05-resource-card.md#fr-rc-12) | Who published and who confirmed | Implemented | – | [resource-detail](../design/screens/resource-detail.html) | [TR-SR-12](technical/04-stacks-and-resources.md#tr-sr-12) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-13](functional/05-resource-card.md#fr-rc-13) | Since when the data is reliable | Implemented | – | [resource-detail](../design/screens/resource-detail.html), [resource-edit](../design/screens/resource-edit.html) | – | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
-| [FR-RC-14](functional/05-resource-card.md#fr-rc-14) | Checks and incidents | Specified | – | [resource-detail](../design/screens/resource-detail.html) | – | [351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
+| [FR-RC-14](functional/05-resource-card.md#fr-rc-14) | Checks and incidents | Specified | – | [resource-detail](../design/screens/resource-detail.html) | – | [85c95c7](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/85c95c718cd0c1b6961e7ecc54e797609c76f266) refs, 2026-11-07<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-15](functional/05-resource-card.md#fr-rc-15) | The Owner and the Data Team edit in place | Implemented | – | [resource-columns-edit](../design/screens/resource-columns-edit.html), [resource-detail](../design/screens/resource-detail.html), [resource-edit](../design/screens/resource-edit.html) | [TR-SR-10](technical/04-stacks-and-resources.md#tr-sr-10) | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28<br>[351bc42](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/351bc423bb4941956634e7bb9a5619cfe26b6a11) refs, 2026-10-22 |
 | [FR-RC-16](functional/05-resource-card.md#fr-rc-16) | A Business Description of every field | Implemented | – | [resource-columns-edit](../design/screens/resource-columns-edit.html), [resource-detail](../design/screens/resource-detail.html) | [TR-SR-10](technical/04-stacks-and-resources.md#tr-sr-10) | [28f5bf5](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/28f5bf544bb33ee67e7491e8de8bd93be5e6f113) implements, 2026-10-28<br>[d27a104](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/d27a10431b7f3a2d055762f520d4b137e754a03e) refs, 2026-10-28 |
 | [FR-RC-17](functional/05-resource-card.md#fr-rc-17) | A changed description in dbt is told to the Owner | Implemented | – | [messages](../design/screens/messages.html), [resource-columns-edit](../design/screens/resource-columns-edit.html) | [TR-SR-13](technical/04-stacks-and-resources.md#tr-sr-13) | [c1e99e6](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/c1e99e6e756f1185032566a11ad8bf1e127e70fd) implements, 2026-10-28<br>[66d0345](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/66d03455af6f15c9fabbcd3e3ded1d0bd4b77dea) refs, 2026-10-28 |
@@ -258,43 +258,43 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Confluence | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- | --- |
-| [FR-CM-01](functional/08-checks-and-monitoring.md#fr-cm-01) | The Run Status of a Resource, from dbt Cloud | Specified | – | – | – | – |
+| [FR-CM-01](functional/08-checks-and-monitoring.md#fr-cm-01) | The Run Status of a Resource, from dbt Cloud | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-02](functional/08-checks-and-monitoring.md#fr-cm-02) | The Owner builds the Monitor | Specified | – | – | – | – |
-| [FR-CM-03](functional/08-checks-and-monitoring.md#fr-cm-03) | A Monitor in four steps | Specified | – | – | – | – |
+| [FR-CM-03](functional/08-checks-and-monitoring.md#fr-cm-03) | A Monitor in four steps | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-04](functional/08-checks-and-monitoring.md#fr-cm-04) | One aggregation query, one Aggregate Table | Specified | – | – | – | – |
-| [FR-CM-05](functional/08-checks-and-monitoring.md#fr-cm-05) | Metrics in two layers | Specified | – | – | – | – |
+| [FR-CM-05](functional/08-checks-and-monitoring.md#fr-cm-05) | Metrics in two layers | Specified | – | [monitor](../design/screens/monitor.html), [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-06](functional/08-checks-and-monitoring.md#fr-cm-06) | The classic checks are Metrics | Specified | – | – | – | – |
-| [FR-CM-07](functional/08-checks-and-monitoring.md#fr-cm-07) | A Rule holds for every Segment value | Specified | – | – | – | – |
-| [FR-CM-08](functional/08-checks-and-monitoring.md#fr-cm-08) | A new Segment value warms up first | Specified | – | – | – | – |
-| [FR-CM-09](functional/08-checks-and-monitoring.md#fr-cm-09) | An exception for one Segment value | Specified | – | – | – | – |
-| [FR-CM-10](functional/08-checks-and-monitoring.md#fr-cm-10) | The level above and the total, in the same pass | Specified | – | – | – | – |
-| [FR-CM-11](functional/08-checks-and-monitoring.md#fr-cm-11) | No judgement before the data is stable | Specified | – | – | – | – |
-| [FR-CM-12](functional/08-checks-and-monitoring.md#fr-cm-12) | A Rule: a Metric, a comparison, a threshold, an Escalation and a Tone | Specified | – | – | – | – |
-| [FR-CM-13](functional/08-checks-and-monitoring.md#fr-cm-13) | The Escalation and the Tone, two settings | Specified | – | – | – | – |
-| [FR-CM-14](functional/08-checks-and-monitoring.md#fr-cm-14) | A Rule can give a list | Specified | – | – | – | – |
-| [FR-CM-15](functional/08-checks-and-monitoring.md#fr-cm-15) | The statistics shown and explained | Specified | – | – | – | – |
-| [FR-CM-16](functional/08-checks-and-monitoring.md#fr-cm-16) | Every Rule shows its history and its band | Specified | – | – | – | – |
-| [FR-CM-17](functional/08-checks-and-monitoring.md#fr-cm-17) | Useful or noise, for every Finding | Specified | – | – | – | – |
-| [FR-CM-18](functional/08-checks-and-monitoring.md#fr-cm-18) | The Health Overview of a Monitor | Specified | – | – | – | – |
-| [FR-CM-19](functional/08-checks-and-monitoring.md#fr-cm-19) | Every Finding in the Log | Specified | – | – | – | – |
-| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Six steps to build a Monitor | Specified | – | – | – | – |
-| [FR-CM-21](functional/08-checks-and-monitoring.md#fr-cm-21) | The Owner chooses when it evaluates | Specified | – | – | – | – |
-| [FR-CM-22](functional/08-checks-and-monitoring.md#fr-cm-22) | Starting from a proposal, not from an empty screen | Specified | – | – | – | – |
-| [FR-CM-23](functional/08-checks-and-monitoring.md#fr-cm-23) | Claude drafts a Monitor from one sentence | Specified | – | – | – | – |
-| [FR-CM-24](functional/08-checks-and-monitoring.md#fr-cm-24) | The Escalation in four zones | Specified | – | – | – | – |
+| [FR-CM-07](functional/08-checks-and-monitoring.md#fr-cm-07) | A Rule holds for every Segment value | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-08](functional/08-checks-and-monitoring.md#fr-cm-08) | A new Segment value warms up first | Specified | – | [monitoring-start](../design/screens/monitoring-start.html), [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-09](functional/08-checks-and-monitoring.md#fr-cm-09) | An exception for one Segment value | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-10](functional/08-checks-and-monitoring.md#fr-cm-10) | The level above and the total, in the same pass | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-11](functional/08-checks-and-monitoring.md#fr-cm-11) | No judgement before the data is stable | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-12](functional/08-checks-and-monitoring.md#fr-cm-12) | A Rule: a Metric, a comparison, a threshold, an Escalation and a Tone | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-13](functional/08-checks-and-monitoring.md#fr-cm-13) | The Escalation and the Tone, two settings | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-14](functional/08-checks-and-monitoring.md#fr-cm-14) | A Rule can give a list | Specified | – | [monitoring-start](../design/screens/monitoring-start.html) | – | – |
+| [FR-CM-15](functional/08-checks-and-monitoring.md#fr-cm-15) | The statistics shown and explained | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-16](functional/08-checks-and-monitoring.md#fr-cm-16) | Every Rule shows its history and its band | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-17](functional/08-checks-and-monitoring.md#fr-cm-17) | Useful or noise, for every Finding | Specified | – | [monitoring-start](../design/screens/monitoring-start.html), [monitor](../design/screens/monitor.html) | – | – |
+| [FR-CM-18](functional/08-checks-and-monitoring.md#fr-cm-18) | The Health Overview of a Monitor | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
+| [FR-CM-19](functional/08-checks-and-monitoring.md#fr-cm-19) | Every Finding in the Log | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
+| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Six steps to build a Monitor | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-21](functional/08-checks-and-monitoring.md#fr-cm-21) | The Owner chooses when it evaluates | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-22](functional/08-checks-and-monitoring.md#fr-cm-22) | Starting from a proposal, not from an empty screen | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-23](functional/08-checks-and-monitoring.md#fr-cm-23) | Claude drafts a Monitor from one sentence | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-24](functional/08-checks-and-monitoring.md#fr-cm-24) | The Escalation in four zones | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-25](functional/08-checks-and-monitoring.md#fr-cm-25) | Quarantine holds the whole Resource | Specified | – | – | – | – |
-| [FR-CM-26](functional/08-checks-and-monitoring.md#fr-cm-26) | The Operational Status of a Resource | Specified | – | – | – | – |
+| [FR-CM-26](functional/08-checks-and-monitoring.md#fr-cm-26) | The Operational Status of a Resource | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-27](functional/08-checks-and-monitoring.md#fr-cm-27) | What a Consumer sees | Specified | – | – | – | – |
-| [FR-CM-28](functional/08-checks-and-monitoring.md#fr-cm-28) | The Resource page shows the status, not the setup | Specified | – | – | – | – |
-| [FR-CM-29](functional/08-checks-and-monitoring.md#fr-cm-29) | The section Monitoring, the Owner's cockpit | Specified | – | – | – | – |
-| [FR-CM-30](functional/08-checks-and-monitoring.md#fr-cm-30) | Suggestions to the Owner | Specified | – | – | – | – |
+| [FR-CM-28](functional/08-checks-and-monitoring.md#fr-cm-28) | The Resource page shows the status, not the setup | Specified | – | [resource-overview](../design/screens/resource-overview.html) | – | – |
+| [FR-CM-29](functional/08-checks-and-monitoring.md#fr-cm-29) | The section Monitoring, the Owner's cockpit | Specified | – | [monitoring-start](../design/screens/monitoring-start.html) | – | – |
+| [FR-CM-30](functional/08-checks-and-monitoring.md#fr-cm-30) | Suggestions to the Owner | Specified | – | [monitoring-start](../design/screens/monitoring-start.html) | – | – |
 | [FR-CM-31](functional/08-checks-and-monitoring.md#fr-cm-31) | The first Monitor with the Data Team | Specified | – | – | – | – |
 | [FR-CM-32](functional/08-checks-and-monitoring.md#fr-cm-32) | Reading your own figures, in the Learning Centre | Specified | – | – | – | – |
-| [FR-CM-33](functional/08-checks-and-monitoring.md#fr-cm-33) | The aggregation query keeps to the free range | Specified | – | – | – | – |
+| [FR-CM-33](functional/08-checks-and-monitoring.md#fr-cm-33) | The aggregation query keeps to the free range | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-34](functional/08-checks-and-monitoring.md#fr-cm-34) | Notifications follow the Escalation | Specified | – | – | – | – |
 | [FR-CM-35](functional/08-checks-and-monitoring.md#fr-cm-35) | Reconciliation across two Monitors | Specified | – | – | – | – |
 | [FR-CM-36](functional/08-checks-and-monitoring.md#fr-cm-36) | Referential integrity across two Monitors | Specified | – | – | – | – |
-| [FR-CM-37](functional/08-checks-and-monitoring.md#fr-cm-37) | The Aggregate Table is a Resource | Specified | – | – | – | – |
+| [FR-CM-37](functional/08-checks-and-monitoring.md#fr-cm-37) | The Aggregate Table is a Resource | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-38](functional/08-checks-and-monitoring.md#fr-cm-38) | Changepoints and seasonal baselines | Specified | – | – | – | – |
 
 ### [Lenses](functional/09-lenses.md)
@@ -496,10 +496,10 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | ID | Title | Status | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
-| [EC-CM-01](functional/08-checks-and-monitoring.md#ec-cm-01) | A field a Metric uses disappears | Proposed | – | – | – |
+| [EC-CM-01](functional/08-checks-and-monitoring.md#ec-cm-01) | A field a Metric uses disappears | Proposed | [monitor](../design/screens/monitor.html) | – | – |
 | [EC-CM-02](functional/08-checks-and-monitoring.md#ec-cm-02) | A Segment value with too little data | Proposed | – | – | – |
 | [EC-CM-03](functional/08-checks-and-monitoring.md#ec-cm-03) | The Resource of a Monitor is withdrawn or deprecated | Proposed | – | – | – |
-| [EC-CM-04](functional/08-checks-and-monitoring.md#ec-cm-04) | The run that builds the Resource failed | Proposed | – | – | – |
+| [EC-CM-04](functional/08-checks-and-monitoring.md#ec-cm-04) | The run that builds the Resource failed | Proposed | [monitor](../design/screens/monitor.html) | – | – |
 
 ### [Permissions and Excel keys](functional/12-permissions-and-library-cards.md)
 

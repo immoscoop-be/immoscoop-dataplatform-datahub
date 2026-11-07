@@ -67,7 +67,7 @@ The Defined Terms of this domain are in the [definitions](../../definitions.md):
 <a id="fr-cm-01"></a>
 ### FR-CM-01 · The Run Status of a Resource, from dbt Cloud
 
-**Status:** Specified · **Source:** [REQ-DH-MON-RUN](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-run)
+**Status:** Specified · **Source:** [REQ-DH-MON-RUN](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-run) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 For every run of a job that builds a Resource, Data Hub keeps its outcome for that Resource: succeeded, failed with an error, or skipped because an upstream model failed ([DEC-CM-06](#dec-cm-06)). On a failure, it keeps the error message, the failing model and the run ID. Data Hub writes it in plain language in the Log of the Resource, with a link to the run in dbt Cloud for the Data Team. On "skipped", it follows the lineage upstream and names the model that actually broke, so that the Owner does not have to search for it. This changes what [FR-AR-19](01-artifact-registry.md#fr-ar-19) says of a run that did not succeed: it is no longer only ignored.
 
@@ -83,7 +83,7 @@ A User with the Permission `monitors.manage` builds and changes the Monitor of a
 <a id="fr-cm-03"></a>
 ### FR-CM-03 · A Monitor in four steps
 
-**Status:** Specified · **Source:** [REQ-DH-MON-CHAIN](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-chain)
+**Status:** Specified · **Source:** [REQ-DH-MON-CHAIN](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-chain) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 A Monitor is built in this order ([DEC-CM-03](#dec-cm-03)):
 
@@ -102,7 +102,7 @@ On its schedule, a Monitor runs one query on its Resource, grouped by its Segmen
 <a id="fr-cm-05"></a>
 ### FR-CM-05 · Metrics in two layers
 
-**Status:** Specified · **Source:** [REQ-DH-MON-METRIC](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-metric)
+**Status:** Specified · **Source:** [REQ-DH-MON-METRIC](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-metric) · **Screens:** [monitor](../../design/screens/monitor.html), [monitor-build](../../design/screens/monitor-build.html)
 
 A Metric is a base Metric, an aggregate of the query per Segment value per bucket, or a derived Metric, computed from base Metrics without reading the Resource again: composed, the ratio of two, such as leads per visitor or price per m², or windowed, a moving average over N buckets, a z-score against the rolling average and standard deviation over N buckets, or the same weekday 1 or 4 weeks earlier. An Owner builds them from templates, without SQL: count, null rate on a field, count distinct, sum, average, and the ratio of two of these ([OP-CM-03](#op-cm-03)). The Data Team adds SQL Metrics for the rest. A Metric exists without a Rule: it is visible in Data Hub and can be drawn as a chart of semgraph.
 
@@ -124,35 +124,35 @@ Referential integrity and reconciliation read a second Resource and come after t
 <a id="fr-cm-07"></a>
 ### FR-CM-07 · A Rule holds for every Segment value
 
-**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment)
+**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 Every Metric and Rule of a Monitor is computed per value of its Segments. A Rule is written once, against each value's own history, and evaluated for every value, future ones included: "the number of properties per estate agent per day may not deviate more than 2.5 standard deviations from that agent's rolling average" covers a new estate agent without the Owner changing anything ([DEC-CM-07](#dec-cm-07)). The baseline is computed within each value, so a small estate agent is not judged against a large one. A Rule can be limited to some values; by default it holds for all.
 
 <a id="fr-cm-08"></a>
 ### FR-CM-08 · A new Segment value warms up first
 
-**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment)
+**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html), [monitor-build](../../design/screens/monitor-build.html)
 
 A new Segment value is only evaluated once it has the history the Monitor asks, four weeks of buckets by default, which the Owner can change. Until then it is in warm-up, and the section Monitoring shows what is ([FR-CM-29](#fr-cm-29)).
 
 <a id="fr-cm-09"></a>
 ### FR-CM-09 · An exception for one Segment value
 
-**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment)
+**Status:** Specified · **Source:** [REQ-DH-MON-SEGMENT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-segment) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 An Owner can give one Segment value another threshold, as an exception on top of the Rule, shown as such: never the norm.
 
 <a id="fr-cm-10"></a>
 ### FR-CM-10 · The level above and the total, in the same pass
 
-**Status:** Specified · **Source:** [REQ-DH-MON-LEVELS](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-levels)
+**Status:** Specified · **Source:** [REQ-DH-MON-LEVELS](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-levels) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 The aggregation query computes, besides each Segment value, the level above it and the total, in the same pass ([OP-CM-06](#op-cm-06)). A Rule can combine them: the share of an estate agent in the total, or its growth compared with the total growth. So "this estate agent dropped" becomes "this estate agent dropped while the market did not".
 
 <a id="fr-cm-11"></a>
 ### FR-CM-11 · No judgement before the data is stable
 
-**Status:** Specified · **Source:** [REQ-DH-MON-DELAY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-delay)
+**Status:** Specified · **Source:** [REQ-DH-MON-DELAY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-delay) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 For data that is still settling, a bucket is only judged once the Stability of its Resource says it is final, for example "stable = D-3" ([FR-RC-06](05-resource-card.md#fr-rc-06)). This follows from the Stability by itself; the Owner does not set it ([DEC-CM-15](#dec-cm-15)). So no Finding comes from data that is still coming in.
 
@@ -161,7 +161,7 @@ For data that is still settling, a bucket is only judged once the Stability of i
 <a id="fr-cm-12"></a>
 ### FR-CM-12 · A Rule: a Metric, a comparison, a threshold, an Escalation and a Tone
 
-**Status:** Specified · **Source:** [REQ-DH-MON-RULE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-rule)
+**Status:** Specified · **Source:** [REQ-DH-MON-RULE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-rule) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 A Rule is one expression: a Metric, a comparison, a threshold, an Escalation ([FR-CM-24](#fr-cm-24)) and a Tone ([FR-CM-13](#fr-cm-13)), with the Segment values it holds for. The comparisons:
 
@@ -178,49 +178,49 @@ The first version has the first three ([DEC-CM-14](#dec-cm-14)).
 <a id="fr-cm-13"></a>
 ### FR-CM-13 · The Escalation and the Tone, two settings
 
-**Status:** Specified · **Source:** [REQ-DH-MON-TONE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-tone)
+**Status:** Specified · **Source:** [REQ-DH-MON-TONE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-tone) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 What the brainstorm first called severity is two settings. The Escalation says who hears a Finding and how far it goes ([DEC-CM-09](#dec-cm-09)). The Tone is a label the Owner gives the Rule, which sets the icon and colour of its Findings in a Message, on the Resource page and in a digest: **opportunity**, **informative**, **attention** or **problem** ([DEC-CM-08](#dec-cm-08)). The same Rule, estate agents growing more than 20%, can be an opportunity to an Owner in sales and attention to an Owner of capacity. Only Quarantine has a Tone of its own: problem.
 
 <a id="fr-cm-14"></a>
 ### FR-CM-14 · A Rule can give a list
 
-**Status:** Specified · **Source:** [REQ-DH-MON-LIST](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-list)
+**Status:** Specified · **Source:** [REQ-DH-MON-LIST](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-list) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html)
 
 A Rule that evaluates per Segment value can give the set of values it holds for, such as "the estate agents that grew more than 20% compared with their average over four weeks". Its Findings come as a digest, daily or weekly, rather than one by one: a list to read, not a problem to solve ([DEC-CM-22](#dec-cm-22), [OP-CM-02](#op-cm-02)).
 
 <a id="fr-cm-15"></a>
 ### FR-CM-15 · The statistics shown and explained
 
-**Status:** Specified · **Source:** [REQ-DH-MON-SENSITIVITY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-sensitivity)
+**Status:** Specified · **Source:** [REQ-DH-MON-SENSITIVITY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-sensitivity) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 The screens show the z-score and the window as they are, with an explanation, not only as "low, normal, high", and link in context to the Learning Cards on them ([DEC-CM-20](#dec-cm-20), [FR-CM-32](#fr-cm-32)). The Data Team sets the defaults: a z-score of 2 and a window of 28 days.
 
 <a id="fr-cm-16"></a>
 ### FR-CM-16 · Every Rule shows its history and its band
 
-**Status:** Specified · **Source:** [REQ-DH-MON-HISTORY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-history)
+**Status:** Specified · **Source:** [REQ-DH-MON-HISTORY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-history) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 While a Rule is made or edited, Data Hub shows its Metric over the past 12 weeks, the band the Rule draws around it, and the days the Rule would have fired. Changing a threshold redraws the band at once: a band around a line is how a standard deviation becomes intuitive.
 
 <a id="fr-cm-17"></a>
 ### FR-CM-17 · Useful or noise, for every Finding
 
-**Status:** Specified · **Source:** [REQ-DH-MON-FEEDBACK](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-feedback)
+**Status:** Specified · **Source:** [REQ-DH-MON-FEEDBACK](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-feedback) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html), [monitor](../../design/screens/monitor.html)
 
 The Owner marks a Finding useful or noise. From those marks Data Hub proposes adjustments to the Rule, such as "this Rule fired 9 times, 7 times noise; consider widening the threshold to 2.5".
 
 <a id="fr-cm-18"></a>
 ### FR-CM-18 · The Health Overview of a Monitor
 
-**Status:** Specified · **Source:** [REQ-DH-MON-REVIEW](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-review)
+**Status:** Specified · **Source:** [REQ-DH-MON-REVIEW](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-review) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 Every Monitor has a Health Overview: Rules that never fire, Rules that fire constantly, Findings marked noise, and Segment values with too little data to mean anything. The Data Team reviews it with the Owner, for example after the first month ([OP-CM-04](#op-cm-04)). Claude reads the same overview through the MCP and proposes adjustments in plain language, which the Owner accepts or changes ([DEC-CM-21](#dec-cm-21)).
 
 <a id="fr-cm-19"></a>
 ### FR-CM-19 · Every Finding in the Log
 
-**Status:** Specified · **Source:** [REQ-DH-MON-LOG](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-log)
+**Status:** Specified · **Source:** [REQ-DH-MON-LOG](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-log) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 Every Finding is written to the Log of its Resource, in order of time, readable by people and by Claude, with the Query ID of the aggregation query it came from. A Finding with the Tone problem is an incident in the sense of [DEC-MR-04](06-maturity-and-release.md#dec-mr-04).
 
@@ -229,7 +229,7 @@ Every Finding is written to the Log of its Resource, in order of time, readable 
 <a id="fr-cm-20"></a>
 ### FR-CM-20 · Six steps to build a Monitor
 
-**Status:** Specified · **Source:** [REQ-DH-MON-FLOW](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-flow)
+**Status:** Specified · **Source:** [REQ-DH-MON-FLOW](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-flow) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 An Owner builds a Monitor in six steps:
 
@@ -243,28 +243,28 @@ An Owner builds a Monitor in six steps:
 <a id="fr-cm-21"></a>
 ### FR-CM-21 · The Owner chooses when it evaluates
 
-**Status:** Specified · **Source:** [REQ-DH-MON-SCHEDULE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-schedule)
+**Status:** Specified · **Source:** [REQ-DH-MON-SCHEDULE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-schedule) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 The Owner chooses when the Monitor evaluates, such as daily at 08:00, without aligning with the runs of dbt ([DEC-CM-15](#dec-cm-15)). If the Resource has not been refreshed since the last evaluation, Data Hub evaluates the data of the previous run and says so, rather than seeing a false drop. The delay from the Stability still holds ([FR-CM-11](#fr-cm-11)).
 
 <a id="fr-cm-22"></a>
 ### FR-CM-22 · Starting from a proposal, not from an empty screen
 
-**Status:** Specified · **Source:** [REQ-DH-MON-PROPOSAL](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-proposal)
+**Status:** Specified · **Source:** [REQ-DH-MON-PROPOSAL](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-proposal) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 From what it knows of the Resource, its EDA, Stability, Entity and identifier ([FR-RC-08](05-resource-card.md#fr-rc-08)) and the types of its fields, Data Hub proposes a Monitor: the count per day, the null rate of its key fields and the count distinct of its identifier, by its most obvious Segment, with z-score defaults. The Owner reviews and prunes rather than builds.
 
 <a id="fr-cm-23"></a>
 ### FR-CM-23 · Claude drafts a Monitor from one sentence
 
-**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-19](#dec-cm-19))
+**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-19](#dec-cm-19)) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 From a sentence such as "I want to keep an eye on the number of credit leads per day per partner, and hear when it drops unusually", Claude, through the MCP, drafts the Monitor of that Resource, or the change to its Monitor, and opens the flow of [FR-CM-20](#fr-cm-20) filled in. The Owner checks it and saves it in Data Hub; Claude saves nothing.
 
 <a id="fr-cm-24"></a>
 ### FR-CM-24 · The Escalation in four zones
 
-**Status:** Specified · **Source:** [REQ-DH-MON-LADDER](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-ladder)
+**Status:** Specified · **Source:** [REQ-DH-MON-LADDER](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-ladder) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
 On one Metric, an Owner draws three thresholds that bound four zones, not three Rules ([DEC-CM-09](#dec-cm-09)):
 
@@ -287,7 +287,7 @@ In Quarantine, a Resource is not served as a whole ([DEC-CM-10](#dec-cm-10)): a 
 <a id="fr-cm-26"></a>
 ### FR-CM-26 · The Operational Status of a Resource
 
-**Status:** Specified · **Source:** [REQ-DH-MON-STATUS](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-status)
+**Status:** Specified · **Source:** [REQ-DH-MON-STATUS](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-status) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 Every Monitored Resource has an Operational Status: healthy, a Finding in its Tone, or Quarantine. It moves with the Findings and leaves the Level alone ([DEC-CM-11](#dec-cm-11)).
 
@@ -303,21 +303,21 @@ Everything built on a Resource takes over its Operational Status: the card of a 
 <a id="fr-cm-28"></a>
 ### FR-CM-28 · The Resource page shows the status, not the setup
 
-**Status:** Specified · **Source:** [REQ-DH-MON-CARD](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-card)
+**Status:** Specified · **Source:** [REQ-DH-MON-CARD](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-card) · **Screens:** [resource-overview](../../design/screens/resource-overview.html)
 
 The page of a Resource shows what a reader needs to know whether to trust it now: its Operational Status, its Level, a compact strip of its Findings of the last 30 days, and a link to its Log, with one button that opens its Monitor in the section Monitoring. Setting up the Monitor is not on that page. This is how the page shows the checks and incidents of [FR-RC-14](05-resource-card.md#fr-rc-14).
 
 <a id="fr-cm-29"></a>
 ### FR-CM-29 · The section Monitoring, the Owner's cockpit
 
-**Status:** Specified · **Source:** [REQ-DH-MON-COCKPIT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-cockpit)
+**Status:** Specified · **Source:** [REQ-DH-MON-COCKPIT](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-cockpit) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html)
 
 A section Monitoring gives a User the Monitors of the Resources they may manage, across Resources: what gave a Finding today, what is open, the lists and digests ([FR-CM-14](#fr-cm-14)), the Rules to adjust, the Segment values in warm-up, the Health Overviews ([FR-CM-18](#fr-cm-18)), and the place to build or edit a Monitor. Every Finding links back to the page of its Resource: the same things, two ways in.
 
 <a id="fr-cm-30"></a>
 ### FR-CM-30 · Suggestions to the Owner
 
-**Status:** Specified · **Source:** [REQ-DH-MON-NUDGE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-nudge)
+**Status:** Specified · **Source:** [REQ-DH-MON-NUDGE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-nudge) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html)
 
 The section Monitoring crosses the Query Log, the lineage of Lenses and Reports and the Monitors, and suggests to the Owner:
 
@@ -348,7 +348,7 @@ The [Learning Centre](16-learning.md) gets a short, practical topic on reading y
 <a id="fr-cm-33"></a>
 ### FR-CM-33 · The aggregation query keeps to the free range
 
-**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-16](#dec-cm-16))
+**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-16](#dec-cm-16)) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 While building a Monitor, the Owner sees the Pre-flight of its aggregation query: how much one run reads, and per month at its schedule. Up to 100 MB per run, the Monitor runs. Above that, saving it sends a Request to the Data Team, and it runs once accepted. When the query grows past what was accepted, it stops, its Owner hears, and a new Request goes to the Data Team.
 
@@ -382,7 +382,7 @@ A Rule can count the orphans of a Resource compared with a related Resource, rel
 <a id="fr-cm-37"></a>
 ### FR-CM-37 · The Aggregate Table is a Resource
 
-**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-18](#dec-cm-18))
+**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-18](#dec-cm-18)) · **Screens:** [monitor](../../design/screens/monitor.html)
 
 The Aggregate Table of a Monitor is a Resource of its own, which Lenses, charts and Claude use as any other Resource. How it enters the catalogue, in which Collection and with which Level, is [OP-CM-01](#op-cm-01).
 
@@ -402,7 +402,7 @@ A Rule can detect a sudden shift in level, a changepoint, and compare with a sea
 <a id="ec-cm-01"></a>
 ### EC-CM-01 · A field a Metric uses disappears
 
-**Status:** Proposed
+**Status:** Proposed · **Screens:** [monitor](../../design/screens/monitor.html)
 
 When a field a Metric of a Monitor reads is removed or renamed in the Resource, the aggregation query fails. The Monitor stops as a whole, as a Lens that reads a field that went is Broken ([FR-SR-52](04-stacks-and-resources.md#fr-sr-52)); its Owner hears, and its Operational Status says that the Monitor stopped, not that the Resource is healthy. Its Rules are not evaluated until the Owner adjusts the Metric.
 
@@ -423,7 +423,7 @@ When its Resource is withdrawn, a Monitor stops and is kept; it resumes when the
 <a id="ec-cm-04"></a>
 ### EC-CM-04 · The run that builds the Resource failed
 
-**Status:** Proposed
+**Status:** Proposed · **Screens:** [monitor](../../design/screens/monitor.html)
 
 When the last run that builds a Resource failed or skipped it ([FR-CM-01](#fr-cm-01)), its Monitor still evaluates at its time, on the data of the last successful run, and says so with the Run Status, rather than see a false drop ([FR-CM-21](#fr-cm-21)).
 
