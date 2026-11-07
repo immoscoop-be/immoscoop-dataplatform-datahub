@@ -1920,26 +1920,33 @@ html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .
 :root { --seg-0: var(--tint-active); --seg-1: color-mix(in srgb, var(--col-magenta) 45%, var(--surface-solid)); --seg-2: color-mix(in srgb, var(--col-olive) 50%, var(--surface-solid)); --seg-3: color-mix(in srgb, var(--col-bordeaux) 70%, var(--surface-solid)); }
 .cv-card { border-radius: var(--radius-xl); padding: 16px 20px 14px; margin-bottom: 12px; }
 .cv-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 240px; gap: 8px 22px; align-items: start; }
-.cv-grid { display: grid; grid-template-rows: 18px 92px 30px; column-gap: 3px; }
 .cv-grid > * { min-width: 0; }
-.cv-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: var(--text-small); color: var(--text-muted); border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
-.cv-tick { grid-row: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 6px; border-top: 1px solid var(--tint-active); font-size: 10px; line-height: 1; color: var(--text-muted); font-variant-numeric: tabular-nums; overflow: hidden; }
-.cv-tick.wk { color: var(--text-secondary); font-weight: var(--weight-medium); }
+.cv-grid { display: grid; grid-template-rows: 22px 52px 30px; column-gap: 3px; }
+.cv-off { grid-row: 1 / 4; margin: 0 -2px; border-radius: 8px; background: color-mix(in srgb, var(--text-muted) 9%, transparent); }
+.cv-tile { grid-row: 2; position: relative; overflow: hidden; border-radius: 7px; background: var(--surface-sub); }
+.cv-tile.off { background: color-mix(in srgb, var(--text-muted) 22%, var(--surface-solid)); }
+.cv-tile.now { background: repeating-linear-gradient(135deg, var(--tint-active) 0 4px, transparent 4px 8px); }
+.cv-tile.future { background: none; outline: 1.5px dashed var(--tint-active); outline-offset: -1.5px; }
+.cv-tile.in { background: color-mix(in srgb, var(--text-primary) 16%, var(--surface-solid)); }
+.cv-tile.in.off { background: color-mix(in srgb, var(--text-muted) 40%, var(--surface-solid)); }
+.cv-tile.ref { background: color-mix(in srgb, var(--text-primary) 7%, var(--surface-solid)); }
+.cv-stripes { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.cv-stripes span { flex: 1; }
+.cv-tile.off .cv-stripes { filter: saturate(.35); }
+.cv-tile.ref .cv-stripes { opacity: .45; }
+.cv-frame { grid-row: 2; margin: -5px -2px; border: 2px solid var(--text-primary); border-radius: 11px; pointer-events: none; z-index: 1; }
+.cv-frame.ref { margin: -3px 0; border: 1.5px dashed var(--text-muted); border-radius: 9px; }
+.cv-frame.band { margin: -5px -2px; border: 1.5px dashed var(--tint-active); z-index: 0; }
+.cv-fixed { grid-row: 2; align-self: start; position: relative; z-index: 2; border-top: 1.5px dashed var(--text-primary); }
+.cv-fixed span { position: absolute; left: 0; top: -15px; font-size: 10px; color: var(--text-secondary); background: var(--surface-solid); padding: 0 3px; border-radius: 4px; }
+.cv-tick { grid-row: 3; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 7px; font-size: 10px; line-height: 1; color: var(--text-secondary); font-variant-numeric: tabular-nums; overflow: hidden; }
+.cv-tick.off { color: var(--text-muted); }
 .cv-tick .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-muted); }
-.cv-now { grid-row: 1 / 4; border-radius: 6px; background: repeating-linear-gradient(135deg, var(--tint-hover) 0 4px, transparent 4px 8px); }
+.cv-tick .dot.next { background: none; outline: 1px solid var(--text-muted); }
+.cv-empty { grid-column: 1 / -1; grid-row: 1 / -1; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 16px; font-size: var(--text-small); color: var(--text-muted); border: 1.5px dashed var(--tint-active); border-radius: var(--radius-md); }
 .cv-now-label { grid-row: 1; align-self: end; display: flex; align-items: center; justify-content: center; gap: 2px; font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: visible; }
-.cv-block { grid-row: 2; display: flex; border: 1.5px solid var(--text-primary); border-radius: 8px; overflow: hidden; background: var(--surface-solid); }
-.cv-block.ref { opacity: .4; border-style: dashed; border-color: var(--text-secondary); }
-.cv-cell { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 1px; padding: 0 2px; min-width: 0; }
-.cv-cell + .cv-cell { border-left: 1px dashed var(--tint-active); }
-.cv-cell.merged + .cv-cell.merged { border-left-color: transparent; }
-.cv-seg { flex: none; border-radius: 2px 2px 0 0; }
-.cv-seg.more { background: repeating-linear-gradient(90deg, var(--seg-1) 0 3px, var(--seg-2) 3px 6px, var(--seg-3) 6px 9px); opacity: .6; }
 .cv-cap { grid-row: 1; align-self: end; font-size: 10px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 2px; }
 .cv-m { grid-row: 1; align-self: end; justify-self: center; max-width: 100%; overflow: hidden; text-overflow: ellipsis; font: var(--weight-medium) 10px var(--font-family); color: var(--text-secondary); background: var(--surface-sub); border-radius: var(--radius-pill); padding: 1px 6px; white-space: nowrap; margin-bottom: 2px; }
-.cv-band { grid-row: 2; border-radius: 8px; border: 1px dashed var(--tint-active); background: color-mix(in srgb, var(--text-muted) 9%, transparent); }
-.cv-fixed { grid-row: 2; align-self: start; position: relative; margin-top: 30px; border-top: 1.5px dashed var(--text-secondary); }
-.cv-fixed span { position: absolute; left: 0; top: -15px; font-size: 10px; color: var(--text-secondary); background: var(--surface-solid); padding: 0 3px; border-radius: 4px; }
 .cv-side { display: grid; gap: 6px; align-content: start; padding-top: 14px; }
 .cv-b { display: flex; align-items: center; gap: 8px; font-size: var(--text-small); padding: 6px 10px; border-radius: var(--radius-md); background: var(--surface-sub); }
 .cv-b .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

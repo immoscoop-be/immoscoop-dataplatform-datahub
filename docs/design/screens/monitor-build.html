@@ -5,8 +5,8 @@
   Above the steps, the picture of the monitor (DEC-UX-195): a timeline, conceptual and not the data, that gains one layer
   per step, and under it the sentence that reads the monitor back. Each part of the sentence opens its step.
   1. Resource: those the User may manage, with the time Data Hub counts by, set by the Data Team (FR-CM-39).
-  2. How often: every hour, day, week or month, at what time (FR-CM-21). Layer: the timeline, in that unit, with its
-     checks and the moment that is still coming in.
+  2. How often: every hour, day, week or month, at what time (FR-CM-21). Layer: a strip of tiles in that unit, days in
+     whole weeks, M T W T F S S, with the weekend greyer, a dot per check, today hatched and the rest of the week to come.
   3. Period: the last one, or the last N, and when N, one by one or as one period (FR-CM-11). Layer: the block that
      looks back from the check, split when one by one.
   4. Per: all together or for each value, and which values; a new value comes in by itself and warms up first
@@ -234,41 +234,46 @@
     return parts.length ? parts.length > 1 ? parts.slice(0, -1).join(', ') + ' and ' + parts.slice(-1) : parts[0] : 'only keep it in the Log';
   };
 
-  // ---- the picture ------------------------------------------------------------------------------------------
+  // ---- the picture: a calendar strip of tiles, conceptual, not the data (DEC-UX-195) ---------------------------
+  // Days come in whole weeks, Monday to Sunday, with a gap between weeks; today is the Tuesday of the last week.
+  function layout() {
+    const P = s.period;
+    if (s.often === 'day') { const weeks = Math.min(9, Math.max(4, Math.ceil((2 * P + 2) / 7) + 1)); return { P, day: true, weeks, N: weeks * 7, now: (weeks - 1) * 7 + 1 }; }
+    const N = Math.min(60, Math.max({ hour: 24, week: 14, month: 13 }[s.often], 2 * P + 2));
+    return { P, day: false, N, now: N - 1 };
+  }
+  const colOf = (L, j) => L.day ? j + Math.floor(j / 7) + 1 : j + 1;
+  const span = (L, a, b) => `${colOf(L, a)} / ${colOf(L, b) + 1}`;
+  const template = L => L.day ? Array.from({ length: L.weeks }, () => 'repeat(7, minmax(0, 1fr))').join(' 10px ') : `repeat(${L.N}, minmax(0, 1fr))`;
+  const label = (L, j) => {
+    if (L.day) { const w = j % 7; return { t: 'MTWTFSS'[w], off: w >= 5 }; }
+    const back = L.now - j;
+    if (s.often === 'week') return { t: 'w' + (45 - back) };
+    if (s.often === 'hour') { const h = ((9 - back) % 24 + 24) % 24; return { t: String(h).padStart(2, '0'), off: h < 7 || h >= 20 }; }
+    return { t: 'JFMAMJJASOND'[((10 - back) % 12 + 12) % 12] };
+  };
   function picture() {
-    const P = s.period, C = Math.min(60, Math.max({ hour: 24, day: 22, week: 14, month: 13 }[s.often], 2 * P + 2));
-    const c0 = C - P, c1 = C - 1; // the period: columns c0..c1, 1-based; column C is the moment still coming in
-    const tick = i => {
-      const back = C - i;
-      if (s.often === 'day') { const w = ((1 - back) % 7 + 7) % 7; return { t: 'MTWTFSS'[w], wk: w === 0, off: w >= 5 }; }
-      if (s.often === 'week') return { t: 'w' + (45 - back), wk: (45 - back) % 4 === 0 };
-      if (s.often === 'hour') { const h = ((9 - back) % 24 + 24) % 24; return { t: String(h).padStart(2, '0'), wk: h === 0 }; }
-      const m = ((10 - back) % 12 + 12) % 12; return { t: 'JFMAMJJASOND'[m], wk: m === 0 };
-    };
-    const height = i => (s.often === 'day' && tick(i).off ? 52 : 78) + ((i * 37) % 13);
-    const cell = (i, merged) => {
-      const h = merged ? 76 : height(i);
-      if (reached < 4 || !per()) return `<div class="cv-cell${merged ? ' merged' : ''}"><div class="cv-seg" style="height:${h * .9}%;background:var(--seg-0)"></div></div>`;
-      const f = [.42, .3, .2];
-      return `<div class="cv-cell${merged ? ' merged' : ''}${later(4)}"><div class="cv-seg more" style="height:${h * .08}%"></div>` +
-        [3, 2, 1].map(k => `<div class="cv-seg" style="height:${h * f[k - 1]}%;background:var(--seg-${k})"></div>`).join('') + '</div>';
-    };
-    const block = (a, b, cls) => {
-      const one = !(s.split && P > 1);
-      let cells = '';
-      for (let i = a; i <= b; i++) cells += cell(i, one);
-      return `<div class="cv-block${cls}" style="grid-column:${a} / ${b + 1}">${cells}</div>`;
+    const L = layout(), P = L.P, c1 = L.now - 1, c0 = c1 - P + 1, split = s.split && P > 1;
+    if (reached < 2) return `<div class="cv-empty" style="grid-column:1 / -1">The picture of your monitor builds up here, one layer per step.</div>`;
+    const stripes = () => reached >= 4 && per() ? `<i class="cv-stripes${later(4)}">${[3, 2, 1].map(k => `<span style="background:var(--seg-${k})"></span>`).join('')}</i>` : '';
+    // a period drawn as tiles, one by one, or as one merged pill, with its frame
+    const period = (a, b, cls, frame) => {
+      let t = '';
+      if (split || a === b) for (let j = a; j <= b; j++) { if (j < 0) continue; t += `<div class="cv-tile ${cls}${label(L, j).off ? ' off' : ''}" style="grid-column:${colOf(L, j)}">${stripes()}</div>`; }
+      else t += `<div class="cv-tile ${cls}" style="grid-column:${span(L, Math.max(0, a), b)}">${stripes()}</div>`;
+      return t + `<div class="cv-frame ${frame}" style="grid-column:${span(L, Math.max(0, a), b)}"></div>`;
     };
     let h = '';
-    if (reached < 2) return `<div class="cv-empty" style="grid-column:1 / -1">The picture of your monitor builds up here, one layer per step.</div>`;
-    // 1 · the timeline, its checks, and the moment still coming in
-    h += `<div class="cv-now${later(2)}" style="grid-column:${C}"></div>`;
-    h += `<div class="cv-now-label${later(2)}" style="grid-column:${C}">${u()[3]}</div>`;
-    for (let i = 1; i <= C; i++) {
-      const t = tick(i), check = i < C && !(s.often === 'day' && s.on === 'weekdays' && t.off);
-      h += `<div class="cv-tick${t.wk ? ' wk' : ''}${later(2)}" style="grid-column:${i}">${t.t}${check ? '<span class="dot"></span>' : ''}</div>`;
+    // 1 · the strip: weekends and nights greyer, a dot per check, today hatched, the rest of this week still to come
+    if (L.day) for (let w = 0; w < L.weeks; w++) h += `<div class="cv-off${later(2)}" style="grid-column:${span(L, w * 7 + 5, w * 7 + 6)}"></div>`;
+    for (let j = 0; j < L.N; j++) {
+      const lb = label(L, j), when = j === L.now ? ' now' : j > L.now ? ' future' : '';
+      const check = !(s.often === 'day' && s.on === 'weekdays' && lb.off);
+      h += `<div class="cv-tile${lb.off ? ' off' : ''}${when}${later(2)}" style="grid-column:${colOf(L, j)}"></div>`;
+      h += `<div class="cv-tick${lb.off ? ' off' : ''}${later(2)}" style="grid-column:${colOf(L, j)}">${lb.t}${check ? `<span class="dot${j >= L.now ? ' next' : ''}"></span>` : ''}</div>`;
     }
-    // 6 · what it is compared with, behind the period
+    h += `<div class="cv-now-label${later(2)}" style="grid-column:${colOf(L, L.now)}">${u()[3]}</div>`;
+    // 6 · what it is compared with: the periods before, dashed and faded; a longer past as a pale frame
     if (reached >= 6) {
       const seen = new Set(), bands = [];
       s.bounds.forEach(b => {
@@ -276,26 +281,26 @@
         if (seen.has(key)) return; seen.add(key);
         if (b.ref === 'prev') {
           const n = Math.max(1, Math.round(b.refLen / P)); let a = c0 - P, k = 0;
-          while (k < n && a >= 1) { h += block(a, a + P - 1, ' ref' + later(6)); a -= P; k++; }
-          h += `<div class="cv-cap${later(6)}" style="grid-column:${Math.max(1, a + P)} / ${c0}">compared with ${refTxt(b)}${k < n ? ' …' : ''}</div>`;
+          while (k < n && a >= 0) { h += period(a, a + P - 1, 'ref' + later(6), 'ref' + later(6)); a -= P; k++; }
+          h += `<div class="cv-cap${later(6)}" style="grid-column:${span(L, Math.max(0, a + P), c0 - 1)}">compared with ${refTxt(b)}${k < n ? ' …' : ''}</div>`;
         } else if (b.ref === 'weekday') {
-          for (let a = c0 - 7; a >= 1; a -= 7) h += block(a, a, ' ref' + later(6));
-          h += `<div class="cv-cap${later(6)}" style="grid-column:1 / ${c0}">compared with ${refTxt(b)}</div>`;
+          for (let a = c0 - 7; a >= 0; a -= 7) h += period(a, a, 'ref' + later(6), 'ref' + later(6));
+          h += `<div class="cv-cap${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}">compared with ${refTxt(b)}</div>`;
         } else if (b.ref === 'ever' || b.ref === 'past') bands.push(b.ref === 'ever' ? 'everything before' : `the ${b.weeks} weeks before`);
       });
-      if (bands.length) h += `<div class="cv-band${later(6)}" style="grid-column:1 / ${c0}"></div><div class="cv-cap${later(6)}" style="grid-column:1 / ${c0}">compared with ${bands.join(' · ')}</div>`;
+      if (bands.length && c0 > 0) h += `<div class="cv-frame band${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}"></div><div class="cv-cap${later(6)}" style="grid-column:${span(L, 0, c0 - 1)}">compared with ${bands.join(' · ')}</div>`;
     }
-    // 2, 3, 4 · the period, split one by one, coloured per value
-    if (reached >= 3) h += block(c0, c1, later(3));
-    // 6 · a fixed limit, as a line across the period
+    // 2, 3, 4 · the period looked back over, framed, one by one or merged, in colours per value
+    if (reached >= 3) h += period(c0, c1, 'in' + later(3), later(3));
+    // 6 · a fixed limit: a dashed line across the strip
     if (reached >= 6) s.bounds.filter(b => b.ref === 'fixed').sort((x, y) => y.amt - x.amt).slice(0, 3).forEach((b, k) => {
-      h += `<div class="cv-fixed${later(6)}" style="grid-column:1 / ${c1 + 1};margin-top:${16 + k * 24}px"><span>${amtTxt(b)}</span></div>`;
+      h += `<div class="cv-fixed${later(6)}" style="grid-column:${span(L, 0, c1)};margin-top:${10 + k * 18}px"><span>${amtTxt(b)}</span></div>`;
     });
-    // 5 · the measure on top of each block
+    // 5 · the measure on top
     if (reached >= 5) {
       const sym = how().sym;
-      if (s.split && P > 1) for (let i = c0; i <= c1; i++) h += `<div class="cv-m${later(5)}" style="grid-column:${i}">${sym}</div>`;
-      else h += `<div class="cv-m${later(5)}" style="grid-column:${c0} / ${c1 + 1}" title="${esc(how().label)}">${c1 - c0 + 1 < 3 ? sym : sym + ' ' + esc(how().label.split(',')[0])}</div>`;
+      if (split) for (let j = c0; j <= c1; j++) h += `<div class="cv-m${later(5)}" style="grid-column:${colOf(L, j)}">${sym}</div>`;
+      else h += `<div class="cv-m${later(5)}" style="grid-column:${span(L, c0, c1)}" title="${esc(how().label)}">${c1 - c0 + 1 < 3 ? sym : sym + ' ' + esc(how().label.split(',')[0])}</div>`;
     }
     return h;
   }
@@ -401,9 +406,8 @@
 
   // ---- render and events ------------------------------------------------------------------------------------
   function render() {
-    const C = Math.min(60, Math.max({ hour: 24, day: 22, week: 14, month: 13 }[s.often], 2 * s.period + 2));
     const cv = document.getElementById('cv');
-    cv.style.gridTemplateColumns = `repeat(${C}, minmax(0, 1fr))`;
+    cv.style.gridTemplateColumns = template(layout());
     cv.innerHTML = picture();
     document.getElementById('cv-side').innerHTML = side();
     document.getElementById('sentence').innerHTML = sentence();
