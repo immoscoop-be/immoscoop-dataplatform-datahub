@@ -1,0 +1,39 @@
+import { describe, expect, it, vi } from 'vitest';
+import { Settings } from './settings.svelte.js';
+
+describe('the settings of the User (DEC-UX-96)', () => {
+  it('change on screen at once, and are saved in Data Hub', () => {
+    const save = vi.fn(async () => {});
+    const settings = new Settings({ language: 'nl' }, save);
+    settings.set('language', 'en');
+    expect(settings.values).toEqual({ language: 'en' });
+    expect(save).toHaveBeenCalledWith('language', 'en');
+  });
+
+  it('save nothing when the value stays the same', () => {
+    const save = vi.fn(async () => {});
+    new Settings({ 'query.layout': 'sideBySide' }, save).set('query.layout', 'sideBySide');
+    expect(save).not.toHaveBeenCalled();
+  });
+
+  it('keep a change that could not be saved for this visit, and tell the console', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const settings = new Settings({}, async () => {
+      throw new Error('identity answered 503');
+    });
+    settings.set('panel.open', false);
+    await vi.waitFor(() => expect(error).toHaveBeenCalledWith('The setting panel.open could not be saved', expect.any(Error)));
+    expect(settings.values['panel.open']).toBe(false);
+    error.mockRestore();
+  });
+
+  it('forget one, such as a dismissed intro shown again', () => {
+    const remove = vi.fn(async () => {});
+    const settings = new Settings({ 'intro.collections': 1, 'panel.open': false }, async () => {}, remove);
+    settings.forget('intro.collections');
+    expect(settings.values).toEqual({ 'panel.open': false });
+    expect(remove).toHaveBeenCalledWith('intro.collections');
+    settings.forget('intro.collections');
+    expect(remove).toHaveBeenCalledTimes(1);
+  });
+});

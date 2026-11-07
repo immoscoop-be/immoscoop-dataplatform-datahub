@@ -1,0 +1,30 @@
+id: calendarRatio
+title: semgraphs.calendarRatio.title
+answers: semgraphs.calendarRatio.answers
+readingCard: readingCards.timeSeries
+attributes:
+  timeAxis: [calendar]
+  breakdown: [none]
+  comparisonBasis: [none]
+  dataGrain: [aggregated]
+  # REQ-074, REQ-076: a numerator divided by a denominator, both from the warehouse. For now only a share
+  # (open point: a ratio per unit).
+  measureType: [ratio]
+  accumulation: [perPeriod]
+  periodType: [calendar]
+  # A ratio has no mean or median: it is one division per block.
+  centralTendency: any
+exampleQuestions:
+  - semgraphs.calendarRatio.examples.1
+  - semgraphs.calendarRatio.examples.2
+doNotUseWhen:
+  - intent: compareCategories
+    use: ratio
+  - intent: showMeanPerUnit
+    use: calendarAverage
+data:
+  minimumPoints: 28
+links:
+  figma: https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6?node-id=226-27
+  # The reading cards do not exist yet; until then this points to the learning plan, level 1.
+  learning: https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146

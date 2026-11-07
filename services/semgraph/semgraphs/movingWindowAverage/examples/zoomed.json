@@ -1,0 +1,24 @@
+{
+  "semgraph": "movingWindowAverage",
+  "metric": "creditLeads",
+  "title": "Kredietleads per dag (voorbeelddata)",
+  "measureType": "additive",
+  "window": 7,
+  "format": "svg",
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "creditLeads",
+    "reliability": "voorbeelddata"
+  },
+  "valueAxis": "zoom",
+  "points": [
+    { "end": "2026-08-19", "mean": 39.8571, "sd": 14.2762 },
+    { "end": "2026-08-26", "mean": 41, "sd": 9.3095 },
+    { "end": "2026-09-02", "mean": 41.8571, "sd": 13.6312 },
+    { "end": "2026-09-09", "mean": 41, "sd": 10.6458 },
+    { "end": "2026-09-16", "mean": 42.4286, "sd": 8.9602 },
+    { "end": "2026-09-23", "mean": 43.7143, "sd": 12.1616 },
+    { "end": "2026-09-30", "mean": 45.8571, "sd": 11.261 }
+  ]
+}

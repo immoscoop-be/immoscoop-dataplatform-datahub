@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<!--
+  Screen: a Resource in Claude, as an MCP App (FR-CL-07, DEC-CL-02)
+  A conversation in Claude, drawn plainly: a colleague asks about a Resource, and Claude answers with show_resource from the
+  MCP server of Data Hub. The frame holds the head of the Resource with its Level and state, then its Summary and Columns.
+  It opens on the Summary, the same as the one the Overview opens on in Data Hub (resource-overview.html): every part in
+  the order to read it, numbered, with its weight; Columns lists every field (DEC-CL-16, FR-CL-26). The parts lead nowhere
+  inside the frame, but "Its fields" opens Columns; the rest stays in Data Hub, through "Open in Data Hub". Claude reads
+  the same Summary first, from show_resource as from get_resource, before the data of the card (FR-CL-25). Lineage, History and Preview are not in the frame: they stay in Data Hub, or
+  come through their own tools (preview_resource opens mcp-resource-preview.html). No rail, no panel and no edit links: an
+  MCP App has no navigation of its own and carries "Open in Data Hub" at its foot (FR-CL-06). It shows what the User sees
+  in Data Hub, nothing more (FR-CL-02). Under the frame, Claude answers in its own words and names the Level, and a
+  deprecation with what to use instead (FR-CL-05). The switch shows the Resource published, and deprecated.
+  Requirements: FR-CL-01, FR-CL-02, FR-CL-05, FR-CL-06, FR-CL-07, FR-CL-26, FR-CL-27
+  Decisions: DEC-UX-164, DEC-UX-169, DEC-CL-02, DEC-CL-16, DEC-MR-06, DEC-DH-15, DEC-LR-08, DEC-UX-101, DEC-UX-180, DEC-UX-181, DEC-RC-17.
+  Open points: OP-CL-01.
+  Not in v1: the whole screen, as Claude comes in version 2 (DEC-CH-02). Its blocks are those of resource-detail.html.
+  The button at the top right folds the frame to its head, and unfolds it again (DEC-UX-181); ?fold=on shows it folded.
+  ?width=phone shows the frame as Claude on a phone shows it, at 390 px: the same blocks, laid out for a narrow width
+  (DEC-UX-180).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="colleague">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — A Resource in Claude</title>
+</head>
+<body class="mcp-demo">
+<div class="mcp-page">
+ <p class="mcp-caption"><i class="ph ph-info" aria-hidden="true"></i>Prototype: how Claude shows a Resource, as an MCP App. Only the part inside the frame comes from Data Hub.</p>
+ <div class="mcp-msg user">I need weekly credit leads for the KBC review. Can you show me Weekly lead volume?</div>
+ <div class="mcp-tool"><i class="ph ph-plugs-connected" aria-hidden="true"></i>Data Hub · <span class="mono">show_resource</span></div>
+ <section class="mcp-app" aria-label="Weekly lead volume, a Resource from Data Hub">
+  <div class="mcp-app-head"><i class="ph-fill ph-table" aria-hidden="true"></i><div style="flex:1;min-width:0"><span class="meta">Resource · <i class="ph ph-coins" aria-hidden="true" style="vertical-align:-2px;margin-right:3px"></i>Credit leads</span><div class="float-title">Weekly lead volume</div><span class="meta mono">immoscoop-dataplatform-398214.dbt_prod_stacks.weekly_lead_volume</span></div></div>
+  <div class="status-row">
+   <span class="status"><span class="maturity" data-level="4" data-no-tooltip></span>4 · Explored</span>
+   <span class="status"><i class="ph-fill ph-globe-simple"></i>Published</span>
+   <span class="status"><i class="ph-fill ph-users-three"></i>Owner: Credit team</span>
+   <span class="status dep-chip" data-pane-group="dep" data-pane="on" hidden title="Deprecated by the credit team on 20 Oct 2026: replaced by Weekly lead volume v2"><i class="ph-fill ph-archive"></i>Deprecated</span>
+  </div>
+  <div class="alert dep-line" data-pane-group="dep" data-pane="on" hidden role="status"><i class="ph-fill ph-archive"></i><p><b style="font-weight:500">Deprecated</b> by the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads, Weekly lead volume v2. It stays usable.</p></div>
+  <div>
+   <div class="tabs" data-group="tabs" role="tablist">
+    <button class="tab on" data-target="overview" role="tab" aria-selected="true">Summary</button>
+    <button class="tab" data-target="columns" role="tab" aria-selected="false">Columns</button>
+   </div>
+   <div class="tab-content card">
+    <div data-pane-group="tabs" data-pane="overview">
+     <div class="sum-legend meta"><span class="weight w1">Read first</span>what it is<span class="weight w2">Before you query</span>how to read and join it cheaply<span class="weight w3">When interpreting results</span>what can mislead you<span class="weight w4">Context</span>where it stands, what others noted</div>
+     <ol class="sum">
+      <li class="sum-part sum-dep" data-pane-group="dep" data-pane="on" hidden>
+       <div class="sum-side"><span class="sum-n"><i class="ph-fill ph-archive" aria-hidden="true"></i></span><span class="weight w1">Read first</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Deprecated</h3></div>
+        <p class="sum-text-line">By the credit team on 20 Oct 2026: replaced by the weekly figures that include partner leads. Use Weekly lead volume v2 instead. It still works, and so do the Lenses on it.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">1</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>What it is</h3></div>
+        <div class="md"><p>The number of <strong>credit leads</strong> we send to KBC each week, per lead source. Use it to follow the trend and to compare sources.</p><ul><li>It counts <strong>leads, not people</strong>: someone who applies twice counts twice.</li></ul></div>
+        <p class="sum-dbt"><span class="origin">From dbt</span>One row per week and lead source with the number of credit leads sent to KBC. Test and duplicate requests are excluded.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">2</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>One row is</h3></div>
+        <p class="sum-text-line">One week × one lead source <span class="code-chip">week_start</span><span class="code-chip">lead_source</span> · an <b>aggregate</b>, counted per week.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">3</span><span class="weight w1">Read first</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Use it for</h3></div><p class="sum-text-line">Weekly trends and comparing lead sources.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">4</span><span class="weight w2">Before you query</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>How to query it cheaply</h3></div>
+        <p class="sum-text-line">Filter on <span class="mono">week_start</span> first, a partition per week: without it a query reads all 6.2 GB, with it about 20 MB a week. Then on <span class="mono">lead_source</span>, the first cluster column.</p>
+        <p class="sum-text-line">Key fields <span class="code-chip">week_start</span><span class="code-chip">lead_source</span><span class="code-chip">lead_count</span> · Parameters <span class="code-chip">lead_source</span><span class="code-chip">week_start</span></p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">5</span><span class="weight w2">Before you query</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Its fields</h3><a class="text-link" data-go="tabs:columns"><span>Columns</span><i class="ph ph-arrow-right"></i></a></div>
+        <p class="sum-text-line">4 fields, each with its type and descriptions; 2 have a Business Description of the Owner.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">6</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Watch out</h3></div>
+        <p class="sum-text-line">The current week is incomplete. Don’t sum across sources for unique people. Reliable since <b>1 Jan 2025</b>.</p></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">7</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Known Gaps</h3></div>
+        <ul class="sum-gaps"><li>No leads from the source <span class="mono">partner</span> before March 2025: the partner feed started then. <span class="sum-scope">until 28 Feb 2025 · <span class="mono">lead_source</span> is <span class="mono">partner</span></span></li></ul></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">8</span><span class="weight w3">When interpreting results</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Q&amp;A of the Owner and the Data Team</h3></div>
+        <ul class="sum-msgs"><li><span class="kind">Question</span><span>Is a lead counted again when the same person applies twice? <span class="role-tag">Owner</span> Yes, every request counts; for unique people, use Credit lead funnel.</span></li></ul></div>
+      </li>
+      <li class="sum-part">
+       <div class="sum-side"><span class="sum-n">9</span><span class="weight w4">Context</span></div>
+       <div class="sum-main"><div class="sum-title"><h3>Where it stands</h3></div>
+        <p class="sum-text-line"><span class="maturity" data-level="4" data-no-tooltip></span> 4 · Explored · published 2 Sep 2026 by An Claes, confirmed 14 Oct 2026.</p></div>
+      </li>
+     </ol>
+    </div>
+    <div data-pane-group="tabs" data-pane="columns" hidden>
+     <p class="meta" style="margin:0 6px 6px">Every field with its Business Description, from the Owner, next to its description from dbt.</p>
+     <table class="stack"><thead><tr><th>Column</th><th>Type</th><th>Business Description <span class="origin">From the Owner</span></th><th>Description <span class="origin">From dbt</span></th><th></th></tr></thead><tbody>
+      <tr><td class="mono stack-name">week_start</td><td class="stack-type" style="color:var(--text-muted)">DATE</td><td data-label="Business Description, from the Owner" class="none" aria-label="No Business Description">–</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Monday of the week the lead was submitted</td><td><span class="pill pill-strong">Partition</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono stack-name">lead_source</td><td class="stack-type" style="color:var(--text-muted)">STRING</td><td data-label="Business Description, from the Owner">Where the lead came in: the website, the app, a partner or a mailing.</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Where the lead came from</td><td><span class="pill pill-strong">Cluster 1</span> <span class="pill">Parameter</span></td></tr>
+      <tr><td class="mono stack-name">lead_count</td><td class="stack-type" style="color:var(--text-muted)">INT64</td><td data-label="Business Description, from the Owner">How many credit leads went to KBC that week from this source. Someone who applies twice counts twice.</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Number of credit leads sent to KBC, without test and duplicate requests</td><td></td></tr>
+      <tr><td class="mono stack-name">lead_channel</td><td class="stack-type" style="color:var(--text-muted)">STRING</td><td data-label="Business Description, from the Owner" class="none" aria-label="No Business Description">–</td><td data-label="Description, from dbt" style="color:var(--text-secondary)">Channel of the first visit</td><td><span class="pill pill-strong">Cluster 2</span></td></tr>
+     </tbody></table>
+    </div>
+   </div>
+  </div>
+  <div class="mcp-app-foot"><span><i class="ph ph-user" aria-hidden="true"></i> As you see it in Data Hub</span><a class="text-link open-dh" href="resource-detail.html"><span>Open in Data Hub</span><i class="ph ph-arrow-square-out"></i></a></div>
+ </section>
+ <div class="mcp-msg" data-pane-group="dep" data-pane="off">
+  <p>Weekly lead volume is at <b>4 · Explored</b>: published and confirmed by the credit team, with an exploration of its data. One row is a week and a lead source, and it counts leads, not people.</p>
+  <p class="meta" style="margin-top:-4px">Claude answers from the same Summary, read first.</p>
+  <p>For the KBC review, mind three things:</p>
+  <ul><li>The current week is still incomplete, so stop at last week.</li><li>There are no partner leads before 1 March 2025.</li><li>Filter on <span class="mono">week_start</span>: the whole table is 6.2 GB, one week about 20 MB.</li></ul>
+  <p>Shall I preview the last four weeks?</p>
+ </div>
+ <div class="mcp-msg" data-pane-group="dep" data-pane="on" hidden>
+  <p>Careful: Weekly lead volume is <b>deprecated</b>. The credit team marked it on 20 October 2026, as it leaves out partner leads; they point to <b>Weekly lead volume v2</b> instead. It still works, at 4 · Explored, but for the KBC review I would use v2.</p>
+  <p>Shall I show you Weekly lead volume v2?</p>
+ </div>
+</div>
+<div class="proto-switch" data-group="dep" role="tablist" aria-label="Prototype: state of the Resource">Resource
+ <button class="seg on" data-target="off" role="tab" aria-selected="true">Published</button>
+ <button class="seg" data-target="on" role="tab" aria-selected="false">Deprecated</button>
+</div>
+<div class="proto-switch" data-group="width" role="tablist" aria-label="Prototype: Claude on a computer or a phone" style="top:16px;bottom:auto">Width
+ <button class="seg on" data-target="computer" role="tab" aria-selected="true">Computer</button>
+ <button class="seg" data-target="phone" role="tab" aria-selected="false">Phone</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>

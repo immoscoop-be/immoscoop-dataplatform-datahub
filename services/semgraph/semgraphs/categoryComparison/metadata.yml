@@ -1,0 +1,29 @@
+id: categoryComparison
+title: semgraphs.categoryComparison.title
+answers: semgraphs.categoryComparison.answers
+readingCard: readingCards.categoryComparison
+attributes:
+  timeAxis: [none]
+  breakdown: [category]
+  # The comparison with last year inside one bar waits on the questions of REQ-065.
+  # A sum can compare inside its bar, with the period before or last year (REQ-066, REQ-067).
+  comparisonBasis: [none, previousPeriod]
+  dataGrain: [aggregated]
+  measureType: [additive, unique, perUnit]
+  partToWhole: ["no"]
+  centralTendency: any
+exampleQuestions:
+  - semgraphs.categoryComparison.examples.1
+  - semgraphs.categoryComparison.examples.2
+doNotUseWhen:
+  - intent: showEvolution
+    use: movingWindowAverage
+  - intent: showPartsOfWhole
+    use: composition
+data:
+  # Bars compare: one category alone has nothing to be compared with.
+  minimumPoints: 2
+links:
+  figma: https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6?node-id=63-757
+  # The reading cards do not exist yet; until then this points to the learning plan, level 1.
+  learning: https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146

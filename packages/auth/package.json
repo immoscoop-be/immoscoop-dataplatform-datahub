@@ -1,0 +1,23 @@
+{
+  "name": "@datahub/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing.d.ts",
+      "default": "./dist/testing.js"
+    }
+  },
+  "files": ["dist"],
+  "dependencies": {
+    "@datahub/contracts": "workspace:*",
+    "fastify": "^5.12.7",
+    "fastify-plugin": "^6.0.1",
+    "jose": "^6.2.12"
+  }
+}

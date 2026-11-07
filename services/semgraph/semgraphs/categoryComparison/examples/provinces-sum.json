@@ -1,0 +1,21 @@
+{
+  "semgraph": "categoryComparison",
+  "metric": "leads",
+  "title": "Leads per provincie (voorbeelddata)",
+  "measureType": "additive",
+  "statistic": "sum",
+  "window": 28,
+  "locale": "nl-BE",
+  "context": {
+    "domain": "Leads",
+    "dataset": "Listing",
+    "reliability": "voorbeelddata"
+  },
+  "points": [
+    { "category": "Limburg", "sum": 610 },
+    { "category": "Antwerpen", "sum": 1820 },
+    { "category": "West-Vlaanderen", "sum": 905 },
+    { "category": "Oost-Vlaanderen", "sum": 1490 },
+    { "category": "Vlaams-Brabant", "sum": 1110 }
+  ]
+}

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<!--
+  Screen: Permission groups, a tool of Admin, the section of the Data Team. Designed on 2026-11-06, with Max.
+  The Permission groups of this environment of Data Hub, each with its number of Users; one is the default, which a new
+  User gets at their first sign-in. One opened shows its Permissions by part of Data Hub: Collections and Resources,
+  Query, Lenses, Claude, Excel and Admin. A Permission is yes or no, and may have values that say how far it goes, of
+  the same kinds a Parameter has: a whole number with its unit, a choice, several choices, a text. Its values show only
+  while it is yes. A change is marked, and an edit bar counts the changes until they are saved or discarded; saved, they
+  take effect within 15 minutes for every User in the group (DEC-UX-189).
+  Admin can do everything and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at
+  least one User (DEC-UX-188). Deleting another group asks where its Users go; when it is the default, the group they go
+  to becomes the default.
+  The Permissions shown are a part of those of FR-PL-05, to show each kind of value; the groups are examples.
+  The switch at the bottom shows Business, Business with two changes, deleting Business, Admin, and a new group:
+  ?pg=business, ?pg=changed, ?pg=delete, ?pg=datateam, ?pg=new. ?kinds=on shows the kind of each value.
+  Requirements: FR-PL-05, FR-PL-08, FR-PL-09, FR-PL-10, FR-PL-11
+  Decisions: DEC-UX-186, DEC-UX-187, DEC-UX-188, DEC-UX-189, DEC-UX-190, DEC-PL-01, DEC-PL-07, DEC-UX-130, DEC-UX-71, DEC-DH-78.
+  Related screens: admin-users.html, admin-keys.html, query.html (the kinds of a Parameter).
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Permission groups</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-permission-groups.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub uat, who reaches it, and what each User may do.</p>
+  <a class="mc-filter" href="admin-webhooks.html"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+  <a class="mc-filter" href="admin-keys.html"><i class="ph ph-key"></i><span>Excel keys</span><span class="count" title="Active keys">14</span></a>
+  <a class="mc-filter" href="admin-users.html"><i class="ph ph-users"></i><span>Users</span><span class="count" title="Users">47</span></a>
+  <a class="mc-filter on" href="admin-permission-groups.html" aria-current="page"><i class="ph ph-shield-check"></i><span>Permission groups</span><span class="count" title="Permission groups">4</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Permission groups</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">What a User may do, here, in Claude and in Excel. Each User is in one Permission group, and a new User gets the default at their first sign-in. A change takes effect within 15 minutes for every User in the group.</p></div>
+ <div style="display:inline-flex;align-items:center;gap:4px;padding:3px 4px 3px 10px;border-radius:var(--radius-pill);border:1px dashed var(--tint-active)" data-group="kinds" role="tablist" aria-label="Prototype: the kind of each value"><span class="meta">Prototype: kinds</span><button class="seg on" data-target="off" role="tab" aria-selected="true">Hide</button><button class="seg" data-target="on" role="tab" aria-selected="false">Show</button></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
+</div>
+
+<div class="mc pg-layout">
+ <section class="card mc-list" aria-label="Permission groups">
+  <div style="display:flex;justify-content:flex-end;padding:2px 4px 10px">
+   <button class="btn-quiet outline" data-go="pg:new"><i class="ph ph-plus"></i>New Permission group</button>
+  </div>
+  <a class="wh-item" href="#" data-go="pg:datateam" data-item="datateam">
+   <i class="ph-fill ph-shield-check wh-outcome done" aria-hidden="true"></i>
+   <span><b>Admin</b> <i class="ph-fill ph-lock-simple" style="color:var(--text-muted);font-size:12px" title="Can do everything; cannot be changed"></i><span class="meta" style="display:block">Everything, Admin included</span><span class="pg-item-sub"><span class="meta">4 Users</span></span></span>
+  </a>
+  <a class="wh-item" href="#" data-item="analysts">
+   <i class="ph-fill ph-shield-check wh-outcome" aria-hidden="true"></i>
+   <span><b>Analysts</b><span class="meta" style="display:block">Queries and Lenses; Claude reads the rows</span><span class="pg-item-sub"><span class="meta">9 Users</span></span></span>
+  </a>
+  <a class="wh-item on" href="#" data-go="pg:business" data-item="business">
+   <i class="ph-fill ph-shield-check wh-outcome" aria-hidden="true"></i>
+   <span><b>Business</b><span class="meta" style="display:block">Lenses and Previews; Claude reads the shape, not the rows</span><span class="pg-item-sub"><span class="meta">31 Users</span><span class="wh-tag"><i class="ph ph-user-plus"></i>Default for new Users</span><span class="chg" data-pane-group="pg" data-pane="changed" hidden>2 changes</span></span></span>
+  </a>
+  <a class="wh-item" href="#" data-item="readonly">
+   <i class="ph-fill ph-shield-check wh-outcome" aria-hidden="true"></i>
+   <span><b>Read only</b><span class="meta" style="display:block">Sees and runs Lenses; no queries, no Claude</span><span class="pg-item-sub"><span class="meta">3 Users</span></span></span>
+  </a>
+ </section>
+
+ <!-- Business opened: its Permissions, by part of Data Hub -->
+ <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="business changed delete new" aria-label="The Permission group opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-shield-check wh-big" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2" style="display:flex;align-items:center;gap:2px">Business <button class="icon-btn" aria-label="Rename"><i class="ph ph-pencil-simple"></i></button></h2><div class="meta">Lenses and Previews; Claude reads the shape, not the rows</div></div>
+   <button class="btn-quiet outline"><i class="ph ph-copy"></i>Duplicate</button>
+  </div>
+  <dl class="wh-facts">
+   <dt>Users</dt><dd>31 · <a class="text-link" href="admin-users.html?usfilter=business">see them on Users</a></dd>
+   <dt>Default for new Users</dt><dd>Yes: a new User gets Business at their first sign-in</dd>
+   <dt>Last changed</dt><dd>14 Oct 2026, by Ruth Aerts</dd>
+  </dl>
+  <div class="edit-bar" data-pane-group="pg" data-pane="changed" hidden>
+   <p><b>2 changes, not saved yet.</b> Saved, they take effect within 15 minutes for the 31 Users of Business.</p>
+   <button class="btn-quiet" data-go="pg:business">Discard</button>
+   <button class="btn-primary" data-go="pg:business">Save</button>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-stack"></i>Collections and Resources</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">What they see <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice, always on</span></div><p class="pg-desc">Of the catalogue, and so of everything built on it: search, Lenses, queries, Claude and Excel.</p></div>
+    <span></span>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">They see <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice</span></span><div class="pe-opts"><label><input type="radio" name="p-see">Only theirs: the Collections of their Owner Units</label><label><input type="radio" name="p-see" checked>Public: theirs, and every public Collection</label><label><input type="radio" name="p-see">All: also the private Collections of other Owner Units, and the Resources without a Collection</label></div></div>
+    </div>
+   </div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Manage Collections <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Make a Collection, and change its details, its Owner Unit and who sees it.</p></div>
+    <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
+   </div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Manage Resources <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Add Resources to a Collection, with their grain and relations: the work of a Data Admin.</p></div>
+    <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
+   </div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Describe and publish Resources <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Write the Business Description of a Resource, its intended use and pitfalls; deprecate and publish it.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Which Resources <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice</span></span><div class="pe-opts"><label><input type="radio" name="p-describe" checked>Those in the Collections of their Owner Units</label><label><input type="radio" name="p-describe">Every Resource they see</label></div></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-terminal-window"></i>Query</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Preview a Resource <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">See the first rows of a Resource, on its page and in Claude.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+   </div>
+   <div class="pg-perm" data-pane-group="pg" data-pane="business delete new">
+    <div><div class="pg-name">Make and run queries <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Write SQL on the Resources they see, in Query and through Claude.</p></div>
+    <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
+   </div>
+   <div class="pg-perm changed" data-pane-group="pg" data-pane="changed" hidden>
+    <div><div class="pg-name">Make and run queries <span class="chg">changed</span> <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Write SQL on the Resources they see, in Query and through Claude.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Runs freely up to <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="100" aria-label="Runs freely up to">MB</span></div>
+     <div class="pg-param"><span class="pe-label">Runs once they approve, up to <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="1" aria-label="Runs once they approve, up to">GB</span></div>
+     <div class="pg-param"><span class="pe-label">Above that <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice</span></span><div class="pe-opts"><label><input type="radio" name="p-above" checked>They send a Request to the Data Team</label><label><input type="radio" name="p-above">It cannot run</label></div></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-aperture"></i>Lenses</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Make Lenses <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Make a query a Lens, in a Collection of their Owner Units, and update and edit their Lenses.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Delete a Lens <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></span><div class="pg-yn" style="justify-self:start"><button class="seg on">Yes</button><button class="seg">No</button></div></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-plugs-connected"></i>Claude, through the MCP</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Work with Data Hub in Claude <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Connect Claude to Data Hub, and find, read and explain what they see.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">What Claude reads of a result or a Preview <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>choice</span></span><div class="pe-opts"><label><input type="radio" name="p-claude-rows">The rows: Claude works on the result</label><label><input type="radio" name="p-claude-rows" checked>The shape, not the values: the rows show in the window only</label><label><input type="radio" name="p-claude-rows">Nothing: Claude offers "Open in Data Hub"</label></div></div>
+     <div class="pg-param"><span class="pe-label">Writes through Claude <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>several choices</span></span><div class="use-chips"><button class="use-chip on"><i class="ph ph-check"></i>Business Descriptions</button><button class="use-chip on"><i class="ph ph-check"></i>Messages</button><button class="use-chip">Deprecations</button><button class="use-chip">Changes marked seen</button></div></div>
+     <div class="pg-param"><span class="pe-label">A note for Claude <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>text</span></span><span><textarea rows="2" aria-label="A note for Claude">Answer in Dutch. Never ask the User to paste rows into the conversation.</textarea><span class="pe-hint" style="display:block">Claude gets it with the how-to-use, for every User of Business.</span></span></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-key"></i>Excel</div>
+   <div class="pg-perm" data-pane-group="pg" data-pane="business delete new">
+    <div><div class="pg-name">Use Excel keys <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Make Excel keys on My page, to fetch the result of a Lens in Excel.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Keys at most <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="3" aria-label="Keys at most">keys</span></div>
+     <div class="pg-param"><span class="pe-label">A key lasts <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="365" aria-label="A key lasts">days</span></div>
+    </div>
+   </div>
+   <div class="pg-perm changed" data-pane-group="pg" data-pane="changed" hidden>
+    <div><div class="pg-name">Use Excel keys <span class="chg">changed</span> <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no</span></div><p class="pg-desc">Make Excel keys on My page, to fetch the result of a Lens in Excel.</p></div>
+    <div class="pg-yn"><button class="seg on">Yes</button><button class="seg">No</button></div>
+    <div class="pg-params">
+     <div class="pg-param"><span class="pe-label">Keys at most <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="5" aria-label="Keys at most">keys <span class="meta">was 3</span></span></div>
+     <div class="pg-param"><span class="pe-label">A key lasts <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>whole number</span></span><span class="pg-num"><input type="number" value="365" aria-label="A key lasts">days</span></div>
+    </div>
+   </div>
+  </div>
+
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-toolbox"></i>Admin</div>
+   <div class="pg-perm">
+    <div><div class="pg-name">Open Admin <span class="pg-kind" data-pane-group="kinds" data-pane="on" hidden>yes or no, with several choices</span></div><p class="pg-desc">The section of the Data Team, with the tools it names: Webhooks, Excel keys, Users, Permission groups.</p></div>
+    <div class="pg-yn"><button class="seg">Yes</button><button class="seg on">No</button></div>
+   </div>
+  </div>
+
+  <div class="pg-foot" data-pane-group="pg" data-pane="business changed new">
+   <p class="meta">To delete Business, its 31 Users go to another Permission group, which then becomes the default.</p>
+   <button class="btn-quiet" data-go="pg:delete" style="color:var(--signal-urgent)"><i class="ph-fill ph-trash"></i> Delete Business…</button>
+  </div>
+  <div class="pg-delete" data-pane-group="pg" data-pane="delete" hidden>
+   <div class="wh-stop-row"><i class="ph-fill ph-warning"></i><span><b>Delete Business?</b> Its 31 Users go to the Permission group you choose, and it becomes the default for new Users, as Business is now. Each of them gets a Message that says what changed for them. This cannot be undone.</span></div>
+   <div class="pe-opts">
+    <label><input type="radio" name="p-move" checked>Analysts, 9 Users: queries and Lenses; Claude reads the rows</label>
+    <label><input type="radio" name="p-move">Read only, 3 Users: sees and runs Lenses; no queries, no Claude</label>
+    <label style="color:var(--text-muted);cursor:default"><input type="radio" name="p-move" disabled>Admin: Users join it one by one, on Users</label>
+   </div>
+   <div class="pg-delete-foot"><button class="btn-quiet" data-go="pg:business">Keep it</button><button class="btn-primary danger" data-go="pg:business">Delete and move 31 Users</button></div>
+  </div>
+ </section>
+
+ <!-- Admin opened: everything, and locked -->
+ <section class="card mc-detail pg-detail" data-pane-group="pg" data-pane="datateam" hidden aria-label="The Permission group opened">
+  <div class="mc-detail-head">
+   <i class="ph-fill ph-shield-check wh-big" aria-hidden="true"></i>
+   <div style="flex:1;min-width:0"><h2 class="wh-h2">Admin</h2><div class="meta">Everything, Admin included</div></div>
+   <button class="btn-quiet outline"><i class="ph ph-copy"></i>Duplicate</button>
+  </div>
+  <dl class="wh-facts">
+   <dt>Users</dt><dd>4 · <a class="text-link" href="admin-users.html?usfilter=datateam">see them on Users</a></dd>
+   <dt>Default for new Users</dt><dd>No</dd>
+   <dt>Since</dt><dd>6 Nov 2026, with the Users of the Role Group datahub-datateam@</dd>
+  </dl>
+  <div class="notice"><i class="ph-fill ph-lock-simple"></i><p>Admin can do everything, and keeps it: its Permissions cannot be changed, it cannot be deleted, and it keeps at least one User, so that someone can always manage Data Hub. Duplicate it to start a group that does almost everything.</p></div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-stack"></i>Collections and Resources</div>
+   <div class="pg-perm"><div><div class="pg-name">What they see</div><p class="pg-desc">All: also the private Collections of other Owner Units, and the Resources without a Collection</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>All</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Manage Collections</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Manage Resources</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Describe and publish Resources</div><p class="pg-desc">Every Resource</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-terminal-window"></i>Query</div>
+   <div class="pg-perm"><div><div class="pg-name">Preview a Resource</div></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+   <div class="pg-perm"><div><div class="pg-name">Make and run queries</div><p class="pg-desc">Freely up to 100 MB, once they approve up to 1 GB, above that a Request to the Data Team</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-aperture"></i>Lenses</div>
+   <div class="pg-perm"><div><div class="pg-name">Make Lenses</div><p class="pg-desc">And delete them</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-plugs-connected"></i>Claude, through the MCP</div>
+   <div class="pg-perm"><div><div class="pg-name">Work with Data Hub in Claude</div><p class="pg-desc">Claude reads the rows; writes everything a User may</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-key"></i>Excel</div>
+   <div class="pg-perm"><div><div class="pg-name">Use Excel keys</div><p class="pg-desc">Up to 5 keys, each for 365 days</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+  <div class="pg-section">
+   <div class="pg-section-head"><i class="ph-fill ph-toolbox"></i>Admin</div>
+   <div class="pg-perm"><div><div class="pg-name">Open Admin</div><p class="pg-desc">Webhooks, Excel keys, Users and Permission groups</p></div><span class="pg-lock"><i class="ph-fill ph-lock-simple"></i>Yes</span></div>
+  </div>
+ </section>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+
+<!-- A new Permission group: a name, a sentence, and the group it starts as a copy of -->
+<div class="sheet-wrap" data-pane-group="pg" data-pane="new" hidden>
+<div class="sheet-backdrop" data-go="pg:business"></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="new-title" style="width:max(460px, 34vw)">
+ <div style="display:flex;align-items:flex-start;gap:10px">
+  <i class="ph-fill ph-shield-check" style="font-size:22px;color:var(--text-secondary);margin-top:2px" aria-hidden="true"></i>
+  <div style="flex:1;min-width:0"><h2 id="new-title">New Permission group</h2></div>
+  <button class="icon-btn" data-go="pg:business" aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" style="padding:0 6px">
+  <label class="field" style="margin-top:8px"><span>Name</span><input value="Sales leads"></label>
+  <label class="field"><span>In one sentence, what it allows</span><input value="Lenses and queries on leads; Claude reads the shape, not the rows"></label>
+  <div class="label" style="margin-top:6px">Start as a copy of</div>
+  <div class="us-groups" role="radiogroup" aria-label="Start as a copy of">
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Admin</span><span class="meta" style="display:block">Everything, Admin included</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Analysts</span><span class="meta" style="display:block">Queries and Lenses; Claude reads the rows</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from" checked><span><span class="item-title">Business</span><span class="meta" style="display:block">Lenses and Previews; Claude reads the shape, not the rows</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Read only</span><span class="meta" style="display:block">Sees and runs Lenses; no queries, no Claude</span></span></label>
+   <label class="wh-opt"><input type="radio" name="p-from"><span><span class="item-title">Nothing</span><span class="meta" style="display:block">Every Permission no, to set one by one</span></span></label>
+  </div>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">It starts without Users. Add them on Users, one by one.</p>
+  <button class="btn-quiet" data-go="pg:business">Cancel</button>
+  <button class="btn-primary" data-go="pg:business">Make it</button>
+ </div>
+</section>
+</div>
+
+<div class="proto-switch" data-group="pg" role="tablist" aria-label="Prototype: Permission groups">Permission groups
+ <button class="seg on" data-target="business" role="tab" aria-selected="true">Business</button>
+ <button class="seg" data-target="changed" role="tab" aria-selected="false">Two changes</button>
+ <button class="seg" data-target="delete" role="tab" aria-selected="false">Deleting it</button>
+ <button class="seg" data-target="datateam" role="tab" aria-selected="false">Admin</button>
+ <button class="seg" data-target="new" role="tab" aria-selected="false">New group</button>
+</div>
+<script src="app.js"></script>
+<script>
+// Prototype only: the list marks the group opened; yes or no shows or hides the values of a Permission
+const markItem = target => document.querySelectorAll('[data-item]').forEach(i => i.classList.toggle('on', i.dataset.item === (target === 'datateam' ? 'datateam' : 'business')));
+document.querySelectorAll('[data-group="pg"] [data-target]').forEach(b => b.addEventListener('click', () => markItem(b.dataset.target)));
+markItem(document.querySelector('[data-group="pg"] .seg.on')?.dataset.target);
+document.querySelectorAll('.pg-perm > .pg-yn .seg').forEach(b => b.addEventListener('click', () => {
+  b.parentElement.querySelectorAll('.seg').forEach(s => s.classList.toggle('on', s === b));
+  const params = b.closest('.pg-perm').querySelector('.pg-params');
+  if (params) params.hidden = b.textContent.trim() === 'No';
+}));
+document.querySelectorAll('.pg-param .pg-yn .seg, .use-chip').forEach(b => b.addEventListener('click', () => {
+  if (b.classList.contains('use-chip')) { b.classList.toggle('on'); return; }
+  b.parentElement.querySelectorAll('.seg').forEach(s => s.classList.toggle('on', s === b));
+}));
+</script>
+</body>
+</html>

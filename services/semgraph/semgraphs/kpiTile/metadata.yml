@@ -1,0 +1,30 @@
+id: kpiTile
+title: semgraphs.kpiTile.title
+answers: semgraphs.kpiTile.answers
+readingCard: readingCards.kpiTile
+attributes:
+  # One current number; the mini trend only gives it context.
+  timeAxis: [none]
+  breakdown: [none]
+  # Never without a comparison: the period before, or last year (REQ-067).
+  comparisonBasis: [previousPeriod]
+  dataGrain: [aggregated]
+  measureType: [additive, unique, perUnit]
+  centralTendency: any
+exampleQuestions:
+  - semgraphs.kpiTile.examples.1
+  - semgraphs.kpiTile.examples.2
+doNotUseWhen:
+  - intent: showEvolution
+    use: periodComparison
+  - intent: compareWithTarget
+    use: kpiStatus
+  - intent: compareCategories
+    use: categoryComparison
+data:
+  # Two weeks of data: enough for a number and a trend before it.
+  minimumPoints: 14
+links:
+  figma: https://www.figma.com/design/X9FMecd5iH6jIced8nZQf6?node-id=4-32
+  # The reading cards do not exist yet; until then this points to the learning plan, level 1.
+  learning: https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1354629146

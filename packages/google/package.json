@@ -1,0 +1,14 @@
+{
+  "name": "@datahub/google",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Calling Google APIs as the service account a service runs as: access tokens, secrets and readable errors.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": ["dist"]
+}

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+  Screen: Users, a tool of Admin, the section of the Data Team. Designed on 2026-11-06, with Max.
+  Every User of this environment of Data Hub: everyone who signed in once. Each has one Permission group, which says
+  what they may do; a new User gets the default Permission group at their first sign-in. Their Owner Units still come
+  from Google Workspace and say which Collections they own; they are shown here, but not changed here (DEC-UX-187).
+  A row opens the User in a sheet over the page: who they are, how they use Data Hub, their Permission group to change,
+  what that changes for them before it is saved, and the history of their Permission group. A change takes effect
+  within 15 minutes, in the web app, in Claude and in Excel (DEC-UX-189). Nobody changes their own Permission group
+  (DEC-UX-188).
+  The search finds a User by name or address; the filter shows one Permission group, each with its count.
+  The switch at the bottom shows the list, a User opened, another Permission group chosen, saved, and yourself opened:
+  ?us=list, ?us=open, ?us=changed, ?us=saved, ?us=self.
+  Requirements: FR-PL-04, FR-PL-06, FR-PL-07, FR-PL-08, FR-PL-11
+  Decisions: DEC-UX-186, DEC-UX-187, DEC-UX-188, DEC-UX-189, DEC-UX-190, DEC-PL-01, DEC-PL-07, DEC-UX-130, DEC-DH-78, DEC-UM-04.
+  Related screens: admin-permission-groups.html, admin-keys.html, my-page.html.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="datateam">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Admin · Users</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <a class="nav-btn nav-admin active" href="admin-users.html" data-label="Admin" aria-label="Admin, for the Data Team" aria-current="page" data-for="datateam"><i class="ph-fill ph-toolbox"></i><span class="flare top"></span><span class="flare bottom"></span></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Admin">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Admin</h1>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <p class="meta" style="display:block;line-height:1.5;margin:10px 4px 14px">For the Data Team: what feeds Data Hub uat, who reaches it, and what each User may do.</p>
+  <a class="mc-filter" href="admin-webhooks.html"><i class="ph ph-webhooks-logo"></i><span>Webhooks</span><span class="count" title="Deliveries to look at: refused, or failed">2</span></a>
+  <a class="mc-filter" href="admin-keys.html"><i class="ph ph-key"></i><span>Excel keys</span><span class="count" title="Active keys">14</span></a>
+  <a class="mc-filter on" href="admin-users.html" aria-current="page"><i class="ph ph-users"></i><span>Users</span><span class="count" title="Users">47</span></a>
+  <a class="mc-filter" href="admin-permission-groups.html"><i class="ph ph-shield-check"></i><span>Permission groups</span><span class="count" title="Permission groups">4</span></a>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Admin</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Users</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5;max-width:720px">Everyone who signed in to Data Hub uat. Each User is in one Permission group, which says what they may do, here, in Claude and in Excel. A new User gets <a class="text-link" href="admin-permission-groups.html">Business</a>, the default, at their first sign-in.</p></div>
+ <span class="status"><i class="ph-fill ph-cloud"></i>Data Hub uat</span>
+</div>
+<div style="display:flex;align-items:center;gap:10px;margin:18px 0 12px;flex-wrap:wrap">
+ <label class="search card" style="flex:1;max-width:420px"><i class="ph-fill ph-magnifying-glass" style="font-size:15px"></i><input placeholder="Search a User by name or address"></label>
+ <div data-group="usfilter" role="tablist" aria-label="Which Permission group" style="display:inline-flex;gap:2px;flex-wrap:wrap">
+  <button class="seg on" data-target="all" role="tab" aria-selected="true">All <span class="count">47</span></button>
+  <button class="seg" data-target="datateam" role="tab" aria-selected="false">Admin <span class="count">4</span></button>
+  <button class="seg" data-target="analysts" role="tab" aria-selected="false">Analysts <span class="count">9</span></button>
+  <button class="seg" data-target="business" role="tab" aria-selected="false">Business <span class="count">31</span></button>
+  <button class="seg" data-target="readonly" role="tab" aria-selected="false">Read only <span class="count">3</span></button>
+ </div>
+</div>
+<div class="table-card">
+ <table class="us-table">
+ <thead><tr><th>User</th><th>Permission group</th><th>Owner Units</th><th>Uses</th><th>Last signed in</th></tr></thead>
+ <tbody>
+  <tr data-go="us:self"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">MP</span><span>Max Passenier <span class="pill">you</span><span class="meta" style="display:block">max@thenextimmoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Admin</span></td><td class="muted">Data Team</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key off" title="No Excel key"></i></span></td><td class="nowrap">today, 09:02</td></tr>
+  <tr data-go="us:open" data-pane-group="us" data-pane="list open changed self"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">AC</span><span>An Claes<span class="meta" style="display:block">an.claes@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Business</span></td><td class="muted">Sales, Marketing</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key" title="1 Excel key"></i></span></td><td class="nowrap">today, 08:12</td></tr>
+  <tr data-go="us:open" data-pane-group="us" data-pane="saved" hidden class="on"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">AC</span><span>An Claes<span class="meta" style="display:block">an.claes@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Analysts</span> <span class="chg">changed by you</span></td><td class="muted">Sales, Marketing</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key" title="1 Excel key"></i></span></td><td class="nowrap">today, 08:12</td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">EY</span><span>Elif Yilmaz <span class="pill">new</span><span class="meta" style="display:block">elif.yilmaz@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Business</span> <span class="meta">the default</span></td><td class="muted">Credit</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected off" title="Not in Claude yet"></i><i class="ph ph-key off" title="No Excel key"></i></span></td><td class="nowrap">yesterday, 16:40</td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">JP</span><span>Jonas Peeters<span class="meta" style="display:block">jonas.peeters@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Analysts</span></td><td class="muted">Marketing</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key off" title="No Excel key"></i></span></td><td class="nowrap">yesterday, 11:05</td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">KL</span><span>Karel Leys<span class="meta" style="display:block">karel.leys@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Business</span></td><td class="muted">Sales</td><td><span class="us-uses"><i class="ph ph-browser off" title="Not in the web app in 30 days"></i><i class="ph ph-plugs-connected off" title="Not in Claude"></i><i class="ph ph-key" title="1 Excel key"></i></span></td><td class="nowrap muted">3 weeks ago</td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">RA</span><span>Ruth Aerts<span class="meta" style="display:block">ruth.aerts@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Admin</span></td><td class="muted">Data Team</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected" title="Claude"></i><i class="ph ph-key" title="1 Excel key"></i></span></td><td class="nowrap">Monday, 14:20</td></tr>
+  <tr><td><span class="name-cell"><span class="avatar small" aria-hidden="true">SM</span><span>Sofie Maes<span class="meta" style="display:block">sofie.maes@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Read only</span></td><td class="muted">none</td><td><span class="us-uses"><i class="ph ph-browser" title="The web app"></i><i class="ph ph-plugs-connected off" title="Claude is not allowed"></i><i class="ph ph-key off" title="No Excel key"></i></span></td><td class="nowrap">2 Nov 2026</td></tr>
+  <tr class="us-gone"><td><span class="name-cell"><span class="avatar small" aria-hidden="true">BS</span><span>Bram De Smet <span class="pill">cannot sign in</span><span class="meta" style="display:block">bram.desmet@immoscoop.be</span></span></span></td><td><span class="wh-tag"><i class="ph ph-shield-check"></i>Analysts</span></td><td>none</td><td><span class="us-uses"><i class="ph ph-browser off"></i><i class="ph ph-plugs-connected off"></i><i class="ph ph-key off"></i></span></td><td class="nowrap">14 Sep 2026</td></tr>
+ </tbody>
+ </table>
+ <p class="meta" style="display:block;padding:8px 10px 2px;line-height:1.5">Owner Units come from Google Workspace and say which Collections a User owns; the Permission group says what they may do. A User who can no longer sign in with Google stays listed, greyed, with their Permission group.</p>
+</div>
+<div style="height:60px"></div>
+</main>
+</div>
+
+<!-- A User opened: their Permission group to change, and what that changes before it is saved -->
+<div class="sheet-wrap" data-pane-group="us" data-pane="open changed" hidden>
+<div class="sheet-backdrop" data-go="us:list"></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="user-title">
+ <div class="us-head">
+  <span class="avatar" aria-hidden="true">AC</span>
+  <div style="flex:1;min-width:0"><h2 id="user-title">An Claes</h2><div class="meta">an.claes@immoscoop.be</div></div>
+  <button class="icon-btn" data-go="us:list" aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" style="padding:0 6px">
+  <dl class="wh-facts" style="margin-top:10px">
+   <dt>In Data Hub since</dt><dd>2 Sep 2026, their first sign-in</dd>
+   <dt>Last signed in</dt><dd>today, 08:12</dd>
+   <dt>Uses</dt><dd>the web app, Claude, and Excel with 1 key</dd>
+   <dt>Owner Units</dt><dd>Sales, Marketing <span class="meta">· from Google Workspace</span></dd>
+  </dl>
+  <div class="label" style="margin-top:20px">Permission group</div>
+  <div class="us-groups" role="radiogroup" aria-label="Permission group">
+   <label class="wh-opt"><input type="radio" name="us-group"><span><span class="item-title">Admin</span><span class="meta" style="display:block">Everything, Admin included · 4 Users</span></span></label>
+   <label class="wh-opt"><input type="radio" name="us-group" id="g-analysts" data-go="us:changed"><span><span class="item-title">Analysts</span><span class="meta" style="display:block">Queries and Lenses; Claude reads the rows · 9 Users</span></span></label>
+   <label class="wh-opt"><input type="radio" name="us-group" id="g-business" data-go="us:open" checked><span><span class="item-title">Business <span class="pill now">now</span> <span class="pill">default</span></span><span class="meta" style="display:block">Lenses and Previews; Claude reads the shape, not the rows · 31 Users</span></span></label>
+   <label class="wh-opt"><input type="radio" name="us-group"><span><span class="item-title">Read only</span><span class="meta" style="display:block">Sees and runs Lenses; no queries, no Claude · 3 Users</span></span></label>
+  </div>
+  <div data-pane-group="us" data-pane="changed" hidden>
+   <div class="label" style="margin-top:18px">What changes for An Claes</div>
+   <ul class="pg-changes">
+    <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Makes and runs queries,</b> freely up to 100 MB, and up to 1 GB once they approve it</span></li>
+    <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Claude reads the rows</b> of their results and Previews <del>the shape only</del></span></li>
+    <li class="gain"><i class="ph-fill ph-plus-circle"></i><span><b>Excel keys:</b> up to 5 <del>3</del></span></li>
+    <li><i class="ph-fill ph-equals"></i><span>All else stays the same. Their Owner Units, and so the Collections they own, do not change.</span></li>
+   </ul>
+  </div>
+  <div class="label" style="margin-top:20px">History of their Permission group</div>
+  <ul class="us-log">
+   <li><span>14 Oct 2026</span><span>Analysts to Business, by Ruth Aerts</span></li>
+   <li><span>2 Sep 2026</span><span>Business, the default, at their first sign-in</span></li>
+  </ul>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta">A change takes effect within 15 minutes, in the web app, in Claude and in Excel.</p>
+  <button class="btn-quiet" data-go="us:list">Cancel</button>
+  <button class="btn-primary" data-pane-group="us" data-pane="open" disabled>Save</button>
+  <button class="btn-primary" data-pane-group="us" data-pane="changed" data-go="us:saved" hidden>Save</button>
+ </div>
+</section>
+</div>
+
+<!-- Yourself opened: you cannot change your own Permission group -->
+<div class="sheet-wrap" data-pane-group="us" data-pane="self" hidden>
+<div class="sheet-backdrop" data-go="us:list"></div>
+<section class="sheet" role="dialog" aria-modal="true" aria-labelledby="self-title">
+ <div class="us-head">
+  <span class="avatar" aria-hidden="true">MP</span>
+  <div style="flex:1;min-width:0"><h2 id="self-title">Max Passenier <span class="pill">you</span></h2><div class="meta">max@thenextimmoscoop.be</div></div>
+  <button class="icon-btn" data-go="us:list" aria-label="Close"><i class="ph ph-x"></i></button>
+ </div>
+ <div class="sheet-list" style="padding:0 6px">
+  <dl class="wh-facts" style="margin-top:10px">
+   <dt>In Data Hub since</dt><dd>17 Oct 2026, their first sign-in</dd>
+   <dt>Last signed in</dt><dd>today, 09:02</dd>
+   <dt>Uses</dt><dd>the web app and Claude</dd>
+   <dt>Owner Units</dt><dd>Data Team <span class="meta">· from Google Workspace</span></dd>
+  </dl>
+  <div class="label" style="margin-top:20px">Permission group</div>
+  <div class="notice" style="margin:6px 0 10px"><i class="ph-fill ph-lock-simple"></i><p>You cannot change your own Permission group, so that nobody takes Admin away from themselves by mistake. Another User of the Data Team can.</p></div>
+  <div class="us-groups" role="radiogroup" aria-label="Permission group" aria-disabled="true">
+   <label class="wh-opt off"><input type="radio" name="self-group" checked disabled><span><span class="item-title">Admin <span class="pill now">now</span></span><span class="meta" style="display:block">Everything, Admin included · 4 Users</span></span></label>
+   <label class="wh-opt off"><input type="radio" name="self-group" disabled><span><span class="item-title">Analysts</span><span class="meta" style="display:block">Queries and Lenses; Claude reads the rows · 9 Users</span></span></label>
+   <label class="wh-opt off"><input type="radio" name="self-group" disabled><span><span class="item-title">Business <span class="pill">default</span></span><span class="meta" style="display:block">Lenses and Previews; Claude reads the shape, not the rows · 31 Users</span></span></label>
+   <label class="wh-opt off"><input type="radio" name="self-group" disabled><span><span class="item-title">Read only</span><span class="meta" style="display:block">Sees and runs Lenses; no queries, no Claude · 3 Users</span></span></label>
+  </div>
+  <div class="label" style="margin-top:20px">History of their Permission group</div>
+  <ul class="us-log">
+   <li><span>6 Nov 2026</span><span>Admin, as a member of the Role Group datahub-datateam@ when Permission groups started</span></li>
+  </ul>
+ </div>
+ <div class="sheet-foot">
+  <p class="meta"></p>
+  <button class="btn-quiet" data-go="us:list">Close</button>
+ </div>
+</section>
+</div>
+
+<div class="moved-toast card" data-pane-group="us" data-pane="saved" hidden><i class="ph-fill ph-check-circle"></i><span>An Claes is now in Analysts. It takes effect within 15 minutes.</span></div>
+
+<div class="proto-switch" data-group="us" role="tablist" aria-label="Prototype: a User">Users
+ <button class="seg on" data-target="list" role="tab" aria-selected="true">The list</button>
+ <button class="seg" data-target="open" role="tab" aria-selected="false">A User opened</button>
+ <button class="seg" data-target="changed" role="tab" aria-selected="false">Another group chosen</button>
+ <button class="seg" data-target="saved" role="tab" aria-selected="false">Saved</button>
+ <button class="seg" data-target="self" role="tab" aria-selected="false">Yourself</button>
+</div>
+<script src="app.js"></script>
+<script>
+// Prototype only: the radio of the Permission group follows the state shown
+const syncGroup = target => {
+  document.getElementById('g-analysts').checked = target === 'changed';
+  document.getElementById('g-business').checked = target !== 'changed';
+};
+document.querySelectorAll('[data-group="us"] [data-target]').forEach(b => b.addEventListener('click', () => syncGroup(b.dataset.target)));
+syncGroup(document.querySelector('[data-group="us"] .seg.on')?.dataset.target);
+</script>
+</body>
+</html>

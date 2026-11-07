@@ -1,0 +1,30 @@
+{
+  "semgraph": "distribution",
+  "size": "xl",
+  "metric": "askingPrice",
+  "title": "Panden te koop per vraagprijs, sep 2026 (voorbeelddata)",
+  "binWidth": 50000,
+  "unit": { "prefix": "€ " },
+  "locale": "nl-BE",
+  "context": { "domain": "Panden", "dataset": "Listings", "reliability": "voorbeelddata" },
+  "bins": [
+    { "from": 100000, "count": 180 },
+    { "from": 150000, "count": 590 },
+    { "from": 200000, "count": 1190 },
+    { "from": 250000, "count": 1890 },
+    { "from": 300000, "count": 2410 },
+    { "from": 350000, "count": 2190 },
+    { "from": 400000, "count": 1790 },
+    { "from": 450000, "count": 1390 },
+    { "from": 500000, "count": 1010 },
+    { "from": 550000, "count": 760 },
+    { "from": 600000, "count": 560 },
+    { "from": 650000, "count": 410 },
+    { "from": 700000, "count": 300 },
+    { "from": 750000, "count": 220 },
+    { "from": 800000, "count": 160 },
+    { "from": 850000, "count": 120 }
+  ],
+  "openBin": { "from": 900000, "count": 480 },
+  "percentiles": { "p25": 261000, "p50": 312000, "p75": 408000 }
+}
