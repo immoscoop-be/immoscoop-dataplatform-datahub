@@ -1970,3 +1970,6 @@ html:not([data-theme="dark"]) .chart-figure .for-dark, html[data-theme="dark"] .
 .cv-tog:disabled { opacity: .5; cursor: default; outline-style: dashed; }
 .cv-tones { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 @media (max-width: 900px) { .cv-wrap { grid-template-columns: minmax(0, 1fr); } }
+.cv-cond { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: var(--text-small); margin-top: 10px; }
+.cv-cond-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; padding-left: 14px; font-size: var(--text-small); }
+.cv-cond-row .icon-btn { width: 28px; height: 28px; }

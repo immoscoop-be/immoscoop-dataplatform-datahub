@@ -11,8 +11,9 @@
      looks back from the check, split when one by one.
   4. Per: all together or for each value, and which values; a new value comes in by itself and warms up first
      (FR-CM-07, FR-CM-08, FR-CM-10). Layer: colours in the block, three standing for many.
-  5. Measure: per field, how to measure it, in business words, by the type of the field; several fields for "all or
-     any empty"; the rest belongs in the Resource, by the Data Team (FR-CM-05, DEC-CM-25). Layer: the measure on top.
+  5. Measure: per field, how to measure it, in business words, by the type of the field; a condition on one or more
+     fields, built here; what a condition cannot say, a SQL measure of the Data Team in the monitor, in Data Hub, never a
+     change in the dbt project (FR-CM-05, DEC-CM-25, DEC-CM-26). Layer: the measure on top.
   6. Boundaries: one or more, each compared with what the Owner chooses (DEC-CM-24); a fixed limit, a change, unusual,
      something new, something silent or the top N (FR-CM-12, FR-CM-24, OP-CM-10); a minimum to be judged (EC-CM-02);
      how often it would have warned in the past 12 weeks (FR-CM-16), explained (FR-CM-15); an exception for one value
@@ -24,7 +25,7 @@
   of the brainstorm through every step; ?step=resource (the default), often, period, per, measure, bounds or react;
   ?from=claude opens a draft of Claude.
   Requirements: FR-CM-03, FR-CM-05, FR-CM-07, FR-CM-08, FR-CM-09, FR-CM-10, FR-CM-11, FR-CM-12, FR-CM-13, FR-CM-14, FR-CM-15, FR-CM-16, FR-CM-20, FR-CM-21, FR-CM-22, FR-CM-23, FR-CM-24, FR-CM-33, FR-CM-39, EC-CM-02
-  Decisions: DEC-CM-03, DEC-CM-09, DEC-CM-12, DEC-CM-14, DEC-CM-15, DEC-CM-19, DEC-CM-20, DEC-CM-23, DEC-CM-24, DEC-CM-25, DEC-UX-195.
+  Decisions: DEC-CM-03, DEC-CM-09, DEC-CM-12, DEC-CM-14, DEC-CM-15, DEC-CM-19, DEC-CM-20, DEC-CM-23, DEC-CM-24, DEC-CM-25, DEC-CM-26, DEC-UX-195.
   Open points: OP-UX-64, OP-UX-65, OP-CM-03, OP-CM-10, OP-CM-11.
   Rules: ../principles.md  ·  Placeholder content only.
 -->
@@ -120,18 +121,22 @@
         { k: 'rows', name: 'Every credit lead', type: 'a row', hows: ['count'] },
         { k: 'amount', name: 'Requested amount', type: 'a number, in euro', hows: ['typical', 'average', 'total', 'smallest', 'largest', 'empty'] },
         { k: 'email', name: 'Email', type: 'text', hows: ['empty', 'distinct'] },
-        { k: 'contact', name: 'Email and phone', type: 'several fields', hows: ['allempty', 'anyempty'] } ] },
+        { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
+      condFields: ['Email', 'Phone', 'Requested amount', 'Lead source', 'Partner'] },
     listings: { name: 'New listings', coll: 'Listings', level: '3 · Confirmed', status: 'no monitor yet', team: 'the Listings team', units: 'listings',
       time: 'published_at', timeText: 'the moment a listing goes online', reads: '6 MB',
       per: { agent: { one: 'estate agent', many: 'estate agents', n: 'about 2,000', first: 'Dewaele Gent' }, province: { one: 'province', many: 'provinces', n: 11, first: 'Antwerp' } },
       fields: [
         { k: 'rows', name: 'Every listing', type: 'a row', hows: ['count'] },
         { k: 'price', name: 'Asking price', type: 'a number, in euro', hows: ['typical', 'average', 'smallest', 'largest', 'empty'] },
-        { k: 'epc', name: 'EPC label', type: 'a category', hows: ['empty', 'distinct'] } ] },
+        { k: 'epc', name: 'EPC label', type: 'a category', hows: ['empty', 'distinct'] },
+        { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
+      condFields: ['Asking price', 'EPC label', 'Estate agent', 'Postcode'] },
     views: { name: 'Views', coll: 'Product', level: '3 · Confirmed', status: 'has a monitor: 2 boundaries', team: 'the Product team', units: 'views',
       time: 'viewed_at', timeText: 'the moment a page is viewed', reads: '40 MB',
       per: { device: { one: 'device', many: 'devices', n: 3, first: 'mobile' } },
-      fields: [ { k: 'rows', name: 'Every view', type: 'a row', hows: ['count'] } ] }
+      fields: [ { k: 'rows', name: 'Every view', type: 'a row', hows: ['count'] }, { k: 'cond', name: 'A condition', type: 'on one or more fields, built here', hows: ['share'] } ],
+      condFields: ['Device', 'Page'] }
   };
   const HOW = {
     count: { label: 'how many', sym: '#', add: true, says: (f, r) => `the number of ${r.units}` },
@@ -142,8 +147,7 @@
     largest: { label: 'largest', sym: '↑', says: f => `the largest ${f.name.toLowerCase()}` },
     empty: { label: 'how often empty', sym: '%', says: (f, r) => `the share of ${r.units} without ${f.name.toLowerCase()}` },
     distinct: { label: 'how many different', sym: '≠', says: f => `the number of different ${f.name.toLowerCase()} values` },
-    allempty: { label: 'how often both are empty', sym: '%', says: (f, r) => `the share of ${r.units} without email and without phone` },
-    anyempty: { label: 'how often one is empty', sym: '%', says: (f, r) => `the share of ${r.units} without email or without phone` }
+    share: { label: 'the share that meets it', sym: '%', says: (f, r) => `the share of ${r.units} where ${condTxt()}` }
   };
   const CASES = {
     volume: { q: 'I want to be informed about fluctuations in the volume per lead source, per day.', res: 'clc', often: 'day', on: 'all', period: 7, split: true, per: 'source', field: 'rows', how: 'count', guard: 10,
@@ -161,7 +165,7 @@
       hist: 'In the past 12 weeks: <b>2 new lead sources</b>, partner_api_v2 and walk_in, and one that went silent, app, from 1 to 4 October.',
       bounds: [ { kind: 'appears', ref: 'ever', tone: 'informative', react: ['owner'] },
                 { kind: 'silent', weeks: 12, ref: 'past', tone: 'attention', react: ['owner'] } ] },
-    complete: { q: 'Tell me when leads come in that we cannot contact: no email and no phone.', res: 'clc', often: 'day', on: 'all', period: 1, split: false, per: 'partner', field: 'contact', how: 'allempty', guard: 20,
+    complete: { q: 'Tell me when leads come in that we cannot contact: no email and no phone.', res: 'clc', often: 'day', on: 'all', period: 1, split: false, per: 'partner', field: 'cond', how: 'share', guard: 20, cond: { join: 'all', parts: [{ f: 'Email', op: 'is empty' }, { f: 'Phone', op: 'is empty' }] },
       hist: 'In the past 12 weeks it would have messaged you <b>4 times for Belfius</b>, and 6 times across all partners; above 10% only once.',
       bounds: [ { kind: 'level', dir: 'higher', amt: 2, unit: '%', ref: 'fixed', tone: 'attention', react: ['owner'] },
                 { kind: 'level', dir: 'higher', amt: 10, unit: '%', ref: 'fixed', tone: 'problem', react: ['owner', 'consumers'] } ] }
@@ -181,7 +185,10 @@
   const q = new URLSearchParams(location.search);
   const copy = o => JSON.parse(JSON.stringify(o));
   let caseKey = CASES[q.get('case')] ? q.get('case') : 'volume';
-  let s = copy(CASES[caseKey]);
+  const OPS = ['is empty', 'is not empty', 'is', 'is not', 'is higher than', 'is lower than'];
+  const needsValue = op => !op.includes('empty');
+  const load = k => { const c = copy(CASES[k]); if (!c.cond) c.cond = { join: 'all', parts: [{ f: RES[c.res].condFields[0], op: 'is empty' }] }; return c; };
+  let s = load(caseKey);
   let at = Math.max(1, STEPS.indexOf(q.get('step')) + 1);
   let reached = at;
   let from = q.get('from') === 'claude' ? 'claude' : 'proposal';
@@ -192,6 +199,7 @@
   const how = () => HOW[s.how] || HOW.count;
   const u = () => U[s.often];
   const esc = t => String(t).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const condTxt = () => s.cond.parts.map(c => `${c.f.toLowerCase()} ${c.op}${needsValue(c.op) ? ' ' + (c.v || '…') : ''}`).join(s.cond.join === 'all' ? ' and ' : ' or ');
   const later = l => l > at ? ' cv-later' : '';
   const a = w => (/^[aeiou]/i.test(w) ? 'an ' : 'a ') + w;
 
@@ -347,10 +355,13 @@
         foot(`${per() ? `For each ${per().one}` : 'All together'} · next, what to measure`);
     },
     measure: () => head('What do you want to measure?', 'Per field, how to measure it, in the words that fit its type. Pick one; you can watch more later, in the same monitor.') +
-      res().fields.map(f => `<div class="cv-field${s.field === f.k ? ' on' : ''}"><div class="cv-field-head"><b style="font-weight:500">${f.name}</b><span class="meta">${f.type}</span></div><div class="mc-chips" style="margin:0">${f.hows.map(k => chip(s.field === f.k && s.how === k, `measure:${f.k}:${k}`, HOW[k].label)).join('')}</div></div>`).join('') +
+      res().fields.map(f => `<div class="cv-field${s.field === f.k ? ' on' : ''}"><div class="cv-field-head"><b style="font-weight:500">${f.name}</b><span class="meta">${f.type}</span></div><div class="mc-chips" style="margin:0">${f.hows.map(k => chip(s.field === f.k && s.how === k, `measure:${f.k}:${k}`, HOW[k].label)).join('')}</div>` +
+        (f.k === 'cond' && s.field === 'cond' ? `<div class="cv-cond">Count the ${res().units} where ${sel('cj', s.cond.join, [['all', 'all'], ['any', 'any']])} of these hold:</div>` +
+          s.cond.parts.map((c, i) => `<div class="cv-cond-row">${sel(`c:${i}:f`, c.f, res().condFields.map(x => [x, x]))}${sel(`c:${i}:op`, c.op, OPS.map(o => [o, o]))}${needsValue(c.op) ? `<input class="cv-sel" data-set="c:${i}:v" value="${esc(c.v || '')}" placeholder="a value" style="width:130px">` : ''}${s.cond.parts.length > 1 ? `<button class="icon-btn" data-act="cdel:${i}" aria-label="Take it out"><i class="ph ph-x"></i></button>` : ''}</div>`).join('') +
+          `<div class="cv-cond-row"><button class="btn-quiet" data-act="cadd"><i class="ph ph-plus"></i>Another field</button></div>` : '') + '</div>').join('') +
       (s.period > 1 && s.split ? `<ul class="wh-steps" style="margin-top:12px"><li><i class="ph-fill ph-calendar-dots"></i><span>${how().add ? `${u()[0][0].toUpperCase() + u()[0].slice(1)} by ${u()[0]}: it takes the average per ${u()[0]}, so the last ${s.period} ${u()[1]} compare with any other ${s.period}.` : `A ${how().label.split(',')[0]} is taken over the whole period at once; ${u()[0]} by ${u()[0]} only shows in the picture.`}</span></li></ul>` : '') +
       (s.how === 'typical' ? `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-scales" aria-hidden="true"></i><div><b>Typical, the middle value,</b> is proposed for amounts: half of them are lower, half higher. One very large one does not move it, as it moves the average.</div></div>` : '') +
-      `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-code" aria-hidden="true"></i><div><b>Something this list cannot say,</b> such as "a lead we can call"? <a href="messages.html">Ask the Data Team</a> to add it to ${res().name} as a field; then you measure it here like any other.</div></div>` +
+      `<div class="explain" style="margin-top:12px"><i class="ph-fill ph-code" aria-hidden="true"></i><div><b>Something a condition cannot say,</b> such as "converted within 30 days"? <a href="messages.html">Ask the Data Team</a>: they write it as a SQL measure in this monitor, here in Data Hub, and you use it like any other. Nothing changes in the dbt project of ${res().name}.</div></div>` +
       foot(`${how().says(field(), res())[0].toUpperCase() + how().says(field(), res()).slice(1)} · next, when to hear of it`),
     bounds: () => {
       const p = per();
@@ -405,14 +416,14 @@
   }
   const goStep = n => { at = Math.min(7, Math.max(1, n)); reached = Math.max(reached, at); render(); document.querySelector('.build-steps').scrollIntoView({ block: 'nearest' }); };
   document.querySelectorAll('[data-group="step"] [data-target]').forEach((b, i) => b.addEventListener('click', () => goStep(i + 1)));
-  document.querySelectorAll('[data-group="case"] [data-target]').forEach(b => b.addEventListener('click', () => { caseKey = b.dataset.target; s = copy(CASES[caseKey]); render(); }));
+  document.querySelectorAll('[data-group="case"] [data-target]').forEach(b => b.addEventListener('click', () => { caseKey = b.dataset.target; s = load(caseKey); render(); }));
   document.querySelectorAll('[data-group="from"] [data-target]').forEach(b => b.addEventListener('click', () => { from = b.dataset.target; render(); }));
   document.addEventListener('click', e => {
     const a = e.target.closest('[data-act]'); if (!a) return;
     const [k, x, y] = a.dataset.act.split(':');
     if (k === 'go') return goStep(at + Number(x));
     if (k === 'jump') return goStep(STEPS.indexOf(x) + 1);
-    if (k === 'res') { s.res = x; const p = Object.keys(RES[x].per); if (!RES[x].per[s.per]) s.per = p[0]; if (!RES[x].fields.some(f => f.k === s.field)) { s.field = 'rows'; s.how = 'count'; } }
+    if (k === 'res') { if (s.res !== x) s.cond = { join: 'all', parts: [{ f: RES[x].condFields[0], op: 'is empty' }] }; s.res = x; const p = Object.keys(RES[x].per); if (!RES[x].per[s.per]) s.per = p[0]; if (!RES[x].fields.some(f => f.k === s.field)) { s.field = 'rows'; s.how = 'count'; } }
     if (k === 'often') { s.often = x; s.period = 1; s.split = false; s.on = x === 'week' ? 'Monday' : 'all'; s.bounds.forEach(b => { if (b.ref === 'prev') b.refLen = 4; if (b.ref === 'weekday') { b.ref = 'prev'; b.refLen = 4; } }); }
     if (k === 'on') s.on = x;
     if (k === 'period') { s.period = Number(x); if (s.period === 1) s.split = false; s.bounds.forEach(b => { if (b.ref === 'prev') b.refLen = s.period * 4; if (b.ref === 'weekday' && s.period > 1) { b.ref = 'prev'; b.refLen = s.period * 4; } }); }
@@ -420,6 +431,8 @@
     if (k === 'per') s.per = x;
     if (k === 'measure') { s.field = x; s.how = y; }
     if (k === 'del') s.bounds.splice(Number(x), 1);
+    if (k === 'cadd') s.cond.parts.push({ f: res().condFields[Math.min(s.cond.parts.length, res().condFields.length - 1)], op: 'is empty' });
+    if (k === 'cdel') s.cond.parts.splice(Number(x), 1);
     if (k === 'add') s.bounds.push({ change: { kind: 'change', dir: 'drops', amt: 30, ref: 'prev', refLen: s.period * 4 }, level: { kind: 'level', dir: 'higher', amt: 10, unit: s.how === 'count' ? '' : '%', ref: 'fixed' }, unusual: { kind: 'unusual', dir: 'lowest', weeks: 12, ref: 'past' }, appears: { kind: 'appears', ref: 'ever' }, silent: { kind: 'silent', weeks: 12, ref: 'past' }, top: { kind: 'top', n: 10, ref: 'prev', refLen: s.period * 4 } }[x]);
     if (k === 'add') Object.assign(s.bounds[s.bounds.length - 1], { tone: 'attention', react: ['owner'] });
     if (k === 'react') { const b = s.bounds[Number(x)]; b.react = b.react.includes(y) ? b.react.filter(r => r !== y) : b.react.concat(y); }
@@ -431,6 +444,8 @@
     const [k, i, f] = el.dataset.set.split(':'), v = el.value, num = Number(v);
     if (k === 'guard') s.guard = num;
     else if (k === 'on') s.on = v;
+    else if (k === 'cj') s.cond.join = v;
+    else if (k === 'c') s.cond.parts[Number(i)][f] = v;
     else if (k === 'b') {
       const b = s.bounds[Number(i)];
       if (f === 'ref') { const [r, n] = v.split(':'); b.ref = r; if (n) b.refLen = Number(n); }
