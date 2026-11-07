@@ -24,7 +24,7 @@
 | 5 | [Resource card](05-resource-card.md) | `RC` | What Data Hub derives about a Resource and keeps itself, with Known Behaviour and Anomalies | To be specified |
 | 6 | [Maturity and release](06-maturity-and-release.md) | `MR` | Deriving Levels, confirming by publishing, visibility in two steps | Specified ¹ |
 | 7 | [Log and notifications](07-log-and-notifications.md) | `LN` | The Log Catalogue across all domains, the Message Centre, who gets which notification when, and through which channel | To be specified |
-| 8 | [Checks and monitoring](08-checks-and-monitoring.md) | `CM` | Automatic checks after a Change, derived from the EDA, and the monitors of an Owner | To be specified |
+| 8 | [Checks and monitoring](08-checks-and-monitoring.md) | `CM` | Automatic checks after a Change, derived from the EDA, and the monitors of an Owner | Monitors specified on 2026-11-07; screens to design, then built next |
 | 9 | [Lenses](09-lenses.md) | `LE` | Lens types, Parameters and their Level | To be specified |
 | 10 | [Reports](10-reports.md) | `RP` | Bundling Lenses around a question, with text and shared Parameters | To be specified |
 | 11 | [Beta and promotion](11-beta-and-promotion.md) | `BP` | Concepts that business defines itself, and how they are hardened into a Resource | To be specified |

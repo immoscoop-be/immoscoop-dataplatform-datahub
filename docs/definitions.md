@@ -12,7 +12,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 - **Capitals, singular and plural.** Resource, Resources; Data Admin, Data Admins; Owner Unit, Owner Units.
 - **Only in the defined meaning.** The same word in its ordinary meaning stays lowercase: a software release, a signing key, the logs of a service, a business question.
 - **Nouns, not verbs.** A Data Admin registers, the Owner publishes and confirms. The nouns are Registration, Publication and Confirmation.
-- **Not defined, on purpose:** lineage, manifest, catalog (the dbt file), check, monitor, business, data. The names of the services (identity, catalogue, registry, query, web, mcp) are names, not Defined Terms, and stay lowercase. The words of the library metaphor (librarian, curator, catalogue card, accession register, reading room, …) explain Data Hub, they do not define it, and stay lowercase.
+- **Not defined, on purpose:** lineage, manifest, catalog (the dbt file), check, business, data. A Monitor is defined since 2026-11-07 ([Checks and monitoring](requirements/functional/08-checks-and-monitoring.md)). The names of the services (identity, catalogue, registry, query, web, mcp) are names, not Defined Terms, and stay lowercase. The words of the library metaphor (librarian, curator, catalogue card, accession register, reading room, …) explain Data Hub, they do not define it, and stay lowercase.
 - **The runtime is written Node.js,** so that it is never confused with a Node.
 - **A new term is added here first,** then used with capitals everywhere.
 
@@ -21,6 +21,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | Defined Term | Meaning | Defined in |
 | --- | --- | --- |
 | <a id="access-token"></a>**Access Token** | The short-lived signed token that identity issues to a User after login, carrying the identity, Groups and roles of the User. Every service validates it itself. | [TR-PF-02](requirements/technical/00-platform.md#tr-pf-02), [TR-PF-03](requirements/technical/00-platform.md#tr-pf-03) |
+| <a id="aggregate-table"></a>**Aggregate Table** | The result of the one aggregation query of a Monitor: one row per Segment value per bucket, with the level above and the total. Every Metric and Rule of the Monitor works on it, and it is a Resource of its own. | [FR-CM-04](requirements/functional/08-checks-and-monitoring.md#fr-cm-04), [DEC-CM-18](requirements/functional/08-checks-and-monitoring.md#dec-cm-18) |
 | <a id="anomaly"></a>**Anomaly** | A recorded deviation in the data of a Resource, with a period, a description of what happened, the impact on the figures and who recorded it. Part of the Known Behaviour; a Signal can become one. | [DEC-DH-18](overview/data-hub.md#dec-dh-18), [FR-SR-30](requirements/functional/04-stacks-and-resources.md#fr-sr-30) |
 | <a id="artifact-set"></a>**Artifact Set** | The Artifacts of one successful run of a Source Job, with run ID, git SHA and timestamp. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="artifacts"></a>**Artifacts** | `manifest.json` and `catalog.json`, the files dbt produces about a dbt project. Not to be confused with GCP's Artifact Registry, which holds the Docker images. | [The dbt Artifacts](overview/data-hub.md#the-dbt-artifacts) |
@@ -42,9 +43,12 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="eda"></a>**EDA** | Exploratory data analysis: the exploration of a Resource by its Owner. A linked EDA document makes a Resource Explored. | [FR-MR-03](requirements/functional/06-maturity-and-release.md#fr-mr-03), [EDA](requirements/functional/15-eda.md) |
 | <a id="edge"></a>**Edge** | A link in the lineage: one Node depends on another. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="entity"></a>**Entity** | An entity of the Domain Model, such as an agency or an office. A Resource is linked to the Entities found in its lineage. | [FR-SR-23](requirements/functional/04-stacks-and-resources.md#fr-sr-23) |
+| <a id="escalation"></a>**Escalation** | Who hears a Finding, and how far it goes: within bounds, Owner, Owner and Consumers, or Quarantine; drawn as three thresholds on one Metric. Apart from its Tone. Not the range of a Pre-flight. | [DEC-CM-09](requirements/functional/08-checks-and-monitoring.md#dec-cm-09), [FR-CM-24](requirements/functional/08-checks-and-monitoring.md#fr-cm-24) |
 | <a id="excel-key"></a>**Excel key** | The personal key with which Excel signs in to Data Hub through Power Query, in the name of its User. A User makes one on My page and sees it once; it lasts a year and can be revoked. Formerly called Library Card. | [DEC-DH-79](overview/data-hub.md#dec-dh-79) |
+| <a id="finding"></a>**Finding** | What a Rule gives when it fires: for one Segment value, or a list of them, in the Tone of the Rule. Not bad news by definition; not a Signal, which a User raises. | [DEC-CM-08](requirements/functional/08-checks-and-monitoring.md#dec-cm-08) |
 | <a id="fingerprint"></a>**Fingerprint** | A set of hashes of the structure, the types and the descriptions of a Resource at a given moment, plus the checksum of its code. | [FR-SR-08](requirements/functional/04-stacks-and-resources.md#fr-sr-08) |
 | <a id="group"></a>**Group** | A Google group of the own Workspace domain that Data Hub knows. Owner Units and Role Groups are Groups. | [User management](requirements/functional/02-user-management.md#terms) |
+| <a id="health-overview"></a>**Health Overview** | What a Monitor says about itself: Rules that never or always fire, Findings marked noise, and Segment values with too little data; for the review of the Owner with the Data Team. | [FR-CM-18](requirements/functional/08-checks-and-monitoring.md#fr-cm-18) |
 | <a id="key"></a>**Key** | The full name of the view of a Resource in BigQuery, `project.dataset.table`, in lower case; Data Hub keeps it in its own case too, for BigQuery ([DEC-SR-44](requirements/functional/04-stacks-and-resources.md#dec-sr-44)). | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="known-behaviour"></a>**Known Behaviour** | The block on the Resource Card with the intended use, the pitfalls, the Known Gaps and the Anomalies of a Resource. | [DEC-DH-18](overview/data-hub.md#dec-dh-18), [DEC-RC-12](requirements/functional/05-resource-card.md#dec-rc-12) |
 | <a id="known-gap"></a>**Known Gap** | A structural gap in the data of a Resource, not an error in the strict sense: for example a field that was never stored for part of the rows. Part of the Known Behaviour. | [FR-RC-04](requirements/functional/05-resource-card.md#fr-rc-04), [DEC-RC-12](requirements/functional/05-resource-card.md#dec-rc-12) |
@@ -62,8 +66,11 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="message-catalogue"></a>**Message Catalogue** | The list of every type of Message, part of the source code: who sends it to whom and when, its texts, plain and laid out, in Dutch and English, the Learning Card that explains it and what it asks of whoever receives it. Its page in docs is generated from it. | [DEC-CV-07](requirements/functional/14-conversations.md#dec-cv-07), [Message catalogue](requirements/functional/message-catalogue.md) |
 | <a id="message-id"></a>**Message ID** | The fixed code of a type of Message in the Message Catalogue, such as `MSG-RES-02`. Not a requirement ID or a Log ID. | [FR-CV-10](requirements/functional/14-conversations.md#fr-cv-10) |
 | <a id="message-centre"></a>**Message Centre** | Where a User finds the Messages that concern them and what Data Hub tells them, for example the Data Admins on every Registration. | [FR-SR-10](requirements/functional/04-stacks-and-resources.md#fr-sr-10) |
+| <a id="metric"></a>**Metric** | A number a Monitor computes per Segment value per bucket: a base Metric from its aggregation query, such as a count or a null rate, or a derived Metric computed from those, such as a ratio or a z-score. | [FR-CM-05](requirements/functional/08-checks-and-monitoring.md#fr-cm-05) |
+| <a id="monitor"></a>**Monitor** | What Data Hub watches on one Resource, set up by its Owner: its Segments, Metrics and Rules, its schedule and its Aggregate Table. A Resource has one Monitor; a Lens has none. | [DEC-CM-02](requirements/functional/08-checks-and-monitoring.md#dec-cm-02), [FR-CM-03](requirements/functional/08-checks-and-monitoring.md#fr-cm-03) |
 | <a id="naming-convention"></a>**Naming Convention** | The rule for the names of Role Groups: `datahub-<role>@<domain>`. An Owner Unit needs no convention. | [User management](requirements/functional/02-user-management.md#naming-convention) |
 | <a id="node"></a>**Node** | A model, seed, snapshot, source or exposure in the manifest of a dbt project, with its columns. | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
+| <a id="operational-status"></a>**Operational Status** | Whether a Monitored Resource can be trusted now: healthy, a Finding in its Tone, or Quarantine. An axis of its own, next to the Level, which it never lowers. | [DEC-CM-11](requirements/functional/08-checks-and-monitoring.md#dec-cm-11), [FR-CM-26](requirements/functional/08-checks-and-monitoring.md#fr-cm-26) |
 | <a id="owner"></a>**Owner** | The Owner Unit of the Collection a Resource is in. It vouches for the Collection and confirms its Resources. | [DEC-CO-04](requirements/functional/03-collections.md#dec-co-04) |
 | <a id="owner-unit"></a>**Owner Unit** | The Group that takes care of a Collection: any Google group of the own Workspace domain, chosen by whoever creates the Collection from the groups they are in. | [DEC-CO-09](requirements/functional/03-collections.md#dec-co-09) |
 | <a id="parameter"></a>**Parameter** | A functionally named and typed input of a Lens, for example `dateFrom`, that can be combined across Lenses. | [DEC-DH-11](overview/data-hub.md#dec-dh-11) |
@@ -72,6 +79,7 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="pre-flight"></a>**Pre-flight** | What Data Hub shows before a query runs: the volume it will process, against the thresholds for approval and for a block. | [FR-SR-36](requirements/functional/04-stacks-and-resources.md#fr-sr-36), [FR-SR-37](requirements/functional/04-stacks-and-resources.md#fr-sr-37) |
 | <a id="promotion-loop"></a>**Promotion Loop** | Hardening a Beta Concept into a Resource, with the beta query as its specification. | [The promotion loop](overview/open-themes.md#3-the-promotion-loop) |
 | <a id="publication"></a>**Publication** | The switch with which the Owner makes a Resource visible to everyone who sees its Collection: the whole company when the Collection is public. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
+| <a id="quarantine"></a>**Quarantine** | The highest Escalation: the whole Resource is no longer served until its Owner lifts it. | [DEC-CM-10](requirements/functional/08-checks-and-monitoring.md#dec-cm-10), [FR-CM-25](requirements/functional/08-checks-and-monitoring.md#fr-cm-25) |
 | <a id="query-id"></a>**Query ID**, <a id="query-log"></a>**Query Log** | The Query Log keeps every query Data Hub executes, with a unique Query ID, the SQL, who ran it, when, the bytes processed and the Resources beneath it. Every output carries the Query ID of its query. Not the Log of a Resource. | [FR-LN-05](requirements/functional/07-log-and-notifications.md#fr-ln-05), [FR-LN-06](requirements/functional/07-log-and-notifications.md#fr-ln-06) |
 | <a id="reaction"></a>**Reaction** | A Question, Remark or Signal that someone who may see a Resource leaves on it. | [DEC-SR-20](requirements/functional/04-stacks-and-resources.md#dec-sr-20) |
 | <a id="reading-card"></a>**Reading Card** | A Learning Card that explains how to read one standard chart of the chart language, and the trap it avoids. Every standard chart links to its Reading Card. | [FR-LR-10](requirements/functional/16-learning.md#fr-lr-10) |
@@ -85,12 +93,16 @@ This document defines the terms that have a specific meaning in Data Hub. As in 
 | <a id="resource"></a>**Resource** | A registered table of a dbt project: one book on the shelves. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="resource-card"></a>**Resource Card** | Everything Data Hub knows about one Resource, partly derived and partly kept by Data Hub itself. | [The Resource Card](overview/data-hub.md#the-resource-card) |
 | <a id="role-group"></a>**Role Group** | A Group that gives its members a role in Data Hub, such as `datahub-datateam@` for the Data Team. Once Permission groups are built, it gives none ([FR-PL-15](requirements/functional/12-permissions-and-library-cards.md#fr-pl-15)). | [User management](requirements/functional/02-user-management.md#naming-convention) |
+| <a id="rule"></a>**Rule** | A condition on a Metric that gives a Finding: a comparison, a threshold, an Escalation and a Tone, written once and evaluated for every Segment value. A Resource is Monitored with at least one active Rule. | [FR-CM-12](requirements/functional/08-checks-and-monitoring.md#fr-cm-12), [DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12) |
+| <a id="run-status"></a>**Run Status** | Whether the last run of a job that builds a Resource succeeded, failed or skipped it, as dbt Cloud reports it, with the model that broke. | [FR-CM-01](requirements/functional/08-checks-and-monitoring.md#fr-cm-01) |
+| <a id="segment"></a>**Segment** | A dimension a Monitor cuts its Resource along, such as partner or region; every Metric and Rule of the Monitor holds per value of it. | [FR-CM-07](requirements/functional/08-checks-and-monitoring.md#fr-cm-07) |
 | <a id="signal"></a>**Signal** | A Reaction reporting that something seems odd about the data of a Resource. It goes to the Owner and the Data Team, and can become an Anomaly. | [Resources](requirements/functional/04-stacks-and-resources.md#terms) |
 | <a id="source-job"></a>**Source Job** | The one job in dbt Cloud, per dbt project and environment, whose Artifacts Data Hub uses: the merge build, which builds the project after a merge and also runs `dbt docs generate`. uat of Data Hub reads the merge builds of uat ([DEC-AR-09](requirements/functional/01-artifact-registry.md#dec-ar-09)). | [Artifact registry](requirements/functional/01-artifact-registry.md#terms) |
 | <a id="stability"></a>**Stability** | Whether the data of a Resource is still settling or can change by nature, and from when it is final, for example "stable = D-3". The final term is still open. | [FR-RC-06](requirements/functional/05-resource-card.md#fr-rc-06), [OP-RC-04](requirements/functional/05-resource-card.md#op-rc-04) |
 | <a id="stack"></a>**Stack**, **the Stacks** | No longer used ([DEC-DH-71](overview/data-hub.md#dec-dh-71)). It named a dataset in BigQuery with the mart views the Data Team released, `dbt_prod_stacks`; since a table becomes a Resource through an exposure on any model, there is no such dataset. Where older decisions say the Stacks, read: the tables that are Resources. | [DEC-DH-71](overview/data-hub.md#dec-dh-71) |
 | <a id="subject"></a>**Subject** | What a Message is about: the kind of object, such as a Resource, a Lens or a query, and its ID. Data Hub sets it from where the Message is written, builds the link to it, and finds all Messages about an object by it. The same for every kind of object. | [DEC-CV-01](requirements/functional/14-conversations.md#dec-cv-01) |
 | <a id="synchronisation"></a>**Synchronisation** | Pulling in the Groups a User is in, when they sign in ([DEC-UM-08](requirements/functional/02-user-management.md#dec-um-08)). | [User management](requirements/functional/02-user-management.md#terms) |
+| <a id="tone"></a>**Tone** | The label an Owner gives a Rule, which sets how its Findings look: opportunity, informative, attention or problem. | [FR-CM-13](requirements/functional/08-checks-and-monitoring.md#fr-cm-13) |
 | <a id="user"></a>**User** | Someone with an Immoscoop Google Workspace account who has logged in to Data Hub at least once. | [User management](requirements/functional/02-user-management.md#terms) |
 
 Data Hub, Domain Hub, Colleciónes, Workspace and the names of products such as BigQuery are proper names and are capitalised as such.
@@ -108,7 +120,7 @@ The ladder itself is defined on [Maturity levels of data](https://immoscoop.atla
 | 2 | <a id="described"></a>**Described** | The table and at least one field have a description in dbt |
 | 3 | <a id="confirmed"></a>**Confirmed** | The Owner has confirmed the Resource |
 | 4 | <a id="explored"></a>**Explored** | An EDA document is linked |
-| 5 | <a id="monitored"></a>**Monitored** | At least one check is active |
+| 5 | <a id="monitored"></a>**Monitored** | Its Monitor has at least one active Rule ([DEC-CM-12](requirements/functional/08-checks-and-monitoring.md#dec-cm-12)) |
 
 ## The library metaphor
 
@@ -124,10 +136,13 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | aanvraag | Request |
 | aanwinstenregister | accession register |
 | access-as | access axis |
+| afgeleide metriek, basismetriek | derived Metric, base Metric |
+| aggregaattabel | Aggregate Table |
 | begrip, beta-begrip | concept, Beta Concept |
 | bekend gedrag | Known Behaviour |
 | bekende hiaten | Known Gaps |
 | bekrachtigen, bekrachtiging | confirm, Confirmation |
+| bereik (van een regel), escalatie, escalatieladder | Escalation |
 | Beschikbaar, Beschreven, Bekrachtigd, Verkend, Bewaakt | Available, Described, Confirmed, Explored, Monitored |
 | bericht | Message |
 | berichtencentrum | Message Centre |
@@ -135,6 +150,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | beslissing | decision |
 | bibliothecaris | librarian |
 | bronjob | Source Job |
+| bucket, bucketgrootte | bucket, size of a bucket |
 | businessbeschrijving | Business Description |
 | defect, werkt niet meer | Broken |
 | collectie | Collection |
@@ -153,6 +169,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | Gebruikersbeheer | User management |
 | gesprek | conversation |
 | gewicht van een lens | weight of a Lens |
+| gezondheidsoverzicht | Health Overview |
 | grafiekserver | Chart Server |
 | grafiektaal | chart language |
 | holle hoek | concave corner (flare) |
@@ -177,8 +194,11 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | maturiteitsicoon | maturity icon |
 | melding | notification |
 | melding (op een scherm) | alert |
+| metriek | Metric |
+| monitor | Monitor |
 | naam (niet vertalen) | name (do not translate) |
 | niveau (van het master-leerplan) | Learning Level |
+| nuttig, ruis | useful, noise |
 | onderwerp (van een bericht) | Subject |
 | onderwerp (van het master-leerplan) | Learning Card |
 | ontsluiting, ontsluiten | Release, release |
@@ -186,14 +206,21 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | open punten | open points |
 | open uitleen | general circulation |
 | open vragen | open questions |
+| operationele status | Operational Status |
 | opheffen | dissolve |
+| opportuniteit, informatief, aandacht, probleem | opportunity, informative, attention, problem |
 | owner, owner unit (in the Dutch texts of the app) | Owner, Owner Unit |
 | pre-flight | Pre-flight |
 | promotielus | Promotion Loop |
+| quarantaine | Quarantine |
 | query-ID, SQL-log | Query ID, Query Log |
 | randgevallen | edge cases |
 | rechten | permissions |
+| regel (van een monitor) | Rule |
 | rekken | shelves |
+| runstatus | Run Status |
+| segment, segmentwaarde | Segment, Segment value |
+| signaal (van een monitor) | Finding |
 | signaal, opmerking, vraag | Signal, Remark, Question |
 | signaalkleur | signal colour |
 | sleutel | Key |
@@ -207,6 +234,7 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | taalvoorkeur | language preference |
 | tegel | tile |
 | toegangsclassificatie | access classification |
+| toon | Tone |
 | uit te diepen | to be worked out |
 | uitschuifpaneel | slide-out panel |
 | vergrootglas | magnifying glass |
@@ -216,7 +244,9 @@ The Confluence pages are in Dutch, and so were the session in which the [design]
 | vingerafdruk | Fingerprint |
 | voorspel, dan onthul | predict, then reveal |
 | voortschrijdend | still settling |
+| voortschrijdend gemiddelde | moving average |
 | Waarom nu, Kernidee, Zie het, Check je begrip, Je kan nu | Why now, Core idea, See it, Check your understanding, You can now |
+| warm-up | warm-up |
 | wijziging | Change |
 | wijzigings- en anomalielog | log of changes and Anomalies |
 | Woordenlijst | Glossary |

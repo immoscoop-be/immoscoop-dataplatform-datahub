@@ -185,6 +185,15 @@ Who sees a Lens runs it, with its Parameters, on its page, in Claude and in Exce
 | `lenses.make` | Make a query a Lens, in a Collection of their Owner Units ([DEC-CO-20](03-collections.md#dec-co-20)), and send a large one to the Data Team | – | Who made the query | yes | yes | no |
 | `lenses.manage` | Change, update and delete a Lens | Which (choice): those in the Collections of their Owner Units, or every Lens | The Owner Unit of its Collection and the Data Team ([DEC-LE-21](09-lenses.md#dec-le-21)) | every | their Owner Units | no |
 
+### Monitoring
+
+*Added on 2026-11-07 with [Checks and monitoring](08-checks-and-monitoring.md) ([DEC-CM-01](08-checks-and-monitoring.md#dec-cm-01)); not in the catalogue of Permissions yet: they come with its build.*
+
+| Key | Permission: what it allows | Values | Today | Admin | Business analyst | Lens user |
+| --- | --- | --- | --- | --- | --- | --- |
+| `monitors.manage` | Build and change the Monitor of a Resource: its Segments, Metrics from the templates, Rules and schedule; mark its Findings useful or noise | Which (choice): those of their Owner Units, or every Resource | Nobody: Monitors are new | every | their Owner Units | no |
+| `monitors.sql` | Add a SQL Metric to a Monitor ([FR-CM-05](08-checks-and-monitoring.md#fr-cm-05)) | – | Nobody: Monitors are new | yes | no | no |
+
 ### Messages
 
 A User always replies in, closes and reopens their own Questions and Signals. The assets in their control are the Collections of their Owner Units and the Resources and Lenses in them.

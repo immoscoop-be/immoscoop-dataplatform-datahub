@@ -15,7 +15,7 @@
 
 - <a id="dec-mr-01"></a>**DEC-MR-01** · Fully described means measurable: the view has a description and every column has one. The Owner judges length and quality when confirming. *Note of 2026-10-28: replaced by [DEC-MR-11](#dec-mr-11): the table and at least one field, with `model_type` and `grain`.*
 - <a id="dec-mr-02"></a>**DEC-MR-02** · Explored: an EDA document is linked to the Resource.
-- <a id="dec-mr-03"></a>**DEC-MR-03** · Monitored: at least one active check runs on the Resource. *Note of 2026-10-28: in version 2 ([DEC-MR-13](#dec-mr-13)).*
+- <a id="dec-mr-03"></a>**DEC-MR-03** · Monitored: at least one active check runs on the Resource. *Note of 2026-10-28: in version 2 ([DEC-MR-13](#dec-mr-13)).* *Note of 2026-11-07: an active check is an active Rule of the Monitor of the Resource ([DEC-CM-12](08-checks-and-monitoring.md#dec-cm-12)); Monitored no longer waits for version 2 ([DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13)).*
 - <a id="dec-mr-04"></a>**DEC-MR-04** · A failing check does not lower the Level: that is the monitoring doing its job. It becomes an incident in the Log.
 - <a id="dec-mr-05"></a>**DEC-MR-05** · A Confirmation does not expire. There is no expiry date and no reminder.
 - <a id="dec-mr-06"></a>**DEC-MR-06** · The Level is information only and restricts nothing. The Publication determines access. The Level is visible in search results, on the Resource Card and on every Lens and Report, and Claude mentions it when it uses a Resource.
@@ -25,7 +25,7 @@
 - <a id="dec-mr-10"></a>**DEC-MR-10** · Only the Data Team describes a Resource into Described, in dbt. A Resource without its descriptions from dbt stays at 1 · Available: its Owner cannot write Business Descriptions on it and cannot publish it. A yaml next to the model is not required for a table to be a Resource ([FR-SR-32](04-stacks-and-resources.md#fr-sr-32)), but without its descriptions it cannot leave Available. Business Descriptions are written from Described on. This replaces the jump over Described of [DEC-MR-09](#dec-mr-09). *Decided on 2026-10-28, by Max ([OP-DH-05](../../overview/open-themes.md#op-dh-05)).*
 - <a id="dec-mr-11"></a>**DEC-MR-11** · A Resource is Described as soon as dbt has a description of its table and of at least one of its fields, and the `meta` of its model holds `model_type` and `grain`. Business Descriptions start from there, at the level of the whole Resource: then its Owner and the Data Team can write one for the table and for every field, also a field dbt does not describe ([DEC-MR-10](#dec-mr-10)). The Owner judges whether it is described well enough when confirming. This replaces "every column" of [DEC-MR-01](#dec-mr-01) and [DEC-DH-34](../../overview/data-hub.md#dec-dh-34). *Decided on 2026-10-28, by Max ([OP-MR-03](#op-mr-03)).* *Note of 2026-10-28: `model_type` and `grain` are no longer asked of dbt ([DEC-MR-12](#dec-mr-12)).*
 - <a id="dec-mr-12"></a>**DEC-MR-12** · Described asks of dbt only the descriptions: of the table and of at least one field. `model_type` and `grain` are not standard fields of dbt, so they are not read from its `meta`: Data Hub defines them, by the Data Admin ([DEC-RC-09](05-resource-card.md#dec-rc-09)), and they do not count towards Described. This replaces that part of [DEC-MR-11](#dec-mr-11). *Decided on 2026-10-28, by Max ([OP-MR-06](#op-mr-06)).*
-- <a id="dec-mr-13"></a>**DEC-MR-13** · In v1 a Resource cannot reach 5 · Monitored: the ladder stops at 4 · Explored. Monitored comes in version 2, with the automatic checks from the EDA and the monitors ([OP-DH-19](../../overview/open-themes.md#op-dh-19)). *Decided on 2026-10-28, by Max ([OP-MR-07](#op-mr-07)).*
+- <a id="dec-mr-13"></a>**DEC-MR-13** · In v1 a Resource cannot reach 5 · Monitored: the ladder stops at 4 · Explored. Monitored comes in version 2, with the automatic checks from the EDA and the monitors ([OP-DH-19](../../overview/open-themes.md#op-dh-19)). *Decided on 2026-10-28, by Max ([OP-MR-07](#op-mr-07)).* *Note of 2026-11-07: replaced by [DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13): monitoring is built as the next part after the launch, and 5 · Monitored becomes reachable.*
 - <a id="dec-mr-14"></a>**DEC-MR-14** · In v1 Data Hub links no EDA document to a Resource yet: no screen is designed for it. A Resource therefore reaches at most 3 · Confirmed; its ladder shows 4 · Explored as the next step, out of reach, until the link is designed. *Decided on 2026-10-28, by Max ([OP-MR-08](#op-mr-08)).*
 
 The overarching decisions on how the Level is determined and on the two-step Release are in the overview: [DEC-DH-31](../../overview/data-hub.md#dec-dh-31) to [DEC-DH-37](../../overview/data-hub.md#dec-dh-37) and [DEC-DH-38](../../overview/data-hub.md#dec-dh-38) to [DEC-DH-40](../../overview/data-hub.md#dec-dh-40).
@@ -38,7 +38,7 @@ The overarching decisions on how the Level is determined and on the two-step Rel
 | 2 Described | The table and at least one field have a description in dbt ([DEC-MR-12](#dec-mr-12)) | The description of the table, or the last one of a field, is missing: to Available |
 | 3 Confirmed | The Owner confirms (the first Publication is the first Confirmation), from Described only ([DEC-MR-10](#dec-mr-10)) | – (a change to the schema gives a warning, [DEC-MR-08](#dec-mr-08)) |
 | 4 Explored | An EDA document is linked | The EDA document disappears: to Confirmed |
-| 5 Monitored | At least one active check | The last active check is switched off: to Explored |
+| 5 Monitored | At least one active Rule of its Monitor ([DEC-CM-12](08-checks-and-monitoring.md#dec-cm-12)) | The last active Rule is switched off: to Explored |
 
 ## Requirements
 
@@ -78,7 +78,7 @@ Explored requires a linked EDA document, on top of Confirmed.
 
 Monitored requires at least one active check, on top of Explored.
 
-*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+*Note of 2026-11-07: no longer left out of version 1; Monitored and its Rules come with [Checks and monitoring](08-checks-and-monitoring.md), the next part after the launch ([DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13)).*
 
 <a id="fr-mr-05"></a>
 ### FR-MR-05 · A structural Change resets the Level to Described
@@ -96,7 +96,7 @@ A structural Change (hash of the structure) puts the Resource back to Described,
 
 A failing check does not lower the Level and is logged as an incident.
 
-*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+*Note of 2026-11-07: no longer left out of version 1; Monitored and its Rules come with [Checks and monitoring](08-checks-and-monitoring.md), the next part after the launch ([DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13)).*
 
 <a id="fr-mr-07"></a>
 ### FR-MR-07 · Drop when the last check or the EDA document goes
@@ -105,7 +105,7 @@ A failing check does not lower the Level and is logged as an incident.
 
 If the last active check is switched off, the Resource drops to Explored. If the EDA document disappears, it drops to Confirmed.
 
-*Could, not in v1: set on 2026-10-28, by Max; Monitored and its checks come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+*Note of 2026-11-07: no longer left out of version 1; Monitored and its Rules come with [Checks and monitoring](08-checks-and-monitoring.md), the next part after the launch ([DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13)).*
 
 <a id="fr-mr-08"></a>
 ### FR-MR-08 · A Confirmation does not expire
@@ -189,7 +189,7 @@ Beside the ladder of a Resource, its Overview explains every Level from 1 · Ava
 ## Open points
 
 - [ ] <a id="op-mr-01"></a>**OP-MR-01** · Work out a new domain, [EDA](15-eda.md): how an exploration runs and is linked to a Resource (builds on the [EDA framework](https://immoscoop.atlassian.net/wiki/spaces/DATA/pages/1352237168), Confluence, Dutch). *Could, not in v1: set on 2026-10-28, by Max; a domain for EDA is not part of version 1.*
-- [ ] <a id="op-mr-02"></a>**OP-MR-02** · Work out the domain [Checks and monitoring](08-checks-and-monitoring.md): kinds of checks, incidents and alerts. *Could, not in v1: set on 2026-10-28, by Max; checks and monitoring come in version 2 ([DEC-MR-13](#dec-mr-13)).*
+- [x] <a id="op-mr-02"></a>**OP-MR-02** · Work out the domain [Checks and monitoring](08-checks-and-monitoring.md): kinds of checks, incidents and alerts. *Could, not in v1: set on 2026-10-28, by Max; checks and monitoring come in version 2 ([DEC-MR-13](#dec-mr-13)).* *Decided on 2026-11-07, by Max: worked out from his brainstorm, as [Checks and monitoring](08-checks-and-monitoring.md).*
 
 Raised during the migration to this repository; not on the Confluence page:
 

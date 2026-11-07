@@ -115,7 +115,7 @@ The errors, import problems and changes in the data of a Resource are kept in ch
 
 Every Resource states its Stability, as metadata of its own: whether its data is still settling, such as event data that closes after a few days, or can change by nature, such as an account name, and from when it is final, for example "stable = D-3".
 
-*Could, not in v1: set on 2026-10-28, by Max; Stability is left out of version 1.*
+*Note of 2026-11-07: no longer left out: a Monitor judges a bucket only once the Stability says it is final, so Stability comes in with [Checks and monitoring](08-checks-and-monitoring.md) ([DEC-CM-15](08-checks-and-monitoring.md#dec-cm-15), [FR-CM-11](08-checks-and-monitoring.md#fr-cm-11)). Its term is still [OP-RC-04](#op-rc-04).*
 
 <a id="fr-rc-07"></a>
 ### FR-RC-07 · The Level on the Resource Card
@@ -181,7 +181,7 @@ The Resource Card shows since when the data of the Resource is reliable. The Own
 
 The Resource Card shows the active checks on the Resource and its incidents.
 
-*Could, not in v1: set on 2026-10-28, by Max; checks come in version 2 ([DEC-MR-13](06-maturity-and-release.md#dec-mr-13)), and the build leaves the tile Monitoring out ([OP-RC-27](#op-rc-27)).*
+*Note of 2026-11-07: no longer left out of version 1; it comes with [Checks and monitoring](08-checks-and-monitoring.md) ([DEC-CM-13](08-checks-and-monitoring.md#dec-cm-13)), as the Operational Status, a strip of the Findings of the last 30 days and a link to the Log ([FR-CM-28](08-checks-and-monitoring.md#fr-cm-28)). The tile Monitoring in the design is to be drawn again with it.*
 
 <a id="fr-rc-15"></a>
 ### FR-RC-15 · The Owner and the Data Team edit in place

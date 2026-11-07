@@ -17,6 +17,7 @@ This repository is the source of truth. The documentation started on Confluence,
 | What to pick up next | [Backlog](overview/backlog.md) |
 | Everything in one read: each part with its screens and what is behind it, and every open point as a checklist | [Review of 2026-10-25](review/2026-10-25-functional-and-technical-review.md) |
 | What a workshop asked of Data Hub, and where each request was recorded | [Workshop of 2026-10-22](workshops/2026-10-22-data-agents-and-governance.md) |
+| What the brainstorm on monitoring asked of Data Hub, and where each item was recorded | [Brainstorm of 2026-11-07](workshops/2026-11-07-monitoring-and-alerting.md) |
 | How the web app must look and behave: design rules, style values and prototype screens | [Design](design/README.md) |
 | How Data Hub is built: services, tokens, data, technology | [Architecture](architecture/README.md) |
 | How code becomes running services, and the branches | [Build and deploy](architecture/build-and-deploy.md) |
