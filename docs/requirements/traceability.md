@@ -9,7 +9,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 
 | File | Requirements | Edge cases | Decisions | Open points |
 | --- | --- | --- | --- | --- |
-| [Data Hub design principles](../design/principles.md) | – | – | 193 | 68 (16 open, 52 done) |
+| [Data Hub design principles](../design/principles.md) | – | – | 194 | 68 (16 open, 52 done) |
 | [Backlog](../overview/backlog.md) | – | – | – | 7 (5 open, 2 done) |
 | [Data Hub](../overview/data-hub.md) | – | – | 77 | – |
 | [Open themes](../overview/open-themes.md) | – | – | 6 | 47 (7 open, 40 done) |
@@ -20,7 +20,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [Resource card](functional/05-resource-card.md) | 27 (4 proposed, 2 specified, 20 implemented, 1 withdrawn) | 1 (1 implemented) | 20 | 27 (2 open, 25 done) |
 | [Maturity and release](functional/06-maturity-and-release.md) | 16 (4 specified, 7 implemented, 5 withdrawn) | – | 14 | 8 (2 open, 6 done) |
 | [Log and notifications](functional/07-log-and-notifications.md) | 6 (3 proposed, 3 implemented) | – | 7 | 7 (7 done) |
-| [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 22 | 9 (9 open) |
+| [Checks and monitoring](functional/08-checks-and-monitoring.md) | 39 (39 specified) | 4 (4 proposed) | 25 | 11 (11 open) |
 | [Lenses](functional/09-lenses.md) | 18 (15 implemented, 3 withdrawn) | – | 21 | 10 (10 done) |
 | [Reports](functional/10-reports.md) | – | – | – | – |
 | [Beta and promotion](functional/11-beta-and-promotion.md) | – | – | – | 1 (1 done) |
@@ -271,13 +271,13 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CM-11](functional/08-checks-and-monitoring.md#fr-cm-11) | No judgement before the data is stable | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-12](functional/08-checks-and-monitoring.md#fr-cm-12) | A Rule: a comparison and a threshold on its Metric, a Tone and its Actions | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-13](functional/08-checks-and-monitoring.md#fr-cm-13) | The Actions and the Tone, two settings | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
-| [FR-CM-14](functional/08-checks-and-monitoring.md#fr-cm-14) | A Rule can give a list | Specified | – | [monitoring-start](../design/screens/monitoring-start.html) | – | – |
+| [FR-CM-14](functional/08-checks-and-monitoring.md#fr-cm-14) | A Rule can give a list | Specified | – | [monitoring-start](../design/screens/monitoring-start.html), [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-15](functional/08-checks-and-monitoring.md#fr-cm-15) | The statistics shown and explained | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-16](functional/08-checks-and-monitoring.md#fr-cm-16) | Every Rule shows its history and its band | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-17](functional/08-checks-and-monitoring.md#fr-cm-17) | Useful or noise, for every Finding | Specified | – | [monitoring-start](../design/screens/monitoring-start.html), [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-18](functional/08-checks-and-monitoring.md#fr-cm-18) | The Health Overview of a Monitor | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
 | [FR-CM-19](functional/08-checks-and-monitoring.md#fr-cm-19) | Every Finding in the Log | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
-| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Six steps to build a Monitor | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [22dd06d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/22dd06dc543750c227c0dddedbf9c426c697e76a) refs, 2026-11-07 |
+| [FR-CM-20](functional/08-checks-and-monitoring.md#fr-cm-20) | Seven steps to build a Monitor, over its picture | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [22dd06d](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/22dd06dc543750c227c0dddedbf9c426c697e76a) refs, 2026-11-07 |
 | [FR-CM-21](functional/08-checks-and-monitoring.md#fr-cm-21) | The Owner chooses when it evaluates | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-22](functional/08-checks-and-monitoring.md#fr-cm-22) | Starting from a proposal, not from an empty screen | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [FR-CM-23](functional/08-checks-and-monitoring.md#fr-cm-23) | Claude drafts a Monitor from one sentence | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
@@ -290,8 +290,8 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | [FR-CM-30](functional/08-checks-and-monitoring.md#fr-cm-30) | Suggestions to the Owner | Specified | – | [monitoring-start](../design/screens/monitoring-start.html) | – | – |
 | [FR-CM-31](functional/08-checks-and-monitoring.md#fr-cm-31) | The first Monitor with the Data Team | Specified | – | – | – | – |
 | [FR-CM-32](functional/08-checks-and-monitoring.md#fr-cm-32) | Reading your own figures, in the Learning Centre | Specified | – | – | – | – |
-| [FR-CM-33](functional/08-checks-and-monitoring.md#fr-cm-33) | The aggregation query keeps to the free range | Specified | – | [monitor](../design/screens/monitor.html) | – | – |
-| [FR-CM-39](functional/08-checks-and-monitoring.md#fr-cm-39) | A Breakdown reads only what is new | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-33](functional/08-checks-and-monitoring.md#fr-cm-33) | The aggregation query keeps to the free range | Specified | – | [monitor](../design/screens/monitor.html), [monitor-build](../design/screens/monitor-build.html) | – | – |
+| [FR-CM-39](functional/08-checks-and-monitoring.md#fr-cm-39) | A Breakdown reads only what is new | Specified | – | [monitor-build](../design/screens/monitor-build.html) | – | [a6c7d1b](https://github.com/immoscoop-be/immoscoop-dataplatform-datahub/commit/a6c7d1ba3f6f245b8f602cd26444ab97dec1fb36) refs, 2026-11-07 |
 | [FR-CM-34](functional/08-checks-and-monitoring.md#fr-cm-34) | Notifications follow the Actions | Specified | – | – | – | – |
 | [FR-CM-35](functional/08-checks-and-monitoring.md#fr-cm-35) | Reconciliation across two Monitors | Specified | – | – | – | – |
 | [FR-CM-36](functional/08-checks-and-monitoring.md#fr-cm-36) | Referential integrity across two Monitors | Specified | – | – | – | – |
@@ -498,7 +498,7 @@ Regenerate it with `pnpm docs:build`; the conventions are in the [requirements R
 | ID | Title | Status | Screens | Realised by | Commits |
 | --- | --- | --- | --- | --- | --- |
 | [EC-CM-01](functional/08-checks-and-monitoring.md#ec-cm-01) | A field a Metric uses disappears | Proposed | [monitor](../design/screens/monitor.html) | – | – |
-| [EC-CM-02](functional/08-checks-and-monitoring.md#ec-cm-02) | A Segment value with too little data | Proposed | – | – | – |
+| [EC-CM-02](functional/08-checks-and-monitoring.md#ec-cm-02) | A Segment value with too little data | Proposed | [monitor-build](../design/screens/monitor-build.html) | – | – |
 | [EC-CM-03](functional/08-checks-and-monitoring.md#ec-cm-03) | The Resource of a Monitor is withdrawn or deprecated | Proposed | – | – | – |
 | [EC-CM-04](functional/08-checks-and-monitoring.md#ec-cm-04) | The run that builds the Resource failed | Proposed | [monitor](../design/screens/monitor.html) | – | – |
 

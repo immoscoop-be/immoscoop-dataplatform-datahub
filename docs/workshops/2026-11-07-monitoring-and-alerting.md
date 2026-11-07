@@ -219,7 +219,7 @@ Reconciliation (two independent sources must give the same number, for example c
 5. **Rules.** Per metric the bounds and the severity (see REQ-DH-MON-LADDER), with the history and the band drawn live (REQ-DH-MON-HISTORY).
 6. **Schedule.** Cadence, time, every day or only weekdays.
 
-**Recorded as:** [FR-CM-20](../requirements/functional/08-checks-and-monitoring.md#fr-cm-20).
+**Recorded as:** [FR-CM-20](../requirements/functional/08-checks-and-monitoring.md#fr-cm-20). Changed in the brainstorm on the screens, the same day, by Max: seven steps of one question each, Resource, How often, Period, Per, Measure, Boundaries and Reactions, over a picture of the monitor that builds up per step ([DEC-CM-23](../requirements/functional/08-checks-and-monitoring.md#dec-cm-23)).
 
 <a id="req-dh-mon-schedule"></a>
 ### REQ-DH-MON-SCHEDULE · The owner chooses the time, the timing of dbt is a given

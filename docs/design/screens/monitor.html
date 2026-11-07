@@ -4,18 +4,18 @@
   the same day for the chain Monitor, Breakdown, Metric, Rule, Action (DEC-CM-03).
   The head says whether the Resource can be trusted now: its Operational Status (FR-CM-26), its Level, the Run Status of
   the last run that built it (FR-CM-01), how many Breakdowns and Rules it has, and what they read a month (FR-CM-33).
-  "Add a breakdown" opens the six steps at step 2 (monitor-build.html). Three tabs:
+  "Watch something else" opens the seven steps at step 2 (monitor-build.html), with this Resource. Three tabs:
   - Findings: every Finding, newest first, each in its Tone, with whom its Actions told; one opened shows its Metric with
     the bands of the Rules on it, the value against what was expected, the Breakdown it came from, who heard, the Query
     ID of its aggregation query, and the Log Entry it wrote (FR-CM-19); the Owner marks it useful or noise (FR-CM-17).
-  - Breakdowns: the chain as one tree (OP-UX-68): each Breakdown a block with its time column, bucket, Segments,
+  - What it watches: the chain as one tree (OP-UX-68): each Breakdown a block, named by its period and what it is per, with its time column, bucket, Segments,
     schedule, what a run reads and its Aggregate Table, a Resource of its own (FR-CM-37, OP-CM-01); under it its Metrics,
     each with its last 30 days, also those without a Rule (FR-CM-05); under a Metric its Rules, each with its threshold,
     Tone, Actions, how often it fired in 30 days and how often it was noise, and its switch. The last active Rule
     switched off drops the Resource to 4 · Explored (DEC-CM-12), and the page says so.
   - Health: the Health Overview, across its Breakdowns (FR-CM-18), with Claude's proposals to accept or change, and the
     review with the Data Team.
-  The switches at the bottom: ?mtab=findings (the default), ?mtab=breakdowns, ?mtab=health; ?run=failed shows the last run
+  The switches at the bottom: ?mtab=findings (the default), ?mtab=breakdowns (What it watches), ?mtab=health; ?run=failed shows the last run
   that failed and the Monitor judging the data of the run before (FR-CM-21, EC-CM-04); ?stopped=on shows a Breakdown
   stopped because a field it reads went, while the other goes on (EC-CM-01).
   Requirements: FR-CM-01, FR-CM-03, FR-CM-05, FR-CM-17, FR-CM-18, FR-CM-19, FR-CM-26, FR-CM-33, FR-CM-37, EC-CM-01, EC-CM-04
@@ -76,7 +76,7 @@
  <div style="flex:1;min-width:280px"><h1 class="page-title">Credit leads</h1>
  <p class="meta" style="display:block;margin-top:4px;line-height:1.5">The monitor of <a class="text-link" href="resource-overview.html">Credit leads</a>, in two breakdowns: daily by lead source and partner, and hourly in total. Set up with the Data Team on 12 October.</p></div>
  <a class="btn-quiet outline" href="monitor-build.html?from=claude" style="text-decoration:none"><i class="ph ph-sparkle"></i>Change it with Claude</a>
- <a class="btn-primary" href="monitor-build.html?step=breakdown" style="text-decoration:none"><i class="ph ph-plus"></i>Add a breakdown</a>
+ <a class="btn-primary" href="monitor-build.html?step=often" style="text-decoration:none"><i class="ph ph-plus"></i>Watch something else</a>
 </div>
 <div class="mon-head-facts">
  <span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Attention · 1 open finding</span>
@@ -88,11 +88,11 @@
 </div>
 
 <div class="alert" data-pane-group="run" data-pane="failed" hidden><i class="ph-fill ph-x-circle"></i><p><b style="font-weight:500">The run of 06:12 failed at <span class="mono">stg_oltp__credit_lead</span></b>, upstream of Credit leads: "column partner_code not found". Credit leads was skipped, so its data is that of yesterday's run. At 08:00 the daily breakdown judged that data, up to Sunday 1 November, and says so on every finding. <a class="text-link" href="#">Run in dbt Cloud</a></p></div>
-<div class="alert" data-pane-group="stopped" data-pane="on" hidden><i class="ph-fill ph-pause-circle"></i><p><b style="font-weight:500">The breakdown daily, by lead source and partner stopped.</b> The field <span class="mono">lead_source</span> it cuts along is no longer in Credit leads since run <span class="mono">59102231</span>. Its 6 rules judge nothing until you choose another dimension or take it out; the hourly breakdown goes on. The Resource is not shown as healthy meanwhile.</p><a class="btn-quiet outline" href="monitor-build.html?step=breakdown" style="text-decoration:none">Fix the breakdown</a></div>
+<div class="alert" data-pane-group="stopped" data-pane="on" hidden><i class="ph-fill ph-pause-circle"></i><p><b style="font-weight:500">The breakdown daily, by lead source and partner stopped.</b> The field <span class="mono">lead_source</span> it cuts along is no longer in Credit leads since run <span class="mono">59102231</span>. Its 6 rules judge nothing until you choose another dimension or take it out; the hourly breakdown goes on. The Resource is not shown as healthy meanwhile.</p><a class="btn-quiet outline" href="monitor-build.html?step=often" style="text-decoration:none">Fix the breakdown</a></div>
 
 <div class="tabs" data-group="mtab" role="tablist">
  <button class="tab on" data-target="findings" role="tab" aria-selected="true">Findings<span class="count" style="margin-left:6px">12</span></button>
- <button class="tab" data-target="breakdowns" role="tab" aria-selected="false">Breakdowns<span class="count" style="margin-left:6px">2</span></button>
+ <button class="tab" data-target="breakdowns" role="tab" aria-selected="false">What it watches<span class="count" style="margin-left:6px">2</span></button>
  <button class="tab" data-target="health" role="tab" aria-selected="false">Health<span class="ov-dot warn" style="margin-left:6px" aria-label="Something to tune"></span></button>
 </div>
 <div class="card tab-content">
@@ -135,7 +135,7 @@
 <!-- Breakdowns -->
 <div data-pane-group="mtab" data-pane="breakdowns" hidden>
  <section class="bd-block" aria-label="Breakdown: Daily, by lead source and partner">
-  <div class="bd-head"><h3>Daily, by lead source and partner</h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at, a day</span><span><i class="ph ph-squares-four" aria-hidden="true"></i>lead source › partner</span><span><i class="ph ph-calendar-check" aria-hidden="true"></i>weekdays at 08:00 · stable at D-1</span><span><i class="ph ph-gauge" aria-hidden="true"></i>2 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div><a class="btn-quiet" href="monitor-build.html?step=metrics" style="text-decoration:none"><i class="ph ph-pencil-simple"></i>Edit</a></div>
+  <div class="bd-head"><h3>Daily, by lead source and partner</h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at, a day</span><span><i class="ph ph-squares-four" aria-hidden="true"></i>lead source › partner</span><span><i class="ph ph-calendar-check" aria-hidden="true"></i>weekdays at 08:00 · stable at D-1</span><span><i class="ph ph-gauge" aria-hidden="true"></i>2 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div><a class="btn-quiet" href="monitor-build.html?step=measure" style="text-decoration:none"><i class="ph ph-pencil-simple"></i>Edit</a></div>
   <table class="metric-table">
   <thead><tr><th>Metric, and its rules</th><th>Kind</th><th>Last 30 days</th><th>Now</th><th>Actions</th><th>30 days</th><th></th><th style="text-align:right"></th></tr></thead>
   <tbody>
@@ -156,7 +156,7 @@
   </table>
  </section>
  <section class="bd-block" aria-label="Breakdown: Hourly, in total">
-  <div class="bd-head"><h3>Hourly, in total</h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at, an hour</span><span><i class="ph ph-squares-four" aria-hidden="true"></i>in total</span><span><i class="ph ph-calendar-check" aria-hidden="true"></i>every hour, 07:00 to 21:00</span><span><i class="ph ph-gauge" aria-hidden="true"></i>under 1 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div><a class="btn-quiet" href="monitor-build.html?step=metrics" style="text-decoration:none"><i class="ph ph-pencil-simple"></i>Edit</a></div>
+  <div class="bd-head"><h3>Hourly, in total</h3><div class="bd-facts"><span><i class="ph ph-clock" aria-hidden="true"></i>created_at, an hour</span><span><i class="ph ph-squares-four" aria-hidden="true"></i>in total</span><span><i class="ph ph-calendar-check" aria-hidden="true"></i>every hour, 07:00 to 21:00</span><span><i class="ph ph-gauge" aria-hidden="true"></i>under 1 MB a run</span><a href="resource-overview.html" style="color:inherit;display:inline-flex;align-items:center;gap:4px"><i class="ph ph-table" aria-hidden="true"></i>its aggregate table</a></div><a class="btn-quiet" href="monitor-build.html?step=measure" style="text-decoration:none"><i class="ph ph-pencil-simple"></i>Edit</a></div>
   <table class="metric-table">
   <thead><tr><th>Metric, and its rules</th><th>Kind</th><th>Last 30 days</th><th>Now</th><th>Actions</th><th>30 days</th><th></th><th style="text-align:right"></th></tr></thead>
   <tbody>
@@ -165,7 +165,7 @@
   </tbody>
   </table>
  </section>
- <p class="meta" style="display:block;margin-top:12px;line-height:1.5">With its last active rule switched off, Credit leads goes back to 4 · Explored. <a class="text-link" href="monitor-build.html?step=breakdown">Add a breakdown</a></p>
+ <p class="meta" style="display:block;margin-top:12px;line-height:1.5">With its last active rule switched off, Credit leads goes back to 4 · Explored. <a class="text-link" href="monitor-build.html?step=often">Watch something else</a></p>
 </div>
 
 <!-- Health -->
@@ -183,7 +183,7 @@
   </section>
   <section class="mon-tile" style="background:var(--surface-sub)" aria-label="Claude's proposals">
    <div class="tile-head"><div class="label">Proposals, from Claude</div><span class="meta">read from the same overview</span></div>
-   <div class="suggestion" style="background:var(--surface-solid)"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><div>Widen <b style="font-weight:500">Null rate of email rises</b> from 2 to 2.5 standard deviations: 7 of its 9 findings were noise, and at 2.5 it would have kept the 2 you found useful.<div class="suggestion-acts"><button class="btn-quiet outline">Accept</button><a class="btn-quiet" href="monitor-build.html?step=rules" style="text-decoration:none">Change it</a></div></div></div>
+   <div class="suggestion" style="background:var(--surface-solid)"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><div>Widen <b style="font-weight:500">Null rate of email rises</b> from 2 to 2.5 standard deviations: 7 of its 9 findings were noise, and at 2.5 it would have kept the 2 you found useful.<div class="suggestion-acts"><button class="btn-quiet outline">Accept</button><a class="btn-quiet" href="monitor-build.html?step=bounds" style="text-decoration:none">Change it</a></div></div></div>
    <div class="suggestion" style="background:var(--surface-solid)"><i class="ph-fill ph-sparkle" aria-hidden="true"></i><div>Give <b style="font-weight:500"><span class="mono">walk_in</span></b> an absolute threshold, 0 leads for 5 days, instead of the z-score: it has too few leads a day for a standard deviation to mean anything.<div class="suggestion-acts"><button class="btn-quiet outline">Accept</button><button class="btn-quiet">Leave it</button></div></div></div>
   </section>
  </div>

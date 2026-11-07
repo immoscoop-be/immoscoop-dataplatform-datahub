@@ -39,6 +39,9 @@ Monitoring here is the monitoring of the data of a Resource. The monitoring of D
 - <a id="dec-cm-20"></a>**DEC-CM-20** · The screens do not hide the statistics, they teach them: the Owner must understand what "two standard deviations" is, as that is the knob they will turn for months.
 - <a id="dec-cm-21"></a>**DEC-CM-21** · Tuning a Monitor is a loop, not a one-off setup: the history of every Rule, feedback on every Finding, and a periodic review with the Data Team, supported by Data Hub and by Claude. It is the librarian's role of the Data Team: coaching, not building.
 - <a id="dec-cm-22"></a>**DEC-CM-22** · Monitoring serves two aims with the same machinery: guarding the data, and following the running business through it, such as "which estate agents grow strongly". A Rule can therefore give a list, gathered in a digest by its Action, as well as a Finding.
+- <a id="dec-cm-23"></a>**DEC-CM-23** · A business User builds a Monitor in seven steps of one question each: Resource, How often, Period, Per, Measure, Boundaries and Reactions. Monitoring is always time-based: every check runs at a moment, looks at a period, and its results form a line over time; for a Resource without a time to count by, that line is made of the moments Data Hub measured, without history at the start. The Owner never builds a Breakdown as such: Data Hub derives it, its bucket from how often and the period, its Segments from the per, and reuses one that matches. The time a Resource is counted by is set by the Data Team, its partition column by default; the Owner sees it, and does not choose it. *Decided on 2026-11-07, by Max, in the brainstorm on the screens: "I tend to think in different steps, the build-up is mentally easier". This refines how [DEC-CM-03](#dec-cm-03) reaches the Owner; the chain itself stays.*
+- <a id="dec-cm-24"></a>**DEC-CM-24** · Every boundary says what it is compared with: a fixed number, its own past (the periods before it, or a usual weekday), all values together, or everything before. The words follow the comparison: against a fixed number it is higher or lower than; against the past it rises or drops. The kinds of boundary are a fixed limit; a change in %, with a minimum in units so that 3 becoming 1 is no −66%; unusual, by rank, such as "the lowest in 12 weeks", or in standard deviations; something new, a value that appears; something silent, a value that stops longer than it ever did; and the top N. For a check of one day, a usual weekday, the same weekday over the 4 weeks before, is the proposed comparison. *Decided on 2026-11-07, by Max, in the brainstorm on the screens. Which kinds come in the first version is [OP-CM-10](#op-cm-10).*
+- <a id="dec-cm-25"></a>**DEC-CM-25** · Defaults of the brainstorm on the screens. For an amount, the typical value, the median, is proposed before the average, as one very large value does not move it. A measure across several fields is "both empty" or "one empty"; anything more is a field the Data Team adds to the Resource in its dbt project, not logic inside a monitor. Something new and something silent judge a value at once, without the warm-up of [FR-CM-08](#fr-cm-08). The screens say "per" for a Segment, "per lead source", and "only" for a filter, "only KBC"; the filter is in the first version. *Decided on 2026-11-07, by Max, in the brainstorm on the screens.*
 
 ## Terms
 
@@ -109,7 +112,7 @@ On its schedule, a Breakdown runs one query on its Resource, grouped by its time
 
 **Status:** Specified · **Source:** [REQ-DH-MON-METRIC](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-metric) · **Screens:** [monitor](../../design/screens/monitor.html), [monitor-build](../../design/screens/monitor-build.html)
 
-A Metric belongs to one Breakdown. It is a base Metric, an aggregate of its query per Segment value per bucket, or a derived Metric, computed from base Metrics of the same Breakdown without reading the Resource again: composed, the ratio of two, such as leads per visitor or price per m², or windowed, a moving average over N buckets, a z-score against the rolling average and standard deviation over N buckets, or the same weekday 1 or 4 weeks earlier. An Owner builds them from templates, without SQL: count, null rate on a field, count distinct, sum, average, and the ratio of two of these ([OP-CM-03](#op-cm-03)). The Data Team adds SQL Metrics for the rest. A Metric exists without a Rule: it is visible in Data Hub and can be drawn as a chart of semgraph.
+A Metric belongs to one Breakdown. It is a base Metric, an aggregate of its query per Segment value per bucket, or a derived Metric, computed from base Metrics of the same Breakdown without reading the Resource again: composed, the ratio of two, such as leads per visitor or price per m², or windowed, a moving average over N buckets, a z-score against the rolling average and standard deviation over N buckets, or the same weekday 1 or 4 weeks earlier. An Owner builds them from templates, without SQL, chosen per field in the words of its type ([DEC-CM-25](#dec-cm-25), [OP-CM-03](#op-cm-03)): for every row, how many; for a number, typical (the median), average, total, smallest, largest and how often empty; for text or a category, how often empty, how many different and how often a given value; for a date, how often empty and how old the newest is; for yes or no, the share of yes; for several fields, how often both or one is empty; and the ratio of two. A count, a total and a share add up across buckets, so a longer period comes from the same query; a median and a number of different values do not, and Data Hub computes them over the period itself. The Data Team adds SQL Metrics for the rest. A Metric exists without a Rule: it is visible in Data Hub and can be drawn as a chart of semgraph.
 
 <a id="fr-cm-06"></a>
 ### FR-CM-06 · The classic checks are Metrics
@@ -168,15 +171,19 @@ For data that is still settling, a bucket is only judged once the Stability of i
 
 **Status:** Specified · **Source:** [REQ-DH-MON-RULE](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-rule) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
-A Rule belongs to one Metric. It is one expression: a comparison and a threshold on that Metric, with the Segment values it holds for, a Tone, and one or more Actions ([FR-CM-13](#fr-cm-13)). The comparisons:
+A Rule belongs to one Metric. It is one expression: a comparison and a threshold on that Metric, with the Segment values it holds for, a Tone, and one or more Actions ([FR-CM-13](#fr-cm-13)). The screens call it a boundary, and write it as a sentence: "when it drops 30% compared with the 4 weeks before" ([OP-CM-11](#op-cm-11)). It is compared with ([DEC-CM-24](#dec-cm-24)):
 
-- **absolute:** the Metric above or below a fixed value;
-- **z-score:** the Metric more than N standard deviations from its rolling average; the suggestion for series that fluctuate, such as leads per day;
-- **same period:** the Metric deviates more than X% from the same weekday 1 or 4 weeks earlier;
+- **a fixed number:** higher or lower than a value;
+- **its own past:** the periods before it, such as the 4 weeks before, or a usual weekday, the same weekday over the 4 weeks before; it rises or drops by a percentage, with a minimum in units;
+- **all values together:** its share of the total, or its change against the change of the total ([FR-CM-10](#fr-cm-10));
+- **everything before:** a value that appears for the first time.
+
+Its kinds: a fixed limit; a change; unusual, by rank, such as "the lowest in 12 weeks", or as a z-score, more than N standard deviations from its rolling average; something new; something silent, a value that stops for longer than ever in N weeks; and the top N, the values that rose most, which gives a list ([FR-CM-14](#fr-cm-14)). Two more come later:
+
 - **relative to a window:** the Metric deviates more than X% from its own moving average over N buckets;
 - **persistence:** one of the above holds for N buckets in a row, which turns a noisy daily check into a trend.
 
-The first version has the first three ([DEC-CM-14](#dec-cm-14)).
+Which kinds the first version has is [OP-CM-10](#op-cm-10); [DEC-CM-14](#dec-cm-14) named absolute, z-score and the same period.
 
 *Could, not in v1 for the comparisons relative to a window and persistence: set on 2026-11-07, by Max ([DEC-CM-14](#dec-cm-14)).*
 
@@ -192,12 +199,12 @@ What the brainstorm first called severity is two settings of a Rule. Its Actions
 - **Gather in a digest:** the Findings of the Rule come together, daily or weekly, rather than one by one ([FR-CM-14](#fr-cm-14)).
 - **Quarantine:** the Resource is no longer served ([FR-CM-25](#fr-cm-25)).
 
-Every Finding is kept in the Log, whatever its Actions ([FR-CM-19](#fr-cm-19)). The Tone is a label the Owner gives the Rule, which sets the icon and colour of its Findings in a Message, on the Resource page and in a digest: **opportunity**, **informative**, **attention** or **problem** ([DEC-CM-08](#dec-cm-08)). The same Rule, estate agents growing more than 20%, can be an opportunity to an Owner in sales and attention to an Owner of capacity. A Rule with the Action Quarantine has the Tone problem.
+The screens call them reactions, and name them for the Owner: message me, in my list, tell the Consumers, block it ([OP-CM-11](#op-cm-11)). Every Finding is kept in the Log, whatever its Actions ([FR-CM-19](#fr-cm-19)). The Tone is a label the Owner gives the Rule, which sets the icon and colour of its Findings in a Message, on the Resource page and in a digest: **opportunity**, **informative**, **attention** or **problem** ([DEC-CM-08](#dec-cm-08)). The same Rule, estate agents growing more than 20%, can be an opportunity to an Owner in sales and attention to an Owner of capacity. A Rule with the Action Quarantine has the Tone problem.
 
 <a id="fr-cm-14"></a>
 ### FR-CM-14 · A Rule can give a list
 
-**Status:** Specified · **Source:** [REQ-DH-MON-LIST](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-list) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html)
+**Status:** Specified · **Source:** [REQ-DH-MON-LIST](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-list) · **Screens:** [monitoring-start](../../design/screens/monitoring-start.html), [monitor-build](../../design/screens/monitor-build.html)
 
 A Rule that evaluates per Segment value can give the set of values it holds for, such as "the estate agents that grew more than 20% compared with their average over four weeks". With the Action "gather in a digest", its Findings come together, daily or weekly, rather than one by one: a list to read, not a problem to solve ([DEC-CM-22](#dec-cm-22), [OP-CM-02](#op-cm-02)).
 
@@ -206,7 +213,7 @@ A Rule that evaluates per Segment value can give the set of values it holds for,
 
 **Status:** Specified · **Source:** [REQ-DH-MON-SENSITIVITY](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-sensitivity) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
-The screens show the z-score and the window as they are, with an explanation, not only as "low, normal, high", and link in context to the Learning Cards on them ([DEC-CM-20](#dec-cm-20), [FR-CM-32](#fr-cm-32)). The Data Team sets the defaults: a z-score of 2 and a window of 28 days.
+The screens explain every comparison in words, and show a z-score and its window as they are, behind "unusual", with an explanation, not only as "low, normal, high", and link in context to the Learning Cards on them ([DEC-CM-20](#dec-cm-20), [FR-CM-32](#fr-cm-32)). The Data Team sets the defaults: a z-score of 2 and a window of 28 days.
 
 <a id="fr-cm-16"></a>
 ### FR-CM-16 · Every Rule shows its history and its band
@@ -239,18 +246,21 @@ Every Finding is written to the Log of its Resource, in order of time, readable 
 ### The way in
 
 <a id="fr-cm-20"></a>
-### FR-CM-20 · Six steps to build a Monitor
+### FR-CM-20 · Seven steps to build a Monitor, over its picture
 
 **Status:** Specified · **Source:** [REQ-DH-MON-FLOW](../../workshops/2026-11-07-monitoring-and-alerting.md#req-dh-mon-flow) · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
-An Owner builds a Monitor one Breakdown at a time, in six steps:
+An Owner builds a Monitor in seven steps, one question each ([DEC-CM-23](#dec-cm-23)):
 
-1. **The Resource.** Data Hub says whether it has a Monitor already, so that the Owner adds a Breakdown to it, or changes one, rather than starting another.
-2. **The Breakdown:** time column, size of a bucket, Segments, with what one run reads ([FR-CM-39](#fr-cm-39)).
-3. **The Metrics:** per field its base Metrics and, per Metric, any windows, which together give its list of Metrics.
-4. **A preview:** the Metrics as a chart over the past period, before any Rule; where learning "a band around a line" begins.
-5. **The Rules:** per Metric its Rules, each with its threshold, its Tone and its Actions, with the history and the band drawn live ([FR-CM-16](#fr-cm-16), [FR-CM-24](#fr-cm-24)).
-6. **The schedule** of the Breakdown: how often, at what time, every day or weekdays only ([FR-CM-21](#fr-cm-21)).
+1. **Resource.** Data Hub says whether it has a Monitor already, so that the Owner adds to it rather than starting another, and which time it counts by, as the Data Team set it ([FR-CM-39](#fr-cm-39)).
+2. **How often:** every hour, day, week or month, at what time, every day or weekdays only ([FR-CM-21](#fr-cm-21)).
+3. **Period:** the last one, or the last N, and then one by one or as one period ([FR-CM-11](#fr-cm-11)).
+4. **Per:** all together, or for each value of a field, and only some values if the Owner wants ([FR-CM-07](#fr-cm-07)).
+5. **Measure:** a field and how to measure it ([FR-CM-05](#fr-cm-05)).
+6. **Boundaries:** one or more, each with what it is compared with, a minimum to be judged ([EC-CM-02](#ec-cm-02)), and how often they would have warned in the past 12 weeks ([FR-CM-12](#fr-cm-12), [FR-CM-16](#fr-cm-16), [FR-CM-24](#fr-cm-24)).
+7. **Reactions:** per boundary its Actions and its Tone ([FR-CM-13](#fr-cm-13)), and what a check reads ([FR-CM-33](#fr-cm-33)).
+
+Above the steps stands the picture of the monitor: a timeline, conceptual and not the data, that gains one layer per step, and under it the sentence that reads the monitor back, such as "Every day at 08:00, look at the number of leads in Credit lead creations, per lead source, over the last 7 days. When it drops 30% compared with the 4 weeks before: message me." Each part of the sentence opens its step ([DEC-UX-195](../../design/principles.md#dec-ux-195)).
 
 <a id="fr-cm-21"></a>
 ### FR-CM-21 · The Owner chooses when it evaluates
@@ -285,7 +295,7 @@ An Owner can give one Metric several Rules with the same comparison and growing 
 - **beyond 3:** a Rule that tells the Owner and the Consumers;
 - **beyond 4:** a Rule that quarantines the Resource.
 
-Data Hub draws them as one ladder on the chart of the Metric, the zones between their thresholds, so the Owner sets them against each other; adding a Rule further out is one step from there. A day beyond 3 fires both the Rules of 2 and of 3: it gives one Finding, of the Rule furthest out and in its Tone, and the Actions of both happen. Each Rule keeps its own Tone and the Segment values it holds for; a Rule that quarantines holds for all ([DEC-CM-10](#dec-cm-10)).
+Data Hub shows them together: in the picture of the monitor as boundaries beside the measure, each with its reactions, and on the chart of the past 12 weeks as bands, so the Owner sets them against each other; adding one further out is one step from there. A day beyond 3 fires both the Rules of 2 and of 3: it gives one Finding, of the Rule furthest out and in its Tone, and the Actions of both happen. Each Rule keeps its own Tone and the Segment values it holds for; a Rule that quarantines holds for all ([DEC-CM-10](#dec-cm-10)).
 
 <a id="fr-cm-25"></a>
 ### FR-CM-25 · Quarantine holds the whole Resource
@@ -360,7 +370,7 @@ The [Learning Centre](16-learning.md) gets a short, practical topic on reading y
 <a id="fr-cm-33"></a>
 ### FR-CM-33 · The aggregation query keeps to the free range
 
-**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-16](#dec-cm-16)) · **Screens:** [monitor](../../design/screens/monitor.html)
+**Status:** Specified · **Source:** Max, 2026-11-07, in the review of the brainstorm ([DEC-CM-16](#dec-cm-16)) · **Screens:** [monitor](../../design/screens/monitor.html), [monitor-build](../../design/screens/monitor-build.html)
 
 While building a Breakdown, the Owner sees the Pre-flight of its aggregation query: how much one run reads, its backfill, and per month at its schedule ([FR-CM-39](#fr-cm-39)). Up to 100 MB per run, the Breakdown runs. Above that, saving it sends a Request to the Data Team, and it runs once accepted; its other Breakdowns run meanwhile. The backfill is read once and counts as a run of its own. When the query grows past what was accepted, it stops, its Owner hears, and a new Request goes to the Data Team.
 
@@ -371,7 +381,7 @@ While building a Breakdown, the Owner sees the Pre-flight of its aggregation que
 
 The time column of a Breakdown bounds what its query reads, besides what it groups by. A run reads only the buckets that are new since the last run, and those its Stability still holds open ([FR-CM-11](#fr-cm-11)), and writes them into the Aggregate Table; the windows and z-scores of its Metrics and Rules are computed on the Aggregate Table, not on the Resource. Once, when a Breakdown is saved or its Metrics change, a backfill reads its history: the window of its longest Metric and its warm-up, 12 weeks by default.
 
-Data Hub proposes as time column the partition column of the Resource, from how it is stored ([FR-CO-34](03-collections.md#fr-co-34)). On another column, BigQuery cannot leave out the partitions outside the period, so every run reads the whole table: Data Hub says so next to the time column, with what one run reads on either column, before the Owner goes on.
+The Data Team sets the time column of a Resource once, its partition column by default, from how it is stored ([FR-CO-34](03-collections.md#fr-co-34)); the Owner sees it in the first step and does not choose it ([DEC-CM-23](#dec-cm-23)). On another column, BigQuery cannot leave out the partitions outside the period, so every run reads the whole table: Data Hub says so to the Data Team when they set it, with what one run reads on either column.
 
 <a id="fr-cm-34"></a>
 ### FR-CM-34 · Notifications follow the Actions
@@ -430,9 +440,9 @@ When a field a Breakdown reads, in a Metric or as a Segment, is removed or renam
 <a id="ec-cm-02"></a>
 ### EC-CM-02 · A Segment value with too little data
 
-**Status:** Proposed
+**Status:** Proposed · **Screens:** [monitor-build](../../design/screens/monitor-build.html)
 
-A Segment value whose buckets hold too few rows for a z-score to mean anything gives no Finding of a Rule by z-score. It shows in the Health Overview as not significant ([FR-CM-18](#fr-cm-18)), so the Owner can choose an absolute threshold for it, or leave it out.
+Small values swing wildly: 3 leads becoming 1 is −66%, and a typical amount over 9 leads is noise. Every measure therefore has a minimum to be judged, "only a lead source with at least 10 leads in the period", which Data Hub proposes from its history and the Owner can change. A Segment value below it gives no Finding of a change or of unusual, and shows in the Health Overview as not judged ([FR-CM-18](#fr-cm-18)), so the Owner can choose a fixed limit for it, or leave it out. Something new and something silent still judge it.
 
 <a id="ec-cm-03"></a>
 ### EC-CM-03 · The Resource of a Monitor is withdrawn or deprecated
@@ -467,7 +477,9 @@ When the last run that builds a Resource failed or skipped it ([FR-CM-01](#fr-cm
 - [ ] <a id="op-cm-06"></a>**OP-CM-06** · Decide what "the level above" a Segment value is when a Breakdown has several Segments ([FR-CM-10](#fr-cm-10)). Proposal: the Segments in the order the Owner sets, each level the one before it, as a rollup, plus the total; at most three Segments per Breakdown.
 - [ ] <a id="op-cm-07"></a>**OP-CM-07** · Decide whether a chart of semgraph shows a stamp "data up to" next to its Query ID ([FR-CM-27](#fr-cm-27)); the brainstorm left it to confirm.
 - [ ] <a id="op-cm-08"></a>**OP-CM-08** · Decide which jobs Data Hub follows for the Run Status ([FR-CM-01](#fr-cm-01)), now that it reads only the Source Job of each dbt project ([DEC-AR-09](01-artifact-registry.md#dec-ar-09)). Proposal: every job of a dbt project Data Hub follows that builds its tables, CI jobs excepted; the webhook in dbt Cloud names them too, and the page Webhooks shows them apart from the Source Job.
-- [ ] <a id="op-cm-09"></a>**OP-CM-09** · Confirm the name of what Max called "aggregation and segmentation" ([DEC-CM-03](#dec-cm-03)): one time column, one bucket and its Segments, which is one query and one Aggregate Table. Proposal: **Breakdown** (Dutch: uitsplitsing), as an Owner reads it, "credit leads, daily, by partner". Considered: Aggregation, which is also what a Metric does; Grain, which a Resource already has ([FR-CO-33](03-collections.md#fr-co-33)); Slice and Cut, which say the segmenting but not the period. *Raised on 2026-11-07, in the review of the screens.*
+- [ ] <a id="op-cm-09"></a>**OP-CM-09** · Confirm the name of what Max called "aggregation and segmentation" ([DEC-CM-03](#dec-cm-03)): one time column, one bucket and its Segments, which is one query and one Aggregate Table. Proposal: **Breakdown** (Dutch: uitsplitsing), as an Owner reads it, "credit leads, daily, by partner". Considered: Aggregation, which is also what a Metric does; Grain, which a Resource already has ([FR-CO-33](03-collections.md#fr-co-33)); Slice and Cut, which say the segmenting but not the period. *Raised on 2026-11-07, in the review of the screens.* Less pressing since [DEC-CM-23](#dec-cm-23): an Owner does not see a Breakdown as such; the screens name one by its period and what it is per.
+- [ ] <a id="op-cm-10"></a>**OP-CM-10** · Decide which kinds of boundary the first version has ([DEC-CM-24](#dec-cm-24)); [DEC-CM-14](#dec-cm-14) named absolute, z-score and the same period. Proposal: a fixed limit, a change against the past or a usual weekday with its minimum in units, unusual by rank, something new and something silent; the top N, unusual in standard deviations, relative to a window and persistence after it. *Raised on 2026-11-07, in the brainstorm on the screens.*
+- [ ] <a id="op-cm-11"></a>**OP-CM-11** · Decide the names of the steps as Defined Terms. The screens, in Max's words of the brainstorm, say boundary for a Rule and reaction for an Action. Proposal: rename the Defined Terms Rule to Boundary and Action to Reaction, so the screens and the documents speak the same words; the alternative keeps Rule and Action and lets the screens say rule and action. *Raised on 2026-11-07, in the brainstorm on the screens.*
 
 ## Builds on
 
