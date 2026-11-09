@@ -111,11 +111,11 @@ const LIGHTS = `
   }`;
 
 // Painted shapes (DEC-UX-198, DEC-UX-199): many kinds of shapes and many colours painted over each other, each
-// drifting, turning, swaying or breathing at a speed of its own, in periods of 20 to 60 seconds. Iris, by
+// drifting, turning, swaying or breathing at a speed of its own, in periods of 20 to 60 seconds. Prism, by
 // day, after a picture Max shared on 2026-11-09: a ground of lilac to sky blue and blush to peach, a
 // tilted eye of violet and periwinkle, a field of pink whose edge is an S that cuts into the eye, a ribbon
 // of rose behind it, sky blue on the right, butter, peach and coral low down, and arcs of mint and mauve.
-const IRIS = `
+const PRISM = `
   precision highp float;
   uniform vec2 uRes;
   uniform float uT;        // seconds, three times as fast as the clock, from a random start
@@ -387,7 +387,7 @@ const TIDE = sides({ corners: ['#2558A8', '#A6C6EA', '#3E74C0', '#F6782C'], band
       spheres: [[0.88, 0.12, 0.42, 1, '#F7934E', 0.55], [0.40, 0.88, 0.40, 0, '#CADFF4', 0.55], [0.0, 1.05, 0.30, 0, '#1A4A9A', 0.6]] });
 
 /** The painted scenes, each its own shader, built the first time it is shown. */
-export const PAINTED: Readonly<Record<string, string>> = { iris: IRIS, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
+export const PAINTED: Readonly<Record<string, string>> = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
 
 /** A light: x, y, softness, arc, r, g, b, strength. */
 type Light = readonly [number, number, number, number, number, number, number, number];

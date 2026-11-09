@@ -40,7 +40,7 @@ export const BACKGROUNDS: readonly Background[] = [
   { id: 'apricot', kind: 'lights', themes: ['light'], name: 'Apricot' },
   { id: 'blush', kind: 'lights', themes: ['light'], name: 'Blush' },
   { id: 'sky', kind: 'lights', themes: ['light'], name: 'Sky' },
-  { id: 'iris', kind: 'painted', themes: ['light'], name: 'Iris' },
+  { id: 'prism', kind: 'painted', themes: ['light'], name: 'Prism' },
   { id: 'cinnamon', kind: 'painted', themes: ['light'], name: 'Cinnamon' },
   { id: 'evening', kind: 'painted', themes: ['light'], name: 'Evening' },
   { id: 'citrus', kind: 'painted', themes: ['light'], name: 'Citrus' },

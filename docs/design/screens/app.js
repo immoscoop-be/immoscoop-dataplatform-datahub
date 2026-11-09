@@ -17,13 +17,13 @@ showThemeBtn();
 // The background (DEC-UX-94, DEC-UX-108): a set per theme. The User chooses two on My page, one for day and one for
 // night, each from the set of its theme, or Random, the default: one picked at random when Data Hub starts, kept for the
 // session, and picked again when the theme switches. ?bg= in the address still sets one, for the prototype
-const BACKGROUNDS = { light: ['', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'iris', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide'],
+const BACKGROUNDS = { light: ['', 'concrete', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide'],
   dark: ['', 'flow', 'aurora', 'ember', 'dusk', 'horizon', 'afterglow', 'nova', 'cobalt', 'midnight'] };
 // The sign-in does not know the User yet: it always picks one of the set at random (DEC-UX-173)
 const signingIn = document.body.classList.contains('signin');
 // The backgrounds drawn live with WebGL: the flowing gradient, the flowing lights (DEC-UX-109) and the painted shapes
 // (DEC-UX-198)
-const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'iris', 'cinnamon', 'evening',
+const FLOWS = ['flow', 'aurora', 'ember', 'dusk', 'horizon', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'prism', 'cinnamon', 'evening',
   'citrus', 'orchid', 'tide', 'afterglow', 'nova', 'cobalt', 'midnight'];
 const setBg = bg => { if (bg) document.documentElement.dataset.bg = bg; else delete document.documentElement.dataset.bg; };
 const pickBg = theme => {
@@ -467,8 +467,8 @@ if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
       [0.50, 0.05, 0.20, 0, 0.94, 0.97, 1.00, 0.8], [0.10, 0.40, 0.25, 0, 0.92, 0.96, 1.00, 0.7], [0.70, 0.90, 0.25, 0, 0.75, 0.86, 0.98, 0.6], [0, 0, 0.1, 0, 0, 0, 0, 0]] },
   };
   // The painted shapes (DEC-UX-198, DEC-UX-199): many kinds of shapes and many colours painted over each other, each
-  // drifting, turning, swaying or breathing at a speed of its own. Iris, by day, after a picture Max shared on 2026-11-09
-  const IRIS = `
+  // drifting, turning, swaying or breathing at a speed of its own. Prism, by day, after a picture Max shared on 2026-11-09
+  const PRISM = `
     precision highp float;
     uniform vec2 uRes;
     uniform float uT;        // seconds, three times as fast as the clock, from a random start
@@ -726,7 +726,7 @@ if (FLOWS.includes(document.documentElement.dataset.bg)) (() => {
   // right
   const TIDE = sides({ corners: ['#2558A8', '#A6C6EA', '#3E74C0', '#F6782C'], bands: [[0.62, 0.02, 0.34, 0.05, '#EDE4DA', 0.72]],
         spheres: [[0.88, 0.12, 0.42, 1, '#F7934E', 0.55], [0.40, 0.88, 0.40, 0, '#CADFF4', 0.55], [0.0, 1.05, 0.30, 0, '#1A4A9A', 0.6]] });
-  const PAINTED = { iris: IRIS, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
+  const PAINTED = { prism: PRISM, cinnamon: CINNAMON, evening: EVENING, citrus: CITRUS, orchid: ORCHID, tide: TIDE, afterglow: AFTERGLOW, nova: NOVA, cobalt: COBALT, midnight: MIDNIGHT };
   const shader = (type, src) => { const sh = gl.createShader(type); gl.shaderSource(sh, src); gl.compileShader(sh); return sh; };
   const build = fragment => {
     const program = gl.createProgram();
