@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { BACKGROUNDS, backgroundsOf, chooseBackground, RANDOM } from './backgrounds.js';
 
 describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)', () => {
-  it('holds by day the clouds, the flowing gradient, five lights, Iris and Concrete; by night the gradient, the flow and four lights', () => {
-    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'iris', 'concrete']);
-    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon']);
+  it('holds by day the clouds, the flowing gradient, five lights, six painted scenes and Concrete; by night the gradient, the flow, four lights and four painted scenes', () => {
+    expect(backgroundsOf('light').map((b) => b.id)).toEqual(['gradient', 'flow', 'periwinkle', 'sunrise', 'apricot', 'blush', 'sky', 'iris', 'cinnamon', 'evening', 'citrus', 'orchid', 'tide', 'concrete']);
+    expect(backgroundsOf('dark').map((b) => b.id)).toEqual(['gradient', 'flow', 'aurora', 'ember', 'dusk', 'horizon', 'afterglow', 'nova', 'cobalt', 'midnight']);
     expect(new Set(BACKGROUNDS.map((b) => b.id)).size).toBe(BACKGROUNDS.length);
   });
 
-  it('paints Iris, a scene of painted shapes by day, with a shader of its own (DEC-UX-198)', () => {
-    expect(BACKGROUNDS.filter((b) => b.kind === 'painted').map((b) => [b.id, b.themes])).toEqual([['iris', ['light']]]);
+  it('paints Iris and five scenes of two sides by day, and four scenes by night (DEC-UX-198, DEC-UX-199)', () => {
+    expect(BACKGROUNDS.filter((b) => b.kind === 'painted').map((b) => [b.id, b.themes[0]])).toEqual([
+      ['iris', 'light'], ['cinnamon', 'light'], ['evening', 'light'], ['citrus', 'light'], ['orchid', 'light'], ['tide', 'light'],
+      ['afterglow', 'dark'], ['nova', 'dark'], ['cobalt', 'dark'], ['midnight', 'dark'],
+    ]);
   });
 
   it('shows the photo of Concrete as it is, covering the window (DEC-UX-113)', () => {
@@ -26,6 +29,6 @@ describe('the backgrounds, a set per theme (DEC-UX-108, DEC-UX-109, DEC-UX-173)'
     expect(chooseBackground('light', undefined, () => 0.999).id).toBe('concrete');
     // A background that left the set, such as Fresh piste, gives way to one at random.
     expect(chooseBackground('light', 'piste', () => 0).id).toBe('gradient');
-    expect(chooseBackground('dark', 'concrete', () => 0.999).id).toBe('horizon');
+    expect(chooseBackground('dark', 'concrete', () => 0.999).id).toBe('midnight');
   });
 });

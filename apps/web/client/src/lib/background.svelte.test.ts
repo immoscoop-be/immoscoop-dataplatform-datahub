@@ -19,7 +19,7 @@ describe('the background on screen (DEC-UX-108)', () => {
   it('is picked again when the User switches between day and night (DEC-UX-94)', () => {
     const backgrounds = new Backgrounds(new Settings({}, async () => {}), sequence(0, 0.99, 0.99));
     expect(backgrounds.of('light').id).toBe('gradient');
-    expect(backgrounds.of('dark').id).toBe('horizon');
+    expect(backgrounds.of('dark').id).toBe('midnight');
     expect(backgrounds.of('light').id).toBe('concrete');
   });
 
