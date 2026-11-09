@@ -85,6 +85,6 @@
     background: center / cover no-repeat var(--bg-1); color: var(--text-secondary); font-size: 26px; }
   .random { background: var(--surface-solid); }
   .gradient { background: var(--app-bg); background-size: 130% 130%; }
-  .flow, .lights { background: var(--preview); }
+  .flow, .lights, .painted { background: var(--preview); }
   .picture { background-image: var(--picture); background-position: var(--position, center); }
 </style>

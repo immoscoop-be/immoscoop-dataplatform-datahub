@@ -74,7 +74,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
     const jan = await as('jan');
     expect((await app.inject({ url: '/me/settings', headers: jan })).json()).toEqual({ settings: {} });
 
-    for (const [key, value] of [['language', 'en'], ['query.layout', 'sideBySide'], ['background.dark', 'aurora'], ['panel.open', false], ['intro.collections', 2]] as const) {
+    for (const [key, value] of [['language', 'en'], ['query.layout', 'sideBySide'], ['background.dark', 'borealis'], ['panel.open', false], ['intro.collections', 2]] as const) {
       const saved = await app.inject({ method: 'PUT', url: `/me/settings/${key}`, headers: jan, payload: { value } });
       expect(saved.statusCode).toBe(204);
     }
@@ -83,7 +83,7 @@ describe.skipIf(!url)('the settings of a User (DEC-UX-96)', () => {
     expect((await app.inject({ url: '/me/settings', headers: jan })).json().settings).toEqual({
       language: 'nl',
       'query.layout': 'sideBySide',
-      'background.dark': 'aurora',
+      'background.dark': 'borealis',
       'panel.open': false,
       'intro.collections': 2,
     });
