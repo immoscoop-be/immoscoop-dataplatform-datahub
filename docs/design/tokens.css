@@ -110,6 +110,8 @@
   --bg-prev-apricot: radial-gradient(50% 50% at 90% 5%, #FF8C26, transparent 70%), radial-gradient(35% 45% at 0% 45%, #FF8C4D, transparent 70%), radial-gradient(40% 40% at 60% 65%, #FBFBB8, transparent 70%), radial-gradient(40% 40% at 95% 95%, #FFE040, transparent 70%), #FFCC73;
   --bg-prev-blush: radial-gradient(25% 25% at 92% 5%, #FF785C, transparent 70%), radial-gradient(45% 45% at 85% 65%, #FF668C, transparent 70%), radial-gradient(40% 45% at 15% 75%, #FFB38C, transparent 70%), #FFDCDC;
   --bg-prev-sky: radial-gradient(40% 40% at 95% 80%, #2E78ED, transparent 70%), radial-gradient(40% 40% at 75% 65%, #8CBFFA, transparent 70%), #DCEDFC;
+  /* A still of Iris, the painted shapes by day (DEC-UX-198): the eye of violet and periwinkle, the pink field, sky blue, butter, peach and coral */
+  --bg-prev-iris: radial-gradient(22% 34% at 74% 44%, #8C92F7 0%, #B68AF5 55%, transparent 80%), radial-gradient(45% 60% at 18% 55%, #F2B0D6 0%, #F2B0D6 40%, transparent 75%), radial-gradient(30% 45% at 102% 18%, #8CC5F5, transparent 75%), radial-gradient(35% 35% at 58% 108%, #F8DEAC, transparent 75%), radial-gradient(30% 35% at 100% 96%, #F2AAA8, transparent 75%), radial-gradient(40% 45% at 4% 104%, #FBE5EE, transparent 75%), linear-gradient(180deg, #CEA9E2 0%, #E9B4DC 55%, #F7C6A8 100%);
   --surface-glass: rgba(255,255,255,.42);  /* rail tab, panel, main frame */
   --surface-float-hover: rgba(255,255,255,.28);
   --surface-solid: #FFFFFF;      /* reading surface in focus */

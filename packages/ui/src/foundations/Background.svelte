@@ -5,7 +5,7 @@
 
   /**
    * The background of Data Hub, behind everything (Layers and focus): the gradient of the theme, a
-   * picture, or the flowing gradient and lights. It moves very slowly, felt rather than seen, and
+   * picture, or the flowing gradient, lights and painted shapes. It moves very slowly, felt rather than seen, and
    * stands still when the system asks to reduce motion (Background and motion).
    */
   let { background, theme }: { background: Background; theme: Theme } = $props();
@@ -15,7 +15,7 @@
   let noWebGL = $state(false);
   let flow: Flow | undefined;
 
-  const flowing = $derived((background.kind === 'flow' || background.kind === 'lights') && !noWebGL);
+  const flowing = $derived((background.kind === 'flow' || background.kind === 'lights' || background.kind === 'painted') && !noWebGL);
 
   $effect(() => {
     if (!flowing || !canvas) {

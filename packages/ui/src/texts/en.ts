@@ -14,6 +14,7 @@ export default {
   'background.flow': 'Flowing gradient',
   'background.flowMeta': 'Moves slowly',
   'background.lightsMeta': 'Flowing lights',
+  'background.paintedMeta': 'Painted shapes',
   'background.label': 'Background',
   'tree.toggle': 'Show what {name} holds',
   'breadcrumb.label': 'Where you are',
