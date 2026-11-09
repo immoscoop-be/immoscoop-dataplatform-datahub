@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<!--
+  Screen: Monitoring, the section of the Owner (FR-CM-29), a proposal drawn on 2026-11-07 from the brainstorm of Max.
+  The rail gets a sixth item, Monitoring, after Charts, for a User with the Permission monitors.manage (OP-UX-63). Its
+  panel is the index of the section: the Monitors of the Resources the User may manage, by Collection, each with the dot
+  of its Operational Status in the colour of its Tone (OP-UX-64), and the Resources of their Owner Units without a
+  Monitor yet. The start screen shows what the panel cannot:
+  - Today: the Findings of today, newest first, each in its Tone, with whom the Actions of its Rule told, the Rule it
+    came from and its Resource; the Owner marks each useful or noise (FR-CM-17). The same Findings reach them as notifications (FR-CM-34).
+  - Lists: the Rules with the Action "gather in a digest", read as a list rather than solved (FR-CM-14).
+  - To tune: what the Health Overviews say, with a proposal to accept (FR-CM-18), and the Segment values in warm-up
+    (FR-CM-08).
+  - Suggestions: coverage, quality of the monitoring and drift of the data, in the words of the Owner's creed; one
+    dismissed stays quiet for a while (FR-CM-30).
+  The intro can be dismissed per User, as on every start screen. The switch at the bottom: ?state=first shows a User with
+  no Monitor yet, where the suggestions of coverage lead.
+  Requirements: FR-CM-08, FR-CM-14, FR-CM-17, FR-CM-29, FR-CM-30
+  Decisions: DEC-CM-07, DEC-CM-08, DEC-CM-09, DEC-CM-21, DEC-CM-22.
+  Open points: OP-UX-63, OP-UX-64, OP-UX-67.
+  Rules: ../principles.md  ·  Placeholder content only.
+-->
+<html lang="en" data-role="owner">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/fill/style.css">
+<link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../base.css">
+<title>Data Hub — Monitoring</title>
+</head>
+<body>
+<div class="app panel-open">
+<nav class="rail" aria-label="Main navigation">
+  <svg class="logo" width="30" height="20" viewBox="0 0 30 20" aria-hidden="true"><circle cx="10" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/><circle cx="20" cy="10" r="8" fill="none" stroke="var(--text-primary)" stroke-width="2"/></svg>
+  <a class="nav-btn" href="collections-start.html" data-label="Collections" aria-label="Collections"><i class="ph-fill ph-stack"></i></a>
+  <a class="nav-btn" href="query.html" data-label="Query" aria-label="Query"><i class="ph-fill ph-terminal-window"></i></a>
+  <a class="nav-btn" href="charts.html" data-label="Charts" aria-label="Charts, the gallery of semgraph"><i class="ph-fill ph-chart-bar"></i></a>
+  <a class="nav-btn active" href="monitoring-start.html" data-label="Monitoring" aria-label="Monitoring, 2 Findings today" aria-current="page"><i class="ph-fill ph-pulse"></i><span class="nav-badge">2</span><span class="flare top"></span><span class="flare bottom"></span></a>
+  <a class="nav-btn" href="messages.html" data-label="Messages" aria-label="Messages, 3 unread"><i class="ph-fill ph-chat-circle-text"></i><span class="nav-badge">3</span></a>
+  <a class="nav-btn" href="learning-start.html" data-label="Learning Centre" aria-label="Learning Centre"><i class="ph-fill ph-graduation-cap"></i></a>
+  <div class="spacer"></div>
+  <button class="nav-btn" id="theme" data-label="Light or dark" aria-label="Switch light or dark"><i class="ph-fill ph-moon"></i></button>
+  <a class="avatar" href="my-page.html" aria-label="My page" data-label="My page">MP</a>
+</nav>
+<aside class="panel" aria-label="Monitoring">
+ <div class="panel-inner">
+  <div style="display:flex;align-items:center;gap:4px">
+   <h1 style="font-size:19px;font-weight:500;flex:1;margin:0">Monitoring</h1>
+   <a class="icon-btn" href="monitor-build.html" aria-label="New monitor" title="New monitor"><i class="ph-fill ph-plus"></i></a>
+   <button class="icon-btn" id="collapse" aria-label="Collapse panel"><i class="ph-fill ph-caret-double-left"></i></button>
+  </div>
+  <label class="search" style="margin-top:12px"><i class="ph ph-magnifying-glass"></i><input type="search" placeholder="Search monitors" aria-label="Search monitors"></label>
+  <div class="mon-nav" data-pane-group="state" data-pane="running">
+   <div class="panel-label">Credits</div>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="attention" aria-label="Attention"></span><span>Credit leads</span><span class="count">1</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="healthy" aria-label="Healthy"></span><span>Lead sources</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="warmup" aria-label="In warm-up"></span><span>Credit lead creations (flat)</span><span class="count" title="In warm-up"><i class="ph ph-hourglass-medium"></i></span></a>
+   <div class="panel-label">Listings</div>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="opportunity" aria-label="Opportunity"></span><span>Listings per estate agent</span><span class="count">7</span></a>
+   <a class="mc-filter" href="monitor.html"><span class="tone-dot" data-tone="healthy" aria-label="Healthy"></span><span>Asking prices</span></a>
+   <div class="panel-label">Without a monitor</div>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Views</span></a>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>CTAs</span></a>
+  </div>
+  <div class="mon-nav" data-pane-group="state" data-pane="first" hidden>
+   <div class="panel-label">Without a monitor</div>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Credit leads</span></a>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Lead sources</span></a>
+   <a class="mc-filter" href="monitor-build.html" style="color:var(--text-muted)"><i class="ph ph-plus-circle"></i><span>Views</span></a>
+  </div>
+ </div>
+</aside>
+<main class="main">
+<div class="breadcrumb">Monitoring</div>
+<div style="display:flex;align-items:flex-end;gap:12px;margin-top:8px;flex-wrap:wrap">
+ <div style="flex:1;min-width:280px"><h1 class="page-title">Monitoring</h1>
+ <p class="meta" style="display:block;margin-top:4px;line-height:1.5">What you watch on your Resources, and what it found. Tuesday 3 November, 08:00.</p></div>
+ <a class="btn-primary" href="monitor-build.html" style="text-decoration:none"><i class="ph ph-plus"></i>New monitor</a>
+</div>
+
+<section id="intro" class="card" data-section="monitoring" data-version="1" style="position:relative;border-radius:20px;padding:26px 28px 24px;text-align:center;margin-top:16px">
+ <button class="icon-btn" id="intro-hide" aria-label="Hide intro" style="position:absolute;right:12px;top:12px"><i class="ph-fill ph-x-circle"></i></button>
+ <svg width="220" height="90" viewBox="0 0 220 90" aria-hidden="true"><path d="M10 28 C60 18 120 22 210 16 L210 62 C120 66 60 70 10 66 Z" fill="var(--tone-attention)" fill-opacity=".16"/><path d="M10 46 L30 44 L50 49 L70 42 L90 47 L110 41 L130 45 L150 43 L170 70 L190 46 L210 40" fill="none" stroke="var(--text-primary)" stroke-width="2" stroke-linejoin="round"/><circle cx="170" cy="70" r="5" fill="var(--tone-attention)"/></svg>
+ <h2 style="font-size:21px;font-weight:500;margin:10px 0 0">What is monitoring?</h2>
+ <p style="font-size:13px;color:var(--text-secondary);line-height:1.6;max-width:520px;margin:6px auto 0">You tell Data Hub what to keep an eye on in the Resources you own, and when you want to hear of it: when credit leads per partner drop unusually, or which estate agents grow strongly. One cheap query a day feeds every rule, and a finding can be good news as well as bad: you give each rule its tone.</p>
+ <div style="display:flex;justify-content:center;align-items:center;gap:16px;margin-top:18px"><a class="btn-primary" href="monitor-build.html" style="text-decoration:none"><i class="ph-fill ph-plus-circle" style="font-size:15px"></i>New monitor</a><a class="btn-quiet outline" href="learning-card.html" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="ph ph-graduation-cap"></i>Reading your own figures</a></div>
+</section>
+<div id="intro-bar" hidden style="margin-top:14px"><button class="btn-quiet" id="intro-show"><i class="ph ph-info"></i>Show intro</button></div>
+
+<div data-pane-group="state" data-pane="running">
+<div class="section-head"><h2>Today</h2><span class="meta">2 findings · judged on the data up to Monday 2 November</span></div>
+<div class="mon-findings">
+ <article class="card finding" data-tone="attention">
+  <i class="ph-fill ph-warning-circle" aria-hidden="true"></i>
+  <div>
+   <div class="finding-what"><b>Credit leads per day for KBC dropped to 22</b> on Monday 2 November, 3.3 standard deviations below its 28-day average of 47. The total held: 352, within its band.</div>
+   <div class="finding-meta"><span class="tone" data-tone="attention"><i class="ph-fill ph-warning-circle"></i>Attention</span><span class="esc"><i class="ph ph-users-three"></i>Told the Owner and Consumers</span><a href="monitor.html">Credit leads</a><span>Rule: leads per partner drop sharply</span><span>Also yesterday, for Sunday: 21</span></div>
+  </div>
+  <div class="finding-acts"><button class="fb" aria-pressed="false"><i class="ph ph-thumbs-up"></i>Useful</button><button class="fb" aria-pressed="false"><i class="ph ph-waveform"></i>Noise</button></div>
+ </article>
+ <article class="card finding" data-tone="opportunity">
+  <i class="ph-fill ph-sparkle" aria-hidden="true"></i>
+  <div>
+   <div class="finding-what"><b>7 estate agents grew more than 20%</b> in listings compared with their average over four weeks: Immo Verhaert, Dewaele Gent, Era Lier and 4 others.</div>
+   <div class="finding-meta"><span class="tone" data-tone="opportunity"><i class="ph-fill ph-sparkle"></i>Opportunity</span><span class="esc"><i class="ph ph-user"></i>Told the Owner</span><a href="monitor.html">Listings per estate agent</a><span>Weekly digest, Mondays</span></div>
+  </div>
+  <div class="finding-acts"><a class="btn-quiet outline" href="monitor.html" style="text-decoration:none">Open list</a></div>
+ </article>
+</div>
+
+<div class="mon-grid" style="margin-top:22px">
+ <section class="card mon-tile" aria-label="Lists">
+  <div class="tile-head"><div class="label">Lists</div><span class="meta">read, not solved</span></div>
+  <ul class="mon-list">
+   <li><span class="tone-dot" data-tone="opportunity"></span><span class="grow">Estate agents growing more than 20%</span><span class="num">7</span><span class="meta">this week</span></li>
+   <li><span class="tone-dot" data-tone="informative"></span><span class="grow">Partners with no lead for 3 days</span><span class="num">1</span><span class="meta">daily</span></li>
+   <li><span class="tone-dot" data-tone="informative"></span><span class="grow">Regions whose asking price per m² rose 5%</span><span class="num">2</span><span class="meta">this week</span></li>
+  </ul>
+ </section>
+ <section class="card mon-tile" aria-label="To tune">
+  <div class="tile-head"><div class="label">To tune</div><a class="meta" href="monitor.html?mtab=health">Health overviews</a></div>
+  <div class="suggestion"><i class="ph-fill ph-sliders-horizontal" aria-hidden="true"></i><div><b style="font-weight:500">Null rate of email</b> on Credit leads fired 9 times this month; you marked 7 noise. Widen it from 2 to 2.5 standard deviations? At 2.5 it would have fired twice.<div class="suggestion-acts"><button class="btn-quiet outline">Widen to 2.5</button><a class="btn-quiet" href="monitor-build.html?step=bounds" style="text-decoration:none">Look at it</a></div></div></div>
+  <div class="suggestion"><i class="ph-fill ph-hourglass-medium" aria-hidden="true"></i><div><b style="font-weight:500">3 partners in warm-up</b> on Credit leads: Belfius, Argenta and Crelan. Their rules judge them once they have four weeks of history, from 23 November.</div></div>
+ </section>
+</div>
+
+<div class="section-head"><h2>Suggestions</h2><span class="meta">from how your Resources are used</span></div>
+<div class="suggestion"><i class="ph-fill ph-users-three" aria-hidden="true"></i><div><b style="font-weight:500">People rely on Views.</b> It was queried 140 times last month and feeds three public Lenses, but nothing watches it yet.<div class="suggestion-acts"><a class="btn-quiet outline" href="monitor-build.html" style="text-decoration:none">Start from a proposal</a><button class="btn-quiet">Not now</button></div></div></div>
+<div class="suggestion"><i class="ph-fill ph-plus-circle" aria-hidden="true"></i><div><b style="font-weight:500">A new lead source appeared</b> in Lead sources 9 days ago, <span class="mono">partner_api_v2</span>. Its rules cover it already; it is in warm-up until 24 November.<div class="suggestion-acts"><button class="btn-quiet">Got it</button></div></div></div>
+</div>
+
+<div data-pane-group="state" data-pane="first" hidden>
+<div class="section-head"><h2>Where to start</h2><span class="meta">the Resources of your Owner Units that people rely on most</span></div>
+<div class="suggestion"><i class="ph-fill ph-users-three" aria-hidden="true"></i><div><b style="font-weight:500">People rely on Credit leads.</b> It was queried 310 times last month, feeds five public Lenses and the weekly report to KBC, and nothing watches it yet. It is 4 · Explored: a first active rule makes it 5 · Monitored.<div class="suggestion-acts"><a class="btn-quiet outline" href="monitor-build.html" style="text-decoration:none">Start from a proposal</a><a class="btn-quiet" href="monitor-build.html?from=claude" style="text-decoration:none">Ask Claude to draft it</a></div></div></div>
+<div class="suggestion"><i class="ph-fill ph-users-three" aria-hidden="true"></i><div><b style="font-weight:500">People rely on Lead sources.</b> Queried 140 times last month, it feeds three public Lenses.<div class="suggestion-acts"><a class="btn-quiet outline" href="monitor-build.html" style="text-decoration:none">Start from a proposal</a><button class="btn-quiet">Not now</button></div></div></div>
+<div class="explain" style="margin-top:14px"><i class="ph-fill ph-chalkboard-teacher" aria-hidden="true"></i><div>Your first monitor is best set up together with the Data Team, on your own Resource: an hour, with the history of your figures in front of you. <a href="messages.html">Ask the Data Team</a></div></div>
+</div>
+</main>
+</div>
+<div class="proto-switch" data-group="state" role="tablist" aria-label="Prototype: monitors or none yet">State
+ <button class="seg on" data-target="running" role="tab" aria-selected="true">Monitors</button>
+ <button class="seg" data-target="first" role="tab" aria-selected="false">None yet</button>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
